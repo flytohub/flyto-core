@@ -1,0 +1,143 @@
+# Level 1 Workflow Template: Web Scraper
+# Ready-to-use workflow for beginners
+#
+# Usage:
+#   python -m cli.main workflows/templates/web_scraper.yaml \
+#     --param.url="https://news.ycombinator.com" \
+#     --param.title_selector=".titleline > a" \
+#     --param.output_file="./data/scraped.json"
+
+id: web_scraper
+name: Web Scraper
+version: 1.0.0
+description: Scrape data from a webpage and save to JSON file
+author: Flyto Core Team
+license: MIT
+level: 1  # Beginner-friendly template
+
+tags:
+  - browser
+  - scrape
+  - extract
+  - json
+  - data
+
+params:
+  - name: url
+    type: string
+    required: true
+    label: Target URL
+    description: The webpage URL to scrape
+    placeholder: https://news.ycombinator.com
+
+  - name: title_selector
+    type: string
+    required: true
+    label: Title Selector
+    description: CSS selector for title/headline elements
+    placeholder: h1, h2, .title
+
+  - name: link_selector
+    type: string
+    required: false
+    label: Link Selector
+    description: CSS selector for link elements (optional)
+    placeholder: a.item-link
+
+  - name: content_selector
+    type: string
+    required: false
+    label: Content Selector
+    description: CSS selector for content elements (optional)
+    placeholder: .content, p
+
+  - name: output_file
+    type: string
+    required: false
+    label: Output File
+    description: Path to save JSON output (optional)
+    placeholder: ./data/scraped.json
+
+  - name: max_items
+    type: number
+    required: false
+    default: 10
+    label: Max Items
+    description: Maximum number of items to extract
+
+steps:
+  - id: launch_browser
+    module: core.browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: core.browser.goto
+    params:
+      url: ${params.url}
+
+  - id: wait_for_content
+    module: core.browser.wait
+    params:
+      selector: body
+      timeout: 10000
+
+  - id: extract_titles
+    module: core.browser.extract
+    params:
+      selector: ${params.title_selector}
+      attribute: textContent
+      multiple: true
+      limit: ${params.max_items}
+
+  - id: extract_links
+    module: core.browser.extract
+    params:
+      selector: ${params.link_selector}
+      attribute: href
+      multiple: true
+      limit: ${params.max_items}
+    when: ${params.link_selector}
+    on_error: continue
+
+  - id: extract_content
+    module: core.browser.extract
+    params:
+      selector: ${params.content_selector}
+      attribute: textContent
+      multiple: true
+      limit: ${params.max_items}
+    when: ${params.content_selector}
+    on_error: continue
+
+  - id: format_json
+    module: data.json.stringify
+    params:
+      data:
+        url: ${params.url}
+        scraped_at: ${workflow.timestamp}
+        titles: ${extract_titles.results}
+        links: ${extract_links.results}
+        content: ${extract_content.results}
+      indent: 2
+
+  - id: save_file
+    module: file.write
+    params:
+      path: ${params.output_file}
+      content: ${format_json.result}
+    when: ${params.output_file}
+    on_error: continue
+
+  - id: close_browser
+    module: core.browser.close
+    on_error: continue
+
+output:
+  url: ${params.url}
+  items_found: ${extract_titles.count}
+  data:
+    titles: ${extract_titles.results}
+    links: ${extract_links.results}
+    content: ${extract_content.results}
+  output_file: ${params.output_file}

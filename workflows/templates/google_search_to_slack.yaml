@@ -1,0 +1,99 @@
+# Level 1 Workflow Template: Google Search to Slack
+# Ready-to-use workflow for beginners
+#
+# Usage:
+#   python -m cli.main workflows/templates/google_search_to_slack.yaml \
+#     --param.query="python tutorial" \
+#     --param.max_results=5
+#
+# Required Environment Variables:
+#   - SLACK_WEBHOOK_URL: Your Slack webhook URL
+
+id: google_search_to_slack
+name: Google Search to Slack
+version: 1.0.0
+description: Search Google and send results to Slack channel
+author: Flyto Core Team
+license: MIT
+level: 1  # Beginner-friendly template
+
+tags:
+  - search
+  - google
+  - slack
+  - notification
+  - automation
+
+params:
+  - name: query
+    type: string
+    required: true
+    label: Search Query
+    description: The search term to look up on Google
+    placeholder: workflow automation
+
+  - name: max_results
+    type: number
+    required: false
+    default: 5
+    label: Max Results
+    description: Maximum number of search results to return
+
+steps:
+  - id: launch_browser
+    module: core.browser.launch
+    params:
+      headless: true
+
+  - id: goto_google
+    module: core.browser.goto
+    params:
+      url: https://www.google.com
+
+  - id: search
+    module: core.browser.type
+    params:
+      selector: textarea[name="q"], input[name="q"]
+      text: ${params.query}
+
+  - id: submit
+    module: core.browser.press
+    params:
+      key: Enter
+
+  - id: wait_results
+    module: core.browser.wait
+    params:
+      selector: "#search"
+      timeout: 10000
+
+  - id: extract_titles
+    module: core.browser.extract
+    params:
+      selector: "#search .g h3"
+      attribute: textContent
+      multiple: true
+      limit: ${params.max_results}
+
+  - id: notify_slack
+    module: notification.slack.send_message
+    params:
+      text: |
+        🔍 *Google Search Results*
+
+        *Query:* ${params.query}
+
+        *Top ${params.max_results} Results:*
+        ${extract_titles.results}
+
+        _Searched by Flyto Core_
+    on_error: continue
+
+  - id: close_browser
+    module: core.browser.close
+    on_error: continue
+
+output:
+  query: ${params.query}
+  results: ${extract_titles.results}
+  notification_sent: ${notify_slack.sent}
