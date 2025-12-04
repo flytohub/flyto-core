@@ -27,6 +27,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2025-12-04
+
+### Added
+- **Level 4: Advanced Patterns** - Enterprise-grade execution patterns (`src/core/modules/patterns/`)
+  - `BasePattern` base class for all patterns
+  - `PatternRegistry` for managing patterns
+  - `PatternExecutor` for unified pattern execution
+  - `@register_pattern` decorator for easy registration
+  - `PatternResult` and `PatternState` for execution tracking
+
+- **Retry Patterns**
+  - `pattern.retry.exponential_backoff` - Exponential backoff with jitter
+  - `pattern.retry.linear_backoff` - Linear delay increase
+
+- **Parallel Patterns**
+  - `pattern.parallel.map` - Parallel execution with concurrency control
+  - `pattern.parallel.race` - Execute multiple functions, return first success
+
+- **Resilience Patterns**
+  - `pattern.circuit_breaker` - Circuit breaker with CLOSED/OPEN/HALF_OPEN states
+
+- **Rate Limiting Patterns**
+  - `pattern.rate_limiter.token_bucket` - Token bucket algorithm
+  - `pattern.rate_limiter.sliding_window` - Sliding window algorithm
+
+- **Batch Patterns**
+  - `pattern.batch.processor` - Batch processing with chunking
+  - `pattern.batch.aggregator` - Aggregate items and flush on threshold
+
+### Changed
+- Four-Level Module Architecture now complete:
+  - Level 1: Workflow Templates (6 templates)
+  - Level 2: Atomic Modules (127+ modules)
+  - Level 3: Composite Modules (9 modules)
+  - Level 4: Advanced Patterns (9 patterns)
+
+---
+
+## [1.4.0] - 2025-12-04
+
+### Added
+- **Four-Level Module Architecture Implementation**
+  - Level 3: Composite Modules (9 modules across 4 categories)
+  - Level 1: Workflow Templates (6 marketplace-ready templates)
+
+- **Composite Module System** (`src/core/modules/composite/`)
+  - `CompositeModule` base class for high-level workflows
+  - `CompositeRegistry` for managing composite modules
+  - `CompositeExecutor` for executing composite workflows
+  - `@register_composite` decorator for easy module registration
+
+- **Browser Composites**
+  - `composite.browser.search_and_notify` - Web search with notification
+  - `composite.browser.scrape_to_json` - Web scraping to JSON
+  - `composite.browser.screenshot_and_save` - Screenshot capture
+
+- **Developer Composites**
+  - `composite.developer.github_daily_digest` - GitHub repo monitoring
+  - `composite.developer.api_to_notification` - API to notification pipeline
+
+- **Notification Composites**
+  - `composite.notification.multi_channel_alert` - Multi-channel alerts
+  - `composite.notification.scheduled_report` - Scheduled report delivery
+
+- **Data Composites**
+  - `composite.data.csv_to_json` - CSV to JSON conversion
+  - `composite.data.json_transform_notify` - JSON transform with notification
+
+- **Level 1 Workflow Templates** (`workflows/templates/`)
+  - `google_search_to_slack.yaml` - Google search to Slack
+  - `github_repo_monitor.yaml` - GitHub repository monitoring
+  - `webpage_screenshot.yaml` - Webpage screenshot capture
+  - `multi_channel_alert.yaml` - Multi-channel alert system
+  - `web_scraper.yaml` - Web scraping workflow
+  - `api_monitor.yaml` - API health monitoring
+
+### Changed
+- Updated `composite/__init__.py` to export all composite modules
+- Composite modules now support variable resolution with `${params.*}`, `${steps.*}`, `${env.*}`
+
+---
+
 ## [1.3.0] - 2025-12-04
 
 ### Added
@@ -137,6 +219,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 1.5.0 | 2025-12-04 | Level 4 Advanced Patterns (Enterprise) |
+| 1.4.0 | 2025-12-04 | Level 3 Composite Modules + Level 1 Templates |
 | 1.3.0 | 2025-12-04 | Third-party module refactoring |
 | 1.2.0 | 2025-12-04 | Browser/LLM constants, utility functions |
 | 1.1.0 | 2025-12-04 | Constants and utils infrastructure |
@@ -144,8 +228,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/anthropics/flyto-core/compare/v1.3.0...HEAD
-[1.3.0]: https://github.com/anthropics/flyto-core/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/anthropics/flyto-core/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/anthropics/flyto-core/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/anthropics/flyto-core/releases/tag/v1.0.0
+[Unreleased]: https://github.com/flytohub/flyto-core/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/flytohub/flyto-core/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/flytohub/flyto-core/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/flytohub/flyto-core/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/flytohub/flyto-core/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/flytohub/flyto-core/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/flytohub/flyto-core/releases/tag/v1.0.0

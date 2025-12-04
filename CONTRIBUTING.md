@@ -36,7 +36,7 @@ git clone https://github.com/YOUR_USERNAME/flyto-core.git
 cd flyto-core
 
 # 3. Add upstream remote
-git remote add upstream https://github.com/anthropics/flyto-core.git
+git remote add upstream https://github.com/flytohub/flyto-core.git
 
 # 4. Create a virtual environment
 python -m venv venv

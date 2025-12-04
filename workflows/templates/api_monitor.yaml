@@ -1,0 +1,113 @@
+# Level 1 Workflow Template: API Monitor
+# Ready-to-use workflow for beginners
+#
+# Usage:
+#   python -m cli.main workflows/templates/api_monitor.yaml \
+#     --param.api_url="https://api.github.com/status" \
+#     --param.expected_status=200
+#
+# Required Environment Variables (for notifications):
+#   - SLACK_WEBHOOK_URL: Slack webhook URL
+
+id: api_monitor
+name: API Health Monitor
+version: 1.0.0
+description: Monitor API endpoint health and send alerts on failure
+author: Flyto Core Team
+license: MIT
+level: 1  # Beginner-friendly template
+
+tags:
+  - api
+  - monitor
+  - health
+  - alert
+  - devops
+
+params:
+  - name: api_url
+    type: string
+    required: true
+    label: API URL
+    description: The API endpoint URL to monitor
+    placeholder: https://api.example.com/health
+
+  - name: api_headers
+    type: object
+    required: false
+    default: {}
+    label: API Headers
+    description: Headers to send with the request (e.g., Authorization)
+
+  - name: expected_status
+    type: number
+    required: false
+    default: 200
+    label: Expected Status Code
+    description: Expected HTTP status code (default 200)
+
+  - name: alert_on_failure
+    type: boolean
+    required: false
+    default: true
+    label: Alert on Failure
+    description: Send notification if API check fails
+
+steps:
+  - id: check_api
+    module: core.api.http_get
+    params:
+      url: ${params.api_url}
+      headers: ${params.api_headers}
+    retry:
+      count: 2
+      delay_ms: 1000
+
+  - id: get_timestamp
+    module: utility.datetime.now
+    params:
+      format: "YYYY-MM-DD HH:mm:ss"
+
+  - id: check_status
+    module: utility.compare
+    params:
+      value: ${check_api.status_code}
+      operator: equals
+      expected: ${params.expected_status}
+
+  - id: alert_failure
+    module: notification.slack.send_message
+    params:
+      text: |
+        🚨 *API Health Check Failed*
+
+        *URL:* ${params.api_url}
+        *Expected Status:* ${params.expected_status}
+        *Actual Status:* ${check_api.status_code}
+        *Time:* ${get_timestamp.result}
+
+        _Monitored by Flyto Core_
+    when: ${check_status.result} == false && ${params.alert_on_failure}
+    on_error: continue
+
+  - id: alert_success
+    module: notification.slack.send_message
+    params:
+      text: |
+        ✅ *API Health Check Passed*
+
+        *URL:* ${params.api_url}
+        *Status:* ${check_api.status_code}
+        *Response Time:* ${check_api.elapsed_ms}ms
+        *Time:* ${get_timestamp.result}
+
+        _Monitored by Flyto Core_
+    when: ${check_status.result} == true
+    on_error: continue
+
+output:
+  url: ${params.api_url}
+  status_code: ${check_api.status_code}
+  response_time_ms: ${check_api.elapsed_ms}
+  healthy: ${check_status.result}
+  checked_at: ${get_timestamp.result}

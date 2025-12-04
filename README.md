@@ -3,32 +3,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-**Open-source YAML workflow automation engine.** Build automation pipelines with 127+ atomic modules - no code required.
+> A Git-native workflow engine and atomic module runtime for building local-first AI agents.
 
-## The Problem
+## What is Flyto Core?
 
-Building automation workflows today is painful:
+Flyto Core is an **open-source workflow automation engine** designed with three principles:
 
-- **Low-code platforms** lock you into proprietary formats and vendor ecosystems
-- **Scripting** requires programming knowledge and results in unmaintainable code
-- **Enterprise tools** are expensive and over-engineered for simple tasks
-- **No version control** - most tools don't play well with Git
-
-## The Solution
-
-Flyto Core is a **YAML-based workflow engine** that treats automation as configuration:
-
-- **Human-readable YAML** - Anyone can read and understand workflows
-- **Git-native** - Version control, code review, and CI/CD integration
-- **127+ atomic modules** - Compose complex workflows from simple building blocks
-- **Zero vendor lock-in** - MIT licensed, runs anywhere Python runs
-- **Extensible** - Write custom modules in Python
+- **Atomic-first** — 127+ fine-grained modules that compose like LEGO bricks
+- **Local-first & Git-native** — YAML workflows that version, diff, and test like code
+- **Designed for AI automation** — Rich module metadata lets AI understand and compose workflows
 
 ## Quick Start
 
 ```bash
 # Clone the repository
-git clone https://github.com/anthropics/flyto-core.git
+git clone https://github.com/flytohub/flyto-core.git
 cd flyto-core
 
 # Install dependencies
@@ -38,262 +27,237 @@ pip install -r requirements.txt
 python run.py workflows/_test/test_text_reverse.yaml
 ```
 
-## Example Workflow
+## 30-Second Example
 
-Create `hello.yaml`:
-
+**workflow.yaml**
 ```yaml
-name: "Hello World"
-description: "A simple text processing workflow"
-
+name: Hello World
 steps:
-  - id: reverse_text
+  - id: reverse
     module: string.reverse
     params:
-      text: "Hello World"
+      text: "Hello Flyto"
 
-  - id: uppercase
+  - id: shout
     module: string.uppercase
     params:
-      text: "${reverse_text.result}"
+      text: "${reverse.result}"
 ```
 
-Run it:
-
+**Run it:**
 ```bash
-python run.py hello.yaml
-# Output: { "result": "DLROW OLLEH" }
+python run.py workflow.yaml
+# Output: "OTYFL OLLEH"
 ```
 
-## Core Features
+**Or use Python directly:**
+```python
+import asyncio
+from src.core.modules.registry import ModuleRegistry
 
-### Atomic Module Design
+async def main():
+    result = await ModuleRegistry.execute(
+        "string.reverse",
+        params={"text": "Hello"},
+        context={}
+    )
+    print(result)  # {"result": "olleH"}
 
-Every module does **one thing well**. Complex workflows emerge from composing simple, tested modules:
+asyncio.run(main())
+```
+
+## Use Cases
+
+### 🧪 Local AI Agent Lab
+Build AI agents that run entirely on your machine with Ollama integration.
 
 ```yaml
 steps:
-  # Launch browser
+  - id: ask_ai
+    module: ai.ollama.chat
+    params:
+      model: llama3
+      prompt: "Summarize this: ${input.text}"
+```
+
+### 🕷️ Web Automation & Scraping
+Automate browsers with the `browser.*` module family.
+
+```yaml
+steps:
   - id: browser
     module: browser.launch
-    params:
-      headless: true
+    params: { headless: true }
 
-  # Navigate to page
   - id: navigate
     module: browser.goto
-    params:
-      url: "https://example.com"
+    params: { url: "https://example.com" }
 
-  # Extract data
   - id: extract
     module: browser.extract
-    params:
-      selector: "h1"
+    params: { selector: "h1" }
 ```
 
-### Variable Resolution
-
-Reference outputs from previous steps using `${step_id.field}` syntax:
+### 🔗 API Orchestration
+Chain API calls with built-in retry and error handling.
 
 ```yaml
 steps:
-  - id: fetch_data
+  - id: fetch
     module: api.http_get
     params:
-      url: "https://api.example.com/users"
-
-  - id: process
-    module: array.filter
-    params:
-      items: "${fetch_data.data}"
-      condition: "item.active == true"
-```
-
-### Built-in Error Handling
-
-```yaml
-steps:
-  - id: risky_operation
-    module: api.http_post
-    params:
-      url: "https://api.example.com/submit"
+      url: "https://api.example.com/data"
     retry:
       max_attempts: 3
       delay_ms: 1000
-    on_error: continue  # or: stop, skip
 ```
 
-## Available Modules
+### 🏗️ Internal Tooling
+Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned in Git.
 
-**127+ modules** across multiple categories:
+## Four-Level Architecture
 
-| Category | Modules | Description |
-|----------|---------|-------------|
-| `string.*` | 8 | Text manipulation (split, replace, trim, reverse) |
-| `array.*` | 10 | Array operations (filter, sort, map, reduce, unique) |
-| `object.*` | 5 | Object manipulation (keys, values, merge, pick) |
-| `file.*` | 6 | File system (read, write, copy, move, delete) |
-| `datetime.*` | 4 | Date/time operations (parse, format, add, subtract) |
-| `math.*` | 7 | Mathematical operations (calculate, round, abs) |
-| `data.*` | 5 | Data parsing (json, csv, xml) |
-| `browser.*` | 9 | Browser automation via Playwright |
-| `api.*` | 4 | HTTP requests (GET, POST, PUT, DELETE) |
-| `utility.*` | 7 | Utilities (delay, random, hash) |
-| `ai.*` | 4 | AI integrations (OpenAI, Anthropic, Ollama) |
+| Level | Type | For | Count |
+|-------|------|-----|-------|
+| **1** | Workflow Templates | Beginners | 6 ready-to-use templates |
+| **2** | Atomic Modules | Developers/AI | 127+ fine-grained modules |
+| **3** | Composite Modules | Power Users | 9 high-level workflows |
+| **4** | Advanced Patterns | Enterprise | 9 resilience patterns |
 
-View all modules:
-```bash
-python run.py  # Interactive mode → "List modules"
+## Module Categories
+
+| Category | Modules | Examples |
+|----------|---------|----------|
+| `string.*` | 8 | reverse, split, replace, trim |
+| `array.*` | 10 | filter, sort, map, reduce, unique |
+| `object.*` | 5 | keys, values, merge, pick |
+| `file.*` | 6 | read, write, copy, delete |
+| `browser.*` | 9 | launch, goto, click, extract |
+| `api.*` | 4+ | http_get, http_post, github |
+| `ai.*` | 4 | openai, ollama, anthropic |
+| `notification.*` | 4 | slack, discord, telegram, email |
+
+## Why Flyto Core?
+
+### vs. n8n / Zapier
+- **Finer granularity** — Atomic modules vs. monolithic nodes
+- **Git-native** — Version control your workflows
+- **No cloud dependency** — Runs entirely local
+
+### vs. Python Scripts
+- **Declarative YAML** — Non-programmers can read and modify
+- **Built-in resilience** — Retry, timeout, error handling included
+- **Module reuse** — Don't rewrite the same HTTP/browser code
+
+### vs. Airflow / Prefect
+- **Lightweight** — No scheduler, database, or infrastructure needed
+- **Developer-friendly** — Just YAML + Python, no DAG ceremony
+- **AI-ready** — Module metadata designed for LLM consumption
+
+## For Module Authors
+
+Modules use the `@register_module` decorator with rich metadata:
+
+```python
+from src.core.modules.registry import register_module
+from src.core.modules.base import BaseModule
+
+@register_module(
+    module_id='string.reverse',
+    version='1.0.0',
+    category='string',
+    label='Reverse String',
+    description='Reverse the characters in a string',
+
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text to reverse'
+        }
+    },
+    output_schema={
+        'result': {'type': 'string'}
+    }
+)
+class StringReverseModule(BaseModule):
+    def validate_params(self):
+        self.text = self.require_param('text')
+
+    async def execute(self):
+        return {'result': self.text[::-1]}
 ```
+
+See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete guide.
 
 ## Installation
 
-### Requirements
-
-- Python 3.8 or higher
-- pip package manager
-
-### Basic Installation
-
+### Basic
 ```bash
 pip install -r requirements.txt
 ```
 
-### Browser Automation (Optional)
-
-For browser modules (`browser.*`):
-
+### With Browser Automation
 ```bash
 pip install playwright
 playwright install chromium
 ```
 
-### Third-Party Integrations (Optional)
-
-For AI and API integrations:
-
+### With AI Integrations
 ```bash
 pip install -r requirements-integrations.txt
-```
-
-## Usage
-
-### Command Line
-
-```bash
-# Run a workflow file
-python run.py workflow.yaml
-
-# Pass parameters
-python run.py workflow.yaml --params '{"url": "https://example.com"}'
-
-# Interactive mode
-python run.py
-```
-
-### Programmatic Usage
-
-```python
-import asyncio
-from src.core.engine.workflow_engine import WorkflowEngine
-
-workflow = {
-    "name": "Example",
-    "steps": [
-        {
-            "id": "step1",
-            "module": "string.reverse",
-            "params": {"text": "hello"}
-        }
-    ]
-}
-
-engine = WorkflowEngine(workflow)
-result = asyncio.run(engine.execute())
-print(result)  # {"result": "olleh"}
 ```
 
 ## Project Structure
 
 ```
 flyto-core/
-├── run.py                  # CLI entry point
-├── src/
-│   ├── cli/                # Command-line interface
-│   └── core/
-│       ├── constants.py    # Centralized configuration
-│       ├── utils.py        # Shared utilities
-│       ├── engine/         # Workflow execution engine
-│       ├── browser/        # Playwright integration
-│       └── modules/
-│           ├── atomic/     # 127+ atomic modules
-│           └── third_party/# External service integrations
-├── workflows/              # Example workflows
-├── i18n/                   # Internationalization (en, zh, ja)
-└── docs/                   # Documentation
+├── src/core/
+│   ├── modules/
+│   │   ├── atomic/        # Level 2: 127+ atomic modules
+│   │   ├── composite/     # Level 3: 9 composite modules
+│   │   ├── patterns/      # Level 4: 9 advanced patterns
+│   │   └── third_party/   # External integrations
+│   └── engine/            # Workflow execution engine
+├── workflows/
+│   └── templates/         # Level 1: Ready-to-use templates
+├── docs/                  # Documentation
+└── i18n/                  # Internationalization (en, zh, ja)
 ```
 
 ## Documentation
 
-- **[Module Specification](docs/MODULE_SPECIFICATION.md)** - Complete module API reference
-- **[Writing Modules](docs/WRITING_MODULES.md)** - Guide to creating custom modules
-- **[CLI Reference](docs/CLI.md)** - Command-line options and usage
-- **[DSL Reference](docs/DSL.md)** - YAML workflow syntax
-
-## Use Cases
-
-- **Web Scraping** - Extract data from websites with browser automation
-- **Data Pipelines** - Transform and process data through multiple stages
-- **API Orchestration** - Chain multiple API calls with error handling
-- **Automated Testing** - Build end-to-end test workflows
-- **DevOps Automation** - Automate deployment and infrastructure tasks
-- **AI Workflows** - Integrate LLMs into automated pipelines
+- **[Module Specification](docs/MODULE_SPECIFICATION.md)** — Complete module API reference
+- **[Writing Modules](docs/WRITING_MODULES.md)** — Guide to creating custom modules
+- **[CLI Reference](docs/CLI.md)** — Command-line options
+- **[DSL Reference](docs/DSL.md)** — YAML workflow syntax
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
 
-### Quick Contribution Guide
+```bash
+# Fork and clone
+git clone https://github.com/YOUR_USERNAME/flyto-core.git
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-module`)
-3. Make your changes following our [coding standards](CONTRIBUTING.md#quality-standards)
-4. Write tests for new functionality
-5. Submit a pull request
+# Create feature branch
+git checkout -b feature/my-module
+
+# Make changes, then submit PR
+```
 
 ## Security
 
-For security concerns, please see our [Security Policy](SECURITY.md).
-
-**Do not** report security vulnerabilities through public GitHub issues.
+Report security vulnerabilities via **[security@flyto.dev](mailto:security@flyto.dev)**.
+See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 Flyto
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
-## Acknowledgments
-
-- [Playwright](https://playwright.dev/) - Browser automation
-- [PyYAML](https://pyyaml.org/) - YAML parsing
-- [aiohttp](https://docs.aiohttp.org/) - Async HTTP client
+MIT License — see **[LICENSE](LICENSE)** for details.
 
 ---
 
-**Built with clarity. Designed for automation.**
+<p align="center">
+  <b>Open-source core engine of the Flyto automation platform.</b><br>
+  Built for developers. Designed for AI.
+</p>

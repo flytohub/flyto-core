@@ -1,0 +1,84 @@
+# Level 1 Workflow Template: Webpage Screenshot
+# Ready-to-use workflow for beginners
+#
+# Usage:
+#   python -m cli.main workflows/templates/webpage_screenshot.yaml \
+#     --param.url="https://example.com" \
+#     --param.output_path="./screenshots/page.png"
+
+id: webpage_screenshot
+name: Webpage Screenshot
+version: 1.0.0
+description: Take a screenshot of any webpage and save it to a file
+author: Flyto Core Team
+license: MIT
+level: 1  # Beginner-friendly template
+
+tags:
+  - browser
+  - screenshot
+  - capture
+  - image
+
+params:
+  - name: url
+    type: string
+    required: true
+    label: Webpage URL
+    description: The URL of the webpage to screenshot
+    placeholder: https://example.com
+
+  - name: output_path
+    type: string
+    required: true
+    label: Output Path
+    description: File path to save the screenshot
+    placeholder: ./screenshots/page.png
+
+  - name: full_page
+    type: boolean
+    required: false
+    default: false
+    label: Full Page
+    description: Capture the entire page (not just viewport)
+
+  - name: wait_selector
+    type: string
+    required: false
+    default: body
+    label: Wait Selector
+    description: CSS selector to wait for before taking screenshot
+
+steps:
+  - id: launch_browser
+    module: core.browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: core.browser.goto
+    params:
+      url: ${params.url}
+
+  - id: wait_for_content
+    module: core.browser.wait
+    params:
+      selector: ${params.wait_selector}
+      timeout: 10000
+    on_error: continue
+
+  - id: take_screenshot
+    module: core.browser.screenshot
+    params:
+      path: ${params.output_path}
+      full_page: ${params.full_page}
+
+  - id: close_browser
+    module: core.browser.close
+    on_error: continue
+
+output:
+  url: ${params.url}
+  screenshot_path: ${params.output_path}
+  full_page: ${params.full_page}
+  status: success
