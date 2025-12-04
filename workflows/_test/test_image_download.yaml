@@ -1,0 +1,17 @@
+name: "Test image.download"
+description: "Downloads an image from a specified URL and saves it to a local path with validation. - Auto-generated test"
+
+steps:
+  - id: test_download_basic
+    module: image.download
+    params:
+      url: "https://httpbin.org/image/jpeg"
+      save_path: "/tmp/test_save_path.dat"
+    description: "Basic functionality test"
+
+  - id: verify_result
+    module: test.assert_not_null
+    params:
+      value: "${test_download_basic.result}"
+      message: "image.download should return a result"
+

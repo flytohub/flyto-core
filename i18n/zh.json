@@ -1,0 +1,94 @@
+{
+  "cli": {
+    "welcome": "工作流程自動化引擎",
+    "version": "版本 1.0.0",
+    "description": "強大的網頁爬蟲和工作流程編排自動化引擎",
+    "select_language": "選擇語言 / Select language",
+    "available_workflows": "可用的工作流程",
+    "required_parameters": "必要參數",
+    "starting_workflow": "開始執行工作流程...",
+    "workflow_completed": "工作流程執行成功！",
+    "workflow_failed": "工作流程執行失敗",
+    "results_saved": "結果已儲存至",
+    "execution_time": "執行時間",
+    "enter_custom_path": "輸入自訂工作流程路徑",
+    "loading_workflow": "載入工作流程",
+    "step_progress": "步驟 {current}/{total}",
+    "no_workflows_found": "在 ./workflows/ 目錄中找不到工作流程",
+    "create_workflow_prompt": "是否要建立範例工作流程？",
+    "error_occurred": "發生錯誤",
+    "press_enter": "按 Enter 繼續",
+    "goodbye": "感謝使用工作流程引擎！"
+  },
+  "commands": {
+    "run": "執行工作流程",
+    "list": "列出可用工作流程",
+    "modules": "列出可用模組",
+    "help": "顯示幫助資訊",
+    "version": "顯示版本資訊"
+  },
+  "params": {
+    "default": "預設",
+    "required": "必填",
+    "optional": "選填"
+  },
+  "status": {
+    "success": "成功",
+    "failed": "失敗",
+    "running": "執行中",
+    "skipped": "已跳過"
+  },
+  "phase2": {
+    "execution": {
+      "timeout": "超時時間",
+      "timeout_description": "模組最大執行時間（秒）",
+      "retryable": "可重試",
+      "retryable_description": "失敗時自動重試",
+      "max_retries": "最大重試次數",
+      "max_retries_description": "允許的重試次數",
+      "concurrent_safe": "並發安全",
+      "concurrent_safe_description": "是否可並行執行",
+      "retry_attempt": "重試第 {attempt}/{max} 次",
+      "timeout_warning": "執行時間已超過 {percent}%",
+      "timeout_exceeded": "執行超時（{timeout}秒）"
+    },
+    "security": {
+      "requires_credentials": "需要憑證",
+      "requires_credentials_description": "需要 API 金鑰或身份驗證",
+      "handles_sensitive_data": "處理敏感數據",
+      "handles_sensitive_data_description": "處理個人識別資訊或機密資料",
+      "required_permissions": "必要權限",
+      "required_permissions_description": "執行此模組所需的權限",
+      "credential_missing": "⚠ 未配置憑證",
+      "credential_configured": "✓ 已配置憑證",
+      "permission_granted": "已授予權限",
+      "permission_denied": "權限被拒絕",
+      "sensitive_data_masked": "敏感數據已遮罩（合規要求）"
+    },
+    "badges": {
+      "requires_credentials_tooltip": "需要 API 憑證",
+      "handles_sensitive_data_tooltip": "處理敏感數據",
+      "timeout_tooltip": "超時時間：{timeout}秒",
+      "retryable_tooltip": "自動重試：最多 {max} 次",
+      "not_concurrent_safe_tooltip": "不適合並行執行"
+    },
+    "warnings": {
+      "credential_required": "此模組需要 API 憑證才能運行",
+      "sensitive_data_warning": "此模組處理敏感資訊，輸出可能會在日誌中遮罩",
+      "concurrent_unsafe": "此模組不適合並行執行，請從並行區塊中移除",
+      "configure_credentials": "配置憑證",
+      "retry_on_failure": "失敗時將自動重試 {max} 次，每次間隔呈指數增長"
+    },
+    "permissions": {
+      "network.access": "網路存取",
+      "file.read": "檔案讀取",
+      "file.write": "檔案寫入",
+      "browser.launch": "瀏覽器啟動",
+      "browser.read": "瀏覽器讀取",
+      "system.process": "系統處理程序",
+      "database.read": "資料庫讀取",
+      "database.write": "資料庫寫入",
+      "ai.api": "AI API 存取"
+    }
+  }
+}

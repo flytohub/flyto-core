@@ -1,0 +1,94 @@
+{
+  "cli": {
+    "welcome": "ワークフロー自動化エンジン",
+    "version": "バージョン 1.0.0",
+    "description": "ウェブスクレイピングとワークフローオーケストレーションのための強力な自動化エンジン",
+    "select_language": "言語を選択 / Select language",
+    "available_workflows": "利用可能なワークフロー",
+    "required_parameters": "必須パラメータ",
+    "starting_workflow": "ワークフローの実行を開始します...",
+    "workflow_completed": "ワークフローが正常に完了しました！",
+    "workflow_failed": "ワークフローの実行に失敗しました",
+    "results_saved": "結果を保存しました",
+    "execution_time": "実行時間",
+    "enter_custom_path": "カスタムワークフローパスを入力",
+    "loading_workflow": "ワークフローを読み込んでいます",
+    "step_progress": "ステップ {current}/{total}",
+    "no_workflows_found": "./workflows/ ディレクトリにワークフローが見つかりません",
+    "create_workflow_prompt": "サンプルワークフローを作成しますか？",
+    "error_occurred": "エラーが発生しました",
+    "press_enter": "Enter キーを押して続行",
+    "goodbye": "ワークフローエンジンをご利用いただきありがとうございました！"
+  },
+  "commands": {
+    "run": "ワークフローを実行",
+    "list": "利用可能なワークフローを一覧表示",
+    "modules": "利用可能なモジュールを一覧表示",
+    "help": "ヘルプ情報を表示",
+    "version": "バージョン情報を表示"
+  },
+  "params": {
+    "default": "デフォルト",
+    "required": "必須",
+    "optional": "オプション"
+  },
+  "status": {
+    "success": "成功",
+    "failed": "失敗",
+    "running": "実行中",
+    "skipped": "スキップ"
+  },
+  "phase2": {
+    "execution": {
+      "timeout": "タイムアウト",
+      "timeout_description": "モジュールの最大実行時間（秒）",
+      "retryable": "リトライ可能",
+      "retryable_description": "失敗時に自動的にリトライ",
+      "max_retries": "最大リトライ回数",
+      "max_retries_description": "許可されるリトライ回数",
+      "concurrent_safe": "並行実行可能",
+      "concurrent_safe_description": "並行実行が安全かどうか",
+      "retry_attempt": "リトライ {attempt}/{max} 回目",
+      "timeout_warning": "実行時間が {percent}% を超えました",
+      "timeout_exceeded": "実行がタイムアウトしました（{timeout}秒）"
+    },
+    "security": {
+      "requires_credentials": "認証情報が必要",
+      "requires_credentials_description": "API キーまたは認証が必要",
+      "handles_sensitive_data": "機密データの処理",
+      "handles_sensitive_data_description": "個人情報または機密情報を処理",
+      "required_permissions": "必要な権限",
+      "required_permissions_description": "このモジュールの実行に必要な権限",
+      "credential_missing": "⚠ 認証情報が未設定",
+      "credential_configured": "✓ 認証情報が設定済み",
+      "permission_granted": "権限が付与されました",
+      "permission_denied": "権限が拒否されました",
+      "sensitive_data_masked": "機密データはマスクされています（コンプライアンス要件）"
+    },
+    "badges": {
+      "requires_credentials_tooltip": "API 認証情報が必要",
+      "handles_sensitive_data_tooltip": "機密データを処理",
+      "timeout_tooltip": "タイムアウト：{timeout}秒",
+      "retryable_tooltip": "自動リトライ：最大 {max} 回",
+      "not_concurrent_safe_tooltip": "並行実行には適していません"
+    },
+    "warnings": {
+      "credential_required": "このモジュールは実行に API 認証情報が必要です",
+      "sensitive_data_warning": "このモジュールは機密情報を処理します。出力はログでマスクされる場合があります",
+      "concurrent_unsafe": "このモジュールは並行実行に適していません。並行ブロックから削除してください",
+      "configure_credentials": "認証情報を設定",
+      "retry_on_failure": "失敗時に最大 {max} 回自動的にリトライします。間隔は指数関数的に増加します"
+    },
+    "permissions": {
+      "network.access": "ネットワークアクセス",
+      "file.read": "ファイル読み取り",
+      "file.write": "ファイル書き込み",
+      "browser.launch": "ブラウザ起動",
+      "browser.read": "ブラウザ読み取り",
+      "system.process": "システムプロセス",
+      "database.read": "データベース読み取り",
+      "database.write": "データベース書き込み",
+      "ai.api": "AI API アクセス"
+    }
+  }
+}
