@@ -1,29 +1,31 @@
 """
-Meta Module Generator - Wrapper for ModuleGenerator
+Meta Module Generator - Placeholder for OSS version
 
-Allows workflows to generate new modules
+The full module generator is available in Flyto Pro.
+This file provides stub implementations for compatibility.
 """
 
 from src.core.modules.base import BaseModule
 from src.core.modules.registry import register_module
-from src.core.meta.module_generator import ModuleGenerator
-from typing import Any, Dict
+from typing import Any
 
 
 @register_module('meta.modules.test_generator')
 class TestGeneratorModule(BaseModule):
     """
-    Test the module generator (for testing only)
+    Test the module generator (stub for OSS)
+
+    Note: Full implementation available in Flyto Pro.
 
     Parameters:
         module_spec (dict): Module specification
 
     Returns:
-        Generation result
+        Stub result
     """
 
     module_name = "TestGenerator"
-    module_description = "Test module generation capability"
+    module_description = "Test module generation capability (Pro feature)"
 
     def validate_params(self):
         """Validate and extract parameters"""
@@ -33,25 +35,24 @@ class TestGeneratorModule(BaseModule):
 
     async def execute(self) -> Any:
         """
-        Test module generation
+        Stub implementation - returns info about Pro version
 
         Returns:
-            Generation result
+            Info message
         """
-        try:
-            generator = ModuleGenerator()
-            result = generator.generate_module(self.module_spec)
-
-            return result
-
-        except Exception as e:
-            raise RuntimeError(f"Module generation test failed: {str(e)}")
+        return {
+            "status": "stub",
+            "message": "Module generation requires Flyto Pro",
+            "spec_received": bool(self.module_spec)
+        }
 
 
 @register_module('meta.modules.generate')
 class GenerateModuleModule(BaseModule):
     """
-    Generate a new module from specification
+    Generate a new module from specification (stub for OSS)
+
+    Note: Full implementation available in Flyto Pro.
 
     Parameters:
         module_id (str): Module ID (e.g., "string.reverse")
@@ -62,11 +63,11 @@ class GenerateModuleModule(BaseModule):
         examples (list): Example usages (optional)
 
     Returns:
-        Generation result with paths and code
+        Stub result
     """
 
     module_name = "GenerateModule"
-    module_description = "Generate new module from specification"
+    module_description = "Generate new module from specification (Pro feature)"
 
     def validate_params(self):
         """Validate and extract parameters"""
@@ -84,25 +85,14 @@ class GenerateModuleModule(BaseModule):
 
     async def execute(self) -> Any:
         """
-        Generate module
+        Stub implementation - returns info about Pro version
 
         Returns:
-            Generation result
+            Info message
         """
-        try:
-            spec = {
-                "module_id": self.module_id,
-                "description": self.description,
-                "category": self.category,
-                "params": self.param_specs,
-                "returns": self.returns,
-                "examples": self.examples
-            }
-
-            generator = ModuleGenerator()
-            result = generator.generate_module(spec)
-
-            return result
-
-        except Exception as e:
-            raise RuntimeError(f"Module generation failed: {str(e)}")
+        return {
+            "status": "stub",
+            "message": "Module generation requires Flyto Pro",
+            "module_id": self.module_id,
+            "description": self.description
+        }
