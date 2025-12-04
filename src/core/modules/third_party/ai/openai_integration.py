@@ -3,9 +3,16 @@ OpenAI Integration Modules
 
 Provides OpenAI GPT chat and DALL-E image generation.
 """
+import logging
+import os
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import EnvVars, APIEndpoints
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -58,7 +65,7 @@ from ...registry import register_module
                 {'label': 'GPT-4', 'value': 'gpt-4'},
                 {'label': 'GPT-3.5 Turbo', 'value': 'gpt-3.5-turbo'}
             ],
-            'default': 'gpt-3.5-turbo',
+            'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
         },
         'temperature': {
@@ -129,7 +136,7 @@ class OpenAIChatModule(BaseModule):
 
     def validate_params(self):
         self.prompt = self.params.get('prompt')
-        self.model = self.params.get('model', 'gpt-3.5-turbo')
+        self.model = self.params.get('model', APIEndpoints.DEFAULT_OPENAI_MODEL)
         self.temperature = self.params.get('temperature', 0.7)
         self.max_tokens = self.params.get('max_tokens', 1000)
         self.system_message = self.params.get('system_message')
@@ -138,10 +145,9 @@ class OpenAIChatModule(BaseModule):
             raise ValueError("prompt is required")
 
         # Get API key from environment
-        import os
-        self.api_key = os.environ.get('OPENAI_API_KEY')
+        self.api_key = os.environ.get(EnvVars.OPENAI_API_KEY)
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
+            raise ValueError(f"{EnvVars.OPENAI_API_KEY} environment variable is required")
 
     async def execute(self) -> Any:
         try:
@@ -333,10 +339,9 @@ class OpenAIImageModule(BaseModule):
             raise ValueError("prompt is required")
 
         # Get API key from environment
-        import os
-        self.api_key = os.environ.get('OPENAI_API_KEY')
+        self.api_key = os.environ.get(EnvVars.OPENAI_API_KEY)
         if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
+            raise ValueError(f"{EnvVars.OPENAI_API_KEY} environment variable is required")
 
     async def execute(self) -> Any:
         try:

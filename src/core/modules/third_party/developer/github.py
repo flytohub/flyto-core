@@ -2,11 +2,18 @@
 GitHub API Integration Modules
 Work with GitHub repositories, issues, pull requests, etc.
 """
+import logging
+import os
 from typing import Any, Dict
+
+import aiohttp
+
 from ...base import BaseModule
 from ...registry import register_module
-import aiohttp
-import os
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -96,13 +103,13 @@ class GitHubGetRepoModule(BaseModule):
 
         self.owner = self.params['owner']
         self.repo = self.params['repo']
-        self.token = self.params.get('token') or os.getenv('GITHUB_TOKEN')
+        self.token = self.params.get('token') or os.getenv(EnvVars.GITHUB_TOKEN)
 
     async def execute(self) -> Any:
-        url = f"https://api.github.com/repos/{self.owner}/{self.repo}"
+        url = APIEndpoints.github_repo(self.owner, self.repo)
 
         headers = {
-            'Accept': 'application/vnd.github.v3+json',
+            'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'User-Agent': 'Flyto2-Workflow-Engine'
         }
 
@@ -240,13 +247,13 @@ class GitHubListIssuesModule(BaseModule):
         self.state = self.params.get('state', 'open')
         self.labels = self.params.get('labels')
         self.limit = self.params.get('limit', 30)
-        self.token = self.params.get('token') or os.getenv('GITHUB_TOKEN')
+        self.token = self.params.get('token') or os.getenv(EnvVars.GITHUB_TOKEN)
 
     async def execute(self) -> Any:
-        url = f"https://api.github.com/repos/{self.owner}/{self.repo}/issues"
+        url = APIEndpoints.github_issues(self.owner, self.repo)
 
         headers = {
-            'Accept': 'application/vnd.github.v3+json',
+            'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'User-Agent': 'Flyto2-Workflow-Engine'
         }
 
@@ -409,19 +416,19 @@ class GitHubCreateIssueModule(BaseModule):
         self.labels = self.params.get('labels', [])
         self.assignees = self.params.get('assignees', [])
 
-        self.token = self.params.get('token') or os.getenv('GITHUB_TOKEN')
+        self.token = self.params.get('token') or os.getenv(EnvVars.GITHUB_TOKEN)
         if not self.token:
             raise ValueError(
-                "GitHub token is required to create issues. "
-                "Set GITHUB_TOKEN environment variable or provide token parameter. "
-                "Get token from: https://github.com/settings/tokens"
+                f"GitHub token is required to create issues. "
+                f"Set {EnvVars.GITHUB_TOKEN} environment variable or provide token parameter. "
+                f"Get token from: https://github.com/settings/tokens"
             )
 
     async def execute(self) -> Any:
-        url = f"https://api.github.com/repos/{self.owner}/{self.repo}/issues"
+        url = APIEndpoints.github_issues(self.owner, self.repo)
 
         headers = {
-            'Accept': 'application/vnd.github.v3+json',
+            'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'Authorization': f'token {self.token}',
             'User-Agent': 'Flyto2-Workflow-Engine'
         }

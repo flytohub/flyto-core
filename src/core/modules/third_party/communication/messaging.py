@@ -2,14 +2,21 @@
 Notification and Messaging Modules
 Send notifications to Slack, Discord, Telegram, Email, etc.
 """
-from typing import Any, Dict
-from ...base import BaseModule
-from ...registry import register_module
-import aiohttp
+import logging
 import os
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any, Dict
+
+import aiohttp
+
+from ...base import BaseModule
+from ...registry import register_module
+from ....constants import EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -115,13 +122,13 @@ class SlackSendMessageModule(BaseModule):
         self.text = self.params['text']
 
         # Get webhook URL from params or environment
-        self.webhook_url = self.params.get('webhook_url') or os.getenv('SLACK_WEBHOOK_URL')
+        self.webhook_url = self.params.get('webhook_url') or os.getenv(EnvVars.SLACK_WEBHOOK_URL)
 
         if not self.webhook_url:
             raise ValueError(
-                "Slack webhook URL not found. "
-                "Please set SLACK_WEBHOOK_URL environment variable or provide webhook_url parameter. "
-                "Get webhook URL from: https://api.slack.com/messaging/webhooks"
+                f"Slack webhook URL not found. "
+                f"Please set {EnvVars.SLACK_WEBHOOK_URL} environment variable or provide webhook_url parameter. "
+                f"Get webhook URL from: https://api.slack.com/messaging/webhooks"
             )
 
         self.channel = self.params.get('channel')
@@ -249,13 +256,13 @@ class DiscordSendMessageModule(BaseModule):
         self.content = self.params['content']
 
         # Get webhook URL from params or environment
-        self.webhook_url = self.params.get('webhook_url') or os.getenv('DISCORD_WEBHOOK_URL')
+        self.webhook_url = self.params.get('webhook_url') or os.getenv(EnvVars.DISCORD_WEBHOOK_URL)
 
         if not self.webhook_url:
             raise ValueError(
-                "Discord webhook URL not found. "
-                "Please set DISCORD_WEBHOOK_URL environment variable or provide webhook_url parameter. "
-                "Get webhook URL from Discord Server Settings → Integrations → Webhooks"
+                f"Discord webhook URL not found. "
+                f"Please set {EnvVars.DISCORD_WEBHOOK_URL} environment variable or provide webhook_url parameter. "
+                f"Get webhook URL from Discord Server Settings → Integrations → Webhooks"
             )
 
         self.username = self.params.get('username')
@@ -395,13 +402,13 @@ class TelegramSendMessageModule(BaseModule):
         self.chat_id = self.params['chat_id']
 
         # Get bot token from params or environment
-        self.bot_token = self.params.get('bot_token') or os.getenv('TELEGRAM_BOT_TOKEN')
+        self.bot_token = self.params.get('bot_token') or os.getenv(EnvVars.TELEGRAM_BOT_TOKEN)
 
         if not self.bot_token:
             raise ValueError(
-                "Telegram bot token not found. "
-                "Please set TELEGRAM_BOT_TOKEN environment variable or provide bot_token parameter. "
-                "Get token from: https://t.me/BotFather"
+                f"Telegram bot token not found. "
+                f"Please set {EnvVars.TELEGRAM_BOT_TOKEN} environment variable or provide bot_token parameter. "
+                f"Get token from: https://t.me/BotFather"
             )
 
         self.parse_mode = self.params.get('parse_mode', 'Markdown')

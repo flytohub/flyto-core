@@ -2,11 +2,16 @@
 AI Integration Modules
 Provides integrations with AI services like Anthropic Claude and Google Gemini
 """
+import logging
+import os
+
+import aiohttp
 
 from ...registry import register_module
-import aiohttp
-import json
-import os
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -55,7 +60,7 @@ import os
             'label_key': 'modules.api.anthropic.chat.params.model.label',
             'description': 'Claude model to use',
             'description_key': 'modules.api.anthropic.chat.params.model.description',
-            'default': 'claude-3-5-sonnet-20241022',
+            'default': APIEndpoints.DEFAULT_ANTHROPIC_MODEL,
             'required': False,
             'options': [
                 {'value': 'claude-3-5-sonnet-20241022', 'label': 'Claude 3.5 Sonnet'},
@@ -164,20 +169,20 @@ async def anthropic_chat(context):
     params = context['params']
 
     # Get API key from params or environment
-    api_key = params.get('api_key') or os.getenv('ANTHROPIC_API_KEY')
+    api_key = params.get('api_key') or os.getenv(EnvVars.ANTHROPIC_API_KEY)
     if not api_key:
-        raise ValueError("API key required: provide 'api_key' param or set ANTHROPIC_API_KEY env variable")
+        raise ValueError(f"API key required: provide 'api_key' param or set {EnvVars.ANTHROPIC_API_KEY} env variable")
 
     # Prepare request
-    url = 'https://api.anthropic.com/v1/messages'
+    url = APIEndpoints.ANTHROPIC_MESSAGES_URL
     headers = {
         'x-api-key': api_key,
-        'anthropic-version': '2023-06-01',
+        'anthropic-version': APIEndpoints.ANTHROPIC_API_VERSION,
         'content-type': 'application/json'
     }
 
     payload = {
-        'model': params.get('model', 'claude-3-5-sonnet-20241022'),
+        'model': params.get('model', APIEndpoints.DEFAULT_ANTHROPIC_MODEL),
         'messages': params['messages'],
         'max_tokens': params.get('max_tokens', 1024)
     }
@@ -255,7 +260,7 @@ async def anthropic_chat(context):
             'label_key': 'modules.api.google_gemini.chat.params.model.label',
             'description': 'Gemini model to use',
             'description_key': 'modules.api.google_gemini.chat.params.model.description',
-            'default': 'gemini-1.5-pro',
+            'default': APIEndpoints.DEFAULT_GEMINI_MODEL,
             'required': False,
             'options': [
                 {'value': 'gemini-1.5-pro', 'label': 'Gemini 1.5 Pro'},
@@ -337,14 +342,14 @@ async def google_gemini_chat(context):
     params = context['params']
 
     # Get API key from params or environment
-    api_key = params.get('api_key') or os.getenv('GOOGLE_AI_API_KEY')
+    api_key = params.get('api_key') or os.getenv(EnvVars.GOOGLE_AI_API_KEY)
     if not api_key:
-        raise ValueError("API key required: provide 'api_key' param or set GOOGLE_AI_API_KEY env variable")
+        raise ValueError(f"API key required: provide 'api_key' param or set {EnvVars.GOOGLE_AI_API_KEY} env variable")
 
-    model = params.get('model', 'gemini-1.5-pro')
+    model = params.get('model', APIEndpoints.DEFAULT_GEMINI_MODEL)
 
     # Prepare request
-    url = f'https://generativelanguage.googleapis.com/v1/models/{model}:generateContent?key={api_key}'
+    url = APIEndpoints.google_gemini_generate(model, api_key)
 
     payload = {
         'contents': [

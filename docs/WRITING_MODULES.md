@@ -1,6 +1,6 @@
-# Writing Custom Modules for Flyto2
+# Writing Custom Modules for Flyto Core
 
-This guide covers everything you need to know to create your own modules for Flyto2.
+This guide covers everything you need to know to create your own modules for Flyto Core.
 
 ---
 
@@ -464,7 +464,7 @@ pytest tests/modules/test_my_module.py::test_uppercase_basic
 
 ## Publishing Your Module
 
-### 1. For Core Modules (Contributing to Flyto2)
+### 1. For Core Modules (Contributing to Flyto Core)
 
 Follow the [CONTRIBUTING.md](../CONTRIBUTING.md) guide:
 
@@ -481,7 +481,7 @@ Follow the [CONTRIBUTING.md](../CONTRIBUTING.md) guide:
 Create a separate package:
 
 ```
-my-flyto2-modules/
+my-flyto-core-modules/
 ├── setup.py
 ├── README.md
 ├── modules/
@@ -495,14 +495,14 @@ my-flyto2-modules/
 from setuptools import setup, find_packages
 
 setup(
-    name='flyto2-custom-modules',
+    name='flyto-core-custom-modules',
     version='1.0.0',
     packages=find_packages(),
     install_requires=[
-        'flyto2>=1.0.0',
+        'flyto-core>=1.0.0',
     ],
     entry_points={
-        'flyto2.modules': [
+        'flyto-core.modules': [
             'custom = modules.my_custom_modules',
         ],
     },
@@ -511,7 +511,7 @@ setup(
 
 Users can install via:
 ```bash
-pip install flyto2-custom-modules
+pip install flyto-core-custom-modules
 ```
 
 ---
@@ -600,8 +600,8 @@ See real module implementations in:
 
 ## Getting Help
 
-- **GitHub Issues**: [Report bugs](https://github.com/flytohub/flyto2/issues)
-- **Discussions**: [Ask questions](https://github.com/flytohub/flyto2/discussions)
+- **GitHub Issues**: [Report bugs](https://github.com/flytohub/flyto-core/issues)
+- **Discussions**: [Ask questions](https://github.com/flytohub/flyto-core/discussions)
 - **Contributing Guide**: [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ---

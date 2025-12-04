@@ -1,6 +1,6 @@
-# Flyto2 CLI Guide
+# Flyto Core CLI Guide
 
-Complete reference for the Flyto2 command-line interface.
+Complete reference for the Flyto Core command-line interface.
 
 ---
 
@@ -24,8 +24,8 @@ python -m cli.main workflow.yaml
 
 ```bash
 # Clone repository
-git clone https://github.com/flytohub/flyto2.git
-cd flyto2
+git clone https://github.com/flytohub/flyto-core.git
+cd flyto-core
 
 # Install dependencies
 pip install -r requirements.txt
@@ -55,7 +55,7 @@ python -m cli.main /path/to/my_workflow.yaml
 
 # Run from different directory
 cd /other/directory
-python -m cli.main ~/flyto2/workflows/api_pipeline.yaml
+python -m cli.main ~/flyto-core/workflows/api_pipeline.yaml
 ```
 
 ---
@@ -113,7 +113,7 @@ GITHUB_TOKEN=ghp_xxxxx
 OPENAI_API_KEY=sk-xxxxx
 ```
 
-Flyto2 automatically loads `.env` file if it exists.
+Flyto Core automatically loads `.env` file if it exists.
 
 ---
 
@@ -281,36 +281,36 @@ crontab -e
 Add scheduled workflows:
 ```bash
 # Run every day at 9 AM
-0 9 * * * cd /path/to/flyto2 && python -m cli.main workflows/daily_report_email.yaml
+0 9 * * * cd /path/to/flyto-core && python -m cli.main workflows/daily_report_email.yaml
 
 # Run every hour
-0 * * * * cd /path/to/flyto2 && python -m cli.main workflows/monitor.yaml
+0 * * * * cd /path/to/flyto-core && python -m cli.main workflows/monitor.yaml
 
 # Run every 15 minutes
-*/15 * * * * cd /path/to/flyto2 && python -m cli.main workflows/check_status.yaml
+*/15 * * * * cd /path/to/flyto-core && python -m cli.main workflows/check_status.yaml
 ```
 
 ### Using systemd Timer (Linux)
 
-Create service file: `/etc/systemd/system/flyto2-daily.service`
+Create service file: `/etc/systemd/system/flyto-core-daily.service`
 
 ```ini
 [Unit]
-Description=Flyto2 Daily Report
+Description=Flyto Core Daily Report
 
 [Service]
 Type=oneshot
-WorkingDirectory=/path/to/flyto2
-EnvironmentFile=/path/to/flyto2/.env
+WorkingDirectory=/path/to/flyto-core
+EnvironmentFile=/path/to/flyto-core/.env
 ExecStart=/usr/bin/python3 -m cli.main workflows/daily_report_email.yaml
 User=your_user
 ```
 
-Create timer: `/etc/systemd/system/flyto2-daily.timer`
+Create timer: `/etc/systemd/system/flyto-core-daily.timer`
 
 ```ini
 [Unit]
-Description=Run Flyto2 Daily Report
+Description=Run Flyto Core Daily Report
 
 [Timer]
 OnCalendar=daily
@@ -322,8 +322,8 @@ WantedBy=timers.target
 
 Enable and start:
 ```bash
-sudo systemctl enable flyto2-daily.timer
-sudo systemctl start flyto2-daily.timer
+sudo systemctl enable flyto-core-daily.timer
+sudo systemctl start flyto-core-daily.timer
 ```
 
 ### Using Task Scheduler (Windows)
@@ -331,7 +331,7 @@ sudo systemctl start flyto2-daily.timer
 Create batch file `run_workflow.bat`:
 ```batch
 @echo off
-cd C:\path\to\flyto2
+cd C:\path\to\flyto-core
 python -m cli.main workflows\daily_report_email.yaml
 ```
 
@@ -340,7 +340,7 @@ Schedule in Task Scheduler:
 2. Create Basic Task
 3. Set trigger (daily at 9 AM)
 4. Action: Start a program
-5. Program: `C:\path\to\flyto2\run_workflow.bat`
+5. Program: `C:\path\to\flyto-core\run_workflow.bat`
 
 ---
 
@@ -376,24 +376,24 @@ CMD ["python", "-m", "cli.main", "workflows/example.yaml"]
 Build and run:
 ```bash
 # Build
-docker build -t flyto2 .
+docker build -t flyto-core .
 
 # Run with environment variables
 docker run --rm \
   -e SLACK_WEBHOOK_URL=$SLACK_WEBHOOK_URL \
   -e API_TOKEN=$API_TOKEN \
-  flyto2
+  flyto-core
 
 # Run with custom workflow
 docker run --rm \
   -v $(pwd)/workflows:/app/workflows \
   -e SLACK_WEBHOOK_URL=$SLACK_WEBHOOK_URL \
-  flyto2 python -m cli.main workflows/my_workflow.yaml
+  flyto-core python -m cli.main workflows/my_workflow.yaml
 
 # Run with .env file
 docker run --rm \
   --env-file .env \
-  flyto2
+  flyto-core
 ```
 
 ---
@@ -458,7 +458,7 @@ playwright install chromium
 `.github/workflows/workflow.yml`:
 
 ```yaml
-name: Run Flyto2 Workflow
+name: Run Flyto Core Workflow
 
 on:
   schedule:
@@ -530,7 +530,7 @@ run-workflow:
 
 - **Documentation:** [docs/DSL.md](DSL.md), [docs/MODULES.md](MODULES.md)
 - **Examples:** [workflows/](../workflows/)
-- **Issues:** [GitHub Issues](https://github.com/flytohub/flyto2/issues)
+- **Issues:** [GitHub Issues](https://github.com/flytohub/flyto-core/issues)
 
 ---
 

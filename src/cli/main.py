@@ -24,11 +24,29 @@ if pythonpath_from_env:
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+import argparse
 import json
+import logging
 import yaml
 import time
 from datetime import datetime
 from typing import Dict, Any, List, Optional
+
+
+logger = logging.getLogger(__name__)
+
+# CLI Constants
+CLI_VERSION = "1.1.0"
+CLI_LINE_WIDTH = 70
+SUPPORTED_LANGUAGES = {
+    '1': ('en', 'English'),
+    '2': ('zh', 'Chinese'),
+    '3': ('ja', 'Japanese'),
+}
+I18N_DIR = Path(__file__).parent.parent.parent / 'i18n'
+CONFIG_FILE = Path(__file__).parent.parent.parent / 'engine.yaml'
+WORKFLOWS_DIR = Path(__file__).parent.parent.parent / 'workflows'
+DEFAULT_OUTPUT_DIR = Path('./output')
 
 # ASCII Logo
 LOGO = r"""
@@ -63,12 +81,12 @@ class I18n:
     
     def load_language(self, lang: str):
         """Load language file"""
-        lang_file = Path(f'i18n/{lang}.json')
+        lang_file = I18N_DIR / f'{lang}.json'
         if lang_file.exists():
             with open(lang_file, 'r', encoding='utf-8') as f:
                 self.translations = json.load(f)
         else:
-            print(f"Warning: Language file for '{lang}' not found")
+            logger.warning(f"Language file for '{lang}' not found")
             self.translations = {}
     
     def t(self, key: str, **kwargs) -> str:
@@ -89,7 +107,13 @@ class I18n:
         return value if isinstance(value, str) else key
 
 
-def print_logo(i18n: I18n):
+def _clear_screen() -> None:
+    """Clear terminal screen using ANSI escape codes"""
+    # Use ANSI escape sequence for cross-platform compatibility
+    print('\033[2J\033[H', end='')
+
+
+def print_logo(i18n: I18n) -> None:
     """Print ASCII logo"""
     print(Colors.OKCYAN + LOGO + Colors.ENDC)
     print(Colors.BOLD + i18n.t('cli.welcome') + Colors.ENDC)
@@ -100,41 +124,34 @@ def print_logo(i18n: I18n):
 
 def select_language() -> str:
     """Interactive language selection"""
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     print("Select language / Select Language / LanguageSelect:")
-    print("  1. English")
-    print("  2. Chinese")
-    print("  3. Japanese")
-    print("=" * 70)
-    
+    for key, (code, name) in SUPPORTED_LANGUAGES.items():
+        print(f"  {key}. {name}")
+    print("=" * CLI_LINE_WIDTH)
+
     while True:
         choice = input("> ").strip()
-        if choice == '1':
-            return 'en'
-        elif choice == '2':
-            return 'zh'
-        elif choice == '3':
-            return 'ja'
+        if choice in SUPPORTED_LANGUAGES:
+            return SUPPORTED_LANGUAGES[choice][0]
         else:
-            print("Invalid choice. Please enter 1, 2, or 3.")
+            print(f"Invalid choice. Please enter 1-{len(SUPPORTED_LANGUAGES)}.")
 
 
 def load_config() -> Dict[str, Any]:
     """Load global configuration"""
-    config_file = Path('engine.yaml')
-    if config_file.exists():
-        with open(config_file, 'r') as f:
+    if CONFIG_FILE.exists():
+        with open(CONFIG_FILE, 'r') as f:
             return yaml.safe_load(f)
     return {}
 
 
 def list_workflows() -> List[Path]:
     """List available workflows"""
-    workflows_dir = Path('workflows')
-    if not workflows_dir.exists():
+    if not WORKFLOWS_DIR.exists():
         return []
-    
-    return list(workflows_dir.glob('*.yaml'))
+
+    return list(WORKFLOWS_DIR.glob('*.yaml'))
 
 
 def select_workflow(i18n: I18n) -> Optional[Path]:
@@ -146,9 +163,9 @@ def select_workflow(i18n: I18n) -> Optional[Path]:
         return None
     
     print()
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     print(Colors.BOLD + i18n.t('cli.available_workflows') + Colors.ENDC)
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     
     for idx, workflow_path in enumerate(workflows, 1):
         # Load workflow to get name and description
@@ -169,7 +186,7 @@ def select_workflow(i18n: I18n) -> Optional[Path]:
             print(f"     {desc_text}")
     
     print(f"  {len(workflows) + 1}. {i18n.t('cli.enter_custom_path')}")
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     
     while True:
         choice = input("> ").strip()
@@ -264,9 +281,9 @@ def collect_params(workflow: Dict[str, Any], i18n: I18n) -> Dict[str, Any]:
         return {}
     
     print()
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     print(Colors.BOLD + i18n.t('cli.required_parameters') + Colors.ENDC)
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     
     params = {}
     for param in params_schema:
@@ -280,9 +297,9 @@ def collect_params(workflow: Dict[str, Any], i18n: I18n) -> Dict[str, Any]:
 def run_workflow(workflow_path: Path, params: Dict[str, Any], config: Dict[str, Any], i18n: I18n):
     """Run a workflow"""
     print()
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     print(Colors.BOLD + i18n.t('cli.starting_workflow') + Colors.ENDC)
-    print("=" * 70)
+    print("=" * CLI_LINE_WIDTH)
     
     # Load workflow
     with open(workflow_path, 'r') as f:
@@ -295,7 +312,7 @@ def run_workflow(workflow_path: Path, params: Dict[str, Any], config: Dict[str, 
     
     # Import execution engine
     try:
-        from src.core.engine.workflow_engine import WorkflowEngine
+        from ..core.engine.workflow_engine import WorkflowEngine
         import asyncio
 
         # Create workflow engine
@@ -355,13 +372,13 @@ def run_workflow(workflow_path: Path, params: Dict[str, Any], config: Dict[str, 
         
         # Show completion
         print()
-        print("=" * 70)
+        print("=" * CLI_LINE_WIDTH)
         print(Colors.OKGREEN + Colors.BOLD + i18n.t('cli.workflow_completed') + Colors.ENDC)
-        print("=" * 70)
+        print("=" * CLI_LINE_WIDTH)
         print(f"{i18n.t('cli.execution_time')}: {execution_time:.2f}s")
         
         # Save results
-        output_dir = Path(config.get('storage', {}).get('output_dir', './output'))
+        output_dir = Path(config.get('storage', {}).get('output_dir', str(DEFAULT_OUTPUT_DIR)))
         output_dir.mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -496,9 +513,8 @@ def merge_params(workflow: Dict[str, Any], args) -> Dict[str, Any]:
     return params
 
 
-def main():
+def main() -> None:
     """Main CLI entry point"""
-    import argparse
 
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
@@ -567,7 +583,7 @@ Examples:
         i18n = I18n(lang)
 
         # Clear screen and show logo
-        os.system('clear' if os.name != 'nt' else 'cls')
+        _clear_screen()
         print_logo(i18n)
 
         # Load global config

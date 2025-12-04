@@ -7,6 +7,13 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 from playwright.async_api import async_playwright, Browser, Page, ElementHandle
 
+from ..constants import (
+    DEFAULT_VIEWPORT_WIDTH,
+    DEFAULT_VIEWPORT_HEIGHT,
+    DEFAULT_BROWSER_TIMEOUT_MS,
+    DEFAULT_USER_AGENT,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +43,7 @@ class BrowserDriver:
             browser_type: Browser type ('chromium', 'firefox', 'webkit')
         """
         self.headless = headless
-        self.viewport = viewport or {'width': 1920, 'height': 1080}
+        self.viewport = viewport or {'width': DEFAULT_VIEWPORT_WIDTH, 'height': DEFAULT_VIEWPORT_HEIGHT}
         self.browser_type = browser_type
 
         # Playwright objects
@@ -71,7 +78,7 @@ class BrowserDriver:
             # Create context with viewport
             self._context = await self._browser.new_context(
                 viewport=self.viewport,
-                user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+                user_agent=DEFAULT_USER_AGENT
             )
 
             # Create page
@@ -92,7 +99,7 @@ class BrowserDriver:
     async def goto(self,
                    url: str,
                    wait_until: str = 'networkidle',
-                   timeout_ms: int = 30000) -> Dict[str, Any]:
+                   timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS) -> Dict[str, Any]:
         """
         Navigate to URL
 
@@ -133,7 +140,7 @@ class BrowserDriver:
 
     async def click(self,
                     selector: str,
-                    timeout_ms: int = 30000,
+                    timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS,
                     force: bool = False) -> Dict[str, Any]:
         """
         Click element by selector
@@ -172,7 +179,7 @@ class BrowserDriver:
                    selector: str,
                    text: str,
                    delay_ms: int = 0,
-                   timeout_ms: int = 30000) -> Dict[str, Any]:
+                   timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS) -> Dict[str, Any]:
         """
         Type text into element
 
@@ -212,7 +219,7 @@ class BrowserDriver:
     async def wait(self,
                    selector: str,
                    state: str = 'visible',
-                   timeout_ms: int = 30000) -> Dict[str, Any]:
+                   timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS) -> Dict[str, Any]:
         """
         Wait for element to reach specified state
 

@@ -3,9 +3,16 @@ Twilio Communication Integration Modules
 
 Provides SMS and voice call operations with Twilio.
 """
+import logging
+import os
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -119,12 +126,11 @@ class TwilioSendSMSModule(BaseModule):
         self.message = self.params.get('message')
 
         if not self.account_sid or not self.auth_token:
-            import os
-            self.account_sid = self.account_sid or os.environ.get('TWILIO_ACCOUNT_SID')
-            self.auth_token = self.auth_token or os.environ.get('TWILIO_AUTH_TOKEN')
+            self.account_sid = self.account_sid or os.environ.get(EnvVars.TWILIO_ACCOUNT_SID)
+            self.auth_token = self.auth_token or os.environ.get(EnvVars.TWILIO_AUTH_TOKEN)
 
             if not self.account_sid or not self.auth_token:
-                raise ValueError("account_sid/auth_token or TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN env required")
+                raise ValueError(f"account_sid/auth_token or {EnvVars.TWILIO_ACCOUNT_SID}/{EnvVars.TWILIO_AUTH_TOKEN} env required")
 
         if not self.from_number or not self.to_number or not self.message:
             raise ValueError("from_number, to_number, and message are required")
@@ -139,7 +145,7 @@ class TwilioSendSMSModule(BaseModule):
             encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
             # Build request
-            url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Messages.json"
+            url = APIEndpoints.twilio_messages(self.account_sid)
 
             data = {
                 'From': self.from_number,
@@ -273,12 +279,11 @@ class TwilioMakeCallModule(BaseModule):
         self.twiml_url = self.params.get('twiml_url')
 
         if not self.account_sid or not self.auth_token:
-            import os
-            self.account_sid = self.account_sid or os.environ.get('TWILIO_ACCOUNT_SID')
-            self.auth_token = self.auth_token or os.environ.get('TWILIO_AUTH_TOKEN')
+            self.account_sid = self.account_sid or os.environ.get(EnvVars.TWILIO_ACCOUNT_SID)
+            self.auth_token = self.auth_token or os.environ.get(EnvVars.TWILIO_AUTH_TOKEN)
 
             if not self.account_sid or not self.auth_token:
-                raise ValueError("account_sid/auth_token or TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN env required")
+                raise ValueError(f"account_sid/auth_token or {EnvVars.TWILIO_ACCOUNT_SID}/{EnvVars.TWILIO_AUTH_TOKEN} env required")
 
         if not self.from_number or not self.to_number or not self.twiml_url:
             raise ValueError("from_number, to_number, and twiml_url are required")
@@ -293,7 +298,7 @@ class TwilioMakeCallModule(BaseModule):
             encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
             # Build request
-            url = f"https://api.twilio.com/2010-04-01/Accounts/{self.account_sid}/Calls.json"
+            url = APIEndpoints.twilio_calls(self.account_sid)
 
             data = {
                 'From': self.from_number,

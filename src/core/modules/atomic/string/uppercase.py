@@ -2,10 +2,10 @@
 String Uppercase Module
 Convert a string to uppercase
 """
-
-from src.core.modules.base import BaseModule
-from src.core.modules.registry import register_module
 from typing import Any, Dict
+
+from ...base import BaseModule
+from ...registry import register_module
 
 
 @register_module('string.uppercase')

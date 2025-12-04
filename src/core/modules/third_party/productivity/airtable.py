@@ -3,9 +3,16 @@ Airtable Integration Modules
 
 Provides operations for Airtable database.
 """
+import logging
+import os
 from typing import Any, Dict, List
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -117,10 +124,9 @@ class AirtableReadModule(BaseModule):
         self.max_records = self.params.get('max_records', 100)
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('AIRTABLE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.AIRTABLE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or AIRTABLE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.AIRTABLE_API_KEY} environment variable is required")
 
         if not self.base_id or not self.table_name:
             raise ValueError("base_id and table_name are required")
@@ -128,10 +134,9 @@ class AirtableReadModule(BaseModule):
     async def execute(self) -> Any:
         try:
             import aiohttp
-            import urllib.parse
 
             # Build URL
-            url = f"https://api.airtable.com/v0/{self.base_id}/{urllib.parse.quote(self.table_name)}"
+            url = APIEndpoints.airtable_table(self.base_id, self.table_name)
 
             # Build query parameters
             params = {
@@ -280,10 +285,9 @@ class AirtableCreateModule(BaseModule):
         self.fields = self.params.get('fields')
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('AIRTABLE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.AIRTABLE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or AIRTABLE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.AIRTABLE_API_KEY} environment variable is required")
 
         if not self.base_id or not self.table_name or not self.fields:
             raise ValueError("base_id, table_name, and fields are required")
@@ -291,11 +295,9 @@ class AirtableCreateModule(BaseModule):
     async def execute(self) -> Any:
         try:
             import aiohttp
-            import urllib.parse
-            import json
 
             # Build URL
-            url = f"https://api.airtable.com/v0/{self.base_id}/{urllib.parse.quote(self.table_name)}"
+            url = APIEndpoints.airtable_table(self.base_id, self.table_name)
 
             # Build request body
             body = {
@@ -440,10 +442,9 @@ class AirtableUpdateModule(BaseModule):
         self.fields = self.params.get('fields')
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('AIRTABLE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.AIRTABLE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or AIRTABLE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.AIRTABLE_API_KEY} environment variable is required")
 
         if not self.base_id or not self.table_name or not self.record_id or not self.fields:
             raise ValueError("base_id, table_name, record_id, and fields are required")
@@ -451,10 +452,9 @@ class AirtableUpdateModule(BaseModule):
     async def execute(self) -> Any:
         try:
             import aiohttp
-            import urllib.parse
 
             # Build URL
-            url = f"https://api.airtable.com/v0/{self.base_id}/{urllib.parse.quote(self.table_name)}/{self.record_id}"
+            url = f"{APIEndpoints.airtable_table(self.base_id, self.table_name)}/{self.record_id}"
 
             # Build request body
             body = {

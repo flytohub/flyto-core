@@ -2,7 +2,7 @@
 
 **Version**: 1.0.0
 **Status**: Official Standard
-**Purpose**: Strict guidelines for creating Flyto2 modules to ensure consistency, UI compatibility, and maintainability
+**Purpose**: Strict guidelines for creating Flyto Core modules to ensure consistency, UI compatibility, and maintainability
 
 ---
 
@@ -469,7 +469,7 @@ class ModuleValidator:
             'json_string': '{"name": "John", "age": 30}',
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Core Team',
     license='MIT',
 )
 async def json_parse(context):
@@ -555,7 +555,7 @@ def register_module(**metadata):
 
 ```bash
 # Validate a module file
-flyto2 lint src/core/modules/my_module.py
+flyto-core lint src/core/modules/my_module.py
 
 # Output:
 ✓ Module ID format correct
@@ -582,7 +582,7 @@ Score: 3/6 checks passed
 
 ```bash
 # Generate a new module from template
-flyto2 create-module --category data --subcategory xml --action parse
+flyto-core create-module --category data --subcategory xml --action parse
 
 # Creates:
 # src/core/modules/data/xml/parse.py
@@ -615,8 +615,8 @@ flyto2 create-module --category data --subcategory xml --action parse
 ### Next Steps
 
 1. Read this specification thoroughly
-2. Use `flyto2 create-module` to generate new modules
-3. Run `flyto2 lint` before submitting
+2. Use `flyto-core create-module` to generate new modules
+3. Run `flyto-core lint` before submitting
 4. All PRs must pass validation checks
 
 ---

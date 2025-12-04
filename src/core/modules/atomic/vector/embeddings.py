@@ -2,8 +2,18 @@
 Embedding Generation Module
 Converts text to vector embeddings using various providers
 """
-from typing import List, Optional, Dict, Any
+import logging
 import os
+from typing import List, Optional, Dict, Any
+
+from ....constants import (
+    OLLAMA_EMBEDDINGS_ENDPOINT,
+    EnvVars,
+    DEFAULT_TIMEOUT_SECONDS,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingGenerator:
@@ -72,9 +82,9 @@ class EmbeddingGenerator:
         try:
             import openai
 
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv(EnvVars.OPENAI_API_KEY)
             if not api_key:
-                raise ValueError("OPENAI_API_KEY not set")
+                raise ValueError(f"{EnvVars.OPENAI_API_KEY} not set")
 
             client = openai.OpenAI(api_key=api_key)
             response = client.embeddings.create(
@@ -84,18 +94,19 @@ class EmbeddingGenerator:
             return response.data[0].embedding
 
         except ImportError:
-            raise ImportError("OpenAI package not installed. Run: pip install openai")
+            raise ImportError("OpenAI package not installed. Run: pip install openai") from None
         except Exception as e:
-            raise RuntimeError(f"OpenAI embedding failed: {str(e)}")
+            logger.exception("OpenAI embedding failed")
+            raise RuntimeError(f"OpenAI embedding failed: {str(e)}") from e
 
     def _generate_openai_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings using OpenAI API (batch)"""
         try:
             import openai
 
-            api_key = os.getenv("OPENAI_API_KEY")
+            api_key = os.getenv(EnvVars.OPENAI_API_KEY)
             if not api_key:
-                raise ValueError("OPENAI_API_KEY not set")
+                raise ValueError(f"{EnvVars.OPENAI_API_KEY} not set")
 
             client = openai.OpenAI(api_key=api_key)
             response = client.embeddings.create(
@@ -114,13 +125,14 @@ class EmbeddingGenerator:
         try:
             import requests
 
+            ollama_url = os.getenv(EnvVars.OLLAMA_API_URL, OLLAMA_EMBEDDINGS_ENDPOINT)
             response = requests.post(
-                "http://localhost:11434/api/embeddings",
+                ollama_url,
                 json={
                     "model": self.model,
                     "prompt": text
                 },
-                timeout=30
+                timeout=DEFAULT_TIMEOUT_SECONDS
             )
             response.raise_for_status()
             return response.json()["embedding"]
