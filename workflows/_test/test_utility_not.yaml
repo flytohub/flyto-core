@@ -1,0 +1,16 @@
+name: "Test utility.not"
+description: "Auto-generated module: Module not found in registry - Auto-generated test"
+
+steps:
+  - id: test_not_basic
+    module: utility.not
+    params:
+      input: "test"
+    description: "Basic functionality test"
+
+  - id: verify_result
+    module: test.assert_not_null
+    params:
+      value: "${test_not_basic.result}"
+      message: "utility.not should return a result"
+

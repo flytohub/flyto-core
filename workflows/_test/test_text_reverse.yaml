@@ -1,0 +1,16 @@
+name: "Test text.reverse"
+description: "Reverses the input text string - Auto-generated test"
+
+steps:
+  - id: test_reverse_basic
+    module: text.reverse
+    params:
+      text: "Test content"
+    description: "Basic functionality test"
+
+  - id: verify_result
+    module: test.assert_not_null
+    params:
+      value: "${test_reverse_basic.result}"
+      message: "text.reverse should return a result"
+

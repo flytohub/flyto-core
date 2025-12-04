@@ -1,0 +1,29 @@
+# Third-party Integration Dependencies
+# Install only the integrations you need
+
+# ============================================
+# AI Integrations
+# ============================================
+openai>=1.0.0              # OpenAI (GPT-4, GPT-3.5)
+# anthropic>=0.7.0         # Anthropic Claude (coming soon)
+# google-generativeai      # Google Gemini (coming soon)
+
+# ============================================
+# Communication Integrations
+# ============================================
+# slack-sdk>=3.0.0         # Slack (coming soon)
+# discord.py>=2.0.0        # Discord (coming soon)
+
+# ============================================
+# Database Integrations
+# ============================================
+# psycopg2-binary>=2.9.0   # PostgreSQL (coming soon)
+# pymongo>=4.0.0           # MongoDB (coming soon)
+# redis>=4.0.0             # Redis (coming soon)
+
+# ============================================
+# Cloud Integrations
+# ============================================
+# boto3>=1.26.0            # AWS (coming soon)
+# google-cloud-storage     # Google Cloud (coming soon)
+# azure-storage-blob       # Azure (coming soon)

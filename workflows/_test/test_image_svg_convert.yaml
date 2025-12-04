@@ -1,0 +1,17 @@
+name: "Test image.svg_convert"
+description: "Convert SVG file to PNG format - Auto-generated test"
+
+steps:
+  - id: test_svg_convert_basic
+    module: image.svg_convert
+    params:
+      svg_path: "/tmp/test_svg_path.dat"
+      png_path: "/tmp/test_png_path.dat"
+    description: "Basic functionality test"
+
+  - id: verify_result
+    module: test.assert_not_null
+    params:
+      value: "${test_svg_convert_basic.result}"
+      message: "image.svg_convert should return a result"
+

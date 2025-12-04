@@ -1,0 +1,51 @@
+id: image_dog_to_svg
+version: 1
+name: "Download dog image and convert to SVG"
+description: "SmartExecutor should autonomously download a dog image and output a valid SVG file."
+tags:
+  - image
+  - e2e
+  - autonomous
+
+entry:
+  engine: smart_executor
+  mode: autonomous
+  max_attempts: 3
+  timeout_seconds: 300
+  working_dir: "tmp/e2e/image_dog_to_svg"
+
+input:
+  user_prompt: "Download a dog image and convert it to SVG format"
+  lang: "en"
+
+expectations:
+  success_mode: "all"
+  checks:
+    - id: svg_file_exists
+      type: file_exists
+      path: "output/dog.svg"
+      description: "dog.svg should be created in the output directory."
+
+    - id: svg_extension_any
+      type: file_glob_any
+      pattern: "output/*.svg"
+      description: "At least one SVG file exists in the output directory."
+
+    - id: svg_min_size
+      type: file_size
+      path: "output/dog.svg"
+      min_bytes: 500
+      description: "The SVG file should not be empty."
+
+    - id: svg_content_looks_like_svg
+      type: file_content_startswith
+      path: "output/dog.svg"
+      prefix: "<svg"
+      description: "The file should start with an <svg tag."
+
+    - id: used_image_modules
+      type: module_usage
+      includes:
+        - "image.download"
+        - "image.svg_convert"
+      description: "image.download and image.svg_convert should be used during execution."

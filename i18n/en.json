@@ -1,0 +1,41 @@
+{
+  "cli": {
+    "welcome": "Workflow Automation Engine",
+    "version": "v1.0.0",
+    "description": "A powerful automation engine for web scraping and workflow orchestration",
+    "select_language": "Select language",
+    "available_workflows": "Available workflows",
+    "required_parameters": "Required parameters",
+    "starting_workflow": "Starting workflow execution...",
+    "workflow_completed": "Workflow completed successfully!",
+    "workflow_failed": "Workflow execution failed",
+    "results_saved": "Results saved to",
+    "execution_time": "Execution time",
+    "enter_custom_path": "Enter custom workflow path",
+    "loading_workflow": "Loading workflow",
+    "step_progress": "Step {current}/{total}",
+    "no_workflows_found": "No workflows found in ./workflows/ directory",
+    "create_workflow_prompt": "Would you like to create an example workflow?",
+    "error_occurred": "Error occurred",
+    "press_enter": "Press Enter to continue",
+    "goodbye": "Thank you for using Workflow Engine!"
+  },
+  "commands": {
+    "run": "Run a workflow",
+    "list": "List available workflows",
+    "modules": "List available modules",
+    "help": "Show help information",
+    "version": "Show version information"
+  },
+  "params": {
+    "default": "default",
+    "required": "required",
+    "optional": "optional"
+  },
+  "status": {
+    "success": "Success",
+    "failed": "Failed",
+    "running": "Running",
+    "skipped": "Skipped"
+  }
+}
