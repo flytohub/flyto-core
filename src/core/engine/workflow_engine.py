@@ -4,11 +4,17 @@ Workflow Engine - Execute YAML workflows
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional
 from datetime import datetime
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from .variable_resolver import VariableResolver
+from ..constants import (
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_RETRY_DELAY_MS,
+    EXPONENTIAL_BACKOFF_BASE,
+    WorkflowStatus,
+    ErrorMessages,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -57,10 +63,9 @@ class WorkflowEngine:
         self.workflow_name = workflow.get('name', 'Unnamed Workflow')
 
         # Execution state
-        self.start_time = None
-        self.end_time = None
-        # Status values: 'pending', 'running', 'success', 'failure'
-        self.status = 'pending'
+        self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
+        self.status: str = WorkflowStatus.PENDING
 
     def _parse_params(self, param_schema: List[Dict[str, Any]], provided_params: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -103,7 +108,7 @@ class WorkflowEngine:
             Workflow output
         """
         self.start_time = time.time()
-        self.status = 'running'
+        self.status = WorkflowStatus.RUNNING
 
         logger.info(f"Starting workflow: {self.workflow_name} (ID: {self.workflow_id})")
 
@@ -117,7 +122,7 @@ class WorkflowEngine:
             await self._execute_steps(steps)
 
             # Update status before collecting output
-            self.status = 'completed'
+            self.status = WorkflowStatus.COMPLETED
             self.end_time = time.time()
 
             logger.info(f"Workflow completed successfully in {self.end_time - self.start_time:.2f}s")
@@ -128,7 +133,7 @@ class WorkflowEngine:
             return output
 
         except Exception as e:
-            self.status = 'failure'
+            self.status = WorkflowStatus.FAILURE
             self.end_time = time.time()
 
             logger.error(f"Workflow failed: {str(e)}")
@@ -242,11 +247,11 @@ class WorkflowEngine:
         retry_config: Dict[str, Any]
     ) -> Any:
         """Execute step with retry logic"""
-        max_retries = retry_config.get('count', 3)
-        delay_ms = retry_config.get('delay_ms', 1000)
-        backoff = retry_config.get('backoff', 'linear')  # linear or exponential
+        max_retries = retry_config.get('count', DEFAULT_MAX_RETRIES)
+        delay_ms = retry_config.get('delay_ms', DEFAULT_RETRY_DELAY_MS)
+        backoff = retry_config.get('backoff', 'linear')
 
-        last_error = None
+        last_error: Optional[Exception] = None
 
         for attempt in range(max_retries + 1):
             try:
@@ -255,9 +260,9 @@ class WorkflowEngine:
                 last_error = e
 
                 if attempt < max_retries:
-                    # Calculate delay
+                    # Calculate delay based on backoff strategy
                     if backoff == 'exponential':
-                        wait_time = (delay_ms / 1000) * (2 ** attempt)
+                        wait_time = (delay_ms / 1000) * (EXPONENTIAL_BACKOFF_BASE ** attempt)
                     else:
                         wait_time = delay_ms / 1000
 
@@ -279,7 +284,8 @@ class WorkflowEngine:
         params: Dict[str, Any]
     ) -> Any:
         """Execute a module"""
-        from src.core.modules.registry import ModuleRegistry
+        # Use relative import to avoid coupling issues
+        from ..modules.registry import ModuleRegistry
 
         # Get module class
         module_class = ModuleRegistry.get(module_id)

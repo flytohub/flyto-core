@@ -3,9 +3,21 @@ AI Agent Modules
 
 Provides autonomous AI agents with memory and reasoning capabilities.
 """
+import logging
+import os
 from typing import Any, Dict, List
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import (
+    OLLAMA_DEFAULT_URL,
+    DEFAULT_LLM_MAX_TOKENS,
+    EnvVars,
+    APIEndpoints,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -85,7 +97,7 @@ from ...registry import register_module
             'label_key': 'modules.agent.autonomous.params.model.label',
             'description': 'Model name (e.g., gpt-4, llama2, mistral)',
             'description_key': 'modules.agent.autonomous.params.model.description',
-            'default': 'gpt-4-turbo-preview',
+            'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
         },
         'ollama_url': {
@@ -94,7 +106,7 @@ from ...registry import register_module
             'label_key': 'modules.agent.autonomous.params.ollama_url.label',
             'description': 'Ollama server URL (only for ollama provider)',
             'description_key': 'modules.agent.autonomous.params.ollama_url.description',
-            'default': 'http://localhost:11434',
+            'default': OLLAMA_DEFAULT_URL,
             'required': False
         },
         'temperature': {
@@ -144,19 +156,18 @@ class AutonomousAgentModule(BaseModule):
         self.context = self.params.get('context', '')
         self.max_iterations = self.params.get('max_iterations', 5)
         self.llm_provider = self.params.get('llm_provider', 'openai')
-        self.model = self.params.get('model', 'gpt-4-turbo-preview')
-        self.ollama_url = self.params.get('ollama_url', 'http://localhost:11434')
+        self.model = self.params.get('model', APIEndpoints.DEFAULT_OPENAI_MODEL)
+        self.ollama_url = self.params.get('ollama_url', OLLAMA_DEFAULT_URL)
         self.temperature = self.params.get('temperature', 0.7)
 
         if not self.goal:
             raise ValueError("goal is required")
 
         # Validate provider-specific requirements
-        import os
         if self.llm_provider == 'openai':
-            self.api_key = os.environ.get('OPENAI_API_KEY')
+            self.api_key = os.environ.get(EnvVars.OPENAI_API_KEY)
             if not self.api_key:
-                raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI provider")
+                raise ValueError(f"{EnvVars.OPENAI_API_KEY} environment variable is required for OpenAI provider")
         elif self.llm_provider == 'ollama':
             # No API key needed for local Ollama
             self.api_key = None
@@ -187,14 +198,13 @@ class AutonomousAgentModule(BaseModule):
             model=self.model,
             messages=messages,
             temperature=self.temperature,
-            max_tokens=2000
+            max_tokens=DEFAULT_LLM_MAX_TOKENS
         )
         return response.choices[0].message.content
 
     async def _call_ollama(self, messages: List[Dict[str, str]]) -> str:
         """Call local Ollama API"""
         import aiohttp
-        import json
 
         payload = {
             "model": self.model,
@@ -202,7 +212,7 @@ class AutonomousAgentModule(BaseModule):
             "stream": False,
             "options": {
                 "temperature": self.temperature,
-                "num_predict": 2000
+                "num_predict": DEFAULT_LLM_MAX_TOKENS
             }
         }
 
@@ -359,7 +369,7 @@ Be concise but thorough. Focus on achieving the goal efficiently."""
             'label_key': 'modules.agent.chain.params.model.label',
             'description': 'Model name (e.g., gpt-4, llama2, mistral)',
             'description_key': 'modules.agent.chain.params.model.description',
-            'default': 'gpt-3.5-turbo',
+            'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
         },
         'ollama_url': {
@@ -368,7 +378,7 @@ Be concise but thorough. Focus on achieving the goal efficiently."""
             'label_key': 'modules.agent.chain.params.ollama_url.label',
             'description': 'Ollama server URL (only for ollama provider)',
             'description_key': 'modules.agent.chain.params.ollama_url.description',
-            'default': 'http://localhost:11434',
+            'default': OLLAMA_DEFAULT_URL,
             'required': False
         },
         'temperature': {
@@ -423,8 +433,8 @@ class ChainAgentModule(BaseModule):
         self.input = self.params.get('input')
         self.chain_steps = self.params.get('chain_steps', [])
         self.llm_provider = self.params.get('llm_provider', 'openai')
-        self.model = self.params.get('model', 'gpt-3.5-turbo')
-        self.ollama_url = self.params.get('ollama_url', 'http://localhost:11434')
+        self.model = self.params.get('model', APIEndpoints.DEFAULT_OPENAI_MODEL)
+        self.ollama_url = self.params.get('ollama_url', OLLAMA_DEFAULT_URL)
         self.temperature = self.params.get('temperature', 0.7)
 
         if not self.input:
@@ -434,11 +444,10 @@ class ChainAgentModule(BaseModule):
             raise ValueError("chain_steps must contain at least one step")
 
         # Validate provider-specific requirements
-        import os
         if self.llm_provider == 'openai':
-            self.api_key = os.environ.get('OPENAI_API_KEY')
+            self.api_key = os.environ.get(EnvVars.OPENAI_API_KEY)
             if not self.api_key:
-                raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI provider")
+                raise ValueError(f"{EnvVars.OPENAI_API_KEY} environment variable is required for OpenAI provider")
         elif self.llm_provider == 'ollama':
             # No API key needed for local Ollama
             self.api_key = None
@@ -469,14 +478,13 @@ class ChainAgentModule(BaseModule):
             model=self.model,
             messages=messages,
             temperature=self.temperature,
-            max_tokens=2000
+            max_tokens=DEFAULT_LLM_MAX_TOKENS
         )
         return response.choices[0].message.content
 
     async def _call_ollama(self, messages: List[Dict[str, str]]) -> str:
         """Call local Ollama API"""
         import aiohttp
-        import json
 
         payload = {
             "model": self.model,
@@ -484,7 +492,7 @@ class ChainAgentModule(BaseModule):
             "stream": False,
             "options": {
                 "temperature": self.temperature,
-                "num_predict": 2000
+                "num_predict": DEFAULT_LLM_MAX_TOKENS
             }
         }
 

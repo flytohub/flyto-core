@@ -8,8 +8,14 @@ Enhanced Features:
 - Rich metadata for module marketplace
 - Filtering and querying capabilities
 """
+import logging
 from typing import Dict, Type, Any, Optional, List
+
 from .base import BaseModule
+from ..constants import ErrorMessages
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_localized_value(value: Any, lang: str = 'en') -> str:
@@ -76,7 +82,7 @@ class ModuleRegistry:
             metadata.setdefault('category', module_id.split('.')[0])
             metadata.setdefault('tags', [])
             cls._metadata[module_id] = metadata
-        print(f" Module registered: {module_id}")
+        logger.debug(f"Module registered: {module_id}")
 
     @classmethod
     def unregister(cls, module_id: str):
@@ -85,7 +91,7 @@ class ModuleRegistry:
             del cls._modules[module_id]
             if module_id in cls._metadata:
                 del cls._metadata[module_id]
-            print(f" Module unregistered: {module_id}")
+            logger.debug(f"Module unregistered: {module_id}")
 
     @classmethod
     def get(cls, module_id: str) -> Type[BaseModule]:
@@ -102,7 +108,12 @@ class ModuleRegistry:
             ValueError: If module not found
         """
         if module_id not in cls._modules:
-            raise ValueError(f"Module not found: {module_id}")
+            raise ValueError(
+                ErrorMessages.format(
+                    ErrorMessages.MODULE_NOT_FOUND,
+                    module_id=module_id
+                )
+            )
         return cls._modules[module_id]
 
     @classmethod

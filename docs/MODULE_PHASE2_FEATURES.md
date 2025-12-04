@@ -1,6 +1,6 @@
 # Module Phase 2 Features
 
-Enhanced execution control and security features for Flyto2 modules.
+Enhanced execution control and security features for Flyto Core modules.
 
 ---
 

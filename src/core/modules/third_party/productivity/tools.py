@@ -2,11 +2,17 @@
 Productivity API Integration Modules
 Provides integrations with productivity tools like Notion and Google Sheets
 """
+import json
+import logging
+import os
+
+import aiohttp
 
 from ...registry import register_module
-import aiohttp
-import json
-import os
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -138,14 +144,14 @@ async def notion_create_page(context):
     params = context['params']
 
     # Get API key
-    api_key = params.get('api_key') or os.getenv('NOTION_API_KEY')
+    api_key = params.get('api_key') or os.getenv(EnvVars.NOTION_API_KEY)
     if not api_key:
-        raise ValueError("API key required: provide 'api_key' param or set NOTION_API_KEY env variable")
+        raise ValueError(f"API key required: provide 'api_key' param or set {EnvVars.NOTION_API_KEY} env variable")
 
-    url = 'https://api.notion.com/v1/pages'
+    url = APIEndpoints.notion_pages()
     headers = {
         'Authorization': f'Bearer {api_key}',
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': APIEndpoints.NOTION_API_VERSION,
         'Content-Type': 'application/json'
     }
 
@@ -290,16 +296,16 @@ async def notion_query_database(context):
     params = context['params']
 
     # Get API key
-    api_key = params.get('api_key') or os.getenv('NOTION_API_KEY')
+    api_key = params.get('api_key') or os.getenv(EnvVars.NOTION_API_KEY)
     if not api_key:
-        raise ValueError("API key required: provide 'api_key' param or set NOTION_API_KEY env variable")
+        raise ValueError(f"API key required: provide 'api_key' param or set {EnvVars.NOTION_API_KEY} env variable")
 
     database_id = params['database_id']
-    url = f'https://api.notion.com/v1/databases/{database_id}/query'
+    url = APIEndpoints.notion_database_query(database_id)
 
     headers = {
         'Authorization': f'Bearer {api_key}',
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': APIEndpoints.NOTION_API_VERSION,
         'Content-Type': 'application/json'
     }
 

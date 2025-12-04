@@ -2,12 +2,16 @@
 Experience Auto-Archiving
 Automatically archives training results, errors, and successes to vector database
 """
+import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
 import json
 from .knowledge_store import KnowledgeStore
 from .quality_filter import QualityFilter
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExperienceArchiver:
@@ -82,7 +86,7 @@ class ExperienceArchiver:
         if self.quality_filter:
             should_archive, score, reason = self.quality_filter.should_archive(content, metadata)
             if not should_archive:
-                print(f"Filtered practice result (score={score:.2f}, reason={reason})")
+                logger.debug(f"Filtered practice result (score={score:.2f}, reason={reason})")
                 return None
             metadata["quality_score"] = score
 
@@ -130,7 +134,7 @@ class ExperienceArchiver:
         if self.quality_filter:
             should_archive, score, reason = self.quality_filter.should_archive(content, metadata)
             if not should_archive:
-                print(f"Filtered speed race (score={score:.2f}, reason={reason})")
+                logger.debug(f"Filtered speed race (score={score:.2f}, reason={reason})")
                 return None
             metadata["quality_score"] = score
 
@@ -188,7 +192,7 @@ class ExperienceArchiver:
         if self.quality_filter:
             should_archive, score, reason = self.quality_filter.should_archive(content, metadata)
             if not should_archive:
-                print(f"Filtered error log (score={score:.2f}, reason={reason})")
+                logger.debug(f"Filtered error log (score={score:.2f}, reason={reason})")
                 return None
             metadata["quality_score"] = score
 
@@ -236,7 +240,7 @@ class ExperienceArchiver:
         if self.quality_filter:
             should_archive, score, reason = self.quality_filter.should_archive(content, metadata)
             if not should_archive:
-                print(f"Filtered success pattern (score={score:.2f}, reason={reason})")
+                logger.debug(f"Filtered success pattern (score={score:.2f}, reason={reason})")
                 return None
             metadata["quality_score"] = score
 
@@ -280,7 +284,7 @@ class ExperienceArchiver:
         if self.quality_filter:
             should_archive, score, reason = self.quality_filter.should_archive(content, metadata)
             if not should_archive:
-                print(f"Filtered module improvement (score={score:.2f}, reason={reason})")
+                logger.debug(f"Filtered module improvement (score={score:.2f}, reason={reason})")
                 return None
             metadata["quality_score"] = score
 
@@ -414,7 +418,7 @@ class AutoArchiveTrigger:
             )
             return entry_id
         except Exception as e:
-            print(f"Auto-archive failed: {e}")
+            logger.error(f"Auto-archive failed: {e}")
             return None
 
     def on_race_complete(self, task_name: str, result: Dict[str, Any]):
@@ -435,7 +439,7 @@ class AutoArchiveTrigger:
             )
             return entry_id
         except Exception as e:
-            print(f"Auto-archive failed: {e}")
+            logger.error(f"Auto-archive failed: {e}")
             return None
 
     def on_module_error(
@@ -464,7 +468,7 @@ class AutoArchiveTrigger:
             )
             return entry_id
         except Exception as e:
-            print(f"Auto-archive failed: {e}")
+            logger.error(f"Auto-archive failed: {e}")
             return None
 
     def enable(self):

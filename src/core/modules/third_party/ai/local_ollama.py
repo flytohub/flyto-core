@@ -3,9 +3,15 @@ Local Ollama Integration Module
 
 Provides local LLM support via Ollama for completely offline AI agent execution.
 """
+import logging
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import OLLAMA_DEFAULT_URL
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -92,9 +98,9 @@ from ...registry import register_module
             'type': 'string',
             'label': 'Ollama URL',
             'label_key': 'modules.ai.local_ollama.chat.params.ollama_url.label',
-            'description': 'Ollama server URL (default: http://localhost:11434)',
+            'description': 'Ollama server URL',
             'description_key': 'modules.ai.local_ollama.chat.params.ollama_url.description',
-            'default': 'http://localhost:11434',
+            'default': OLLAMA_DEFAULT_URL,
             'required': False
         },
         'max_tokens': {
@@ -152,7 +158,7 @@ class LocalOllamaChatModule(BaseModule):
         self.model = self.params.get('model', 'llama2')
         self.temperature = self.params.get('temperature', 0.7)
         self.system_message = self.params.get('system_message')
-        self.ollama_url = self.params.get('ollama_url', 'http://localhost:11434')
+        self.ollama_url = self.params.get('ollama_url', OLLAMA_DEFAULT_URL)
         self.max_tokens = self.params.get('max_tokens')
 
         if not self.prompt:

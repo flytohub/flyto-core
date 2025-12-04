@@ -1,9 +1,9 @@
-# Flyto2 Workflow DSL Specification
+# Flyto Core Workflow DSL Specification
 
 **Version:** 1.0.0-alpha
 **Last Updated:** 2025-11-29
 
-This document is the complete specification for Flyto2 workflow YAML files.
+This document is the complete specification for Flyto Core workflow YAML files.
 
 ---
 
@@ -107,7 +107,7 @@ output:                              # Optional: Final output structure
 
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `author` | string | Workflow author | `"Flyto2 Team"` |
+| `author` | string | Workflow author | `"Flyto Core Team"` |
 | `tags` | array | Categorization tags | `["scraping", "api"]` |
 | `params` | array | User input definitions | See [Parameters](#parameters-params) |
 | `config` | object | Workflow-level configuration | See below |
@@ -746,4 +746,4 @@ Future versions will support JSON Schema validation for workflows.
 
 ---
 
-**Questions or suggestions?** [Open an issue](https://github.com/flytohub/flyto2/issues)
+**Questions or suggestions?** [Open an issue](https://github.com/flytohub/flyto-core/issues)

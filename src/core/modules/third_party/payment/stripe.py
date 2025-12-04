@@ -3,9 +3,16 @@ Stripe Payment Integration Modules
 
 Provides payment processing operations with Stripe.
 """
+import logging
+import os
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
+from ....constants import APIEndpoints, EnvVars
+
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -121,10 +128,9 @@ class StripeCreatePaymentModule(BaseModule):
         self.customer = self.params.get('customer')
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('STRIPE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.STRIPE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or STRIPE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.STRIPE_API_KEY} environment variable is required")
 
         if not self.amount:
             raise ValueError("amount is required")
@@ -151,7 +157,7 @@ class StripeCreatePaymentModule(BaseModule):
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    'https://api.stripe.com/v1/payment_intents',
+                    APIEndpoints.STRIPE_PAYMENT_INTENTS,
                     headers=headers,
                     data=data
                 ) as response:
@@ -246,10 +252,9 @@ class StripeGetCustomerModule(BaseModule):
         self.customer_id = self.params.get('customer_id')
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('STRIPE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.STRIPE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or STRIPE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.STRIPE_API_KEY} environment variable is required")
 
         if not self.customer_id:
             raise ValueError("customer_id is required")
@@ -265,7 +270,7 @@ class StripeGetCustomerModule(BaseModule):
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    f'https://api.stripe.com/v1/customers/{self.customer_id}',
+                    f"{APIEndpoints.STRIPE_CUSTOMERS}/{self.customer_id}",
                     headers=headers
                 ) as response:
                     if response.status != 200:
@@ -376,10 +381,9 @@ class StripeListChargesModule(BaseModule):
         self.customer = self.params.get('customer')
 
         if not self.api_key:
-            import os
-            self.api_key = os.environ.get('STRIPE_API_KEY')
+            self.api_key = os.environ.get(EnvVars.STRIPE_API_KEY)
             if not self.api_key:
-                raise ValueError("api_key or STRIPE_API_KEY environment variable is required")
+                raise ValueError(f"api_key or {EnvVars.STRIPE_API_KEY} environment variable is required")
 
     async def execute(self) -> Any:
         try:
@@ -399,7 +403,7 @@ class StripeListChargesModule(BaseModule):
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
-                    'https://api.stripe.com/v1/charges',
+                    APIEndpoints.STRIPE_CHARGES,
                     headers=headers,
                     params=params
                 ) as response:
