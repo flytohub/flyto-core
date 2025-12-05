@@ -7,11 +7,13 @@ Enhanced Features:
 - Tags and categories
 - Rich metadata for module marketplace
 - Filtering and querying capabilities
+- Module level classification (ATOMIC/THIRD_PARTY/AI_TOOL/EXTERNAL)
 """
 import logging
 from typing import Dict, Type, Any, Optional, List
 
 from .base import BaseModule
+from .types import ModuleLevel, LEVEL_PRIORITY
 from ..constants import ErrorMessages
 
 
@@ -246,6 +248,7 @@ class ModuleRegistry:
 def register_module(
     module_id: str,
     version: str = "1.0.0",
+    level: ModuleLevel = ModuleLevel.ATOMIC,  # Module level classification
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
     tags: Optional[List[str]] = None,
@@ -296,6 +299,7 @@ def register_module(
         @register_module(
             module_id="browser.goto",
             version="1.0.0",
+            level=ModuleLevel.ATOMIC,
             category="browser",
             subcategory="browser",
             label={"en": "Go to URL", "zh": "Go to URL"},
@@ -322,6 +326,7 @@ def register_module(
     Args:
         module_id: Unique identifier (e.g., "browser.goto")
         version: Semantic version (default: "1.0.0")
+        level: Module level (ATOMIC/THIRD_PARTY/AI_TOOL/EXTERNAL)
         category: Primary category (default: extracted from module_id)
         subcategory: Optional subcategory
         tags: List of tags for filtering
@@ -391,13 +396,14 @@ def register_module(
         metadata = {
             "module_id": module_id,
             "version": version,
+            "level": level,
             "category": category or module_id.split('.')[0],
             "subcategory": subcategory,
             "tags": tags or [],
             "label": label or module_id,
-            "label_key": label_key,  # i18n key
+            "label_key": label_key,
             "description": description or "",
-            "description_key": description_key,  # i18n key
+            "description_key": description_key,
             "icon": icon,
             "color": color,
             "input_types": input_types or [],
@@ -406,16 +412,13 @@ def register_module(
             "can_connect_to": can_connect_to or [],
             "params_schema": params_schema or {},
             "output_schema": output_schema or {},
-            # Phase 2: Execution settings
             "timeout": timeout,
             "retryable": retryable,
             "max_retries": max_retries,
             "concurrent_safe": concurrent_safe,
-            # Phase 2: Security settings
             "requires_credentials": requires_credentials,
             "handles_sensitive_data": handles_sensitive_data,
             "required_permissions": required_permissions or [],
-            # Advanced
             "requires": requires or [],
             "permissions": permissions or [],
             "examples": examples or [],
