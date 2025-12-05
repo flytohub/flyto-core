@@ -2,13 +2,16 @@
 Module System - Core Registration and Execution
 
 Organized by architecture:
-- Atomic: Core building blocks, no external dependencies
-- Third-party: External service integrations
+- Atomic: Core building blocks, no external dependencies (Level 1)
+- Third-party: External service integrations (Level 2)
+- AI Tools: AI-powered analysis tools (Level 3)
+- External: MCP and remote agents (Level 4)
 - Composite: High-level workflow templates (v1.1)
 """
 
 from .registry import ModuleRegistry
 from .base import BaseModule
+from .types import ModuleLevel, LEVEL_PRIORITY
 
 # Import atomic modules
 from .atomic import browser_ops
@@ -32,6 +35,8 @@ from . import composite
 __all__ = [
     'ModuleRegistry',
     'BaseModule',
+    'ModuleLevel',
+    'LEVEL_PRIORITY',
     # Atomic
     'browser_ops',
     'data',
