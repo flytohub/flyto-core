@@ -119,6 +119,119 @@
     "success": "Success",
     "failed": "Failed",
     "running": "Running",
-    "skipped": "Skipped"
+    "skipped": "Skipped",
+    "error": "Error"
+  },
+  "menu": {
+    "title": "Main Menu",
+    "run_workflow": "Run Workflow",
+    "run_workflow_desc": "Execute a workflow from file or selection",
+    "list_workflows": "Browse Workflows",
+    "list_workflows_desc": "View available workflows by category",
+    "list_modules": "Module Catalog",
+    "list_modules_desc": "View all available automation modules",
+    "version": "Version Info",
+    "version_desc": "Show version and build information",
+    "help": "Help",
+    "help_desc": "Show usage guide and documentation",
+    "settings": "Settings",
+    "settings_desc": "Configure language and output options",
+    "exit": "Exit",
+    "exit_desc": "Exit the application",
+    "select_option": "Select an option",
+    "invalid_choice": "Invalid selection. Please try again.",
+    "cancelled": "Operation cancelled",
+    "error": "An error occurred",
+    "not_implemented": "This feature is not yet implemented",
+    "press_enter": "Press Enter to continue...",
+    "goodbye": "Goodbye! Thank you for using Flyto.",
+    "back": "Back to menu"
+  },
+  "workflows": {
+    "select": "Select Workflow",
+    "enter_number": "Enter workflow number",
+    "category": "Category",
+    "no_workflows": "No workflows available"
+  },
+  "modules": {
+    "catalog": "Module Catalog",
+    "total": "Total modules available",
+    "category": "Category"
+  },
+  "version": {
+    "title": "Version Information",
+    "version": "Version",
+    "commit": "Commit",
+    "date": "Build Date"
+  },
+  "help": {
+    "title": "Help",
+    "usage_title": "Usage",
+    "usage_content": "Select 'Run Workflow' to execute automation tasks",
+    "workflows_title": "Workflows",
+    "workflows_content": "YAML files that define automation sequences",
+    "params_title": "Parameters",
+    "params_content": "Pass values using --param key=value or interactively"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "output_dir": "Output Directory",
+    "verbose": "Verbose Mode",
+    "select": "Select setting to modify",
+    "updated": "Setting updated successfully"
+  },
+  "phase2": {
+    "execution": {
+      "timeout": "Timeout",
+      "timeout_description": "Maximum execution time for module (seconds)",
+      "retryable": "Retryable",
+      "retryable_description": "Automatically retry on failure",
+      "max_retries": "Max Retries",
+      "max_retries_description": "Number of retry attempts allowed",
+      "concurrent_safe": "Concurrent Safe",
+      "concurrent_safe_description": "Whether it can run in parallel",
+      "retry_attempt": "Retry attempt {attempt}/{max}",
+      "timeout_warning": "Execution time exceeded {percent}%",
+      "timeout_exceeded": "Execution timed out ({timeout}s)"
+    },
+    "security": {
+      "requires_credentials": "Requires Credentials",
+      "requires_credentials_description": "Requires API key or authentication",
+      "handles_sensitive_data": "Handles Sensitive Data",
+      "handles_sensitive_data_description": "Processes PII or confidential data",
+      "required_permissions": "Required Permissions",
+      "required_permissions_description": "Permissions needed to execute this module",
+      "credential_missing": "Credentials not configured",
+      "credential_configured": "Credentials configured",
+      "permission_granted": "Permission granted",
+      "permission_denied": "Permission denied",
+      "sensitive_data_masked": "Sensitive data masked (compliance requirement)"
+    },
+    "badges": {
+      "requires_credentials_tooltip": "Requires API credentials",
+      "handles_sensitive_data_tooltip": "Handles sensitive data",
+      "timeout_tooltip": "Timeout: {timeout}s",
+      "retryable_tooltip": "Auto-retry: up to {max} times",
+      "not_concurrent_safe_tooltip": "Not suitable for parallel execution"
+    },
+    "warnings": {
+      "credential_required": "This module requires API credentials to run",
+      "sensitive_data_warning": "This module handles sensitive information. Output may be masked in logs",
+      "concurrent_unsafe": "This module is not suitable for parallel execution. Remove from parallel block",
+      "configure_credentials": "Configure credentials",
+      "retry_on_failure": "Will automatically retry up to {max} times on failure with exponential backoff"
+    },
+    "permissions": {
+      "network.access": "Network Access",
+      "file.read": "File Read",
+      "file.write": "File Write",
+      "browser.launch": "Browser Launch",
+      "browser.read": "Browser Read",
+      "system.process": "System Process",
+      "database.read": "Database Read",
+      "database.write": "Database Write",
+      "ai.api": "AI API Access"
+    }
   }
 }
