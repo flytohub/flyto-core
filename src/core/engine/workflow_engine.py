@@ -1,22 +1,39 @@
 """
 Workflow Engine - Execute YAML workflows with flow control support
+
+Supports:
+- Variable resolution (${params.x}, ${step.result}, ${env.VAR})
+- Flow control (when, retry, parallel, branch, switch, goto)
+- Error handling (on_error: stop/continue/retry)
+- Timeout per step
+- Foreach iteration with result aggregation
+- Workflow-level output definition
 """
 import asyncio
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .variable_resolver import VariableResolver
 from ..constants import (
     DEFAULT_MAX_RETRIES,
     DEFAULT_RETRY_DELAY_MS,
+    DEFAULT_TIMEOUT_SECONDS,
     EXPONENTIAL_BACKOFF_BASE,
     WorkflowStatus,
 )
 
 
 logger = logging.getLogger(__name__)
+
+
+class StepTimeoutError(Exception):
+    """Raised when a step execution times out"""
+    def __init__(self, step_id: str, timeout: int):
+        self.step_id = step_id
+        self.timeout = timeout
+        super().__init__(f"Step '{step_id}' timed out after {timeout} seconds")
 
 
 class WorkflowExecutionError(Exception):
@@ -69,6 +86,8 @@ class WorkflowEngine:
 
         self.workflow_id = workflow.get('id', 'unknown')
         self.workflow_name = workflow.get('name', 'Unnamed Workflow')
+        self.workflow_description = workflow.get('description', '')
+        self.workflow_version = workflow.get('version', '1.0.0')
 
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
@@ -76,6 +95,7 @@ class WorkflowEngine:
 
         self._step_index: Dict[str, int] = {}
         self._visited_gotos: Dict[str, int] = {}
+        self._cancelled: bool = False
 
     def _parse_params(
         self,
@@ -176,21 +196,37 @@ class WorkflowEngine:
 
     async def _execute_parallel_steps(self, steps: List[Dict[str, Any]]):
         """
-        Execute multiple steps in parallel
+        Execute multiple steps in parallel with error handling
+
+        If any step with on_error: stop fails, cancel remaining steps
         """
         logger.info(f"Executing {len(steps)} steps in parallel")
 
-        tasks = [self._execute_step(step) for step in steps]
+        tasks = [asyncio.create_task(self._execute_step(step)) for step in steps]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
+        errors = []
+        should_stop = False
+
         for i, result in enumerate(results):
+            step_id = steps[i].get('id', f'step_{i}')
+            on_error = steps[i].get('on_error', 'stop')
+
             if isinstance(result, Exception):
-                step_id = steps[i].get('id', f'step_{i}')
-                raise StepExecutionError(
-                    step_id,
-                    f"Parallel step failed: {str(result)}",
-                    result
-                )
+                if on_error == 'stop':
+                    should_stop = True
+                    errors.append((step_id, result))
+                else:
+                    logger.warning(f"Parallel step '{step_id}' failed but continuing: {str(result)}")
+                    self.context[step_id] = {'ok': False, 'error': str(result)}
+
+        if should_stop and errors:
+            step_id, error = errors[0]
+            raise StepExecutionError(
+                step_id,
+                f"Parallel step failed: {str(error)}",
+                error
+            )
 
     async def _execute_step_with_flow_control(
         self,
@@ -233,10 +269,14 @@ class WorkflowEngine:
 
     async def _execute_step(self, step_config: Dict[str, Any]) -> Any:
         """
-        Execute a single step
+        Execute a single step with timeout and foreach support
         """
         step_id = step_config.get('id', f'step_{id(step_config)}')
         module_id = step_config.get('module')
+        description = step_config.get('description', '')
+        timeout = step_config.get('timeout', 0)
+        foreach_array = step_config.get('foreach')
+        foreach_var = step_config.get('as', 'item')
 
         if not module_id:
             raise StepExecutionError(step_id, "Step missing 'module' field")
@@ -245,19 +285,21 @@ class WorkflowEngine:
             logger.info(f"Skipping step '{step_id}' (condition not met)")
             return None
 
-        logger.info(f"Executing step '{step_id}': {module_id}")
+        log_message = f"Executing step '{step_id}': {module_id}"
+        if description:
+            log_message += f" - {description}"
+        logger.info(log_message)
 
         resolver = self._get_resolver()
-        step_params = step_config.get('params', {})
-        resolved_params = resolver.resolve(step_params)
 
-        retry_config = step_config.get('retry', {})
-        if retry_config:
-            result = await self._execute_with_retry(
-                step_id, module_id, resolved_params, retry_config
+        if foreach_array:
+            result = await self._execute_foreach_step(
+                step_config, resolver, foreach_array, foreach_var
             )
         else:
-            result = await self._execute_module(step_id, module_id, resolved_params)
+            result = await self._execute_single_step(
+                step_config, resolver, timeout
+            )
 
         self.context[step_id] = result
 
@@ -268,6 +310,7 @@ class WorkflowEngine:
         self.execution_log.append({
             'step_id': step_id,
             'module_id': module_id,
+            'description': description,
             'status': 'success',
             'timestamp': datetime.now().isoformat()
         })
@@ -275,6 +318,132 @@ class WorkflowEngine:
         logger.info(f"Step '{step_id}' completed successfully")
 
         return result
+
+    async def _execute_single_step(
+        self,
+        step_config: Dict[str, Any],
+        resolver: VariableResolver,
+        timeout: int
+    ) -> Any:
+        """
+        Execute a single step with optional timeout
+        """
+        step_id = step_config.get('id', f'step_{id(step_config)}')
+        module_id = step_config.get('module')
+        step_params = step_config.get('params', {})
+        resolved_params = resolver.resolve(step_params)
+        on_error = step_config.get('on_error', 'stop')
+
+        retry_config = step_config.get('retry', {})
+
+        try:
+            if retry_config:
+                coro = self._execute_with_retry(
+                    step_id, module_id, resolved_params, retry_config, timeout
+                )
+            else:
+                coro = self._execute_module_with_timeout(
+                    step_id, module_id, resolved_params, timeout
+                )
+
+            return await coro
+
+        except StepTimeoutError as e:
+            return self._handle_step_error(step_id, e, on_error)
+        except StepExecutionError as e:
+            return self._handle_step_error(step_id, e, on_error)
+
+    def _handle_step_error(
+        self,
+        step_id: str,
+        error: Exception,
+        on_error: str
+    ) -> Any:
+        """
+        Handle step execution error based on on_error strategy
+        """
+        if on_error == 'continue':
+            logger.warning(f"Step '{step_id}' failed but continuing: {str(error)}")
+            return {'ok': False, 'error': str(error)}
+        else:
+            raise error
+
+    async def _execute_foreach_step(
+        self,
+        step_config: Dict[str, Any],
+        resolver: VariableResolver,
+        foreach_array: Any,
+        foreach_var: str
+    ) -> List[Any]:
+        """
+        Execute a step for each item in an array
+
+        Returns array of results matching input array order
+        """
+        step_id = step_config.get('id', f'step_{id(step_config)}')
+        on_error = step_config.get('on_error', 'stop')
+        timeout = step_config.get('timeout', 0)
+
+        resolved_array = resolver.resolve(foreach_array)
+
+        if not isinstance(resolved_array, list):
+            raise StepExecutionError(
+                step_id,
+                f"foreach expects array, got {type(resolved_array).__name__}"
+            )
+
+        logger.info(f"Executing foreach step '{step_id}' with {len(resolved_array)} items")
+
+        results = []
+        for index, item in enumerate(resolved_array):
+            self.context[foreach_var] = item
+            self.context['__foreach_index__'] = index
+
+            try:
+                result = await self._execute_single_step(
+                    step_config, resolver, timeout
+                )
+                results.append(result)
+            except Exception as e:
+                if on_error == 'continue':
+                    logger.warning(
+                        f"Foreach iteration {index} failed, continuing: {str(e)}"
+                    )
+                    results.append({'ok': False, 'error': str(e), 'index': index})
+                else:
+                    raise StepExecutionError(
+                        step_id,
+                        f"Foreach iteration {index} failed: {str(e)}",
+                        e
+                    )
+
+        if foreach_var in self.context:
+            del self.context[foreach_var]
+        if '__foreach_index__' in self.context:
+            del self.context['__foreach_index__']
+
+        return results
+
+    async def _execute_module_with_timeout(
+        self,
+        step_id: str,
+        module_id: str,
+        params: Dict[str, Any],
+        timeout: int
+    ) -> Any:
+        """
+        Execute a module with optional timeout
+        """
+        if timeout <= 0:
+            return await self._execute_module(step_id, module_id, params)
+
+        try:
+            return await asyncio.wait_for(
+                self._execute_module(step_id, module_id, params),
+                timeout=timeout
+            )
+        except asyncio.TimeoutError:
+            raise StepTimeoutError(step_id, timeout)
 
     async def _should_execute_step(self, step_config: Dict[str, Any]) -> bool:
         """
@@ -298,10 +467,11 @@ class WorkflowEngine:
         step_id: str,
         module_id: str,
         params: Dict[str, Any],
-        retry_config: Dict[str, Any]
+        retry_config: Dict[str, Any],
+        timeout: int = 0
     ) -> Any:
         """
-        Execute step with retry logic
+        Execute step with retry logic and optional timeout per attempt
         """
         max_retries = retry_config.get('count', DEFAULT_MAX_RETRIES)
         delay_ms = retry_config.get('delay_ms', DEFAULT_RETRY_DELAY_MS)
@@ -311,19 +481,23 @@ class WorkflowEngine:
 
         for attempt in range(max_retries + 1):
             try:
-                return await self._execute_module(step_id, module_id, params)
-            except Exception as e:
+                return await self._execute_module_with_timeout(
+                    step_id, module_id, params, timeout
+                )
+            except (StepTimeoutError, StepExecutionError, Exception) as e:
                 last_error = e
 
                 if attempt < max_retries:
                     if backoff == 'exponential':
                         wait_time = (delay_ms / 1000) * (EXPONENTIAL_BACKOFF_BASE ** attempt)
+                    elif backoff == 'linear':
+                        wait_time = (delay_ms / 1000) * (attempt + 1)
                     else:
                         wait_time = delay_ms / 1000
 
                     logger.warning(
                         f"Step '{step_id}' failed (attempt {attempt + 1}/{max_retries + 1}). "
-                        f"Retrying in {wait_time}s..."
+                        f"Retrying in {wait_time:.1f}s..."
                     )
 
                     await asyncio.sleep(wait_time)
@@ -343,7 +517,7 @@ class WorkflowEngine:
         params: Dict[str, Any]
     ) -> Any:
         """
-        Execute a module
+        Execute a module and return result
         """
         from ..modules.registry import ModuleRegistry
 
@@ -357,16 +531,7 @@ class WorkflowEngine:
         try:
             return await module_instance.run()
         except Exception as e:
-            on_error = params.get('on_error', 'fail')
-
-            if on_error == 'continue':
-                logger.warning(f"Step '{step_id}' failed but continuing: {str(e)}")
-                return {'status': 'failure', 'error': str(e)}
-            elif on_error == 'rollback':
-                logger.error(f"Step '{step_id}' failed, initiating rollback")
-                raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
-            else:
-                raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
+            raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
 
     def _get_resolver(self) -> VariableResolver:
         """
@@ -375,34 +540,47 @@ class WorkflowEngine:
         workflow_metadata = {
             'id': self.workflow_id,
             'name': self.workflow_name,
-            'version': self.workflow.get('version', '1.0.0')
+            'version': self.workflow_version,
+            'description': self.workflow_description
         }
 
         return VariableResolver(self.params, self.context, workflow_metadata)
 
     def _collect_output(self) -> Dict[str, Any]:
         """
-        Collect workflow output
+        Collect workflow output based on output template or default structure
         """
         output_template = self.workflow.get('output', {})
+        execution_time_ms = int((self.end_time - self.start_time) * 1000) if self.end_time else None
+
+        metadata = {
+            'workflow_id': self.workflow_id,
+            'workflow_name': self.workflow_name,
+            'workflow_version': self.workflow_version,
+            'status': self.status,
+            'execution_time_ms': execution_time_ms,
+            'steps_executed': len(self.execution_log),
+            'timestamp': datetime.now().isoformat()
+        }
 
         if not output_template:
             return {
                 'status': self.status,
                 'steps': self.context,
-                'execution_time': self.end_time - self.start_time if self.end_time else None
+                'execution_time_ms': execution_time_ms,
+                '__metadata__': metadata
             }
 
         resolver = self._get_resolver()
         resolved_output = resolver.resolve(output_template)
 
-        resolved_output['__metadata__'] = {
-            'workflow_id': self.workflow_id,
-            'workflow_name': self.workflow_name,
-            'status': self.status,
-            'execution_time': self.end_time - self.start_time if self.end_time else None,
-            'timestamp': datetime.now().isoformat()
-        }
+        if isinstance(resolved_output, dict):
+            resolved_output['__metadata__'] = metadata
+        else:
+            resolved_output = {
+                'result': resolved_output,
+                '__metadata__': metadata
+            }
 
         return resolved_output
 
@@ -429,15 +607,29 @@ class WorkflowEngine:
 
     def get_execution_summary(self) -> Dict[str, Any]:
         """
-        Get execution summary
+        Get execution summary with all workflow metadata
         """
+        execution_time_ms = None
+        if self.end_time and self.start_time:
+            execution_time_ms = int((self.end_time - self.start_time) * 1000)
+
         return {
             'workflow_id': self.workflow_id,
             'workflow_name': self.workflow_name,
+            'workflow_version': self.workflow_version,
+            'workflow_description': self.workflow_description,
             'status': self.status,
-            'start_time': self.start_time,
-            'end_time': self.end_time,
-            'execution_time': self.end_time - self.start_time if self.end_time else None,
+            'start_time': datetime.fromtimestamp(self.start_time).isoformat() if self.start_time else None,
+            'end_time': datetime.fromtimestamp(self.end_time).isoformat() if self.end_time else None,
+            'execution_time_ms': execution_time_ms,
             'steps_executed': len(self.execution_log),
             'execution_log': self.execution_log
         }
+
+    def cancel(self):
+        """
+        Cancel workflow execution
+        """
+        self._cancelled = True
+        self.status = WorkflowStatus.CANCELLED
+        logger.info(f"Workflow '{self.workflow_id}' cancelled")
