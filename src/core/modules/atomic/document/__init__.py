@@ -10,6 +10,10 @@ try:
 except ImportError:
     pass
 try:
+    from .pdf_fill_form import *
+except ImportError:
+    pass
+try:
     from .excel_read import *
 except ImportError:
     pass
