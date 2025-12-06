@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='Scheduled Report',
-    ui_label_key='modules.composite.notification.scheduled_report.label',
+    ui_label_key='composite.scheduled_report.label',
     ui_description='Generate a report from data and send it via email or Slack',
-    ui_description_key='modules.composite.notification.scheduled_report.description',
+    ui_description_key='composite.scheduled_report.desc',
     ui_group='Notification / Report',
     ui_icon='FileText',
     ui_color='#3B82F6',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'report_title': {
             'type': 'string',
             'label': 'Report Title',
+            'label_key': 'composite.scheduled_report.report_title.label',
             'description': 'Title of the report',
+            'description_key': 'composite.scheduled_report.report_title.desc',
             'placeholder': 'Daily Sales Report',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'report_content': {
             'type': 'string',
             'label': 'Report Content',
+            'label_key': 'composite.scheduled_report.report_content.label',
             'description': 'The report content (plain text or markdown)',
+            'description_key': 'composite.scheduled_report.report_content.desc',
             'placeholder': 'Total sales: $10,000\nNew customers: 15',
             'required': True,
             'ui_component': 'textarea',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'slack_webhook': {
             'type': 'string',
             'label': 'Slack Webhook URL',
+            'label_key': 'composite.scheduled_report.slack_webhook.label',
             'description': 'Slack webhook (leave empty to skip)',
+            'description_key': 'composite.scheduled_report.slack_webhook.desc',
             'placeholder': '${env.SLACK_WEBHOOK_URL}',
             'required': False,
             'ui_component': 'input',
@@ -56,7 +62,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'smtp_server': {
             'type': 'string',
             'label': 'SMTP Server',
+            'label_key': 'composite.scheduled_report.smtp_server.label',
             'description': 'Email SMTP server (leave empty to skip email)',
+            'description_key': 'composite.scheduled_report.smtp_server.desc',
             'placeholder': 'smtp.gmail.com',
             'required': False,
             'ui_component': 'input',
@@ -64,7 +72,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'smtp_port': {
             'type': 'number',
             'label': 'SMTP Port',
+            'label_key': 'composite.scheduled_report.smtp_port.label',
             'description': 'SMTP port',
+            'description_key': 'composite.scheduled_report.smtp_port.desc',
             'default': 587,
             'required': False,
             'ui_component': 'number',
@@ -72,7 +82,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'smtp_username': {
             'type': 'string',
             'label': 'SMTP Username',
+            'label_key': 'composite.scheduled_report.smtp_username.label',
             'description': 'SMTP login username',
+            'description_key': 'composite.scheduled_report.smtp_username.desc',
             'placeholder': '${env.SMTP_USERNAME}',
             'required': False,
             'ui_component': 'input',
@@ -80,7 +92,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'smtp_password': {
             'type': 'string',
             'label': 'SMTP Password',
+            'label_key': 'composite.scheduled_report.smtp_password.label',
             'description': 'SMTP login password',
+            'description_key': 'composite.scheduled_report.smtp_password.desc',
             'placeholder': '${env.SMTP_PASSWORD}',
             'required': False,
             'sensitive': True,
@@ -89,7 +103,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'from_email': {
             'type': 'string',
             'label': 'From Email',
+            'label_key': 'composite.scheduled_report.from_email.label',
             'description': 'Sender email address',
+            'description_key': 'composite.scheduled_report.from_email.desc',
             'placeholder': 'reports@company.com',
             'required': False,
             'ui_component': 'input',
@@ -97,7 +113,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'to_email': {
             'type': 'string',
             'label': 'To Email',
+            'label_key': 'composite.scheduled_report.to_email.label',
             'description': 'Recipient email address',
+            'description_key': 'composite.scheduled_report.to_email.desc',
             'placeholder': 'manager@company.com',
             'required': False,
             'ui_component': 'input',

@@ -39,6 +39,13 @@ from ...registry import register_module
             'description': 'Wait for this element to appear (overrides duration)',
             'description_key': 'modules.browser.wait.params.selector.description',
             'required': False
+        },
+        'timeout': {
+            'type': 'number',
+            'label': 'Timeout (ms)',
+            'description': 'Maximum time to wait in milliseconds',
+            'default': 30000,
+            'required': False
         }
     },
     output_schema={
@@ -59,6 +66,16 @@ from ...registry import register_module
     author='Flyto2 Team',
     license='MIT'
 )
+@register_module(
+    module_id='browser.wait',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'wait', 'delay', 'selector'],
+    label='Wait',
+    description='Wait for a duration or until an element appears',
+    icon='Clock',
+    color='#95A5A6',
+)
 class BrowserWaitModule(BaseModule):
     """Wait Module"""
 
@@ -69,20 +86,25 @@ class BrowserWaitModule(BaseModule):
     def validate_params(self):
         self.duration = self.params.get('duration', 1)
         self.selector = self.params.get('selector')
+        self.timeout = self.params.get('timeout', 30000)
 
     async def execute(self) -> Any:
         import asyncio
 
         browser = self.context.get('browser')
-        if not browser:
-            raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         if self.selector:
             # Wait for element to appear
-            await browser.wait_for_selector(self.selector)
+            if not browser:
+                raise RuntimeError("Browser not launched. Please run browser.launch first")
+            await browser.wait(self.selector, timeout_ms=self.timeout)
             return {"status": "success", "selector": self.selector}
+        elif self.timeout and not self.selector and 'duration' not in self.params:
+            # If only timeout is provided (used as simple delay in ms)
+            await asyncio.sleep(self.timeout / 1000)
+            return {"status": "success", "duration": self.timeout / 1000}
         else:
-            # Wait for specified duration
+            # Wait for specified duration in seconds
             await asyncio.sleep(self.duration)
             return {"status": "success", "duration": self.duration}
 

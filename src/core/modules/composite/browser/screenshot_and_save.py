@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='Screenshot and Save',
-    ui_label_key='modules.composite.browser.screenshot_and_save.label',
+    ui_label_key='composite.screenshot_and_save.label',
     ui_description='Take a screenshot of a webpage and save it to a file',
-    ui_description_key='modules.composite.browser.screenshot_and_save.description',
+    ui_description_key='composite.screenshot_and_save.desc',
     ui_group='Browser / Screenshot',
     ui_icon='Camera',
     ui_color='#8B5CF6',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'url': {
             'type': 'string',
             'label': 'URL',
+            'label_key': 'composite.screenshot_and_save.url.label',
             'description': 'The webpage URL to screenshot',
+            'description_key': 'composite.screenshot_and_save.url.desc',
             'placeholder': 'https://example.com',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'output_path': {
             'type': 'string',
             'label': 'Output Path',
+            'label_key': 'composite.screenshot_and_save.output_path.label',
             'description': 'File path to save the screenshot',
+            'description_key': 'composite.screenshot_and_save.output_path.desc',
             'placeholder': './screenshots/page.png',
             'required': True,
             'ui_component': 'input',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'wait_selector': {
             'type': 'string',
             'label': 'Wait Selector',
+            'label_key': 'composite.screenshot_and_save.wait_selector.label',
             'description': 'CSS selector to wait for before screenshot',
+            'description_key': 'composite.screenshot_and_save.wait_selector.desc',
             'placeholder': 'body',
             'default': 'body',
             'required': False,
@@ -57,7 +63,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'full_page': {
             'type': 'boolean',
             'label': 'Full Page',
+            'label_key': 'composite.screenshot_and_save.full_page.label',
             'description': 'Capture the full page (not just viewport)',
+            'description_key': 'composite.screenshot_and_save.full_page.desc',
             'default': False,
             'required': False,
             'ui_component': 'checkbox',

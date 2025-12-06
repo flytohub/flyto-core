@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='Multi-Channel Alert',
-    ui_label_key='modules.composite.notification.multi_channel_alert.label',
+    ui_label_key='composite.multi_channel_alert.label',
     ui_description='Send alert notifications to multiple channels (Slack, Discord, Telegram) simultaneously',
-    ui_description_key='modules.composite.notification.multi_channel_alert.description',
+    ui_description_key='composite.multi_channel_alert.desc',
     ui_group='Notification / Alert',
     ui_icon='Bell',
     ui_color='#EF4444',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'title': {
             'type': 'string',
             'label': 'Alert Title',
+            'label_key': 'composite.multi_channel_alert.title.label',
             'description': 'Title of the alert',
+            'description_key': 'composite.multi_channel_alert.title.desc',
             'placeholder': 'Production Alert',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'message': {
             'type': 'string',
             'label': 'Alert Message',
+            'label_key': 'composite.multi_channel_alert.message.label',
             'description': 'The alert message content',
+            'description_key': 'composite.multi_channel_alert.message.desc',
             'placeholder': 'Server CPU usage exceeded 90%',
             'required': True,
             'ui_component': 'textarea',
@@ -48,20 +52,24 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'severity': {
             'type': 'string',
             'label': 'Severity',
+            'label_key': 'composite.multi_channel_alert.severity.label',
             'description': 'Alert severity level',
+            'description_key': 'composite.multi_channel_alert.severity.desc',
             'default': 'warning',
             'required': False,
             'ui_component': 'select',
             'options': [
-                {'value': 'critical', 'label': 'Critical'},
-                {'value': 'warning', 'label': 'Warning'},
-                {'value': 'info', 'label': 'Info'}
+                {'value': 'critical', 'label': 'Critical', 'label_key': 'composite.multi_channel_alert.severity.critical'},
+                {'value': 'warning', 'label': 'Warning', 'label_key': 'composite.multi_channel_alert.severity.warning'},
+                {'value': 'info', 'label': 'Info', 'label_key': 'composite.multi_channel_alert.severity.info'}
             ]
         },
         'slack_webhook': {
             'type': 'string',
             'label': 'Slack Webhook URL',
+            'label_key': 'composite.multi_channel_alert.slack_webhook.label',
             'description': 'Slack webhook (leave empty to skip)',
+            'description_key': 'composite.multi_channel_alert.slack_webhook.desc',
             'placeholder': '${env.SLACK_WEBHOOK_URL}',
             'required': False,
             'ui_component': 'input',
@@ -69,7 +77,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'discord_webhook': {
             'type': 'string',
             'label': 'Discord Webhook URL',
+            'label_key': 'composite.multi_channel_alert.discord_webhook.label',
             'description': 'Discord webhook (leave empty to skip)',
+            'description_key': 'composite.multi_channel_alert.discord_webhook.desc',
             'placeholder': '${env.DISCORD_WEBHOOK_URL}',
             'required': False,
             'ui_component': 'input',
@@ -77,7 +87,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'telegram_token': {
             'type': 'string',
             'label': 'Telegram Bot Token',
+            'label_key': 'composite.multi_channel_alert.telegram_token.label',
             'description': 'Telegram bot token (leave empty to skip)',
+            'description_key': 'composite.multi_channel_alert.telegram_token.desc',
             'placeholder': '${env.TELEGRAM_BOT_TOKEN}',
             'required': False,
             'sensitive': True,
@@ -86,7 +98,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'telegram_chat_id': {
             'type': 'string',
             'label': 'Telegram Chat ID',
+            'label_key': 'composite.multi_channel_alert.telegram_chat_id.label',
             'description': 'Telegram chat ID or channel username',
+            'description_key': 'composite.multi_channel_alert.telegram_chat_id.desc',
             'placeholder': '@alerts',
             'required': False,
             'ui_component': 'input',

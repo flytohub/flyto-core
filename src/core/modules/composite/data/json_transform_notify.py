@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='JSON Transform and Notify',
-    ui_label_key='modules.composite.data.json_transform_notify.label',
+    ui_label_key='composite.json_transform_notify.label',
     ui_description='Transform JSON data using JMESPath and send notification with results',
-    ui_description_key='modules.composite.data.json_transform_notify.description',
+    ui_description_key='composite.json_transform_notify.desc',
     ui_group='Data / Transform',
     ui_icon='Braces',
     ui_color='#8B5CF6',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'json_input': {
             'type': 'string',
             'label': 'JSON Input',
+            'label_key': 'composite.json_transform_notify.json_input.label',
             'description': 'JSON string to transform',
+            'description_key': 'composite.json_transform_notify.json_input.desc',
             'placeholder': '[{"name": "John", "age": 30}]',
             'required': True,
             'ui_component': 'textarea',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'filter_expression': {
             'type': 'string',
             'label': 'Filter Expression',
+            'label_key': 'composite.json_transform_notify.filter_expression.label',
             'description': 'Expression to filter data (e.g., item.age > 25)',
+            'description_key': 'composite.json_transform_notify.filter_expression.desc',
             'placeholder': 'true',
             'default': 'true',
             'required': False,
@@ -49,7 +53,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'map_expression': {
             'type': 'string',
             'label': 'Map Expression',
+            'label_key': 'composite.json_transform_notify.map_expression.label',
             'description': 'Expression to transform each item',
+            'description_key': 'composite.json_transform_notify.map_expression.desc',
             'placeholder': 'item',
             'default': 'item',
             'required': False,
@@ -58,7 +64,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'webhook_url': {
             'type': 'string',
             'label': 'Notification Webhook URL',
+            'label_key': 'composite.json_transform_notify.webhook_url.label',
             'description': 'Slack webhook URL to send results',
+            'description_key': 'composite.json_transform_notify.webhook_url.desc',
             'placeholder': '${env.SLACK_WEBHOOK_URL}',
             'required': False,
             'ui_component': 'input',

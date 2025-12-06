@@ -1,4 +1,87 @@
 {
+  "composite": {
+    "api_to_notification": {
+      "label": "API to Notification",
+      "desc": "Fetch data from an API endpoint and send results to Slack, Discord, or Telegram",
+      "api_url": { "label": "API URL", "desc": "The API endpoint to fetch data from" },
+      "api_headers": { "label": "API Headers", "desc": "Headers to send with the API request" },
+      "webhook_url": { "label": "Notification Webhook URL", "desc": "Slack, Discord, or Telegram webhook URL" },
+      "message_template": { "label": "Message Template", "desc": "Template for the notification message" }
+    },
+    "github_daily_digest": {
+      "label": "GitHub Daily Digest",
+      "desc": "Fetch GitHub repository updates and send a daily digest to Slack or Discord",
+      "owner": { "label": "Repository Owner", "desc": "GitHub username or organization" },
+      "repo": { "label": "Repository Name", "desc": "GitHub repository name" },
+      "webhook_url": { "label": "Notification Webhook URL", "desc": "Slack or Discord webhook URL" },
+      "github_token": { "label": "GitHub Token", "desc": "GitHub personal access token (optional for public repos)" }
+    },
+    "json_transform_notify": {
+      "label": "JSON Transform and Notify",
+      "desc": "Transform JSON data using JMESPath and send notification with results",
+      "json_input": { "label": "JSON Input", "desc": "JSON string to transform" },
+      "filter_expression": { "label": "Filter Expression", "desc": "Expression to filter data (e.g., item.age > 25)" },
+      "map_expression": { "label": "Map Expression", "desc": "Expression to transform each item" },
+      "webhook_url": { "label": "Notification Webhook URL", "desc": "Slack webhook URL to send results" }
+    },
+    "csv_to_json": {
+      "label": "CSV to JSON",
+      "desc": "Read a CSV file and convert it to JSON format",
+      "input_file": { "label": "Input CSV File", "desc": "Path to the CSV file to read" },
+      "output_file": { "label": "Output JSON File", "desc": "Path to save the JSON output (optional)" },
+      "delimiter": { "label": "Delimiter", "desc": "CSV delimiter character" },
+      "has_header": { "label": "Has Header Row", "desc": "Whether the CSV has a header row" },
+      "indent": { "label": "JSON Indent", "desc": "Number of spaces for JSON indentation" }
+    },
+    "scheduled_report": {
+      "label": "Scheduled Report",
+      "desc": "Generate a report from data and send it via email or Slack",
+      "report_title": { "label": "Report Title", "desc": "Title of the report" },
+      "report_content": { "label": "Report Content", "desc": "The report content (plain text or markdown)" },
+      "slack_webhook": { "label": "Slack Webhook URL", "desc": "Slack webhook (leave empty to skip)" },
+      "smtp_server": { "label": "SMTP Server", "desc": "Email SMTP server (leave empty to skip email)" },
+      "smtp_port": { "label": "SMTP Port", "desc": "SMTP port" },
+      "smtp_username": { "label": "SMTP Username", "desc": "SMTP login username" },
+      "smtp_password": { "label": "SMTP Password", "desc": "SMTP login password" },
+      "from_email": { "label": "From Email", "desc": "Sender email address" },
+      "to_email": { "label": "To Email", "desc": "Recipient email address" }
+    },
+    "multi_channel_alert": {
+      "label": "Multi-Channel Alert",
+      "desc": "Send alert notifications to multiple channels (Slack, Discord, Telegram) simultaneously",
+      "title": { "label": "Alert Title", "desc": "Title of the alert" },
+      "message": { "label": "Alert Message", "desc": "The alert message content" },
+      "severity": { "label": "Severity", "desc": "Alert severity level", "critical": "Critical", "warning": "Warning", "info": "Info" },
+      "slack_webhook": { "label": "Slack Webhook URL", "desc": "Slack webhook (leave empty to skip)" },
+      "discord_webhook": { "label": "Discord Webhook URL", "desc": "Discord webhook (leave empty to skip)" },
+      "telegram_token": { "label": "Telegram Bot Token", "desc": "Telegram bot token (leave empty to skip)" },
+      "telegram_chat_id": { "label": "Telegram Chat ID", "desc": "Telegram chat ID or channel username" }
+    },
+    "screenshot_and_save": {
+      "label": "Screenshot and Save",
+      "desc": "Take a screenshot of a webpage and save it to a file",
+      "url": { "label": "URL", "desc": "The webpage URL to screenshot" },
+      "output_path": { "label": "Output Path", "desc": "File path to save the screenshot" },
+      "wait_selector": { "label": "Wait Selector", "desc": "CSS selector to wait for before screenshot" },
+      "full_page": { "label": "Full Page", "desc": "Capture the full page (not just viewport)" }
+    },
+    "scrape_to_json": {
+      "label": "Scrape Web to JSON",
+      "desc": "Scrape a webpage and extract data into structured JSON format",
+      "url": { "label": "URL", "desc": "The webpage URL to scrape" },
+      "title_selector": { "label": "Title Selector", "desc": "CSS selector for title elements" },
+      "link_selector": { "label": "Link Selector", "desc": "CSS selector for link elements" },
+      "content_selector": { "label": "Content Selector", "desc": "CSS selector for content elements" },
+      "wait_selector": { "label": "Wait Selector", "desc": "CSS selector to wait for before scraping" }
+    },
+    "search_and_notify": {
+      "label": "Web Search and Notify",
+      "desc": "Search the web using Google and send results to Slack, Discord, or Telegram",
+      "query": { "label": "Search Query", "desc": "The search term to look up" },
+      "webhook_url": { "label": "Notification Webhook URL", "desc": "Slack, Discord, or Telegram webhook URL" },
+      "max_results": { "label": "Max Results", "desc": "Maximum number of results to return" }
+    }
+  },
   "cli": {
     "welcome": "Workflow Automation Engine",
     "version": "v1.0.0",

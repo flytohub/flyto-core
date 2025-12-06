@@ -6,6 +6,10 @@ try:
 except ImportError:
     pass
 try:
+    from .convert import *
+except ImportError:
+    pass
+try:
     from .svg_convert import *
 except ImportError:
     pass

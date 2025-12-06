@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='Web Search and Notify',
-    ui_label_key='modules.composite.browser.search_and_notify.label',
+    ui_label_key='composite.search_and_notify.label',
     ui_description='Search the web using Google and send results to Slack, Discord, or Telegram',
-    ui_description_key='modules.composite.browser.search_and_notify.description',
+    ui_description_key='composite.search_and_notify.desc',
     ui_group='Browser / Search',
     ui_icon='Search',
     ui_color='#4285F4',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'query': {
             'type': 'string',
             'label': 'Search Query',
+            'label_key': 'composite.search_and_notify.query.label',
             'description': 'The search term to look up',
+            'description_key': 'composite.search_and_notify.query.desc',
             'placeholder': 'workflow automation',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'webhook_url': {
             'type': 'string',
             'label': 'Notification Webhook URL',
+            'label_key': 'composite.search_and_notify.webhook_url.label',
             'description': 'Slack, Discord, or Telegram webhook URL',
+            'description_key': 'composite.search_and_notify.webhook_url.desc',
             'placeholder': 'https://hooks.slack.com/...',
             'required': True,
             'ui_component': 'input',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'max_results': {
             'type': 'number',
             'label': 'Max Results',
+            'label_key': 'composite.search_and_notify.max_results.label',
             'description': 'Maximum number of results to return',
+            'description_key': 'composite.search_and_notify.max_results.desc',
             'default': 5,
             'required': False,
             'ui_component': 'number',

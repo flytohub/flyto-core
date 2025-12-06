@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='GitHub Daily Digest',
-    ui_label_key='modules.composite.developer.github_daily_digest.label',
+    ui_label_key='composite.github_daily_digest.label',
     ui_description='Fetch GitHub repository updates and send a daily digest to Slack or Discord',
-    ui_description_key='modules.composite.developer.github_daily_digest.description',
+    ui_description_key='composite.github_daily_digest.desc',
     ui_group='Developer / GitHub',
     ui_icon='Github',
     ui_color='#333333',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'owner': {
             'type': 'string',
             'label': 'Repository Owner',
+            'label_key': 'composite.github_daily_digest.owner.label',
             'description': 'GitHub username or organization',
+            'description_key': 'composite.github_daily_digest.owner.desc',
             'placeholder': 'facebook',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'repo': {
             'type': 'string',
             'label': 'Repository Name',
+            'label_key': 'composite.github_daily_digest.repo.label',
             'description': 'GitHub repository name',
+            'description_key': 'composite.github_daily_digest.repo.desc',
             'placeholder': 'react',
             'required': True,
             'ui_component': 'input',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'webhook_url': {
             'type': 'string',
             'label': 'Notification Webhook URL',
+            'label_key': 'composite.github_daily_digest.webhook_url.label',
             'description': 'Slack or Discord webhook URL',
+            'description_key': 'composite.github_daily_digest.webhook_url.desc',
             'placeholder': '${env.SLACK_WEBHOOK_URL}',
             'required': True,
             'ui_component': 'input',
@@ -56,7 +62,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'github_token': {
             'type': 'string',
             'label': 'GitHub Token',
+            'label_key': 'composite.github_daily_digest.github_token.label',
             'description': 'GitHub personal access token (optional for public repos)',
+            'description_key': 'composite.github_daily_digest.github_token.desc',
             'placeholder': '${env.GITHUB_TOKEN}',
             'required': False,
             'sensitive': True,

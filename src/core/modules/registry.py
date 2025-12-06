@@ -20,6 +20,7 @@ from .types import (
     LEVEL_PRIORITY,
     DEFAULT_CONTEXT_REQUIREMENTS,
     DEFAULT_CONTEXT_PROVISIONS,
+    get_default_visibility,
 )
 from ..constants import ErrorMessages
 
@@ -265,7 +266,8 @@ def register_module(
     provides_context: Optional[List[str]] = None,
 
     # UI visibility and metadata
-    ui_visibility: UIVisibility = UIVisibility.EXPERT,
+    # None = auto-detect based on category (see types.DEFAULT_VISIBILITY_CATEGORIES)
+    ui_visibility: Optional[UIVisibility] = None,
     ui_label: Optional[Any] = None,
     ui_label_key: Optional[str] = None,
     ui_description: Optional[Any] = None,
@@ -316,6 +318,14 @@ def register_module(
     """
     Module registration decorator
 
+    UI Visibility Auto-Detection:
+        When ui_visibility is not specified (None), it will be automatically
+        determined based on the module's category:
+        - DEFAULT (shown to all users): ai, agent, notification, api, browser, cloud, database, productivity, payment, image
+        - EXPERT (advanced users only): string, array, object, math, datetime, file, element, flow, data, utility, meta, test
+
+        See types.DEFAULT_VISIBILITY_CATEGORIES for the full mapping.
+
     Example:
         @register_module(
             module_id="browser.goto",
@@ -326,8 +336,7 @@ def register_module(
             requires_context=["browser"],
             provides_context=["browser", "page"],
 
-            # UI metadata
-            ui_visibility=UIVisibility.EXPERT,
+            # UI metadata (ui_visibility auto-detected from category "browser" -> DEFAULT)
             ui_label="Open URL",
             ui_description="Navigate browser to a URL",
             ui_group="Browser / Navigation",
@@ -357,7 +366,7 @@ def register_module(
         requires_context: List of context types this module requires (e.g., ["browser"])
         provides_context: List of context types this module provides (e.g., ["browser", "page"])
 
-        ui_visibility: UI visibility level (DEFAULT/EXPERT/HIDDEN)
+        ui_visibility: UI visibility level (DEFAULT/EXPERT/HIDDEN), or None for auto-detection
         ui_label: Display name for UI
         ui_label_key: i18n translation key for label
         ui_description: Description for UI
@@ -422,6 +431,11 @@ def register_module(
         # Determine category from module_id if not provided
         resolved_category = category or module_id.split('.')[0]
 
+        # Auto-resolve UI visibility from category if not explicitly provided
+        resolved_visibility = ui_visibility
+        if resolved_visibility is None:
+            resolved_visibility = get_default_visibility(resolved_category)
+
         # Auto-resolve context from category defaults if not explicitly provided
         resolved_requires_context = requires_context
         resolved_provides_context = provides_context
@@ -446,7 +460,7 @@ def register_module(
             "provides_context": resolved_provides_context,
 
             # UI metadata (prefer new ui_* fields, fallback to legacy)
-            "ui_visibility": ui_visibility.value if isinstance(ui_visibility, UIVisibility) else ui_visibility,
+            "ui_visibility": resolved_visibility.value if isinstance(resolved_visibility, UIVisibility) else resolved_visibility,
             "ui_label": ui_label or label or module_id,
             "ui_label_key": ui_label_key or label_key,
             "ui_description": ui_description or description or "",
