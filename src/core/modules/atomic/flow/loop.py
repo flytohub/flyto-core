@@ -4,8 +4,8 @@ loop / foreach - Loop/ForEach Module
 Provides functionality to iterate through list and execute sub-steps for each item
 """
 from typing import Any, List, Dict
-from ..base import BaseModule
-from ..registry import register_module
+from ...base import BaseModule
+from ...registry import register_module
 
 
 @register_module(

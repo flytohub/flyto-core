@@ -1,11 +1,11 @@
 """
-Workflow Engine - Execute YAML workflows
+Workflow Engine - Execute YAML workflows with flow control support
 """
 import asyncio
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from .variable_resolver import VariableResolver
 from ..constants import (
@@ -13,7 +13,6 @@ from ..constants import (
     DEFAULT_RETRY_DELAY_MS,
     EXPONENTIAL_BACKOFF_BASE,
     WorkflowStatus,
-    ErrorMessages,
 )
 
 
@@ -37,10 +36,19 @@ class WorkflowEngine:
     """
     Execute YAML workflows with full support for:
     - Variable resolution
-    - Flow control (when, retry, parallel)
+    - Flow control (when, retry, parallel, branch, switch, goto)
     - Error handling
     - Context management
     """
+
+    FLOW_CONTROL_MODULES = frozenset([
+        'flow.branch',
+        'flow.switch',
+        'flow.goto',
+        'core.flow.branch',
+        'core.flow.switch',
+        'core.flow.goto',
+    ])
 
     def __init__(self, workflow: Dict[str, Any], params: Dict[str, Any] = None):
         """
@@ -51,48 +59,40 @@ class WorkflowEngine:
             params: Workflow input parameters
         """
         self.workflow = workflow
-
-        # Parse params - convert list format to dict with defaults
         self.params = self._parse_params(workflow.get('params', []), params or {})
-
         self.context = {}
         self.execution_log = []
 
-        # Workflow metadata
         self.workflow_id = workflow.get('id', 'unknown')
         self.workflow_name = workflow.get('name', 'Unnamed Workflow')
 
-        # Execution state
         self.start_time: Optional[float] = None
         self.end_time: Optional[float] = None
         self.status: str = WorkflowStatus.PENDING
 
-    def _parse_params(self, param_schema: List[Dict[str, Any]], provided_params: Dict[str, Any]) -> Dict[str, Any]:
+        self._step_index: Dict[str, int] = {}
+        self._visited_gotos: Dict[str, int] = {}
+
+    def _parse_params(
+        self,
+        param_schema: List[Dict[str, Any]],
+        provided_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Parse parameter schema and merge with provided values
-
-        Args:
-            param_schema: List of parameter definitions from YAML
-            provided_params: User-provided parameter values
-
-        Returns:
-            Dict of parameter name -> value with defaults applied
         """
         result = {}
 
-        # If param_schema is already a dict, return it merged with provided
         if isinstance(param_schema, dict):
             result = param_schema.copy()
             result.update(provided_params)
             return result
 
-        # Parse list format
         for param_def in param_schema:
             param_name = param_def.get('name')
             if not param_name:
                 continue
 
-            # Use provided value if available, otherwise use default
             if param_name in provided_params:
                 result[param_name] = provided_params[param_name]
             elif 'default' in param_def:
@@ -103,9 +103,6 @@ class WorkflowEngine:
     async def execute(self) -> Dict[str, Any]:
         """
         Execute the workflow
-
-        Returns:
-            Workflow output
         """
         self.start_time = time.time()
         self.status = WorkflowStatus.RUNNING
@@ -113,94 +110,143 @@ class WorkflowEngine:
         logger.info(f"Starting workflow: {self.workflow_name} (ID: {self.workflow_id})")
 
         try:
-            # Get steps
             steps = self.workflow.get('steps', [])
             if not steps:
                 raise WorkflowExecutionError("No steps defined in workflow")
 
-            # Execute steps
+            self._build_step_index(steps)
             await self._execute_steps(steps)
 
-            # Update status before collecting output
             self.status = WorkflowStatus.COMPLETED
             self.end_time = time.time()
 
-            logger.info(f"Workflow completed successfully in {self.end_time - self.start_time:.2f}s")
+            logger.info(
+                f"Workflow completed successfully in {self.end_time - self.start_time:.2f}s"
+            )
 
-            # Collect output (after status is set)
-            output = self._collect_output()
-
-            return output
+            return self._collect_output()
 
         except Exception as e:
             self.status = WorkflowStatus.FAILURE
             self.end_time = time.time()
 
             logger.error(f"Workflow failed: {str(e)}")
-
-            # Handle workflow-level error
             await self._handle_workflow_error(e)
 
             raise WorkflowExecutionError(f"Workflow execution failed: {str(e)}") from e
 
+    def _build_step_index(self, steps: List[Dict[str, Any]]):
+        """
+        Build index mapping step IDs to their positions
+        """
+        self._step_index = {}
+        for idx, step in enumerate(steps):
+            step_id = step.get('id')
+            if step_id:
+                self._step_index[step_id] = idx
+
     async def _execute_steps(self, steps: List[Dict[str, Any]]):
-        """Execute all workflow steps"""
-        # Separate parallel and sequential steps
+        """
+        Execute workflow steps with flow control support
+        """
+        current_idx = 0
         parallel_batch = []
 
-        for step in steps:
-            # Check if step should run in parallel
+        while current_idx < len(steps):
+            step = steps[current_idx]
+
             if step.get('parallel', False):
-                parallel_batch.append(step)
-            else:
-                # Execute any pending parallel batch first
-                if parallel_batch:
-                    await self._execute_parallel_steps(parallel_batch)
-                    parallel_batch = []
+                parallel_batch.append((current_idx, step))
+                current_idx += 1
+                continue
 
-                # Execute this step sequentially
-                await self._execute_step(step)
+            if parallel_batch:
+                await self._execute_parallel_steps([s for _, s in parallel_batch])
+                parallel_batch = []
 
-        # Execute any remaining parallel steps
+            next_idx = await self._execute_step_with_flow_control(step, current_idx, steps)
+            current_idx = next_idx
+
         if parallel_batch:
-            await self._execute_parallel_steps(parallel_batch)
+            await self._execute_parallel_steps([s for _, s in parallel_batch])
 
     async def _execute_parallel_steps(self, steps: List[Dict[str, Any]]):
-        """Execute multiple steps in parallel"""
+        """
+        Execute multiple steps in parallel
+        """
         logger.info(f"Executing {len(steps)} steps in parallel")
 
         tasks = [self._execute_step(step) for step in steps]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Check for errors
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 step_id = steps[i].get('id', f'step_{i}')
-                raise StepExecutionError(step_id, f"Parallel step failed: {str(result)}", result)
+                raise StepExecutionError(
+                    step_id,
+                    f"Parallel step failed: {str(result)}",
+                    result
+                )
+
+    async def _execute_step_with_flow_control(
+        self,
+        step_config: Dict[str, Any],
+        current_idx: int,
+        steps: List[Dict[str, Any]]
+    ) -> int:
+        """
+        Execute a step and handle flow control directives
+
+        Returns the next step index to execute
+        """
+        result = await self._execute_step(step_config)
+
+        if result is None:
+            return current_idx + 1
+
+        module_id = step_config.get('module', '')
+        if not self._is_flow_control_module(module_id):
+            return current_idx + 1
+
+        next_step_id = None
+        if isinstance(result, dict):
+            next_step_id = result.get('next_step')
+
+            set_context = result.get('__set_context')
+            if isinstance(set_context, dict):
+                self.context.update(set_context)
+
+        if next_step_id and next_step_id in self._step_index:
+            return self._step_index[next_step_id]
+
+        return current_idx + 1
+
+    def _is_flow_control_module(self, module_id: str) -> bool:
+        """
+        Check if module is a flow control module
+        """
+        return module_id in self.FLOW_CONTROL_MODULES
 
     async def _execute_step(self, step_config: Dict[str, Any]) -> Any:
-        """Execute a single step"""
+        """
+        Execute a single step
+        """
         step_id = step_config.get('id', f'step_{id(step_config)}')
         module_id = step_config.get('module')
 
         if not module_id:
             raise StepExecutionError(step_id, "Step missing 'module' field")
 
-        # Check if step should be executed (conditional execution)
         if not await self._should_execute_step(step_config):
             logger.info(f"Skipping step '{step_id}' (condition not met)")
             return None
 
         logger.info(f"Executing step '{step_id}': {module_id}")
 
-        # Get resolver with current context
         resolver = self._get_resolver()
-
-        # Resolve step parameters
         step_params = step_config.get('params', {})
         resolved_params = resolver.resolve(step_params)
 
-        # Execute with retry if configured
         retry_config = step_config.get('retry', {})
         if retry_config:
             result = await self._execute_with_retry(
@@ -209,10 +255,12 @@ class WorkflowEngine:
         else:
             result = await self._execute_module(step_id, module_id, resolved_params)
 
-        # Store result in context
         self.context[step_id] = result
 
-        # Log execution
+        output_var = step_config.get('output')
+        if output_var:
+            self.context[output_var] = result
+
         self.execution_log.append({
             'step_id': step_id,
             'module_id': module_id,
@@ -225,7 +273,9 @@ class WorkflowEngine:
         return result
 
     async def _should_execute_step(self, step_config: Dict[str, Any]) -> bool:
-        """Check if step should be executed based on 'when' condition"""
+        """
+        Check if step should be executed based on 'when' condition
+        """
         when_condition = step_config.get('when')
 
         if when_condition is None:
@@ -246,7 +296,9 @@ class WorkflowEngine:
         params: Dict[str, Any],
         retry_config: Dict[str, Any]
     ) -> Any:
-        """Execute step with retry logic"""
+        """
+        Execute step with retry logic
+        """
         max_retries = retry_config.get('count', DEFAULT_MAX_RETRIES)
         delay_ms = retry_config.get('delay_ms', DEFAULT_RETRY_DELAY_MS)
         backoff = retry_config.get('backoff', 'linear')
@@ -260,7 +312,6 @@ class WorkflowEngine:
                 last_error = e
 
                 if attempt < max_retries:
-                    # Calculate delay based on backoff strategy
                     if backoff == 'exponential':
                         wait_time = (delay_ms / 1000) * (EXPONENTIAL_BACKOFF_BASE ** attempt)
                     else:
@@ -275,7 +326,11 @@ class WorkflowEngine:
                 else:
                     logger.error(f"Step '{step_id}' failed after {max_retries + 1} attempts")
 
-        raise StepExecutionError(step_id, f"Step failed after {max_retries + 1} attempts", last_error)
+        raise StepExecutionError(
+            step_id,
+            f"Step failed after {max_retries + 1} attempts",
+            last_error
+        )
 
     async def _execute_module(
         self,
@@ -283,26 +338,21 @@ class WorkflowEngine:
         module_id: str,
         params: Dict[str, Any]
     ) -> Any:
-        """Execute a module"""
-        # Use relative import to avoid coupling issues
+        """
+        Execute a module
+        """
         from ..modules.registry import ModuleRegistry
 
-        # Get module class
         module_class = ModuleRegistry.get(module_id)
 
         if not module_class:
             raise StepExecutionError(step_id, f"Module not found: {module_id}")
 
-        # Create module instance
         module_instance = module_class(params, self.context)
 
         try:
-            # Execute module
-            result = await module_instance.run()
-            return result
-
+            return await module_instance.run()
         except Exception as e:
-            # Handle step error based on configuration
             on_error = params.get('on_error', 'fail')
 
             if on_error == 'continue':
@@ -311,11 +361,13 @@ class WorkflowEngine:
             elif on_error == 'rollback':
                 logger.error(f"Step '{step_id}' failed, initiating rollback")
                 raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
-            else:  # 'fail'
+            else:
                 raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
 
     def _get_resolver(self) -> VariableResolver:
-        """Get variable resolver with current context"""
+        """
+        Get variable resolver with current context
+        """
         workflow_metadata = {
             'id': self.workflow_id,
             'name': self.workflow_name,
@@ -325,22 +377,21 @@ class WorkflowEngine:
         return VariableResolver(self.params, self.context, workflow_metadata)
 
     def _collect_output(self) -> Dict[str, Any]:
-        """Collect workflow output"""
+        """
+        Collect workflow output
+        """
         output_template = self.workflow.get('output', {})
 
         if not output_template:
-            # Return all step results
             return {
                 'status': self.status,
                 'steps': self.context,
                 'execution_time': self.end_time - self.start_time if self.end_time else None
             }
 
-        # Resolve output template
         resolver = self._get_resolver()
         resolved_output = resolver.resolve(output_template)
 
-        # Add metadata
         resolved_output['__metadata__'] = {
             'workflow_id': self.workflow_id,
             'workflow_name': self.workflow_name,
@@ -352,13 +403,14 @@ class WorkflowEngine:
         return resolved_output
 
     async def _handle_workflow_error(self, error: Exception):
-        """Handle workflow-level errors"""
+        """
+        Handle workflow-level errors
+        """
         on_error_config = self.workflow.get('on_error', {})
 
         if not on_error_config:
             return
 
-        # Execute rollback steps if configured
         rollback_steps = on_error_config.get('rollback_steps', [])
         if rollback_steps:
             logger.info("Executing rollback steps...")
@@ -367,13 +419,14 @@ class WorkflowEngine:
             except Exception as rollback_error:
                 logger.error(f"Rollback failed: {str(rollback_error)}")
 
-        # TODO: Send notification if configured
         notify_config = on_error_config.get('notify')
         if notify_config:
             logger.info(f"Error notification: {notify_config}")
 
     def get_execution_summary(self) -> Dict[str, Any]:
-        """Get execution summary"""
+        """
+        Get execution summary
+        """
         return {
             'workflow_id': self.workflow_id,
             'workflow_name': self.workflow_name,

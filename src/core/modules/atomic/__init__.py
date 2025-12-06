@@ -23,30 +23,36 @@ from .element_ops import (
     ElementTextModule,
     ElementAttributeModule
 )
-from .loop import LoopModule
 from .element_registry import ElementRegistry
 
-# Import new atomic module categories
+# Import module categories
 from . import file
 from . import string
 from . import array
 from . import math
 from . import datetime
 from . import object
+from . import flow
 from . import meta_operations
 from . import test_utilities
 from . import meta
 from . import training
 from . import analysis
 from . import competition
-from . import image_modules  # Image processing modules
-from . import browser_aliases  # Browser module aliases
+from . import image_modules
+from . import browser_aliases
+
+# Re-export flow control modules
+from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
 __all__ = [
     'BrowserFindModule',
     'ElementQueryModule',
     'ElementTextModule',
     'ElementAttributeModule',
-    'LoopModule',
     'ElementRegistry',
+    'LoopModule',
+    'BranchModule',
+    'SwitchModule',
+    'GotoModule',
 ]
