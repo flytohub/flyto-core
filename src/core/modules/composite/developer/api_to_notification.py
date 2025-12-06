@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='API to Notification',
-    ui_label_key='modules.composite.developer.api_to_notification.label',
+    ui_label_key='composite.api_to_notification.label',
     ui_description='Fetch data from an API endpoint and send results to Slack, Discord, or Telegram',
-    ui_description_key='modules.composite.developer.api_to_notification.description',
+    ui_description_key='composite.api_to_notification.desc',
     ui_group='Developer / Integration',
     ui_icon='Zap',
     ui_color='#F59E0B',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'api_url': {
             'type': 'string',
             'label': 'API URL',
+            'label_key': 'composite.api_to_notification.api_url.label',
             'description': 'The API endpoint to fetch data from',
+            'description_key': 'composite.api_to_notification.api_url.desc',
             'placeholder': 'https://api.example.com/data',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'api_headers': {
             'type': 'object',
             'label': 'API Headers',
+            'label_key': 'composite.api_to_notification.api_headers.label',
             'description': 'Headers to send with the API request',
+            'description_key': 'composite.api_to_notification.api_headers.desc',
             'default': {},
             'required': False,
             'ui_component': 'json',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'webhook_url': {
             'type': 'string',
             'label': 'Notification Webhook URL',
+            'label_key': 'composite.api_to_notification.webhook_url.label',
             'description': 'Slack, Discord, or Telegram webhook URL',
+            'description_key': 'composite.api_to_notification.webhook_url.desc',
             'placeholder': 'https://hooks.slack.com/...',
             'required': True,
             'ui_component': 'input',
@@ -56,7 +62,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'message_template': {
             'type': 'string',
             'label': 'Message Template',
+            'label_key': 'composite.api_to_notification.message_template.label',
             'description': 'Template for the notification message',
+            'description_key': 'composite.api_to_notification.message_template.desc',
             'placeholder': 'API Response: ${data.status}',
             'default': 'API Response:\n${data}',
             'required': False,

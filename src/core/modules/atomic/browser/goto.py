@@ -73,6 +73,16 @@ from ...registry import register_module
     author='Flyto2 Team',
     license='MIT'
 )
+@register_module(
+    module_id='browser.goto',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'navigation', 'url'],
+    label='Go to URL',
+    description='Navigate to a specific URL',
+    icon='Globe',
+    color='#5CB85C',
+)
 class BrowserGotoModule(BaseModule):
     """Navigate to URL Module"""
 

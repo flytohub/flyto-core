@@ -1,4 +1,87 @@
 {
+  "composite": {
+    "api_to_notification": {
+      "label": "API 轉通知",
+      "desc": "從 API 端點取得資料並發送到 Slack、Discord 或 Telegram",
+      "api_url": { "label": "API 網址", "desc": "要取得資料的 API 端點" },
+      "api_headers": { "label": "API 標頭", "desc": "發送 API 請求時附帶的標頭" },
+      "webhook_url": { "label": "通知 Webhook 網址", "desc": "Slack、Discord 或 Telegram 的 webhook 網址" },
+      "message_template": { "label": "訊息模板", "desc": "通知訊息的模板" }
+    },
+    "github_daily_digest": {
+      "label": "GitHub 每日摘要",
+      "desc": "取得 GitHub 儲存庫更新並發送每日摘要到 Slack 或 Discord",
+      "owner": { "label": "儲存庫擁有者", "desc": "GitHub 使用者名稱或組織" },
+      "repo": { "label": "儲存庫名稱", "desc": "GitHub 儲存庫名稱" },
+      "webhook_url": { "label": "通知 Webhook 網址", "desc": "Slack 或 Discord 的 webhook 網址" },
+      "github_token": { "label": "GitHub Token", "desc": "GitHub 個人存取權杖（公開儲存庫可選）" }
+    },
+    "json_transform_notify": {
+      "label": "JSON 轉換並通知",
+      "desc": "使用 JMESPath 轉換 JSON 資料並發送通知",
+      "json_input": { "label": "JSON 輸入", "desc": "要轉換的 JSON 字串" },
+      "filter_expression": { "label": "篩選表達式", "desc": "篩選資料的表達式（例如：item.age > 25）" },
+      "map_expression": { "label": "映射表達式", "desc": "轉換每個項目的表達式" },
+      "webhook_url": { "label": "通知 Webhook 網址", "desc": "發送結果的 Slack webhook 網址" }
+    },
+    "csv_to_json": {
+      "label": "CSV 轉 JSON",
+      "desc": "讀取 CSV 檔案並轉換為 JSON 格式",
+      "input_file": { "label": "輸入 CSV 檔案", "desc": "要讀取的 CSV 檔案路徑" },
+      "output_file": { "label": "輸出 JSON 檔案", "desc": "儲存 JSON 輸出的路徑（選填）" },
+      "delimiter": { "label": "分隔符", "desc": "CSV 分隔字元" },
+      "has_header": { "label": "有標題列", "desc": "CSV 是否有標題列" },
+      "indent": { "label": "JSON 縮排", "desc": "JSON 縮排的空格數" }
+    },
+    "scheduled_report": {
+      "label": "排程報告",
+      "desc": "產生報告並透過電子郵件或 Slack 發送",
+      "report_title": { "label": "報告標題", "desc": "報告的標題" },
+      "report_content": { "label": "報告內容", "desc": "報告內容（純文字或 markdown）" },
+      "slack_webhook": { "label": "Slack Webhook 網址", "desc": "Slack webhook（留空跳過）" },
+      "smtp_server": { "label": "SMTP 伺服器", "desc": "電子郵件 SMTP 伺服器（留空跳過電子郵件）" },
+      "smtp_port": { "label": "SMTP 連接埠", "desc": "SMTP 連接埠" },
+      "smtp_username": { "label": "SMTP 使用者名稱", "desc": "SMTP 登入使用者名稱" },
+      "smtp_password": { "label": "SMTP 密碼", "desc": "SMTP 登入密碼" },
+      "from_email": { "label": "寄件人電子郵件", "desc": "寄件人電子郵件地址" },
+      "to_email": { "label": "收件人電子郵件", "desc": "收件人電子郵件地址" }
+    },
+    "multi_channel_alert": {
+      "label": "多頻道警報",
+      "desc": "同時發送警報通知到多個頻道（Slack、Discord、Telegram）",
+      "title": { "label": "警報標題", "desc": "警報的標題" },
+      "message": { "label": "警報訊息", "desc": "警報訊息內容" },
+      "severity": { "label": "嚴重程度", "desc": "警報嚴重程度等級", "critical": "嚴重", "warning": "警告", "info": "資訊" },
+      "slack_webhook": { "label": "Slack Webhook 網址", "desc": "Slack webhook（留空跳過）" },
+      "discord_webhook": { "label": "Discord Webhook 網址", "desc": "Discord webhook（留空跳過）" },
+      "telegram_token": { "label": "Telegram Bot Token", "desc": "Telegram bot token（留空跳過）" },
+      "telegram_chat_id": { "label": "Telegram Chat ID", "desc": "Telegram 聊天室 ID 或頻道使用者名稱" }
+    },
+    "screenshot_and_save": {
+      "label": "截圖並儲存",
+      "desc": "截取網頁畫面並儲存到檔案",
+      "url": { "label": "網址", "desc": "要截圖的網頁網址" },
+      "output_path": { "label": "輸出路徑", "desc": "儲存截圖的檔案路徑" },
+      "wait_selector": { "label": "等待選擇器", "desc": "截圖前等待的 CSS 選擇器" },
+      "full_page": { "label": "完整頁面", "desc": "截取完整頁面（而非僅視窗範圍）" }
+    },
+    "scrape_to_json": {
+      "label": "網頁抓取轉 JSON",
+      "desc": "抓取網頁並提取資料為結構化 JSON 格式",
+      "url": { "label": "網址", "desc": "要抓取的網頁網址" },
+      "title_selector": { "label": "標題選擇器", "desc": "標題元素的 CSS 選擇器" },
+      "link_selector": { "label": "連結選擇器", "desc": "連結元素的 CSS 選擇器" },
+      "content_selector": { "label": "內容選擇器", "desc": "內容元素的 CSS 選擇器" },
+      "wait_selector": { "label": "等待選擇器", "desc": "抓取前等待的 CSS 選擇器" }
+    },
+    "search_and_notify": {
+      "label": "網路搜尋並通知",
+      "desc": "使用 Google 搜尋網路並發送結果到 Slack、Discord 或 Telegram",
+      "query": { "label": "搜尋關鍵字", "desc": "要搜尋的關鍵字" },
+      "webhook_url": { "label": "通知 Webhook 網址", "desc": "Slack、Discord 或 Telegram 的 webhook 網址" },
+      "max_results": { "label": "最大結果數", "desc": "要回傳的最大結果數量" }
+    }
+  },
   "cli": {
     "welcome": "工作流程自動化引擎",
     "version": "版本 1.0.0",

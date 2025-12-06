@@ -45,9 +45,13 @@ class WorkflowEngine:
         'flow.branch',
         'flow.switch',
         'flow.goto',
+        'flow.loop',
+        'loop',
+        'foreach',
         'core.flow.branch',
         'core.flow.switch',
         'core.flow.goto',
+        'core.flow.loop',
     ])
 
     def __init__(self, workflow: Dict[str, Any], params: Dict[str, Any] = None):

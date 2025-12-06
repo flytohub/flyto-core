@@ -1,4 +1,87 @@
 {
+  "composite": {
+    "api_to_notification": {
+      "label": "API から通知",
+      "desc": "API エンドポイントからデータを取得し、Slack、Discord、または Telegram に送信",
+      "api_url": { "label": "API URL", "desc": "データを取得する API エンドポイント" },
+      "api_headers": { "label": "API ヘッダー", "desc": "API リクエストに送信するヘッダー" },
+      "webhook_url": { "label": "通知 Webhook URL", "desc": "Slack、Discord、または Telegram の webhook URL" },
+      "message_template": { "label": "メッセージテンプレート", "desc": "通知メッセージのテンプレート" }
+    },
+    "github_daily_digest": {
+      "label": "GitHub 日次ダイジェスト",
+      "desc": "GitHub リポジトリの更新を取得し、Slack または Discord に日次ダイジェストを送信",
+      "owner": { "label": "リポジトリオーナー", "desc": "GitHub ユーザー名または組織" },
+      "repo": { "label": "リポジトリ名", "desc": "GitHub リポジトリ名" },
+      "webhook_url": { "label": "通知 Webhook URL", "desc": "Slack または Discord の webhook URL" },
+      "github_token": { "label": "GitHub トークン", "desc": "GitHub パーソナルアクセストークン（公開リポジトリでは任意）" }
+    },
+    "json_transform_notify": {
+      "label": "JSON 変換して通知",
+      "desc": "JMESPath を使用して JSON データを変換し、結果を通知として送信",
+      "json_input": { "label": "JSON 入力", "desc": "変換する JSON 文字列" },
+      "filter_expression": { "label": "フィルター式", "desc": "データをフィルターする式（例：item.age > 25）" },
+      "map_expression": { "label": "マップ式", "desc": "各項目を変換する式" },
+      "webhook_url": { "label": "通知 Webhook URL", "desc": "結果を送信する Slack webhook URL" }
+    },
+    "csv_to_json": {
+      "label": "CSV から JSON へ",
+      "desc": "CSV ファイルを読み取り、JSON 形式に変換",
+      "input_file": { "label": "入力 CSV ファイル", "desc": "読み取る CSV ファイルのパス" },
+      "output_file": { "label": "出力 JSON ファイル", "desc": "JSON 出力を保存するパス（任意）" },
+      "delimiter": { "label": "区切り文字", "desc": "CSV の区切り文字" },
+      "has_header": { "label": "ヘッダー行あり", "desc": "CSV にヘッダー行があるかどうか" },
+      "indent": { "label": "JSON インデント", "desc": "JSON インデントのスペース数" }
+    },
+    "scheduled_report": {
+      "label": "スケジュールレポート",
+      "desc": "レポートを生成し、メールまたは Slack で送信",
+      "report_title": { "label": "レポートタイトル", "desc": "レポートのタイトル" },
+      "report_content": { "label": "レポート内容", "desc": "レポートの内容（プレーンテキストまたは markdown）" },
+      "slack_webhook": { "label": "Slack Webhook URL", "desc": "Slack webhook（空白でスキップ）" },
+      "smtp_server": { "label": "SMTP サーバー", "desc": "メール SMTP サーバー（空白でメールをスキップ）" },
+      "smtp_port": { "label": "SMTP ポート", "desc": "SMTP ポート" },
+      "smtp_username": { "label": "SMTP ユーザー名", "desc": "SMTP ログインユーザー名" },
+      "smtp_password": { "label": "SMTP パスワード", "desc": "SMTP ログインパスワード" },
+      "from_email": { "label": "送信元メール", "desc": "送信者のメールアドレス" },
+      "to_email": { "label": "送信先メール", "desc": "受信者のメールアドレス" }
+    },
+    "multi_channel_alert": {
+      "label": "マルチチャンネルアラート",
+      "desc": "複数のチャンネル（Slack、Discord、Telegram）に同時にアラート通知を送信",
+      "title": { "label": "アラートタイトル", "desc": "アラートのタイトル" },
+      "message": { "label": "アラートメッセージ", "desc": "アラートメッセージの内容" },
+      "severity": { "label": "重大度", "desc": "アラートの重大度レベル", "critical": "重大", "warning": "警告", "info": "情報" },
+      "slack_webhook": { "label": "Slack Webhook URL", "desc": "Slack webhook（空白でスキップ）" },
+      "discord_webhook": { "label": "Discord Webhook URL", "desc": "Discord webhook（空白でスキップ）" },
+      "telegram_token": { "label": "Telegram Bot トークン", "desc": "Telegram bot トークン（空白でスキップ）" },
+      "telegram_chat_id": { "label": "Telegram チャット ID", "desc": "Telegram チャット ID またはチャンネルユーザー名" }
+    },
+    "screenshot_and_save": {
+      "label": "スクリーンショットして保存",
+      "desc": "ウェブページのスクリーンショットを撮影し、ファイルに保存",
+      "url": { "label": "URL", "desc": "スクリーンショットを撮るウェブページの URL" },
+      "output_path": { "label": "出力パス", "desc": "スクリーンショットを保存するファイルパス" },
+      "wait_selector": { "label": "待機セレクター", "desc": "スクリーンショット前に待機する CSS セレクター" },
+      "full_page": { "label": "フルページ", "desc": "ビューポートだけでなくページ全体をキャプチャ" }
+    },
+    "scrape_to_json": {
+      "label": "ウェブスクレイプから JSON へ",
+      "desc": "ウェブページをスクレイプし、構造化された JSON 形式でデータを抽出",
+      "url": { "label": "URL", "desc": "スクレイプするウェブページの URL" },
+      "title_selector": { "label": "タイトルセレクター", "desc": "タイトル要素の CSS セレクター" },
+      "link_selector": { "label": "リンクセレクター", "desc": "リンク要素の CSS セレクター" },
+      "content_selector": { "label": "コンテンツセレクター", "desc": "コンテンツ要素の CSS セレクター" },
+      "wait_selector": { "label": "待機セレクター", "desc": "スクレイプ前に待機する CSS セレクター" }
+    },
+    "search_and_notify": {
+      "label": "ウェブ検索して通知",
+      "desc": "Google でウェブを検索し、結果を Slack、Discord、または Telegram に送信",
+      "query": { "label": "検索クエリ", "desc": "検索するキーワード" },
+      "webhook_url": { "label": "通知 Webhook URL", "desc": "Slack、Discord、または Telegram の webhook URL" },
+      "max_results": { "label": "最大結果数", "desc": "返す結果の最大数" }
+    }
+  },
   "cli": {
     "welcome": "ワークフロー自動化エンジン",
     "version": "バージョン 1.0.0",

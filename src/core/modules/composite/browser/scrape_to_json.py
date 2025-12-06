@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='Scrape Web to JSON',
-    ui_label_key='modules.composite.browser.scrape_to_json.label',
+    ui_label_key='composite.scrape_to_json.label',
     ui_description='Scrape a webpage and extract data into structured JSON format',
-    ui_description_key='modules.composite.browser.scrape_to_json.description',
+    ui_description_key='composite.scrape_to_json.desc',
     ui_group='Browser / Scraping',
     ui_icon='FileJson',
     ui_color='#10B981',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'url': {
             'type': 'string',
             'label': 'URL',
+            'label_key': 'composite.scrape_to_json.url.label',
             'description': 'The webpage URL to scrape',
+            'description_key': 'composite.scrape_to_json.url.desc',
             'placeholder': 'https://example.com',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'title_selector': {
             'type': 'string',
             'label': 'Title Selector',
+            'label_key': 'composite.scrape_to_json.title_selector.label',
             'description': 'CSS selector for title elements',
+            'description_key': 'composite.scrape_to_json.title_selector.desc',
             'placeholder': 'h1, h2, .title',
             'required': True,
             'ui_component': 'input',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'link_selector': {
             'type': 'string',
             'label': 'Link Selector',
+            'label_key': 'composite.scrape_to_json.link_selector.label',
             'description': 'CSS selector for link elements',
+            'description_key': 'composite.scrape_to_json.link_selector.desc',
             'placeholder': 'a.item-link',
             'required': False,
             'ui_component': 'input',
@@ -56,7 +62,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'content_selector': {
             'type': 'string',
             'label': 'Content Selector',
+            'label_key': 'composite.scrape_to_json.content_selector.label',
             'description': 'CSS selector for content elements',
+            'description_key': 'composite.scrape_to_json.content_selector.desc',
             'placeholder': '.content, p',
             'required': False,
             'ui_component': 'input',
@@ -64,7 +72,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'wait_selector': {
             'type': 'string',
             'label': 'Wait Selector',
+            'label_key': 'composite.scrape_to_json.wait_selector.label',
             'description': 'CSS selector to wait for before scraping',
+            'description_key': 'composite.scrape_to_json.wait_selector.desc',
             'placeholder': 'body',
             'default': 'body',
             'required': False,

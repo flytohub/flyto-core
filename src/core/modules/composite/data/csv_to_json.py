@@ -20,9 +20,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
     # UI metadata
     ui_visibility=UIVisibility.DEFAULT,
     ui_label='CSV to JSON',
-    ui_label_key='modules.composite.data.csv_to_json.label',
+    ui_label_key='composite.csv_to_json.label',
     ui_description='Read a CSV file and convert it to JSON format',
-    ui_description_key='modules.composite.data.csv_to_json.description',
+    ui_description_key='composite.csv_to_json.desc',
     ui_group='Data / Transform',
     ui_icon='FileSpreadsheet',
     ui_color='#059669',
@@ -32,7 +32,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'input_file': {
             'type': 'string',
             'label': 'Input CSV File',
+            'label_key': 'composite.csv_to_json.input_file.label',
             'description': 'Path to the CSV file to read',
+            'description_key': 'composite.csv_to_json.input_file.desc',
             'placeholder': './data/input.csv',
             'required': True,
             'ui_component': 'input',
@@ -40,7 +42,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'output_file': {
             'type': 'string',
             'label': 'Output JSON File',
+            'label_key': 'composite.csv_to_json.output_file.label',
             'description': 'Path to save the JSON output (optional)',
+            'description_key': 'composite.csv_to_json.output_file.desc',
             'placeholder': './data/output.json',
             'required': False,
             'ui_component': 'input',
@@ -48,7 +52,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'delimiter': {
             'type': 'string',
             'label': 'Delimiter',
+            'label_key': 'composite.csv_to_json.delimiter.label',
             'description': 'CSV delimiter character',
+            'description_key': 'composite.csv_to_json.delimiter.desc',
             'default': ',',
             'required': False,
             'ui_component': 'input',
@@ -56,7 +62,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'has_header': {
             'type': 'boolean',
             'label': 'Has Header Row',
+            'label_key': 'composite.csv_to_json.has_header.label',
             'description': 'Whether the CSV has a header row',
+            'description_key': 'composite.csv_to_json.has_header.desc',
             'default': True,
             'required': False,
             'ui_component': 'checkbox',
@@ -64,7 +72,9 @@ from ..base import CompositeModule, register_composite, UIVisibility
         'indent': {
             'type': 'number',
             'label': 'JSON Indent',
+            'label_key': 'composite.csv_to_json.indent.label',
             'description': 'Number of spaces for JSON indentation',
+            'description_key': 'composite.csv_to_json.indent.desc',
             'default': 2,
             'required': False,
             'ui_component': 'number',

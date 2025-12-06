@@ -64,6 +64,16 @@ from ...registry import register_module
     author='Flyto2 Team',
     license='MIT'
 )
+@register_module(
+    module_id='browser.launch',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'automation', 'setup'],
+    label='Launch Browser',
+    description='Launch a new browser instance with Playwright',
+    icon='Monitor',
+    color='#4A90E2',
+)
 class BrowserLaunchModule(BaseModule):
     """Launch Browser Module"""
 

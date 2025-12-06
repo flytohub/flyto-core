@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **P1 Feature Modules** (7 new modules)
+  - `image.download` - Download images from URL with custom headers
+  - `image.convert` - Convert images between formats (PNG, JPEG, WEBP, etc.)
+  - `pdf.parse` - Extract text and metadata from PDF files
+  - `excel.read` - Read data from Excel files (xlsx, xls)
+  - `excel.write` - Write data to Excel files with auto-width columns
+  - `email.send` - Send emails via SMTP with attachments support
+  - `database.query` - Execute SQL queries on PostgreSQL, MySQL, SQLite
+
 - **Module Tiered Architecture** (ADR-001)
   - `UIVisibility` enum for module UI visibility control (DEFAULT/EXPERT/HIDDEN)
   - `ContextType` enum for module context requirements (browser/page/file/data/api_response)
@@ -18,18 +27,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `can_connect()` and `validate_workflow()` helper functions
   - `DEFAULT_CONTEXT_REQUIREMENTS` and `DEFAULT_CONTEXT_PROVISIONS` for category-based defaults
 
+- **Smart UI Visibility Auto-Detection**
+  - `DEFAULT_VISIBILITY_CATEGORIES` mapping in `types.py` for category-based visibility
+  - `get_default_visibility(category)` helper function
+  - Categories automatically classified:
+    - **DEFAULT** (shown to all users): `ai`, `agent`, `notification`, `communication`, `api`, `browser`, `cloud`, `database`, `db`, `productivity`, `payment`, `image`
+    - **EXPERT** (advanced users): `string`, `text`, `array`, `object`, `math`, `datetime`, `file`, `element`, `flow`, `data`, `utility`, `meta`, `test`, `atomic`
+
 - **Architecture Documentation**
   - `docs/architecture/ADR_001_MODULE_TIERED_ARCHITECTURE.md`
 
 ### Changed
 - `@register_module` decorator now supports context-based connection validation
+- `@register_module` decorator now auto-detects `ui_visibility` based on category when not specified
 - `@register_composite` decorator now supports UI form generation via `ui_params_schema`
 - `ModuleLevel` enum extended with COMPOSITE, TEMPLATE, PATTERN levels
 - Composite modules now default to `ui_visibility=DEFAULT` (visible to normal users)
-- Atomic modules now default to `ui_visibility=EXPERT` (hidden in collapsed section)
+- Atomic modules visibility now depends on category (see Smart UI Visibility above)
 
 ### Deprecated
 - Legacy `label`, `description`, `icon`, `color` fields in favor of `ui_*` prefixed versions
+
+### Important Notes for Module Developers
+
+**UI Visibility Classification:**
+
+When creating new modules, the `ui_visibility` is now auto-detected based on category:
+
+```python
+# These categories will show in the main module list (DEFAULT):
+# ai, agent, notification, api, browser, cloud, database, productivity, payment, image
+
+@register_module(
+    module_id="ai.my_new_model",
+    category="ai",
+    # ui_visibility auto-detected as DEFAULT (user-facing)
+)
+
+# These categories will show in Expert Mode only (EXPERT):
+# string, array, object, math, datetime, file, element, flow, data, utility, meta, test
+
+@register_module(
+    module_id="string.custom_parser",
+    category="string",
+    # ui_visibility auto-detected as EXPERT (programming primitive)
+)
+
+# To override auto-detection:
+@register_module(
+    module_id="browser.internal_helper",
+    category="browser",
+    ui_visibility=UIVisibility.HIDDEN,  # Explicitly hide from UI
+)
+```
+
+**Visibility Guidelines:**
+- **DEFAULT**: Complete, standalone features users can use directly (e.g., "Send Slack Message", "Generate Image with DALL-E")
+- **EXPERT**: Low-level operations requiring programming knowledge (e.g., "Split String", "Filter Array", "Click Element")
+- **HIDDEN**: Internal system modules not meant for direct user access
 
 ---
 
