@@ -13,3 +13,11 @@ try:
     from .svg_convert import *
 except ImportError:
     pass
+try:
+    from .resize import *
+except ImportError:
+    pass
+try:
+    from .compress import *
+except ImportError:
+    pass
