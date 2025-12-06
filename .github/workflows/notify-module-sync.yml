@@ -1,0 +1,57 @@
+name: Notify Module Sync
+
+# Trigger when modules are changed on main branch
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/core/modules/atomic/**/*.py'
+
+jobs:
+  notify-flyto-pro:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit to compare
+
+      - name: Get changed modules
+        id: changes
+        run: |
+          # Get list of changed module files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'src/core/modules/atomic/**/*.py' | tr '\n' ',')
+          echo "changed_files=${CHANGED_FILES%,}" >> $GITHUB_OUTPUT
+
+          # Extract module IDs from file paths
+          # e.g., src/core/modules/atomic/browser/click.py -> browser.click
+          MODULE_IDS=""
+          for file in $(git diff --name-only HEAD~1 HEAD -- 'src/core/modules/atomic/**/*.py'); do
+            if [[ $file == *.py ]] && [[ ! $(basename $file) == __* ]]; then
+              # Extract category and module name
+              category=$(basename $(dirname $file))
+              module=$(basename $file .py)
+              MODULE_IDS="${MODULE_IDS}${category}.${module},"
+            fi
+          done
+          echo "module_ids=${MODULE_IDS%,}" >> $GITHUB_OUTPUT
+          echo "Changed modules: ${MODULE_IDS%,}"
+
+      - name: Dispatch to flyto-pro
+        if: steps.changes.outputs.module_ids != ''
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.FLYTO_PRO_DISPATCH_TOKEN }}
+          repository: anthropics/flyto-pro  # Change to actual repo
+          event-type: module-sync
+          client-payload: |
+            {
+              "module_ids": "${{ steps.changes.outputs.module_ids }}",
+              "changed_files": "${{ steps.changes.outputs.changed_files }}",
+              "commit_sha": "${{ github.sha }}",
+              "commit_message": "${{ github.event.head_commit.message }}"
+            }
+
+      - name: Log dispatch
+        run: |
+          echo "Dispatched sync event for modules: ${{ steps.changes.outputs.module_ids }}"

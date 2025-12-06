@@ -13,7 +13,14 @@ import logging
 from typing import Dict, Type, Any, Optional, List
 
 from .base import BaseModule
-from .types import ModuleLevel, LEVEL_PRIORITY
+from .types import (
+    ModuleLevel,
+    UIVisibility,
+    ContextType,
+    LEVEL_PRIORITY,
+    DEFAULT_CONTEXT_REQUIREMENTS,
+    DEFAULT_CONTEXT_PROVISIONS,
+)
 from ..constants import ErrorMessages
 
 
@@ -248,18 +255,32 @@ class ModuleRegistry:
 def register_module(
     module_id: str,
     version: str = "1.0.0",
-    level: ModuleLevel = ModuleLevel.ATOMIC,  # Module level classification
+    level: ModuleLevel = ModuleLevel.ATOMIC,
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
     tags: Optional[List[str]] = None,
 
-    # Labels (support i18n via dict or string)
-    label: Optional[Any] = None,
-    label_key: Optional[str] = None,  # i18n translation key
-    description: Optional[Any] = None,
-    description_key: Optional[str] = None,  # i18n translation key
+    # Context requirements (for connection validation)
+    requires_context: Optional[List[str]] = None,
+    provides_context: Optional[List[str]] = None,
 
-    # Visual
+    # UI visibility and metadata
+    ui_visibility: UIVisibility = UIVisibility.EXPERT,
+    ui_label: Optional[Any] = None,
+    ui_label_key: Optional[str] = None,
+    ui_description: Optional[Any] = None,
+    ui_description_key: Optional[str] = None,
+    ui_group: Optional[str] = None,
+    ui_icon: Optional[str] = None,
+    ui_color: Optional[str] = None,
+
+    # Legacy label fields (deprecated, use ui_label instead)
+    label: Optional[Any] = None,
+    label_key: Optional[str] = None,
+    description: Optional[Any] = None,
+    description_key: Optional[str] = None,
+
+    # Legacy visual fields (deprecated, use ui_icon instead)
     icon: Optional[str] = None,
     color: Optional[str] = None,
 
@@ -273,16 +294,16 @@ def register_module(
     params_schema: Optional[Dict[str, Any]] = None,
     output_schema: Optional[Dict[str, Any]] = None,
 
-    # Execution settings (Phase 2)
-    timeout: Optional[int] = None,  # Execution timeout in seconds
-    retryable: bool = False,  # Whether the module can be retried on failure
-    max_retries: int = 3,  # Maximum number of retry attempts
-    concurrent_safe: bool = True,  # Whether module can run concurrently
+    # Execution settings
+    timeout: Optional[int] = None,
+    retryable: bool = False,
+    max_retries: int = 3,
+    concurrent_safe: bool = True,
 
-    # Security settings (Phase 2)
-    requires_credentials: bool = False,  # Whether module needs API keys/credentials
-    handles_sensitive_data: bool = False,  # Whether module processes sensitive data
-    required_permissions: Optional[List[str]] = None,  # Required permissions
+    # Security settings
+    requires_credentials: bool = False,
+    handles_sensitive_data: bool = False,
+    required_permissions: Optional[List[str]] = None,
 
     # Advanced
     requires: Optional[List[str]] = None,
@@ -298,63 +319,69 @@ def register_module(
     Example:
         @register_module(
             module_id="browser.goto",
-            version="1.0.0",
             level=ModuleLevel.ATOMIC,
             category="browser",
-            subcategory="browser",
-            label={"en": "Go to URL", "zh": "Go to URL"},
-            description={"en": "Navigate to URL", "zh": "Navigate to specified URL"},
-            icon="Globe",
-            color="#8B5CF6",
-            input_types=["browser_instance"],
-            output_types=["page_instance"],
-            can_receive_from=["browser.launch"],
-            can_connect_to=["browser.*", "element.*"],
+
+            # Context for connection validation
+            requires_context=["browser"],
+            provides_context=["browser", "page"],
+
+            # UI metadata
+            ui_visibility=UIVisibility.EXPERT,
+            ui_label="Open URL",
+            ui_description="Navigate browser to a URL",
+            ui_group="Browser / Navigation",
+            ui_icon="Globe",
+            ui_color="#8B5CF6",
+
             params_schema={
                 "url": {
                     "type": "string",
                     "required": True,
-                    "label": {"en": "URL", "zh": "URL"}
+                    "label": "URL"
                 }
             }
         )
         class BrowserGotoModule(BaseModule):
             async def execute(self):
-                # Implementation
                 pass
 
     Args:
         module_id: Unique identifier (e.g., "browser.goto")
         version: Semantic version (default: "1.0.0")
-        level: Module level (ATOMIC/THIRD_PARTY/AI_TOOL/EXTERNAL)
+        level: Module level classification
         category: Primary category (default: extracted from module_id)
         subcategory: Optional subcategory
         tags: List of tags for filtering
-        label: Display name (string or i18n dict)
-        label_key: i18n translation key for label
-        description: Description (string or i18n dict)
-        description_key: i18n translation key for description
-        icon: Icon name (e.g., "Globe", "Keyboard")
-        color: Hex color code
-        input_types: List of accepted input types
-        output_types: List of produced output types
-        can_receive_from: List of module patterns this can receive from
-        can_connect_to: List of module patterns this can connect to
+
+        requires_context: List of context types this module requires (e.g., ["browser"])
+        provides_context: List of context types this module provides (e.g., ["browser", "page"])
+
+        ui_visibility: UI visibility level (DEFAULT/EXPERT/HIDDEN)
+        ui_label: Display name for UI
+        ui_label_key: i18n translation key for label
+        ui_description: Description for UI
+        ui_description_key: i18n translation key for description
+        ui_group: UI grouping category
+        ui_icon: Lucide icon name
+        ui_color: Hex color code
+
         params_schema: Parameter definitions
         output_schema: Output structure definition
-        timeout: Execution timeout in seconds (None = no timeout)
-        retryable: Whether module can be retried on failure (default: False)
-        max_retries: Maximum retry attempts if retryable (default: 3)
-        concurrent_safe: Whether module can run concurrently (default: True)
-        requires_credentials: Whether module needs API keys/credentials
+
+        timeout: Execution timeout in seconds
+        retryable: Whether module can be retried on failure
+        max_retries: Maximum retry attempts
+        concurrent_safe: Whether module can run concurrently
+
+        requires_credentials: Whether module needs API keys
         handles_sensitive_data: Whether module processes sensitive data
         required_permissions: List of required permissions
-        requires: List of required module IDs
-        permissions: Required permissions
+
         examples: Usage examples
         docs_url: Documentation URL
         author: Module author
-        license: License (default: "MIT")
+        license: License identifier
     """
     def decorator(module_class_or_func):
         # Check if it's a function or a class
@@ -392,33 +419,70 @@ def register_module(
             module_class = module_class_or_func
             module_class.module_id = module_id
 
+        # Determine category from module_id if not provided
+        resolved_category = category or module_id.split('.')[0]
+
+        # Auto-resolve context from category defaults if not explicitly provided
+        resolved_requires_context = requires_context
+        resolved_provides_context = provides_context
+
+        if resolved_requires_context is None:
+            resolved_requires_context = DEFAULT_CONTEXT_REQUIREMENTS.get(resolved_category, [])
+
+        if resolved_provides_context is None:
+            resolved_provides_context = DEFAULT_CONTEXT_PROVISIONS.get(resolved_category, [])
+
         # Build metadata
         metadata = {
             "module_id": module_id,
             "version": version,
-            "level": level,
-            "category": category or module_id.split('.')[0],
+            "level": level.value if isinstance(level, ModuleLevel) else level,
+            "category": resolved_category,
             "subcategory": subcategory,
             "tags": tags or [],
-            "label": label or module_id,
-            "label_key": label_key,
-            "description": description or "",
-            "description_key": description_key,
-            "icon": icon,
-            "color": color,
+
+            # Context for connection validation
+            "requires_context": resolved_requires_context,
+            "provides_context": resolved_provides_context,
+
+            # UI metadata (prefer new ui_* fields, fallback to legacy)
+            "ui_visibility": ui_visibility.value if isinstance(ui_visibility, UIVisibility) else ui_visibility,
+            "ui_label": ui_label or label or module_id,
+            "ui_label_key": ui_label_key or label_key,
+            "ui_description": ui_description or description or "",
+            "ui_description_key": ui_description_key or description_key,
+            "ui_group": ui_group,
+            "ui_icon": ui_icon or icon,
+            "ui_color": ui_color or color,
+
+            # Legacy fields (for backward compatibility)
+            "label": ui_label or label or module_id,
+            "description": ui_description or description or "",
+            "icon": ui_icon or icon,
+            "color": ui_color or color,
+
+            # Connection types
             "input_types": input_types or [],
             "output_types": output_types or [],
             "can_receive_from": can_receive_from or [],
             "can_connect_to": can_connect_to or [],
+
+            # Schema
             "params_schema": params_schema or {},
             "output_schema": output_schema or {},
+
+            # Execution settings
             "timeout": timeout,
             "retryable": retryable,
             "max_retries": max_retries,
             "concurrent_safe": concurrent_safe,
+
+            # Security settings
             "requires_credentials": requires_credentials,
             "handles_sensitive_data": handles_sensitive_data,
             "required_permissions": required_permissions or [],
+
+            # Advanced
             "requires": requires or [],
             "permissions": permissions or [],
             "examples": examples or [],

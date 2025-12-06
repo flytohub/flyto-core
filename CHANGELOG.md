@@ -8,22 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Nothing yet
+- **Module Tiered Architecture** (ADR-001)
+  - `UIVisibility` enum for module UI visibility control (DEFAULT/EXPERT/HIDDEN)
+  - `ContextType` enum for module context requirements (browser/page/file/data/api_response)
+  - `requires_context` and `provides_context` fields in `@register_module`
+  - `ui_visibility`, `ui_label`, `ui_description`, `ui_group`, `ui_icon`, `ui_color` fields
+  - `ui_params_schema` for automatic UI form generation in composites
+  - `ConnectionValidator` class for workflow validation
+  - `can_connect()` and `validate_workflow()` helper functions
+  - `DEFAULT_CONTEXT_REQUIREMENTS` and `DEFAULT_CONTEXT_PROVISIONS` for category-based defaults
+
+- **Architecture Documentation**
+  - `docs/architecture/ADR_001_MODULE_TIERED_ARCHITECTURE.md`
 
 ### Changed
-- Nothing yet
+- `@register_module` decorator now supports context-based connection validation
+- `@register_composite` decorator now supports UI form generation via `ui_params_schema`
+- `ModuleLevel` enum extended with COMPOSITE, TEMPLATE, PATTERN levels
+- Composite modules now default to `ui_visibility=DEFAULT` (visible to normal users)
+- Atomic modules now default to `ui_visibility=EXPERT` (hidden in collapsed section)
 
 ### Deprecated
-- Nothing yet
-
-### Removed
-- Nothing yet
-
-### Fixed
-- Nothing yet
-
-### Security
-- Nothing yet
+- Legacy `label`, `description`, `icon`, `color` fields in favor of `ui_*` prefixed versions
 
 ---
 

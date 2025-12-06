@@ -3,25 +3,74 @@ Web Scrape to JSON Composite Module
 
 Scrapes a webpage and outputs structured JSON data.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.browser.scrape_to_json',
     version='1.0.0',
-    category='composite',
-    subcategory='browser',
+    category='browser',
+    subcategory='scrape',
     tags=['browser', 'scrape', 'json', 'data', 'extraction'],
 
-    # Display
-    label='Scrape Web to JSON',
-    label_key='modules.composite.browser.scrape_to_json.label',
-    description='Scrape a webpage and extract data into structured JSON format',
-    description_key='modules.composite.browser.scrape_to_json.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data'],
 
-    # Visual
-    icon='FileJson',
-    color='#10B981',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='Scrape Web to JSON',
+    ui_label_key='modules.composite.browser.scrape_to_json.label',
+    ui_description='Scrape a webpage and extract data into structured JSON format',
+    ui_description_key='modules.composite.browser.scrape_to_json.description',
+    ui_group='Browser / Scraping',
+    ui_icon='FileJson',
+    ui_color='#10B981',
+
+    # UI form generation
+    ui_params_schema={
+        'url': {
+            'type': 'string',
+            'label': 'URL',
+            'description': 'The webpage URL to scrape',
+            'placeholder': 'https://example.com',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'title_selector': {
+            'type': 'string',
+            'label': 'Title Selector',
+            'description': 'CSS selector for title elements',
+            'placeholder': 'h1, h2, .title',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'link_selector': {
+            'type': 'string',
+            'label': 'Link Selector',
+            'description': 'CSS selector for link elements',
+            'placeholder': 'a.item-link',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'content_selector': {
+            'type': 'string',
+            'label': 'Content Selector',
+            'description': 'CSS selector for content elements',
+            'placeholder': '.content, p',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'wait_selector': {
+            'type': 'string',
+            'label': 'Wait Selector',
+            'description': 'CSS selector to wait for before scraping',
+            'placeholder': 'body',
+            'default': 'body',
+            'required': False,
+            'ui_component': 'input',
+        }
+    },
 
     # Connection types
     input_types=['url'],
@@ -83,45 +132,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'description': 'The webpage URL to scrape',
-            'placeholder': 'https://example.com',
-            'required': True
-        },
-        'title_selector': {
-            'type': 'string',
-            'label': 'Title Selector',
-            'description': 'CSS selector for title elements',
-            'placeholder': 'h1, h2, .title',
-            'required': True
-        },
-        'link_selector': {
-            'type': 'string',
-            'label': 'Link Selector',
-            'description': 'CSS selector for link elements',
-            'placeholder': 'a.item-link',
-            'required': False
-        },
-        'content_selector': {
-            'type': 'string',
-            'label': 'Content Selector',
-            'description': 'CSS selector for content elements',
-            'placeholder': '.content, p',
-            'required': False
-        },
-        'wait_selector': {
-            'type': 'string',
-            'label': 'Wait Selector',
-            'description': 'CSS selector to wait for before scraping',
-            'placeholder': 'body',
-            'default': 'body',
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'url': {'type': 'string'},

@@ -3,25 +3,66 @@ Screenshot and Save Composite Module
 
 Takes a screenshot of a webpage and saves it to a file.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.browser.screenshot_and_save',
     version='1.0.0',
-    category='composite',
-    subcategory='browser',
+    category='browser',
+    subcategory='screenshot',
     tags=['browser', 'screenshot', 'file', 'save'],
 
-    # Display
-    label='Screenshot and Save',
-    label_key='modules.composite.browser.screenshot_and_save.label',
-    description='Take a screenshot of a webpage and save it to a file',
-    description_key='modules.composite.browser.screenshot_and_save.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['file'],
 
-    # Visual
-    icon='Camera',
-    color='#8B5CF6',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='Screenshot and Save',
+    ui_label_key='modules.composite.browser.screenshot_and_save.label',
+    ui_description='Take a screenshot of a webpage and save it to a file',
+    ui_description_key='modules.composite.browser.screenshot_and_save.description',
+    ui_group='Browser / Screenshot',
+    ui_icon='Camera',
+    ui_color='#8B5CF6',
+
+    # UI form generation
+    ui_params_schema={
+        'url': {
+            'type': 'string',
+            'label': 'URL',
+            'description': 'The webpage URL to screenshot',
+            'placeholder': 'https://example.com',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'output_path': {
+            'type': 'string',
+            'label': 'Output Path',
+            'description': 'File path to save the screenshot',
+            'placeholder': './screenshots/page.png',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'wait_selector': {
+            'type': 'string',
+            'label': 'Wait Selector',
+            'description': 'CSS selector to wait for before screenshot',
+            'placeholder': 'body',
+            'default': 'body',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'full_page': {
+            'type': 'boolean',
+            'label': 'Full Page',
+            'description': 'Capture the full page (not just viewport)',
+            'default': False,
+            'required': False,
+            'ui_component': 'checkbox',
+        }
+    },
 
     # Connection types
     input_types=['url'],
@@ -62,38 +103,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'description': 'The webpage URL to screenshot',
-            'placeholder': 'https://example.com',
-            'required': True
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'description': 'File path to save the screenshot',
-            'placeholder': './screenshots/page.png',
-            'required': True
-        },
-        'wait_selector': {
-            'type': 'string',
-            'label': 'Wait Selector',
-            'description': 'CSS selector to wait for before screenshot',
-            'placeholder': 'body',
-            'default': 'body',
-            'required': False
-        },
-        'full_page': {
-            'type': 'boolean',
-            'label': 'Full Page',
-            'description': 'Capture the full page (not just viewport)',
-            'default': False,
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'url': {'type': 'string'},

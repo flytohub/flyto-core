@@ -3,25 +3,57 @@ Web Search and Notify Composite Module
 
 Searches the web and sends results to a notification channel.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.browser.search_and_notify',
     version='1.0.0',
-    category='composite',
-    subcategory='browser',
+    category='browser',
+    subcategory='search',
     tags=['browser', 'search', 'notification', 'automation'],
 
-    # Display
-    label='Web Search and Notify',
-    label_key='modules.composite.browser.search_and_notify.label',
-    description='Search the web using Google and send results to Slack, Discord, or Telegram',
-    description_key='modules.composite.browser.search_and_notify.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data', 'api_response'],
 
-    # Visual
-    icon='Search',
-    color='#4285F4',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='Web Search and Notify',
+    ui_label_key='modules.composite.browser.search_and_notify.label',
+    ui_description='Search the web using Google and send results to Slack, Discord, or Telegram',
+    ui_description_key='modules.composite.browser.search_and_notify.description',
+    ui_group='Browser / Search',
+    ui_icon='Search',
+    ui_color='#4285F4',
+
+    # UI form generation
+    ui_params_schema={
+        'query': {
+            'type': 'string',
+            'label': 'Search Query',
+            'description': 'The search term to look up',
+            'placeholder': 'workflow automation',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'webhook_url': {
+            'type': 'string',
+            'label': 'Notification Webhook URL',
+            'description': 'Slack, Discord, or Telegram webhook URL',
+            'placeholder': 'https://hooks.slack.com/...',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'max_results': {
+            'type': 'number',
+            'label': 'Max Results',
+            'description': 'Maximum number of results to return',
+            'default': 5,
+            'required': False,
+            'ui_component': 'number',
+        }
+    },
 
     # Connection types
     input_types=['text'],
@@ -87,30 +119,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'query': {
-            'type': 'string',
-            'label': 'Search Query',
-            'description': 'The search term to look up',
-            'placeholder': 'workflow automation',
-            'required': True
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Notification Webhook URL',
-            'description': 'Slack, Discord, or Telegram webhook URL',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': True
-        },
-        'max_results': {
-            'type': 'number',
-            'label': 'Max Results',
-            'description': 'Maximum number of results to return',
-            'default': 5,
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'query': {'type': 'string'},
