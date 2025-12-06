@@ -1,30 +1,90 @@
 """
 Module Types
 
-Defines core types for module system.
+Defines core types for module system including:
+- ModuleLevel: Priority and trust classification
+- UIVisibility: UI display behavior
+- ContextType: Module context requirements
 """
 from enum import Enum
+from typing import List, Optional
 
 
 class ModuleLevel(str, Enum):
     """
     Module level - determines priority and trust level.
 
-    ATOMIC: Level 1 - Our own atomic modules (most trusted, highest priority)
-    THIRD_PARTY: Level 2 - Third-party APIs (requires API key)
-    AI_TOOL: Level 3 - AI tools for analysis (Claude/GPT)
-    EXTERNAL: Level 4 - External services (MCP, remote agents)
+    ATOMIC: Level 2 - Core atomic modules (building blocks, expert mode)
+    COMPOSITE: Level 3 - Composite modules (normal user visible)
+    TEMPLATE: Level 1 - Workflow templates (one-click solutions)
+    PATTERN: Level 4 - Advanced patterns (system internal)
+    THIRD_PARTY: Third-party API integrations
+    AI_TOOL: AI tools for analysis
+    EXTERNAL: External services (MCP, remote agents)
     """
     ATOMIC = "atomic"
+    COMPOSITE = "composite"
+    TEMPLATE = "template"
+    PATTERN = "pattern"
     THIRD_PARTY = "third_party"
     AI_TOOL = "ai_tool"
     EXTERNAL = "external"
 
 
+class UIVisibility(str, Enum):
+    """
+    UI visibility level for modules.
+
+    DEFAULT: Show in normal mode (templates, composites)
+    EXPERT: Show only in expert collapsed section (atomic modules)
+    HIDDEN: Never show in UI (internal system modules)
+    """
+    DEFAULT = "default"
+    EXPERT = "expert"
+    HIDDEN = "hidden"
+
+
+class ContextType(str, Enum):
+    """
+    Context types that modules can require or provide.
+
+    Used for connection validation between modules.
+    """
+    BROWSER = "browser"
+    PAGE = "page"
+    FILE = "file"
+    DATA = "data"
+    API_RESPONSE = "api_response"
+    DATABASE = "database"
+    SESSION = "session"
+
+
 # Priority order for module selection (lower = higher priority)
 LEVEL_PRIORITY = {
     ModuleLevel.ATOMIC: 1,
-    ModuleLevel.THIRD_PARTY: 2,
-    ModuleLevel.AI_TOOL: 3,
-    ModuleLevel.EXTERNAL: 4,
+    ModuleLevel.COMPOSITE: 2,
+    ModuleLevel.TEMPLATE: 3,
+    ModuleLevel.PATTERN: 4,
+    ModuleLevel.THIRD_PARTY: 5,
+    ModuleLevel.AI_TOOL: 6,
+    ModuleLevel.EXTERNAL: 7,
+}
+
+
+# Default context requirements by category
+# Used when module does not explicitly declare requires_context
+DEFAULT_CONTEXT_REQUIREMENTS = {
+    "page": [ContextType.BROWSER],
+    "scraper": [ContextType.BROWSER],
+    "element": [ContextType.BROWSER],
+}
+
+
+# Default context provisions by category
+# Used when module does not explicitly declare provides_context
+DEFAULT_CONTEXT_PROVISIONS = {
+    "browser": [ContextType.BROWSER],
+    "file": [ContextType.FILE],
+    "api": [ContextType.API_RESPONSE],
+    "data": [ContextType.DATA],
 }

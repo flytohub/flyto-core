@@ -3,25 +3,66 @@ API to Notification Composite Module
 
 Fetches data from any API and sends it to a notification channel.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.developer.api_to_notification',
     version='1.0.0',
-    category='composite',
-    subcategory='developer',
+    category='developer',
+    subcategory='api',
     tags=['api', 'notification', 'webhook', 'integration'],
 
-    # Display
-    label='API to Notification',
-    label_key='modules.composite.developer.api_to_notification.label',
-    description='Fetch data from an API endpoint and send results to Slack, Discord, or Telegram',
-    description_key='modules.composite.developer.api_to_notification.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data', 'api_response'],
 
-    # Visual
-    icon='Zap',
-    color='#F59E0B',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='API to Notification',
+    ui_label_key='modules.composite.developer.api_to_notification.label',
+    ui_description='Fetch data from an API endpoint and send results to Slack, Discord, or Telegram',
+    ui_description_key='modules.composite.developer.api_to_notification.description',
+    ui_group='Developer / Integration',
+    ui_icon='Zap',
+    ui_color='#F59E0B',
+
+    # UI form generation
+    ui_params_schema={
+        'api_url': {
+            'type': 'string',
+            'label': 'API URL',
+            'description': 'The API endpoint to fetch data from',
+            'placeholder': 'https://api.example.com/data',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'api_headers': {
+            'type': 'object',
+            'label': 'API Headers',
+            'description': 'Headers to send with the API request',
+            'default': {},
+            'required': False,
+            'ui_component': 'json',
+        },
+        'webhook_url': {
+            'type': 'string',
+            'label': 'Notification Webhook URL',
+            'description': 'Slack, Discord, or Telegram webhook URL',
+            'placeholder': 'https://hooks.slack.com/...',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'message_template': {
+            'type': 'string',
+            'label': 'Message Template',
+            'description': 'Template for the notification message',
+            'placeholder': 'API Response: ${data.status}',
+            'default': 'API Response:\n${data}',
+            'required': False,
+            'ui_component': 'textarea',
+        }
+    },
 
     # Connection types
     input_types=['url', 'json'],
@@ -64,38 +105,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'api_url': {
-            'type': 'string',
-            'label': 'API URL',
-            'description': 'The API endpoint to fetch data from',
-            'placeholder': 'https://api.example.com/data',
-            'required': True
-        },
-        'api_headers': {
-            'type': 'object',
-            'label': 'API Headers',
-            'description': 'Headers to send with the API request',
-            'default': {},
-            'required': False
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Notification Webhook URL',
-            'description': 'Slack, Discord, or Telegram webhook URL',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': True
-        },
-        'message_template': {
-            'type': 'string',
-            'label': 'Message Template',
-            'description': 'Template for the notification message (use ${data.field} for values)',
-            'placeholder': 'API Response: ${data.status}',
-            'default': 'API Response:\n${data}',
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'api_response': {'type': 'object'},

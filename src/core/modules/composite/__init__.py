@@ -29,6 +29,7 @@ from .base import (
     CompositeRegistry,
     CompositeExecutor,
     register_composite,
+    UIVisibility,
 )
 
 # Browser composites
@@ -55,6 +56,7 @@ __all__ = [
     'CompositeRegistry',
     'CompositeExecutor',
     'register_composite',
+    'UIVisibility',
 
     # Browser composites
     'WebSearchAndNotify',

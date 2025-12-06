@@ -3,25 +3,95 @@ Multi-Channel Alert Composite Module
 
 Sends alerts to multiple notification channels simultaneously.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.notification.multi_channel_alert',
     version='1.0.0',
-    category='composite',
-    subcategory='notification',
+    category='notification',
+    subcategory='alert',
     tags=['notification', 'alert', 'multi-channel', 'slack', 'discord', 'telegram'],
 
-    # Display
-    label='Multi-Channel Alert',
-    label_key='modules.composite.notification.multi_channel_alert.label',
-    description='Send alert notifications to multiple channels (Slack, Discord, Telegram) simultaneously',
-    description_key='modules.composite.notification.multi_channel_alert.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['api_response'],
 
-    # Visual
-    icon='Bell',
-    color='#EF4444',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='Multi-Channel Alert',
+    ui_label_key='modules.composite.notification.multi_channel_alert.label',
+    ui_description='Send alert notifications to multiple channels (Slack, Discord, Telegram) simultaneously',
+    ui_description_key='modules.composite.notification.multi_channel_alert.description',
+    ui_group='Notification / Alert',
+    ui_icon='Bell',
+    ui_color='#EF4444',
+
+    # UI form generation
+    ui_params_schema={
+        'title': {
+            'type': 'string',
+            'label': 'Alert Title',
+            'description': 'Title of the alert',
+            'placeholder': 'Production Alert',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'message': {
+            'type': 'string',
+            'label': 'Alert Message',
+            'description': 'The alert message content',
+            'placeholder': 'Server CPU usage exceeded 90%',
+            'required': True,
+            'ui_component': 'textarea',
+        },
+        'severity': {
+            'type': 'string',
+            'label': 'Severity',
+            'description': 'Alert severity level',
+            'default': 'warning',
+            'required': False,
+            'ui_component': 'select',
+            'options': [
+                {'value': 'critical', 'label': 'Critical'},
+                {'value': 'warning', 'label': 'Warning'},
+                {'value': 'info', 'label': 'Info'}
+            ]
+        },
+        'slack_webhook': {
+            'type': 'string',
+            'label': 'Slack Webhook URL',
+            'description': 'Slack webhook (leave empty to skip)',
+            'placeholder': '${env.SLACK_WEBHOOK_URL}',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'discord_webhook': {
+            'type': 'string',
+            'label': 'Discord Webhook URL',
+            'description': 'Discord webhook (leave empty to skip)',
+            'placeholder': '${env.DISCORD_WEBHOOK_URL}',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'telegram_token': {
+            'type': 'string',
+            'label': 'Telegram Bot Token',
+            'description': 'Telegram bot token (leave empty to skip)',
+            'placeholder': '${env.TELEGRAM_BOT_TOKEN}',
+            'required': False,
+            'sensitive': True,
+            'ui_component': 'password',
+        },
+        'telegram_chat_id': {
+            'type': 'string',
+            'label': 'Telegram Chat ID',
+            'description': 'Telegram chat ID or channel username',
+            'placeholder': '@alerts',
+            'required': False,
+            'ui_component': 'input',
+        }
+    },
 
     # Connection types
     input_types=['text', 'json'],
@@ -34,7 +104,7 @@ from ..base import CompositeModule, register_composite
             'module': 'notification.slack.send_message',
             'params': {
                 'webhook_url': '${params.slack_webhook}',
-                'text': '🚨 *${params.title}*\n\n${params.message}'
+                'text': 'ALERT: *${params.title}*\n\n${params.message}'
             },
             'on_error': 'continue'
         },
@@ -43,7 +113,7 @@ from ..base import CompositeModule, register_composite
             'module': 'notification.discord.send_message',
             'params': {
                 'webhook_url': '${params.discord_webhook}',
-                'content': '🚨 **${params.title}**\n\n${params.message}'
+                'content': 'ALERT: **${params.title}**\n\n${params.message}'
             },
             'on_error': 'continue'
         },
@@ -53,68 +123,14 @@ from ..base import CompositeModule, register_composite
             'params': {
                 'bot_token': '${params.telegram_token}',
                 'chat_id': '${params.telegram_chat_id}',
-                'text': '🚨 *${params.title}*\n\n${params.message}',
+                'text': 'ALERT: *${params.title}*\n\n${params.message}',
                 'parse_mode': 'Markdown'
             },
             'on_error': 'continue'
         }
     ],
 
-    # Schema
-    params_schema={
-        'title': {
-            'type': 'string',
-            'label': 'Alert Title',
-            'description': 'Title of the alert',
-            'placeholder': 'Production Alert',
-            'required': True
-        },
-        'message': {
-            'type': 'string',
-            'label': 'Alert Message',
-            'description': 'The alert message content',
-            'placeholder': 'Server CPU usage exceeded 90%',
-            'required': True,
-            'multiline': True
-        },
-        'severity': {
-            'type': 'select',
-            'label': 'Severity',
-            'description': 'Alert severity level',
-            'options': ['critical', 'warning', 'info'],
-            'default': 'warning',
-            'required': False
-        },
-        'slack_webhook': {
-            'type': 'string',
-            'label': 'Slack Webhook URL',
-            'description': 'Slack webhook (leave empty to skip)',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': False
-        },
-        'discord_webhook': {
-            'type': 'string',
-            'label': 'Discord Webhook URL',
-            'description': 'Discord webhook (leave empty to skip)',
-            'placeholder': '${env.DISCORD_WEBHOOK_URL}',
-            'required': False
-        },
-        'telegram_token': {
-            'type': 'string',
-            'label': 'Telegram Bot Token',
-            'description': 'Telegram bot token (leave empty to skip)',
-            'placeholder': '${env.TELEGRAM_BOT_TOKEN}',
-            'required': False,
-            'sensitive': True
-        },
-        'telegram_chat_id': {
-            'type': 'string',
-            'label': 'Telegram Chat ID',
-            'description': 'Telegram chat ID or channel username',
-            'placeholder': '@alerts',
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'channels': {
@@ -130,7 +146,7 @@ from ..base import CompositeModule, register_composite
 
     # Execution settings
     timeout=60,
-    retryable=False,  # Don't retry to avoid duplicate alerts
+    retryable=False,
     max_retries=1,
 
     # Documentation

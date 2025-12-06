@@ -3,25 +3,67 @@ JSON Transform and Notify Composite Module
 
 Transforms JSON data and sends notification with results.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.data.json_transform_notify',
     version='1.0.0',
-    category='composite',
-    subcategory='data',
+    category='data',
+    subcategory='transform',
     tags=['data', 'json', 'transform', 'notification'],
 
-    # Display
-    label='JSON Transform and Notify',
-    label_key='modules.composite.data.json_transform_notify.label',
-    description='Transform JSON data using JMESPath and send notification with results',
-    description_key='modules.composite.data.json_transform_notify.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data', 'api_response'],
 
-    # Visual
-    icon='Braces',
-    color='#8B5CF6',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='JSON Transform and Notify',
+    ui_label_key='modules.composite.data.json_transform_notify.label',
+    ui_description='Transform JSON data using JMESPath and send notification with results',
+    ui_description_key='modules.composite.data.json_transform_notify.description',
+    ui_group='Data / Transform',
+    ui_icon='Braces',
+    ui_color='#8B5CF6',
+
+    # UI form generation
+    ui_params_schema={
+        'json_input': {
+            'type': 'string',
+            'label': 'JSON Input',
+            'description': 'JSON string to transform',
+            'placeholder': '[{"name": "John", "age": 30}]',
+            'required': True,
+            'ui_component': 'textarea',
+        },
+        'filter_expression': {
+            'type': 'string',
+            'label': 'Filter Expression',
+            'description': 'Expression to filter data (e.g., item.age > 25)',
+            'placeholder': 'true',
+            'default': 'true',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'map_expression': {
+            'type': 'string',
+            'label': 'Map Expression',
+            'description': 'Expression to transform each item',
+            'placeholder': 'item',
+            'default': 'item',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'webhook_url': {
+            'type': 'string',
+            'label': 'Notification Webhook URL',
+            'description': 'Slack webhook URL to send results',
+            'placeholder': '${env.SLACK_WEBHOOK_URL}',
+            'required': False,
+            'ui_component': 'input',
+        }
+    },
 
     # Connection types
     input_types=['json'],
@@ -67,46 +109,13 @@ from ..base import CompositeModule, register_composite
             'module': 'notification.slack.send_message',
             'params': {
                 'webhook_url': '${params.webhook_url}',
-                'text': '📊 *Data Transform Results*\n\n```${steps.stringify.result}```'
+                'text': 'Data Transform Results\n\n${steps.stringify.result}'
             },
             'on_error': 'continue'
         }
     ],
 
-    # Schema
-    params_schema={
-        'json_input': {
-            'type': 'string',
-            'label': 'JSON Input',
-            'description': 'JSON string to transform',
-            'placeholder': '[{"name": "John", "age": 30}]',
-            'required': True,
-            'multiline': True
-        },
-        'filter_expression': {
-            'type': 'string',
-            'label': 'Filter Expression',
-            'description': 'Expression to filter data (e.g., item.age > 25)',
-            'placeholder': 'true',
-            'default': 'true',
-            'required': False
-        },
-        'map_expression': {
-            'type': 'string',
-            'label': 'Map Expression',
-            'description': 'Expression to transform each item',
-            'placeholder': 'item',
-            'default': 'item',
-            'required': False
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Notification Webhook URL',
-            'description': 'Slack webhook URL to send results',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'original_count': {'type': 'number'},

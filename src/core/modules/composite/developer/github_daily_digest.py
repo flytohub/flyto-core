@@ -3,25 +3,66 @@ GitHub Daily Digest Composite Module
 
 Fetches GitHub repository updates and sends a daily digest notification.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.developer.github_daily_digest',
     version='1.0.0',
-    category='composite',
-    subcategory='developer',
+    category='developer',
+    subcategory='github',
     tags=['github', 'digest', 'notification', 'developer', 'daily'],
 
-    # Display
-    label='GitHub Daily Digest',
-    label_key='modules.composite.developer.github_daily_digest.label',
-    description='Fetch GitHub repository updates and send a daily digest to Slack or Discord',
-    description_key='modules.composite.developer.github_daily_digest.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data', 'api_response'],
 
-    # Visual
-    icon='Github',
-    color='#333333',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='GitHub Daily Digest',
+    ui_label_key='modules.composite.developer.github_daily_digest.label',
+    ui_description='Fetch GitHub repository updates and send a daily digest to Slack or Discord',
+    ui_description_key='modules.composite.developer.github_daily_digest.description',
+    ui_group='Developer / GitHub',
+    ui_icon='Github',
+    ui_color='#333333',
+
+    # UI form generation
+    ui_params_schema={
+        'owner': {
+            'type': 'string',
+            'label': 'Repository Owner',
+            'description': 'GitHub username or organization',
+            'placeholder': 'facebook',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'repo': {
+            'type': 'string',
+            'label': 'Repository Name',
+            'description': 'GitHub repository name',
+            'placeholder': 'react',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'webhook_url': {
+            'type': 'string',
+            'label': 'Notification Webhook URL',
+            'description': 'Slack or Discord webhook URL',
+            'placeholder': '${env.SLACK_WEBHOOK_URL}',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'github_token': {
+            'type': 'string',
+            'label': 'GitHub Token',
+            'description': 'GitHub personal access token (optional for public repos)',
+            'placeholder': '${env.GITHUB_TOKEN}',
+            'required': False,
+            'sensitive': True,
+            'ui_component': 'password',
+        }
+    },
 
     # Connection types
     input_types=['text'],
@@ -51,7 +92,7 @@ from ..base import CompositeModule, register_composite
             'id': 'format_message',
             'module': 'data.text.template',
             'params': {
-                'template': '📊 *GitHub Daily Digest*\n\n*Repository:* ${steps.get_repo.full_name}\n⭐ Stars: ${steps.get_repo.stargazers_count}\n🍴 Forks: ${steps.get_repo.forks_count}\n🐛 Open Issues: ${steps.get_repo.open_issues_count}\n\n*Recent Issues:*\n${steps.get_issues.formatted}'
+                'template': 'GitHub Daily Digest\n\nRepository: ${steps.get_repo.full_name}\nStars: ${steps.get_repo.stargazers_count}\nForks: ${steps.get_repo.forks_count}\nOpen Issues: ${steps.get_repo.open_issues_count}\n\nRecent Issues:\n${steps.get_issues.formatted}'
             },
             'on_error': 'continue'
         },
@@ -66,38 +107,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'owner': {
-            'type': 'string',
-            'label': 'Repository Owner',
-            'description': 'GitHub username or organization',
-            'placeholder': 'facebook',
-            'required': True
-        },
-        'repo': {
-            'type': 'string',
-            'label': 'Repository Name',
-            'description': 'GitHub repository name',
-            'placeholder': 'react',
-            'required': True
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Notification Webhook URL',
-            'description': 'Slack or Discord webhook URL',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': True
-        },
-        'github_token': {
-            'type': 'string',
-            'label': 'GitHub Token',
-            'description': 'GitHub personal access token (optional for public repos)',
-            'placeholder': '${env.GITHUB_TOKEN}',
-            'required': False,
-            'sensitive': True
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'repository': {

@@ -3,25 +3,73 @@ CSV to JSON Composite Module
 
 Reads a CSV file and converts it to JSON format.
 """
-from ..base import CompositeModule, register_composite
+from ..base import CompositeModule, register_composite, UIVisibility
 
 
 @register_composite(
     module_id='composite.data.csv_to_json',
     version='1.0.0',
-    category='composite',
-    subcategory='data',
+    category='data',
+    subcategory='transform',
     tags=['data', 'csv', 'json', 'transform', 'file'],
 
-    # Display
-    label='CSV to JSON',
-    label_key='modules.composite.data.csv_to_json.label',
-    description='Read a CSV file and convert it to JSON format',
-    description_key='modules.composite.data.csv_to_json.description',
+    # Context requirements
+    requires_context=None,
+    provides_context=['data', 'file'],
 
-    # Visual
-    icon='FileSpreadsheet',
-    color='#059669',
+    # UI metadata
+    ui_visibility=UIVisibility.DEFAULT,
+    ui_label='CSV to JSON',
+    ui_label_key='modules.composite.data.csv_to_json.label',
+    ui_description='Read a CSV file and convert it to JSON format',
+    ui_description_key='modules.composite.data.csv_to_json.description',
+    ui_group='Data / Transform',
+    ui_icon='FileSpreadsheet',
+    ui_color='#059669',
+
+    # UI form generation
+    ui_params_schema={
+        'input_file': {
+            'type': 'string',
+            'label': 'Input CSV File',
+            'description': 'Path to the CSV file to read',
+            'placeholder': './data/input.csv',
+            'required': True,
+            'ui_component': 'input',
+        },
+        'output_file': {
+            'type': 'string',
+            'label': 'Output JSON File',
+            'description': 'Path to save the JSON output (optional)',
+            'placeholder': './data/output.json',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'delimiter': {
+            'type': 'string',
+            'label': 'Delimiter',
+            'description': 'CSV delimiter character',
+            'default': ',',
+            'required': False,
+            'ui_component': 'input',
+        },
+        'has_header': {
+            'type': 'boolean',
+            'label': 'Has Header Row',
+            'description': 'Whether the CSV has a header row',
+            'default': True,
+            'required': False,
+            'ui_component': 'checkbox',
+        },
+        'indent': {
+            'type': 'number',
+            'label': 'JSON Indent',
+            'description': 'Number of spaces for JSON indentation',
+            'default': 2,
+            'required': False,
+            'ui_component': 'number',
+        }
+    },
 
     # Connection types
     input_types=['file_path', 'csv'],
@@ -57,44 +105,7 @@ from ..base import CompositeModule, register_composite
         }
     ],
 
-    # Schema
-    params_schema={
-        'input_file': {
-            'type': 'string',
-            'label': 'Input CSV File',
-            'description': 'Path to the CSV file to read',
-            'placeholder': './data/input.csv',
-            'required': True
-        },
-        'output_file': {
-            'type': 'string',
-            'label': 'Output JSON File',
-            'description': 'Path to save the JSON output (optional)',
-            'placeholder': './data/output.json',
-            'required': False
-        },
-        'delimiter': {
-            'type': 'string',
-            'label': 'Delimiter',
-            'description': 'CSV delimiter character',
-            'default': ',',
-            'required': False
-        },
-        'has_header': {
-            'type': 'boolean',
-            'label': 'Has Header Row',
-            'description': 'Whether the CSV has a header row',
-            'default': True,
-            'required': False
-        },
-        'indent': {
-            'type': 'number',
-            'label': 'JSON Indent',
-            'description': 'Number of spaces for JSON indentation',
-            'default': 2,
-            'required': False
-        }
-    },
+    # Output schema
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'array'},
