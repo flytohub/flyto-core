@@ -12,13 +12,13 @@ from ...registry import register_module
 
 
 @register_module(
-    module_id='core.flow.loop',
+    module_id='flow.loop',
     version='1.0.0',
     category='flow',
-    tags=['flow', 'loop', 'iteration'],
+    tags=['flow', 'loop', 'iteration', 'repeat'],
     label='Loop',
     label_key='modules.flow.loop.label',
-    description='Iterate over a list and execute steps for each item',
+    description='Repeat steps N times with optional jump target',
     description_key='modules.flow.loop.description',
     icon='Repeat',
     color='#8B5CF6',
@@ -44,7 +44,7 @@ from ...registry import register_module
             'description': 'Number of times to repeat',
             'description_key': 'modules.flow.loop.params.times.description',
             'default': 10,
-            'required': False
+            'required': True
         },
         'target': {
             'type': 'string',
@@ -54,14 +54,6 @@ from ...registry import register_module
             'description_key': 'modules.flow.loop.params.target.description',
             'required': False
         },
-        'items': {
-            'type': 'array',
-            'label': 'Items',
-            'label_key': 'modules.flow.loop.params.items.label',
-            'description': 'List of items to iterate over',
-            'description_key': 'modules.flow.loop.params.items.description',
-            'required': False
-        },
         'steps': {
             'type': 'array',
             'label': 'Steps',
@@ -69,14 +61,6 @@ from ...registry import register_module
             'description': 'Steps to execute for each iteration (nested mode)',
             'description_key': 'modules.flow.loop.params.steps.description',
             'required': False
-        },
-        'item_var': {
-            'type': 'string',
-            'label': 'Item Variable',
-            'label_key': 'modules.flow.loop.params.item_var.label',
-            'description': 'Variable name for current item',
-            'description_key': 'modules.flow.loop.params.item_var.description',
-            'default': 'item'
         },
         'index_var': {
             'type': 'string',
@@ -90,7 +74,6 @@ from ...registry import register_module
     output_schema={
         'status': {'type': 'string'},
         'results': {'type': 'array', 'optional': True},
-        'result': {'type': 'any', 'optional': True},
         'count': {'type': 'number', 'optional': True},
         'next_step': {'type': 'string', 'optional': True},
         'iteration': {'type': 'number', 'optional': True}
@@ -104,16 +87,11 @@ from ...registry import register_module
             }
         },
         {
-            'name': 'Nested loop with items',
+            'name': 'Nested loop (5 times)',
             'params': {
-                'items': '${search_results}',
-                'item_var': 'result_element',
+                'times': 5,
                 'steps': [
-                    {
-                        'module': 'element.text',
-                        'params': {'element_id': '${result_element}'},
-                        'output': 'text'
-                    }
+                    {'module': 'browser.click', 'params': {'selector': '.next'}}
                 ]
             }
         }
@@ -122,34 +100,97 @@ from ...registry import register_module
     license='MIT'
 )
 @register_module(
-    module_id='flow.loop',
+    module_id='flow.foreach',
     version='1.0.0',
     category='flow',
-    tags=['flow', 'loop', 'iteration'],
-    label='Loop',
-    description='Loop with edge-based or nested mode',
-    icon='Repeat',
-    color='#8B5CF6',
-)
-@register_module(
-    module_id='loop',
-    version='1.0.0',
-    category='flow',
-    tags=['flow', 'loop', 'iteration'],
-    label='Loop',
-    description='Iterate over a list and execute steps for each item',
-    icon='Repeat',
-    color='#8B5CF6',
-)
-@register_module(
-    module_id='foreach',
-    version='1.0.0',
-    category='flow',
-    tags=['flow', 'loop', 'iteration', 'foreach'],
+    tags=['flow', 'loop', 'iteration', 'foreach', 'list'],
     label='For Each',
-    description='Iterate over a list and execute steps for each item (alias for Loop)',
-    icon='Repeat',
-    color='#8B5CF6',
+    label_key='modules.flow.foreach.label',
+    description='Iterate over a list and execute steps for each item',
+    description_key='modules.flow.foreach.description',
+    icon='List',
+    color='#10B981',
+
+    # Connection types
+    input_types=['array', 'any'],
+    output_types=['array', 'any'],
+
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=['flow.control'],
+
+    params_schema={
+        'items': {
+            'type': 'array',
+            'label': 'Items',
+            'label_key': 'modules.flow.foreach.params.items.label',
+            'description': 'List of items to iterate over',
+            'description_key': 'modules.flow.foreach.params.items.description',
+            'required': True
+        },
+        'steps': {
+            'type': 'array',
+            'label': 'Steps',
+            'label_key': 'modules.flow.foreach.params.steps.label',
+            'description': 'Steps to execute for each item',
+            'description_key': 'modules.flow.foreach.params.steps.description',
+            'required': True
+        },
+        'item_var': {
+            'type': 'string',
+            'label': 'Item Variable',
+            'label_key': 'modules.flow.foreach.params.item_var.label',
+            'description': 'Variable name for current item',
+            'description_key': 'modules.flow.foreach.params.item_var.description',
+            'default': 'item'
+        },
+        'index_var': {
+            'type': 'string',
+            'label': 'Index Variable',
+            'label_key': 'modules.flow.foreach.params.index_var.label',
+            'description': 'Variable name for current index',
+            'description_key': 'modules.flow.foreach.params.index_var.description',
+            'default': 'index'
+        },
+        'output_mode': {
+            'type': 'string',
+            'label': 'Output Mode',
+            'label_key': 'modules.flow.foreach.params.output_mode.label',
+            'description': 'How to collect results: collect (array), last (single), none',
+            'description_key': 'modules.flow.foreach.params.output_mode.description',
+            'default': 'collect',
+            'enum': ['collect', 'last', 'none']
+        }
+    },
+    output_schema={
+        'status': {'type': 'string'},
+        'results': {'type': 'array', 'optional': True},
+        'result': {'type': 'any', 'optional': True},
+        'count': {'type': 'number', 'optional': True}
+    },
+    examples=[
+        {
+            'name': 'Process each search result',
+            'params': {
+                'items': '${search_results}',
+                'item_var': 'element',
+                'steps': [
+                    {
+                        'module': 'element.text',
+                        'params': {'element_id': '${element}'},
+                        'output': 'text'
+                    }
+                ]
+            }
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
 )
 class LoopModule(BaseModule):
     """
