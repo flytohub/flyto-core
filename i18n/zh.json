@@ -119,7 +119,67 @@
     "success": "成功",
     "failed": "失敗",
     "running": "執行中",
-    "skipped": "已跳過"
+    "skipped": "已跳過",
+    "error": "錯誤"
+  },
+  "menu": {
+    "title": "主選單",
+    "run_workflow": "執行工作流程",
+    "run_workflow_desc": "從檔案或選擇執行工作流程",
+    "list_workflows": "瀏覽工作流程",
+    "list_workflows_desc": "按分類查看可用的工作流程",
+    "list_modules": "模組目錄",
+    "list_modules_desc": "查看所有可用的自動化模組",
+    "version": "版本資訊",
+    "version_desc": "顯示版本和建置資訊",
+    "help": "說明",
+    "help_desc": "顯示使用指南和文件",
+    "settings": "設定",
+    "settings_desc": "設定語言和輸出選項",
+    "exit": "結束",
+    "exit_desc": "結束應用程式",
+    "select_option": "選擇一個選項",
+    "invalid_choice": "無效的選擇，請重試。",
+    "cancelled": "操作已取消",
+    "error": "發生錯誤",
+    "not_implemented": "此功能尚未實作",
+    "press_enter": "按 Enter 繼續...",
+    "goodbye": "再見！感謝使用 Flyto。",
+    "back": "返回選單"
+  },
+  "workflows": {
+    "select": "選擇工作流程",
+    "enter_number": "輸入工作流程編號",
+    "category": "分類",
+    "no_workflows": "沒有可用的工作流程"
+  },
+  "modules": {
+    "catalog": "模組目錄",
+    "total": "可用模組總數",
+    "category": "分類"
+  },
+  "version": {
+    "title": "版本資訊",
+    "version": "版本",
+    "commit": "提交",
+    "date": "建置日期"
+  },
+  "help": {
+    "title": "說明",
+    "usage_title": "使用方式",
+    "usage_content": "選擇「執行工作流程」來執行自動化任務",
+    "workflows_title": "工作流程",
+    "workflows_content": "定義自動化序列的 YAML 檔案",
+    "params_title": "參數",
+    "params_content": "使用 --param key=value 傳遞值或互動式輸入"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "語言",
+    "output_dir": "輸出目錄",
+    "verbose": "詳細模式",
+    "select": "選擇要修改的設定",
+    "updated": "設定更新成功"
   },
   "phase2": {
     "execution": {

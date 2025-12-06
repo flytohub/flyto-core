@@ -119,7 +119,67 @@
     "success": "成功",
     "failed": "失敗",
     "running": "実行中",
-    "skipped": "スキップ"
+    "skipped": "スキップ",
+    "error": "エラー"
+  },
+  "menu": {
+    "title": "メインメニュー",
+    "run_workflow": "ワークフローを実行",
+    "run_workflow_desc": "ファイルまたは選択からワークフローを実行",
+    "list_workflows": "ワークフローを閲覧",
+    "list_workflows_desc": "カテゴリ別に利用可能なワークフローを表示",
+    "list_modules": "モジュールカタログ",
+    "list_modules_desc": "すべての利用可能な自動化モジュールを表示",
+    "version": "バージョン情報",
+    "version_desc": "バージョンとビルド情報を表示",
+    "help": "ヘルプ",
+    "help_desc": "使用ガイドとドキュメントを表示",
+    "settings": "設定",
+    "settings_desc": "言語と出力オプションを設定",
+    "exit": "終了",
+    "exit_desc": "アプリケーションを終了",
+    "select_option": "オプションを選択",
+    "invalid_choice": "無効な選択です。もう一度お試しください。",
+    "cancelled": "操作がキャンセルされました",
+    "error": "エラーが発生しました",
+    "not_implemented": "この機能はまだ実装されていません",
+    "press_enter": "Enter キーを押して続行...",
+    "goodbye": "さようなら！Flyto をご利用いただきありがとうございました。",
+    "back": "メニューに戻る"
+  },
+  "workflows": {
+    "select": "ワークフローを選択",
+    "enter_number": "ワークフロー番号を入力",
+    "category": "カテゴリ",
+    "no_workflows": "利用可能なワークフローがありません"
+  },
+  "modules": {
+    "catalog": "モジュールカタログ",
+    "total": "利用可能なモジュール数",
+    "category": "カテゴリ"
+  },
+  "version": {
+    "title": "バージョン情報",
+    "version": "バージョン",
+    "commit": "コミット",
+    "date": "ビルド日"
+  },
+  "help": {
+    "title": "ヘルプ",
+    "usage_title": "使用方法",
+    "usage_content": "「ワークフローを実行」を選択して自動化タスクを実行",
+    "workflows_title": "ワークフロー",
+    "workflows_content": "自動化シーケンスを定義する YAML ファイル",
+    "params_title": "パラメータ",
+    "params_content": "--param key=value で値を渡すか、対話式で入力"
+  },
+  "settings": {
+    "title": "設定",
+    "language": "言語",
+    "output_dir": "出力ディレクトリ",
+    "verbose": "詳細モード",
+    "select": "変更する設定を選択",
+    "updated": "設定が正常に更新されました"
   },
   "phase2": {
     "execution": {
