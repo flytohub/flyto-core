@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **P2 Feature Modules** (9 new modules)
+  - `image.resize` - Resize images with multiple algorithms (lanczos, bilinear, bicubic, nearest)
+  - `image.compress` - Compress images with quality control and target file size
+  - `pdf.generate` - Generate PDF from HTML or text content using reportlab
+  - `word.parse` - Parse Word documents (docx) to extract text, tables, images, metadata
+  - `email.read` - Read emails via IMAP with folder/filter support
+  - `slack.send` - Send Slack messages via incoming webhook with blocks/attachments
+  - `webhook.trigger` - Send HTTP requests to webhook endpoints (GET/POST/PUT/PATCH/DELETE)
+  - `database.insert` - Insert data into database tables (PostgreSQL, MySQL, SQLite)
+  - `database.update` - Update data in database tables with WHERE conditions
+
 - **P1 Feature Modules** (7 new modules)
   - `image.download` - Download images from URL with custom headers
   - `image.convert` - Convert images between formats (PNG, JPEG, WEBP, etc.)
