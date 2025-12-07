@@ -1,6 +1,6 @@
 # Flyto Core
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 > A Git-native workflow engine and atomic module runtime for building local-first AI agents.
@@ -253,11 +253,26 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ## License
 
-MIT License — see **[LICENSE](LICENSE)** for details.
+**Source Available License** — Free for non-commercial use.
+
+| Use Case | License Required |
+|----------|-----------------|
+| Personal projects | Free |
+| Education & research | Free |
+| Internal business tools | Free |
+| Commercial products/services | [Commercial License](LICENSE-COMMERCIAL.md) |
+
+See **[LICENSE](LICENSE)** for complete terms.
+
+For commercial licensing inquiries: licensing@flyto.dev
 
 ---
 
 <p align="center">
-  <b>Open-source core engine of the Flyto automation platform.</b><br>
+  <b>Source-available core engine of the Flyto automation platform.</b><br>
   Built for developers. Designed for AI.
 </p>
+
+---
+
+*Copyright (c) 2025 Flyto. All Rights Reserved.*

@@ -71,13 +71,21 @@ class WorkflowEngine:
         'core.flow.loop',
     ])
 
-    def __init__(self, workflow: Dict[str, Any], params: Dict[str, Any] = None):
+    def __init__(
+        self,
+        workflow: Dict[str, Any],
+        params: Dict[str, Any] = None,
+        start_step: Optional[int] = None,
+        end_step: Optional[int] = None
+    ):
         """
         Initialize workflow engine
 
         Args:
             workflow: Parsed workflow YAML
             params: Workflow input parameters
+            start_step: Start from this step index (0-based, inclusive)
+            end_step: End at this step index (0-based, inclusive)
         """
         self.workflow = workflow
         self.params = self._parse_params(workflow.get('params', []), params or {})
@@ -93,9 +101,16 @@ class WorkflowEngine:
         self.end_time: Optional[float] = None
         self.status: str = WorkflowStatus.PENDING
 
+        # Step range for partial execution (debug mode)
+        self._start_step = start_step
+        self._end_step = end_step
+
         self._step_index: Dict[str, int] = {}
         self._visited_gotos: Dict[str, int] = {}
         self._cancelled: bool = False
+
+        # Current step index for progress tracking (exposed for external monitoring)
+        self.current_step: int = 0
 
     def _parse_params(
         self,
@@ -172,12 +187,28 @@ class WorkflowEngine:
     async def _execute_steps(self, steps: List[Dict[str, Any]]):
         """
         Execute workflow steps with flow control support
+
+        Supports partial execution via start_step and end_step parameters.
         """
-        current_idx = 0
+        # Determine step range (0-based indices)
+        start_idx = self._start_step if self._start_step is not None else 0
+        end_idx = self._end_step if self._end_step is not None else len(steps) - 1
+
+        # Clamp to valid range
+        start_idx = max(0, min(start_idx, len(steps) - 1))
+        end_idx = max(start_idx, min(end_idx, len(steps) - 1))
+
+        if self._start_step is not None or self._end_step is not None:
+            logger.info(f"Partial execution: steps {start_idx + 1} to {end_idx + 1} (of {len(steps)})")
+
+        current_idx = start_idx
         parallel_batch = []
 
-        while current_idx < len(steps):
+        while current_idx <= end_idx:
             step = steps[current_idx]
+
+            # Update current_step for external monitoring
+            self.current_step = current_idx
 
             if step.get('parallel', False):
                 parallel_batch.append((current_idx, step))
@@ -189,6 +220,12 @@ class WorkflowEngine:
                 parallel_batch = []
 
             next_idx = await self._execute_step_with_flow_control(step, current_idx, steps)
+
+            # If flow control jumps beyond end_idx, stop execution
+            if next_idx > end_idx + 1:
+                logger.info(f"Flow control jumped to step {next_idx + 1}, stopping at end_step {end_idx + 1}")
+                break
+
             current_idx = next_idx
 
         if parallel_batch:

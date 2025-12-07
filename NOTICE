@@ -1,0 +1,151 @@
+Flyto Core
+Copyright (c) 2025 Flyto. All Rights Reserved.
+
+================================================================================
+
+NOTICE FILE
+
+This file contains attribution notices and license information for Flyto Core
+and any third-party components included in this software.
+
+================================================================================
+
+1. FLYTO CORE
+
+   Licensed under the Flyto Source Available License v1.0
+   See LICENSE file for the complete license terms.
+
+   Commercial use requires a separate license.
+   See LICENSE-COMMERCIAL.md for commercial licensing options.
+
+   Website: https://flyto.dev
+   Source: https://github.com/flytohub/flyto-core
+
+================================================================================
+
+2. TRADEMARKS
+
+   "Flyto", "Flyto Core", and the Flyto logo are trademarks of Flyto.
+
+   These trademarks may not be used without prior written permission except:
+   - To refer to the Flyto Core software in an accurate, descriptive manner
+   - In attribution notices as required by the license
+
+   You may NOT use these trademarks:
+   - In a way that suggests endorsement or affiliation
+   - In product names, service names, or domain names
+   - As part of your own branding
+
+================================================================================
+
+3. THIRD-PARTY COMPONENTS
+
+   Flyto Core includes or depends on the following third-party components.
+   Each component is subject to its own license terms.
+
+   -------------------------------------------------------------------------
+   Component: Python
+   License: PSF License
+   Source: https://www.python.org/
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: aiohttp
+   License: Apache License 2.0
+   Source: https://github.com/aio-libs/aiohttp
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: aiofiles
+   License: Apache License 2.0
+   Source: https://github.com/Tinche/aiofiles
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: PyYAML
+   License: MIT License
+   Source: https://github.com/yaml/pyyaml
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: Playwright
+   License: Apache License 2.0
+   Source: https://github.com/microsoft/playwright-python
+   Note: Optional dependency for browser automation
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: Pydantic
+   License: MIT License
+   Source: https://github.com/pydantic/pydantic
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: httpx
+   License: BSD-3-Clause
+   Source: https://github.com/encode/httpx
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: beautifulsoup4
+   License: MIT License
+   Source: https://www.crummy.com/software/BeautifulSoup/
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: lxml
+   License: BSD License
+   Source: https://lxml.de/
+   -------------------------------------------------------------------------
+
+   -------------------------------------------------------------------------
+   Component: Pillow
+   License: HPND License
+   Source: https://github.com/python-pillow/Pillow
+   Note: Optional dependency for image processing
+   -------------------------------------------------------------------------
+
+================================================================================
+
+4. CONTRIBUTOR ACKNOWLEDGMENTS
+
+   We thank all contributors who have helped improve Flyto Core.
+
+   By contributing to Flyto Core, you agree to the Contributor License Agreement
+   as described in the LICENSE file (Section 5).
+
+   For a full list of contributors, see:
+   https://github.com/flytohub/flyto-core/graphs/contributors
+
+================================================================================
+
+5. SECURITY NOTICES
+
+   If you discover a security vulnerability in Flyto Core, please report it
+   responsibly to: security@flyto.dev
+
+   See SECURITY.md for our security policy and vulnerability disclosure process.
+
+================================================================================
+
+6. CONTACT INFORMATION
+
+   General Inquiries:     hello@flyto.dev
+   Licensing:             licensing@flyto.dev
+   Security:              security@flyto.dev
+   Support:               support@flyto.dev
+
+   Website:               https://flyto.dev
+   Documentation:         https://docs.flyto.dev
+   GitHub:                https://github.com/flytohub/flyto-core
+
+================================================================================
+
+7. CHANGELOG
+
+   For a detailed changelog, see:
+   https://github.com/flytohub/flyto-core/releases
+
+================================================================================
+
+END OF NOTICE FILE

@@ -7,7 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Loop Module Consolidation** - Simplified loop module registrations
+  - Consolidated from 4 IDs (`core.flow.loop`, `flow.loop`, `loop`, `foreach`) to 2 clear modules
+  - `flow.loop` - Repeat N times (params: `times`, `target`)
+  - `flow.foreach` - Iterate over list (params: `items`, `steps`)
+
 ### Added
+- **Execution Environment Safety System** (Security Feature)
+  - `ExecutionEnvironment` enum: `LOCAL` | `CLOUD` | `ALL`
+  - `LOCAL_ONLY_CATEGORIES` set for automatic environment detection
+  - `MODULE_ENVIRONMENT_OVERRIDES` dict for per-module overrides
+  - `get_module_environment()` function to determine module environment
+  - `is_module_allowed_in_environment()` function for runtime checks
+  - **LOCAL_ONLY Categories** (blocked in cloud deployment):
+    - `browser.*` - Browser automation (security risk, resource heavy)
+    - `page.*` - Browser page operations
+    - `scraper.*` - Web scraping operations
+    - `element.*` - DOM element operations
+    - `file.*` - Local filesystem access
+    - `desktop.*`, `app.*` - Desktop automation (future)
+  - **Specific LOCAL_ONLY Modules** (in otherwise cloud-safe categories):
+    - `database.sqlite_query`, `database.sqlite_execute` - Local SQLite
+    - `image.read_local` - Local file image reading
+    - `utility.shell_exec`, `utility.run_command` - Shell execution
+
 - **P2 Feature Modules** (9 new modules)
   - `image.resize` - Resize images with multiple algorithms (lanczos, bilinear, bicubic, nearest)
   - `image.compress` - Compress images with quality control and target file size

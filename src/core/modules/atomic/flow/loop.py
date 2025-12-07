@@ -314,20 +314,28 @@ class LoopModule(BaseModule):
     async def _execute_edge_mode(self) -> Dict[str, Any]:
         """
         Edge-based loop: return jump instruction to workflow engine
+
+        The loop body (steps between target and this loop module) executes N times.
+        - First execution: before any loop (iteration 0)
+        - Then N-1 more jumps back to target
+
+        So if times=2, we jump back 1 time (total 2 executions of loop body).
         """
         # Use target as key to track iterations
         iteration_key = f"{self.ITERATION_PREFIX}{self.target}"
         current_iteration = self.context.get(iteration_key, 0) + 1
 
-        if current_iteration > self.times:
+        # Check if we've completed enough iterations
+        # times=2 means: run 2 times total, so jump back (times-1)=1 time
+        if current_iteration >= self.times:
             # Max iterations reached, continue to next step
             return {
                 'status': 'completed',
-                'iteration': current_iteration - 1,
+                'iteration': current_iteration,
                 'message': f"Loop completed after {self.times} iterations"
             }
 
-        # Return jump instruction
+        # Return jump instruction for next iteration
         return {
             'next_step': self.target,
             'iteration': current_iteration,

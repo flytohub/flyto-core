@@ -1,0 +1,164 @@
+# ==============================================================================
+# LICENSE HEADER TEMPLATES
+# ==============================================================================
+#
+# Use one of the following headers in your source files to indicate license.
+#
+# ==============================================================================
+
+
+# ==============================================================================
+# PYTHON FILES (.py)
+# ==============================================================================
+# Add this header at the top of all Python files:
+
+# Flyto Core - Source Available License
+# Copyright (c) 2025 Flyto. All Rights Reserved.
+#
+# This source code is licensed under the Flyto Source Available License v1.0.
+# You may obtain a copy of the license at:
+#     https://github.com/flytohub/flyto-core/blob/main/LICENSE
+#
+# Commercial use of this software requires a separate license.
+# See LICENSE-COMMERCIAL.md for commercial licensing options.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
+
+# ==============================================================================
+# YAML FILES (.yaml, .yml)
+# ==============================================================================
+# Add this header at the top of all YAML files:
+
+# Flyto Core - Source Available License
+# Copyright (c) 2025 Flyto. All Rights Reserved.
+# Commercial use requires a license. See LICENSE for details.
+
+
+# ==============================================================================
+# JAVASCRIPT/TYPESCRIPT FILES (.js, .ts, .jsx, .tsx)
+# ==============================================================================
+# Add this header at the top of all JS/TS files:
+
+/**
+ * Flyto Core - Source Available License
+ * Copyright (c) 2025 Flyto. All Rights Reserved.
+ *
+ * This source code is licensed under the Flyto Source Available License v1.0.
+ * You may obtain a copy of the license at:
+ *     https://github.com/flytohub/flyto-core/blob/main/LICENSE
+ *
+ * Commercial use of this software requires a separate license.
+ * See LICENSE-COMMERCIAL.md for commercial licensing options.
+ */
+
+
+# ==============================================================================
+# HTML FILES (.html)
+# ==============================================================================
+# Add this header at the top of all HTML files:
+
+<!--
+  Flyto Core - Source Available License
+  Copyright (c) 2025 Flyto. All Rights Reserved.
+  Commercial use requires a license. See LICENSE for details.
+-->
+
+
+# ==============================================================================
+# CSS FILES (.css)
+# ==============================================================================
+# Add this header at the top of all CSS files:
+
+/*
+ * Flyto Core - Source Available License
+ * Copyright (c) 2025 Flyto. All Rights Reserved.
+ * Commercial use requires a license. See LICENSE for details.
+ */
+
+
+# ==============================================================================
+# SHELL SCRIPTS (.sh, .bash)
+# ==============================================================================
+# Add this header after the shebang line:
+
+#!/bin/bash
+# Flyto Core - Source Available License
+# Copyright (c) 2025 Flyto. All Rights Reserved.
+# Commercial use requires a license. See LICENSE for details.
+
+
+# ==============================================================================
+# MARKDOWN FILES (.md)
+# ==============================================================================
+# Add this footer at the bottom of documentation files:
+
+---
+*Copyright (c) 2025 Flyto. Licensed under the Flyto Source Available License.*
+
+
+# ==============================================================================
+# SPDX IDENTIFIER (SHORT FORM)
+# ==============================================================================
+# For files where space is limited, use this SPDX-style identifier:
+
+# SPDX-License-Identifier: Flyto-SAL-1.0
+# SPDX-FileCopyrightText: 2025 Flyto
+
+
+# ==============================================================================
+# AUTOMATED HEADER SCRIPT
+# ==============================================================================
+# Use this script to add headers to Python files automatically:
+
+#!/usr/bin/env python3
+"""
+Script to add license headers to Python files.
+Run: python add_headers.py src/
+"""
+
+HEADER = '''\
+# Flyto Core - Source Available License
+# Copyright (c) 2025 Flyto. All Rights Reserved.
+#
+# This source code is licensed under the Flyto Source Available License v1.0.
+# Commercial use requires a license. See LICENSE for details.
+
+'''
+
+import sys
+from pathlib import Path
+
+def add_header(file_path: Path) -> None:
+    content = file_path.read_text()
+    if 'Flyto Core - Source Available License' in content:
+        return  # Already has header
+
+    # Preserve shebang if present
+    if content.startswith('#!'):
+        shebang, rest = content.split('\n', 1)
+        new_content = shebang + '\n' + HEADER + rest
+    else:
+        new_content = HEADER + content
+
+    file_path.write_text(new_content)
+    print(f'Added header to: {file_path}')
+
+def main():
+    if len(sys.argv) < 2:
+        print('Usage: python add_headers.py <directory>')
+        sys.exit(1)
+
+    directory = Path(sys.argv[1])
+    for py_file in directory.rglob('*.py'):
+        add_header(py_file)
+
+if __name__ == '__main__':
+    main()
+
+
+# ==============================================================================
+# END OF LICENSE HEADER TEMPLATES
+# ==============================================================================
