@@ -463,10 +463,52 @@ Contributors are recognized in:
 
 ---
 
-## License
+## License and Contributor Agreement
 
-By contributing to Flyto Core, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+### Source Available License
+
+Flyto Core is licensed under the **Flyto Source Available License v1.0**. This license:
+
+- Allows free non-commercial use
+- Requires a commercial license for commercial use
+- See [LICENSE](LICENSE) for complete terms
+
+### Contributor License Agreement (CLA)
+
+By submitting a contribution (pull request, issue, code, documentation, or any other content), you agree to the following:
+
+1. **Original Work**: Your contribution is your original work, or you have the right to submit it.
+
+2. **License Grant**: You grant Flyto a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to:
+   - Use, modify, and distribute your contribution
+   - Incorporate your contribution into both open-source and commercial versions of Flyto Core
+   - Sublicense your contribution as part of Flyto Core
+
+3. **No Compensation**: Unless separately agreed in writing, contributions are provided without expectation of compensation.
+
+4. **Representation**: You represent that you are legally entitled to grant the above license.
+
+5. **Patent Grant**: If your contribution contains any patent claims, you grant Flyto a royalty-free license to those patent claims.
+
+### Why a CLA?
+
+This CLA allows Flyto to:
+- Maintain a dual-licensing model (open source + commercial)
+- Protect the project from legal issues
+- Ensure all contributions can be used freely
+
+### Your Rights
+
+You retain copyright to your contributions. You can use, modify, and distribute your own contributions however you like.
+
+---
+
+*By submitting a pull request, you agree to the terms of this Contributor License Agreement.*
 
 ---
 
 Thank you for contributing to Flyto Core!
+
+---
+
+*Copyright (c) 2025 Flyto. All Rights Reserved.*

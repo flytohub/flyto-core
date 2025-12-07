@@ -17,10 +17,12 @@ from .types import (
     ModuleLevel,
     UIVisibility,
     ContextType,
+    ExecutionEnvironment,
     LEVEL_PRIORITY,
     DEFAULT_CONTEXT_REQUIREMENTS,
     DEFAULT_CONTEXT_PROVISIONS,
     get_default_visibility,
+    get_module_environment,
 )
 from ..constants import ErrorMessages
 
@@ -307,6 +309,10 @@ def register_module(
     handles_sensitive_data: bool = False,
     required_permissions: Optional[List[str]] = None,
 
+    # Execution environment (LOCAL/CLOUD/ALL)
+    # None = auto-detect based on category (see types.LOCAL_ONLY_CATEGORIES)
+    execution_environment: Optional[ExecutionEnvironment] = None,
+
     # Advanced
     requires: Optional[List[str]] = None,
     permissions: Optional[List[str]] = None,
@@ -387,6 +393,8 @@ def register_module(
         handles_sensitive_data: Whether module processes sensitive data
         required_permissions: List of required permissions
 
+        execution_environment: Where module can run (LOCAL/CLOUD/ALL), or None for auto-detection
+
         examples: Usage examples
         docs_url: Documentation URL
         author: Module author
@@ -446,6 +454,11 @@ def register_module(
         if resolved_provides_context is None:
             resolved_provides_context = DEFAULT_CONTEXT_PROVISIONS.get(resolved_category, [])
 
+        # Auto-resolve execution environment from category if not explicitly provided
+        resolved_execution_env = execution_environment
+        if resolved_execution_env is None:
+            resolved_execution_env = get_module_environment(module_id, resolved_category)
+
         # Build metadata
         metadata = {
             "module_id": module_id,
@@ -495,6 +508,9 @@ def register_module(
             "requires_credentials": requires_credentials,
             "handles_sensitive_data": handles_sensitive_data,
             "required_permissions": required_permissions or [],
+
+            # Execution environment
+            "execution_environment": resolved_execution_env.value if isinstance(resolved_execution_env, ExecutionEnvironment) else resolved_execution_env,
 
             # Advanced
             "requires": requires or [],

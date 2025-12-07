@@ -11,7 +11,17 @@ Organized by architecture:
 
 from .registry import ModuleRegistry
 from .base import BaseModule
-from .types import ModuleLevel, LEVEL_PRIORITY
+from .types import (
+    ModuleLevel,
+    UIVisibility,
+    ContextType,
+    ExecutionEnvironment,
+    LEVEL_PRIORITY,
+    LOCAL_ONLY_CATEGORIES,
+    get_default_visibility,
+    get_module_environment,
+    is_module_allowed_in_environment,
+)
 
 # Import atomic modules
 from .atomic import browser_ops
@@ -33,10 +43,20 @@ from .third_party import developer
 from . import composite
 
 __all__ = [
+    # Core
     'ModuleRegistry',
     'BaseModule',
+    # Types
     'ModuleLevel',
+    'UIVisibility',
+    'ContextType',
+    'ExecutionEnvironment',
     'LEVEL_PRIORITY',
+    'LOCAL_ONLY_CATEGORIES',
+    # Functions
+    'get_default_visibility',
+    'get_module_environment',
+    'is_module_allowed_in_environment',
     # Atomic
     'browser_ops',
     'data',

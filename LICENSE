@@ -1,21 +1,262 @@
-MIT License
+# Flyto Core License
 
-Copyright (c) 2025 Flyto
+## Source Available License v1.0
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+**Copyright (c) 2025 Flyto. All Rights Reserved.**
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+---
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+## Summary
+
+| Permission | Status |
+|------------|--------|
+| ✅ View source code | Allowed |
+| ✅ Use for personal projects | Allowed |
+| ✅ Use for internal business operations | Allowed |
+| ✅ Modify for personal/internal use | Allowed |
+| ✅ Educational and research use | Allowed |
+| ❌ Sell the software | **Not Allowed** |
+| ❌ Offer as a commercial service | **Not Allowed** |
+| ❌ Include in commercial products | **Not Allowed** |
+| ❌ Redistribute for profit | **Not Allowed** |
+
+For commercial licensing, see [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md).
+
+---
+
+## 1. Definitions
+
+**1.1 "Software"** means the Flyto Core source code, documentation, configuration files, and any associated materials made available under this License.
+
+**1.2 "Licensor"** means Flyto and its affiliates, the copyright holder of the Software.
+
+**1.3 "You" (or "Your")** means the individual or legal entity exercising permissions granted by this License.
+
+**1.4 "Commercial Use"** means any use of the Software that is primarily intended for or directed toward commercial advantage or monetary compensation. This includes, but is not limited to:
+
+- (a) Selling the Software or any derivative works;
+- (b) Offering the Software as a hosted service, SaaS, PaaS, or any cloud-based service;
+- (c) Integrating the Software into products or services that are sold or licensed for a fee;
+- (d) Using the Software to provide paid consulting, implementation, or support services where the Software is a primary component of the service offering;
+- (e) Bundling the Software with commercial hardware or software packages.
+
+**1.5 "Non-Commercial Use"** means any use that does not constitute Commercial Use, including:
+
+- (a) Personal projects and learning;
+- (b) Academic research and education;
+- (c) Internal business operations where the Software is not offered to third parties;
+- (d) Non-profit organizational use;
+- (e) Open-source projects that are themselves non-commercial.
+
+**1.6 "Derivative Works"** means any work that is based on or derived from the Software, including modifications, translations, adaptations, or any work that would constitute a derivative work under copyright law.
+
+**1.7 "Contribution"** means any work of authorship submitted to the Licensor for inclusion in the Software.
+
+---
+
+## 2. Grant of Rights
+
+Subject to the terms and conditions of this License, the Licensor hereby grants You a worldwide, royalty-free, non-exclusive, non-transferable license to:
+
+**2.1 View and Study**
+- Access and read the source code;
+- Study the Software's design, architecture, and implementation.
+
+**2.2 Use for Non-Commercial Purposes**
+- Execute and run the Software for Non-Commercial Use;
+- Use the Software for personal projects, education, and research;
+- Use the Software for internal business operations.
+
+**2.3 Modify for Non-Commercial Purposes**
+- Create Derivative Works for Non-Commercial Use;
+- Adapt the Software to Your specific non-commercial needs.
+
+**2.4 Distribute for Non-Commercial Purposes**
+- Share the Software with others for Non-Commercial Use;
+- Publish Derivative Works under the same license terms.
+
+---
+
+## 3. Restrictions
+
+**3.1 Commercial Use Prohibited**
+You may NOT use the Software for any Commercial Use without obtaining a separate commercial license from the Licensor. Any Commercial Use without proper licensing is a violation of this License and may result in legal action.
+
+**3.2 No Sublicensing for Commercial Purposes**
+You may NOT grant sublicenses that permit Commercial Use of the Software.
+
+**3.3 No Removal of Notices**
+You may NOT remove, alter, or obscure any copyright, trademark, or attribution notices included in the Software.
+
+**3.4 No Misrepresentation**
+You may NOT misrepresent the origin of the Software or claim that You created the original Software.
+
+**3.5 No Trademark Rights**
+This License does NOT grant You any rights to use the Licensor's trademarks, trade names, logos, or service marks.
+
+---
+
+## 4. Attribution Requirements
+
+**4.1 Retention of Notices**
+You must retain all copyright, patent, trademark, and attribution notices present in the Software.
+
+**4.2 Derivative Works Attribution**
+If You create Derivative Works, You must:
+- (a) Include a prominent notice stating that You have modified the Software;
+- (b) Retain this License file in its entirety;
+- (c) Include the following attribution in Your documentation or user interface:
+
+```
+Powered by Flyto Core (https://github.com/flytohub/flyto-core)
+Licensed under the Flyto Source Available License
+```
+
+---
+
+## 5. Contributions
+
+**5.1 Contribution License**
+By submitting a Contribution to the Licensor, You agree that:
+- (a) Your Contribution is Your original work or You have the right to submit it;
+- (b) You grant the Licensor a perpetual, worldwide, non-exclusive, royalty-free license to use, modify, and distribute Your Contribution;
+- (c) Your Contribution may be included in both open-source and commercial versions of the Software.
+
+**5.2 No Compensation**
+Unless separately agreed in writing, Contributions are provided without expectation of compensation.
+
+---
+
+## 6. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+THE LICENSOR DOES NOT WARRANT THAT:
+- (a) The Software will meet Your requirements;
+- (b) The Software will be uninterrupted, timely, secure, or error-free;
+- (c) The results obtained from using the Software will be accurate or reliable;
+- (d) Any errors in the Software will be corrected.
+
+---
+
+## 7. Limitation of Liability
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY:
+- (a) Indirect, incidental, special, consequential, or punitive damages;
+- (b) Loss of profits, revenue, data, or business opportunities;
+- (c) Cost of procurement of substitute goods or services;
+- (d) Business interruption;
+
+ARISING OUT OF OR IN CONNECTION WITH THIS LICENSE OR THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+THE LICENSOR'S TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID FOR THE SOFTWARE (IF ANY), OR ONE HUNDRED DOLLARS ($100 USD), WHICHEVER IS GREATER.
+
+---
+
+## 8. Term and Termination
+
+**8.1 Term**
+This License is effective until terminated.
+
+**8.2 Automatic Termination**
+This License terminates automatically if You:
+- (a) Fail to comply with any term of this License;
+- (b) Engage in Commercial Use without proper licensing;
+- (c) Initiate patent litigation against the Licensor regarding the Software.
+
+**8.3 Effect of Termination**
+Upon termination:
+- (a) All rights granted under this License cease immediately;
+- (b) You must destroy all copies of the Software in Your possession;
+- (c) Sections 6, 7, 9, and 10 survive termination.
+
+**8.4 Reinstatement**
+If You cure a violation within 30 days of becoming aware of it, Your rights under this License may be reinstated at the Licensor's discretion.
+
+---
+
+## 9. Governing Law and Dispute Resolution
+
+**9.1 Governing Law**
+This License shall be governed by and construed in accordance with the laws of the jurisdiction in which the Licensor is incorporated, without regard to conflict of law principles.
+
+**9.2 Dispute Resolution**
+Any disputes arising under this License shall be resolved through:
+- (a) Good faith negotiation between the parties;
+- (b) If negotiation fails, binding arbitration under internationally recognized arbitration rules;
+- (c) The prevailing party shall be entitled to recover reasonable attorneys' fees.
+
+**9.3 Injunctive Relief**
+The Licensor may seek injunctive relief in any court of competent jurisdiction to prevent unauthorized Commercial Use.
+
+---
+
+## 10. General Provisions
+
+**10.1 Entire Agreement**
+This License constitutes the entire agreement between You and the Licensor regarding the Software and supersedes all prior agreements.
+
+**10.2 Severability**
+If any provision of this License is held to be unenforceable, the remaining provisions shall remain in full force and effect.
+
+**10.3 No Waiver**
+Failure to enforce any provision of this License does not constitute a waiver of that provision or any other provision.
+
+**10.4 Assignment**
+You may not assign or transfer this License without the Licensor's prior written consent. The Licensor may assign this License without restriction.
+
+**10.5 Amendments**
+The Licensor may publish revised versions of this License. You may choose to use the Software under the terms of the version under which You originally received it.
+
+---
+
+## 11. Commercial Licensing
+
+For Commercial Use, You must obtain a commercial license from the Licensor.
+
+**Contact Information:**
+- Email: licensing@flyto.dev
+- Website: https://flyto.dev/licensing
+- See: [LICENSE-COMMERCIAL.md](LICENSE-COMMERCIAL.md)
+
+Commercial licenses are available with:
+- Full commercial use rights
+- Priority support
+- Custom terms and conditions
+- Enterprise deployment options
+
+---
+
+## 12. Quick Reference
+
+### What You CAN Do (Non-Commercial)
+
+| Activity | Allowed |
+|----------|---------|
+| Read and study the source code | ✅ |
+| Use for personal projects | ✅ |
+| Use for learning and education | ✅ |
+| Use for academic research | ✅ |
+| Use internally within your company | ✅ |
+| Modify for your own use | ✅ |
+| Share with attribution | ✅ |
+| Contribute improvements | ✅ |
+
+### What You CANNOT Do (Without Commercial License)
+
+| Activity | Prohibited |
+|----------|------------|
+| Sell the software | ❌ |
+| Offer as SaaS/cloud service | ❌ |
+| Include in commercial products | ❌ |
+| Provide paid services using the software | ❌ |
+| Remove copyright notices | ❌ |
+| Claim you created it | ❌ |
+
+---
+
+**Flyto Core — Source Available License v1.0**
+
+Copyright (c) 2025 Flyto. All Rights Reserved.
+
+For questions about this license, contact: licensing@flyto2.com
