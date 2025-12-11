@@ -118,15 +118,20 @@ class WorkflowEngine:
         provided_params: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Parse parameter schema and merge with provided values
+        Parse parameter schema and merge with provided values.
+
+        If param_schema is empty or not defined, all provided_params are passed through.
+        This supports runtime params like ui inputs (params.ui.xxx).
         """
         result = {}
 
+        # If param_schema is a dict (legacy format), merge with provided
         if isinstance(param_schema, dict):
             result = param_schema.copy()
             result.update(provided_params)
             return result
 
+        # Process schema-defined params
         for param_def in param_schema:
             param_name = param_def.get('name')
             if not param_name:
@@ -136,6 +141,12 @@ class WorkflowEngine:
                 result[param_name] = provided_params[param_name]
             elif 'default' in param_def:
                 result[param_name] = param_def['default']
+
+        # Always include all provided_params that aren't in schema
+        # This allows runtime params (like ui.xxx) to pass through
+        for key, value in provided_params.items():
+            if key not in result:
+                result[key] = value
 
         return result
 
