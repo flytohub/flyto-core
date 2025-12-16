@@ -25,22 +25,34 @@ from .element_ops import (
 )
 from .element_registry import ElementRegistry
 
-# Import module categories
-from . import file
-from . import string
+# Import module categories (all subdirectories with modules)
+from . import api
 from . import array
-from . import math
+from . import browser
+from . import browser_ops
+from . import communication
+from . import competition
+from . import data
+from . import database
 from . import datetime
-from . import object
+from . import document
+from . import file
 from . import flow
+from . import image
+from . import math
+from . import meta
+from . import object
+from . import string
+from . import training
+from . import utility
+from . import vector
+
+# Legacy/helper imports
+from . import analysis
+from . import browser_aliases
+from . import image_modules
 from . import meta_operations
 from . import test_utilities
-from . import meta
-from . import training
-from . import analysis
-from . import competition
-from . import image_modules
-from . import browser_aliases
 
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule

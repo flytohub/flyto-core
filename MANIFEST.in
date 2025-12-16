@@ -1,0 +1,16 @@
+include LICENSE
+include README.md
+include CHANGELOG.md
+include pyproject.toml
+
+recursive-include src *.py
+recursive-include src *.json
+recursive-include src *.yaml
+recursive-include src *.yml
+
+recursive-include i18n *.json
+recursive-include workflows *.yaml *.yml
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]
+recursive-exclude * .DS_Store

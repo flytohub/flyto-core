@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flyto-core"
+version = "1.0.0"
+description = "Atomic workflow automation modules for git-native automation"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Flyto Team", email = "team@flyto.dev"}
+]
+maintainers = [
+    {name = "Flyto Team", email = "team@flyto.dev"}
+]
+keywords = [
+    "automation",
+    "workflow",
+    "atomic-modules",
+    "web-scraping",
+    "browser-automation"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Framework :: AsyncIO",
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "pyyaml>=6.0",
+    "aiohttp>=3.9.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "aiofiles>=23.0.0",
+]
+
+[project.optional-dependencies]
+browser = [
+    "playwright>=1.40.0",
+]
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+]
+vector = [
+    "qdrant-client>=1.7.0",
+    "sentence-transformers>=2.2.0",
+]
+telegram = [
+    "python-telegram-bot>=20.0",
+]
+all = [
+    "flyto-core[browser,api,vector,telegram]",
+]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/flytohub/flyto-core"
+Documentation = "https://github.com/flytohub/flyto-core#readme"
+Repository = "https://github.com/flytohub/flyto-core.git"
+Issues = "https://github.com/flytohub/flyto-core/issues"
+Changelog = "https://github.com/flytohub/flyto-core/blob/main/CHANGELOG.md"
+
+[project.scripts]
+flyto = "cli.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.yaml", "*.yml"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
