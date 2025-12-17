@@ -51,7 +51,7 @@ from ...registry import register_module
                     'label_key': 'modules.browser.goto.params.wait_until.options.domcontentloaded'
                 }
             ],
-            'default': 'networkidle',
+            'default': 'domcontentloaded',
             'description': 'Condition to wait for page loading',
             'description_key': 'modules.browser.goto.params.wait_until.description',
             'required': False
@@ -66,7 +66,7 @@ from ...registry import register_module
             'name': 'Navigate to Google',
             'params': {
                 'url': 'https://www.google.com',
-                'wait_until': 'networkidle'
+                'wait_until': 'domcontentloaded'
             }
         }
     ],
@@ -94,13 +94,16 @@ class BrowserGotoModule(BaseModule):
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']
+        # Default to 'domcontentloaded' for faster page loads (was 'networkidle' which hangs on many sites)
+        self.wait_until = self.params.get('wait_until', 'domcontentloaded')
+        self.timeout_ms = self.params.get('timeout_ms', 30000)
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        await browser.goto(self.url)
+        await browser.goto(self.url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
         return {"status": "success", "url": self.url}
 
 

@@ -2,7 +2,7 @@
 Browser Module Aliases
 Provides browser.* aliases for core.browser.* modules
 """
-from src.core.modules.registry import register_module, ModuleRegistry
+from core.modules.registry import register_module, ModuleRegistry
 
 
 # Get existing core.browser modules

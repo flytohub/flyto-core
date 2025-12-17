@@ -12,10 +12,10 @@ Categories:
 - batch: Batch processing and aggregation patterns
 
 Usage:
-    from src.core.modules.patterns import PatternRegistry, PatternExecutor
+    from core.modules.patterns import PatternRegistry, PatternExecutor
 
     # Using pattern directly
-    from src.core.modules.patterns import RetryWithExponentialBackoff
+    from core.modules.patterns import RetryWithExponentialBackoff
 
     retry = RetryWithExponentialBackoff({
         'max_retries': 5,
@@ -34,7 +34,7 @@ Usage:
     )
 
     # Circuit breaker example
-    from src.core.modules.patterns import CircuitBreaker
+    from core.modules.patterns import CircuitBreaker
 
     circuit = CircuitBreaker({
         'failure_threshold': 5,
