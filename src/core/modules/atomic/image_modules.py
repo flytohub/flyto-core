@@ -4,8 +4,8 @@ Following atomic module standards - single responsibility, no coupling
 """
 from typing import Dict, Any
 from pathlib import Path
-from src.core.modules.base import BaseModule
-from src.core.modules.registry import register_module
+from core.modules.base import BaseModule
+from core.modules.registry import register_module
 
 
 @register_module('image.compress')

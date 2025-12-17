@@ -5,8 +5,8 @@ The full module generator is available in Flyto Pro.
 This file provides stub implementations for compatibility.
 """
 
-from src.core.modules.base import BaseModule
-from src.core.modules.registry import register_module
+from core.modules.base import BaseModule
+from core.modules.registry import register_module
 from typing import Any
 
 

@@ -5,7 +5,7 @@ Analyze content readability
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
-from src.core.analysis.html_analyzer import HTMLAnalyzer
+from core.analysis.html_analyzer import HTMLAnalyzer
 
 
 @register_module('analysis.html.analyze_readability')

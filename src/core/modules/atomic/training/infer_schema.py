@@ -5,7 +5,7 @@ Infer data schema from website
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
-from src.core.training.daily_practice import DailyPracticeEngine
+from core.training.daily_practice import DailyPracticeEngine
 
 
 @register_module('training.practice.infer_schema')

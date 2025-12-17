@@ -11,7 +11,7 @@ Categories:
 - data: Data transformation pipelines
 
 Usage:
-    from src.core.modules.composite import CompositeRegistry, CompositeExecutor
+    from core.modules.composite import CompositeRegistry, CompositeExecutor
 
     # List all composites
     composites = CompositeRegistry.list_all()

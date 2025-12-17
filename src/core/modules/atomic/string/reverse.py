@@ -2,8 +2,8 @@
 Reverse Module - Reverses the input text string
 """
 
-from src.core.modules.base import BaseModule
-from src.core.modules.registry import register_module
+from core.modules.base import BaseModule
+from core.modules.registry import register_module
 from typing import Any, Dict
 
 

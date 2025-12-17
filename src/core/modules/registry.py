@@ -650,7 +650,7 @@ class ModuleCatalogManager:
         Uses knowledge store to make modules searchable via RAG.
         """
         try:
-            from src.core.knowledge.knowledge_store import KnowledgeStore
+            from core.knowledge.knowledge_store import KnowledgeStore
 
             store = KnowledgeStore()
             all_modules = self.registry.get_all_metadata(lang=lang)

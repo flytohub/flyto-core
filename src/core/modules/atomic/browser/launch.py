@@ -85,7 +85,7 @@ class BrowserLaunchModule(BaseModule):
         self.headless = self.params.get('headless', False)
 
     async def execute(self) -> Any:
-        from src.core.browser.driver import BrowserDriver
+        from core.browser.driver import BrowserDriver
 
         driver = BrowserDriver(headless=self.headless)
         await driver.launch()
