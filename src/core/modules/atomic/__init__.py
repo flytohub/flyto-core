@@ -47,6 +47,12 @@ from . import training
 from . import utility
 from . import vector
 
+# HuggingFace AI modules
+try:
+    from . import huggingface
+except ImportError:
+    pass  # Optional: transformers/huggingface_hub not installed
+
 # Legacy/helper imports
 from . import analysis
 from . import browser_aliases
