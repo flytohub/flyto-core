@@ -19,8 +19,8 @@ Usage:
     # Execute a composite
     executor = CompositeExecutor()
     result = await executor.execute(
-        'composite.browser.search_and_notify',
-        {'query': 'python tutorial', 'webhook_url': '...'}
+        'composite.browser.scrape_to_json',
+        {'url': 'https://example.com', 'title_selector': 'h1'}
     )
 """
 
@@ -33,9 +33,7 @@ from .base import (
 )
 
 # Browser composites
-from .browser.search_and_notify import WebSearchAndNotify
 from .browser.scrape_to_json import WebScrapeToJson
-from .browser.screenshot_and_save import ScreenshotAndSave
 
 # Developer composites
 from .developer.github_daily_digest import GithubDailyDigest
@@ -59,9 +57,7 @@ __all__ = [
     'UIVisibility',
 
     # Browser composites
-    'WebSearchAndNotify',
     'WebScrapeToJson',
-    'ScreenshotAndSave',
 
     # Developer composites
     'GithubDailyDigest',

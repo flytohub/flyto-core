@@ -155,8 +155,8 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 ### Changed
 - Four-Level Module Architecture now complete:
   - Level 1: Workflow Templates (6 templates)
-  - Level 2: Atomic Modules (127+ modules)
-  - Level 3: Composite Modules (9 modules)
+  - Level 2: Atomic Modules (150+ modules)
+  - Level 3: Composite Modules (7 modules)
   - Level 4: Advanced Patterns (9 patterns)
 
 ---
@@ -165,7 +165,7 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 ### Added
 - **Four-Level Module Architecture Implementation**
-  - Level 3: Composite Modules (9 modules across 4 categories)
+  - Level 3: Composite Modules (7 modules across 4 categories)
   - Level 1: Workflow Templates (6 marketplace-ready templates)
 
 - **Composite Module System** (`src/core/modules/composite/`)

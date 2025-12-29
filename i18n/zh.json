@@ -101,7 +101,14 @@
     "create_workflow_prompt": "是否要建立範例工作流程？",
     "error_occurred": "發生錯誤",
     "press_enter": "按 Enter 繼續",
-    "goodbye": "感謝使用工作流程引擎！"
+    "goodbye": "感謝使用工作流程引擎！",
+    "invalid_language_choice": "無效的選擇。請輸入 1-{max}。",
+    "invalid_workflow_choice": "無效的選擇。請輸入 1 到 {max} 之間的數字。",
+    "parameter_required": "此參數為必填。",
+    "value_min": "值必須 >= {min}",
+    "value_max": "值必須 <= {max}",
+    "invalid_type": "對於類型 {type} 的輸入無效",
+    "example": "範例：{placeholder}"
   },
   "commands": {
     "run": "執行工作流程",

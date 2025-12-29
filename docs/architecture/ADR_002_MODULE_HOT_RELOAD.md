@@ -1,5 +1,10 @@
 # ADR-002: Module Hot Reload
 
+> **Status**: PLANNED - Enterprise Feature (Not implemented in flyto-core)
+>
+> This ADR describes a feature planned for flyto-cloud (private repository).
+> It is documented here for architectural reference only.
+
 **Status:** Accepted
 **Date:** 2025-12-06
 **Author:** Flyto Core Team

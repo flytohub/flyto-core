@@ -135,7 +135,8 @@ def select_language() -> str:
         if choice in SUPPORTED_LANGUAGES:
             return SUPPORTED_LANGUAGES[choice][0]
         else:
-            print(f"Invalid choice. Please enter 1-{len(SUPPORTED_LANGUAGES)}.")
+            # Use English as fallback since i18n is not yet initialized
+            print(f"Invalid choice. Please enter 1-{len(SUPPORTED_LANGUAGES)}. / 無效的選擇。請輸入 1-{len(SUPPORTED_LANGUAGES)}。")
 
 
 def load_config() -> Dict[str, Any]:
@@ -200,7 +201,7 @@ def select_workflow(i18n: I18n) -> Optional[Path]:
         except ValueError:
             pass
         
-        print(f"{Colors.FAIL}Invalid choice.{Colors.ENDC} Please enter a number between 1 and {len(workflows) + 1}")
+        print(f"{Colors.FAIL}{i18n.t('cli.invalid_workflow_choice', max=len(workflows) + 1)}{Colors.ENDC}")
 
 
 def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
@@ -237,7 +238,7 @@ def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
     # Show placeholder
     placeholder = param.get('placeholder', '')
     if placeholder:
-        print(f"Example: {placeholder}")
+        print(i18n.t('cli.example', placeholder=placeholder))
     
     # Get input
     while True:
@@ -250,7 +251,7 @@ def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
             elif not param.get('required', False):
                 return None
             else:
-                print(f"{Colors.FAIL}This parameter is required.{Colors.ENDC}")
+                print(f"{Colors.FAIL}{i18n.t('cli.parameter_required')}{Colors.ENDC}")
                 continue
         
         # Convert type
@@ -259,10 +260,10 @@ def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
                 value = float(user_input) if '.' in user_input else int(user_input)
                 # Check min/max
                 if 'min' in param and value < param['min']:
-                    print(f"{Colors.FAIL}Value must be >= {param['min']}{Colors.ENDC}")
+                    print(f"{Colors.FAIL}{i18n.t('cli.value_min', min=param['min'])}{Colors.ENDC}")
                     continue
                 if 'max' in param and value > param['max']:
-                    print(f"{Colors.FAIL}Value must be <= {param['max']}{Colors.ENDC}")
+                    print(f"{Colors.FAIL}{i18n.t('cli.value_max', max=param['max'])}{Colors.ENDC}")
                     continue
                 return value
             elif param_type == 'boolean':
@@ -270,7 +271,7 @@ def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
             else:
                 return user_input
         except ValueError:
-            print(f"{Colors.FAIL}Invalid input for type {param_type}{Colors.ENDC}")
+            print(f"{Colors.FAIL}{i18n.t('cli.invalid_type', type=param_type)}{Colors.ENDC}")
 
 
 def collect_params(workflow: Dict[str, Any], i18n: I18n) -> Dict[str, Any]:

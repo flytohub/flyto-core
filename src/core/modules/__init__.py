@@ -32,7 +32,7 @@ from .connection_rules import (
 )
 
 # Import atomic modules
-from .atomic import browser_ops
+from .atomic import browser
 from .atomic import data
 from .atomic import utility
 
@@ -73,7 +73,7 @@ __all__ = [
     'get_acceptable_sources',
     'CONNECTION_RULES',
     # Atomic
-    'browser_ops',
+    'browser',
     'data',
     'utility',
     # Third-party

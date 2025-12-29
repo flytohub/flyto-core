@@ -9,7 +9,7 @@
 
 Flyto Core is an **open-source workflow automation engine** designed with three principles:
 
-- **Atomic-first** — 127+ fine-grained modules that compose like LEGO bricks
+- **Atomic-first** — 150+ fine-grained modules that compose like LEGO bricks
 - **Local-first & Git-native** — YAML workflows that version, diff, and test like code
 - **Designed for AI automation** — Rich module metadata lets AI understand and compose workflows
 
@@ -120,8 +120,8 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 | Level | Type | For | Count |
 |-------|------|-----|-------|
 | **1** | Workflow Templates | Beginners | 6 ready-to-use templates |
-| **2** | Atomic Modules | Developers/AI | 127+ fine-grained modules |
-| **3** | Composite Modules | Power Users | 9 high-level workflows |
+| **2** | Atomic Modules | Developers/AI | 150+ fine-grained modules |
+| **3** | Composite Modules | Power Users | 7 high-level workflows |
 | **4** | Advanced Patterns | Enterprise | 9 resilience patterns |
 
 ## Module Categories
@@ -214,8 +214,8 @@ pip install -r requirements-integrations.txt
 flyto-core/
 ├── src/core/
 │   ├── modules/
-│   │   ├── atomic/        # Level 2: 127+ atomic modules
-│   │   ├── composite/     # Level 3: 9 composite modules
+│   │   ├── atomic/        # Level 2: 150+ atomic modules
+│   │   ├── composite/     # Level 3: 7 composite modules
 │   │   ├── patterns/      # Level 4: 9 advanced patterns
 │   │   └── third_party/   # External integrations
 │   └── engine/            # Workflow execution engine

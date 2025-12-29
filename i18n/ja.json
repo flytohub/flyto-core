@@ -101,7 +101,14 @@
     "create_workflow_prompt": "サンプルワークフローを作成しますか？",
     "error_occurred": "エラーが発生しました",
     "press_enter": "Enter キーを押して続行",
-    "goodbye": "ワークフローエンジンをご利用いただきありがとうございました！"
+    "goodbye": "ワークフローエンジンをご利用いただきありがとうございました！",
+    "invalid_language_choice": "無効な選択です。1-{max} を入力してください。",
+    "invalid_workflow_choice": "無効な選択です。1 から {max} の間の数字を入力してください。",
+    "parameter_required": "このパラメータは必須です。",
+    "value_min": "値は {min} 以上である必要があります",
+    "value_max": "値は {max} 以下である必要があります",
+    "invalid_type": "タイプ {type} に対する入力が無効です",
+    "example": "例：{placeholder}"
   },
   "commands": {
     "run": "ワークフローを実行",

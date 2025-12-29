@@ -44,7 +44,10 @@ class VectorDBConnector:
 
     def connect(self) -> bool:
         """
-        Connect to vector database (cloud only - local Qdrant is NOT supported)
+        Connect to vector database (supports both local and cloud modes)
+
+        Local mode: Uses file-based storage at self.path
+        Cloud mode: Uses QDRANT_URL and QDRANT_API_KEY
 
         Returns:
             True if connected successfully
@@ -52,35 +55,40 @@ class VectorDBConnector:
         try:
             from qdrant_client import QdrantClient
 
-            # Local mode is NOT supported - force cloud mode
             if self.mode == "local":
-                raise ValueError(
-                    "Local Qdrant is NOT supported! "
-                    "Please use cloud mode with QDRANT_URL and QDRANT_API_KEY environment variables."
+                # Local mode - use file-based storage
+                # Supports localhost or file-based persistence
+                storage_path = Path(self.path)
+                storage_path.mkdir(parents=True, exist_ok=True)
+
+                self.client = QdrantClient(path=str(storage_path))
+                self._connected = True
+                return True
+
+            elif self.mode == "memory":
+                # In-memory mode for testing
+                self.client = QdrantClient(":memory:")
+                self._connected = True
+                return True
+
+            else:
+                # Cloud mode (default)
+                if not self.url or not self.api_key:
+                    raise ValueError(
+                        "Cloud Qdrant requires url and api_key. "
+                        "Set QDRANT_URL and QDRANT_API_KEY environment variables, "
+                        "or use mode='local' for local development."
+                    )
+
+                self.client = QdrantClient(
+                    url=self.url,
+                    api_key=self.api_key
                 )
 
-            if not self.url or not self.api_key:
-                raise ValueError(
-                    "Cloud Qdrant requires url and api_key. "
-                    "Set QDRANT_URL and QDRANT_API_KEY environment variables."
-                )
-
-            # Validate URL is not localhost
-            if "localhost" in self.url or "127.0.0.1" in self.url:
-                raise ValueError(
-                    "Local Qdrant (localhost) is NOT supported! "
-                    "Please use Qdrant Cloud or a remote server."
-                )
-
-            self.client = QdrantClient(
-                url=self.url,
-                api_key=self.api_key
-            )
-
-            # Test connection
-            self.client.get_collections()
-            self._connected = True
-            return True
+                # Test connection
+                self.client.get_collections()
+                self._connected = True
+                return True
 
         except Exception as e:
             self._connected = False

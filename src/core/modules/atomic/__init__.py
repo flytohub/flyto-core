@@ -5,37 +5,35 @@ Provides basic, composable operation units
 
 Design Principles:
 1. Single Responsibility - Each module does one thing
-2. Completely Independent - Does not depend on otherAtomic Modules
+2. Completely Independent - Does not depend on other Atomic Modules
 3. Composable - Can be freely combined to complete complex tasks
 4. Testable - Each module can be tested independently
 
-ImplementedAtomic Modules:
+Implemented Atomic Modules:
 - browser.find: Find elements in page
 - element.query: Find child elements within element
 - element.text: Get element text
 - element.attribute: Get element attribute
 """
 
-# Import all atomic modules, trigger @register_module decorator
-from .browser_find import BrowserFindModule
-from .element_ops import (
-    ElementQueryModule,
-    ElementTextModule,
-    ElementAttributeModule
+# Import element registry (utility for browser/element modules)
+from .element_registry import (
+    ElementRegistry,
+    get_element_registry,
+    create_element_registry,
+    ELEMENT_REGISTRY_CONTEXT_KEY,
 )
-from .element_registry import ElementRegistry
 
 # Import module categories (all subdirectories with modules)
 from . import api
 from . import array
 from . import browser
-from . import browser_ops
 from . import communication
-from . import competition
 from . import data
 from . import database
 from . import datetime
 from . import document
+from . import element
 from . import file
 from . import flow
 from . import image
@@ -55,20 +53,30 @@ except ImportError:
 
 # Legacy/helper imports
 from . import analysis
-from . import browser_aliases
-from . import image_modules
-from . import meta_operations
-from . import test_utilities
+from . import testing
 
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
+# Re-export element modules
+from .element import ElementQueryModule, ElementTextModule, ElementAttributeModule
+
+# Re-export browser find module
+from .browser.find import BrowserFindModule
+
 __all__ = [
+    # Browser modules
     'BrowserFindModule',
+    # Element modules
     'ElementQueryModule',
     'ElementTextModule',
     'ElementAttributeModule',
+    # Element registry (context-aware pattern)
     'ElementRegistry',
+    'get_element_registry',
+    'create_element_registry',
+    'ELEMENT_REGISTRY_CONTEXT_KEY',
+    # Flow control modules
     'LoopModule',
     'BranchModule',
     'SwitchModule',

@@ -203,13 +203,19 @@ async def _execute_postgresql(
 
     # Build connection string if not provided
     if not connection_string:
-        host = params.get('host') or os.getenv('POSTGRES_HOST', 'localhost')
+        # NO hardcoded defaults - require explicit configuration
+        host = params.get('host') or os.getenv('POSTGRES_HOST')
         port = params.get('port') or int(os.getenv('POSTGRES_PORT', '5432'))
         database = params.get('database') or os.getenv('POSTGRES_DB')
         user = params.get('user') or os.getenv('POSTGRES_USER')
         password = params.get('password') or os.getenv('POSTGRES_PASSWORD')
 
-        if not all([host, database, user]):
+        if not host:
+            raise ValueError(
+                "Database host not configured. "
+                "Set 'host' parameter or POSTGRES_HOST environment variable."
+            )
+        if not all([database, user]):
             raise ValueError("Database connection not configured")
 
         connection_string = f"postgresql://{user}:{password}@{host}:{port}/{database}"
@@ -262,12 +268,18 @@ async def _execute_mysql(
     except ImportError:
         raise ImportError("aiomysql is required for MySQL. Install with: pip install aiomysql")
 
-    # Get connection params
-    host = params.get('host') or os.getenv('MYSQL_HOST', 'localhost')
+    # Get connection params - NO hardcoded defaults
+    host = params.get('host') or os.getenv('MYSQL_HOST')
     port = params.get('port') or int(os.getenv('MYSQL_PORT', '3306'))
     database = params.get('database') or os.getenv('MYSQL_DATABASE')
     user = params.get('user') or os.getenv('MYSQL_USER')
     password = params.get('password') or os.getenv('MYSQL_PASSWORD')
+
+    if not host:
+        raise ValueError(
+            "Database host not configured. "
+            "Set 'host' parameter or MYSQL_HOST environment variable."
+        )
 
     # Execute query
     conn = await aiomysql.connect(

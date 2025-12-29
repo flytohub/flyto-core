@@ -1,8 +1,26 @@
 """
 Workflow Engine Package
 """
-from .workflow_engine import WorkflowEngine, WorkflowExecutionError, StepExecutionError
+from .exceptions import (
+    StepTimeoutError,
+    WorkflowExecutionError,
+    StepExecutionError,
+    FlowControlError,
+    VariableResolutionError,
+)
+from .flow_control import (
+    FLOW_CONTROL_MODULES,
+    is_flow_control_module,
+    is_flow_jumping_module,
+    is_iteration_module,
+    normalize_module_id,
+)
+from .workflow_engine import WorkflowEngine
 from .variable_resolver import VariableResolver
+from .step_executor import (
+    StepExecutor,
+    create_step_executor,
+)
 from .hooks import (
     ExecutorHooks,
     HookContext,
@@ -57,11 +75,24 @@ from .breakpoint import (
 )
 
 __all__ = [
-    # Workflow Engine
-    'WorkflowEngine',
+    # Exceptions
+    'StepTimeoutError',
     'WorkflowExecutionError',
     'StepExecutionError',
+    'FlowControlError',
+    'VariableResolutionError',
+    # Flow Control
+    'FLOW_CONTROL_MODULES',
+    'is_flow_control_module',
+    'is_flow_jumping_module',
+    'is_iteration_module',
+    'normalize_module_id',
+    # Workflow Engine
+    'WorkflowEngine',
     'VariableResolver',
+    # Step Executor
+    'StepExecutor',
+    'create_step_executor',
     # Hooks
     'ExecutorHooks',
     'HookContext',

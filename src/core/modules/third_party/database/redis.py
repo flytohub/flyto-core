@@ -49,10 +49,11 @@ from ...registry import register_module
             'type': 'string',
             'label': 'Host',
             'label_key': 'modules.db.redis.get.params.host.label',
-            'description': 'Redis host',
+            'description': 'Redis host (from env.REDIS_HOST or explicit)',
             'description_key': 'modules.db.redis.get.params.host.description',
-            'default': 'localhost',
+            'placeholder': '${env.REDIS_HOST}',
             'required': False
+            # NOTE: NO hardcoded default - require explicit configuration
         },
         'port': {
             'type': 'number',
@@ -83,7 +84,7 @@ from ...registry import register_module
             'title': 'Get cached value',
             'params': {
                 'key': 'user:123:profile',
-                'host': 'localhost'
+                'host': '${env.REDIS_HOST}'
             }
         },
         {
@@ -103,13 +104,21 @@ class RedisGetModule(BaseModule):
     """Redis Get Module"""
 
     def validate_params(self):
+        import os
         self.key = self.params.get('key')
-        self.host = self.params.get('host', 'localhost')
+        # NO hardcoded defaults - require explicit configuration
+        self.host = self.params.get('host') or os.getenv('REDIS_HOST')
         self.port = self.params.get('port', 6379)
         self.db = self.params.get('db', 0)
 
         if not self.key:
             raise ValueError("key is required")
+
+        if not self.host:
+            raise ValueError(
+                "Redis host not configured. "
+                "Set 'host' parameter or REDIS_HOST environment variable."
+            )
 
     async def execute(self) -> Any:
         try:
@@ -202,10 +211,11 @@ class RedisGetModule(BaseModule):
             'type': 'string',
             'label': 'Host',
             'label_key': 'modules.db.redis.set.params.host.label',
-            'description': 'Redis host',
+            'description': 'Redis host (from env.REDIS_HOST or explicit)',
             'description_key': 'modules.db.redis.set.params.host.description',
-            'default': 'localhost',
+            'placeholder': '${env.REDIS_HOST}',
             'required': False
+            # NOTE: NO hardcoded default - require explicit configuration
         },
         'port': {
             'type': 'number',
@@ -256,15 +266,23 @@ class RedisSetModule(BaseModule):
     """Redis Set Module"""
 
     def validate_params(self):
+        import os
         self.key = self.params.get('key')
         self.value = self.params.get('value')
         self.ttl = self.params.get('ttl')
-        self.host = self.params.get('host', 'localhost')
+        # NO hardcoded defaults - require explicit configuration
+        self.host = self.params.get('host') or os.getenv('REDIS_HOST')
         self.port = self.params.get('port', 6379)
         self.db = self.params.get('db', 0)
 
         if not self.key or self.value is None:
             raise ValueError("key and value are required")
+
+        if not self.host:
+            raise ValueError(
+                "Redis host not configured. "
+                "Set 'host' parameter or REDIS_HOST environment variable."
+            )
 
     async def execute(self) -> Any:
         try:

@@ -101,7 +101,14 @@
     "create_workflow_prompt": "Would you like to create an example workflow?",
     "error_occurred": "Error occurred",
     "press_enter": "Press Enter to continue",
-    "goodbye": "Thank you for using Workflow Engine!"
+    "goodbye": "Thank you for using Workflow Engine!",
+    "invalid_language_choice": "Invalid choice. Please enter 1-{max}.",
+    "invalid_workflow_choice": "Invalid choice. Please enter a number between 1 and {max}.",
+    "parameter_required": "This parameter is required.",
+    "value_min": "Value must be >= {min}",
+    "value_max": "Value must be <= {max}",
+    "invalid_type": "Invalid input for type {type}",
+    "example": "Example: {placeholder}"
   },
   "commands": {
     "run": "Run a workflow",

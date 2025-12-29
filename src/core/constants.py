@@ -21,6 +21,114 @@ DEFAULT_MAX_TREE_DEPTH: int = 5
 
 
 # =============================================================================
+# Module-Specific Timeouts (seconds)
+# Use these instead of hardcoding timeout values in modules
+# =============================================================================
+
+class Timeouts:
+    """Centralized timeout values for all module types"""
+
+    # Browser operations
+    BROWSER_DEFAULT: int = 10
+    BROWSER_NAVIGATION: int = 30
+    BROWSER_ELEMENT_WAIT: int = 10
+    BROWSER_PAGE_LOAD: int = 30
+
+    # File operations
+    FILE_READ: int = 30
+    FILE_WRITE: int = 30
+    FILE_MOVE: int = 10
+    FILE_DELETE: int = 10
+    FILE_COPY: int = 30
+
+    # Image processing
+    IMAGE_COMPRESS: int = 60
+    IMAGE_RESIZE: int = 60
+    IMAGE_CONVERT: int = 60
+    IMAGE_OCR: int = 120
+
+    # API calls (third-party services)
+    API_DEFAULT: int = 30
+    API_STRIPE: int = 30
+    API_AIRTABLE: int = 30
+    API_NOTION: int = 30
+    API_GITHUB: int = 30
+    API_JIRA: int = 60
+
+    # Cloud storage
+    CLOUD_UPLOAD: int = 300
+    CLOUD_DOWNLOAD: int = 300
+    CLOUD_S3: int = 60
+    CLOUD_GCS: int = 300
+    CLOUD_AZURE: int = 300
+
+    # AI services
+    AI_DEFAULT: int = 120
+    AI_CHAT: int = 180
+    AI_EMBEDDING: int = 60
+    AI_AGENT: int = 180
+    AI_AUDIO: int = 300
+
+    # Database operations
+    DB_QUERY: int = 30
+    DB_INSERT: int = 30
+    DB_UPDATE: int = 30
+    DB_DELETE: int = 30
+    DB_TRANSACTION: int = 60
+
+    # HuggingFace
+    HF_DEFAULT: int = 120
+    HF_AUDIO: int = 300
+    HF_MODEL_LOAD: int = 300
+
+    # Vector DB
+    VECTOR_QUERY: int = 30
+    VECTOR_INSERT: int = 60
+    VECTOR_BATCH: int = 120
+
+
+# =============================================================================
+# Database Configuration
+# =============================================================================
+
+class DatabaseDefaults:
+    """Database connection defaults - NO hardcoded hostnames"""
+
+    # Ports only - host should come from environment
+    MYSQL_PORT: int = 3306
+    POSTGRESQL_PORT: int = 5432
+    MONGODB_PORT: int = 27017
+    REDIS_PORT: int = 6379
+
+    # Connection pool settings
+    POOL_MIN_SIZE: int = 1
+    POOL_MAX_SIZE: int = 10
+    POOL_TIMEOUT: int = 30
+
+    # NOTE: DO NOT add default hostnames like 'localhost'
+    # Host should always be explicitly configured via:
+    # 1. Module parameters
+    # 2. Environment variables (POSTGRES_HOST, MYSQL_HOST, etc.)
+    # This ensures explicit dependency declaration
+
+
+# =============================================================================
+# Flow Control Limits
+# =============================================================================
+
+class FlowControlLimits:
+    """Limits for flow control modules"""
+
+    MAX_CONTAINER_DEPTH: int = 5
+    MAX_LOOP_ITERATIONS: int = 10000
+    MAX_FORK_BRANCHES: int = 10
+    MIN_FORK_BRANCHES: int = 2
+    MAX_MERGE_INPUTS: int = 10
+    MIN_MERGE_INPUTS: int = 2
+    MAX_RETRY_ATTEMPTS: int = 10
+
+
+# =============================================================================
 # Browser Defaults
 # =============================================================================
 
