@@ -25,7 +25,6 @@ from .element_registry import (
 )
 
 # Import module categories (all subdirectories with modules)
-from . import api
 from . import array
 from . import browser
 from . import communication

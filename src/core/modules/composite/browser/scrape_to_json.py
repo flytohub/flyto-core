@@ -1,7 +1,7 @@
 """
 Web Scrape to JSON Composite Module
 
-Scrapes a webpage and outputs structured JSON data.
+Scrapes a webpage and outputs s tructured JSON data.
 """
 from ..base import CompositeModule, register_composite, UIVisibility
 
