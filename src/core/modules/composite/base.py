@@ -337,6 +337,10 @@ def register_composite(
     input_types: Optional[List[str]] = None,
     output_types: Optional[List[str]] = None,
 
+    # Connection rules (which modules can connect to/from this composite)
+    can_connect_to: Optional[List[str]] = None,
+    can_receive_from: Optional[List[str]] = None,
+
     # Steps definition
     steps: Optional[List[Dict[str, Any]]] = None,
 
@@ -477,6 +481,10 @@ def register_composite(
             # Connection types
             "input_types": input_types or [],
             "output_types": output_types or [],
+
+            # Connection rules
+            "can_connect_to": can_connect_to or ["*"],
+            "can_receive_from": can_receive_from or ["*"],
 
             # Steps definition
             "steps": steps or [],

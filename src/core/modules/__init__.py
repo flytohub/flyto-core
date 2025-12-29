@@ -22,6 +22,14 @@ from .types import (
     get_module_environment,
     is_module_allowed_in_environment,
 )
+from .connection_rules import (
+    can_connect,
+    validate_workflow_connections,
+    get_connection_rules,
+    get_suggested_connections,
+    get_acceptable_sources,
+    CONNECTION_RULES,
+)
 
 # Import atomic modules
 from .atomic import browser_ops
@@ -57,6 +65,13 @@ __all__ = [
     'get_default_visibility',
     'get_module_environment',
     'is_module_allowed_in_environment',
+    # Connection rules
+    'can_connect',
+    'validate_workflow_connections',
+    'get_connection_rules',
+    'get_suggested_connections',
+    'get_acceptable_sources',
+    'CONNECTION_RULES',
     # Atomic
     'browser_ops',
     'data',

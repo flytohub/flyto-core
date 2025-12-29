@@ -18,12 +18,19 @@ from .types import (
     UIVisibility,
     ContextType,
     ExecutionEnvironment,
+    NodeType,
+    EdgeType,
+    DataType,
+    PortImportance,
     LEVEL_PRIORITY,
     DEFAULT_CONTEXT_REQUIREMENTS,
     DEFAULT_CONTEXT_PROVISIONS,
+    DEFAULT_PORTS_BY_NODE_TYPE,
     get_default_visibility,
     get_module_environment,
+    get_default_ports,
 )
+from .connection_rules import get_default_connection_rules
 from ..constants import ErrorMessages
 
 
@@ -313,6 +320,37 @@ def register_module(
     # None = auto-detect based on category (see types.LOCAL_ONLY_CATEGORIES)
     execution_environment: Optional[ExecutionEnvironment] = None,
 
+    # ==========================================================================
+    # Workflow Spec v1.1 - Node & Port Configuration
+    # ==========================================================================
+
+    # Node type (determines default ports and execution behavior)
+    node_type: NodeType = NodeType.STANDARD,
+
+    # Input ports (if not specified, uses defaults from node_type)
+    # Each port: {id, label, label_key?, data_type?, edge_type?, max_connections?, required?, ui?}
+    input_ports: Optional[List[Dict[str, Any]]] = None,
+
+    # Output ports (if not specified, uses defaults from node_type)
+    # Each port: {id, label, label_key?, data_type?, edge_type?, event, color?, ui?}
+    output_ports: Optional[List[Dict[str, Any]]] = None,
+
+    # Dynamic ports configuration (for Switch/Case nodes)
+    # {
+    #   'output': {
+    #     'from_param': 'cases',
+    #     'stable_key_field': 'id',
+    #     'id_field': 'value',
+    #     'label_field': 'label',
+    #     'event_prefix': 'case:',
+    #     'include_default': True
+    #   }
+    # }
+    dynamic_ports: Optional[Dict[str, Dict[str, Any]]] = None,
+
+    # Container configuration (for container/sandbox nodes)
+    container_config: Optional[Dict[str, Any]] = None,
+
     # Advanced
     requires: Optional[List[str]] = None,
     permissions: Optional[List[str]] = None,
@@ -459,6 +497,16 @@ def register_module(
         if resolved_execution_env is None:
             resolved_execution_env = get_module_environment(module_id, resolved_category)
 
+        # Resolve ports from node_type defaults if not explicitly provided
+        default_ports = get_default_ports(node_type)
+        resolved_input_ports = input_ports if input_ports is not None else default_ports.get("input", [])
+        resolved_output_ports = output_ports if output_ports is not None else default_ports.get("output", [])
+
+        # Resolve connection rules from category defaults if not explicitly provided
+        default_can_connect, default_can_receive = get_default_connection_rules(resolved_category)
+        resolved_can_connect_to = can_connect_to if can_connect_to is not None else default_can_connect
+        resolved_can_receive_from = can_receive_from if can_receive_from is not None else default_can_receive
+
         # Build metadata
         metadata = {
             "module_id": module_id,
@@ -491,8 +539,8 @@ def register_module(
             # Connection types
             "input_types": input_types or [],
             "output_types": output_types or [],
-            "can_receive_from": can_receive_from or [],
-            "can_connect_to": can_connect_to or [],
+            "can_receive_from": resolved_can_receive_from,
+            "can_connect_to": resolved_can_connect_to,
 
             # Schema
             "params_schema": params_schema or {},
@@ -512,6 +560,13 @@ def register_module(
             # Execution environment
             "execution_environment": resolved_execution_env.value if isinstance(resolved_execution_env, ExecutionEnvironment) else resolved_execution_env,
 
+            # Workflow Spec v1.1 - Node & Port Configuration
+            "node_type": node_type.value if isinstance(node_type, NodeType) else node_type,
+            "input_ports": resolved_input_ports,
+            "output_ports": resolved_output_ports,
+            "dynamic_ports": dynamic_ports,
+            "container_config": container_config,
+
             # Advanced
             "requires": requires or [],
             "permissions": permissions or [],
@@ -525,6 +580,116 @@ def register_module(
         return module_class
 
     return decorator
+
+
+def generate_dynamic_ports(
+    params: Dict[str, Any],
+    dynamic_config: Dict[str, Dict[str, Any]]
+) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Generate dynamic ports from module params based on configuration.
+
+    Used for Switch/Case nodes where output ports are generated from 'cases' param.
+
+    Args:
+        params: Module params (e.g., {'cases': [{'id': 'abc', 'value': 'US', 'label': 'United States'}]})
+        dynamic_config: Dynamic port configuration from @register_module
+
+    Returns:
+        Dictionary with 'input' and/or 'output' port lists
+
+    Example:
+        config = {
+            'output': {
+                'from_param': 'cases',
+                'stable_key_field': 'id',
+                'id_field': 'value',
+                'label_field': 'label',
+                'event_prefix': 'case:',
+                'include_default': True
+            }
+        }
+        ports = generate_dynamic_ports({'cases': [...]}, config)
+    """
+    result = {}
+
+    for direction, config in dynamic_config.items():
+        if direction not in ('input', 'output'):
+            continue
+
+        from_param = config.get('from_param')
+        if not from_param or from_param not in params:
+            continue
+
+        items = params[from_param]
+        if not isinstance(items, list):
+            continue
+
+        ports = []
+        stable_key_field = config.get('stable_key_field', 'id')
+        id_field = config.get('id_field', 'value')
+        label_field = config.get('label_field', 'label')
+        event_prefix = config.get('event_prefix', '')
+        color_field = config.get('color_field')
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            # Use stable_key for port.id if available, otherwise use id_field
+            stable_key = item.get(stable_key_field)
+            value = item.get(id_field, '')
+            label = item.get(label_field, value)
+
+            # Generate port.id: use stable_key if available, otherwise slug from value
+            if stable_key:
+                port_id = f"case_{stable_key}"
+            else:
+                # Fallback: slug from value
+                port_id = f"case_{_slugify(str(value))}"
+
+            # Generate event
+            event = f"{event_prefix}{value}"
+
+            port = {
+                'id': port_id,
+                'label': label,
+                'event': event,
+                'direction': direction,
+                '_stable_key': stable_key,  # Keep reference for edge binding
+                '_value': value,            # Keep original value
+            }
+
+            # Add color if specified
+            if color_field and color_field in item:
+                port['color'] = item[color_field]
+
+            ports.append(port)
+
+        # Add default port if configured
+        if config.get('include_default', False) and direction == 'output':
+            ports.append({
+                'id': 'default',
+                'label': 'Default',
+                'event': 'default',
+                'direction': 'output',
+                'color': '#6B7280'
+            })
+
+        result[direction] = ports
+
+    return result
+
+
+def _slugify(text: str) -> str:
+    """Convert text to a safe slug for port IDs."""
+    import re
+    # Replace special chars with underscore
+    slug = re.sub(r'[^a-zA-Z0-9]', '_', text.lower())
+    # Remove consecutive underscores
+    slug = re.sub(r'_+', '_', slug)
+    # Remove leading/trailing underscores
+    return slug.strip('_')
 
 
 class ModuleCatalogManager:

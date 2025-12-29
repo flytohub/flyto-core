@@ -1,31 +1,74 @@
 """
 Loop / ForEach - Iteration Module
 
-Provides functionality to iterate over lists and execute sub-steps for each item.
+Workflow Spec v1.2:
+- Uses output ports (iterate/done/error) instead of text params
+- Returns __event__ for engine routing
+- Edges determine flow, not params.target (deprecated)
+
 Supports two modes:
-- Edge-based mode: Uses 'target' and 'times' to jump back to a previous step
+- Edge-based mode: Uses output ports to route back (iterate) or forward (done)
 - Nested mode: Uses 'items' and 'steps' to execute sub-steps internally
 """
 from typing import Any, List, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...types import NodeType, EdgeType, DataType
 
 
 @register_module(
     module_id='flow.loop',
-    version='1.0.0',
+    version='2.0.0',  # Major version bump for spec v1.2
     category='flow',
     tags=['flow', 'loop', 'iteration', 'repeat'],
     label='Loop',
     label_key='modules.flow.loop.label',
-    description='Repeat steps N times with optional jump target',
+    description='Repeat steps N times using output port routing',
     description_key='modules.flow.loop.description',
     icon='Repeat',
     color='#8B5CF6',
 
-    # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    # Workflow Spec v1.2
+    node_type=NodeType.LOOP,
+
+    input_ports=[
+        {
+            'id': 'input',
+            'label': 'Input',
+            'label_key': 'modules.flow.loop.ports.input',
+            'data_type': DataType.ANY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1,
+            'required': True
+        }
+    ],
+
+    output_ports=[
+        {
+            'id': 'iterate',
+            'label': 'Iterate',
+            'label_key': 'modules.flow.loop.ports.iterate',
+            'event': 'iterate',
+            'color': '#F59E0B',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'done',
+            'label': 'Done',
+            'label_key': 'modules.flow.loop.ports.done',
+            'event': 'done',
+            'color': '#10B981',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'error',
+            'label': 'Error',
+            'label_key': 'common.ports.error',
+            'event': 'error',
+            'color': '#EF4444',
+            'edge_type': EdgeType.CONTROL.value
+        }
+    ],
 
     # Execution settings
     retryable=False,
@@ -50,9 +93,10 @@ from ...registry import register_module
             'type': 'string',
             'label': 'Target Step',
             'label_key': 'modules.flow.loop.params.target.label',
-            'description': 'Step ID to loop back to (edge-based loop)',
+            'description': 'DEPRECATED: Use output ports and edges instead',
             'description_key': 'modules.flow.loop.params.target.description',
-            'required': False
+            'required': False,
+            'deprecated': True
         },
         'steps': {
             'type': 'array',
@@ -72,19 +116,28 @@ from ...registry import register_module
         }
     },
     output_schema={
-        'status': {'type': 'string'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done/error)'},
+        'outputs': {
+            'type': 'object',
+            'description': 'Output values by port',
+            'properties': {
+                'iterate': {'type': 'object'},
+                'done': {'type': 'object'}
+            }
+        },
+        'iteration': {'type': 'number', 'description': 'Current iteration count'},
+        'status': {'type': 'string', 'optional': True},
         'results': {'type': 'array', 'optional': True},
-        'count': {'type': 'number', 'optional': True},
-        'next_step': {'type': 'string', 'optional': True},
-        'iteration': {'type': 'number', 'optional': True}
+        'count': {'type': 'number', 'optional': True}
     },
     examples=[
         {
-            'name': 'Edge-based loop (10 times)',
+            'name': 'Loop 10 times (v2.0 - edge-based)',
+            'description': 'Connect iterate port back to the step you want to repeat',
             'params': {
-                'times': 10,
-                'target': 'step_1'
-            }
+                'times': 10
+            },
+            'note': 'Connect iterate port to loop body start, done port to next step'
         },
         {
             'name': 'Nested loop (5 times)',
@@ -229,13 +282,23 @@ class LoopModule(BaseModule):
 
     def validate_params(self):
         import logging
+        import warnings
         logger = logging.getLogger(__name__)
         logger.debug(f"LoopModule validate_params: params={self.params}")
 
-        # Check for edge-based loop mode (target parameter)
+        # Check for edge-based loop mode (target parameter - DEPRECATED)
         self.target = self.params.get('target')
         self.is_edge_mode = bool(self.target) and str(self.target).strip() != ''
         logger.debug(f"LoopModule: target={self.target!r}, is_edge_mode={self.is_edge_mode}")
+
+        # Deprecation warning for params.target
+        if self.target:
+            warnings.warn(
+                "params.target is deprecated in v2.0. "
+                "Use output ports and edges instead. "
+                "Connect 'iterate' port to the step you want to loop back to.",
+                DeprecationWarning
+            )
 
         if self.is_edge_mode:
             # Edge-based loop: uses 'target' and 'times'
@@ -313,36 +376,62 @@ class LoopModule(BaseModule):
 
     async def _execute_edge_mode(self) -> Dict[str, Any]:
         """
-        Edge-based loop: return jump instruction to workflow engine
+        Edge-based loop: return event for workflow engine routing (Spec v1.2)
 
         The loop body (steps between target and this loop module) executes N times.
         - First execution: before any loop (iteration 0)
         - Then N-1 more jumps back to target
 
         So if times=2, we jump back 1 time (total 2 executions of loop body).
+
+        Returns:
+            Dict with __event__ (iterate/done) for engine routing
         """
-        # Use target as key to track iterations
-        iteration_key = f"{self.ITERATION_PREFIX}{self.target}"
+        # Use step_id or target as key to track iterations
+        step_id = self.context.get('__current_step_id', self.target or 'loop')
+        iteration_key = f"{self.ITERATION_PREFIX}{step_id}"
         current_iteration = self.context.get(iteration_key, 0) + 1
 
         # Check if we've completed enough iterations
         # times=2 means: run 2 times total, so jump back (times-1)=1 time
         if current_iteration >= self.times:
-            # Max iterations reached, continue to next step
+            # Max iterations reached - emit 'done' event
             return {
-                'status': 'completed',
+                '__event__': 'done',
+                'outputs': {
+                    'done': {
+                        'iterations': current_iteration,
+                        'status': 'completed'
+                    }
+                },
                 'iteration': current_iteration,
-                'message': f"Loop completed after {self.times} iterations"
+                'status': 'completed',
+                'message': f"Loop completed after {self.times} iterations",
+                '__set_context': {
+                    iteration_key: 0  # Reset for next execution
+                }
             }
 
-        # Return jump instruction for next iteration
-        return {
-            'next_step': self.target,
+        # Continue iterating - emit 'iterate' event
+        response = {
+            '__event__': 'iterate',
+            'outputs': {
+                'iterate': {
+                    'iteration': current_iteration,
+                    'remaining': self.times - current_iteration
+                }
+            },
             'iteration': current_iteration,
             '__set_context': {
                 iteration_key: current_iteration
             }
         }
+
+        # Legacy support: include next_step if target provided (deprecated)
+        if self.target:
+            response['next_step'] = self.target
+
+        return response
 
     async def _execute_nested_mode(self) -> Dict[str, Any]:
         """

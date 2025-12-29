@@ -1,17 +1,20 @@
 """
 Branch Module - Conditional branching for workflows
 
-Evaluates a condition and returns the next step ID based on true/false result.
-The workflow engine handles the actual jump logic.
+Workflow Spec v1.1:
+- Uses output ports (true/false/error) instead of text params
+- Returns __event__ for engine routing
+- Edges determine flow, not params
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...types import NodeType, EdgeType, DataType
 
 
 @register_module(
     module_id='flow.branch',
-    version='1.0.0',
+    version='2.0.0',  # Major version bump for spec v1.1
     category='flow',
     tags=['flow', 'branch', 'condition', 'if', 'control'],
     label='Branch',
@@ -21,8 +24,47 @@ from ...registry import register_module
     icon='GitBranch',
     color='#E91E63',
 
-    input_types=['any'],
-    output_types=['branch_result'],
+    # Workflow Spec v1.1
+    node_type=NodeType.BRANCH,
+
+    input_ports=[
+        {
+            'id': 'input',
+            'label': 'Input',
+            'label_key': 'modules.flow.branch.ports.input',
+            'data_type': DataType.ANY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1,
+            'required': True
+        }
+    ],
+
+    output_ports=[
+        {
+            'id': 'true',
+            'label': 'True',
+            'label_key': 'modules.flow.branch.ports.true',
+            'event': 'true',
+            'color': '#10B981',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'false',
+            'label': 'False',
+            'label_key': 'modules.flow.branch.ports.false',
+            'event': 'false',
+            'color': '#F59E0B',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'error',
+            'label': 'Error',
+            'label_key': 'common.ports.error',
+            'event': 'error',
+            'color': '#EF4444',
+            'edge_type': EdgeType.CONTROL.value
+        }
+    ],
 
     retryable=False,
     concurrent_safe=True,
@@ -43,46 +85,42 @@ from ...registry import register_module
                 '${step1.status} == success',
                 '${step1.data} contains error'
             ]
-        },
-        'on_true': {
-            'type': 'string',
-            'label': 'On True',
-            'label_key': 'modules.flow.branch.params.on_true.label',
-            'description': 'Step ID to jump to when condition is true',
-            'description_key': 'modules.flow.branch.params.on_true.description',
-            'required': True
-        },
-        'on_false': {
-            'type': 'string',
-            'label': 'On False',
-            'label_key': 'modules.flow.branch.params.on_false.label',
-            'description': 'Step ID to jump to when condition is false',
-            'description_key': 'modules.flow.branch.params.on_false.description',
-            'required': True
         }
+        # NOTE: on_true/on_false removed in v2.0
+        # Flow is now determined by edges connected to output ports
     },
+
     output_schema={
+        '__event__': {'type': 'string', 'description': 'Event for routing (true/false/error)'},
+        'outputs': {
+            'type': 'object',
+            'description': 'Output values by port',
+            'properties': {
+                'true': {'type': 'object'},
+                'false': {'type': 'object'}
+            }
+        },
         'result': {'type': 'boolean', 'description': 'Condition evaluation result'},
-        'next_step': {'type': 'string', 'description': 'ID of the next step to execute'},
         'condition': {'type': 'string', 'description': 'Original condition expression'},
         'resolved_condition': {'type': 'string', 'description': 'Condition after variable resolution'}
     },
+
     examples=[
         {
             'name': 'Check if results exist',
+            'description': 'Branch based on whether count is greater than 0',
             'params': {
-                'condition': '${search_step.count} > 0',
-                'on_true': 'process_results',
-                'on_false': 'no_results_handler'
-            }
+                'condition': '${search_step.count} > 0'
+            },
+            'note': 'Connect true port to process_results, false port to no_results_handler'
         },
         {
             'name': 'Check status',
+            'description': 'Branch based on API response status',
             'params': {
-                'condition': '${api_call.status} == success',
-                'on_true': 'continue_processing',
-                'on_false': 'error_handler'
-            }
+                'condition': '${api_call.status} == success'
+            },
+            'note': 'Connect true port to continue_processing, false port to error_handler'
         }
     ],
     author='Flyto2 Team',
@@ -90,10 +128,16 @@ from ...registry import register_module
 )
 class BranchModule(BaseModule):
     """
-    Conditional branching module
+    Conditional branching module (Spec v1.1)
 
-    Evaluates a condition and determines which step to execute next.
-    The workflow engine reads the next_step from the output and jumps accordingly.
+    Evaluates a condition and emits an event (true/false/error).
+    The workflow engine routes to the next node based on the event
+    and connected edges.
+
+    Changes from v1.x:
+    - Removed on_true/on_false params (use output ports instead)
+    - Returns __event__ for engine routing
+    - Returns outputs{} for per-port values
     """
 
     module_name = "Branch"
@@ -103,29 +147,67 @@ class BranchModule(BaseModule):
     def validate_params(self):
         if 'condition' not in self.params:
             raise ValueError("Missing required parameter: condition")
-        if 'on_true' not in self.params:
-            raise ValueError("Missing required parameter: on_true")
-        if 'on_false' not in self.params:
-            raise ValueError("Missing required parameter: on_false")
 
         self.condition = self.params['condition']
-        self.on_true = self.params['on_true']
-        self.on_false = self.params['on_false']
+
+        # Legacy support: check for deprecated on_true/on_false
+        if 'on_true' in self.params or 'on_false' in self.params:
+            import warnings
+            warnings.warn(
+                "on_true/on_false params are deprecated in v2.0. "
+                "Use output ports and edges instead.",
+                DeprecationWarning
+            )
 
     async def execute(self) -> Dict[str, Any]:
         """
-        Evaluate condition and return branch decision
-        """
-        resolved_condition = self._resolve_variables(self.condition)
-        result = self._evaluate_condition(resolved_condition)
-        next_step = self.on_true if result else self.on_false
+        Evaluate condition and return event for routing.
 
-        return {
-            'result': result,
-            'next_step': next_step,
-            'condition': self.condition,
-            'resolved_condition': resolved_condition
-        }
+        Returns:
+            Dict with __event__ (true/false/error) for engine routing
+        """
+        try:
+            resolved_condition = self._resolve_variables(self.condition)
+            result = self._evaluate_condition(resolved_condition)
+
+            # Determine event
+            event = 'true' if result else 'false'
+
+            # Build response with Spec v1.1 format
+            response = {
+                # Event for routing
+                '__event__': event,
+
+                # Per-port outputs
+                'outputs': {
+                    'true': {'result': result, 'condition': self.condition} if result else None,
+                    'false': {'result': result, 'condition': self.condition} if not result else None,
+                },
+
+                # Legacy fields for backwards compatibility
+                'result': result,
+                'condition': self.condition,
+                'resolved_condition': resolved_condition,
+            }
+
+            # Legacy support: include next_step if on_true/on_false provided
+            if 'on_true' in self.params and 'on_false' in self.params:
+                response['next_step'] = self.params['on_true'] if result else self.params['on_false']
+
+            return response
+
+        except Exception as e:
+            # Return error event
+            return {
+                '__event__': 'error',
+                'outputs': {
+                    'error': {'message': str(e), 'condition': self.condition}
+                },
+                '__error__': {
+                    'code': 'CONDITION_ERROR',
+                    'message': str(e)
+                }
+            }
 
     def _resolve_variables(self, expression: str) -> str:
         """

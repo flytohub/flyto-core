@@ -6,9 +6,13 @@ Defines core types for module system including:
 - UIVisibility: UI display behavior
 - ContextType: Module context requirements
 - ExecutionEnvironment: Where modules can safely run
+- NodeType: Workflow node types (v1.1 spec)
+- EdgeType: Connection types (control/resource)
+- DataType: Port data types
+- PortImportance: Port UI visibility level
 """
 from enum import Enum
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Dict, Any
 
 
 class ExecutionEnvironment(str, Enum):
@@ -73,6 +77,251 @@ class ContextType(str, Enum):
     API_RESPONSE = "api_response"
     DATABASE = "database"
     SESSION = "session"
+
+
+# =============================================================================
+# Workflow Spec v1.1 Types
+# =============================================================================
+
+class NodeType(str, Enum):
+    """
+    Node types for workflow canvas.
+
+    Determines node behavior, port configuration, and execution semantics.
+    Reference: FLYTO2_WORKFLOW_SPEC_V1.md §3.2
+    """
+    STANDARD = "standard"      # Normal node: single input, success/error output
+    BRANCH = "branch"          # If/Else: single input, true/false/error outputs
+    SWITCH = "switch"          # Multi-way: single input, N case outputs + default
+    LOOP = "loop"              # ForEach/While: single input, item/done outputs
+    MERGE = "merge"            # Merge: N inputs, single output
+    FORK = "fork"              # Parallel fork: single input, N outputs (all fire)
+    JOIN = "join"              # Parallel join: N inputs, single output (wait strategy)
+    CONTAINER = "container"    # Sandbox: contains embedded subflow
+    SUBFLOW = "subflow"        # Reference: points to external workflow
+    TRIGGER = "trigger"        # Entry: webhook/schedule/manual trigger
+    START = "start"            # Explicit start node
+    END = "end"                # Explicit end node
+    BREAKPOINT = "breakpoint"  # Human-in-the-loop: pause for approval/input
+
+
+class EdgeType(str, Enum):
+    """
+    Edge types for workflow connections.
+
+    CONTROL: Determines execution flow (which node runs next)
+    RESOURCE: Injects data/tools without affecting flow order
+
+    Reference: FLYTO2_WORKFLOW_SPEC_V1.md §4.3
+    """
+    CONTROL = "control"        # Execution flow edge
+    RESOURCE = "resource"      # Data/tool injection edge
+
+
+class DataType(str, Enum):
+    """
+    Data types for port type checking.
+
+    Used for connection validation between ports.
+    Reference: FLYTO2_WORKFLOW_SPEC_V1.md §4.2
+    """
+    ANY = "any"                # Accepts any type
+    STRING = "string"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    OBJECT = "object"
+    ARRAY = "array"
+    BINARY = "binary"          # Binary data (bytes)
+    TABLE = "table"            # Tabular data (DataFrame-like)
+    BROWSER = "browser"        # Browser context
+    PAGE = "page"              # Page context
+    ELEMENT = "element"        # DOM element
+    FILE = "file"
+    IMAGE = "image"
+    JSON = "json"
+    XML = "xml"
+    HTML = "html"
+    CREDENTIAL = "credential"  # Sensitive credential data
+
+
+class PortImportance(str, Enum):
+    """
+    Port UI importance level.
+
+    Controls where ports are displayed on the node.
+    Reference: FLYTO2_WORKFLOW_SPEC_V1.md §16.1
+    """
+    PRIMARY = "primary"        # Always visible on node face
+    SECONDARY = "secondary"    # Visible on hover
+    ADVANCED = "advanced"      # Only in settings panel
+
+
+# =============================================================================
+# Type Compatibility Matrix
+# =============================================================================
+
+# Types that are compatible with each other
+# Key can connect to any value in its list
+DATA_TYPE_COMPATIBILITY: Dict[DataType, List[DataType]] = {
+    DataType.ANY: list(DataType),  # ANY accepts everything
+    DataType.STRING: [DataType.ANY, DataType.STRING, DataType.JSON, DataType.XML, DataType.HTML],
+    DataType.NUMBER: [DataType.ANY, DataType.NUMBER, DataType.STRING],
+    DataType.BOOLEAN: [DataType.ANY, DataType.BOOLEAN, DataType.STRING, DataType.NUMBER],
+    DataType.OBJECT: [DataType.ANY, DataType.OBJECT, DataType.JSON],
+    DataType.ARRAY: [DataType.ANY, DataType.ARRAY, DataType.TABLE],
+    DataType.JSON: [DataType.ANY, DataType.JSON, DataType.OBJECT, DataType.STRING],
+    DataType.TABLE: [DataType.ANY, DataType.TABLE, DataType.ARRAY],
+    DataType.BROWSER: [DataType.ANY, DataType.BROWSER],
+    DataType.PAGE: [DataType.ANY, DataType.PAGE, DataType.BROWSER],
+    DataType.ELEMENT: [DataType.ANY, DataType.ELEMENT],
+    DataType.FILE: [DataType.ANY, DataType.FILE, DataType.BINARY],
+    DataType.IMAGE: [DataType.ANY, DataType.IMAGE, DataType.FILE, DataType.BINARY],
+    DataType.BINARY: [DataType.ANY, DataType.BINARY],
+    DataType.XML: [DataType.ANY, DataType.XML, DataType.STRING],
+    DataType.HTML: [DataType.ANY, DataType.HTML, DataType.STRING],
+    DataType.CREDENTIAL: [DataType.ANY, DataType.CREDENTIAL],
+}
+
+
+def is_data_type_compatible(source: DataType, target: DataType) -> bool:
+    """
+    Check if source data type can connect to target data type.
+
+    Args:
+        source: Output port data type
+        target: Input port data type
+
+    Returns:
+        True if connection is valid
+    """
+    # ANY target accepts everything
+    if target == DataType.ANY:
+        return True
+
+    # Check compatibility matrix
+    compatible_types = DATA_TYPE_COMPATIBILITY.get(source, [DataType.ANY])
+    return target in compatible_types
+
+
+# =============================================================================
+# Default Port Configurations by NodeType
+# =============================================================================
+
+DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
+    NodeType.STANDARD: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": [
+            {"id": "success", "label": "Success", "event": "success"},
+            {"id": "error", "label": "Error", "event": "error"}
+        ]
+    },
+    NodeType.BRANCH: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": [
+            {"id": "true", "label": "True", "event": "true", "color": "#10B981"},
+            {"id": "false", "label": "False", "event": "false", "color": "#F59E0B"},
+            {"id": "error", "label": "Error", "event": "error", "color": "#EF4444"}
+        ]
+    },
+    NodeType.SWITCH: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": [
+            {"id": "default", "label": "Default", "event": "default", "color": "#6B7280"},
+            {"id": "error", "label": "Error", "event": "error", "color": "#EF4444"}
+        ]
+        # Note: dynamic ports are added based on 'cases' param
+    },
+    NodeType.LOOP: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": [
+            {"id": "iterate", "label": "Iterate", "event": "iterate", "color": "#F59E0B"},
+            {"id": "done", "label": "Done", "event": "done", "color": "#10B981"},
+            {"id": "error", "label": "Error", "event": "error", "color": "#EF4444"}
+        ]
+    },
+    NodeType.MERGE: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": None}  # Unlimited
+        ],
+        "output": [
+            {"id": "output", "label": "Output", "event": "success"}
+        ]
+    },
+    NodeType.FORK: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": []  # Dynamic based on configuration
+    },
+    NodeType.JOIN: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": None}  # Unlimited
+        ],
+        "output": [
+            {"id": "output", "label": "Output", "event": "success"},
+            {"id": "timeout", "label": "Timeout", "event": "timeout"},
+            {"id": "error", "label": "Error", "event": "error"}
+        ]
+    },
+    NodeType.CONTAINER: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1}
+        ],
+        "output": [
+            {"id": "success", "label": "Success", "event": "success"},
+            {"id": "error", "label": "Error", "event": "error"}
+        ]
+    },
+    NodeType.TRIGGER: {
+        "input": [],
+        "output": [
+            {"id": "trigger", "label": "Trigger", "event": "trigger"}
+        ]
+    },
+    NodeType.START: {
+        "input": [],
+        "output": [
+            {"id": "start", "label": "Start", "event": "start"}
+        ]
+    },
+    NodeType.END: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": None}
+        ],
+        "output": []
+    },
+    NodeType.BREAKPOINT: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True}
+        ],
+        "output": [
+            {"id": "approved", "label": "Approved", "event": "approved", "color": "#10B981"},
+            {"id": "rejected", "label": "Rejected", "event": "rejected", "color": "#EF4444"},
+            {"id": "timeout", "label": "Timeout", "event": "timeout", "color": "#F59E0B"}
+        ]
+    },
+}
+
+
+def get_default_ports(node_type: NodeType) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Get default port configuration for a node type.
+
+    Args:
+        node_type: The node type
+
+    Returns:
+        Dictionary with 'input' and 'output' port lists
+    """
+    return DEFAULT_PORTS_BY_NODE_TYPE.get(node_type, DEFAULT_PORTS_BY_NODE_TYPE[NodeType.STANDARD])
 
 
 # Priority order for module selection (lower = higher priority)
