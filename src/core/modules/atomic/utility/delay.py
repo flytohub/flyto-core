@@ -25,9 +25,9 @@ import uuid
     icon='Clock',
     color='#6B7280',
 
-    # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    # Connection types - pure utility, no data transformation
+    input_types=[],
+    output_types=[],
 
     # Phase 2: Execution settings
     retryable=False,  # Delay operations are deterministic

@@ -1,0 +1,215 @@
+"""
+Browser Cookies Module
+
+Get, set, or clear browser cookies.
+"""
+from typing import Any, Dict, List, Optional
+from ...base import BaseModule
+from ...registry import register_module
+
+
+@register_module(
+    module_id='core.browser.cookies',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'cookies', 'session', 'storage'],
+    label='Manage Cookies',
+    label_key='modules.browser.cookies.label',
+    description='Get, set, or clear browser cookies',
+    description_key='modules.browser.cookies.description',
+    icon='Cookie',
+    color='#D4A373',
+
+    # Connection types
+    input_types=['browser'],
+    output_types=['array', 'json'],
+
+    params_schema={
+        'action': {
+            'type': 'string',
+            'label': 'Action',
+            'label_key': 'modules.browser.cookies.params.action.label',
+            'description': 'Cookie action to perform',
+            'description_key': 'modules.browser.cookies.params.action.description',
+            'required': True,
+            'enum': ['get', 'set', 'clear', 'delete']
+        },
+        'name': {
+            'type': 'string',
+            'label': 'Cookie Name',
+            'label_key': 'modules.browser.cookies.params.name.label',
+            'description': 'Name of the cookie (for get/set/delete)',
+            'description_key': 'modules.browser.cookies.params.name.description',
+            'required': False
+        },
+        'value': {
+            'type': 'string',
+            'label': 'Cookie Value',
+            'label_key': 'modules.browser.cookies.params.value.label',
+            'description': 'Value of the cookie (for set action)',
+            'description_key': 'modules.browser.cookies.params.value.description',
+            'required': False
+        },
+        'domain': {
+            'type': 'string',
+            'label': 'Domain',
+            'label_key': 'modules.browser.cookies.params.domain.label',
+            'description': 'Cookie domain (for set action)',
+            'description_key': 'modules.browser.cookies.params.domain.description',
+            'required': False
+        },
+        'path': {
+            'type': 'string',
+            'label': 'Path',
+            'label_key': 'modules.browser.cookies.params.path.label',
+            'description': 'Cookie path',
+            'description_key': 'modules.browser.cookies.params.path.description',
+            'default': '/',
+            'required': False
+        },
+        'secure': {
+            'type': 'boolean',
+            'label': 'Secure',
+            'label_key': 'modules.browser.cookies.params.secure.label',
+            'description': 'Whether cookie is secure (HTTPS only)',
+            'description_key': 'modules.browser.cookies.params.secure.description',
+            'default': False,
+            'required': False
+        },
+        'httpOnly': {
+            'type': 'boolean',
+            'label': 'HTTP Only',
+            'label_key': 'modules.browser.cookies.params.httpOnly.label',
+            'description': 'Whether cookie is HTTP only',
+            'description_key': 'modules.browser.cookies.params.httpOnly.description',
+            'default': False,
+            'required': False
+        },
+        'expires': {
+            'type': 'number',
+            'label': 'Expires',
+            'label_key': 'modules.browser.cookies.params.expires.label',
+            'description': 'Cookie expiration time (Unix timestamp)',
+            'description_key': 'modules.browser.cookies.params.expires.description',
+            'required': False
+        }
+    },
+    output_schema={
+        'status': {'type': 'string'},
+        'cookies': {'type': 'array'},
+        'count': {'type': 'number'}
+    },
+    examples=[
+        {
+            'name': 'Get all cookies',
+            'params': {'action': 'get'}
+        },
+        {
+            'name': 'Get specific cookie',
+            'params': {'action': 'get', 'name': 'session_id'}
+        },
+        {
+            'name': 'Set a cookie',
+            'params': {
+                'action': 'set',
+                'name': 'user_pref',
+                'value': 'dark_mode',
+                'domain': 'example.com'
+            }
+        },
+        {
+            'name': 'Clear all cookies',
+            'params': {'action': 'clear'}
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
+)
+class BrowserCookiesModule(BaseModule):
+    """Manage Cookies Module"""
+
+    module_name = "Manage Cookies"
+    module_description = "Get, set, or clear browser cookies"
+    required_permission = "browser.interact"
+
+    def validate_params(self):
+        if 'action' not in self.params:
+            raise ValueError("Missing required parameter: action")
+
+        self.action = self.params['action']
+        if self.action not in ['get', 'set', 'clear', 'delete']:
+            raise ValueError(f"Invalid action: {self.action}")
+
+        self.name = self.params.get('name')
+        self.value = self.params.get('value')
+        self.domain = self.params.get('domain')
+        self.path = self.params.get('path', '/')
+        self.secure = self.params.get('secure', False)
+        self.http_only = self.params.get('httpOnly', False)
+        self.expires = self.params.get('expires')
+
+        if self.action == 'set':
+            if not self.name or not self.value:
+                raise ValueError("set action requires name and value")
+            if not self.domain:
+                raise ValueError("set action requires domain")
+
+        if self.action == 'delete' and not self.name:
+            raise ValueError("delete action requires name")
+
+    async def execute(self) -> Any:
+        browser = self.context.get('browser')
+        if not browser:
+            raise RuntimeError("Browser not launched. Please run browser.launch first")
+
+        context = browser._context
+
+        if self.action == 'get':
+            cookies = await context.cookies()
+            if self.name:
+                cookies = [c for c in cookies if c.get('name') == self.name]
+            return {
+                "status": "success",
+                "cookies": cookies,
+                "count": len(cookies)
+            }
+
+        elif self.action == 'set':
+            cookie = {
+                'name': self.name,
+                'value': self.value,
+                'domain': self.domain,
+                'path': self.path,
+                'secure': self.secure,
+                'httpOnly': self.http_only
+            }
+            if self.expires:
+                cookie['expires'] = self.expires
+
+            await context.add_cookies([cookie])
+            return {
+                "status": "success",
+                "cookies": [cookie],
+                "count": 1
+            }
+
+        elif self.action == 'clear':
+            await context.clear_cookies()
+            return {
+                "status": "success",
+                "cookies": [],
+                "count": 0
+            }
+
+        elif self.action == 'delete':
+            # Get all cookies, filter out the one to delete, then clear and re-add
+            all_cookies = await context.cookies()
+            remaining = [c for c in all_cookies if c.get('name') != self.name]
+            await context.clear_cookies()
+            if remaining:
+                await context.add_cookies(remaining)
+            return {
+                "status": "success",
+                "deleted": self.name,
+                "count": len(all_cookies) - len(remaining)
+            }

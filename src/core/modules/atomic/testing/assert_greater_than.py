@@ -19,6 +19,11 @@ from ...registry import register_module
     description='Assert that a value is greater than another',
     icon='CheckCircle',
     color='#22C55E',
+
+    # Connection types
+    input_types=['number'],
+    output_types=['boolean'],
+
     params_schema={
         'actual': {
             'type': 'number',

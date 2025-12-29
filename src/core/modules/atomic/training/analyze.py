@@ -8,7 +8,20 @@ from ...registry import register_module
 from core.training.daily_practice import DailyPracticeEngine
 
 
-@register_module('training.practice.analyze')
+@register_module(
+    module_id='training.practice.analyze',
+    version='1.0.0',
+    category='training',
+    tags=['training', 'practice', 'analyze'],
+    label='Practice Analyze',
+    description='Analyze website structure for practice',
+    icon='Search',
+    color='#10B981',
+
+    # Connection types
+    input_types=['string'],
+    output_types=['object'],
+)
 class TrainingPracticeAnalyze(BaseModule):
     """Analyze website structure for practice"""
 

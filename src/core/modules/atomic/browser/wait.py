@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.wait.description',
     icon='Clock',
     color='#95A5A6',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
     params_schema={
         'duration': {
             'type': 'number',

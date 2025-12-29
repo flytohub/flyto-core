@@ -26,8 +26,8 @@ import uuid
     color='#8B5CF6',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['string'],
+    output_types=['string'],
 
     # Phase 2: Execution settings
     retryable=False,  # Hash operations are deterministic

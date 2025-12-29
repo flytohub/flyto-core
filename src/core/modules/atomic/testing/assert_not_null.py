@@ -19,6 +19,11 @@ from ...registry import register_module
     description='Assert that a value is not null or undefined',
     icon='CheckCircle',
     color='#22C55E',
+
+    # Connection types
+    input_types=['any'],
+    output_types=['boolean'],
+
     params_schema={
         'value': {
             'type': ['string', 'number', 'boolean', 'object', 'array', 'null'],

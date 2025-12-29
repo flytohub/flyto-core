@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.press.description',
     icon='Command',
     color='#34495E',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
     params_schema={
         'key': {
             'type': 'string',

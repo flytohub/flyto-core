@@ -21,8 +21,8 @@ from ...registry import register_module
     color='#E74C3C',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['browser'],
+    output_types=[],
 
     # Phase 2: Execution settings
     timeout=10,  # Browser close should complete within 10s

@@ -1,0 +1,163 @@
+"""
+Browser Dialog Module
+
+Handle alert, confirm, and prompt dialogs.
+"""
+from typing import Any, Dict, Optional
+import asyncio
+from ...base import BaseModule
+from ...registry import register_module
+
+
+@register_module(
+    module_id='core.browser.dialog',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'dialog', 'alert', 'confirm', 'prompt'],
+    label='Handle Dialog',
+    label_key='modules.browser.dialog.label',
+    description='Handle alert, confirm, and prompt dialogs',
+    description_key='modules.browser.dialog.description',
+    icon='MessageSquare',
+    color='#FD7E14',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['object'],
+
+    params_schema={
+        'action': {
+            'type': 'string',
+            'label': 'Action',
+            'label_key': 'modules.browser.dialog.params.action.label',
+            'description': 'How to handle the dialog',
+            'description_key': 'modules.browser.dialog.params.action.description',
+            'required': True,
+            'enum': ['accept', 'dismiss', 'listen']
+        },
+        'prompt_text': {
+            'type': 'string',
+            'label': 'Prompt Text',
+            'label_key': 'modules.browser.dialog.params.prompt_text.label',
+            'description': 'Text to enter in prompt dialog (for accept action)',
+            'description_key': 'modules.browser.dialog.params.prompt_text.description',
+            'required': False
+        },
+        'timeout': {
+            'type': 'number',
+            'label': 'Timeout (ms)',
+            'label_key': 'modules.browser.dialog.params.timeout.label',
+            'description': 'Time to wait for dialog to appear',
+            'description_key': 'modules.browser.dialog.params.timeout.description',
+            'default': 30000,
+            'required': False
+        }
+    },
+    output_schema={
+        'status': {'type': 'string'},
+        'message': {'type': 'string'},
+        'type': {'type': 'string'},
+        'default_value': {'type': 'string'}
+    },
+    examples=[
+        {
+            'name': 'Accept alert',
+            'params': {'action': 'accept'}
+        },
+        {
+            'name': 'Dismiss confirm dialog',
+            'params': {'action': 'dismiss'}
+        },
+        {
+            'name': 'Accept prompt with text',
+            'params': {'action': 'accept', 'prompt_text': 'Hello World'}
+        },
+        {
+            'name': 'Listen for dialogs',
+            'params': {'action': 'listen', 'timeout': 5000}
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
+)
+class BrowserDialogModule(BaseModule):
+    """Handle Dialog Module"""
+
+    module_name = "Handle Dialog"
+    module_description = "Handle alert, confirm, and prompt dialogs"
+    required_permission = "browser.interact"
+
+    def validate_params(self):
+        if 'action' not in self.params:
+            raise ValueError("Missing required parameter: action")
+
+        self.action = self.params['action']
+        if self.action not in ['accept', 'dismiss', 'listen']:
+            raise ValueError(f"Invalid action: {self.action}")
+
+        self.prompt_text = self.params.get('prompt_text')
+        self.timeout = self.params.get('timeout', 30000)
+
+    async def execute(self) -> Any:
+        browser = self.context.get('browser')
+        if not browser:
+            raise RuntimeError("Browser not launched. Please run browser.launch first")
+
+        page = browser.page
+        dialog_info = {'appeared': False, 'message': None, 'type': None, 'default_value': None}
+
+        async def handle_dialog(dialog):
+            dialog_info['appeared'] = True
+            dialog_info['message'] = dialog.message
+            dialog_info['type'] = dialog.type
+            dialog_info['default_value'] = dialog.default_value
+
+            if self.action == 'accept':
+                if self.prompt_text is not None:
+                    await dialog.accept(self.prompt_text)
+                else:
+                    await dialog.accept()
+            elif self.action == 'dismiss':
+                await dialog.dismiss()
+            # For 'listen', just capture info without handling
+
+        page.on('dialog', handle_dialog)
+
+        try:
+            if self.action == 'listen':
+                # Just wait and capture any dialogs
+                await asyncio.sleep(self.timeout / 1000)
+            else:
+                # Wait for dialog to appear
+                try:
+                    await asyncio.wait_for(
+                        self._wait_for_dialog(dialog_info),
+                        timeout=self.timeout / 1000
+                    )
+                except asyncio.TimeoutError:
+                    pass
+
+        finally:
+            page.remove_listener('dialog', handle_dialog)
+
+        if dialog_info['appeared']:
+            return {
+                "status": "success",
+                "message": dialog_info['message'],
+                "type": dialog_info['type'],
+                "default_value": dialog_info['default_value'],
+                "action": self.action
+            }
+        else:
+            return {
+                "status": "success",
+                "message": None,
+                "type": None,
+                "default_value": None,
+                "action": self.action,
+                "note": "No dialog appeared within timeout"
+            }
+
+    async def _wait_for_dialog(self, dialog_info: dict):
+        while not dialog_info['appeared']:
+            await asyncio.sleep(0.1)

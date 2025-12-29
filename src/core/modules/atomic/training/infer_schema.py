@@ -8,7 +8,20 @@ from ...registry import register_module
 from core.training.daily_practice import DailyPracticeEngine
 
 
-@register_module('training.practice.infer_schema')
+@register_module(
+    module_id='training.practice.infer_schema',
+    version='1.0.0',
+    category='training',
+    tags=['training', 'practice', 'schema'],
+    label='Practice Infer Schema',
+    description='Infer data schema from website',
+    icon='FileJson',
+    color='#10B981',
+
+    # Connection types
+    input_types=['string'],
+    output_types=['object'],
+)
 class TrainingPracticeInferSchema(BaseModule):
     """Infer data schema from website"""
 

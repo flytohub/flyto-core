@@ -20,8 +20,9 @@ from ...registry import register_module
     icon='CornerUpLeft',
     color='#FF5722',
 
-    input_types=['any'],
-    output_types=['jump_result'],
+    # Control flow - no data input/output
+    input_types=[],
+    output_types=[],
 
     retryable=False,
     concurrent_safe=True,

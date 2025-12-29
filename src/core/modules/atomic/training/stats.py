@@ -8,7 +8,20 @@ from ...registry import register_module
 from core.training.daily_practice import DailyPracticeEngine
 
 
-@register_module('training.practice.stats')
+@register_module(
+    module_id='training.practice.stats',
+    version='1.0.0',
+    category='training',
+    tags=['training', 'practice', 'stats'],
+    label='Practice Stats',
+    description='Get practice statistics',
+    icon='BarChart',
+    color='#10B981',
+
+    # Connection types
+    input_types=[],
+    output_types=['object'],
+)
 class TrainingPracticeStats(BaseModule):
     """Get practice statistics"""
 

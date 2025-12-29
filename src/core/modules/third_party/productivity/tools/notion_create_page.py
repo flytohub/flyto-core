@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
     color='#000000',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['object'],
+    output_types=['json', 'object'],
 
     # Phase 2: Execution settings
     timeout=30,

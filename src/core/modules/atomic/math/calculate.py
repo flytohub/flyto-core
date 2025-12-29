@@ -23,8 +23,8 @@ import math
     color='#F59E0B',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['number'],
+    output_types=['number'],
 
     # Phase 2: Execution settings
     # No timeout - instant math operation

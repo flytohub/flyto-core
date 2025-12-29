@@ -19,6 +19,11 @@ from ...registry import register_module
     description='Assert that a collection contains a value',
     icon='CheckCircle',
     color='#22C55E',
+
+    # Connection types
+    input_types=['string', 'array'],
+    output_types=['boolean'],
+
     params_schema={
         'collection': {
             'type': ['array', 'string'],

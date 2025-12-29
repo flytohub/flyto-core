@@ -10,7 +10,20 @@ from core.modules.registry import register_module
 from typing import Any
 
 
-@register_module('meta.modules.test_generator')
+@register_module(
+    module_id='meta.modules.test_generator',
+    version='1.0.0',
+    category='meta',
+    tags=['meta', 'generator', 'test'],
+    label='Test Generator',
+    description='Test module generation capability',
+    icon='Beaker',
+    color='#8B5CF6',
+
+    # Connection types
+    input_types=['object'],
+    output_types=['object'],
+)
 class TestGeneratorModule(BaseModule):
     """
     Test the module generator (stub for OSS)
@@ -47,7 +60,20 @@ class TestGeneratorModule(BaseModule):
         }
 
 
-@register_module('meta.modules.generate')
+@register_module(
+    module_id='meta.modules.generate',
+    version='1.0.0',
+    category='meta',
+    tags=['meta', 'generator', 'module'],
+    label='Generate Module',
+    description='Generate new module from specification',
+    icon='PlusCircle',
+    color='#8B5CF6',
+
+    # Connection types
+    input_types=['object'],
+    output_types=['object'],
+)
 class GenerateModuleModule(BaseModule):
     """
     Generate a new module from specification (stub for OSS)

@@ -22,8 +22,8 @@ from ...registry import register_module
     color='#4A90E2',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=[],
+    output_types=['browser'],
 
     # Phase 2: Execution settings
     timeout=10,  # Browser launch should complete within 10s

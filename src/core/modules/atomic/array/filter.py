@@ -22,8 +22,8 @@ from ...registry import register_module
     color='#10B981',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['array'],
+    output_types=['array'],
 
     # Phase 2: Execution settings
     # No timeout - instant array operation

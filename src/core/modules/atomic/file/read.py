@@ -24,8 +24,8 @@ import shutil
     color='#6B7280',
 
     # Connection types
-    output_types=['text', 'binary'],
-    can_connect_to=['data.*', 'string.*'],
+    input_types=['string'],
+    output_types=['string', 'binary'],
 
     # Phase 2: Execution settings
     timeout=30,  # File reads can timeout on network filesystems

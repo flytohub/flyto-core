@@ -22,8 +22,8 @@ from ...registry import register_module
     color='#DC2626',
 
     # Connection types
-    input_types=['text'],
-    output_types=['any'],
+    input_types=['string'],
+    output_types=['string', 'json'],
 
     # Phase 2: Execution settings
     timeout=5,
@@ -168,7 +168,7 @@ class RedisGetModule(BaseModule):
     color='#DC2626',
 
     # Connection types
-    input_types=['any'],
+    input_types=['string', 'json'],
     output_types=['boolean'],
 
     # Phase 2: Execution settings

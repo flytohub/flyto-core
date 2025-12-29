@@ -9,7 +9,20 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('utility.not')
+@register_module(
+    module_id='utility.not',
+    version='1.0.0',
+    category='utility',
+    tags=['utility', 'logic', 'not', 'boolean'],
+    label='Not',
+    description='Logical negation operation',
+    icon='CircleSlash',
+    color='#EF4444',
+
+    # Connection types
+    input_types=['boolean'],
+    output_types=['boolean'],
+)
 class Not(BaseModule):
     """
     Logical negation - inverts the boolean value of the input

@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.screenshot.description',
     icon='Camera',
     color='#9B59B6',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['image', 'file'],
+
     params_schema={
         'path': {
             'type': 'string',

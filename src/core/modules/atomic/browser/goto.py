@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.goto.description',
     icon='Globe',
     color='#5CB85C',
+
+    # Connection types
+    input_types=['browser'],
+    output_types=['page'],
+
     params_schema={
         'url': {
             'type': 'string',

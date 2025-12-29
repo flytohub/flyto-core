@@ -1,0 +1,168 @@
+"""
+Browser Scroll Module
+
+Scroll page to element, position, or direction.
+"""
+from typing import Any, Dict, Optional
+from ...base import BaseModule
+from ...registry import register_module
+
+
+@register_module(
+    module_id='core.browser.scroll',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'scroll', 'navigation'],
+    label='Scroll Page',
+    label_key='modules.browser.scroll.label',
+    description='Scroll page to element, position, or direction',
+    description_key='modules.browser.scroll.description',
+    icon='ArrowDownUp',
+    color='#17A2B8',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
+    params_schema={
+        'selector': {
+            'type': 'string',
+            'label': 'CSS Selector',
+            'label_key': 'modules.browser.scroll.params.selector.label',
+            'placeholder': '#element-id',
+            'description': 'Scroll to this element (optional)',
+            'description_key': 'modules.browser.scroll.params.selector.description',
+            'required': False
+        },
+        'direction': {
+            'type': 'string',
+            'label': 'Direction',
+            'label_key': 'modules.browser.scroll.params.direction.label',
+            'description': 'Scroll direction (up, down, left, right)',
+            'description_key': 'modules.browser.scroll.params.direction.description',
+            'default': 'down',
+            'required': False,
+            'enum': ['up', 'down', 'left', 'right']
+        },
+        'amount': {
+            'type': 'number',
+            'label': 'Amount (pixels)',
+            'label_key': 'modules.browser.scroll.params.amount.label',
+            'description': 'Pixels to scroll (ignored if selector is provided)',
+            'description_key': 'modules.browser.scroll.params.amount.description',
+            'default': 500,
+            'required': False
+        },
+        'behavior': {
+            'type': 'string',
+            'label': 'Behavior',
+            'label_key': 'modules.browser.scroll.params.behavior.label',
+            'description': 'Scroll behavior (smooth or instant)',
+            'description_key': 'modules.browser.scroll.params.behavior.description',
+            'default': 'smooth',
+            'required': False,
+            'enum': ['smooth', 'instant']
+        }
+    },
+    output_schema={
+        'status': {'type': 'string'},
+        'scrolled_to': {'type': 'object'}
+    },
+    examples=[
+        {
+            'name': 'Scroll to element',
+            'params': {'selector': '#footer'}
+        },
+        {
+            'name': 'Scroll down 500 pixels',
+            'params': {'direction': 'down', 'amount': 500}
+        },
+        {
+            'name': 'Smooth scroll to top',
+            'params': {'direction': 'up', 'amount': 10000, 'behavior': 'smooth'}
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
+)
+class BrowserScrollModule(BaseModule):
+    """Scroll Page Module"""
+
+    module_name = "Scroll Page"
+    module_description = "Scroll page to element or position"
+    required_permission = "browser.interact"
+
+    def validate_params(self):
+        self.selector = self.params.get('selector')
+        self.direction = self.params.get('direction', 'down')
+        self.amount = self.params.get('amount', 500)
+        self.behavior = self.params.get('behavior', 'smooth')
+
+        if self.direction not in ['up', 'down', 'left', 'right']:
+            raise ValueError(f"Invalid direction: {self.direction}")
+        if self.behavior not in ['smooth', 'instant']:
+            raise ValueError(f"Invalid behavior: {self.behavior}")
+
+    async def execute(self) -> Any:
+        browser = self.context.get('browser')
+        if not browser:
+            raise RuntimeError("Browser not launched. Please run browser.launch first")
+
+        page = browser.page
+
+        if self.selector:
+            # Scroll to element
+            await page.locator(self.selector).scroll_into_view_if_needed()
+            # Get element position
+            position = await page.evaluate(f'''
+                () => {{
+                    const el = document.querySelector("{self.selector}");
+                    if (el) {{
+                        const rect = el.getBoundingClientRect();
+                        return {{ x: rect.left + window.scrollX, y: rect.top + window.scrollY }};
+                    }}
+                    return {{ x: 0, y: 0 }};
+                }}
+            ''')
+            return {
+                "status": "success",
+                "scrolled_to": position,
+                "selector": self.selector
+            }
+        else:
+            # Scroll by direction and amount
+            scroll_x = 0
+            scroll_y = 0
+
+            if self.direction == 'down':
+                scroll_y = self.amount
+            elif self.direction == 'up':
+                scroll_y = -self.amount
+            elif self.direction == 'right':
+                scroll_x = self.amount
+            elif self.direction == 'left':
+                scroll_x = -self.amount
+
+            behavior = 'smooth' if self.behavior == 'smooth' else 'auto'
+
+            await page.evaluate(f'''
+                () => {{
+                    window.scrollBy({{
+                        left: {scroll_x},
+                        top: {scroll_y},
+                        behavior: '{behavior}'
+                    }});
+                }}
+            ''')
+
+            # Get current scroll position
+            position = await page.evaluate('''
+                () => ({ x: window.scrollX, y: window.scrollY })
+            ''')
+
+            return {
+                "status": "success",
+                "scrolled_to": position,
+                "direction": self.direction,
+                "amount": self.amount
+            }

@@ -8,7 +8,20 @@ from ...registry import register_module
 from core.training.daily_practice import DailyPracticeEngine
 
 
-@register_module('training.practice.execute')
+@register_module(
+    module_id='training.practice.execute',
+    version='1.0.0',
+    category='training',
+    tags=['training', 'practice', 'execute'],
+    label='Practice Execute',
+    description='Execute practice session',
+    icon='Play',
+    color='#10B981',
+
+    # Connection types
+    input_types=['string'],
+    output_types=['object'],
+)
 class TrainingPracticeExecute(BaseModule):
     """Execute practice session"""
 

@@ -22,8 +22,8 @@ from ...registry import register_module
     color='#EF4444',
 
     # Connection types
-    input_types=['array', 'json'],
-    output_types=['any'],
+    input_types=['array'],
+    output_types=['string', 'number'],
 
     # Phase 2: Execution settings
     timeout=None,

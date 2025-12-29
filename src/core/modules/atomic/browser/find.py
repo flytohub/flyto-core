@@ -23,10 +23,8 @@ from ..element_registry import get_element_registry
     color='#8B5CF6',
 
     # Connection types
-    input_types=['browser_instance', 'page_instance'],
+    input_types=['page'],
     output_types=['element', 'array'],
-    can_receive_from=['browser.page.*'],
-    can_connect_to=['element.*', 'data.*'],
 
     # Phase 2: Execution settings
     timeout=10,  # Finding elements should complete within 10s

@@ -8,7 +8,20 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('string.split')
+@register_module(
+    module_id='string.split',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'split', 'array'],
+    label='Split String',
+    description='Split a string into an array using a delimiter',
+    icon='Scissors',
+    color='#3B82F6',
+
+    # Connection types
+    input_types=['string'],
+    output_types=['array'],
+)
 class StringSplit(BaseModule):
     """
     Split a string into an array using a delimiter

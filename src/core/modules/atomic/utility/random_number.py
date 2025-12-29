@@ -26,8 +26,8 @@ import uuid
     color='#EC4899',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=[],
+    output_types=['number'],
 
     # Phase 2: Execution settings
     retryable=False,  # Random generation is deterministic

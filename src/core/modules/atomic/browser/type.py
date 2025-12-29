@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.type.description',
     icon='Keyboard',
     color='#5BC0DE',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
     params_schema={
         'selector': {
             'type': 'string',

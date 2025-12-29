@@ -19,6 +19,11 @@ from ...registry import register_module
     description='Assert that a condition is true',
     icon='CheckCircle',
     color='#22C55E',
+
+    # Connection types
+    input_types=['boolean'],
+    output_types=['boolean'],
+
     params_schema={
         'condition': {
             'type': 'boolean',

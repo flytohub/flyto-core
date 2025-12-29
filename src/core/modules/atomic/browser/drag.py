@@ -1,0 +1,163 @@
+"""
+Browser Drag Module
+
+Drag and drop elements.
+"""
+from typing import Any, Dict, Optional
+from ...base import BaseModule
+from ...registry import register_module
+
+
+@register_module(
+    module_id='core.browser.drag',
+    version='1.0.0',
+    category='browser',
+    tags=['browser', 'drag', 'drop', 'interaction'],
+    label='Drag and Drop',
+    label_key='modules.browser.drag.label',
+    description='Drag and drop elements',
+    description_key='modules.browser.drag.description',
+    icon='Move',
+    color='#6F42C1',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
+    params_schema={
+        'source': {
+            'type': 'string',
+            'label': 'Source Selector',
+            'label_key': 'modules.browser.drag.params.source.label',
+            'placeholder': '#draggable',
+            'description': 'CSS selector of element to drag',
+            'description_key': 'modules.browser.drag.params.source.description',
+            'required': True
+        },
+        'target': {
+            'type': 'string',
+            'label': 'Target Selector',
+            'label_key': 'modules.browser.drag.params.target.label',
+            'placeholder': '#dropzone',
+            'description': 'CSS selector of drop target',
+            'description_key': 'modules.browser.drag.params.target.description',
+            'required': True
+        },
+        'source_position': {
+            'type': 'object',
+            'label': 'Source Position',
+            'label_key': 'modules.browser.drag.params.source_position.label',
+            'description': 'Position within source element {x, y} as percentages',
+            'description_key': 'modules.browser.drag.params.source_position.description',
+            'required': False
+        },
+        'target_position': {
+            'type': 'object',
+            'label': 'Target Position',
+            'label_key': 'modules.browser.drag.params.target_position.label',
+            'description': 'Position within target element {x, y} as percentages',
+            'description_key': 'modules.browser.drag.params.target_position.description',
+            'required': False
+        },
+        'timeout': {
+            'type': 'number',
+            'label': 'Timeout (ms)',
+            'label_key': 'modules.browser.drag.params.timeout.label',
+            'description': 'Maximum time to wait for elements',
+            'description_key': 'modules.browser.drag.params.timeout.description',
+            'default': 30000,
+            'required': False
+        }
+    },
+    output_schema={
+        'status': {'type': 'string'},
+        'source': {'type': 'string'},
+        'target': {'type': 'string'}
+    },
+    examples=[
+        {
+            'name': 'Simple drag and drop',
+            'params': {'source': '#item1', 'target': '#dropzone'}
+        },
+        {
+            'name': 'Drag to specific position',
+            'params': {
+                'source': '.draggable',
+                'target': '.container',
+                'target_position': {'x': 0.5, 'y': 0.5}
+            }
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
+)
+class BrowserDragModule(BaseModule):
+    """Drag and Drop Module"""
+
+    module_name = "Drag and Drop"
+    module_description = "Drag and drop elements"
+    required_permission = "browser.interact"
+
+    def validate_params(self):
+        if 'source' not in self.params:
+            raise ValueError("Missing required parameter: source")
+        if 'target' not in self.params:
+            raise ValueError("Missing required parameter: target")
+
+        self.source = self.params['source']
+        self.target = self.params['target']
+        self.source_position = self.params.get('source_position')
+        self.target_position = self.params.get('target_position')
+        self.timeout = self.params.get('timeout', 30000)
+
+    async def execute(self) -> Any:
+        browser = self.context.get('browser')
+        if not browser:
+            raise RuntimeError("Browser not launched. Please run browser.launch first")
+
+        page = browser.page
+
+        # Wait for both elements
+        source_locator = page.locator(self.source)
+        target_locator = page.locator(self.target)
+
+        await source_locator.wait_for(timeout=self.timeout)
+        await target_locator.wait_for(timeout=self.timeout)
+
+        # Get element bounding boxes
+        source_box = await source_locator.bounding_box()
+        target_box = await target_locator.bounding_box()
+
+        if not source_box:
+            raise RuntimeError(f"Could not get bounding box for source: {self.source}")
+        if not target_box:
+            raise RuntimeError(f"Could not get bounding box for target: {self.target}")
+
+        # Calculate positions
+        if self.source_position:
+            source_x = source_box['x'] + source_box['width'] * self.source_position.get('x', 0.5)
+            source_y = source_box['y'] + source_box['height'] * self.source_position.get('y', 0.5)
+        else:
+            source_x = source_box['x'] + source_box['width'] / 2
+            source_y = source_box['y'] + source_box['height'] / 2
+
+        if self.target_position:
+            target_x = target_box['x'] + target_box['width'] * self.target_position.get('x', 0.5)
+            target_y = target_box['y'] + target_box['height'] * self.target_position.get('y', 0.5)
+        else:
+            target_x = target_box['x'] + target_box['width'] / 2
+            target_y = target_box['y'] + target_box['height'] / 2
+
+        # Perform drag and drop
+        await page.mouse.move(source_x, source_y)
+        await page.mouse.down()
+        await page.mouse.move(target_x, target_y, steps=10)
+        await page.mouse.up()
+
+        return {
+            "status": "success",
+            "source": self.source,
+            "target": self.target,
+            "from": {"x": source_x, "y": source_y},
+            "to": {"x": target_x, "y": target_y}
+        }

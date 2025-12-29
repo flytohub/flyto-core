@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.click.description',
     icon='MousePointerClick',
     color='#F0AD4E',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['page'],
+
     params_schema={
         'selector': {
             'type': 'string',

@@ -26,8 +26,8 @@ import uuid
     color='#3B82F6',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=[],
+    output_types=['string'],
 
     # Phase 2: Execution settings
     retryable=False,  # Time operations are instant and deterministic

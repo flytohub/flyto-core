@@ -19,6 +19,11 @@ from ...registry import register_module
     description='Assert that two values are equal',
     icon='CheckCircle',
     color='#22C55E',
+
+    # Connection types
+    input_types=['any'],
+    output_types=['boolean'],
+
     params_schema={
         'actual': {
             'type': ['string', 'number', 'boolean', 'object', 'array'],

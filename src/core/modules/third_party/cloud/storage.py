@@ -21,8 +21,8 @@ import base64
     color='#FF9900',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['file', 'binary', 'string'],
+    output_types=['object'],
 
     # Phase 2: Execution settings
     timeout=60,  # Cloud uploads can take time depending on file size
@@ -246,8 +246,8 @@ async def aws_s3_upload(context):
     color='#FF9900',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['string'],
+    output_types=['file', 'binary'],
 
     # Phase 2: Execution settings
     timeout=60,  # Cloud downloads can take time depending on file size

@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
     color='#24292e',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['string'],
+    output_types=['json', 'object'],
 
     # Phase 2: Execution settings
     timeout=30,  # API calls should complete within 30s
@@ -151,8 +151,8 @@ class GitHubGetRepoModule(BaseModule):
     color='#24292e',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['string'],
+    output_types=['array', 'json'],
 
     # Phase 2: Execution settings
     timeout=30,  # API calls should complete within 30s
@@ -313,8 +313,8 @@ class GitHubListIssuesModule(BaseModule):
     color='#24292e',
 
     # Connection types
-    input_types=['any'],
-    output_types=['any'],
+    input_types=['string', 'object'],
+    output_types=['json', 'object'],
 
     # Phase 2: Execution settings
     timeout=30,  # API calls should complete within 30s

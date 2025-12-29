@@ -20,6 +20,11 @@ from ...registry import register_module
     description_key='modules.browser.extract.description',
     icon='Database',
     color='#E74C3C',
+
+    # Connection types
+    input_types=['page'],
+    output_types=['json', 'array'],
+
     params_schema={
         'selector': {
             'type': 'string',

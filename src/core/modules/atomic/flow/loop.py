@@ -165,8 +165,8 @@ from ...types import NodeType, EdgeType, DataType
     color='#10B981',
 
     # Connection types
-    input_types=['array', 'any'],
-    output_types=['array', 'any'],
+    input_types=['array'],
+    output_types=['array'],
 
     # Execution settings
     retryable=False,
