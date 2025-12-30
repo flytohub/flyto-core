@@ -125,8 +125,12 @@ class DateTimeAddModule(BaseModule):
         else:
             try:
                 dt = datetime.fromisoformat(self.datetime_str.replace('Z', '+00:00'))
-            except:
-                raise ValueError(f"Invalid datetime format: {self.datetime_str}")
+            except (ValueError, AttributeError) as e:
+                raise ValueError(
+                    f"Invalid datetime format: '{self.datetime_str}'. "
+                    f"Expected ISO 8601 format (e.g., '2024-01-15T10:30:00Z'). "
+                    f"Error: {e}"
+                )
 
         # Add time
         delta = timedelta(

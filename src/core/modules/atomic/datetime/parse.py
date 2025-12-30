@@ -101,8 +101,12 @@ class DateTimeParseModule(BaseModule):
             # Try ISO format
             try:
                 dt = datetime.fromisoformat(self.datetime_string.replace('Z', '+00:00'))
-            except:
-                raise ValueError(f"Invalid datetime format: {self.datetime_string}")
+            except (ValueError, AttributeError) as e:
+                raise ValueError(
+                    f"Invalid datetime format: '{self.datetime_string}'. "
+                    f"Expected ISO 8601 format (e.g., '2024-01-15T10:30:00Z'). "
+                    f"Error: {e}"
+                )
 
         return {
             "result": dt.isoformat(),

@@ -42,6 +42,10 @@ def register_module(
     ui_icon: Optional[str] = None,
     ui_color: Optional[str] = None,
 
+    # Extended UI help (detailed explanation)
+    ui_help: Optional[str] = None,
+    ui_help_key: Optional[str] = None,
+
     # Legacy label fields (deprecated, use ui_label instead)
     label: Optional[Any] = None,
     label_key: Optional[str] = None,
@@ -57,6 +61,19 @@ def register_module(
     output_types: Optional[List[str]] = None,
     can_receive_from: Optional[List[str]] = None,
     can_connect_to: Optional[List[str]] = None,
+
+    # Type labels and descriptions (for UI display)
+    input_type_labels: Optional[Dict[str, str]] = None,
+    input_type_descriptions: Optional[Dict[str, str]] = None,
+    output_type_labels: Optional[Dict[str, str]] = None,
+    output_type_descriptions: Optional[Dict[str, str]] = None,
+
+    # Connection suggestions (for UI guidance)
+    suggested_predecessors: Optional[List[str]] = None,
+    suggested_successors: Optional[List[str]] = None,
+
+    # Connection error messages (custom messages)
+    connection_error_messages: Optional[Dict[str, str]] = None,
 
     # Schema
     params_schema: Optional[Dict[str, Any]] = None,
@@ -287,6 +304,10 @@ def register_module(
             "ui_icon": ui_icon or icon,
             "ui_color": ui_color or color,
 
+            # Extended UI help
+            "ui_help": ui_help,
+            "ui_help_key": ui_help_key,
+
             # Legacy fields (for backward compatibility)
             "label": ui_label or label or module_id,
             "description": ui_description or description or "",
@@ -298,6 +319,19 @@ def register_module(
             "output_types": output_types or [],
             "can_receive_from": resolved_can_receive_from,
             "can_connect_to": resolved_can_connect_to,
+
+            # Type labels and descriptions (for UI display)
+            "input_type_labels": input_type_labels or {},
+            "input_type_descriptions": input_type_descriptions or {},
+            "output_type_labels": output_type_labels or {},
+            "output_type_descriptions": output_type_descriptions or {},
+
+            # Connection suggestions
+            "suggested_predecessors": suggested_predecessors or [],
+            "suggested_successors": suggested_successors or [],
+
+            # Connection error messages
+            "connection_error_messages": connection_error_messages or {},
 
             # Schema
             "params_schema": params_schema or {},
