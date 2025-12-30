@@ -1,0 +1,400 @@
+"""
+HTTP Request Module
+Send HTTP requests with full control over method, headers, body, and auth
+"""
+
+import asyncio
+import logging
+import time
+from typing import Any, Dict, List, Optional, Union
+
+from ...registry import register_module
+
+
+logger = logging.getLogger(__name__)
+
+
+@register_module(
+    module_id='http.request',
+    version='1.0.0',
+    category='atomic',
+    subcategory='http',
+    tags=['http', 'request', 'api', 'rest', 'client', 'atomic'],
+    label='HTTP Request',
+    label_key='modules.http.request.label',
+    description='Send HTTP request and receive response',
+    description_key='modules.http.request.description',
+    icon='Globe',
+    color='#3B82F6',
+
+    # Connection types
+    input_types=['string', 'object'],
+    output_types=['object'],
+    can_connect_to=['test.*', 'data.*', 'file.*'],
+
+    # Execution settings
+    timeout=60,
+    retryable=True,
+    max_retries=3,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=True,  # May contain auth tokens
+    required_permissions=['network.http'],
+
+    params_schema={
+        'url': {
+            'type': 'string',
+            'label': 'URL',
+            'label_key': 'modules.http.request.params.url.label',
+            'description': 'Request URL',
+            'description_key': 'modules.http.request.params.url.description',
+            'required': True,
+            'placeholder': 'https://api.example.com/endpoint',
+            'validation': {
+                'pattern': r'^https?://.+',
+                'pattern_error': 'URL must start with http:// or https://'
+            }
+        },
+        'method': {
+            'type': 'string',
+            'label': 'Method',
+            'label_key': 'modules.http.request.params.method.label',
+            'description': 'HTTP method',
+            'description_key': 'modules.http.request.params.method.description',
+            'required': False,
+            'default': 'GET',
+            'enum': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
+        },
+        'headers': {
+            'type': 'object',
+            'label': 'Headers',
+            'label_key': 'modules.http.request.params.headers.label',
+            'description': 'HTTP headers',
+            'description_key': 'modules.http.request.params.headers.description',
+            'required': False
+        },
+        'body': {
+            'type': 'any',
+            'label': 'Body',
+            'label_key': 'modules.http.request.params.body.label',
+            'description': 'Request body (object for JSON, string for raw)',
+            'description_key': 'modules.http.request.params.body.description',
+            'required': False
+        },
+        'query': {
+            'type': 'object',
+            'label': 'Query Parameters',
+            'label_key': 'modules.http.request.params.query.label',
+            'description': 'URL query parameters',
+            'description_key': 'modules.http.request.params.query.description',
+            'required': False
+        },
+        'content_type': {
+            'type': 'string',
+            'label': 'Content Type',
+            'label_key': 'modules.http.request.params.content_type.label',
+            'description': 'Content-Type header',
+            'description_key': 'modules.http.request.params.content_type.description',
+            'required': False,
+            'default': 'application/json',
+            'enum': [
+                'application/json',
+                'application/x-www-form-urlencoded',
+                'multipart/form-data',
+                'text/plain',
+                'text/html',
+                'application/xml'
+            ]
+        },
+        'auth': {
+            'type': 'object',
+            'label': 'Authentication',
+            'label_key': 'modules.http.request.params.auth.label',
+            'description': 'Authentication config {type: "bearer"|"basic", token/username/password}',
+            'description_key': 'modules.http.request.params.auth.description',
+            'required': False,
+            'properties': {
+                'type': {
+                    'type': 'string',
+                    'enum': ['bearer', 'basic', 'api_key']
+                },
+                'token': {'type': 'string'},
+                'username': {'type': 'string'},
+                'password': {'type': 'string'},
+                'header_name': {'type': 'string'},
+                'api_key': {'type': 'string'}
+            }
+        },
+        'timeout': {
+            'type': 'number',
+            'label': 'Timeout (seconds)',
+            'label_key': 'modules.http.request.params.timeout.label',
+            'description': 'Request timeout in seconds',
+            'description_key': 'modules.http.request.params.timeout.description',
+            'required': False,
+            'default': 30
+        },
+        'follow_redirects': {
+            'type': 'boolean',
+            'label': 'Follow Redirects',
+            'label_key': 'modules.http.request.params.follow_redirects.label',
+            'description': 'Automatically follow HTTP redirects',
+            'description_key': 'modules.http.request.params.follow_redirects.description',
+            'required': False,
+            'default': True
+        },
+        'verify_ssl': {
+            'type': 'boolean',
+            'label': 'Verify SSL',
+            'label_key': 'modules.http.request.params.verify_ssl.label',
+            'description': 'Verify SSL certificates',
+            'description_key': 'modules.http.request.params.verify_ssl.description',
+            'required': False,
+            'default': True
+        },
+        'response_type': {
+            'type': 'string',
+            'label': 'Response Type',
+            'label_key': 'modules.http.request.params.response_type.label',
+            'description': 'Expected response format',
+            'description_key': 'modules.http.request.params.response_type.description',
+            'required': False,
+            'default': 'auto',
+            'enum': ['auto', 'json', 'text', 'binary']
+        }
+    },
+    output_schema={
+        'ok': {
+            'type': 'boolean',
+            'description': 'Whether request was successful (2xx status)'
+        },
+        'status': {
+            'type': 'number',
+            'description': 'HTTP status code'
+        },
+        'status_text': {
+            'type': 'string',
+            'description': 'HTTP status text'
+        },
+        'headers': {
+            'type': 'object',
+            'description': 'Response headers'
+        },
+        'body': {
+            'type': 'any',
+            'description': 'Response body (parsed JSON or text)'
+        },
+        'url': {
+            'type': 'string',
+            'description': 'Final URL (after redirects)'
+        },
+        'duration_ms': {
+            'type': 'number',
+            'description': 'Request duration in milliseconds'
+        },
+        'content_type': {
+            'type': 'string',
+            'description': 'Response Content-Type'
+        },
+        'content_length': {
+            'type': 'number',
+            'description': 'Response body size in bytes'
+        }
+    },
+    examples=[
+        {
+            'title': 'Simple GET request',
+            'title_key': 'modules.http.request.examples.get.title',
+            'params': {
+                'url': 'https://api.example.com/users',
+                'method': 'GET'
+            }
+        },
+        {
+            'title': 'POST with JSON body',
+            'title_key': 'modules.http.request.examples.post.title',
+            'params': {
+                'url': 'https://api.example.com/users',
+                'method': 'POST',
+                'body': {'name': 'John', 'email': 'john@example.com'}
+            }
+        },
+        {
+            'title': 'Request with Bearer auth',
+            'title_key': 'modules.http.request.examples.auth.title',
+            'params': {
+                'url': 'https://api.example.com/protected',
+                'method': 'GET',
+                'auth': {'type': 'bearer', 'token': '${env.API_TOKEN}'}
+            }
+        },
+        {
+            'title': 'Request with query params',
+            'title_key': 'modules.http.request.examples.query.title',
+            'params': {
+                'url': 'https://api.example.com/search',
+                'method': 'GET',
+                'query': {'q': 'flyto', 'limit': 10}
+            }
+        }
+    ],
+    author='Flyto2 Team',
+    license='MIT'
+)
+async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Send HTTP request and return response"""
+    try:
+        import aiohttp
+    except ImportError:
+        raise ImportError(
+            "aiohttp is required for http.request. "
+            "Install with: pip install aiohttp"
+        )
+
+    import base64
+    from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+
+    params = context['params']
+    url = params['url']
+    method = params.get('method', 'GET').upper()
+    headers = dict(params.get('headers', {}))
+    body = params.get('body')
+    query = params.get('query', {})
+    content_type = params.get('content_type', 'application/json')
+    auth = params.get('auth')
+    timeout_seconds = params.get('timeout', 30)
+    follow_redirects = params.get('follow_redirects', True)
+    verify_ssl = params.get('verify_ssl', True)
+    response_type = params.get('response_type', 'auto')
+
+    # Build URL with query params
+    if query:
+        parsed = urlparse(url)
+        existing_query = parse_qs(parsed.query)
+        existing_query.update({k: [str(v)] for k, v in query.items()})
+        new_query = urlencode(existing_query, doseq=True)
+        url = urlunparse(parsed._replace(query=new_query))
+
+    # Set Content-Type header
+    if body and 'Content-Type' not in headers:
+        headers['Content-Type'] = content_type
+
+    # Handle authentication
+    if auth:
+        auth_type = auth.get('type', 'bearer')
+        if auth_type == 'bearer':
+            token = auth.get('token', '')
+            headers['Authorization'] = f'Bearer {token}'
+        elif auth_type == 'basic':
+            username = auth.get('username', '')
+            password = auth.get('password', '')
+            credentials = base64.b64encode(
+                f'{username}:{password}'.encode()
+            ).decode()
+            headers['Authorization'] = f'Basic {credentials}'
+        elif auth_type == 'api_key':
+            header_name = auth.get('header_name', 'X-API-Key')
+            api_key = auth.get('api_key', '')
+            headers[header_name] = api_key
+
+    # Prepare request body
+    request_kwargs: Dict[str, Any] = {
+        'headers': headers,
+        'allow_redirects': follow_redirects,
+        'ssl': verify_ssl if verify_ssl else False
+    }
+
+    if body is not None and method in ('POST', 'PUT', 'PATCH'):
+        if content_type == 'application/json':
+            request_kwargs['json'] = body
+        elif content_type == 'application/x-www-form-urlencoded':
+            request_kwargs['data'] = body
+        else:
+            request_kwargs['data'] = str(body) if not isinstance(body, (bytes, str)) else body
+
+    timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+    start_time = time.time()
+
+    try:
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.request(method, url, **request_kwargs) as response:
+                duration_ms = int((time.time() - start_time) * 1000)
+
+                status = response.status
+                status_text = response.reason or ''
+                response_headers = dict(response.headers)
+                final_url = str(response.url)
+                response_content_type = response.headers.get('Content-Type', '')
+                content_length = response.headers.get('Content-Length')
+
+                # Parse response body
+                if response_type == 'binary':
+                    body_content = await response.read()
+                elif response_type == 'json':
+                    body_content = await response.json()
+                elif response_type == 'text':
+                    body_content = await response.text()
+                else:  # auto
+                    if 'application/json' in response_content_type:
+                        try:
+                            body_content = await response.json()
+                        except Exception:
+                            body_content = await response.text()
+                    else:
+                        body_content = await response.text()
+
+                ok = 200 <= status < 300
+
+                logger.info(
+                    f"HTTP {method} {url} -> {status} "
+                    f"({duration_ms}ms)"
+                )
+
+                return {
+                    'ok': ok,
+                    'status': status,
+                    'status_text': status_text,
+                    'headers': response_headers,
+                    'body': body_content,
+                    'url': final_url,
+                    'duration_ms': duration_ms,
+                    'content_type': response_content_type,
+                    'content_length': int(content_length) if content_length else len(
+                        body_content if isinstance(body_content, (str, bytes)) else str(body_content)
+                    )
+                }
+
+    except asyncio.TimeoutError:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"HTTP request timeout: {method} {url}")
+        return {
+            'ok': False,
+            'error': f'Request timed out after {timeout_seconds} seconds',
+            'error_code': 'TIMEOUT',
+            'url': url,
+            'duration_ms': duration_ms
+        }
+
+    except aiohttp.ClientError as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"HTTP client error: {e}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'CLIENT_ERROR',
+            'url': url,
+            'duration_ms': duration_ms
+        }
+
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.error(f"HTTP request failed: {e}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'REQUEST_ERROR',
+            'url': url,
+            'duration_ms': duration_ms
+        }

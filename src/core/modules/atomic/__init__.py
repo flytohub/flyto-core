@@ -44,6 +44,17 @@ from . import training
 from . import utility
 from . import vector
 
+# New testing infrastructure modules
+from . import shell
+from . import http
+from . import process
+from . import port
+
+# AI vision and LLM modules
+from . import vision
+from . import ui
+from . import llm
+
 # HuggingFace AI modules
 try:
     from . import huggingface
@@ -64,6 +75,15 @@ from .element import ElementQueryModule, ElementTextModule, ElementAttributeModu
 from .browser.find import BrowserFindModule
 
 __all__ = [
+    # Shell/Process/Port modules (testing infrastructure)
+    'shell',
+    'http',
+    'process',
+    'port',
+    # AI vision and LLM modules
+    'vision',
+    'ui',
+    'llm',
     # Browser modules
     'BrowserFindModule',
     # Element modules

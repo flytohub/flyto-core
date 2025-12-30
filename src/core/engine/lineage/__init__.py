@@ -6,6 +6,12 @@ Each value can be traced back to its source step and output port.
 
 This is a capability n8n lacks - full data provenance tracking.
 
+Extended for AI Testing:
+- Step categorization (observe/evaluate/decide/act/verify)
+- Artifact production and consumption tracking
+- AI decision recording with confidence and evidence
+- Swimlane-friendly data structure for visualization
+
 Design principles:
 - Zero coupling: Works with any data type
 - Transparent: Can be used without changing existing code
@@ -15,8 +21,28 @@ Design principles:
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+# Original models
 from .models import DataSource, TrackedValue
+
+# Extended models for AI Testing
+from .models import (
+    StepCategory,
+    ArtifactType,
+    Artifact,
+    Decision,
+    Step,
+    EdgeType,
+    Edge,
+    Run,
+)
+
+# Context
 from .context import LineageContext
+
+# Tracker
+from .tracker import RunTracker
+
+# Analysis
 from .analysis import (
     build_data_graph,
     find_dependent_variables,
@@ -69,11 +95,22 @@ def wrap_with_lineage(
 
 
 __all__ = [
-    # Models
+    # Original Models
     "DataSource",
     "TrackedValue",
+    # Extended Models (AI Testing)
+    "StepCategory",
+    "ArtifactType",
+    "Artifact",
+    "Decision",
+    "Step",
+    "EdgeType",
+    "Edge",
+    "Run",
     # Context
     "LineageContext",
+    # Tracker
+    "RunTracker",
     # Analysis
     "build_data_graph",
     "find_dependent_variables",

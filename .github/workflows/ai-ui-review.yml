@@ -1,0 +1,448 @@
+name: AI UI Review Quality Gate
+
+# This workflow runs AI-powered UI review with optional auto-fix and verification
+# Complete flow: Review -> Fix -> Verify -> Quality Gate
+
+on:
+  # Manual trigger with parameters
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Application URL (if already deployed)'
+        required: false
+        type: string
+      project_path:
+        description: 'Path to the project'
+        required: false
+        default: '.'
+        type: string
+      start_command:
+        description: 'Command to start the app'
+        required: false
+        default: 'npm run dev'
+        type: string
+      pages:
+        description: 'Pages to review (JSON array)'
+        required: false
+        default: '[{"path": "/", "name": "Home"}]'
+        type: string
+      min_score:
+        description: 'Minimum score to pass'
+        required: false
+        default: '70'
+        type: string
+      auto_fix:
+        description: 'Attempt to auto-fix issues'
+        required: false
+        default: false
+        type: boolean
+      verify_fixes:
+        description: 'Re-verify after fixes applied'
+        required: false
+        default: true
+        type: boolean
+
+  # Trigger on PR to frontend code
+  pull_request:
+    paths:
+      - 'src/ui/**'
+      - 'frontend/**'
+      - '*.vue'
+      - '*.tsx'
+      - '*.jsx'
+      - 'package.json'
+
+  # Reusable workflow
+  workflow_call:
+    inputs:
+      base_url:
+        required: false
+        type: string
+      project_path:
+        required: false
+        type: string
+        default: '.'
+      pages:
+        required: true
+        type: string
+      min_score:
+        required: false
+        type: string
+        default: '70'
+      auto_fix:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      OPENAI_API_KEY:
+        required: true
+
+env:
+  NODE_VERSION: '20'
+  SCREENSHOT_DIR: './ui-review-screenshots'
+  LINEAGE_PATH: './lineage.json'
+
+jobs:
+  ui-review:
+    name: AI UI Review
+    runs-on: ubuntu-latest
+    outputs:
+      passed: ${{ steps.review.outputs.passed }}
+      score: ${{ steps.review.outputs.score }}
+      issues_count: ${{ steps.review.outputs.issues_count }}
+      fixes_generated: ${{ steps.review.outputs.fixes_generated }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install flyto-core playwright
+          npx playwright install chromium
+
+      - name: Start application
+        if: ${{ !inputs.base_url }}
+        id: start_app
+        run: |
+          cd ${{ inputs.project_path || '.' }}
+          ${{ inputs.start_command || 'npm run dev' }} &
+          echo "pid=$!" >> $GITHUB_OUTPUT
+          # Wait for server to be ready
+          npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run AI UI Review
+        id: review
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python -c "
+          import asyncio
+          import json
+          import os
+          from flyto.core.modules.composite.test import AIUIReview
+
+          async def main():
+              params = {
+                  'project_path': '${{ inputs.project_path || '.' }}',
+                  'base_url': '${{ inputs.base_url }}' or 'http://localhost:3000',
+                  'pages': ${{ inputs.pages || '[{\"path\": \"/\", \"name\": \"Home\"}]' }},
+                  'min_score': ${{ inputs.min_score || 70 }},
+                  'auto_fix': ${{ inputs.auto_fix || false }},
+                  'fix_mode': 'apply' if ${{ inputs.auto_fix || false }} else 'suggest',
+                  'headless': True,
+                  'screenshot_dir': '${{ env.SCREENSHOT_DIR }}',
+                  'lineage_output': '${{ env.LINEAGE_PATH }}',
+                  'enable_lineage': True,
+                  'api_key': os.environ['OPENAI_API_KEY']
+              }
+
+              review = AIUIReview(params)
+              result = await review.execute()
+
+              # Save result for other steps
+              with open('review-result.json', 'w') as f:
+                  json.dump(result, f, indent=2)
+
+              # Set outputs for GitHub Actions
+              print(f\"passed={str(result.get('passed', False)).lower()}\")
+              print(f\"score={result.get('overall_score', 0)}\")
+              print(f\"issues_count={len(result.get('issues', []))}\")
+              print(f\"fixes_generated={len(result.get('fixes', []))}\")
+
+              # Write to GITHUB_OUTPUT
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f\"passed={str(result.get('passed', False)).lower()}\n\")
+                  f.write(f\"score={result.get('overall_score', 0)}\n\")
+                  f.write(f\"issues_count={len(result.get('issues', []))}\n\")
+                  f.write(f\"fixes_generated={len(result.get('fixes', []))}\n\")
+
+              return result
+
+          asyncio.run(main())
+          "
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-review-screenshots
+          path: ${{ env.SCREENSHOT_DIR }}
+          retention-days: 7
+
+      - name: Upload lineage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lineage-data
+          path: ${{ env.LINEAGE_PATH }}
+          retention-days: 30
+
+      - name: Upload review result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-result
+          path: review-result.json
+          retention-days: 7
+
+      - name: Stop application
+        if: ${{ steps.start_app.outputs.pid }}
+        run: kill ${{ steps.start_app.outputs.pid }} || true
+
+  verify-fixes:
+    name: Verify Fixes
+    needs: ui-review
+    if: ${{ inputs.auto_fix && inputs.verify_fixes && needs.ui-review.outputs.fixes_generated != '0' }}
+    runs-on: ubuntu-latest
+    outputs:
+      verified: ${{ steps.verify.outputs.verified }}
+      improvement: ${{ steps.verify.outputs.improvement }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          pip install flyto-core playwright
+          npx playwright install chromium
+
+      - name: Download review result
+        uses: actions/download-artifact@v4
+        with:
+          name: review-result
+
+      - name: Start application
+        if: ${{ !inputs.base_url }}
+        id: start_app
+        run: |
+          cd ${{ inputs.project_path || '.' }}
+          ${{ inputs.start_command || 'npm run dev' }} &
+          echo "pid=$!" >> $GITHUB_OUTPUT
+          npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run verification
+        id: verify
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python -c "
+          import asyncio
+          import json
+          import os
+          from flyto.core.modules.composite.test import VerifyFix
+
+          async def main():
+              # Load previous results
+              with open('review-result.json', 'r') as f:
+                  previous_results = json.load(f)
+
+              params = {
+                  'previous_results': previous_results,
+                  'base_url': '${{ inputs.base_url }}' or 'http://localhost:3000',
+                  'min_score': ${{ inputs.min_score || 70 }},
+                  'improvement_threshold': 5,
+                  'headless': True,
+                  'screenshot_dir': './verify-screenshots',
+                  'lineage_output': './verify-lineage.json',
+                  'api_key': os.environ['OPENAI_API_KEY']
+              }
+
+              verify = VerifyFix(params)
+              result = await verify.execute()
+
+              # Save result
+              with open('verify-result.json', 'w') as f:
+                  json.dump(result, f, indent=2)
+
+              # Set outputs
+              avg_improvement = result.get('stats', {}).get('avg_improvement', 0)
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f\"verified={str(result.get('verified', False)).lower()}\n\")
+                  f.write(f\"improvement={avg_improvement:.1f}\n\")
+
+              return result
+
+          asyncio.run(main())
+          "
+
+      - name: Upload verification screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verify-screenshots
+          path: ./verify-screenshots
+          retention-days: 7
+
+      - name: Upload verification result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verify-result
+          path: verify-result.json
+          retention-days: 7
+
+      - name: Stop application
+        if: ${{ steps.start_app.outputs.pid }}
+        run: kill ${{ steps.start_app.outputs.pid }} || true
+
+  quality-gate:
+    name: Quality Gate
+    needs: [ui-review, verify-fixes]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install flyto-core
+        run: pip install flyto-core
+
+      - name: Download lineage
+        uses: actions/download-artifact@v4
+        with:
+          name: lineage-data
+          path: ./artifacts
+
+      - name: Run quality gate
+        id: gate
+        run: |
+          python -c "
+          import asyncio
+          import json
+          import os
+          import sys
+          from flyto.core.modules.composite.test import CIQualityGate
+
+          async def main():
+              params = {
+                  'lineage_path': './artifacts/lineage.json',
+                  'require_all_pass': True,
+                  'min_confidence': 0.7,
+                  'fail_on_low_confidence': False,
+                  'blocking_failures': ['fail', 'critical', 'regression'],
+                  'exit_on_failure': False,
+              }
+
+              gate = CIQualityGate(params)
+              result = await gate.execute()
+
+              # Save result
+              with open('gate-result.json', 'w') as f:
+                  json.dump(result, f, indent=2)
+
+              # Print summary
+              print('=' * 60)
+              print('QUALITY GATE RESULT')
+              print('=' * 60)
+              print(result.get('summary', 'No summary'))
+              print()
+
+              if result.get('blocked_decisions'):
+                  print('Blocked decisions:')
+                  for d in result['blocked_decisions']:
+                      print(f\"  - {d['step_name']}: {d['decision']} ({d['reason']})\")
+
+              if result.get('low_confidence_decisions'):
+                  print('Low confidence decisions:')
+                  for d in result['low_confidence_decisions']:
+                      print(f\"  - {d['step_name']}: confidence {d['confidence']:.2f}\")
+
+              print()
+              print(f\"Exit code: {result.get('exit_code', 1)}\")
+
+              # Write outputs
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f\"passed={str(result.get('passed', False)).lower()}\n\")
+                  f.write(f\"exit_code={result.get('exit_code', 1)}\n\")
+
+              return result.get('exit_code', 1)
+
+          exit_code = asyncio.run(main())
+          sys.exit(exit_code)
+          "
+
+      - name: Upload gate result
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gate-result
+          path: gate-result.json
+          retention-days: 7
+
+      - name: Post summary comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Load results
+            let gateResult = {};
+            try {
+              gateResult = JSON.parse(fs.readFileSync('gate-result.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not load gate result');
+            }
+
+            const passed = gateResult.passed || false;
+            const summary = gateResult.summary || 'Quality gate completed';
+
+            // Build comment
+            const status = passed ? '✅ PASSED' : '❌ FAILED';
+            const body = `## UI Review Quality Gate ${status}
+
+            ${summary}
+
+            **Details:**
+            - Total decisions: ${gateResult.total_decisions || 0}
+            - Passed: ${gateResult.passed_decisions || 0}
+            - Failed: ${gateResult.failed_decisions || 0}
+
+            ${gateResult.blocked_decisions?.length ? `
+            **Blocking Issues:**
+            ${gateResult.blocked_decisions.map(d => `- ${d.step_name}: ${d.decision}`).join('\n')}
+            ` : ''}
+
+            [View screenshots and lineage in artifacts](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
+            `;
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
