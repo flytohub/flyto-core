@@ -8,7 +8,28 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('string.lowercase')
+@register_module(
+    module_id='string.lowercase',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'lowercase', 'case', 'text'],
+    label='String Lowercase',
+    label_key='modules.string.lowercase.label',
+    description='Convert a string to lowercase',
+    description_key='modules.string.lowercase.description',
+    icon='CaseLower',
+    color='#6366F1',
+    input_types=['string'],
+    output_types=['string'],
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text',
+            'description': 'The string to convert'
+        }
+    }
+)
 class StringLowercase(BaseModule):
     """
     Convert a string to lowercase

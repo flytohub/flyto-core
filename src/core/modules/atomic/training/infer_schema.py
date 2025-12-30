@@ -14,7 +14,9 @@ from core.training.daily_practice import DailyPracticeEngine
     category='training',
     tags=['training', 'practice', 'schema'],
     label='Practice Infer Schema',
+    label_key='modules.training.practice.infer_schema.label',
     description='Infer data schema from website',
+    description_key='modules.training.practice.infer_schema.description',
     icon='FileJson',
     color='#10B981',
 

@@ -7,7 +7,28 @@ from core.modules.registry import register_module
 from typing import Any, Dict
 
 
-@register_module('text.reverse')
+@register_module(
+    module_id='string.reverse',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'reverse', 'text'],
+    label='String Reverse',
+    label_key='modules.string.reverse.label',
+    description='Reverse the characters in a string',
+    description_key='modules.string.reverse.description',
+    icon='ArrowLeftRight',
+    color='#6366F1',
+    input_types=['string'],
+    output_types=['string'],
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text',
+            'description': 'The string to reverse'
+        }
+    }
+)
 class Reverse(BaseModule):
     """
     Reverses the input text string

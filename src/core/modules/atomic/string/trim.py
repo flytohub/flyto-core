@@ -8,7 +8,28 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('string.trim')
+@register_module(
+    module_id='string.trim',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'trim', 'whitespace', 'text'],
+    label='String Trim',
+    label_key='modules.string.trim.label',
+    description='Remove whitespace from both ends of a string',
+    description_key='modules.string.trim.description',
+    icon='Scissors',
+    color='#6366F1',
+    input_types=['string'],
+    output_types=['string'],
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text',
+            'description': 'The string to trim'
+        }
+    }
+)
 class StringTrim(BaseModule):
     """
     Remove whitespace from both ends of a string

@@ -16,7 +16,9 @@ from ...registry import register_module
     category='testing',
     tags=['testing', 'assertion', 'validation'],
     label='Assert Equal',
+    label_key='modules.test.assert_equal.label',
     description='Assert that two values are equal',
+    description_key='modules.test.assert_equal.description',
     icon='CheckCircle',
     color='#22C55E',
 

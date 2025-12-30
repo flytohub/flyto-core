@@ -8,7 +8,28 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('string.uppercase')
+@register_module(
+    module_id='string.uppercase',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'uppercase', 'case', 'text'],
+    label='String Uppercase',
+    label_key='modules.string.uppercase.label',
+    description='Convert a string to uppercase',
+    description_key='modules.string.uppercase.description',
+    icon='CaseUpper',
+    color='#6366F1',
+    input_types=['string'],
+    output_types=['string'],
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text',
+            'description': 'The string to convert'
+        }
+    }
+)
 class StringUppercase(BaseModule):
     """
     Convert a string to uppercase

@@ -8,7 +8,28 @@ from ...registry import register_module
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
-@register_module('analysis.html.extract_metadata')
+@register_module(
+    module_id='analysis.html.extract_metadata',
+    version='1.0.0',
+    category='analysis',
+    tags=['analysis', 'html', 'metadata', 'seo'],
+    label='Extract Metadata',
+    label_key='modules.analysis.html.metadata.label',
+    description='Extract metadata from HTML',
+    description_key='modules.analysis.html.metadata.description',
+    icon='Tag',
+    color='#8B5CF6',
+    input_types=['html', 'string'],
+    output_types=['object'],
+    params_schema={
+        'html': {
+            'type': 'string',
+            'required': True,
+            'label': 'HTML',
+            'description': 'HTML content to extract metadata from'
+        }
+    }
+)
 class HtmlExtractMetadata(BaseModule):
     """Extract metadata from HTML"""
 

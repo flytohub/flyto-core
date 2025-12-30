@@ -16,7 +16,9 @@ from ...registry import register_module
     category='testing',
     tags=['testing', 'assertion', 'validation'],
     label='Assert Length',
+    label_key='modules.test.assert_length.label',
     description='Assert that a collection has expected length',
+    description_key='modules.test.assert_length.description',
     icon='CheckCircle',
     color='#22C55E',
 

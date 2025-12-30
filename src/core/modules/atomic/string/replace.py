@@ -8,7 +8,40 @@ from ...base import BaseModule
 from ...registry import register_module
 
 
-@register_module('string.replace')
+@register_module(
+    module_id='string.replace',
+    version='1.0.0',
+    category='string',
+    tags=['string', 'replace', 'text'],
+    label='String Replace',
+    label_key='modules.string.replace.label',
+    description='Replace occurrences of a substring in a string',
+    description_key='modules.string.replace.description',
+    icon='Replace',
+    color='#6366F1',
+    input_types=['string'],
+    output_types=['string'],
+    params_schema={
+        'text': {
+            'type': 'string',
+            'required': True,
+            'label': 'Text',
+            'description': 'The string to process'
+        },
+        'search': {
+            'type': 'string',
+            'required': True,
+            'label': 'Search',
+            'description': 'The substring to search for'
+        },
+        'replace': {
+            'type': 'string',
+            'required': True,
+            'label': 'Replace With',
+            'description': 'The replacement string'
+        }
+    }
+)
 class StringReplace(BaseModule):
     """
     Replace occurrences of a substring in a string

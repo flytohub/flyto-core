@@ -16,7 +16,9 @@ from ...registry import register_module
     category='testing',
     tags=['testing', 'assertion', 'validation'],
     label='Assert Contains',
+    label_key='modules.test.assert_contains.label',
     description='Assert that a collection contains a value',
+    description_key='modules.test.assert_contains.description',
     icon='CheckCircle',
     color='#22C55E',
 

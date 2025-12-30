@@ -16,7 +16,9 @@ from ...registry import register_module
     category='testing',
     tags=['testing', 'assertion', 'validation'],
     label='Assert Greater Than',
+    label_key='modules.test.assert_greater_than.label',
     description='Assert that a value is greater than another',
+    description_key='modules.test.assert_greater_than.description',
     icon='CheckCircle',
     color='#22C55E',
 

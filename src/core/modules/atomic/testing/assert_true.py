@@ -16,7 +16,9 @@ from ...registry import register_module
     category='testing',
     tags=['testing', 'assertion', 'validation'],
     label='Assert True',
+    label_key='modules.test.assert_true.label',
     description='Assert that a condition is true',
+    description_key='modules.test.assert_true.description',
     icon='CheckCircle',
     color='#22C55E',
 

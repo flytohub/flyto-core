@@ -14,7 +14,9 @@ from core.training.daily_practice import DailyPracticeEngine
     category='training',
     tags=['training', 'practice', 'analyze'],
     label='Practice Analyze',
+    label_key='modules.training.practice.analyze.label',
     description='Analyze website structure for practice',
+    description_key='modules.training.practice.analyze.description',
     icon='Search',
     color='#10B981',
 

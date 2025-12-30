@@ -14,7 +14,9 @@ from core.training.daily_practice import DailyPracticeEngine
     category='training',
     tags=['training', 'practice', 'stats'],
     label='Practice Stats',
+    label_key='modules.training.practice.stats.label',
     description='Get practice statistics',
+    description_key='modules.training.practice.stats.description',
     icon='BarChart',
     color='#10B981',
 

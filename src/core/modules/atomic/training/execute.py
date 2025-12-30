@@ -14,7 +14,9 @@ from core.training.daily_practice import DailyPracticeEngine
     category='training',
     tags=['training', 'practice', 'execute'],
     label='Practice Execute',
+    label_key='modules.training.practice.execute.label',
     description='Execute practice session',
+    description_key='modules.training.practice.execute.description',
     icon='Play',
     color='#10B981',
 

@@ -8,7 +8,28 @@ from ...registry import register_module
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
-@register_module('analysis.html.extract_forms')
+@register_module(
+    module_id='analysis.html.extract_forms',
+    version='1.0.0',
+    category='analysis',
+    tags=['analysis', 'html', 'forms', 'input'],
+    label='Extract Forms',
+    label_key='modules.analysis.html.forms.label',
+    description='Extract form data from HTML',
+    description_key='modules.analysis.html.forms.description',
+    icon='FileInput',
+    color='#8B5CF6',
+    input_types=['html', 'string'],
+    output_types=['array'],
+    params_schema={
+        'html': {
+            'type': 'string',
+            'required': True,
+            'label': 'HTML',
+            'description': 'HTML content to extract forms from'
+        }
+    }
+)
 class HtmlExtractForms(BaseModule):
     """Extract forms from HTML"""
 

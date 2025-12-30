@@ -8,7 +8,28 @@ from ...registry import register_module
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
-@register_module('analysis.html.analyze_readability')
+@register_module(
+    module_id='analysis.html.analyze_readability',
+    version='1.0.0',
+    category='analysis',
+    tags=['analysis', 'html', 'readability', 'text'],
+    label='HTML Readability',
+    label_key='modules.analysis.html.readability.label',
+    description='Analyze content readability',
+    description_key='modules.analysis.html.readability.description',
+    icon='BookOpen',
+    color='#8B5CF6',
+    input_types=['html', 'string'],
+    output_types=['object'],
+    params_schema={
+        'html': {
+            'type': 'string',
+            'required': True,
+            'label': 'HTML',
+            'description': 'HTML content to analyze'
+        }
+    }
+)
 class HtmlAnalyzeReadability(BaseModule):
     """Analyze HTML readability"""
 

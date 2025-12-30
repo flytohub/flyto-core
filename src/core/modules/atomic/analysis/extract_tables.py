@@ -8,7 +8,28 @@ from ...registry import register_module
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
-@register_module('analysis.html.extract_tables')
+@register_module(
+    module_id='analysis.html.extract_tables',
+    version='1.0.0',
+    category='analysis',
+    tags=['analysis', 'html', 'tables', 'data'],
+    label='Extract Tables',
+    label_key='modules.analysis.html.tables.label',
+    description='Extract table data from HTML',
+    description_key='modules.analysis.html.tables.description',
+    icon='Table',
+    color='#8B5CF6',
+    input_types=['html', 'string'],
+    output_types=['array'],
+    params_schema={
+        'html': {
+            'type': 'string',
+            'required': True,
+            'label': 'HTML',
+            'description': 'HTML content to extract tables from'
+        }
+    }
+)
 class HtmlExtractTables(BaseModule):
     """Extract tables from HTML"""
 

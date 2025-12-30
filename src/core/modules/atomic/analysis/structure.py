@@ -8,7 +8,28 @@ from ...registry import register_module
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
-@register_module('analysis.html.structure')
+@register_module(
+    module_id='analysis.html.structure',
+    version='1.0.0',
+    category='analysis',
+    tags=['analysis', 'html', 'dom', 'structure'],
+    label='HTML Structure',
+    label_key='modules.analysis.html.structure.label',
+    description='Analyze HTML DOM structure',
+    description_key='modules.analysis.html.structure.description',
+    icon='FileCode',
+    color='#8B5CF6',
+    input_types=['html', 'string'],
+    output_types=['object'],
+    params_schema={
+        'html': {
+            'type': 'string',
+            'required': True,
+            'label': 'HTML',
+            'description': 'HTML content to analyze'
+        }
+    }
+)
 class HtmlStructureAnalysis(BaseModule):
     """Analyze HTML structure"""
 
