@@ -3,6 +3,9 @@ Module Registry - Core Registration and Lookup
 
 Manages all registered modules and their metadata.
 """
+# Registry version for sync tracking
+REGISTRY_VERSION = "1.0.1"
+
 import logging
 from typing import Dict, Type, Any, Optional, List
 
