@@ -85,6 +85,25 @@ class BrowserExtractModule(BaseModule):
         if self.limit:
             elements = elements[:self.limit]
 
+        # Simple mode: if 'attribute' param is provided without 'fields', extract directly
+        # This supports composite modules that pass {'selector': 'a', 'attribute': 'href'}
+        simple_attribute = self.params.get('attribute')
+        if simple_attribute and not self.fields:
+            results = []
+            for element in elements:
+                try:
+                    if simple_attribute == 'textContent' or simple_attribute == 'text':
+                        value = await element.inner_text()
+                    elif simple_attribute == 'innerHTML' or simple_attribute == 'html':
+                        value = await element.inner_html()
+                    else:
+                        value = await element.get_attribute(simple_attribute)
+                    results.append(value)
+                except Exception:
+                    results.append(None)
+            return {"status": "success", "data": results, "count": len(results)}
+
+        # Complex mode: extract multiple fields per element
         results = []
         for element in elements:
             item = {}
