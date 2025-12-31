@@ -6,6 +6,7 @@ Array data manipulation and transformation
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,39 +36,12 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.filter.params.array.label',
-            'description': 'Array to filter',
-            'description_key': 'modules.array.filter.params.array.description',
-            'required': True
-        },
-        'condition': {
-            'type': 'string',
-            'label': 'Condition',
-            'label_key': 'modules.array.filter.params.condition.label',
-            'description': 'Filter condition (gt, lt, eq, ne, contains)',
-            'description_key': 'modules.array.filter.params.condition.description',
-            'required': True,
-            'options': [
-                {'value': 'gt', 'label': 'Greater Than'},
-                {'value': 'lt', 'label': 'Less Than'},
-                {'value': 'eq', 'label': 'Equal'},
-                {'value': 'ne', 'label': 'Not Equal'},
-                {'value': 'contains', 'label': 'Contains'}
-            ]
-        },
-        'value': {
-            'type': 'string',
-            'label': 'Value',
-            'label_key': 'modules.array.filter.params.value.label',
-            'description': 'Value to compare against',
-            'description_key': 'modules.array.filter.params.value.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.FILTER_CONDITION(required=True),
+        presets.COMPARE_VALUE(required=True),
+    ),
     output_schema={
         'filtered': {
             'type': 'array',

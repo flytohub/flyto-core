@@ -25,3 +25,11 @@ try:
     from .word_parse import *
 except ImportError:
     pass
+try:
+    from .pdf_to_word import *
+except ImportError:
+    pass
+try:
+    from .word_to_pdf import *
+except ImportError:
+    pass

@@ -6,6 +6,7 @@ Create, switch, and close browser tabs.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -24,34 +25,26 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=['page'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.tab.params.action.label',
-            'description': 'Tab action to perform',
-            'description_key': 'modules.browser.tab.params.action.description',
-            'required': True,
-            'enum': ['new', 'switch', 'close', 'list']
-        },
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'label_key': 'modules.browser.tab.params.url.label',
-            'placeholder': 'https://example.com',
-            'description': 'URL to open in new tab (for new action)',
-            'description_key': 'modules.browser.tab.params.url.description',
-            'required': False
-        },
-        'index': {
-            'type': 'number',
-            'label': 'Tab Index',
-            'label_key': 'modules.browser.tab.params.index.label',
-            'description': 'Tab index to switch to or close (0-based)',
-            'description_key': 'modules.browser.tab.params.index.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        field(
+            'action',
+            type='string',
+            label='Action',
+            label_key='modules.browser.tab.params.action.label',
+            description='Tab action to perform',
+            required=True,
+            enum=['new', 'switch', 'close', 'list'],
+        ),
+        presets.URL(required=False, placeholder='https://example.com'),
+        field(
+            'index',
+            type='number',
+            label='Tab Index',
+            label_key='modules.browser.tab.params.index.label',
+            description='Tab index to switch to or close (0-based)',
+            required=False,
+        ),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'tab_count': {'type': 'number'},

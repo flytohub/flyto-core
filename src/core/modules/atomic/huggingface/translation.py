@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .constants import TaskType, ModuleDefaults, ModuleColors, Subcategory
 from ._base import HuggingFaceTaskExecutor, normalize_text_result
 
@@ -41,30 +42,13 @@ _executor = HuggingFaceTaskExecutor(TaskType.TRANSLATION)
     requires_credentials=ModuleDefaults.REQUIRES_CREDENTIALS,
     handles_sensitive_data=ModuleDefaults.HANDLES_SENSITIVE_DATA,
 
-    params_schema={
-        'model_id': {
-            'type': 'installed_model',
-            'label': 'Model',
-            'required': True,
-            'task': TaskType.TRANSLATION
-        },
-        'text': {
-            'type': 'string',
-            'label': 'Text',
-            'required': True,
-            'multiline': True
-        },
-        'source_lang': {
-            'type': 'string',
-            'label': 'Source Language',
-            'required': False
-        },
-        'target_lang': {
-            'type': 'string',
-            'label': 'Target Language',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.HF_MODEL_ID(task=TaskType.TRANSLATION),
+        presets.HF_TEXT_INPUT(),
+        presets.HF_SOURCE_LANG(),
+        presets.HF_TARGET_LANG(),
+    ),
     output_schema={
         'translation_text': {'type': 'string', 'description': 'Translated text'}
     },

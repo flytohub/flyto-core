@@ -6,6 +6,7 @@ Provides date and time manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from datetime import datetime, timedelta
 import time
 
@@ -37,26 +38,11 @@ import time
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'datetime': {
-            'type': 'string',
-            'label': 'DateTime',
-            'label_key': 'modules.datetime.format.params.datetime.label',
-            'description': 'DateTime to format (ISO format or "now")',
-            'description_key': 'modules.datetime.format.params.datetime.description',
-            'default': 'now',
-            'required': False
-        },
-        'format': {
-            'type': 'string',
-            'label': 'Format',
-            'label_key': 'modules.datetime.format.params.format.label',
-            'description': 'strftime format string',
-            'description_key': 'modules.datetime.format.params.format.description',
-            'default': '%Y-%m-%d %H:%M:%S',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.DATETIME_INPUT(default='now'),
+        presets.DATETIME_FORMAT(default='%Y-%m-%d %H:%M:%S'),
+    ),
     output_schema={
         'result': {'type': 'string'},
         'timestamp': {'type': 'number'}

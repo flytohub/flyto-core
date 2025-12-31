@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -21,14 +22,10 @@ from ...registry import register_module
     color='#6366F1',
     input_types=['string'],
     output_types=['string'],
-    params_schema={
-        'text': {
-            'type': 'string',
-            'required': True,
-            'label': 'Text',
-            'description': 'The string to trim'
-        }
-    }
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_TEXT(required=True),
+    )
 )
 class StringTrim(BaseModule):
     """

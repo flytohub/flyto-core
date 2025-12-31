@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -40,44 +41,12 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['file.read'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'PDF Path',
-            'label_key': 'modules.pdf.parse.params.path.label',
-            'description': 'Path to the PDF file',
-            'description_key': 'modules.pdf.parse.params.path.description',
-            'required': True,
-            'placeholder': '/path/to/document.pdf'
-        },
-        'pages': {
-            'type': 'string',
-            'label': 'Pages',
-            'label_key': 'modules.pdf.parse.params.pages.label',
-            'description': 'Page range to extract (e.g., "1-5", "1,3,5", or "all")',
-            'description_key': 'modules.pdf.parse.params.pages.description',
-            'required': False,
-            'default': 'all'
-        },
-        'extract_images': {
-            'type': 'boolean',
-            'label': 'Extract Images',
-            'label_key': 'modules.pdf.parse.params.extract_images.label',
-            'description': 'Extract embedded images',
-            'description_key': 'modules.pdf.parse.params.extract_images.description',
-            'required': False,
-            'default': False
-        },
-        'extract_tables': {
-            'type': 'boolean',
-            'label': 'Extract Tables',
-            'label_key': 'modules.pdf.parse.params.extract_tables.label',
-            'description': 'Try to extract tables as structured data',
-            'description_key': 'modules.pdf.parse.params.extract_tables.description',
-            'required': False,
-            'default': False
-        }
-    },
+    params_schema=compose(
+        presets.PDF_PATH(),
+        presets.DOC_PAGES(),
+        presets.DOC_EXTRACT_IMAGES(),
+        presets.DOC_EXTRACT_TABLES(),
+    ),
     output_schema={
         'text': {
             'type': 'string',

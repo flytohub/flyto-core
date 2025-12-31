@@ -3,10 +3,25 @@ Browser Automation Modules
 
 Provides browser automation capabilities using Playwright.
 All modules use i18n keys for multi-language support.
+
+Example of schema presets usage - compare before/after:
+    BEFORE (36 lines for params_schema):
+        params_schema={
+            'url': {'type': 'string', 'label': 'URL', ...},
+            'wait_until': {'type': 'select', 'options': [...], ...}
+        }
+
+    AFTER (4 lines with presets):
+        params_schema=compose(
+            presets.URL(required=True),
+            presets.WAIT_CONDITION(),
+            presets.TIMEOUT_MS(),
+        )
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,43 +40,12 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=['page'],
 
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'label_key': 'modules.browser.goto.params.url.label',
-            'placeholder': 'https://example.com',
-            'description': 'The URL to navigate to',
-            'description_key': 'modules.browser.goto.params.url.description',
-            'required': True
-        },
-        'wait_until': {
-            'type': 'select',
-            'label': 'Wait Condition',
-            'label_key': 'modules.browser.goto.params.wait_until.label',
-            'options': [
-                {
-                    'value': 'load',
-                    'label': 'Page Load Complete',
-                    'label_key': 'modules.browser.goto.params.wait_until.options.load'
-                },
-                {
-                    'value': 'networkidle',
-                    'label': 'Network Idle',
-                    'label_key': 'modules.browser.goto.params.wait_until.options.networkidle'
-                },
-                {
-                    'value': 'domcontentloaded',
-                    'label': 'DOM Content Loaded',
-                    'label_key': 'modules.browser.goto.params.wait_until.options.domcontentloaded'
-                }
-            ],
-            'default': 'domcontentloaded',
-            'description': 'Condition to wait for page loading',
-            'description_key': 'modules.browser.goto.params.wait_until.description',
-            'required': False
-        }
-    },
+    # Schema-driven params using presets (was 36 lines, now 4 lines)
+    params_schema=compose(
+        presets.URL(required=True, placeholder='https://example.com'),
+        presets.WAIT_CONDITION(default='domcontentloaded'),
+        presets.TIMEOUT_MS(key='timeout_ms', default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'url': {'type': 'string'}

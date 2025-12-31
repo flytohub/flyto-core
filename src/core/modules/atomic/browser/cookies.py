@@ -6,6 +6,7 @@ Get, set, or clear browser cookies.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,76 +25,16 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=['array', 'json'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.cookies.params.action.label',
-            'description': 'Cookie action to perform',
-            'description_key': 'modules.browser.cookies.params.action.description',
-            'required': True,
-            'enum': ['get', 'set', 'clear', 'delete']
-        },
-        'name': {
-            'type': 'string',
-            'label': 'Cookie Name',
-            'label_key': 'modules.browser.cookies.params.name.label',
-            'description': 'Name of the cookie (for get/set/delete)',
-            'description_key': 'modules.browser.cookies.params.name.description',
-            'required': False
-        },
-        'value': {
-            'type': 'string',
-            'label': 'Cookie Value',
-            'label_key': 'modules.browser.cookies.params.value.label',
-            'description': 'Value of the cookie (for set action)',
-            'description_key': 'modules.browser.cookies.params.value.description',
-            'required': False
-        },
-        'domain': {
-            'type': 'string',
-            'label': 'Domain',
-            'label_key': 'modules.browser.cookies.params.domain.label',
-            'description': 'Cookie domain (for set action)',
-            'description_key': 'modules.browser.cookies.params.domain.description',
-            'required': False
-        },
-        'path': {
-            'type': 'string',
-            'label': 'Path',
-            'label_key': 'modules.browser.cookies.params.path.label',
-            'description': 'Cookie path',
-            'description_key': 'modules.browser.cookies.params.path.description',
-            'default': '/',
-            'required': False
-        },
-        'secure': {
-            'type': 'boolean',
-            'label': 'Secure',
-            'label_key': 'modules.browser.cookies.params.secure.label',
-            'description': 'Whether cookie is secure (HTTPS only)',
-            'description_key': 'modules.browser.cookies.params.secure.description',
-            'default': False,
-            'required': False
-        },
-        'httpOnly': {
-            'type': 'boolean',
-            'label': 'HTTP Only',
-            'label_key': 'modules.browser.cookies.params.httpOnly.label',
-            'description': 'Whether cookie is HTTP only',
-            'description_key': 'modules.browser.cookies.params.httpOnly.description',
-            'default': False,
-            'required': False
-        },
-        'expires': {
-            'type': 'number',
-            'label': 'Expires',
-            'label_key': 'modules.browser.cookies.params.expires.label',
-            'description': 'Cookie expiration time (Unix timestamp)',
-            'description_key': 'modules.browser.cookies.params.expires.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.BROWSER_ACTION(options=['get', 'set', 'clear', 'delete']),
+        presets.COOKIE_NAME(),
+        presets.COOKIE_VALUE(),
+        presets.COOKIE_DOMAIN(),
+        presets.COOKIE_PATH(),
+        presets.COOKIE_SECURE(),
+        presets.COOKIE_HTTP_ONLY(),
+        presets.COOKIE_EXPIRES(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'cookies': {'type': 'array'},

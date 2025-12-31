@@ -8,6 +8,7 @@ import re
 from typing import Any, Dict, List, Optional, Union
 
 from ...registry import register_module
+from ...schema import compose, field, presets
 
 
 logger = logging.getLogger(__name__)
@@ -75,106 +76,23 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'response': {
-            'type': 'object',
-            'label': 'Response',
-            'label_key': 'modules.http.response_assert.params.response.label',
-            'description': 'HTTP response object from http.request',
-            'description_key': 'modules.http.response_assert.params.response.description',
-            'required': True
-        },
-        'status': {
-            'type': 'any',
-            'label': 'Expected Status',
-            'label_key': 'modules.http.response_assert.params.status.label',
-            'description': 'Expected status code (number, array of numbers, or range string "200-299")',
-            'description_key': 'modules.http.response_assert.params.status.description',
-            'required': False,
-            'examples': [200, [200, 201], '200-299']
-        },
-        'body_contains': {
-            'type': 'any',
-            'label': 'Body Contains',
-            'label_key': 'modules.http.response_assert.params.body_contains.label',
-            'description': 'String or array of strings that body should contain',
-            'description_key': 'modules.http.response_assert.params.body_contains.description',
-            'required': False
-        },
-        'body_not_contains': {
-            'type': 'any',
-            'label': 'Body Not Contains',
-            'label_key': 'modules.http.response_assert.params.body_not_contains.label',
-            'description': 'String or array of strings that body should NOT contain',
-            'description_key': 'modules.http.response_assert.params.body_not_contains.description',
-            'required': False
-        },
-        'body_matches': {
-            'type': 'string',
-            'label': 'Body Matches Regex',
-            'label_key': 'modules.http.response_assert.params.body_matches.label',
-            'description': 'Regular expression pattern that body should match',
-            'description_key': 'modules.http.response_assert.params.body_matches.description',
-            'required': False
-        },
-        'json_path': {
-            'type': 'object',
-            'label': 'JSON Path Assertions',
-            'label_key': 'modules.http.response_assert.params.json_path.label',
-            'description': 'Object mapping JSON paths to expected values (e.g., {"data.id": 123})',
-            'description_key': 'modules.http.response_assert.params.json_path.description',
-            'required': False
-        },
-        'json_path_exists': {
-            'type': 'array',
-            'label': 'JSON Paths Exist',
-            'label_key': 'modules.http.response_assert.params.json_path_exists.label',
-            'description': 'Array of JSON paths that should exist',
-            'description_key': 'modules.http.response_assert.params.json_path_exists.description',
-            'required': False
-        },
-        'header_contains': {
-            'type': 'object',
-            'label': 'Headers Contain',
-            'label_key': 'modules.http.response_assert.params.header_contains.label',
-            'description': 'Object mapping header names to expected values',
-            'description_key': 'modules.http.response_assert.params.header_contains.description',
-            'required': False
-        },
-        'content_type': {
-            'type': 'string',
-            'label': 'Content Type',
-            'label_key': 'modules.http.response_assert.params.content_type.label',
-            'description': 'Expected Content-Type (partial match)',
-            'description_key': 'modules.http.response_assert.params.content_type.description',
-            'required': False
-        },
-        'max_duration_ms': {
-            'type': 'number',
-            'label': 'Max Duration (ms)',
-            'label_key': 'modules.http.response_assert.params.max_duration_ms.label',
-            'description': 'Maximum allowed response time in milliseconds',
-            'description_key': 'modules.http.response_assert.params.max_duration_ms.description',
-            'required': False
-        },
-        'schema': {
-            'type': 'object',
-            'label': 'JSON Schema',
-            'label_key': 'modules.http.response_assert.params.schema.label',
-            'description': 'JSON Schema to validate response body against',
-            'description_key': 'modules.http.response_assert.params.schema.description',
-            'required': False
-        },
-        'fail_fast': {
-            'type': 'boolean',
-            'label': 'Fail Fast',
-            'label_key': 'modules.http.response_assert.params.fail_fast.label',
-            'description': 'Stop on first assertion failure',
-            'description_key': 'modules.http.response_assert.params.fail_fast.description',
-            'required': False,
-            'default': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        field('response', type='object', label='Response', label_key='schema.field.response',
+              required=True, description='HTTP response object from http.request'),
+        presets.HTTP_STATUS(),
+        presets.BODY_CONTAINS(),
+        presets.BODY_NOT_CONTAINS(),
+        presets.REGEX_PATTERN(key='body_matches', label='Body Matches Regex',
+                              label_key='schema.field.body_matches'),
+        presets.JSON_PATH_ASSERTIONS(),
+        presets.JSON_PATH_EXISTS(),
+        presets.HEADER_CONTAINS(),
+        presets.CONTENT_TYPE(key='content_type', default=''),
+        presets.MAX_DURATION_MS(),
+        presets.JSON_SCHEMA(),
+        presets.FAIL_FAST(default=False),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

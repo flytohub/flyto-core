@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -39,51 +40,13 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['file.read'],
 
-    params_schema={
-        'file_path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.word.parse.params.file_path.label',
-            'description': 'Path to the Word document (.docx)',
-            'description_key': 'modules.word.parse.params.file_path.description',
-            'required': True
-        },
-        'extract_tables': {
-            'type': 'boolean',
-            'label': 'Extract Tables',
-            'label_key': 'modules.word.parse.params.extract_tables.label',
-            'description': 'Extract tables as structured data',
-            'description_key': 'modules.word.parse.params.extract_tables.description',
-            'required': False,
-            'default': True
-        },
-        'extract_images': {
-            'type': 'boolean',
-            'label': 'Extract Images',
-            'label_key': 'modules.word.parse.params.extract_images.label',
-            'description': 'Extract embedded images',
-            'description_key': 'modules.word.parse.params.extract_images.description',
-            'required': False,
-            'default': False
-        },
-        'images_output_dir': {
-            'type': 'string',
-            'label': 'Images Output Directory',
-            'label_key': 'modules.word.parse.params.images_output_dir.label',
-            'description': 'Directory to save extracted images',
-            'description_key': 'modules.word.parse.params.images_output_dir.description',
-            'required': False
-        },
-        'preserve_formatting': {
-            'type': 'boolean',
-            'label': 'Preserve Formatting',
-            'label_key': 'modules.word.parse.params.preserve_formatting.label',
-            'description': 'Include paragraph/heading structure in output',
-            'description_key': 'modules.word.parse.params.preserve_formatting.description',
-            'required': False,
-            'default': False
-        }
-    },
+    params_schema=compose(
+        presets.WORD_FILE_PATH(),
+        presets.DOC_EXTRACT_TABLES(default=True),
+        presets.DOC_EXTRACT_IMAGES(),
+        presets.DOC_IMAGES_OUTPUT_DIR(),
+        presets.DOC_PRESERVE_FORMATTING(default=False),
+    ),
     output_schema={
         'text': {
             'type': 'string',

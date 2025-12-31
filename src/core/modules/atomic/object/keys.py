@@ -6,6 +6,7 @@ Provides object/dictionary manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,16 +36,10 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'object': {
-            'type': 'json',
-            'label': 'Object',
-            'label_key': 'modules.object.keys.params.object.label',
-            'description': 'Input object/dictionary',
-            'description_key': 'modules.object.keys.params.object.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_OBJECT(required=True),
+    ),
     output_schema={
         'keys': {'type': 'array'},
         'count': {'type': 'number'}

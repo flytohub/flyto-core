@@ -8,6 +8,7 @@ import math
 from typing import Any, Dict, List
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor
 
@@ -67,25 +68,12 @@ def extract_embedding(result: Any) -> List[float]:
     requires_credentials=ModuleDefaults.REQUIRES_CREDENTIALS,
     handles_sensitive_data=ModuleDefaults.HANDLES_SENSITIVE_DATA,
 
-    params_schema={
-        'model_id': {
-            'type': 'installed_model',
-            'label': 'Model',
-            'required': True,
-            'task': TaskType.FEATURE_EXTRACTION
-        },
-        'text': {
-            'type': 'string',
-            'label': 'Text',
-            'required': True,
-            'multiline': True
-        },
-        'normalize': {
-            'type': 'boolean',
-            'label': 'Normalize',
-            'default': ParamDefaults.NORMALIZE
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.HF_MODEL_ID(task=TaskType.FEATURE_EXTRACTION),
+        presets.HF_TEXT_INPUT(),
+        presets.HF_NORMALIZE(default=ParamDefaults.NORMALIZE),
+    ),
     output_schema={
         'embedding': {'type': 'array', 'description': 'Embedding vector(s)'},
         'dimension': {'type': 'number', 'description': 'Embedding dimension'}

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -67,54 +68,13 @@ def get_format_from_extension(path: str) -> Optional[str]:
     handles_sensitive_data=False,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'input_path': {
-            'type': 'string',
-            'label': 'Input Path',
-            'label_key': 'modules.image.convert.params.input_path.label',
-            'description': 'Path to the source image',
-            'description_key': 'modules.image.convert.params.input_path.description',
-            'required': True,
-            'placeholder': '/path/to/image.png'
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.image.convert.params.output_path.label',
-            'description': 'Path for the converted image (optional)',
-            'description_key': 'modules.image.convert.params.output_path.description',
-            'required': False
-        },
-        'format': {
-            'type': 'string',
-            'label': 'Output Format',
-            'label_key': 'modules.image.convert.params.format.label',
-            'description': 'Target format: jpeg, png, webp, gif, bmp, tiff',
-            'description_key': 'modules.image.convert.params.format.description',
-            'required': True,
-            'enum': ['jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
-            'default': 'png'
-        },
-        'quality': {
-            'type': 'number',
-            'label': 'Quality',
-            'label_key': 'modules.image.convert.params.quality.label',
-            'description': 'Output quality (1-100, for JPEG/WEBP)',
-            'description_key': 'modules.image.convert.params.quality.description',
-            'required': False,
-            'default': 85,
-            'minimum': 1,
-            'maximum': 100
-        },
-        'resize': {
-            'type': 'object',
-            'label': 'Resize',
-            'label_key': 'modules.image.convert.params.resize.label',
-            'description': 'Resize options: {width, height, keep_aspect}',
-            'description_key': 'modules.image.convert.params.resize.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.IMAGE_INPUT_PATH(),
+        presets.IMAGE_OUTPUT_PATH(),
+        presets.IMAGE_FORMAT(required=True),
+        presets.IMAGE_QUALITY(),
+        presets.IMAGE_RESIZE_OPTIONS(),
+    ),
     output_schema={
         'path': {
             'type': 'string',

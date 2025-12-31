@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,25 +36,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.join.params.array.label',
-            'description': 'Array to join',
-            'description_key': 'modules.array.join.params.array.description',
-            'required': True
-        },
-        'separator': {
-            'type': 'string',
-            'label': 'Separator',
-            'label_key': 'modules.array.join.params.separator.label',
-            'description': 'String to insert between elements',
-            'description_key': 'modules.array.join.params.separator.description',
-            'default': ',',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.SEPARATOR(default=','),
+    ),
     output_schema={
         'result': {'type': 'string'}
     },

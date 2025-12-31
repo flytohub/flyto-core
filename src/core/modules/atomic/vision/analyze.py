@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -44,107 +45,17 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['ai.vision'],
 
-    params_schema={
-        'image': {
-            'type': 'string',
-            'label': 'Image',
-            'label_key': 'modules.vision.analyze.params.image.label',
-            'description': 'Image file path, URL, or base64 data',
-            'description_key': 'modules.vision.analyze.params.image.description',
-            'required': True,
-            'placeholder': './screenshots/home.png',
-            'examples': [
-                './screenshots/dashboard.png',
-                'https://example.com/image.jpg',
-                'data:image/png;base64,...'
-            ]
-        },
-        'prompt': {
-            'type': 'string',
-            'label': 'Analysis Prompt',
-            'label_key': 'modules.vision.analyze.params.prompt.label',
-            'description': 'What to analyze or look for in the image',
-            'description_key': 'modules.vision.analyze.params.prompt.description',
-            'required': True,
-            'multiline': True,
-            'placeholder': 'Analyze this UI screenshot and provide feedback on usability...',
-            'examples': [
-                'Describe what you see in this screenshot',
-                'Evaluate the UI design and suggest improvements',
-                'Find any visual bugs or layout issues',
-                'Is the login button visible and accessible?',
-                'Rate the overall user experience from 1-10'
-            ]
-        },
-        'analysis_type': {
-            'type': 'string',
-            'label': 'Analysis Type',
-            'label_key': 'modules.vision.analyze.params.analysis_type.label',
-            'description': 'Type of analysis to perform',
-            'description_key': 'modules.vision.analyze.params.analysis_type.description',
-            'required': False,
-            'default': 'general',
-            'enum': ['general', 'ui_review', 'accessibility', 'bug_detection', 'comparison', 'data_extraction']
-        },
-        'context': {
-            'type': 'string',
-            'label': 'Additional Context',
-            'label_key': 'modules.vision.analyze.params.context.label',
-            'description': 'Additional context about the application/page',
-            'description_key': 'modules.vision.analyze.params.context.description',
-            'required': False,
-            'multiline': True,
-            'placeholder': 'This is a dashboard page for a SaaS application...'
-        },
-        'output_format': {
-            'type': 'string',
-            'label': 'Output Format',
-            'label_key': 'modules.vision.analyze.params.output_format.label',
-            'description': 'Format of the analysis output',
-            'description_key': 'modules.vision.analyze.params.output_format.description',
-            'required': False,
-            'default': 'structured',
-            'enum': ['text', 'structured', 'json', 'checklist']
-        },
-        'model': {
-            'type': 'string',
-            'label': 'Model',
-            'label_key': 'modules.vision.analyze.params.model.label',
-            'description': 'OpenAI model to use',
-            'description_key': 'modules.vision.analyze.params.model.description',
-            'required': False,
-            'default': 'gpt-4o',
-            'enum': ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']
-        },
-        'max_tokens': {
-            'type': 'number',
-            'label': 'Max Tokens',
-            'label_key': 'modules.vision.analyze.params.max_tokens.label',
-            'description': 'Maximum tokens in response',
-            'description_key': 'modules.vision.analyze.params.max_tokens.description',
-            'required': False,
-            'default': 1000
-        },
-        'api_key': {
-            'type': 'string',
-            'label': 'OpenAI API Key',
-            'label_key': 'modules.vision.analyze.params.api_key.label',
-            'description': 'OpenAI API key (defaults to OPENAI_API_KEY env var)',
-            'description_key': 'modules.vision.analyze.params.api_key.description',
-            'required': False,
-            'secret': True
-        },
-        'detail': {
-            'type': 'string',
-            'label': 'Image Detail Level',
-            'label_key': 'modules.vision.analyze.params.detail.label',
-            'description': 'Level of detail for image analysis',
-            'description_key': 'modules.vision.analyze.params.detail.description',
-            'required': False,
-            'default': 'high',
-            'enum': ['low', 'high', 'auto']
-        }
-    },
+    params_schema=compose(
+        presets.VISION_IMAGE(),
+        presets.VISION_PROMPT(),
+        presets.VISION_ANALYSIS_TYPE(),
+        presets.VISION_CONTEXT(),
+        presets.VISION_OUTPUT_FORMAT(),
+        presets.LLM_MODEL(key='model', default='gpt-4o'),
+        presets.MAX_TOKENS(key='max_tokens', default=1000),
+        presets.API_KEY(key='api_key', label='OpenAI API Key'),
+        presets.VISION_DETAIL(),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

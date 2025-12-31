@@ -5,6 +5,7 @@ Execute SQL queries on MySQL database.
 import os
 
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -36,74 +37,15 @@ from ....registry import register_module
     handles_sensitive_data=True,  # Database data is typically sensitive
     required_permissions=['network.access', 'database.read'],
 
-    params_schema={
-        'host': {
-            'type': 'string',
-            'label': 'Host',
-            'label_key': 'modules.db.mysql.query.params.host.label',
-            'description': 'MySQL server host (from env.MYSQL_HOST or explicit)',
-            'description_key': 'modules.db.mysql.query.params.host.description',
-            'placeholder': '${env.MYSQL_HOST}',
-            'required': False
-            # NOTE: NO hardcoded default - require explicit configuration
-        },
-        'port': {
-            'type': 'number',
-            'label': 'Port',
-            'label_key': 'modules.db.mysql.query.params.port.label',
-            'description': 'MySQL server port',
-            'description_key': 'modules.db.mysql.query.params.port.description',
-            'default': 3306,
-            'required': False
-        },
-        'user': {
-            'type': 'string',
-            'label': 'Username',
-            'label_key': 'modules.db.mysql.query.params.user.label',
-            'description': 'MySQL username (defaults to env.MYSQL_USER)',
-            'description_key': 'modules.db.mysql.query.params.user.description',
-            'placeholder': '${env.MYSQL_USER}',
-            'required': False
-        },
-        'password': {
-            'type': 'string',
-            'label': 'Password',
-            'label_key': 'modules.db.mysql.query.params.password.label',
-            'description': 'MySQL password (defaults to env.MYSQL_PASSWORD)',
-            'description_key': 'modules.db.mysql.query.params.password.description',
-            'placeholder': '${env.MYSQL_PASSWORD}',
-            'required': False,
-            'secret': True
-        },
-        'database': {
-            'type': 'string',
-            'label': 'Database',
-            'label_key': 'modules.db.mysql.query.params.database.label',
-            'description': 'Database name (defaults to env.MYSQL_DATABASE)',
-            'description_key': 'modules.db.mysql.query.params.database.description',
-            'placeholder': '${env.MYSQL_DATABASE}',
-            'required': False
-        },
-        'query': {
-            'type': 'string',
-            'label': 'SQL Query',
-            'label_key': 'modules.db.mysql.query.params.query.label',
-            'description': 'SQL query to execute',
-            'description_key': 'modules.db.mysql.query.params.query.description',
-            'required': True,
-            'multiline': True,
-            'placeholder': 'SELECT * FROM users WHERE active = 1'
-        },
-        'params': {
-            'type': 'array',
-            'label': 'Query Parameters',
-            'label_key': 'modules.db.mysql.query.params.params.label',
-            'description': 'Parameters for parameterized queries (prevents SQL injection)',
-            'description_key': 'modules.db.mysql.query.params.params.description',
-            'required': False,
-            'help': 'Use %s in query and provide values here'
-        }
-    },
+    params_schema=compose(
+        presets.DB_HOST(),
+        presets.DB_PORT(default=3306),
+        presets.DB_USER(),
+        presets.DB_PASSWORD(),
+        presets.DB_NAME(),
+        presets.SQL_QUERY(placeholder='SELECT * FROM users WHERE active = 1'),
+        presets.QUERY_PARAMS(),
+    ),
     output_schema={
         'rows': {
             'type': 'array',

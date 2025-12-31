@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -44,86 +45,16 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['ai.chat', 'file.write'],
 
-    params_schema={
-        'issues': {
-            'type': 'array',
-            'label': 'Issues',
-            'label_key': 'modules.llm.code_fix.params.issues.label',
-            'description': 'List of issues to fix (from ui.evaluate, test results, etc.)',
-            'description_key': 'modules.llm.code_fix.params.issues.description',
-            'required': True,
-            'examples': [
-                [
-                    {'area': 'accessibility', 'description': 'Low contrast text', 'location': 'footer'},
-                    {'area': 'usability', 'description': 'Button too small', 'location': 'header'}
-                ]
-            ]
-        },
-        'source_files': {
-            'type': 'array',
-            'label': 'Source Files',
-            'label_key': 'modules.llm.code_fix.params.source_files.label',
-            'description': 'Files to analyze and potentially fix',
-            'description_key': 'modules.llm.code_fix.params.source_files.description',
-            'required': True,
-            'examples': [
-                './src/components/Header.tsx',
-                './src/styles/main.css'
-            ]
-        },
-        'fix_mode': {
-            'type': 'string',
-            'label': 'Fix Mode',
-            'label_key': 'modules.llm.code_fix.params.fix_mode.label',
-            'description': 'How to apply fixes',
-            'description_key': 'modules.llm.code_fix.params.fix_mode.description',
-            'required': False,
-            'default': 'suggest',
-            'enum': ['suggest', 'apply', 'dry_run'],
-            'options': [
-                {'value': 'suggest', 'label': 'Suggest Only - Return fixes without applying'},
-                {'value': 'apply', 'label': 'Apply - Write fixes to files'},
-                {'value': 'dry_run', 'label': 'Dry Run - Show what would change'}
-            ]
-        },
-        'backup': {
-            'type': 'boolean',
-            'label': 'Create Backup',
-            'label_key': 'modules.llm.code_fix.params.backup.label',
-            'description': 'Create .bak backup before modifying files',
-            'description_key': 'modules.llm.code_fix.params.backup.description',
-            'required': False,
-            'default': True
-        },
-        'context': {
-            'type': 'string',
-            'label': 'Additional Context',
-            'label_key': 'modules.llm.code_fix.params.context.label',
-            'description': 'Additional context about the project',
-            'description_key': 'modules.llm.code_fix.params.context.description',
-            'required': False,
-            'multiline': True,
-            'placeholder': 'This is a React project using Tailwind CSS...'
-        },
-        'model': {
-            'type': 'string',
-            'label': 'Model',
-            'label_key': 'modules.llm.code_fix.params.model.label',
-            'description': 'LLM model to use',
-            'description_key': 'modules.llm.code_fix.params.model.description',
-            'required': False,
-            'default': 'gpt-4o'
-        },
-        'api_key': {
-            'type': 'string',
-            'label': 'API Key',
-            'label_key': 'modules.llm.code_fix.params.api_key.label',
-            'description': 'OpenAI API key',
-            'description_key': 'modules.llm.code_fix.params.api_key.description',
-            'required': False,
-            'secret': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.CODE_ISSUES(required=True),
+        presets.SOURCE_FILES(required=True),
+        presets.FIX_MODE(default='suggest'),
+        presets.CREATE_BACKUP(default=True),
+        presets.TEXT(key='context', label='Additional Context', multiline=True, placeholder='This is a React project using Tailwind CSS...'),
+        presets.LLM_MODEL(default='gpt-4o'),
+        presets.LLM_API_KEY(),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

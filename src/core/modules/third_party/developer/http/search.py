@@ -11,6 +11,7 @@ import aiohttp
 
 from ....base import BaseModule
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -35,28 +36,10 @@ from ....registry import register_module
     requires_credentials=True,
     handles_sensitive_data=False,
     required_permissions=['network.access'],
-    params_schema={
-        'keyword': {
-            'type': 'string',
-            'label': 'Keyword',
-            'label_key': 'modules.api.google_search.params.keyword.label',
-            'description': 'Search keyword',
-            'description_key': 'modules.api.google_search.params.keyword.description',
-            'placeholder': 'python tutorial',
-            'required': True
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.api.google_search.params.limit.label',
-            'description': 'Maximum number of results (max 10 per API call)',
-            'description_key': 'modules.api.google_search.params.limit.description',
-            'default': 10,
-            'min': 1,
-            'max': 10,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SEARCH_KEYWORD(placeholder='python tutorial'),
+        presets.SEARCH_LIMIT(max_val=10),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'array'},
@@ -154,28 +137,10 @@ class GoogleSearchAPIModule(BaseModule):
     input_types=[],
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    params_schema={
-        'keyword': {
-            'type': 'string',
-            'label': 'Keyword',
-            'label_key': 'modules.api.serpapi_search.params.keyword.label',
-            'description': 'Search keyword',
-            'description_key': 'modules.api.serpapi_search.params.keyword.description',
-            'placeholder': 'python tutorial',
-            'required': True
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.api.serpapi_search.params.limit.label',
-            'description': 'Maximum number of results',
-            'description_key': 'modules.api.serpapi_search.params.limit.description',
-            'default': 10,
-            'min': 1,
-            'max': 100,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SEARCH_KEYWORD(placeholder='python tutorial'),
+        presets.SEARCH_LIMIT(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'array'},

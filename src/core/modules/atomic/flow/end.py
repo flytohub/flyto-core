@@ -11,6 +11,7 @@ from typing import Any, Dict
 from datetime import datetime
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -50,25 +51,11 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'output_mapping': {
-            'type': 'object',
-            'label': 'Output Mapping',
-            'label_key': 'modules.flow.end.params.output_mapping.label',
-            'description': 'Map internal variables to workflow output',
-            'description_key': 'modules.flow.end.params.output_mapping.description',
-            'default': {},
-            'required': False
-        },
-        'success_message': {
-            'type': 'string',
-            'label': 'Success Message',
-            'label_key': 'modules.flow.end.params.success_message.label',
-            'description': 'Optional message on successful completion',
-            'description_key': 'modules.flow.end.params.success_message.description',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.OUTPUT_MAPPING(),
+        presets.TEXT(key='success_message', label='Success Message'),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (__end__)'},

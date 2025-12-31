@@ -6,6 +6,7 @@ Transform each element in an array using various operations.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,39 +36,12 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.map.params.array.label',
-            'description': 'Input array to transform',
-            'description_key': 'modules.array.map.params.array.description',
-            'required': True
-        },
-        'operation': {
-            'type': 'select',
-            'label': 'Operation',
-            'label_key': 'modules.array.map.params.operation.label',
-            'description': 'Transformation to apply',
-            'description_key': 'modules.array.map.params.operation.description',
-            'options': [
-                {'label': 'Multiply', 'value': 'multiply'},
-                {'label': 'Add', 'value': 'add'},
-                {'label': 'Extract field', 'value': 'extract'},
-                {'label': 'To uppercase', 'value': 'uppercase'},
-                {'label': 'To lowercase', 'value': 'lowercase'}
-            ],
-            'required': True
-        },
-        'value': {
-            'type': 'any',
-            'label': 'Value',
-            'label_key': 'modules.array.map.params.value.label',
-            'description': 'Value for operation (number for math, field name for extract)',
-            'description_key': 'modules.array.map.params.value.description',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.ARRAY_OPERATION(required=True),
+        presets.OPERATION_VALUE(),
+    ),
     output_schema={
         'result': {'type': 'array'},
         'length': {'type': 'number'}

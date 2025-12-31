@@ -10,6 +10,7 @@ import aiohttp
 
 from ....base import BaseModule
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -27,42 +28,14 @@ from ....registry import register_module
     input_types=[],
     output_types=['json', 'text', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'label_key': 'modules.api.http_get.params.url.label',
-            'description': 'Target URL',
-            'description_key': 'modules.api.http_get.params.url.description',
-            'placeholder': 'https://api.example.com/data',
-            'required': True
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'Headers',
-            'label_key': 'modules.api.http_get.params.headers.label',
-            'description': 'HTTP headers (optional)',
-            'description_key': 'modules.api.http_get.params.headers.description',
-            'required': False
-        },
-        'params': {
-            'type': 'object',
-            'label': 'Query Parameters',
-            'label_key': 'modules.api.http_get.params.params.label',
-            'description': 'Query parameters (optional)',
-            'description_key': 'modules.api.http_get.params.params.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout',
-            'label_key': 'modules.api.http_get.params.timeout.label',
-            'description': 'Request timeout in seconds',
-            'description_key': 'modules.api.http_get.params.timeout.description',
-            'default': 30,
-            'required': False
-        }
-    },
+
+    # Schema-driven params
+    params_schema=compose(
+        presets.URL(required=True, placeholder='https://api.example.com/data'),
+        presets.HEADERS(),
+        presets.QUERY_PARAMS(key='params'),
+        presets.TIMEOUT_S(default=30),
+    ),
     output_schema={
         'status_code': {'type': 'number'},
         'headers': {'type': 'object'},
@@ -139,51 +112,15 @@ class HTTPGetModule(BaseModule):
     output_types=['json', 'text', 'api_response'],
     can_receive_from=['data.*'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'label_key': 'modules.api.http_post.params.url.label',
-            'description': 'Target URL',
-            'description_key': 'modules.api.http_post.params.url.description',
-            'placeholder': 'https://api.example.com/data',
-            'required': True
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'Headers',
-            'label_key': 'modules.api.http_post.params.headers.label',
-            'description': 'HTTP headers (optional)',
-            'description_key': 'modules.api.http_post.params.headers.description',
-            'required': False
-        },
-        'body': {
-            'type': 'string',
-            'label': 'Body',
-            'label_key': 'modules.api.http_post.params.body.label',
-            'description': 'Request body (string)',
-            'description_key': 'modules.api.http_post.params.body.description',
-            'required': False,
-            'multiline': True
-        },
-        'json': {
-            'type': 'object',
-            'label': 'JSON Data',
-            'label_key': 'modules.api.http_post.params.json.label',
-            'description': 'JSON data to send',
-            'description_key': 'modules.api.http_post.params.json.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout',
-            'label_key': 'modules.api.http_post.params.timeout.label',
-            'description': 'Request timeout in seconds',
-            'description_key': 'modules.api.http_post.params.timeout.description',
-            'default': 30,
-            'required': False
-        }
-    },
+
+    # Schema-driven params
+    params_schema=compose(
+        presets.URL(required=True, placeholder='https://api.example.com/data'),
+        presets.HEADERS(),
+        presets.TEXT(key='body', label='Body', label_key='schema.field.body', multiline=True),
+        presets.REQUEST_BODY(key='json'),
+        presets.TIMEOUT_S(default=30),
+    ),
     output_schema={
         'status_code': {'type': 'number'},
         'headers': {'type': 'object'},

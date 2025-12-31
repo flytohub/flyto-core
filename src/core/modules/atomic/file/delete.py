@@ -8,6 +8,7 @@ import shutil
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -27,35 +28,21 @@ from ...registry import register_module
     input_types=['file_path', 'text'],
     output_types=['boolean'],
 
-    # Phase 2: Execution settings
+    # Execution settings
     timeout=5,
-    retryable=False,  # Don't retry deletes
-    concurrent_safe=False,  # File operations not thread-safe
+    retryable=False,
+    concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['file.delete'],
 
-    params_schema={
-        'file_path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.file.delete.params.file_path.label',
-            'description': 'Path to the file to delete',
-            'description_key': 'modules.file.delete.params.file_path.description',
-            'required': True
-        },
-        'ignore_missing': {
-            'type': 'boolean',
-            'label': 'Ignore Missing',
-            'label_key': 'modules.file.delete.params.ignore_missing.label',
-            'description': 'Do not raise error if file does not exist',
-            'description_key': 'modules.file.delete.params.ignore_missing.description',
-            'default': False,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILE_PATH(required=True),
+        presets.IGNORE_MISSING(default=False),
+    ),
     output_schema={
         'deleted': {'type': 'boolean'},
         'file_path': {'type': 'string'}

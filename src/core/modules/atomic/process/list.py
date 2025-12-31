@@ -9,6 +9,7 @@ import os
 from typing import Any, Dict, List
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .start import get_process_registry
 
 
@@ -43,25 +44,11 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'filter_name': {
-            'type': 'string',
-            'label': 'Filter by Name',
-            'label_key': 'modules.process.list.params.filter_name.label',
-            'description': 'Filter processes by name (substring match)',
-            'description_key': 'modules.process.list.params.filter_name.description',
-            'required': False
-        },
-        'include_status': {
-            'type': 'boolean',
-            'label': 'Include Status',
-            'label_key': 'modules.process.list.params.include_status.label',
-            'description': 'Include running/stopped status check',
-            'description_key': 'modules.process.list.params.include_status.description',
-            'required': False,
-            'default': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILTER_NAME(),
+        presets.INCLUDE_STATUS(default=True),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

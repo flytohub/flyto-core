@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -41,51 +42,13 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['file.write'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.excel.write.params.path.label',
-            'description': 'Path for the output Excel file',
-            'description_key': 'modules.excel.write.params.path.description',
-            'required': True,
-            'placeholder': '/path/to/output.xlsx'
-        },
-        'data': {
-            'type': 'array',
-            'label': 'Data',
-            'label_key': 'modules.excel.write.params.data.label',
-            'description': 'Data to write (array of arrays or array of objects)',
-            'description_key': 'modules.excel.write.params.data.description',
-            'required': True
-        },
-        'headers': {
-            'type': 'array',
-            'label': 'Headers',
-            'label_key': 'modules.excel.write.params.headers.label',
-            'description': 'Column headers (auto-detected from objects if not provided)',
-            'description_key': 'modules.excel.write.params.headers.description',
-            'required': False
-        },
-        'sheet_name': {
-            'type': 'string',
-            'label': 'Sheet Name',
-            'label_key': 'modules.excel.write.params.sheet_name.label',
-            'description': 'Name of the worksheet',
-            'description_key': 'modules.excel.write.params.sheet_name.description',
-            'required': False,
-            'default': 'Sheet1'
-        },
-        'auto_width': {
-            'type': 'boolean',
-            'label': 'Auto Width',
-            'label_key': 'modules.excel.write.params.auto_width.label',
-            'description': 'Automatically adjust column widths',
-            'description_key': 'modules.excel.write.params.auto_width.description',
-            'required': False,
-            'default': True
-        }
-    },
+    params_schema=compose(
+        presets.EXCEL_PATH(placeholder='/path/to/output.xlsx'),
+        presets.EXCEL_DATA(),
+        presets.EXCEL_HEADERS(),
+        presets.EXCEL_SHEET_NAME(),
+        presets.EXCEL_AUTO_WIDTH(),
+    ),
     output_schema={
         'path': {
             'type': 'string',

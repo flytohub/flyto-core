@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -39,85 +40,17 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['file.write'],
 
-    params_schema={
-        'content': {
-            'type': 'string',
-            'label': 'Content',
-            'label_key': 'modules.pdf.generate.params.content.label',
-            'description': 'HTML or text content to convert to PDF',
-            'description_key': 'modules.pdf.generate.params.content.description',
-            'required': True
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.pdf.generate.params.output_path.label',
-            'description': 'Path for the generated PDF file',
-            'description_key': 'modules.pdf.generate.params.output_path.description',
-            'required': True
-        },
-        'title': {
-            'type': 'string',
-            'label': 'Title',
-            'label_key': 'modules.pdf.generate.params.title.label',
-            'description': 'Document title (metadata)',
-            'description_key': 'modules.pdf.generate.params.title.description',
-            'required': False
-        },
-        'author': {
-            'type': 'string',
-            'label': 'Author',
-            'label_key': 'modules.pdf.generate.params.author.label',
-            'description': 'Document author (metadata)',
-            'description_key': 'modules.pdf.generate.params.author.description',
-            'required': False
-        },
-        'page_size': {
-            'type': 'string',
-            'label': 'Page Size',
-            'label_key': 'modules.pdf.generate.params.page_size.label',
-            'description': 'Page size format',
-            'description_key': 'modules.pdf.generate.params.page_size.description',
-            'required': False,
-            'enum': ['A4', 'Letter', 'Legal', 'A3', 'A5'],
-            'default': 'A4'
-        },
-        'orientation': {
-            'type': 'string',
-            'label': 'Orientation',
-            'label_key': 'modules.pdf.generate.params.orientation.label',
-            'description': 'Page orientation',
-            'description_key': 'modules.pdf.generate.params.orientation.description',
-            'required': False,
-            'enum': ['portrait', 'landscape'],
-            'default': 'portrait'
-        },
-        'margin': {
-            'type': 'number',
-            'label': 'Margin (mm)',
-            'label_key': 'modules.pdf.generate.params.margin.label',
-            'description': 'Page margin in millimeters',
-            'description_key': 'modules.pdf.generate.params.margin.description',
-            'required': False,
-            'default': 20
-        },
-        'header': {
-            'type': 'string',
-            'label': 'Header',
-            'label_key': 'modules.pdf.generate.params.header.label',
-            'description': 'Header text for each page',
-            'description_key': 'modules.pdf.generate.params.header.description',
-            'required': False
-        },
-        'footer': {
-            'type': 'string',
-            'label': 'Footer',
-            'label_key': 'modules.pdf.generate.params.footer.label',
-            'description': 'Footer text for each page',
-            'description_key': 'modules.pdf.generate.params.footer.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.PDF_CONTENT(),
+        presets.DOC_OUTPUT_PATH(required=True),
+        presets.PDF_TITLE(),
+        presets.PDF_AUTHOR(),
+        presets.PDF_PAGE_SIZE(),
+        presets.PDF_ORIENTATION(),
+        presets.PDF_MARGIN(),
+        presets.PDF_HEADER(),
+        presets.PDF_FOOTER(),
+    ),
     output_schema={
         'output_path': {
             'type': 'string',

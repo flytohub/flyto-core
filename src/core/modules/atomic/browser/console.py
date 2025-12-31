@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 import asyncio
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,36 +26,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['array', 'json'],
 
-    params_schema={
-        'level': {
-            'type': 'string',
-            'label': 'Log Level',
-            'label_key': 'modules.browser.console.params.level.label',
-            'description': 'Filter by log level (all, error, warning, info, log)',
-            'description_key': 'modules.browser.console.params.level.description',
-            'default': 'all',
-            'required': False,
-            'enum': ['all', 'error', 'warning', 'info', 'log']
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.console.params.timeout.label',
-            'description': 'Time to listen for console messages in milliseconds',
-            'description_key': 'modules.browser.console.params.timeout.description',
-            'default': 5000,
-            'required': False
-        },
-        'clear_existing': {
-            'type': 'boolean',
-            'label': 'Clear Existing',
-            'label_key': 'modules.browser.console.params.clear_existing.label',
-            'description': 'Clear existing messages before capturing',
-            'description_key': 'modules.browser.console.params.clear_existing.description',
-            'default': False,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.CONSOLE_LEVEL(),
+        presets.TIMEOUT_MS(default=5000),
+        presets.CONSOLE_CLEAR_EXISTING(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'messages': {'type': 'array'},

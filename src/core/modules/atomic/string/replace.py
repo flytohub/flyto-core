@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -21,26 +22,12 @@ from ...registry import register_module
     color='#6366F1',
     input_types=['string'],
     output_types=['string'],
-    params_schema={
-        'text': {
-            'type': 'string',
-            'required': True,
-            'label': 'Text',
-            'description': 'The string to process'
-        },
-        'search': {
-            'type': 'string',
-            'required': True,
-            'label': 'Search',
-            'description': 'The substring to search for'
-        },
-        'replace': {
-            'type': 'string',
-            'required': True,
-            'label': 'Replace With',
-            'description': 'The replacement string'
-        }
-    }
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_TEXT(required=True),
+        presets.SEARCH_STRING(required=True),
+        presets.REPLACE_STRING(required=True),
+    )
 )
 class StringReplace(BaseModule):
     """

@@ -1,12 +1,10 @@
 """
-Browser Automation Modules
-
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+Browser Type Module - Type text into an input field
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,26 +23,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.type.params.selector.label',
-            'placeholder': 'input[name="email"]',
-            'description': 'CSS selector of the input field',
-            'description_key': 'modules.browser.type.params.selector.description',
-            'required': True
-        },
-        'text': {
-            'type': 'string',
-            'label': 'Text Content',
-            'label_key': 'modules.browser.type.params.text.label',
-            'placeholder': 'Text to type',
-            'description': 'The text to type into the field',
-            'description_key': 'modules.browser.type.params.text.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='input[name="email"]'),
+        presets.TEXT(key='text', required=True, label='Text Content', placeholder='Text to type'),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'selector': {'type': 'string'}

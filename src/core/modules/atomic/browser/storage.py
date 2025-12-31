@@ -6,6 +6,7 @@ Access localStorage and sessionStorage.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,43 +25,12 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['string', 'json'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.storage.params.action.label',
-            'description': 'Storage action to perform',
-            'description_key': 'modules.browser.storage.params.action.description',
-            'required': True,
-            'enum': ['get', 'set', 'remove', 'clear', 'keys', 'length']
-        },
-        'type': {
-            'type': 'string',
-            'label': 'Storage Type',
-            'label_key': 'modules.browser.storage.params.type.label',
-            'description': 'Type of storage to access',
-            'description_key': 'modules.browser.storage.params.type.description',
-            'default': 'local',
-            'required': False,
-            'enum': ['local', 'session']
-        },
-        'key': {
-            'type': 'string',
-            'label': 'Key',
-            'label_key': 'modules.browser.storage.params.key.label',
-            'description': 'Storage key (for get/set/remove)',
-            'description_key': 'modules.browser.storage.params.key.description',
-            'required': False
-        },
-        'value': {
-            'type': 'string',
-            'label': 'Value',
-            'label_key': 'modules.browser.storage.params.value.label',
-            'description': 'Value to store (for set action)',
-            'description_key': 'modules.browser.storage.params.value.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.BROWSER_ACTION(options=['get', 'set', 'remove', 'clear', 'keys', 'length']),
+        presets.STORAGE_TYPE(),
+        presets.STORAGE_KEY(),
+        presets.STORAGE_VALUE(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'value': {'type': 'any'},

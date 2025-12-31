@@ -6,6 +6,7 @@ Provides extended string manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,16 +36,10 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'text': {
-            'type': 'string',
-            'label': 'Text',
-            'label_key': 'modules.string.titlecase.params.text.label',
-            'description': 'Text to convert to title case',
-            'description_key': 'modules.string.titlecase.params.text.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_TEXT(required=True),
+    ),
     output_schema={
         'result': {'type': 'string'}
     },

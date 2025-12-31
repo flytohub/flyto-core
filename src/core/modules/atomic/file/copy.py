@@ -8,6 +8,7 @@ import shutil
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -27,44 +28,23 @@ from ...registry import register_module
     input_types=['file_path', 'text'],
     output_types=['file_path', 'text'],
 
-    # Phase 2: Execution settings
-    timeout=30,  # Large files may take time
+    # Execution settings
+    timeout=30,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'source': {
-            'type': 'string',
-            'label': 'Source Path',
-            'label_key': 'modules.file.copy.params.source.label',
-            'description': 'Path to the source file',
-            'description_key': 'modules.file.copy.params.source.description',
-            'required': True
-        },
-        'destination': {
-            'type': 'string',
-            'label': 'Destination Path',
-            'label_key': 'modules.file.copy.params.destination.label',
-            'description': 'Path to copy the file to',
-            'description_key': 'modules.file.copy.params.destination.description',
-            'required': True
-        },
-        'overwrite': {
-            'type': 'boolean',
-            'label': 'Overwrite',
-            'label_key': 'modules.file.copy.params.overwrite.label',
-            'description': 'Overwrite destination if it exists',
-            'description_key': 'modules.file.copy.params.overwrite.description',
-            'default': False,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SOURCE_PATH(required=True),
+        presets.DESTINATION_PATH(required=True),
+        presets.OVERWRITE(default=False),
+    ),
     output_schema={
         'copied': {'type': 'boolean'},
         'source': {'type': 'string'},

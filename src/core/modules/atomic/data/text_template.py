@@ -5,6 +5,7 @@ Handle CSV, JSON, text processing, data transformation, etc.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import json
 import csv
 import io
@@ -23,36 +24,20 @@ import os
     icon='FileText',
     color='#8B5CF6',
 
-    # Phase 2: Execution settings
-    # No timeout - template filling is instant
-    retryable=False,  # Template errors won't fix themselves
-    concurrent_safe=True,  # Stateless operation
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'template': {
-            'type': 'text',
-            'label': 'Template',
-            'label_key': 'modules.data.text.template.params.template.label',
-            'description': 'Text template with {variable} placeholders',
-            'description_key': 'modules.data.text.template.params.template.description',
-            'placeholder': 'Hello {name}, you have {count} messages.',
-            'required': True
-        },
-        'variables': {
-            'type': 'object',
-            'label': 'Variables',
-            'label_key': 'modules.data.text.template.params.variables.label',
-            'description': 'Object with variable values',
-            'description_key': 'modules.data.text.template.params.variables.description',
-            'placeholder': {'name': 'John', 'count': 5},
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.TEMPLATE(required=True),
+        presets.VARIABLES(required=True),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'result': {'type': 'string', 'description': 'Filled template'}

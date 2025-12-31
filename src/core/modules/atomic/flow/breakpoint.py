@@ -13,6 +13,7 @@ from datetime import datetime
 
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -76,78 +77,17 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control', 'breakpoint.manage'],
 
-    params_schema={
-        'title': {
-            'type': 'string',
-            'label': 'Title',
-            'description': 'Title displayed to approvers',
-            'default': 'Approval Required',
-            'required': False
-        },
-        'description': {
-            'type': 'string',
-            'label': 'Description',
-            'description': 'Detailed description for approvers',
-            'default': '',
-            'required': False,
-            'ui': {'multiline': True}
-        },
-        'timeout_seconds': {
-            'type': 'integer',
-            'label': 'Timeout (seconds)',
-            'description': 'Maximum wait time (0 for no timeout)',
-            'default': 0,
-            'required': False,
-            'minimum': 0
-        },
-        'required_approvers': {
-            'type': 'array',
-            'label': 'Required Approvers',
-            'description': 'User IDs who can approve (empty for anyone)',
-            'default': [],
-            'required': False,
-            'items': {'type': 'string'}
-        },
-        'approval_mode': {
-            'type': 'string',
-            'label': 'Approval Mode',
-            'description': 'How approvals are counted',
-            'default': 'single',
-            'required': False,
-            'enum': ['single', 'all', 'majority', 'first']
-        },
-        'custom_fields': {
-            'type': 'array',
-            'label': 'Custom Input Fields',
-            'description': 'Additional fields to collect from approver',
-            'default': [],
-            'required': False,
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'label': {'type': 'string'},
-                    'type': {'type': 'string', 'enum': ['string', 'number', 'boolean', 'text']},
-                    'required': {'type': 'boolean', 'default': False},
-                    'default': {'type': 'any'}
-                }
-            }
-        },
-        'include_context': {
-            'type': 'boolean',
-            'label': 'Include Context',
-            'description': 'Show workflow context to approvers',
-            'default': True,
-            'required': False
-        },
-        'auto_approve_condition': {
-            'type': 'string',
-            'label': 'Auto-Approve Condition',
-            'description': 'Expression that auto-approves if true',
-            'default': '',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.APPROVAL_TITLE(default='Approval Required'),
+        presets.DESCRIPTION(multiline=True),
+        presets.TIMEOUT_SECONDS(default=0),
+        presets.DATA_ARRAY(key='required_approvers', label='Required Approvers'),
+        presets.APPROVAL_MODE(default='single'),
+        presets.DATA_ARRAY(key='custom_fields', label='Custom Input Fields'),
+        presets.BOOLEAN(key='include_context', label='Include Context', default=True),
+        presets.TEXT(key='auto_approve_condition', label='Auto-Approve Condition'),
+    ),
 
     output_schema={
         '__event__': {

@@ -5,6 +5,7 @@ Handle CSV, JSON, text processing, data transformation, etc.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import json
 import csv
 import io
@@ -28,57 +29,24 @@ import os
     output_types=['array', 'object'],
     can_connect_to=['data.*', 'file.*'],
 
-    # Phase 2: Execution settings
-    timeout=30,  # File reads can timeout on network filesystems
-    retryable=True,  # Can retry failed reads
+    # Execution settings
+    timeout=30,
+    retryable=True,
     max_retries=2,
-    concurrent_safe=True,  # Reading different files is safe
+    concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
-    handles_sensitive_data=True,  # CSV files may contain sensitive data
+    handles_sensitive_data=True,
     required_permissions=['file.read'],
 
-    params_schema={
-        'file_path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.data.csv.read.params.file_path.label',
-            'description': 'Path to CSV file',
-            'description_key': 'modules.data.csv.read.params.file_path.description',
-            'placeholder': '/path/to/data.csv',
-            'required': True
-        },
-        'delimiter': {
-            'type': 'string',
-            'label': 'Delimiter',
-            'label_key': 'modules.data.csv.read.params.delimiter.label',
-            'description': 'CSV delimiter character',
-            'description_key': 'modules.data.csv.read.params.delimiter.description',
-            'default': ',',
-            'placeholder': ',',
-            'required': False
-        },
-        'encoding': {
-            'type': 'string',
-            'label': 'Encoding',
-            'label_key': 'modules.data.csv.read.params.encoding.label',
-            'description': 'File encoding',
-            'description_key': 'modules.data.csv.read.params.encoding.description',
-            'default': 'utf-8',
-            'placeholder': 'utf-8',
-            'required': False
-        },
-        'skip_header': {
-            'type': 'boolean',
-            'label': 'Skip Header',
-            'label_key': 'modules.data.csv.read.params.skip_header.label',
-            'description': 'Skip first row (header)',
-            'description_key': 'modules.data.csv.read.params.skip_header.description',
-            'default': False,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILE_PATH(required=True, placeholder='/path/to/data.csv'),
+        presets.DELIMITER(default=','),
+        presets.ENCODING(default='utf-8'),
+        presets.SKIP_HEADER(default=False),
+    ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status'},
         'data': {'type': 'array', 'description': 'Array of row objects'},

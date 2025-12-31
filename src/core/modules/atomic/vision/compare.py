@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -44,86 +45,16 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['ai.vision'],
 
-    params_schema={
-        'image_before': {
-            'type': 'string',
-            'label': 'Before Image',
-            'label_key': 'modules.vision.compare.params.image_before.label',
-            'description': 'Path to baseline/before image',
-            'description_key': 'modules.vision.compare.params.image_before.description',
-            'required': True,
-            'placeholder': './screenshots/baseline.png'
-        },
-        'image_after': {
-            'type': 'string',
-            'label': 'After Image',
-            'label_key': 'modules.vision.compare.params.image_after.label',
-            'description': 'Path to current/after image',
-            'description_key': 'modules.vision.compare.params.image_after.description',
-            'required': True,
-            'placeholder': './screenshots/current.png'
-        },
-        'comparison_type': {
-            'type': 'string',
-            'label': 'Comparison Type',
-            'label_key': 'modules.vision.compare.params.comparison_type.label',
-            'description': 'Type of comparison to perform',
-            'description_key': 'modules.vision.compare.params.comparison_type.description',
-            'required': False,
-            'default': 'visual_regression',
-            'enum': ['visual_regression', 'layout_diff', 'content_diff', 'full_analysis']
-        },
-        'threshold': {
-            'type': 'number',
-            'label': 'Difference Threshold (%)',
-            'label_key': 'modules.vision.compare.params.threshold.label',
-            'description': 'Acceptable difference percentage (0-100)',
-            'description_key': 'modules.vision.compare.params.threshold.description',
-            'required': False,
-            'default': 5,
-            'validation': {
-                'min': 0,
-                'max': 100
-            }
-        },
-        'focus_areas': {
-            'type': 'array',
-            'label': 'Focus Areas',
-            'label_key': 'modules.vision.compare.params.focus_areas.label',
-            'description': 'Specific areas to focus comparison on',
-            'description_key': 'modules.vision.compare.params.focus_areas.description',
-            'required': False,
-            'examples': [
-                'header', 'navigation', 'main content', 'footer', 'sidebar'
-            ]
-        },
-        'ignore_areas': {
-            'type': 'array',
-            'label': 'Ignore Areas',
-            'label_key': 'modules.vision.compare.params.ignore_areas.label',
-            'description': 'Areas to ignore (dynamic content, ads, timestamps)',
-            'description_key': 'modules.vision.compare.params.ignore_areas.description',
-            'required': False
-        },
-        'model': {
-            'type': 'string',
-            'label': 'Model',
-            'label_key': 'modules.vision.compare.params.model.label',
-            'description': 'OpenAI model to use',
-            'description_key': 'modules.vision.compare.params.model.description',
-            'required': False,
-            'default': 'gpt-4o'
-        },
-        'api_key': {
-            'type': 'string',
-            'label': 'OpenAI API Key',
-            'label_key': 'modules.vision.compare.params.api_key.label',
-            'description': 'OpenAI API key (defaults to OPENAI_API_KEY env var)',
-            'description_key': 'modules.vision.compare.params.api_key.description',
-            'required': False,
-            'secret': True
-        }
-    },
+    params_schema=compose(
+        presets.VISION_IMAGE_BEFORE(),
+        presets.VISION_IMAGE_AFTER(),
+        presets.VISION_COMPARISON_TYPE(),
+        presets.VISION_THRESHOLD(),
+        presets.VISION_FOCUS_AREAS(),
+        presets.VISION_IGNORE_AREAS(),
+        presets.LLM_MODEL(key='model', default='gpt-4o'),
+        presets.API_KEY(key='api_key', label='OpenAI API Key'),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

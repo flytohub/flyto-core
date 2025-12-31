@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor, normalize_classification_result
 
@@ -41,24 +42,12 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
     requires_credentials=ModuleDefaults.REQUIRES_CREDENTIALS,
     handles_sensitive_data=ModuleDefaults.HANDLES_SENSITIVE_DATA,
 
-    params_schema={
-        'model_id': {
-            'type': 'installed_model',
-            'label': 'Model',
-            'required': True,
-            'task': TaskType.IMAGE_CLASSIFICATION
-        },
-        'image_path': {
-            'type': 'string',
-            'label': 'Image Path',
-            'required': True
-        },
-        'top_k': {
-            'type': 'number',
-            'label': 'Top K',
-            'default': ParamDefaults.TOP_K
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.HF_MODEL_ID(task=TaskType.IMAGE_CLASSIFICATION),
+        presets.HF_IMAGE_PATH(),
+        presets.HF_TOP_K(default=ParamDefaults.TOP_K),
+    ),
     output_schema={
         'labels': {'type': 'array', 'description': 'Classification results'},
         'top_label': {'type': 'string', 'description': 'Top predicted label'},

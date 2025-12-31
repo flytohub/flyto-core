@@ -6,6 +6,7 @@ Basic file system operations
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import os
 import shutil
 
@@ -23,58 +24,23 @@ import shutil
     icon='FileText',
     color='#6B7280',
 
-    # Phase 2: Execution settings
-    timeout=30,  # File writes can timeout on network filesystems
-    retryable=False,  # Don't retry writes (could cause duplicates)
-    concurrent_safe=False,  # Writing to same file is not thread-safe
+    # Execution settings
+    timeout=30,
+    retryable=False,
+    concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
-    handles_sensitive_data=True,  # File content may be sensitive
+    handles_sensitive_data=True,
     required_permissions=['file.write'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.file.write.params.path.label',
-            'description': 'Path to the file to write',
-            'description_key': 'modules.file.write.params.path.description',
-            'required': True,
-            'placeholder': '/path/to/file.txt'
-        },
-        'content': {
-            'type': 'string',
-            'label': 'Content',
-            'label_key': 'modules.file.write.params.content.label',
-            'description': 'Content to write',
-            'description_key': 'modules.file.write.params.content.description',
-            'required': True,
-            'multiline': True
-        },
-        'encoding': {
-            'type': 'string',
-            'label': 'Encoding',
-            'label_key': 'modules.file.write.params.encoding.label',
-            'description': 'File encoding',
-            'description_key': 'modules.file.write.params.encoding.description',
-            'default': 'utf-8',
-            'required': False
-        },
-        'mode': {
-            'type': 'string',
-            'label': 'Write Mode',
-            'label_key': 'modules.file.write.params.mode.label',
-            'description': 'Write mode: overwrite or append',
-            'description_key': 'modules.file.write.params.mode.description',
-            'default': 'overwrite',
-            'required': False,
-            'options': [
-                {'value': 'overwrite', 'label': 'Overwrite'},
-                {'value': 'append', 'label': 'Append'}
-            ]
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILE_PATH(key='path', required=True, placeholder='/path/to/file.txt'),
+        presets.FILE_CONTENT(required=True),
+        presets.ENCODING(default='utf-8'),
+        presets.WRITE_MODE(default='overwrite'),
+    ),
     output_schema={
         'path': {
             'type': 'string',

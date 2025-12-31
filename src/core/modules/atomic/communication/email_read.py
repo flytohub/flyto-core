@@ -10,6 +10,7 @@ from email.header import decode_header
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -41,93 +42,18 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['network.imap'],
 
-    params_schema={
-        'folder': {
-            'type': 'string',
-            'label': 'Folder',
-            'label_key': 'modules.email.read.params.folder.label',
-            'description': 'Mailbox folder to read from',
-            'description_key': 'modules.email.read.params.folder.description',
-            'required': False,
-            'default': 'INBOX'
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.email.read.params.limit.label',
-            'description': 'Maximum number of emails to fetch',
-            'description_key': 'modules.email.read.params.limit.description',
-            'required': False,
-            'default': 10
-        },
-        'unread_only': {
-            'type': 'boolean',
-            'label': 'Unread Only',
-            'label_key': 'modules.email.read.params.unread_only.label',
-            'description': 'Only fetch unread emails',
-            'description_key': 'modules.email.read.params.unread_only.description',
-            'required': False,
-            'default': False
-        },
-        'since_date': {
-            'type': 'string',
-            'label': 'Since Date',
-            'label_key': 'modules.email.read.params.since_date.label',
-            'description': 'Fetch emails since this date (YYYY-MM-DD)',
-            'description_key': 'modules.email.read.params.since_date.description',
-            'required': False
-        },
-        'from_filter': {
-            'type': 'string',
-            'label': 'From Filter',
-            'label_key': 'modules.email.read.params.from_filter.label',
-            'description': 'Filter by sender email address',
-            'description_key': 'modules.email.read.params.from_filter.description',
-            'required': False
-        },
-        'subject_filter': {
-            'type': 'string',
-            'label': 'Subject Filter',
-            'label_key': 'modules.email.read.params.subject_filter.label',
-            'description': 'Filter by subject (contains)',
-            'description_key': 'modules.email.read.params.subject_filter.description',
-            'required': False
-        },
-        'imap_host': {
-            'type': 'string',
-            'label': 'IMAP Host',
-            'label_key': 'modules.email.read.params.imap_host.label',
-            'description': 'IMAP server host',
-            'description_key': 'modules.email.read.params.imap_host.description',
-            'required': False
-        },
-        'imap_port': {
-            'type': 'number',
-            'label': 'IMAP Port',
-            'label_key': 'modules.email.read.params.imap_port.label',
-            'description': 'IMAP server port',
-            'description_key': 'modules.email.read.params.imap_port.description',
-            'required': False,
-            'default': 993
-        },
-        'imap_user': {
-            'type': 'string',
-            'label': 'IMAP User',
-            'label_key': 'modules.email.read.params.imap_user.label',
-            'description': 'IMAP username',
-            'description_key': 'modules.email.read.params.imap_user.description',
-            'required': False
-        },
-        'imap_password': {
-            'type': 'string',
-            'label': 'IMAP Password',
-            'label_key': 'modules.email.read.params.imap_password.label',
-            'description': 'IMAP password',
-            'description_key': 'modules.email.read.params.imap_password.description',
-            'required': False,
-            'secret': True
-        }
-    },
+    params_schema=compose(
+        presets.EMAIL_FOLDER(),
+        presets.EMAIL_LIMIT(),
+        presets.EMAIL_UNREAD_ONLY(),
+        presets.EMAIL_SINCE_DATE(),
+        presets.EMAIL_FROM_FILTER(),
+        presets.EMAIL_SUBJECT_FILTER(),
+        presets.IMAP_HOST(),
+        presets.IMAP_PORT(),
+        presets.IMAP_USER(),
+        presets.IMAP_PASSWORD(),
+    ),
     output_schema={
         'emails': {
             'type': 'array',

@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 import uuid
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -78,57 +79,11 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'expression': {
-            'type': 'string',
-            'label': 'Expression',
-            'label_key': 'modules.flow.switch.params.expression.label',
-            'description': 'Value to match against cases (supports variable reference)',
-            'description_key': 'modules.flow.switch.params.expression.description',
-            'required': True
-        },
-        'cases': {
-            'type': 'array',
-            'label': 'Cases',
-            'label_key': 'modules.flow.switch.params.cases.label',
-            'description': 'List of case definitions',
-            'description_key': 'modules.flow.switch.params.cases.description',
-            'required': True,
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'id': {
-                        'type': 'string',
-                        'description': 'Stable unique ID (auto-generated if not provided)',
-                        'auto_generate': True  # UI will auto-generate UUID
-                    },
-                    'value': {
-                        'type': 'string',
-                        'description': 'Value to match',
-                        'required': True
-                    },
-                    'label': {
-                        'type': 'string',
-                        'description': 'Display label for this case'
-                    }
-                    # NOTE: 'step' removed in v2.0
-                    # Flow is now determined by edges connected to output ports
-                }
-            }
-        },
-        # Legacy param (deprecated)
-        'value': {
-            'type': 'string',
-            'deprecated': True,
-            'alias': 'expression',
-            'description': 'Deprecated: use "expression" instead'
-        },
-        'default': {
-            'type': 'string',
-            'deprecated': True,
-            'description': 'Deprecated: use default port instead'
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SWITCH_EXPRESSION(required=True),
+        presets.SWITCH_CASES(required=True),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (case:value or default)'},

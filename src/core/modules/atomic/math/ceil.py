@@ -6,6 +6,7 @@ Provides extended mathematical operations.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import math
 
 
@@ -36,16 +37,10 @@ import math
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'number': {
-            'type': 'number',
-            'label': 'Number',
-            'label_key': 'modules.math.ceil.params.number.label',
-            'description': 'Number to ceil',
-            'description_key': 'modules.math.ceil.params.number.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_NUMBER(required=True),
+    ),
     output_schema={
         'result': {'type': 'number'},
         'original': {'type': 'number'}

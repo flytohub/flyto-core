@@ -10,6 +10,7 @@ import shlex
 from typing import Any, Dict, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -34,94 +35,26 @@ logger = logging.getLogger(__name__)
     can_connect_to=['file.*', 'data.*', 'test.*'],
 
     # Execution settings
-    timeout=300,  # 5 minutes default for long-running commands
-    retryable=False,  # Don't retry commands (could cause side effects)
+    timeout=300,
+    retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
-    handles_sensitive_data=True,  # Command output may contain sensitive data
+    handles_sensitive_data=True,
     required_permissions=['shell.exec'],
 
-    params_schema={
-        'command': {
-            'type': 'string',
-            'label': 'Command',
-            'label_key': 'modules.shell.exec.params.command.label',
-            'description': 'Shell command to execute',
-            'description_key': 'modules.shell.exec.params.command.description',
-            'required': True,
-            'placeholder': 'npm install',
-            'examples': [
-                'npm install',
-                'python -m pytest tests/',
-                'docker-compose up -d',
-                'git status'
-            ]
-        },
-        'cwd': {
-            'type': 'string',
-            'label': 'Working Directory',
-            'label_key': 'modules.shell.exec.params.cwd.label',
-            'description': 'Directory to execute command in',
-            'description_key': 'modules.shell.exec.params.cwd.description',
-            'required': False,
-            'placeholder': '/path/to/project'
-        },
-        'env': {
-            'type': 'object',
-            'label': 'Environment Variables',
-            'label_key': 'modules.shell.exec.params.env.label',
-            'description': 'Additional environment variables',
-            'description_key': 'modules.shell.exec.params.env.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (seconds)',
-            'label_key': 'modules.shell.exec.params.timeout.label',
-            'description': 'Maximum execution time in seconds',
-            'description_key': 'modules.shell.exec.params.timeout.description',
-            'required': False,
-            'default': 300
-        },
-        'shell': {
-            'type': 'boolean',
-            'label': 'Use Shell',
-            'label_key': 'modules.shell.exec.params.shell.label',
-            'description': 'Execute command through shell (enables pipes, redirects)',
-            'description_key': 'modules.shell.exec.params.shell.description',
-            'required': False,
-            'default': True
-        },
-        'capture_stderr': {
-            'type': 'boolean',
-            'label': 'Capture Stderr',
-            'label_key': 'modules.shell.exec.params.capture_stderr.label',
-            'description': 'Capture stderr separately from stdout',
-            'description_key': 'modules.shell.exec.params.capture_stderr.description',
-            'required': False,
-            'default': True
-        },
-        'encoding': {
-            'type': 'string',
-            'label': 'Output Encoding',
-            'label_key': 'modules.shell.exec.params.encoding.label',
-            'description': 'Character encoding for output',
-            'description_key': 'modules.shell.exec.params.encoding.description',
-            'required': False,
-            'default': 'utf-8'
-        },
-        'raise_on_error': {
-            'type': 'boolean',
-            'label': 'Raise on Error',
-            'label_key': 'modules.shell.exec.params.raise_on_error.label',
-            'description': 'Raise exception if command returns non-zero exit code',
-            'description_key': 'modules.shell.exec.params.raise_on_error.description',
-            'required': False,
-            'default': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.COMMAND(required=True, placeholder='npm install'),
+        presets.WORKING_DIR(),
+        presets.ENV_VARS(),
+        presets.TIMEOUT_S(key='timeout', default=300),
+        presets.USE_SHELL(default=True),
+        presets.CAPTURE_STDERR(default=True),
+        presets.ENCODING(default='utf-8'),
+        presets.RAISE_ON_ERROR(default=False),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

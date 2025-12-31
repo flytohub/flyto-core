@@ -6,6 +6,7 @@ Array data manipulation and transformation
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -31,29 +32,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.sort.params.array.label',
-            'description': 'Array to sort',
-            'description_key': 'modules.array.sort.params.array.description',
-            'required': True
-        },
-        'order': {
-            'type': 'string',
-            'label': 'Order',
-            'label_key': 'modules.array.sort.params.order.label',
-            'description': 'Sort order',
-            'description_key': 'modules.array.sort.params.order.description',
-            'default': 'asc',
-            'required': False,
-            'options': [
-                {'value': 'asc', 'label': 'Ascending'},
-                {'value': 'desc', 'label': 'Descending'}
-            ]
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.SORT_ORDER(default='asc'),
+    ),
     output_schema={
         'sorted': {
             'type': 'array',

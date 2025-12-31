@@ -9,6 +9,7 @@ import time
 from typing import Any, Dict, List, Optional, Union
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -43,128 +44,20 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,  # May contain auth tokens
     required_permissions=['network.http'],
 
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'label_key': 'modules.http.request.params.url.label',
-            'description': 'Request URL',
-            'description_key': 'modules.http.request.params.url.description',
-            'required': True,
-            'placeholder': 'https://api.example.com/endpoint',
-            'validation': {
-                'pattern': r'^https?://.+',
-                'pattern_error': 'URL must start with http:// or https://'
-            }
-        },
-        'method': {
-            'type': 'string',
-            'label': 'Method',
-            'label_key': 'modules.http.request.params.method.label',
-            'description': 'HTTP method',
-            'description_key': 'modules.http.request.params.method.description',
-            'required': False,
-            'default': 'GET',
-            'enum': ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'Headers',
-            'label_key': 'modules.http.request.params.headers.label',
-            'description': 'HTTP headers',
-            'description_key': 'modules.http.request.params.headers.description',
-            'required': False
-        },
-        'body': {
-            'type': 'any',
-            'label': 'Body',
-            'label_key': 'modules.http.request.params.body.label',
-            'description': 'Request body (object for JSON, string for raw)',
-            'description_key': 'modules.http.request.params.body.description',
-            'required': False
-        },
-        'query': {
-            'type': 'object',
-            'label': 'Query Parameters',
-            'label_key': 'modules.http.request.params.query.label',
-            'description': 'URL query parameters',
-            'description_key': 'modules.http.request.params.query.description',
-            'required': False
-        },
-        'content_type': {
-            'type': 'string',
-            'label': 'Content Type',
-            'label_key': 'modules.http.request.params.content_type.label',
-            'description': 'Content-Type header',
-            'description_key': 'modules.http.request.params.content_type.description',
-            'required': False,
-            'default': 'application/json',
-            'enum': [
-                'application/json',
-                'application/x-www-form-urlencoded',
-                'multipart/form-data',
-                'text/plain',
-                'text/html',
-                'application/xml'
-            ]
-        },
-        'auth': {
-            'type': 'object',
-            'label': 'Authentication',
-            'label_key': 'modules.http.request.params.auth.label',
-            'description': 'Authentication config {type: "bearer"|"basic", token/username/password}',
-            'description_key': 'modules.http.request.params.auth.description',
-            'required': False,
-            'properties': {
-                'type': {
-                    'type': 'string',
-                    'enum': ['bearer', 'basic', 'api_key']
-                },
-                'token': {'type': 'string'},
-                'username': {'type': 'string'},
-                'password': {'type': 'string'},
-                'header_name': {'type': 'string'},
-                'api_key': {'type': 'string'}
-            }
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (seconds)',
-            'label_key': 'modules.http.request.params.timeout.label',
-            'description': 'Request timeout in seconds',
-            'description_key': 'modules.http.request.params.timeout.description',
-            'required': False,
-            'default': 30
-        },
-        'follow_redirects': {
-            'type': 'boolean',
-            'label': 'Follow Redirects',
-            'label_key': 'modules.http.request.params.follow_redirects.label',
-            'description': 'Automatically follow HTTP redirects',
-            'description_key': 'modules.http.request.params.follow_redirects.description',
-            'required': False,
-            'default': True
-        },
-        'verify_ssl': {
-            'type': 'boolean',
-            'label': 'Verify SSL',
-            'label_key': 'modules.http.request.params.verify_ssl.label',
-            'description': 'Verify SSL certificates',
-            'description_key': 'modules.http.request.params.verify_ssl.description',
-            'required': False,
-            'default': True
-        },
-        'response_type': {
-            'type': 'string',
-            'label': 'Response Type',
-            'label_key': 'modules.http.request.params.response_type.label',
-            'description': 'Expected response format',
-            'description_key': 'modules.http.request.params.response_type.description',
-            'required': False,
-            'default': 'auto',
-            'enum': ['auto', 'json', 'text', 'binary']
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.URL(required=True, placeholder='https://api.example.com/endpoint'),
+        presets.HTTP_METHOD(default='GET'),
+        presets.HEADERS(),
+        presets.REQUEST_BODY(),
+        presets.QUERY_PARAMS(),
+        presets.CONTENT_TYPE(default='application/json'),
+        presets.HTTP_AUTH(),
+        presets.TIMEOUT_S(default=30),
+        presets.FOLLOW_REDIRECTS(default=True),
+        presets.VERIFY_SSL(default=True),
+        presets.RESPONSE_TYPE(default='auto'),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

@@ -6,6 +6,7 @@ Provides object/dictionary manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,16 +36,10 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'objects': {
-            'type': 'array',
-            'label': 'Objects',
-            'label_key': 'modules.object.merge.params.objects.label',
-            'description': 'Array of objects to merge',
-            'description_key': 'modules.object.merge.params.objects.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_OBJECTS(required=True),
+    ),
     output_schema={
         'result': {'type': 'json'}
     },

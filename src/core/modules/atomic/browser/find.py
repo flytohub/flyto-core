@@ -6,6 +6,7 @@ This is an atomic operation. Only responsible for finding and returning element 
 from typing import Any
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ..element_registry import get_element_registry
 
 
@@ -37,25 +38,10 @@ from ..element_registry import get_element_registry
     handles_sensitive_data=False,
     required_permissions=['browser.read'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.find.params.selector.label',
-            'description': 'CSS selector to find elements',
-            'description_key': 'modules.browser.find.params.selector.description',
-            'placeholder': 'div.result-item',
-            'required': True
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.browser.find.params.limit.label',
-            'description': 'Limit count (optional)',
-            'description_key': 'modules.browser.find.params.limit.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='div.result-item'),
+        presets.EXTRACT_LIMIT(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'count': {'type': 'number'},

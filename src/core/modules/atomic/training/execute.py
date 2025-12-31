@@ -5,6 +5,7 @@ Execute practice session
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from core.training.daily_practice import DailyPracticeEngine
 
 
@@ -23,6 +24,15 @@ from core.training.daily_practice import DailyPracticeEngine
     # Connection types
     input_types=['string'],
     output_types=['object'],
+
+    params_schema=compose(
+        presets.PRACTICE_URL(),
+        presets.PRACTICE_MAX_ITEMS(),
+    ),
+    output_schema={
+        'status': {'type': 'string'},
+        'items_processed': {'type': 'number'},
+    },
 )
 class TrainingPracticeExecute(BaseModule):
     """Execute practice session"""

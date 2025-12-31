@@ -5,6 +5,7 @@ Execute SQL queries on PostgreSQL database.
 import os
 
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -36,38 +37,11 @@ from ....registry import register_module
     handles_sensitive_data=True,  # Database data is typically sensitive
     required_permissions=['network.access', 'database.read'],
 
-    params_schema={
-        'connection_string': {
-            'type': 'string',
-            'label': 'Connection String',
-            'label_key': 'modules.db.postgresql.query.params.connection_string.label',
-            'description': 'PostgreSQL connection string (defaults to env.POSTGRESQL_URL)',
-            'description_key': 'modules.db.postgresql.query.params.connection_string.description',
-            'placeholder': '${env.POSTGRESQL_URL}',
-            'required': False,
-            'secret': True,
-            'help': 'Format: postgresql://user:password@host:port/database'
-        },
-        'query': {
-            'type': 'string',
-            'label': 'SQL Query',
-            'label_key': 'modules.db.postgresql.query.params.query.label',
-            'description': 'SQL query to execute',
-            'description_key': 'modules.db.postgresql.query.params.query.description',
-            'required': True,
-            'multiline': True,
-            'placeholder': 'SELECT * FROM users WHERE active = true'
-        },
-        'params': {
-            'type': 'array',
-            'label': 'Query Parameters',
-            'label_key': 'modules.db.postgresql.query.params.params.label',
-            'description': 'Parameters for parameterized queries (prevents SQL injection)',
-            'description_key': 'modules.db.postgresql.query.params.params.description',
-            'required': False,
-            'help': 'Use $1, $2, etc in query and provide values here'
-        }
-    },
+    params_schema=compose(
+        presets.DB_CONNECTION_STRING(),
+        presets.SQL_QUERY(),
+        presets.QUERY_PARAMS(),
+    ),
     output_schema={
         'rows': {
             'type': 'array',

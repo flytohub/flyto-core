@@ -1,12 +1,10 @@
 """
-Browser Automation Modules
-
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+Browser Launch Module - Launch a new browser instance with Playwright
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,28 +23,22 @@ from ...registry import register_module
     input_types=[],
     output_types=['browser'],
 
-    # Phase 2: Execution settings
-    timeout=10,  # Browser launch should complete within 10s
-    retryable=True,  # Can retry if browser fails to launch
-    max_retries=2,  # Don't retry too many times (resource intensive)
-    concurrent_safe=False,  # Browser instances should not launch in parallel
+    # Execution settings
+    timeout=10,
+    retryable=True,
+    max_retries=2,
+    concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['browser.launch', 'system.process'],
 
-    params_schema={
-        'headless': {
-            'type': 'boolean',
-            'label': 'Headless Mode',
-            'label_key': 'modules.browser.launch.params.headless.label',
-            'description': 'Run browser in headless mode (no UI)',
-            'description_key': 'modules.browser.launch.params.headless.description',
-            'default': False,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.BROWSER_HEADLESS(default=False),
+        presets.VIEWPORT(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'message': {'type': 'string'}

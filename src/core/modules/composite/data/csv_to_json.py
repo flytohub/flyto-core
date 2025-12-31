@@ -4,6 +4,7 @@ CSV to JSON Composite Module
 Reads a CSV file and converts it to JSON format.
 """
 from ..base import CompositeModule, register_composite, UIVisibility
+from ...schema import compose, presets
 
 
 @register_composite(
@@ -27,59 +28,16 @@ from ..base import CompositeModule, register_composite, UIVisibility
     ui_icon='FileSpreadsheet',
     ui_color='#059669',
 
-    # UI form generation
-    ui_params_schema={
-        'input_file': {
-            'type': 'string',
-            'label': 'Input CSV File',
-            'label_key': 'composite.csv_to_json.input_file.label',
-            'description': 'Path to the CSV file to read',
-            'description_key': 'composite.csv_to_json.input_file.desc',
-            'placeholder': './data/input.csv',
-            'required': True,
-            'ui_component': 'input',
-        },
-        'output_file': {
-            'type': 'string',
-            'label': 'Output JSON File',
-            'label_key': 'composite.csv_to_json.output_file.label',
-            'description': 'Path to save the JSON output (optional)',
-            'description_key': 'composite.csv_to_json.output_file.desc',
-            'placeholder': './data/output.json',
-            'required': False,
-            'ui_component': 'input',
-        },
-        'delimiter': {
-            'type': 'string',
-            'label': 'Delimiter',
-            'label_key': 'composite.csv_to_json.delimiter.label',
-            'description': 'CSV delimiter character',
-            'description_key': 'composite.csv_to_json.delimiter.desc',
-            'default': ',',
-            'required': False,
-            'ui_component': 'input',
-        },
-        'has_header': {
-            'type': 'boolean',
-            'label': 'Has Header Row',
-            'label_key': 'composite.csv_to_json.has_header.label',
-            'description': 'Whether the CSV has a header row',
-            'description_key': 'composite.csv_to_json.has_header.desc',
-            'default': True,
-            'required': False,
-            'ui_component': 'checkbox',
-        },
-        'indent': {
-            'type': 'number',
-            'label': 'JSON Indent',
-            'label_key': 'composite.csv_to_json.indent.label',
-            'description': 'Number of spaces for JSON indentation',
-            'description_key': 'composite.csv_to_json.indent.desc',
-            'default': 2,
-            'required': False,
-            'ui_component': 'number',
-        }
-    },
+    # Schema-driven params
+    ui_params_schema=compose(
+        presets.FILE_PATH(key='input_file', required=True, label='Input CSV File',
+                          placeholder='./data/input.csv'),
+        presets.OUTPUT_PATH(key='output_file', label='Output JSON File',
+                            placeholder='./data/output.json'),
+        presets.DELIMITER(default=','),
+        presets.INCLUDE_HEADER(key='has_header', label='Has Header Row', default=True),
+        presets.INDENT_SIZE(default=2),
+    ),
 
     # Connection types
     input_types=['file_path', 'csv'],

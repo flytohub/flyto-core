@@ -9,6 +9,7 @@ import json
 import yaml
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -27,35 +28,27 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['json', 'string'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.record.params.action.label',
-            'description': 'Recording action (start, stop, get)',
-            'description_key': 'modules.browser.record.params.action.description',
-            'required': True,
-            'enum': ['start', 'stop', 'get']
-        },
-        'output_format': {
-            'type': 'string',
-            'label': 'Output Format',
-            'label_key': 'modules.browser.record.params.output_format.label',
-            'description': 'Format for recorded workflow (yaml or json)',
-            'description_key': 'modules.browser.record.params.output_format.description',
-            'default': 'yaml',
-            'required': False,
-            'enum': ['yaml', 'json']
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.browser.record.params.output_path.label',
-            'description': 'Path to save the recorded workflow (optional)',
-            'description_key': 'modules.browser.record.params.output_path.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        field(
+            'action',
+            type='string',
+            label='Action',
+            label_key='modules.browser.record.params.action.label',
+            description='Recording action (start, stop, get)',
+            required=True,
+            enum=['start', 'stop', 'get'],
+        ),
+        field(
+            'output_format',
+            type='string',
+            label='Output Format',
+            label_key='modules.browser.record.params.output_format.label',
+            description='Format for recorded workflow (yaml or json)',
+            default='yaml',
+            enum=['yaml', 'json'],
+        ),
+        presets.OUTPUT_PATH(key='output_path', required=False),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'recording': {'type': 'array'},

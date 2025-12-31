@@ -6,6 +6,7 @@ Mathematical calculations and operations
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import math
 
 
@@ -36,51 +37,13 @@ import math
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'operation': {
-            'type': 'string',
-            'label': 'Operation',
-            'label_key': 'modules.math.calculate.params.operation.label',
-            'description': 'Mathematical operation to perform',
-            'description_key': 'modules.math.calculate.params.operation.description',
-            'required': True,
-            'options': [
-                {'value': 'add', 'label': 'Add'},
-                {'value': 'subtract', 'label': 'Subtract'},
-                {'value': 'multiply', 'label': 'Multiply'},
-                {'value': 'divide', 'label': 'Divide'},
-                {'value': 'power', 'label': 'Power'},
-                {'value': 'modulo', 'label': 'Modulo'},
-                {'value': 'sqrt', 'label': 'Square Root'},
-                {'value': 'abs', 'label': 'Absolute Value'}
-            ]
-        },
-        'a': {
-            'type': 'number',
-            'label': 'First Number',
-            'label_key': 'modules.math.calculate.params.a.label',
-            'description': 'First operand',
-            'description_key': 'modules.math.calculate.params.a.description',
-            'required': True
-        },
-        'b': {
-            'type': 'number',
-            'label': 'Second Number',
-            'label_key': 'modules.math.calculate.params.b.label',
-            'description': 'Second operand (not required for sqrt and abs)',
-            'description_key': 'modules.math.calculate.params.b.description',
-            'required': False
-        },
-        'precision': {
-            'type': 'number',
-            'label': 'Decimal Precision',
-            'label_key': 'modules.math.calculate.params.precision.label',
-            'description': 'Number of decimal places',
-            'description_key': 'modules.math.calculate.params.precision.description',
-            'default': 2,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.MATH_OPERATION(required=True),
+        presets.FIRST_OPERAND(required=True),
+        presets.SECOND_OPERAND(required=False),
+        presets.DECIMAL_PRECISION(default=2),
+    ),
     output_schema={
         'result': {
             'type': 'number',

@@ -5,6 +5,7 @@ Round a number to specified decimal places
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -31,25 +32,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'number': {
-            'type': 'number',
-            'label': 'Number',
-            'label_key': 'modules.math.round.params.number.label',
-            'description': 'Number to round',
-            'description_key': 'modules.math.round.params.number.description',
-            'required': True
-        },
-        'decimals': {
-            'type': 'number',
-            'label': 'Decimal Places',
-            'label_key': 'modules.math.round.params.decimals.label',
-            'description': 'Number of decimal places (default: 0)',
-            'description_key': 'modules.math.round.params.decimals.description',
-            'required': False,
-            'default': 0
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_NUMBER(required=True),
+        presets.DECIMAL_PLACES(default=0),
+    ),
     output_schema={
         'result': {'type': 'number'},
         'original': {'type': 'number'}

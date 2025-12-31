@@ -6,6 +6,7 @@ Scroll page to element, position, or direction.
 from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,46 +25,12 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.scroll.params.selector.label',
-            'placeholder': '#element-id',
-            'description': 'Scroll to this element (optional)',
-            'description_key': 'modules.browser.scroll.params.selector.description',
-            'required': False
-        },
-        'direction': {
-            'type': 'string',
-            'label': 'Direction',
-            'label_key': 'modules.browser.scroll.params.direction.label',
-            'description': 'Scroll direction (up, down, left, right)',
-            'description_key': 'modules.browser.scroll.params.direction.description',
-            'default': 'down',
-            'required': False,
-            'enum': ['up', 'down', 'left', 'right']
-        },
-        'amount': {
-            'type': 'number',
-            'label': 'Amount (pixels)',
-            'label_key': 'modules.browser.scroll.params.amount.label',
-            'description': 'Pixels to scroll (ignored if selector is provided)',
-            'description_key': 'modules.browser.scroll.params.amount.description',
-            'default': 500,
-            'required': False
-        },
-        'behavior': {
-            'type': 'string',
-            'label': 'Behavior',
-            'label_key': 'modules.browser.scroll.params.behavior.label',
-            'description': 'Scroll behavior (smooth or instant)',
-            'description_key': 'modules.browser.scroll.params.behavior.description',
-            'default': 'smooth',
-            'required': False,
-            'enum': ['smooth', 'instant']
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=False, placeholder='#element-id'),
+        presets.SCROLL_DIRECTION(),
+        presets.SCROLL_AMOUNT(),
+        presets.SCROLL_BEHAVIOR(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'scrolled_to': {'type': 'object'}

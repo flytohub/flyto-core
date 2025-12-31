@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -39,61 +40,14 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'input_path': {
-            'type': 'string',
-            'label': 'Input Path',
-            'label_key': 'modules.image.compress.params.input_path.label',
-            'description': 'Path to the source image file',
-            'description_key': 'modules.image.compress.params.input_path.description',
-            'required': True
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.image.compress.params.output_path.label',
-            'description': 'Path for compressed image (optional)',
-            'description_key': 'modules.image.compress.params.output_path.description',
-            'required': False
-        },
-        'quality': {
-            'type': 'number',
-            'label': 'Quality',
-            'label_key': 'modules.image.compress.params.quality.label',
-            'description': 'Compression quality (1-100, higher is better)',
-            'description_key': 'modules.image.compress.params.quality.description',
-            'required': False,
-            'default': 85,
-            'minimum': 1,
-            'maximum': 100
-        },
-        'optimize': {
-            'type': 'boolean',
-            'label': 'Optimize',
-            'label_key': 'modules.image.compress.params.optimize.label',
-            'description': 'Apply additional optimization',
-            'description_key': 'modules.image.compress.params.optimize.description',
-            'required': False,
-            'default': True
-        },
-        'max_size_kb': {
-            'type': 'number',
-            'label': 'Max Size (KB)',
-            'label_key': 'modules.image.compress.params.max_size_kb.label',
-            'description': 'Target maximum file size in KB (will auto-adjust quality)',
-            'description_key': 'modules.image.compress.params.max_size_kb.description',
-            'required': False
-        },
-        'format': {
-            'type': 'string',
-            'label': 'Output Format',
-            'label_key': 'modules.image.compress.params.format.label',
-            'description': 'Output format (defaults to input format)',
-            'description_key': 'modules.image.compress.params.format.description',
-            'required': False,
-            'enum': ['jpeg', 'png', 'webp']
-        }
-    },
+    params_schema=compose(
+        presets.IMAGE_INPUT_PATH(),
+        presets.IMAGE_OUTPUT_PATH(),
+        presets.IMAGE_QUALITY(),
+        presets.IMAGE_OPTIMIZE(),
+        presets.IMAGE_MAX_SIZE_KB(),
+        presets.IMAGE_FORMAT(),
+    ),
     output_schema={
         'output_path': {
             'type': 'string',

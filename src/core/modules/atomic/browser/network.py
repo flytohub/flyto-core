@@ -8,6 +8,7 @@ import asyncio
 import re
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -26,51 +27,43 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['array', 'json'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.network.params.action.label',
-            'description': 'Network action to perform',
-            'description_key': 'modules.browser.network.params.action.description',
-            'required': True,
-            'enum': ['monitor', 'block', 'intercept']
-        },
-        'url_pattern': {
-            'type': 'string',
-            'label': 'URL Pattern',
-            'label_key': 'modules.browser.network.params.url_pattern.label',
-            'placeholder': '.*\\.api\\..*',
-            'description': 'Regex pattern to match request URLs',
-            'description_key': 'modules.browser.network.params.url_pattern.description',
-            'required': False
-        },
-        'resource_type': {
-            'type': 'string',
-            'label': 'Resource Type',
-            'label_key': 'modules.browser.network.params.resource_type.label',
-            'description': 'Filter by resource type (document, script, image, etc)',
-            'description_key': 'modules.browser.network.params.resource_type.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.network.params.timeout.label',
-            'description': 'Time to monitor network activity',
-            'description_key': 'modules.browser.network.params.timeout.description',
-            'default': 30000,
-            'required': False
-        },
-        'mock_response': {
-            'type': 'object',
-            'label': 'Mock Response',
-            'label_key': 'modules.browser.network.params.mock_response.label',
-            'description': 'Response to return for intercepted requests',
-            'description_key': 'modules.browser.network.params.mock_response.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        field(
+            'action',
+            type='string',
+            label='Action',
+            label_key='modules.browser.network.params.action.label',
+            description='Network action to perform',
+            required=True,
+            enum=['monitor', 'block', 'intercept'],
+        ),
+        field(
+            'url_pattern',
+            type='string',
+            label='URL Pattern',
+            label_key='modules.browser.network.params.url_pattern.label',
+            placeholder='.*\\.api\\..*',
+            description='Regex pattern to match request URLs',
+            required=False,
+        ),
+        field(
+            'resource_type',
+            type='string',
+            label='Resource Type',
+            label_key='modules.browser.network.params.resource_type.label',
+            description='Filter by resource type (document, script, image, etc)',
+            required=False,
+        ),
+        presets.TIMEOUT_MS(default=30000),
+        field(
+            'mock_response',
+            type='object',
+            label='Mock Response',
+            label_key='modules.browser.network.params.mock_response.label',
+            description='Response to return for intercepted requests',
+            required=False,
+        ),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'requests': {'type': 'array'},

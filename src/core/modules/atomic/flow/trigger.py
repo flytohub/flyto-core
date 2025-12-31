@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -56,54 +57,14 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'trigger_type': {
-            'type': 'string',
-            'label': 'Trigger Type',
-            'label_key': 'modules.flow.trigger.params.trigger_type.label',
-            'description': 'Type of trigger',
-            'description_key': 'modules.flow.trigger.params.trigger_type.description',
-            'enum': ['manual', 'webhook', 'schedule', 'event'],
-            'default': 'manual',
-            'required': False
-        },
-        'webhook_path': {
-            'type': 'string',
-            'label': 'Webhook Path',
-            'label_key': 'modules.flow.trigger.params.webhook_path.label',
-            'description': 'URL path for webhook trigger',
-            'description_key': 'modules.flow.trigger.params.webhook_path.description',
-            'required': False,
-            'visible_when': {'trigger_type': 'webhook'}
-        },
-        'schedule': {
-            'type': 'string',
-            'label': 'Schedule',
-            'label_key': 'modules.flow.trigger.params.schedule.label',
-            'description': 'Cron expression for scheduled trigger',
-            'description_key': 'modules.flow.trigger.params.schedule.description',
-            'required': False,
-            'visible_when': {'trigger_type': 'schedule'},
-            'examples': ['0 * * * *', '0 9 * * 1-5', '*/5 * * * *']
-        },
-        'event_name': {
-            'type': 'string',
-            'label': 'Event Name',
-            'label_key': 'modules.flow.trigger.params.event_name.label',
-            'description': 'Event name to listen for',
-            'description_key': 'modules.flow.trigger.params.event_name.description',
-            'required': False,
-            'visible_when': {'trigger_type': 'event'}
-        },
-        'description': {
-            'type': 'string',
-            'label': 'Description',
-            'label_key': 'modules.flow.trigger.params.description.label',
-            'description': 'Description of this trigger',
-            'description_key': 'modules.flow.trigger.params.description.description',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.TRIGGER_TYPE(default='manual'),
+        presets.WEBHOOK_PATH(),
+        presets.CRON_SCHEDULE(),
+        presets.EVENT_NAME(),
+        presets.DESCRIPTION(),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (triggered/error)'},

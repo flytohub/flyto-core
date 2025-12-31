@@ -8,6 +8,7 @@ import shutil
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -27,34 +28,21 @@ from ...registry import register_module
     input_types=['file_path', 'text'],
     output_types=['file_path', 'text'],
 
-    # Phase 2: Execution settings
+    # Execution settings
     timeout=10,
     retryable=False,
     concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'source': {
-            'type': 'string',
-            'label': 'Source Path',
-            'label_key': 'modules.file.move.params.source.label',
-            'description': 'Path to the source file',
-            'description_key': 'modules.file.move.params.source.description',
-            'required': True
-        },
-        'destination': {
-            'type': 'string',
-            'label': 'Destination Path',
-            'label_key': 'modules.file.move.params.destination.label',
-            'description': 'Path to the destination',
-            'description_key': 'modules.file.move.params.destination.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SOURCE_PATH(required=True),
+        presets.DESTINATION_PATH(required=True),
+    ),
     output_schema={
         'moved': {'type': 'boolean'},
         'source': {'type': 'string'},

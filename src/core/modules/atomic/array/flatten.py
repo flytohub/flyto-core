@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,25 +36,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.flatten.params.array.label',
-            'description': 'Nested array to flatten',
-            'description_key': 'modules.array.flatten.params.array.description',
-            'required': True
-        },
-        'depth': {
-            'type': 'number',
-            'label': 'Depth',
-            'label_key': 'modules.array.flatten.params.depth.label',
-            'description': 'Depth level to flatten (default: 1, use -1 for infinite)',
-            'description_key': 'modules.array.flatten.params.depth.description',
-            'default': 1,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.FLATTEN_DEPTH(default=1),
+    ),
     output_schema={
         'result': {'type': 'array'},
         'length': {'type': 'number'}

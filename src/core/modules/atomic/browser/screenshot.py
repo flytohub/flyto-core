@@ -1,12 +1,10 @@
 """
-Browser Automation Modules
-
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+Browser Screenshot Module - Take a screenshot of the current page
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,18 +23,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['image', 'file'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.browser.screenshot.params.path.label',
-            'placeholder': 'screenshot.png',
-            'description': 'Path to save the screenshot',
-            'description_key': 'modules.browser.screenshot.params.path.description',
-            'default': 'screenshot.png',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.OUTPUT_PATH(default='screenshot.png', placeholder='screenshot.png'),
+        presets.SCREENSHOT_OPTIONS(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'filepath': {'type': 'string'}

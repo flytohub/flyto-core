@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -40,51 +41,13 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['file.read'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'Excel Path',
-            'label_key': 'modules.excel.read.params.path.label',
-            'description': 'Path to the Excel file',
-            'description_key': 'modules.excel.read.params.path.description',
-            'required': True,
-            'placeholder': '/path/to/data.xlsx'
-        },
-        'sheet': {
-            'type': 'string',
-            'label': 'Sheet Name',
-            'label_key': 'modules.excel.read.params.sheet.label',
-            'description': 'Sheet name to read (default: first sheet)',
-            'description_key': 'modules.excel.read.params.sheet.description',
-            'required': False
-        },
-        'header_row': {
-            'type': 'number',
-            'label': 'Header Row',
-            'label_key': 'modules.excel.read.params.header_row.label',
-            'description': 'Row number for headers (1-based, 0 for no headers)',
-            'description_key': 'modules.excel.read.params.header_row.description',
-            'required': False,
-            'default': 1
-        },
-        'range': {
-            'type': 'string',
-            'label': 'Cell Range',
-            'label_key': 'modules.excel.read.params.range.label',
-            'description': 'Cell range to read (e.g., "A1:D10")',
-            'description_key': 'modules.excel.read.params.range.description',
-            'required': False
-        },
-        'as_dict': {
-            'type': 'boolean',
-            'label': 'Return as Dict',
-            'label_key': 'modules.excel.read.params.as_dict.label',
-            'description': 'Return rows as dictionaries (using headers as keys)',
-            'description_key': 'modules.excel.read.params.as_dict.description',
-            'required': False,
-            'default': True
-        }
-    },
+    params_schema=compose(
+        presets.EXCEL_PATH(placeholder='/path/to/data.xlsx'),
+        presets.EXCEL_SHEET(),
+        presets.EXCEL_HEADER_ROW(),
+        presets.EXCEL_RANGE(),
+        presets.EXCEL_AS_DICT(),
+    ),
     output_schema={
         'data': {
             'type': 'array',

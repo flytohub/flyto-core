@@ -1,11 +1,10 @@
 """
-Browser Hover Module
-
-Hover mouse over an element.
+Browser Hover Module - Hover mouse over an element
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,34 +23,12 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.hover.params.selector.label',
-            'placeholder': '#element-id or .element-class',
-            'description': 'CSS selector of the element to hover over',
-            'description_key': 'modules.browser.hover.params.selector.description',
-            'required': True
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.hover.params.timeout.label',
-            'description': 'Maximum time to wait for element in milliseconds',
-            'description_key': 'modules.browser.hover.params.timeout.description',
-            'default': 30000,
-            'required': False
-        },
-        'position': {
-            'type': 'object',
-            'label': 'Position',
-            'label_key': 'modules.browser.hover.params.position.label',
-            'description': 'Relative position within element {x, y} as percentages (0-1)',
-            'description_key': 'modules.browser.hover.params.position.description',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='#element-id or .element-class'),
+        presets.TIMEOUT_MS(default=30000),
+        presets.POSITION(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'selector': {'type': 'string'}

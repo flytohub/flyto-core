@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor, normalize_text_result
 
@@ -41,30 +42,13 @@ _executor = HuggingFaceTaskExecutor(TaskType.SUMMARIZATION)
     requires_credentials=ModuleDefaults.REQUIRES_CREDENTIALS,
     handles_sensitive_data=ModuleDefaults.HANDLES_SENSITIVE_DATA,
 
-    params_schema={
-        'model_id': {
-            'type': 'installed_model',
-            'label': 'Model',
-            'required': True,
-            'task': TaskType.SUMMARIZATION
-        },
-        'text': {
-            'type': 'string',
-            'label': 'Text',
-            'required': True,
-            'multiline': True
-        },
-        'max_length': {
-            'type': 'number',
-            'label': 'Max Length',
-            'default': ParamDefaults.SUMMARY_MAX_LENGTH
-        },
-        'min_length': {
-            'type': 'number',
-            'label': 'Min Length',
-            'default': ParamDefaults.SUMMARY_MIN_LENGTH
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.HF_MODEL_ID(task=TaskType.SUMMARIZATION),
+        presets.HF_TEXT_INPUT(),
+        presets.HF_MAX_LENGTH(default=ParamDefaults.SUMMARY_MAX_LENGTH),
+        presets.HF_MIN_LENGTH(default=ParamDefaults.SUMMARY_MIN_LENGTH),
+    ),
     output_schema={
         'summary_text': {'type': 'string', 'description': 'Generated summary'}
     },

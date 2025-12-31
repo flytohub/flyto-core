@@ -1,0 +1,70 @@
+# Simple API + Data + File Workflow (No LLM - for testing without API keys)
+# Run: python run.py examples/api_llm_file_combo/workflow_simple.yaml
+
+name: API Data Fetch and Save Pipeline
+description: |
+  使用 HTTP API 獲取數據，然後將結果保存到文件。
+  展示 http.* + data.* + file.* 模組的組合。
+
+steps:
+  # Step 1: 從公開 API 獲取文章數據
+  - id: fetch_posts
+    module: http.request
+    params:
+      url: "https://jsonplaceholder.typicode.com/posts"
+      method: GET
+      query:
+        _limit: 3
+      timeout: 30
+    description: 從 JSONPlaceholder API 獲取前 3 篇文章
+
+  # Step 2: 將文章數據轉換為 JSON 字符串
+  - id: stringify_posts
+    module: data.json.stringify
+    params:
+      data: "${fetch_posts.body}"
+      pretty: true
+      indent: 2
+    description: 將文章數據轉為格式化 JSON 字符串
+
+  # Step 3: 獲取用戶信息
+  - id: fetch_user
+    module: http.request
+    params:
+      url: "https://jsonplaceholder.typicode.com/users/1"
+      method: GET
+      timeout: 30
+    description: 獲取用戶詳細信息
+
+  # Step 4: 將用戶數據轉為 JSON 字符串
+  - id: stringify_user
+    module: data.json.stringify
+    params:
+      data: "${fetch_user.body}"
+      pretty: true
+      indent: 2
+    description: 將用戶數據轉為格式化 JSON 字符串
+
+  # Step 5: 將文章保存到 JSON 文件
+  - id: save_posts
+    module: file.write
+    params:
+      path: /tmp/flyto_analysis/posts_data.json
+      content: "${stringify_posts.json}"
+      mode: overwrite
+    description: 保存文章數據到 JSON 文件
+
+  # Step 6: 將用戶信息保存到文件
+  - id: save_user
+    module: file.write
+    params:
+      path: /tmp/flyto_analysis/user_data.json
+      content: "${stringify_user.json}"
+      mode: overwrite
+    description: 保存用戶數據到 JSON 文件
+
+outputs:
+  posts_status: "${fetch_posts.ok}"
+  user_status: "${fetch_user.ok}"
+  posts_path: "${save_posts.path}"
+  user_path: "${save_user.path}"

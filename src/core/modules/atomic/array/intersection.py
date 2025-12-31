@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,16 +36,10 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'arrays': {
-            'type': 'array',
-            'label': 'Arrays',
-            'label_key': 'modules.array.intersection.params.arrays.label',
-            'description': 'Arrays to find intersection',
-            'description_key': 'modules.array.intersection.params.arrays.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.ARRAYS(required=True),
+    ),
     output_schema={
         'result': {'type': 'array'},
         'length': {'type': 'number'}

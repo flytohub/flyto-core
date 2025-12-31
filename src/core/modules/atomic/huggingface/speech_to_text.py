@@ -7,6 +7,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor
 
@@ -42,42 +43,13 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
     requires_credentials=ModuleDefaults.REQUIRES_CREDENTIALS,
     handles_sensitive_data=ModuleDefaults.HANDLES_SENSITIVE_DATA,
 
-    params_schema={
-        'model_id': {
-            'type': 'installed_model',
-            'label': 'Model',
-            'label_key': 'huggingface.speech_to_text.params.model_id.label',
-            'description': 'HuggingFace model to use',
-            'description_key': 'huggingface.speech_to_text.params.model_id.description',
-            'required': True,
-            'task': TaskType.AUTOMATIC_SPEECH_RECOGNITION
-        },
-        'audio_path': {
-            'type': 'string',
-            'label': 'Audio File',
-            'label_key': 'huggingface.speech_to_text.params.audio_path.label',
-            'description': 'Path to audio file (wav, mp3, flac, etc.)',
-            'description_key': 'huggingface.speech_to_text.params.audio_path.description',
-            'required': True
-        },
-        'language': {
-            'type': 'string',
-            'label': 'Language',
-            'label_key': 'huggingface.speech_to_text.params.language.label',
-            'description': 'Language code (e.g., "en", "zh", "ja"). Leave empty for auto-detection.',
-            'description_key': 'huggingface.speech_to_text.params.language.description',
-            'required': False
-        },
-        'return_timestamps': {
-            'type': 'boolean',
-            'label': 'Return Timestamps',
-            'label_key': 'huggingface.speech_to_text.params.return_timestamps.label',
-            'description': 'Include word/chunk timestamps in output',
-            'description_key': 'huggingface.speech_to_text.params.return_timestamps.description',
-            'required': False,
-            'default': ParamDefaults.RETURN_TIMESTAMPS
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.HF_MODEL_ID(task=TaskType.AUTOMATIC_SPEECH_RECOGNITION),
+        presets.HF_AUDIO_PATH(),
+        presets.HF_LANGUAGE(),
+        presets.HF_RETURN_TIMESTAMPS(default=ParamDefaults.RETURN_TIMESTAMPS),
+    ),
     output_schema={
         'text': {'type': 'string', 'description': 'Transcribed text'},
         'chunks': {'type': 'array', 'description': 'Timestamped chunks (if return_timestamps=true)'}

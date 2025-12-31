@@ -12,6 +12,7 @@ import time
 from typing import Any, Dict, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
     can_connect_to=['port.*', 'process.*', 'test.*'],
 
     # Execution settings
-    timeout=30,  # Time to wait for process to start
+    timeout=30,
     retryable=False,
     concurrent_safe=True,
 
@@ -53,97 +54,18 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
     handles_sensitive_data=True,
     required_permissions=['process.start'],
 
-    params_schema={
-        'command': {
-            'type': 'string',
-            'label': 'Command',
-            'label_key': 'modules.process.start.params.command.label',
-            'description': 'Command to execute',
-            'description_key': 'modules.process.start.params.command.description',
-            'required': True,
-            'placeholder': 'npm run dev',
-            'examples': [
-                'npm run dev',
-                'python -m http.server 8000',
-                'docker-compose up',
-                'node server.js'
-            ]
-        },
-        'cwd': {
-            'type': 'string',
-            'label': 'Working Directory',
-            'label_key': 'modules.process.start.params.cwd.label',
-            'description': 'Directory to run command in',
-            'description_key': 'modules.process.start.params.cwd.description',
-            'required': False
-        },
-        'env': {
-            'type': 'object',
-            'label': 'Environment Variables',
-            'label_key': 'modules.process.start.params.env.label',
-            'description': 'Additional environment variables',
-            'description_key': 'modules.process.start.params.env.description',
-            'required': False
-        },
-        'name': {
-            'type': 'string',
-            'label': 'Process Name',
-            'label_key': 'modules.process.start.params.name.label',
-            'description': 'Friendly name for the process (for later reference)',
-            'description_key': 'modules.process.start.params.name.description',
-            'required': False,
-            'placeholder': 'dev-server'
-        },
-        'wait_for_output': {
-            'type': 'string',
-            'label': 'Wait for Output',
-            'label_key': 'modules.process.start.params.wait_for_output.label',
-            'description': 'String to wait for in stdout before returning (e.g., "ready on")',
-            'description_key': 'modules.process.start.params.wait_for_output.description',
-            'required': False,
-            'examples': [
-                'ready on',
-                'listening on port',
-                'Server started',
-                'compiled successfully'
-            ]
-        },
-        'wait_timeout': {
-            'type': 'number',
-            'label': 'Wait Timeout (seconds)',
-            'label_key': 'modules.process.start.params.wait_timeout.label',
-            'description': 'Timeout for wait_for_output',
-            'description_key': 'modules.process.start.params.wait_timeout.description',
-            'required': False,
-            'default': 60
-        },
-        'capture_output': {
-            'type': 'boolean',
-            'label': 'Capture Output',
-            'label_key': 'modules.process.start.params.capture_output.label',
-            'description': 'Capture stdout/stderr (stored in memory)',
-            'description_key': 'modules.process.start.params.capture_output.description',
-            'required': False,
-            'default': True
-        },
-        'log_file': {
-            'type': 'string',
-            'label': 'Log File',
-            'label_key': 'modules.process.start.params.log_file.label',
-            'description': 'File to write process output to',
-            'description_key': 'modules.process.start.params.log_file.description',
-            'required': False
-        },
-        'auto_restart': {
-            'type': 'boolean',
-            'label': 'Auto Restart',
-            'label_key': 'modules.process.start.params.auto_restart.label',
-            'description': 'Automatically restart if process exits',
-            'description_key': 'modules.process.start.params.auto_restart.description',
-            'required': False,
-            'default': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.COMMAND(required=True, placeholder='npm run dev'),
+        presets.WORKING_DIR(),
+        presets.ENV_VARS(),
+        presets.PROCESS_NAME(placeholder='dev-server'),
+        presets.WAIT_FOR_OUTPUT(placeholder='ready on'),
+        presets.TIMEOUT_S(key='wait_timeout', default=60, label='Wait Timeout (seconds)'),
+        presets.CAPTURE_OUTPUT(default=True),
+        presets.LOG_FILE(),
+        presets.AUTO_RESTART(default=False),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

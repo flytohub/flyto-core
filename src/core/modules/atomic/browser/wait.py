@@ -1,12 +1,10 @@
 """
-Browser Automation Modules
-
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+Browser Wait Module - Wait for a duration or until an element appears
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,34 +23,12 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'duration': {
-            'type': 'number',
-            'label': 'Duration (seconds)',
-            'label_key': 'modules.browser.wait.params.duration.label',
-            'placeholder': '1',
-            'description': 'Time to wait in seconds',
-            'description_key': 'modules.browser.wait.params.duration.description',
-            'default': 1,
-            'required': False
-        },
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.wait.params.selector.label',
-            'placeholder': '.element-to-wait-for',
-            'description': 'Wait for this element to appear (overrides duration)',
-            'description_key': 'modules.browser.wait.params.selector.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'description': 'Maximum time to wait in milliseconds',
-            'default': 30000,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.DURATION_S(default=1),
+        presets.SELECTOR(required=False, placeholder='.element-to-wait-for'),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'selector': {'type': 'string', 'optional': True},

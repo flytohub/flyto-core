@@ -9,6 +9,7 @@ Workflow Spec v1.1:
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -72,23 +73,10 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'condition': {
-            'type': 'string',
-            'label': 'Condition',
-            'label_key': 'modules.flow.branch.params.condition.label',
-            'description': 'Expression to evaluate (supports ==, !=, >, <, >=, <=, contains)',
-            'description_key': 'modules.flow.branch.params.condition.description',
-            'required': True,
-            'examples': [
-                '${step1.count} > 0',
-                '${step1.status} == success',
-                '${step1.data} contains error'
-            ]
-        }
-        # NOTE: on_true/on_false removed in v2.0
-        # Flow is now determined by edges connected to output ports
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.CONDITION_EXPRESSION(required=True),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (true/false/error)'},

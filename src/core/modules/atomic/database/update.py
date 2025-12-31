@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -38,92 +39,18 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['database.write'],
 
-    params_schema={
-        'table': {
-            'type': 'string',
-            'label': 'Table Name',
-            'label_key': 'modules.database.update.params.table.label',
-            'description': 'Name of the table to update',
-            'description_key': 'modules.database.update.params.table.description',
-            'required': True
-        },
-        'data': {
-            'type': 'object',
-            'label': 'Data',
-            'label_key': 'modules.database.update.params.data.label',
-            'description': 'Data to update (column: value pairs)',
-            'description_key': 'modules.database.update.params.data.description',
-            'required': True
-        },
-        'where': {
-            'type': 'object',
-            'label': 'Where Conditions',
-            'label_key': 'modules.database.update.params.where.label',
-            'description': 'WHERE conditions (column: value for equality)',
-            'description_key': 'modules.database.update.params.where.description',
-            'required': True
-        },
-        'database_type': {
-            'type': 'string',
-            'label': 'Database Type',
-            'label_key': 'modules.database.update.params.database_type.label',
-            'description': 'Type of database',
-            'description_key': 'modules.database.update.params.database_type.description',
-            'required': False,
-            'enum': ['postgresql', 'mysql', 'sqlite'],
-            'default': 'postgresql'
-        },
-        'connection_string': {
-            'type': 'string',
-            'label': 'Connection String',
-            'label_key': 'modules.database.update.params.connection_string.label',
-            'description': 'Database connection string',
-            'description_key': 'modules.database.update.params.connection_string.description',
-            'required': False,
-            'secret': True
-        },
-        'host': {
-            'type': 'string',
-            'label': 'Host',
-            'label_key': 'modules.database.update.params.host.label',
-            'description': 'Database host',
-            'description_key': 'modules.database.update.params.host.description',
-            'required': False
-        },
-        'port': {
-            'type': 'number',
-            'label': 'Port',
-            'label_key': 'modules.database.update.params.port.label',
-            'description': 'Database port',
-            'description_key': 'modules.database.update.params.port.description',
-            'required': False
-        },
-        'database': {
-            'type': 'string',
-            'label': 'Database Name',
-            'label_key': 'modules.database.update.params.database.label',
-            'description': 'Database name',
-            'description_key': 'modules.database.update.params.database.description',
-            'required': False
-        },
-        'user': {
-            'type': 'string',
-            'label': 'Username',
-            'label_key': 'modules.database.update.params.user.label',
-            'description': 'Database username',
-            'description_key': 'modules.database.update.params.user.description',
-            'required': False
-        },
-        'password': {
-            'type': 'string',
-            'label': 'Password',
-            'label_key': 'modules.database.update.params.password.label',
-            'description': 'Database password',
-            'description_key': 'modules.database.update.params.password.description',
-            'required': False,
-            'secret': True
-        }
-    },
+    params_schema=compose(
+        presets.DB_TABLE(),
+        presets.DB_DATA(),
+        presets.WHERE_CONDITIONS(),
+        presets.DB_TYPE(),
+        presets.DB_CONNECTION_STRING(),
+        presets.DB_HOST(),
+        presets.DB_PORT(),
+        presets.DB_NAME(),
+        presets.DB_USER(),
+        presets.DB_PASSWORD(),
+    ),
     output_schema={
         'updated_count': {
             'type': 'number',

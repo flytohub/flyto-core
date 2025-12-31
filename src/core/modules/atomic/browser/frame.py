@@ -6,6 +6,7 @@ Switch to iframe or frame context.
 from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -24,52 +25,35 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'Frame Selector',
-            'label_key': 'modules.browser.frame.params.selector.label',
-            'placeholder': 'iframe#content',
-            'description': 'CSS selector of the iframe element',
-            'description_key': 'modules.browser.frame.params.selector.description',
-            'required': False
-        },
-        'name': {
-            'type': 'string',
-            'label': 'Frame Name',
-            'label_key': 'modules.browser.frame.params.name.label',
-            'description': 'Name attribute of the frame (alternative to selector)',
-            'description_key': 'modules.browser.frame.params.name.description',
-            'required': False
-        },
-        'url': {
-            'type': 'string',
-            'label': 'Frame URL',
-            'label_key': 'modules.browser.frame.params.url.label',
-            'description': 'URL pattern to match frame (alternative to selector)',
-            'description_key': 'modules.browser.frame.params.url.description',
-            'required': False
-        },
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.frame.params.action.label',
-            'description': 'Frame action (enter to switch to frame, list to list all frames)',
-            'description_key': 'modules.browser.frame.params.action.description',
-            'default': 'enter',
-            'required': False,
-            'enum': ['enter', 'list']
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.frame.params.timeout.label',
-            'description': 'Maximum time to wait for frame',
-            'description_key': 'modules.browser.frame.params.timeout.description',
-            'default': 30000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=False, placeholder='iframe#content'),
+        field(
+            'name',
+            type='string',
+            label='Frame Name',
+            label_key='modules.browser.frame.params.name.label',
+            description='Name attribute of the frame (alternative to selector)',
+            required=False,
+        ),
+        field(
+            'url',
+            type='string',
+            label='Frame URL',
+            label_key='modules.browser.frame.params.url.label',
+            description='URL pattern to match frame (alternative to selector)',
+            required=False,
+        ),
+        field(
+            'action',
+            type='string',
+            label='Action',
+            label_key='modules.browser.frame.params.action.label',
+            description='Frame action (enter to switch to frame, list to list all frames)',
+            default='enter',
+            enum=['enter', 'list'],
+        ),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'frame_url': {'type': 'string'},

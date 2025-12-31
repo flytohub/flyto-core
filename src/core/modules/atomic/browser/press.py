@@ -7,6 +7,7 @@ All modules use i18n keys for multi-language support.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,17 +26,9 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'key': {
-            'type': 'string',
-            'label': 'Key',
-            'label_key': 'modules.browser.press.params.key.label',
-            'placeholder': 'Enter',
-            'description': 'The key to press (e.g., Enter, Escape, Tab)',
-            'description_key': 'modules.browser.press.params.key.description',
-            'required': True
-        }
-    },
+    params_schema=compose(
+        presets.KEYBOARD_KEY(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'key': {'type': 'string'}

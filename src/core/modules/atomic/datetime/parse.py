@@ -6,6 +6,7 @@ Provides date and time manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from datetime import datetime, timedelta
 import time
 
@@ -37,24 +38,11 @@ import time
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'datetime_string': {
-            'type': 'string',
-            'label': 'DateTime String',
-            'label_key': 'modules.datetime.parse.params.datetime_string.label',
-            'description': 'DateTime string to parse',
-            'description_key': 'modules.datetime.parse.params.datetime_string.description',
-            'required': True
-        },
-        'format': {
-            'type': 'string',
-            'label': 'Format',
-            'label_key': 'modules.datetime.parse.params.format.label',
-            'description': 'strptime format string (leave empty for ISO)',
-            'description_key': 'modules.datetime.parse.params.format.description',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.DATETIME_STRING(required=True),
+        presets.DATETIME_FORMAT(),
+    ),
     output_schema={
         'result': {'type': 'string'},
         'timestamp': {'type': 'number'},

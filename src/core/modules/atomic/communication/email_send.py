@@ -12,6 +12,7 @@ from email import encoders
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -46,118 +47,21 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['network.smtp'],
 
-    params_schema={
-        'to': {
-            'type': 'string',
-            'label': 'To',
-            'label_key': 'modules.email.send.params.to.label',
-            'description': 'Recipient email address(es), comma-separated for multiple',
-            'description_key': 'modules.email.send.params.to.description',
-            'required': True,
-            'placeholder': 'recipient@example.com'
-        },
-        'subject': {
-            'type': 'string',
-            'label': 'Subject',
-            'label_key': 'modules.email.send.params.subject.label',
-            'description': 'Email subject line',
-            'description_key': 'modules.email.send.params.subject.description',
-            'required': True
-        },
-        'body': {
-            'type': 'string',
-            'label': 'Body',
-            'label_key': 'modules.email.send.params.body.label',
-            'description': 'Email body content',
-            'description_key': 'modules.email.send.params.body.description',
-            'required': True
-        },
-        'html': {
-            'type': 'boolean',
-            'label': 'HTML Format',
-            'label_key': 'modules.email.send.params.html.label',
-            'description': 'Send as HTML email',
-            'description_key': 'modules.email.send.params.html.description',
-            'required': False,
-            'default': False
-        },
-        'from_email': {
-            'type': 'string',
-            'label': 'From',
-            'label_key': 'modules.email.send.params.from_email.label',
-            'description': 'Sender email (uses SMTP_FROM_EMAIL env if not provided)',
-            'description_key': 'modules.email.send.params.from_email.description',
-            'required': False
-        },
-        'cc': {
-            'type': 'string',
-            'label': 'CC',
-            'label_key': 'modules.email.send.params.cc.label',
-            'description': 'CC recipients, comma-separated',
-            'description_key': 'modules.email.send.params.cc.description',
-            'required': False
-        },
-        'bcc': {
-            'type': 'string',
-            'label': 'BCC',
-            'label_key': 'modules.email.send.params.bcc.label',
-            'description': 'BCC recipients, comma-separated',
-            'description_key': 'modules.email.send.params.bcc.description',
-            'required': False
-        },
-        'attachments': {
-            'type': 'array',
-            'label': 'Attachments',
-            'label_key': 'modules.email.send.params.attachments.label',
-            'description': 'List of file paths to attach',
-            'description_key': 'modules.email.send.params.attachments.description',
-            'required': False,
-            'default': []
-        },
-        'smtp_host': {
-            'type': 'string',
-            'label': 'SMTP Host',
-            'label_key': 'modules.email.send.params.smtp_host.label',
-            'description': 'SMTP server host (uses SMTP_HOST env if not provided)',
-            'description_key': 'modules.email.send.params.smtp_host.description',
-            'required': False
-        },
-        'smtp_port': {
-            'type': 'number',
-            'label': 'SMTP Port',
-            'label_key': 'modules.email.send.params.smtp_port.label',
-            'description': 'SMTP server port (uses SMTP_PORT env if not provided)',
-            'description_key': 'modules.email.send.params.smtp_port.description',
-            'required': False,
-            'default': 587
-        },
-        'smtp_user': {
-            'type': 'string',
-            'label': 'SMTP User',
-            'label_key': 'modules.email.send.params.smtp_user.label',
-            'description': 'SMTP username (uses SMTP_USER env if not provided)',
-            'description_key': 'modules.email.send.params.smtp_user.description',
-            'required': False
-        },
-        'smtp_password': {
-            'type': 'string',
-            'label': 'SMTP Password',
-            'label_key': 'modules.email.send.params.smtp_password.label',
-            'description': 'SMTP password (uses SMTP_PASSWORD env if not provided)',
-            'description_key': 'modules.email.send.params.smtp_password.description',
-            'required': False,
-            'secret': True
-        },
-        'use_tls': {
-            'type': 'boolean',
-            'label': 'Use TLS',
-            'label_key': 'modules.email.send.params.use_tls.label',
-            'description': 'Use TLS encryption',
-            'description_key': 'modules.email.send.params.use_tls.description',
-            'required': False,
-            'default': True
-        }
-    },
+    params_schema=compose(
+        presets.EMAIL_TO(),
+        presets.EMAIL_SUBJECT(),
+        presets.EMAIL_BODY(),
+        presets.EMAIL_HTML(),
+        presets.EMAIL_FROM(),
+        presets.EMAIL_CC(),
+        presets.EMAIL_BCC(),
+        presets.EMAIL_ATTACHMENTS(),
+        presets.SMTP_HOST(),
+        presets.SMTP_PORT(),
+        presets.SMTP_USER(),
+        presets.SMTP_PASSWORD(),
+        presets.USE_TLS(),
+    ),
     output_schema={
         'sent': {
             'type': 'boolean',

@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 import asyncio
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,34 +26,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['object'],
 
-    params_schema={
-        'action': {
-            'type': 'string',
-            'label': 'Action',
-            'label_key': 'modules.browser.dialog.params.action.label',
-            'description': 'How to handle the dialog',
-            'description_key': 'modules.browser.dialog.params.action.description',
-            'required': True,
-            'enum': ['accept', 'dismiss', 'listen']
-        },
-        'prompt_text': {
-            'type': 'string',
-            'label': 'Prompt Text',
-            'label_key': 'modules.browser.dialog.params.prompt_text.label',
-            'description': 'Text to enter in prompt dialog (for accept action)',
-            'description_key': 'modules.browser.dialog.params.prompt_text.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.dialog.params.timeout.label',
-            'description': 'Time to wait for dialog to appear',
-            'description_key': 'modules.browser.dialog.params.timeout.description',
-            'default': 30000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.DIALOG_ACTION(),
+        presets.DIALOG_PROMPT_TEXT(),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'message': {'type': 'string'},

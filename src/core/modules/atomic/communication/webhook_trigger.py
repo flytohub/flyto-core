@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -38,70 +39,15 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['network.http'],
 
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'Webhook URL',
-            'label_key': 'modules.webhook.trigger.params.url.label',
-            'description': 'Target webhook URL',
-            'description_key': 'modules.webhook.trigger.params.url.description',
-            'required': True
-        },
-        'method': {
-            'type': 'string',
-            'label': 'HTTP Method',
-            'label_key': 'modules.webhook.trigger.params.method.label',
-            'description': 'HTTP method to use',
-            'description_key': 'modules.webhook.trigger.params.method.description',
-            'required': False,
-            'enum': ['POST', 'GET', 'PUT', 'PATCH', 'DELETE'],
-            'default': 'POST'
-        },
-        'payload': {
-            'type': 'object',
-            'label': 'Payload',
-            'label_key': 'modules.webhook.trigger.params.payload.label',
-            'description': 'JSON payload to send',
-            'description_key': 'modules.webhook.trigger.params.payload.description',
-            'required': False
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'Headers',
-            'label_key': 'modules.webhook.trigger.params.headers.label',
-            'description': 'Custom HTTP headers',
-            'description_key': 'modules.webhook.trigger.params.headers.description',
-            'required': False
-        },
-        'content_type': {
-            'type': 'string',
-            'label': 'Content Type',
-            'label_key': 'modules.webhook.trigger.params.content_type.label',
-            'description': 'Content-Type header',
-            'description_key': 'modules.webhook.trigger.params.content_type.description',
-            'required': False,
-            'enum': ['application/json', 'application/x-www-form-urlencoded', 'text/plain'],
-            'default': 'application/json'
-        },
-        'auth_token': {
-            'type': 'string',
-            'label': 'Auth Token',
-            'label_key': 'modules.webhook.trigger.params.auth_token.label',
-            'description': 'Bearer token for authorization',
-            'description_key': 'modules.webhook.trigger.params.auth_token.description',
-            'required': False,
-            'secret': True
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (seconds)',
-            'label_key': 'modules.webhook.trigger.params.timeout.label',
-            'description': 'Request timeout in seconds',
-            'description_key': 'modules.webhook.trigger.params.timeout.description',
-            'required': False,
-            'default': 30
-        }
-    },
+    params_schema=compose(
+        presets.WEBHOOK_URL(),
+        presets.HTTP_METHOD(default='POST'),
+        presets.WEBHOOK_PAYLOAD(),
+        presets.HEADERS(),
+        presets.CONTENT_TYPE(default='application/json'),
+        presets.WEBHOOK_AUTH_TOKEN(),
+        presets.TIMEOUT_S(default=30),
+    ),
     output_schema={
         'status_code': {
             'type': 'number',

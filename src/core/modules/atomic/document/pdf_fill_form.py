@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -39,63 +40,13 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'template': {
-            'type': 'string',
-            'label': 'Template PDF',
-            'label_key': 'modules.pdf.fill_form.params.template.label',
-            'description': 'Path to the PDF template file',
-            'description_key': 'modules.pdf.fill_form.params.template.description',
-            'required': True
-        },
-        'output': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.pdf.fill_form.params.output.label',
-            'description': 'Path for the filled PDF output',
-            'description_key': 'modules.pdf.fill_form.params.output.description',
-            'required': True
-        },
-        'fields': {
-            'type': 'object',
-            'label': 'Form Fields',
-            'label_key': 'modules.pdf.fill_form.params.fields.label',
-            'description': 'Key-value pairs of form field names and values',
-            'description_key': 'modules.pdf.fill_form.params.fields.description',
-            'required': False,
-            'default': {}
-        },
-        'images': {
-            'type': 'array',
-            'label': 'Images',
-            'label_key': 'modules.pdf.fill_form.params.images.label',
-            'description': 'List of images to insert with position info',
-            'description_key': 'modules.pdf.fill_form.params.images.description',
-            'required': False,
-            'default': [],
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'file': {'type': 'string', 'description': 'Image file path'},
-                    'page': {'type': 'number', 'description': 'Page number (1-indexed)'},
-                    'x': {'type': 'number', 'description': 'X position in points'},
-                    'y': {'type': 'number', 'description': 'Y position in points'},
-                    'width': {'type': 'number', 'description': 'Image width in points'},
-                    'height': {'type': 'number', 'description': 'Image height in points'},
-                    'field': {'type': 'string', 'description': 'Form field name to place image at'}
-                }
-            }
-        },
-        'flatten': {
-            'type': 'boolean',
-            'label': 'Flatten Form',
-            'label_key': 'modules.pdf.fill_form.params.flatten.label',
-            'description': 'Flatten form fields (make them non-editable)',
-            'description_key': 'modules.pdf.fill_form.params.flatten.description',
-            'required': False,
-            'default': True
-        }
-    },
+    params_schema=compose(
+        presets.PDF_TEMPLATE(),
+        presets.DOC_OUTPUT_PATH(key="output", required=True),
+        presets.PDF_FORM_FIELDS(),
+        presets.PDF_IMAGES(),
+        presets.PDF_FLATTEN(),
+    ),
     output_schema={
         'output_path': {
             'type': 'string',

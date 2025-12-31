@@ -21,3 +21,7 @@ try:
     from .compress import *
 except ImportError:
     pass
+try:
+    from .qrcode_generate import *
+except ImportError:
+    pass

@@ -7,6 +7,7 @@ All modules use i18n keys for multi-language support.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,34 +26,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['json', 'array'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'Container Selector',
-            'label_key': 'modules.browser.extract.params.selector.label',
-            'placeholder': '.result-item',
-            'description': 'CSS selector for container elements',
-            'description_key': 'modules.browser.extract.params.selector.description',
-            'required': True
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.browser.extract.params.limit.label',
-            'placeholder': '10',
-            'description': 'Maximum number of items to extract',
-            'description_key': 'modules.browser.extract.params.limit.description',
-            'required': False
-        },
-        'fields': {
-            'type': 'object',
-            'label': 'Fields to Extract',
-            'label_key': 'modules.browser.extract.params.fields.label',
-            'description': 'Define fields to extract from each item',
-            'description_key': 'modules.browser.extract.params.fields.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='.result-item'),
+        presets.EXTRACT_LIMIT(),
+        presets.EXTRACT_FIELDS(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'array'},

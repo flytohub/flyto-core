@@ -4,6 +4,7 @@ JSON Transform and Notify Composite Module
 Transforms JSON data and sends notification with results.
 """
 from ..base import CompositeModule, register_composite, UIVisibility
+from ...schema import compose, field, presets
 
 
 @register_composite(
@@ -27,51 +28,19 @@ from ..base import CompositeModule, register_composite, UIVisibility
     ui_icon='Braces',
     ui_color='#8B5CF6',
 
-    # UI form generation
-    ui_params_schema={
-        'json_input': {
-            'type': 'string',
-            'label': 'JSON Input',
-            'label_key': 'composite.json_transform_notify.json_input.label',
-            'description': 'JSON string to transform',
-            'description_key': 'composite.json_transform_notify.json_input.desc',
-            'placeholder': '[{"name": "John", "age": 30}]',
-            'required': True,
-            'ui_component': 'textarea',
-        },
-        'filter_expression': {
-            'type': 'string',
-            'label': 'Filter Expression',
-            'label_key': 'composite.json_transform_notify.filter_expression.label',
-            'description': 'Expression to filter data (e.g., item.age > 25)',
-            'description_key': 'composite.json_transform_notify.filter_expression.desc',
-            'placeholder': 'true',
-            'default': 'true',
-            'required': False,
-            'ui_component': 'input',
-        },
-        'map_expression': {
-            'type': 'string',
-            'label': 'Map Expression',
-            'label_key': 'composite.json_transform_notify.map_expression.label',
-            'description': 'Expression to transform each item',
-            'description_key': 'composite.json_transform_notify.map_expression.desc',
-            'placeholder': 'item',
-            'default': 'item',
-            'required': False,
-            'ui_component': 'input',
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Notification Webhook URL',
-            'label_key': 'composite.json_transform_notify.webhook_url.label',
-            'description': 'Slack webhook URL to send results',
-            'description_key': 'composite.json_transform_notify.webhook_url.desc',
-            'placeholder': '${env.SLACK_WEBHOOK_URL}',
-            'required': False,
-            'ui_component': 'input',
-        }
-    },
+    # Schema-driven params
+    ui_params_schema=compose(
+        presets.JSON_STRING(key='json_input', label='JSON Input',
+                            placeholder='[{"name": "John", "age": 30}]'),
+        field('filter_expression', type='string', label='Filter Expression',
+              placeholder='true', default='true',
+              description='Expression to filter data (e.g., item.age > 25)'),
+        field('map_expression', type='string', label='Map Expression',
+              placeholder='item', default='item',
+              description='Expression to transform each item'),
+        presets.URL(key='webhook_url', required=False, label='Notification Webhook URL',
+                    placeholder='${env.SLACK_WEBHOOK_URL}'),
+    ),
 
     # Connection types
     input_types=['json'],

@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -39,67 +40,15 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['file.read', 'file.write'],
 
-    params_schema={
-        'input_path': {
-            'type': 'string',
-            'label': 'Input Path',
-            'label_key': 'modules.image.resize.params.input_path.label',
-            'description': 'Path to the source image file',
-            'description_key': 'modules.image.resize.params.input_path.description',
-            'required': True
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.image.resize.params.output_path.label',
-            'description': 'Path for the resized image (optional, defaults to input with _resized suffix)',
-            'description_key': 'modules.image.resize.params.output_path.description',
-            'required': False
-        },
-        'width': {
-            'type': 'number',
-            'label': 'Width',
-            'label_key': 'modules.image.resize.params.width.label',
-            'description': 'Target width in pixels (use 0 to maintain aspect ratio)',
-            'description_key': 'modules.image.resize.params.width.description',
-            'required': False
-        },
-        'height': {
-            'type': 'number',
-            'label': 'Height',
-            'label_key': 'modules.image.resize.params.height.label',
-            'description': 'Target height in pixels (use 0 to maintain aspect ratio)',
-            'description_key': 'modules.image.resize.params.height.description',
-            'required': False
-        },
-        'scale': {
-            'type': 'number',
-            'label': 'Scale Factor',
-            'label_key': 'modules.image.resize.params.scale.label',
-            'description': 'Scale factor (e.g., 0.5 for half size, 2.0 for double)',
-            'description_key': 'modules.image.resize.params.scale.description',
-            'required': False
-        },
-        'algorithm': {
-            'type': 'string',
-            'label': 'Algorithm',
-            'label_key': 'modules.image.resize.params.algorithm.label',
-            'description': 'Resampling algorithm',
-            'description_key': 'modules.image.resize.params.algorithm.description',
-            'required': False,
-            'enum': ['lanczos', 'bilinear', 'bicubic', 'nearest'],
-            'default': 'lanczos'
-        },
-        'maintain_aspect': {
-            'type': 'boolean',
-            'label': 'Maintain Aspect Ratio',
-            'label_key': 'modules.image.resize.params.maintain_aspect.label',
-            'description': 'Maintain original aspect ratio when resizing',
-            'description_key': 'modules.image.resize.params.maintain_aspect.description',
-            'required': False,
-            'default': True
-        }
-    },
+    params_schema=compose(
+        presets.IMAGE_INPUT_PATH(),
+        presets.IMAGE_OUTPUT_PATH(),
+        presets.IMAGE_WIDTH(),
+        presets.IMAGE_HEIGHT(),
+        presets.IMAGE_SCALE(),
+        presets.IMAGE_RESIZE_ALGORITHM(),
+        presets.IMAGE_MAINTAIN_ASPECT(),
+    ),
     output_schema={
         'output_path': {
             'type': 'string',

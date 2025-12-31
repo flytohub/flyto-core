@@ -6,6 +6,7 @@ Drag and drop elements.
 from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -24,51 +25,27 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'source': {
-            'type': 'string',
-            'label': 'Source Selector',
-            'label_key': 'modules.browser.drag.params.source.label',
-            'placeholder': '#draggable',
-            'description': 'CSS selector of element to drag',
-            'description_key': 'modules.browser.drag.params.source.description',
-            'required': True
-        },
-        'target': {
-            'type': 'string',
-            'label': 'Target Selector',
-            'label_key': 'modules.browser.drag.params.target.label',
-            'placeholder': '#dropzone',
-            'description': 'CSS selector of drop target',
-            'description_key': 'modules.browser.drag.params.target.description',
-            'required': True
-        },
-        'source_position': {
-            'type': 'object',
-            'label': 'Source Position',
-            'label_key': 'modules.browser.drag.params.source_position.label',
-            'description': 'Position within source element {x, y} as percentages',
-            'description_key': 'modules.browser.drag.params.source_position.description',
-            'required': False
-        },
-        'target_position': {
-            'type': 'object',
-            'label': 'Target Position',
-            'label_key': 'modules.browser.drag.params.target_position.label',
-            'description': 'Position within target element {x, y} as percentages',
-            'description_key': 'modules.browser.drag.params.target_position.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.drag.params.timeout.label',
-            'description': 'Maximum time to wait for elements',
-            'description_key': 'modules.browser.drag.params.timeout.description',
-            'default': 30000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(key='source', required=True, placeholder='#draggable', label='Source Selector'),
+        presets.SELECTOR(key='target', required=True, placeholder='#dropzone', label='Target Selector'),
+        field(
+            'source_position',
+            type='object',
+            label='Source Position',
+            label_key='modules.browser.drag.params.source_position.label',
+            description='Position within source element {x, y} as percentages',
+            required=False,
+        ),
+        field(
+            'target_position',
+            type='object',
+            label='Target Position',
+            label_key='modules.browser.drag.params.target_position.label',
+            description='Position within target element {x, y} as percentages',
+            required=False,
+        ),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'source': {'type': 'string'},

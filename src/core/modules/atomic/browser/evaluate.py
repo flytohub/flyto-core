@@ -6,6 +6,7 @@ Execute JavaScript in page context.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,26 +25,10 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['any'],
 
-    params_schema={
-        'script': {
-            'type': 'string',
-            'label': 'JavaScript Code',
-            'label_key': 'modules.browser.evaluate.params.script.label',
-            'placeholder': 'return document.title',
-            'description': 'JavaScript code to execute (can use return statement)',
-            'description_key': 'modules.browser.evaluate.params.script.description',
-            'required': True,
-            'multiline': True
-        },
-        'args': {
-            'type': 'array',
-            'label': 'Arguments',
-            'label_key': 'modules.browser.evaluate.params.args.label',
-            'description': 'Arguments to pass to the script function',
-            'description_key': 'modules.browser.evaluate.params.args.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.JS_SCRIPT(),
+        presets.JS_ARGS(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'result': {'type': 'any'}

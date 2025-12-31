@@ -5,6 +5,7 @@ Analyze website structure for practice
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from core.training.daily_practice import DailyPracticeEngine
 
 
@@ -23,6 +24,14 @@ from core.training.daily_practice import DailyPracticeEngine
     # Connection types
     input_types=['string'],
     output_types=['object'],
+
+    params_schema=compose(
+        presets.PRACTICE_URL(),
+    ),
+    output_schema={
+        'status': {'type': 'string'},
+        'structure': {'type': 'object'},
+    },
 )
 class TrainingPracticeAnalyze(BaseModule):
     """Analyze website structure for practice"""

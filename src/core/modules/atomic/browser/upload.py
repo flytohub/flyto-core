@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 from pathlib import Path
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,35 +26,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['object'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.upload.params.selector.label',
-            'placeholder': 'input[type="file"]',
-            'description': 'CSS selector of the file input element',
-            'description_key': 'modules.browser.upload.params.selector.description',
-            'required': True
-        },
-        'file_path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.browser.upload.params.file_path.label',
-            'placeholder': '/path/to/file.pdf',
-            'description': 'Local path to the file to upload',
-            'description_key': 'modules.browser.upload.params.file_path.description',
-            'required': True
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.upload.params.timeout.label',
-            'description': 'Maximum time to wait for element',
-            'description_key': 'modules.browser.upload.params.timeout.description',
-            'default': 30000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='input[type="file"]'),
+        presets.UPLOAD_FILE_PATH(),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'filename': {'type': 'string'},

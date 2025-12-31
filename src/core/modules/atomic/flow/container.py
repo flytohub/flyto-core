@@ -10,6 +10,7 @@ Workflow Spec v1.1:
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -69,57 +70,13 @@ MAX_CONTAINER_DEPTH = 5
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'subflow': {
-            'type': 'object',
-            'label': 'Subflow Definition',
-            'label_key': 'modules.flow.container.params.subflow.label',
-            'description': 'Embedded workflow definition with nodes and edges',
-            'description_key': 'modules.flow.container.params.subflow.description',
-            'required': False,
-            'default': {
-                'nodes': [],
-                'edges': []
-            },
-            'properties': {
-                'nodes': {
-                    'type': 'array',
-                    'description': 'List of workflow nodes'
-                },
-                'edges': {
-                    'type': 'array',
-                    'description': 'List of workflow edges'
-                }
-            }
-        },
-        'inherit_context': {
-            'type': 'boolean',
-            'label': 'Inherit Parent Context',
-            'label_key': 'modules.flow.container.params.inherit_context.label',
-            'description': 'Whether to inherit variables from parent workflow',
-            'description_key': 'modules.flow.container.params.inherit_context.description',
-            'required': False,
-            'default': True
-        },
-        'isolated_variables': {
-            'type': 'array',
-            'label': 'Isolated Variables',
-            'label_key': 'modules.flow.container.params.isolated_variables.label',
-            'description': 'Variables that should not be inherited from parent',
-            'description_key': 'modules.flow.container.params.isolated_variables.description',
-            'required': False,
-            'default': []
-        },
-        'export_variables': {
-            'type': 'array',
-            'label': 'Export Variables',
-            'label_key': 'modules.flow.container.params.export_variables.label',
-            'description': 'Variables to export back to parent context after execution',
-            'description_key': 'modules.flow.container.params.export_variables.description',
-            'required': False,
-            'default': []
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SUBFLOW_DEFINITION(),
+        presets.INHERIT_CONTEXT(default=True),
+        presets.DATA_ARRAY(key='isolated_variables', label='Isolated Variables'),
+        presets.DATA_ARRAY(key='export_variables', label='Export Variables'),
+    ),
 
     output_schema={
         '__event__': {

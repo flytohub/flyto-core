@@ -9,6 +9,7 @@ Workflow Spec v1.1:
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -83,19 +84,10 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'branch_count': {
-            'type': 'integer',
-            'label': 'Branch Count',
-            'label_key': 'modules.flow.fork.params.branch_count.label',
-            'description': 'Number of parallel branches',
-            'description_key': 'modules.flow.fork.params.branch_count.description',
-            'default': 2,
-            'minimum': 2,
-            'maximum': 10,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.BRANCH_COUNT(default=2),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (fork/error)'},

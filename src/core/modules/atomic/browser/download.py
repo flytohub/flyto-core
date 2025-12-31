@@ -8,6 +8,7 @@ from pathlib import Path
 import asyncio
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -26,35 +27,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['file'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.download.params.selector.label',
-            'placeholder': 'a.download-link',
-            'description': 'CSS selector of element to click to trigger download',
-            'description_key': 'modules.browser.download.params.selector.description',
-            'required': False
-        },
-        'save_path': {
-            'type': 'string',
-            'label': 'Save Path',
-            'label_key': 'modules.browser.download.params.save_path.label',
-            'placeholder': '/path/to/save/file.pdf',
-            'description': 'Path where to save the downloaded file',
-            'description_key': 'modules.browser.download.params.save_path.description',
-            'required': True
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.download.params.timeout.label',
-            'description': 'Maximum time to wait for download',
-            'description_key': 'modules.browser.download.params.timeout.description',
-            'default': 60000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=False, placeholder='a.download-link'),
+        presets.DOWNLOAD_SAVE_PATH(),
+        presets.TIMEOUT_MS(default=60000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'path': {'type': 'string'},

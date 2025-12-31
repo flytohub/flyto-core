@@ -9,6 +9,7 @@ Workflow Spec v1.1:
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -83,29 +84,11 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'strategy': {
-            'type': 'string',
-            'label': 'Merge Strategy',
-            'label_key': 'modules.flow.merge.params.strategy.label',
-            'description': 'How to merge multiple inputs',
-            'description_key': 'modules.flow.merge.params.strategy.description',
-            'enum': ['first', 'last', 'all'],
-            'default': 'all',
-            'required': False
-        },
-        'input_count': {
-            'type': 'integer',
-            'label': 'Input Count',
-            'label_key': 'modules.flow.merge.params.input_count.label',
-            'description': 'Number of input ports',
-            'description_key': 'modules.flow.merge.params.input_count.description',
-            'default': 2,
-            'minimum': 2,
-            'maximum': 10,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.MERGE_STRATEGY(default='all'),
+        presets.PORT_COUNT(key='input_count', default=2),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (merged/error)'},

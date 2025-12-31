@@ -5,6 +5,7 @@ Handle CSV, JSON, text processing, data transformation, etc.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import json
 import csv
 import io
@@ -23,27 +24,19 @@ import os
     icon='Code',
     color='#F59E0B',
 
-    # Phase 2: Execution settings
-    # No timeout - JSON parsing is instant
-    retryable=False,  # Parse errors won't fix themselves
-    concurrent_safe=True,  # Stateless operation
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'json_string': {
-            'type': 'text',
-            'label': 'JSON String',
-            'label_key': 'modules.data.json.parse.params.json_string.label',
-            'description': 'JSON string to parse',
-            'description_key': 'modules.data.json.parse.params.json_string.description',
-            'placeholder': '{"name": "John", "age": 30}',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.JSON_STRING(required=True),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'object', 'description': 'Parsed object'}

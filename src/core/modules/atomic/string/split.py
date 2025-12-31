@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -21,6 +22,12 @@ from ...registry import register_module
     # Connection types
     input_types=['string'],
     output_types=['array'],
+
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_TEXT(required=True),
+        presets.STRING_DELIMITER(default=' '),
+    ),
 )
 class StringSplit(BaseModule):
     """

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import aiohttp
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -45,53 +46,13 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['network.http', 'file.write'],
 
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'Image URL',
-            'label_key': 'modules.image.download.params.url.label',
-            'description': 'URL of the image to download',
-            'description_key': 'modules.image.download.params.url.description',
-            'required': True,
-            'placeholder': 'https://example.com/image.jpg'
-        },
-        'output_path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.image.download.params.output_path.label',
-            'description': 'Local path to save the image (optional, auto-generated if not provided)',
-            'description_key': 'modules.image.download.params.output_path.description',
-            'required': False,
-            'placeholder': '/tmp/downloaded_image.jpg'
-        },
-        'output_dir': {
-            'type': 'string',
-            'label': 'Output Directory',
-            'label_key': 'modules.image.download.params.output_dir.label',
-            'description': 'Directory to save the image (used if output_path not provided)',
-            'description_key': 'modules.image.download.params.output_dir.description',
-            'required': False,
-            'default': '/tmp'
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'HTTP Headers',
-            'label_key': 'modules.image.download.params.headers.label',
-            'description': 'Custom HTTP headers for the request',
-            'description_key': 'modules.image.download.params.headers.description',
-            'required': False,
-            'default': {}
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout',
-            'label_key': 'modules.image.download.params.timeout.label',
-            'description': 'Request timeout in seconds',
-            'description_key': 'modules.image.download.params.timeout.description',
-            'required': False,
-            'default': 30
-        }
-    },
+    params_schema=compose(
+        presets.IMAGE_URL(),
+        presets.IMAGE_OUTPUT_PATH(placeholder='/tmp/downloaded_image.jpg'),
+        presets.OUTPUT_DIRECTORY(),
+        presets.HEADERS(),
+        presets.TIMEOUT_S(default=30),
+    ),
     output_schema={
         'path': {
             'type': 'string',

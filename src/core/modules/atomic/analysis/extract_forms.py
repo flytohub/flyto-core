@@ -5,6 +5,7 @@ Extract forms from HTML
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from core.analysis.html_analyzer import HTMLAnalyzer
 
 
@@ -21,14 +22,9 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     color='#8B5CF6',
     input_types=['html', 'string'],
     output_types=['array'],
-    params_schema={
-        'html': {
-            'type': 'string',
-            'required': True,
-            'label': 'HTML',
-            'description': 'HTML content to extract forms from'
-        }
-    }
+    params_schema=compose(
+        presets.HTML_CONTENT(),
+    ),
 )
 class HtmlExtractForms(BaseModule):
     """Extract forms from HTML"""

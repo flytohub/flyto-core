@@ -23,6 +23,15 @@ from core.training.daily_practice import DailyPracticeEngine
     # Connection types
     input_types=[],
     output_types=['object'],
+
+    # No params needed for stats
+    params_schema={},
+    output_schema={
+        'total_sessions': {'type': 'number'},
+        'successful_sessions': {'type': 'number'},
+        'success_rate': {'type': 'number'},
+        'history': {'type': 'array'},
+    },
 )
 class TrainingPracticeStats(BaseModule):
     """Get practice statistics"""

@@ -4,6 +4,7 @@ Reverse Module - Reverses the input text string
 
 from core.modules.base import BaseModule
 from core.modules.registry import register_module
+from core.modules.schema import compose, presets
 from typing import Any, Dict
 
 
@@ -20,14 +21,10 @@ from typing import Any, Dict
     color='#6366F1',
     input_types=['string'],
     output_types=['string'],
-    params_schema={
-        'text': {
-            'type': 'string',
-            'required': True,
-            'label': 'Text',
-            'description': 'The string to reverse'
-        }
-    }
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_TEXT(required=True),
+    )
 )
 class Reverse(BaseModule):
     """

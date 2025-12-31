@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,41 +36,12 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.reduce.params.array.label',
-            'description': 'Input array to reduce',
-            'description_key': 'modules.array.reduce.params.array.description',
-            'required': True
-        },
-        'operation': {
-            'type': 'select',
-            'label': 'Operation',
-            'label_key': 'modules.array.reduce.params.operation.label',
-            'description': 'Reduction operation',
-            'description_key': 'modules.array.reduce.params.operation.description',
-            'options': [
-                {'label': 'Sum', 'value': 'sum'},
-                {'label': 'Product', 'value': 'product'},
-                {'label': 'Average', 'value': 'average'},
-                {'label': 'Min', 'value': 'min'},
-                {'label': 'Max', 'value': 'max'},
-                {'label': 'Join', 'value': 'join'}
-            ],
-            'required': True
-        },
-        'separator': {
-            'type': 'string',
-            'label': 'Separator',
-            'label_key': 'modules.array.reduce.params.separator.label',
-            'description': 'Separator for join operation',
-            'description_key': 'modules.array.reduce.params.separator.description',
-            'default': ',',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.REDUCE_OPERATION(required=True),
+        presets.SEPARATOR(default=','),
+    ),
     output_schema={
         'result': {'type': 'any'},
         'operation': {'type': 'string'}

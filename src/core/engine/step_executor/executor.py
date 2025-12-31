@@ -112,6 +112,22 @@ class StepExecutor:
         foreach_array = step_config.get('foreach')
         foreach_var = step_config.get('as', 'item')
 
+        # Data Pinning: Check for pinned output - skip execution if present
+        pinned_output = step_config.get('pinned_output')
+        if pinned_output is not None:
+            logger.info(f"Step '{step_id}': Using pinned output (skipping execution)")
+
+            # Store pinned result in context (same as normal execution)
+            context[step_id] = pinned_output
+
+            # Also store in output variable if specified
+            output_var = step_config.get('output')
+            if output_var:
+                context[output_var] = pinned_output
+
+            # Return pinned result (will be treated as successful completion)
+            return pinned_output
+
         if not module_id:
             raise StepExecutionError(step_id, "Step missing 'module' field")
 

@@ -5,6 +5,7 @@ Handle CSV, JSON, text processing, data transformation, etc.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import json
 import csv
 import io
@@ -23,46 +24,21 @@ import os
     icon='FileCode',
     color='#F59E0B',
 
-    # Phase 2: Execution settings
-    # No timeout - JSON stringify is instant
-    retryable=False,  # Serialization errors won't fix themselves
-    concurrent_safe=True,  # Stateless operation
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'data': {
-            'type': 'object',
-            'label': 'Data',
-            'label_key': 'modules.data.json.stringify.params.data.label',
-            'description': 'Object to stringify',
-            'description_key': 'modules.data.json.stringify.params.data.description',
-            'required': True
-        },
-        'pretty': {
-            'type': 'boolean',
-            'label': 'Pretty Print',
-            'label_key': 'modules.data.json.stringify.params.pretty.label',
-            'description': 'Format with indentation',
-            'description_key': 'modules.data.json.stringify.params.pretty.description',
-            'default': False,
-            'required': False
-        },
-        'indent': {
-            'type': 'number',
-            'label': 'Indent Size',
-            'label_key': 'modules.data.json.stringify.params.indent.label',
-            'description': 'Indentation spaces (if pretty=true)',
-            'description_key': 'modules.data.json.stringify.params.indent.description',
-            'default': 2,
-            'min': 1,
-            'max': 8,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.DATA_OBJECT(required=True),
+        presets.PRETTY_PRINT(default=False),
+        presets.INDENT_SIZE(default=2),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'json': {'type': 'string', 'description': 'JSON string'}

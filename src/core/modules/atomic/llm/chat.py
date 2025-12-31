@@ -8,6 +8,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -42,118 +43,20 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=True,
     required_permissions=['ai.chat'],
 
-    params_schema={
-        'prompt': {
-            'type': 'string',
-            'label': 'Prompt',
-            'label_key': 'modules.llm.chat.params.prompt.label',
-            'description': 'The prompt to send to the LLM',
-            'description_key': 'modules.llm.chat.params.prompt.description',
-            'required': True,
-            'multiline': True,
-            'placeholder': 'Analyze this code and suggest improvements...'
-        },
-        'system_prompt': {
-            'type': 'string',
-            'label': 'System Prompt',
-            'label_key': 'modules.llm.chat.params.system_prompt.label',
-            'description': 'System prompt to set context and behavior',
-            'description_key': 'modules.llm.chat.params.system_prompt.description',
-            'required': False,
-            'multiline': True,
-            'placeholder': 'You are an expert code reviewer...'
-        },
-        'context': {
-            'type': 'object',
-            'label': 'Context Data',
-            'label_key': 'modules.llm.chat.params.context.label',
-            'description': 'Additional context data to include',
-            'description_key': 'modules.llm.chat.params.context.description',
-            'required': False
-        },
-        'messages': {
-            'type': 'array',
-            'label': 'Conversation History',
-            'label_key': 'modules.llm.chat.params.messages.label',
-            'description': 'Previous messages for multi-turn conversation',
-            'description_key': 'modules.llm.chat.params.messages.description',
-            'required': False
-        },
-        'provider': {
-            'type': 'string',
-            'label': 'Provider',
-            'label_key': 'modules.llm.chat.params.provider.label',
-            'description': 'LLM provider to use',
-            'description_key': 'modules.llm.chat.params.provider.description',
-            'required': False,
-            'default': 'openai',
-            'enum': ['openai', 'anthropic', 'ollama']
-        },
-        'model': {
-            'type': 'string',
-            'label': 'Model',
-            'label_key': 'modules.llm.chat.params.model.label',
-            'description': 'Specific model to use',
-            'description_key': 'modules.llm.chat.params.model.description',
-            'required': False,
-            'default': 'gpt-4o',
-            'examples': [
-                'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo',
-                'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229',
-                'llama2', 'codellama', 'mistral'
-            ]
-        },
-        'temperature': {
-            'type': 'number',
-            'label': 'Temperature',
-            'label_key': 'modules.llm.chat.params.temperature.label',
-            'description': 'Creativity level (0=deterministic, 1=creative)',
-            'description_key': 'modules.llm.chat.params.temperature.description',
-            'required': False,
-            'default': 0.7,
-            'validation': {
-                'min': 0,
-                'max': 2
-            }
-        },
-        'max_tokens': {
-            'type': 'number',
-            'label': 'Max Tokens',
-            'label_key': 'modules.llm.chat.params.max_tokens.label',
-            'description': 'Maximum tokens in response',
-            'description_key': 'modules.llm.chat.params.max_tokens.description',
-            'required': False,
-            'default': 2000
-        },
-        'response_format': {
-            'type': 'string',
-            'label': 'Response Format',
-            'label_key': 'modules.llm.chat.params.response_format.label',
-            'description': 'Expected response format',
-            'description_key': 'modules.llm.chat.params.response_format.description',
-            'required': False,
-            'default': 'text',
-            'enum': ['text', 'json', 'code', 'markdown']
-        },
-        'api_key': {
-            'type': 'string',
-            'label': 'API Key',
-            'label_key': 'modules.llm.chat.params.api_key.label',
-            'description': 'API key (defaults to provider env var)',
-            'description_key': 'modules.llm.chat.params.api_key.description',
-            'required': False,
-            'secret': True
-        },
-        'base_url': {
-            'type': 'string',
-            'label': 'Base URL',
-            'label_key': 'modules.llm.chat.params.base_url.label',
-            'description': 'Custom API base URL (for Ollama or proxies)',
-            'description_key': 'modules.llm.chat.params.base_url.description',
-            'required': False,
-            'placeholder': 'http://localhost:11434/v1'
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.LLM_PROMPT(required=True, placeholder='Analyze this code and suggest improvements...'),
+        presets.SYSTEM_PROMPT(placeholder='You are an expert code reviewer...'),
+        presets.LLM_CONTEXT(),
+        presets.CONVERSATION_MESSAGES(),
+        presets.LLM_PROVIDER(default='openai'),
+        presets.LLM_MODEL(default='gpt-4o'),
+        presets.TEMPERATURE(default=0.7),
+        presets.MAX_TOKENS(default=2000),
+        presets.LLM_RESPONSE_FORMAT(default='text'),
+        presets.LLM_API_KEY(),
+        presets.LLM_BASE_URL(),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

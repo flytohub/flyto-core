@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -38,65 +39,15 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['network.http'],
 
-    params_schema={
-        'message': {
-            'type': 'string',
-            'label': 'Message',
-            'label_key': 'modules.slack.send.params.message.label',
-            'description': 'Message text to send',
-            'description_key': 'modules.slack.send.params.message.description',
-            'required': True
-        },
-        'webhook_url': {
-            'type': 'string',
-            'label': 'Webhook URL',
-            'label_key': 'modules.slack.send.params.webhook_url.label',
-            'description': 'Slack incoming webhook URL',
-            'description_key': 'modules.slack.send.params.webhook_url.description',
-            'required': False,
-            'secret': True
-        },
-        'channel': {
-            'type': 'string',
-            'label': 'Channel',
-            'label_key': 'modules.slack.send.params.channel.label',
-            'description': 'Override channel (optional)',
-            'description_key': 'modules.slack.send.params.channel.description',
-            'required': False
-        },
-        'username': {
-            'type': 'string',
-            'label': 'Username',
-            'label_key': 'modules.slack.send.params.username.label',
-            'description': 'Override bot username',
-            'description_key': 'modules.slack.send.params.username.description',
-            'required': False
-        },
-        'icon_emoji': {
-            'type': 'string',
-            'label': 'Icon Emoji',
-            'label_key': 'modules.slack.send.params.icon_emoji.label',
-            'description': 'Emoji to use as icon (e.g., :robot_face:)',
-            'description_key': 'modules.slack.send.params.icon_emoji.description',
-            'required': False
-        },
-        'blocks': {
-            'type': 'array',
-            'label': 'Blocks',
-            'label_key': 'modules.slack.send.params.blocks.label',
-            'description': 'Slack Block Kit blocks for rich formatting',
-            'description_key': 'modules.slack.send.params.blocks.description',
-            'required': False
-        },
-        'attachments': {
-            'type': 'array',
-            'label': 'Attachments',
-            'label_key': 'modules.slack.send.params.attachments.label',
-            'description': 'Message attachments',
-            'description_key': 'modules.slack.send.params.attachments.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SLACK_MESSAGE(),
+        presets.SLACK_WEBHOOK_URL(),
+        presets.SLACK_CHANNEL(),
+        presets.SLACK_USERNAME(),
+        presets.SLACK_ICON_EMOJI(),
+        presets.SLACK_BLOCKS(),
+        presets.SLACK_ATTACHMENTS(),
+    ),
     output_schema={
         'sent': {
             'type': 'boolean',

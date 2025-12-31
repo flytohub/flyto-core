@@ -6,6 +6,7 @@ Array data manipulation and transformation
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -31,25 +32,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.unique.params.array.label',
-            'description': 'Array to deduplicate',
-            'description_key': 'modules.array.unique.params.array.description',
-            'required': True
-        },
-        'preserve_order': {
-            'type': 'boolean',
-            'label': 'Preserve Order',
-            'label_key': 'modules.array.unique.params.preserve_order.label',
-            'description': 'Maintain original order of elements',
-            'description_key': 'modules.array.unique.params.preserve_order.description',
-            'default': True,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.PRESERVE_ORDER(default=True),
+    ),
     output_schema={
         'unique': {
             'type': 'array',

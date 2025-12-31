@@ -6,6 +6,7 @@ Used for loops (jump back) and skip logic (jump forward).
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -30,25 +31,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'target': {
-            'type': 'string',
-            'label': 'Target Step',
-            'label_key': 'modules.flow.goto.params.target.label',
-            'description': 'Step ID to jump to',
-            'description_key': 'modules.flow.goto.params.target.description',
-            'required': True
-        },
-        'max_iterations': {
-            'type': 'number',
-            'label': 'Max Iterations',
-            'label_key': 'modules.flow.goto.params.max_iterations.label',
-            'description': 'Maximum number of times this goto can execute (prevents infinite loops)',
-            'description_key': 'modules.flow.goto.params.max_iterations.description',
-            'default': 100,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.TARGET_STEP(required=True),
+        presets.MAX_ITERATIONS(default=100),
+    ),
     output_schema={
         'next_step': {'type': 'string', 'description': 'ID of the next step to execute'},
         'iteration': {'type': 'number', 'description': 'Current iteration count for this goto'}

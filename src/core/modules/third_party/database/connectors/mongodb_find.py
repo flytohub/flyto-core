@@ -5,6 +5,7 @@ Query documents from MongoDB collection.
 import os
 
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -36,76 +37,15 @@ from ....registry import register_module
     handles_sensitive_data=True,  # Database data is typically sensitive
     required_permissions=['network.access', 'database.read'],
 
-    params_schema={
-        'connection_string': {
-            'type': 'string',
-            'label': 'Connection String',
-            'label_key': 'modules.db.mongodb.find.params.connection_string.label',
-            'description': 'MongoDB connection string (defaults to env.MONGODB_URL)',
-            'description_key': 'modules.db.mongodb.find.params.connection_string.description',
-            'placeholder': '${env.MONGODB_URL}',
-            'required': False,
-            'secret': True,
-            'help': 'Format: mongodb://user:password@host:port/database or mongodb+srv://...'
-        },
-        'database': {
-            'type': 'string',
-            'label': 'Database',
-            'label_key': 'modules.db.mongodb.find.params.database.label',
-            'description': 'Database name',
-            'description_key': 'modules.db.mongodb.find.params.database.description',
-            'required': True,
-            'placeholder': 'my_database'
-        },
-        'collection': {
-            'type': 'string',
-            'label': 'Collection',
-            'label_key': 'modules.db.mongodb.find.params.collection.label',
-            'description': 'Collection name',
-            'description_key': 'modules.db.mongodb.find.params.collection.description',
-            'required': True,
-            'placeholder': 'users'
-        },
-        'filter': {
-            'type': 'object',
-            'label': 'Filter',
-            'label_key': 'modules.db.mongodb.find.params.filter.label',
-            'description': 'MongoDB query filter (empty object {} returns all)',
-            'description_key': 'modules.db.mongodb.find.params.filter.description',
-            'required': False,
-            'default': {},
-            'placeholder': '{"status": "active"}'
-        },
-        'projection': {
-            'type': 'object',
-            'label': 'Projection',
-            'label_key': 'modules.db.mongodb.find.params.projection.label',
-            'description': 'Fields to include/exclude in results',
-            'description_key': 'modules.db.mongodb.find.params.projection.description',
-            'required': False,
-            'placeholder': '{"_id": 0, "name": 1, "email": 1}'
-        },
-        'limit': {
-            'type': 'number',
-            'label': 'Limit',
-            'label_key': 'modules.db.mongodb.find.params.limit.label',
-            'description': 'Maximum number of documents to return',
-            'description_key': 'modules.db.mongodb.find.params.limit.description',
-            'required': False,
-            'default': 100,
-            'min': 1,
-            'max': 10000
-        },
-        'sort': {
-            'type': 'object',
-            'label': 'Sort',
-            'label_key': 'modules.db.mongodb.find.params.sort.label',
-            'description': 'Sort order (1 for ascending, -1 for descending)',
-            'description_key': 'modules.db.mongodb.find.params.sort.description',
-            'required': False,
-            'placeholder': '{"created_at": -1}'
-        }
-    },
+    params_schema=compose(
+        presets.MONGO_CONNECTION_STRING(),
+        presets.MONGO_DATABASE(),
+        presets.MONGO_COLLECTION(),
+        presets.MONGO_FILTER(),
+        presets.MONGO_PROJECTION(),
+        presets.MONGO_LIMIT(),
+        presets.MONGO_SORT(),
+    ),
     output_schema={
         'documents': {
             'type': 'array',

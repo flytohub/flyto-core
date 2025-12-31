@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
@@ -45,96 +46,18 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
     handles_sensitive_data=True,
     required_permissions=['database.query'],
 
-    params_schema={
-        'query': {
-            'type': 'string',
-            'label': 'SQL Query',
-            'label_key': 'modules.database.query.params.query.label',
-            'description': 'SQL query to execute',
-            'description_key': 'modules.database.query.params.query.description',
-            'required': True,
-            'placeholder': 'SELECT * FROM users WHERE active = true'
-        },
-        'params': {
-            'type': 'array',
-            'label': 'Query Parameters',
-            'label_key': 'modules.database.query.params.params.label',
-            'description': 'Parameters for parameterized queries (prevents SQL injection)',
-            'description_key': 'modules.database.query.params.params.description',
-            'required': False,
-            'default': []
-        },
-        'database_type': {
-            'type': 'string',
-            'label': 'Database Type',
-            'label_key': 'modules.database.query.params.database_type.label',
-            'description': 'Type of database',
-            'description_key': 'modules.database.query.params.database_type.description',
-            'required': False,
-            'enum': ['postgresql', 'mysql', 'sqlite'],
-            'default': 'postgresql'
-        },
-        'connection_string': {
-            'type': 'string',
-            'label': 'Connection String',
-            'label_key': 'modules.database.query.params.connection_string.label',
-            'description': 'Database connection string (uses DATABASE_URL env if not provided)',
-            'description_key': 'modules.database.query.params.connection_string.description',
-            'required': False,
-            'secret': True
-        },
-        'host': {
-            'type': 'string',
-            'label': 'Host',
-            'label_key': 'modules.database.query.params.host.label',
-            'description': 'Database host (alternative to connection_string)',
-            'description_key': 'modules.database.query.params.host.description',
-            'required': False
-        },
-        'port': {
-            'type': 'number',
-            'label': 'Port',
-            'label_key': 'modules.database.query.params.port.label',
-            'description': 'Database port',
-            'description_key': 'modules.database.query.params.port.description',
-            'required': False
-        },
-        'database': {
-            'type': 'string',
-            'label': 'Database Name',
-            'label_key': 'modules.database.query.params.database.label',
-            'description': 'Database name',
-            'description_key': 'modules.database.query.params.database.description',
-            'required': False
-        },
-        'user': {
-            'type': 'string',
-            'label': 'Username',
-            'label_key': 'modules.database.query.params.user.label',
-            'description': 'Database username',
-            'description_key': 'modules.database.query.params.user.description',
-            'required': False
-        },
-        'password': {
-            'type': 'string',
-            'label': 'Password',
-            'label_key': 'modules.database.query.params.password.label',
-            'description': 'Database password',
-            'description_key': 'modules.database.query.params.password.description',
-            'required': False,
-            'secret': True
-        },
-        'fetch': {
-            'type': 'string',
-            'label': 'Fetch Mode',
-            'label_key': 'modules.database.query.params.fetch.label',
-            'description': 'How to fetch results: all, one, or none (for INSERT/UPDATE)',
-            'description_key': 'modules.database.query.params.fetch.description',
-            'required': False,
-            'enum': ['all', 'one', 'none'],
-            'default': 'all'
-        }
-    },
+    params_schema=compose(
+        presets.SQL_QUERY(),
+        presets.QUERY_PARAMS(),
+        presets.DB_TYPE(),
+        presets.DB_CONNECTION_STRING(),
+        presets.DB_HOST(),
+        presets.DB_PORT(),
+        presets.DB_NAME(),
+        presets.DB_USER(),
+        presets.DB_PASSWORD(),
+        presets.FETCH_MODE(),
+    ),
     output_schema={
         'rows': {
             'type': 'array',

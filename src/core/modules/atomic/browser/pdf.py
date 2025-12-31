@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from pathlib import Path
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -25,78 +26,32 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['file'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'Output Path',
-            'label_key': 'modules.browser.pdf.params.path.label',
-            'placeholder': '/path/to/output.pdf',
-            'description': 'Path where to save the PDF file',
-            'description_key': 'modules.browser.pdf.params.path.description',
-            'required': True
-        },
-        'format': {
-            'type': 'string',
-            'label': 'Page Format',
-            'label_key': 'modules.browser.pdf.params.format.label',
-            'description': 'Page format (A4, Letter, Legal, etc)',
-            'description_key': 'modules.browser.pdf.params.format.description',
-            'default': 'A4',
-            'required': False,
-            'enum': ['A4', 'Letter', 'Legal', 'Tabloid', 'Ledger', 'A0', 'A1', 'A2', 'A3', 'A5', 'A6']
-        },
-        'landscape': {
-            'type': 'boolean',
-            'label': 'Landscape',
-            'label_key': 'modules.browser.pdf.params.landscape.label',
-            'description': 'Print in landscape orientation',
-            'description_key': 'modules.browser.pdf.params.landscape.description',
-            'default': False,
-            'required': False
-        },
-        'print_background': {
-            'type': 'boolean',
-            'label': 'Print Background',
-            'label_key': 'modules.browser.pdf.params.print_background.label',
-            'description': 'Include background graphics',
-            'description_key': 'modules.browser.pdf.params.print_background.description',
-            'default': True,
-            'required': False
-        },
-        'scale': {
-            'type': 'number',
-            'label': 'Scale',
-            'label_key': 'modules.browser.pdf.params.scale.label',
-            'description': 'Scale of the webpage rendering (0.1-2)',
-            'description_key': 'modules.browser.pdf.params.scale.description',
-            'default': 1,
-            'required': False
-        },
-        'margin': {
-            'type': 'object',
-            'label': 'Margins',
-            'label_key': 'modules.browser.pdf.params.margin.label',
-            'description': 'Page margins {top, right, bottom, left} in CSS units',
-            'description_key': 'modules.browser.pdf.params.margin.description',
-            'required': False
-        },
-        'header_template': {
-            'type': 'string',
-            'label': 'Header Template',
-            'label_key': 'modules.browser.pdf.params.header_template.label',
-            'description': 'HTML template for page header',
-            'description_key': 'modules.browser.pdf.params.header_template.description',
-            'required': False
-        },
-        'footer_template': {
-            'type': 'string',
-            'label': 'Footer Template',
-            'label_key': 'modules.browser.pdf.params.footer_template.label',
-            'description': 'HTML template for page footer',
-            'description_key': 'modules.browser.pdf.params.footer_template.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.OUTPUT_PATH(placeholder='/path/to/output.pdf'),
+        presets.PDF_PAGE_SIZE(default='A4'),
+        presets.PDF_ORIENTATION(default='portrait'),
+        field(
+            'print_background',
+            type='boolean',
+            label='Print Background',
+            label_key='modules.browser.pdf.params.print_background.label',
+            description='Include background graphics',
+            default=True,
+        ),
+        field(
+            'scale',
+            type='number',
+            label='Scale',
+            label_key='modules.browser.pdf.params.scale.label',
+            description='Scale of the webpage rendering (0.1-2)',
+            default=1,
+            min=0.1,
+            max=2,
+        ),
+        presets.PDF_MARGIN(),
+        presets.PDF_HEADER(),
+        presets.PDF_FOOTER(),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'path': {'type': 'string'},
@@ -134,13 +89,14 @@ class BrowserPdfModule(BaseModule):
             raise ValueError("Missing required parameter: path")
 
         self.path = self.params['path']
-        self.format = self.params.get('format', 'A4')
-        self.landscape = self.params.get('landscape', False)
+        self.format = self.params.get('page_size', self.params.get('format', 'A4'))
+        orientation = self.params.get('orientation', 'portrait')
+        self.landscape = orientation == 'landscape'
         self.print_background = self.params.get('print_background', True)
         self.scale = self.params.get('scale', 1)
         self.margin = self.params.get('margin')
-        self.header_template = self.params.get('header_template')
-        self.footer_template = self.params.get('footer_template')
+        self.header_template = self.params.get('header_template', self.params.get('header'))
+        self.footer_template = self.params.get('footer_template', self.params.get('footer'))
 
         # Validate scale
         if self.scale < 0.1 or self.scale > 2:

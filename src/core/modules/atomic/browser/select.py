@@ -6,6 +6,7 @@ Select option from dropdown element.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -24,50 +25,13 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.select.params.selector.label',
-            'placeholder': 'select#country',
-            'description': 'CSS selector of the select element',
-            'description_key': 'modules.browser.select.params.selector.description',
-            'required': True
-        },
-        'value': {
-            'type': 'string',
-            'label': 'Value',
-            'label_key': 'modules.browser.select.params.value.label',
-            'description': 'Option value attribute to select',
-            'description_key': 'modules.browser.select.params.value.description',
-            'required': False
-        },
-        'label': {
-            'type': 'string',
-            'label': 'Label',
-            'label_key': 'modules.browser.select.params.label.label',
-            'description': 'Option text content to select (alternative to value)',
-            'description_key': 'modules.browser.select.params.label.description',
-            'required': False
-        },
-        'index': {
-            'type': 'number',
-            'label': 'Index',
-            'label_key': 'modules.browser.select.params.index.label',
-            'description': 'Option index to select (0-based)',
-            'description_key': 'modules.browser.select.params.index.description',
-            'required': False
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.browser.select.params.timeout.label',
-            'description': 'Maximum time to wait for element',
-            'description_key': 'modules.browser.select.params.timeout.description',
-            'default': 30000,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='select#country'),
+        presets.SELECT_VALUE(),
+        presets.SELECT_LABEL(),
+        presets.SELECT_INDEX(),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'selected': {'type': 'array'},

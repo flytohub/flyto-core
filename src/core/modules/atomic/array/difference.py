@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,24 +36,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.difference.params.array.label',
-            'description': 'Base array',
-            'description_key': 'modules.array.difference.params.array.description',
-            'required': True
-        },
-        'subtract': {
-            'type': 'array',
-            'label': 'Subtract Arrays',
-            'label_key': 'modules.array.difference.params.subtract.label',
-            'description': 'Arrays to subtract from base',
-            'description_key': 'modules.array.difference.params.subtract.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.SUBTRACT_ARRAYS(required=True),
+    ),
     output_schema={
         'result': {'type': 'array'},
         'length': {'type': 'number'}

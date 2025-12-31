@@ -11,6 +11,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ...schema import compose, presets
 from .start import get_process_registry
 
 
@@ -45,69 +46,16 @@ logger = logging.getLogger(__name__)
     handles_sensitive_data=False,
     required_permissions=['process.stop'],
 
-    params_schema={
-        'process_id': {
-            'type': 'string',
-            'label': 'Process ID',
-            'label_key': 'modules.process.stop.params.process_id.label',
-            'description': 'Internal process ID from process.start',
-            'description_key': 'modules.process.stop.params.process_id.description',
-            'required': False
-        },
-        'name': {
-            'type': 'string',
-            'label': 'Process Name',
-            'label_key': 'modules.process.stop.params.name.label',
-            'description': 'Process name (stops all matching)',
-            'description_key': 'modules.process.stop.params.name.description',
-            'required': False
-        },
-        'pid': {
-            'type': 'number',
-            'label': 'PID',
-            'label_key': 'modules.process.stop.params.pid.label',
-            'description': 'System process ID',
-            'description_key': 'modules.process.stop.params.pid.description',
-            'required': False
-        },
-        'signal': {
-            'type': 'string',
-            'label': 'Signal',
-            'label_key': 'modules.process.stop.params.signal.label',
-            'description': 'Signal to send (SIGTERM, SIGKILL, SIGINT)',
-            'description_key': 'modules.process.stop.params.signal.description',
-            'required': False,
-            'default': 'SIGTERM',
-            'enum': ['SIGTERM', 'SIGKILL', 'SIGINT']
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (seconds)',
-            'label_key': 'modules.process.stop.params.timeout.label',
-            'description': 'Time to wait for graceful shutdown before force kill',
-            'description_key': 'modules.process.stop.params.timeout.description',
-            'required': False,
-            'default': 10
-        },
-        'force': {
-            'type': 'boolean',
-            'label': 'Force Kill',
-            'label_key': 'modules.process.stop.params.force.label',
-            'description': 'Use SIGKILL immediately',
-            'description_key': 'modules.process.stop.params.force.description',
-            'required': False,
-            'default': False
-        },
-        'stop_all': {
-            'type': 'boolean',
-            'label': 'Stop All',
-            'label_key': 'modules.process.stop.params.stop_all.label',
-            'description': 'Stop all tracked processes',
-            'description_key': 'modules.process.stop.params.stop_all.description',
-            'required': False,
-            'default': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.PROCESS_ID(),
+        presets.PROCESS_NAME(label='Process Name'),
+        presets.PID(),
+        presets.SIGNAL_TYPE(default='SIGTERM'),
+        presets.TIMEOUT_S(key='timeout', default=10),
+        presets.FORCE_KILL(default=False),
+        presets.STOP_ALL(default=False),
+    ),
     output_schema={
         'ok': {
             'type': 'boolean',

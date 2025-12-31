@@ -6,6 +6,7 @@ Provides extended mathematical operations.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import math
 
 
@@ -36,24 +37,11 @@ import math
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'base': {
-            'type': 'number',
-            'label': 'Base',
-            'label_key': 'modules.math.power.params.base.label',
-            'description': 'Base number',
-            'description_key': 'modules.math.power.params.base.description',
-            'required': True
-        },
-        'exponent': {
-            'type': 'number',
-            'label': 'Exponent',
-            'label_key': 'modules.math.power.params.exponent.label',
-            'description': 'Power to raise to',
-            'description_key': 'modules.math.power.params.exponent.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.MATH_BASE(required=True),
+        presets.MATH_EXPONENT(required=True),
+    ),
     output_schema={
         'result': {'type': 'number'},
         'base': {'type': 'number'},

@@ -6,6 +6,7 @@ Provides Redis key-value store operations.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -36,44 +37,12 @@ from ...registry import register_module
     handles_sensitive_data=True,  # Cache may contain sensitive data
     required_permissions=['database.read'],
 
-    params_schema={
-        'key': {
-            'type': 'string',
-            'label': 'Key',
-            'label_key': 'modules.db.redis.get.params.key.label',
-            'description': 'Redis key to retrieve',
-            'description_key': 'modules.db.redis.get.params.key.description',
-            'required': True
-        },
-        'host': {
-            'type': 'string',
-            'label': 'Host',
-            'label_key': 'modules.db.redis.get.params.host.label',
-            'description': 'Redis host (from env.REDIS_HOST or explicit)',
-            'description_key': 'modules.db.redis.get.params.host.description',
-            'placeholder': '${env.REDIS_HOST}',
-            'required': False
-            # NOTE: NO hardcoded default - require explicit configuration
-        },
-        'port': {
-            'type': 'number',
-            'label': 'Port',
-            'label_key': 'modules.db.redis.get.params.port.label',
-            'description': 'Redis port',
-            'description_key': 'modules.db.redis.get.params.port.description',
-            'default': 6379,
-            'required': False
-        },
-        'db': {
-            'type': 'number',
-            'label': 'Database',
-            'label_key': 'modules.db.redis.get.params.db.label',
-            'description': 'Redis database number',
-            'description_key': 'modules.db.redis.get.params.db.description',
-            'default': 0,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.REDIS_KEY(),
+        presets.REDIS_HOST(),
+        presets.REDIS_PORT(),
+        presets.REDIS_DB(),
+    ),
     output_schema={
         'value': {'type': 'any'},
         'exists': {'type': 'boolean'},
@@ -182,60 +151,14 @@ class RedisGetModule(BaseModule):
     handles_sensitive_data=True,
     required_permissions=['database.write'],
 
-    params_schema={
-        'key': {
-            'type': 'string',
-            'label': 'Key',
-            'label_key': 'modules.db.redis.set.params.key.label',
-            'description': 'Redis key to set',
-            'description_key': 'modules.db.redis.set.params.key.description',
-            'required': True
-        },
-        'value': {
-            'type': 'any',
-            'label': 'Value',
-            'label_key': 'modules.db.redis.set.params.value.label',
-            'description': 'Value to store',
-            'description_key': 'modules.db.redis.set.params.value.description',
-            'required': True
-        },
-        'ttl': {
-            'type': 'number',
-            'label': 'TTL (seconds)',
-            'label_key': 'modules.db.redis.set.params.ttl.label',
-            'description': 'Time to live in seconds (optional)',
-            'description_key': 'modules.db.redis.set.params.ttl.description',
-            'required': False
-        },
-        'host': {
-            'type': 'string',
-            'label': 'Host',
-            'label_key': 'modules.db.redis.set.params.host.label',
-            'description': 'Redis host (from env.REDIS_HOST or explicit)',
-            'description_key': 'modules.db.redis.set.params.host.description',
-            'placeholder': '${env.REDIS_HOST}',
-            'required': False
-            # NOTE: NO hardcoded default - require explicit configuration
-        },
-        'port': {
-            'type': 'number',
-            'label': 'Port',
-            'label_key': 'modules.db.redis.set.params.port.label',
-            'description': 'Redis port',
-            'description_key': 'modules.db.redis.set.params.port.description',
-            'default': 6379,
-            'required': False
-        },
-        'db': {
-            'type': 'number',
-            'label': 'Database',
-            'label_key': 'modules.db.redis.set.params.db.label',
-            'description': 'Redis database number',
-            'description_key': 'modules.db.redis.set.params.db.description',
-            'default': 0,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.REDIS_KEY(),
+        presets.REDIS_VALUE(),
+        presets.REDIS_TTL(),
+        presets.REDIS_HOST(),
+        presets.REDIS_PORT(),
+        presets.REDIS_DB(),
+    ),
     output_schema={
         'success': {'type': 'boolean'},
         'key': {'type': 'string'}

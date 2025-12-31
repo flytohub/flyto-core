@@ -6,6 +6,7 @@ Mock browser geolocation.
 from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -24,35 +25,39 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=['object'],
 
-    params_schema={
-        'latitude': {
-            'type': 'number',
-            'label': 'Latitude',
-            'label_key': 'modules.browser.geolocation.params.latitude.label',
-            'placeholder': '37.7749',
-            'description': 'Latitude coordinate (-90 to 90)',
-            'description_key': 'modules.browser.geolocation.params.latitude.description',
-            'required': True
-        },
-        'longitude': {
-            'type': 'number',
-            'label': 'Longitude',
-            'label_key': 'modules.browser.geolocation.params.longitude.label',
-            'placeholder': '-122.4194',
-            'description': 'Longitude coordinate (-180 to 180)',
-            'description_key': 'modules.browser.geolocation.params.longitude.description',
-            'required': True
-        },
-        'accuracy': {
-            'type': 'number',
-            'label': 'Accuracy (meters)',
-            'label_key': 'modules.browser.geolocation.params.accuracy.label',
-            'description': 'Position accuracy in meters',
-            'description_key': 'modules.browser.geolocation.params.accuracy.description',
-            'default': 100,
-            'required': False
-        }
-    },
+    params_schema=compose(
+        field(
+            'latitude',
+            type='number',
+            label='Latitude',
+            label_key='modules.browser.geolocation.params.latitude.label',
+            placeholder='37.7749',
+            description='Latitude coordinate (-90 to 90)',
+            required=True,
+            min=-90,
+            max=90,
+        ),
+        field(
+            'longitude',
+            type='number',
+            label='Longitude',
+            label_key='modules.browser.geolocation.params.longitude.label',
+            placeholder='-122.4194',
+            description='Longitude coordinate (-180 to 180)',
+            required=True,
+            min=-180,
+            max=180,
+        ),
+        field(
+            'accuracy',
+            type='number',
+            label='Accuracy (meters)',
+            label_key='modules.browser.geolocation.params.accuracy.label',
+            description='Position accuracy in meters',
+            default=100,
+            min=0,
+        ),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'location': {'type': 'object'}

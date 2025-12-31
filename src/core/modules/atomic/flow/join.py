@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -92,49 +93,13 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control'],
 
-    params_schema={
-        'strategy': {
-            'type': 'string',
-            'label': 'Join Strategy',
-            'label_key': 'modules.flow.join.params.strategy.label',
-            'description': 'How to handle multiple inputs',
-            'description_key': 'modules.flow.join.params.strategy.description',
-            'enum': ['all', 'any', 'first'],
-            'default': 'all',
-            'required': False
-        },
-        'input_count': {
-            'type': 'integer',
-            'label': 'Input Count',
-            'label_key': 'modules.flow.join.params.input_count.label',
-            'description': 'Number of input ports',
-            'description_key': 'modules.flow.join.params.input_count.description',
-            'default': 2,
-            'minimum': 2,
-            'maximum': 10,
-            'required': False
-        },
-        'timeout_ms': {
-            'type': 'integer',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.flow.join.params.timeout_ms.label',
-            'description': 'Maximum wait time in milliseconds',
-            'description_key': 'modules.flow.join.params.timeout_ms.description',
-            'default': 60000,
-            'minimum': 1000,
-            'maximum': 600000,
-            'required': False
-        },
-        'cancel_pending': {
-            'type': 'boolean',
-            'label': 'Cancel Pending',
-            'label_key': 'modules.flow.join.params.cancel_pending.label',
-            'description': 'Cancel pending branches when using first strategy',
-            'description_key': 'modules.flow.join.params.cancel_pending.description',
-            'default': True,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.JOIN_STRATEGY(default='all'),
+        presets.PORT_COUNT(key='input_count', default=2),
+        presets.TIMEOUT_MS(default=60000),
+        presets.CANCEL_PENDING(default=True),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (joined/timeout/error)'},

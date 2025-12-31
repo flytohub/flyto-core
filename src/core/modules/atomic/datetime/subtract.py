@@ -6,6 +6,7 @@ Provides date and time manipulation capabilities.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from datetime import datetime, timedelta
 import time
 
@@ -37,53 +38,14 @@ import time
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'datetime': {
-            'type': 'string',
-            'label': 'DateTime',
-            'label_key': 'modules.datetime.subtract.params.datetime.label',
-            'description': 'DateTime to modify (ISO format or "now")',
-            'description_key': 'modules.datetime.subtract.params.datetime.description',
-            'default': 'now',
-            'required': False
-        },
-        'days': {
-            'type': 'number',
-            'label': 'Days',
-            'label_key': 'modules.datetime.subtract.params.days.label',
-            'description': 'Days to subtract',
-            'description_key': 'modules.datetime.subtract.params.days.description',
-            'default': 0,
-            'required': False
-        },
-        'hours': {
-            'type': 'number',
-            'label': 'Hours',
-            'label_key': 'modules.datetime.subtract.params.hours.label',
-            'description': 'Hours to subtract',
-            'description_key': 'modules.datetime.subtract.params.hours.description',
-            'default': 0,
-            'required': False
-        },
-        'minutes': {
-            'type': 'number',
-            'label': 'Minutes',
-            'label_key': 'modules.datetime.subtract.params.minutes.label',
-            'description': 'Minutes to subtract',
-            'description_key': 'modules.datetime.subtract.params.minutes.description',
-            'default': 0,
-            'required': False
-        },
-        'seconds': {
-            'type': 'number',
-            'label': 'Seconds',
-            'label_key': 'modules.datetime.subtract.params.seconds.label',
-            'description': 'Seconds to subtract',
-            'description_key': 'modules.datetime.subtract.params.seconds.description',
-            'default': 0,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.DATETIME_INPUT(default='now'),
+        presets.TIME_DAYS(default=0),
+        presets.TIME_HOURS(default=0),
+        presets.TIME_MINUTES(default=0),
+        presets.TIME_SECONDS(default=0),
+    ),
     output_schema={
         'result': {'type': 'string'},
         'timestamp': {'type': 'number'}

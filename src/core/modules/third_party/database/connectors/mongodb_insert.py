@@ -5,6 +5,7 @@ Insert documents into MongoDB collection.
 import os
 
 from ....registry import register_module
+from ....schema import compose, presets
 
 
 @register_module(
@@ -35,50 +36,13 @@ from ....registry import register_module
     handles_sensitive_data=True,  # Database data is typically sensitive
     required_permissions=['network.access', 'database.write'],
 
-    params_schema={
-        'connection_string': {
-            'type': 'string',
-            'label': 'Connection String',
-            'label_key': 'modules.db.mongodb.insert.params.connection_string.label',
-            'description': 'MongoDB connection string (defaults to env.MONGODB_URL)',
-            'description_key': 'modules.db.mongodb.insert.params.connection_string.description',
-            'placeholder': '${env.MONGODB_URL}',
-            'required': False,
-            'secret': True
-        },
-        'database': {
-            'type': 'string',
-            'label': 'Database',
-            'label_key': 'modules.db.mongodb.insert.params.database.label',
-            'description': 'Database name',
-            'description_key': 'modules.db.mongodb.insert.params.database.description',
-            'required': True
-        },
-        'collection': {
-            'type': 'string',
-            'label': 'Collection',
-            'label_key': 'modules.db.mongodb.insert.params.collection.label',
-            'description': 'Collection name',
-            'description_key': 'modules.db.mongodb.insert.params.collection.description',
-            'required': True
-        },
-        'document': {
-            'type': 'object',
-            'label': 'Document',
-            'label_key': 'modules.db.mongodb.insert.params.document.label',
-            'description': 'Document to insert (for single insert)',
-            'description_key': 'modules.db.mongodb.insert.params.document.description',
-            'required': False
-        },
-        'documents': {
-            'type': 'array',
-            'label': 'Documents',
-            'label_key': 'modules.db.mongodb.insert.params.documents.label',
-            'description': 'Array of documents to insert (for bulk insert)',
-            'description_key': 'modules.db.mongodb.insert.params.documents.description',
-            'required': False
-        }
-    },
+    params_schema=compose(
+        presets.MONGO_CONNECTION_STRING(),
+        presets.MONGO_DATABASE(),
+        presets.MONGO_COLLECTION(),
+        presets.MONGO_DOCUMENT(),
+        presets.MONGO_DOCUMENTS(),
+    ),
     output_schema={
         'inserted_count': {
             'type': 'number',

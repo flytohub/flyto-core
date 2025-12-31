@@ -6,6 +6,7 @@ Basic file system operations
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import os
 import shutil
 
@@ -23,28 +24,20 @@ import shutil
     icon='FileSearch',
     color='#6B7280',
 
-    # Phase 2: Execution settings
-    # No timeout needed - file existence check is instant
-    retryable=True,  # Can retry if filesystem temporarily unavailable
+    # Execution settings
+    retryable=True,
     max_retries=2,
-    concurrent_safe=True,  # Stateless check operation
+    concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['file.read'],
 
-    params_schema={
-        'path': {
-            'type': 'string',
-            'label': 'Path',
-            'label_key': 'modules.file.exists.params.path.label',
-            'description': 'Path to check',
-            'description_key': 'modules.file.exists.params.path.description',
-            'required': True,
-            'placeholder': '/path/to/file'
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILE_PATH(key='path', required=True, label='Path', placeholder='/path/to/file'),
+    ),
     output_schema={
         'exists': {
             'type': 'boolean',

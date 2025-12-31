@@ -9,6 +9,7 @@ Workflow Spec v1.1:
 from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -64,55 +65,17 @@ from ...types import NodeType, EdgeType, DataType
     handles_sensitive_data=False,
     required_permissions=['flow.control', 'workflow.execute'],
 
-    params_schema={
-        'workflow_ref': {
-            'type': 'string',
-            'label': 'Workflow Reference',
-            'label_key': 'modules.flow.subflow.params.workflow_ref.label',
-            'description': 'External workflow ID or path',
-            'description_key': 'modules.flow.subflow.params.workflow_ref.description',
-            'required': True
-        },
-        'execution_mode': {
-            'type': 'string',
-            'label': 'Execution Mode',
-            'label_key': 'modules.flow.subflow.params.execution_mode.label',
-            'description': 'How to execute the subflow',
-            'description_key': 'modules.flow.subflow.params.execution_mode.description',
-            'enum': ['inline', 'spawn', 'async'],
-            'default': 'inline',
-            'required': False
-        },
-        'input_mapping': {
-            'type': 'object',
-            'label': 'Input Mapping',
-            'label_key': 'modules.flow.subflow.params.input_mapping.label',
-            'description': 'Map parent variables to subflow inputs',
-            'description_key': 'modules.flow.subflow.params.input_mapping.description',
-            'default': {},
-            'required': False
-        },
-        'output_mapping': {
-            'type': 'object',
-            'label': 'Output Mapping',
-            'label_key': 'modules.flow.subflow.params.output_mapping.label',
-            'description': 'Map subflow outputs to parent variables',
-            'description_key': 'modules.flow.subflow.params.output_mapping.description',
-            'default': {},
-            'required': False
-        },
-        'timeout_ms': {
-            'type': 'integer',
-            'label': 'Timeout (ms)',
-            'label_key': 'modules.flow.subflow.params.timeout_ms.label',
-            'description': 'Maximum execution time in milliseconds',
-            'description_key': 'modules.flow.subflow.params.timeout_ms.description',
-            'default': 300000,
-            'minimum': 1000,
-            'maximum': 3600000,
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.TEXT(key='workflow_ref', required=True, label='Workflow Reference'),
+        presets.SELECT(key='execution_mode', default='inline', label='Execution Mode',
+                      options=[{'value': 'inline', 'label': 'Inline'},
+                               {'value': 'spawn', 'label': 'Spawn'},
+                               {'value': 'async', 'label': 'Async'}]),
+        presets.DATA_OBJECT(key='input_mapping', label='Input Mapping'),
+        presets.OUTPUT_MAPPING(),
+        presets.TIMEOUT_MS(default=300000),
+    ),
 
     output_schema={
         '__event__': {'type': 'string', 'description': 'Event for routing (success/error)'},

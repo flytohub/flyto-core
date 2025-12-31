@@ -1,12 +1,10 @@
 """
-Browser Automation Modules
-
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+Browser Click Module - Click an element on the page
 """
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -25,17 +23,11 @@ from ...registry import register_module
     input_types=['page'],
     output_types=['page'],
 
-    params_schema={
-        'selector': {
-            'type': 'string',
-            'label': 'CSS Selector',
-            'label_key': 'modules.browser.click.params.selector.label',
-            'placeholder': '#button-id or .button-class',
-            'description': 'CSS selector of the element to click',
-            'description_key': 'modules.browser.click.params.selector.description',
-            'required': True
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='#button-id or .button-class'),
+        presets.TIMEOUT_MS(default=30000),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'selector': {'type': 'string'}

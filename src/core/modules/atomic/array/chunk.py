@@ -6,6 +6,7 @@ Provides extended array manipulation capabilities.
 from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -35,25 +36,11 @@ from ...registry import register_module
     handles_sensitive_data=False,
     required_permissions=[],
 
-    params_schema={
-        'array': {
-            'type': 'array',
-            'label': 'Array',
-            'label_key': 'modules.array.chunk.params.array.label',
-            'description': 'Array to chunk',
-            'description_key': 'modules.array.chunk.params.array.description',
-            'required': True
-        },
-        'size': {
-            'type': 'number',
-            'label': 'Chunk Size',
-            'label_key': 'modules.array.chunk.params.size.label',
-            'description': 'Size of each chunk',
-            'description_key': 'modules.array.chunk.params.size.description',
-            'required': True,
-            'min': 1
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.INPUT_ARRAY(required=True),
+        presets.CHUNK_SIZE(required=True),
+    ),
     output_schema={
         'result': {'type': 'array'},
         'chunks': {'type': 'number'}

@@ -5,6 +5,7 @@ Handle CSV, JSON, text processing, data transformation, etc.
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
+from ...schema import compose, presets
 import json
 import csv
 import io
@@ -23,53 +24,23 @@ import os
     icon='Save',
     color='#10B981',
 
-    # Phase 2: Execution settings
-    timeout=30,  # File writes can timeout on network filesystems
-    retryable=False,  # Don't retry writes (could cause duplicates)
-    concurrent_safe=False,  # Writing to same file is not thread-safe
+    # Execution settings
+    timeout=30,
+    retryable=False,
+    concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
-    handles_sensitive_data=True,  # CSV data may be sensitive
+    handles_sensitive_data=True,
     required_permissions=['file.write'],
 
-    params_schema={
-        'file_path': {
-            'type': 'string',
-            'label': 'File Path',
-            'label_key': 'modules.data.csv.write.params.file_path.label',
-            'description': 'Output CSV file path',
-            'description_key': 'modules.data.csv.write.params.file_path.description',
-            'placeholder': '/path/to/output.csv',
-            'required': True
-        },
-        'data': {
-            'type': 'array',
-            'label': 'Data',
-            'label_key': 'modules.data.csv.write.params.data.label',
-            'description': 'Array of objects to write',
-            'description_key': 'modules.data.csv.write.params.data.description',
-            'required': True
-        },
-        'delimiter': {
-            'type': 'string',
-            'label': 'Delimiter',
-            'label_key': 'modules.data.csv.write.params.delimiter.label',
-            'description': 'CSV delimiter character',
-            'description_key': 'modules.data.csv.write.params.delimiter.description',
-            'default': ',',
-            'required': False
-        },
-        'encoding': {
-            'type': 'string',
-            'label': 'Encoding',
-            'label_key': 'modules.data.csv.write.params.encoding.label',
-            'description': 'File encoding',
-            'description_key': 'modules.data.csv.write.params.encoding.description',
-            'default': 'utf-8',
-            'required': False
-        }
-    },
+    # Schema-driven params
+    params_schema=compose(
+        presets.FILE_PATH(required=True, placeholder='/path/to/output.csv'),
+        presets.DATA_ARRAY(required=True),
+        presets.DELIMITER(default=','),
+        presets.ENCODING(default='utf-8'),
+    ),
     output_schema={
         'status': {'type': 'string'},
         'file_path': {'type': 'string'},
