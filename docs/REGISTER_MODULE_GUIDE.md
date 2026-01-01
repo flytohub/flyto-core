@@ -368,6 +368,41 @@ async def execute(self) -> Dict[str, Any]:
         return {'__event__': 'false', 'result': ...}
 ```
 
+#### `__event__` Rules (Critical)
+
+| Rule | Behavior |
+|------|----------|
+| **Reserved keyword** | `__event__` is reserved. Modules MUST NOT use `__event__` as a param name in `params_schema`. Import-time validation will reject it. |
+| **Flow module requirement** | Flow modules (`category='flow'`) MUST return `__event__` in their output. Missing `__event__` = **hard fail** at runtime. |
+| **Non-flow default** | Non-flow modules without `__event__` default to `'default'` output port. If no `'default'` port exists, use first output port. |
+| **Unknown event** | If `__event__` value doesn't match any output port `event` field = **hard fail** at runtime. |
+
+**Examples:**
+
+```python
+# ✅ Flow module - MUST return __event__
+@register_module(module_id='flow.branch', category='flow', ...)
+class BranchModule(BaseModule):
+    async def execute(self):
+        if self.condition:
+            return {'__event__': 'true', 'data': ...}
+        return {'__event__': 'false', 'data': ...}
+
+# ✅ Non-flow module - __event__ optional, defaults to 'default'
+@register_module(module_id='string.reverse', category='string', ...)
+class ReverseModule(BaseModule):
+    async def execute(self):
+        return {'result': self.text[::-1]}  # No __event__, routes to 'default'
+
+# ❌ INVALID - __event__ as param name
+@register_module(
+    module_id='bad.module',
+    params_schema={
+        '__event__': {'type': 'string'}  # FORBIDDEN - import-time error
+    }
+)
+```
+
 ---
 
 ## Validation Behavior
@@ -382,12 +417,14 @@ The following will **raise an error** and prevent module registration:
 | `flow.*` module missing `input_ports` or `output_ports` | `ValueError: Flow modules require port definitions` |
 | Duplicate port `id` within input/output | `ValueError: Duplicate port id` |
 | Port missing required fields (`id`, `label`, `edge_type`) | `ValueError: Invalid port definition` |
+| `params_schema` contains `__event__` as key | `ValueError: __event__ is a reserved keyword` |
 
 ### Runtime (Hard Fail)
 
 | Condition | Error |
 |-----------|-------|
-| `__event__` doesn't match any output port | `RuntimeError: Unknown event` |
+| Flow module output missing `__event__` | `RuntimeError: Flow module must return __event__` |
+| `__event__` doesn't match any output port | `RuntimeError: Unknown event '{event}'` |
 | Connection violates `max_connections` | `RuntimeError: Max connections exceeded` |
 | Required port has no connection | `RuntimeError: Required port not connected` |
 

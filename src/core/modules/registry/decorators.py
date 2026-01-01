@@ -27,6 +27,7 @@ def _validate_module_registration(
     output_ports: Optional[List[Dict[str, Any]]],
     can_receive_from: Optional[List[str]],
     can_connect_to: Optional[List[str]],
+    params_schema: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Validate module registration at import time.
@@ -48,6 +49,10 @@ def _validate_module_registration(
         # END doesn't need output_ports (it's a terminal)
         if not output_ports and node_type != NodeType.END:
             errors.append("Flow module missing 'output_ports' - port definitions required")
+
+    # Reserved keyword check: __event__ cannot be used as a param name
+    if params_schema and '__event__' in params_schema:
+        errors.append("'__event__' is a reserved keyword and cannot be used in params_schema")
 
     if errors:
         error_msg = f"Module '{module_id}' registration failed (import-time validation):\n"
@@ -327,6 +332,7 @@ def register_module(
             output_ports=output_ports,  # Original, not resolved
             can_receive_from=can_receive_from,  # Original, not resolved
             can_connect_to=can_connect_to,  # Original, not resolved
+            params_schema=params_schema,  # Check for reserved keywords
         )
 
         # Build metadata
