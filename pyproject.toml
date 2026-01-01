@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "1.6.2"
+version = "1.6.3"
 description = "Atomic workflow automation modules for git-native automation"
 readme = "README.md"
 license = "MIT"
