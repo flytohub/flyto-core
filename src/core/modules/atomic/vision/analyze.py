@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
     input_types=['string', 'image', 'object'],
     output_types=['object', 'string'],
     can_connect_to=['test.*', 'ui.*', 'file.*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=60,

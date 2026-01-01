@@ -24,7 +24,9 @@ import shutil
     icon='FileText',
     color='#6B7280',
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Execution settings
     timeout=30,
     retryable=False,
     concurrent_safe=False,

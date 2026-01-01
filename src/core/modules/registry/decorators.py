@@ -19,6 +19,42 @@ from ..connection_rules import get_default_connection_rules
 from .core import ModuleRegistry
 
 
+def _validate_module_registration(
+    module_id: str,
+    category: str,
+    node_type: NodeType,
+    input_ports: Optional[List[Dict[str, Any]]],
+    output_ports: Optional[List[Dict[str, Any]]],
+    can_receive_from: Optional[List[str]],
+    can_connect_to: Optional[List[str]],
+) -> None:
+    """
+    Validate module registration at import time.
+    Raises ValueError if validation fails (hard fail).
+    """
+    errors = []
+
+    # P1: All modules must have explicit connection rules
+    if can_receive_from is None:
+        errors.append("Missing 'can_receive_from' - connection rules are required")
+    if can_connect_to is None:
+        errors.append("Missing 'can_connect_to' - connection rules are required")
+
+    # P0: Flow modules must have ports defined
+    if category == 'flow':
+        # START and TRIGGER don't need input_ports (they're entry points)
+        if not input_ports and node_type not in (NodeType.START, NodeType.TRIGGER):
+            errors.append("Flow module missing 'input_ports' - port definitions required")
+        # END doesn't need output_ports (it's a terminal)
+        if not output_ports and node_type != NodeType.END:
+            errors.append("Flow module missing 'output_ports' - port definitions required")
+
+    if errors:
+        error_msg = f"Module '{module_id}' registration failed (import-time validation):\n"
+        error_msg += "\n".join(f"  - {e}" for e in errors)
+        raise ValueError(error_msg)
+
+
 def register_module(
     module_id: str,
     version: str = "1.0.0",
@@ -280,6 +316,18 @@ def register_module(
         default_can_connect, default_can_receive = get_default_connection_rules(resolved_category)
         resolved_can_connect_to = can_connect_to if can_connect_to is not None else default_can_connect
         resolved_can_receive_from = can_receive_from if can_receive_from is not None else default_can_receive
+
+        # Import-time validation (P0/P1 - hard fail)
+        # Check ORIGINAL values to enforce explicit definition
+        _validate_module_registration(
+            module_id=module_id,
+            category=resolved_category,
+            node_type=node_type,
+            input_ports=input_ports,  # Original, not resolved
+            output_ports=output_ports,  # Original, not resolved
+            can_receive_from=can_receive_from,  # Original, not resolved
+            can_connect_to=can_connect_to,  # Original, not resolved
+        )
 
         # Build metadata
         metadata = {

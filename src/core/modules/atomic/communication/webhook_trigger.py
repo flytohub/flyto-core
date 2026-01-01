@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
     input_types=['object', 'text'],
     output_types=['object'],
     can_connect_to=['notification.*', 'api.*'],
+    can_receive_from=['*'],
 
     timeout=30,
     retryable=True,

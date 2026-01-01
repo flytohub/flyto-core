@@ -14,6 +14,8 @@ from ..integration import JiraIntegration
 
 @register_module(
     module_id="integration.jira.search_issues",
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version="1.0.0",
     category="integration",
     tags=["integration", "jira", "search", "jql"],

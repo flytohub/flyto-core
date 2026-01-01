@@ -14,6 +14,8 @@ from ..integration import SalesforceIntegration
 
 @register_module(
     module_id="integration.salesforce.query",
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version="1.0.0",
     category="integration",
     tags=["integration", "salesforce", "crm", "query", "soql"],

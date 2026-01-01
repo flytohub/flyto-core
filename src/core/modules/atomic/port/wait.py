@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
     input_types=['number', 'object'],
     output_types=['object', 'boolean'],
     can_connect_to=['browser.*', 'http.*', 'test.*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=120,  # 2 minutes max wait

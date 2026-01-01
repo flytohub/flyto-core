@@ -25,7 +25,9 @@ from ...schema import compose, presets, field
     input_types=['page'],
     output_types=['page'],
 
-    params_schema=compose(
+
+    can_receive_from=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
         presets.SELECTOR(key='source', required=True, placeholder='#draggable', label='Source Selector'),
         presets.SELECTOR(key='target', required=True, placeholder='#dropzone', label='Target Selector'),
         field(

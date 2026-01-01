@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
     input_types=['string', 'object'],
     output_types=['string', 'object'],
     can_connect_to=['*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=120,
@@ -314,12 +315,16 @@ async def _call_openai_aiohttp(
     }
 
 
+ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+
+
 async def _call_anthropic(
     messages: List[Dict],
     model: str,
     temperature: float,
     max_tokens: int,
-    api_key: str
+    api_key: str,
+    base_url: str = None
 ) -> Dict[str, Any]:
     """Call Anthropic Claude API"""
     try:
@@ -329,7 +334,7 @@ async def _call_anthropic(
         import aiohttp
         use_httpx = False
 
-    url = "https://api.anthropic.com/v1/messages"
+    url = base_url or ANTHROPIC_API_URL
 
     headers = {
         "x-api-key": api_key,

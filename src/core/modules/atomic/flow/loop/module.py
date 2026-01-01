@@ -34,6 +34,10 @@ LOOP_CONFIG = {
     'icon': 'Repeat',
     'color': '#8B5CF6',
     'node_type': NodeType.LOOP,
+
+    # Connection rules
+    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'flow.*', 'start'],
+    'can_connect_to': ['*'],
     'input_ports': [
         {
             'id': 'input',
@@ -162,6 +166,50 @@ FOREACH_CONFIG = {
     'color': '#10B981',
     'input_types': ['array'],
     'output_types': ['array'],
+
+    # Connection rules
+    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'element.*', 'flow.*', 'start'],
+    'can_connect_to': ['*'],
+
+    # Port definitions (required for flow modules)
+    'input_ports': [
+        {
+            'id': 'input',
+            'label': 'Input',
+            'label_key': 'modules.flow.foreach.ports.input',
+            'data_type': DataType.ARRAY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1,
+            'required': True
+        }
+    ],
+    'output_ports': [
+        {
+            'id': 'iterate',
+            'label': 'Iterate',
+            'label_key': 'modules.flow.foreach.ports.iterate',
+            'event': 'iterate',
+            'color': '#F59E0B',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'done',
+            'label': 'Done',
+            'label_key': 'modules.flow.foreach.ports.done',
+            'event': 'done',
+            'color': '#10B981',
+            'edge_type': EdgeType.CONTROL.value
+        },
+        {
+            'id': 'error',
+            'label': 'Error',
+            'label_key': 'common.ports.error',
+            'event': 'error',
+            'color': '#EF4444',
+            'edge_type': EdgeType.CONTROL.value
+        }
+    ],
+
     'retryable': False,
     'concurrent_safe': True,
     'requires_credentials': False,

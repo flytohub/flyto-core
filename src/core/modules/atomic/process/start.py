@@ -43,6 +43,7 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
     input_types=['string', 'object'],
     output_types=['object'],
     can_connect_to=['port.*', 'process.*', 'test.*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=30,

@@ -27,7 +27,9 @@ from ...schema import compose, presets
     input_types=['page'],
     output_types=['file'],
 
-    params_schema=compose(
+
+    can_receive_from=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='a.download-link'),
         presets.DOWNLOAD_SAVE_PATH(),
         presets.TIMEOUT_MS(default=60000),

@@ -27,7 +27,8 @@ from ....schema import compose, presets
     color='#3B82F6',
     input_types=[],
     output_types=['json', 'text', 'api_response'],
-    can_connect_to=['data.*', 'notification.*', 'file.*'],
+    can_connect_to=['data.*', 'notification.*', 'file.*', 'flow.*'],
+    can_receive_from=['*'],
 
     # Schema-driven params
     params_schema=compose(

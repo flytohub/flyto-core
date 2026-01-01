@@ -24,7 +24,9 @@ import shutil
     icon='FileSearch',
     color='#6B7280',
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Execution settings
     retryable=True,
     max_retries=2,
     concurrent_safe=True,

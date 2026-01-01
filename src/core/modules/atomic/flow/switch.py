@@ -26,6 +26,26 @@ from ...types import NodeType, EdgeType, DataType
     icon='GitMerge',
     color='#9C27B0',
 
+    # Connection rules - switch needs a value to switch on
+    can_receive_from=[
+        'data.*',       # Data modules output values
+        'api.*',        # API responses
+        'http.*',       # HTTP responses
+        'string.*',     # String operations
+        'array.*',      # Array operations (e.g., get index)
+        'object.*',     # Object operations (e.g., get property)
+        'element.get_*', # Get element text/attribute
+        'element.text',  # Element text
+        'element.attribute', # Element attribute
+        'ai.*',         # AI outputs
+        'database.*',   # Database query results
+        'file.*',       # File read results
+        'math.*',       # Math operations
+        'flow.loop',    # Loop can output values
+        'flow.foreach', # Foreach current item
+    ],
+    can_connect_to=['*'],  # Switch outputs can go anywhere
+
     # Workflow Spec v1.1
     node_type=NodeType.SWITCH,
 

@@ -27,7 +27,9 @@ from ..element_registry import get_element_registry
     input_types=['page'],
     output_types=['element', 'array'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    # Phase 2: Execution settings
     timeout=10,  # Finding elements should complete within 10s
     retryable=True,  # Can retry if elements not ready
     max_retries=2,

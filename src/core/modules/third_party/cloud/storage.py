@@ -10,6 +10,8 @@ import base64
 
 @register_module(
     module_id='cloud.aws_s3.upload',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'upload', 'file'],
@@ -235,6 +237,8 @@ async def aws_s3_upload(context):
 
 @register_module(
     module_id='cloud.aws_s3.download',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'download', 'file'],

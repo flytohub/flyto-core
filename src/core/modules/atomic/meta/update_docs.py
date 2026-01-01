@@ -24,7 +24,9 @@ import json
     input_types=['none'],
     output_types=['file'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Phase 2: Execution settings
     timeout=10,
     retryable=True,
     concurrent_safe=True,

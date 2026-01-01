@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='api.notion.create_page',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     tags=['productivity', 'notion', 'api', 'database', 'page'],

@@ -26,7 +26,9 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,

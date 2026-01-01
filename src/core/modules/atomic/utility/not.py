@@ -22,7 +22,9 @@ from ...registry import register_module
     # Connection types
     input_types=['boolean'],
     output_types=['boolean'],
-)
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],)
 class Not(BaseModule):
     """
     Logical negation - inverts the boolean value of the input

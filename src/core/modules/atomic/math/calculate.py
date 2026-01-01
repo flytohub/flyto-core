@@ -27,7 +27,9 @@ import math
     input_types=['number'],
     output_types=['number'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Phase 2: Execution settings
     # No timeout - instant math operation
     retryable=False,  # Logic errors won't fix themselves
     concurrent_safe=True,  # Stateless operation

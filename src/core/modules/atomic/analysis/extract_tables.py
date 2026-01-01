@@ -22,7 +22,9 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     color='#8B5CF6',
     input_types=['html', 'string'],
     output_types=['array'],
-    params_schema=compose(
+
+    can_receive_from=['browser.*', 'element.*', 'page.*', 'file.*', 'data.*', 'api.*', 'flow.*', 'start'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],    params_schema=compose(
         presets.HTML_CONTENT(),
     ),
 )

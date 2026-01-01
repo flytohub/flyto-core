@@ -26,7 +26,9 @@ from ...schema import compose, presets
     input_types=['page'],
     output_types=['page'],
 
-    params_schema=compose(
+
+    can_receive_from=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
         presets.KEYBOARD_KEY(),
     ),
     output_schema={

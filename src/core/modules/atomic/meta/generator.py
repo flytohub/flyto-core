@@ -23,7 +23,9 @@ from typing import Any
     # Connection types
     input_types=['object'],
     output_types=['object'],
-)
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],)
 class TestGeneratorModule(BaseModule):
     """
     Test the module generator (stub for OSS)
@@ -73,6 +75,8 @@ class TestGeneratorModule(BaseModule):
     # Connection types
     input_types=['object'],
     output_types=['object'],
+    can_receive_from=['*'],
+    can_connect_to=['*'],
 )
 class GenerateModuleModule(BaseModule):
     """

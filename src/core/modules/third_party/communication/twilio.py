@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='communication.twilio.send_sms',
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='notification',
     subcategory='sms',
@@ -179,6 +181,8 @@ class TwilioSendSMSModule(BaseModule):
 
 @register_module(
     module_id='communication.twilio.make_call',
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='notification',
     subcategory='voice',

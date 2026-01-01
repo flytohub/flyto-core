@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='api.github.get_repo',
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='api',
     tags=['api', 'github', 'repository', 'integration'],
@@ -140,6 +142,8 @@ class GitHubGetRepoModule(BaseModule):
 
 @register_module(
     module_id='api.github.list_issues',
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='api',
     tags=['api', 'github', 'issues', 'integration'],
@@ -302,6 +306,8 @@ class GitHubListIssuesModule(BaseModule):
 
 @register_module(
     module_id='api.github.create_issue',
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='api',
     tags=['api', 'github', 'issues', 'create'],

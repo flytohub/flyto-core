@@ -27,7 +27,9 @@ import math
     input_types=['number'],
     output_types=['number'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,

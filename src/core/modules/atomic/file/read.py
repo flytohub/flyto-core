@@ -28,7 +28,9 @@ import shutil
     input_types=['string'],
     output_types=['string', 'binary'],
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Execution settings
     timeout=30,
     retryable=True,
     max_retries=2,

@@ -28,6 +28,7 @@ import os
     input_types=['text', 'file_path'],
     output_types=['array', 'object'],
     can_connect_to=['data.*', 'file.*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=30,

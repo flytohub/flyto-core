@@ -22,7 +22,9 @@ from ...schema import compose, presets
     icon='Layers',
     color='#10B981',
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Phase 2: Execution settings
     # No timeout - instant array operation
     retryable=False,  # Logic errors won't fix themselves
     concurrent_safe=True,  # Stateless operation

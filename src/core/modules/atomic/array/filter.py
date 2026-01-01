@@ -26,7 +26,9 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['*'],    # Phase 2: Execution settings
     # No timeout - instant array operation
     retryable=False,  # Logic errors won't fix themselves
     concurrent_safe=True,  # Stateless operation

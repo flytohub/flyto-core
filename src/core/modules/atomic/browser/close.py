@@ -24,6 +24,10 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=[],
 
+    # Connection rules - close is an end point for browser chain
+    can_receive_from=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
+
     # Phase 2: Execution settings
     timeout=10,  # Browser close should complete within 10s
     retryable=False,  # Don't retry close operations
@@ -58,6 +62,8 @@ from ...registry import register_module
     description='Close the browser instance and release resources',
     icon='X',
     color='#E74C3C',
+    can_receive_from=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
 )
 class BrowserCloseModule(BaseModule):
     """Close Browser Module"""

@@ -119,6 +119,10 @@ logger = logging.getLogger(__name__)
     input_types=['text'],
     output_types=['text'],
 
+    # Connection rules (required)
+    can_receive_from=['string.*', 'data.*', 'flow.*', 'start'],
+    can_connect_to=['string.*', 'data.*', 'file.*', 'notification.*', 'flow.*'],
+
     # Parameter definitions
     params_schema={
         'name': {
@@ -230,6 +234,207 @@ class HelloModule(BaseModule):
 |-----------|------|-------------|
 | `label_key` | `str` | Translation key for label |
 | `description_key` | `str` | Translation key for description |
+
+### Connection Rules (Required)
+
+Define which modules can connect to/from this module. This prevents illogical connections in the workflow editor.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `can_receive_from` | `List[str]` | Module patterns that can connect TO this module |
+| `can_connect_to` | `List[str]` | Module patterns this module can connect TO |
+
+**Pattern Format:**
+- `'category.*'` - All modules in a category (e.g., `'browser.*'`)
+- `'category.action'` - Specific module (e.g., `'browser.launch'`)
+- `'*'` - Any module (use sparingly)
+- `'start'` - Workflow start node
+- `'end'` - Workflow end node
+
+**Example:**
+```python
+@register_module(
+    module_id='browser.click',
+    # ...
+    can_receive_from=['browser.*', 'flow.*'],      # Can receive from browser or flow modules
+    can_connect_to=['browser.*', 'element.*', 'flow.*'],  # Can connect to browser, element, or flow
+)
+```
+
+**Category Rules:**
+| Category | Can Receive From | Can Connect To |
+|----------|-----------------|----------------|
+| `browser` | `browser.*`, `flow.*`, `start` | `browser.*`, `element.*`, `page.*`, `flow.*` |
+| `element` | `browser.*`, `element.*`, `flow.*` | `element.*`, `data.*`, `string.*`, `flow.*` |
+| `flow` | `data.*`, `api.*`, `array.*`, `flow.*`, `start` | `*` (any) |
+| `data` | `*` (any) | `data.*`, `array.*`, `file.*`, `flow.*` (NO browser) |
+| `ai` | `data.*`, `string.*`, `file.*`, `flow.*` | `data.*`, `string.*`, `flow.*` (NO browser) |
+
+See `src/core/modules/connection_rules/rules.py` for complete category defaults.
+
+### Port-level Connections (Required for flow modules)
+
+Module-level rules (`can_receive_from/can_connect_to`) work as a coarse filter, but flow nodes need **port-level** rules for multi-output routing:
+
+- `flow.branch` has **true/false** outputs
+- `flow.switch` has **case outputs + default**
+- `flow.loop` has **iterate/done** outputs
+
+#### Port Definition
+
+Add `input_ports` and `output_ports` to `@register_module(...)`:
+
+```python
+@register_module(
+    module_id='flow.branch',
+    # ...
+    input_ports=[
+        {
+            'id': 'input',
+            'label': 'Input',
+            'data_type': 'any',
+            'edge_type': 'control',
+            'max_connections': 1,
+            'required': True
+        }
+    ],
+    output_ports=[
+        {
+            'id': 'true',
+            'label': 'True',
+            'event': 'true',
+            'edge_type': 'control',
+            'max_connections': 1
+        },
+        {
+            'id': 'false',
+            'label': 'False',
+            'event': 'false',
+            'edge_type': 'control',
+            'max_connections': 1
+        }
+    ]
+)
+```
+
+#### Port Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | `str` | ✅ | Stable identifier, unique within input/output |
+| `label` | `str` | ✅ | Display name |
+| `data_type` | `str` | ✅ | `'any'`, `'string'`, `'number'`, `'array'`, `'object'` |
+| `edge_type` | `str` | ✅ | `'control'` or `'data'` |
+| `max_connections` | `int` | ✅ | `1` for most control ports; `None` = unlimited |
+| `required` | `bool` | ❌ | For validation/warnings |
+| `event` | `str` | ❌ | Event name for routing (output ports only) |
+
+#### Flow Module Port Definitions
+
+**Branch (if/else)**
+```python
+output_ports=[
+    {'id': 'true', 'label': 'True', 'event': 'true', 'edge_type': 'control', 'max_connections': 1},
+    {'id': 'false', 'label': 'False', 'event': 'false', 'edge_type': 'control', 'max_connections': 1}
+]
+```
+
+**Switch (multi-case)**
+```python
+output_ports=[
+    {'id': 'default', 'label': 'Default', 'event': 'default', 'edge_type': 'control', 'max_connections': 1},
+    {'id': 'case:*', 'label': 'Case', 'event': 'case', 'edge_type': 'control', 'max_connections': 1}
+]
+# Dynamic ports: for each params.cases[i].id = "abc", editor creates port "case:abc"
+```
+
+**Loop (iterate/done)**
+```python
+output_ports=[
+    {'id': 'iterate', 'label': 'Iterate', 'event': 'iterate', 'edge_type': 'control', 'max_connections': 1},
+    {'id': 'done', 'label': 'Done', 'event': 'done', 'edge_type': 'control', 'max_connections': 1}
+]
+```
+
+#### Executor Routing Contract
+
+The executor uses `__event__` from module output to determine which port to route:
+
+```python
+async def execute(self) -> Dict[str, Any]:
+    if self.condition:
+        return {'__event__': 'true', 'result': ...}
+    else:
+        return {'__event__': 'false', 'result': ...}
+```
+
+---
+
+## Validation Behavior
+
+### Import-time (Hard Fail)
+
+The following will **raise an error** and prevent module registration:
+
+| Condition | Error |
+|-----------|-------|
+| Missing `can_receive_from` or `can_connect_to` | `ValueError: Connection rules required` |
+| `flow.*` module missing `input_ports` or `output_ports` | `ValueError: Flow modules require port definitions` |
+| Duplicate port `id` within input/output | `ValueError: Duplicate port id` |
+| Port missing required fields (`id`, `label`, `edge_type`) | `ValueError: Invalid port definition` |
+
+### Runtime (Hard Fail)
+
+| Condition | Error |
+|-----------|-------|
+| `__event__` doesn't match any output port | `RuntimeError: Unknown event` |
+| Connection violates `max_connections` | `RuntimeError: Max connections exceeded` |
+| Required port has no connection | `RuntimeError: Required port not connected` |
+
+---
+
+## Context Contract
+
+### Reserved Context Keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `params` | `Dict` | Module parameters (for function-based modules) |
+| `input` | `Any` | Input data from previous node |
+| `step_results` | `Dict` | Results from all previous steps |
+| `workflow_id` | `str` | Current workflow ID |
+| `execution_id` | `str` | Current execution ID |
+| `browser` | `object` | Browser instance (browser modules only) |
+| `page` | `object` | Current page (browser modules only) |
+
+### Class-based vs Function-based
+
+**Class-based (recommended):**
+```python
+class MyModule(BaseModule):
+    def validate_params(self):
+        self.text = self.require_param('text')  # Uses self.params internally
+
+    async def execute(self):
+        input_data = self.context.get('input')
+        return {'result': ...}
+```
+
+**Function-based:**
+```python
+@register_module('string.reverse', ...)
+async def string_reverse(context):
+    text = context['params']['text']  # Access params from context
+    return {'result': text[::-1]}
+```
+
+### Context Write Rules
+
+- Modules should **NOT** write to `context` directly
+- Use return value to pass data to next node
+- Executor handles context propagation
+
+---
 
 ### Advanced Parameters
 
@@ -485,8 +690,10 @@ pytest tests/modules/test_hello.py -v
 ## Checklist Before PR
 
 - [ ] Module ID follows `category.action` or `category.subcategory.action`
+- [ ] **Connection rules defined** (`can_receive_from` and `can_connect_to`)
+- [ ] **Flow modules have ports** (`input_ports` and `output_ports` with valid `id/label/edge_type`)
 - [ ] `validate_params()` validates all required parameters
-- [ ] `execute()` returns a dict with `result` and `status`
+- [ ] `execute()` returns a dict with `__event__` for flow modules, `result` for data modules
 - [ ] Use `logger.debug()` instead of `print()`
 - [ ] Use constants from `src/core/constants.py` (no hardcoded values)
 - [ ] Use relative imports (e.g., `from ...base import BaseModule`)

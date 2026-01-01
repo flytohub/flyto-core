@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
     input_types=['object'],
     output_types=['array', 'object'],
     can_connect_to=['data.*', 'array.*'],
+    can_receive_from=['*'],
 
     timeout=60,
     retryable=True,

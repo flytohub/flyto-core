@@ -11,6 +11,8 @@ from ...schema import compose, presets
 
 @register_module(
     module_id='db.redis.get',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='database',
     subcategory='cache',
@@ -125,6 +127,8 @@ class RedisGetModule(BaseModule):
 
 @register_module(
     module_id='db.redis.set',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='database',
     subcategory='cache',

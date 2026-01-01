@@ -21,7 +21,9 @@ from typing import Any, Dict
     color='#6366F1',
     input_types=['string'],
     output_types=['string'],
-    # Schema-driven params
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Schema-driven params
     params_schema=compose(
         presets.INPUT_TEXT(required=True),
     )

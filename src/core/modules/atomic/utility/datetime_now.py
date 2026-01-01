@@ -29,7 +29,9 @@ import uuid
     input_types=[],
     output_types=['string'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     retryable=False,  # Time operations are instant and deterministic
     concurrent_safe=True,  # Multiple time operations can run in parallel
 

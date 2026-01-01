@@ -28,7 +28,9 @@ from ...schema import compose, presets
     input_types=['file_path', 'text'],
     output_types=['boolean'],
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['file.*', 'data.*', 'document.*', 'image.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
     timeout=5,
     retryable=False,
     concurrent_safe=False,

@@ -28,7 +28,9 @@ import time
     input_types=['datetime', 'string'],
     output_types=['string', 'text'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,

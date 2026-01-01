@@ -28,7 +28,9 @@ import time
     input_types=['string', 'text'],
     output_types=['datetime', 'json'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,

@@ -24,7 +24,9 @@ from ...schema import compose, presets
     input_types=['number'],
     output_types=['number'],
 
-    timeout=None,
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    timeout=None,
     retryable=False,
     concurrent_safe=True,
 

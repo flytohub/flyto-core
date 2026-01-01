@@ -26,7 +26,9 @@ from ...registry import register_module
     input_types=['string', 'array'],
     output_types=['boolean'],
 
-    params_schema={
+
+    can_receive_from=['*'],
+    can_connect_to=['testing.*', 'test.*', 'flow.*', 'notification.*', 'data.*'],    params_schema={
         'collection': {
             'type': ['array', 'string'],
             'required': True,

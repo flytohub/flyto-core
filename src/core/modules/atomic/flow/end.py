@@ -27,7 +27,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='Square',
     color='#EF4444',
 
-    # Workflow Spec v1.1
+
+    can_receive_from=['*'],
+    can_connect_to=[],    # Workflow Spec v1.1
     node_type=NodeType.END,
 
     input_ports=[

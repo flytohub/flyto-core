@@ -25,7 +25,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='Workflow',
     color='#8B5CF6',
 
-    # Workflow Spec v1.1
+
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.SUBFLOW,
 
     input_ports=[

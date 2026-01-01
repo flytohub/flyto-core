@@ -30,7 +30,9 @@ MAX_CONTAINER_DEPTH = 5
     icon='Box',
     color='#8B5CF6',
 
-    # Workflow Spec v1.1
+
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.CONTAINER,
 
     input_ports=[

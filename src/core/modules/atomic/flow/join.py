@@ -26,7 +26,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='GitPullRequest',
     color='#F59E0B',
 
-    # Workflow Spec v1.1
+
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.JOIN,
 
     input_ports=[

@@ -24,7 +24,9 @@ import os
     icon='FileCode',
     color='#F59E0B',
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
     retryable=False,
     concurrent_safe=True,
 

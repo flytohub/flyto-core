@@ -29,7 +29,9 @@ import uuid
     input_types=[],
     output_types=['number'],
 
-    # Phase 2: Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     retryable=False,  # Random generation is deterministic
     concurrent_safe=True,  # Multiple random operations can run in parallel
 

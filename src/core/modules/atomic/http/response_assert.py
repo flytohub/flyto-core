@@ -65,6 +65,7 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     input_types=['object'],
     output_types=['object', 'boolean'],
     can_connect_to=['test.*', 'flow.*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout=5,

@@ -23,6 +23,10 @@ from ...schema import compose, presets
     input_types=[],
     output_types=['browser'],
 
+    # Connection rules - browser.launch can only connect to browser modules
+    can_connect_to=['browser.*'],
+    can_receive_from=['start', 'flow.*'],  # Can be first node or after flow control
+
     # Execution settings
     timeout=10,
     retryable=True,
@@ -65,6 +69,8 @@ from ...schema import compose, presets
     description='Launch a new browser instance with Playwright',
     icon='Monitor',
     color='#4A90E2',
+    can_connect_to=['browser.*'],
+    can_receive_from=['start', 'flow.*'],
 )
 class BrowserLaunchModule(BaseModule):
     """Launch Browser Module"""

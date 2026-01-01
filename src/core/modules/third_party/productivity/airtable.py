@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='productivity.airtable.read',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='database',
@@ -180,6 +182,8 @@ class AirtableReadModule(BaseModule):
 
 @register_module(
     module_id='productivity.airtable.create',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='database',
@@ -330,6 +334,8 @@ class AirtableCreateModule(BaseModule):
 
 @register_module(
     module_id='productivity.airtable.update',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='database',

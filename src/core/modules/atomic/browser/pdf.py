@@ -26,7 +26,9 @@ from ...schema import compose, presets, field
     input_types=['page'],
     output_types=['file'],
 
-    params_schema=compose(
+
+    can_receive_from=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
         presets.OUTPUT_PATH(placeholder='/path/to/output.pdf'),
         presets.PDF_PAGE_SIZE(default='A4'),
         presets.PDF_ORIENTATION(default='portrait'),

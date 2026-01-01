@@ -1,3 +1,0 @@
-"""
-Flyto Core Tests
-"""

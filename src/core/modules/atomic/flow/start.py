@@ -25,7 +25,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='Play',
     color='#10B981',
 
-    # Workflow Spec v1.1
+
+    can_receive_from=[],
+    can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.START,
 
     # No input ports - this is an entry point

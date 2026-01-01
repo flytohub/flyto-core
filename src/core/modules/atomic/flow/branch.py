@@ -25,6 +25,24 @@ from ...types import NodeType, EdgeType, DataType
     icon='GitBranch',
     color='#E91E63',
 
+    # Connection rules - branch needs a value to evaluate condition
+    can_receive_from=[
+        'data.*',       # Data modules output values
+        'api.*',        # API responses
+        'http.*',       # HTTP responses
+        'string.*',     # String comparisons
+        'array.*',      # Array operations
+        'object.*',     # Object operations
+        'element.*',    # Element checks
+        'ai.*',         # AI outputs
+        'database.*',   # Database results
+        'file.*',       # File operations
+        'math.*',       # Math comparisons
+        'flow.*',       # Chain from other flow control
+        'test.*',       # Test assertions
+    ],
+    can_connect_to=['*'],  # Branch outputs can go anywhere
+
     # Workflow Spec v1.1
     node_type=NodeType.BRANCH,
 

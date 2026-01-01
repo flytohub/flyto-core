@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='api.google_sheets.write',
+    can_connect_to=['*'],
+    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     tags=['productivity', 'google', 'sheets', 'spreadsheet', 'write', 'data'],

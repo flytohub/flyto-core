@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ...types import DataType, EdgeType
 
 
 @register_module(
@@ -25,7 +26,33 @@ from ...schema import compose, presets
     input_types=[],
     output_types=[],
 
-    retryable=False,
+
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_connect_to=['*'],
+
+    # Port definitions (required for flow modules)
+    input_ports=[
+        {
+            'id': 'input',
+            'label': 'Input',
+            'label_key': 'modules.flow.goto.ports.input',
+            'data_type': DataType.ANY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1,
+            'required': True
+        }
+    ],
+    output_ports=[
+        {
+            'id': 'goto',
+            'label': 'Goto',
+            'label_key': 'modules.flow.goto.ports.goto',
+            'event': 'goto',
+            'color': '#FF5722',
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1
+        }
+    ],    retryable=False,
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
@@ -37,7 +64,8 @@ from ...schema import compose, presets
         presets.MAX_ITERATIONS(default=100),
     ),
     output_schema={
-        'next_step': {'type': 'string', 'description': 'ID of the next step to execute'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (goto)'},
+        'target': {'type': 'string', 'description': 'ID of the target step'},
         'iteration': {'type': 'number', 'description': 'Current iteration count for this goto'}
     },
     examples=[
@@ -102,7 +130,8 @@ class GotoModule(BaseModule):
             )
 
         return {
-            'next_step': self.target,
+            '__event__': 'goto',
+            'target': self.target,
             'iteration': current_iteration,
             '__set_context': {
                 iteration_key: current_iteration

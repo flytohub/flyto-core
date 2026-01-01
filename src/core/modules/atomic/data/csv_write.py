@@ -24,7 +24,9 @@ import os
     icon='Save',
     color='#10B981',
 
-    # Execution settings
+
+    can_receive_from=['*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
     timeout=30,
     retryable=False,
     concurrent_safe=False,

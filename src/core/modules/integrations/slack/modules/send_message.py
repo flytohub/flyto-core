@@ -14,6 +14,8 @@ from ..integration import SlackIntegration
 
 @register_module(
     module_id="integration.slack.send_message",
+    can_connect_to=['*'],
+    can_receive_from=['*'],
     version="1.0.0",
     category="integration",
     tags=["integration", "slack", "messaging", "notification"],
