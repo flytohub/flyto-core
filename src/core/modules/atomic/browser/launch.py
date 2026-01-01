@@ -8,7 +8,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.launch',
+    module_id='browser.launch',
     version='1.0.0',
     category='browser',
     tags=['browser', 'automation', 'setup'],
@@ -23,9 +23,9 @@ from ...schema import compose, presets
     input_types=[],
     output_types=['browser'],
 
-    # Connection rules - browser.launch can only connect to browser modules
+    # Connection rules
     can_connect_to=['browser.*'],
-    can_receive_from=['start', 'flow.*'],  # Can be first node or after flow control
+    can_receive_from=['start', 'flow.*'],
 
     # Execution settings
     timeout=10,
@@ -59,18 +59,6 @@ from ...schema import compose, presets
     ],
     author='Flyto2 Team',
     license='MIT'
-)
-@register_module(
-    module_id='browser.launch',
-    version='1.0.0',
-    category='browser',
-    tags=['browser', 'automation', 'setup'],
-    label='Launch Browser',
-    description='Launch a new browser instance with Playwright',
-    icon='Monitor',
-    color='#4A90E2',
-    can_connect_to=['browser.*'],
-    can_receive_from=['start', 'flow.*'],
 )
 class BrowserLaunchModule(BaseModule):
     """Launch Browser Module"""

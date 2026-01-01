@@ -9,7 +9,7 @@ from ...registry import register_module
 
 
 @register_module(
-    module_id='core.browser.close',
+    module_id='browser.close',
     version='1.0.0',
     category='browser',
     tags=['browser', 'automation', 'cleanup'],
@@ -24,17 +24,17 @@ from ...registry import register_module
     input_types=['browser'],
     output_types=[],
 
-    # Connection rules - close is an end point for browser chain
+    # Connection rules
     can_receive_from=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
     can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
 
-    # Phase 2: Execution settings
-    timeout=10,  # Browser close should complete within 10s
-    retryable=False,  # Don't retry close operations
+    # Execution settings
+    timeout=10,
+    retryable=False,
     max_retries=0,
     concurrent_safe=False,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['browser.close'],
@@ -52,18 +52,6 @@ from ...registry import register_module
     ],
     author='Flyto2 Team',
     license='MIT'
-)
-@register_module(
-    module_id='browser.close',
-    version='1.0.0',
-    category='browser',
-    tags=['browser', 'automation', 'cleanup'],
-    label='Close Browser',
-    description='Close the browser instance and release resources',
-    icon='X',
-    color='#E74C3C',
-    can_receive_from=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
-    can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
 )
 class BrowserCloseModule(BaseModule):
     """Close Browser Module"""

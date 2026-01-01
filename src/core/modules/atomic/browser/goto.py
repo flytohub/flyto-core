@@ -25,7 +25,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.goto',
+    module_id='browser.goto',
     version='1.0.0',
     category='browser',
     tags=['browser', 'navigation', 'url'],
@@ -40,11 +40,11 @@ from ...schema import compose, presets
     input_types=['browser'],
     output_types=['page'],
 
-    # Connection rules - goto needs browser context
+    # Connection rules
     can_receive_from=['browser.launch', 'browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'data.*', 'flow.*', 'file.*'],
 
-    # Schema-driven params using presets (was 36 lines, now 4 lines)
+    # Schema-driven params
     params_schema=compose(
         presets.URL(required=True, placeholder='https://example.com'),
         presets.WAIT_CONDITION(default='domcontentloaded'),
@@ -65,18 +65,6 @@ from ...schema import compose, presets
     ],
     author='Flyto2 Team',
     license='MIT'
-)
-@register_module(
-    module_id='browser.goto',
-    version='1.0.0',
-    category='browser',
-    tags=['browser', 'navigation', 'url'],
-    label='Go to URL',
-    description='Navigate to a specific URL',
-    icon='Globe',
-    color='#5CB85C',
-    can_receive_from=['browser.launch', 'browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'data.*', 'flow.*', 'file.*'],
 )
 class BrowserGotoModule(BaseModule):
     """Navigate to URL Module"""

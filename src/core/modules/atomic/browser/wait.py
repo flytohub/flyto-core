@@ -8,7 +8,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.wait',
+    module_id='browser.wait',
     version='1.0.0',
     category='browser',
     tags=['browser', 'wait', 'delay', 'selector'],
@@ -23,9 +23,11 @@ from ...schema import compose, presets
     input_types=['page'],
     output_types=['page'],
 
-
+    # Connection rules
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+
+    # Schema-driven params
     params_schema=compose(
         presets.DURATION_S(default=1),
         presets.SELECTOR(required=False, placeholder='.element-to-wait-for'),
@@ -48,18 +50,6 @@ from ...schema import compose, presets
     ],
     author='Flyto2 Team',
     license='MIT'
-)
-@register_module(
-    module_id='browser.wait',
-    version='1.0.0',
-    category='browser',
-    tags=['browser', 'wait', 'delay', 'selector'],
-    label='Wait',
-    description='Wait for a duration or until an element appears',
-    icon='Clock',
-    color='#95A5A6',
-    can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
 )
 class BrowserWaitModule(BaseModule):
     """Wait Module"""
