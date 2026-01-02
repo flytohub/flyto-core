@@ -2,6 +2,11 @@
 Flyto Core - YAML Workflow Automation Engine
 
 This package provides the core functionality for executing YAML-based workflows.
+
+Key APIs:
+- core.validation: Workflow validation (used by flyto-cloud)
+- core.catalog: Module catalog (used by flyto-pro LLM)
+- core.modules: Module registry and execution
 """
 from .constants import (
     # Execution defaults
