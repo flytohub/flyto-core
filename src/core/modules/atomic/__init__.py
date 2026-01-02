@@ -49,6 +49,7 @@ from . import shell
 from . import http
 from . import process
 from . import port
+from . import api
 
 # AI vision and LLM modules
 from . import vision
@@ -75,11 +76,12 @@ from .element import ElementQueryModule, ElementTextModule, ElementAttributeModu
 from .browser.find import BrowserFindModule
 
 __all__ = [
-    # Shell/Process/Port modules (testing infrastructure)
+    # Shell/Process/Port/API modules (testing infrastructure)
     'shell',
     'http',
     'process',
     'port',
+    'api',
     # AI vision and LLM modules
     'vision',
     'ui',
