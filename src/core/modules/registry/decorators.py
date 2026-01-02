@@ -328,22 +328,25 @@ def register_module(
         resolved_can_connect_to = can_connect_to if can_connect_to is not None else default_can_connect
         resolved_can_receive_from = can_receive_from if can_receive_from is not None else default_can_receive
 
-        # Resolve can_be_start: explicit > node_type > input_types > False
+        # Resolve can_be_start: explicit > node_type > input_types > requires_context
         resolved_can_be_start = can_be_start
         if resolved_can_be_start is None:
             # START and TRIGGER node types can always be start
             if node_type in (NodeType.START, NodeType.TRIGGER):
                 resolved_can_be_start = True
-            # If no input_types required, can be start
-            elif not input_types or input_types == ['*']:
-                resolved_can_be_start = True
-            # SWITCH, MERGE, LOOP, etc. cannot be start
+            # SWITCH, MERGE, LOOP, etc. cannot be start (flow control nodes)
             elif node_type in (NodeType.SWITCH, NodeType.MERGE, NodeType.LOOP, NodeType.JOIN, NodeType.END):
                 resolved_can_be_start = False
-            # Default: check if module requires input
+            # If input_types requires specific data types, cannot be start
+            elif input_types and input_types != ['*']:
+                # Has specific input requirements (e.g., ['browser'], ['page'])
+                resolved_can_be_start = False
+            # If requires_context is set, cannot be start
+            elif resolved_requires_context:
+                resolved_can_be_start = False
+            # Otherwise can be start (no inputs required)
             else:
-                # If requires_context is set (needs something before it), cannot be start
-                resolved_can_be_start = len(resolved_requires_context) == 0
+                resolved_can_be_start = True
 
         # Import-time validation (P0/P1 - hard fail)
         # Check ORIGINAL values to enforce explicit definition
