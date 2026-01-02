@@ -78,7 +78,9 @@ class ConnectionIndex:
                 if self._can_connect(
                     can_connect_to, output_types,
                     other_meta.get('can_receive_from', ['*']),
-                    other_meta.get('input_types', [])
+                    other_meta.get('input_types', []),
+                    from_module_id=module_id,
+                    to_module_id=other_id,
                 ):
                     next_list.append(other_id)
             self.connectable_next[module_id] = next_list
@@ -91,7 +93,9 @@ class ConnectionIndex:
                 if self._can_connect(
                     other_meta.get('can_connect_to', ['*']),
                     other_meta.get('output_types', []),
-                    can_receive_from, input_types
+                    can_receive_from, input_types,
+                    from_module_id=other_id,
+                    to_module_id=module_id,
                 ):
                     prev_list.append(other_id)
             self.connectable_prev[module_id] = prev_list
@@ -108,16 +112,19 @@ class ConnectionIndex:
         from_output_types: List[str],
         to_can_receive: List[str],
         to_input_types: List[str],
+        from_module_id: str = '',
+        to_module_id: str = '',
     ) -> bool:
         """Check if connection is allowed based on rules and types"""
-        # Check wildcard rules
-        from_allows = '*' in from_can_connect
-        to_allows = '*' in to_can_receive
+        # Check can_connect_to rules
+        if '*' not in from_can_connect:
+            if not self._matches_any_pattern(to_module_id, from_can_connect):
+                return False
 
-        if not from_allows and not to_allows:
-            # Both have restrictions - need to check patterns
-            # For now, allow if not explicitly blocked
-            pass
+        # Check can_receive_from rules
+        if '*' not in to_can_receive:
+            if not self._matches_any_pattern(from_module_id, to_can_receive):
+                return False
 
         # Check type compatibility
         if from_output_types and to_input_types:
@@ -128,6 +135,20 @@ class ConnectionIndex:
                         return False
 
         return True
+
+    def _matches_any_pattern(self, module_id: str, patterns: List[str]) -> bool:
+        """Check if module_id matches any pattern (supports wildcards like 'browser.*')"""
+        for pattern in patterns:
+            if pattern == '*':
+                return True
+            if pattern.endswith('.*'):
+                # Category wildcard: 'browser.*' matches 'browser.click'
+                prefix = pattern[:-2]
+                if module_id.startswith(prefix + '.'):
+                    return True
+            elif pattern == module_id:
+                return True
+        return False
 
     def get_summary(self, module_id: str, direction: str) -> Dict[str, int]:
         """Get category counts for connectable modules"""

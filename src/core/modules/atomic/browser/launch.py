@@ -21,10 +21,10 @@ from ...schema import compose, presets
 
     # Connection types
     input_types=[],
-    output_types=['browser'],
+    output_types=['browser', 'page'],  # Browser launch also creates a default page
 
     # Connection rules
-    can_connect_to=['browser.*'],
+    can_connect_to=['browser.*', 'core.browser.*', 'element.*', 'page.*'],  # Can connect to browser modules
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
