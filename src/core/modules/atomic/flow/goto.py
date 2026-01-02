@@ -27,7 +27,7 @@ from ...types import DataType, EdgeType
     output_types=[],
 
 
-    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
     can_connect_to=['*'],
 
     # Port definitions (required for flow modules)

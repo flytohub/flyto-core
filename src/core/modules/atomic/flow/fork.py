@@ -26,7 +26,7 @@ from ...types import NodeType, EdgeType, DataType
     color='#06B6D4',
 
 
-    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.FORK,
 

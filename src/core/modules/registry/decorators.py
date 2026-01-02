@@ -328,14 +328,14 @@ def register_module(
         resolved_can_connect_to = can_connect_to if can_connect_to is not None else default_can_connect
         resolved_can_receive_from = can_receive_from if can_receive_from is not None else default_can_receive
 
-        # Resolve can_be_start: explicit > node_type > input_types > requires_context
+        # Resolve can_be_start: explicit > node_type > can_receive_from > input_types > requires_context
         resolved_can_be_start = can_be_start
         if resolved_can_be_start is None:
             # START and TRIGGER node types can always be start
             if node_type in (NodeType.START, NodeType.TRIGGER):
                 resolved_can_be_start = True
-            # SWITCH, MERGE, LOOP, etc. cannot be start (flow control nodes)
-            elif node_type in (NodeType.SWITCH, NodeType.MERGE, NodeType.LOOP, NodeType.JOIN, NodeType.END):
+            # Flow control nodes that need input cannot be start
+            elif node_type in (NodeType.SWITCH, NodeType.MERGE, NodeType.LOOP, NodeType.JOIN, NodeType.END, NodeType.BRANCH, NodeType.FORK):
                 resolved_can_be_start = False
             # If input_types requires specific data types, cannot be start
             elif input_types and input_types != ['*']:
@@ -344,7 +344,16 @@ def register_module(
             # If requires_context is set, cannot be start
             elif resolved_requires_context:
                 resolved_can_be_start = False
-            # Otherwise can be start (no inputs required)
+            # Check can_receive_from: must EXPLICITLY include 'start' to be a starter
+            # Note: ['*'] means "accepts any INPUT" not "doesn't need input"
+            elif resolved_can_receive_from:
+                # Check if 'start' is explicitly allowed
+                allows_start = any(
+                    pattern == 'start' or pattern.startswith('start.')
+                    for pattern in resolved_can_receive_from
+                )
+                resolved_can_be_start = allows_start
+            # Empty can_receive_from means no input needed - can be starter
             else:
                 resolved_can_be_start = True
 
