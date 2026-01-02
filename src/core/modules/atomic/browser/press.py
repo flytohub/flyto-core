@@ -11,7 +11,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.press',
+    module_id='browser.press',
     version='1.0.0',
     category='browser',
     tags=['browser', 'keyboard', 'interaction', 'key'],

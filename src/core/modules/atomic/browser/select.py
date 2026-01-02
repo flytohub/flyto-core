@@ -10,7 +10,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.select',
+    module_id='browser.select',
     version='1.0.0',
     category='browser',
     tags=['browser', 'interaction', 'select', 'dropdown', 'form'],

@@ -12,7 +12,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.download',
+    module_id='browser.download',
     version='1.0.0',
     category='browser',
     tags=['browser', 'download', 'file'],

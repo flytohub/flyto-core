@@ -11,7 +11,7 @@ from ..element_registry import get_element_registry
 
 
 @register_module(
-    module_id='core.browser.find',
+    module_id='browser.find',
     version='1.0.0',
     category='browser',
     subcategory='browser',

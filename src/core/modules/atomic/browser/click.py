@@ -8,7 +8,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.click',
+    module_id='browser.click',
     version='1.0.0',
     category='browser',
     tags=['browser', 'interaction', 'click'],

@@ -8,7 +8,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.hover',
+    module_id='browser.hover',
     version='1.0.0',
     category='browser',
     tags=['browser', 'interaction', 'hover', 'mouse'],

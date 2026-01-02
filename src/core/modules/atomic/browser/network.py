@@ -12,7 +12,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.network',
+    module_id='browser.network',
     version='1.0.0',
     category='browser',
     tags=['browser', 'network', 'request', 'response', 'intercept'],

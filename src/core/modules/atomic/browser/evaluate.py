@@ -10,7 +10,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.evaluate',
+    module_id='browser.evaluate',
     version='1.0.0',
     category='browser',
     tags=['browser', 'javascript', 'execute', 'script'],

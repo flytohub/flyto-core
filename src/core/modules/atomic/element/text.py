@@ -8,7 +8,7 @@ from ..element_registry import get_element_registry
 
 
 @register_module(
-    module_id='core.element.text',
+    module_id='element.text',
     version='1.0.0',
     category='element',
     subcategory='element',

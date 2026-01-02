@@ -10,7 +10,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.frame',
+    module_id='browser.frame',
     version='1.0.0',
     category='browser',
     tags=['browser', 'frame', 'iframe'],

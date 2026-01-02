@@ -8,7 +8,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.screenshot',
+    module_id='browser.screenshot',
     version='1.0.0',
     category='browser',
     tags=['browser', 'screenshot', 'capture', 'image'],

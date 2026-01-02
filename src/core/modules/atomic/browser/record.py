@@ -13,7 +13,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.record',
+    module_id='browser.record',
     version='1.0.0',
     category='browser',
     tags=['browser', 'record', 'automation', 'workflow'],

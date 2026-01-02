@@ -10,7 +10,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.scroll',
+    module_id='browser.scroll',
     version='1.0.0',
     category='browser',
     tags=['browser', 'scroll', 'navigation'],

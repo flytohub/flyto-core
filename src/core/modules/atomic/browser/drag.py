@@ -10,7 +10,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.drag',
+    module_id='browser.drag',
     version='1.0.0',
     category='browser',
     tags=['browser', 'drag', 'drop', 'interaction'],

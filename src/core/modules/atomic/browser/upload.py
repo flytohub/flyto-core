@@ -11,7 +11,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.upload',
+    module_id='browser.upload',
     version='1.0.0',
     category='browser',
     tags=['browser', 'upload', 'file', 'input'],

@@ -11,7 +11,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.dialog',
+    module_id='browser.dialog',
     version='1.0.0',
     category='browser',
     tags=['browser', 'dialog', 'alert', 'confirm', 'prompt'],

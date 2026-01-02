@@ -11,7 +11,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.console',
+    module_id='browser.console',
     version='1.0.0',
     category='browser',
     tags=['browser', 'console', 'debug', 'logs'],

@@ -10,7 +10,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.geolocation',
+    module_id='browser.geolocation',
     version='1.0.0',
     category='browser',
     tags=['browser', 'geolocation', 'location', 'gps'],

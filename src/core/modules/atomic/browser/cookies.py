@@ -10,7 +10,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.cookies',
+    module_id='browser.cookies',
     version='1.0.0',
     category='browser',
     tags=['browser', 'cookies', 'session', 'storage'],

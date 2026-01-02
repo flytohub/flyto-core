@@ -11,7 +11,7 @@ from ...schema import compose, presets, field
 
 
 @register_module(
-    module_id='core.browser.pdf',
+    module_id='browser.pdf',
     version='1.0.0',
     category='browser',
     tags=['browser', 'pdf', 'export', 'print'],

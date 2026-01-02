@@ -10,7 +10,7 @@ from ...schema import compose, presets
 
 
 @register_module(
-    module_id='core.browser.storage',
+    module_id='browser.storage',
     version='1.0.0',
     category='browser',
     tags=['browser', 'storage', 'localStorage', 'sessionStorage'],
