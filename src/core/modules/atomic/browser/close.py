@@ -21,7 +21,7 @@ from ...registry import register_module
     color='#E74C3C',
 
     # Connection types
-    input_types=['browser'],
+    input_types=['browser', 'page'],  # Accept both browser and page
     output_types=[],
 
     # Connection rules
