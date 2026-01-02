@@ -3,57 +3,20 @@ JSON Transform and Notify Composite Module
 
 Transforms JSON data and sends notification with results.
 """
-from ..base import CompositeModule, register_composite, UIVisibility
-from ...schema import compose, field, presets
+from ..base import CompositeModule, register_composite
 
 
 @register_composite(
     module_id='composite.data.json_transform_notify',
-    version='1.0.0',
-    category='data',
-    subcategory='transform',
-    tags=['data', 'json', 'transform', 'notification'],
+    label='JSON Transform and Notify',
+    icon='Braces',
+    color='#8B5CF6',
 
-    # Context requirements
-    requires_context=None,
-    provides_context=['data', 'api_response'],
-
-    # UI metadata
-    ui_visibility=UIVisibility.DEFAULT,
-    ui_label='JSON Transform and Notify',
-    ui_label_key='composite.json_transform_notify.label',
-    ui_description='Transform JSON data using JMESPath and send notification with results',
-    ui_description_key='composite.json_transform_notify.desc',
-    ui_group='Data / Transform',
-    ui_icon='Braces',
-    ui_color='#8B5CF6',
-
-    # Schema-driven params
-    ui_params_schema=compose(
-        presets.JSON_STRING(key='json_input', label='JSON Input',
-                            placeholder='[{"name": "John", "age": 30}]'),
-        field('filter_expression', type='string', label='Filter Expression',
-              placeholder='true', default='true',
-              description='Expression to filter data (e.g., item.age > 25)'),
-        field('map_expression', type='string', label='Map Expression',
-              placeholder='item', default='item',
-              description='Expression to transform each item'),
-        presets.URL(key='webhook_url', required=False, label='Notification Webhook URL',
-                    placeholder='${env.SLACK_WEBHOOK_URL}'),
-    ),
-
-    # Connection types
-    input_types=['json'],
-    output_types=['json', 'api_response'],
-
-    # Steps definition
     steps=[
         {
             'id': 'parse',
             'module': 'data.json.parse',
-            'params': {
-                'json_string': '${params.json_input}'
-            }
+            'params': {'json_string': '${params.json_input}'}
         },
         {
             'id': 'filter',
@@ -92,7 +55,32 @@ from ...schema import compose, field, presets
         }
     ],
 
-    # Output schema
+    params_schema={
+        'json_input': {
+            'type': 'string',
+            'label': 'JSON Input',
+            'required': True,
+            'placeholder': '[{"name": "John", "age": 30}]'
+        },
+        'filter_expression': {
+            'type': 'string',
+            'label': 'Filter Expression',
+            'default': 'true',
+            'placeholder': 'item.age > 25'
+        },
+        'map_expression': {
+            'type': 'string',
+            'label': 'Map Expression',
+            'default': 'item',
+            'placeholder': 'item'
+        },
+        'webhook_url': {
+            'type': 'string',
+            'label': 'Notification Webhook URL',
+            'placeholder': '${env.SLACK_WEBHOOK_URL}'
+        }
+    },
+
     output_schema={
         'status': {'type': 'string'},
         'original_count': {'type': 'number'},
@@ -101,39 +89,14 @@ from ...schema import compose, field, presets
         'notification_sent': {'type': 'boolean'}
     },
 
-    # Execution settings
     timeout=30,
     retryable=True,
     max_retries=2,
-
-    # Documentation
-    examples=[
-        {
-            'name': 'Filter and notify',
-            'description': 'Filter users over 25 and notify',
-            'params': {
-                'json_input': '[{"name": "John", "age": 30}, {"name": "Jane", "age": 20}]',
-                'filter_expression': 'item.age > 25',
-                'webhook_url': '${env.SLACK_WEBHOOK_URL}'
-            }
-        }
-    ],
-    author='Flyto Core Team',
-    license='MIT'
 )
 class JsonTransformNotify(CompositeModule):
-    """
-    JSON Transform and Notify Composite Module
-
-    This composite module:
-    1. Parses JSON input
-    2. Filters data based on expression
-    3. Maps/transforms each item
-    4. Sends notification with results
-    """
+    """JSON Transform and Notify - filter, transform, and notify"""
 
     def _build_output(self, metadata):
-        """Build output with transformation results"""
         parse_result = self.step_results.get('parse', {})
         filter_result = self.step_results.get('filter', {})
         map_result = self.step_results.get('map', {})

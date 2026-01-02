@@ -1,5 +1,11 @@
 """
 Composite Module Registration Decorator
+
+Features:
+- Auto-derivation: input_types, output_types, can_receive_from, can_connect_to
+  are automatically inferred from the first/last steps
+- Import-time validation: steps must be defined, each step must have 'module'
+- Simplified API: only need module_id, label, icon, color, steps, params_schema
 """
 from typing import Any, Dict, List, Optional
 
@@ -10,6 +16,67 @@ from ....constants import (
 )
 from .registry import CompositeRegistry
 from .module import CompositeModule
+
+
+def _validate_composite_registration(
+    module_id: str,
+    steps: Optional[List[Dict[str, Any]]],
+) -> None:
+    """
+    Validate composite module registration at import time.
+    Raises ValueError if validation fails.
+    """
+    errors = []
+
+    # P1: steps must be defined
+    if not steps:
+        errors.append("Missing 'steps' - composite must define workflow steps")
+
+    # P0: each step must have 'module' reference
+    for i, step in enumerate(steps or []):
+        if 'module' not in step:
+            step_id = step.get('id', f'step_{i}')
+            errors.append(f"Step '{step_id}' missing 'module' reference")
+
+    if errors:
+        raise ValueError(
+            f"Composite '{module_id}' registration failed:\n  - " +
+            "\n  - ".join(errors)
+        )
+
+
+def _infer_from_steps(steps: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Auto-derive input/output types and connection rules from steps.
+
+    Rules:
+    - input_types: from first step's input_types
+    - output_types: from last step's output_types
+    - can_receive_from: from first step's can_receive_from
+    - can_connect_to: from last step's can_connect_to
+    """
+    if not steps:
+        return {}
+
+    # Lazy import to avoid circular dependency
+    from ...registry import ModuleRegistry
+
+    first_step = steps[0]
+    last_step = steps[-1]
+
+    first_module_id = first_step.get('module', '')
+    last_module_id = last_step.get('module', '')
+
+    # Get metadata from atomic module registry
+    first_meta = ModuleRegistry.get_metadata(first_module_id) or {}
+    last_meta = ModuleRegistry.get_metadata(last_module_id) or {}
+
+    return {
+        'input_types': first_meta.get('input_types', []),
+        'output_types': last_meta.get('output_types', []),
+        'can_receive_from': first_meta.get('can_receive_from', ['*']),
+        'can_connect_to': last_meta.get('can_connect_to', ['*']),
+    }
 
 
 def register_composite(
@@ -48,7 +115,7 @@ def register_composite(
     icon: Optional[str] = None,
     color: Optional[str] = None,
 
-    # Connection types
+    # Connection types (auto-derived from steps if not provided)
     input_types: Optional[List[str]] = None,
     output_types: Optional[List[str]] = None,
 
@@ -65,11 +132,11 @@ def register_composite(
     # Connection error messages (custom messages)
     connection_error_messages: Optional[Dict[str, str]] = None,
 
-    # Connection rules (which modules can connect to/from this composite)
+    # Connection rules (auto-derived from steps if not provided)
     can_connect_to: Optional[List[str]] = None,
     can_receive_from: Optional[List[str]] = None,
 
-    # Steps definition
+    # Steps definition (REQUIRED)
     steps: Optional[List[Dict[str, Any]]] = None,
 
     # Schema
@@ -89,133 +156,77 @@ def register_composite(
     """
     Decorator to register a Composite Module (Level 3)
 
-    Composite modules are the primary interface for normal users.
-    They combine multiple atomic modules into a single, easy-to-use action.
+    Composite modules combine multiple atomic modules into a single action.
+    Connection types and rules are auto-derived from steps unless explicitly provided.
 
-    Example:
+    Simplified Example:
         @register_composite(
-            module_id='composite.browser.search_and_screenshot',
-            category='browser',
-            tags=['search', 'screenshot'],
-
-            requires_context=None,
-            provides_context=['file'],
-
-            ui_visibility=UIVisibility.DEFAULT,
-            ui_label='Search and Screenshot',
-            ui_description='Search the web and capture screenshot',
-            ui_help='This module launches a browser, performs a search, and captures a screenshot.',
-            ui_group='Browser / Common Tasks',
-            ui_icon='Search',
-            ui_color='#4285F4',
-
-            # Connection type labels for UI display
-            input_types=['string'],
-            input_type_labels={'string': 'Search Query'},
-            input_type_descriptions={'string': 'The search term to look for'},
-
-            output_types=['image', 'file'],
-            output_type_labels={'image': 'Screenshot', 'file': 'Image File'},
-            output_type_descriptions={'image': 'Screenshot of search results'},
-
-            # Connection suggestions for UI guidance
-            suggested_predecessors=['file.read', 'string.template'],
-            suggested_successors=['file.write', 'notification.send'],
-
-            ui_params_schema={
-                'query': {
-                    'type': 'string',
-                    'label': 'Search Query',
-                    'description': 'What to search for',
-                    'help': 'Enter keywords separated by spaces',
-                    'hint': 'Tip: Use quotes for exact matches',
-                    'examples': ['python tutorial', 'latest news'],
-                    'required': True,
-                    'ui_component': 'input',
-                    'validation': {
-                        'min_length': 1,
-                        'max_length': 200,
-                    },
-                    'error_messages': {
-                        'required': 'Please enter a search query',
-                        'min_length': 'Query is too short',
-                    },
-                },
-            },
+            module_id='composite.browser.scrape_to_json',
+            label='Scrape Web to JSON',
+            icon='FileJson',
+            color='#10B981',
 
             steps=[
-                {'id': 'launch', 'module': 'browser.launch'},
-                {'id': 'search', 'module': 'browser.goto', 'params': {...}},
-            ]
+                {'id': 'launch', 'module': 'browser.launch', 'params': {'headless': True}},
+                {'id': 'goto', 'module': 'browser.goto', 'params': {'url': '${params.url}'}},
+                {'id': 'extract', 'module': 'browser.extract', 'params': {'selector': '${params.selector}'}},
+            ],
+
+            params_schema={
+                'url': {'type': 'string', 'required': True, 'label': 'URL'},
+                'selector': {'type': 'string', 'required': True, 'label': 'CSS Selector'},
+            },
+            # input_types, output_types, can_receive_from, can_connect_to
+            # are automatically derived from steps!
         )
-        class SearchAndScreenshot(CompositeModule):
+        class WebScrapeToJson(CompositeModule):
             pass
 
+    Auto-Derivation Rules:
+        - input_types: from first step's input_types
+        - output_types: from last step's output_types
+        - can_receive_from: from first step's can_receive_from
+        - can_connect_to: from last step's can_connect_to
+        - category: from module_id (e.g., composite.browser.x → browser)
+
+    Priority: Manual override > Auto-derived > Default
+
     Args:
-        module_id: Unique identifier (e.g., "composite.browser.search_and_screenshot")
-        version: Semantic version
-        category: Primary category
-        subcategory: Subcategory
-        tags: List of tags for filtering
+        module_id: Unique identifier (e.g., "composite.browser.scrape_to_json")
+        label/ui_label: Display name for UI
+        icon/ui_icon: Lucide icon name
+        color/ui_color: Hex color code
+        steps: List of atomic steps to execute (REQUIRED)
+        params_schema: Parameter definitions for UI form
 
-        requires_context: List of context types this composite requires
-        provides_context: List of context types this composite provides
-
-        ui_visibility: UI visibility level (DEFAULT/EXPERT/HIDDEN)
-        ui_label: Display name for UI
-        ui_label_key: i18n key for label
-        ui_description: Short description for UI
-        ui_description_key: i18n key for description
-        ui_help: Detailed help text (expandable in UI)
-        ui_help_key: i18n key for help text
-        ui_group: UI grouping category
-        ui_icon: Lucide icon name
-        ui_color: Hex color code
-        ui_params_schema: Schema for UI form generation with enhanced fields:
-            - help: Detailed field explanation
-            - hint: Inline tip displayed below field
-            - warning: Warning message (non-blocking)
-            - examples: List of example values
-            - validation: {pattern, pattern_error, min_length, max_length, min, max}
-            - error_messages: Custom error messages for validation types
-            - visible_when: Conditional display rules
-            - depends_on: Field dependencies
-
+        # Auto-derived (override only if needed):
         input_types: List of accepted input data types
-        input_type_labels: Human-readable labels for input types
-        input_type_descriptions: Detailed descriptions for input types
         output_types: List of produced output data types
-        output_type_labels: Human-readable labels for output types
-        output_type_descriptions: Detailed descriptions for output types
-
-        suggested_predecessors: Recommended modules to connect before this one
-        suggested_successors: Recommended modules to connect after this one
-        connection_error_messages: Custom error messages for connection validation
-
         can_connect_to: Module patterns this can connect to
         can_receive_from: Module patterns this can receive from
-
-        steps: List of atomic steps to execute
-        params_schema: Parameter definitions
-        output_schema: Output structure definition
-
-        timeout: Execution timeout in seconds
-        retryable: Whether module can be retried
-        max_retries: Maximum retry attempts
-        examples: Usage examples
-        author: Module author
-        license: License identifier
     """
     def decorator(cls):
         # Ensure class inherits from CompositeModule
         if not issubclass(cls, CompositeModule):
             raise TypeError(f"{cls.__name__} must inherit from CompositeModule")
 
+        # Step 1: Validate (import-time hard fail)
+        _validate_composite_registration(module_id, steps)
+
+        # Step 2: Auto-derive from steps
+        inferred = _infer_from_steps(steps or [])
+
+        # Step 3: Resolve values (manual > inferred > default)
+        final_input_types = input_types if input_types is not None else inferred.get('input_types', [])
+        final_output_types = output_types if output_types is not None else inferred.get('output_types', [])
+        final_can_receive = can_receive_from if can_receive_from is not None else inferred.get('can_receive_from', ['*'])
+        final_can_connect = can_connect_to if can_connect_to is not None else inferred.get('can_connect_to', ['*'])
+
         cls.module_id = module_id
         cls.steps = steps or []
 
         # Determine category from module_id if not provided
-        resolved_category = category or module_id.split('.')[1] if '.' in module_id else 'composite'
+        resolved_category = category or (module_id.split('.')[1] if '.' in module_id else 'composite')
 
         # Build metadata
         metadata = {
@@ -253,9 +264,9 @@ def register_composite(
             "icon": ui_icon or icon,
             "color": ui_color or color,
 
-            # Connection types
-            "input_types": input_types or [],
-            "output_types": output_types or [],
+            # Connection types (auto-derived or manual)
+            "input_types": final_input_types,
+            "output_types": final_output_types,
 
             # Type labels and descriptions (for UI display)
             "input_type_labels": input_type_labels or {},
@@ -270,9 +281,9 @@ def register_composite(
             # Connection error messages
             "connection_error_messages": connection_error_messages or {},
 
-            # Connection rules
-            "can_connect_to": can_connect_to or ["*"],
-            "can_receive_from": can_receive_from or ["*"],
+            # Connection rules (auto-derived or manual)
+            "can_connect_to": final_can_connect,
+            "can_receive_from": final_can_receive,
 
             # Steps definition
             "steps": steps or [],

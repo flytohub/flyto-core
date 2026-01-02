@@ -48,10 +48,10 @@ from .data.csv_to_json import CsvToJson
 from .data.json_transform_notify import JsonTransformNotify
 
 # Test composites
-from .test.e2e_flow import WebAppE2ETest
-from .test.api_test import APITestSuite
-from .test.ui_review import AIUIReview
-from .test.quality_gate import CIQualityGate
+from .test.e2e_flow import E2EFlowTest
+from .test.api_test import ApiTestSuite
+from .test.ui_review import UIReview
+from .test.quality_gate import QualityGate
 
 
 __all__ = [
@@ -78,10 +78,10 @@ __all__ = [
     'JsonTransformNotify',
 
     # Test composites
-    'WebAppE2ETest',
-    'APITestSuite',
-    'AIUIReview',
-    'CIQualityGate',
+    'E2EFlowTest',
+    'ApiTestSuite',
+    'UIReview',
+    'QualityGate',
 ]
 
 

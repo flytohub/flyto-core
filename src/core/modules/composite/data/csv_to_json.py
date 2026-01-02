@@ -3,47 +3,15 @@ CSV to JSON Composite Module
 
 Reads a CSV file and converts it to JSON format.
 """
-from ..base import CompositeModule, register_composite, UIVisibility
-from ...schema import compose, presets
+from ..base import CompositeModule, register_composite
 
 
 @register_composite(
     module_id='composite.data.csv_to_json',
-    version='1.0.0',
-    category='data',
-    subcategory='transform',
-    tags=['data', 'csv', 'json', 'transform', 'file'],
+    label='CSV to JSON',
+    icon='FileSpreadsheet',
+    color='#059669',
 
-    # Context requirements
-    requires_context=None,
-    provides_context=['data', 'file'],
-
-    # UI metadata
-    ui_visibility=UIVisibility.DEFAULT,
-    ui_label='CSV to JSON',
-    ui_label_key='composite.csv_to_json.label',
-    ui_description='Read a CSV file and convert it to JSON format',
-    ui_description_key='composite.csv_to_json.desc',
-    ui_group='Data / Transform',
-    ui_icon='FileSpreadsheet',
-    ui_color='#059669',
-
-    # Schema-driven params
-    ui_params_schema=compose(
-        presets.FILE_PATH(key='input_file', required=True, label='Input CSV File',
-                          placeholder='./data/input.csv'),
-        presets.OUTPUT_PATH(key='output_file', label='Output JSON File',
-                            placeholder='./data/output.json'),
-        presets.DELIMITER(default=','),
-        presets.INCLUDE_HEADER(key='has_header', label='Has Header Row', default=True),
-        presets.INDENT_SIZE(default=2),
-    ),
-
-    # Connection types
-    input_types=['file_path', 'csv'],
-    output_types=['json'],
-
-    # Steps definition
     steps=[
         {
             'id': 'read_csv',
@@ -73,7 +41,35 @@ from ...schema import compose, presets
         }
     ],
 
-    # Output schema
+    params_schema={
+        'input_file': {
+            'type': 'string',
+            'label': 'Input CSV File',
+            'required': True,
+            'placeholder': './data/input.csv'
+        },
+        'output_file': {
+            'type': 'string',
+            'label': 'Output JSON File',
+            'placeholder': './data/output.json'
+        },
+        'delimiter': {
+            'type': 'string',
+            'label': 'Delimiter',
+            'default': ','
+        },
+        'has_header': {
+            'type': 'boolean',
+            'label': 'Has Header Row',
+            'default': True
+        },
+        'indent': {
+            'type': 'number',
+            'label': 'Indent Size',
+            'default': 2
+        }
+    },
+
     output_schema={
         'status': {'type': 'string'},
         'data': {'type': 'array'},
@@ -81,38 +77,14 @@ from ...schema import compose, presets
         'output_file': {'type': 'string'}
     },
 
-    # Execution settings
     timeout=60,
     retryable=True,
     max_retries=2,
-
-    # Documentation
-    examples=[
-        {
-            'name': 'Convert sales data',
-            'description': 'Convert sales.csv to JSON',
-            'params': {
-                'input_file': './data/sales.csv',
-                'output_file': './data/sales.json',
-                'has_header': True
-            }
-        }
-    ],
-    author='Flyto Core Team',
-    license='MIT'
 )
 class CsvToJson(CompositeModule):
-    """
-    CSV to JSON Composite Module
-
-    This composite module:
-    1. Reads a CSV file
-    2. Converts to JSON format
-    3. Optionally saves to output file
-    """
+    """CSV to JSON - reads CSV and converts to JSON format"""
 
     def _build_output(self, metadata):
-        """Build output with conversion results"""
         csv_data = self.step_results.get('read_csv', {})
         data = csv_data.get('data', [])
 
