@@ -33,7 +33,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
     input_types=['image', 'file'],
     output_types=['json'],
     can_connect_to=['data.*', 'object.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'image.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'image.*', 'api.*', 'flow.*'],
 
     timeout=ModuleDefaults.TIMEOUT,
     retryable=ModuleDefaults.RETRYABLE,

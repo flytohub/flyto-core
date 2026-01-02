@@ -44,7 +44,7 @@ from ....schema import compose, presets
         presets.DB_PASSWORD(),
         presets.DB_NAME(),
         presets.SQL_QUERY(placeholder='SELECT * FROM users WHERE active = 1'),
-        presets.QUERY_PARAMS(),
+        presets.DB_QUERY_PARAMS(),
     ),
     output_schema={
         'rows': {

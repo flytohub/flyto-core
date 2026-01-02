@@ -16,6 +16,7 @@ DEFAULT_VISIBILITY_CATEGORIES: Dict[str, UIVisibility] = {
     # AI & Chat - Complete AI integrations
     "ai": UIVisibility.DEFAULT,
     "agent": UIVisibility.DEFAULT,
+    "huggingface": UIVisibility.DEFAULT,  # HuggingFace AI models
 
     # Communication & Notifications - Send messages to users
     "notification": UIVisibility.DEFAULT,

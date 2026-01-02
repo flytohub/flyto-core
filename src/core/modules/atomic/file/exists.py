@@ -25,7 +25,7 @@ import shutil
     color='#6B7280',
 
 
-    can_receive_from=['*'],
+    can_receive_from=['start', 'flow.*'],
     can_connect_to=['*'],    # Execution settings
     retryable=True,
     max_retries=2,

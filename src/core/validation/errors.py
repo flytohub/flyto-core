@@ -34,6 +34,7 @@ class ErrorCode:
     MISSING_REQUIRED_PARAM = 'MISSING_REQUIRED_PARAM'
     INVALID_PARAM_VALUE = 'INVALID_PARAM_VALUE'
     INVALID_PARAM_TYPE = 'INVALID_PARAM_TYPE'
+    UNKNOWN_PARAM = 'UNKNOWN_PARAM'
 
     # Module errors
     MODULE_NOT_FOUND = 'MODULE_NOT_FOUND'
@@ -100,6 +101,10 @@ ERROR_MESSAGES = {
     ErrorCode.INVALID_PARAM_VALUE: {
         'en': 'Invalid value for {param}: {value}',
         'zh-TW': '{param} 的值無效: {value}',
+    },
+    ErrorCode.UNKNOWN_PARAM: {
+        'en': 'Unknown parameter "{param}" in {node_id}. Valid params: {valid_params}',
+        'zh-TW': '{node_id} 中的參數 "{param}" 不存在。有效參數: {valid_params}',
     },
 
     # Module

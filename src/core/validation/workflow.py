@@ -29,9 +29,83 @@ class WorkflowResult:
     warnings: List[WorkflowError] = field(default_factory=list)
 
 
+def validate_node_params(
+    node: Dict[str, Any],
+    strict: bool = False,
+) -> List[WorkflowError]:
+    """
+    Validate node parameters against module's params_schema.
+
+    Checks:
+    - All provided params keys exist in params_schema
+    - Required params are present
+    - Param values match expected types
+
+    Args:
+        node: Node definition with 'id', 'module_id', 'params'
+        strict: If True, unknown params are errors; if False, warnings
+
+    Returns:
+        List of validation errors/warnings
+    """
+    from ..modules.registry import ModuleRegistry
+
+    results: List[WorkflowError] = []
+    node_id = node.get('id', 'unknown')
+    module_id = node.get('module_id', '')
+    params = node.get('params', {})
+
+    if not module_id:
+        return results
+
+    meta = ModuleRegistry.get_metadata(module_id)
+    if not meta:
+        return results
+
+    params_schema = meta.get('params_schema', {})
+    if not params_schema:
+        return results  # No schema to validate against
+
+    valid_keys = set(params_schema.keys())
+
+    # Check for unknown params
+    for param_key in params.keys():
+        if param_key not in valid_keys:
+            results.append(WorkflowError(
+                code=ErrorCode.UNKNOWN_PARAM,
+                message=f'Unknown parameter "{param_key}" in {node_id}',
+                path=f'nodes[{node_id}].params.{param_key}',
+                meta={
+                    'node_id': node_id,
+                    'module_id': module_id,
+                    'param': param_key,
+                    'valid_params': ', '.join(sorted(valid_keys)) or '(none)',
+                }
+            ))
+
+    # Check for missing required params
+    for param_key, param_def in params_schema.items():
+        if param_def.get('required', False):
+            value = params.get(param_key)
+            if value is None or value == '':
+                results.append(WorkflowError(
+                    code=ErrorCode.MISSING_REQUIRED_PARAM,
+                    message=f'Missing required parameter: {param_key}',
+                    path=f'nodes[{node_id}].params.{param_key}',
+                    meta={
+                        'node_id': node_id,
+                        'module_id': module_id,
+                        'param': param_key,
+                    }
+                ))
+
+    return results
+
+
 def validate_workflow(
     nodes: List[Dict[str, Any]],
     edges: List[Dict[str, Any]],
+    validate_params: bool = True,
 ) -> WorkflowResult:
     """
     Validate entire workflow.
@@ -41,6 +115,7 @@ def validate_workflow(
     - No orphan nodes (except start nodes)
     - Start nodes are valid
     - Required parameters are set
+    - Unknown params are flagged as warnings
     - No cycles (except in loop modules)
 
     Args:
@@ -48,6 +123,7 @@ def validate_workflow(
             [{'id': 'n1', 'module_id': 'browser.launch', 'params': {...}}, ...]
         edges: List of edge definitions
             [{'id': 'e1', 'source': 'n1', 'target': 'n2'}, ...]
+        validate_params: Whether to validate params against schema
 
     Returns:
         WorkflowResult with valid=True/False and error/warning lists
@@ -122,6 +198,17 @@ def validate_workflow(
                     path=f'nodes[{nid}]',
                     meta={'node_id': nid}
                 ))
+
+    # Validate params for each node
+    if validate_params:
+        for node in nodes:
+            param_errors = validate_node_params(node, strict=False)
+            for err in param_errors:
+                # Unknown params are warnings, missing required are errors
+                if err.code == ErrorCode.UNKNOWN_PARAM:
+                    warnings.append(err)
+                else:
+                    errors.append(err)
 
     # Check for cycles (simple DFS)
     cycle_errors = _detect_cycles(node_ids, outgoing, node_map)

@@ -40,7 +40,7 @@ from ....schema import compose, presets
     params_schema=compose(
         presets.DB_CONNECTION_STRING(),
         presets.SQL_QUERY(),
-        presets.QUERY_PARAMS(),
+        presets.DB_QUERY_PARAMS(),
     ),
     output_schema={
         'rows': {

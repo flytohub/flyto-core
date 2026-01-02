@@ -28,7 +28,7 @@ from ....schema import compose, presets
     input_types=[],
     output_types=['json', 'text', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*', 'flow.*'],
-    can_receive_from=['*'],
+    can_receive_from=['start', 'flow.*'],
 
     # Schema-driven params
     params_schema=compose(

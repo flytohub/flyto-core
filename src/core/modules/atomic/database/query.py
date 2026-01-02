@@ -49,7 +49,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
 
     params_schema=compose(
         presets.SQL_QUERY(),
-        presets.QUERY_PARAMS(),
+        presets.DB_QUERY_PARAMS(),
         presets.DB_TYPE(),
         presets.DB_CONNECTION_STRING(),
         presets.DB_HOST(),

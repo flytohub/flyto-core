@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    can_receive_from=['data.*', 'file.*', 'browser.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
 
     # Phase 2: Execution settings
@@ -229,7 +229,7 @@ async def anthropic_chat(context):
     # Connection types
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    can_receive_from=['data.*', 'file.*', 'browser.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
 
     # Phase 2: Execution settings

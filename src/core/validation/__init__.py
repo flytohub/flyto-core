@@ -22,6 +22,7 @@ from .connection import (
 from .workflow import (
     validate_workflow,
     validate_start,
+    validate_node_params,
     get_startable_modules,
     WorkflowResult,
     WorkflowError,
@@ -39,6 +40,7 @@ __all__ = [
     # Workflow validation
     'validate_workflow',
     'validate_start',
+    'validate_node_params',
     'get_startable_modules',
     'WorkflowResult',
     'WorkflowError',

@@ -59,7 +59,7 @@ def extract_embedding(result: Any) -> List[float]:
     input_types=['text'],
     output_types=['vector'],
     can_connect_to=['vector.*', 'data.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'image.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     timeout=ModuleDefaults.TIMEOUT,
     retryable=ModuleDefaults.RETRYABLE,

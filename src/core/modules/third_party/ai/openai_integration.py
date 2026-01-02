@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
     input_types=['text', 'json'],
     output_types=['text', 'json'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     # Phase 2: Execution settings
     timeout=60,  # AI responses can take time
@@ -214,7 +214,7 @@ class OpenAIChatModule(BaseModule):
     input_types=['text'],
     output_types=['image', 'url'],
     can_connect_to=['file.*', 'cloud.*', 'notification.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     # Phase 2: Execution settings
     timeout=120,  # Image generation takes longer

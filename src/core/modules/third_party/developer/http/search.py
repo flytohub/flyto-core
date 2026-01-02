@@ -29,7 +29,7 @@ from ....schema import compose, presets
     input_types=[],
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    can_receive_from=['*'],
+    can_receive_from=['start', 'flow.*'],
     timeout=30,
     retryable=True,
     max_retries=3,
@@ -138,7 +138,7 @@ class GoogleSearchAPIModule(BaseModule):
     input_types=[],
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
-    can_receive_from=['*'],
+    can_receive_from=['start', 'flow.*'],
     params_schema=compose(
         presets.SEARCH_KEYWORD(placeholder='python tutorial'),
         presets.SEARCH_LIMIT(),
