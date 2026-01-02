@@ -103,6 +103,8 @@ def field(
     format: Optional[str] = None,
     ui: Optional[dict] = None,
     advanced: bool = False,
+    visibility: Optional[str] = None,
+    group: Optional[str] = None,
     **extra: Any,
 ) -> Schema:
     """
@@ -127,7 +129,9 @@ def field(
         step: Step value (for numbers)
         format: Format hint (multiline, path, url, email, password, color, date, etc.)
         ui: UI rendering hints (widget, etc.)
-        advanced: Mark as advanced/expert option
+        advanced: Mark as advanced/expert option (legacy, prefer visibility)
+        visibility: Field visibility level ('default', 'expert', 'hidden')
+        group: Field group name ('basic', 'connection', 'options', 'advanced')
         **extra: Additional custom properties
 
     Returns:
@@ -190,6 +194,16 @@ def field(
         d["ui"] = ui
     if advanced:
         d["advanced"] = True
+
+    # Visibility: explicit > advanced flag > default
+    if visibility is not None:
+        d["visibility"] = visibility
+    elif advanced:
+        d["visibility"] = "expert"
+
+    # Group
+    if group is not None:
+        d["group"] = group
 
     # Extra properties
     d.update(extra)

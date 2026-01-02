@@ -4,6 +4,7 @@ Common Presets / Common Field Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -26,6 +27,7 @@ def URL(
         placeholder=placeholder,
         required=required,
         validation=validation,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -73,6 +75,7 @@ def FILE_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -96,6 +99,8 @@ def TIMEOUT_MS(
         max=max_ms,
         step=100,
         ui={"unit": "ms"},
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -119,6 +124,8 @@ def TIMEOUT_S(
         max=max_s,
         step=1,
         ui={"unit": "s"},
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -201,6 +208,7 @@ def DESCRIPTION(
         required=False,
         placeholder=placeholder,
         format="multiline" if multiline else None,
+        group=FieldGroup.OPTIONS,
     )
 
 

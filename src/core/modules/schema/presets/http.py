@@ -4,6 +4,7 @@ HTTP Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def HTTP_METHOD(
         label_key=label_key,
         default=default,
         enum=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -39,6 +41,7 @@ def HEADERS(
         label_key=label_key,
         default={},
         ui={"widget": "key_value"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -57,6 +60,7 @@ def REQUEST_BODY(
         required=False,
         format="multiline",
         ui={"widget": "json_editor"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -82,6 +86,7 @@ def CONTENT_TYPE(
             "text/html",
             "application/xml",
         ],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -99,6 +104,7 @@ def QUERY_PARAMS(
         label_key=label_key,
         default={},
         ui={"widget": "key_value"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -117,7 +123,8 @@ def FOLLOW_REDIRECTS(
         label_key=label_key,
         default=default,
         description="Automatically follow HTTP redirects",
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -136,7 +143,8 @@ def VERIFY_SSL(
         label_key=label_key,
         default=default,
         description="Verify SSL certificates",
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -155,7 +163,8 @@ def RESPONSE_TYPE(
         label_key=label_key,
         default=default,
         enum=["auto", "json", "text", "binary"],
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -172,7 +181,6 @@ def HTTP_AUTH(
         label=label,
         label_key=label_key,
         required=False,
-        advanced=True,
         properties={
             "type": {
                 "type": "string",
@@ -186,5 +194,6 @@ def HTTP_AUTH(
             "api_key": {"type": "string", "format": "password"},
         },
         ui={"widget": "auth_config"},
+        group=FieldGroup.CONNECTION,
     )
 

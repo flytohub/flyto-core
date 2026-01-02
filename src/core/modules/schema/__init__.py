@@ -40,6 +40,11 @@ from .builders import (
     deep_merge,
     SchemaComposeError,
 )
+from .constants import (
+    Visibility,
+    FieldGroup,
+    GROUP_ORDER,
+)
 from . import presets
 from . import validators
 
@@ -51,6 +56,10 @@ __all__ = [
     "extend",
     "deep_merge",
     "SchemaComposeError",
+    # Constants
+    "Visibility",
+    "FieldGroup",
+    "GROUP_ORDER",
     # Modules
     "presets",
     "validators",
