@@ -4,6 +4,7 @@ Webhook Presets / Email Presets / Slack Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def WEBHOOK_URL(
         placeholder=placeholder,
         required=required,
         description='Target webhook URL',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -42,6 +44,7 @@ def WEBHOOK_PAYLOAD(
         label_key=label_key,
         required=required,
         description='JSON payload to send',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -61,6 +64,7 @@ def WEBHOOK_AUTH_TOKEN(
         required=required,
         secret=True,
         description='Bearer token for authorization',
+        group=FieldGroup.CONNECTION,
     )
 
 def EMAIL_TO(
@@ -80,6 +84,7 @@ def EMAIL_TO(
         placeholder=placeholder,
         required=required,
         description='Recipient email address(es), comma-separated for multiple',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -98,6 +103,7 @@ def EMAIL_SUBJECT(
         label_key=label_key,
         required=required,
         description='Email subject line',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -117,6 +123,7 @@ def EMAIL_BODY(
         required=required,
         multiline=True,
         description='Email body content',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -136,6 +143,7 @@ def EMAIL_HTML(
         default=default,
         required=False,
         description='Send as HTML email',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -154,6 +162,7 @@ def EMAIL_FROM(
         label_key=label_key,
         required=required,
         description='Sender email (uses SMTP_FROM_EMAIL env if not provided)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -172,6 +181,7 @@ def EMAIL_CC(
         label_key=label_key,
         required=required,
         description='CC recipients, comma-separated',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -190,6 +200,7 @@ def EMAIL_BCC(
         label_key=label_key,
         required=required,
         description='BCC recipients, comma-separated',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -209,6 +220,7 @@ def EMAIL_ATTACHMENTS(
         default=[],
         required=required,
         description='List of file paths to attach',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -229,6 +241,7 @@ def SMTP_HOST(
         placeholder=placeholder,
         required=required,
         description='SMTP server host (uses SMTP_HOST env if not provided)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -248,6 +261,7 @@ def SMTP_PORT(
         default=default,
         required=False,
         description='SMTP server port (uses SMTP_PORT env if not provided)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -266,6 +280,7 @@ def SMTP_USER(
         label_key=label_key,
         required=required,
         description='SMTP username (uses SMTP_USER env if not provided)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -285,6 +300,7 @@ def SMTP_PASSWORD(
         required=required,
         secret=True,
         description='SMTP password (uses SMTP_PASSWORD env if not provided)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -304,6 +320,7 @@ def USE_TLS(
         default=default,
         required=False,
         description='Use TLS encryption',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -324,6 +341,7 @@ def IMAP_HOST(
         placeholder=placeholder,
         required=required,
         description='IMAP server host',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -343,6 +361,7 @@ def IMAP_PORT(
         default=default,
         required=False,
         description='IMAP server port',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -361,6 +380,7 @@ def IMAP_USER(
         label_key=label_key,
         required=required,
         description='IMAP username',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -380,6 +400,7 @@ def IMAP_PASSWORD(
         required=required,
         secret=True,
         description='IMAP password',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -399,6 +420,7 @@ def EMAIL_FOLDER(
         default=default,
         required=False,
         description='Mailbox folder to read from',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -418,6 +440,7 @@ def EMAIL_LIMIT(
         default=default,
         required=False,
         description='Maximum number of emails to fetch',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -437,6 +460,7 @@ def EMAIL_UNREAD_ONLY(
         default=default,
         required=False,
         description='Only fetch unread emails',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -455,6 +479,7 @@ def EMAIL_SINCE_DATE(
         label_key=label_key,
         required=required,
         description='Fetch emails since this date (YYYY-MM-DD)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -473,6 +498,7 @@ def EMAIL_FROM_FILTER(
         label_key=label_key,
         required=required,
         description='Filter by sender email address',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -491,6 +517,7 @@ def EMAIL_SUBJECT_FILTER(
         label_key=label_key,
         required=required,
         description='Filter by subject (contains)',
+        group=FieldGroup.OPTIONS,
     )
 
 def SLACK_MESSAGE(
@@ -508,6 +535,7 @@ def SLACK_MESSAGE(
         label_key=label_key,
         required=required,
         description='Message text to send',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -529,6 +557,7 @@ def SLACK_WEBHOOK_URL(
         required=required,
         secret=True,
         description='Slack incoming webhook URL',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -547,6 +576,7 @@ def SLACK_CHANNEL(
         label_key=label_key,
         required=required,
         description='Override channel (optional)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -565,6 +595,7 @@ def SLACK_USERNAME(
         label_key=label_key,
         required=required,
         description='Override bot username',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -585,6 +616,7 @@ def SLACK_ICON_EMOJI(
         placeholder=placeholder,
         required=required,
         description='Emoji to use as icon (e.g., :robot_face:)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -603,6 +635,7 @@ def SLACK_BLOCKS(
         label_key=label_key,
         required=required,
         description='Slack Block Kit blocks for rich formatting',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -621,5 +654,5 @@ def SLACK_ATTACHMENTS(
         label_key=label_key,
         required=required,
         description='Message attachments',
+        group=FieldGroup.OPTIONS,
     )
-

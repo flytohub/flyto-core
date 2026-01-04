@@ -36,7 +36,7 @@ LOOP_CONFIG = {
     'node_type': NodeType.LOOP,
 
     # Connection rules
-    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'flow.*', 'start'],
+    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'flow.*', 'browser.*', 'start'],
     'can_connect_to': ['*'],
     'input_ports': [
         {
@@ -87,8 +87,9 @@ LOOP_CONFIG = {
             'label_key': 'modules.flow.loop.params.times.label',
             'description': 'Number of times to repeat',
             'description_key': 'modules.flow.loop.params.times.description',
-            'default': 10,
-            'required': True
+            'default': 1,
+            'required': True,
+            'min': 1
         },
         'target': {
             'type': 'string',
@@ -133,9 +134,9 @@ LOOP_CONFIG = {
     },
     'examples': [
         {
-            'name': 'Loop 10 times (v2.0 - edge-based)',
+            'name': 'Loop 3 times (v2.0 - edge-based)',
             'description': 'Connect iterate port back to the step you want to repeat',
-            'params': {'times': 10},
+            'params': {'times': 3},
             'note': 'Connect iterate port to loop body start, done port to next step'
         },
         {
@@ -168,7 +169,7 @@ FOREACH_CONFIG = {
     'output_types': ['array'],
 
     # Connection rules
-    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'element.*', 'flow.*', 'start'],
+    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'element.*', 'flow.*', 'browser.*', 'start'],
     'can_connect_to': ['*'],
 
     # Port definitions (required for flow modules)
@@ -220,7 +221,7 @@ FOREACH_CONFIG = {
             'type': 'array',
             'label': 'Items',
             'label_key': 'modules.flow.foreach.params.items.label',
-            'description': 'List of items to iterate over',
+            'description': 'List of items to iterate over (supports ${variable} reference)',
             'description_key': 'modules.flow.foreach.params.items.description',
             'required': True
         },
@@ -228,9 +229,9 @@ FOREACH_CONFIG = {
             'type': 'array',
             'label': 'Steps',
             'label_key': 'modules.flow.foreach.params.steps.label',
-            'description': 'Steps to execute for each item',
+            'description': 'Steps to execute for each item (nested mode only, optional for edge mode)',
             'description_key': 'modules.flow.foreach.params.steps.description',
-            'required': True
+            'required': False  # Not required for edge mode
         },
         'item_var': {
             'type': 'string',
@@ -259,14 +260,47 @@ FOREACH_CONFIG = {
         }
     },
     'output_schema': {
-        'status': {'type': 'string'},
-        'results': {'type': 'array', 'optional': True},
-        'result': {'type': 'any', 'optional': True},
+        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done)'},
+        '__set_context': {
+            'type': 'object',
+            'description': 'Scope variables set on each iteration',
+            'properties': {
+                'loop.item': {'type': 'any', 'description': 'Current item being iterated'},
+                'loop.index': {'type': 'number', 'description': 'Current iteration index (0-based)'}
+            }
+        },
+        'outputs': {
+            'type': 'object',
+            'description': 'Output values by port',
+            'properties': {
+                'iterate': {
+                    'type': 'object',
+                    'properties': {
+                        'item': {'type': 'any'},
+                        'index': {'type': 'number'},
+                        'remaining': {'type': 'number'},
+                        'total': {'type': 'number'}
+                    }
+                },
+                'done': {'type': 'object'}
+            }
+        },
+        'iteration': {'type': 'number', 'description': 'Current iteration index'},
+        'status': {'type': 'string', 'optional': True},
+        'results': {'type': 'array', 'optional': True, 'description': 'Nested mode only'},
         'count': {'type': 'number', 'optional': True}
     },
     'examples': [
         {
-            'name': 'Process each search result',
+            'name': 'Edge mode: CSV rows to browser (v2.0)',
+            'description': 'Iterate over CSV rows, each row available as loop.item',
+            'params': {
+                'items': '${steps.csv.result.data}'
+            },
+            'note': 'Connect iterate port to browser.goto, use ${loop.item.url} for URL param'
+        },
+        {
+            'name': 'Nested mode: Process each search result',
             'params': {
                 'items': '${search_results}',
                 'item_var': 'element',
@@ -327,10 +361,23 @@ class LoopModule(BaseModule):
         logger = logging.getLogger(__name__)
         logger.debug(f"LoopModule validate_params: params={self.params}")
 
-        # Check for edge-based loop mode (target parameter - DEPRECATED)
+        # Check for edge-based loop mode
+        # Edge mode is used when:
+        # 1. target is set (legacy, deprecated)
+        # 2. items is set but steps is NOT set (new foreach edge mode)
+        # 3. times is set but steps is NOT set (repeat edge mode)
         self.target = self.params.get('target')
-        self.is_edge_mode = bool(self.target) and str(self.target).strip() != ''
-        logger.debug(f"LoopModule: target={self.target!r}, is_edge_mode={self.is_edge_mode}")
+        has_items = 'items' in self.params
+        has_times = 'times' in self.params
+        has_steps = 'steps' in self.params and self.params.get('steps')
+
+        # Determine mode: edge mode if no steps defined
+        self.is_edge_mode = (
+            (bool(self.target) and str(self.target).strip() != '') or  # Legacy target mode
+            (has_items and not has_steps) or  # ForEach edge mode
+            (has_times and not has_steps)  # Repeat edge mode (times only)
+        )
+        logger.debug(f"LoopModule: target={self.target!r}, has_items={has_items}, has_steps={has_steps}, is_edge_mode={self.is_edge_mode}")
 
         # Deprecation warning for params.target
         if self.target:
@@ -347,22 +394,52 @@ class LoopModule(BaseModule):
             self._validate_nested_mode()
 
     def _validate_edge_mode(self):
-        """Validate parameters for edge-based loop mode."""
-        self.times = self.params.get('times', 10)
-        if isinstance(self.times, str) and self.times.startswith('${') and self.times.endswith('}'):
-            var_name = self.times[2:-1]
-            self.times = self.context.get(var_name, 10)
-        self.times = int(self.times)
+        """Validate parameters for edge-based loop mode (repeat or foreach)."""
+        self.item_var = self.params.get('item_var', 'item')
+        self.index_var = self.params.get('index_var', 'index')
         self.steps = None
-        self.items = None
+
+        # Check if we have items (foreach edge mode) or just times (repeat mode)
+        # Note: Empty string '' should be treated as "no items" (use times instead)
+        raw_items = self.params.get('items')
+        has_meaningful_items = raw_items is not None and raw_items != '' and raw_items != []
+        if has_meaningful_items:
+            # ForEach edge mode: iterate over items array
+            self.items = resolve_variable(raw_items, self.context)
+
+            # Handle various input formats
+            if isinstance(self.items, str):
+                # Try comma-separated string: "a,b,c" -> ["a", "b", "c"]
+                if ',' in self.items:
+                    self.items = [s.strip() for s in self.items.split(',') if s.strip()]
+                # Single string item
+                elif self.items.strip():
+                    self.items = [self.items.strip()]
+                else:
+                    self.items = []
+
+            if not isinstance(self.items, list):
+                raise ValueError(
+                    f"items must be a list, got: {type(self.items)}. "
+                    f"Use a variable reference like ${{variable}} or a JSON array like [1,2,3]"
+                )
+            self.times = len(self.items)
+        if not has_meaningful_items:
+            # Repeat mode: just count iterations (times parameter)
+            self.times = self.params.get('times', 1)
+            if isinstance(self.times, str) and self.times.startswith('${') and self.times.endswith('}'):
+                var_name = self.times[2:-1]
+                self.times = self.context.get(var_name, 1)
+            self.times = max(1, int(self.times))
+            self.items = None
 
     def _validate_nested_mode(self):
-        """Validate parameters for nested loop mode."""
+        """Validate parameters for nested loop mode (internal sub-step execution)."""
         has_times = 'times' in self.params
         has_items = 'items' in self.params
 
         if not has_times and not has_items:
-            raise ValueError("Missing parameter: either 'times', 'items', or 'target' is required")
+            raise ValueError("Missing parameter: either 'times' or 'items' is required")
         if 'steps' not in self.params:
             raise ValueError("Missing parameter: steps (required for nested loop mode)")
 
@@ -377,30 +454,48 @@ class LoopModule(BaseModule):
             if isinstance(times, str) and times.startswith('${') and times.endswith('}'):
                 var_name = times[2:-1]
                 times = self.context.get(var_name, 1)
-            self.items = list(range(int(times)))
+            self.items = list(range(max(1, int(times))))
         else:
             # Handle 'items' parameter with variable resolution
-            self.items = resolve_variable(self.params['items'], self.context)
+            raw_items = self.params['items']
+            self.items = resolve_variable(raw_items, self.context)
+
+            # Handle various input formats (same as edge mode)
+            if isinstance(self.items, str):
+                if ',' in self.items:
+                    self.items = [s.strip() for s in self.items.split(',') if s.strip()]
+                elif self.items.strip():
+                    self.items = [self.items.strip()]
+                else:
+                    self.items = []
 
             if not isinstance(self.items, list):
-                raise ValueError(f"items must be a list, got: {type(self.items)}")
+                raise ValueError(
+                    f"items must be a list, got: {type(self.items)}. "
+                    f"Use a variable reference like ${{variable}} or a JSON array like [1,2,3]"
+                )
 
     async def execute(self) -> Any:
         """
         Execute loop in one of two modes.
 
-        Edge-based mode (target parameter):
-        - Returns next_step to jump back to target
-        - WorkflowEngine handles the actual looping
+        Edge-based mode (items without steps, or legacy target):
+        - Returns __event__ (iterate/done) for workflow engine routing
+        - Sets loop.item and loop.index in __set_context for body nodes
+        - WorkflowEngine handles routing based on event
 
-        Nested mode (steps parameter):
+        Nested mode (items/times + steps):
         - Executes sub-steps internally for each iteration
+        - Returns collected results
         """
         if self.is_edge_mode:
             return await execute_edge_mode(
                 target=self.target,
                 times=self.times,
-                context=self.context
+                context=self.context,
+                items=self.items,
+                item_var=self.item_var,
+                index_var=self.index_var,
             )
 
         return await execute_nested_mode(

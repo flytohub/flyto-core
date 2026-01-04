@@ -4,6 +4,7 @@ DateTime Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def DATETIME_STRING(
         label_key=label_key,
         required=required,
         description='DateTime string to parse',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -41,6 +43,7 @@ def DATETIME_INPUT(
         default=default,
         required=False,
         description='DateTime (ISO format or "now")',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -60,6 +63,7 @@ def DATETIME_FORMAT(
         default=default,
         required=False,
         description='Format string (strftime/strptime)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -79,6 +83,7 @@ def TIME_DAYS(
         default=default,
         required=False,
         description='Days to add/subtract',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -98,6 +103,7 @@ def TIME_HOURS(
         default=default,
         required=False,
         description='Hours to add/subtract',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -117,6 +123,7 @@ def TIME_MINUTES(
         default=default,
         required=False,
         description='Minutes to add/subtract',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -136,5 +143,5 @@ def TIME_SECONDS(
         default=default,
         required=False,
         description='Seconds to add/subtract',
+        group=FieldGroup.OPTIONS,
     )
-

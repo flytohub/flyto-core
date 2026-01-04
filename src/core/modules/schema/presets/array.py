@@ -4,6 +4,7 @@ Array Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -21,6 +22,7 @@ def INPUT_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -45,6 +47,7 @@ def FILTER_CONDITION(
             {'value': 'ne', 'label': 'Not Equal'},
             {'value': 'contains', 'label': 'Contains'},
         ],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -63,6 +66,7 @@ def COMPARE_VALUE(
         label_key=label_key,
         required=required,
         description='Value to compare against',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -87,6 +91,7 @@ def ARRAY_OPERATION(
             {'value': 'uppercase', 'label': 'To uppercase'},
             {'value': 'lowercase', 'label': 'To lowercase'},
         ],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -108,6 +113,7 @@ def SORT_ORDER(
             {'value': 'asc', 'label': 'Ascending'},
             {'value': 'desc', 'label': 'Descending'},
         ],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -127,6 +133,7 @@ def CHUNK_SIZE(
         required=required,
         min=1,
         description='Size of each chunk',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -145,6 +152,7 @@ def FLATTEN_DEPTH(
         label_key=label_key,
         default=default,
         description='Depth level to flatten (default: 1, use -1 for infinite)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -163,6 +171,7 @@ def PRESERVE_ORDER(
         label_key=label_key,
         default=default,
         description='Maintain original order of elements',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -180,6 +189,7 @@ def OPERATION_VALUE(
         label_key=label_key,
         required=False,
         description='Value for operation (number for math, field name for extract)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -205,6 +215,7 @@ def REDUCE_OPERATION(
             {'value': 'max', 'label': 'Max'},
             {'value': 'join', 'label': 'Join'},
         ],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -223,6 +234,7 @@ def SEPARATOR(
         label_key=label_key,
         default=default,
         description='String to insert between elements',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -240,6 +252,7 @@ def SECOND_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -258,6 +271,7 @@ def ARRAYS(
         label_key=label_key,
         required=required,
         description='Arrays to process',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -276,5 +290,5 @@ def SUBTRACT_ARRAYS(
         label_key=label_key,
         required=required,
         description='Arrays to subtract from base',
+        group=FieldGroup.BASIC,
     )
-

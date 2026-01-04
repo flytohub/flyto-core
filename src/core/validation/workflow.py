@@ -188,26 +188,17 @@ def validate_workflow(
     start_errors = validate_start(nodes, edges)
     errors.extend(start_errors)
 
-    # Check for orphan nodes (no connections at all, except single-node workflows)
-    if len(nodes) > 1:
-        for nid in node_ids:
-            if not outgoing[nid] and not incoming[nid]:
-                warnings.append(WorkflowError(
-                    code=ErrorCode.ORPHAN_NODE,
-                    message=f'Node {nid} is not connected to any other nodes',
-                    path=f'nodes[{nid}]',
-                    meta={'node_id': nid}
-                ))
+    # NOTE: ORPHAN_NODE check removed - users should be able to save
+    # work-in-progress workflows with unconnected nodes
 
     # Validate params for each node
     if validate_params:
         for node in nodes:
             param_errors = validate_node_params(node, strict=False)
             for err in param_errors:
-                # Unknown params are warnings, missing required are errors
-                if err.code == ErrorCode.UNKNOWN_PARAM:
-                    warnings.append(err)
-                else:
+                # Only missing required params are errors
+                # Unknown params are silently ignored (might be custom/dynamic)
+                if err.code != ErrorCode.UNKNOWN_PARAM:
                     errors.append(err)
 
     # Check for cycles (simple DFS)

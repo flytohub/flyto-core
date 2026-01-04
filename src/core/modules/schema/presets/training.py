@@ -4,6 +4,7 @@ Training/Practice Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def PRACTICE_URL(
         placeholder=placeholder,
         required=required,
         validation=validators.URL_HTTP,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -46,6 +48,7 @@ def PRACTICE_MAX_ITEMS(
         min=min_val,
         max=max_val,
         description='Maximum items to process',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -68,5 +71,5 @@ def PRACTICE_SAMPLE_SIZE(
         min=min_val,
         max=max_val,
         description='Number of samples to analyze',
+        group=FieldGroup.OPTIONS,
     )
-

@@ -4,6 +4,7 @@ Analysis/HTML Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,5 +23,6 @@ def HTML_CONTENT(
         label_key=label_key,
         required=required,
         description='HTML content to analyze',
+        group=FieldGroup.BASIC,
     )
 

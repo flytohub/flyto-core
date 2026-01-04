@@ -4,6 +4,7 @@ Document Common Presets / Excel Presets / PDF Presets / Word Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def DOC_INPUT_PATH(
         required=required,
         placeholder=placeholder,
         description='Path to the input document',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -44,6 +46,7 @@ def DOC_OUTPUT_PATH(
         required=required,
         placeholder=placeholder,
         description='Path for the output document',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -63,6 +66,7 @@ def DOC_PAGES(
         default=default,
         required=False,
         description='Page range (e.g., "1-5", "1,3,5", or "all")',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -82,6 +86,7 @@ def DOC_EXTRACT_TABLES(
         default=default,
         required=False,
         description='Extract tables as structured data',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -101,6 +106,7 @@ def DOC_EXTRACT_IMAGES(
         default=default,
         required=False,
         description='Extract embedded images',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -120,6 +126,7 @@ def DOC_PRESERVE_FORMATTING(
         default=default,
         required=False,
         description='Preserve basic formatting',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -137,6 +144,7 @@ def DOC_IMAGES_OUTPUT_DIR(
         label_key=label_key,
         required=False,
         description='Directory to save extracted images',
+        group=FieldGroup.OPTIONS,
     )
 
 def EXCEL_PATH(
@@ -156,6 +164,7 @@ def EXCEL_PATH(
         required=required,
         placeholder=placeholder,
         description='Path to the Excel file',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -173,6 +182,7 @@ def EXCEL_SHEET(
         label_key=label_key,
         required=False,
         description='Sheet name (default: first sheet)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -192,6 +202,7 @@ def EXCEL_HEADER_ROW(
         default=default,
         required=False,
         description='Row number for headers (1-based, 0 for no headers)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -209,6 +220,7 @@ def EXCEL_RANGE(
         label_key=label_key,
         required=False,
         description='Cell range to read (e.g., "A1:D10")',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -228,6 +240,7 @@ def EXCEL_AS_DICT(
         default=default,
         required=False,
         description='Return rows as dictionaries (using headers as keys)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -246,6 +259,7 @@ def EXCEL_DATA(
         label_key=label_key,
         required=required,
         description='Data to write (array of arrays or array of objects)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -263,6 +277,7 @@ def EXCEL_HEADERS(
         label_key=label_key,
         required=False,
         description='Column headers (auto-detected from objects if not provided)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -282,6 +297,7 @@ def EXCEL_SHEET_NAME(
         default=default,
         required=False,
         description='Name of the worksheet',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -301,6 +317,7 @@ def EXCEL_AUTO_WIDTH(
         default=default,
         required=False,
         description='Automatically adjust column widths',
+        group=FieldGroup.OPTIONS,
     )
 
 def PDF_PATH(
@@ -320,6 +337,7 @@ def PDF_PATH(
         required=required,
         placeholder=placeholder,
         description='Path to the PDF file',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -338,6 +356,7 @@ def PDF_CONTENT(
         label_key=label_key,
         required=required,
         description='HTML or text content to convert to PDF',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -355,6 +374,7 @@ def PDF_TITLE(
         label_key=label_key,
         required=False,
         description='Document title (metadata)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -372,6 +392,7 @@ def PDF_AUTHOR(
         label_key=label_key,
         required=False,
         description='Document author (metadata)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -392,6 +413,7 @@ def PDF_PAGE_SIZE(
         required=False,
         enum=["A4", "Letter", "Legal", "A3", "A5"],
         description='Page size format',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -412,6 +434,7 @@ def PDF_ORIENTATION(
         required=False,
         enum=["portrait", "landscape"],
         description='Page orientation',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -431,6 +454,7 @@ def PDF_MARGIN(
         default=default,
         required=False,
         description='Page margin in millimeters',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -448,6 +472,7 @@ def PDF_HEADER(
         label_key=label_key,
         required=False,
         description='Header text for each page',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -465,6 +490,7 @@ def PDF_FOOTER(
         label_key=label_key,
         required=False,
         description='Footer text for each page',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -483,6 +509,7 @@ def PDF_TEMPLATE(
         label_key=label_key,
         required=required,
         description='Path to the PDF template file',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -501,6 +528,7 @@ def PDF_FORM_FIELDS(
         required=False,
         default={},
         description='Key-value pairs of form field names and values',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -519,6 +547,7 @@ def PDF_IMAGES(
         required=False,
         default=[],
         description='List of images to insert with position info',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -538,6 +567,7 @@ def PDF_FLATTEN(
         default=default,
         required=False,
         description='Flatten form fields (make them non-editable)',
+        group=FieldGroup.OPTIONS,
     )
 
 def WORD_FILE_PATH(
@@ -555,6 +585,7 @@ def WORD_FILE_PATH(
         label_key=label_key,
         required=required,
         description='Path to the Word document (.docx)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -579,5 +610,5 @@ def DOC_CONVERSION_METHOD(
             {"value": "docx2pdf", "label": "docx2pdf (Windows/Mac)"},
         ],
         description='Method to use for conversion',
+        group=FieldGroup.OPTIONS,
     )
-

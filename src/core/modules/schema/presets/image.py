@@ -4,6 +4,7 @@ Image Processing Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def IMAGE_INPUT_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -44,6 +46,7 @@ def IMAGE_OUTPUT_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -66,6 +69,7 @@ def IMAGE_WIDTH(
         min=min_val,
         max=max_val,
         description='Target width in pixels',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -88,6 +92,7 @@ def IMAGE_HEIGHT(
         min=min_val,
         max=max_val,
         description='Target height in pixels',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -111,6 +116,7 @@ def IMAGE_SCALE(
         max=max_val,
         step=0.1,
         description='Scale factor (e.g., 0.5 for half, 2.0 for double)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -133,6 +139,7 @@ def IMAGE_QUALITY(
         min=min_val,
         max=max_val,
         description='Quality level (1-100, higher is better)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -154,6 +161,7 @@ def IMAGE_FORMAT(
         default=default,
         enum=["jpeg", "png", "webp", "gif", "bmp", "tiff"],
         description='Output image format',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -173,6 +181,7 @@ def IMAGE_RESIZE_ALGORITHM(
         default=default,
         enum=["lanczos", "bilinear", "bicubic", "nearest"],
         description='Resampling algorithm',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -191,6 +200,7 @@ def IMAGE_MAINTAIN_ASPECT(
         label_key=label_key,
         default=default,
         description='Maintain original aspect ratio',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -209,6 +219,7 @@ def IMAGE_OPTIMIZE(
         label_key=label_key,
         default=default,
         description='Apply additional optimization',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -228,6 +239,7 @@ def IMAGE_MAX_SIZE_KB(
         required=required,
         min=1,
         description='Target maximum file size in KB',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -246,6 +258,7 @@ def IMAGE_RESIZE_OPTIONS(
         label_key=label_key,
         required=required,
         description='Resize options: {width, height, keep_aspect}',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -266,6 +279,7 @@ def IMAGE_URL(
         placeholder=placeholder,
         required=required,
         validation=validators.URL_HTTP,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -286,6 +300,7 @@ def OUTPUT_DIRECTORY(
         required=required,
         default=default,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -307,6 +322,7 @@ def QRCODE_DATA(
         placeholder=placeholder,
         required=required,
         description='Text, URL, or data to encode',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -329,6 +345,7 @@ def QRCODE_SIZE(
         min=min_val,
         max=max_val,
         description='Size in pixels',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -347,6 +364,7 @@ def QRCODE_COLOR(
         label_key=label_key,
         default=default,
         description='Color of the QR code (hex or name)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -365,6 +383,7 @@ def QRCODE_BACKGROUND(
         label_key=label_key,
         default=default,
         description='Background color (hex or name)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -389,6 +408,7 @@ def QRCODE_ERROR_CORRECTION(
             {'value': 'H', 'label': 'High (30%)'},
         ],
         description='Error correction level',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -408,5 +428,5 @@ def QRCODE_LOGO_PATH(
         required=required,
         format="path",
         description='Path to logo image to embed in center',
+        group=FieldGroup.OPTIONS,
     )
-

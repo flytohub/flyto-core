@@ -140,11 +140,18 @@ class WorkflowRouter:
         next_step_id = None
 
         # Priority 1: step.connections (v1.2)
-        if event and step_id in self._step_connections:
+        if step_id in self._step_connections:
             step_conns = self._step_connections[step_id]
-            if event in step_conns and step_conns[event]:
-                next_step_id = step_conns[event][0]
-                logger.debug(f"Connections routing: {step_id}.connections.{event} -> {next_step_id}")
+
+            # Try explicit event first, then fallback to 'default' or 'success'
+            events_to_try = [event] if event else []
+            events_to_try.extend(['default', 'success'])
+
+            for try_event in events_to_try:
+                if try_event and try_event in step_conns and step_conns[try_event]:
+                    next_step_id = step_conns[try_event][0]
+                    logger.debug(f"Connections routing: {step_id}.connections.{try_event} -> {next_step_id}")
+                    break
 
         # Priority 2: Edge-based routing (v1.1)
         if not next_step_id and event and self._event_routes:

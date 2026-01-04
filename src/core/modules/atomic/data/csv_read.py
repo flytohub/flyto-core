@@ -27,7 +27,7 @@ import os
     # Connection types
     input_types=['text', 'file_path'],
     output_types=['array', 'object'],
-    can_connect_to=['data.*', 'file.*'],
+    can_connect_to=['data.*', 'file.*', 'flow.*', 'array.*'],
     can_receive_from=['*'],
 
     # Execution settings

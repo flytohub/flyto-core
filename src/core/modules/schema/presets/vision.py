@@ -4,6 +4,7 @@ Vision/AI Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def VISION_IMAGE(
         placeholder=placeholder,
         required=required,
         description='Image file path, URL, or base64 data',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -45,6 +47,7 @@ def VISION_PROMPT(
         required=required,
         multiline=True,
         description='What to analyze in the image',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -64,6 +67,7 @@ def VISION_ANALYSIS_TYPE(
         default=default,
         enum=["general", "ui_review", "accessibility", "bug_detection", "comparison", "data_extraction"],
         description='Type of analysis to perform',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -83,6 +87,7 @@ def VISION_OUTPUT_FORMAT(
         default=default,
         enum=["text", "structured", "json", "checklist"],
         description='Format of the analysis output',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -104,6 +109,7 @@ def VISION_CONTEXT(
         required=required,
         multiline=True,
         description='Additional context about the image',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -123,6 +129,7 @@ def VISION_DETAIL(
         default=default,
         enum=["low", "high", "auto"],
         description='Level of detail for image analysis',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -143,6 +150,7 @@ def VISION_IMAGE_BEFORE(
         placeholder=placeholder,
         required=required,
         description='Path to baseline/before image',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -163,6 +171,7 @@ def VISION_IMAGE_AFTER(
         placeholder=placeholder,
         required=required,
         description='Path to current/after image',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -182,6 +191,7 @@ def VISION_COMPARISON_TYPE(
         default=default,
         enum=["visual_regression", "layout_diff", "content_diff", "full_analysis"],
         description='Type of comparison to perform',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -204,6 +214,7 @@ def VISION_THRESHOLD(
         min=min_val,
         max=max_val,
         description='Acceptable difference percentage',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -222,6 +233,7 @@ def VISION_FOCUS_AREAS(
         label_key=label_key,
         required=required,
         description='Specific areas to focus on',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -240,5 +252,5 @@ def VISION_IGNORE_AREAS(
         label_key=label_key,
         required=required,
         description='Areas to ignore (dynamic content, ads, etc.)',
+        group=FieldGroup.OPTIONS,
     )
-

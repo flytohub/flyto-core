@@ -4,6 +4,7 @@ Shell/Process Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -23,6 +24,7 @@ def COMMAND(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -42,6 +44,7 @@ def WORKING_DIR(
         placeholder=placeholder,
         required=False,
         format="path",
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -59,6 +62,7 @@ def ENV_VARS(
         label_key=label_key,
         required=False,
         ui={"widget": "key_value"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -78,6 +82,8 @@ def USE_SHELL(
         default=default,
         description='Execute command through shell (enables pipes, redirects)',
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -96,6 +102,8 @@ def CAPTURE_STDERR(
         label_key=label_key,
         default=default,
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -114,6 +122,8 @@ def RAISE_ON_ERROR(
         label_key=label_key,
         default=default,
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -132,6 +142,7 @@ def PROCESS_NAME(
         label_key=label_key,
         placeholder=placeholder,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -151,6 +162,7 @@ def WAIT_FOR_OUTPUT(
         placeholder=placeholder,
         required=False,
         description='String to wait for in stdout before returning',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -168,6 +180,7 @@ def CAPTURE_OUTPUT(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -186,6 +199,8 @@ def LOG_FILE(
         required=False,
         format="path",
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -204,6 +219,8 @@ def AUTO_RESTART(
         label_key=label_key,
         default=default,
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -223,6 +240,8 @@ def SIGNAL_TYPE(
         default=default,
         enum=["SIGTERM", "SIGKILL", "SIGINT"],
         advanced=True,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -240,6 +259,7 @@ def FORCE_KILL(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -257,6 +277,7 @@ def STOP_ALL(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -273,6 +294,7 @@ def PROCESS_ID(
         label=label,
         label_key=label_key,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -289,6 +311,7 @@ def PID(
         label=label,
         label_key=label_key,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -305,6 +328,7 @@ def FILTER_NAME(
         label=label,
         label_key=label_key,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -322,5 +346,5 @@ def INCLUDE_STATUS(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
-

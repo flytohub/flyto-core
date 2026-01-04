@@ -4,6 +4,7 @@ Search Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def SEARCH_KEYWORD(
         placeholder=placeholder,
         required=required,
         description='Search keyword or query',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -47,5 +49,5 @@ def SEARCH_LIMIT(
         max=max_val,
         required=False,
         description='Maximum number of results',
+        group=FieldGroup.OPTIONS,
     )
-

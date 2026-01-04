@@ -4,6 +4,7 @@ String Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def INPUT_TEXT(
         required=required,
         placeholder=placeholder,
         description='The string to process',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -42,6 +44,7 @@ def SEARCH_STRING(
         label_key=label_key,
         required=required,
         description='The substring to search for',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -60,6 +63,7 @@ def REPLACE_STRING(
         label_key=label_key,
         required=required,
         description='The replacement string',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -78,5 +82,5 @@ def STRING_DELIMITER(
         label_key=label_key,
         default=default,
         description='The delimiter to split on',
+        group=FieldGroup.OPTIONS,
     )
-

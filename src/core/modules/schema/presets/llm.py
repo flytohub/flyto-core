@@ -4,6 +4,7 @@ LLM Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def LLM_PROMPT(
         placeholder=placeholder,
         required=required,
         format="multiline",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -44,6 +46,7 @@ def SYSTEM_PROMPT(
         placeholder=placeholder,
         required=required,
         format="multiline",
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -61,6 +64,7 @@ def LLM_CONTEXT(
         label_key=label_key,
         required=False,
         description='Additional context data to include',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -78,6 +82,7 @@ def CONVERSATION_MESSAGES(
         label_key=label_key,
         required=False,
         description='Previous messages for multi-turn conversation',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -96,6 +101,7 @@ def LLM_PROVIDER(
         label_key=label_key,
         default=default,
         enum=["openai", "anthropic", "ollama"],
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -119,6 +125,7 @@ def LLM_MODEL(
             'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229',
             'llama2', 'codellama', 'mistral'
         ],
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -142,6 +149,7 @@ def TEMPERATURE(
         max=max_val,
         step=0.1,
         description='Creativity level (0=deterministic, 1=creative)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -162,6 +170,7 @@ def MAX_TOKENS(
         min=1,
         max=128000,
         description='Maximum tokens in response',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -180,6 +189,7 @@ def LLM_RESPONSE_FORMAT(
         label_key=label_key,
         default=default,
         enum=["text", "json", "code", "markdown"],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -198,7 +208,8 @@ def LLM_API_KEY(
         required=False,
         format="password",
         description='API key (defaults to provider env var)',
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -217,7 +228,8 @@ def LLM_BASE_URL(
         label_key=label_key,
         placeholder=placeholder,
         required=False,
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.CONNECTION,
         description='Custom API base URL (for Ollama or proxies)',
     )
 
@@ -237,6 +249,7 @@ def CODE_ISSUES(
         label_key=label_key,
         required=required,
         description='List of issues to fix (from ui.evaluate, test results, etc.)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -255,6 +268,7 @@ def SOURCE_FILES(
         label_key=label_key,
         required=required,
         description='Files to analyze and potentially fix',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -278,6 +292,7 @@ def FIX_MODE(
             {"value": "apply", "label": "Apply - Write fixes to files"},
             {"value": "dry_run", "label": "Dry Run - Show what would change"},
         ],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -296,5 +311,6 @@ def CREATE_BACKUP(
         label_key=label_key,
         default=default,
         description='Create .bak backup before modifying files',
+        group=FieldGroup.OPTIONS,
     )
 

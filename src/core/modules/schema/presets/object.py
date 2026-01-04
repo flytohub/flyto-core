@@ -4,6 +4,7 @@ Object Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def INPUT_OBJECT(
         label_key=label_key,
         required=required,
         description='Input object/dictionary',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -40,6 +42,7 @@ def INPUT_OBJECTS(
         label_key=label_key,
         required=required,
         description='Array of objects to process',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -58,5 +61,5 @@ def OBJECT_KEYS(
         label_key=label_key,
         required=required,
         description='Keys to pick or omit',
+        group=FieldGroup.BASIC,
     )
-

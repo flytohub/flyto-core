@@ -4,6 +4,7 @@ Auth Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -23,6 +24,7 @@ def BEARER_TOKEN(
         required=required,
         format="password",
         placeholder="${env.API_TOKEN}",
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -44,6 +46,7 @@ def API_KEY(
             required=required,
             format="password",
             placeholder="${env.API_KEY}",
+            group=FieldGroup.CONNECTION,
         ),
         field(
             "header_name",
@@ -51,6 +54,6 @@ def API_KEY(
             label="Header Name",
             label_key="schema.field.api_key_header",
             default=header_name,
+            group=FieldGroup.CONNECTION,
         ),
     )
-

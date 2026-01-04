@@ -4,6 +4,7 @@ Test/Assert Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def HTTP_STATUS(
         required=False,
         description='Expected status code (number, array of numbers, or range string "200-299")',
         examples=[200, [200, 201], '200-299'],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -39,6 +41,7 @@ def BODY_CONTAINS(
         label_key=label_key,
         required=False,
         description='String or array of strings that body should contain',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -56,6 +59,7 @@ def BODY_NOT_CONTAINS(
         label_key=label_key,
         required=False,
         description='String or array of strings that body should NOT contain',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -74,6 +78,7 @@ def REGEX_PATTERN(
         label_key=label_key,
         placeholder=placeholder,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -92,6 +97,7 @@ def JSON_PATH_ASSERTIONS(
         required=False,
         description='Object mapping JSON paths to expected values (e.g., {"data.id": 123})',
         ui={"widget": "key_value"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -109,6 +115,7 @@ def JSON_PATH_EXISTS(
         label_key=label_key,
         required=False,
         description='Array of JSON paths that should exist',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -127,6 +134,7 @@ def HEADER_CONTAINS(
         required=False,
         description='Object mapping header names to expected values',
         ui={"widget": "key_value"},
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -145,6 +153,8 @@ def MAX_DURATION_MS(
         required=False,
         min=0,
         description='Maximum allowed response time in milliseconds',
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -164,6 +174,8 @@ def JSON_SCHEMA(
         advanced=True,
         description='JSON Schema to validate response body against',
         ui={"widget": "json_editor"},
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -183,5 +195,6 @@ def FAIL_FAST(
         default=default,
         description='Stop on first assertion failure',
         advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
-

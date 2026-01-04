@@ -57,8 +57,17 @@ def resolve_variable(value: Any, context: Dict) -> Any:
     Returns:
         Resolved value or original if not a variable reference
     """
+    import json
+
     if not isinstance(value, str):
         return value
+
+    # Try to parse JSON string (e.g., "[1,2,3]" -> [1,2,3])
+    if value.startswith('[') and value.endswith(']'):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            pass
 
     if not (value.startswith('${') and value.endswith('}')):
         return value
@@ -78,4 +87,10 @@ def resolve_variable(value: Any, context: Dict) -> Any:
                 result = getattr(result, part, None)
         return result if result is not None else []
 
-    return context.get(var_name, value)
+    # For simple variables, return empty list if not found (for items param)
+    resolved = context.get(var_name)
+    if resolved is not None:
+        return resolved
+
+    # Variable not found - return empty list as default for iteration
+    return []

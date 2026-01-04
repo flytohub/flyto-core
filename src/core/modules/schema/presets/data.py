@@ -4,6 +4,7 @@ Data Presets / JSON Presets / CSV Presets / Template Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -23,6 +24,8 @@ def ENCODING(
         default=default,
         enum=["utf-8", "ascii", "latin-1", "utf-16", "gbk", "big5"],
         advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -43,6 +46,7 @@ def JSON_PATH(
         placeholder=placeholder,
         required=required,
         validation=validators.JSON_PATH,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -62,6 +66,8 @@ def DELIMITER(
         default=default,
         enum=[",", ";", "\t", "|", " "],
         advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 def JSON_STRING(
@@ -81,6 +87,7 @@ def JSON_STRING(
         placeholder=placeholder,
         required=required,
         format="multiline",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -98,6 +105,7 @@ def DATA_OBJECT(
         label=label,
         label_key=label_key,
         required=required,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -115,6 +123,7 @@ def DATA_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -133,6 +142,7 @@ def PRETTY_PRINT(
         label_key=label_key,
         default=default,
         description='Format with indentation',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -155,6 +165,7 @@ def INDENT_SIZE(
         min=min_val,
         max=max_val,
         description='Indentation spaces (if pretty=true)',
+        group=FieldGroup.OPTIONS,
     )
 
 def INCLUDE_HEADER(
@@ -172,6 +183,7 @@ def INCLUDE_HEADER(
         label_key=label_key,
         default=default,
         description='Include column headers in first row',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -190,6 +202,7 @@ def SKIP_HEADER(
         label_key=label_key,
         default=default,
         description='Skip first row (header)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -208,6 +221,7 @@ def FLATTEN_NESTED(
         label_key=label_key,
         default=default,
         description='Flatten nested objects using dot notation (e.g., address.city)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -226,6 +240,7 @@ def COLUMNS(
         required=False,
         default=[],
         description='Specific columns to include (empty = all columns)',
+        group=FieldGroup.OPTIONS,
     )
 
 def TEMPLATE(
@@ -246,6 +261,7 @@ def TEMPLATE(
         required=required,
         format="multiline",
         description='Text template with {variable} placeholders',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -265,6 +281,7 @@ def VARIABLES(
         required=required,
         description='Object with variable values',
         ui={"widget": "key_value"},
+        group=FieldGroup.BASIC,
     )
 
 
@@ -283,5 +300,5 @@ def INPUT_DATA(
         label_key=label_key,
         required=required,
         description='JSON data (array of objects) or path to JSON file',
+        group=FieldGroup.BASIC,
     )
-

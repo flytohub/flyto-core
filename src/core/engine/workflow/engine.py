@@ -381,16 +381,20 @@ class WorkflowEngine:
         if result is None:
             return current_idx + 1
 
-        module_id = step_config.get('module', '')
-        if not is_flow_control_module(module_id):
-            return current_idx + 1
-
+        # Handle __set_context for any module that returns it
         if isinstance(result, dict):
             set_context = result.get('__set_context')
             if isinstance(set_context, dict):
                 self.context.update(set_context)
 
-        return self._router.get_next_step_index(step_id, result, current_idx)
+        module_id = step_config.get('module', '')
+        has_connections = bool(step_config.get('connections'))
+
+        # Use router for flow control modules OR steps with explicit connections
+        if is_flow_control_module(module_id) or has_connections:
+            return self._router.get_next_step_index(step_id, result, current_idx)
+
+        return current_idx + 1
 
     async def _execute_step(
         self,

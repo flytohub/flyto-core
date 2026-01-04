@@ -4,6 +4,7 @@ File Operation Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def SOURCE_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -44,6 +46,7 @@ def DESTINATION_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        group=FieldGroup.BASIC,
     )
 
 
@@ -62,6 +65,7 @@ def OVERWRITE(
         label_key=label_key,
         default=default,
         description='Overwrite destination if it exists',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -80,6 +84,7 @@ def IGNORE_MISSING(
         label_key=label_key,
         default=default,
         description='Do not raise error if file does not exist',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -98,6 +103,7 @@ def WRITE_MODE(
         label_key=label_key,
         default=default,
         enum=["overwrite", "append"],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -116,5 +122,5 @@ def FILE_CONTENT(
         label_key=label_key,
         required=required,
         format="multiline",
+        group=FieldGroup.BASIC,
     )
-

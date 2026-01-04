@@ -4,6 +4,7 @@ Browser Presets / Additional Browser Presets / Browser Extended Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -25,6 +26,7 @@ def SELECTOR(
         required=required,
         validation=validators.SELECTOR,
         ui={"widget": "selector"},
+        group=FieldGroup.BASIC,
     )
 
 
@@ -48,6 +50,7 @@ def WAIT_CONDITION(
         label_key=label_key,
         options=options,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -69,6 +72,7 @@ def VIEWPORT(
             min=320,
             max=3840,
             step=1,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             height_key,
@@ -79,6 +83,7 @@ def VIEWPORT(
             min=240,
             max=2160,
             step=1,
+            group=FieldGroup.OPTIONS,
         ),
     )
 
@@ -96,6 +101,7 @@ def SCREENSHOT_OPTIONS(
             label="Full Page",
             label_key="schema.field.full_page",
             default=False,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             format_key,
@@ -108,6 +114,7 @@ def SCREENSHOT_OPTIONS(
                 {"value": "webp", "label": "WebP"},
             ],
             default="png",
+            group=FieldGroup.OPTIONS,
         ),
     )
 
@@ -127,6 +134,7 @@ def BROWSER_HEADLESS(
         label_key=label_key,
         default=default,
         description="Run browser without visible window",
+        group=FieldGroup.OPTIONS,
     )
 
 def DURATION_S(
@@ -149,6 +157,8 @@ def DURATION_S(
         max=max_s,
         step=0.1,
         ui={"unit": "s"},
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
     )
 
 
@@ -171,6 +181,7 @@ def OUTPUT_PATH(
         default=default,
         required=required,
         format="path",
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -187,7 +198,8 @@ def POSITION(
         label=label,
         label_key=label_key,
         required=False,
-        advanced=True,
+        visibility=Visibility.EXPERT,
+        group=FieldGroup.ADVANCED,
         properties={
             "x": {"type": "number", "min": 0, "max": 1, "default": 0.5},
             "y": {"type": "number", "min": 0, "max": 1, "default": 0.5},
@@ -211,6 +223,7 @@ def SCROLL_DIRECTION(
         required=False,
         enum=["up", "down", "left", "right"],
         description='Scroll direction (up, down, left, right)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -230,6 +243,7 @@ def SCROLL_AMOUNT(
         default=default,
         required=False,
         description='Pixels to scroll (ignored if selector is provided)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -250,6 +264,7 @@ def SCROLL_BEHAVIOR(
         required=False,
         enum=["smooth", "instant"],
         description='Scroll behavior (smooth or instant)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -268,6 +283,7 @@ def SELECT_VALUE(
         label_key=label_key,
         required=required,
         description='Option value attribute to select',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -286,6 +302,7 @@ def SELECT_LABEL(
         label_key=label_key,
         required=required,
         description='Option text content to select (alternative to value)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -304,6 +321,7 @@ def SELECT_INDEX(
         label_key=label_key,
         required=required,
         description='Option index to select (0-based)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -324,6 +342,7 @@ def BROWSER_ACTION(
         required=required,
         enum=options or ["get", "set", "clear"],
         description='Action to perform',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -342,6 +361,7 @@ def COOKIE_NAME(
         label_key=label_key,
         required=required,
         description='Name of the cookie',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -360,6 +380,7 @@ def COOKIE_VALUE(
         label_key=label_key,
         required=required,
         description='Value of the cookie',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -378,6 +399,7 @@ def COOKIE_DOMAIN(
         label_key=label_key,
         required=required,
         description='Cookie domain',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -397,6 +419,7 @@ def COOKIE_PATH(
         default=default,
         required=False,
         description='Cookie path',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -416,6 +439,7 @@ def COOKIE_SECURE(
         default=default,
         required=False,
         description='Whether cookie is secure (HTTPS only)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -435,6 +459,7 @@ def COOKIE_HTTP_ONLY(
         default=default,
         required=False,
         description='Whether cookie is HTTP only',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -453,6 +478,7 @@ def COOKIE_EXPIRES(
         label_key=label_key,
         required=required,
         description='Cookie expiration time (Unix timestamp)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -473,6 +499,7 @@ def STORAGE_TYPE(
         required=False,
         enum=["local", "session"],
         description='Type of storage to access',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -491,6 +518,7 @@ def STORAGE_KEY(
         label_key=label_key,
         required=required,
         description='Storage key',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -509,6 +537,7 @@ def STORAGE_VALUE(
         label_key=label_key,
         required=required,
         description='Value to store',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -529,6 +558,7 @@ def UPLOAD_FILE_PATH(
         placeholder=placeholder,
         required=required,
         description='Local path to the file to upload',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -549,6 +579,7 @@ def DOWNLOAD_SAVE_PATH(
         placeholder=placeholder,
         required=required,
         description='Path where to save the downloaded file',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -568,6 +599,7 @@ def DIALOG_ACTION(
         required=required,
         enum=["accept", "dismiss", "listen"],
         description='How to handle the dialog',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -586,6 +618,7 @@ def DIALOG_PROMPT_TEXT(
         label_key=label_key,
         required=required,
         description='Text to enter in prompt dialog (for accept action)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -607,6 +640,7 @@ def JS_SCRIPT(
         required=required,
         multiline=True,
         description='JavaScript code to execute (can use return statement)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -625,6 +659,7 @@ def JS_ARGS(
         label_key=label_key,
         required=required,
         description='Arguments to pass to the script function',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -645,6 +680,7 @@ def KEYBOARD_KEY(
         placeholder=placeholder,
         required=required,
         description='The key to press (e.g., Enter, Escape, Tab)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -663,6 +699,7 @@ def EXTRACT_FIELDS(
         label_key=label_key,
         required=required,
         description='Define fields to extract from each item',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -683,6 +720,7 @@ def EXTRACT_LIMIT(
         placeholder=placeholder,
         required=required,
         description='Maximum number of items to extract',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -703,6 +741,7 @@ def CONSOLE_LEVEL(
         required=False,
         enum=["all", "error", "warning", "info", "log"],
         description='Filter by log level',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -722,5 +761,6 @@ def CONSOLE_CLEAR_EXISTING(
         default=default,
         required=False,
         description='Clear existing messages before capturing',
+        group=FieldGroup.OPTIONS,
     )
 

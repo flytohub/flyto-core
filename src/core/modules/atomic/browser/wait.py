@@ -9,7 +9,7 @@ from ...schema import compose, presets
 
 @register_module(
     module_id='browser.wait',
-    version='1.0.0',
+    version='1.1.0',
     category='browser',
     tags=['browser', 'wait', 'delay', 'selector'],
     label='Wait',
@@ -29,23 +29,23 @@ from ...schema import compose, presets
 
     # Schema-driven params
     params_schema=compose(
-        presets.DURATION_S(default=1),
+        presets.DURATION_MS(key='duration_ms', default=1000, label='Wait Duration (ms)'),
         presets.SELECTOR(required=False, placeholder='.element-to-wait-for'),
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
         'status': {'type': 'string'},
         'selector': {'type': 'string', 'optional': True},
-        'duration': {'type': 'number', 'optional': True}
+        'duration_ms': {'type': 'number', 'optional': True}
     },
     examples=[
         {
             'name': 'Wait 2 seconds',
-            'params': {'duration': 2}
+            'params': {'duration_ms': 2000}
         },
         {
             'name': 'Wait for element',
-            'params': {'selector': '#loading-complete'}
+            'params': {'selector': '#loading-complete', 'timeout': 5000}
         }
     ],
     author='Flyto2 Team',
@@ -59,7 +59,17 @@ class BrowserWaitModule(BaseModule):
     required_permission = "browser.interact"
 
     def validate_params(self):
-        self.duration = self.params.get('duration', 1)
+        # Primary: duration_ms (explicit milliseconds)
+        # Fallback: duration (for backwards compatibility - auto-detect unit)
+        if 'duration_ms' in self.params:
+            self.duration_ms = self.params['duration_ms']
+        elif 'duration' in self.params:
+            # Backwards compatibility: if duration > 100, assume ms; else assume seconds
+            raw = self.params['duration']
+            self.duration_ms = raw if raw > 100 else raw * 1000
+        else:
+            self.duration_ms = 1000  # Default 1 second
+
         self.selector = self.params.get('selector')
         self.timeout = self.params.get('timeout', 30000)
 
@@ -74,13 +84,9 @@ class BrowserWaitModule(BaseModule):
                 raise RuntimeError("Browser not launched. Please run browser.launch first")
             await browser.wait(self.selector, timeout_ms=self.timeout)
             return {"status": "success", "selector": self.selector}
-        elif self.timeout and not self.selector and 'duration' not in self.params:
-            # If only timeout is provided (used as simple delay in ms)
-            await asyncio.sleep(self.timeout / 1000)
-            return {"status": "success", "duration": self.timeout / 1000}
         else:
-            # Wait for specified duration in seconds
-            await asyncio.sleep(self.duration)
-            return {"status": "success", "duration": self.duration}
+            # Wait for specified duration
+            await asyncio.sleep(self.duration_ms / 1000)
+            return {"status": "success", "duration_ms": self.duration_ms}
 
 

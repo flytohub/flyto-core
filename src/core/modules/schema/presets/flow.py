@@ -4,6 +4,7 @@ Flow Control Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -24,6 +25,7 @@ def CONDITION_EXPRESSION(
         required=required,
         placeholder=placeholder,
         description='Expression to evaluate (supports ==, !=, >, <, >=, <=, contains)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -42,6 +44,7 @@ def SWITCH_EXPRESSION(
         label_key=label_key,
         required=required,
         description='Value to match against cases (supports variable reference)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -60,6 +63,7 @@ def SWITCH_CASES(
         label_key=label_key,
         required=required,
         description='List of case definitions',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -78,6 +82,7 @@ def TRIGGER_TYPE(
         label_key=label_key,
         default=default,
         enum=["manual", "webhook", "schedule", "event"],
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -97,6 +102,7 @@ def WEBHOOK_PATH(
         required=False,
         placeholder=placeholder,
         description='URL path for webhook trigger',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -116,6 +122,7 @@ def CRON_SCHEDULE(
         required=False,
         placeholder=placeholder,
         description='Cron expression for scheduled trigger',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -133,6 +140,7 @@ def EVENT_NAME(
         label_key=label_key,
         required=False,
         description='Event name to listen for',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -151,6 +159,7 @@ def OUTPUT_MAPPING(
         required=False,
         default={},
         description='Map internal variables to workflow output',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -170,6 +179,7 @@ def MERGE_STRATEGY(
         default=default,
         enum=["first", "last", "all"],
         description='How to merge multiple inputs',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -189,6 +199,7 @@ def JOIN_STRATEGY(
         default=default,
         enum=["all", "any", "first"],
         description='How to handle multiple inputs',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -211,6 +222,7 @@ def PORT_COUNT(
         min=min_val,
         max=max_val,
         description='Number of ports',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -231,6 +243,7 @@ def BRANCH_COUNT(
         min=2,
         max=10,
         description='Number of parallel branches',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -249,6 +262,7 @@ def TARGET_STEP(
         label_key=label_key,
         required=required,
         description='Step ID to jump to',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -267,6 +281,8 @@ def MAX_ITERATIONS(
         label_key=label_key,
         default=default,
         description='Maximum number of iterations (prevents infinite loops)',
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -287,6 +303,8 @@ def TIMEOUT_MS(
         min=1000,
         max=600000,
         description='Maximum wait time in milliseconds',
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -305,6 +323,8 @@ def CANCEL_PENDING(
         label_key=label_key,
         default=default,
         description='Cancel pending branches when using first strategy',
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -323,6 +343,7 @@ def APPROVAL_TITLE(
         label_key=label_key,
         default=default,
         description='Title displayed to approvers',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -342,6 +363,7 @@ def APPROVAL_MODE(
         default=default,
         enum=["single", "all", "majority", "first"],
         description='How approvals are counted',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -361,6 +383,8 @@ def TIMEOUT_SECONDS(
         default=default,
         min=0,
         description='Maximum wait time (0 for no timeout)',
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
     )
 
 
@@ -379,6 +403,7 @@ def INHERIT_CONTEXT(
         label_key=label_key,
         default=default,
         description='Whether to inherit variables from parent workflow',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -397,5 +422,5 @@ def SUBFLOW_DEFINITION(
         required=False,
         default={'nodes': [], 'edges': []},
         description='Embedded workflow definition with nodes and edges',
+        group=FieldGroup.OPTIONS,
     )
-

@@ -4,6 +4,7 @@ HuggingFace Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def HF_MODEL_ID(
         label_key=label_key,
         required=True,
         task=task,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -40,6 +42,7 @@ def HF_PROMPT(
         label_key=label_key,
         required=required,
         multiline=True,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -58,6 +61,7 @@ def HF_TEXT_INPUT(
         label_key=label_key,
         required=required,
         multiline=True,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -75,6 +79,7 @@ def HF_MAX_NEW_TOKENS(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -92,6 +97,7 @@ def HF_TEMPERATURE(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -109,6 +115,7 @@ def HF_TOP_P(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -126,6 +133,7 @@ def HF_DO_SAMPLE(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -143,6 +151,7 @@ def HF_MAX_LENGTH(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -160,6 +169,7 @@ def HF_MIN_LENGTH(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -177,6 +187,7 @@ def HF_TOP_K(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -193,6 +204,7 @@ def HF_SOURCE_LANG(
         label=label,
         label_key=label_key,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -209,6 +221,7 @@ def HF_TARGET_LANG(
         label=label,
         label_key=label_key,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -225,6 +238,7 @@ def HF_AUDIO_PATH(
         label=label,
         label_key=label_key,
         required=True,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -241,6 +255,7 @@ def HF_IMAGE_PATH(
         label=label,
         label_key=label_key,
         required=True,
+        group=FieldGroup.BASIC,
     )
 
 
@@ -258,6 +273,7 @@ def HF_LANGUAGE(
         label_key=label_key,
         required=False,
         description='Language code (e.g., "en", "zh"). Leave empty for auto-detection.',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -276,6 +292,7 @@ def HF_RETURN_TIMESTAMPS(
         label_key=label_key,
         default=default,
         required=False,
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -293,5 +310,5 @@ def HF_NORMALIZE(
         label=label,
         label_key=label_key,
         default=default,
+        group=FieldGroup.OPTIONS,
     )
-

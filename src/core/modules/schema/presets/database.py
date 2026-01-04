@@ -4,6 +4,7 @@ Database Presets / Redis Presets / MongoDB Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -23,6 +24,7 @@ def DB_TYPE(
         default=default,
         required=False,
         enum=["postgresql", "mysql", "sqlite"],
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -41,6 +43,7 @@ def DB_CONNECTION_STRING(
         required=False,
         secret=True,
         description='Database connection string',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -58,6 +61,7 @@ def DB_HOST(
         label_key=label_key,
         required=False,
         description='Database host',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -77,6 +81,7 @@ def DB_PORT(
         default=default,
         required=False,
         description='Database port',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -94,6 +99,7 @@ def DB_NAME(
         label_key=label_key,
         required=False,
         description='Database name',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -111,6 +117,7 @@ def DB_USER(
         label_key=label_key,
         required=False,
         description='Database username',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -129,6 +136,7 @@ def DB_PASSWORD(
         required=False,
         secret=True,
         description='Database password',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -147,6 +155,7 @@ def DB_TABLE(
         label_key=label_key,
         required=required,
         description='Name of the table',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -168,6 +177,7 @@ def SQL_QUERY(
         placeholder=placeholder,
         multiline=True,
         description='SQL query to execute',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -186,6 +196,7 @@ def DB_QUERY_PARAMS(
         required=False,
         default=[],
         description='Parameters for parameterized queries (prevents SQL injection)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -206,6 +217,7 @@ def FETCH_MODE(
         required=False,
         enum=["all", "one", "none"],
         description='How to fetch results: all, one, or none (for INSERT/UPDATE)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -224,6 +236,7 @@ def DB_DATA(
         label_key=label_key,
         required=required,
         description='Data to insert or update',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -242,6 +255,7 @@ def WHERE_CONDITIONS(
         label_key=label_key,
         required=required,
         description='WHERE conditions (column: value for equality)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -259,6 +273,7 @@ def RETURNING_COLUMNS(
         label_key=label_key,
         required=False,
         description='Columns to return after insert (PostgreSQL)',
+        group=FieldGroup.OPTIONS,
     )
 
 def REDIS_KEY(
@@ -276,6 +291,7 @@ def REDIS_KEY(
         label_key=label_key,
         required=required,
         description='Redis key',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -294,6 +310,7 @@ def REDIS_VALUE(
         label_key=label_key,
         required=required,
         description='Value to store',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -311,6 +328,7 @@ def REDIS_TTL(
         label_key=label_key,
         required=False,
         description='Time to live in seconds (optional)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -330,6 +348,7 @@ def REDIS_HOST(
         required=False,
         placeholder=placeholder,
         description='Redis host (from env.REDIS_HOST or explicit)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -349,6 +368,7 @@ def REDIS_PORT(
         default=default,
         required=False,
         description='Redis port',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -368,6 +388,7 @@ def REDIS_DB(
         default=default,
         required=False,
         description='Redis database number',
+        group=FieldGroup.CONNECTION,
     )
 
 def MONGO_CONNECTION_STRING(
@@ -387,6 +408,7 @@ def MONGO_CONNECTION_STRING(
         placeholder=placeholder,
         secret=True,
         description='MongoDB connection string (defaults to env.MONGODB_URL)',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -405,6 +427,7 @@ def MONGO_DATABASE(
         label_key=label_key,
         required=required,
         description='Database name',
+        group=FieldGroup.CONNECTION,
     )
 
 
@@ -423,6 +446,7 @@ def MONGO_COLLECTION(
         label_key=label_key,
         required=required,
         description='Collection name',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -441,6 +465,7 @@ def MONGO_FILTER(
         required=False,
         default={},
         description='MongoDB query filter (empty object {} returns all)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -458,6 +483,7 @@ def MONGO_PROJECTION(
         label_key=label_key,
         required=False,
         description='Fields to include/exclude in results',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -479,6 +505,7 @@ def MONGO_LIMIT(
         min=1,
         max=10000,
         description='Maximum number of documents to return',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -496,6 +523,7 @@ def MONGO_SORT(
         label_key=label_key,
         required=False,
         description='Sort order (1 for ascending, -1 for descending)',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -513,6 +541,7 @@ def MONGO_DOCUMENT(
         label_key=label_key,
         required=False,
         description='Document to insert (for single insert)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -530,5 +559,6 @@ def MONGO_DOCUMENTS(
         label_key=label_key,
         required=False,
         description='Array of documents to insert (for bulk insert)',
+        group=FieldGroup.BASIC,
     )
 

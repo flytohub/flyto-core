@@ -4,6 +4,7 @@ Math Presets
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from ..builders import field, compose
+from ..constants import Visibility, FieldGroup
 from .. import validators
 
 
@@ -22,6 +23,7 @@ def INPUT_NUMBER(
         label_key=label_key,
         required=required,
         description='Number to process',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -43,6 +45,7 @@ def DECIMAL_PLACES(
         min=0,
         max=15,
         description='Number of decimal places',
+        group=FieldGroup.OPTIONS,
     )
 
 
@@ -61,6 +64,7 @@ def MATH_BASE(
         label_key=label_key,
         required=required,
         description='Base number',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -79,6 +83,7 @@ def MATH_EXPONENT(
         label_key=label_key,
         required=required,
         description='Power to raise to',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -106,6 +111,7 @@ def MATH_OPERATION(
             {'value': 'sqrt', 'label': 'Square Root'},
             {'value': 'abs', 'label': 'Absolute Value'},
         ],
+        group=FieldGroup.BASIC,
     )
 
 
@@ -124,6 +130,7 @@ def FIRST_OPERAND(
         label_key=label_key,
         required=required,
         description='First operand',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -142,6 +149,7 @@ def SECOND_OPERAND(
         label_key=label_key,
         required=required,
         description='Second operand (not required for sqrt and abs)',
+        group=FieldGroup.BASIC,
     )
 
 
@@ -161,5 +169,5 @@ def DECIMAL_PRECISION(
         default=default,
         required=False,
         description='Number of decimal places',
+        group=FieldGroup.OPTIONS,
     )
-

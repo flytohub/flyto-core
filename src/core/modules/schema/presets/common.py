@@ -129,6 +129,56 @@ def TIMEOUT_S(
     )
 
 
+def DURATION_MS(
+    *,
+    key: str = "duration_ms",
+    default: int = 1000,
+    min_ms: int = 0,
+    max_ms: int = 300000,
+    label: str = "Duration (ms)",
+    label_key: str = "schema.field.duration_ms",
+) -> Dict[str, Dict[str, Any]]:
+    """Duration field in milliseconds."""
+    return field(
+        key,
+        type="number",
+        label=label,
+        label_key=label_key,
+        default=default,
+        min=min_ms,
+        max=max_ms,
+        step=100,
+        ui={"unit": "ms"},
+        visibility=Visibility.DEFAULT,
+        group=FieldGroup.BASIC,
+    )
+
+
+def DURATION_S(
+    *,
+    key: str = "duration_s",
+    default: float = 1,
+    min_s: float = 0,
+    max_s: float = 300,
+    label: str = "Duration (seconds)",
+    label_key: str = "schema.field.duration_s",
+) -> Dict[str, Dict[str, Any]]:
+    """Duration field in seconds."""
+    return field(
+        key,
+        type="number",
+        label=label,
+        label_key=label_key,
+        default=default,
+        min=min_s,
+        max=max_s,
+        step=0.1,
+        ui={"unit": "s"},
+        visibility=Visibility.DEFAULT,
+        group=FieldGroup.BASIC,
+    )
+
+
 def BOOLEAN(
     *,
     key: str,
