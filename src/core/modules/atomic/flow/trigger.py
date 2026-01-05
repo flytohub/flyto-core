@@ -27,6 +27,9 @@ from ...types import NodeType, EdgeType, DataType
     color='#F59E0B',
 
 
+    # Connection rules
+    input_types=[],  # No input - this is an entry point
+    output_types=['object', 'string'],  # Outputs trigger_data object and strings
     can_receive_from=[],
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.TRIGGER,
