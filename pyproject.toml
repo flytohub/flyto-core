@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "1.8.15"
+version = "1.8.16"
 description = "Atomic workflow automation modules for git-native automation"
 readme = "README.md"
 license = "MIT"
@@ -100,7 +100,7 @@ target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "1.8.15"
+target-version = "1.8.16"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "B", "A", "C4", "SIM"]
@@ -113,7 +113,7 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 
 [tool.mypy]
-python_version = "1.8.15"
+python_version = "1.8.16"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true

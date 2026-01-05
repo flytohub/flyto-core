@@ -10,7 +10,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module, get_registry
-from ...schema import compose, presets
+from ...schema import compose, field, presets
 
 
 logger = logging.getLogger(__name__)
@@ -23,15 +23,16 @@ MAX_ITERATIONS = 10
 @register_module(
     module_id='llm.agent',
     version='1.0.0',
-    category='atomic',
+    category='ai',
     subcategory='llm',
-    tags=['llm', 'ai', 'agent', 'autonomous', 'tools', 'react', 'atomic'],
+    tags=['llm', 'ai', 'agent', 'autonomous', 'tools', 'react'],
     label='AI Agent',
     label_key='modules.llm.agent.label',
     description='Autonomous AI agent that can use tools to complete tasks',
     description_key='modules.llm.agent.description',
     icon='Bot',
     color='#8B5CF6',
+    # category='ai' automatically gets UIVisibility.DEFAULT
 
     # Connection types
     input_types=['string', 'object'],
@@ -52,61 +53,61 @@ MAX_ITERATIONS = 10
 
     # Schema-driven params
     params_schema=compose(
-        {
-            'name': 'task',
-            'type': 'string',
-            'label': 'Task',
-            'label_key': 'modules.llm.agent.params.task',
-            'description': 'The task for the agent to complete',
-            'description_key': 'modules.llm.agent.params.task.description',
-            'required': True,
-            'ui_component': 'textarea',
-            'placeholder': 'Scrape the website and summarize the content...'
-        },
-        {
-            'name': 'system_prompt',
-            'type': 'string',
-            'label': 'System Prompt',
-            'label_key': 'modules.llm.agent.params.system_prompt',
-            'description': 'Instructions for the agent behavior',
-            'description_key': 'modules.llm.agent.params.system_prompt.description',
-            'required': False,
-            'ui_component': 'textarea',
-            'default': 'You are a helpful AI agent. Use the available tools to complete the task. Think step by step.'
-        },
-        {
-            'name': 'tools',
-            'type': 'array',
-            'label': 'Available Tools',
-            'label_key': 'modules.llm.agent.params.tools',
-            'description': 'List of module IDs the agent can use as tools',
-            'description_key': 'modules.llm.agent.params.tools.description',
-            'required': False,
-            'default': [],
-            'ui_component': 'tool_selector'
-        },
-        {
-            'name': 'context',
-            'type': 'object',
-            'label': 'Context',
-            'label_key': 'modules.llm.agent.params.context',
-            'description': 'Additional context data for the agent',
-            'description_key': 'modules.llm.agent.params.context.description',
-            'required': False,
-            'default': {}
-        },
-        {
-            'name': 'max_iterations',
-            'type': 'number',
-            'label': 'Max Iterations',
-            'label_key': 'modules.llm.agent.params.max_iterations',
-            'description': 'Maximum number of tool calls',
-            'description_key': 'modules.llm.agent.params.max_iterations.description',
-            'required': False,
-            'default': 10,
-            'min': 1,
-            'max': 50
-        },
+        field(
+            'task',
+            type='string',
+            label='Task',
+            label_key='modules.llm.agent.params.task',
+            description='The task for the agent to complete',
+            description_key='modules.llm.agent.params.task.description',
+            required=True,
+            format='multiline',
+            placeholder='Scrape the website and summarize the content...'
+        ),
+        field(
+            'system_prompt',
+            type='string',
+            label='System Prompt',
+            label_key='modules.llm.agent.params.system_prompt',
+            description='Instructions for the agent behavior',
+            description_key='modules.llm.agent.params.system_prompt.description',
+            required=False,
+            format='multiline',
+            default='You are a helpful AI agent. Use the available tools to complete the task. Think step by step.'
+        ),
+        field(
+            'tools',
+            type='array',
+            label='Available Tools',
+            label_key='modules.llm.agent.params.tools',
+            description='List of module IDs the agent can use as tools',
+            description_key='modules.llm.agent.params.tools.description',
+            required=False,
+            default=[],
+            ui={'component': 'tool_selector'}
+        ),
+        field(
+            'context',
+            type='object',
+            label='Context',
+            label_key='modules.llm.agent.params.context',
+            description='Additional context data for the agent',
+            description_key='modules.llm.agent.params.context.description',
+            required=False,
+            default={}
+        ),
+        field(
+            'max_iterations',
+            type='number',
+            label='Max Iterations',
+            label_key='modules.llm.agent.params.max_iterations',
+            description='Maximum number of tool calls',
+            description_key='modules.llm.agent.params.max_iterations.description',
+            required=False,
+            default=10,
+            min=1,
+            max=50
+        ),
         presets.LLM_PROVIDER(default='openai'),
         presets.LLM_MODEL(default='gpt-4o'),
         presets.TEMPERATURE(default=0.3),
