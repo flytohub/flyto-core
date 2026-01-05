@@ -8,12 +8,16 @@ n8n-style architecture:
 - Memory port: Connect ai.memory for conversation history
 - Tools port: Connect ai.tool nodes for available tools
 - Main input: Control flow from previous node
+
+Supports n8n-style prompt source:
+- manual: Define task in params
+- auto: Take from previous node with path resolution
 """
 
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from ...registry import register_module, get_registry
 from ...schema import compose, field, presets
@@ -26,6 +30,239 @@ logger = logging.getLogger(__name__)
 # Maximum iterations to prevent infinite loops
 MAX_ITERATIONS = 10
 
+
+# =============================================================================
+# Prompt Resolution Helpers
+# =============================================================================
+
+def _resolve_task_prompt(
+    context: Dict[str, Any],
+    params: Dict[str, Any],
+    prompt_source: str,
+    prompt_path: str,
+    join_strategy: str,
+    join_separator: str,
+    max_input_size: int,
+) -> str:
+    """
+    Resolve the task prompt based on source configuration.
+
+    Args:
+        context: Execution context with inputs
+        params: Module parameters
+        prompt_source: 'manual' or 'auto'
+        prompt_path: Path expression for auto mode (e.g., {{input.message}})
+        join_strategy: How to handle arrays ('first', 'newline', 'separator', 'json')
+        join_separator: Custom separator for 'separator' strategy
+        max_input_size: Maximum characters for prompt
+
+    Returns:
+        Resolved task string
+    """
+    if prompt_source == 'manual':
+        task = params.get('task', '')
+        # Apply variable substitution for manual mode
+        if task and '{{' in task:
+            task = _substitute_variables(task, context, max_input_size)
+        return task
+
+    # Auto mode: resolve from input using prompt_path
+    return _resolve_from_input(
+        context=context,
+        prompt_path=prompt_path,
+        join_strategy=join_strategy,
+        join_separator=join_separator,
+        max_input_size=max_input_size,
+    )
+
+
+def _resolve_from_input(
+    context: Dict[str, Any],
+    prompt_path: str,
+    join_strategy: str,
+    join_separator: str,
+    max_input_size: int,
+) -> str:
+    """
+    Resolve prompt from input using path expression.
+
+    Args:
+        context: Execution context
+        prompt_path: Path expression (e.g., {{input}}, {{input.message}})
+        join_strategy: Array handling strategy
+        join_separator: Custom separator
+        max_input_size: Max characters
+
+    Returns:
+        Resolved prompt string
+    """
+    # Try to use VariableResolver from SDK
+    try:
+        from core.engine.sdk.resolver import VariableResolver, ResolutionMode
+        resolver = VariableResolver(context=context)
+        raw_value = resolver.resolve(prompt_path, mode=ResolutionMode.RAW)
+    except ImportError:
+        # Fallback to simple resolution
+        raw_value = _simple_resolve(context, prompt_path)
+
+    if raw_value is None:
+        return ''
+
+    # Handle arrays based on join_strategy
+    if isinstance(raw_value, (list, tuple)):
+        return _join_array(raw_value, join_strategy, join_separator, max_input_size)
+
+    # Convert to string
+    return _stringify_value(raw_value, max_input_size)
+
+
+def _simple_resolve(context: Dict[str, Any], path: str) -> Any:
+    """
+    Simple variable resolution fallback.
+
+    Supports basic paths: {{input}}, {{input.field}}
+    """
+    import re
+
+    # Extract path from {{...}}
+    match = re.match(r'\{\{(.+?)\}\}', path.strip())
+    if not match:
+        return None
+
+    path_str = match.group(1).strip()
+    parts = path_str.split('.')
+
+    # Start resolution
+    if parts[0] == 'input':
+        current = context.get('inputs', {}).get('input')
+        if current is None:
+            current = context.get('inputs', {}).get('main')
+        parts = parts[1:]
+    elif parts[0] == 'inputs':
+        current = context.get('inputs', {})
+        parts = parts[1:]
+    else:
+        current = context.get(parts[0])
+        parts = parts[1:]
+
+    # Navigate path
+    for part in parts:
+        if current is None:
+            return None
+        if isinstance(current, dict):
+            current = current.get(part)
+        elif hasattr(current, part):
+            current = getattr(current, part)
+        else:
+            return None
+
+    return current
+
+
+def _substitute_variables(
+    template: str,
+    context: Dict[str, Any],
+    max_input_size: int,
+) -> str:
+    """
+    Substitute {{...}} variables in a template string.
+
+    Args:
+        template: Template with {{...}} placeholders
+        context: Execution context
+        max_input_size: Max chars per substitution
+
+    Returns:
+        Template with variables substituted
+    """
+    import re
+
+    def replacer(match: re.Match) -> str:
+        path = '{{' + match.group(1) + '}}'
+        value = _simple_resolve(context, path)
+        if value is None:
+            return match.group(0)  # Keep original if not found
+        return _stringify_value(value, max_input_size)
+
+    return re.sub(r'\{\{(.+?)\}\}', replacer, template)
+
+
+def _join_array(
+    arr: Union[List, tuple],
+    strategy: str,
+    separator: str,
+    max_size: int,
+) -> str:
+    """
+    Join array elements based on strategy.
+
+    Args:
+        arr: Array to join
+        strategy: 'first', 'newline', 'separator', 'json'
+        separator: Custom separator for 'separator' strategy
+        max_size: Maximum output size
+
+    Returns:
+        Joined string
+    """
+    if not arr:
+        return ''
+
+    if strategy == 'first':
+        return _stringify_value(arr[0], max_size)
+
+    elif strategy == 'newline':
+        items = [_stringify_value(item, max_size // len(arr)) for item in arr]
+        return '\n'.join(items)[:max_size]
+
+    elif strategy == 'separator':
+        items = [_stringify_value(item, max_size // len(arr)) for item in arr]
+        return separator.join(items)[:max_size]
+
+    elif strategy == 'json':
+        result = json.dumps(arr, ensure_ascii=False, indent=2)
+        if len(result) > max_size:
+            result = result[:max_size] + '\n... [truncated]'
+        return result
+
+    # Default to first
+    return _stringify_value(arr[0], max_size)
+
+
+def _stringify_value(value: Any, max_size: int) -> str:
+    """
+    Convert value to string with size limit.
+
+    Args:
+        value: Any value
+        max_size: Maximum characters
+
+    Returns:
+        String representation
+    """
+    if value is None:
+        return ''
+
+    if isinstance(value, str):
+        result = value
+    elif isinstance(value, bool):
+        result = 'true' if value else 'false'
+    elif isinstance(value, (dict, list)):
+        result = json.dumps(value, ensure_ascii=False, indent=2)
+    else:
+        result = str(value)
+
+    if len(result) > max_size:
+        truncated = len(result) - max_size
+        result = result[:max_size] + f'\n... [truncated, {truncated} chars omitted]'
+        logger.warning(f'Value truncated to {max_size} chars')
+
+    return result
+
+
+# =============================================================================
+# Module Registration
+# =============================================================================
 
 @register_module(
     module_id='llm.agent',
@@ -130,16 +367,84 @@ MAX_ITERATIONS = 10
 
     # Schema-driven params (model config can be overridden or from connected ai.model)
     params_schema=compose(
+        # Prompt source configuration (n8n-style)
+        field(
+            'prompt_source',
+            type='select',
+            label='Prompt Source',
+            label_key='modules.llm.agent.params.prompt_source',
+            description='Where to get the task prompt from',
+            description_key='modules.llm.agent.params.prompt_source.description',
+            options=[
+                {'label': 'Define below', 'value': 'manual'},
+                {'label': 'From previous node', 'value': 'auto'},
+            ],
+            default='manual',
+            required=False,
+        ),
         field(
             'task',
             type='string',
             label='Task',
             label_key='modules.llm.agent.params.task',
-            description='The task for the agent to complete',
+            description='The task for the agent to complete. Use {{input}} to reference upstream data.',
             description_key='modules.llm.agent.params.task.description',
-            required=True,
+            required=False,  # Not required when prompt_source=auto
             format='multiline',
-            placeholder='Scrape the website and summarize the content...'
+            placeholder='Analyze the following data: {{input}}',
+            ui={'depends_on': {'prompt_source': 'manual'}},
+        ),
+        field(
+            'prompt_path',
+            type='string',
+            label='Prompt Path',
+            label_key='modules.llm.agent.params.prompt_path',
+            description='Path to extract prompt from input (e.g., {{input.message}})',
+            description_key='modules.llm.agent.params.prompt_path.description',
+            default='{{input}}',
+            required=False,
+            ui={'visibility': 'advanced', 'depends_on': {'prompt_source': 'auto'}},
+        ),
+        field(
+            'join_strategy',
+            type='select',
+            label='Array Join Strategy',
+            label_key='modules.llm.agent.params.join_strategy',
+            description='How to handle array inputs',
+            description_key='modules.llm.agent.params.join_strategy.description',
+            options=[
+                {'label': 'First item only', 'value': 'first'},
+                {'label': 'Join with newlines', 'value': 'newline'},
+                {'label': 'Join with separator', 'value': 'separator'},
+                {'label': 'As JSON array', 'value': 'json'},
+            ],
+            default='first',
+            required=False,
+            ui={'visibility': 'advanced', 'depends_on': {'prompt_source': 'auto'}},
+        ),
+        field(
+            'join_separator',
+            type='string',
+            label='Join Separator',
+            label_key='modules.llm.agent.params.join_separator',
+            description='Separator for joining array items',
+            description_key='modules.llm.agent.params.join_separator.description',
+            default='\n\n---\n\n',
+            required=False,
+            ui={'visibility': 'advanced', 'depends_on': {'join_strategy': 'separator'}},
+        ),
+        field(
+            'max_input_size',
+            type='number',
+            label='Max Input Size',
+            label_key='modules.llm.agent.params.max_input_size',
+            description='Maximum characters for prompt (prevents overflow)',
+            description_key='modules.llm.agent.params.max_input_size.description',
+            required=False,
+            default=10000,
+            min=100,
+            max=100000,
+            ui={'visibility': 'advanced'},
         ),
         field(
             'system_prompt',
@@ -245,13 +550,46 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     - model port: ai.model node for LLM config
     - memory port: ai.memory node for conversation history
     - tools port: connected tool modules
+
+    Supports n8n-style prompt source:
+    - manual: Use task param directly
+    - auto: Resolve from input using prompt_path
     """
     params = context['params']
-    task = params['task']
     system_prompt = params.get('system_prompt', 'You are a helpful AI agent.')
     tool_ids = params.get('tools', [])
-    user_context = params.get('context', {})
+    user_context = params.get('context', {}) or {}
     max_iterations = min(params.get('max_iterations', MAX_ITERATIONS), MAX_ITERATIONS)
+    max_input_size = params.get('max_input_size', 10000)
+
+    # Prompt source handling (n8n-style)
+    prompt_source = params.get('prompt_source', 'manual')
+    prompt_path = params.get('prompt_path', '{{input}}')
+    join_strategy = params.get('join_strategy', 'first')
+    join_separator = params.get('join_separator', '\n\n---\n\n')
+
+    # Resolve task prompt based on source
+    task = _resolve_task_prompt(
+        context=context,
+        params=params,
+        prompt_source=prompt_source,
+        prompt_path=prompt_path,
+        join_strategy=join_strategy,
+        join_separator=join_separator,
+        max_input_size=max_input_size,
+    )
+
+    if not task:
+        return {
+            'ok': False,
+            'error': 'No task prompt provided. Either set prompt_source to "manual" and provide a task, or connect an input node.',
+            'error_code': 'MISSING_TASK'
+        }
+
+    # Store resolved input in context for reference
+    main_input = context.get('inputs', {}).get('input')
+    if main_input is not None:
+        user_context['input'] = _stringify_value(main_input, max_input_size)
 
     # Get model config from connected ai.model or params
     model_input = context.get('inputs', {}).get('model')

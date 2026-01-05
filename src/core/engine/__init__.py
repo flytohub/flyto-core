@@ -1,6 +1,15 @@
 """
 Workflow Engine Package
+
+This package provides workflow execution capabilities with:
+- Variable resolution
+- Step execution
+- Hooks and evidence collection
+- Data lineage tracking
+- Replay and breakpoint support
 """
+
+# Core exceptions - always available
 from .exceptions import (
     StepTimeoutError,
     WorkflowExecutionError,
@@ -8,6 +17,8 @@ from .exceptions import (
     FlowControlError,
     VariableResolutionError,
 )
+
+# Flow control utilities - always available
 from .flow_control import (
     FLOW_CONTROL_MODULES,
     is_flow_control_module,
@@ -15,64 +26,148 @@ from .flow_control import (
     is_iteration_module,
     normalize_module_id,
 )
-from .workflow_engine import WorkflowEngine
+
+# Variable resolver - always available
 from .variable_resolver import VariableResolver
-from .step_executor import (
-    StepExecutor,
-    create_step_executor,
-)
-from .hooks import (
-    ExecutorHooks,
-    HookContext,
-    HookResult,
-    HookAction,
-    NullHooks,
-    LoggingHooks,
-    MetricsHooks,
-    CompositeHooks,
-    create_hooks,
-)
-from .evidence import (
-    StepEvidence,
-    EvidenceStore,
-    StepEvidenceHook,
-    EvidenceExecutorHooks,
-    create_evidence_store,
-    create_evidence_hook,
-    create_evidence_executor_hooks,
-)
-from .lineage import (
-    DataSource,
-    TrackedValue,
-    LineageContext,
-    trace_data_flow,
-    find_dependent_variables,
-    build_data_graph,
-    create_lineage_context,
-    wrap_with_lineage,
-)
-from .replay import (
-    ReplayMode,
-    ReplayConfig,
-    ReplayResult,
-    ReplayManager,
-    create_replay_manager,
-)
-from .breakpoint import (
-    BreakpointStatus,
-    ApprovalMode,
-    BreakpointRequest,
-    ApprovalResponse,
-    BreakpointResult,
-    BreakpointManager,
-    BreakpointStore,
-    BreakpointNotifier,
-    InMemoryBreakpointStore,
-    NullNotifier,
-    get_breakpoint_manager,
-    create_breakpoint_manager,
-    set_global_breakpoint_manager,
-)
+
+# Optional imports - may not exist in all configurations
+WorkflowEngine = None
+StepExecutor = None
+create_step_executor = None
+
+try:
+    from .workflow.engine import WorkflowEngine
+except ImportError:
+    pass
+
+try:
+    from .step_executor import StepExecutor, create_step_executor
+except ImportError:
+    pass
+
+# Hooks - optional
+ExecutorHooks = None
+HookContext = None
+HookResult = None
+HookAction = None
+NullHooks = None
+LoggingHooks = None
+MetricsHooks = None
+CompositeHooks = None
+create_hooks = None
+
+try:
+    from .hooks import (
+        ExecutorHooks,
+        HookContext,
+        HookResult,
+        HookAction,
+        NullHooks,
+        LoggingHooks,
+        MetricsHooks,
+        CompositeHooks,
+        create_hooks,
+    )
+except ImportError:
+    pass
+
+# Evidence - optional
+StepEvidence = None
+EvidenceStore = None
+StepEvidenceHook = None
+EvidenceExecutorHooks = None
+create_evidence_store = None
+create_evidence_hook = None
+create_evidence_executor_hooks = None
+
+try:
+    from .evidence import (
+        StepEvidence,
+        EvidenceStore,
+        StepEvidenceHook,
+        EvidenceExecutorHooks,
+        create_evidence_store,
+        create_evidence_hook,
+        create_evidence_executor_hooks,
+    )
+except ImportError:
+    pass
+
+# Lineage - optional
+DataSource = None
+TrackedValue = None
+LineageContext = None
+trace_data_flow = None
+find_dependent_variables = None
+build_data_graph = None
+create_lineage_context = None
+wrap_with_lineage = None
+
+try:
+    from .lineage import (
+        DataSource,
+        TrackedValue,
+        LineageContext,
+        trace_data_flow,
+        find_dependent_variables,
+        build_data_graph,
+        create_lineage_context,
+        wrap_with_lineage,
+    )
+except ImportError:
+    pass
+
+# Replay - optional
+ReplayMode = None
+ReplayConfig = None
+ReplayResult = None
+ReplayManager = None
+create_replay_manager = None
+
+try:
+    from .replay import (
+        ReplayMode,
+        ReplayConfig,
+        ReplayResult,
+        ReplayManager,
+        create_replay_manager,
+    )
+except ImportError:
+    pass
+
+# Breakpoint - optional
+BreakpointStatus = None
+ApprovalMode = None
+BreakpointRequest = None
+ApprovalResponse = None
+BreakpointResult = None
+BreakpointManager = None
+BreakpointStore = None
+BreakpointNotifier = None
+InMemoryBreakpointStore = None
+NullNotifier = None
+get_breakpoint_manager = None
+create_breakpoint_manager = None
+set_global_breakpoint_manager = None
+
+try:
+    from .breakpoint import (
+        BreakpointStatus,
+        ApprovalMode,
+        BreakpointRequest,
+        ApprovalResponse,
+        BreakpointResult,
+        BreakpointManager,
+        BreakpointStore,
+        BreakpointNotifier,
+        InMemoryBreakpointStore,
+        NullNotifier,
+        get_breakpoint_manager,
+        create_breakpoint_manager,
+        set_global_breakpoint_manager,
+    )
+except ImportError:
+    pass
 
 __all__ = [
     # Exceptions
