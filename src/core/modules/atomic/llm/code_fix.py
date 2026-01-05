@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['object', 'array'],
     output_types=['object', 'array'],
-    can_connect_to=['file.*', 'shell.*', 'test.*'],
+    can_connect_to=['*'],  # Can connect to any module (file, shell, llm, etc.)
     can_receive_from=['*'],
 
     # Execution settings

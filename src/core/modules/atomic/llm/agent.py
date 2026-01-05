@@ -48,6 +48,7 @@ MAX_ITERATIONS = 10
     output_types=['string', 'object'],
     can_connect_to=['*'],
     can_receive_from=['*', 'ai.model', 'ai.memory'],
+    can_be_start=True,  # Can be start node - task param provides input
 
     # Multiple input ports (n8n-style)
     input_ports=[
