@@ -4,7 +4,7 @@ Module Registry - Core Registration and Lookup
 Manages all registered modules and their metadata.
 """
 # Registry version for sync tracking
-REGISTRY_VERSION = "1.0.2"
+REGISTRY_VERSION = "1.0.3"
 
 import logging
 from typing import Dict, Type, Any, Optional, List
@@ -12,6 +12,7 @@ from typing import Dict, Type, Any, Optional, List
 from ..base import BaseModule
 from ...constants import ErrorMessages
 from .localization import get_localized_value
+from ..types import StabilityLevel, is_module_visible, get_current_env
 
 
 logger = logging.getLogger(__name__)
@@ -101,7 +102,9 @@ class ModuleRegistry:
         cls,
         category: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        lang: str = 'en'
+        lang: str = 'en',
+        filter_by_stability: bool = True,
+        env: Optional[str] = None
     ) -> Dict[str, Dict[str, Any]]:
         """
         Get all module metadata (with optional filtering)
@@ -110,13 +113,26 @@ class ModuleRegistry:
             category: Filter by category (e.g., "browser", "data")
             tags: Filter by tags (module must have at least one matching tag)
             lang: Language code for localized fields
+            filter_by_stability: If True, filter modules by stability level based on environment
+            env: Environment override (production/staging/development/local), defaults to FLYTO_ENV
 
         Returns:
             Dict of module_id -> metadata
         """
         result = {}
+        current_env = env or get_current_env()
 
         for module_id, metadata in cls._metadata.items():
+            # Filter by stability (environment-aware)
+            if filter_by_stability:
+                stability_str = metadata.get('stability', 'stable')
+                try:
+                    stability = StabilityLevel(stability_str)
+                except ValueError:
+                    stability = StabilityLevel.STABLE
+                if not is_module_visible(stability, current_env):
+                    continue
+
             # Filter by category
             if category and metadata.get('category') != category:
                 continue

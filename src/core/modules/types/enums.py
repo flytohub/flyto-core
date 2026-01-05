@@ -148,6 +148,21 @@ class PortImportance(str, Enum):
     ADVANCED = "advanced"
 
 
+class StabilityLevel(str, Enum):
+    """
+    Module stability level - determines which environment sees the module.
+
+    STABLE: Production ready, shown in all environments
+    BETA: Testing phase, shown in development/staging only
+    ALPHA: Early development, shown only in local dev mode
+    DEPRECATED: Scheduled for removal, hidden but still functional
+    """
+    STABLE = "stable"
+    BETA = "beta"
+    ALPHA = "alpha"
+    DEPRECATED = "deprecated"
+
+
 # Priority order for module selection (lower = higher priority)
 LEVEL_PRIORITY = {
     ModuleLevel.ATOMIC: 1,

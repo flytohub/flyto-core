@@ -9,6 +9,7 @@ from ..types import (
     UIVisibility,
     ExecutionEnvironment,
     NodeType,
+    StabilityLevel,
     DEFAULT_CONTEXT_REQUIREMENTS,
     DEFAULT_CONTEXT_PROVISIONS,
     get_default_visibility,
@@ -63,6 +64,7 @@ def _validate_module_registration(
 def register_module(
     module_id: str,
     version: str = "1.0.0",
+    stability: StabilityLevel = StabilityLevel.STABLE,
     level: ModuleLevel = ModuleLevel.ATOMIC,
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
@@ -223,6 +225,11 @@ def register_module(
     Args:
         module_id: Unique identifier (e.g., "browser.goto")
         version: Semantic version (default: "1.0.0")
+        stability: Stability level (STABLE/BETA/ALPHA/DEPRECATED)
+                   - STABLE: Production ready, shown everywhere
+                   - BETA: Testing, shown in development/staging
+                   - ALPHA: Early dev, shown only in local dev
+                   - DEPRECATED: Hidden but functional
         level: Module level classification
         category: Primary category (default: extracted from module_id)
         subcategory: Optional subcategory
@@ -374,6 +381,7 @@ def register_module(
         metadata = {
             "module_id": module_id,
             "version": version,
+            "stability": stability.value if isinstance(stability, StabilityLevel) else stability,
             "level": level.value if isinstance(level, ModuleLevel) else level,
             "category": resolved_category,
             "subcategory": subcategory,

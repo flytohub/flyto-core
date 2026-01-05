@@ -21,6 +21,7 @@ from .enums import (
     ModuleLevel,
     NodeType,
     PortImportance,
+    StabilityLevel,
     UIVisibility,
 )
 from .data_types import (
@@ -48,6 +49,13 @@ from .environment import (
     get_module_environment,
     is_module_allowed_in_environment,
 )
+from .stability import (
+    STABILITY_BY_ENV,
+    get_allowed_stability_levels,
+    get_current_env,
+    get_default_stability,
+    is_module_visible,
+)
 
 __all__ = [
     # Enums
@@ -59,6 +67,7 @@ __all__ = [
     "ModuleLevel",
     "NodeType",
     "PortImportance",
+    "StabilityLevel",
     "UIVisibility",
     # Data types
     "DATA_TYPE_COMPATIBILITY",
@@ -80,4 +89,10 @@ __all__ = [
     "MODULE_ENVIRONMENT_OVERRIDES",
     "get_module_environment",
     "is_module_allowed_in_environment",
+    # Stability
+    "STABILITY_BY_ENV",
+    "get_allowed_stability_levels",
+    "get_current_env",
+    "get_default_stability",
+    "is_module_visible",
 ]
