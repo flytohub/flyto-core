@@ -91,6 +91,9 @@ class NodeType(str, Enum):
     START = "start"
     END = "end"
     BREAKPOINT = "breakpoint"
+    # AI-specific node types (n8n-style cluster nodes)
+    AI_AGENT = "ai_agent"
+    AI_SUB_NODE = "ai_sub_node"
 
 
 class EdgeType(str, Enum):
@@ -127,6 +130,11 @@ class DataType(str, Enum):
     XML = "xml"
     HTML = "html"
     CREDENTIAL = "credential"
+    # AI-specific types (for n8n-style multi-port connections)
+    AI_MODEL = "ai_model"
+    AI_MEMORY = "ai_memory"
+    AI_TOOL = "ai_tool"
+    AI_OUTPUT_PARSER = "ai_output_parser"
 
 
 class PortImportance(str, Enum):

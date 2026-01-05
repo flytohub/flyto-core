@@ -1,7 +1,13 @@
 """
 AI Agent Module
 Autonomous agent that can use tools (other modules) to complete tasks
-Similar to n8n's AI Agent node
+Similar to n8n's AI Agent node with multiple input ports
+
+n8n-style architecture:
+- Model port: Connect ai.model for LLM configuration
+- Memory port: Connect ai.memory for conversation history
+- Tools port: Connect ai.tool nodes for available tools
+- Main input: Control flow from previous node
 """
 
 import json
@@ -11,6 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module, get_registry
 from ...schema import compose, field, presets
+from ...types import NodeType, EdgeType, DataType
 
 
 logger = logging.getLogger(__name__)
@@ -22,23 +29,92 @@ MAX_ITERATIONS = 10
 
 @register_module(
     module_id='llm.agent',
-    version='1.0.0',
+    version='2.0.0',  # Major version for multi-port architecture
     category='ai',
-    subcategory='llm',
-    tags=['llm', 'ai', 'agent', 'autonomous', 'tools', 'react'],
+    subcategory='agent',
+    tags=['llm', 'ai', 'agent', 'autonomous', 'tools', 'react', 'n8n-style'],
     label='AI Agent',
     label_key='modules.llm.agent.label',
-    description='Autonomous AI agent that can use tools to complete tasks',
+    description='Autonomous AI agent with multi-port connections (model, memory, tools)',
     description_key='modules.llm.agent.description',
     icon='Bot',
     color='#8B5CF6',
-    # category='ai' automatically gets UIVisibility.DEFAULT
 
-    # Connection types
-    input_types=['string', 'object'],
+    # n8n-style AI Agent node type
+    node_type=NodeType.AI_AGENT,
+
+    # Connection types - accepts AI sub-nodes and regular data
+    input_types=['string', 'object', 'ai_model', 'ai_memory', 'ai_tool'],
     output_types=['string', 'object'],
     can_connect_to=['*'],
-    can_receive_from=['*'],
+    can_receive_from=['*', 'ai.model', 'ai.memory'],
+
+    # Multiple input ports (n8n-style)
+    input_ports=[
+        {
+            'id': 'input',
+            'label': 'Input',
+            'label_key': 'modules.llm.agent.ports.input',
+            'data_type': DataType.ANY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'max_connections': 1,
+            'required': False,
+            'description': 'Main control flow input'
+        },
+        {
+            'id': 'model',
+            'label': 'Model',
+            'label_key': 'modules.llm.agent.ports.model',
+            'data_type': DataType.AI_MODEL.value,
+            'edge_type': EdgeType.RESOURCE.value,
+            'max_connections': 1,
+            'required': False,
+            'color': '#10B981',
+            'description': 'Connect ai.model for LLM configuration'
+        },
+        {
+            'id': 'memory',
+            'label': 'Memory',
+            'label_key': 'modules.llm.agent.ports.memory',
+            'data_type': DataType.AI_MEMORY.value,
+            'edge_type': EdgeType.RESOURCE.value,
+            'max_connections': 1,
+            'required': False,
+            'color': '#8B5CF6',
+            'description': 'Connect ai.memory for conversation history'
+        },
+        {
+            'id': 'tools',
+            'label': 'Tools',
+            'label_key': 'modules.llm.agent.ports.tools',
+            'data_type': DataType.AI_TOOL.value,
+            'edge_type': EdgeType.RESOURCE.value,
+            'max_connections': -1,  # Unlimited
+            'required': False,
+            'color': '#F59E0B',
+            'description': 'Connect tool modules for agent to use'
+        }
+    ],
+
+    # Output ports
+    output_ports=[
+        {
+            'id': 'output',
+            'label': 'Output',
+            'label_key': 'modules.llm.agent.ports.output',
+            'data_type': DataType.ANY.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'color': '#10B981'
+        },
+        {
+            'id': 'error',
+            'label': 'Error',
+            'label_key': 'common.ports.error',
+            'data_type': DataType.OBJECT.value,
+            'edge_type': EdgeType.CONTROL.value,
+            'color': '#EF4444'
+        }
+    ],
 
     # Execution settings
     timeout=300,  # 5 minutes for agent tasks
@@ -51,7 +127,7 @@ MAX_ITERATIONS = 10
     handles_sensitive_data=True,
     required_permissions=['ai.agent'],
 
-    # Schema-driven params
+    # Schema-driven params (model config can be overridden or from connected ai.model)
     params_schema=compose(
         field(
             'task',
@@ -80,7 +156,7 @@ MAX_ITERATIONS = 10
             type='array',
             label='Available Tools',
             label_key='modules.llm.agent.params.tools',
-            description='List of module IDs the agent can use as tools',
+            description='List of module IDs (alternative to connecting tool nodes)',
             description_key='modules.llm.agent.params.tools.description',
             required=False,
             default=[],
@@ -108,6 +184,7 @@ MAX_ITERATIONS = 10
             min=1,
             max=50
         ),
+        # Fallback model config (used if no ai.model connected)
         presets.LLM_PROVIDER(default='openai'),
         presets.LLM_MODEL(default='gpt-4o'),
         presets.TEMPERATURE(default=0.3),
@@ -160,18 +237,57 @@ MAX_ITERATIONS = 10
     license='MIT'
 )
 async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
-    """Run an autonomous AI agent with tool use"""
+    """
+    Run an autonomous AI agent with tool use.
+
+    Supports n8n-style multi-port connections:
+    - model port: ai.model node for LLM config
+    - memory port: ai.memory node for conversation history
+    - tools port: connected tool modules
+    """
     params = context['params']
     task = params['task']
     system_prompt = params.get('system_prompt', 'You are a helpful AI agent.')
     tool_ids = params.get('tools', [])
     user_context = params.get('context', {})
     max_iterations = min(params.get('max_iterations', MAX_ITERATIONS), MAX_ITERATIONS)
-    provider = params.get('provider', 'openai')
-    model = params.get('model', 'gpt-4o')
-    temperature = params.get('temperature', 0.3)
-    api_key = params.get('api_key')
-    base_url = params.get('base_url')
+
+    # Get model config from connected ai.model or params
+    model_input = context.get('inputs', {}).get('model')
+    if model_input and model_input.get('__data_type__') == 'ai_model':
+        # Use connected model configuration
+        model_config = model_input.get('config', {})
+        provider = model_config.get('provider', 'openai')
+        model = model_config.get('model', 'gpt-4o')
+        temperature = model_config.get('temperature', 0.3)
+        api_key = model_config.get('api_key')
+        base_url = model_config.get('base_url')
+        logger.info(f"Using connected ai.model: {provider}/{model}")
+    else:
+        # Use params as fallback
+        provider = params.get('provider', 'openai')
+        model = params.get('model', 'gpt-4o')
+        temperature = params.get('temperature', 0.3)
+        api_key = params.get('api_key')
+        base_url = params.get('base_url')
+
+    # Get memory from connected ai.memory
+    memory_input = context.get('inputs', {}).get('memory')
+    conversation_history = []
+    if memory_input and memory_input.get('__data_type__') == 'ai_memory':
+        conversation_history = memory_input.get('messages', [])
+        logger.info(f"Using connected ai.memory with {len(conversation_history)} messages")
+
+    # Get tools from connected tool nodes
+    tools_input = context.get('inputs', {}).get('tools')
+    if tools_input:
+        if isinstance(tools_input, list):
+            # Multiple tool nodes connected
+            for tool_data in tools_input:
+                if tool_data.get('__data_type__') == 'ai_tool':
+                    tool_ids.append(tool_data.get('module_id'))
+        elif isinstance(tools_input, dict) and tools_input.get('__data_type__') == 'ai_tool':
+            tool_ids.append(tools_input.get('module_id'))
 
     # Get API key from environment if not provided
     if not api_key:
@@ -199,8 +315,14 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     # Build initial messages
     messages = [
         {"role": "system", "content": _build_agent_system_prompt(system_prompt, tools)},
-        {"role": "user", "content": _build_task_prompt(task, user_context)}
     ]
+
+    # Add conversation history from memory if available
+    if conversation_history:
+        messages.extend(conversation_history)
+
+    # Add current task
+    messages.append({"role": "user", "content": _build_task_prompt(task, user_context)})
 
     steps = []
     total_tokens = 0
