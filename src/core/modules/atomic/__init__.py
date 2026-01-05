@@ -55,6 +55,7 @@ from . import api
 from . import vision
 from . import ui
 from . import llm
+from . import ai  # AI sub-nodes (model, memory)
 
 # HuggingFace AI modules
 try:
@@ -86,6 +87,7 @@ __all__ = [
     'vision',
     'ui',
     'llm',
+    'ai',
     # Browser modules
     'BrowserFindModule',
     # Element modules
