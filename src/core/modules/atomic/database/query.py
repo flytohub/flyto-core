@@ -19,6 +19,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
 
 @register_module(
     module_id='database.query',
+    stability="beta",
     version='1.0.0',
     category='database',
     subcategory='query',

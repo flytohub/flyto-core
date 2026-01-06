@@ -14,6 +14,7 @@ from ...types import NodeType, EdgeType, DataType
 
 @register_module(
     module_id='ai.memory',
+    stability="beta",
     version='1.0.0',
     category='ai',
     subcategory='sub_node',

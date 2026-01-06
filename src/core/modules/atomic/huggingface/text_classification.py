@@ -19,6 +19,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_CLASSIFICATION)
 
 @register_module(
     module_id='huggingface.text-classification',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.TEXT,

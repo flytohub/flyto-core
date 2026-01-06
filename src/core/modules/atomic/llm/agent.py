@@ -266,6 +266,7 @@ def _stringify_value(value: Any, max_size: int) -> str:
 
 @register_module(
     module_id='llm.agent',
+    stability="beta",
     version='2.0.0',  # Major version for multi-port architecture
     category='ai',
     subcategory='agent',

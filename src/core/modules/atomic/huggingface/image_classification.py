@@ -19,6 +19,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
 
 @register_module(
     module_id='huggingface.image-classification',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.VISION,

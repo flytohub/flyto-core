@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='email.read',
+    stability="beta",
     version='1.0.0',
     category='communication',
     subcategory='email',

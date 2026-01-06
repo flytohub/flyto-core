@@ -18,6 +18,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite']
 
 @register_module(
     module_id='database.insert',
+    stability="beta",
     version='1.0.0',
     category='database',
     subcategory='write',

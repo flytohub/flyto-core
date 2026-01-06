@@ -19,6 +19,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.TRANSLATION)
 
 @register_module(
     module_id='huggingface.translation',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.TEXT,

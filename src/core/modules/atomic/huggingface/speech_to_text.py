@@ -20,6 +20,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
 
 @register_module(
     module_id='huggingface.speech-to-text',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.AUDIO,

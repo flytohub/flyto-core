@@ -19,6 +19,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_GENERATION)
 
 @register_module(
     module_id='huggingface.text-generation',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.TEXT,

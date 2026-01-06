@@ -19,6 +19,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.SUMMARIZATION)
 
 @register_module(
     module_id='huggingface.summarization',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.TEXT,

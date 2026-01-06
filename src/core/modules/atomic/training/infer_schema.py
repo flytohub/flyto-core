@@ -11,6 +11,7 @@ from core.training.daily_practice import DailyPracticeEngine
 
 @register_module(
     module_id='training.practice.infer_schema',
+    stability="beta",
     version='1.0.0',
     category='training',
     tags=['training', 'practice', 'schema'],

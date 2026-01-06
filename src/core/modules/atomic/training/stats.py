@@ -10,6 +10,7 @@ from core.training.daily_practice import DailyPracticeEngine
 
 @register_module(
     module_id='training.practice.stats',
+    stability="beta",
     version='1.0.0',
     category='training',
     tags=['training', 'practice', 'stats'],

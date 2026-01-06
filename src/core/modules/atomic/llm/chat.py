@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='llm.chat',
+    stability="beta",
     version='1.0.0',
     category='atomic',
     subcategory='llm',

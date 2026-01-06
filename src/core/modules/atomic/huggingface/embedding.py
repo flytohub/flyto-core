@@ -45,6 +45,7 @@ def extract_embedding(result: Any) -> List[float]:
 
 @register_module(
     module_id='huggingface.embedding',
+    stability="beta",
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.TEXT,

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='vision.compare',
+    stability="beta",
     version='1.0.0',
     category='atomic',
     subcategory='vision',

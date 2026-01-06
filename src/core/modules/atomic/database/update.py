@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='database.update',
+    stability="beta",
     version='1.0.0',
     category='database',
     subcategory='write',
