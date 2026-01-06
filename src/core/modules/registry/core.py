@@ -4,7 +4,7 @@ Module Registry - Core Registration and Lookup
 Manages all registered modules and their metadata.
 """
 # Registry version for sync tracking
-REGISTRY_VERSION = "1.0.3"
+REGISTRY_VERSION = "1.0.4"
 
 import logging
 from typing import Dict, Type, Any, Optional, List
@@ -93,9 +93,39 @@ class ModuleRegistry:
         return module_id in cls._modules
 
     @classmethod
-    def list_all(cls) -> Dict[str, Type[BaseModule]]:
-        """List all registered module classes"""
-        return cls._modules.copy()
+    def list_all(
+        cls,
+        filter_by_stability: bool = False,
+        env: Optional[str] = None
+    ) -> Dict[str, Type[BaseModule]]:
+        """
+        List all registered module classes
+
+        Args:
+            filter_by_stability: If True, filter by stability level based on environment
+            env: Environment override (production/staging/development/local)
+
+        Returns:
+            Dict of module_id -> module class
+        """
+        if not filter_by_stability:
+            return cls._modules.copy()
+
+        current_env = env or get_current_env()
+        result = {}
+
+        for module_id, module_class in cls._modules.items():
+            metadata = cls._metadata.get(module_id, {})
+            stability_str = metadata.get('stability', 'stable')
+            try:
+                stability = StabilityLevel(stability_str)
+            except ValueError:
+                stability = StabilityLevel.STABLE
+
+            if is_module_visible(stability, current_env):
+                result[module_id] = module_class
+
+        return result
 
     @classmethod
     def get_all_metadata(

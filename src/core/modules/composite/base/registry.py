@@ -6,6 +6,8 @@ Manages registration and lookup of composite modules.
 import logging
 from typing import Any, Dict, List, Optional, Type, TYPE_CHECKING
 
+from ...types import StabilityLevel, is_module_visible, get_current_env
+
 if TYPE_CHECKING:
     from .module import CompositeModule
 
@@ -54,9 +56,36 @@ class CompositeRegistry:
         return module_id in cls._composites
 
     @classmethod
-    def list_all(cls) -> Dict[str, Type['CompositeModule']]:
-        """List all registered composite modules"""
-        return cls._composites.copy()
+    def list_all(
+        cls,
+        filter_by_stability: bool = False,
+        env: Optional[str] = None
+    ) -> Dict[str, Type['CompositeModule']]:
+        """
+        List all registered composite modules
+
+        Args:
+            filter_by_stability: If True, filter by stability level
+            env: Environment override
+        """
+        if not filter_by_stability:
+            return cls._composites.copy()
+
+        current_env = env or get_current_env()
+        result = {}
+
+        for module_id, module_class in cls._composites.items():
+            metadata = cls._metadata.get(module_id, {})
+            stability_str = metadata.get('stability', 'stable')
+            try:
+                stability = StabilityLevel(stability_str)
+            except ValueError:
+                stability = StabilityLevel.STABLE
+
+            if is_module_visible(stability, current_env):
+                result[module_id] = module_class
+
+        return result
 
     @classmethod
     def get_metadata(cls, module_id: str) -> Optional[Dict[str, Any]]:
@@ -67,12 +96,33 @@ class CompositeRegistry:
     def get_all_metadata(
         cls,
         category: Optional[str] = None,
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
+        filter_by_stability: bool = True,
+        env: Optional[str] = None
     ) -> Dict[str, Dict[str, Any]]:
-        """Get all composite metadata with optional filtering"""
+        """
+        Get all composite metadata with optional filtering
+
+        Args:
+            category: Filter by category
+            tags: Filter by tags
+            filter_by_stability: If True, filter by stability level
+            env: Environment override
+        """
         result = {}
+        current_env = env or get_current_env()
 
         for module_id, metadata in cls._metadata.items():
+            # Filter by stability
+            if filter_by_stability:
+                stability_str = metadata.get('stability', 'stable')
+                try:
+                    stability = StabilityLevel(stability_str)
+                except ValueError:
+                    stability = StabilityLevel.STABLE
+                if not is_module_visible(stability, current_env):
+                    continue
+
             if category and metadata.get('category') != category:
                 continue
 
