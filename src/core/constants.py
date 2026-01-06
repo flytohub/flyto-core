@@ -362,6 +362,77 @@ class WorkflowStatus:
 
 
 # =============================================================================
+# Error Codes
+# =============================================================================
+
+class ErrorCode:
+    """
+    Standardized error codes for module execution.
+
+    Usage:
+        from core.constants import ErrorCode
+
+        return {
+            "ok": False,
+            "error": {
+                "code": ErrorCode.MISSING_PARAM,
+                "message": "Missing required parameter: url",
+                "field": "url",
+                "hint": "Please provide a valid URL"
+            }
+        }
+    """
+
+    # Parameter validation errors
+    MISSING_PARAM: str = "MISSING_PARAM"
+    INVALID_PARAM_TYPE: str = "INVALID_PARAM_TYPE"
+    INVALID_PARAM_VALUE: str = "INVALID_PARAM_VALUE"
+    PARAM_OUT_OF_RANGE: str = "PARAM_OUT_OF_RANGE"
+
+    # Execution errors
+    TIMEOUT: str = "TIMEOUT"
+    RETRY_EXHAUSTED: str = "RETRY_EXHAUSTED"
+    EXECUTION_ERROR: str = "EXECUTION_ERROR"
+    CANCELLED: str = "CANCELLED"
+
+    # Network / API errors
+    NETWORK_ERROR: str = "NETWORK_ERROR"
+    API_ERROR: str = "API_ERROR"
+    RATE_LIMITED: str = "RATE_LIMITED"
+    UNAUTHORIZED: str = "UNAUTHORIZED"
+    FORBIDDEN: str = "FORBIDDEN"
+    NOT_FOUND: str = "NOT_FOUND"
+
+    # Browser / Element errors
+    ELEMENT_NOT_FOUND: str = "ELEMENT_NOT_FOUND"
+    ELEMENT_NOT_VISIBLE: str = "ELEMENT_NOT_VISIBLE"
+    NAVIGATION_ERROR: str = "NAVIGATION_ERROR"
+    PAGE_LOAD_ERROR: str = "PAGE_LOAD_ERROR"
+    BROWSER_ERROR: str = "BROWSER_ERROR"
+
+    # File errors
+    FILE_NOT_FOUND: str = "FILE_NOT_FOUND"
+    FILE_ACCESS_DENIED: str = "FILE_ACCESS_DENIED"
+    FILE_READ_ERROR: str = "FILE_READ_ERROR"
+    FILE_WRITE_ERROR: str = "FILE_WRITE_ERROR"
+
+    # Connection / Type errors
+    TYPE_MISMATCH: str = "TYPE_MISMATCH"
+    INVALID_CONNECTION: str = "INVALID_CONNECTION"
+    DEPENDENCY_ERROR: str = "DEPENDENCY_ERROR"
+
+    # Configuration errors
+    MISSING_CREDENTIAL: str = "MISSING_CREDENTIAL"
+    INVALID_CONFIG: str = "INVALID_CONFIG"
+    MODULE_NOT_FOUND: str = "MODULE_NOT_FOUND"
+
+    # AI/LLM specific errors
+    AI_RESPONSE_ERROR: str = "AI_RESPONSE_ERROR"
+    AI_CONTEXT_TOO_LONG: str = "AI_CONTEXT_TOO_LONG"
+    MODEL_NOT_AVAILABLE: str = "MODEL_NOT_AVAILABLE"
+
+
+# =============================================================================
 # Error Messages
 # =============================================================================
 

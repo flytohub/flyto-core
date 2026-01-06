@@ -4,13 +4,15 @@ Base Module Class with Phase 2 execution support
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Type, Union
 
 from ..constants import (
     DEFAULT_MAX_RETRIES,
     EXPONENTIAL_BACKOFF_BASE,
+    ErrorCode,
     ErrorMessages,
 )
+from .validation import ModuleError, validate_required, validate_type, validate_all
 
 
 logger = logging.getLogger(__name__)
@@ -215,3 +217,108 @@ class BaseModule(ABC):
                 )
             )
         return self.params[name]
+
+    # =========================================================================
+    # Unified Return Format Helpers
+    # =========================================================================
+
+    def success(self, data: Any = None, message: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Create a standard success result.
+
+        Usage:
+            return self.success({'title': 'Example'})
+            return self.success(data={'items': []}, message='Found 0 items')
+
+        Args:
+            data: Result data (any type)
+            message: Optional success message
+
+        Returns:
+            Standard success result dict with ok=True
+        """
+        result: Dict[str, Any] = {"ok": True}
+        if data is not None:
+            result["data"] = data
+        if message:
+            result["message"] = message
+        return result
+
+    def failure(
+        self,
+        code: str,
+        message: str,
+        field: Optional[str] = None,
+        hint: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a standard failure result.
+
+        Usage:
+            return self.failure(
+                ErrorCode.MISSING_PARAM,
+                "URL is required",
+                field="url",
+                hint="Please provide a valid URL"
+            )
+
+        Args:
+            code: Error code from ErrorCode class
+            message: Human-readable error message
+            field: Field that caused the error
+            hint: Suggestion for fixing the error
+
+        Returns:
+            Standard failure result dict with ok=False
+        """
+        return ModuleError(
+            code=code,
+            message=message,
+            field=field,
+            hint=hint
+        ).to_result()
+
+    def validate_params_v2(
+        self,
+        required: Optional[List[str]] = None,
+        types: Optional[Dict[str, Type]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Validate parameters using the new validation system.
+
+        Usage:
+            error = self.validate_params_v2(
+                required=['url', 'method'],
+                types={'timeout': int, 'headers': dict}
+            )
+            if error:
+                return error
+
+        Args:
+            required: List of required parameter names
+            types: Dict mapping parameter names to expected types
+
+        Returns:
+            Failure result dict if validation fails, None if valid
+        """
+        errors = []
+
+        # Validate required parameters
+        if required:
+            for field in required:
+                error = validate_required(self.params, field)
+                if error:
+                    errors.append(error)
+
+        # Validate types
+        if types:
+            for field, expected_type in types.items():
+                error = validate_type(self.params, field, expected_type)
+                if error:
+                    errors.append(error)
+
+        # Return first error (or None if valid)
+        if errors:
+            return errors[0].to_result()
+
+        return None

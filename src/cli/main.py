@@ -12,6 +12,7 @@ This file has been refactored into separate modules:
 - cli/workflow.py - Workflow listing and parameter collection
 - cli/params.py - Parameter merging
 - cli/runner.py - Workflow execution
+- cli/modules.py - Module listing command
 """
 import sys
 import os
@@ -42,6 +43,28 @@ from .ui import clear_screen, print_logo, select_language
 from .workflow import collect_params, load_config, select_workflow
 from .params import merge_params
 from .runner import run_workflow
+from .modules import add_modules_parser, run_modules_command
+
+
+def add_run_parser(subparsers) -> None:
+    """Add run subcommand for workflow execution."""
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Run a workflow",
+        description="Execute a workflow YAML file with parameters."
+    )
+    run_parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file')
+    run_parser.add_argument('--lang', '-l', default='en', choices=['en', 'zh', 'ja'],
+                            help='Language (en, zh, ja)')
+    run_parser.add_argument('--params', '-p',
+                            help='Workflow parameters as JSON string')
+    run_parser.add_argument('--params-file',
+                            help='Path to JSON/YAML file containing parameters')
+    run_parser.add_argument('--env-file',
+                            help='Path to .env file for environment variables')
+    run_parser.add_argument('--param', action='append',
+                            help='Individual parameter (format: key=value), '
+                                 'can be used multiple times')
 
 
 def main() -> None:
@@ -54,23 +77,28 @@ def main() -> None:
         epilog="""
 Examples:
   # Interactive mode
-  python -m src.cli.main
+  flyto
 
-  # Non-interactive mode - basic
-  python -m src.cli.main workflows/google_search.yaml
-  python -m src.cli.main workflows/api_pipeline.yaml --lang zh
+  # Run workflow
+  flyto run workflow.yaml
+  flyto run workflow.yaml --params '{"keyword":"nodejs"}'
 
-  # Parameter passing methods
-  python -m src.cli.main workflow.yaml --params '{"keyword":"nodejs"}'
-  python -m src.cli.main workflow.yaml --params-file params.json
-  python -m src.cli.main workflow.yaml --env-file .env.production
-  python -m src.cli.main workflow.yaml --param keyword=nodejs --param max_results=20
+  # List modules
+  flyto modules --env production --format json
+  flyto modules --env development --format table
 
-  # Combined (priority: param > params > params-file > YAML defaults)
-  python -m src.cli.main workflow.yaml --params-file base.json --param keyword=override
+  # Legacy mode (backward compatible)
+  flyto workflow.yaml
         """
     )
-    parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file')
+
+    # Add subcommands
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    add_run_parser(subparsers)
+    add_modules_parser(subparsers)
+
+    # Also support legacy mode: flyto workflow.yaml (without 'run' subcommand)
+    parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file (legacy mode)')
     parser.add_argument('--lang', '-l', default='en', choices=['en', 'zh', 'ja'],
                         help='Language (en, zh, ja)')
     parser.add_argument('--params', '-p',
@@ -85,14 +113,30 @@ Examples:
 
     args = parser.parse_args()
 
+    # Handle 'modules' command
+    if args.command == 'modules':
+        sys.exit(run_modules_command(
+            env=args.env,
+            format=args.format,
+            output_file=args.output
+        ))
+
+    # Handle 'run' command or legacy mode
+    if args.command == 'run':
+        # Use run subcommand's workflow argument
+        workflow_arg = args.workflow
+    else:
+        # Legacy mode: flyto workflow.yaml
+        workflow_arg = args.workflow
+
     # Determine mode: interactive or non-interactive
-    if args.workflow:
+    if workflow_arg:
         # Non-interactive mode
         lang = args.lang
         i18n = I18n(lang)
         config = load_config()
 
-        workflow_path = Path(args.workflow)
+        workflow_path = Path(workflow_arg)
         if not workflow_path.exists():
             print(f"{Colors.FAIL}Error: Workflow file not found: "
                   f"{workflow_path}{Colors.ENDC}")

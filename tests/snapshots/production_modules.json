@@ -1,0 +1,1269 @@
+{
+  "version": "1.14.0",
+  "environment": "production",
+  "generated_at": "2026-01-06T11:26:00.093646+00:00",
+  "total": 177,
+  "modules": [
+    {
+      "id": "agent.autonomous",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "Autonomous Agent"
+    },
+    {
+      "id": "agent.chain",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "Chain Agent"
+    },
+    {
+      "id": "ai.local_ollama.chat",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "Local Ollama Chat"
+    },
+    {
+      "id": "api.anthropic.chat",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "Claude Chat"
+    },
+    {
+      "id": "api.github.create_issue",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "Create GitHub Issue"
+    },
+    {
+      "id": "api.github.get_repo",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "Get GitHub Repository"
+    },
+    {
+      "id": "api.github.list_issues",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "List GitHub Issues"
+    },
+    {
+      "id": "api.google_gemini.chat",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "Google Gemini Chat"
+    },
+    {
+      "id": "api.google_sheets.read",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Google Sheets Read"
+    },
+    {
+      "id": "api.google_sheets.write",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Google Sheets Write"
+    },
+    {
+      "id": "api.http_get",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "HTTP GET"
+    },
+    {
+      "id": "api.notion.create_page",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Notion Create Page"
+    },
+    {
+      "id": "api.notion.query_database",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Notion Query Database"
+    },
+    {
+      "id": "api.openai.chat",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "OpenAI Chat"
+    },
+    {
+      "id": "api.openai.image",
+      "version": "1.0.0",
+      "category": "ai",
+      "stability": "stable",
+      "label": "DALL-E Image Generation"
+    },
+    {
+      "id": "array.chunk",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Chunk"
+    },
+    {
+      "id": "array.difference",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Difference"
+    },
+    {
+      "id": "array.filter",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Filter Array"
+    },
+    {
+      "id": "array.flatten",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Flatten"
+    },
+    {
+      "id": "array.intersection",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Intersection"
+    },
+    {
+      "id": "array.join",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Join"
+    },
+    {
+      "id": "array.map",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Map"
+    },
+    {
+      "id": "array.reduce",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Array Reduce"
+    },
+    {
+      "id": "array.sort",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Sort Array"
+    },
+    {
+      "id": "array.unique",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Array Unique"
+    },
+    {
+      "id": "browser.click",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Click Element"
+    },
+    {
+      "id": "browser.close",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Close Browser"
+    },
+    {
+      "id": "browser.console",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Capture Console"
+    },
+    {
+      "id": "browser.cookies",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Manage Cookies"
+    },
+    {
+      "id": "browser.dialog",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Handle Dialog"
+    },
+    {
+      "id": "browser.download",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Download File"
+    },
+    {
+      "id": "browser.drag",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Drag and Drop"
+    },
+    {
+      "id": "browser.evaluate",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Execute JavaScript"
+    },
+    {
+      "id": "browser.extract",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Extract Data"
+    },
+    {
+      "id": "browser.find",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Find Elements"
+    },
+    {
+      "id": "browser.frame",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Switch Frame"
+    },
+    {
+      "id": "browser.geolocation",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Mock Geolocation"
+    },
+    {
+      "id": "browser.goto",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Go to URL"
+    },
+    {
+      "id": "browser.hover",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Hover Element"
+    },
+    {
+      "id": "browser.launch",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Launch Browser"
+    },
+    {
+      "id": "browser.network",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Network Monitor"
+    },
+    {
+      "id": "browser.pdf",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Generate PDF"
+    },
+    {
+      "id": "browser.press",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Press Key"
+    },
+    {
+      "id": "browser.record",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Record Actions"
+    },
+    {
+      "id": "browser.screenshot",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Take Screenshot"
+    },
+    {
+      "id": "browser.scroll",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Scroll Page"
+    },
+    {
+      "id": "browser.select",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Select Option"
+    },
+    {
+      "id": "browser.storage",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Browser Storage"
+    },
+    {
+      "id": "browser.tab",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Manage Tabs"
+    },
+    {
+      "id": "browser.type",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Type Text"
+    },
+    {
+      "id": "browser.upload",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Upload File"
+    },
+    {
+      "id": "browser.wait",
+      "version": "1.1.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Wait"
+    },
+    {
+      "id": "cloud.aws_s3.download",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "AWS S3 Download"
+    },
+    {
+      "id": "cloud.aws_s3.upload",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "AWS S3 Upload"
+    },
+    {
+      "id": "cloud.azure.download",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "Azure Download"
+    },
+    {
+      "id": "cloud.azure.upload",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "Azure Upload"
+    },
+    {
+      "id": "cloud.gcs.download",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "GCS Download"
+    },
+    {
+      "id": "cloud.gcs.upload",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "GCS Upload"
+    },
+    {
+      "id": "communication.twilio.make_call",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Twilio Make Call"
+    },
+    {
+      "id": "communication.twilio.send_sms",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Twilio Send SMS"
+    },
+    {
+      "id": "core.api.google_search",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "Google Search (API)"
+    },
+    {
+      "id": "core.api.http_get",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "HTTP GET Request"
+    },
+    {
+      "id": "core.api.http_post",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "HTTP POST Request"
+    },
+    {
+      "id": "core.api.serpapi_search",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "Google Search (SerpAPI)"
+    },
+    {
+      "id": "data.csv.read",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Read CSV File"
+    },
+    {
+      "id": "data.csv.write",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Write CSV File"
+    },
+    {
+      "id": "data.json.parse",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Parse JSON"
+    },
+    {
+      "id": "data.json.stringify",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "JSON Stringify"
+    },
+    {
+      "id": "data.json_to_csv",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "JSON to CSV"
+    },
+    {
+      "id": "data.text.template",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Text Template"
+    },
+    {
+      "id": "datetime.add",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Add Time"
+    },
+    {
+      "id": "datetime.format",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Format DateTime"
+    },
+    {
+      "id": "datetime.parse",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Parse DateTime"
+    },
+    {
+      "id": "datetime.subtract",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Subtract Time"
+    },
+    {
+      "id": "db.mongodb.find",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "MongoDB Find"
+    },
+    {
+      "id": "db.mongodb.insert",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "MongoDB Insert"
+    },
+    {
+      "id": "db.mysql.query",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "MySQL Query"
+    },
+    {
+      "id": "db.postgresql.query",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "PostgreSQL Query"
+    },
+    {
+      "id": "db.redis.get",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "Redis Get"
+    },
+    {
+      "id": "db.redis.set",
+      "version": "1.0.0",
+      "category": "database",
+      "stability": "stable",
+      "label": "Redis Set"
+    },
+    {
+      "id": "element.attribute",
+      "version": "1.0.0",
+      "category": "element",
+      "stability": "stable",
+      "label": "Get Attribute"
+    },
+    {
+      "id": "element.query",
+      "version": "1.0.0",
+      "category": "element",
+      "stability": "stable",
+      "label": "Query Element"
+    },
+    {
+      "id": "element.text",
+      "version": "1.0.0",
+      "category": "element",
+      "stability": "stable",
+      "label": "Get Text"
+    },
+    {
+      "id": "excel.read",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Read Excel"
+    },
+    {
+      "id": "excel.write",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Write Excel"
+    },
+    {
+      "id": "file.copy",
+      "version": "1.0.0",
+      "category": "file",
+      "stability": "stable",
+      "label": "Copy File"
+    },
+    {
+      "id": "file.delete",
+      "version": "1.0.0",
+      "category": "file",
+      "stability": "stable",
+      "label": "Delete File"
+    },
+    {
+      "id": "file.exists",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Check File Exists"
+    },
+    {
+      "id": "file.move",
+      "version": "1.0.0",
+      "category": "file",
+      "stability": "stable",
+      "label": "Move File"
+    },
+    {
+      "id": "file.read",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Read File"
+    },
+    {
+      "id": "file.write",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Write File"
+    },
+    {
+      "id": "flow.branch",
+      "version": "2.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Branch"
+    },
+    {
+      "id": "flow.breakpoint",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Breakpoint"
+    },
+    {
+      "id": "flow.container",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Container"
+    },
+    {
+      "id": "flow.end",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "End"
+    },
+    {
+      "id": "flow.foreach",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "For Each"
+    },
+    {
+      "id": "flow.fork",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Fork"
+    },
+    {
+      "id": "flow.goto",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Goto"
+    },
+    {
+      "id": "flow.join",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Join"
+    },
+    {
+      "id": "flow.loop",
+      "version": "2.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Loop"
+    },
+    {
+      "id": "flow.merge",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Merge"
+    },
+    {
+      "id": "flow.start",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Start"
+    },
+    {
+      "id": "flow.subflow",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Subflow"
+    },
+    {
+      "id": "flow.switch",
+      "version": "2.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Switch"
+    },
+    {
+      "id": "flow.trigger",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Trigger"
+    },
+    {
+      "id": "http.request",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "HTTP Request"
+    },
+    {
+      "id": "http.response_assert",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Assert HTTP Response"
+    },
+    {
+      "id": "image.compress",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "Compress Image"
+    },
+    {
+      "id": "image.convert",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "Convert Image"
+    },
+    {
+      "id": "image.download",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "Download Image"
+    },
+    {
+      "id": "image.qrcode_generate",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "Generate QR Code"
+    },
+    {
+      "id": "image.resize",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "Resize Image"
+    },
+    {
+      "id": "math.abs",
+      "version": "1.0.0",
+      "category": "math",
+      "stability": "stable",
+      "label": "Absolute Value"
+    },
+    {
+      "id": "math.calculate",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Calculate"
+    },
+    {
+      "id": "math.ceil",
+      "version": "1.0.0",
+      "category": "math",
+      "stability": "stable",
+      "label": "Ceiling Number"
+    },
+    {
+      "id": "math.floor",
+      "version": "1.0.0",
+      "category": "math",
+      "stability": "stable",
+      "label": "Floor Number"
+    },
+    {
+      "id": "math.power",
+      "version": "1.0.0",
+      "category": "math",
+      "stability": "stable",
+      "label": "Power/Exponent"
+    },
+    {
+      "id": "math.round",
+      "version": "1.0.0",
+      "category": "math",
+      "stability": "stable",
+      "label": "Round Number"
+    },
+    {
+      "id": "meta.modules.generate",
+      "version": "1.0.0",
+      "category": "meta",
+      "stability": "stable",
+      "label": "Generate Module"
+    },
+    {
+      "id": "meta.modules.list",
+      "version": "1.0.0",
+      "category": "meta",
+      "stability": "stable",
+      "label": "List Available Modules"
+    },
+    {
+      "id": "meta.modules.test_generator",
+      "version": "1.0.0",
+      "category": "meta",
+      "stability": "stable",
+      "label": "Test Generator"
+    },
+    {
+      "id": "meta.modules.update_docs",
+      "version": "1.0.0",
+      "category": "meta",
+      "stability": "stable",
+      "label": "Update Module Documentation"
+    },
+    {
+      "id": "notification.discord.send_message",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Send Discord Message"
+    },
+    {
+      "id": "notification.email.send",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Send Email"
+    },
+    {
+      "id": "notification.slack.send_message",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Send Slack Message"
+    },
+    {
+      "id": "notification.telegram.send_message",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Send Telegram Message"
+    },
+    {
+      "id": "object.keys",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Object Keys"
+    },
+    {
+      "id": "object.merge",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Object Merge"
+    },
+    {
+      "id": "object.omit",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Object Omit"
+    },
+    {
+      "id": "object.pick",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Object Pick"
+    },
+    {
+      "id": "object.values",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Object Values"
+    },
+    {
+      "id": "payment.stripe.create_payment",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Stripe Create Payment"
+    },
+    {
+      "id": "payment.stripe.get_customer",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Stripe Get Customer"
+    },
+    {
+      "id": "payment.stripe.list_charges",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Stripe List Charges"
+    },
+    {
+      "id": "pdf.fill_form",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Fill PDF Form"
+    },
+    {
+      "id": "pdf.generate",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Generate PDF"
+    },
+    {
+      "id": "pdf.parse",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Parse PDF"
+    },
+    {
+      "id": "pdf.to_word",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "PDF to Word"
+    },
+    {
+      "id": "port.check",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Check Port"
+    },
+    {
+      "id": "port.wait",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Wait for Port"
+    },
+    {
+      "id": "process.list",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "List Processes"
+    },
+    {
+      "id": "process.start",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Start Background Process"
+    },
+    {
+      "id": "process.stop",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Stop Process"
+    },
+    {
+      "id": "productivity.airtable.create",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Airtable Create Record"
+    },
+    {
+      "id": "productivity.airtable.read",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Airtable Read Records"
+    },
+    {
+      "id": "productivity.airtable.update",
+      "version": "1.0.0",
+      "category": "productivity",
+      "stability": "stable",
+      "label": "Airtable Update Record"
+    },
+    {
+      "id": "shell.exec",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Execute Shell Command"
+    },
+    {
+      "id": "string.lowercase",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "String Lowercase"
+    },
+    {
+      "id": "string.replace",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "String Replace"
+    },
+    {
+      "id": "string.reverse",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "String Reverse"
+    },
+    {
+      "id": "string.split",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Split String"
+    },
+    {
+      "id": "string.titlecase",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Title Case String"
+    },
+    {
+      "id": "string.trim",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "String Trim"
+    },
+    {
+      "id": "string.uppercase",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "String Uppercase"
+    },
+    {
+      "id": "test.assert_contains",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert Contains"
+    },
+    {
+      "id": "test.assert_equal",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert Equal"
+    },
+    {
+      "id": "test.assert_greater_than",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert Greater Than"
+    },
+    {
+      "id": "test.assert_length",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert Length"
+    },
+    {
+      "id": "test.assert_not_null",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert Not Null"
+    },
+    {
+      "id": "test.assert_true",
+      "version": "1.0.0",
+      "category": "testing",
+      "stability": "stable",
+      "label": "Assert True"
+    },
+    {
+      "id": "testing.e2e.run_steps",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run E2E Steps"
+    },
+    {
+      "id": "testing.gate.evaluate",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Quality Gate"
+    },
+    {
+      "id": "testing.http.run_suite",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run HTTP Tests"
+    },
+    {
+      "id": "testing.lint.run",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run Linter"
+    },
+    {
+      "id": "testing.report.generate",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Generate Report"
+    },
+    {
+      "id": "testing.scenario.run",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run Scenario"
+    },
+    {
+      "id": "testing.security.scan",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Security Scan"
+    },
+    {
+      "id": "testing.suite.run",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run Test Suite"
+    },
+    {
+      "id": "testing.unit.run",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Run Unit Tests"
+    },
+    {
+      "id": "testing.visual.compare",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Visual Compare"
+    },
+    {
+      "id": "utility.datetime.now",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Current Date/Time"
+    },
+    {
+      "id": "utility.delay",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Delay/Sleep"
+    },
+    {
+      "id": "utility.hash.md5",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "MD5 Hash"
+    },
+    {
+      "id": "utility.random.number",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Random Number"
+    },
+    {
+      "id": "utility.random.string",
+      "version": "1.0.0",
+      "category": "utility",
+      "stability": "stable",
+      "label": "Random String"
+    },
+    {
+      "id": "word.parse",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Parse Word Document"
+    },
+    {
+      "id": "word.to_pdf",
+      "version": "1.0.0",
+      "category": "document",
+      "stability": "stable",
+      "label": "Word to PDF"
+    }
+  ],
+  "categories": {
+    "ai": 7,
+    "api": 7,
+    "array": 7,
+    "atomic": 26,
+    "browser": 27,
+    "cloud": 6,
+    "data": 11,
+    "database": 6,
+    "document": 8,
+    "element": 3,
+    "file": 3,
+    "flow": 14,
+    "image": 5,
+    "math": 5,
+    "meta": 4,
+    "notification": 6,
+    "productivity": 10,
+    "string": 7,
+    "testing": 6,
+    "utility": 9
+  }
+}

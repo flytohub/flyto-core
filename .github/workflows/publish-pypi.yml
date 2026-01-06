@@ -70,6 +70,18 @@ jobs:
           python -c "from core.modules.registry import ModuleRegistry; print('Import successful')"
           python -c "from core.modules.base import BaseModule; print('BaseModule import successful')"
 
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-asyncio pyyaml
+
+      - name: Run production module tests
+        run: |
+          PYTHONPATH=src pytest tests/test_production_modules.py -v
+
+      - name: Run E2E smoke tests (non-browser)
+        run: |
+          PYTHONPATH=src pytest tests/e2e/test_smoke.py -v -k "not Browser"
+
   publish-testpypi:
     name: Publish to TestPyPI
     needs: [build, test]
