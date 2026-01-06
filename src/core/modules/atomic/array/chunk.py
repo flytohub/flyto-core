@@ -1,10 +1,10 @@
 """
-Advanced Array Operations Modules
+Array Chunk Module
 
-Provides extended array manipulation capabilities.
+Split array into chunks of specified size.
 """
-from typing import Any, Dict, List
-from ...base import BaseModule
+from typing import Any, Dict
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -44,8 +45,14 @@ from ...schema import compose, presets
         presets.CHUNK_SIZE(required=True),
     ),
     output_schema={
-        'result': {'type': 'array'},
-        'chunks': {'type': 'number'}
+        'result': {
+            'type': 'array',
+            'description': 'Array of chunks'
+        },
+        'chunks': {
+            'type': 'number',
+            'description': 'Number of chunks'
+        }
     },
     examples=[
         {
@@ -66,28 +73,31 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayChunkModule(BaseModule):
-    """Array Chunk Module"""
+async def array_chunk(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Split array into chunks of specified size."""
+    params = context['params']
+    array = params.get('array', [])
+    size = params.get('size')
 
-    def validate_params(self):
-        self.array = self.params.get('array', [])
-        self.size = self.params.get('size')
-
-        if not isinstance(self.array, list):
-            raise ValueError("array must be a list")
-
-        if not self.size or self.size < 1:
-            raise ValueError("size must be a positive number")
-
-    async def execute(self) -> Any:
-        result = []
-
-        for i in range(0, len(self.array), self.size):
-            result.append(self.array[i:i + self.size])
-
+    if not isinstance(array, list):
         return {
-            "result": result,
-            "chunks": len(result)
+            'ok': False,
+            'error': 'array must be a list',
+            'error_code': 'INVALID_TYPE'
         }
 
+    if not size or size < 1:
+        return {
+            'ok': False,
+            'error': 'size must be a positive number',
+            'error_code': 'INVALID_PARAM'
+        }
 
+    result = []
+    for i in range(0, len(array), size):
+        result.append(array[i:i + size])
+
+    return {
+        'result': result,
+        'chunks': len(result)
+    }

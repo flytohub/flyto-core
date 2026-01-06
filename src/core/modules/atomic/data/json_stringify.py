@@ -1,15 +1,12 @@
 """
-Data Processing Modules
-Handle CSV, JSON, text processing, data transformation, etc.
+JSON Stringify Module
+Convert object to JSON string
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import json
+
 from ...registry import register_module
 from ...schema import compose, presets
-import json
-import csv
-import io
-import os
 
 
 @register_module(
@@ -24,9 +21,10 @@ import os
     icon='FileCode',
     color='#F59E0B',
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     retryable=False,
     concurrent_safe=True,
 
@@ -42,8 +40,14 @@ import os
         presets.INDENT_SIZE(default=2),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'json': {'type': 'string', 'description': 'JSON string'}
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        },
+        'json': {
+            'type': 'string',
+            'description': 'JSON string'
+        }
     },
     examples=[
         {
@@ -57,35 +61,32 @@ import os
     author='Flyto2 Team',
     license='MIT'
 )
-class JSONStringifyModule(BaseModule):
-    """Convert object to JSON string"""
+async def json_stringify(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert object to JSON string."""
+    params = context['params']
+    data = params.get('data')
+    pretty = params.get('pretty', False)
+    indent = params.get('indent', 2)
 
-    module_name = "JSON Stringify"
-    module_description = "Convert object to JSON string"
+    if data is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: data',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        if 'data' not in self.params:
-            raise ValueError("Missing required parameter: data")
+    try:
+        if pretty:
+            json_str = json.dumps(data, indent=indent, ensure_ascii=False)
+        else:
+            json_str = json.dumps(data, ensure_ascii=False)
 
-        self.data = self.params['data']
-        self.pretty = self.params.get('pretty', False)
-        self.indent = self.params.get('indent', 2)
-
-    async def execute(self) -> Any:
-        try:
-            if self.pretty:
-                json_str = json.dumps(self.data, indent=self.indent, ensure_ascii=False)
-            else:
-                json_str = json.dumps(self.data, ensure_ascii=False)
-
-            return {
-                'status': 'success',
-                'json': json_str
-            }
-        except Exception as e:
-            return {
-                'status': 'error',
-                'message': f'Failed to stringify: {str(e)}'
-            }
-
-
+        return {
+            'status': 'success',
+            'json': json_str
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Failed to stringify: {str(e)}'
+        }

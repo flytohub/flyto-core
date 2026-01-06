@@ -1,11 +1,11 @@
 """
-Reverse Module - Reverses the input text string
+String Reverse Module
+Reverse the characters in a string
 """
-
-from core.modules.base import BaseModule
-from core.modules.registry import register_module
-from core.modules.schema import compose, presets
 from typing import Any, Dict
+
+from ...registry import register_module
+from ...schema import compose, presets
 
 
 @register_module(
@@ -23,49 +23,53 @@ from typing import Any, Dict
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=[],
+
+    # Schema-driven params
     params_schema=compose(
         presets.INPUT_TEXT(required=True),
-    )
+    ),
+    output_schema={
+        'result': {
+            'type': 'string',
+            'description': 'Reversed string'
+        },
+        'original': {
+            'type': 'string',
+            'description': 'Original input string'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'String length'
+        }
+    }
 )
-class Reverse(BaseModule):
-    """
-    Reverses the input text string
+async def string_reverse(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Reverse the characters in a string."""
+    params = context['params']
+    text = params.get('text')
 
-    Parameters:
-        text (str): The input text string to reverse
+    if text is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: text',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    Returns:
-        Dict[str, Any] with keys: result (reversed string)
-    """
+    text_str = str(text)
+    result = text_str[::-1]
 
-    module_name = "Reverse"
-    module_description = "Reverses the input text string"
-
-    def validate_params(self):
-        """Validate and extract parameters"""
-        if "text" not in self.params:
-            raise ValueError("Missing required parameter: text")
-        self.text = self.params["text"]
-
-    async def execute(self) -> Any:
-        """
-        Execute the module logic to reverse a text string.
-
-        Returns:
-            Dict with reversed text string
-        """
-        try:
-            if not isinstance(self.text, str):
-                raise ValueError("Invalid input: text must be a string")
-
-            reversed_text = self.text[::-1]
-
-            return {
-                "result": reversed_text,
-                "original": self.text,
-                "length": len(self.text)
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"text.reverse execution failed: {str(e)}")
+    return {
+        'result': result,
+        'original': text,
+        'length': len(text_str)
+    }

@@ -1,10 +1,10 @@
 """
-Advanced Array Operations Modules
+Array Intersection Module
 
-Provides extended array manipulation capabilities.
+Find common elements between arrays.
 """
-from typing import Any, Dict, List
-from ...base import BaseModule
+from typing import Any, Dict
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -43,8 +44,14 @@ from ...schema import compose, presets
         presets.ARRAYS(required=True),
     ),
     output_schema={
-        'result': {'type': 'array'},
-        'length': {'type': 'number'}
+        'result': {
+            'type': 'array',
+            'description': 'Common elements'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'Number of common elements'
+        }
     },
     examples=[
         {
@@ -57,28 +64,28 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayIntersectionModule(BaseModule):
-    """Array Intersection Module"""
+async def array_intersection(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Find common elements between arrays."""
+    params = context['params']
+    arrays = params.get('arrays', [])
 
-    def validate_params(self):
-        self.arrays = self.params.get('arrays', [])
-
-        if not isinstance(self.arrays, list) or len(self.arrays) < 2:
-            raise ValueError("arrays must be a list with at least 2 arrays")
-
-    async def execute(self) -> Any:
-        # Convert first array to set
-        result = set(self.arrays[0])
-
-        # Intersect with remaining arrays
-        for arr in self.arrays[1:]:
-            result = result.intersection(set(arr))
-
-        result_list = list(result)
-
+    if not isinstance(arrays, list) or len(arrays) < 2:
         return {
-            "result": result_list,
-            "length": len(result_list)
+            'ok': False,
+            'error': 'arrays must be a list with at least 2 arrays',
+            'error_code': 'INVALID_PARAM'
         }
 
+    # Convert first array to set
+    result = set(arrays[0])
 
+    # Intersect with remaining arrays
+    for arr in arrays[1:]:
+        result = result.intersection(set(arr))
+
+    result_list = list(result)
+
+    return {
+        'result': result_list,
+        'length': len(result_list)
+    }

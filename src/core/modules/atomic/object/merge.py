@@ -1,10 +1,9 @@
 """
-Object Operations Modules
-
-Provides object/dictionary manipulation capabilities.
+Object Merge Module
+Merge multiple objects into one
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +25,15 @@ from ...schema import compose, presets
     input_types=['json'],
     output_types=['json'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -43,7 +43,10 @@ from ...schema import compose, presets
         presets.INPUT_OBJECTS(required=True),
     ),
     output_schema={
-        'result': {'type': 'json'}
+        'result': {
+            'type': 'json',
+            'description': 'Merged object'
+        }
     },
     examples=[
         {
@@ -60,24 +63,24 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ObjectMergeModule(BaseModule):
-    """Object Merge Module"""
+async def object_merge(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge multiple objects into one."""
+    params = context['params']
+    objects = params.get('objects', [])
 
-    def validate_params(self):
-        self.objects = self.params.get('objects', [])
-
-        if not isinstance(self.objects, list):
-            raise ValueError("objects must be an array")
-
-    async def execute(self) -> Any:
-        result = {}
-
-        for obj in self.objects:
-            if isinstance(obj, dict):
-                result.update(obj)
-
+    if not isinstance(objects, list):
         return {
-            "result": result
+            'ok': False,
+            'error': 'objects must be an array',
+            'error_code': 'INVALID_TYPE'
         }
 
+    result = {}
 
+    for obj in objects:
+        if isinstance(obj, dict):
+            result.update(obj)
+
+    return {
+        'result': result
+    }

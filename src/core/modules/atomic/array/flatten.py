@@ -1,10 +1,10 @@
 """
-Advanced Array Operations Modules
+Array Flatten Module
 
-Provides extended array manipulation capabilities.
+Flatten nested arrays into single array.
 """
-from typing import Any, Dict, List
-from ...base import BaseModule
+from typing import Any, Dict
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -44,8 +45,14 @@ from ...schema import compose, presets
         presets.FLATTEN_DEPTH(default=1),
     ),
     output_schema={
-        'result': {'type': 'array'},
-        'length': {'type': 'number'}
+        'result': {
+            'type': 'array',
+            'description': 'Flattened array'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'Length of flattened array'
+        }
     },
     examples=[
         {
@@ -66,37 +73,37 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayFlattenModule(BaseModule):
-    """Array Flatten Module"""
+async def array_flatten(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Flatten nested arrays into single array."""
+    params = context['params']
+    array = params.get('array', [])
+    depth = params.get('depth', 1)
 
-    def validate_params(self):
-        self.array = self.params.get('array', [])
-        self.depth = self.params.get('depth', 1)
-
-        if not isinstance(self.array, list):
-            raise ValueError("array must be a list")
-
-    async def execute(self) -> Any:
-        def flatten(arr, depth):
-            if depth == 0:
-                return arr
-
-            result = []
-            for item in arr:
-                if isinstance(item, list):
-                    if depth == -1:
-                        result.extend(flatten(item, -1))
-                    else:
-                        result.extend(flatten(item, depth - 1))
-                else:
-                    result.append(item)
-            return result
-
-        result = flatten(self.array, self.depth)
-
+    if not isinstance(array, list):
         return {
-            "result": result,
-            "length": len(result)
+            'ok': False,
+            'error': 'array must be a list',
+            'error_code': 'INVALID_TYPE'
         }
 
+    def flatten(arr, d):
+        if d == 0:
+            return arr
 
+        result = []
+        for item in arr:
+            if isinstance(item, list):
+                if d == -1:
+                    result.extend(flatten(item, -1))
+                else:
+                    result.extend(flatten(item, d - 1))
+            else:
+                result.append(item)
+        return result
+
+    result = flatten(array, depth)
+
+    return {
+        'result': result,
+        'length': len(result)
+    }

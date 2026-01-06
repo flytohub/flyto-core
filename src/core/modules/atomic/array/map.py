@@ -4,7 +4,7 @@ Array Map Module
 Transform each element in an array using various operations.
 """
 from typing import Any, Dict, List
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array', 'json'],
     output_types=['array', 'json'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -45,8 +46,14 @@ from ...schema import compose, presets
         presets.OPERATION_VALUE(),
     ),
     output_schema={
-        'result': {'type': 'array'},
-        'length': {'type': 'number'}
+        'result': {
+            'type': 'array',
+            'description': 'Transformed array'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'Length of result array'
+        }
     },
     examples=[
         {
@@ -69,38 +76,40 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayMapModule(BaseModule):
-    """Array Map Module"""
+async def array_map(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform each element in an array."""
+    params = context['params']
+    array = params.get('array', [])
+    operation = params.get('operation')
+    value = params.get('value')
 
-    def validate_params(self):
-        self.array = self.params.get('array', [])
-        self.operation = self.params.get('operation')
-        self.value = self.params.get('value')
-
-        if not isinstance(self.array, list):
-            raise ValueError("array must be a list")
-
-    async def execute(self) -> Any:
-        result = []
-
-        for item in self.array:
-            if self.operation == 'multiply':
-                result.append(item * (self.value or 1))
-            elif self.operation == 'add':
-                result.append(item + (self.value or 0))
-            elif self.operation == 'extract':
-                if isinstance(item, dict) and self.value:
-                    result.append(item.get(self.value))
-                else:
-                    result.append(None)
-            elif self.operation == 'uppercase':
-                result.append(str(item).upper())
-            elif self.operation == 'lowercase':
-                result.append(str(item).lower())
-            else:
-                result.append(item)
-
+    if not isinstance(array, list):
         return {
-            "result": result,
-            "length": len(result)
+            'ok': False,
+            'error': 'array must be a list',
+            'error_code': 'INVALID_TYPE'
         }
+
+    result = []
+
+    for item in array:
+        if operation == 'multiply':
+            result.append(item * (value or 1))
+        elif operation == 'add':
+            result.append(item + (value or 0))
+        elif operation == 'extract':
+            if isinstance(item, dict) and value:
+                result.append(item.get(value))
+            else:
+                result.append(None)
+        elif operation == 'uppercase':
+            result.append(str(item).upper())
+        elif operation == 'lowercase':
+            result.append(str(item).lower())
+        else:
+            result.append(item)
+
+    return {
+        'result': result,
+        'length': len(result)
+    }

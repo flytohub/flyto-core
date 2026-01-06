@@ -4,7 +4,6 @@ Remove whitespace from both ends of a string
 """
 from typing import Any, Dict
 
-from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -24,46 +23,52 @@ from ...schema import compose, presets
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=[],
+
+    # Schema-driven params
     params_schema=compose(
         presets.INPUT_TEXT(required=True),
-    )
+    ),
+    output_schema={
+        'result': {
+            'type': 'string',
+            'description': 'Trimmed string with whitespace removed'
+        },
+        'original': {
+            'type': 'string',
+            'description': 'Original input string'
+        },
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        }
+    }
 )
-class StringTrim(BaseModule):
-    """
-    Remove whitespace from both ends of a string
+async def string_trim(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove whitespace from both ends of a string."""
+    params = context['params']
+    text = params.get('text')
 
-    Parameters:
-        text (string): The string to trim
+    if text is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: text',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    Returns:
-        Trimmed string
-    """
+    result = str(text).strip()
 
-    module_name = "String Trim"
-    module_description = "Remove whitespace from string ends"
-
-    def validate_params(self):
-        """Validate and extract parameters"""
-        if "text" not in self.params:
-            raise ValueError("Missing required parameter: text")
-        self.text = self.params["text"]
-
-    async def execute(self) -> Any:
-        """
-        Execute the module logic
-
-        Returns:
-            Trimmed string
-        """
-        try:
-            result = str(self.text).strip()
-
-            return {
-                "result": result,
-                "original": self.text,
-                "status": "success"
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"{self.module_name} execution failed: {str(e)}")
+    return {
+        'result': result,
+        'original': text,
+        'status': 'success'
+    }

@@ -1,13 +1,12 @@
 """
-Advanced Math Operations Modules
-
-Provides extended mathematical operations.
+Math Ceiling Module
+Round number up to nearest integer
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import math
+
 from ...registry import register_module
 from ...schema import compose, presets
-import math
 
 
 @register_module(
@@ -27,14 +26,15 @@ import math
     input_types=['number'],
     output_types=['number'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -44,8 +44,14 @@ import math
         presets.INPUT_NUMBER(required=True),
     ),
     output_schema={
-        'result': {'type': 'number'},
-        'original': {'type': 'number'}
+        'result': {
+            'type': 'number',
+            'description': 'Ceiling value'
+        },
+        'original': {
+            'type': 'number',
+            'description': 'Original number'
+        }
     },
     examples=[
         {
@@ -64,21 +70,21 @@ import math
     author='Flyto2 Team',
     license='MIT'
 )
-class MathCeilModule(BaseModule):
-    """Math Ceiling Module"""
+async def math_ceil(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Round number up to nearest integer."""
+    params = context['params']
+    number = params.get('number')
 
-    def validate_params(self):
-        self.number = self.params.get('number')
-
-        if self.number is None:
-            raise ValueError("number is required")
-
-    async def execute(self) -> Any:
-        result = math.ceil(self.number)
-
+    if number is None:
         return {
-            "result": result,
-            "original": self.number
+            'ok': False,
+            'error': 'Missing required parameter: number',
+            'error_code': 'MISSING_PARAM'
         }
 
+    result = math.ceil(number)
 
+    return {
+        'result': result,
+        'original': number
+    }

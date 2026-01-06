@@ -1,15 +1,12 @@
 """
-Data Processing Modules
-Handle CSV, JSON, text processing, data transformation, etc.
+JSON Parse Module
+Parse JSON string into object
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import json
+
 from ...registry import register_module
 from ...schema import compose, presets
-import json
-import csv
-import io
-import os
 
 
 @register_module(
@@ -24,9 +21,10 @@ import os
     icon='Code',
     color='#F59E0B',
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     retryable=False,
     concurrent_safe=True,
 
@@ -40,8 +38,14 @@ import os
         presets.JSON_STRING(required=True),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'data': {'type': 'object', 'description': 'Parsed object'}
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        },
+        'data': {
+            'type': 'object',
+            'description': 'Parsed object'
+        }
     },
     examples=[
         {
@@ -58,28 +62,26 @@ import os
     author='Flyto2 Team',
     license='MIT'
 )
-class JSONParseModule(BaseModule):
-    """Parse JSON string"""
+async def json_parse(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Parse JSON string into object."""
+    params = context['params']
+    json_string = params.get('json_string')
 
-    module_name = "Parse JSON"
-    module_description = "Parse JSON string into object"
+    if json_string is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: json_string',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        if 'json_string' not in self.params:
-            raise ValueError("Missing required parameter: json_string")
-        self.json_string = self.params['json_string']
-
-    async def execute(self) -> Any:
-        try:
-            data = json.loads(self.json_string)
-            return {
-                'status': 'success',
-                'data': data
-            }
-        except json.JSONDecodeError as e:
-            return {
-                'status': 'error',
-                'message': f'Invalid JSON: {str(e)}'
-            }
-
-
+    try:
+        data = json.loads(json_string)
+        return {
+            'status': 'success',
+            'data': data
+        }
+    except json.JSONDecodeError as e:
+        return {
+            'status': 'error',
+            'message': f'Invalid JSON: {str(e)}'
+        }

@@ -1,10 +1,9 @@
 """
-Object Operations Modules
-
-Provides object/dictionary manipulation capabilities.
+Object Omit Module
+Omit specific keys from an object
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +25,15 @@ from ...schema import compose, presets
     input_types=['json'],
     output_types=['json'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -44,7 +44,10 @@ from ...schema import compose, presets
         presets.OBJECT_KEYS(required=True),
     ),
     output_schema={
-        'result': {'type': 'json'}
+        'result': {
+            'type': 'json',
+            'description': 'Object without omitted keys'
+        }
     },
     examples=[
         {
@@ -58,22 +61,28 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ObjectOmitModule(BaseModule):
-    """Object Omit Module"""
+async def object_omit(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Omit specific keys from an object."""
+    params = context['params']
+    obj = params.get('object')
+    keys = params.get('keys', [])
 
-    def validate_params(self):
-        self.obj = self.params.get('object')
-        self.keys = self.params.get('keys', [])
-
-        if not isinstance(self.obj, dict):
-            raise ValueError("object must be a dictionary")
-
-        if not isinstance(self.keys, list):
-            raise ValueError("keys must be an array")
-
-    async def execute(self) -> Any:
-        result = {key: value for key, value in self.obj.items() if key not in self.keys}
-
+    if not isinstance(obj, dict):
         return {
-            "result": result
+            'ok': False,
+            'error': 'object must be a dictionary',
+            'error_code': 'INVALID_TYPE'
         }
+
+    if not isinstance(keys, list):
+        return {
+            'ok': False,
+            'error': 'keys must be an array',
+            'error_code': 'INVALID_TYPE'
+        }
+
+    result = {key: value for key, value in obj.items() if key not in keys}
+
+    return {
+        'result': result
+    }

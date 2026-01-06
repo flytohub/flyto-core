@@ -1,10 +1,9 @@
 """
-Advanced String Operations Modules
-
-Provides extended string manipulation capabilities.
+String Titlecase Module
+Convert string to title case
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +25,15 @@ from ...schema import compose, presets
     input_types=['text', 'string'],
     output_types=['text', 'string'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -43,7 +43,10 @@ from ...schema import compose, presets
         presets.INPUT_TEXT(required=True),
     ),
     output_schema={
-        'result': {'type': 'string'}
+        'result': {
+            'type': 'string',
+            'description': 'Title case converted string'
+        }
     },
     examples=[
         {
@@ -62,13 +65,18 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class StringTitlecaseModule(BaseModule):
-    """Title Case String Module"""
+async def string_titlecase(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert string to title case."""
+    params = context['params']
+    text = params.get('text', '')
 
-    def validate_params(self):
-        self.text = self.params.get('text', '')
-
-    async def execute(self) -> Any:
+    if text is None:
         return {
-            "result": self.text.title()
+            'ok': False,
+            'error': 'Missing required parameter: text',
+            'error_code': 'MISSING_PARAM'
         }
+
+    return {
+        'result': str(text).title()
+    }

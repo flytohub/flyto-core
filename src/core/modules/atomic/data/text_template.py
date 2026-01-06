@@ -1,15 +1,11 @@
 """
-Data Processing Modules
-Handle CSV, JSON, text processing, data transformation, etc.
+Text Template Module
+Fill text template with variables
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
-import json
-import csv
-import io
-import os
 
 
 @register_module(
@@ -24,9 +20,10 @@ import os
     icon='FileText',
     color='#8B5CF6',
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     retryable=False,
     concurrent_safe=True,
 
@@ -41,8 +38,14 @@ import os
         presets.VARIABLES(required=True),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'result': {'type': 'string', 'description': 'Filled template'}
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        },
+        'result': {
+            'type': 'string',
+            'description': 'Filled template'
+        }
     },
     examples=[
         {
@@ -60,35 +63,39 @@ import os
     author='Flyto2 Team',
     license='MIT'
 )
-class TextTemplateModule(BaseModule):
-    """Fill text template with variables"""
+async def text_template(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Fill text template with variables."""
+    params = context['params']
+    template = params.get('template')
+    variables = params.get('variables')
 
-    module_name = "Text Template"
-    module_description = "Replace {placeholders} in template with variable values"
+    if not template:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: template',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        if 'template' not in self.params or not self.params['template']:
-            raise ValueError("Missing required parameter: template")
-        if 'variables' not in self.params or not isinstance(self.params['variables'], dict):
-            raise ValueError("Missing or invalid parameter: variables (must be object)")
+    if not isinstance(variables, dict):
+        return {
+            'ok': False,
+            'error': 'variables must be an object',
+            'error_code': 'INVALID_TYPE'
+        }
 
-        self.template = self.params['template']
-        self.variables = self.params['variables']
-
-    async def execute(self) -> Any:
-        try:
-            result = self.template.format(**self.variables)
-            return {
-                'status': 'success',
-                'result': result
-            }
-        except KeyError as e:
-            return {
-                'status': 'error',
-                'message': f'Missing variable in template: {str(e)}'
-            }
-        except Exception as e:
-            return {
-                'status': 'error',
-                'message': f'Template error: {str(e)}'
-            }
+    try:
+        result = template.format(**variables)
+        return {
+            'status': 'success',
+            'result': result
+        }
+    except KeyError as e:
+        return {
+            'status': 'error',
+            'message': f'Missing variable in template: {str(e)}'
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Template error: {str(e)}'
+        }

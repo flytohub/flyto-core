@@ -4,7 +4,6 @@ Split a string into an array using a delimiter
 """
 from typing import Any, Dict
 
-from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -23,54 +22,70 @@ from ...schema import compose, presets
     input_types=['string'],
     output_types=['array'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=[],
+
+    # Schema-driven params
     params_schema=compose(
         presets.INPUT_TEXT(required=True),
         presets.STRING_DELIMITER(default=' '),
     ),
+    output_schema={
+        'parts': {
+            'type': 'array',
+            'description': 'Array of split string parts'
+        },
+        'result': {
+            'type': 'array',
+            'description': 'Alias for parts - array of split string parts'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'Number of parts after split'
+        },
+        'original': {
+            'type': 'string',
+            'description': 'Original input string'
+        },
+        'delimiter': {
+            'type': 'string',
+            'description': 'Delimiter used for splitting'
+        },
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        }
+    }
 )
-class StringSplit(BaseModule):
-    """
-    Split a string into an array using a delimiter
+async def string_split(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Split a string into an array using a delimiter."""
+    params = context['params']
+    text = params.get('text')
+    delimiter = params.get('delimiter', ' ')
 
-    Parameters:
-        text (string): The string to split
-        delimiter (string): The delimiter to split on (default: space)
+    if text is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: text',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    Returns:
-        Array of string parts
-    """
+    parts = str(text).split(delimiter)
 
-    module_name = "String Split"
-    module_description = "Split a string into an array"
-
-    def validate_params(self):
-        """Validate and extract parameters"""
-        if "text" not in self.params:
-            raise ValueError("Missing required parameter: text")
-        self.text = self.params["text"]
-        self.delimiter = self.params.get("delimiter", " ")
-
-    async def execute(self) -> Any:
-        """
-        Execute the module logic
-
-        Returns:
-            Array of string parts
-        """
-        try:
-            parts = str(self.text).split(self.delimiter)
-
-            return {
-                "parts": parts,
-                "result": parts,
-                "length": len(parts),
-                "original": self.text,
-                "delimiter": self.delimiter,
-                "status": "success"
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"{self.module_name} execution failed: {str(e)}")
+    return {
+        'parts': parts,
+        'result': parts,
+        'length': len(parts),
+        'original': text,
+        'delimiter': delimiter,
+        'status': 'success'
+    }

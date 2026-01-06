@@ -4,7 +4,6 @@ Replace occurrences of a substring in a string
 """
 from typing import Any, Dict
 
-from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -24,59 +23,80 @@ from ...schema import compose, presets
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=[],
+
+    # Schema-driven params
     params_schema=compose(
         presets.INPUT_TEXT(required=True),
         presets.SEARCH_STRING(required=True),
         presets.REPLACE_STRING(required=True),
-    )
+    ),
+    output_schema={
+        'result': {
+            'type': 'string',
+            'description': 'String with replacements applied'
+        },
+        'original': {
+            'type': 'string',
+            'description': 'Original input string'
+        },
+        'search': {
+            'type': 'string',
+            'description': 'Search string that was replaced'
+        },
+        'replace': {
+            'type': 'string',
+            'description': 'Replacement string used'
+        },
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        }
+    }
 )
-class StringReplace(BaseModule):
-    """
-    Replace occurrences of a substring in a string
+async def string_replace(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Replace occurrences of a substring in a string."""
+    params = context['params']
+    text = params.get('text')
+    search = params.get('search')
+    replace_with = params.get('replace')
 
-    Parameters:
-        text (string): The string to process
-        search (string): The substring to search for
-        replace (string): The replacement string
+    if text is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: text',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    Returns:
-        Modified string
-    """
+    if search is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: search',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    module_name = "String Replace"
-    module_description = "Replace text in a string"
+    if replace_with is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: replace',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        """Validate and extract parameters"""
-        if "text" not in self.params:
-            raise ValueError("Missing required parameter: text")
-        if "search" not in self.params:
-            raise ValueError("Missing required parameter: search")
-        if "replace" not in self.params:
-            raise ValueError("Missing required parameter: replace")
+    result = str(text).replace(str(search), str(replace_with))
 
-        self.text = self.params["text"]
-        self.search = self.params["search"]
-        self.replace_with = self.params["replace"]
-
-    async def execute(self) -> Any:
-        """
-        Execute the module logic
-
-        Returns:
-            Modified string
-        """
-        try:
-            result = str(self.text).replace(str(self.search), str(self.replace_with))
-
-            return {
-                "result": result,
-                "original": self.text,
-                "search": self.search,
-                "replace": self.replace_with,
-                "status": "success"
-            }
-
-        except Exception as e:
-            raise RuntimeError(f"{self.module_name} execution failed: {str(e)}")
+    return {
+        'result': result,
+        'original': text,
+        'search': search,
+        'replace': replace_with,
+        'status': 'success'
+    }

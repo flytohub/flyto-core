@@ -1,10 +1,10 @@
 """
-Advanced Array Operations Modules
+Array Difference Module
 
-Provides extended array manipulation capabilities.
+Find elements in first array not in others.
 """
-from typing import Any, Dict, List
-from ...base import BaseModule
+from typing import Any, Dict
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['array'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -44,8 +45,14 @@ from ...schema import compose, presets
         presets.SUBTRACT_ARRAYS(required=True),
     ),
     output_schema={
-        'result': {'type': 'array'},
-        'length': {'type': 'number'}
+        'result': {
+            'type': 'array',
+            'description': 'Elements unique to first array'
+        },
+        'length': {
+            'type': 'number',
+            'description': 'Number of unique elements'
+        }
     },
     examples=[
         {
@@ -59,30 +66,36 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayDifferenceModule(BaseModule):
-    """Array Difference Module"""
+async def array_difference(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Find elements in first array not in others."""
+    params = context['params']
+    array = params.get('array', [])
+    subtract = params.get('subtract', [])
 
-    def validate_params(self):
-        self.array = self.params.get('array', [])
-        self.subtract = self.params.get('subtract', [])
-
-        if not isinstance(self.array, list):
-            raise ValueError("array must be a list")
-
-        if not isinstance(self.subtract, list):
-            raise ValueError("subtract must be a list of arrays")
-
-    async def execute(self) -> Any:
-        result = set(self.array)
-
-        # Subtract all arrays
-        for arr in self.subtract:
-            if isinstance(arr, list):
-                result = result.difference(set(arr))
-
-        result_list = list(result)
-
+    if not isinstance(array, list):
         return {
-            "result": result_list,
-            "length": len(result_list)
+            'ok': False,
+            'error': 'array must be a list',
+            'error_code': 'INVALID_TYPE'
         }
+
+    if not isinstance(subtract, list):
+        return {
+            'ok': False,
+            'error': 'subtract must be a list of arrays',
+            'error_code': 'INVALID_TYPE'
+        }
+
+    result = set(array)
+
+    # Subtract all arrays
+    for arr in subtract:
+        if isinstance(arr, list):
+            result = result.difference(set(arr))
+
+    result_list = list(result)
+
+    return {
+        'result': result_list,
+        'length': len(result_list)
+    }

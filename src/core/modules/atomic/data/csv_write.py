@@ -1,15 +1,13 @@
 """
-Data Processing Modules
-Handle CSV, JSON, text processing, data transformation, etc.
+CSV Write Module
+Write array of objects to CSV file
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import csv
+import os
+
 from ...registry import register_module
 from ...schema import compose, presets
-import json
-import csv
-import io
-import os
 
 
 @register_module(
@@ -24,9 +22,10 @@ import os
     icon='Save',
     color='#10B981',
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=30,
     retryable=False,
     concurrent_safe=False,
@@ -44,9 +43,18 @@ import os
         presets.ENCODING(default='utf-8'),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'file_path': {'type': 'string'},
-        'rows_written': {'type': 'number'}
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        },
+        'file_path': {
+            'type': 'string',
+            'description': 'Path to written file'
+        },
+        'rows_written': {
+            'type': 'number',
+            'description': 'Number of rows written'
+        }
     },
     examples=[
         {
@@ -63,52 +71,56 @@ import os
     author='Flyto2 Team',
     license='MIT'
 )
-class CSVWriteModule(BaseModule):
-    """Write array to CSV file"""
+async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Write array of objects to CSV file."""
+    params = context['params']
+    file_path = params.get('file_path')
+    data = params.get('data')
+    delimiter = params.get('delimiter', ',')
+    encoding = params.get('encoding', 'utf-8')
 
-    module_name = "Write CSV File"
-    module_description = "Write array of objects to CSV file"
+    if not file_path:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: file_path',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        if 'file_path' not in self.params or not self.params['file_path']:
-            raise ValueError("Missing required parameter: file_path")
-        if 'data' not in self.params or not isinstance(self.params['data'], list):
-            raise ValueError("Missing or invalid parameter: data (must be array)")
+    if not isinstance(data, list):
+        return {
+            'ok': False,
+            'error': 'data must be an array',
+            'error_code': 'INVALID_TYPE'
+        }
 
-        self.file_path = self.params['file_path']
-        self.data = self.params['data']
-        self.delimiter = self.params.get('delimiter', ',')
-        self.encoding = self.params.get('encoding', 'utf-8')
-
-    async def execute(self) -> Any:
-        try:
-            if not self.data:
-                return {
-                    'status': 'error',
-                    'message': 'Cannot write empty data array'
-                }
-
-            # Create directory if not exists
-            os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-
-            # Get column names from first object
-            fieldnames = list(self.data[0].keys())
-
-            with open(self.file_path, 'w', encoding=self.encoding, newline='') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=self.delimiter)
-                writer.writeheader()
-                writer.writerows(self.data)
-
-            return {
-                'status': 'success',
-                'file_path': self.file_path,
-                'rows_written': len(self.data)
-            }
-
-        except Exception as e:
+    try:
+        if not data:
             return {
                 'status': 'error',
-                'message': f'Failed to write CSV: {str(e)}'
+                'message': 'Cannot write empty data array'
             }
 
+        # Create directory if not exists
+        dir_path = os.path.dirname(file_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
 
+        # Get column names from first object
+        fieldnames = list(data[0].keys())
+
+        with open(file_path, 'w', encoding=encoding, newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=delimiter)
+            writer.writeheader()
+            writer.writerows(data)
+
+        return {
+            'status': 'success',
+            'file_path': file_path,
+            'rows_written': len(data)
+        }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Failed to write CSV: {str(e)}'
+        }

@@ -1,15 +1,13 @@
 """
-Data Processing Modules
-Handle CSV, JSON, text processing, data transformation, etc.
+CSV Read Module
+Read and parse CSV file into array of objects
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import csv
+import os
+
 from ...registry import register_module
 from ...schema import compose, presets
-import json
-import csv
-import io
-import os
 
 
 @register_module(
@@ -49,10 +47,22 @@ import os
         presets.SKIP_HEADER(default=False),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status'},
-        'data': {'type': 'array', 'description': 'Array of row objects'},
-        'rows': {'type': 'number', 'description': 'Number of rows'},
-        'columns': {'type': 'array', 'description': 'Column names'}
+        'status': {
+            'type': 'string',
+            'description': 'Operation status'
+        },
+        'data': {
+            'type': 'array',
+            'description': 'Array of row objects'
+        },
+        'rows': {
+            'type': 'number',
+            'description': 'Number of rows'
+        },
+        'columns': {
+            'type': 'array',
+            'description': 'Column names'
+        }
     },
     examples=[
         {
@@ -75,49 +85,46 @@ import os
     author='Flyto2 Team',
     license='MIT'
 )
-class CSVReadModule(BaseModule):
-    """Read CSV file and parse into array"""
+async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Read and parse CSV file into array of objects."""
+    params = context['params']
+    file_path = params.get('file_path')
+    delimiter = params.get('delimiter', ',')
+    encoding = params.get('encoding', 'utf-8')
+    skip_header = params.get('skip_header', False)
 
-    module_name = "Read CSV File"
-    module_description = "Read and parse CSV file into array of objects"
+    if not file_path:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: file_path',
+            'error_code': 'MISSING_PARAM'
+        }
 
-    def validate_params(self):
-        if 'file_path' not in self.params or not self.params['file_path']:
-            raise ValueError("Missing required parameter: file_path")
-
-        self.file_path = self.params['file_path']
-        self.delimiter = self.params.get('delimiter', ',')
-        self.encoding = self.params.get('encoding', 'utf-8')
-        self.skip_header = self.params.get('skip_header', False)
-
-    async def execute(self) -> Any:
-        try:
-            if not os.path.exists(self.file_path):
-                return {
-                    'status': 'error',
-                    'message': f'File not found: {self.file_path}'
-                }
-
-            with open(self.file_path, 'r', encoding=self.encoding) as csvfile:
-                reader = csv.DictReader(csvfile, delimiter=self.delimiter)
-
-                if self.skip_header:
-                    next(reader, None)  # Skip header row
-
-                data = list(reader)
-                columns = reader.fieldnames or []
-
-                return {
-                    'status': 'success',
-                    'data': data,
-                    'rows': len(data),
-                    'columns': columns
-                }
-
-        except Exception as e:
+    try:
+        if not os.path.exists(file_path):
             return {
                 'status': 'error',
-                'message': f'Failed to read CSV: {str(e)}'
+                'message': f'File not found: {file_path}'
             }
 
+        with open(file_path, 'r', encoding=encoding) as csvfile:
+            reader = csv.DictReader(csvfile, delimiter=delimiter)
 
+            if skip_header:
+                next(reader, None)
+
+            data = list(reader)
+            columns = reader.fieldnames or []
+
+            return {
+                'status': 'success',
+                'data': data,
+                'rows': len(data),
+                'columns': columns
+            }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'Failed to read CSV: {str(e)}'
+        }

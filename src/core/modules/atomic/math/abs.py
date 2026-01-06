@@ -3,7 +3,7 @@ Math Absolute Value Module
 Get the absolute value of a number
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -24,9 +24,10 @@ from ...schema import compose, presets
     input_types=['number'],
     output_types=['number'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    timeout=None,
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+
+    timeout=None,
     retryable=False,
     concurrent_safe=True,
 
@@ -39,8 +40,14 @@ from ...schema import compose, presets
         presets.INPUT_NUMBER(required=True),
     ),
     output_schema={
-        'result': {'type': 'number'},
-        'original': {'type': 'number'}
+        'result': {
+            'type': 'number',
+            'description': 'Absolute value'
+        },
+        'original': {
+            'type': 'number',
+            'description': 'Original number'
+        }
     },
     examples=[
         {
@@ -59,19 +66,21 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class MathAbsModule(BaseModule):
-    """Math Absolute Value Module"""
+async def math_abs(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Get absolute value of a number."""
+    params = context['params']
+    number = params.get('number')
 
-    def validate_params(self):
-        self.number = self.params.get('number')
-
-        if self.number is None:
-            raise ValueError("number is required")
-
-    async def execute(self) -> Any:
-        result = abs(self.number)
-
+    if number is None:
         return {
-            "result": result,
-            "original": self.number
+            'ok': False,
+            'error': 'Missing required parameter: number',
+            'error_code': 'MISSING_PARAM'
         }
+
+    result = abs(number)
+
+    return {
+        'result': result,
+        'original': number
+    }

@@ -3,7 +3,7 @@ Math Round Module
 Round a number to specified decimal places
 """
 from typing import Any, Dict
-from ...base import BaseModule
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -24,9 +24,10 @@ from ...schema import compose, presets
     input_types=['number'],
     output_types=['number'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    timeout=None,
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+
+    timeout=None,
     retryable=False,
     concurrent_safe=True,
 
@@ -40,8 +41,18 @@ from ...schema import compose, presets
         presets.DECIMAL_PLACES(default=0),
     ),
     output_schema={
-        'result': {'type': 'number'},
-        'original': {'type': 'number'}
+        'result': {
+            'type': 'number',
+            'description': 'Rounded value'
+        },
+        'original': {
+            'type': 'number',
+            'description': 'Original number'
+        },
+        'decimals': {
+            'type': 'number',
+            'description': 'Decimal places used'
+        }
     },
     examples=[
         {
@@ -61,21 +72,23 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class MathRoundModule(BaseModule):
-    """Math Round Module"""
+async def math_round(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Round number to specified decimal places."""
+    params = context['params']
+    number = params.get('number')
+    decimals = params.get('decimals', 0)
 
-    def validate_params(self):
-        self.number = self.params.get('number')
-        self.decimals = self.params.get('decimals', 0)
-
-        if self.number is None:
-            raise ValueError("number is required")
-
-    async def execute(self) -> Any:
-        result = round(self.number, self.decimals)
-
+    if number is None:
         return {
-            "result": result,
-            "original": self.number,
-            "decimals": self.decimals
+            'ok': False,
+            'error': 'Missing required parameter: number',
+            'error_code': 'MISSING_PARAM'
         }
+
+    result = round(number, decimals)
+
+    return {
+        'result': result,
+        'original': number,
+        'decimals': decimals
+    }

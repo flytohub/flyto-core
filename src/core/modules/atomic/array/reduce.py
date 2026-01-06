@@ -1,10 +1,10 @@
 """
-Advanced Array Operations Modules
+Array Reduce Module
 
-Provides extended array manipulation capabilities.
+Reduce array to single value using various operations.
 """
-from typing import Any, Dict, List
-from ...base import BaseModule
+from typing import Any, Dict
+
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -26,14 +26,15 @@ from ...schema import compose, presets
     input_types=['array'],
     output_types=['string', 'number'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -45,8 +46,14 @@ from ...schema import compose, presets
         presets.SEPARATOR(default=','),
     ),
     output_schema={
-        'result': {'type': 'any'},
-        'operation': {'type': 'string'}
+        'result': {
+            'type': 'any',
+            'description': 'Reduced value'
+        },
+        'operation': {
+            'type': 'string',
+            'description': 'Operation that was applied'
+        }
     },
     examples=[
         {
@@ -68,41 +75,41 @@ from ...schema import compose, presets
     author='Flyto2 Team',
     license='MIT'
 )
-class ArrayReduceModule(BaseModule):
-    """Array Reduce Module"""
+async def array_reduce(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Reduce array to single value."""
+    params = context['params']
+    array = params.get('array', [])
+    operation = params.get('operation')
+    separator = params.get('separator', ',')
 
-    def validate_params(self):
-        self.array = self.params.get('array', [])
-        self.operation = self.params.get('operation')
-        self.separator = self.params.get('separator', ',')
-
-        if not isinstance(self.array, list):
-            raise ValueError("array must be a list")
-
-    async def execute(self) -> Any:
-        if not self.array:
-            return {"result": None, "operation": self.operation}
-
-        result = None
-
-        if self.operation == 'sum':
-            result = sum(self.array)
-        elif self.operation == 'product':
-            result = 1
-            for item in self.array:
-                result *= item
-        elif self.operation == 'average':
-            result = sum(self.array) / len(self.array)
-        elif self.operation == 'min':
-            result = min(self.array)
-        elif self.operation == 'max':
-            result = max(self.array)
-        elif self.operation == 'join':
-            result = self.separator.join(str(item) for item in self.array)
-
+    if not isinstance(array, list):
         return {
-            "result": result,
-            "operation": self.operation
+            'ok': False,
+            'error': 'array must be a list',
+            'error_code': 'INVALID_TYPE'
         }
 
+    if not array:
+        return {'result': None, 'operation': operation}
 
+    result = None
+
+    if operation == 'sum':
+        result = sum(array)
+    elif operation == 'product':
+        result = 1
+        for item in array:
+            result *= item
+    elif operation == 'average':
+        result = sum(array) / len(array)
+    elif operation == 'min':
+        result = min(array)
+    elif operation == 'max':
+        result = max(array)
+    elif operation == 'join':
+        result = separator.join(str(item) for item in array)
+
+    return {
+        'result': result,
+        'operation': operation
+    }

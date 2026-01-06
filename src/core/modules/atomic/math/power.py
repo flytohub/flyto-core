@@ -1,13 +1,12 @@
 """
-Advanced Math Operations Modules
-
-Provides extended mathematical operations.
+Math Power Module
+Raise number to a power
 """
 from typing import Any, Dict
-from ...base import BaseModule
+import math
+
 from ...registry import register_module
 from ...schema import compose, presets
-import math
 
 
 @register_module(
@@ -27,14 +26,15 @@ import math
     input_types=['number'],
     output_types=['number'],
 
-
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+
+    # Execution settings
     timeout=None,
     retryable=False,
     concurrent_safe=True,
 
-    # Phase 2: Security settings
+    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=[],
@@ -45,9 +45,18 @@ import math
         presets.MATH_EXPONENT(required=True),
     ),
     output_schema={
-        'result': {'type': 'number'},
-        'base': {'type': 'number'},
-        'exponent': {'type': 'number'}
+        'result': {
+            'type': 'number',
+            'description': 'Result of base raised to exponent'
+        },
+        'base': {
+            'type': 'number',
+            'description': 'Base number'
+        },
+        'exponent': {
+            'type': 'number',
+            'description': 'Exponent used'
+        }
     },
     examples=[
         {
@@ -68,21 +77,30 @@ import math
     author='Flyto2 Team',
     license='MIT'
 )
-class MathPowerModule(BaseModule):
-    """Math Power Module"""
+async def math_power(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Raise number to a power."""
+    params = context['params']
+    base = params.get('base')
+    exponent = params.get('exponent')
 
-    def validate_params(self):
-        self.base = self.params.get('base')
-        self.exponent = self.params.get('exponent')
-
-        if self.base is None or self.exponent is None:
-            raise ValueError("base and exponent are required")
-
-    async def execute(self) -> Any:
-        result = math.pow(self.base, self.exponent)
-
+    if base is None:
         return {
-            "result": result,
-            "base": self.base,
-            "exponent": self.exponent
+            'ok': False,
+            'error': 'Missing required parameter: base',
+            'error_code': 'MISSING_PARAM'
         }
+
+    if exponent is None:
+        return {
+            'ok': False,
+            'error': 'Missing required parameter: exponent',
+            'error_code': 'MISSING_PARAM'
+        }
+
+    result = math.pow(base, exponent)
+
+    return {
+        'result': result,
+        'base': base,
+        'exponent': exponent
+    }
