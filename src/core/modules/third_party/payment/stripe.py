@@ -157,7 +157,9 @@ class StripeCreatePaymentModule(BaseModule):
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
 
-            async with aiohttp.ClientSession() as session:
+            # SECURITY: Set timeout to prevent hanging API calls
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(
                     APIEndpoints.STRIPE_PAYMENT_INTENTS,
                     headers=headers,
@@ -272,7 +274,9 @@ class StripeGetCustomerModule(BaseModule):
                 'Authorization': f'Bearer {self.api_key}'
             }
 
-            async with aiohttp.ClientSession() as session:
+            # SECURITY: Set timeout to prevent hanging API calls
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(
                     f"{APIEndpoints.STRIPE_CUSTOMERS}/{self.customer_id}",
                     headers=headers
@@ -407,7 +411,9 @@ class StripeListChargesModule(BaseModule):
                 'Authorization': f'Bearer {self.api_key}'
             }
 
-            async with aiohttp.ClientSession() as session:
+            # SECURITY: Set timeout to prevent hanging API calls
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(
                     APIEndpoints.STRIPE_CHARGES,
                     headers=headers,

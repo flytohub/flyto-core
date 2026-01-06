@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.notion.query_database.params.api_key.description',
             'placeholder': '${env.NOTION_API_KEY}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'database_id': {
             'type': 'string',

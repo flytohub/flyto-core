@@ -155,6 +155,9 @@ class LocalOllamaChatModule(BaseModule):
     """Local Ollama Chat Module - Completely offline LLM"""
 
     def validate_params(self):
+        import os
+        from urllib.parse import urlparse
+
         self.prompt = self.params.get('prompt')
         self.model = self.params.get('model', 'llama2')
         self.temperature = self.params.get('temperature', 0.7)
@@ -164,6 +167,22 @@ class LocalOllamaChatModule(BaseModule):
 
         if not self.prompt:
             raise ValueError("prompt is required")
+
+        # SECURITY: Validate ollama_url - restrict to localhost by default
+        # This module is for LOCAL Ollama, not remote servers
+        parsed = urlparse(self.ollama_url)
+        host = parsed.hostname or ''
+        localhost_hosts = ('localhost', '127.0.0.1', '::1', '0.0.0.0')
+
+        # Allow localhost connections always
+        if host.lower() not in localhost_hosts:
+            # Check if remote Ollama is explicitly allowed
+            allow_remote = os.environ.get('FLYTO_ALLOW_REMOTE_OLLAMA', '').lower() == 'true'
+            if not allow_remote:
+                raise ValueError(
+                    f"SSRF blocked: ollama_url must be localhost (got {host}). "
+                    "Set FLYTO_ALLOW_REMOTE_OLLAMA=true to allow remote servers."
+                )
 
     async def execute(self) -> Any:
         try:

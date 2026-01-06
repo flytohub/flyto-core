@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.anthropic.chat.params.api_key.description',
             'placeholder': '${env.ANTHROPIC_API_KEY}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'model': {
             'type': 'string',
@@ -193,8 +193,10 @@ async def anthropic_chat(context):
     if params.get('system'):
         payload['system'] = params['system']
 
-    # Make API request
-    async with aiohttp.ClientSession() as session:
+    # Make API request with timeout
+    # SECURITY: Set timeout to prevent hanging API calls
+    timeout = aiohttp.ClientTimeout(total=120, connect=30)  # 2 min total for AI
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.post(url, headers=headers, json=payload) as response:
             if response.status != 200:
                 error_text = await response.text()
@@ -252,7 +254,7 @@ async def anthropic_chat(context):
             'description_key': 'modules.api.google_gemini.chat.params.api_key.description',
             'placeholder': '${env.GOOGLE_AI_API_KEY}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'model': {
             'type': 'string',
@@ -371,8 +373,10 @@ async def google_gemini_chat(context):
     if generation_config:
         payload['generationConfig'] = generation_config
 
-    # Make API request
-    async with aiohttp.ClientSession() as session:
+    # Make API request with timeout
+    # SECURITY: Set timeout to prevent hanging API calls
+    timeout = aiohttp.ClientTimeout(total=120, connect=30)  # 2 min total for AI
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.post(url, json=payload) as response:
             if response.status != 200:
                 error_text = await response.text()

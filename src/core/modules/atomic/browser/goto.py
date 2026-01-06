@@ -22,6 +22,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 @register_module(
@@ -77,6 +78,13 @@ class BrowserGotoModule(BaseModule):
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']
+
+        # SECURITY: Validate URL against SSRF attacks
+        try:
+            validate_url_with_env_config(self.url)
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection: {e}")
+
         # Default to 'domcontentloaded' for faster page loads (was 'networkidle' which hangs on many sites)
         self.wait_until = self.params.get('wait_until', 'domcontentloaded')
         self.timeout_ms = self.params.get('timeout_ms', 30000)

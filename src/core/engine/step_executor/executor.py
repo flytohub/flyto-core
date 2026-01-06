@@ -2,10 +2,13 @@
 Step Executor
 
 Handles execution of individual workflow steps.
+
+SECURITY: Includes redaction of sensitive data from module outputs.
 """
 
 import asyncio
 import logging
+import re
 import time
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -19,6 +22,44 @@ if TYPE_CHECKING:
     from ..variable_resolver import VariableResolver
 
 logger = logging.getLogger(__name__)
+
+# SECURITY: Patterns for sensitive keys that should be redacted from results
+_SENSITIVE_KEY_PATTERN = re.compile(
+    r'(?i)(api[_-]?key|secret|password|token|credential|auth|private[_-]?key|bearer|jwt)',
+)
+
+
+def _redact_sensitive_output(data: Any, depth: int = 0) -> Any:
+    """
+    Redact sensitive data from module output.
+
+    SECURITY: Prevents secrets in module outputs from leaking to hooks or storage.
+    Only redacts up to 10 levels deep to prevent infinite recursion.
+    """
+    if depth > 10:
+        return data
+
+    if data is None:
+        return data
+
+    if isinstance(data, str):
+        # Don't redact regular strings - only check dict keys
+        return data
+
+    if isinstance(data, dict):
+        redacted = {}
+        for key, value in data.items():
+            # Check if key name suggests sensitive data
+            if _SENSITIVE_KEY_PATTERN.search(str(key)):
+                redacted[key] = '[REDACTED]'
+            else:
+                redacted[key] = _redact_sensitive_output(value, depth + 1)
+        return redacted
+
+    if isinstance(data, (list, tuple)):
+        return [_redact_sensitive_output(item, depth + 1) for item in data]
+
+    return data
 
 
 class StepExecutor:
@@ -185,11 +226,13 @@ class StepExecutor:
 
         finally:
             # Call post-execute hook
+            # SECURITY: Redact sensitive data before passing to hooks
+            redacted_result = _redact_sensitive_output(result) if result else result
             post_context = self._create_step_context(
                 step_config,
                 step_index,
                 context,
-                result=result,
+                result=redacted_result,
                 error=error,
                 step_start_time=step_start_time,
             )

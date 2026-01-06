@@ -144,8 +144,10 @@ class TelegramSendMessageModule(BaseModule):
         if self.parse_mode:
             payload['parse_mode'] = self.parse_mode
 
-        # Send message
-        async with aiohttp.ClientSession() as session:
+        # Send message with timeout
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, json=payload) as response:
                 data = await response.json()
 

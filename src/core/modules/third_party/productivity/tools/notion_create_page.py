@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.notion.create_page.params.api_key.description',
             'placeholder': '${env.NOTION_API_KEY}',
             'required': False,
-            'secret': True,
+            'sensitive': True,
             'help': 'Create integration at https://www.notion.so/my-integrations'
         },
         'database_id': {

@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
             'description': 'Google service account JSON credentials (defaults to env.GOOGLE_CREDENTIALS_JSON)',
             'description_key': 'modules.api.google_sheets.write.params.credentials.description',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'spreadsheet_id': {
             'type': 'string',

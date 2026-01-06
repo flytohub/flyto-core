@@ -12,6 +12,7 @@ import aiohttp
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -98,6 +99,17 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
     parsed = urlparse(url)
     if not parsed.scheme or not parsed.netloc:
         raise ValueError(f"Invalid URL: {url}")
+
+    # SECURITY: Validate URL against SSRF attacks
+    try:
+        validate_url_with_env_config(url)
+    except SSRFError as e:
+        logger.warning(f"SSRF protection blocked image download from: {url}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED'
+        }
 
     # Set default headers
     default_headers = {

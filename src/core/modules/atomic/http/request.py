@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,19 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     follow_redirects = params.get('follow_redirects', True)
     verify_ssl = params.get('verify_ssl', True)
     response_type = params.get('response_type', 'auto')
+
+    # SECURITY: Validate URL against SSRF attacks
+    try:
+        validate_url_with_env_config(url)
+    except SSRFError as e:
+        logger.warning(f"SSRF protection blocked request to: {url}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED',
+            'url': url,
+            'duration_ms': 0
+        }
 
     # Build URL with query params
     if query:

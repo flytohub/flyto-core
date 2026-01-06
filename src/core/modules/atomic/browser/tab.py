@@ -2,11 +2,14 @@
 Browser Tab Module
 
 Create, switch, and close browser tabs.
+
+SECURITY: Includes SSRF protection for new tab URLs.
 """
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 @register_module(
@@ -130,6 +133,16 @@ class BrowserTabModule(BaseModule):
         elif self.action == 'new':
             new_page = await context.new_page()
             if self.url:
+                # SECURITY: Validate URL for SSRF before navigation
+                try:
+                    validate_url_with_env_config(self.url)
+                except SSRFError as e:
+                    await new_page.close()
+                    return {
+                        "status": "error",
+                        "error": str(e),
+                        "error_code": "SSRF_BLOCKED"
+                    }
                 await new_page.goto(self.url)
 
             # Update browser's current page reference

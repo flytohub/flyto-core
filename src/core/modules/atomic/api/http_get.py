@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ....utils import validate_url_with_env_config, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,18 @@ async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     headers = params.get('headers', {})
     query = params.get('query', {})
     timeout_s = params.get('timeout', 30)
+
+    # SECURITY: Validate URL against SSRF attacks
+    try:
+        validate_url_with_env_config(url)
+    except SSRFError as e:
+        logger.warning(f"SSRF protection blocked GET to: {url}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED',
+            'status': 0
+        }
 
     # Add query params to URL
     if query:

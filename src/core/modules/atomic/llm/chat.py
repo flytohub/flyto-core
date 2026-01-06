@@ -1,6 +1,8 @@
 """
 LLM Chat Module
 Interact with LLM APIs for code generation, analysis, and decision making
+
+SECURITY: Includes SSRF protection for custom base URLs.
 """
 
 import logging
@@ -9,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -131,6 +134,17 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
     response_format = params.get('response_format', 'text')
     api_key = params.get('api_key')
     base_url = params.get('base_url')
+
+    # SECURITY: Validate custom base URL for SSRF
+    if base_url:
+        try:
+            validate_url_with_env_config(base_url)
+        except SSRFError as e:
+            return {
+                'ok': False,
+                'error': str(e),
+                'error_code': 'SSRF_BLOCKED'
+            }
 
     # Get API key from environment if not provided
     if not api_key:
@@ -301,7 +315,9 @@ async def _call_openai_aiohttp(
     if response_format == 'json':
         payload["response_format"] = {"type": "json_object"}
 
-    async with aiohttp.ClientSession() as session:
+    # SECURITY: Set timeout to prevent hanging API calls
+    timeout = aiohttp.ClientTimeout(total=120, connect=30)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.post(url, headers=headers, json=payload) as response:
             result = await response.json()
 
@@ -367,7 +383,9 @@ async def _call_anthropic(
             response = await client.post(url, headers=headers, json=payload)
             result = response.json()
     else:
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=120, connect=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
 
@@ -416,7 +434,9 @@ async def _call_ollama(
                 response = await client.post(url, json=payload)
                 result = response.json()
         else:
-            async with aiohttp.ClientSession() as session:
+            # SECURITY: Set timeout to prevent hanging API calls
+            timeout = aiohttp.ClientTimeout(total=120, connect=30)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(url, json=payload) as response:
                     result = await response.json()
 

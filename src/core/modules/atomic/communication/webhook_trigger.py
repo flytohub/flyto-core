@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,18 @@ async def webhook_trigger(context: Dict[str, Any]) -> Dict[str, Any]:
     content_type = params.get('content_type', 'application/json')
     auth_token = params.get('auth_token')
     timeout_seconds = params.get('timeout', 30)
+
+    # SECURITY: Validate URL against SSRF attacks
+    try:
+        validate_url_with_env_config(url)
+    except SSRFError as e:
+        logger.warning(f"SSRF protection blocked webhook to: {url}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED',
+            'status_code': 0
+        }
 
     headers = {'Content-Type': content_type}
     headers.update(custom_headers)

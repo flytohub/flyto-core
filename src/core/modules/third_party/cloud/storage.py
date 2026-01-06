@@ -46,7 +46,7 @@ import base64
             'description_key': 'modules.cloud.aws_s3.upload.params.aws_access_key_id.description',
             'placeholder': '${env.AWS_ACCESS_KEY_ID}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'aws_secret_access_key': {
             'type': 'string',
@@ -56,7 +56,7 @@ import base64
             'description_key': 'modules.cloud.aws_s3.upload.params.aws_secret_access_key.description',
             'placeholder': '${env.AWS_SECRET_ACCESS_KEY}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'region': {
             'type': 'string',
@@ -273,7 +273,7 @@ async def aws_s3_upload(context):
             'description_key': 'modules.cloud.aws_s3.download.params.aws_access_key_id.description',
             'placeholder': '${env.AWS_ACCESS_KEY_ID}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'aws_secret_access_key': {
             'type': 'string',
@@ -283,7 +283,7 @@ async def aws_s3_upload(context):
             'description_key': 'modules.cloud.aws_s3.download.params.aws_secret_access_key.description',
             'placeholder': '${env.AWS_SECRET_ACCESS_KEY}',
             'required': False,
-            'secret': True
+            'sensitive': True
         },
         'region': {
             'type': 'string',

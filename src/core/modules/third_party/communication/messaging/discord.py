@@ -127,7 +127,9 @@ class DiscordSendMessageModule(BaseModule):
             payload['avatar_url'] = self.avatar_url
 
         # Send to Discord webhook
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(
                 self.webhook_url,
                 json=payload,

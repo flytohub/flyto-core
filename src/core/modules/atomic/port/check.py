@@ -5,13 +5,19 @@ Check if a network port is open or closed
 
 import asyncio
 import logging
+import os
 import socket
 from typing import Any, Dict, List
 
 from ...registry import register_module
+from ....utils import is_private_ip
 
 
 logger = logging.getLogger(__name__)
+
+
+# SECURITY: Localhost-only hosts that are always allowed
+_LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
 
 
 @register_module(
@@ -138,6 +144,30 @@ async def port_check(context: Dict[str, Any]) -> Dict[str, Any]:
     host = params.get('host', 'localhost')
     connect_timeout = params.get('connect_timeout', 2)
     expect_open = params.get('expect_open')
+
+    # SECURITY: Validate host to prevent internal network scanning
+    host_lower = host.lower()
+    if host_lower not in _LOCALHOST_HOSTS:
+        # Check if scanning non-localhost is allowed
+        allow_remote = os.environ.get('FLYTO_ALLOW_PORT_SCAN', '').lower() == 'true'
+        if not allow_remote:
+            # Try to resolve and check if it's a private IP
+            try:
+                resolved_ip = socket.gethostbyname(host)
+                if is_private_ip(resolved_ip):
+                    return {
+                        'ok': False,
+                        'error': f'SSRF blocked: Cannot scan private network host ({host} -> {resolved_ip}). '
+                                 'Set FLYTO_ALLOW_PORT_SCAN=true to allow.',
+                        'error_code': 'SSRF_BLOCKED',
+                        'results': [],
+                        'open_ports': [],
+                        'closed_ports': [],
+                        'summary': {'total': 0, 'open': 0, 'closed': 0}
+                    }
+            except socket.gaierror:
+                # DNS resolution failed - allow the check to fail naturally
+                pass
 
     # Normalize ports to list
     if isinstance(ports_input, int):

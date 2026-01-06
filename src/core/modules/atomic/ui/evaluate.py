@@ -136,7 +136,7 @@ logger = logging.getLogger(__name__)
             'description': 'OpenAI API key (defaults to OPENAI_API_KEY env var)',
             'description_key': 'modules.ui.evaluate.params.api_key.description',
             'required': False,
-            'secret': True
+            'sensitive': True
         }
     },
     output_schema={

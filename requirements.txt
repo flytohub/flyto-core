@@ -1,12 +1,14 @@
 # Core dependencies
 pyyaml>=6.0
 playwright>=1.40.0
-aiohttp>=3.9.0
+# CVE-2024-30251: body iteration race fixed in 3.11.0
+aiohttp>=3.11.0
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
 # API dependencies (for web UI)
-fastapi>=0.104.0
+# CVE-2024-24762: multipart DoS fixed in 0.115.0
+fastapi>=0.115.0
 uvicorn>=0.24.0
 pydantic>=2.0.0
 

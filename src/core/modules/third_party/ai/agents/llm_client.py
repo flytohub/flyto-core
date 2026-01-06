@@ -71,7 +71,7 @@ class LLMClientMixin:
             raise ValueError(f"Unsupported LLM provider: {self.llm_provider}")
 
     async def _call_openai(self, messages: List[Dict[str, str]]) -> str:
-        """Call OpenAI API."""
+        """Call OpenAI API with timeout."""
         try:
             import openai
         except ImportError:
@@ -80,14 +80,36 @@ class LLMClientMixin:
                 "Install with: pip install openai"
             )
 
-        openai.api_key = self.api_key
-        response = await openai.ChatCompletion.acreate(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            max_tokens=DEFAULT_LLM_MAX_TOKENS
-        )
-        return response.choices[0].message.content
+        # SECURITY: Set timeout to prevent hanging API calls
+        # Support both old (< 1.0) and new (>= 1.0) OpenAI library
+        if hasattr(openai, 'AsyncOpenAI'):
+            # New OpenAI library (>= 1.0)
+            client = openai.AsyncOpenAI(
+                api_key=self.api_key,
+                timeout=120.0
+            )
+            response = await client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=DEFAULT_LLM_MAX_TOKENS
+            )
+            return response.choices[0].message.content
+        else:
+            # Old OpenAI library (< 1.0)
+            openai.api_key = self.api_key
+            # Old API doesn't have direct timeout, use asyncio.wait_for
+            import asyncio
+            response = await asyncio.wait_for(
+                openai.ChatCompletion.acreate(
+                    model=self.model,
+                    messages=messages,
+                    temperature=self.temperature,
+                    max_tokens=DEFAULT_LLM_MAX_TOKENS
+                ),
+                timeout=120.0
+            )
+            return response.choices[0].message.content
 
     async def _call_ollama(self, messages: List[Dict[str, str]]) -> str:
         """Call local Ollama API."""

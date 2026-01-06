@@ -7,6 +7,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+from ....utils import validate_url_with_env_config, SSRFError
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -79,6 +81,12 @@ class VectorDBConnector:
                         "Set QDRANT_URL and QDRANT_API_KEY environment variables, "
                         "or use mode='local' for local development."
                     )
+
+                # SECURITY: Validate URL to prevent SSRF attacks
+                try:
+                    validate_url_with_env_config(self.url)
+                except SSRFError as e:
+                    raise ValueError(f"SSRF blocked: {e}")
 
                 self.client = QdrantClient(
                     url=self.url,

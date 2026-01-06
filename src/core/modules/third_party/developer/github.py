@@ -118,7 +118,9 @@ class GitHubGetRepoModule(BaseModule):
         if self.token:
             headers['Authorization'] = f'token {self.token}'
 
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -272,7 +274,9 @@ class GitHubListIssuesModule(BaseModule):
         if self.labels:
             params['labels'] = self.labels
 
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -449,7 +453,9 @@ class GitHubCreateIssueModule(BaseModule):
         if self.assignees:
             payload['assignees'] = self.assignees
 
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: Set timeout to prevent hanging API calls
+        timeout = aiohttp.ClientTimeout(total=30, connect=10)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 if response.status == 201:
                     data = await response.json()
