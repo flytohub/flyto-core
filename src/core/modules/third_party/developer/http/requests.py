@@ -38,10 +38,10 @@ from ....schema import compose, presets
         presets.TIMEOUT_S(default=30),
     ),
     output_schema={
-        'status_code': {'type': 'number'},
-        'headers': {'type': 'object'},
-        'body': {'type': 'string'},
-        'json': {'type': 'object', 'optional': True}
+        'status_code': {'type': 'number', 'description': 'HTTP status code'},
+        'headers': {'type': 'object', 'description': 'HTTP headers'},
+        'body': {'type': 'string', 'description': 'Response body content'},
+        'json': {'type': 'object', 'optional': True, 'description': 'Parsed JSON response data'}
     },
     examples=[{
         'title': 'Fetch API data',
@@ -123,10 +123,10 @@ class HTTPGetModule(BaseModule):
         presets.TIMEOUT_S(default=30),
     ),
     output_schema={
-        'status_code': {'type': 'number'},
-        'headers': {'type': 'object'},
-        'body': {'type': 'string'},
-        'json': {'type': 'object', 'optional': True}
+        'status_code': {'type': 'number', 'description': 'HTTP status code'},
+        'headers': {'type': 'object', 'description': 'HTTP headers'},
+        'body': {'type': 'string', 'description': 'Response body content'},
+        'json': {'type': 'object', 'optional': True, 'description': 'Parsed JSON response data'}
     },
     examples=[{
         'title': 'Post JSON data',

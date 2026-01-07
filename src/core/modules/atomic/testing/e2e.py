@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'e2e', 'end-to-end', 'steps', 'atomic'],
     label='Run E2E Steps',
+    label_key='modules.testing.e2e.run_steps.label',
     description='Execute end-to-end test steps sequentially',
+    description_key='modules.testing.e2e.run_steps.description',
     icon='PlayCircle',
     color='#8B5CF6',
 
@@ -50,10 +52,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'number'},
-        'failed': {'type': 'number'},
-        'results': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed'},
+        'results': {'type': 'array', 'description': 'List of results'}
     }
 )
 async def testing_e2e_run_steps(context: Dict[str, Any]) -> Dict[str, Any]:

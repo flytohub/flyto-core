@@ -57,8 +57,8 @@ from ..element_registry import get_element_registry
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'value': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'value': {'type': 'string', 'description': 'The returned value'}
     },
     examples=[{
         'title': 'Get href attribute',

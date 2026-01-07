@@ -145,6 +145,8 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
     all_recipients = to_emails + cc_emails + bcc_emails
 
     # Send email
+    # RELIABILITY: Use try/finally to ensure SMTP connection is always closed
+    server = None
     try:
         if use_tls:
             server = smtplib.SMTP(smtp_host, smtp_port)
@@ -157,7 +159,6 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
 
         server.sendmail(from_email, all_recipients, msg.as_string())
         message_id = msg.get('Message-ID', '')
-        server.quit()
 
         logger.info(f"Email sent to {len(all_recipients)} recipients")
 
@@ -171,3 +172,9 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Failed to send email: {e}")
         raise
+    finally:
+        if server:
+            try:
+                server.quit()
+            except Exception:
+                pass  # Ignore errors during cleanup

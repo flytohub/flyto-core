@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'unit', 'unittest', 'atomic'],
     label='Run Unit Tests',
+    label_key='modules.testing.unit.run.label',
     description='Execute unit tests',
+    description_key='modules.testing.unit.run.description',
     icon='TestTube',
     color='#22C55E',
 
@@ -50,11 +52,11 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'number'},
-        'failed': {'type': 'number'},
-        'errors': {'type': 'number'},
-        'results': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed'},
+        'errors': {'type': 'number', 'description': 'Number of errors encountered'},
+        'results': {'type': 'array', 'description': 'List of results'}
     }
 )
 async def testing_unit_run(context: Dict[str, Any]) -> Dict[str, Any]:

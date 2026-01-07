@@ -4,6 +4,7 @@ Core Utilities - Shared utility functions
 This module contains reusable utility functions to reduce code duplication.
 """
 import os
+import re
 import socket
 import ipaddress
 import logging
@@ -478,3 +479,195 @@ def validate_url_with_env_config(url: str) -> str:
     """
     config = get_ssrf_config()
     return validate_url_ssrf(url, **config)
+
+
+# =============================================================================
+# Path Traversal Protection
+# =============================================================================
+
+class PathTraversalError(ValueError):
+    """Raised when a path traversal attack is detected."""
+    pass
+
+
+def validate_path_safe(
+    path: str,
+    base_dir: Optional[str] = None,
+    allow_absolute: bool = True
+) -> str:
+    """
+    Validate a file path to prevent path traversal attacks.
+
+    Security checks:
+    1. Resolve path to canonical form (eliminates .., ., symlinks)
+    2. If base_dir specified, ensure path stays within it
+    3. Block common traversal patterns
+
+    Args:
+        path: The file path to validate
+        base_dir: Optional base directory to restrict access to
+        allow_absolute: Whether to allow absolute paths (default: True)
+
+    Returns:
+        The validated canonical path
+
+    Raises:
+        PathTraversalError: If path traversal is detected
+        ValueError: If path is invalid
+
+    Example:
+        # Validate with base directory restriction
+        validate_path_safe('/tmp/user_data/../../../etc/passwd', base_dir='/tmp/user_data')
+        # Raises PathTraversalError
+
+        # Validate without restriction (just canonicalize)
+        validate_path_safe('/tmp/data.txt')
+        # Returns: '/tmp/data.txt'
+    """
+    if not path:
+        raise ValueError("Path cannot be empty")
+
+    # Expand user home directory
+    expanded_path = os.path.expanduser(path)
+
+    # Check for absolute path if not allowed
+    if not allow_absolute and os.path.isabs(expanded_path):
+        raise PathTraversalError(
+            f"Absolute paths not allowed: {path}"
+        )
+
+    # Resolve to canonical path (follows symlinks, resolves ..)
+    try:
+        canonical_path = os.path.realpath(expanded_path)
+    except (OSError, ValueError) as e:
+        raise ValueError(f"Invalid path: {path} - {e}")
+
+    # If base_dir specified, ensure path stays within it
+    if base_dir:
+        base_canonical = os.path.realpath(os.path.expanduser(base_dir))
+
+        # Ensure canonical path starts with base directory
+        # Add trailing separator to prevent /tmp/evil matching /tmp/
+        if not canonical_path.startswith(base_canonical + os.sep) and canonical_path != base_canonical:
+            raise PathTraversalError(
+                f"Path escapes base directory: {path} "
+                f"(resolves to {canonical_path}, outside {base_canonical})"
+            )
+
+    # Additional security: detect suspicious patterns in original path
+    suspicious_patterns = ['..', '\x00', '%00', '%2e%2e', '%252e%252e']
+    path_lower = path.lower()
+    for pattern in suspicious_patterns:
+        if pattern in path_lower:
+            logger.warning(f"Suspicious pattern '{pattern}' detected in path: {path}")
+
+    return canonical_path
+
+
+def get_safe_path_config() -> dict:
+    """
+    Get path safety configuration from environment.
+
+    Environment variables:
+    - FLYTO_SANDBOX_DIR: Base directory for file operations (default: None = no restriction)
+    - FLYTO_ALLOW_ABSOLUTE_PATHS: true/false (default: true)
+
+    Returns:
+        dict with base_dir and allow_absolute
+    """
+    sandbox_dir = os.environ.get('FLYTO_SANDBOX_DIR')
+    allow_absolute = os.environ.get('FLYTO_ALLOW_ABSOLUTE_PATHS', 'true').lower() == 'true'
+
+    return {
+        'base_dir': sandbox_dir,
+        'allow_absolute': allow_absolute,
+    }
+
+
+def validate_path_with_env_config(path: str) -> str:
+    """
+    Validate file path using environment-based safety configuration.
+
+    Uses FLYTO_SANDBOX_DIR and FLYTO_ALLOW_ABSOLUTE_PATHS env vars.
+
+    Args:
+        path: File path to validate
+
+    Returns:
+        The validated canonical path
+
+    Raises:
+        PathTraversalError: If path traversal is detected
+    """
+    config = get_safe_path_config()
+    return validate_path_safe(path, **config)
+
+
+# =============================================================================
+# SQL Identifier Validation
+# =============================================================================
+
+class SQLInjectionError(ValueError):
+    """Raised when SQL injection is detected in identifiers."""
+    pass
+
+
+# Valid SQL identifier pattern: alphanumeric and underscore, starting with letter/underscore
+SQL_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def validate_sql_identifier(name: str, identifier_type: str = 'identifier') -> str:
+    """
+    Validate a SQL identifier (table name, column name) to prevent SQL injection.
+
+    Args:
+        name: The identifier to validate
+        identifier_type: Type of identifier for error messages ('table', 'column', etc.)
+
+    Returns:
+        The validated identifier
+
+    Raises:
+        SQLInjectionError: If the identifier contains invalid characters
+
+    Example:
+        validate_sql_identifier('users', 'table')  # OK: 'users'
+        validate_sql_identifier('user_id', 'column')  # OK: 'user_id'
+        validate_sql_identifier('users; DROP TABLE --', 'table')  # Raises SQLInjectionError
+    """
+    if not name:
+        raise ValueError(f"SQL {identifier_type} cannot be empty")
+
+    if not SQL_IDENTIFIER_PATTERN.match(name):
+        raise SQLInjectionError(
+            f"Invalid SQL {identifier_type}: '{name}'. "
+            f"Only alphanumeric characters and underscores are allowed, "
+            f"and it must start with a letter or underscore."
+        )
+
+    # Check for SQL keywords that might be dangerous
+    dangerous_keywords = {
+        'drop', 'delete', 'truncate', 'insert', 'update', 'select',
+        'union', 'exec', 'execute', 'create', 'alter', 'grant'
+    }
+    if name.lower() in dangerous_keywords:
+        logger.warning(f"SQL {identifier_type} '{name}' matches a SQL keyword")
+
+    return name
+
+
+def validate_sql_identifiers(names: list, identifier_type: str = 'identifier') -> list:
+    """
+    Validate multiple SQL identifiers.
+
+    Args:
+        names: List of identifiers to validate
+        identifier_type: Type of identifier for error messages
+
+    Returns:
+        List of validated identifiers
+
+    Raises:
+        SQLInjectionError: If any identifier is invalid
+    """
+    return [validate_sql_identifier(name, identifier_type) for name in names]

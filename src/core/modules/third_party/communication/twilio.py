@@ -91,10 +91,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'sid': {'type': 'string'},
-        'status': {'type': 'string'},
-        'to': {'type': 'string'},
-        'from': {'type': 'string'}
+        'sid': {'type': 'string', 'description': 'The sid'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'to': {'type': 'string', 'description': 'The to'},
+        'from': {'type': 'string', 'description': 'The from'}
     },
     examples=[
         {
@@ -254,10 +254,10 @@ class TwilioSendSMSModule(BaseModule):
         }
     },
     output_schema={
-        'sid': {'type': 'string'},
-        'status': {'type': 'string'},
-        'to': {'type': 'string'},
-        'from': {'type': 'string'}
+        'sid': {'type': 'string', 'description': 'The sid'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'to': {'type': 'string', 'description': 'The to'},
+        'from': {'type': 'string', 'description': 'The from'}
     },
     examples=[
         {

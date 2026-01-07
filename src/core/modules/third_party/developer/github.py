@@ -70,14 +70,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'repo': {'type': 'object'},
-        'name': {'type': 'string'},
-        'full_name': {'type': 'string'},
-        'description': {'type': 'string'},
-        'stars': {'type': 'number'},
-        'forks': {'type': 'number'},
-        'url': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'repo': {'type': 'object', 'description': 'Repository information'},
+        'name': {'type': 'string', 'description': 'Name of the item'},
+        'full_name': {'type': 'string', 'description': 'Full repository name'},
+        'description': {'type': 'string', 'description': 'Item description'},
+        'stars': {'type': 'number', 'description': 'Number of stars'},
+        'forks': {'type': 'number', 'description': 'Number of forks'},
+        'url': {'type': 'string', 'description': 'URL address'}
     },
     examples=[
         {
@@ -218,9 +218,9 @@ class GitHubGetRepoModule(BaseModule):
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'issues': {'type': 'array'},
-        'count': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'issues': {'type': 'array', 'description': 'The issues'},
+        'count': {'type': 'number', 'description': 'Number of items'}
     },
     examples=[
         {
@@ -387,10 +387,10 @@ class GitHubListIssuesModule(BaseModule):
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'issue': {'type': 'object'},
-        'number': {'type': 'number'},
-        'url': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'issue': {'type': 'object', 'description': 'Issue information'},
+        'number': {'type': 'number', 'description': 'Issue or PR number'},
+        'url': {'type': 'string', 'description': 'URL address'}
     },
     examples=[
         {

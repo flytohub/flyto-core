@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'http', 'api', 'suite', 'atomic'],
     label='Run HTTP Tests',
+    label_key='modules.testing.http.run_suite.label',
     description='Execute HTTP API test suite',
+    description_key='modules.testing.http.run_suite.description',
     icon='Globe',
     color='#3B82F6',
 
@@ -50,10 +52,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'number'},
-        'failed': {'type': 'number'},
-        'results': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed'},
+        'results': {'type': 'array', 'description': 'List of results'}
     }
 )
 async def testing_http_run_suite(context: Dict[str, Any]) -> Dict[str, Any]:

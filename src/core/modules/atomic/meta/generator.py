@@ -16,7 +16,9 @@ from typing import Any
     category='meta',
     tags=['meta', 'generator', 'test'],
     label='Test Generator',
+    label_key='modules.meta.modules.test_generator.label',
     description='Test module generation capability',
+    description_key='modules.meta.modules.test_generator.description',
     icon='Beaker',
     color='#8B5CF6',
 
@@ -68,7 +70,9 @@ class TestGeneratorModule(BaseModule):
     category='meta',
     tags=['meta', 'generator', 'module'],
     label='Generate Module',
+    label_key='modules.meta.modules.generate.label',
     description='Generate new module from specification',
+    description_key='modules.meta.modules.generate.description',
     icon='PlusCircle',
     color='#8B5CF6',
 

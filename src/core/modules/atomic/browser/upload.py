@@ -34,10 +34,10 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'filename': {'type': 'string'},
-        'size': {'type': 'number'},
-        'selector': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'filename': {'type': 'string', 'description': 'Name of the file'},
+        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'selector': {'type': 'string', 'description': 'CSS selector that was used'}
     },
     examples=[
         {

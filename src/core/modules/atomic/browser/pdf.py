@@ -55,9 +55,9 @@ from ...schema import compose, presets, field
         presets.PDF_FOOTER(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'path': {'type': 'string'},
-        'size': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'path': {'type': 'string', 'description': 'File or resource path'},
+        'size': {'type': 'number', 'description': 'Size in bytes'}
     },
     examples=[
         {

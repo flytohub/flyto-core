@@ -71,10 +71,10 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'data': {'type': 'array'},
-        'row_count': {'type': 'number'},
-        'output_file': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'data': {'type': 'array', 'description': 'Output data from the operation'},
+        'row_count': {'type': 'number', 'description': 'Number of rows affected'},
+        'output_file': {'type': 'string', 'description': 'The output file'}
     },
 
     timeout=60,

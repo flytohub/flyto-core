@@ -26,9 +26,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
     subcategory=Subcategory.AUDIO,
     tags=['huggingface', 'audio', 'speech', 'transcription', 'asr', 'whisper'],
     label='Speech to Text',
-    label_key='huggingface.speech_to_text.label',
+    label_key='modules.huggingface.speech-to-text.label',
     description='Transcribe audio to text using HuggingFace models (Whisper, etc.)',
-    description_key='huggingface.speech_to_text.description',
+    description_key='modules.huggingface.speech-to-text.description',
     icon='Mic',
     color=ModuleColors.SPEECH_TO_TEXT,
 

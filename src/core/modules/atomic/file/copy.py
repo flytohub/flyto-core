@@ -48,10 +48,10 @@ from ...schema import compose, presets
         presets.OVERWRITE(default=False),
     ),
     output_schema={
-        'copied': {'type': 'boolean'},
-        'source': {'type': 'string'},
-        'destination': {'type': 'string'},
-        'size': {'type': 'number'}
+        'copied': {'type': 'boolean', 'description': 'The copied'},
+        'source': {'type': 'string', 'description': 'The source'},
+        'destination': {'type': 'string', 'description': 'The destination'},
+        'size': {'type': 'number', 'description': 'Size in bytes'}
     },
     examples=[
         {

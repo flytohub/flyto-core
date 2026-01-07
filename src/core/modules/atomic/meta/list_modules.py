@@ -89,21 +89,22 @@ import json
     output_schema={
         'modules': {
             'type': 'array',
+            'description': 'List of registered modules',
             'items': {
                 'type': 'object',
                 'properties': {
-                    'module_id': {'type': 'string'},
-                    'label': {'type': 'string'},
-                    'description': {'type': 'string'},
-                    'category': {'type': 'string'},
-                    'tags': {'type': 'array'},
-                    'params_schema': {'type': 'object'},
-                    'output_schema': {'type': 'object'}
+                    'module_id': {'type': 'string', 'description': 'The module id'},
+                    'label': {'type': 'string', 'description': 'The label'},
+                    'description': {'type': 'string', 'description': 'Item description'},
+                    'category': {'type': 'string', 'description': 'The category'},
+                    'tags': {'type': 'array', 'description': 'The tags'},
+                    'params_schema': {'type': 'object', 'description': 'The params schema'},
+                    'output_schema': {'type': 'object', 'description': 'The output schema'}
                 }
             }
         },
-        'count': {'type': 'number'},
-        'formatted': {'type': 'string'}
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'formatted': {'type': 'string', 'description': 'The formatted'}
     },
     examples=[
         {

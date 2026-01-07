@@ -49,8 +49,8 @@ import time
         presets.TIME_SECONDS(default=0),
     ),
     output_schema={
-        'result': {'type': 'string'},
-        'timestamp': {'type': 'number'}
+        'result': {'type': 'string', 'description': 'The operation result'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp'}
     },
     examples=[
         {

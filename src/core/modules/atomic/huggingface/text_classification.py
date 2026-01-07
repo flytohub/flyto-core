@@ -25,9 +25,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_CLASSIFICATION)
     subcategory=Subcategory.TEXT,
     tags=['huggingface', 'text', 'classification', 'sentiment', 'nlp'],
     label='Text Classification',
-    label_key='huggingface.text_classification.label',
+    label_key='modules.huggingface.text-classification.label',
     description='Classify text into categories (sentiment, topic, etc.)',
-    description_key='huggingface.text_classification.description',
+    description_key='modules.huggingface.text-classification.description',
     icon='Tags',
     color=ModuleColors.TEXT_CLASSIFICATION,
 

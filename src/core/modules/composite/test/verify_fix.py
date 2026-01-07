@@ -66,9 +66,9 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'fix_verified': {'type': 'boolean'},
-        'regression_passed': {'type': 'boolean'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'fix_verified': {'type': 'boolean', 'description': 'The fix verified'},
+        'regression_passed': {'type': 'boolean', 'description': 'The regression passed'}
     },
 
     timeout=300,

@@ -46,14 +46,14 @@ import time
         presets.DATETIME_FORMAT(),
     ),
     output_schema={
-        'result': {'type': 'string'},
-        'timestamp': {'type': 'number'},
-        'year': {'type': 'number'},
-        'month': {'type': 'number'},
-        'day': {'type': 'number'},
-        'hour': {'type': 'number'},
-        'minute': {'type': 'number'},
-        'second': {'type': 'number'}
+        'result': {'type': 'string', 'description': 'The operation result'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp'},
+        'year': {'type': 'number', 'description': 'Year component'},
+        'month': {'type': 'number', 'description': 'Month component'},
+        'day': {'type': 'number', 'description': 'Day component'},
+        'hour': {'type': 'number', 'description': 'Hour component'},
+        'minute': {'type': 'number', 'description': 'Minute component'},
+        'second': {'type': 'number', 'description': 'Second component'}
     },
     examples=[
         {

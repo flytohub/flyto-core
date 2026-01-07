@@ -75,10 +75,10 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'steps_passed': {'type': 'number'},
-        'steps_failed': {'type': 'number'},
-        'screenshot': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'steps_passed': {'type': 'number', 'description': 'The steps passed'},
+        'steps_failed': {'type': 'number', 'description': 'The steps failed'},
+        'screenshot': {'type': 'string', 'description': 'Screenshot file path or data'}
     },
 
     timeout=300,

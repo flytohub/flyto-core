@@ -87,9 +87,9 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'channels': {'type': 'object'},
-        'success_count': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'channels': {'type': 'object', 'description': 'The channels'},
+        'success_count': {'type': 'number', 'description': 'The success count'}
     },
 
     timeout=60,

@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'report', 'documentation', 'atomic'],
     label='Generate Report',
+    label_key='modules.testing.report.generate.label',
     description='Generate test execution report',
+    description_key='modules.testing.report.generate.description',
     icon='FileText',
     color='#6366F1',
 
@@ -50,10 +52,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'report': {'type': 'string'},
-        'format': {'type': 'string'},
-        'summary': {'type': 'object'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'report': {'type': 'string', 'description': 'The report'},
+        'format': {'type': 'string', 'description': 'The format'},
+        'summary': {'type': 'object', 'description': 'The summary'}
     }
 )
 async def testing_report_generate(context: Dict[str, Any]) -> Dict[str, Any]:

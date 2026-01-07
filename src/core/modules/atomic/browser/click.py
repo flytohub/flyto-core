@@ -31,8 +31,8 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'selector': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'selector': {'type': 'string', 'description': 'CSS selector that was used'}
     },
     examples=[
         {

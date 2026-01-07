@@ -34,8 +34,8 @@ from ...schema import compose, presets
         presets.SCROLL_BEHAVIOR(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'scrolled_to': {'type': 'object'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'scrolled_to': {'type': 'object', 'description': 'The scrolled to'}
     },
     examples=[
         {

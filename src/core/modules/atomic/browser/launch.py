@@ -44,8 +44,8 @@ from ...schema import compose, presets
         presets.VIEWPORT(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'message': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
     },
     examples=[
         {

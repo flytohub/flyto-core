@@ -96,14 +96,14 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'url': {'type': 'string'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'url': {'type': 'string', 'description': 'URL address'},
         'data': {
             'type': 'object',
             'properties': {
-                'titles': {'type': 'array'},
-                'links': {'type': 'array'},
-                'content': {'type': 'array'}
+                'titles': {'type': 'array', 'description': 'The titles'},
+                'links': {'type': 'array', 'description': 'The links'},
+                'content': {'type': 'array', 'description': 'Content returned by the operation'}
             }
         }
     },

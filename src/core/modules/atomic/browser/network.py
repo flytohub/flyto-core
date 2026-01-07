@@ -67,9 +67,9 @@ from ...schema import compose, presets, field
         ),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'requests': {'type': 'array'},
-        'blocked_count': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'requests': {'type': 'array', 'description': 'Captured network requests'},
+        'blocked_count': {'type': 'number', 'description': 'The blocked count'}
     },
     examples=[
         {

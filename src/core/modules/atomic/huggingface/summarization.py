@@ -25,9 +25,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.SUMMARIZATION)
     subcategory=Subcategory.TEXT,
     tags=['huggingface', 'text', 'summarization', 'summary', 'nlp'],
     label='Summarization',
-    label_key='huggingface.summarization.label',
+    label_key='modules.huggingface.summarization.label',
     description='Generate summaries of long text using BART, Pegasus, etc.',
-    description_key='huggingface.summarization.description',
+    description_key='modules.huggingface.summarization.description',
     icon='FileText',
     color=ModuleColors.SUMMARIZATION,
 

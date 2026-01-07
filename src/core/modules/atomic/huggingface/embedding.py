@@ -51,9 +51,9 @@ def extract_embedding(result: Any) -> List[float]:
     subcategory=Subcategory.TEXT,
     tags=['huggingface', 'text', 'embedding', 'vector', 'semantic', 'rag'],
     label='Text Embedding',
-    label_key='huggingface.embedding.label',
+    label_key='modules.huggingface.embedding.label',
     description='Generate text embeddings for semantic search, RAG, clustering',
-    description_key='huggingface.embedding.description',
+    description_key='modules.huggingface.embedding.description',
     icon='Layers',
     color=ModuleColors.EMBEDDING,
 

@@ -83,9 +83,9 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'passed': {'type': 'boolean'},
-        'checks': {'type': 'object'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
+        'checks': {'type': 'object', 'description': 'The checks'}
     },
 
     timeout=300,

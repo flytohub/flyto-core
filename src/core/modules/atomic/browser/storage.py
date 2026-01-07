@@ -34,10 +34,10 @@ from ...schema import compose, presets
         presets.STORAGE_VALUE(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'value': {'type': 'any'},
-        'keys': {'type': 'array'},
-        'length': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'value': {'type': 'any', 'description': 'The returned value'},
+        'keys': {'type': 'array', 'description': 'List of keys'},
+        'length': {'type': 'number', 'description': 'Length of data'}
     },
     examples=[
         {

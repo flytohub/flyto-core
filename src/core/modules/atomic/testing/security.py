@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'security', 'vulnerability', 'scan', 'atomic'],
     label='Security Scan',
+    label_key='modules.testing.security.scan.label',
     description='Scan for security vulnerabilities',
+    description_key='modules.testing.security.scan.description',
     icon='ShieldAlert',
     color='#EF4444',
 
@@ -52,9 +54,9 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'vulnerabilities': {'type': 'array'},
-        'summary': {'type': 'object'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'vulnerabilities': {'type': 'array', 'description': 'The vulnerabilities'},
+        'summary': {'type': 'object', 'description': 'The summary'}
     }
 )
 async def testing_security_scan(context: Dict[str, Any]) -> Dict[str, Any]:

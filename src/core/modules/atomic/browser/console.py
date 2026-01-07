@@ -34,9 +34,9 @@ from ...schema import compose, presets
         presets.CONSOLE_CLEAR_EXISTING(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'messages': {'type': 'array'},
-        'count': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'messages': {'type': 'array', 'description': 'The messages'},
+        'count': {'type': 'number', 'description': 'Number of items'}
     },
     examples=[
         {

@@ -25,9 +25,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_GENERATION)
     subcategory=Subcategory.TEXT,
     tags=['huggingface', 'text', 'generation', 'llm', 'llama', 'mistral'],
     label='Text Generation',
-    label_key='huggingface.text_generation.label',
+    label_key='modules.huggingface.text-generation.label',
     description='Generate text using LLMs (Llama, Mistral, Phi, etc.)',
-    description_key='huggingface.text_generation.description',
+    description_key='modules.huggingface.text-generation.description',
     icon='MessageSquare',
     color=ModuleColors.TEXT_GENERATION,
 

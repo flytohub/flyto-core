@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_sql_identifier, validate_sql_identifiers, SQLInjectionError
 
 
 logger = logging.getLogger(__name__)
@@ -84,10 +85,31 @@ async def database_update(context: Dict[str, Any]) -> Dict[str, Any]:
     db_type = params.get('database_type', 'postgresql')
     connection_string = params.get('connection_string') or os.getenv('DATABASE_URL')
 
+    # SECURITY: Validate table name to prevent SQL injection
+    try:
+        table = validate_sql_identifier(table, 'table')
+    except SQLInjectionError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SQL_INJECTION'
+        }
+
     if not data:
         raise ValueError("No data to update")
     if not where:
         raise ValueError("WHERE conditions required for safety")
+
+    # SECURITY: Validate column names in data and where clauses
+    try:
+        validate_sql_identifiers(list(data.keys()), 'column')
+        validate_sql_identifiers(list(where.keys()), 'where column')
+    except SQLInjectionError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SQL_INJECTION'
+        }
 
     if db_type == 'postgresql':
         return await _update_postgresql(table, data, where, connection_string, params)
@@ -216,7 +238,9 @@ async def _update_mysql(
             'updated_count': updated_count
         }
     finally:
+        # RELIABILITY: Properly close async MySQL connection
         conn.close()
+        await conn.ensure_closed()
 
 
 async def _update_sqlite(

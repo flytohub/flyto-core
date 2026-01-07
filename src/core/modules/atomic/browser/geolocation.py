@@ -61,8 +61,8 @@ from ...schema import compose, presets, field
         ),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'location': {'type': 'object'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'location': {'type': 'object', 'description': 'The location'}
     },
     examples=[
         {

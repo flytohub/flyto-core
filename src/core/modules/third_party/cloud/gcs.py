@@ -82,11 +82,11 @@ from ...registry import register_module
         }
     },
     output_schema={
-        'url': {'type': 'string'},
-        'bucket': {'type': 'string'},
-        'object_name': {'type': 'string'},
-        'size': {'type': 'number'},
-        'public_url': {'type': 'string'}
+        'url': {'type': 'string', 'description': 'URL address'},
+        'bucket': {'type': 'string', 'description': 'Storage bucket name'},
+        'object_name': {'type': 'string', 'description': 'Object name in storage'},
+        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'public_url': {'type': 'string', 'description': 'Public accessible URL'}
     },
     examples=[
         {
@@ -238,10 +238,10 @@ class GCSUploadModule(BaseModule):
         }
     },
     output_schema={
-        'file_path': {'type': 'string'},
-        'size': {'type': 'number'},
-        'bucket': {'type': 'string'},
-        'object_name': {'type': 'string'}
+        'file_path': {'type': 'string', 'description': 'The file path'},
+        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'bucket': {'type': 'string', 'description': 'Storage bucket name'},
+        'object_name': {'type': 'string', 'description': 'Object name in storage'}
     },
     examples=[
         {

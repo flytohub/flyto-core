@@ -112,10 +112,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'result': {'type': 'string'},
-        'thoughts': {'type': 'array', 'items': {'type': 'string'}},
-        'iterations': {'type': 'number'},
-        'goal_achieved': {'type': 'boolean'}
+        'result': {'type': 'string', 'description': 'The operation result'},
+        'thoughts': {'type': 'array', 'description': 'Agent reasoning steps', 'items': {'type': 'string'}},
+        'iterations': {'type': 'number', 'description': 'The iterations'},
+        'goal_achieved': {'type': 'boolean', 'description': 'The goal achieved'}
     },
     examples=[
         {

@@ -48,8 +48,8 @@ from ..element_registry import get_element_registry
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'text': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'text': {'type': 'string', 'description': 'Text content'}
     },
     examples=[{
         'title': 'Get element text',

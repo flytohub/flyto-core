@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'scenario', 'bdd', 'atomic'],
     label='Run Scenario',
+    label_key='modules.testing.scenario.run.label',
     description='Execute scenario-based test (BDD style)',
+    description_key='modules.testing.scenario.run.description',
     icon='ListTree',
     color='#EC4899',
 
@@ -45,9 +47,9 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'boolean'},
-        'steps': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
+        'steps': {'type': 'array', 'description': 'The steps'}
     }
 )
 async def testing_scenario_run(context: Dict[str, Any]) -> Dict[str, Any]:

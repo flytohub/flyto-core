@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
     subcategory='api',
     tags=['api', 'http', 'get', 'request', 'atomic'],
     label='HTTP GET',
+    label_key='modules.api.http_get.label',
     description='Send HTTP GET request to an API endpoint',
+    description_key='modules.api.http_get.description',
     icon='Download',
     color='#3B82F6',
 
@@ -57,10 +59,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'status': {'type': 'number'},
-        'body': {'type': 'any'},
-        'headers': {'type': 'object'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'status': {'type': 'number', 'description': 'Operation status (success/error)'},
+        'body': {'type': 'any', 'description': 'Response body content'},
+        'headers': {'type': 'object', 'description': 'HTTP headers'}
     }
 )
 async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:

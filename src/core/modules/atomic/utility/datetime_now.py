@@ -79,7 +79,7 @@ import uuid
         }
     },
     output_schema={
-        'status': {'type': 'string'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'datetime': {'type': 'string', 'description': 'Formatted date/time'},
         'timestamp': {'type': 'number', 'description': 'Unix timestamp'},
         'iso': {'type': 'string', 'description': 'ISO format'}

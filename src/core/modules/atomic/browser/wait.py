@@ -34,9 +34,9 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'selector': {'type': 'string', 'optional': True},
-        'duration_ms': {'type': 'number', 'optional': True}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'selector': {'type': 'string', 'optional': True, 'description': 'CSS selector that was waited for'},
+        'duration_ms': {'type': 'number', 'optional': True, 'description': 'Wait duration in milliseconds'}
     },
     examples=[
         {

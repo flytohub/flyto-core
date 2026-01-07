@@ -78,9 +78,9 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'repository': {'type': 'object'},
-        'notification_sent': {'type': 'boolean'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'repository': {'type': 'object', 'description': 'The repository'},
+        'notification_sent': {'type': 'boolean', 'description': 'The notification sent'}
     },
 
     timeout=60,

@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'quality', 'gate', 'threshold', 'atomic'],
     label='Quality Gate',
+    label_key='modules.testing.gate.evaluate.label',
     description='Evaluate quality metrics against defined thresholds',
+    description_key='modules.testing.gate.evaluate.description',
     icon='Shield',
     color='#10B981',
 
@@ -51,10 +53,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'boolean'},
-        'results': {'type': 'array'},
-        'summary': {'type': 'string'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
+        'results': {'type': 'array', 'description': 'List of results'},
+        'summary': {'type': 'string', 'description': 'The summary'}
     }
 )
 async def testing_gate_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:

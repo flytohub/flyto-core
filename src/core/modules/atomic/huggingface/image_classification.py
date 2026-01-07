@@ -25,9 +25,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
     subcategory=Subcategory.VISION,
     tags=['huggingface', 'image', 'classification', 'vision', 'cv'],
     label='Image Classification',
-    label_key='huggingface.image_classification.label',
+    label_key='modules.huggingface.image-classification.label',
     description='Classify images into categories using ViT, ResNet, etc.',
-    description_key='huggingface.image_classification.description',
+    description_key='modules.huggingface.image-classification.description',
     icon='Image',
     color=ModuleColors.IMAGE_CLASSIFICATION,
 

@@ -89,8 +89,8 @@ MAX_CONTAINER_DEPTH = 5
             'type': 'object',
             'description': 'Output values by port',
             'properties': {
-                'success': {'type': 'object'},
-                'error': {'type': 'object'}
+                'success': {'type': 'object', 'description': 'Whether the operation completed successfully'},
+                'error': {'type': 'object', 'description': 'Error message if operation failed'}
             }
         },
         'subflow_result': {

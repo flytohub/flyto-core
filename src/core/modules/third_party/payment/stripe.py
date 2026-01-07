@@ -91,11 +91,11 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'id': {'type': 'string'},
-        'amount': {'type': 'number'},
-        'currency': {'type': 'string'},
-        'status': {'type': 'string'},
-        'client_secret': {'type': 'string'}
+        'id': {'type': 'string', 'description': 'Unique identifier'},
+        'amount': {'type': 'number', 'description': 'Payment amount'},
+        'currency': {'type': 'string', 'description': 'Currency code'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'client_secret': {'type': 'string', 'description': 'Client secret for payment'}
     },
     examples=[
         {
@@ -233,11 +233,11 @@ class StripeCreatePaymentModule(BaseModule):
         }
     },
     output_schema={
-        'id': {'type': 'string'},
-        'email': {'type': 'string'},
-        'name': {'type': 'string'},
-        'created': {'type': 'number'},
-        'balance': {'type': 'number'}
+        'id': {'type': 'string', 'description': 'Unique identifier'},
+        'email': {'type': 'string', 'description': 'Email address'},
+        'name': {'type': 'string', 'description': 'Name of the item'},
+        'created': {'type': 'number', 'description': 'Creation timestamp'},
+        'balance': {'type': 'number', 'description': 'Account balance'}
     },
     examples=[
         {
@@ -360,9 +360,9 @@ class StripeGetCustomerModule(BaseModule):
         }
     },
     output_schema={
-        'charges': {'type': 'array'},
-        'count': {'type': 'number'},
-        'has_more': {'type': 'boolean'}
+        'charges': {'type': 'array', 'description': 'The charges'},
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'has_more': {'type': 'boolean', 'description': 'The has more'}
     },
     examples=[
         {

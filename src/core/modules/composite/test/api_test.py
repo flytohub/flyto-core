@@ -79,11 +79,11 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'passed': {'type': 'number'},
-        'failed': {'type': 'number'},
-        'total': {'type': 'number'},
-        'results': {'type': 'array'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed'},
+        'total': {'type': 'number', 'description': 'Total count'},
+        'results': {'type': 'array', 'description': 'List of results'}
     },
 
     timeout=300,

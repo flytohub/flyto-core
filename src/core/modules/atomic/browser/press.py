@@ -32,8 +32,8 @@ from ...schema import compose, presets
         presets.KEYBOARD_KEY(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'key': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'key': {'type': 'string', 'description': 'Key identifier'}
     },
     examples=[
         {

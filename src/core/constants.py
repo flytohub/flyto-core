@@ -197,8 +197,9 @@ class APIEndpoints:
     GOOGLE_GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1"
 
     @classmethod
-    def google_gemini_generate(cls, model: str, api_key: str) -> str:
-        return f"{cls.GOOGLE_GEMINI_BASE_URL}/models/{model}:generateContent?key={api_key}"
+    def google_gemini_generate(cls, model: str) -> str:
+        """Get Gemini API URL. API key should be passed via x-goog-api-key header."""
+        return f"{cls.GOOGLE_GEMINI_BASE_URL}/models/{model}:generateContent"
 
     # SerpAPI
     SERPAPI_BASE_URL: str = "https://serpapi.com/search"

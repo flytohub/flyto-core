@@ -42,10 +42,10 @@ from ....schema import compose, presets
         presets.SEARCH_LIMIT(max_val=10),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'data': {'type': 'array'},
-        'count': {'type': 'number'},
-        'total_results': {'type': 'number', 'optional': True}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'data': {'type': 'array', 'description': 'Output data from the operation'},
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'total_results': {'type': 'number', 'optional': True, 'description': 'Total number of search results available'}
     },
     examples=[{
         'title': 'Search Python tutorials',
@@ -144,9 +144,9 @@ class GoogleSearchAPIModule(BaseModule):
         presets.SEARCH_LIMIT(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'data': {'type': 'array'},
-        'count': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'data': {'type': 'array', 'description': 'Output data from the operation'},
+        'count': {'type': 'number', 'description': 'Number of items'}
     },
     examples=[{
         'title': 'Search with SerpAPI',

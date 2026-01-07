@@ -114,13 +114,13 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'response': {'type': 'string'},
-        'model': {'type': 'string'},
-        'context': {'type': 'array', 'items': {'type': 'number'}},
-        'total_duration': {'type': 'number'},
-        'load_duration': {'type': 'number'},
-        'prompt_eval_count': {'type': 'number'},
-        'eval_count': {'type': 'number'}
+        'response': {'type': 'string', 'description': 'Response from the operation'},
+        'model': {'type': 'string', 'description': 'Model name or identifier'},
+        'context': {'type': 'array', 'description': 'Conversation context for follow-up requests', 'items': {'type': 'number'}},
+        'total_duration': {'type': 'number', 'description': 'Total processing duration'},
+        'load_duration': {'type': 'number', 'description': 'Model loading duration'},
+        'prompt_eval_count': {'type': 'number', 'description': 'Number of prompt tokens evaluated'},
+        'eval_count': {'type': 'number', 'description': 'Number of tokens generated'}
     },
     examples=[
         {

@@ -128,9 +128,9 @@ LOOP_CONFIG = {
             }
         },
         'iteration': {'type': 'number', 'description': 'Current iteration count'},
-        'status': {'type': 'string', 'optional': True},
-        'results': {'type': 'array', 'optional': True},
-        'count': {'type': 'number', 'optional': True}
+        'status': {'type': 'string', 'optional': True, 'description': 'Operation status'},
+        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of iterations completed'}
     },
     'examples': [
         {
@@ -286,9 +286,9 @@ FOREACH_CONFIG = {
             }
         },
         'iteration': {'type': 'number', 'description': 'Current iteration index'},
-        'status': {'type': 'string', 'optional': True},
-        'results': {'type': 'array', 'optional': True, 'description': 'Nested mode only'},
-        'count': {'type': 'number', 'optional': True}
+        'status': {'type': 'string', 'optional': True, 'description': 'Operation status'},
+        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of items processed'}
     },
     'examples': [
         {

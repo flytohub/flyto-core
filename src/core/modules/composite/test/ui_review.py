@@ -70,10 +70,10 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'diff_percentage': {'type': 'number'},
-        'passed': {'type': 'boolean'},
-        'screenshot': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'diff_percentage': {'type': 'number', 'description': 'The diff percentage'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
+        'screenshot': {'type': 'string', 'description': 'Screenshot file path or data'}
     },
 
     timeout=120,

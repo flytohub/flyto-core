@@ -49,9 +49,9 @@ from ...schema import compose, presets, field
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'source': {'type': 'string'},
-        'target': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'source': {'type': 'string', 'description': 'The source'},
+        'target': {'type': 'string', 'description': 'The target'}
     },
     examples=[
         {

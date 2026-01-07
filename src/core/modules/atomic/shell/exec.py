@@ -46,12 +46,14 @@ logger = logging.getLogger(__name__)
     required_permissions=['shell.exec'],
 
     # Schema-driven params
+    # SECURITY NOTE: use_shell defaults to False to prevent shell injection attacks.
+    # Only enable shell=True when absolutely necessary (e.g., shell features like pipes).
     params_schema=compose(
         presets.COMMAND(required=True, placeholder='npm install'),
         presets.WORKING_DIR(),
         presets.ENV_VARS(),
         presets.TIMEOUT_S(key='timeout', default=300),
-        presets.USE_SHELL(default=True),
+        presets.USE_SHELL(default=False),  # SECURITY: Default False to prevent injection
         presets.CAPTURE_STDERR(default=True),
         presets.ENCODING(default='utf-8'),
         presets.RAISE_ON_ERROR(default=False),
@@ -132,7 +134,8 @@ async def shell_exec(context: Dict[str, Any]) -> Dict[str, Any]:
     cwd = params.get('cwd')
     env_vars = params.get('env', {})
     timeout_seconds = params.get('timeout', 300)
-    use_shell = params.get('shell', True)
+    # SECURITY: Default to False to prevent shell injection attacks
+    use_shell = params.get('shell', False)
     capture_stderr = params.get('capture_stderr', True)
     encoding = params.get('encoding', 'utf-8')
     raise_on_error = params.get('raise_on_error', False)

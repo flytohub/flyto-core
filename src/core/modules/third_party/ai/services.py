@@ -79,7 +79,7 @@ logger = logging.getLogger(__name__)
                 'type': 'object',
                 'properties': {
                     'role': {'type': 'string', 'enum': ['user', 'assistant']},
-                    'content': {'type': 'string'}
+                    'content': {'type': 'string', 'description': 'Content returned by the operation'}
                 }
             }
         },
@@ -132,8 +132,8 @@ logger = logging.getLogger(__name__)
             'type': 'object',
             'description': 'Token usage statistics',
             'properties': {
-                'input_tokens': {'type': 'number'},
-                'output_tokens': {'type': 'number'}
+                'input_tokens': {'type': 'number', 'description': 'The input tokens'},
+                'output_tokens': {'type': 'number', 'description': 'The output tokens'}
             }
         }
     },
@@ -351,7 +351,12 @@ async def google_gemini_chat(context):
     model = params.get('model', APIEndpoints.DEFAULT_GEMINI_MODEL)
 
     # Prepare request
-    url = APIEndpoints.google_gemini_generate(model, api_key)
+    # SECURITY: API key passed via header, not URL query parameter
+    url = APIEndpoints.google_gemini_generate(model)
+    headers = {
+        'x-goog-api-key': api_key,
+        'Content-Type': 'application/json'
+    }
 
     payload = {
         'contents': [
@@ -377,7 +382,7 @@ async def google_gemini_chat(context):
     # SECURITY: Set timeout to prevent hanging API calls
     timeout = aiohttp.ClientTimeout(total=120, connect=30)  # 2 min total for AI
     async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.post(url, json=payload) as response:
+        async with session.post(url, json=payload, headers=headers) as response:
             if response.status != 200:
                 error_text = await response.text()
                 raise Exception(f"Google Gemini API error ({response.status}): {error_text}")

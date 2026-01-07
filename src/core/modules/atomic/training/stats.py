@@ -30,10 +30,10 @@ from core.training.daily_practice import DailyPracticeEngine
     can_connect_to=['data.*', 'file.*', 'notification.*', 'flow.*'],    # No params needed for stats
     params_schema={},
     output_schema={
-        'total_sessions': {'type': 'number'},
-        'successful_sessions': {'type': 'number'},
-        'success_rate': {'type': 'number'},
-        'history': {'type': 'array'},
+        'total_sessions': {'type': 'number', 'description': 'The total sessions'},
+        'successful_sessions': {'type': 'number', 'description': 'The successful sessions'},
+        'success_rate': {'type': 'number', 'description': 'The success rate'},
+        'history': {'type': 'array', 'description': 'The history'},
     },
 )
 class TrainingPracticeStats(BaseModule):

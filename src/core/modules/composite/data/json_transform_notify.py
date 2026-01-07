@@ -82,11 +82,11 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'original_count': {'type': 'number'},
-        'result_count': {'type': 'number'},
-        'data': {'type': 'array'},
-        'notification_sent': {'type': 'boolean'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'original_count': {'type': 'number', 'description': 'The original count'},
+        'result_count': {'type': 'number', 'description': 'The result count'},
+        'data': {'type': 'array', 'description': 'Output data from the operation'},
+        'notification_sent': {'type': 'boolean', 'description': 'The notification sent'}
     },
 
     timeout=30,

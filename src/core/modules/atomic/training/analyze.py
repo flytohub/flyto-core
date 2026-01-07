@@ -32,8 +32,8 @@ from core.training.daily_practice import DailyPracticeEngine
         presets.PRACTICE_URL(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'structure': {'type': 'object'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'structure': {'type': 'object', 'description': 'The structure'},
     },
 )
 class TrainingPracticeAnalyze(BaseModule):

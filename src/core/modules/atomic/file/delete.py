@@ -46,8 +46,8 @@ from ...schema import compose, presets
         presets.IGNORE_MISSING(default=False),
     ),
     output_schema={
-        'deleted': {'type': 'boolean'},
-        'file_path': {'type': 'string'}
+        'deleted': {'type': 'boolean', 'description': 'The deleted'},
+        'file_path': {'type': 'string', 'description': 'The file path'}
     },
     examples=[
         {

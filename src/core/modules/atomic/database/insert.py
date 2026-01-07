@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_sql_identifier, validate_sql_identifiers, SQLInjectionError
 
 
 logger = logging.getLogger(__name__)
@@ -90,9 +91,32 @@ async def database_insert(context: Dict[str, Any]) -> Dict[str, Any]:
     connection_string = params.get('connection_string') or os.getenv('DATABASE_URL')
     returning = params.get('returning', [])
 
+    # SECURITY: Validate table name to prevent SQL injection
+    try:
+        table = validate_sql_identifier(table, 'table')
+    except SQLInjectionError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SQL_INJECTION'
+        }
+
     rows = [data] if isinstance(data, dict) else data
     if not rows:
         raise ValueError("No data to insert")
+
+    # SECURITY: Validate column names
+    try:
+        columns = list(rows[0].keys())
+        validate_sql_identifiers(columns, 'column')
+        if returning:
+            validate_sql_identifiers(returning, 'returning column')
+    except SQLInjectionError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SQL_INJECTION'
+        }
 
     if db_type == 'postgresql':
         return await _insert_postgresql(table, rows, connection_string, params, returning)
@@ -218,7 +242,9 @@ async def _insert_mysql(
             'returning_data': []
         }
     finally:
+        # RELIABILITY: Properly close async MySQL connection
         conn.close()
+        await conn.ensure_closed()
 
 
 async def _insert_sqlite(

@@ -246,7 +246,9 @@ async def _execute_mysql(
                     'columns': columns
                 }
     finally:
+        # RELIABILITY: Properly close async MySQL connection
         conn.close()
+        await conn.ensure_closed()
 
 
 async def _execute_sqlite(

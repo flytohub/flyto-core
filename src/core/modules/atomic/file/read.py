@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config, PathTraversalError
 import os
 import shutil
 
@@ -75,10 +76,27 @@ async def file_read(context):
     path = params['path']
     encoding = params.get('encoding', 'utf-8')
 
-    with open(path, 'r', encoding=encoding) as f:
+    # SECURITY: Validate path to prevent path traversal attacks
+    try:
+        safe_path = validate_path_with_env_config(path)
+    except PathTraversalError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'PATH_TRAVERSAL'
+        }
+
+    if not os.path.exists(safe_path):
+        return {
+            'ok': False,
+            'error': f'File not found: {path}',
+            'error_code': 'FILE_NOT_FOUND'
+        }
+
+    with open(safe_path, 'r', encoding=encoding) as f:
         content = f.read()
 
-    size = os.path.getsize(path)
+    size = os.path.getsize(safe_path)
 
     return {
         'content': content,

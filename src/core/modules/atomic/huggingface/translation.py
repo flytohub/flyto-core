@@ -25,9 +25,9 @@ _executor = HuggingFaceTaskExecutor(TaskType.TRANSLATION)
     subcategory=Subcategory.TEXT,
     tags=['huggingface', 'text', 'translation', 'nlp', 'language'],
     label='Translation',
-    label_key='huggingface.translation.label',
+    label_key='modules.huggingface.translation.label',
     description='Translate text between languages using Helsinki-NLP, mBART, etc.',
-    description_key='huggingface.translation.description',
+    description_key='modules.huggingface.translation.description',
     icon='Languages',
     color=ModuleColors.TRANSLATION,
 

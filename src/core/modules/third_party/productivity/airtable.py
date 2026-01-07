@@ -90,8 +90,8 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'records': {'type': 'array'},
-        'count': {'type': 'number'}
+        'records': {'type': 'array', 'description': 'The records'},
+        'count': {'type': 'number', 'description': 'Number of items'}
     },
     examples=[
         {
@@ -246,9 +246,9 @@ class AirtableReadModule(BaseModule):
         }
     },
     output_schema={
-        'id': {'type': 'string'},
-        'createdTime': {'type': 'string'},
-        'fields': {'type': 'json'}
+        'id': {'type': 'string', 'description': 'Unique identifier'},
+        'createdTime': {'type': 'string', 'description': 'Record creation timestamp'},
+        'fields': {'type': 'json', 'description': 'The fields'}
     },
     examples=[
         {
@@ -406,8 +406,8 @@ class AirtableCreateModule(BaseModule):
         }
     },
     output_schema={
-        'id': {'type': 'string'},
-        'fields': {'type': 'json'}
+        'id': {'type': 'string', 'description': 'Unique identifier'},
+        'fields': {'type': 'json', 'description': 'The fields'}
     },
     examples=[
         {

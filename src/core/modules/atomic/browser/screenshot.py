@@ -31,8 +31,8 @@ from ...schema import compose, presets
         presets.SCREENSHOT_OPTIONS(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'filepath': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'filepath': {'type': 'string', 'description': 'Path to the file'}
     },
     examples=[
         {

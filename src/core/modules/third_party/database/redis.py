@@ -46,9 +46,9 @@ from ...schema import compose, presets
         presets.REDIS_DB(),
     ),
     output_schema={
-        'value': {'type': 'any'},
-        'exists': {'type': 'boolean'},
-        'key': {'type': 'string'}
+        'value': {'type': 'any', 'description': 'The returned value'},
+        'exists': {'type': 'boolean', 'description': 'The exists'},
+        'key': {'type': 'string', 'description': 'Key identifier'}
     },
     examples=[
         {
@@ -164,8 +164,8 @@ class RedisGetModule(BaseModule):
         presets.REDIS_DB(),
     ),
     output_schema={
-        'success': {'type': 'boolean'},
-        'key': {'type': 'string'}
+        'success': {'type': 'boolean', 'description': 'Whether the operation completed successfully'},
+        'key': {'type': 'string', 'description': 'Key identifier'}
     },
     examples=[
         {

@@ -45,9 +45,9 @@ from ..element_registry import get_element_registry
         presets.EXTRACT_LIMIT(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'count': {'type': 'number'},
-        'element_ids': {'type': 'array'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'element_ids': {'type': 'array', 'description': 'The element ids'}
     },
     examples=[{
         'title': 'Find search results',

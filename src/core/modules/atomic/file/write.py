@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config, PathTraversalError
 import os
 import shutil
 
@@ -75,11 +76,26 @@ async def file_write(context):
     encoding = params.get('encoding', 'utf-8')
     mode = 'w' if params.get('mode', 'overwrite') == 'overwrite' else 'a'
 
-    with open(path, mode, encoding=encoding) as f:
-        bytes_written = f.write(content)
+    # SECURITY: Validate path to prevent path traversal attacks
+    try:
+        safe_path = validate_path_with_env_config(path)
+    except PathTraversalError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'PATH_TRAVERSAL'
+        }
+
+    # Create parent directory if it doesn't exist
+    parent_dir = os.path.dirname(safe_path)
+    if parent_dir and not os.path.exists(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
+
+    with open(safe_path, mode, encoding=encoding) as f:
+        f.write(content)
 
     return {
-        'path': path,
+        'path': safe_path,
         'bytes_written': len(content.encode(encoding))
     }
 

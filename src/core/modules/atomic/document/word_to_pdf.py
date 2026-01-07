@@ -275,6 +275,6 @@ def _which(program: str) -> str:
         result = subprocess.run(['which', program], capture_output=True, text=True)
         if result.returncode == 0:
             return result.stdout.strip()
-    except:
-        pass
+    except (OSError, subprocess.SubprocessError) as e:
+        logger.debug(f"Failed to find {program}: {e}")
     return None

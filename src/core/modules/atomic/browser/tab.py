@@ -51,10 +51,10 @@ from ....utils import validate_url_with_env_config, SSRFError
         ),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'tab_count': {'type': 'number'},
-        'current_index': {'type': 'number'},
-        'tabs': {'type': 'array'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'tab_count': {'type': 'number', 'description': 'The tab count'},
+        'current_index': {'type': 'number', 'description': 'The current index'},
+        'tabs': {'type': 'array', 'description': 'List of open tabs'}
     },
     examples=[
         {

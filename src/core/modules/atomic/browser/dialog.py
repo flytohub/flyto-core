@@ -34,10 +34,10 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'message': {'type': 'string'},
-        'type': {'type': 'string'},
-        'default_value': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome'},
+        'type': {'type': 'string', 'description': 'The type'},
+        'default_value': {'type': 'string', 'description': 'The default value'}
     },
     examples=[
         {

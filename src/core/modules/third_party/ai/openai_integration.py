@@ -100,14 +100,15 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'response': {'type': 'string'},
-        'model': {'type': 'string'},
+        'response': {'type': 'string', 'description': 'Response from the operation'},
+        'model': {'type': 'string', 'description': 'Model name or identifier'},
         'usage': {
             'type': 'object',
+            'description': 'Token usage statistics',
             'properties': {
-                'prompt_tokens': {'type': 'number'},
-                'completion_tokens': {'type': 'number'},
-                'total_tokens': {'type': 'number'}
+                'prompt_tokens': {'type': 'number', 'description': 'The prompt tokens'},
+                'completion_tokens': {'type': 'number', 'description': 'The completion tokens'},
+                'total_tokens': {'type': 'number', 'description': 'The total tokens'}
             }
         }
     },
@@ -294,15 +295,16 @@ class OpenAIChatModule(BaseModule):
     output_schema={
         'images': {
             'type': 'array',
+            'description': 'List of generated images',
             'items': {
                 'type': 'object',
                 'properties': {
-                    'url': {'type': 'string'},
-                    'revised_prompt': {'type': 'string'}
+                    'url': {'type': 'string', 'description': 'URL address'},
+                    'revised_prompt': {'type': 'string', 'description': 'The revised prompt'}
                 }
             }
         },
-        'model': {'type': 'string'}
+        'model': {'type': 'string', 'description': 'Model name or identifier'}
     },
     examples=[
         {

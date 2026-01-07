@@ -46,9 +46,9 @@ from ...schema import compose, presets
         presets.DESTINATION_PATH(required=True),
     ),
     output_schema={
-        'moved': {'type': 'boolean'},
-        'source': {'type': 'string'},
-        'destination': {'type': 'string'}
+        'moved': {'type': 'boolean', 'description': 'The moved'},
+        'source': {'type': 'string', 'description': 'The source'},
+        'destination': {'type': 'string', 'description': 'The destination'}
     },
     examples=[
         {

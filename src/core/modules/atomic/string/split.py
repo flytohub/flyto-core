@@ -14,7 +14,9 @@ from ...schema import compose, presets
     category='string',
     tags=['string', 'split', 'array'],
     label='Split String',
+    label_key='modules.string.split.label',
     description='Split a string into an array using a delimiter',
+    description_key='modules.string.split.description',
     icon='Scissors',
     color='#3B82F6',
 

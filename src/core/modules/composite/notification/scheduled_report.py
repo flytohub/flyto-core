@@ -103,10 +103,10 @@ from ..base import CompositeModule, register_composite
     },
 
     output_schema={
-        'status': {'type': 'string'},
-        'report_title': {'type': 'string'},
-        'timestamp': {'type': 'string'},
-        'channels': {'type': 'object'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'report_title': {'type': 'string', 'description': 'The report title'},
+        'timestamp': {'type': 'string', 'description': 'Unix timestamp'},
+        'channels': {'type': 'object', 'description': 'The channels'}
     },
 
     timeout=60,

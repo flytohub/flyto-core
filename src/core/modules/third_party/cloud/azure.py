@@ -82,10 +82,10 @@ from ...registry import register_module
         }
     },
     output_schema={
-        'url': {'type': 'string'},
-        'container': {'type': 'string'},
-        'blob_name': {'type': 'string'},
-        'size': {'type': 'number'}
+        'url': {'type': 'string', 'description': 'URL address'},
+        'container': {'type': 'string', 'description': 'The container'},
+        'blob_name': {'type': 'string', 'description': 'The blob name'},
+        'size': {'type': 'number', 'description': 'Size in bytes'}
     },
     examples=[
         {
@@ -257,10 +257,10 @@ class AzureUploadModule(BaseModule):
         }
     },
     output_schema={
-        'file_path': {'type': 'string'},
-        'size': {'type': 'number'},
-        'container': {'type': 'string'},
-        'blob_name': {'type': 'string'}
+        'file_path': {'type': 'string', 'description': 'The file path'},
+        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'container': {'type': 'string', 'description': 'The container'},
+        'blob_name': {'type': 'string', 'description': 'The blob name'}
     },
     examples=[
         {

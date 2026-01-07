@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'lint', 'code-quality', 'atomic'],
     label='Run Linter',
+    label_key='modules.testing.lint.run.label',
     description='Run linting checks on source code',
+    description_key='modules.testing.lint.run.description',
     icon='FileCode',
     color='#F59E0B',
 
@@ -51,10 +53,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'errors': {'type': 'number'},
-        'warnings': {'type': 'number'},
-        'issues': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'errors': {'type': 'number', 'description': 'Number of errors encountered'},
+        'warnings': {'type': 'number', 'description': 'The warnings'},
+        'issues': {'type': 'array', 'description': 'The issues'}
     }
 )
 async def testing_lint_run(context: Dict[str, Any]) -> Dict[str, Any]:

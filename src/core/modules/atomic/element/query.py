@@ -65,10 +65,10 @@ from ..element_registry import get_element_registry
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'element_id': {'type': 'string', 'optional': True},
-        'element_ids': {'type': 'array', 'optional': True},
-        'count': {'type': 'number', 'optional': True}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'element_id': {'type': 'string', 'optional': True, 'description': 'Found element ID (single mode)'},
+        'element_ids': {'type': 'array', 'optional': True, 'description': 'List of found element IDs (all mode)'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of elements found'}
     },
     examples=[{
         'title': 'Find child element',

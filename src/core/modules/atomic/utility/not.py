@@ -15,7 +15,9 @@ from ...registry import register_module
     category='utility',
     tags=['utility', 'logic', 'not', 'boolean'],
     label='Not',
+    label_key='modules.utility.not.label',
     description='Logical negation operation',
+    description_key='modules.utility.not.description',
     icon='CircleSlash',
     color='#EF4444',
 

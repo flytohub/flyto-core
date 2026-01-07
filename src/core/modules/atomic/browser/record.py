@@ -52,9 +52,9 @@ from ...schema import compose, presets, field
         presets.OUTPUT_PATH(key='output_path', required=False),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'recording': {'type': 'array'},
-        'workflow': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'recording': {'type': 'array', 'description': 'Recording data or path'},
+        'workflow': {'type': 'string', 'description': 'The workflow'}
     },
     examples=[
         {

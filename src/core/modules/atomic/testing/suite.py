@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'suite', 'collection', 'atomic'],
     label='Run Test Suite',
+    label_key='modules.testing.suite.run.label',
     description='Execute a collection of tests',
+    description_key='modules.testing.suite.run.description',
     icon='Layers',
     color='#8B5CF6',
 
@@ -51,11 +53,11 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'passed': {'type': 'number'},
-        'failed': {'type': 'number'},
-        'skipped': {'type': 'number'},
-        'results': {'type': 'array'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed'},
+        'skipped': {'type': 'number', 'description': 'Number of tests skipped'},
+        'results': {'type': 'array', 'description': 'List of results'}
     }
 )
 async def testing_suite_run(context: Dict[str, Any]) -> Dict[str, Any]:

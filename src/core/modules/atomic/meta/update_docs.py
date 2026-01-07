@@ -57,9 +57,9 @@ import json
         }
     },
     output_schema={
-        'file_path': {'type': 'string'},
-        'modules_count': {'type': 'number'},
-        'categories': {'type': 'array'}
+        'file_path': {'type': 'string', 'description': 'The file path'},
+        'modules_count': {'type': 'number', 'description': 'The modules count'},
+        'categories': {'type': 'array', 'description': 'The categories'}
     },
     examples=[
         {

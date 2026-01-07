@@ -33,8 +33,8 @@ from core.training.daily_practice import DailyPracticeEngine
         presets.PRACTICE_MAX_ITEMS(),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'items_processed': {'type': 'number'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'items_processed': {'type': 'number', 'description': 'The items processed'},
     },
 )
 class TrainingPracticeExecute(BaseModule):

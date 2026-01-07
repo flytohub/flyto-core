@@ -102,8 +102,8 @@ from ...types import NodeType, EdgeType, DataType
             'type': 'object',
             'description': 'Output values by port',
             'properties': {
-                'true': {'type': 'object'},
-                'false': {'type': 'object'}
+                'true': {'type': 'object', 'description': 'The true'},
+                'false': {'type': 'object', 'description': 'The false'}
             }
         },
         'result': {'type': 'boolean', 'description': 'Condition evaluation result'},

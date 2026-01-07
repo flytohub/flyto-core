@@ -35,10 +35,10 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=60000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'path': {'type': 'string'},
-        'filename': {'type': 'string'},
-        'size': {'type': 'number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'path': {'type': 'string', 'description': 'File or resource path'},
+        'filename': {'type': 'string', 'description': 'Name of the file'},
+        'size': {'type': 'number', 'description': 'Size in bytes'}
     },
     examples=[
         {

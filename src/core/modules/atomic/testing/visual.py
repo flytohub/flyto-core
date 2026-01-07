@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
     subcategory='testing',
     tags=['testing', 'visual', 'screenshot', 'compare', 'atomic'],
     label='Visual Compare',
+    label_key='modules.testing.visual.compare.label',
     description='Compare visual outputs for differences',
+    description_key='modules.testing.visual.compare.description',
     icon='Image',
     color='#06B6D4',
 
@@ -57,10 +59,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean'},
-        'match': {'type': 'boolean'},
-        'difference': {'type': 'number'},
-        'diff_image': {'type': 'string'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
+        'match': {'type': 'boolean', 'description': 'The match'},
+        'difference': {'type': 'number', 'description': 'The difference'},
+        'diff_image': {'type': 'string', 'description': 'The diff image'}
     }
 )
 async def testing_visual_compare(context: Dict[str, Any]) -> Dict[str, Any]:

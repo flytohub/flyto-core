@@ -77,10 +77,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'status': {'type': 'string'},
-        'sent': {'type': 'boolean'},
-        'message_id': {'type': 'number'},
-        'message': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'sent': {'type': 'boolean', 'description': 'Whether notification was sent'},
+        'message_id': {'type': 'number', 'description': 'Message identifier'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
     },
     examples=[
         {

@@ -52,8 +52,8 @@ from ....utils import validate_url_with_env_config, SSRFError
         presets.TIMEOUT_MS(key='timeout_ms', default=30000),
     ),
     output_schema={
-        'status': {'type': 'string'},
-        'url': {'type': 'string'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'url': {'type': 'string', 'description': 'URL address'}
     },
     examples=[
         {
