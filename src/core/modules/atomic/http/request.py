@@ -64,39 +64,48 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether request was successful (2xx status)'
-        },
+        ,
+                'description_key': 'modules.http.request.output.ok.description'},
         'status': {
             'type': 'number',
             'description': 'HTTP status code'
-        },
+        ,
+                'description_key': 'modules.http.request.output.status.description'},
         'status_text': {
             'type': 'string',
             'description': 'HTTP status text'
-        },
+        ,
+                'description_key': 'modules.http.request.output.status_text.description'},
         'headers': {
             'type': 'object',
             'description': 'Response headers'
-        },
+        ,
+                'description_key': 'modules.http.request.output.headers.description'},
         'body': {
             'type': 'any',
             'description': 'Response body (parsed JSON or text)'
-        },
+        ,
+                'description_key': 'modules.http.request.output.body.description'},
         'url': {
             'type': 'string',
             'description': 'Final URL (after redirects)'
-        },
+        ,
+                'description_key': 'modules.http.request.output.url.description'},
         'duration_ms': {
             'type': 'number',
             'description': 'Request duration in milliseconds'
-        },
+        ,
+                'description_key': 'modules.http.request.output.duration_ms.description'},
         'content_type': {
             'type': 'string',
             'description': 'Response Content-Type'
-        },
+        ,
+                'description_key': 'modules.http.request.output.content_type.description'},
         'content_length': {
             'type': 'number',
             'description': 'Response body size in bytes'
-        }
+        ,
+                'description_key': 'modules.http.request.output.content_length.description'}
     },
     examples=[
         {

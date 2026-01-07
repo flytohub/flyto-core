@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Bot Token',
             'description': 'Telegram bot token (from env.TELEGRAM_BOT_TOKEN or direct input)',
+                'description_key': 'modules.notification.telegram.send_message.params.bot_token.description',
             'placeholder': '${env.TELEGRAM_BOT_TOKEN}',
             'required': False
         },
@@ -57,6 +58,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Chat ID',
             'description': 'Telegram chat ID or channel username',
+                'description_key': 'modules.notification.telegram.send_message.params.chat_id.description',
             'placeholder': '@channel or 123456789',
             'required': True
         },
@@ -64,6 +66,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Message Text',
             'description': 'The message to send',
+                'description_key': 'modules.notification.telegram.send_message.params.text.description',
             'placeholder': 'Hello from Flyto2!',
             'required': True
         },
@@ -71,16 +74,21 @@ logger = logging.getLogger(__name__)
             'type': 'select',
             'label': 'Parse Mode',
             'description': 'Message formatting mode',
+                'description_key': 'modules.notification.telegram.send_message.params.parse_mode.description',
             'options': ['Markdown', 'HTML', 'None'],
             'default': 'Markdown',
             'required': False
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'sent': {'type': 'boolean', 'description': 'Whether notification was sent'},
-        'message_id': {'type': 'number', 'description': 'Message identifier'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.notification.telegram.send_message.output.status.description'},
+        'sent': {'type': 'boolean', 'description': 'Whether notification was sent',
+                'description_key': 'modules.notification.telegram.send_message.output.sent.description'},
+        'message_id': {'type': 'number', 'description': 'Message identifier',
+                'description_key': 'modules.notification.telegram.send_message.output.message_id.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.notification.telegram.send_message.output.message.description'}
     },
     examples=[
         {

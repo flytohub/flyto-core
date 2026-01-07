@@ -60,9 +60,12 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (__end__)'},
-        'ended_at': {'type': 'string', 'description': 'ISO timestamp of end'},
-        'workflow_result': {'type': 'object', 'description': 'Mapped workflow output'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (__end__)',
+                'description_key': 'modules.flow.end.output.__event__.description'},
+        'ended_at': {'type': 'string', 'description': 'ISO timestamp of end',
+                'description_key': 'modules.flow.end.output.ended_at.description'},
+        'workflow_result': {'type': 'object', 'description': 'Mapped workflow output',
+                'description_key': 'modules.flow.end.output.workflow_result.description'}
     },
 
     examples=[

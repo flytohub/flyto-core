@@ -46,15 +46,18 @@ from ...schema import compose, presets
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        },
+        ,
+                'description_key': 'modules.data.csv.write.output.status.description'},
         'file_path': {
             'type': 'string',
             'description': 'Path to written file'
-        },
+        ,
+                'description_key': 'modules.data.csv.write.output.file_path.description'},
         'rows_written': {
             'type': 'number',
             'description': 'Number of rows written'
-        }
+        ,
+                'description_key': 'modules.data.csv.write.output.rows_written.description'}
     },
     examples=[
         {

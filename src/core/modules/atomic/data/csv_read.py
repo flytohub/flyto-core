@@ -50,19 +50,23 @@ from ...schema import compose, presets
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        },
+        ,
+                'description_key': 'modules.data.csv.read.output.status.description'},
         'data': {
             'type': 'array',
             'description': 'Array of row objects'
-        },
+        ,
+                'description_key': 'modules.data.csv.read.output.data.description'},
         'rows': {
             'type': 'number',
             'description': 'Number of rows'
-        },
+        ,
+                'description_key': 'modules.data.csv.read.output.rows.description'},
         'columns': {
             'type': 'array',
             'description': 'Column names'
-        }
+        ,
+                'description_key': 'modules.data.csv.read.output.columns.description'}
     },
     examples=[
         {

@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Webhook URL',
             'description': 'Discord webhook URL (from env.DISCORD_WEBHOOK_URL or direct input)',
+                'description_key': 'modules.notification.discord.send_message.params.webhook_url.description',
             'placeholder': '${env.DISCORD_WEBHOOK_URL}',
             'required': False
         },
@@ -57,6 +58,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Message Content',
             'description': 'The message to send',
+                'description_key': 'modules.notification.discord.send_message.params.content.description',
             'placeholder': 'Hello from Flyto2!',
             'required': True
         },
@@ -64,6 +66,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Username',
             'description': 'Override bot username (optional)',
+                'description_key': 'modules.notification.discord.send_message.params.username.description',
             'placeholder': 'Flyto2 Bot',
             'required': False
         },
@@ -71,13 +74,17 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Avatar URL',
             'description': 'Bot avatar image URL (optional)',
+                'description_key': 'modules.notification.discord.send_message.params.avatar_url.description',
             'required': False
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'sent': {'type': 'boolean', 'description': 'Whether notification was sent'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.notification.discord.send_message.output.status.description'},
+        'sent': {'type': 'boolean', 'description': 'Whether notification was sent',
+                'description_key': 'modules.notification.discord.send_message.output.sent.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.notification.discord.send_message.output.message.description'}
     },
     examples=[
         {

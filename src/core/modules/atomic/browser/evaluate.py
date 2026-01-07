@@ -32,8 +32,10 @@ from ...schema import compose, presets
         presets.JS_ARGS(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'result': {'type': 'any', 'description': 'The operation result'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.evaluate.output.status.description'},
+        'result': {'type': 'any', 'description': 'The operation result',
+                'description_key': 'modules.browser.evaluate.output.result.description'}
     },
     examples=[
         {

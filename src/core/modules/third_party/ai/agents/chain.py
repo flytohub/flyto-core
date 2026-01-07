@@ -100,9 +100,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'result': {'type': 'string', 'description': 'The operation result'},
-        'intermediate_results': {'type': 'array', 'description': 'Results from each step in the chain', 'items': {'type': 'string'}},
-        'steps_completed': {'type': 'number', 'description': 'The steps completed'}
+        'result': {'type': 'string', 'description': 'The operation result',
+                'description_key': 'modules.agent.chain.output.result.description'},
+        'intermediate_results': {'type': 'array', 'description': 'Results from each step in the chain',
+                'description_key': 'modules.agent.chain.output.intermediate_results.description', 'items': {'type': 'string'}},
+        'steps_completed': {'type': 'number', 'description': 'The steps completed',
+                'description_key': 'modules.agent.chain.output.steps_completed.description'}
     },
     examples=[
         {

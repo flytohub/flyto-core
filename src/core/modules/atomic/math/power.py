@@ -48,15 +48,18 @@ from ...schema import compose, presets
         'result': {
             'type': 'number',
             'description': 'Result of base raised to exponent'
-        },
+        ,
+                'description_key': 'modules.math.power.output.result.description'},
         'base': {
             'type': 'number',
             'description': 'Base number'
-        },
+        ,
+                'description_key': 'modules.math.power.output.base.description'},
         'exponent': {
             'type': 'number',
             'description': 'Exponent used'
-        }
+        ,
+                'description_key': 'modules.math.power.output.exponent.description'}
     },
     examples=[
         {

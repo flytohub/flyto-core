@@ -46,11 +46,13 @@ from ...schema import compose, presets
         'keys': {
             'type': 'array',
             'description': 'List of object keys'
-        },
+        ,
+                'description_key': 'modules.object.keys.output.keys.description'},
         'count': {
             'type': 'number',
             'description': 'Number of keys'
-        }
+        ,
+                'description_key': 'modules.object.keys.output.count.description'}
     },
     examples=[
         {

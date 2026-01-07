@@ -104,10 +104,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (joined/timeout/error)'},
-        'joined_data': {'type': 'array', 'description': 'Data from all completed inputs'},
-        'completed_count': {'type': 'integer', 'description': 'Number of inputs completed'},
-        'strategy': {'type': 'string', 'description': 'Strategy used for joining'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (joined/timeout/error)',
+                'description_key': 'modules.flow.join.output.__event__.description'},
+        'joined_data': {'type': 'array', 'description': 'Data from all completed inputs',
+                'description_key': 'modules.flow.join.output.joined_data.description'},
+        'completed_count': {'type': 'integer', 'description': 'Number of inputs completed',
+                'description_key': 'modules.flow.join.output.completed_count.description'},
+        'strategy': {'type': 'string', 'description': 'Strategy used for joining',
+                'description_key': 'modules.flow.join.output.strategy.description'}
     },
 
     examples=[

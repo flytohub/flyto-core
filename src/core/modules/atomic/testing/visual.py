@@ -39,19 +39,22 @@ logger = logging.getLogger(__name__)
             'label': 'Actual Image',
             'required': True,
             'description': 'Path or base64 of actual image'
-        },
+        ,
+                'description_key': 'modules.testing.visual.compare.params.actual.description'},
         'expected': {
             'type': 'string',
             'label': 'Expected Image',
             'required': True,
             'description': 'Path or base64 of expected image'
-        },
+        ,
+                'description_key': 'modules.testing.visual.compare.params.expected.description'},
         'threshold': {
             'type': 'number',
             'label': 'Difference Threshold',
             'default': 0.1,
             'description': 'Max allowed difference (0-1)'
-        },
+        ,
+                'description_key': 'modules.testing.visual.compare.params.threshold.description'},
         'output_diff': {
             'type': 'boolean',
             'label': 'Output Diff Image',
@@ -59,10 +62,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'match': {'type': 'boolean', 'description': 'The match'},
-        'difference': {'type': 'number', 'description': 'The difference'},
-        'diff_image': {'type': 'string', 'description': 'The diff image'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.visual.compare.output.ok.description'},
+        'match': {'type': 'boolean', 'description': 'The match',
+                'description_key': 'modules.testing.visual.compare.output.match.description'},
+        'difference': {'type': 'number', 'description': 'The difference',
+                'description_key': 'modules.testing.visual.compare.output.difference.description'},
+        'diff_image': {'type': 'string', 'description': 'The diff image',
+                'description_key': 'modules.testing.visual.compare.output.diff_image.description'}
     }
 )
 async def testing_visual_compare(context: Dict[str, Any]) -> Dict[str, Any]:

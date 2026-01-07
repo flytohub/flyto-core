@@ -47,11 +47,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'array',
             'description': 'Common elements'
-        },
+        ,
+                'description_key': 'modules.array.intersection.output.result.description'},
         'length': {
             'type': 'number',
             'description': 'Number of common elements'
-        }
+        ,
+                'description_key': 'modules.array.intersection.output.length.description'}
     },
     examples=[
         {

@@ -41,11 +41,13 @@ from ...schema import compose, presets
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        },
+        ,
+                'description_key': 'modules.data.text.template.output.status.description'},
         'result': {
             'type': 'string',
             'description': 'Filled template'
-        }
+        ,
+                'description_key': 'modules.data.text.template.output.result.description'}
     },
     examples=[
         {

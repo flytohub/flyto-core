@@ -51,10 +51,14 @@ from ....utils import validate_url_with_env_config, SSRFError
         ),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'tab_count': {'type': 'number', 'description': 'The tab count'},
-        'current_index': {'type': 'number', 'description': 'The current index'},
-        'tabs': {'type': 'array', 'description': 'List of open tabs'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.tab.output.status.description'},
+        'tab_count': {'type': 'number', 'description': 'The tab count',
+                'description_key': 'modules.browser.tab.output.tab_count.description'},
+        'current_index': {'type': 'number', 'description': 'The current index',
+                'description_key': 'modules.browser.tab.output.current_index.description'},
+        'tabs': {'type': 'array', 'description': 'List of open tabs',
+                'description_key': 'modules.browser.tab.output.tabs.description'}
     },
     examples=[
         {

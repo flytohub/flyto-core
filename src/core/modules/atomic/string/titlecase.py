@@ -46,7 +46,8 @@ from ...schema import compose, presets
         'result': {
             'type': 'string',
             'description': 'Title case converted string'
-        }
+        ,
+                'description_key': 'modules.string.titlecase.output.result.description'}
     },
     examples=[
         {

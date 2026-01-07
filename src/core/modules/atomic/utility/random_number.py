@@ -72,8 +72,10 @@ import uuid
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'value': {'type': 'number', 'description': 'Random number'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.utility.random.number.output.status.description'},
+        'value': {'type': 'number', 'description': 'Random number',
+                'description_key': 'modules.utility.random.number.output.value.description'}
     },
     examples=[
         {

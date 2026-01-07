@@ -106,13 +106,17 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (case:value or default)'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (case:value or default)',
+                'description_key': 'modules.flow.switch.output.__event__.description'},
         'outputs': {
             'type': 'object',
             'description': 'Output values by port'
-        },
-        'matched_case': {'type': 'string', 'description': 'The case that matched'},
-        'value': {'type': 'any', 'description': 'The resolved value that was matched'}
+        ,
+                'description_key': 'modules.flow.switch.output.outputs.description'},
+        'matched_case': {'type': 'string', 'description': 'The case that matched',
+                'description_key': 'modules.flow.switch.output.matched_case.description'},
+        'value': {'type': 'any', 'description': 'The resolved value that was matched',
+                'description_key': 'modules.flow.switch.output.value.description'}
     },
 
     examples=[

@@ -48,11 +48,13 @@ import shutil
         'path': {
             'type': 'string',
             'description': 'File path'
-        },
+        ,
+                'description_key': 'modules.file.write.output.path.description'},
         'bytes_written': {
             'type': 'number',
             'description': 'Number of bytes written'
-        }
+        ,
+                'description_key': 'modules.file.write.output.bytes_written.description'}
     },
     examples=[
         {

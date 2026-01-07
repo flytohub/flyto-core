@@ -48,12 +48,14 @@ from ..integration import SalesforceIntegration
             "type": "string",
             "label": "Record ID",
             "description": "Salesforce record ID (18 characters)",
+                "description_key": "modules.integration.salesforce.update_record.params.record_id.description",
             "required": True,
         },
         "data": {
             "type": "object",
             "label": "Update Data",
             "description": "Fields to update",
+                "description_key": "modules.integration.salesforce.update_record.params.data.description",
             "required": True,
         },
         "access_token": {

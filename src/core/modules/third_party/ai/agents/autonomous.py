@@ -112,10 +112,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'result': {'type': 'string', 'description': 'The operation result'},
-        'thoughts': {'type': 'array', 'description': 'Agent reasoning steps', 'items': {'type': 'string'}},
-        'iterations': {'type': 'number', 'description': 'The iterations'},
-        'goal_achieved': {'type': 'boolean', 'description': 'The goal achieved'}
+        'result': {'type': 'string', 'description': 'The operation result',
+                'description_key': 'modules.agent.autonomous.output.result.description'},
+        'thoughts': {'type': 'array', 'description': 'Agent reasoning steps',
+                'description_key': 'modules.agent.autonomous.output.thoughts.description', 'items': {'type': 'string'}},
+        'iterations': {'type': 'number', 'description': 'The iterations',
+                'description_key': 'modules.agent.autonomous.output.iterations.description'},
+        'goal_achieved': {'type': 'boolean', 'description': 'The goal achieved',
+                'description_key': 'modules.agent.autonomous.output.goal_achieved.description'}
     },
     examples=[
         {

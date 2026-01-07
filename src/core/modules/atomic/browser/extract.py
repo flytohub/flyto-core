@@ -34,9 +34,12 @@ from ...schema import compose, presets
         presets.EXTRACT_FIELDS(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'data': {'type': 'array', 'description': 'Output data from the operation'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.extract.output.status.description'},
+        'data': {'type': 'array', 'description': 'Output data from the operation',
+                'description_key': 'modules.browser.extract.output.data.description'},
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.browser.extract.output.count.description'}
     },
     examples=[
         {

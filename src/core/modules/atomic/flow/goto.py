@@ -64,9 +64,12 @@ from ...types import DataType, EdgeType
         presets.MAX_ITERATIONS(default=100),
     ),
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (goto)'},
-        'target': {'type': 'string', 'description': 'ID of the target step'},
-        'iteration': {'type': 'number', 'description': 'Current iteration count for this goto'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (goto)',
+                'description_key': 'modules.flow.goto.output.__event__.description'},
+        'target': {'type': 'string', 'description': 'ID of the target step',
+                'description_key': 'modules.flow.goto.output.target.description'},
+        'iteration': {'type': 'number', 'description': 'Current iteration count for this goto',
+                'description_key': 'modules.flow.goto.output.iteration.description'}
     },
     examples=[
         {

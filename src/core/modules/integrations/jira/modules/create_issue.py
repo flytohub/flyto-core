@@ -36,6 +36,7 @@ from ..integration import JiraIntegration
             "type": "string",
             "label": "Jira Domain",
             "description": "Your Jira Cloud domain (e.g., your-domain.atlassian.net)",
+                "description_key": "modules.integration.jira.create_issue.params.domain.description",
             "placeholder": "${env.JIRA_DOMAIN}",
             "required": True,
         },
@@ -43,12 +44,14 @@ from ..integration import JiraIntegration
             "type": "string",
             "label": "Project Key",
             "description": "Project key (e.g., PROJ)",
+                "description_key": "modules.integration.jira.create_issue.params.project_key.description",
             "required": True,
         },
         "summary": {
             "type": "string",
             "label": "Summary",
             "description": "Issue summary/title",
+                "description_key": "modules.integration.jira.create_issue.params.summary.description",
             "required": True,
         },
         "issue_type": {
@@ -62,6 +65,7 @@ from ..integration import JiraIntegration
             "type": "text",
             "label": "Description",
             "description": "Issue description",
+                "description_key": "modules.integration.jira.create_issue.params.description.description",
             "required": False,
         },
         "priority": {
@@ -74,6 +78,7 @@ from ..integration import JiraIntegration
             "type": "array",
             "label": "Labels",
             "description": "Issue labels",
+                "description_key": "modules.integration.jira.create_issue.params.labels.description",
             "required": False,
         },
         "email": {

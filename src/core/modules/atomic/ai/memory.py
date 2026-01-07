@@ -111,10 +111,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        'memory_type': {'type': 'string', 'description': 'Type of memory'},
-        'session_id': {'type': 'string', 'description': 'Session identifier'},
-        'messages': {'type': 'array', 'description': 'Current message history'},
-        'config': {'type': 'object', 'description': 'Full memory configuration'}
+        'memory_type': {'type': 'string', 'description': 'Type of memory',
+                'description_key': 'modules.ai.memory.output.memory_type.description'},
+        'session_id': {'type': 'string', 'description': 'Session identifier',
+                'description_key': 'modules.ai.memory.output.session_id.description'},
+        'messages': {'type': 'array', 'description': 'Current message history',
+                'description_key': 'modules.ai.memory.output.messages.description'},
+        'config': {'type': 'object', 'description': 'Full memory configuration',
+                'description_key': 'modules.ai.memory.output.config.description'}
     },
 
     examples=[

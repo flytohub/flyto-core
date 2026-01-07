@@ -47,11 +47,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'number',
             'description': 'Ceiling value'
-        },
+        ,
+                'description_key': 'modules.math.ceil.output.result.description'},
         'original': {
             'type': 'number',
             'description': 'Original number'
-        }
+        ,
+                'description_key': 'modules.math.ceil.output.original.description'}
     },
     examples=[
         {

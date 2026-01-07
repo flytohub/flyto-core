@@ -90,8 +90,10 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'records': {'type': 'array', 'description': 'The records'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'records': {'type': 'array', 'description': 'The records',
+                'description_key': 'modules.productivity.airtable.read.output.records.description'},
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.productivity.airtable.read.output.count.description'}
     },
     examples=[
         {

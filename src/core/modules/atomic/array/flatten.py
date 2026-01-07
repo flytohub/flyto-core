@@ -48,11 +48,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'array',
             'description': 'Flattened array'
-        },
+        ,
+                'description_key': 'modules.array.flatten.output.result.description'},
         'length': {
             'type': 'number',
             'description': 'Length of flattened array'
-        }
+        ,
+                'description_key': 'modules.array.flatten.output.length.description'}
     },
     examples=[
         {

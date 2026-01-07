@@ -49,11 +49,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'array',
             'description': 'Transformed array'
-        },
+        ,
+                'description_key': 'modules.array.map.output.result.description'},
         'length': {
             'type': 'number',
             'description': 'Length of result array'
-        }
+        ,
+                'description_key': 'modules.array.map.output.length.description'}
     },
     examples=[
         {

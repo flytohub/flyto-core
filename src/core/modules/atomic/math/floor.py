@@ -47,11 +47,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'number',
             'description': 'Floored value'
-        },
+        ,
+                'description_key': 'modules.math.floor.output.result.description'},
         'original': {
             'type': 'number',
             'description': 'Original number'
-        }
+        ,
+                'description_key': 'modules.math.floor.output.original.description'}
     },
     examples=[
         {

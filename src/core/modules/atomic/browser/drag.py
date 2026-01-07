@@ -49,9 +49,12 @@ from ...schema import compose, presets, field
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'source': {'type': 'string', 'description': 'The source'},
-        'target': {'type': 'string', 'description': 'The target'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.drag.output.status.description'},
+        'source': {'type': 'string', 'description': 'The source',
+                'description_key': 'modules.browser.drag.output.source.description'},
+        'target': {'type': 'string', 'description': 'The target',
+                'description_key': 'modules.browser.drag.output.target.description'}
     },
     examples=[
         {

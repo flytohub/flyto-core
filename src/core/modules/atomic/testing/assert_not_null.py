@@ -33,22 +33,26 @@ from ...registry import register_module
             'type': ['string', 'number', 'boolean', 'object', 'array', 'null'],
             'required': True,
             'description': 'Value to check'
-        },
+        ,
+                'description_key': 'modules.test.assert_not_null.params.value.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_not_null.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_not_null.output.passed.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_not_null.output.message.description'}
     }
 )
 class AssertNotNullModule(BaseModule):

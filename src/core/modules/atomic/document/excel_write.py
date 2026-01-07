@@ -54,15 +54,18 @@ logger = logging.getLogger(__name__)
         'path': {
             'type': 'string',
             'description': 'Path to the created Excel file'
-        },
+        ,
+                'description_key': 'modules.excel.write.output.path.description'},
         'row_count': {
             'type': 'number',
             'description': 'Number of data rows written'
-        },
+        ,
+                'description_key': 'modules.excel.write.output.row_count.description'},
         'size': {
             'type': 'number',
             'description': 'File size in bytes'
-        }
+        ,
+                'description_key': 'modules.excel.write.output.size.description'}
     },
     examples=[
         {

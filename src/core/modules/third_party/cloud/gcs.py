@@ -82,11 +82,16 @@ from ...registry import register_module
         }
     },
     output_schema={
-        'url': {'type': 'string', 'description': 'URL address'},
-        'bucket': {'type': 'string', 'description': 'Storage bucket name'},
-        'object_name': {'type': 'string', 'description': 'Object name in storage'},
-        'size': {'type': 'number', 'description': 'Size in bytes'},
-        'public_url': {'type': 'string', 'description': 'Public accessible URL'}
+        'url': {'type': 'string', 'description': 'URL address',
+                'description_key': 'modules.cloud.gcs.upload.output.url.description'},
+        'bucket': {'type': 'string', 'description': 'Storage bucket name',
+                'description_key': 'modules.cloud.gcs.upload.output.bucket.description'},
+        'object_name': {'type': 'string', 'description': 'Object name in storage',
+                'description_key': 'modules.cloud.gcs.upload.output.object_name.description'},
+        'size': {'type': 'number', 'description': 'Size in bytes',
+                'description_key': 'modules.cloud.gcs.upload.output.size.description'},
+        'public_url': {'type': 'string', 'description': 'Public accessible URL',
+                'description_key': 'modules.cloud.gcs.upload.output.public_url.description'}
     },
     examples=[
         {

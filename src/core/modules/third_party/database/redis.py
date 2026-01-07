@@ -46,9 +46,12 @@ from ...schema import compose, presets
         presets.REDIS_DB(),
     ),
     output_schema={
-        'value': {'type': 'any', 'description': 'The returned value'},
-        'exists': {'type': 'boolean', 'description': 'The exists'},
-        'key': {'type': 'string', 'description': 'Key identifier'}
+        'value': {'type': 'any', 'description': 'The returned value',
+                'description_key': 'modules.db.redis.get.output.value.description'},
+        'exists': {'type': 'boolean', 'description': 'The exists',
+                'description_key': 'modules.db.redis.get.output.exists.description'},
+        'key': {'type': 'string', 'description': 'Key identifier',
+                'description_key': 'modules.db.redis.get.output.key.description'}
     },
     examples=[
         {

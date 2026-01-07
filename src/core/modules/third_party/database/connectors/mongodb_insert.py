@@ -47,11 +47,13 @@ from ....schema import compose, presets
         'inserted_count': {
             'type': 'number',
             'description': 'Number of documents inserted'
-        },
+        ,
+                'description_key': 'modules.db.mongodb.insert.output.inserted_count.description'},
         'inserted_ids': {
             'type': 'array',
             'description': 'Array of inserted document IDs'
-        }
+        ,
+                'description_key': 'modules.db.mongodb.insert.output.inserted_ids.description'}
     },
     examples=[
         {

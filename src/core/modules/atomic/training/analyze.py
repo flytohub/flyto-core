@@ -32,8 +32,10 @@ from core.training.daily_practice import DailyPracticeEngine
         presets.PRACTICE_URL(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'structure': {'type': 'object', 'description': 'The structure'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.training.practice.analyze.output.status.description'},
+        'structure': {'type': 'object', 'description': 'The structure',
+                'description_key': 'modules.training.practice.analyze.output.structure.description'},
     },
 )
 class TrainingPracticeAnalyze(BaseModule):

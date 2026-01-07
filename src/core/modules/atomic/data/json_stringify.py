@@ -43,11 +43,13 @@ from ...schema import compose, presets
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        },
+        ,
+                'description_key': 'modules.data.json.stringify.output.status.description'},
         'json': {
             'type': 'string',
             'description': 'JSON string'
-        }
+        ,
+                'description_key': 'modules.data.json.stringify.output.json.description'}
     },
     examples=[
         {

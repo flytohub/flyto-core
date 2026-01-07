@@ -99,27 +99,33 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether port is in expected state'
-        },
+        ,
+                'description_key': 'modules.port.wait.output.ok.description'},
         'available': {
             'type': 'boolean',
             'description': 'Whether port is currently available'
-        },
+        ,
+                'description_key': 'modules.port.wait.output.available.description'},
         'host': {
             'type': 'string',
             'description': 'Host that was checked'
-        },
+        ,
+                'description_key': 'modules.port.wait.output.host.description'},
         'port': {
             'type': 'number',
             'description': 'Port that was checked'
-        },
+        ,
+                'description_key': 'modules.port.wait.output.port.description'},
         'wait_time_ms': {
             'type': 'number',
             'description': 'Time spent waiting in milliseconds'
-        },
+        ,
+                'description_key': 'modules.port.wait.output.wait_time_ms.description'},
         'attempts': {
             'type': 'number',
             'description': 'Number of connection attempts'
-        }
+        ,
+                'description_key': 'modules.port.wait.output.attempts.description'}
     },
     examples=[
         {

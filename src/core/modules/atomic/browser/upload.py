@@ -34,10 +34,14 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'filename': {'type': 'string', 'description': 'Name of the file'},
-        'size': {'type': 'number', 'description': 'Size in bytes'},
-        'selector': {'type': 'string', 'description': 'CSS selector that was used'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.upload.output.status.description'},
+        'filename': {'type': 'string', 'description': 'Name of the file',
+                'description_key': 'modules.browser.upload.output.filename.description'},
+        'size': {'type': 'number', 'description': 'Size in bytes',
+                'description_key': 'modules.browser.upload.output.size.description'},
+        'selector': {'type': 'string', 'description': 'CSS selector that was used',
+                'description_key': 'modules.browser.upload.output.selector.description'}
     },
     examples=[
         {

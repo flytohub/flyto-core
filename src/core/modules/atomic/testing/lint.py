@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Paths',
             'required': True,
             'description': 'Files or directories to lint'
-        },
+        ,
+                'description_key': 'modules.testing.lint.run.params.paths.description'},
         'linter': {
             'type': 'string',
             'label': 'Linter',
@@ -53,10 +54,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'errors': {'type': 'number', 'description': 'Number of errors encountered'},
-        'warnings': {'type': 'number', 'description': 'The warnings'},
-        'issues': {'type': 'array', 'description': 'The issues'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.lint.run.output.ok.description'},
+        'errors': {'type': 'number', 'description': 'Number of errors encountered',
+                'description_key': 'modules.testing.lint.run.output.errors.description'},
+        'warnings': {'type': 'number', 'description': 'The warnings',
+                'description_key': 'modules.testing.lint.run.output.warnings.description'},
+        'issues': {'type': 'array', 'description': 'The issues',
+                'description_key': 'modules.testing.lint.run.output.issues.description'}
     }
 )
 async def testing_lint_run(context: Dict[str, Any]) -> Dict[str, Any]:

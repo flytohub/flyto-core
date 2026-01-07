@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Test Cases',
             'required': True,
             'description': 'Array of HTTP test definitions'
-        },
+        ,
+                'description_key': 'modules.testing.http.run_suite.params.tests.description'},
         'base_url': {
             'type': 'string',
             'label': 'Base URL',
@@ -52,10 +53,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'number', 'description': 'Number of tests passed'},
-        'failed': {'type': 'number', 'description': 'Number of tests failed'},
-        'results': {'type': 'array', 'description': 'List of results'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.http.run_suite.output.ok.description'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.http.run_suite.output.passed.description'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed',
+                'description_key': 'modules.testing.http.run_suite.output.failed.description'},
+        'results': {'type': 'array', 'description': 'List of results',
+                'description_key': 'modules.testing.http.run_suite.output.results.description'}
     }
 )
 async def testing_http_run_suite(context: Dict[str, Any]) -> Dict[str, Any]:

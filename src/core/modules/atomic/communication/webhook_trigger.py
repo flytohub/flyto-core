@@ -55,15 +55,18 @@ logger = logging.getLogger(__name__)
         'status_code': {
             'type': 'number',
             'description': 'HTTP response status code'
-        },
+        ,
+                'description_key': 'modules.webhook.trigger.output.status_code.description'},
         'response': {
             'type': 'object',
             'description': 'Response body (if JSON)'
-        },
+        ,
+                'description_key': 'modules.webhook.trigger.output.response.description'},
         'headers': {
             'type': 'object',
             'description': 'Response headers'
-        }
+        ,
+                'description_key': 'modules.webhook.trigger.output.headers.description'}
     },
     examples=[
         {

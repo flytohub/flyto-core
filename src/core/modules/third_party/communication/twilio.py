@@ -91,10 +91,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'sid': {'type': 'string', 'description': 'The sid'},
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'to': {'type': 'string', 'description': 'The to'},
-        'from': {'type': 'string', 'description': 'The from'}
+        'sid': {'type': 'string', 'description': 'The sid',
+                'description_key': 'modules.communication.twilio.send_sms.output.sid.description'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.communication.twilio.send_sms.output.status.description'},
+        'to': {'type': 'string', 'description': 'The to',
+                'description_key': 'modules.communication.twilio.send_sms.output.to.description'},
+        'from': {'type': 'string', 'description': 'The from',
+                'description_key': 'modules.communication.twilio.send_sms.output.from.description'}
     },
     examples=[
         {

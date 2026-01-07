@@ -46,15 +46,18 @@ from ....schema import compose, presets
         'rows': {
             'type': 'array',
             'description': 'Array of result rows as objects'
-        },
+        ,
+                'description_key': 'modules.db.postgresql.query.output.rows.description'},
         'row_count': {
             'type': 'number',
             'description': 'Number of rows returned'
-        },
+        ,
+                'description_key': 'modules.db.postgresql.query.output.row_count.description'},
         'columns': {
             'type': 'array',
             'description': 'Column names in result set'
-        }
+        ,
+                'description_key': 'modules.db.postgresql.query.output.columns.description'}
     },
     examples=[
         {

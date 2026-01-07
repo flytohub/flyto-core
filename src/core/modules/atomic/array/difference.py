@@ -48,11 +48,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'array',
             'description': 'Elements unique to first array'
-        },
+        ,
+                'description_key': 'modules.array.difference.output.result.description'},
         'length': {
             'type': 'number',
             'description': 'Number of unique elements'
-        }
+        ,
+                'description_key': 'modules.array.difference.output.length.description'}
     },
     examples=[
         {

@@ -52,19 +52,23 @@ logger = logging.getLogger(__name__)
         'text': {
             'type': 'string',
             'description': 'Extracted text content'
-        },
+        ,
+                'description_key': 'modules.pdf.parse.output.text.description'},
         'pages': {
             'type': 'array',
             'description': 'Text content per page'
-        },
+        ,
+                'description_key': 'modules.pdf.parse.output.pages.description'},
         'metadata': {
             'type': 'object',
             'description': 'PDF metadata (title, author, etc.)'
-        },
+        ,
+                'description_key': 'modules.pdf.parse.output.metadata.description'},
         'page_count': {
             'type': 'number',
             'description': 'Total number of pages'
-        }
+        ,
+                'description_key': 'modules.pdf.parse.output.page_count.description'}
     },
     examples=[
         {

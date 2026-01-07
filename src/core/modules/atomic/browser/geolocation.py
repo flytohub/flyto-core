@@ -61,8 +61,10 @@ from ...schema import compose, presets, field
         ),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'location': {'type': 'object', 'description': 'The location'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.geolocation.output.status.description'},
+        'location': {'type': 'object', 'description': 'The location',
+                'description_key': 'modules.browser.geolocation.output.location.description'}
     },
     examples=[
         {

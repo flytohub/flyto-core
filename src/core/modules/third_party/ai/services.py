@@ -79,7 +79,8 @@ logger = logging.getLogger(__name__)
                 'type': 'object',
                 'properties': {
                     'role': {'type': 'string', 'enum': ['user', 'assistant']},
-                    'content': {'type': 'string', 'description': 'Content returned by the operation'}
+                    'content': {'type': 'string', 'description': 'Content returned by the operation',
+                'description_key': 'modules.api.anthropic.chat.params.messages.properties.content.description'}
                 }
             }
         },
@@ -119,21 +120,27 @@ logger = logging.getLogger(__name__)
         'content': {
             'type': 'string',
             'description': 'Claude response text'
-        },
+        ,
+                'description_key': 'modules.api.anthropic.chat.output.content.description'},
         'model': {
             'type': 'string',
             'description': 'Model used for response'
-        },
+        ,
+                'description_key': 'modules.api.anthropic.chat.output.model.description'},
         'stop_reason': {
             'type': 'string',
             'description': 'Why the model stopped generating (end_turn, max_tokens, etc)'
-        },
+        ,
+                'description_key': 'modules.api.anthropic.chat.output.stop_reason.description'},
         'usage': {
             'type': 'object',
             'description': 'Token usage statistics',
+                'description_key': 'modules.api.anthropic.chat.output.usage.description',
             'properties': {
-                'input_tokens': {'type': 'number', 'description': 'The input tokens'},
-                'output_tokens': {'type': 'number', 'description': 'The output tokens'}
+                'input_tokens': {'type': 'number', 'description': 'The input tokens',
+                'description_key': 'modules.api.anthropic.chat.output.usage.properties.input_tokens.description'},
+                'output_tokens': {'type': 'number', 'description': 'The output tokens',
+                'description_key': 'modules.api.anthropic.chat.output.usage.properties.output_tokens.description'}
             }
         }
     },

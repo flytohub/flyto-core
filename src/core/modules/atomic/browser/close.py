@@ -41,8 +41,10 @@ from ...registry import register_module
 
     params_schema={},
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.close.output.status.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.browser.close.output.message.description'}
     },
     examples=[
         {

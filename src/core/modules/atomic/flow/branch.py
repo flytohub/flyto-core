@@ -97,18 +97,25 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (true/false/error)'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (true/false/error)',
+                'description_key': 'modules.flow.branch.output.__event__.description'},
         'outputs': {
             'type': 'object',
             'description': 'Output values by port',
+                'description_key': 'modules.flow.branch.output.outputs.description',
             'properties': {
-                'true': {'type': 'object', 'description': 'The true'},
-                'false': {'type': 'object', 'description': 'The false'}
+                'true': {'type': 'object', 'description': 'The true',
+                'description_key': 'modules.flow.branch.output.outputs.properties.true.description'},
+                'false': {'type': 'object', 'description': 'The false',
+                'description_key': 'modules.flow.branch.output.outputs.properties.false.description'}
             }
         },
-        'result': {'type': 'boolean', 'description': 'Condition evaluation result'},
-        'condition': {'type': 'string', 'description': 'Original condition expression'},
-        'resolved_condition': {'type': 'string', 'description': 'Condition after variable resolution'}
+        'result': {'type': 'boolean', 'description': 'Condition evaluation result',
+                'description_key': 'modules.flow.branch.output.result.description'},
+        'condition': {'type': 'string', 'description': 'Original condition expression',
+                'description_key': 'modules.flow.branch.output.condition.description'},
+        'resolved_condition': {'type': 'string', 'description': 'Condition after variable resolution',
+                'description_key': 'modules.flow.branch.output.resolved_condition.description'}
     },
 
     examples=[

@@ -46,8 +46,10 @@ import time
         presets.DATETIME_FORMAT(default='%Y-%m-%d %H:%M:%S'),
     ),
     output_schema={
-        'result': {'type': 'string', 'description': 'The operation result'},
-        'timestamp': {'type': 'number', 'description': 'Unix timestamp'}
+        'result': {'type': 'string', 'description': 'The operation result',
+                'description_key': 'modules.datetime.format.output.result.description'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp',
+                'description_key': 'modules.datetime.format.output.timestamp.description'}
     },
     examples=[
         {

@@ -115,11 +115,16 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        'memory_type': {'type': 'string', 'description': 'Type of memory (redis)'},
-        'session_id': {'type': 'string', 'description': 'Session identifier'},
-        'messages': {'type': 'array', 'description': 'Loaded message history'},
-        'connected': {'type': 'boolean', 'description': 'Redis connection status'},
-        'config': {'type': 'object', 'description': 'Full memory configuration'}
+        'memory_type': {'type': 'string', 'description': 'Type of memory (redis)',
+                'description_key': 'modules.ai.memory.redis.output.memory_type.description'},
+        'session_id': {'type': 'string', 'description': 'Session identifier',
+                'description_key': 'modules.ai.memory.redis.output.session_id.description'},
+        'messages': {'type': 'array', 'description': 'Loaded message history',
+                'description_key': 'modules.ai.memory.redis.output.messages.description'},
+        'connected': {'type': 'boolean', 'description': 'Redis connection status',
+                'description_key': 'modules.ai.memory.redis.output.connected.description'},
+        'config': {'type': 'object', 'description': 'Full memory configuration',
+                'description_key': 'modules.ai.memory.redis.output.config.description'}
     },
 
     examples=[

@@ -51,11 +51,13 @@ import shutil
         'content': {
             'type': 'string',
             'description': 'File content'
-        },
+        ,
+                'description_key': 'modules.file.read.output.content.description'},
         'size': {
             'type': 'number',
             'description': 'File size in bytes'
-        }
+        ,
+                'description_key': 'modules.file.read.output.size.description'}
     },
     examples=[
         {

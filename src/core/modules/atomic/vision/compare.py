@@ -61,27 +61,33 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether comparison succeeded'
-        },
+        ,
+                'description_key': 'modules.vision.compare.output.ok.description'},
         'has_differences': {
             'type': 'boolean',
             'description': 'Whether significant differences were found'
-        },
+        ,
+                'description_key': 'modules.vision.compare.output.has_differences.description'},
         'similarity_score': {
             'type': 'number',
             'description': 'Similarity percentage (0-100)'
-        },
+        ,
+                'description_key': 'modules.vision.compare.output.similarity_score.description'},
         'differences': {
             'type': 'array',
             'description': 'List of identified differences'
-        },
+        ,
+                'description_key': 'modules.vision.compare.output.differences.description'},
         'summary': {
             'type': 'string',
             'description': 'Summary of comparison results'
-        },
+        ,
+                'description_key': 'modules.vision.compare.output.summary.description'},
         'recommendation': {
             'type': 'string',
             'description': 'Pass/Fail recommendation based on threshold'
-        }
+        ,
+                'description_key': 'modules.vision.compare.output.recommendation.description'}
     },
     examples=[
         {

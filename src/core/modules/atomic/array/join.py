@@ -48,7 +48,8 @@ from ...schema import compose, presets
         'result': {
             'type': 'string',
             'description': 'Joined string'
-        }
+        ,
+                'description_key': 'modules.array.join.output.result.description'}
     },
     examples=[
         {

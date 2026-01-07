@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Scenario',
             'required': True,
             'description': 'Scenario definition with given/when/then'
-        },
+        ,
+                'description_key': 'modules.testing.scenario.run.params.scenario.description'},
         'context': {
             'type': 'object',
             'label': 'Context',
@@ -47,9 +48,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
-        'steps': {'type': 'array', 'description': 'The steps'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.scenario.run.output.ok.description'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.scenario.run.output.passed.description'},
+        'steps': {'type': 'array', 'description': 'The steps',
+                'description_key': 'modules.testing.scenario.run.output.steps.description'}
     }
 )
 async def testing_scenario_run(context: Dict[str, Any]) -> Dict[str, Any]:

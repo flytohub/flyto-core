@@ -134,19 +134,23 @@ import base64
         'url': {
             'type': 'string',
             'description': 'S3 URL of uploaded object'
-        },
+        ,
+                'description_key': 'modules.cloud.aws_s3.upload.output.url.description'},
         'bucket': {
             'type': 'string',
             'description': 'Bucket name'
-        },
+        ,
+                'description_key': 'modules.cloud.aws_s3.upload.output.bucket.description'},
         'key': {
             'type': 'string',
             'description': 'Object key'
-        },
+        ,
+                'description_key': 'modules.cloud.aws_s3.upload.output.key.description'},
         'etag': {
             'type': 'string',
             'description': 'ETag of uploaded object'
-        }
+        ,
+                'description_key': 'modules.cloud.aws_s3.upload.output.etag.description'}
     },
     examples=[
         {

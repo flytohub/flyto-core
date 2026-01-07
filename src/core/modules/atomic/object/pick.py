@@ -47,7 +47,8 @@ from ...schema import compose, presets
         'result': {
             'type': 'json',
             'description': 'Object with only picked keys'
-        }
+        ,
+                'description_key': 'modules.object.pick.output.result.description'}
     },
     examples=[
         {

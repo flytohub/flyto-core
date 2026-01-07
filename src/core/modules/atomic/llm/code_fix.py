@@ -61,23 +61,28 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether operation succeeded'
-        },
+        ,
+                'description_key': 'modules.llm.code_fix.output.ok.description'},
         'fixes': {
             'type': 'array',
             'description': 'List of generated fixes'
-        },
+        ,
+                'description_key': 'modules.llm.code_fix.output.fixes.description'},
         'applied': {
             'type': 'array',
             'description': 'List of applied fixes (if fix_mode is apply)'
-        },
+        ,
+                'description_key': 'modules.llm.code_fix.output.applied.description'},
         'failed': {
             'type': 'array',
             'description': 'Fixes that could not be applied'
-        },
+        ,
+                'description_key': 'modules.llm.code_fix.output.failed.description'},
         'summary': {
             'type': 'string',
             'description': 'Summary of fixes'
-        }
+        ,
+                'description_key': 'modules.llm.code_fix.output.summary.description'}
     },
     examples=[
         {

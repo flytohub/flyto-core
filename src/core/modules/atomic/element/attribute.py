@@ -57,8 +57,10 @@ from ..element_registry import get_element_registry
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'value': {'type': 'string', 'description': 'The returned value'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.element.attribute.output.status.description'},
+        'value': {'type': 'string', 'description': 'The returned value',
+                'description_key': 'modules.element.attribute.output.value.description'}
     },
     examples=[{
         'title': 'Get href attribute',

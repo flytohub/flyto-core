@@ -48,11 +48,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'array',
             'description': 'Array of chunks'
-        },
+        ,
+                'description_key': 'modules.array.chunk.output.result.description'},
         'chunks': {
             'type': 'number',
             'description': 'Number of chunks'
-        }
+        ,
+                'description_key': 'modules.array.chunk.output.chunks.description'}
     },
     examples=[
         {

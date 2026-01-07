@@ -33,35 +33,42 @@ from ...registry import register_module
             'type': ['array', 'string'],
             'required': True,
             'description': 'Collection to check'
-        },
+        ,
+                'description_key': 'modules.test.assert_length.params.collection.description'},
         'expected_length': {
             'type': 'number',
             'required': True,
             'description': 'Expected length'
-        },
+        ,
+                'description_key': 'modules.test.assert_length.params.expected_length.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_length.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_length.output.passed.description'},
         'actual_length': {
             'type': 'number',
             'description': 'Actual length'
-        },
+        ,
+                'description_key': 'modules.test.assert_length.output.actual_length.description'},
         'expected_length': {
             'type': 'number',
             'description': 'Expected length'
-        },
+        ,
+                'description_key': 'modules.test.assert_length.output.expected_length.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_length.output.message.description'}
     }
 )
 class AssertLengthModule(BaseModule):

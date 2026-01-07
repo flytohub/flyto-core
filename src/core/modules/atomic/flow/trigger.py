@@ -72,10 +72,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (triggered/error)'},
-        'trigger_data': {'type': 'object', 'description': 'Data from trigger source'},
-        'trigger_type': {'type': 'string', 'description': 'Type of trigger'},
-        'triggered_at': {'type': 'string', 'description': 'ISO timestamp'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (triggered/error)',
+                'description_key': 'modules.flow.trigger.output.__event__.description'},
+        'trigger_data': {'type': 'object', 'description': 'Data from trigger source',
+                'description_key': 'modules.flow.trigger.output.trigger_data.description'},
+        'trigger_type': {'type': 'string', 'description': 'Type of trigger',
+                'description_key': 'modules.flow.trigger.output.trigger_type.description'},
+        'triggered_at': {'type': 'string', 'description': 'ISO timestamp',
+                'description_key': 'modules.flow.trigger.output.triggered_at.description'}
     },
 
     examples=[

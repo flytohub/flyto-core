@@ -54,23 +54,28 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Operation success'
-        },
+        ,
+                'description_key': 'modules.process.list.output.ok.description'},
         'processes': {
             'type': 'array',
             'description': 'List of process information'
-        },
+        ,
+                'description_key': 'modules.process.list.output.processes.description'},
         'count': {
             'type': 'number',
             'description': 'Total number of processes'
-        },
+        ,
+                'description_key': 'modules.process.list.output.count.description'},
         'running': {
             'type': 'number',
             'description': 'Number of running processes'
-        },
+        ,
+                'description_key': 'modules.process.list.output.running.description'},
         'stopped': {
             'type': 'number',
             'description': 'Number of stopped processes'
-        }
+        ,
+                'description_key': 'modules.process.list.output.stopped.description'}
     },
     examples=[
         {

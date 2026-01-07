@@ -33,22 +33,26 @@ from ...registry import register_module
             'type': 'boolean',
             'required': True,
             'description': 'Condition to check'
-        },
+        ,
+                'description_key': 'modules.test.assert_true.params.condition.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_true.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_true.output.passed.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_true.output.message.description'}
     }
 )
 class AssertTrueModule(BaseModule):

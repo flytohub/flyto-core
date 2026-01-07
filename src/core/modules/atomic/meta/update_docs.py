@@ -57,9 +57,12 @@ import json
         }
     },
     output_schema={
-        'file_path': {'type': 'string', 'description': 'The file path'},
-        'modules_count': {'type': 'number', 'description': 'The modules count'},
-        'categories': {'type': 'array', 'description': 'The categories'}
+        'file_path': {'type': 'string', 'description': 'The file path',
+                'description_key': 'modules.meta.modules.update_docs.output.file_path.description'},
+        'modules_count': {'type': 'number', 'description': 'The modules count',
+                'description_key': 'modules.meta.modules.update_docs.output.modules_count.description'},
+        'categories': {'type': 'array', 'description': 'The categories',
+                'description_key': 'modules.meta.modules.update_docs.output.categories.description'}
     },
     examples=[
         {

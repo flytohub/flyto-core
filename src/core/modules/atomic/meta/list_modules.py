@@ -90,21 +90,31 @@ import json
         'modules': {
             'type': 'array',
             'description': 'List of registered modules',
+                'description_key': 'modules.meta.modules.list.output.modules.description',
             'items': {
                 'type': 'object',
                 'properties': {
-                    'module_id': {'type': 'string', 'description': 'The module id'},
-                    'label': {'type': 'string', 'description': 'The label'},
-                    'description': {'type': 'string', 'description': 'Item description'},
-                    'category': {'type': 'string', 'description': 'The category'},
-                    'tags': {'type': 'array', 'description': 'The tags'},
-                    'params_schema': {'type': 'object', 'description': 'The params schema'},
-                    'output_schema': {'type': 'object', 'description': 'The output schema'}
+                    'module_id': {'type': 'string', 'description': 'The module id',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.module_id.description'},
+                    'label': {'type': 'string', 'description': 'The label',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.label.description'},
+                    'description': {'type': 'string', 'description': 'Item description',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.description.description'},
+                    'category': {'type': 'string', 'description': 'The category',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.category.description'},
+                    'tags': {'type': 'array', 'description': 'The tags',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.tags.description'},
+                    'params_schema': {'type': 'object', 'description': 'The params schema',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.params_schema.description'},
+                    'output_schema': {'type': 'object', 'description': 'The output schema',
+                'description_key': 'modules.meta.modules.list.output.modules.properties.output_schema.description'}
                 }
             }
         },
-        'count': {'type': 'number', 'description': 'Number of items'},
-        'formatted': {'type': 'string', 'description': 'The formatted'}
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.meta.modules.list.output.count.description'},
+        'formatted': {'type': 'string', 'description': 'The formatted',
+                'description_key': 'modules.meta.modules.list.output.formatted.description'}
     },
     examples=[
         {

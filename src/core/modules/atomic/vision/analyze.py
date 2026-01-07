@@ -62,23 +62,28 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether analysis succeeded'
-        },
+        ,
+                'description_key': 'modules.vision.analyze.output.ok.description'},
         'analysis': {
             'type': 'string',
             'description': 'The AI analysis result'
-        },
+        ,
+                'description_key': 'modules.vision.analyze.output.analysis.description'},
         'structured': {
             'type': 'object',
             'description': 'Structured analysis data (if output_format is structured/json)'
-        },
+        ,
+                'description_key': 'modules.vision.analyze.output.structured.description'},
         'model': {
             'type': 'string',
             'description': 'Model used for analysis'
-        },
+        ,
+                'description_key': 'modules.vision.analyze.output.model.description'},
         'tokens_used': {
             'type': 'number',
             'description': 'Total tokens used'
-        }
+        ,
+                'description_key': 'modules.vision.analyze.output.tokens_used.description'}
     },
     examples=[
         {

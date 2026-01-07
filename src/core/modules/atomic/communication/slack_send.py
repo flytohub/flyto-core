@@ -54,7 +54,8 @@ logger = logging.getLogger(__name__)
         'sent': {
             'type': 'boolean',
             'description': 'Whether message was sent successfully'
-        }
+        ,
+                'description_key': 'modules.slack.send.output.sent.description'}
     },
     examples=[
         {

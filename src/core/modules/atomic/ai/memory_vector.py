@@ -111,10 +111,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        'memory_type': {'type': 'string', 'description': 'Type of memory (vector)'},
-        'session_id': {'type': 'string', 'description': 'Session identifier'},
-        'embedding_model': {'type': 'string', 'description': 'Embedding model used'},
-        'config': {'type': 'object', 'description': 'Full memory configuration'}
+        'memory_type': {'type': 'string', 'description': 'Type of memory (vector)',
+                'description_key': 'modules.ai.memory.vector.output.memory_type.description'},
+        'session_id': {'type': 'string', 'description': 'Session identifier',
+                'description_key': 'modules.ai.memory.vector.output.session_id.description'},
+        'embedding_model': {'type': 'string', 'description': 'Embedding model used',
+                'description_key': 'modules.ai.memory.vector.output.embedding_model.description'},
+        'config': {'type': 'object', 'description': 'Full memory configuration',
+                'description_key': 'modules.ai.memory.vector.output.config.description'}
     },
 
     examples=[

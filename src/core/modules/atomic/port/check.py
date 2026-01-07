@@ -90,23 +90,28 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
         'ok': {
             'type': 'boolean',
             'description': 'Whether all checks passed (if expect_open is set)'
-        },
+        ,
+                'description_key': 'modules.port.check.output.ok.description'},
         'results': {
             'type': 'array',
             'description': 'Array of port check results'
-        },
+        ,
+                'description_key': 'modules.port.check.output.results.description'},
         'open_ports': {
             'type': 'array',
             'description': 'List of open ports'
-        },
+        ,
+                'description_key': 'modules.port.check.output.open_ports.description'},
         'closed_ports': {
             'type': 'array',
             'description': 'List of closed ports'
-        },
+        ,
+                'description_key': 'modules.port.check.output.closed_ports.description'},
         'summary': {
             'type': 'object',
             'description': 'Summary statistics'
-        }
+        ,
+                'description_key': 'modules.port.check.output.summary.description'}
     },
     examples=[
         {

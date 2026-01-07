@@ -43,11 +43,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'number',
             'description': 'Absolute value'
-        },
+        ,
+                'description_key': 'modules.math.abs.output.result.description'},
         'original': {
             'type': 'number',
             'description': 'Original number'
-        }
+        ,
+                'description_key': 'modules.math.abs.output.original.description'}
     },
     examples=[
         {

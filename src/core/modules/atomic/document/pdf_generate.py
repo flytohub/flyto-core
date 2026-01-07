@@ -56,15 +56,18 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the generated PDF'
-        },
+        ,
+                'description_key': 'modules.pdf.generate.output.output_path.description'},
         'page_count': {
             'type': 'number',
             'description': 'Number of pages in the PDF'
-        },
+        ,
+                'description_key': 'modules.pdf.generate.output.page_count.description'},
         'file_size_bytes': {
             'type': 'number',
             'description': 'Size of the generated PDF in bytes'
-        }
+        ,
+                'description_key': 'modules.pdf.generate.output.file_size_bytes.description'}
     },
     examples=[
         {

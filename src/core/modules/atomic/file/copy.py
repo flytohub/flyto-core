@@ -48,10 +48,14 @@ from ...schema import compose, presets
         presets.OVERWRITE(default=False),
     ),
     output_schema={
-        'copied': {'type': 'boolean', 'description': 'The copied'},
-        'source': {'type': 'string', 'description': 'The source'},
-        'destination': {'type': 'string', 'description': 'The destination'},
-        'size': {'type': 'number', 'description': 'Size in bytes'}
+        'copied': {'type': 'boolean', 'description': 'The copied',
+                'description_key': 'modules.file.copy.output.copied.description'},
+        'source': {'type': 'string', 'description': 'The source',
+                'description_key': 'modules.file.copy.output.source.description'},
+        'destination': {'type': 'string', 'description': 'The destination',
+                'description_key': 'modules.file.copy.output.destination.description'},
+        'size': {'type': 'number', 'description': 'Size in bytes',
+                'description_key': 'modules.file.copy.output.size.description'}
     },
     examples=[
         {

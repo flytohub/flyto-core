@@ -82,9 +82,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'page_id': {'type': 'string', 'description': 'Created page ID'},
-        'url': {'type': 'string', 'description': 'URL to the created page'},
-        'created_time': {'type': 'string', 'description': 'Page creation timestamp'}
+        'page_id': {'type': 'string', 'description': 'Created page ID',
+                'description_key': 'modules.api.notion.create_page.output.page_id.description'},
+        'url': {'type': 'string', 'description': 'URL to the created page',
+                'description_key': 'modules.api.notion.create_page.output.url.description'},
+        'created_time': {'type': 'string', 'description': 'Page creation timestamp',
+                'description_key': 'modules.api.notion.create_page.output.created_time.description'}
     },
     examples=[
         {

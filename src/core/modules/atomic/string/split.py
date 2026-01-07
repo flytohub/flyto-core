@@ -45,27 +45,33 @@ from ...schema import compose, presets
         'parts': {
             'type': 'array',
             'description': 'Array of split string parts'
-        },
+        ,
+                'description_key': 'modules.string.split.output.parts.description'},
         'result': {
             'type': 'array',
             'description': 'Alias for parts - array of split string parts'
-        },
+        ,
+                'description_key': 'modules.string.split.output.result.description'},
         'length': {
             'type': 'number',
             'description': 'Number of parts after split'
-        },
+        ,
+                'description_key': 'modules.string.split.output.length.description'},
         'original': {
             'type': 'string',
             'description': 'Original input string'
-        },
+        ,
+                'description_key': 'modules.string.split.output.original.description'},
         'delimiter': {
             'type': 'string',
             'description': 'Delimiter used for splitting'
-        },
+        ,
+                'description_key': 'modules.string.split.output.delimiter.description'},
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        }
+        ,
+                'description_key': 'modules.string.split.output.status.description'}
     }
 )
 async def string_split(context: Dict[str, Any]) -> Dict[str, Any]:

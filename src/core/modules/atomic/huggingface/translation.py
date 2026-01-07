@@ -52,7 +52,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.TRANSLATION)
         presets.HF_TARGET_LANG(),
     ),
     output_schema={
-        'translation_text': {'type': 'string', 'description': 'Translated text'}
+        'translation_text': {'type': 'string', 'description': 'Translated text',
+                'description_key': 'modules.huggingface.translation.output.translation_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

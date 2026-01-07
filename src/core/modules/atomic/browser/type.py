@@ -31,8 +31,10 @@ from ...schema import compose, presets
         presets.TEXT(key='text', required=True, label='Text Content', placeholder='Text to type'),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'selector': {'type': 'string', 'description': 'CSS selector that was used'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.type.output.status.description'},
+        'selector': {'type': 'string', 'description': 'CSS selector that was used',
+                'description_key': 'modules.browser.type.output.selector.description'}
     },
     examples=[
         {

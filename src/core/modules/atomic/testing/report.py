@@ -52,10 +52,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'report': {'type': 'string', 'description': 'The report'},
-        'format': {'type': 'string', 'description': 'The format'},
-        'summary': {'type': 'object', 'description': 'The summary'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.report.generate.output.ok.description'},
+        'report': {'type': 'string', 'description': 'The report',
+                'description_key': 'modules.testing.report.generate.output.report.description'},
+        'format': {'type': 'string', 'description': 'The format',
+                'description_key': 'modules.testing.report.generate.output.format.description'},
+        'summary': {'type': 'object', 'description': 'The summary',
+                'description_key': 'modules.testing.report.generate.output.summary.description'}
     }
 )
 async def testing_report_generate(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -48,11 +48,13 @@ from ...schema import compose, presets
         'filtered': {
             'type': 'array',
             'description': 'Filtered array'
-        },
+        ,
+                'description_key': 'modules.array.filter.output.filtered.description'},
         'count': {
             'type': 'number',
             'description': 'Number of items in filtered array'
-        }
+        ,
+                'description_key': 'modules.array.filter.output.count.description'}
     },
     examples=[
         {

@@ -62,31 +62,38 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether command executed successfully (exit code 0)'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.ok.description'},
         'exit_code': {
             'type': 'number',
             'description': 'Command exit code'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.exit_code.description'},
         'stdout': {
             'type': 'string',
             'description': 'Standard output'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.stdout.description'},
         'stderr': {
             'type': 'string',
             'description': 'Standard error output'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.stderr.description'},
         'command': {
             'type': 'string',
             'description': 'The executed command'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.command.description'},
         'cwd': {
             'type': 'string',
             'description': 'Working directory used'
-        },
+        ,
+                'description_key': 'modules.shell.exec.output.cwd.description'},
         'duration_ms': {
             'type': 'number',
             'description': 'Execution duration in milliseconds'
-        }
+        ,
+                'description_key': 'modules.shell.exec.output.duration_ms.description'}
     },
     examples=[
         {

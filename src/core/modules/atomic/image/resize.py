@@ -54,15 +54,18 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the resized image'
-        },
+        ,
+                'description_key': 'modules.image.resize.output.output_path.description'},
         'original_size': {
             'type': 'object',
             'description': 'Original image dimensions'
-        },
+        ,
+                'description_key': 'modules.image.resize.output.original_size.description'},
         'new_size': {
             'type': 'object',
             'description': 'New image dimensions'
-        }
+        ,
+                'description_key': 'modules.image.resize.output.new_size.description'}
     },
     examples=[
         {

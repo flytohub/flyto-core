@@ -98,27 +98,33 @@ def _get_nested_value(obj: Any, path: str) -> Any:
         'ok': {
             'type': 'boolean',
             'description': 'Whether all assertions passed'
-        },
+        ,
+                'description_key': 'modules.http.response_assert.output.ok.description'},
         'passed': {
             'type': 'number',
             'description': 'Number of passed assertions'
-        },
+        ,
+                'description_key': 'modules.http.response_assert.output.passed.description'},
         'failed': {
             'type': 'number',
             'description': 'Number of failed assertions'
-        },
+        ,
+                'description_key': 'modules.http.response_assert.output.failed.description'},
         'total': {
             'type': 'number',
             'description': 'Total number of assertions'
-        },
+        ,
+                'description_key': 'modules.http.response_assert.output.total.description'},
         'assertions': {
             'type': 'array',
             'description': 'Detailed assertion results'
-        },
+        ,
+                'description_key': 'modules.http.response_assert.output.assertions.description'},
         'errors': {
             'type': 'array',
             'description': 'List of error messages for failed assertions'
-        }
+        ,
+                'description_key': 'modules.http.response_assert.output.errors.description'}
     },
     examples=[
         {

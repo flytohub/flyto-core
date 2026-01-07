@@ -91,11 +91,16 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'id': {'type': 'string', 'description': 'Unique identifier'},
-        'amount': {'type': 'number', 'description': 'Payment amount'},
-        'currency': {'type': 'string', 'description': 'Currency code'},
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'client_secret': {'type': 'string', 'description': 'Client secret for payment'}
+        'id': {'type': 'string', 'description': 'Unique identifier',
+                'description_key': 'modules.payment.stripe.create_payment.output.id.description'},
+        'amount': {'type': 'number', 'description': 'Payment amount',
+                'description_key': 'modules.payment.stripe.create_payment.output.amount.description'},
+        'currency': {'type': 'string', 'description': 'Currency code',
+                'description_key': 'modules.payment.stripe.create_payment.output.currency.description'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.payment.stripe.create_payment.output.status.description'},
+        'client_secret': {'type': 'string', 'description': 'Client secret for payment',
+                'description_key': 'modules.payment.stripe.create_payment.output.client_secret.description'}
     },
     examples=[
         {

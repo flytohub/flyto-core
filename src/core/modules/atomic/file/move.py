@@ -46,9 +46,12 @@ from ...schema import compose, presets
         presets.DESTINATION_PATH(required=True),
     ),
     output_schema={
-        'moved': {'type': 'boolean', 'description': 'The moved'},
-        'source': {'type': 'string', 'description': 'The source'},
-        'destination': {'type': 'string', 'description': 'The destination'}
+        'moved': {'type': 'boolean', 'description': 'The moved',
+                'description_key': 'modules.file.move.output.moved.description'},
+        'source': {'type': 'string', 'description': 'The source',
+                'description_key': 'modules.file.move.output.source.description'},
+        'destination': {'type': 'string', 'description': 'The destination',
+                'description_key': 'modules.file.move.output.destination.description'}
     },
     examples=[
         {

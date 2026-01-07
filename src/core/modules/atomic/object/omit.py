@@ -47,7 +47,8 @@ from ...schema import compose, presets
         'result': {
             'type': 'json',
             'description': 'Object without omitted keys'
-        }
+        ,
+                'description_key': 'modules.object.omit.output.result.description'}
     },
     examples=[
         {

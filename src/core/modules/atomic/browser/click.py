@@ -31,8 +31,10 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'selector': {'type': 'string', 'description': 'CSS selector that was used'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.click.output.status.description'},
+        'selector': {'type': 'string', 'description': 'CSS selector that was used',
+                'description_key': 'modules.browser.click.output.selector.description'}
     },
     examples=[
         {

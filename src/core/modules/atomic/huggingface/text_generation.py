@@ -54,7 +54,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_GENERATION)
         presets.HF_DO_SAMPLE(default=ParamDefaults.DO_SAMPLE),
     ),
     output_schema={
-        'generated_text': {'type': 'string', 'description': 'Generated text'}
+        'generated_text': {'type': 'string', 'description': 'Generated text',
+                'description_key': 'modules.huggingface.text-generation.output.generated_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

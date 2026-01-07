@@ -60,11 +60,13 @@ logger = logging.getLogger(__name__)
         'emails': {
             'type': 'array',
             'description': 'List of email objects'
-        },
+        ,
+                'description_key': 'modules.email.read.output.emails.description'},
         'count': {
             'type': 'number',
             'description': 'Number of emails fetched'
-        }
+        ,
+                'description_key': 'modules.email.read.output.count.description'}
     },
     examples=[
         {

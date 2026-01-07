@@ -49,8 +49,10 @@ import time
         presets.TIME_SECONDS(default=0),
     ),
     output_schema={
-        'result': {'type': 'string', 'description': 'The operation result'},
-        'timestamp': {'type': 'number', 'description': 'Unix timestamp'}
+        'result': {'type': 'string', 'description': 'The operation result',
+                'description_key': 'modules.datetime.subtract.output.result.description'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp',
+                'description_key': 'modules.datetime.subtract.output.timestamp.description'}
     },
     examples=[
         {

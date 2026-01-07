@@ -33,35 +33,42 @@ from ...registry import register_module
             'type': 'number',
             'required': True,
             'description': 'Actual value'
-        },
+        ,
+                'description_key': 'modules.test.assert_greater_than.params.actual.description'},
         'threshold': {
             'type': 'number',
             'required': True,
             'description': 'Threshold value'
-        },
+        ,
+                'description_key': 'modules.test.assert_greater_than.params.threshold.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_greater_than.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_greater_than.output.passed.description'},
         'actual': {
             'type': 'number',
             'description': 'Actual value'
-        },
+        ,
+                'description_key': 'modules.test.assert_greater_than.output.actual.description'},
         'threshold': {
             'type': 'number',
             'description': 'Threshold value'
-        },
+        ,
+                'description_key': 'modules.test.assert_greater_than.output.threshold.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_greater_than.output.message.description'}
     }
 )
 class AssertGreaterThanModule(BaseModule):

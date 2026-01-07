@@ -92,9 +92,12 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (fork/error)'},
-        'input_data': {'type': 'any', 'description': 'Input data passed to all branches'},
-        'branch_count': {'type': 'integer', 'description': 'Number of branches created'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (fork/error)',
+                'description_key': 'modules.flow.fork.output.__event__.description'},
+        'input_data': {'type': 'any', 'description': 'Input data passed to all branches',
+                'description_key': 'modules.flow.fork.output.input_data.description'},
+        'branch_count': {'type': 'integer', 'description': 'Number of branches created',
+                'description_key': 'modules.flow.fork.output.branch_count.description'}
     },
 
     examples=[

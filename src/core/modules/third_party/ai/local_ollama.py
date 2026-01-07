@@ -114,13 +114,20 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'response': {'type': 'string', 'description': 'Response from the operation'},
-        'model': {'type': 'string', 'description': 'Model name or identifier'},
-        'context': {'type': 'array', 'description': 'Conversation context for follow-up requests', 'items': {'type': 'number'}},
-        'total_duration': {'type': 'number', 'description': 'Total processing duration'},
-        'load_duration': {'type': 'number', 'description': 'Model loading duration'},
-        'prompt_eval_count': {'type': 'number', 'description': 'Number of prompt tokens evaluated'},
-        'eval_count': {'type': 'number', 'description': 'Number of tokens generated'}
+        'response': {'type': 'string', 'description': 'Response from the operation',
+                'description_key': 'modules.ai.local_ollama.chat.output.response.description'},
+        'model': {'type': 'string', 'description': 'Model name or identifier',
+                'description_key': 'modules.ai.local_ollama.chat.output.model.description'},
+        'context': {'type': 'array', 'description': 'Conversation context for follow-up requests',
+                'description_key': 'modules.ai.local_ollama.chat.output.context.description', 'items': {'type': 'number'}},
+        'total_duration': {'type': 'number', 'description': 'Total processing duration',
+                'description_key': 'modules.ai.local_ollama.chat.output.total_duration.description'},
+        'load_duration': {'type': 'number', 'description': 'Model loading duration',
+                'description_key': 'modules.ai.local_ollama.chat.output.load_duration.description'},
+        'prompt_eval_count': {'type': 'number', 'description': 'Number of prompt tokens evaluated',
+                'description_key': 'modules.ai.local_ollama.chat.output.prompt_eval_count.description'},
+        'eval_count': {'type': 'number', 'description': 'Number of tokens generated',
+                'description_key': 'modules.ai.local_ollama.chat.output.eval_count.description'}
     },
     examples=[
         {

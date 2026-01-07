@@ -52,19 +52,23 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the filled PDF'
-        },
+        ,
+                'description_key': 'modules.pdf.fill_form.output.output_path.description'},
         'fields_filled': {
             'type': 'number',
             'description': 'Number of fields filled'
-        },
+        ,
+                'description_key': 'modules.pdf.fill_form.output.fields_filled.description'},
         'images_inserted': {
             'type': 'number',
             'description': 'Number of images inserted'
-        },
+        ,
+                'description_key': 'modules.pdf.fill_form.output.images_inserted.description'},
         'file_size_bytes': {
             'type': 'number',
             'description': 'Size of the output PDF in bytes'
-        }
+        ,
+                'description_key': 'modules.pdf.fill_form.output.file_size_bytes.description'}
     },
     examples=[
         {

@@ -64,15 +64,18 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
         'rows': {
             'type': 'array',
             'description': 'Query result rows'
-        },
+        ,
+                'description_key': 'modules.database.query.output.rows.description'},
         'row_count': {
             'type': 'number',
             'description': 'Number of rows returned/affected'
-        },
+        ,
+                'description_key': 'modules.database.query.output.row_count.description'},
         'columns': {
             'type': 'array',
             'description': 'Column names'
-        }
+        ,
+                'description_key': 'modules.database.query.output.columns.description'}
     },
     examples=[
         {

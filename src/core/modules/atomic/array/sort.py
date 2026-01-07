@@ -43,11 +43,13 @@ from ...schema import compose, presets
         'sorted': {
             'type': 'array',
             'description': 'Sorted array'
-        },
+        ,
+                'description_key': 'modules.array.sort.output.sorted.description'},
         'count': {
             'type': 'number',
             'description': 'Number of items'
-        }
+        ,
+                'description_key': 'modules.array.sort.output.count.description'}
     },
     examples=[
         {

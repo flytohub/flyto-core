@@ -43,15 +43,18 @@ from ...schema import compose, presets
         'unique': {
             'type': 'array',
             'description': 'Array with unique values'
-        },
+        ,
+                'description_key': 'modules.array.unique.output.unique.description'},
         'count': {
             'type': 'number',
             'description': 'Number of unique items'
-        },
+        ,
+                'description_key': 'modules.array.unique.output.count.description'},
         'duplicates_removed': {
             'type': 'number',
             'description': 'Number of duplicates removed'
-        }
+        ,
+                'description_key': 'modules.array.unique.output.duplicates_removed.description'}
     },
     examples=[
         {

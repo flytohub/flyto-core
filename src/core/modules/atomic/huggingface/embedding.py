@@ -77,8 +77,10 @@ def extract_embedding(result: Any) -> List[float]:
         presets.HF_NORMALIZE(default=ParamDefaults.NORMALIZE),
     ),
     output_schema={
-        'embedding': {'type': 'array', 'description': 'Embedding vector(s)'},
-        'dimension': {'type': 'number', 'description': 'Embedding dimension'}
+        'embedding': {'type': 'array', 'description': 'Embedding vector(s)',
+                'description_key': 'modules.huggingface.embedding.output.embedding.description'},
+        'dimension': {'type': 'number', 'description': 'Embedding dimension',
+                'description_key': 'modules.huggingface.embedding.output.dimension.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

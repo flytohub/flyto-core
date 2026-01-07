@@ -49,11 +49,13 @@ from ...schema import compose, presets
         'result': {
             'type': 'any',
             'description': 'Reduced value'
-        },
+        ,
+                'description_key': 'modules.array.reduce.output.result.description'},
         'operation': {
             'type': 'string',
             'description': 'Operation that was applied'
-        }
+        ,
+                'description_key': 'modules.array.reduce.output.operation.description'}
     },
     examples=[
         {

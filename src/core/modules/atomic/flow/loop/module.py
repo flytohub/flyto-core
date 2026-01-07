@@ -118,19 +118,20 @@ LOOP_CONFIG = {
         }
     },
     'output_schema': {
-        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done/error)'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done/error)', 'description_key': 'modules.flow.loop.output.__event__.description'},
         'outputs': {
             'type': 'object',
             'description': 'Output values by port',
+            'description_key': 'modules.flow.loop.output.outputs.description',
             'properties': {
                 'iterate': {'type': 'object'},
                 'done': {'type': 'object'}
             }
         },
-        'iteration': {'type': 'number', 'description': 'Current iteration count'},
-        'status': {'type': 'string', 'optional': True, 'description': 'Operation status'},
-        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution'},
-        'count': {'type': 'number', 'optional': True, 'description': 'Number of iterations completed'}
+        'iteration': {'type': 'number', 'description': 'Current iteration count', 'description_key': 'modules.flow.loop.output.iteration.description'},
+        'status': {'type': 'string', 'optional': True, 'description': 'Operation status', 'description_key': 'modules.flow.loop.output.status.description'},
+        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution', 'description_key': 'modules.flow.loop.output.results.description'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of iterations completed', 'description_key': 'modules.flow.loop.output.count.description'}
     },
     'examples': [
         {
@@ -260,18 +261,20 @@ FOREACH_CONFIG = {
         }
     },
     'output_schema': {
-        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done)'},
+        '__event__': {'type': 'string', 'description': 'Event for routing (iterate/done)', 'description_key': 'modules.flow.foreach.output.__event__.description'},
         '__set_context': {
             'type': 'object',
             'description': 'Scope variables set on each iteration',
+            'description_key': 'modules.flow.foreach.output.__set_context.description',
             'properties': {
-                'loop.item': {'type': 'any', 'description': 'Current item being iterated'},
-                'loop.index': {'type': 'number', 'description': 'Current iteration index (0-based)'}
+                'loop.item': {'type': 'any', 'description': 'Current item being iterated', 'description_key': 'modules.flow.foreach.output.__set_context.properties.loop.item.description'},
+                'loop.index': {'type': 'number', 'description': 'Current iteration index (0-based)', 'description_key': 'modules.flow.foreach.output.__set_context.properties.loop.index.description'}
             }
         },
         'outputs': {
             'type': 'object',
             'description': 'Output values by port',
+            'description_key': 'modules.flow.foreach.output.outputs.description',
             'properties': {
                 'iterate': {
                     'type': 'object',
@@ -285,10 +288,10 @@ FOREACH_CONFIG = {
                 'done': {'type': 'object'}
             }
         },
-        'iteration': {'type': 'number', 'description': 'Current iteration index'},
-        'status': {'type': 'string', 'optional': True, 'description': 'Operation status'},
-        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution'},
-        'count': {'type': 'number', 'optional': True, 'description': 'Number of items processed'}
+        'iteration': {'type': 'number', 'description': 'Current iteration index', 'description_key': 'modules.flow.foreach.output.iteration.description'},
+        'status': {'type': 'string', 'optional': True, 'description': 'Operation status', 'description_key': 'modules.flow.foreach.output.status.description'},
+        'results': {'type': 'array', 'optional': True, 'description': 'Results from nested mode execution', 'description_key': 'modules.flow.foreach.output.results.description'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of items processed', 'description_key': 'modules.flow.foreach.output.count.description'}
     },
     'examples': [
         {

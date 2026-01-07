@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Test Steps',
             'required': True,
             'description': 'Array of test step definitions'
-        },
+        ,
+                'description_key': 'modules.testing.e2e.run_steps.params.steps.description'},
         'stop_on_failure': {
             'type': 'boolean',
             'label': 'Stop on Failure',
@@ -52,10 +53,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'number', 'description': 'Number of tests passed'},
-        'failed': {'type': 'number', 'description': 'Number of tests failed'},
-        'results': {'type': 'array', 'description': 'List of results'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.e2e.run_steps.output.ok.description'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.e2e.run_steps.output.passed.description'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed',
+                'description_key': 'modules.testing.e2e.run_steps.output.failed.description'},
+        'results': {'type': 'array', 'description': 'List of results',
+                'description_key': 'modules.testing.e2e.run_steps.output.results.description'}
     }
 )
 async def testing_e2e_run_steps(context: Dict[str, Any]) -> Dict[str, Any]:

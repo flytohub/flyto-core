@@ -59,10 +59,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'status': {'type': 'number', 'description': 'Operation status (success/error)'},
-        'body': {'type': 'any', 'description': 'Response body content'},
-        'headers': {'type': 'object', 'description': 'HTTP headers'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.api.http_get.output.ok.description'},
+        'status': {'type': 'number', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.api.http_get.output.status.description'},
+        'body': {'type': 'any', 'description': 'Response body content',
+                'description_key': 'modules.api.http_get.output.body.description'},
+        'headers': {'type': 'object', 'description': 'HTTP headers',
+                'description_key': 'modules.api.http_get.output.headers.description'}
     }
 )
 async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:

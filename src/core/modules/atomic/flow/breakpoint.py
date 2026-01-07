@@ -95,39 +95,48 @@ from ...types import NodeType, EdgeType, DataType
         '__event__': {
             'type': 'string',
             'description': 'Event for routing (approved/rejected/timeout)'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.__event__.description'},
         'breakpoint_id': {
             'type': 'string',
             'description': 'Unique breakpoint identifier'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.breakpoint_id.description'},
         'status': {
             'type': 'string',
             'description': 'Final status (approved/rejected/timeout/cancelled)'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.status.description'},
         'approved_by': {
             'type': 'array',
             'description': 'List of users who approved'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.approved_by.description'},
         'rejected_by': {
             'type': 'array',
             'description': 'List of users who rejected'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.rejected_by.description'},
         'custom_inputs': {
             'type': 'object',
             'description': 'Values collected from custom fields'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.custom_inputs.description'},
         'comments': {
             'type': 'array',
             'description': 'Comments from approvers'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.comments.description'},
         'resolved_at': {
             'type': 'string',
             'description': 'ISO timestamp of resolution'
-        },
+        ,
+                'description_key': 'modules.flow.breakpoint.output.resolved_at.description'},
         'wait_duration_ms': {
             'type': 'integer',
             'description': 'Time spent waiting for approval'
-        }
+        ,
+                'description_key': 'modules.flow.breakpoint.output.wait_duration_ms.description'}
     },
 
     examples=[

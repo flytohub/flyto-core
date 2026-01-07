@@ -44,15 +44,18 @@ import shutil
         'exists': {
             'type': 'boolean',
             'description': 'Whether path exists'
-        },
+        ,
+                'description_key': 'modules.file.exists.output.exists.description'},
         'is_file': {
             'type': 'boolean',
             'description': 'Whether path is a file'
-        },
+        ,
+                'description_key': 'modules.file.exists.output.is_file.description'},
         'is_directory': {
             'type': 'boolean',
             'description': 'Whether path is a directory'
-        }
+        ,
+                'description_key': 'modules.file.exists.output.is_directory.description'}
     },
     examples=[
         {

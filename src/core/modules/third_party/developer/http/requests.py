@@ -38,10 +38,14 @@ from ....schema import compose, presets
         presets.TIMEOUT_S(default=30),
     ),
     output_schema={
-        'status_code': {'type': 'number', 'description': 'HTTP status code'},
-        'headers': {'type': 'object', 'description': 'HTTP headers'},
-        'body': {'type': 'string', 'description': 'Response body content'},
-        'json': {'type': 'object', 'optional': True, 'description': 'Parsed JSON response data'}
+        'status_code': {'type': 'number', 'description': 'HTTP status code',
+                'description_key': 'modules.core.api.http_get.output.status_code.description'},
+        'headers': {'type': 'object', 'description': 'HTTP headers',
+                'description_key': 'modules.core.api.http_get.output.headers.description'},
+        'body': {'type': 'string', 'description': 'Response body content',
+                'description_key': 'modules.core.api.http_get.output.body.description'},
+        'json': {'type': 'object', 'optional': True, 'description': 'Parsed JSON response data',
+                'description_key': 'modules.core.api.http_get.output.json.description'}
     },
     examples=[{
         'title': 'Fetch API data',

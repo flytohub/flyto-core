@@ -33,8 +33,10 @@ from core.training.daily_practice import DailyPracticeEngine
         presets.PRACTICE_SAMPLE_SIZE(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'schema': {'type': 'object', 'description': 'The schema'},
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.training.practice.infer_schema.output.status.description'},
+        'schema': {'type': 'object', 'description': 'The schema',
+                'description_key': 'modules.training.practice.infer_schema.output.schema.description'},
     },
 )
 class TrainingPracticeInferSchema(BaseModule):

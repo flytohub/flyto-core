@@ -82,10 +82,14 @@ from ...registry import register_module
         }
     },
     output_schema={
-        'url': {'type': 'string', 'description': 'URL address'},
-        'container': {'type': 'string', 'description': 'The container'},
-        'blob_name': {'type': 'string', 'description': 'The blob name'},
-        'size': {'type': 'number', 'description': 'Size in bytes'}
+        'url': {'type': 'string', 'description': 'URL address',
+                'description_key': 'modules.cloud.azure.upload.output.url.description'},
+        'container': {'type': 'string', 'description': 'The container',
+                'description_key': 'modules.cloud.azure.upload.output.container.description'},
+        'blob_name': {'type': 'string', 'description': 'The blob name',
+                'description_key': 'modules.cloud.azure.upload.output.blob_name.description'},
+        'size': {'type': 'number', 'description': 'Size in bytes',
+                'description_key': 'modules.cloud.azure.upload.output.size.description'}
     },
     examples=[
         {

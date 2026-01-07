@@ -57,19 +57,23 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the generated CSV file'
-        },
+        ,
+                'description_key': 'modules.data.json_to_csv.output.output_path.description'},
         'row_count': {
             'type': 'number',
             'description': 'Number of rows written'
-        },
+        ,
+                'description_key': 'modules.data.json_to_csv.output.row_count.description'},
         'column_count': {
             'type': 'number',
             'description': 'Number of columns'
-        },
+        ,
+                'description_key': 'modules.data.json_to_csv.output.column_count.description'},
         'columns': {
             'type': 'array',
             'description': 'List of column names'
-        }
+        ,
+                'description_key': 'modules.data.json_to_csv.output.columns.description'}
     },
     examples=[
         {

@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Owner',
             'description': 'Repository owner (username or organization)',
+                'description_key': 'modules.api.github.get_repo.params.owner.description',
             'placeholder': 'octocat',
             'required': True
         },
@@ -57,6 +58,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Repository',
             'description': 'Repository name',
+                'description_key': 'modules.api.github.get_repo.params.repo.description',
             'placeholder': 'Hello-World',
             'required': True
         },
@@ -64,20 +66,29 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token (optional but recommended)',
+                'description_key': 'modules.api.github.get_repo.params.token.description',
             'placeholder': '${env.GITHUB_TOKEN}',
             'required': False,
             'sensitive': True
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'repo': {'type': 'object', 'description': 'Repository information'},
-        'name': {'type': 'string', 'description': 'Name of the item'},
-        'full_name': {'type': 'string', 'description': 'Full repository name'},
-        'description': {'type': 'string', 'description': 'Item description'},
-        'stars': {'type': 'number', 'description': 'Number of stars'},
-        'forks': {'type': 'number', 'description': 'Number of forks'},
-        'url': {'type': 'string', 'description': 'URL address'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.api.github.get_repo.output.status.description'},
+        'repo': {'type': 'object', 'description': 'Repository information',
+                'description_key': 'modules.api.github.get_repo.output.repo.description'},
+        'name': {'type': 'string', 'description': 'Name of the item',
+                'description_key': 'modules.api.github.get_repo.output.name.description'},
+        'full_name': {'type': 'string', 'description': 'Full repository name',
+                'description_key': 'modules.api.github.get_repo.output.full_name.description'},
+        'description': {'type': 'string', 'description': 'Item description',
+                'description_key': 'modules.api.github.get_repo.output.description.description'},
+        'stars': {'type': 'number', 'description': 'Number of stars',
+                'description_key': 'modules.api.github.get_repo.output.stars.description'},
+        'forks': {'type': 'number', 'description': 'Number of forks',
+                'description_key': 'modules.api.github.get_repo.output.forks.description'},
+        'url': {'type': 'string', 'description': 'URL address',
+                'description_key': 'modules.api.github.get_repo.output.url.description'}
     },
     examples=[
         {

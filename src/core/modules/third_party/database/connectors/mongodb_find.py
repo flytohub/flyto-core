@@ -50,11 +50,13 @@ from ....schema import compose, presets
         'documents': {
             'type': 'array',
             'description': 'Array of matching documents'
-        },
+        ,
+                'description_key': 'modules.db.mongodb.find.output.documents.description'},
         'count': {
             'type': 'number',
             'description': 'Number of documents returned'
-        }
+        ,
+                'description_key': 'modules.db.mongodb.find.output.count.description'}
     },
     examples=[
         {

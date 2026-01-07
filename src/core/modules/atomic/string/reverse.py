@@ -42,15 +42,18 @@ from ...schema import compose, presets
         'result': {
             'type': 'string',
             'description': 'Reversed string'
-        },
+        ,
+                'description_key': 'modules.string.reverse.output.result.description'},
         'original': {
             'type': 'string',
             'description': 'Original input string'
-        },
+        ,
+                'description_key': 'modules.string.reverse.output.original.description'},
         'length': {
             'type': 'number',
             'description': 'String length'
-        }
+        ,
+                'description_key': 'modules.string.reverse.output.length.description'}
     }
 )
 async def string_reverse(context: Dict[str, Any]) -> Dict[str, Any]:

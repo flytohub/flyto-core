@@ -80,19 +80,23 @@ def get_format_from_extension(path: str) -> Optional[str]:
         'path': {
             'type': 'string',
             'description': 'Path to the converted image'
-        },
+        ,
+                'description_key': 'modules.image.convert.output.path.description'},
         'size': {
             'type': 'number',
             'description': 'File size in bytes'
-        },
+        ,
+                'description_key': 'modules.image.convert.output.size.description'},
         'format': {
             'type': 'string',
             'description': 'Output format'
-        },
+        ,
+                'description_key': 'modules.image.convert.output.format.description'},
         'dimensions': {
             'type': 'object',
             'description': 'Image dimensions {width, height}'
-        }
+        ,
+                'description_key': 'modules.image.convert.output.dimensions.description'}
     },
     examples=[
         {

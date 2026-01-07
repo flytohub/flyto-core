@@ -50,15 +50,18 @@ import math
         'result': {
             'type': 'number',
             'description': 'Calculation result'
-        },
+        ,
+                'description_key': 'modules.math.calculate.output.result.description'},
         'operation': {
             'type': 'string',
             'description': 'Operation performed'
-        },
+        ,
+                'description_key': 'modules.math.calculate.output.operation.description'},
         'expression': {
             'type': 'string',
             'description': 'Human-readable expression'
-        }
+        ,
+                'description_key': 'modules.math.calculate.output.expression.description'}
     },
     examples=[
         {

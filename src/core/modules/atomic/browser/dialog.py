@@ -34,10 +34,14 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'},
-        'type': {'type': 'string', 'description': 'The type'},
-        'default_value': {'type': 'string', 'description': 'The default value'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.dialog.output.status.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.browser.dialog.output.message.description'},
+        'type': {'type': 'string', 'description': 'The type',
+                'description_key': 'modules.browser.dialog.output.type.description'},
+        'default_value': {'type': 'string', 'description': 'The default value',
+                'description_key': 'modules.browser.dialog.output.default_value.description'}
     },
     examples=[
         {

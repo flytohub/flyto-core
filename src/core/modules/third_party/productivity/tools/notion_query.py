@@ -91,9 +91,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'results': {'type': 'array', 'description': 'Array of page objects'},
-        'count': {'type': 'number', 'description': 'Number of results returned'},
-        'has_more': {'type': 'boolean', 'description': 'Whether there are more results'}
+        'results': {'type': 'array', 'description': 'Array of page objects',
+                'description_key': 'modules.api.notion.query_database.output.results.description'},
+        'count': {'type': 'number', 'description': 'Number of results returned',
+                'description_key': 'modules.api.notion.query_database.output.count.description'},
+        'has_more': {'type': 'boolean', 'description': 'Whether there are more results',
+                'description_key': 'modules.api.notion.query_database.output.has_more.description'}
     },
     examples=[
         {

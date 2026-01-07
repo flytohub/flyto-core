@@ -33,35 +33,42 @@ from ...registry import register_module
             'type': ['array', 'string'],
             'required': True,
             'description': 'Collection to search in'
-        },
+        ,
+                'description_key': 'modules.test.assert_contains.params.collection.description'},
         'value': {
             'type': ['string', 'number', 'boolean'],
             'required': True,
             'description': 'Value to find'
-        },
+        ,
+                'description_key': 'modules.test.assert_contains.params.value.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_contains.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_contains.output.passed.description'},
         'collection': {
             'type': ['array', 'string'],
             'description': 'Collection searched'
-        },
+        ,
+                'description_key': 'modules.test.assert_contains.output.collection.description'},
         'value': {
             'type': ['string', 'number', 'boolean'],
             'description': 'Value searched for'
-        },
+        ,
+                'description_key': 'modules.test.assert_contains.output.value.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_contains.output.message.description'}
     }
 )
 class AssertContainsModule(BaseModule):

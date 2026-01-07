@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Test Paths',
             'required': True,
             'description': 'Paths to test files or directories'
-        },
+        ,
+                'description_key': 'modules.testing.unit.run.params.paths.description'},
         'pattern': {
             'type': 'string',
             'label': 'Pattern',
@@ -52,11 +53,16 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'number', 'description': 'Number of tests passed'},
-        'failed': {'type': 'number', 'description': 'Number of tests failed'},
-        'errors': {'type': 'number', 'description': 'Number of errors encountered'},
-        'results': {'type': 'array', 'description': 'List of results'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.unit.run.output.ok.description'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.unit.run.output.passed.description'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed',
+                'description_key': 'modules.testing.unit.run.output.failed.description'},
+        'errors': {'type': 'number', 'description': 'Number of errors encountered',
+                'description_key': 'modules.testing.unit.run.output.errors.description'},
+        'results': {'type': 'array', 'description': 'List of results',
+                'description_key': 'modules.testing.unit.run.output.results.description'}
     }
 )
 async def testing_unit_run(context: Dict[str, Any]) -> Dict[str, Any]:

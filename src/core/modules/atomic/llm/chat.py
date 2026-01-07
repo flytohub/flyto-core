@@ -66,27 +66,33 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether the request succeeded'
-        },
+        ,
+                'description_key': 'modules.llm.chat.output.ok.description'},
         'response': {
             'type': 'string',
             'description': 'The LLM response text'
-        },
+        ,
+                'description_key': 'modules.llm.chat.output.response.description'},
         'parsed': {
             'type': 'any',
             'description': 'Parsed response (if JSON format requested)'
-        },
+        ,
+                'description_key': 'modules.llm.chat.output.parsed.description'},
         'model': {
             'type': 'string',
             'description': 'Model used'
-        },
+        ,
+                'description_key': 'modules.llm.chat.output.model.description'},
         'tokens_used': {
             'type': 'number',
             'description': 'Total tokens consumed'
-        },
+        ,
+                'description_key': 'modules.llm.chat.output.tokens_used.description'},
         'finish_reason': {
             'type': 'string',
             'description': 'Why the response ended'
-        }
+        ,
+                'description_key': 'modules.llm.chat.output.finish_reason.description'}
     },
     examples=[
         {

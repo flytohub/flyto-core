@@ -59,19 +59,23 @@ logger = logging.getLogger(__name__)
         'path': {
             'type': 'string',
             'description': 'Local file path of downloaded image'
-        },
+        ,
+                'description_key': 'modules.image.download.output.path.description'},
         'size': {
             'type': 'number',
             'description': 'File size in bytes'
-        },
+        ,
+                'description_key': 'modules.image.download.output.size.description'},
         'content_type': {
             'type': 'string',
             'description': 'Content type of the image'
-        },
+        ,
+                'description_key': 'modules.image.download.output.content_type.description'},
         'filename': {
             'type': 'string',
             'description': 'Filename of the downloaded image'
-        }
+        ,
+                'description_key': 'modules.image.download.output.filename.description'}
     },
     examples=[
         {

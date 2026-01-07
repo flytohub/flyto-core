@@ -35,10 +35,14 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=60000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'path': {'type': 'string', 'description': 'File or resource path'},
-        'filename': {'type': 'string', 'description': 'Name of the file'},
-        'size': {'type': 'number', 'description': 'Size in bytes'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.download.output.status.description'},
+        'path': {'type': 'string', 'description': 'File or resource path',
+                'description_key': 'modules.browser.download.output.path.description'},
+        'filename': {'type': 'string', 'description': 'Name of the file',
+                'description_key': 'modules.browser.download.output.filename.description'},
+        'size': {'type': 'number', 'description': 'Size in bytes',
+                'description_key': 'modules.browser.download.output.size.description'}
     },
     examples=[
         {

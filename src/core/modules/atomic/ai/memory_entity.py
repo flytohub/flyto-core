@@ -116,11 +116,16 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        'memory_type': {'type': 'string', 'description': 'Type of memory (entity)'},
-        'session_id': {'type': 'string', 'description': 'Session identifier'},
-        'entities': {'type': 'object', 'description': 'Tracked entities by type'},
-        'relationships': {'type': 'array', 'description': 'Entity relationships'},
-        'config': {'type': 'object', 'description': 'Full memory configuration'}
+        'memory_type': {'type': 'string', 'description': 'Type of memory (entity)',
+                'description_key': 'modules.ai.memory.entity.output.memory_type.description'},
+        'session_id': {'type': 'string', 'description': 'Session identifier',
+                'description_key': 'modules.ai.memory.entity.output.session_id.description'},
+        'entities': {'type': 'object', 'description': 'Tracked entities by type',
+                'description_key': 'modules.ai.memory.entity.output.entities.description'},
+        'relationships': {'type': 'array', 'description': 'Entity relationships',
+                'description_key': 'modules.ai.memory.entity.output.relationships.description'},
+        'config': {'type': 'object', 'description': 'Full memory configuration',
+                'description_key': 'modules.ai.memory.entity.output.config.description'}
     },
 
     examples=[

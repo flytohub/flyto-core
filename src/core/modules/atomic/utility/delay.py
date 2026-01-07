@@ -66,8 +66,10 @@ import uuid
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'waited_ms': {'type': 'number', 'description': 'Actual wait time in ms'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.utility.delay.output.status.description'},
+        'waited_ms': {'type': 'number', 'description': 'Actual wait time in ms',
+                'description_key': 'modules.utility.delay.output.waited_ms.description'}
     },
     examples=[
         {

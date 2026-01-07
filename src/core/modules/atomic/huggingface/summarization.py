@@ -52,7 +52,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.SUMMARIZATION)
         presets.HF_MIN_LENGTH(default=ParamDefaults.SUMMARY_MIN_LENGTH),
     ),
     output_schema={
-        'summary_text': {'type': 'string', 'description': 'Generated summary'}
+        'summary_text': {'type': 'string', 'description': 'Generated summary',
+                'description_key': 'modules.huggingface.summarization.output.summary_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

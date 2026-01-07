@@ -52,23 +52,28 @@ logger = logging.getLogger(__name__)
         'text': {
             'type': 'string',
             'description': 'Full text content of the document'
-        },
+        ,
+                'description_key': 'modules.word.parse.output.text.description'},
         'paragraphs': {
             'type': 'array',
             'description': 'List of paragraphs'
-        },
+        ,
+                'description_key': 'modules.word.parse.output.paragraphs.description'},
         'tables': {
             'type': 'array',
             'description': 'Extracted tables as arrays'
-        },
+        ,
+                'description_key': 'modules.word.parse.output.tables.description'},
         'images': {
             'type': 'array',
             'description': 'Paths to extracted images'
-        },
+        ,
+                'description_key': 'modules.word.parse.output.images.description'},
         'metadata': {
             'type': 'object',
             'description': 'Document metadata'
-        }
+        ,
+                'description_key': 'modules.word.parse.output.metadata.description'}
     },
     examples=[
         {

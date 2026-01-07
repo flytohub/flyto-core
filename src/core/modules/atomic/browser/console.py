@@ -34,9 +34,12 @@ from ...schema import compose, presets
         presets.CONSOLE_CLEAR_EXISTING(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'messages': {'type': 'array', 'description': 'The messages'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.console.output.status.description'},
+        'messages': {'type': 'array', 'description': 'The messages',
+                'description_key': 'modules.browser.console.output.messages.description'},
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.browser.console.output.count.description'}
     },
     examples=[
         {

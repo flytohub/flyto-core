@@ -502,23 +502,28 @@ def _stringify_value(value: Any, max_size: int) -> str:
         'ok': {
             'type': 'boolean',
             'description': 'Whether the agent completed successfully'
-        },
+        ,
+                'description_key': 'modules.llm.agent.output.ok.description'},
         'result': {
             'type': 'string',
             'description': 'The final result from the agent'
-        },
+        ,
+                'description_key': 'modules.llm.agent.output.result.description'},
         'steps': {
             'type': 'array',
             'description': 'List of steps the agent took'
-        },
+        ,
+                'description_key': 'modules.llm.agent.output.steps.description'},
         'tool_calls': {
             'type': 'number',
             'description': 'Number of tools called'
-        },
+        ,
+                'description_key': 'modules.llm.agent.output.tool_calls.description'},
         'tokens_used': {
             'type': 'number',
             'description': 'Total tokens consumed'
-        }
+        ,
+                'description_key': 'modules.llm.agent.output.tokens_used.description'}
     },
     examples=[
         {

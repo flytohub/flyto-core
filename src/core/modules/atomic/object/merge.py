@@ -46,7 +46,8 @@ from ...schema import compose, presets
         'result': {
             'type': 'json',
             'description': 'Merged object'
-        }
+        ,
+                'description_key': 'modules.object.merge.output.result.description'}
     },
     examples=[
         {

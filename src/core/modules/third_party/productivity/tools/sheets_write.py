@@ -92,10 +92,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'updated_range': {'type': 'string', 'description': 'Range that was updated'},
-        'updated_rows': {'type': 'number', 'description': 'Number of rows updated'},
-        'updated_columns': {'type': 'number', 'description': 'Number of columns updated'},
-        'updated_cells': {'type': 'number', 'description': 'Number of cells updated'}
+        'updated_range': {'type': 'string', 'description': 'Range that was updated',
+                'description_key': 'modules.api.google_sheets.write.output.updated_range.description'},
+        'updated_rows': {'type': 'number', 'description': 'Number of rows updated',
+                'description_key': 'modules.api.google_sheets.write.output.updated_rows.description'},
+        'updated_columns': {'type': 'number', 'description': 'Number of columns updated',
+                'description_key': 'modules.api.google_sheets.write.output.updated_columns.description'},
+        'updated_cells': {'type': 'number', 'description': 'Number of cells updated',
+                'description_key': 'modules.api.google_sheets.write.output.updated_cells.description'}
     },
     examples=[
         {

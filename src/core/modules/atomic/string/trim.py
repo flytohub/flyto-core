@@ -42,15 +42,18 @@ from ...schema import compose, presets
         'result': {
             'type': 'string',
             'description': 'Trimmed string with whitespace removed'
-        },
+        ,
+                'description_key': 'modules.string.trim.output.result.description'},
         'original': {
             'type': 'string',
             'description': 'Original input string'
-        },
+        ,
+                'description_key': 'modules.string.trim.output.original.description'},
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        }
+        ,
+                'description_key': 'modules.string.trim.output.status.description'}
     }
 )
 async def string_trim(context: Dict[str, Any]) -> Dict[str, Any]:

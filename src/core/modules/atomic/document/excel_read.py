@@ -53,19 +53,23 @@ logger = logging.getLogger(__name__)
         'data': {
             'type': 'array',
             'description': 'Extracted data rows'
-        },
+        ,
+                'description_key': 'modules.excel.read.output.data.description'},
         'headers': {
             'type': 'array',
             'description': 'Column headers'
-        },
+        ,
+                'description_key': 'modules.excel.read.output.headers.description'},
         'row_count': {
             'type': 'number',
             'description': 'Number of data rows'
-        },
+        ,
+                'description_key': 'modules.excel.read.output.row_count.description'},
         'sheet_names': {
             'type': 'array',
             'description': 'All sheet names in the workbook'
-        }
+        ,
+                'description_key': 'modules.excel.read.output.sheet_names.description'}
     },
     examples=[
         {

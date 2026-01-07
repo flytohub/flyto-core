@@ -65,10 +65,14 @@ from ..element_registry import get_element_registry
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'element_id': {'type': 'string', 'optional': True, 'description': 'Found element ID (single mode)'},
-        'element_ids': {'type': 'array', 'optional': True, 'description': 'List of found element IDs (all mode)'},
-        'count': {'type': 'number', 'optional': True, 'description': 'Number of elements found'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.element.query.output.status.description'},
+        'element_id': {'type': 'string', 'optional': True, 'description': 'Found element ID (single mode)',
+                'description_key': 'modules.element.query.output.element_id.description'},
+        'element_ids': {'type': 'array', 'optional': True, 'description': 'List of found element IDs (all mode)',
+                'description_key': 'modules.element.query.output.element_ids.description'},
+        'count': {'type': 'number', 'optional': True, 'description': 'Number of elements found',
+                'description_key': 'modules.element.query.output.count.description'}
     },
     examples=[{
         'title': 'Find child element',

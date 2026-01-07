@@ -42,10 +42,14 @@ from ....schema import compose, presets
         presets.SEARCH_LIMIT(max_val=10),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'data': {'type': 'array', 'description': 'Output data from the operation'},
-        'count': {'type': 'number', 'description': 'Number of items'},
-        'total_results': {'type': 'number', 'optional': True, 'description': 'Total number of search results available'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.core.api.google_search.output.status.description'},
+        'data': {'type': 'array', 'description': 'Output data from the operation',
+                'description_key': 'modules.core.api.google_search.output.data.description'},
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.core.api.google_search.output.count.description'},
+        'total_results': {'type': 'number', 'optional': True, 'description': 'Total number of search results available',
+                'description_key': 'modules.core.api.google_search.output.total_results.description'}
     },
     examples=[{
         'title': 'Search Python tutorials',

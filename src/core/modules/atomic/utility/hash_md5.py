@@ -61,8 +61,10 @@ import uuid
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'hash': {'type': 'string', 'description': 'MD5 hash (hexadecimal)'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.utility.hash.md5.output.status.description'},
+        'hash': {'type': 'string', 'description': 'MD5 hash (hexadecimal)',
+                'description_key': 'modules.utility.hash.md5.output.hash.description'}
     },
     examples=[
         {

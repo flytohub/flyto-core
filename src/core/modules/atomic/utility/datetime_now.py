@@ -79,10 +79,14 @@ import uuid
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'datetime': {'type': 'string', 'description': 'Formatted date/time'},
-        'timestamp': {'type': 'number', 'description': 'Unix timestamp'},
-        'iso': {'type': 'string', 'description': 'ISO format'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.utility.datetime.now.output.status.description'},
+        'datetime': {'type': 'string', 'description': 'Formatted date/time',
+                'description_key': 'modules.utility.datetime.now.output.datetime.description'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp',
+                'description_key': 'modules.utility.datetime.now.output.timestamp.description'},
+        'iso': {'type': 'string', 'description': 'ISO format',
+                'description_key': 'modules.utility.datetime.now.output.iso.description'}
     },
     examples=[
         {

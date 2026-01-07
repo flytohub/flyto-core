@@ -55,15 +55,18 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the generated QR code image'
-        },
+        ,
+                'description_key': 'modules.image.qrcode_generate.output.output_path.description'},
         'file_size': {
             'type': 'number',
             'description': 'Size of the output file in bytes'
-        },
+        ,
+                'description_key': 'modules.image.qrcode_generate.output.file_size.description'},
         'dimensions': {
             'type': 'object',
             'description': 'Image dimensions {width, height}'
-        }
+        ,
+                'description_key': 'modules.image.qrcode_generate.output.dimensions.description'}
     },
     examples=[
         {

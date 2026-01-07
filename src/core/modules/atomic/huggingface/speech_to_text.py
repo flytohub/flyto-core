@@ -53,8 +53,10 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
         presets.HF_RETURN_TIMESTAMPS(default=ParamDefaults.RETURN_TIMESTAMPS),
     ),
     output_schema={
-        'text': {'type': 'string', 'description': 'Transcribed text'},
-        'chunks': {'type': 'array', 'description': 'Timestamped chunks (if return_timestamps=true)'}
+        'text': {'type': 'string', 'description': 'Transcribed text',
+                'description_key': 'modules.huggingface.speech-to-text.output.text.description'},
+        'chunks': {'type': 'array', 'description': 'Timestamped chunks (if return_timestamps=true)',
+                'description_key': 'modules.huggingface.speech-to-text.output.chunks.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

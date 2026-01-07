@@ -39,13 +39,15 @@ logger = logging.getLogger(__name__)
             'label': 'Metrics',
             'required': True,
             'description': 'Metrics to evaluate'
-        },
+        ,
+                'description_key': 'modules.testing.gate.evaluate.params.metrics.description'},
         'thresholds': {
             'type': 'object',
             'label': 'Thresholds',
             'required': True,
             'description': 'Threshold values for each metric'
-        },
+        ,
+                'description_key': 'modules.testing.gate.evaluate.params.thresholds.description'},
         'fail_on_breach': {
             'type': 'boolean',
             'label': 'Fail on Breach',
@@ -53,10 +55,14 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'boolean', 'description': 'Number of tests passed'},
-        'results': {'type': 'array', 'description': 'List of results'},
-        'summary': {'type': 'string', 'description': 'The summary'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.gate.evaluate.output.ok.description'},
+        'passed': {'type': 'boolean', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.gate.evaluate.output.passed.description'},
+        'results': {'type': 'array', 'description': 'List of results',
+                'description_key': 'modules.testing.gate.evaluate.output.results.description'},
+        'summary': {'type': 'string', 'description': 'The summary',
+                'description_key': 'modules.testing.gate.evaluate.output.summary.description'}
     }
 )
 async def testing_gate_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:

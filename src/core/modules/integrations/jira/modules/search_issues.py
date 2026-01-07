@@ -42,6 +42,7 @@ from ..integration import JiraIntegration
             "type": "string",
             "label": "JQL Query",
             "description": "JQL search query",
+                "description_key": "modules.integration.jira.search_issues.params.jql.description",
             "placeholder": "project = PROJ AND status = Open",
             "required": True,
         },

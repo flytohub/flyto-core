@@ -53,9 +53,12 @@ from ...types import NodeType, EdgeType, DataType
     params_schema={},
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (start)'},
-        'started_at': {'type': 'string', 'description': 'ISO timestamp of start'},
-        'workflow_id': {'type': 'string', 'description': 'Workflow ID if available'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (start)',
+                'description_key': 'modules.flow.start.output.__event__.description'},
+        'started_at': {'type': 'string', 'description': 'ISO timestamp of start',
+                'description_key': 'modules.flow.start.output.started_at.description'},
+        'workflow_id': {'type': 'string', 'description': 'Workflow ID if available',
+                'description_key': 'modules.flow.start.output.workflow_id.description'}
     },
 
     examples=[

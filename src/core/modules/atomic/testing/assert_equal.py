@@ -33,35 +33,42 @@ from ...registry import register_module
             'type': ['string', 'number', 'boolean', 'object', 'array'],
             'required': True,
             'description': 'Actual value'
-        },
+        ,
+                'description_key': 'modules.test.assert_equal.params.actual.description'},
         'expected': {
             'type': ['string', 'number', 'boolean', 'object', 'array'],
             'required': True,
             'description': 'Expected value'
-        },
+        ,
+                'description_key': 'modules.test.assert_equal.params.expected.description'},
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
-        }
+        ,
+                'description_key': 'modules.test.assert_equal.params.message.description'}
     },
     output_schema={
         'passed': {
             'type': 'boolean',
             'description': 'Whether assertion passed'
-        },
+        ,
+                'description_key': 'modules.test.assert_equal.output.passed.description'},
         'actual': {
             'type': ['string', 'number', 'boolean', 'object', 'array'],
             'description': 'Actual value received'
-        },
+        ,
+                'description_key': 'modules.test.assert_equal.output.actual.description'},
         'expected': {
             'type': ['string', 'number', 'boolean', 'object', 'array'],
             'description': 'Expected value'
-        },
+        ,
+                'description_key': 'modules.test.assert_equal.output.expected.description'},
         'message': {
             'type': 'string',
             'description': 'Result message'
-        }
+        ,
+                'description_key': 'modules.test.assert_equal.output.message.description'}
     }
 )
 class AssertEqualModule(BaseModule):

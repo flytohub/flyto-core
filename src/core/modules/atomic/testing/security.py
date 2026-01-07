@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Targets',
             'required': True,
             'description': 'Files, URLs, or paths to scan'
-        },
+        ,
+                'description_key': 'modules.testing.security.scan.params.targets.description'},
         'scan_type': {
             'type': 'string',
             'label': 'Scan Type',
@@ -54,9 +55,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'vulnerabilities': {'type': 'array', 'description': 'The vulnerabilities'},
-        'summary': {'type': 'object', 'description': 'The summary'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.security.scan.output.ok.description'},
+        'vulnerabilities': {'type': 'array', 'description': 'The vulnerabilities',
+                'description_key': 'modules.testing.security.scan.output.vulnerabilities.description'},
+        'summary': {'type': 'object', 'description': 'The summary',
+                'description_key': 'modules.testing.security.scan.output.summary.description'}
     }
 )
 async def testing_security_scan(context: Dict[str, Any]) -> Dict[str, Any]:

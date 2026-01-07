@@ -51,9 +51,12 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
         presets.HF_TOP_K(default=ParamDefaults.TOP_K),
     ),
     output_schema={
-        'labels': {'type': 'array', 'description': 'Classification results'},
-        'top_label': {'type': 'string', 'description': 'Top predicted label'},
-        'top_score': {'type': 'number', 'description': 'Confidence score'}
+        'labels': {'type': 'array', 'description': 'Classification results',
+                'description_key': 'modules.huggingface.image-classification.output.labels.description'},
+        'top_label': {'type': 'string', 'description': 'Top predicted label',
+                'description_key': 'modules.huggingface.image-classification.output.top_label.description'},
+        'top_score': {'type': 'number', 'description': 'Confidence score',
+                'description_key': 'modules.huggingface.image-classification.output.top_score.description'}
     },
     author=ModuleDefaults.AUTHOR,
     license=ModuleDefaults.LICENSE

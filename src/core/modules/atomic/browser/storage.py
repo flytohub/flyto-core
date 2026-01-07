@@ -34,10 +34,14 @@ from ...schema import compose, presets
         presets.STORAGE_VALUE(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'value': {'type': 'any', 'description': 'The returned value'},
-        'keys': {'type': 'array', 'description': 'List of keys'},
-        'length': {'type': 'number', 'description': 'Length of data'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.storage.output.status.description'},
+        'value': {'type': 'any', 'description': 'The returned value',
+                'description_key': 'modules.browser.storage.output.value.description'},
+        'keys': {'type': 'array', 'description': 'List of keys',
+                'description_key': 'modules.browser.storage.output.keys.description'},
+        'length': {'type': 'number', 'description': 'Length of data',
+                'description_key': 'modules.browser.storage.output.length.description'}
     },
     examples=[
         {

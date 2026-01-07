@@ -34,9 +34,12 @@ from ...schema import compose, presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'selector': {'type': 'string', 'optional': True, 'description': 'CSS selector that was waited for'},
-        'duration_ms': {'type': 'number', 'optional': True, 'description': 'Wait duration in milliseconds'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.wait.output.status.description'},
+        'selector': {'type': 'string', 'optional': True, 'description': 'CSS selector that was waited for',
+                'description_key': 'modules.browser.wait.output.selector.description'},
+        'duration_ms': {'type': 'number', 'optional': True, 'description': 'Wait duration in milliseconds',
+                'description_key': 'modules.browser.wait.output.duration_ms.description'}
     },
     examples=[
         {

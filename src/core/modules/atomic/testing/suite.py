@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
             'label': 'Tests',
             'required': True,
             'description': 'Array of test definitions'
-        },
+        ,
+                'description_key': 'modules.testing.suite.run.params.tests.description'},
         'parallel': {
             'type': 'boolean',
             'label': 'Run in Parallel',
@@ -50,14 +51,20 @@ logger = logging.getLogger(__name__)
             'label': 'Max Failures',
             'default': 0,
             'description': '0 = no limit'
-        }
+        ,
+                'description_key': 'modules.testing.suite.run.params.max_failures.description'}
     },
     output_schema={
-        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'passed': {'type': 'number', 'description': 'Number of tests passed'},
-        'failed': {'type': 'number', 'description': 'Number of tests failed'},
-        'skipped': {'type': 'number', 'description': 'Number of tests skipped'},
-        'results': {'type': 'array', 'description': 'List of results'}
+        'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
+                'description_key': 'modules.testing.suite.run.output.ok.description'},
+        'passed': {'type': 'number', 'description': 'Number of tests passed',
+                'description_key': 'modules.testing.suite.run.output.passed.description'},
+        'failed': {'type': 'number', 'description': 'Number of tests failed',
+                'description_key': 'modules.testing.suite.run.output.failed.description'},
+        'skipped': {'type': 'number', 'description': 'Number of tests skipped',
+                'description_key': 'modules.testing.suite.run.output.skipped.description'},
+        'results': {'type': 'array', 'description': 'List of results',
+                'description_key': 'modules.testing.suite.run.output.results.description'}
     }
 )
 async def testing_suite_run(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -61,19 +61,23 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether all processes were stopped successfully'
-        },
+        ,
+                'description_key': 'modules.process.stop.output.ok.description'},
         'stopped': {
             'type': 'array',
             'description': 'List of stopped process info'
-        },
+        ,
+                'description_key': 'modules.process.stop.output.stopped.description'},
         'failed': {
             'type': 'array',
             'description': 'List of processes that failed to stop'
-        },
+        ,
+                'description_key': 'modules.process.stop.output.failed.description'},
         'count': {
             'type': 'number',
             'description': 'Number of processes stopped'
-        }
+        ,
+                'description_key': 'modules.process.stop.output.count.description'}
     },
     examples=[
         {

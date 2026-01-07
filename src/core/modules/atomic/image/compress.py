@@ -53,19 +53,23 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the compressed image'
-        },
+        ,
+                'description_key': 'modules.image.compress.output.output_path.description'},
         'original_size_bytes': {
             'type': 'number',
             'description': 'Original file size in bytes'
-        },
+        ,
+                'description_key': 'modules.image.compress.output.original_size_bytes.description'},
         'compressed_size_bytes': {
             'type': 'number',
             'description': 'Compressed file size in bytes'
-        },
+        ,
+                'description_key': 'modules.image.compress.output.compressed_size_bytes.description'},
         'compression_ratio': {
             'type': 'number',
             'description': 'Compression ratio (original/compressed)'
-        }
+        ,
+                'description_key': 'modules.image.compress.output.compression_ratio.description'}
     },
     examples=[
         {

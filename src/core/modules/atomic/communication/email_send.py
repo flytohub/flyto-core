@@ -68,15 +68,18 @@ logger = logging.getLogger(__name__)
         'sent': {
             'type': 'boolean',
             'description': 'Whether email was sent successfully'
-        },
+        ,
+                'description_key': 'modules.email.send.output.sent.description'},
         'message_id': {
             'type': 'string',
             'description': 'Email message ID'
-        },
+        ,
+                'description_key': 'modules.email.send.output.message_id.description'},
         'recipients': {
             'type': 'array',
             'description': 'List of recipients'
-        }
+        ,
+                'description_key': 'modules.email.send.output.recipients.description'}
     },
     examples=[
         {

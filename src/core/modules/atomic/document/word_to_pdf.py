@@ -53,15 +53,18 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the generated PDF file'
-        },
+        ,
+                'description_key': 'modules.word.to_pdf.output.output_path.description'},
         'file_size': {
             'type': 'number',
             'description': 'Size of the output file in bytes'
-        },
+        ,
+                'description_key': 'modules.word.to_pdf.output.file_size.description'},
         'method_used': {
             'type': 'string',
             'description': 'Conversion method that was used'
-        }
+        ,
+                'description_key': 'modules.word.to_pdf.output.method_used.description'}
     },
     examples=[
         {

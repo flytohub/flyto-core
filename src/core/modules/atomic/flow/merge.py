@@ -93,10 +93,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (merged/error)'},
-        'merged_data': {'type': 'any', 'description': 'Merged data based on strategy'},
-        'input_count': {'type': 'integer', 'description': 'Number of inputs received'},
-        'strategy': {'type': 'string', 'description': 'Strategy used for merging'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (merged/error)',
+                'description_key': 'modules.flow.merge.output.__event__.description'},
+        'merged_data': {'type': 'any', 'description': 'Merged data based on strategy',
+                'description_key': 'modules.flow.merge.output.merged_data.description'},
+        'input_count': {'type': 'integer', 'description': 'Number of inputs received',
+                'description_key': 'modules.flow.merge.output.input_count.description'},
+        'strategy': {'type': 'string', 'description': 'Strategy used for merging',
+                'description_key': 'modules.flow.merge.output.strategy.description'}
     },
 
     examples=[

@@ -44,23 +44,28 @@ from ...schema import compose, presets
         'result': {
             'type': 'string',
             'description': 'String with replacements applied'
-        },
+        ,
+                'description_key': 'modules.string.replace.output.result.description'},
         'original': {
             'type': 'string',
             'description': 'Original input string'
-        },
+        ,
+                'description_key': 'modules.string.replace.output.original.description'},
         'search': {
             'type': 'string',
             'description': 'Search string that was replaced'
-        },
+        ,
+                'description_key': 'modules.string.replace.output.search.description'},
         'replace': {
             'type': 'string',
             'description': 'Replacement string used'
-        },
+        ,
+                'description_key': 'modules.string.replace.output.replace.description'},
         'status': {
             'type': 'string',
             'description': 'Operation status'
-        }
+        ,
+                'description_key': 'modules.string.replace.output.status.description'}
     }
 )
 async def string_replace(context: Dict[str, Any]) -> Dict[str, Any]:

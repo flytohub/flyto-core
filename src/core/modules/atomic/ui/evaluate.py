@@ -143,35 +143,43 @@ logger = logging.getLogger(__name__)
         'ok': {
             'type': 'boolean',
             'description': 'Whether evaluation succeeded'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.ok.description'},
         'passed': {
             'type': 'boolean',
             'description': 'Whether UI meets minimum score threshold'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.passed.description'},
         'overall_score': {
             'type': 'number',
             'description': 'Overall UI quality score (0-100)'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.overall_score.description'},
         'scores': {
             'type': 'object',
             'description': 'Scores by evaluation criteria'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.scores.description'},
         'strengths': {
             'type': 'array',
             'description': 'List of UI strengths'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.strengths.description'},
         'issues': {
             'type': 'array',
             'description': 'List of issues found with severity'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.issues.description'},
         'recommendations': {
             'type': 'array',
             'description': 'Specific improvement recommendations'
-        },
+        ,
+                'description_key': 'modules.ui.evaluate.output.recommendations.description'},
         'summary': {
             'type': 'string',
             'description': 'Executive summary of evaluation'
-        }
+        ,
+                'description_key': 'modules.ui.evaluate.output.summary.description'}
     },
     examples=[
         {

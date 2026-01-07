@@ -38,9 +38,12 @@ from ...schema import compose, presets
         presets.COOKIE_EXPIRES(),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'cookies': {'type': 'array', 'description': 'Browser cookies'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.cookies.output.status.description'},
+        'cookies': {'type': 'array', 'description': 'Browser cookies',
+                'description_key': 'modules.browser.cookies.output.cookies.description'},
+        'count': {'type': 'number', 'description': 'Number of items',
+                'description_key': 'modules.browser.cookies.output.count.description'}
     },
     examples=[
         {

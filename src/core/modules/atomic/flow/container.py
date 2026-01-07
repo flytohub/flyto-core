@@ -84,31 +84,39 @@ MAX_CONTAINER_DEPTH = 5
         '__event__': {
             'type': 'string',
             'description': 'Event for routing (success/error)'
-        },
+        ,
+                'description_key': 'modules.flow.container.output.__event__.description'},
         'outputs': {
             'type': 'object',
             'description': 'Output values by port',
+                'description_key': 'modules.flow.container.output.outputs.description',
             'properties': {
-                'success': {'type': 'object', 'description': 'Whether the operation completed successfully'},
-                'error': {'type': 'object', 'description': 'Error message if operation failed'}
+                'success': {'type': 'object', 'description': 'Whether the operation completed successfully',
+                'description_key': 'modules.flow.container.output.outputs.properties.success.description'},
+                'error': {'type': 'object', 'description': 'Error message if operation failed',
+                'description_key': 'modules.flow.container.output.outputs.properties.error.description'}
             }
         },
         'subflow_result': {
             'type': 'object',
             'description': 'Result from subflow execution'
-        },
+        ,
+                'description_key': 'modules.flow.container.output.subflow_result.description'},
         'exported_variables': {
             'type': 'object',
             'description': 'Variables exported from subflow'
-        },
+        ,
+                'description_key': 'modules.flow.container.output.exported_variables.description'},
         'node_count': {
             'type': 'integer',
             'description': 'Number of nodes in subflow'
-        },
+        ,
+                'description_key': 'modules.flow.container.output.node_count.description'},
         'execution_time_ms': {
             'type': 'number',
             'description': 'Total subflow execution time in milliseconds'
-        }
+        ,
+                'description_key': 'modules.flow.container.output.execution_time_ms.description'}
     },
 
     examples=[

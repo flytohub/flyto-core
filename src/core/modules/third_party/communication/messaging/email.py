@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'SMTP Server',
             'description': 'SMTP server hostname (e.g., smtp.gmail.com)',
+                'description_key': 'modules.notification.email.send.params.smtp_server.description',
             'placeholder': '${env.SMTP_SERVER}',
             'required': True
         },
@@ -56,6 +57,7 @@ logger = logging.getLogger(__name__)
             'type': 'number',
             'label': 'SMTP Port',
             'description': 'SMTP port (587 for TLS, 465 for SSL)',
+                'description_key': 'modules.notification.email.send.params.smtp_port.description',
             'default': 587,
             'required': False
         },
@@ -63,6 +65,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Username',
             'description': 'SMTP username',
+                'description_key': 'modules.notification.email.send.params.username.description',
             'placeholder': '${env.SMTP_USERNAME}',
             'required': True
         },
@@ -70,6 +73,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Password',
             'description': 'SMTP password (use env variable!)',
+                'description_key': 'modules.notification.email.send.params.password.description',
             'placeholder': '${env.SMTP_PASSWORD}',
             'required': True,
             'sensitive': True
@@ -78,6 +82,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'From Email',
             'description': 'Sender email address',
+                'description_key': 'modules.notification.email.send.params.from_email.description',
             'placeholder': 'bot@example.com',
             'required': True
         },
@@ -85,6 +90,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'To Email',
             'description': 'Recipient email address',
+                'description_key': 'modules.notification.email.send.params.to_email.description',
             'placeholder': 'user@example.com',
             'required': True
         },
@@ -92,6 +98,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Subject',
             'description': 'Email subject',
+                'description_key': 'modules.notification.email.send.params.subject.description',
             'placeholder': 'Workflow Alert',
             'required': True
         },
@@ -99,6 +106,7 @@ logger = logging.getLogger(__name__)
             'type': 'text',
             'label': 'Body',
             'description': 'Email body (HTML supported)',
+                'description_key': 'modules.notification.email.send.params.body.description',
             'placeholder': 'Your workflow has completed.',
             'required': True
         },
@@ -106,14 +114,18 @@ logger = logging.getLogger(__name__)
             'type': 'boolean',
             'label': 'HTML Body',
             'description': 'Send body as HTML',
+                'description_key': 'modules.notification.email.send.params.html.description',
             'default': False,
             'required': False
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'sent': {'type': 'boolean', 'description': 'Whether notification was sent'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.notification.email.send.output.status.description'},
+        'sent': {'type': 'boolean', 'description': 'Whether notification was sent',
+                'description_key': 'modules.notification.email.send.output.sent.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.notification.email.send.output.message.description'}
     },
     examples=[
         {

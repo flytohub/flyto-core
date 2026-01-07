@@ -61,11 +61,13 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite']
         'inserted_count': {
             'type': 'number',
             'description': 'Number of rows inserted'
-        },
+        ,
+                'description_key': 'modules.database.insert.output.inserted_count.description'},
         'returning_data': {
             'type': 'array',
             'description': 'Returned data from insert'
-        }
+        ,
+                'description_key': 'modules.database.insert.output.returning_data.description'}
     },
     examples=[
         {

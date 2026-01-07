@@ -100,15 +100,21 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'response': {'type': 'string', 'description': 'Response from the operation'},
-        'model': {'type': 'string', 'description': 'Model name or identifier'},
+        'response': {'type': 'string', 'description': 'Response from the operation',
+                'description_key': 'modules.api.openai.chat.output.response.description'},
+        'model': {'type': 'string', 'description': 'Model name or identifier',
+                'description_key': 'modules.api.openai.chat.output.model.description'},
         'usage': {
             'type': 'object',
             'description': 'Token usage statistics',
+                'description_key': 'modules.api.openai.chat.output.usage.description',
             'properties': {
-                'prompt_tokens': {'type': 'number', 'description': 'The prompt tokens'},
-                'completion_tokens': {'type': 'number', 'description': 'The completion tokens'},
-                'total_tokens': {'type': 'number', 'description': 'The total tokens'}
+                'prompt_tokens': {'type': 'number', 'description': 'The prompt tokens',
+                'description_key': 'modules.api.openai.chat.output.usage.properties.prompt_tokens.description'},
+                'completion_tokens': {'type': 'number', 'description': 'The completion tokens',
+                'description_key': 'modules.api.openai.chat.output.usage.properties.completion_tokens.description'},
+                'total_tokens': {'type': 'number', 'description': 'The total tokens',
+                'description_key': 'modules.api.openai.chat.output.usage.properties.total_tokens.description'}
             }
         }
     },

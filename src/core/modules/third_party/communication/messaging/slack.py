@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Webhook URL',
             'description': 'Slack webhook URL (from env.SLACK_WEBHOOK_URL or direct input)',
+                'description_key': 'modules.notification.slack.send_message.params.webhook_url.description',
             'placeholder': '${env.SLACK_WEBHOOK_URL}',
             'required': False
         },
@@ -57,6 +58,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Message Text',
             'description': 'The message to send',
+                'description_key': 'modules.notification.slack.send_message.params.text.description',
             'placeholder': 'Hello from Flyto2!',
             'required': True
         },
@@ -64,6 +66,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Channel',
             'description': 'Override default channel (optional)',
+                'description_key': 'modules.notification.slack.send_message.params.channel.description',
             'placeholder': '#general',
             'required': False
         },
@@ -71,6 +74,7 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Username',
             'description': 'Override bot username (optional)',
+                'description_key': 'modules.notification.slack.send_message.params.username.description',
             'placeholder': 'Flyto2 Bot',
             'required': False
         },
@@ -78,14 +82,18 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Icon Emoji',
             'description': 'Bot icon emoji (optional)',
+                'description_key': 'modules.notification.slack.send_message.params.icon_emoji.description',
             'placeholder': ':robot_face:',
             'required': False
         }
     },
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'sent': {'type': 'boolean', 'description': 'Whether notification was sent'},
-        'message': {'type': 'string', 'description': 'Result message describing the outcome'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.notification.slack.send_message.output.status.description'},
+        'sent': {'type': 'boolean', 'description': 'Whether notification was sent',
+                'description_key': 'modules.notification.slack.send_message.output.sent.description'},
+        'message': {'type': 'string', 'description': 'Result message describing the outcome',
+                'description_key': 'modules.notification.slack.send_message.output.message.description'}
     },
     examples=[
         {

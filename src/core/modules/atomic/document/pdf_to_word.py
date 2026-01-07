@@ -52,15 +52,18 @@ logger = logging.getLogger(__name__)
         'output_path': {
             'type': 'string',
             'description': 'Path to the generated Word document'
-        },
+        ,
+                'description_key': 'modules.pdf.to_word.output.output_path.description'},
         'page_count': {
             'type': 'number',
             'description': 'Number of pages converted'
-        },
+        ,
+                'description_key': 'modules.pdf.to_word.output.page_count.description'},
         'file_size': {
             'type': 'number',
             'description': 'Size of the output file in bytes'
-        }
+        ,
+                'description_key': 'modules.pdf.to_word.output.file_size.description'}
     },
     examples=[
         {

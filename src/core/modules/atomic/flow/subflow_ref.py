@@ -80,10 +80,14 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        '__event__': {'type': 'string', 'description': 'Event for routing (success/error)'},
-        'result': {'type': 'any', 'description': 'Subflow execution result'},
-        'execution_id': {'type': 'string', 'description': 'Subflow execution ID (for spawn/async)'},
-        'workflow_ref': {'type': 'string', 'description': 'Referenced workflow'}
+        '__event__': {'type': 'string', 'description': 'Event for routing (success/error)',
+                'description_key': 'modules.flow.subflow.output.__event__.description'},
+        'result': {'type': 'any', 'description': 'Subflow execution result',
+                'description_key': 'modules.flow.subflow.output.result.description'},
+        'execution_id': {'type': 'string', 'description': 'Subflow execution ID (for spawn/async)',
+                'description_key': 'modules.flow.subflow.output.execution_id.description'},
+        'workflow_ref': {'type': 'string', 'description': 'Referenced workflow',
+                'description_key': 'modules.flow.subflow.output.workflow_ref.description'}
     },
 
     examples=[

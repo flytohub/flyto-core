@@ -79,9 +79,12 @@ from ...types import NodeType, EdgeType, DataType
     ),
 
     output_schema={
-        'provider': {'type': 'string', 'description': 'LLM provider name'},
-        'model': {'type': 'string', 'description': 'Model identifier'},
-        'config': {'type': 'object', 'description': 'Full model configuration'}
+        'provider': {'type': 'string', 'description': 'LLM provider name',
+                'description_key': 'modules.ai.model.output.provider.description'},
+        'model': {'type': 'string', 'description': 'Model identifier',
+                'description_key': 'modules.ai.model.output.model.description'},
+        'config': {'type': 'object', 'description': 'Full model configuration',
+                'description_key': 'modules.ai.model.output.config.description'}
     },
 
     examples=[

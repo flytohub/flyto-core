@@ -67,9 +67,12 @@ from ...schema import compose, presets, field
         ),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'requests': {'type': 'array', 'description': 'Captured network requests'},
-        'blocked_count': {'type': 'number', 'description': 'The blocked count'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.network.output.status.description'},
+        'requests': {'type': 'array', 'description': 'Captured network requests',
+                'description_key': 'modules.browser.network.output.requests.description'},
+        'blocked_count': {'type': 'number', 'description': 'The blocked count',
+                'description_key': 'modules.browser.network.output.blocked_count.description'}
     },
     examples=[
         {

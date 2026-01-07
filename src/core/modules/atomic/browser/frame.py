@@ -57,10 +57,14 @@ from ...schema import compose, presets, field
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
-        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
-        'frame_url': {'type': 'string', 'description': 'Frame URL'},
-        'frame_name': {'type': 'string', 'description': 'The frame name'},
-        'frames': {'type': 'array', 'description': 'List of frames'}
+        'status': {'type': 'string', 'description': 'Operation status (success/error)',
+                'description_key': 'modules.browser.frame.output.status.description'},
+        'frame_url': {'type': 'string', 'description': 'Frame URL',
+                'description_key': 'modules.browser.frame.output.frame_url.description'},
+        'frame_name': {'type': 'string', 'description': 'The frame name',
+                'description_key': 'modules.browser.frame.output.frame_name.description'},
+        'frames': {'type': 'array', 'description': 'List of frames',
+                'description_key': 'modules.browser.frame.output.frames.description'}
     },
     examples=[
         {

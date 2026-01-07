@@ -36,6 +36,7 @@ from ..integration import SalesforceIntegration
             "type": "string",
             "label": "Instance URL",
             "description": "Salesforce instance URL",
+                "description_key": "modules.integration.salesforce.create_record.params.instance_url.description",
             "placeholder": "${env.SALESFORCE_INSTANCE_URL}",
             "required": True,
         },
@@ -50,6 +51,7 @@ from ..integration import SalesforceIntegration
             "type": "object",
             "label": "Record Data",
             "description": "Field values for the record",
+                "description_key": "modules.integration.salesforce.create_record.params.data.description",
             "required": True,
         },
         "access_token": {

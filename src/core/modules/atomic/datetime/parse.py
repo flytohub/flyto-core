@@ -46,14 +46,22 @@ import time
         presets.DATETIME_FORMAT(),
     ),
     output_schema={
-        'result': {'type': 'string', 'description': 'The operation result'},
-        'timestamp': {'type': 'number', 'description': 'Unix timestamp'},
-        'year': {'type': 'number', 'description': 'Year component'},
-        'month': {'type': 'number', 'description': 'Month component'},
-        'day': {'type': 'number', 'description': 'Day component'},
-        'hour': {'type': 'number', 'description': 'Hour component'},
-        'minute': {'type': 'number', 'description': 'Minute component'},
-        'second': {'type': 'number', 'description': 'Second component'}
+        'result': {'type': 'string', 'description': 'The operation result',
+                'description_key': 'modules.datetime.parse.output.result.description'},
+        'timestamp': {'type': 'number', 'description': 'Unix timestamp',
+                'description_key': 'modules.datetime.parse.output.timestamp.description'},
+        'year': {'type': 'number', 'description': 'Year component',
+                'description_key': 'modules.datetime.parse.output.year.description'},
+        'month': {'type': 'number', 'description': 'Month component',
+                'description_key': 'modules.datetime.parse.output.month.description'},
+        'day': {'type': 'number', 'description': 'Day component',
+                'description_key': 'modules.datetime.parse.output.day.description'},
+        'hour': {'type': 'number', 'description': 'Hour component',
+                'description_key': 'modules.datetime.parse.output.hour.description'},
+        'minute': {'type': 'number', 'description': 'Minute component',
+                'description_key': 'modules.datetime.parse.output.minute.description'},
+        'second': {'type': 'number', 'description': 'Second component',
+                'description_key': 'modules.datetime.parse.output.second.description'}
     },
     examples=[
         {

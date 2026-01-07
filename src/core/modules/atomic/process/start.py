@@ -71,35 +71,43 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
         'ok': {
             'type': 'boolean',
             'description': 'Whether process started successfully'
-        },
+        ,
+                'description_key': 'modules.process.start.output.ok.description'},
         'pid': {
             'type': 'number',
             'description': 'Process ID'
-        },
+        ,
+                'description_key': 'modules.process.start.output.pid.description'},
         'process_id': {
             'type': 'string',
             'description': 'Internal process identifier for process.stop'
-        },
+        ,
+                'description_key': 'modules.process.start.output.process_id.description'},
         'name': {
             'type': 'string',
             'description': 'Process name'
-        },
+        ,
+                'description_key': 'modules.process.start.output.name.description'},
         'command': {
             'type': 'string',
             'description': 'The executed command'
-        },
+        ,
+                'description_key': 'modules.process.start.output.command.description'},
         'cwd': {
             'type': 'string',
             'description': 'Working directory'
-        },
+        ,
+                'description_key': 'modules.process.start.output.cwd.description'},
         'started_at': {
             'type': 'string',
             'description': 'ISO timestamp when process started'
-        },
+        ,
+                'description_key': 'modules.process.start.output.started_at.description'},
         'initial_output': {
             'type': 'string',
             'description': 'Initial stdout output (if wait_for_output was used)'
-        }
+        ,
+                'description_key': 'modules.process.start.output.initial_output.description'}
     },
     examples=[
         {

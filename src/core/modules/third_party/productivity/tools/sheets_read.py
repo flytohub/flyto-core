@@ -83,9 +83,12 @@ logger = logging.getLogger(__name__)
         }
     },
     output_schema={
-        'values': {'type': 'array', 'description': 'Array of rows (each row is array of values)'},
-        'data': {'type': 'array', 'description': 'Array of row objects (if include_header=true)'},
-        'row_count': {'type': 'number', 'description': 'Number of rows read'}
+        'values': {'type': 'array', 'description': 'Array of rows (each row is array of values)',
+                'description_key': 'modules.api.google_sheets.read.output.values.description'},
+        'data': {'type': 'array', 'description': 'Array of row objects (if include_header=true)',
+                'description_key': 'modules.api.google_sheets.read.output.data.description'},
+        'row_count': {'type': 'number', 'description': 'Number of rows read',
+                'description_key': 'modules.api.google_sheets.read.output.row_count.description'}
     },
     examples=[
         {

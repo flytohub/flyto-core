@@ -58,7 +58,8 @@ logger = logging.getLogger(__name__)
         'updated_count': {
             'type': 'number',
             'description': 'Number of rows updated'
-        }
+        ,
+                'description_key': 'modules.database.update.output.updated_count.description'}
     },
     examples=[
         {
