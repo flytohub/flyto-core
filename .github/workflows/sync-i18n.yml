@@ -27,12 +27,7 @@ jobs:
           token: ${{ secrets.FLYTO_I18N_TOKEN }}
           repository: flytohub/flyto-i18n
           event-type: sync-from-core
-          client-payload: |
-            {
-              "ref": "${{ github.sha }}",
-              "actor": "${{ github.actor }}",
-              "message": "${{ github.event.head_commit.message }}"
-            }
+          client-payload: '{"ref": "${{ github.sha }}", "actor": "${{ github.actor }}"}'
 
       - name: Summary
         run: |
