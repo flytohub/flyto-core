@@ -19,26 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get changed modules
-        id: changes
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Manual trigger - syncing all keys"
-          else
-            # Check if module files changed
-            CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'src/core/modules/**/*.py' | wc -l)
-            if [ "$CHANGED" -gt "0" ]; then
-              echo "changed=true" >> $GITHUB_OUTPUT
-              echo "Found $CHANGED changed module files"
-            else
-              echo "changed=false" >> $GITHUB_OUTPUT
-              echo "No module files changed"
-            fi
-          fi
-
+      # No need to check for changes - the paths filter already ensures
+      # this workflow only runs when src/core/modules/**/*.py changes
       - name: Trigger flyto-i18n sync
-        if: steps.changes.outputs.changed == 'true'
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.FLYTO_I18N_TOKEN }}
@@ -55,10 +38,6 @@ jobs:
         run: |
           echo "## i18n Sync Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.changes.outputs.changed }}" = "true" ]; then
-            echo "✅ Triggered sync to flyto-i18n" >> $GITHUB_STEP_SUMMARY
-            echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-            echo "- Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⏭️ No module changes detected, skipping sync" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "✅ Triggered sync to flyto-i18n" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
