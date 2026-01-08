@@ -446,8 +446,154 @@ class ErrorMessages:
     API_KEY_MISSING: str = "API key not found. Please set {env_var} environment variable."
     TIMEOUT_ERROR: str = "Module {module_id} timed out after {timeout}s"
     RETRY_EXHAUSTED: str = "Module {module_id} failed after {attempts} attempts"
+    CAPABILITY_DENIED: str = "Module {module_id} requires capability '{capability}' which is denied in {env} environment"
 
     @classmethod
     def format(cls, message: str, **kwargs) -> str:
         """Format error message with parameters"""
         return message.format(**kwargs)
+
+
+# =============================================================================
+# Module Capabilities
+# =============================================================================
+
+class Capability:
+    """
+    Module capability declarations.
+
+    Capabilities describe what a module can do (dangerous operations).
+    Production policy enforces which capabilities are allowed in each environment.
+
+    Usage in module decorator:
+        @register_module(
+            module_id='shell.exec',
+            capabilities=[Capability.SHELL_EXEC, Capability.FILE_SYSTEM_WRITE]
+        )
+    """
+
+    # Network capabilities
+    NETWORK_PUBLIC = "network.public"        # Can access public internet
+    NETWORK_PRIVATE = "network.private"      # Can access private/internal networks
+    NETWORK_LOCALHOST = "network.localhost"  # Can access localhost
+
+    # File system capabilities
+    FILE_SYSTEM_READ = "filesystem.read"     # Can read files
+    FILE_SYSTEM_WRITE = "filesystem.write"   # Can write files
+
+    # Shell/Process capabilities
+    SHELL_EXEC = "shell.exec"                # Can execute shell commands
+    PROCESS_SPAWN = "process.spawn"          # Can spawn child processes
+
+    # Browser/Desktop capabilities
+    BROWSER_CONTROL = "browser.control"      # Can control browser
+    DESKTOP_CONTROL = "desktop.control"      # Can control desktop (mouse, keyboard)
+    SCREENSHOT = "screenshot"                # Can take screenshots
+
+    # Credential/Secret capabilities
+    CREDENTIAL_ACCESS = "credential.access"  # Can access stored credentials
+
+    # AI capabilities
+    AI_EXTERNAL = "ai.external"              # Can call external AI services
+
+    # Database capabilities
+    DATABASE_READ = "database.read"          # Can read from databases
+    DATABASE_WRITE = "database.write"        # Can write to databases
+
+
+class ProductionPolicy:
+    """
+    Capability enforcement policy for each environment.
+
+    Defines which capabilities are DENIED in each environment.
+    Default is to allow - only explicitly denied capabilities are blocked.
+    """
+
+    # Capabilities denied in production environment
+    PRODUCTION_DENIED = {
+        Capability.NETWORK_PRIVATE,
+        Capability.NETWORK_LOCALHOST,
+        Capability.SHELL_EXEC,
+        Capability.PROCESS_SPAWN,
+        Capability.DESKTOP_CONTROL,
+    }
+
+    # Capabilities denied in staging environment
+    STAGING_DENIED = {
+        Capability.SHELL_EXEC,
+        Capability.PROCESS_SPAWN,
+        Capability.DESKTOP_CONTROL,
+    }
+
+    # Development allows everything (empty set)
+    DEVELOPMENT_DENIED: set = set()
+
+    # Local allows everything
+    LOCAL_DENIED: set = set()
+
+    @classmethod
+    def get_denied_capabilities(cls, env: str) -> set:
+        """
+        Get set of denied capabilities for an environment.
+
+        Args:
+            env: Environment name (production/staging/development/local)
+
+        Returns:
+            Set of denied capability strings
+        """
+        env_lower = env.lower()
+        if env_lower == "production":
+            return cls.PRODUCTION_DENIED
+        elif env_lower == "staging":
+            return cls.STAGING_DENIED
+        elif env_lower == "development":
+            return cls.DEVELOPMENT_DENIED
+        elif env_lower == "local":
+            return cls.LOCAL_DENIED
+        else:
+            # Unknown environment - use production policy (safest)
+            return cls.PRODUCTION_DENIED
+
+    @classmethod
+    def is_capability_allowed(
+        cls,
+        capability: str,
+        env: str
+    ) -> bool:
+        """
+        Check if a capability is allowed in an environment.
+
+        Args:
+            capability: Capability string
+            env: Environment name
+
+        Returns:
+            True if allowed, False if denied
+        """
+        denied = cls.get_denied_capabilities(env)
+        return capability not in denied
+
+    @classmethod
+    def check_capabilities(
+        cls,
+        capabilities: list,
+        env: str
+    ) -> tuple:
+        """
+        Check if all capabilities are allowed.
+
+        Args:
+            capabilities: List of capability strings
+            env: Environment name
+
+        Returns:
+            Tuple of (all_allowed: bool, denied_capabilities: list)
+        """
+        if not capabilities:
+            return True, []
+
+        denied = cls.get_denied_capabilities(env)
+        denied_caps = [cap for cap in capabilities if cap in denied]
+
+        return len(denied_caps) == 0, denied_caps

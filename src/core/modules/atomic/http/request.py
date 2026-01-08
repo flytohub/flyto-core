@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='http',
-    tags=['http', 'request', 'api', 'rest', 'client', 'atomic'],
+    tags=['http', 'request', 'api', 'rest', 'client', 'atomic', 'ssrf_protected'],
     label='HTTP Request',
     label_key='modules.http.request.label',
     description='Send HTTP request and receive response',
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,  # May contain auth tokens
-    required_permissions=['network.http'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     # Schema-driven params
     params_schema=compose(

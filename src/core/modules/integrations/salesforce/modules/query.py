@@ -18,7 +18,7 @@ from ..integration import SalesforceIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "salesforce", "crm", "query", "soql"],
+    tags=["integration", "salesforce", "crm", "query", "soql", "ssrf_protected"],
     label="Salesforce Query",
     label_key="modules.integration.salesforce.query.label",
     description="Execute SOQL query in Salesforce",
@@ -27,10 +27,11 @@ from ..integration import SalesforceIntegration
     color="#00A1E0",
     input_types=["any"],
     output_types=["any"],
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['SALESFORCE_CLIENT_ID', 'SALESFORCE_CLIENT_SECRET'],
     params_schema={
         "instance_url": {
             "type": "string",
@@ -63,7 +64,7 @@ from ..integration import SalesforceIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
         "records": {"type": "array"},
         "total_size": {"type": "number"},
     },
@@ -90,7 +91,7 @@ class SalesforceQueryModule(BaseModule):
     module_name = "Salesforce Query"
     module_description = "Execute SOQL query in Salesforce"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if not self.params.get("instance_url"):
             raise ValueError("Instance URL required")
         if not self.params.get("soql"):

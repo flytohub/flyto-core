@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.type',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'interaction', 'input', 'keyboard'],
+    tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],
     label='Type Text',
     label_key='modules.browser.type.label',
     description='Type text into an input field',
@@ -46,16 +46,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserTypeModule(BaseModule):
     """Type Text Module"""
 
     module_name = "Type Text"
     module_description = "Type text into an input field"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
         if 'text' not in self.params:

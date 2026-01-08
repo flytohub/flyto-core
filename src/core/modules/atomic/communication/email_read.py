@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='communication',
     subcategory='email',
-    tags=['email', 'imap', 'read', 'fetch', 'inbox'],
+    tags=['email', 'imap', 'read', 'fetch', 'inbox', 'ssrf_protected', 'path_restricted'],
     label='Read Email',
     label_key='modules.email.read.label',
     description='Read emails from IMAP server',
@@ -35,14 +35,15 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*', 'array.*'],
     can_receive_from=['*'],
 
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.imap'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.EMAIL_FOLDER(),

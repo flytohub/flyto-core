@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='pdf',
-    tags=['pdf', 'document', 'parse', 'extract', 'text'],
+    tags=['pdf', 'document', 'parse', 'extract', 'text', 'path_restricted'],
     label='Parse PDF',
     label_key='modules.pdf.parse.label',
     description='Extract text and metadata from PDF files',
@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=120,
+    timeout_ms=120000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.read'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.PDF_PATH(),

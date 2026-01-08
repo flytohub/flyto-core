@@ -84,7 +84,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -122,7 +122,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class MergeModule(BaseModule):
     """
@@ -138,9 +139,7 @@ class MergeModule(BaseModule):
 
     module_name = "Merge"
     module_description = "Merge multiple inputs into single output"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.strategy = self.params.get('strategy', 'all')
         self.input_count = self.params.get('input_count', 2)
 

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='ai',
     subcategory='ai',
-    tags=['ai', 'openai', 'gpt', 'chat', 'llm'],
+    tags=['ai', 'openai', 'gpt', 'chat', 'llm', 'ssrf_protected'],
     label='OpenAI Chat',
     label_key='modules.api.openai.chat.label',
     description='Send a chat message to OpenAI GPT models',
@@ -35,15 +35,16 @@ logger = logging.getLogger(__name__)
     can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     # Phase 2: Execution settings
-    timeout=60,  # AI responses can take time
+    timeout_ms=60000,  # AI responses can take time
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['OPENAI_API_KEY'],
     handles_sensitive_data=True,  # User prompts may contain PII
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
 
     params_schema={
         'prompt': {
@@ -142,7 +143,7 @@ logger = logging.getLogger(__name__)
 class OpenAIChatModule(BaseModule):
     """OpenAI Chat Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.prompt = self.params.get('prompt')
         self.model = self.params.get('model', APIEndpoints.DEFAULT_OPENAI_MODEL)
         self.temperature = self.params.get('temperature', 0.7)
@@ -224,15 +225,16 @@ class OpenAIChatModule(BaseModule):
     can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     # Phase 2: Execution settings
-    timeout=120,  # Image generation takes longer
+    timeout_ms=120000,  # Image generation takes longer
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['OPENAI_API_KEY'],
     handles_sensitive_data=False,
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
 
     params_schema={
         'prompt': {
@@ -338,7 +340,7 @@ class OpenAIChatModule(BaseModule):
 class OpenAIImageModule(BaseModule):
     """DALL-E Image Generation Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.prompt = self.params.get('prompt')
         self.size = self.params.get('size', '1024x1024')
         self.model = self.params.get('model', 'dall-e-3')

@@ -16,7 +16,7 @@ from ...schema import compose, presets
     version='1.0.0',
     category='file',
     subcategory='operations',
-    tags=['file', 'move', 'rename'],
+    tags=['file', 'move', 'rename', 'path_restricted'],
     label='Move File',
     label_key='modules.file.move.label',
     description='Move or rename a file',
@@ -31,14 +31,14 @@ from ...schema import compose, presets
 
     can_receive_from=['*'],
     can_connect_to=['file.*', 'data.*', 'document.*', 'image.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
-    timeout=10,
+    timeout_ms=10000,
     retryable=False,
     concurrent_safe=False,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=['filesystem.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -75,7 +75,7 @@ from ...schema import compose, presets
 class FileMoveModule(BaseModule):
     """Move File Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.source = self.params.get('source')
         self.destination = self.params.get('destination')
 

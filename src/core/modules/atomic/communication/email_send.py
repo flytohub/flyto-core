@@ -39,15 +39,16 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.smtp'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.EMAIL_TO(),

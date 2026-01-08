@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError
 
 
 @register_module(
@@ -30,7 +31,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -82,13 +83,9 @@ async def array_flatten(context: Dict[str, Any]) -> Dict[str, Any]:
     depth = params.get('depth', 1)
 
     if not isinstance(array, list):
-        return {
-            'ok': False,
-            'error': 'array must be a list',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError("array must be a list", field="array", expected_type="list")
 
-    def flatten(arr, d):
+    def flatten_recursive(arr, d):
         if d == 0:
             return arr
 
@@ -96,16 +93,19 @@ async def array_flatten(context: Dict[str, Any]) -> Dict[str, Any]:
         for item in arr:
             if isinstance(item, list):
                 if d == -1:
-                    result.extend(flatten(item, -1))
+                    result.extend(flatten_recursive(item, -1))
                 else:
-                    result.extend(flatten(item, d - 1))
+                    result.extend(flatten_recursive(item, d - 1))
             else:
                 result.append(item)
         return result
 
-    result = flatten(array, depth)
+    result = flatten_recursive(array, depth)
 
     return {
-        'result': result,
-        'length': len(result)
+        'ok': True,
+        'data': {
+            'result': result,
+            'length': len(result)
+        }
     }

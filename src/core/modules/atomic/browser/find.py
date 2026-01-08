@@ -15,7 +15,7 @@ from ..element_registry import get_element_registry
     version='1.0.0',
     category='browser',
     subcategory='browser',
-    tags=['browser', 'find', 'element', 'selector'],
+    tags=['browser', 'find', 'element', 'selector', 'ssrf_protected'],
     label='Find Elements',
     label_key='modules.browser.find.label',
     description='Find elements in page and return element ID list',
@@ -30,7 +30,7 @@ from ..element_registry import get_element_registry
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    # Phase 2: Execution settings
-    timeout=10,  # Finding elements should complete within 10s
+    timeout_ms=10000,  # Finding elements should complete within 10s
     retryable=True,  # Can retry if elements not ready
     max_retries=2,
     concurrent_safe=True,  # Stateless find operation
@@ -38,7 +38,7 @@ from ..element_registry import get_element_registry
     # Phase 2: Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['browser.read'],
+    required_permissions=['browser.read', 'browser.write'],
 
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='div.result-item'),
@@ -89,7 +89,7 @@ class BrowserFindModule(BaseModule):
     module_description = "Find elements in page and return element ID list"
     required_permission = "browser.read"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing parameter: selector")
 

@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.hover',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'interaction', 'hover', 'mouse'],
+    tags=['browser', 'interaction', 'hover', 'mouse', 'ssrf_protected'],
     label='Hover Element',
     label_key='modules.browser.hover.label',
     description='Hover mouse over an element',
@@ -48,16 +48,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserHoverModule(BaseModule):
     """Hover Element Module"""
 
     module_name = "Hover Element"
     module_description = "Hover mouse over an element"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
         self.selector = self.params['selector']

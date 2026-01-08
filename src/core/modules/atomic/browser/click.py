@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.click',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'interaction', 'click'],
+    tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
     label_key='modules.browser.click.label',
     description='Click an element on the page',
@@ -47,16 +47,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserClickModule(BaseModule):
     """Click Element Module"""
 
     module_name = "Click Element"
     module_description = "Click an element on the page"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
         self.selector = self.params['selector']

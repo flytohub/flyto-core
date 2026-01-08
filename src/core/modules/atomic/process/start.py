@@ -46,14 +46,14 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=False,
-    concurrent_safe=True,
+    concurrent_safe=False,  # Process management requires sequential execution
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['process.start'],
+    required_permissions=['shell.execute'],
 
     # Schema-driven params
     params_schema=compose(

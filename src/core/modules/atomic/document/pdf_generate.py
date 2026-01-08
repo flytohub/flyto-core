@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='pdf',
-    tags=['pdf', 'generate', 'create', 'document', 'report'],
+    tags=['pdf', 'generate', 'create', 'document', 'report', 'path_restricted'],
     label='Generate PDF',
     label_key='modules.pdf.generate.label',
     description='Generate PDF files from HTML content or text',
@@ -32,14 +32,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['file.*'],
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.write'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.PDF_CONTENT(),

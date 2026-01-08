@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='image',
     subcategory='transform',
-    tags=['image', 'resize', 'scale', 'transform'],
+    tags=['image', 'resize', 'scale', 'transform', 'path_restricted'],
     label='Resize Image',
     label_key='modules.image.resize.label',
     description='Resize images to specified dimensions with various algorithms',
@@ -32,14 +32,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['file.*', 'image.*'],
     can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
 
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.IMAGE_INPUT_PATH(),

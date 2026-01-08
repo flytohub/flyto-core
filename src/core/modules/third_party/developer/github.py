@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
     version='1.0.0',
     category='api',
-    tags=['api', 'github', 'repository', 'integration'],
+    tags=['api', 'github', 'repository', 'integration', 'ssrf_protected'],
     label='Get GitHub Repository',
     label_key='modules.api.github.get_repo.label',
     description='Get information about a GitHub repository',
@@ -35,13 +35,14 @@ logger = logging.getLogger(__name__)
     output_types=['json', 'object'],
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple API calls can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs GITHUB_TOKEN (recommended)
+    requires_credentials=True,
+    credential_keys=['GITHUB_TOKEN'],
     handles_sensitive_data=False,  # Repository data is typically public
     required_permissions=['network.access'],
 
@@ -108,7 +109,7 @@ class GitHubGetRepoModule(BaseModule):
     module_name = "Get GitHub Repository"
     module_description = "Fetch information about a GitHub repository"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'owner' not in self.params or not self.params['owner']:
             raise ValueError("Missing required parameter: owner")
         if 'repo' not in self.params or not self.params['repo']:
@@ -159,7 +160,7 @@ class GitHubGetRepoModule(BaseModule):
     can_receive_from=['*'],
     version='1.0.0',
     category='api',
-    tags=['api', 'github', 'issues', 'integration'],
+    tags=['api', 'github', 'issues', 'integration', 'ssrf_protected'],
     label='List GitHub Issues',
     label_key='modules.api.github.list_issues.label',
     description='List issues from a GitHub repository',
@@ -172,13 +173,14 @@ class GitHubGetRepoModule(BaseModule):
     output_types=['array', 'json'],
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple API calls can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs GITHUB_TOKEN (recommended)
+    requires_credentials=True,
+    credential_keys=['GITHUB_TOKEN'],
     handles_sensitive_data=False,  # Issue data is typically public
     required_permissions=['network.access'],
 
@@ -253,7 +255,7 @@ class GitHubListIssuesModule(BaseModule):
     module_name = "List GitHub Issues"
     module_description = "Fetch issues from a GitHub repository"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'owner' not in self.params or not self.params['owner']:
             raise ValueError("Missing required parameter: owner")
         if 'repo' not in self.params or not self.params['repo']:
@@ -325,7 +327,7 @@ class GitHubListIssuesModule(BaseModule):
     can_receive_from=['*'],
     version='1.0.0',
     category='api',
-    tags=['api', 'github', 'issues', 'create'],
+    tags=['api', 'github', 'issues', 'create', 'ssrf_protected'],
     label='Create GitHub Issue',
     label_key='modules.api.github.create_issue.label',
     description='Create a new issue in a GitHub repository',
@@ -338,12 +340,13 @@ class GitHubListIssuesModule(BaseModule):
     output_types=['json', 'object'],
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=False,  # Could create duplicate issues if retried
     concurrent_safe=True,  # Multiple API calls can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs GITHUB_TOKEN (required for creation)
+    requires_credentials=True,
+    credential_keys=['GITHUB_TOKEN'],
     handles_sensitive_data=False,  # Issue data is typically public
     required_permissions=['network.access'],
 
@@ -424,7 +427,7 @@ class GitHubCreateIssueModule(BaseModule):
     module_name = "Create GitHub Issue"
     module_description = "Create a new issue in a GitHub repository"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         required = ['owner', 'repo', 'title']
         for param in required:
             if param not in self.params or not self.params[param]:

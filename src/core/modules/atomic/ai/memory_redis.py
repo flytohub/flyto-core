@@ -47,8 +47,9 @@ from ...types import NodeType, EdgeType, DataType
     retryable=True,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['ai.memory', 'database.redis'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         field(
@@ -147,7 +148,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
     """

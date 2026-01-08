@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='testing',
-    tags=['testing', 'report', 'documentation', 'atomic'],
+    tags=['testing', 'report', 'documentation', 'atomic', 'path_restricted'],
     label='Generate Report',
     label_key='modules.testing.report.generate.label',
     description='Generate test execution report',
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['testing.*', 'data.*', 'flow.*'],
     can_connect_to=['notification.*', 'file.*', 'data.*', 'flow.*', 'end'],
 
-    timeout=60,
+    timeout_ms=60000,
     retryable=False,
 
     params_schema={

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='image',
     subcategory='generate',
-    tags=['qrcode', 'qr', 'image', 'generate', 'barcode'],
+    tags=['qrcode', 'qr', 'image', 'generate', 'barcode', 'path_restricted'],
     label='Generate QR Code',
     label_key='modules.image.qrcode_generate.label',
     description='Generate QR codes from text, URLs, or data',
@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.write'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.QRCODE_DATA(),

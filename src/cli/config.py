@@ -15,7 +15,7 @@ SUPPORTED_LANGUAGES = {
     '2': ('zh', 'Chinese'),
     '3': ('ja', 'Japanese'),
 }
-I18N_DIR = Path(__file__).parent.parent / 'i18n'
+# Note: i18n files moved to flyto-i18n repository
 CONFIG_FILE = Path(__file__).parent.parent / 'engine.yaml'
 WORKFLOWS_DIR = Path(__file__).parent.parent / 'workflows'
 DEFAULT_OUTPUT_DIR = Path('./output')

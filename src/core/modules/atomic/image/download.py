@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='image',
     subcategory='download',
-    tags=['image', 'download', 'http', 'media'],
+    tags=['image', 'download', 'http', 'media', 'ssrf_protected', 'path_restricted'],
     label='Download Image',
     label_key='modules.image.download.label',
     description='Download image from URL to local file',
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['network.http', 'file.write'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.IMAGE_URL(),

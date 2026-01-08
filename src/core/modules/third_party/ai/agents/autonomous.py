@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='ai',
     subcategory='agent',
-    tags=['ai', 'agent', 'autonomous', 'memory', 'llm'],
+    tags=['ssrf_protected', 'ai', 'agent', 'autonomous', 'memory', 'llm'],
     label='Autonomous Agent',
     label_key='modules.agent.autonomous.label',
     description='Self-directed AI agent with memory and goal-oriented behavior',
@@ -31,13 +31,14 @@ logger = logging.getLogger(__name__)
     color='#7C3AED',
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    timeout=180,
+    timeout_ms=180000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
     params_schema={
         'goal': {
             'type': 'string',
@@ -145,7 +146,7 @@ logger = logging.getLogger(__name__)
 class AutonomousAgentModule(LLMClientMixin, BaseModule):
     """Autonomous AI Agent Module with memory and goal-oriented behavior"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.goal = self.params.get('goal')
         self.context = self.params.get('context', '')
         self.max_iterations = self.params.get('max_iterations', 5)

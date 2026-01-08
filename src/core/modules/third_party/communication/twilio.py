@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='notification',
     subcategory='sms',
-    tags=['twilio', 'sms', 'message', 'phone'],
+    tags=['twilio', 'sms', 'message', 'phone', 'ssrf_protected'],
     label='Twilio Send SMS',
     label_key='modules.communication.twilio.send_sms.label',
     description='Send SMS message via Twilio',
@@ -35,15 +35,16 @@ logger = logging.getLogger(__name__)
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'sms.send'],
+    required_permissions=['voice.call'],
 
     params_schema={
         'account_sid': {
@@ -124,7 +125,7 @@ logger = logging.getLogger(__name__)
 class TwilioSendSMSModule(BaseModule):
     """Twilio Send SMS Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.account_sid = self.params.get('account_sid')
         self.auth_token = self.params.get('auth_token')
         self.from_number = self.params.get('from_number')
@@ -190,7 +191,7 @@ class TwilioSendSMSModule(BaseModule):
     version='1.0.0',
     category='notification',
     subcategory='voice',
-    tags=['twilio', 'call', 'voice', 'phone'],
+    tags=['twilio', 'call', 'voice', 'phone', 'ssrf_protected'],
     label='Twilio Make Call',
     label_key='modules.communication.twilio.make_call.label',
     description='Make a voice call via Twilio',
@@ -203,15 +204,16 @@ class TwilioSendSMSModule(BaseModule):
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'voice.call'],
+    required_permissions=['voice.call'],
 
     params_schema={
         'account_sid': {
@@ -279,7 +281,7 @@ class TwilioSendSMSModule(BaseModule):
 class TwilioMakeCallModule(BaseModule):
     """Twilio Make Call Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.account_sid = self.params.get('account_sid')
         self.auth_token = self.params.get('auth_token')
         self.from_number = self.params.get('from_number')

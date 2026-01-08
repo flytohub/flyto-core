@@ -83,7 +83,8 @@ def extract_embedding(result: Any) -> List[float]:
                 'description_key': 'modules.huggingface.embedding.output.dimension.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_embedding(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate text embeddings using HuggingFace models"""

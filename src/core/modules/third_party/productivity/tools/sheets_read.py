@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
-    tags=['productivity', 'google', 'sheets', 'spreadsheet', 'read', 'data'],
+    tags=['productivity', 'google', 'sheets', 'spreadsheet', 'read', 'data', 'path_restricted', 'ssrf_protected'],
     label='Google Sheets Read',
     label_key='modules.api.google_sheets.read.label',
     description='Read data from Google Sheets spreadsheet',
@@ -31,13 +31,14 @@ logger = logging.getLogger(__name__)
     output_types=['table', 'array'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['GOOGLE_CREDENTIALS'],
     handles_sensitive_data=True,
     required_permissions=['network.access'],
 

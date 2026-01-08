@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
-    tags=['productivity', 'notion', 'api', 'database', 'query'],
+    tags=['productivity', 'notion', 'api', 'database', 'query', 'ssrf_protected'],
     label='Notion Query Database',
     label_key='modules.api.notion.query_database.label',
     description='Query pages from Notion database with filters and sorting',
@@ -33,13 +33,14 @@ logger = logging.getLogger(__name__)
     output_types=['array', 'json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['NOTION_TOKEN'],
     handles_sensitive_data=True,
     required_permissions=['network.access'],
 

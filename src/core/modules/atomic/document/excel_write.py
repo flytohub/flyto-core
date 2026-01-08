@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='excel',
-    tags=['excel', 'spreadsheet', 'write', 'xlsx', 'export'],
+    tags=['excel', 'spreadsheet', 'write', 'xlsx', 'export', 'path_restricted'],
     label='Write Excel',
     label_key='modules.excel.write.label',
     description='Write data to Excel files (xlsx)',
@@ -34,14 +34,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.write'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.EXCEL_PATH(placeholder='/path/to/output.xlsx'),

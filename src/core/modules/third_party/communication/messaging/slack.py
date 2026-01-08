@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     module_id='notification.slack.send_message',
     version='1.0.0',
     category='notification',
-    tags=['notification', 'slack', 'webhook', 'messaging'],
+    tags=['notification', 'slack', 'webhook', 'messaging', 'ssrf_protected'],
     label='Send Slack Message',
     label_key='modules.notification.slack.send_message.label',
     description='Send message to Slack via webhook',
@@ -35,13 +35,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['*'],  # Notifications can connect to any module (typically end of workflow or chain to other notifications)
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple messages can be sent in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs SLACK_WEBHOOK_URL
+    requires_credentials=True,
+    credential_keys=['SLACK_TOKEN'],
     handles_sensitive_data=True,  # Messages may contain sensitive info
     required_permissions=['network.access'],
 
@@ -121,7 +122,7 @@ class SlackSendMessageModule(BaseModule):
     module_name = "Send Slack Message"
     module_description = "Send message to Slack channel via webhook URL"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'text' not in self.params or not self.params['text']:
             raise ValueError("Missing required parameter: text")
 

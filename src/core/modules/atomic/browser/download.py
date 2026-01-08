@@ -15,7 +15,7 @@ from ...schema import compose, presets
     module_id='browser.download',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'download', 'file'],
+    tags=['browser', 'download', 'file', 'ssrf_protected', 'path_restricted'],
     label='Download File',
     label_key='modules.browser.download.label',
     description='Download file from browser',
@@ -62,16 +62,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserDownloadModule(BaseModule):
     """Download File Module"""
 
     module_name = "Download File"
     module_description = "Download file from browser"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'save_path' not in self.params:
             raise ValueError("Missing required parameter: save_path")
 

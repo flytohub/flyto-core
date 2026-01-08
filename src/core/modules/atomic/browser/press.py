@@ -14,7 +14,7 @@ from ...schema import compose, presets
     module_id='browser.press',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'keyboard', 'interaction', 'key'],
+    tags=['browser', 'keyboard', 'interaction', 'key', 'ssrf_protected'],
     label='Press Key',
     label_key='modules.browser.press.label',
     description='Press a keyboard key',
@@ -48,16 +48,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserPressModule(BaseModule):
     """Press Key Module"""
 
     module_name = "Press Key"
     module_description = "Press a keyboard key"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'key' not in self.params:
             raise ValueError("Missing required parameter: key")
         self.key = self.params['key']

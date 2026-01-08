@@ -12,7 +12,7 @@ from ....schema import compose, presets
     module_id='db.mysql.query',
     version='1.0.0',
     category='database',
-    tags=['database', 'mysql', 'sql', 'query', 'db'],
+    tags=['ssrf_protected', 'database', 'mysql', 'sql', 'query', 'db'],
     label='MySQL Query',
     label_key='modules.db.mysql.query.label',
     description='Execute a SQL query on MySQL database and return results',
@@ -27,15 +27,16 @@ from ....schema import compose, presets
     can_connect_to=['data.*', 'notification.*'],
 
     # Phase 2: Execution settings
-    timeout=60,  # Database queries can take time
+    timeout_ms=60000,  # Database queries can take time
     retryable=True,  # Network errors can be retried for read queries
     max_retries=3,
     concurrent_safe=True,  # Multiple queries can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs database credentials
+    requires_credentials=True,
+    credential_keys=['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD'],
     handles_sensitive_data=True,  # Database data is typically sensitive
-    required_permissions=['network.access', 'database.read'],
+    required_permissions=['database.query'],
 
     params_schema=compose(
         presets.DB_HOST(),

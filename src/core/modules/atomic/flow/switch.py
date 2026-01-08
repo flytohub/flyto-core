@@ -97,7 +97,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -148,7 +148,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class SwitchModule(BaseModule):
     """
@@ -167,9 +168,8 @@ class SwitchModule(BaseModule):
 
     module_name = "Switch"
     module_description = "Multi-way branching based on value matching"
-    required_permission = "flow.control"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         # Support legacy 'value' param
         self.expression = self.params.get('expression') or self.params.get('value')
         if not self.expression:

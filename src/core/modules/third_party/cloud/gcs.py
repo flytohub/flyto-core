@@ -15,7 +15,7 @@ from ...registry import register_module
     version='1.0.0',
     category='cloud',
     subcategory='storage',
-    tags=['cloud', 'gcs', 'google', 'storage', 'upload'],
+    tags=['cloud', 'gcs', 'google', 'storage', 'upload', 'path_restricted', 'ssrf_protected'],
     label='GCS Upload',
     label_key='modules.cloud.gcs.upload.label',
     description='Upload file to Google Cloud Storage',
@@ -28,15 +28,16 @@ from ...registry import register_module
     output_types=['url', 'json'],
 
     # Phase 2: Execution settings
-    timeout=300,  # 5 minutes for large file uploads
+    timeout_ms=300000,  # 5 minutes for large file uploads
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['GOOGLE_CLOUD_CREDENTIALS'],
     handles_sensitive_data=True,
-    required_permissions=['cloud.storage.write'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'file_path': {
@@ -119,7 +120,7 @@ from ...registry import register_module
 class GCSUploadModule(BaseModule):
     """Google Cloud Storage Upload Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.file_path = self.params.get('file_path')
         self.bucket = self.params.get('bucket')
         self.object_name = self.params.get('object_name')
@@ -193,7 +194,7 @@ class GCSUploadModule(BaseModule):
     version='1.0.0',
     category='cloud',
     subcategory='storage',
-    tags=['cloud', 'gcs', 'google', 'storage', 'download'],
+    tags=['cloud', 'gcs', 'google', 'storage', 'download', 'ssrf_protected', 'path_restricted'],
     label='GCS Download',
     label_key='modules.cloud.gcs.download.label',
     description='Download file from Google Cloud Storage',
@@ -206,15 +207,16 @@ class GCSUploadModule(BaseModule):
     output_types=['file', 'binary'],
 
     # Phase 2: Execution settings
-    timeout=300,  # 5 minutes for large file downloads
+    timeout_ms=300000,  # 5 minutes for large file downloads
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['GOOGLE_CLOUD_CREDENTIALS'],
     handles_sensitive_data=True,
-    required_permissions=['cloud.storage.read'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'bucket': {
@@ -272,7 +274,7 @@ class GCSUploadModule(BaseModule):
 class GCSDownloadModule(BaseModule):
     """Google Cloud Storage Download Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.bucket = self.params.get('bucket')
         self.object_name = self.params.get('object_name')
         self.destination_path = self.params.get('destination_path')

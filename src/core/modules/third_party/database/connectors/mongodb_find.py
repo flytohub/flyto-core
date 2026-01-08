@@ -12,7 +12,7 @@ from ....schema import compose, presets
     module_id='db.mongodb.find',
     version='1.0.0',
     category='database',
-    tags=['database', 'mongodb', 'nosql', 'query', 'db', 'document'],
+    tags=['ssrf_protected', 'database', 'mongodb', 'nosql', 'query', 'db', 'document', 'path_restricted'],
     label='MongoDB Find',
     label_key='modules.db.mongodb.find.label',
     description='Query documents from MongoDB collection',
@@ -27,15 +27,16 @@ from ....schema import compose, presets
     can_connect_to=['data.*', 'notification.*'],
 
     # Phase 2: Execution settings
-    timeout=60,  # Database queries can take time
+    timeout_ms=60000,  # Database queries can take time
     retryable=True,  # Network errors can be retried for read queries
     max_retries=3,
     concurrent_safe=True,  # Multiple queries can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs database credentials
+    requires_credentials=True,
+    credential_keys=['MONGODB_URI'],
     handles_sensitive_data=True,  # Database data is typically sensitive
-    required_permissions=['network.access', 'database.read'],
+    required_permissions=['database.query'],
 
     params_schema=compose(
         presets.MONGO_CONNECTION_STRING(),

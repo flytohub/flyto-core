@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='productivity',
     subcategory='payment',
-    tags=['stripe', 'payment', 'charge', 'checkout'],
+    tags=['stripe', 'payment', 'charge', 'checkout', 'ssrf_protected'],
     label='Stripe Create Payment',
     label_key='modules.payment.stripe.create_payment.label',
     description='Create a payment intent with Stripe',
@@ -35,15 +35,16 @@ logger = logging.getLogger(__name__)
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['STRIPE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'payment.process'],
+    required_permissions=['payment.process'],
 
     params_schema={
         'api_key': {
@@ -127,7 +128,7 @@ logger = logging.getLogger(__name__)
 class StripeCreatePaymentModule(BaseModule):
     """Stripe Create Payment Intent Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.amount = self.params.get('amount')
         self.currency = self.params.get('currency', 'usd')
@@ -195,7 +196,7 @@ class StripeCreatePaymentModule(BaseModule):
     version='1.0.0',
     category='productivity',
     subcategory='payment',
-    tags=['stripe', 'customer', 'retrieve'],
+    tags=['stripe', 'customer', 'retrieve', 'ssrf_protected'],
     label='Stripe Get Customer',
     label_key='modules.payment.stripe.get_customer.label',
     description='Retrieve customer information from Stripe',
@@ -208,15 +209,16 @@ class StripeCreatePaymentModule(BaseModule):
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=15,
+    timeout_ms=15000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['STRIPE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'payment.read'],
+    required_permissions=['payment.process'],
 
     params_schema={
         'api_key': {
@@ -258,7 +260,7 @@ class StripeCreatePaymentModule(BaseModule):
 class StripeGetCustomerModule(BaseModule):
     """Stripe Get Customer Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.customer_id = self.params.get('customer_id')
 
@@ -311,7 +313,7 @@ class StripeGetCustomerModule(BaseModule):
     version='1.0.0',
     category='productivity',
     subcategory='payment',
-    tags=['stripe', 'charges', 'list', 'transactions'],
+    tags=['stripe', 'charges', 'list', 'transactions', 'ssrf_protected'],
     label='Stripe List Charges',
     label_key='modules.payment.stripe.list_charges.label',
     description='List recent charges from Stripe',
@@ -324,15 +326,16 @@ class StripeGetCustomerModule(BaseModule):
     output_types=['array', 'json'],
 
     # Phase 2: Execution settings
-    timeout=20,
+    timeout_ms=20000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['STRIPE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'payment.read'],
+    required_permissions=['payment.process'],
 
     params_schema={
         'api_key': {
@@ -390,7 +393,7 @@ class StripeGetCustomerModule(BaseModule):
 class StripeListChargesModule(BaseModule):
     """Stripe List Charges Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.limit = self.params.get('limit', 10)
         self.customer = self.params.get('customer')

@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.screenshot',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'screenshot', 'capture', 'image'],
+    tags=['browser', 'screenshot', 'capture', 'image', 'ssrf_protected', 'path_restricted'],
     label='Take Screenshot',
     label_key='modules.browser.screenshot.label',
     description='Take a screenshot of the current page',
@@ -43,7 +43,9 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserScreenshotModule(BaseModule):
     """Screenshot Module"""
@@ -52,7 +54,7 @@ class BrowserScreenshotModule(BaseModule):
     module_description = "Take a screenshot of the current page"
     required_permission = "browser.screenshot"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.path = self.params.get('path', 'screenshot.png')
 
     async def execute(self) -> Any:

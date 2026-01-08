@@ -8,13 +8,14 @@ import os
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError, InvalidValueError, ModuleError
 
 
 @register_module(
     module_id='data.csv.write',
     version='1.0.0',
     category='data',
-    tags=['data', 'csv', 'file', 'write', 'export'],
+    tags=['data', 'csv', 'file', 'write', 'export', 'path_restricted'],
     label='Write CSV File',
     label_key='modules.data.csv.write.label',
     description='Write array of objects to CSV file',
@@ -26,14 +27,14 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=False,
     concurrent_safe=False,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.write'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -83,26 +84,20 @@ async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:
     encoding = params.get('encoding', 'utf-8')
 
     if not file_path:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: file_path',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: file_path", field="file_path")
 
     if not isinstance(data, list):
-        return {
-            'ok': False,
-            'error': 'data must be an array',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError(
+            "data must be an array",
+            field="data",
+            expected_type="list",
+            actual_type=type(data).__name__
+        )
+
+    if not data:
+        raise InvalidValueError("Cannot write empty data array", field="data")
 
     try:
-        if not data:
-            return {
-                'status': 'error',
-                'message': 'Cannot write empty data array'
-            }
-
         # Create directory if not exists
         dir_path = os.path.dirname(file_path)
         if dir_path:
@@ -117,13 +112,12 @@ async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:
             writer.writerows(data)
 
         return {
-            'status': 'success',
-            'file_path': file_path,
-            'rows_written': len(data)
+            'ok': True,
+            'data': {
+                'file_path': file_path,
+                'rows_written': len(data)
+            }
         }
 
     except Exception as e:
-        return {
-            'status': 'error',
-            'message': f'Failed to write CSV: {str(e)}'
-        }
+        raise ModuleError(f"Failed to write CSV: {str(e)}")

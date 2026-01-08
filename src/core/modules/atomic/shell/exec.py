@@ -36,14 +36,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
-    timeout=300,
+    timeout_ms=300000,
     retryable=False,
-    concurrent_safe=True,
+    concurrent_safe=False,  # Shell commands can have race conditions
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['shell.exec'],
+    required_permissions=['shell.execute'],
 
     # Schema-driven params
     # SECURITY NOTE: use_shell defaults to False to prevent shell injection attacks.

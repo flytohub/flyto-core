@@ -13,7 +13,7 @@ from ...schema import compose, presets, field
     module_id='browser.drag',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'drag', 'drop', 'interaction'],
+    tags=['browser', 'drag', 'drop', 'interaction', 'ssrf_protected'],
     label='Drag and Drop',
     label_key='modules.browser.drag.label',
     description='Drag and drop elements',
@@ -71,16 +71,18 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserDragModule(BaseModule):
     """Drag and Drop Module"""
 
     module_name = "Drag and Drop"
     module_description = "Drag and drop elements"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'source' not in self.params:
             raise ValueError("Missing required parameter: source")
         if 'target' not in self.params:

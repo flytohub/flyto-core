@@ -58,7 +58,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_GENERATION)
                 'description_key': 'modules.huggingface.text-generation.output.generated_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_text_generation(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate text using HuggingFace LLMs"""

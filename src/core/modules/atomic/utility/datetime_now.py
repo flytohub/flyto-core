@@ -103,7 +103,8 @@ import uuid
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class DateTimeNowModule(BaseModule):
     """Get current date/time"""
@@ -111,7 +112,7 @@ class DateTimeNowModule(BaseModule):
     module_name = "Current Date/Time"
     module_description = "Get current date and time in various formats"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.format = self.params.get('format', 'iso')
         self.custom_format = self.params.get('custom_format', '%Y-%m-%d %H:%M:%S')
         self.timezone = self.params.get('timezone', 'UTC')

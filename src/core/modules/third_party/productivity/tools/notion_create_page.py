@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
-    tags=['productivity', 'notion', 'api', 'database', 'page'],
+    tags=['productivity', 'notion', 'api', 'database', 'page', 'ssrf_protected'],
     label='Notion Create Page',
     label_key='modules.api.notion.create_page.label',
     description='Create a new page in Notion database',
@@ -33,12 +33,13 @@ logger = logging.getLogger(__name__)
     output_types=['json', 'object'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=False,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['NOTION_TOKEN'],
     handles_sensitive_data=True,
     required_permissions=['network.access'],
 

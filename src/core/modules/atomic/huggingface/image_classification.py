@@ -23,7 +23,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.VISION,
-    tags=['huggingface', 'image', 'classification', 'vision', 'cv'],
+    tags=['huggingface', 'image', 'classification', 'vision', 'cv', 'path_restricted'],
     label='Image Classification',
     label_key='modules.huggingface.image-classification.label',
     description='Classify images into categories using ViT, ResNet, etc.',
@@ -59,7 +59,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.IMAGE_CLASSIFICATION)
                 'description_key': 'modules.huggingface.image-classification.output.top_score.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_image_classification(context: Dict[str, Any]) -> Dict[str, Any]:
     """Classify images using HuggingFace models"""

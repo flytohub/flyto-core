@@ -16,7 +16,7 @@ from ...schema import compose, presets, field
     module_id='browser.record',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'record', 'automation', 'workflow'],
+    tags=['browser', 'record', 'automation', 'workflow', 'ssrf_protected', 'path_restricted', 'filesystem_write'],
     label='Record Actions',
     label_key='modules.browser.record.label',
     description='Record user actions as workflow',
@@ -74,20 +74,22 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserRecordModule(BaseModule):
     """Record Actions Module"""
 
     module_name = "Record Actions"
     module_description = "Record user actions as workflow"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
     # Class-level storage for recordings
     _recordings: Dict[str, List[Dict[str, Any]]] = {}
     _handlers: Dict[str, Dict[str, Any]] = {}
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

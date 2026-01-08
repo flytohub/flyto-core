@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='data',
     subcategory='transform',
-    tags=['json', 'csv', 'convert', 'data', 'transform'],
+    tags=['json', 'csv', 'convert', 'data', 'transform', 'path_restricted'],
     label='JSON to CSV',
     label_key='modules.data.json_to_csv.label',
     description='Convert JSON data or files to CSV format',
@@ -35,14 +35,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(

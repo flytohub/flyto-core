@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='productivity',
     subcategory='database',
-    tags=['airtable', 'database', 'read', 'query'],
+    tags=['airtable', 'database', 'read', 'query', 'path_restricted', 'ssrf_protected'],
     label='Airtable Read Records',
     label_key='modules.productivity.airtable.read.label',
     description='Read records from Airtable table',
@@ -35,15 +35,16 @@ logger = logging.getLogger(__name__)
     output_types=['array', 'json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['AIRTABLE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'data.read'],
+    required_permissions=['network.access'],
 
     params_schema={
         'api_key': {
@@ -120,7 +121,7 @@ logger = logging.getLogger(__name__)
 class AirtableReadModule(BaseModule):
     """Airtable Read Records Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.base_id = self.params.get('base_id')
         self.table_name = self.params.get('table_name')
@@ -189,7 +190,7 @@ class AirtableReadModule(BaseModule):
     version='1.0.0',
     category='productivity',
     subcategory='database',
-    tags=['airtable', 'database', 'create', 'insert'],
+    tags=['airtable', 'database', 'create', 'insert', 'ssrf_protected'],
     label='Airtable Create Record',
     label_key='modules.productivity.airtable.create.label',
     description='Create a new record in Airtable table',
@@ -202,15 +203,16 @@ class AirtableReadModule(BaseModule):
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['AIRTABLE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'data.write'],
+    required_permissions=['network.access'],
 
     params_schema={
         'api_key': {
@@ -284,7 +286,7 @@ class AirtableReadModule(BaseModule):
 class AirtableCreateModule(BaseModule):
     """Airtable Create Record Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.base_id = self.params.get('base_id')
         self.table_name = self.params.get('table_name')
@@ -341,7 +343,7 @@ class AirtableCreateModule(BaseModule):
     version='1.0.0',
     category='productivity',
     subcategory='database',
-    tags=['airtable', 'database', 'update'],
+    tags=['airtable', 'database', 'update', 'ssrf_protected'],
     label='Airtable Update Record',
     label_key='modules.productivity.airtable.update.label',
     description='Update an existing record in Airtable table',
@@ -354,15 +356,16 @@ class AirtableCreateModule(BaseModule):
     output_types=['json'],
 
     # Phase 2: Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=False,  # Updates should not be concurrent
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['AIRTABLE_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'data.write'],
+    required_permissions=['network.access'],
 
     params_schema={
         'api_key': {
@@ -442,7 +445,7 @@ class AirtableCreateModule(BaseModule):
 class AirtableUpdateModule(BaseModule):
     """Airtable Update Record Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.api_key = self.params.get('api_key')
         self.base_id = self.params.get('base_id')
         self.table_name = self.params.get('table_name')

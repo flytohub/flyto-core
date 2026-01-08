@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='ai',
     subcategory='agent',
-    tags=['ai', 'agent', 'chain', 'langchain', 'workflow'],
+    tags=['ssrf_protected', 'ai', 'agent', 'chain', 'langchain', 'workflow'],
     label='Chain Agent',
     label_key='modules.agent.chain.label',
     description='Sequential AI processing chain with multiple steps',
@@ -31,13 +31,14 @@ logger = logging.getLogger(__name__)
     color='#7C3AED',
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
     params_schema={
         'input': {
             'type': 'string',
@@ -138,7 +139,7 @@ logger = logging.getLogger(__name__)
 class ChainAgentModule(LLMClientMixin, BaseModule):
     """Chain Agent Module - Sequential AI processing"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.input = self.params.get('input')
         self.chain_steps = self.params.get('chain_steps', [])
 

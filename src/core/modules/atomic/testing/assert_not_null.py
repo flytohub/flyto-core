@@ -53,7 +53,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_not_null.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertNotNullModule(BaseModule):
     """Assert that a value is not null or undefined."""
@@ -61,7 +62,7 @@ class AssertNotNullModule(BaseModule):
     module_name = "Assert Not Null"
     module_description = "Assert that a value is not null or undefined"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         # value can be None, so we check if it's in params dict instead
         pass
 

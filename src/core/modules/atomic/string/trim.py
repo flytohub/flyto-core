@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError
 
 
 @register_module(
@@ -54,7 +55,8 @@ from ...schema import compose, presets
             'description': 'Operation status'
         ,
                 'description_key': 'modules.string.trim.output.status.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 async def string_trim(context: Dict[str, Any]) -> Dict[str, Any]:
     """Remove whitespace from both ends of a string."""
@@ -62,16 +64,14 @@ async def string_trim(context: Dict[str, Any]) -> Dict[str, Any]:
     text = params.get('text')
 
     if text is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: text',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: text", field="text")
 
     result = str(text).strip()
 
     return {
-        'result': result,
-        'original': text,
-        'status': 'success'
+        'ok': True,
+        'data': {
+            'result': result,
+            'original': text
+        }
     }

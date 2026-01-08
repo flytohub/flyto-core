@@ -56,7 +56,7 @@ from ...types import DataType, EdgeType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -87,7 +87,8 @@ from ...types import DataType, EdgeType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class GotoModule(BaseModule):
     """
@@ -99,11 +100,9 @@ class GotoModule(BaseModule):
 
     module_name = "Goto"
     module_description = "Unconditional jump to another step"
-    required_permission = "flow.control"
+    required_permission = ITERATION_PREFIX = '__goto_iteration_'
 
-    ITERATION_PREFIX = '__goto_iteration_'
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'target' not in self.params:
             raise ValueError("Missing required parameter: target")
 

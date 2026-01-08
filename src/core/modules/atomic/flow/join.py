@@ -93,7 +93,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -135,7 +135,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class JoinModule(BaseModule):
     """
@@ -151,9 +152,7 @@ class JoinModule(BaseModule):
 
     module_name = "Join"
     module_description = "Wait for parallel branches to complete"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.strategy = self.params.get('strategy', 'all')
         self.input_count = self.params.get('input_count', 2)
         self.timeout_ms = self.params.get('timeout_ms', 60000)

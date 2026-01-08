@@ -39,6 +39,7 @@ from core.training.daily_practice import DailyPracticeEngine
         'history': {'type': 'array', 'description': 'The history',
                 'description_key': 'modules.training.practice.stats.output.history.description'},
     },
+    timeout_ms=30000,
 )
 class TrainingPracticeStats(BaseModule):
     """Get practice statistics"""
@@ -46,7 +47,7 @@ class TrainingPracticeStats(BaseModule):
     module_name = "Practice Stats"
     module_description = "Get practice statistics"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         pass
 
     async def execute(self) -> Any:

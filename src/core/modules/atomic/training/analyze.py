@@ -37,6 +37,7 @@ from core.training.daily_practice import DailyPracticeEngine
         'structure': {'type': 'object', 'description': 'The structure',
                 'description_key': 'modules.training.practice.analyze.output.structure.description'},
     },
+    timeout_ms=30000,
 )
 class TrainingPracticeAnalyze(BaseModule):
     """Analyze website structure for practice"""
@@ -44,7 +45,7 @@ class TrainingPracticeAnalyze(BaseModule):
     module_name = "Practice Analyze"
     module_description = "Analyze website structure"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if "url" not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params["url"]

@@ -14,7 +14,7 @@ import base64
     can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
-    tags=['cloud', 'aws', 's3', 'storage', 'upload', 'file'],
+    tags=['cloud', 'aws', 's3', 'storage', 'upload', 'file', 'path_restricted', 'ssrf_protected'],
     label='AWS S3 Upload',
     label_key='modules.cloud.aws_s3.upload.label',
     description='Upload a file or data to AWS S3 bucket',
@@ -27,15 +27,16 @@ import base64
     output_types=['object'],
 
     # Phase 2: Execution settings
-    timeout=60,  # Cloud uploads can take time depending on file size
+    timeout_ms=60000,  # Cloud uploads can take time depending on file size
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple uploads can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs AWS credentials
+    requires_credentials=True,
+    credential_keys=['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'],
     handles_sensitive_data=True,  # Files may contain sensitive data
-    required_permissions=['network.access', 'cloud.storage'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'aws_access_key_id': {
@@ -245,7 +246,7 @@ async def aws_s3_upload(context):
     can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
-    tags=['cloud', 'aws', 's3', 'storage', 'download', 'file'],
+    tags=['cloud', 'aws', 's3', 'storage', 'download', 'file', 'ssrf_protected', 'path_restricted'],
     label='AWS S3 Download',
     label_key='modules.cloud.aws_s3.download.label',
     description='Download a file from AWS S3 bucket',
@@ -258,15 +259,16 @@ async def aws_s3_upload(context):
     output_types=['file', 'binary'],
 
     # Phase 2: Execution settings
-    timeout=60,  # Cloud downloads can take time depending on file size
+    timeout_ms=60000,  # Cloud downloads can take time depending on file size
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple downloads can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs AWS credentials
+    requires_credentials=True,
+    credential_keys=['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'],
     handles_sensitive_data=True,  # Files may contain sensitive data
-    required_permissions=['network.access', 'cloud.storage'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'aws_access_key_id': {

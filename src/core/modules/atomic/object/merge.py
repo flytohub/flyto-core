@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import InvalidTypeError
 
 
 @register_module(
@@ -29,7 +30,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -70,11 +71,12 @@ async def object_merge(context: Dict[str, Any]) -> Dict[str, Any]:
     objects = params.get('objects', [])
 
     if not isinstance(objects, list):
-        return {
-            'ok': False,
-            'error': 'objects must be an array',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError(
+            "objects must be an array",
+            field="objects",
+            expected_type="list",
+            actual_type=type(objects).__name__
+        )
 
     result = {}
 
@@ -83,5 +85,8 @@ async def object_merge(context: Dict[str, Any]) -> Dict[str, Any]:
             result.update(obj)
 
     return {
-        'result': result
+        'ok': True,
+        'data': {
+            'result': result
+        }
     }

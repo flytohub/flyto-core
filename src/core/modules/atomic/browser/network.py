@@ -15,7 +15,7 @@ from ...schema import compose, presets, field
     module_id='browser.network',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'network', 'request', 'response', 'intercept'],
+    tags=['browser', 'network', 'request', 'response', 'intercept', 'ssrf_protected'],
     label='Network Monitor',
     label_key='modules.browser.network.label',
     description='Monitor and intercept network requests',
@@ -96,16 +96,18 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserNetworkModule(BaseModule):
     """Network Monitor Module"""
 
     module_name = "Network Monitor"
     module_description = "Monitor and intercept network requests"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

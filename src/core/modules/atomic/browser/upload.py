@@ -14,7 +14,7 @@ from ...schema import compose, presets
     module_id='browser.upload',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'upload', 'file', 'input'],
+    tags=['browser', 'upload', 'file', 'input', 'ssrf_protected', 'path_restricted'],
     label='Upload File',
     label_key='modules.browser.upload.label',
     description='Upload file to file input element',
@@ -60,16 +60,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserUploadModule(BaseModule):
     """Upload File Module"""
 
     module_name = "Upload File"
     module_description = "Upload file to file input element"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
         if 'file_path' not in self.params:

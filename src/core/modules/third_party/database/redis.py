@@ -16,7 +16,7 @@ from ...schema import compose, presets
     version='1.0.0',
     category='database',
     subcategory='cache',
-    tags=['database', 'redis', 'cache', 'get'],
+    tags=['ssrf_protected', 'database', 'redis', 'cache', 'get'],
     label='Redis Get',
     label_key='modules.db.redis.get.label',
     description='Get a value from Redis cache',
@@ -29,15 +29,16 @@ from ...schema import compose, presets
     output_types=['string', 'json'],
 
     # Phase 2: Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['REDIS_URL'],
     handles_sensitive_data=True,  # Cache may contain sensitive data
-    required_permissions=['database.read'],
+    required_permissions=['database.query'],
 
     params_schema=compose(
         presets.REDIS_KEY(),
@@ -77,7 +78,7 @@ from ...schema import compose, presets
 class RedisGetModule(BaseModule):
     """Redis Get Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         import os
         self.key = self.params.get('key')
         # NO hardcoded defaults - require explicit configuration
@@ -135,7 +136,7 @@ class RedisGetModule(BaseModule):
     version='1.0.0',
     category='database',
     subcategory='cache',
-    tags=['database', 'redis', 'cache', 'set'],
+    tags=['ssrf_protected', 'database', 'redis', 'cache', 'set'],
     label='Redis Set',
     label_key='modules.db.redis.set.label',
     description='Set a value in Redis cache',
@@ -148,15 +149,16 @@ class RedisGetModule(BaseModule):
     output_types=['boolean'],
 
     # Phase 2: Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['REDIS_URL'],
     handles_sensitive_data=True,
-    required_permissions=['database.write'],
+    required_permissions=['database.query'],
 
     params_schema=compose(
         presets.REDIS_KEY(),
@@ -195,7 +197,7 @@ class RedisGetModule(BaseModule):
 class RedisSetModule(BaseModule):
     """Redis Set Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         import os
         self.key = self.params.get('key')
         self.value = self.params.get('value')

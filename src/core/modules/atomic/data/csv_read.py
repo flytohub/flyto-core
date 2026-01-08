@@ -8,13 +8,14 @@ import os
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, FileNotFoundError, ModuleError
 
 
 @register_module(
     module_id='data.csv.read',
     version='1.0.0',
     category='data',
-    tags=['data', 'csv', 'file', 'read', 'parser'],
+    tags=['data', 'csv', 'file', 'read', 'parser', 'path_restricted'],
     label='Read CSV File',
     label_key='modules.data.csv.read.label',
     description='Read and parse CSV file into array of objects',
@@ -29,7 +30,7 @@ from ...schema import compose, presets
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
@@ -37,7 +38,7 @@ from ...schema import compose, presets
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.read'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -98,19 +99,12 @@ async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
     skip_header = params.get('skip_header', False)
 
     if not file_path:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: file_path',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: file_path", field="file_path")
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}", path=file_path)
 
     try:
-        if not os.path.exists(file_path):
-            return {
-                'status': 'error',
-                'message': f'File not found: {file_path}'
-            }
-
         with open(file_path, 'r', encoding=encoding) as csvfile:
             reader = csv.DictReader(csvfile, delimiter=delimiter)
 
@@ -121,14 +115,13 @@ async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
             columns = reader.fieldnames or []
 
             return {
-                'status': 'success',
-                'data': data,
-                'rows': len(data),
-                'columns': columns
+                'ok': True,
+                'data': {
+                    'rows': data,
+                    'row_count': len(data),
+                    'columns': columns
+                }
             }
 
     except Exception as e:
-        return {
-            'status': 'error',
-            'message': f'Failed to read CSV: {str(e)}'
-        }
+        raise ModuleError(f"Failed to read CSV: {str(e)}")

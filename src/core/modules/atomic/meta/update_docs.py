@@ -12,7 +12,7 @@ import json
     version='1.0.0',
     category='meta',
     subcategory='documentation',
-    tags=['meta', 'modules', 'documentation', 'generator'],
+    tags=['meta', 'modules', 'documentation', 'generator', 'path_restricted', 'filesystem_write'],
     label='Update Module Documentation',
     label_key='modules.meta.modules.update_docs.label',
     description='Generate or update MODULES.md documentation from registry',
@@ -27,14 +27,14 @@ import json
 
     can_receive_from=['*'],
     can_connect_to=['*'],    # Phase 2: Execution settings
-    timeout=10,
+    timeout_ms=10000,
     retryable=True,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.write'],
+    required_permissions=[],
 
     params_schema={
         'output_path': {
@@ -78,7 +78,7 @@ import json
 class UpdateModuleDocsModule(BaseModule):
     """Generate MODULES.md from current module registry"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.output_path = self.params.get('output_path', 'docs/MODULES.md')
         self.include_examples = self.params.get('include_examples', True)
 

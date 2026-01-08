@@ -59,7 +59,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_CLASSIFICATION)
                 'description_key': 'modules.huggingface.text-classification.output.top_score.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_text_classification(context: Dict[str, Any]) -> Dict[str, Any]:
     """Classify text using HuggingFace models"""

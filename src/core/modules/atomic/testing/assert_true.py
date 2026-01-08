@@ -53,7 +53,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_true.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertTrueModule(BaseModule):
     """Assert that a condition is true."""
@@ -61,7 +62,7 @@ class AssertTrueModule(BaseModule):
     module_name = "Assert True"
     module_description = "Assert that a condition is true"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'condition' not in self.params:
             raise ValueError("Parameter 'condition' is required")
 

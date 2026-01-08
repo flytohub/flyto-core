@@ -89,7 +89,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -137,7 +137,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class BranchModule(BaseModule):
     """
@@ -155,9 +156,8 @@ class BranchModule(BaseModule):
 
     module_name = "Branch"
     module_description = "Conditional branching based on expression"
-    required_permission = "flow.control"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'condition' not in self.params:
             raise ValueError("Missing required parameter: condition")
 

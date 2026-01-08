@@ -27,7 +27,7 @@ from ..element_registry import get_element_registry
     can_connect_to=['data.*', 'string.*'],
 
     # Phase 2: Execution settings
-    timeout=5,  # Attribute extraction should be quick
+    timeout_ms=5000,  # Attribute extraction should be quick
     retryable=True,  # Can retry if element not ready
     max_retries=2,
     concurrent_safe=True,  # Stateless element operations
@@ -35,7 +35,7 @@ from ..element_registry import get_element_registry
     # Phase 2: Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['browser.read'],
+    required_permissions=[],
 
     params_schema={
         'element_id': {
@@ -98,7 +98,7 @@ class ElementAttributeModule(BaseModule):
     module_description = "Get element's attribute value"
     required_permission = "browser.read"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'element_id' not in self.params:
             raise ValueError("Missing parameter: element_id")
         if 'name' not in self.params:

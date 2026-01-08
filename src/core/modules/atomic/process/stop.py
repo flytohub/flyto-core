@@ -38,14 +38,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['process.stop'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(

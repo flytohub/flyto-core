@@ -45,7 +45,7 @@ def get_format_from_extension(path: str) -> Optional[str]:
     version='1.0.0',
     category='image',
     subcategory='convert',
-    tags=['image', 'convert', 'format', 'media'],
+    tags=['image', 'convert', 'format', 'media', 'path_restricted'],
     label='Convert Image',
     label_key='modules.image.convert.label',
     description='Convert image to different format (PNG, JPEG, WEBP, etc.)',
@@ -60,14 +60,14 @@ def get_format_from_extension(path: str) -> Optional[str]:
     can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=120,
+    timeout_ms=120000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.IMAGE_INPUT_PATH(),

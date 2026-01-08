@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.launch',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'automation', 'setup'],
+    tags=['browser', 'automation', 'setup', 'ssrf_protected'],
     label='Launch Browser',
     label_key='modules.browser.launch.label',
     description='Launch a new browser instance with Playwright',
@@ -28,7 +28,7 @@ from ...schema import compose, presets
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
-    timeout=10,
+    timeout_ms=10000,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,
@@ -36,7 +36,7 @@ from ...schema import compose, presets
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['browser.launch', 'system.process'],
+    required_permissions=['browser.read', 'browser.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -67,9 +67,9 @@ class BrowserLaunchModule(BaseModule):
 
     module_name = "Launch Browser"
     module_description = "Launch a new browser instance"
-    required_permission = "browser.launch"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.headless = self.params.get('headless', False)
 
     async def execute(self) -> Any:

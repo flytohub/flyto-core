@@ -56,7 +56,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.TRANSLATION)
                 'description_key': 'modules.huggingface.translation.output.translation_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_translation(context: Dict[str, Any]) -> Dict[str, Any]:
     """Translate text using HuggingFace models"""

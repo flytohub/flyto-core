@@ -33,14 +33,15 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*'],
     can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
 
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,
 
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['database.write'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.DB_TABLE(),

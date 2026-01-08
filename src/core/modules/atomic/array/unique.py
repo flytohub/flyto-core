@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError
 
 
 @register_module(
@@ -67,7 +68,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 async def array_unique(context):
     """Remove duplicate values from array"""
@@ -94,7 +96,10 @@ async def array_unique(context):
         unique = list(set(array))
 
     return {
-        'unique': unique,
-        'count': len(unique),
-        'duplicates_removed': original_count - len(unique)
+        'ok': True,
+        'data': {
+            'unique': unique,
+            'count': len(unique),
+            'duplicates_removed': original_count - len(unique)
+        }
     }

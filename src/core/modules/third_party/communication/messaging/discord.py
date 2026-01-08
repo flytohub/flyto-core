@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     module_id='notification.discord.send_message',
     version='1.0.0',
     category='notification',
-    tags=['notification', 'discord', 'webhook', 'messaging'],
+    tags=['notification', 'discord', 'webhook', 'messaging', 'ssrf_protected'],
     label='Send Discord Message',
     label_key='modules.notification.discord.send_message.label',
     description='Send message to Discord via webhook',
@@ -35,13 +35,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*', 'flow.*', 'notification.*', 'end'],
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple messages can be sent in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs DISCORD_WEBHOOK_URL
+    requires_credentials=True,
+    credential_keys=['DISCORD_WEBHOOK_URL'],
     handles_sensitive_data=True,  # Messages may contain sensitive info
     required_permissions=['network.access'],
 
@@ -103,7 +104,7 @@ class DiscordSendMessageModule(BaseModule):
     module_name = "Send Discord Message"
     module_description = "Send message to Discord channel via webhook URL"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'content' not in self.params or not self.params['content']:
             raise ValueError("Missing required parameter: content")
 

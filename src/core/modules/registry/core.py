@@ -11,8 +11,27 @@ from typing import Dict, Type, Any, Optional, List
 
 from ..base import BaseModule
 from ...constants import ErrorMessages
-from .localization import get_localized_value
 from ..types import StabilityLevel, is_module_visible, get_current_env
+
+
+def get_localized_value(value: Any, lang: str = 'en') -> str:
+    """
+    Extract localized string from value.
+
+    Stub implementation - actual translations provided by flyto-i18n.
+    Supports:
+    1. String: returns as-is
+    2. Dict: {"en": "...", "zh": "...", "ja": "..."}
+    """
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, dict):
+        if lang in value:
+            return value[lang]
+        if 'en' in value:
+            return value['en']
+        return next(iter(value.values())) if value else ''
+    return str(value) if value else ''
 
 
 logger = logging.getLogger(__name__)

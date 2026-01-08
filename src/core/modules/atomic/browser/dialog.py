@@ -14,7 +14,7 @@ from ...schema import compose, presets
     module_id='browser.dialog',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'dialog', 'alert', 'confirm', 'prompt'],
+    tags=['browser', 'dialog', 'alert', 'confirm', 'prompt', 'ssrf_protected'],
     label='Handle Dialog',
     label_key='modules.browser.dialog.label',
     description='Handle alert, confirm, and prompt dialogs',
@@ -62,16 +62,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserDialogModule(BaseModule):
     """Handle Dialog Module"""
 
     module_name = "Handle Dialog"
     module_description = "Handle alert, confirm, and prompt dialogs"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

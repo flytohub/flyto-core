@@ -7,6 +7,7 @@ import json
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, ModuleError
 
 
 @register_module(
@@ -61,7 +62,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def json_stringify(context: Dict[str, Any]) -> Dict[str, Any]:
     """Convert object to JSON string."""
@@ -71,11 +73,7 @@ async def json_stringify(context: Dict[str, Any]) -> Dict[str, Any]:
     indent = params.get('indent', 2)
 
     if data is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: data',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: data", field="data")
 
     try:
         if pretty:
@@ -84,11 +82,10 @@ async def json_stringify(context: Dict[str, Any]) -> Dict[str, Any]:
             json_str = json.dumps(data, ensure_ascii=False)
 
         return {
-            'status': 'success',
-            'json': json_str
+            'ok': True,
+            'data': {
+                'json': json_str
+            }
         }
     except Exception as e:
-        return {
-            'status': 'error',
-            'message': f'Failed to stringify: {str(e)}'
-        }
+        raise ModuleError(f"Failed to stringify: {str(e)}")

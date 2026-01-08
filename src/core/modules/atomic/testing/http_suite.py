@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='testing',
-    tags=['testing', 'http', 'api', 'suite', 'atomic'],
+    tags=['testing', 'http', 'api', 'suite', 'atomic', 'ssrf_protected'],
     label='Run HTTP Tests',
     label_key='modules.testing.http.run_suite.label',
     description='Execute HTTP API test suite',
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*', 'data.*'],
     can_connect_to=['testing.*', 'notification.*', 'data.*', 'flow.*'],
 
-    timeout=300,
+    timeout_ms=300000,
     retryable=False,
 
     params_schema={

@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import InvalidTypeError
 
 
 @register_module(
@@ -29,7 +30,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -69,21 +70,26 @@ async def object_omit(context: Dict[str, Any]) -> Dict[str, Any]:
     keys = params.get('keys', [])
 
     if not isinstance(obj, dict):
-        return {
-            'ok': False,
-            'error': 'object must be a dictionary',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError(
+            "object must be a dictionary",
+            field="object",
+            expected_type="dict",
+            actual_type=type(obj).__name__
+        )
 
     if not isinstance(keys, list):
-        return {
-            'ok': False,
-            'error': 'keys must be an array',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError(
+            "keys must be an array",
+            field="keys",
+            expected_type="list",
+            actual_type=type(keys).__name__
+        )
 
     result = {key: value for key, value in obj.items() if key not in keys}
 
     return {
-        'result': result
+        'ok': True,
+        'data': {
+            'result': result
+        }
     }

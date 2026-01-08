@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='communication',
     subcategory='slack',
-    tags=['slack', 'message', 'send', 'notification', 'webhook'],
+    tags=['slack', 'message', 'send', 'notification', 'webhook', 'ssrf_protected'],
     label='Send Slack Message',
     label_key='modules.slack.send.label',
     description='Send messages to Slack channels via incoming webhook',
@@ -32,14 +32,15 @@ logger = logging.getLogger(__name__)
     can_connect_to=['notification.*'],
     can_receive_from=['*'],
 
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=False,
-    required_permissions=['network.http'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.SLACK_MESSAGE(),

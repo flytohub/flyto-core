@@ -38,15 +38,16 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['ai.chat'],
+    required_permissions=['filesystem.read'],
 
     # Schema-driven params
     params_schema=compose(

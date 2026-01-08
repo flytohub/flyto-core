@@ -18,7 +18,7 @@ from ..integration import SlackIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "slack", "channels"],
+    tags=["integration", "slack", "channels", "ssrf_protected"],
     label="List Slack Channels",
     label_key="modules.integration.slack.list_channels.label",
     description="List channels in Slack workspace",
@@ -27,10 +27,11 @@ from ..integration import SlackIntegration
     color="#4A154B",
     input_types=["any"],
     output_types=["any"],
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['SLACK_BOT_TOKEN'],
     params_schema={
         "types": {
             "type": "string",
@@ -59,7 +60,7 @@ from ..integration import SlackIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
         "channels": {"type": "array"},
         "count": {"type": "number"},
     },
@@ -72,7 +73,7 @@ class SlackListChannelsModule(BaseModule):
     module_name = "List Slack Channels"
     module_description = "List channels in Slack workspace"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.types = self.params.get("types", "public_channel,private_channel")
         self.limit = self.params.get("limit", 100)
         self.token = self.params.get("token") or os.getenv("SLACK_BOT_TOKEN")

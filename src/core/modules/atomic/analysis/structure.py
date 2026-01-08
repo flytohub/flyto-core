@@ -24,9 +24,17 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     output_types=['object'],
 
     can_receive_from=['browser.*', 'element.*', 'page.*', 'file.*', 'data.*', 'api.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],
+    params_schema=compose(
         presets.HTML_CONTENT(),
     ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "structure": {"type": "object", "description": "HTML DOM structure analysis"}
+        }
+    },
+    timeout_ms=60000,
 )
 class HtmlStructureAnalysis(BaseModule):
     """Analyze HTML structure"""
@@ -34,7 +42,7 @@ class HtmlStructureAnalysis(BaseModule):
     module_name = "HTML Structure"
     module_description = "Analyze HTML DOM structure"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if "html" not in self.params:
             raise ValueError("Missing required parameter: html")
         self.html = self.params["html"]

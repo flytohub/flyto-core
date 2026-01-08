@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 

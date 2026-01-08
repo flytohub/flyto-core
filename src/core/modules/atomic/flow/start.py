@@ -48,7 +48,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     params_schema={},
 
@@ -69,7 +69,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class StartModule(BaseModule):
     """
@@ -81,9 +82,7 @@ class StartModule(BaseModule):
 
     module_name = "Start"
     module_description = "Explicit workflow start node"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         # No required params
         pass
 

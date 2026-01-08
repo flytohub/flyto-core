@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='testing',
-    tags=['testing', 'unit', 'unittest', 'atomic'],
+    tags=['testing', 'unit', 'unittest', 'atomic', 'path_restricted'],
     label='Run Unit Tests',
     label_key='modules.testing.unit.run.label',
     description='Execute unit tests',
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*', 'file.*'],
     can_connect_to=['testing.*', 'notification.*', 'data.*', 'flow.*'],
 
-    timeout=300,
+    timeout_ms=300000,
     retryable=False,
 
     params_schema={

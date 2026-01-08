@@ -96,7 +96,8 @@ import uuid
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class RandomNumberModule(BaseModule):
     """Generate random number"""
@@ -104,7 +105,7 @@ class RandomNumberModule(BaseModule):
     module_name = "Random Number"
     module_description = "Generate random number in specified range"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.min = self.params.get('min', 0)
         self.max = self.params.get('max', 100)
         self.decimals = self.params.get('decimals', 0)

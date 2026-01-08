@@ -19,7 +19,7 @@ from ....schema import compose, presets
     version='1.0.0',
     category='api',
     subcategory='api',
-    tags=['api', 'search', 'google', 'official'],
+    tags=['api', 'search', 'google', 'official', 'ssrf_protected'],
     label='Google Search (API)',
     label_key='modules.api.google_search.label',
     description='Use Google Custom Search API to search keywords',
@@ -30,11 +30,12 @@ from ....schema import compose, presets
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
     can_receive_from=['start', 'flow.*'],
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['GOOGLE_API_KEY', 'GOOGLE_CSE_ID'],
     handles_sensitive_data=False,
     required_permissions=['network.access'],
     params_schema=compose(
@@ -68,7 +69,7 @@ class GoogleSearchAPIModule(BaseModule):
     module_description = "Use Google Custom Search API to search keywords"
     required_permission = "api.search"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'keyword' not in self.params:
             raise ValueError("Missing parameter: keyword")
         self.keyword = self.params['keyword']
@@ -132,7 +133,7 @@ class GoogleSearchAPIModule(BaseModule):
     version='1.0.0',
     category='api',
     subcategory='api',
-    tags=['api', 'search', 'google', 'serpapi', 'third-party'],
+    tags=['api', 'search', 'google', 'serpapi', 'third-party', 'ssrf_protected'],
     label='Google Search (SerpAPI)',
     label_key='modules.api.serpapi_search.label',
     description='Use SerpAPI to search keywords (100 free searches/month)',
@@ -143,6 +144,14 @@ class GoogleSearchAPIModule(BaseModule):
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notification.*', 'file.*'],
     can_receive_from=['start', 'flow.*'],
+    timeout_ms=30000,
+    retryable=True,
+    max_retries=3,
+    concurrent_safe=True,
+    requires_credentials=True,
+    credential_keys=['SERPAPI_KEY'],
+    handles_sensitive_data=False,
+    required_permissions=['network.access'],
     params_schema=compose(
         presets.SEARCH_KEYWORD(placeholder='python tutorial'),
         presets.SEARCH_LIMIT(),
@@ -169,7 +178,7 @@ class SerpAPISearchModule(BaseModule):
     module_description = "Use SerpAPI to search keywords (100 free searches/month)"
     required_permission = "api.search"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'keyword' not in self.params:
             raise ValueError("Missing parameter: keyword")
         self.keyword = self.params['keyword']

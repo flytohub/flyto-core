@@ -18,7 +18,7 @@ from ..integration import SlackIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "slack", "messaging", "notification"],
+    tags=["integration", "slack", "messaging", "notification", "ssrf_protected"],
     label="Send Slack Message",
     label_key="modules.integration.slack.send_message.label",
     description="Send a message to a Slack channel",
@@ -27,11 +27,12 @@ from ..integration import SlackIntegration
     color="#4A154B",
     input_types=["any"],
     output_types=["any"],
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['SLACK_BOT_TOKEN'],
     required_permissions=["network.access"],
     params_schema={
         "channel": {
@@ -68,7 +69,7 @@ from ..integration import SlackIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
         "channel": {"type": "string"},
         "ts": {"type": "string"},
         "message": {"type": "object"},
@@ -99,7 +100,7 @@ class SlackSendMessageModule(BaseModule):
     module_name = "Send Slack Message"
     module_description = "Send a message to a Slack channel"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if not self.params.get("channel"):
             raise ValueError("Channel is required")
         if not self.params.get("text"):

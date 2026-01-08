@@ -8,6 +8,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_path_with_env_config, PathTraversalError
+from ...errors import ValidationError, FileNotFoundError, ModuleError
 import os
 import shutil
 
@@ -17,7 +18,7 @@ import shutil
     version='1.0.0',
     category='atomic',
     subcategory='file',
-    tags=['file', 'io', 'read', 'atomic'],
+    tags=['file', 'io', 'read', 'atomic', 'path_restricted'],
     label='Read File',
     label_key='modules.file.read.label',
     description='Read content from a file',
@@ -32,7 +33,7 @@ import shutil
 
     can_receive_from=['start', 'flow.*'],
     can_connect_to=['*'],    # Execution settings
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
@@ -40,7 +41,7 @@ import shutil
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.read'],
+    required_permissions=['filesystem.read'],
 
     # Schema-driven params
     params_schema=compose(
@@ -82,18 +83,10 @@ async def file_read(context):
     try:
         safe_path = validate_path_with_env_config(path)
     except PathTraversalError as e:
-        return {
-            'ok': False,
-            'error': str(e),
-            'error_code': 'PATH_TRAVERSAL'
-        }
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
 
     if not os.path.exists(safe_path):
-        return {
-            'ok': False,
-            'error': f'File not found: {path}',
-            'error_code': 'FILE_NOT_FOUND'
-        }
+        raise FileNotFoundError(f"File not found: {path}", path=path)
 
     with open(safe_path, 'r', encoding=encoding) as f:
         content = f.read()
@@ -101,8 +94,11 @@ async def file_read(context):
     size = os.path.getsize(safe_path)
 
     return {
-        'content': content,
-        'size': size
+        'ok': True,
+        'data': {
+            'content': content,
+            'size': size
+        }
     }
 
 

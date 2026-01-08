@@ -69,7 +69,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_contains.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertContainsModule(BaseModule):
     """Assert that a collection contains a value."""
@@ -77,7 +78,7 @@ class AssertContainsModule(BaseModule):
     module_name = "Assert Contains"
     module_description = "Assert that a collection contains a value"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'collection' not in self.params:
             raise ValueError("Parameter 'collection' is required")
         if 'value' not in self.params:

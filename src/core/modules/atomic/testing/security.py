@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*', 'file.*'],
     can_connect_to=['testing.*', 'notification.*', 'data.*', 'flow.*'],
 
-    timeout=300,
+    timeout_ms=300000,
     retryable=False,
 
     params_schema={

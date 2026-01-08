@@ -16,7 +16,7 @@ import shutil
     version='1.0.0',
     category='atomic',
     subcategory='file',
-    tags=['file', 'io', 'check', 'atomic'],
+    tags=['file', 'io', 'check', 'atomic', 'path_restricted'],
     label='Check File Exists',
     label_key='modules.file.exists.label',
     description='Check if a file or directory exists',
@@ -34,7 +34,7 @@ import shutil
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read'],
+    required_permissions=['filesystem.read'],
 
     # Schema-driven params
     params_schema=compose(
@@ -67,7 +67,8 @@ import shutil
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def file_exists(context):
     """Check if file exists"""
@@ -79,7 +80,10 @@ async def file_exists(context):
     is_directory = os.path.isdir(path) if exists else False
 
     return {
-        'exists': exists,
-        'is_file': is_file,
-        'is_directory': is_directory
+        'ok': True,
+        'data': {
+            'exists': exists,
+            'is_file': is_file,
+            'is_directory': is_directory
+        }
     }

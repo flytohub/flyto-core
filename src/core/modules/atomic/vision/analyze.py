@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='vision',
-    tags=['vision', 'ai', 'image', 'screenshot', 'analysis', 'openai', 'gpt4v', 'atomic'],
+    tags=['vision', 'ai', 'image', 'screenshot', 'analysis', 'openai', 'gpt4v', 'atomic', 'ssrf_protected', 'path_restricted'],
     label='Analyze Image with AI',
     label_key='modules.vision.analyze.label',
     description='Analyze images using OpenAI Vision API (GPT-4V)',
@@ -37,15 +37,16 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['ai.vision'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.VISION_IMAGE(),

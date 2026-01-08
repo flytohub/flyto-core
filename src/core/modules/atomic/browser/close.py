@@ -12,7 +12,7 @@ from ...registry import register_module
     module_id='browser.close',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'automation', 'cleanup'],
+    tags=['browser', 'automation', 'cleanup', 'ssrf_protected'],
     label='Close Browser',
     label_key='modules.browser.close.label',
     description='Close the browser instance and release resources',
@@ -29,7 +29,7 @@ from ...registry import register_module
     can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
 
     # Execution settings
-    timeout=10,
+    timeout_ms=10000,
     retryable=False,
     max_retries=0,
     concurrent_safe=False,
@@ -37,9 +37,17 @@ from ...registry import register_module
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['browser.close'],
+    required_permissions=['browser.read', 'browser.write'],
 
-    params_schema={},
+    params_schema={
+        '_no_params': {
+            'type': 'boolean',
+            'label': 'No Parameters',
+            'description': 'This module requires no parameters',
+            'default': True,
+            'hidden': True
+        }
+    },
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.close.output.status.description'},
@@ -60,9 +68,9 @@ class BrowserCloseModule(BaseModule):
 
     module_name = "Close Browser"
     module_description = "Close the browser instance"
-    required_permission = "browser.close"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         pass
 
     async def execute(self) -> Any:

@@ -13,7 +13,7 @@ from ...schema import compose, presets
     module_id='browser.evaluate',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'javascript', 'execute', 'script'],
+    tags=['browser', 'javascript', 'execute', 'script', 'ssrf_protected'],
     label='Execute JavaScript',
     label_key='modules.browser.evaluate.label',
     description='Execute JavaScript code in page context',
@@ -59,16 +59,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserEvaluateModule(BaseModule):
     """Execute JavaScript Module"""
 
     module_name = "Execute JavaScript"
     module_description = "Execute JavaScript in page context"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'script' not in self.params:
             raise ValueError("Missing required parameter: script")
         self.script = self.params['script']

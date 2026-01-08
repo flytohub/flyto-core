@@ -11,7 +11,7 @@ from ...schema import compose, presets
     module_id='browser.wait',
     version='1.1.0',
     category='browser',
-    tags=['browser', 'wait', 'delay', 'selector'],
+    tags=['browser', 'wait', 'delay', 'selector', 'ssrf_protected'],
     label='Wait',
     label_key='modules.browser.wait.label',
     description='Wait for a duration or until an element appears',
@@ -26,6 +26,17 @@ from ...schema import compose, presets
     # Connection rules
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+
+    # Execution settings
+    timeout_ms=30000,
+    retryable=True,
+    max_retries=2,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=['browser.read'],
 
     # Schema-driven params
     params_schema=compose(
@@ -59,9 +70,9 @@ class BrowserWaitModule(BaseModule):
 
     module_name = "Wait"
     module_description = "Wait for a duration or element to appear"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         # Primary: duration_ms (explicit milliseconds)
         # Fallback: duration (for backwards compatibility - auto-detect unit)
         if 'duration_ms' in self.params:

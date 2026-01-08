@@ -79,7 +79,8 @@ import uuid
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class HashMD5Module(BaseModule):
     """Calculate MD5 hash"""
@@ -87,7 +88,7 @@ class HashMD5Module(BaseModule):
     module_name = "MD5 Hash"
     module_description = "Calculate MD5 hash of text"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'text' not in self.params:
             raise ValueError("Missing required parameter: text")
 

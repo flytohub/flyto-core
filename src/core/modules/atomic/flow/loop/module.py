@@ -75,11 +75,12 @@ LOOP_CONFIG = {
             'edge_type': EdgeType.CONTROL.value
         }
     ],
+    'timeout_ms': 60000,
     'retryable': False,
     'concurrent_safe': True,
     'requires_credentials': False,
     'handles_sensitive_data': False,
-    'required_permissions': ['flow.control'],
+    'required_permissions': [],
     'params_schema': {
         'times': {
             'type': 'number',
@@ -211,12 +212,12 @@ FOREACH_CONFIG = {
             'edge_type': EdgeType.CONTROL.value
         }
     ],
-
+    'timeout_ms': 60000,
     'retryable': False,
     'concurrent_safe': True,
     'requires_credentials': False,
     'handles_sensitive_data': False,
-    'required_permissions': ['flow.control'],
+    'required_permissions': [],
     'params_schema': {
         'items': {
             'type': 'array',
@@ -356,9 +357,7 @@ class LoopModule(BaseModule):
 
     module_name = "Loop"
     module_description = "Iterate over list and execute operations for each item"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         import logging
         import warnings
         logger = logging.getLogger(__name__)

@@ -7,10 +7,73 @@ Organized by architecture:
 - AI Tools: AI-powered analysis tools (Level 3)
 - External: MCP and remote agents (Level 4)
 - Composite: High-level workflow templates (v1.1)
+
+Key classes:
+- ModuleResult: Standardized execution result
+- ModuleError: Exception hierarchy for module errors
+- execute_module: Unified execution wrapper
 """
 
 from .registry import ModuleRegistry
 from .base import BaseModule
+from .result import ModuleResult
+from .errors import (
+    ModuleError,
+    ValidationError,
+    InvalidTypeError,
+    InvalidValueError,
+    ParamOutOfRangeError,
+    ConfigMissingError,
+    InvalidConfigError,
+    ExecutionTimeoutError,
+    RetryExhaustedError,
+    CancelledError,
+    NetworkError,
+    APIError,
+    RateLimitedError,
+    AuthenticationError,
+    ForbiddenError,
+    NotFoundError,
+    ElementNotFoundError,
+    ElementNotVisibleError,
+    NavigationError,
+    BrowserError,
+    FileNotFoundError,
+    FileAccessDeniedError,
+    FileReadError,
+    FileWriteError,
+    TypeMismatchError,
+    InvalidConnectionError,
+    DependencyError,
+    ModuleNotFoundError,
+    AIResponseError,
+    AIContextTooLongError,
+    ModelNotAvailableError,
+    UnsupportedError,
+    error_from_code,
+)
+from .runtime import (
+    execute_module,
+    execute_module_with_retry,
+    wrap_sync_module,
+    check_capabilities,
+)
+from .catalog import (
+    scrub_catalog_metadata,
+    scrub_all_metadata,
+    get_public_catalog_view,
+    get_public_catalog,
+    PUBLIC_FIELDS,
+    FORBIDDEN_FIELDS,
+)
+from .lint import (
+    lint_module,
+    lint_all_modules,
+    lint_from_registry,
+    LintResult,
+    LintReport,
+    Severity,
+)
 from .types import (
     ModuleLevel,
     UIVisibility,
@@ -54,6 +117,53 @@ __all__ = [
     # Core
     'ModuleRegistry',
     'BaseModule',
+    # Result & Errors (New)
+    'ModuleResult',
+    'ModuleError',
+    'ValidationError',
+    'InvalidTypeError',
+    'InvalidValueError',
+    'ParamOutOfRangeError',
+    'ConfigMissingError',
+    'InvalidConfigError',
+    'ExecutionTimeoutError',
+    'RetryExhaustedError',
+    'CancelledError',
+    'NetworkError',
+    'APIError',
+    'RateLimitedError',
+    'AuthenticationError',
+    'ForbiddenError',
+    'NotFoundError',
+    'ElementNotFoundError',
+    'ElementNotVisibleError',
+    'NavigationError',
+    'BrowserError',
+    'FileNotFoundError',
+    'FileAccessDeniedError',
+    'FileReadError',
+    'FileWriteError',
+    'TypeMismatchError',
+    'InvalidConnectionError',
+    'DependencyError',
+    'ModuleNotFoundError',
+    'AIResponseError',
+    'AIContextTooLongError',
+    'ModelNotAvailableError',
+    'UnsupportedError',
+    'error_from_code',
+    # Runtime (New)
+    'execute_module',
+    'execute_module_with_retry',
+    'wrap_sync_module',
+    'check_capabilities',
+    # Catalog (New)
+    'scrub_catalog_metadata',
+    'scrub_all_metadata',
+    'get_public_catalog_view',
+    'get_public_catalog',
+    'PUBLIC_FIELDS',
+    'FORBIDDEN_FIELDS',
     # Types
     'ModuleLevel',
     'UIVisibility',
@@ -85,4 +195,11 @@ __all__ = [
     'developer',
     # Composite
     'composite',
+    # Lint
+    'lint_module',
+    'lint_all_modules',
+    'lint_from_registry',
+    'LintResult',
+    'LintReport',
+    'Severity',
 ]

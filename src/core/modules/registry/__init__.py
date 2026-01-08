@@ -4,11 +4,21 @@ Module Registry - Registration and Management
 Re-exports all public APIs for backward compatibility.
 """
 
-from .core import ModuleRegistry
+from .core import ModuleRegistry, get_localized_value
 from .decorators import register_module
-from .localization import get_localized_value
 from .ports import generate_dynamic_ports, slugify
 from .catalog import ModuleCatalogManager, get_catalog_manager
+from .quality_validator import (
+    ModuleQualityValidator,
+    QualityReport,
+    validate_module_quality,
+)
+from .validation_types import (
+    ValidationMode,
+    ValidationIssue,
+    Severity,
+    get_validation_mode,
+)
 
 # Keep the old function name for backward compatibility
 _get_localized_value = get_localized_value
@@ -63,4 +73,11 @@ __all__ = [
     # Catalog
     'ModuleCatalogManager',
     'get_catalog_manager',
+
+    # Quality Validation
+    'ModuleQualityValidator',
+    'ValidationIssue',
+    'QualityReport',
+    'Severity',
+    'validate_module_quality',
 ]

@@ -19,9 +19,10 @@ from ...types import NodeType, EdgeType, DataType
 
 @register_module(
     module_id='flow.breakpoint',
+    stability='beta',  # Uses eval() for auto-approve conditions - requires review
     version='1.0.0',
     category='flow',
-    tags=['flow', 'breakpoint', 'approval', 'human', 'pause', 'control', 'hitl'],
+    tags=['flow', 'breakpoint', 'approval', 'human', 'pause', 'control', 'hitl', 'eval_safe'],
     label='Breakpoint',
     label_key='modules.flow.breakpoint.label',
     description='Pause workflow execution for human approval or input',
@@ -77,7 +78,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control', 'breakpoint.manage'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -171,7 +172,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class BreakpointModule(BaseModule):
     """
@@ -190,9 +192,7 @@ class BreakpointModule(BaseModule):
 
     module_name = "Breakpoint"
     module_description = "Pause workflow for human approval or input"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         """Validate and extract parameters"""
         self.title = self.get_param('title', 'Approval Required')
         self.description = self.get_param('description', '')

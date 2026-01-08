@@ -38,6 +38,7 @@ from core.training.daily_practice import DailyPracticeEngine
         'schema': {'type': 'object', 'description': 'The schema',
                 'description_key': 'modules.training.practice.infer_schema.output.schema.description'},
     },
+    timeout_ms=30000,
 )
 class TrainingPracticeInferSchema(BaseModule):
     """Infer data schema from website"""
@@ -45,7 +46,7 @@ class TrainingPracticeInferSchema(BaseModule):
     module_name = "Practice Infer Schema"
     module_description = "Infer data schema"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if "url" not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params["url"]

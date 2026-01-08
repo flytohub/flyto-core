@@ -31,7 +31,7 @@ import time
 
     can_receive_from=['*'],
     can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -77,7 +77,7 @@ import time
 class DateTimeAddModule(BaseModule):
     """DateTime Add Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.datetime_str = self.params.get('datetime', 'now')
         self.days = self.params.get('days', 0)
         self.hours = self.params.get('hours', 0)

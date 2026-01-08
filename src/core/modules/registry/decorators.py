@@ -123,7 +123,8 @@ def register_module(
     output_schema: Optional[Dict[str, Any]] = None,
 
     # Execution settings
-    timeout: Optional[int] = None,
+    timeout_ms: Optional[int] = None,  # Timeout in milliseconds (preferred)
+    timeout: Optional[int] = None,     # DEPRECATED: Use timeout_ms instead (seconds)
     retryable: bool = False,
     max_retries: int = 3,
     concurrent_safe: bool = True,
@@ -132,6 +133,9 @@ def register_module(
     requires_credentials: bool = False,
     handles_sensitive_data: bool = False,
     required_permissions: Optional[List[str]] = None,
+    credential_keys: Optional[List[str]] = None,  # e.g., ['OPENAI_API_KEY']
+    required_secrets: Optional[List[str]] = None,  # Alternative to credential_keys
+    env_vars: Optional[List[str]] = None,  # Environment variable names
 
     # Execution environment (LOCAL/CLOUD/ALL)
     # None = auto-detect based on category (see types.LOCAL_ONLY_CATEGORIES)
@@ -250,7 +254,8 @@ def register_module(
         params_schema: Parameter definitions
         output_schema: Output structure definition
 
-        timeout: Execution timeout in seconds
+        timeout_ms: Execution timeout in milliseconds (preferred)
+        timeout: DEPRECATED - Execution timeout in seconds (use timeout_ms instead)
         retryable: Whether module can be retried on failure
         max_retries: Maximum retry attempts
         concurrent_safe: Whether module can run concurrently
@@ -280,7 +285,7 @@ def register_module(
                     self.params = params
                     self.context = context
 
-                def validate_params(self):
+                def validate_params(self) -> None:
                     """Validation handled by function"""
                     pass
 
@@ -364,6 +369,25 @@ def register_module(
             else:
                 resolved_can_be_start = True
 
+        # Resolve timeout_ms from timeout (deprecated) if not set
+        resolved_timeout_ms = timeout_ms
+        if resolved_timeout_ms is None and timeout is not None:
+            # Convert seconds to milliseconds with deprecation warning
+            import logging
+            import warnings
+            logger = logging.getLogger(__name__)
+            resolved_timeout_ms = timeout * 1000
+            warnings.warn(
+                f"[{module_id}] 'timeout' (seconds) is deprecated. "
+                f"Use 'timeout_ms={resolved_timeout_ms}' instead.",
+                DeprecationWarning,
+                stacklevel=3
+            )
+            logger.warning(
+                f"[{module_id}] 'timeout' is deprecated. "
+                f"Use 'timeout_ms={resolved_timeout_ms}' instead."
+            )
+
         # Import-time validation (P0/P1 - hard fail)
         # Check ORIGINAL values to enforce explicit definition
         _validate_module_registration(
@@ -435,15 +459,20 @@ def register_module(
             "output_schema": output_schema or {},
 
             # Execution settings
-            "timeout": timeout,
+            "timeout_ms": resolved_timeout_ms,
+            "timeout": resolved_timeout_ms // 1000 if resolved_timeout_ms else None,  # Legacy (seconds)
             "retryable": retryable,
-            "max_retries": max_retries,
+            # If retryable=False, max_retries should be 0 (consistency fix)
+            "max_retries": max_retries if retryable else 0,
             "concurrent_safe": concurrent_safe,
 
             # Security settings
             "requires_credentials": requires_credentials,
             "handles_sensitive_data": handles_sensitive_data,
             "required_permissions": required_permissions or [],
+            "credential_keys": credential_keys or [],
+            "required_secrets": required_secrets or [],
+            "env_vars": env_vars or [],
 
             # Execution environment
             "execution_environment": resolved_execution_env.value if isinstance(resolved_execution_env, ExecutionEnvironment) else resolved_execution_env,
@@ -467,6 +496,22 @@ def register_module(
             "author": author,
             "license": license
         }
+
+        # ======================================================================
+        # Quality Validation (P0 - hard fail on errors)
+        # ======================================================================
+        # Import here to avoid circular imports
+        from .quality_validator import validate_module_quality
+
+        # Validate module code quality before registration
+        # This ensures "good decorator != bad code" - the code must meet standards
+        # For function-based modules, we validate the original function, not the wrapper
+        validate_module_quality(
+            module_class=module_class,
+            module_id=module_id,
+            metadata=metadata,
+            original_func=module_class_or_func if is_function else None,
+        )
 
         ModuleRegistry.register(module_id, module_class, metadata)
         return module_class

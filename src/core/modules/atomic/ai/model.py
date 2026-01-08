@@ -18,7 +18,7 @@ from ...types import NodeType, EdgeType, DataType
     version='1.0.0',
     category='ai',
     subcategory='sub_node',
-    tags=['ai', 'llm', 'model', 'openai', 'anthropic', 'sub-node'],
+    tags=['ai', 'llm', 'model', 'openai', 'anthropic', 'sub-node', 'ssrf_protected'],
     label='AI Model',
     label_key='modules.ai.model.label',
     description='LLM model configuration for AI Agent',
@@ -55,8 +55,9 @@ from ...types import NodeType, EdgeType, DataType
     retryable=False,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['ai.model'],
+    required_permissions=['filesystem.read'],
 
     params_schema=compose(
         presets.LLM_PROVIDER(default='openai'),
@@ -108,7 +109,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def ai_model(context: Dict[str, Any]) -> Dict[str, Any]:
     """

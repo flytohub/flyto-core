@@ -13,7 +13,7 @@ from ...schema import compose, presets, field
     module_id='browser.frame',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'frame', 'iframe'],
+    tags=['browser', 'frame', 'iframe', 'ssrf_protected'],
     label='Switch Frame',
     label_key='modules.browser.frame.label',
     description='Switch to iframe or frame context',
@@ -81,16 +81,18 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserFrameModule(BaseModule):
     """Switch Frame Module"""
 
     module_name = "Switch Frame"
     module_description = "Switch to iframe or frame context"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.selector = self.params.get('selector')
         self.name = self.params.get('name')
         self.url = self.params.get('url')

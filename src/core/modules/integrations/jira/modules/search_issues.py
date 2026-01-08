@@ -18,7 +18,7 @@ from ..integration import JiraIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "jira", "search", "jql"],
+    tags=["integration", "jira", "search", "jql", "ssrf_protected"],
     label="Search Jira Issues",
     label_key="modules.integration.jira.search_issues.label",
     description="Search issues using JQL query",
@@ -27,10 +27,11 @@ from ..integration import JiraIntegration
     color="#0052CC",
     input_types=["any"],
     output_types=["any"],
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['JIRA_TOKEN', 'JIRA_EMAIL'],
     params_schema={
         "domain": {
             "type": "string",
@@ -67,7 +68,7 @@ from ..integration import JiraIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
         "issues": {"type": "array"},
         "total": {"type": "number"},
     },
@@ -80,7 +81,7 @@ class JiraSearchIssuesModule(BaseModule):
     module_name = "Search Jira Issues"
     module_description = "Search issues using JQL"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if not self.params.get("domain"):
             raise ValueError("Jira domain required")
         if not self.params.get("jql"):

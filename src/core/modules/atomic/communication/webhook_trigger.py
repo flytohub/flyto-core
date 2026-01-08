@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='communication',
     subcategory='webhook',
-    tags=['webhook', 'http', 'trigger', 'api', 'notification'],
+    tags=['webhook', 'http', 'trigger', 'api', 'notification', 'ssrf_protected'],
     label='Trigger Webhook',
     label_key='modules.webhook.trigger.label',
     description='Send HTTP POST request to a webhook URL',
@@ -33,14 +33,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['notification.*', 'api.*'],
     can_receive_from=['*'],
 
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['network.http'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.WEBHOOK_URL(),

@@ -18,7 +18,7 @@ from ..integration import SalesforceIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "salesforce", "crm", "update"],
+    tags=["integration", "salesforce", "crm", "update", "ssrf_protected"],
     label="Update Salesforce Record",
     label_key="modules.integration.salesforce.update_record.label",
     description="Update an existing record in Salesforce",
@@ -27,10 +27,11 @@ from ..integration import SalesforceIntegration
     color="#00A1E0",
     input_types=["any"],
     output_types=["any"],
-    timeout=30,
+    timeout_ms=30000,
     retryable=True,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['SALESFORCE_CLIENT_ID', 'SALESFORCE_CLIENT_SECRET'],
     params_schema={
         "instance_url": {
             "type": "string",
@@ -66,7 +67,7 @@ from ..integration import SalesforceIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
     },
     author="Flyto Team",
     license="MIT",
@@ -77,7 +78,7 @@ class SalesforceUpdateRecordModule(BaseModule):
     module_name = "Update Salesforce Record"
     module_description = "Update an existing record in Salesforce"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         required = ["instance_url", "sobject", "record_id", "data"]
         for param in required:
             if not self.params.get(param):

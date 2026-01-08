@@ -53,7 +53,7 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     version='1.0.0',
     category='atomic',
     subcategory='http',
-    tags=['http', 'response', 'assert', 'test', 'validation', 'atomic'],
+    tags=['http', 'response', 'assert', 'test', 'validation', 'atomic', 'ssrf_protected', 'path_restricted'],
     label='Assert HTTP Response',
     label_key='modules.http.response_assert.label',
     description='Assert and validate HTTP response properties',
@@ -68,14 +68,14 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
-    # Security settings
+    # Security settings (no network access - just validates response objects)
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=[],
+    required_permissions=[],  # This module doesn't make network calls
 
     # Schema-driven params
     params_schema=compose(

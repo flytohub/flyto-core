@@ -51,7 +51,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -86,7 +86,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class EndModule(BaseModule):
     """
@@ -99,9 +100,7 @@ class EndModule(BaseModule):
 
     module_name = "End"
     module_description = "Explicit workflow end node"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.output_mapping = self.params.get('output_mapping', {})
         self.success_message = self.params.get('success_message')
 

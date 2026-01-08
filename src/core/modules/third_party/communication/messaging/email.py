@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     module_id='notification.email.send',
     version='1.0.0',
     category='notification',
-    tags=['notification', 'email', 'smtp', 'mail'],
+    tags=['ssrf_protected', 'notification', 'email', 'smtp', 'mail'],
     label='Send Email',
     label_key='modules.notification.email.send.label',
     description='Send email via SMTP',
@@ -34,15 +34,16 @@ logger = logging.getLogger(__name__)
     can_connect_to=['*'],  # Notifications can connect to any module
 
     # Phase 2: Execution settings
-    timeout=30,  # SMTP operations should complete within 30s
+    timeout_ms=30000,  # SMTP operations should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=2,
     concurrent_safe=True,  # Multiple emails can be sent in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs SMTP credentials
+    requires_credentials=True,
+    credential_keys=['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD'],
     handles_sensitive_data=True,  # Email content may be sensitive
-    required_permissions=['network.access'],
+    required_permissions=['email.send'],
 
     params_schema={
         'smtp_server': {
@@ -149,7 +150,7 @@ class EmailSendModule(BaseModule):
     module_name = "Send Email"
     module_description = "Send email message via SMTP server"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         required = ['smtp_server', 'username', 'password', 'from_email', 'to_email', 'subject', 'body']
         for param in required:
             if param not in self.params or not self.params[param]:

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='word',
-    tags=['word', 'pdf', 'docx', 'convert', 'document'],
+    tags=['word', 'pdf', 'docx', 'convert', 'document', 'path_restricted'],
     label='Word to PDF',
     label_key='modules.word.to_pdf.label',
     description='Convert Word documents (.docx) to PDF files',
@@ -35,14 +35,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=300,
+    timeout_ms=300000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.DOC_INPUT_PATH(placeholder='/path/to/document.docx'),

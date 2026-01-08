@@ -18,7 +18,7 @@ from ....schema import compose, presets
     version='1.0.0',
     category='api',
     subcategory='api',
-    tags=['api', 'http', 'request', 'get'],
+    tags=['api', 'http', 'request', 'get', 'ssrf_protected'],
     label='HTTP GET Request',
     label_key='modules.api.http_get.label',
     description='Send HTTP GET request to any URL',
@@ -54,7 +54,8 @@ from ....schema import compose, presets
         }
     }],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=60000,
 )
 class HTTPGetModule(BaseModule):
     """Send HTTP GET request"""
@@ -62,7 +63,7 @@ class HTTPGetModule(BaseModule):
     module_name = "HTTP GET Request"
     module_description = "Send HTTP GET request to any URL"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
 
@@ -106,7 +107,7 @@ class HTTPGetModule(BaseModule):
     version='1.0.0',
     category='api',
     subcategory='api',
-    tags=['api', 'http', 'request', 'post'],
+    tags=['api', 'http', 'request', 'post', 'ssrf_protected'],
     label='HTTP POST Request',
     label_key='modules.api.http_post.label',
     description='Send HTTP POST request to any URL',
@@ -140,7 +141,8 @@ class HTTPGetModule(BaseModule):
         }
     }],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=60000,
 )
 class HTTPPostModule(BaseModule):
     """Send HTTP POST request"""
@@ -148,7 +150,7 @@ class HTTPPostModule(BaseModule):
     module_name = "HTTP POST Request"
     module_description = "Send HTTP POST request to any URL"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
 

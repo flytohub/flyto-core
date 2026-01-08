@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError
 
 
 @register_module(
@@ -68,7 +69,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 async def array_filter(context):
     """Filter array by condition"""
@@ -102,8 +104,11 @@ async def array_filter(context):
                 filtered.append(item)
 
     return {
-        'filtered': filtered,
-        'count': len(filtered)
+        'ok': True,
+        'data': {
+            'filtered': filtered,
+            'count': len(filtered)
+        }
     }
 
 

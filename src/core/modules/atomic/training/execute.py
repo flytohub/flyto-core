@@ -38,6 +38,7 @@ from core.training.daily_practice import DailyPracticeEngine
         'items_processed': {'type': 'number', 'description': 'The items processed',
                 'description_key': 'modules.training.practice.execute.output.items_processed.description'},
     },
+    timeout_ms=30000,
 )
 class TrainingPracticeExecute(BaseModule):
     """Execute practice session"""
@@ -45,7 +46,7 @@ class TrainingPracticeExecute(BaseModule):
     module_name = "Practice Execute"
     module_description = "Execute practice session"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if "url" not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params["url"]

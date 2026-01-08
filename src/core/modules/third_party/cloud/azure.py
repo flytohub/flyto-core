@@ -15,7 +15,7 @@ from ...registry import register_module
     version='1.0.0',
     category='cloud',
     subcategory='storage',
-    tags=['cloud', 'azure', 'blob', 'storage', 'upload'],
+    tags=['cloud', 'azure', 'blob', 'storage', 'upload', 'path_restricted', 'ssrf_protected', 'filesystem_write'],
     label='Azure Upload',
     label_key='modules.cloud.azure.upload.label',
     description='Upload file to Azure Blob Storage',
@@ -28,15 +28,16 @@ from ...registry import register_module
     output_types=['url', 'json'],
 
     # Phase 2: Execution settings
-    timeout=300,  # 5 minutes for large file uploads
+    timeout_ms=300000,  # 5 minutes for large file uploads
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['AZURE_STORAGE_CONNECTION_STRING'],
     handles_sensitive_data=True,
-    required_permissions=['cloud.storage.write'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'file_path': {
@@ -116,7 +117,7 @@ from ...registry import register_module
 class AzureUploadModule(BaseModule):
     """Azure Blob Storage Upload Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.file_path = self.params.get('file_path')
         self.connection_string = self.params.get('connection_string')
         self.container = self.params.get('container')
@@ -202,7 +203,7 @@ class AzureUploadModule(BaseModule):
     version='1.0.0',
     category='cloud',
     subcategory='storage',
-    tags=['cloud', 'azure', 'blob', 'storage', 'download'],
+    tags=['cloud', 'azure', 'blob', 'storage', 'download', 'ssrf_protected', 'path_restricted', 'filesystem_write'],
     label='Azure Download',
     label_key='modules.cloud.azure.download.label',
     description='Download file from Azure Blob Storage',
@@ -215,15 +216,16 @@ class AzureUploadModule(BaseModule):
     output_types=['file', 'binary'],
 
     # Phase 2: Execution settings
-    timeout=300,  # 5 minutes for large file downloads
+    timeout_ms=300000,  # 5 minutes for large file downloads
     retryable=True,
     max_retries=3,
     concurrent_safe=True,
 
     # Phase 2: Security settings
     requires_credentials=True,
+    credential_keys=['AZURE_STORAGE_CONNECTION_STRING'],
     handles_sensitive_data=True,
-    required_permissions=['cloud.storage.read'],
+    required_permissions=['cloud.storage'],
 
     params_schema={
         'connection_string': {
@@ -290,7 +292,7 @@ class AzureUploadModule(BaseModule):
 class AzureDownloadModule(BaseModule):
     """Azure Blob Storage Download Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.connection_string = self.params.get('connection_string')
         self.container = self.params.get('container')
         self.blob_name = self.params.get('blob_name')

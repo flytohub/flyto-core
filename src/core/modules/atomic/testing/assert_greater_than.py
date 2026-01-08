@@ -69,7 +69,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_greater_than.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertGreaterThanModule(BaseModule):
     """Assert that a value is greater than another."""
@@ -77,7 +78,7 @@ class AssertGreaterThanModule(BaseModule):
     module_name = "Assert Greater Than"
     module_description = "Assert that a value is greater than another"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'actual' not in self.params:
             raise ValueError("Parameter 'actual' is required")
         if 'threshold' not in self.params:

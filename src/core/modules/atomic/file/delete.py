@@ -16,7 +16,7 @@ from ...schema import compose, presets
     version='1.0.0',
     category='file',
     subcategory='operations',
-    tags=['file', 'delete', 'remove'],
+    tags=['file', 'delete', 'remove', 'path_restricted'],
     label='Delete File',
     label_key='modules.file.delete.label',
     description='Delete a file from the filesystem',
@@ -31,14 +31,14 @@ from ...schema import compose, presets
 
     can_receive_from=['*'],
     can_connect_to=['file.*', 'data.*', 'document.*', 'image.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=False,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.delete'],
+    required_permissions=['filesystem.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -72,7 +72,7 @@ from ...schema import compose, presets
 class FileDeleteModule(BaseModule):
     """Delete File Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.file_path = self.params.get('file_path')
         self.ignore_missing = self.params.get('ignore_missing', False)
 

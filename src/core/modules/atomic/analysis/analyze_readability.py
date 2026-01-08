@@ -13,7 +13,7 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     module_id='analysis.html.analyze_readability',
     version='1.0.0',
     category='analysis',
-    tags=['analysis', 'html', 'readability', 'text'],
+    tags=['analysis', 'html', 'readability', 'text', 'path_restricted'],
     label='HTML Readability',
     label_key='modules.analysis.html.analyze_readability.label',
     description='Analyze content readability',
@@ -24,9 +24,19 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     output_types=['object'],
 
     can_receive_from=['browser.*', 'element.*', 'page.*', 'file.*', 'data.*', 'api.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],
+    params_schema=compose(
         presets.HTML_CONTENT(),
     ),
+    output_schema={
+        "type": "object",
+        "properties": {
+            "word_count": {"type": "number", "description": "Total word count"},
+            "sentence_count": {"type": "number", "description": "Total sentence count"},
+            "readability": {"type": "object", "description": "Readability metrics"}
+        }
+    },
+    timeout_ms=60000,
 )
 class HtmlAnalyzeReadability(BaseModule):
     """Analyze HTML readability"""
@@ -34,7 +44,7 @@ class HtmlAnalyzeReadability(BaseModule):
     module_name = "HTML Readability Analysis"
     module_description = "Analyze content readability"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if "html" not in self.params:
             raise ValueError("Missing required parameter: html")
         self.html = self.params["html"]

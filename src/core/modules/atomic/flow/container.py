@@ -70,7 +70,7 @@ MAX_CONTAINER_DEPTH = 5
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -146,7 +146,8 @@ MAX_CONTAINER_DEPTH = 5
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class ContainerModule(BaseModule):
     """
@@ -166,9 +167,7 @@ class ContainerModule(BaseModule):
 
     module_name = "Container"
     module_description = "Embedded subflow container"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         """Validate container parameters."""
         # Get subflow definition
         self.subflow = self.params.get('subflow', {'nodes': [], 'edges': []})

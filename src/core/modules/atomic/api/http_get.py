@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from ...errors import ValidationError, NetworkError, ModuleError
 from ....utils import validate_url_with_env_config, SSRFError
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='api',
-    tags=['api', 'http', 'get', 'request', 'atomic'],
+    tags=['api', 'http', 'get', 'request', 'atomic', 'ssrf_protected'],
     label='HTTP GET',
     label_key='modules.api.http_get.label',
     description='Send HTTP GET request to an API endpoint',
@@ -31,9 +32,12 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*'],
     can_connect_to=['data.*', 'array.*', 'notification.*', 'file.*', 'flow.*'],
 
-    timeout=60,
+    timeout_ms=60000,
+    required_permissions=["network.access"],
     retryable=True,
     max_retries=3,
+    requires_credentials=True,
+    credential_keys=['API_KEY'],  # API calls may require authentication
 
     params_schema={
         'url': {
@@ -74,15 +78,16 @@ async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         import aiohttp
     except ImportError:
-        return {
-            'ok': False,
-            'error': 'aiohttp required. Install: pip install aiohttp'
-        }
+        raise ModuleError("aiohttp required. Install: pip install aiohttp")
 
     from urllib.parse import urlencode, urlparse, urlunparse
 
     params = context['params']
-    url = params['url']
+    url = params.get('url')
+
+    if not url:
+        raise ValidationError("Missing required parameter: url", field="url")
+
     headers = params.get('headers', {})
     query = params.get('query', {})
     timeout_s = params.get('timeout', 30)
@@ -92,12 +97,7 @@ async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
         validate_url_with_env_config(url)
     except SSRFError as e:
         logger.warning(f"SSRF protection blocked GET to: {url}")
-        return {
-            'ok': False,
-            'error': str(e),
-            'error_code': 'SSRF_BLOCKED',
-            'status': 0
-        }
+        raise NetworkError(str(e), url=url, status_code=0)
 
     # Add query params to URL
     if query:
@@ -120,17 +120,26 @@ async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                     body = await response.text()
 
-                return {
-                    'ok': 200 <= response.status < 300,
-                    'status': response.status,
-                    'body': body,
-                    'headers': dict(response.headers)
-                }
+                is_success = 200 <= response.status < 300
 
+                if is_success:
+                    return {
+                        'ok': True,
+                        'data': {
+                            'status': response.status,
+                            'body': body,
+                            'headers': dict(response.headers)
+                        }
+                    }
+                else:
+                    raise NetworkError(
+                        f"HTTP {response.status} error",
+                        url=url,
+                        status_code=response.status
+                    )
+
+    except NetworkError:
+        raise
     except Exception as e:
         logger.error(f"HTTP GET failed: {e}")
-        return {
-            'ok': False,
-            'error': str(e),
-            'status': 0
-        }
+        raise NetworkError(str(e), url=url)

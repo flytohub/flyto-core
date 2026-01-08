@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     module_id='notification.telegram.send_message',
     version='1.0.0',
     category='notification',
-    tags=['notification', 'telegram', 'bot', 'messaging'],
+    tags=['notification', 'telegram', 'bot', 'messaging', 'ssrf_protected'],
     label='Send Telegram Message',
     label_key='modules.notification.telegram.send_message.label',
     description='Send message via Telegram Bot API',
@@ -35,13 +35,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*', 'flow.*', 'notification.*', 'end'],
 
     # Phase 2: Execution settings
-    timeout=30,  # API calls should complete within 30s
+    timeout_ms=30000,  # API calls should complete within 30s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple messages can be sent in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs TELEGRAM_BOT_TOKEN
+    requires_credentials=True,
+    credential_keys=['TELEGRAM_BOT_TOKEN'],
     handles_sensitive_data=True,  # Messages may contain sensitive info
     required_permissions=['network.access'],
 
@@ -116,7 +117,7 @@ class TelegramSendMessageModule(BaseModule):
     module_name = "Send Telegram Message"
     module_description = "Send message to Telegram chat/channel via Bot API"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'text' not in self.params or not self.params['text']:
             raise ValueError("Missing required parameter: text")
         if 'chat_id' not in self.params or not self.params['chat_id']:

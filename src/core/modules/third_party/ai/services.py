@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     module_id='api.anthropic.chat',
     version='1.0.0',
     category='ai',
-    tags=['ai', 'anthropic', 'claude', 'llm', 'chat', 'api'],
+    tags=['ai', 'anthropic', 'claude', 'llm', 'chat', 'api', 'ssrf_protected'],
     label='Claude Chat',
     label_key='modules.api.anthropic.chat.label',
     description='Send a chat message to Anthropic Claude AI and get a response',
@@ -33,15 +33,16 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*', 'notification.*', 'file.*'],
 
     # Phase 2: Execution settings
-    timeout=60,  # AI responses can take up to 60s
+    timeout_ms=60000,  # AI responses can take up to 60s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple AI calls can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs ANTHROPIC_API_KEY
+    requires_credentials=True,
+    credential_keys=['ANTHROPIC_API_KEY'],
     handles_sensitive_data=True,  # User messages may contain sensitive info
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
 
     params_schema={
         'api_key': {
@@ -242,15 +243,16 @@ async def anthropic_chat(context):
     can_connect_to=['data.*', 'notification.*', 'file.*'],
 
     # Phase 2: Execution settings
-    timeout=60,  # AI responses can take up to 60s
+    timeout_ms=60000,  # AI responses can take up to 60s
     retryable=True,  # Network errors can be retried
     max_retries=3,
     concurrent_safe=True,  # Multiple AI calls can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs GOOGLE_AI_API_KEY
+    requires_credentials=True,
+    credential_keys=['GOOGLE_API_KEY'],
     handles_sensitive_data=True,  # User prompts may contain sensitive info
-    required_permissions=['network.access', 'ai.api'],
+    required_permissions=['ai.api'],
 
     params_schema={
         'api_key': {

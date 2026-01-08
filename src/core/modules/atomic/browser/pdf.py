@@ -14,7 +14,7 @@ from ...schema import compose, presets, field
     module_id='browser.pdf',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'pdf', 'export', 'print'],
+    tags=['browser', 'pdf', 'export', 'print', 'ssrf_protected', 'path_restricted'],
     label='Generate PDF',
     label_key='modules.browser.pdf.label',
     description='Generate PDF from current page',
@@ -80,16 +80,18 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserPdfModule(BaseModule):
     """Generate PDF Module"""
 
     module_name = "Generate PDF"
     module_description = "Generate PDF from current page"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'path' not in self.params:
             raise ValueError("Missing required parameter: path")
 

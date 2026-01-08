@@ -25,7 +25,7 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
     version='1.0.0',
     category='atomic',
     subcategory='port',
-    tags=['port', 'check', 'network', 'status', 'atomic'],
+    tags=['port', 'check', 'network', 'status', 'atomic', 'ssrf_protected'],
     label='Check Port',
     label_key='modules.port.check.label',
     description='Check if network port(s) are open or closed',
@@ -40,14 +40,14 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=10,
+    timeout_ms=10000,
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['network.connect'],
+    required_permissions=[],
 
     params_schema={
         'port': {

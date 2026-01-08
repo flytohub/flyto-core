@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='testing',
-    tags=['testing', 'lint', 'code-quality', 'atomic'],
+    tags=['testing', 'lint', 'code-quality', 'atomic', 'path_restricted'],
     label='Run Linter',
     label_key='modules.testing.lint.run.label',
     description='Run linting checks on source code',
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['start', 'flow.*', 'file.*'],
     can_connect_to=['testing.*', 'notification.*', 'data.*', 'flow.*'],
 
-    timeout=120,
+    timeout_ms=120000,
     retryable=False,
 
     params_schema={

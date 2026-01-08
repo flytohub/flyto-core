@@ -27,7 +27,15 @@ from typing import Any
     output_types=['object'],
 
     can_receive_from=['*'],
-    can_connect_to=['*'],)
+    can_connect_to=['*'],
+    params_schema={},
+    output_schema={
+        "status": {"type": "string", "description": "Operation status (stub/success/error)"},
+        "message": {"type": "string", "description": "Human-readable result message"},
+        "spec_received": {"type": "boolean", "description": "Whether module spec was received"}
+    },
+    timeout_ms=30000,
+)
 class TestGeneratorModule(BaseModule):
     """
     Test the module generator (stub for OSS)
@@ -44,7 +52,7 @@ class TestGeneratorModule(BaseModule):
     module_name = "TestGenerator"
     module_description = "Test module generation capability (Pro feature)"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         """Validate and extract parameters"""
         if "module_spec" not in self.params:
             raise ValueError("Missing required parameter: module_spec")
@@ -81,6 +89,13 @@ class TestGeneratorModule(BaseModule):
     output_types=['object'],
     can_receive_from=['*'],
     can_connect_to=['*'],
+    params_schema={},
+    output_schema={
+        "status": {"type": "string", "description": "Operation status (stub/success/error)"},
+        "message": {"type": "string", "description": "Human-readable result message"},
+        "module_id": {"type": "string", "description": "Generated module ID"},
+        "description": {"type": "string", "description": "Module description"}
+    },
 )
 class GenerateModuleModule(BaseModule):
     """
@@ -103,7 +118,7 @@ class GenerateModuleModule(BaseModule):
     module_name = "GenerateModule"
     module_description = "Generate new module from specification (Pro feature)"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         """Validate and extract parameters"""
         required = ["module_id", "description", "category", "params", "returns"]
         for param in required:

@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidValueError
 
 
 @register_module(
@@ -30,7 +31,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -72,11 +73,7 @@ async def array_intersection(context: Dict[str, Any]) -> Dict[str, Any]:
     arrays = params.get('arrays', [])
 
     if not isinstance(arrays, list) or len(arrays) < 2:
-        return {
-            'ok': False,
-            'error': 'arrays must be a list with at least 2 arrays',
-            'error_code': 'INVALID_PARAM'
-        }
+        raise InvalidValueError("arrays must be a list with at least 2 arrays", field="arrays")
 
     # Convert first array to set
     result = set(arrays[0])
@@ -88,6 +85,9 @@ async def array_intersection(context: Dict[str, Any]) -> Dict[str, Any]:
     result_list = list(result)
 
     return {
-        'result': result_list,
-        'length': len(result_list)
+        'ok': True,
+        'data': {
+            'result': result_list,
+            'length': len(result_list)
+        }
     }

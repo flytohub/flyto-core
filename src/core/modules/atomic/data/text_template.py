@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError, ModuleError
 
 
 @register_module(
@@ -63,7 +64,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def text_template(context: Dict[str, Any]) -> Dict[str, Any]:
     """Fill text template with variables."""
@@ -72,32 +74,25 @@ async def text_template(context: Dict[str, Any]) -> Dict[str, Any]:
     variables = params.get('variables')
 
     if not template:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: template',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: template", field="template")
 
     if not isinstance(variables, dict):
-        return {
-            'ok': False,
-            'error': 'variables must be an object',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError(
+            "variables must be an object",
+            field="variables",
+            expected_type="dict",
+            actual_type=type(variables).__name__
+        )
 
     try:
         result = template.format(**variables)
         return {
-            'status': 'success',
-            'result': result
+            'ok': True,
+            'data': {
+                'result': result
+            }
         }
     except KeyError as e:
-        return {
-            'status': 'error',
-            'message': f'Missing variable in template: {str(e)}'
-        }
+        raise ModuleError(f"Missing variable in template: {str(e)}")
     except Exception as e:
-        return {
-            'status': 'error',
-            'message': f'Template error: {str(e)}'
-        }
+        raise ModuleError(f"Template error: {str(e)}")

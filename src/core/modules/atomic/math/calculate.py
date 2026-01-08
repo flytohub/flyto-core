@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidValueError
 import math
 
 
@@ -84,7 +85,8 @@ import math
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 async def math_calculate(context):
     """Perform mathematical operations"""
@@ -131,7 +133,10 @@ async def math_calculate(context):
         result = round(result, precision)
 
     return {
-        'result': result,
-        'operation': operation,
-        'expression': expression
+        'ok': True,
+        'data': {
+            'result': result,
+            'operation': operation,
+            'expression': expression
+        }
     }

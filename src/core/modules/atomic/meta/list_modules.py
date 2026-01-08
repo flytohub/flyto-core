@@ -27,7 +27,7 @@ import json
 
     can_receive_from=['*'],
     can_connect_to=['*'],    # Phase 2: Execution settings
-    timeout=5,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -148,7 +148,7 @@ import json
 class ListModulesModule(BaseModule):
     """List all available modules from registry"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.category = self.params.get('category')
         self.tags = self.params.get('tags')
         self.include_params = self.params.get('include_params', True)

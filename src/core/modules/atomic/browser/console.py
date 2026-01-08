@@ -14,7 +14,7 @@ from ...schema import compose, presets
     module_id='browser.console',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'console', 'debug', 'logs'],
+    tags=['browser', 'console', 'debug', 'logs', 'ssrf_protected'],
     label='Capture Console',
     label_key='modules.browser.console.label',
     description='Capture browser console logs (errors, warnings, info)',
@@ -52,16 +52,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserConsoleModule(BaseModule):
     """Capture Console Module"""
 
     module_name = "Capture Console"
     module_description = "Capture browser console logs"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.level = self.params.get('level', 'all')
         self.timeout = self.params.get('timeout', 5000)
         self.clear_existing = self.params.get('clear_existing', False)

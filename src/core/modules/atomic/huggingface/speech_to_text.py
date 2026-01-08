@@ -59,7 +59,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
                 'description_key': 'modules.huggingface.speech-to-text.output.chunks.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_speech_to_text(context: Dict[str, Any]) -> Dict[str, Any]:
     """Transcribe audio to text using HuggingFace ASR models"""

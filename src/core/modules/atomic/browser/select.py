@@ -13,7 +13,7 @@ from ...schema import compose, presets
     module_id='browser.select',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'interaction', 'select', 'dropdown', 'form'],
+    tags=['browser', 'interaction', 'select', 'dropdown', 'form', 'ssrf_protected'],
     label='Select Option',
     label_key='modules.browser.select.label',
     description='Select option from dropdown element',
@@ -57,16 +57,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserSelectModule(BaseModule):
     """Select Option Module"""
 
     module_name = "Select Option"
     module_description = "Select option from dropdown"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
 

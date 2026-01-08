@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError, InvalidValueError
 
 
 @register_module(
@@ -30,7 +31,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -82,24 +83,19 @@ async def array_chunk(context: Dict[str, Any]) -> Dict[str, Any]:
     size = params.get('size')
 
     if not isinstance(array, list):
-        return {
-            'ok': False,
-            'error': 'array must be a list',
-            'error_code': 'INVALID_TYPE'
-        }
+        raise InvalidTypeError("array must be a list", field="array", expected_type="list")
 
     if not size or size < 1:
-        return {
-            'ok': False,
-            'error': 'size must be a positive number',
-            'error_code': 'INVALID_PARAM'
-        }
+        raise InvalidValueError("size must be a positive number", field="size")
 
     result = []
     for i in range(0, len(array), size):
         result.append(array[i:i + size])
 
     return {
-        'result': result,
-        'chunks': len(result)
+        'ok': True,
+        'data': {
+            'result': result,
+            'chunks': len(result)
+        }
     }

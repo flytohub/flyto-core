@@ -18,7 +18,7 @@ from ...types import NodeType, EdgeType, DataType
     module_id='flow.trigger',
     version='1.0.0',
     category='flow',
-    tags=['flow', 'trigger', 'entry', 'webhook', 'schedule', 'control'],
+    tags=['flow', 'trigger', 'entry', 'webhook', 'schedule', 'control', 'ssrf_protected', 'path_restricted'],
     label='Trigger',
     label_key='modules.flow.trigger.label',
     description='Workflow entry point - manual, webhook, schedule, or event',
@@ -60,7 +60,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -108,7 +108,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class TriggerModule(BaseModule):
     """
@@ -123,9 +124,7 @@ class TriggerModule(BaseModule):
 
     module_name = "Trigger"
     module_description = "Workflow entry point"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.trigger_type = self.params.get('trigger_type', 'manual')
         self.webhook_path = self.params.get('webhook_path')
         self.schedule = self.params.get('schedule')

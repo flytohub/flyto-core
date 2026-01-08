@@ -38,15 +38,16 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
     can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
 
     # Execution settings
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,  # Database connections may not be thread-safe
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['database.query'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.SQL_QUERY(),

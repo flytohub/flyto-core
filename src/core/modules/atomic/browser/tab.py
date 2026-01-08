@@ -16,7 +16,7 @@ from ....utils import validate_url_with_env_config, SSRFError
     module_id='browser.tab',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'tab', 'window', 'page'],
+    tags=['browser', 'tab', 'window', 'page', 'ssrf_protected'],
     label='Manage Tabs',
     label_key='modules.browser.tab.label',
     description='Create, switch, and close browser tabs',
@@ -79,16 +79,18 @@ from ....utils import validate_url_with_env_config, SSRFError
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserTabModule(BaseModule):
     """Manage Tabs Module"""
 
     module_name = "Manage Tabs"
     module_description = "Create, switch, and close browser tabs"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

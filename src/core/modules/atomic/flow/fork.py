@@ -84,7 +84,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['flow.control'],
+    required_permissions=[],
 
     # Schema-driven params
     params_schema=compose(
@@ -117,7 +117,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class ForkModule(BaseModule):
     """
@@ -132,9 +133,7 @@ class ForkModule(BaseModule):
 
     module_name = "Fork"
     module_description = "Split execution into parallel branches"
-    required_permission = "flow.control"
-
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.branch_count = self.params.get('branch_count', 2)
 
         if not 2 <= self.branch_count <= 10:

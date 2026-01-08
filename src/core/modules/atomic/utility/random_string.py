@@ -93,7 +93,8 @@ import uuid
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class RandomStringModule(BaseModule):
     """Generate random string"""
@@ -101,7 +102,7 @@ class RandomStringModule(BaseModule):
     module_name = "Random String"
     module_description = "Generate random string or UUID"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.length = self.params.get('length', 16)
         self.charset = self.params.get('charset', 'alphanumeric')
 

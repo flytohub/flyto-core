@@ -18,7 +18,7 @@ from ..integration import JiraIntegration
     can_receive_from=['*'],
     version="1.0.0",
     category="integration",
-    tags=["integration", "jira", "issues", "project-management"],
+    tags=["integration", "jira", "issues", "project-management", "ssrf_protected"],
     label="Create Jira Issue",
     label_key="modules.integration.jira.create_issue.label",
     description="Create a new issue in Jira",
@@ -27,10 +27,11 @@ from ..integration import JiraIntegration
     color="#0052CC",
     input_types=["any"],
     output_types=["any"],
-    timeout=30,
+    timeout_ms=30000,
     retryable=False,
     concurrent_safe=True,
     requires_credentials=True,
+    credential_keys=['JIRA_TOKEN', 'JIRA_EMAIL'],
     params_schema={
         "domain": {
             "type": "string",
@@ -96,7 +97,7 @@ from ..integration import JiraIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "The ok value"},
         "key": {"type": "string"},
         "id": {"type": "string"},
         "url": {"type": "string"},
@@ -122,7 +123,7 @@ class JiraCreateIssueModule(BaseModule):
     module_name = "Create Jira Issue"
     module_description = "Create a new issue in Jira"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         required = ["domain", "project_key", "summary"]
         for param in required:
             if not self.params.get(param):

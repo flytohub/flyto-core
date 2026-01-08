@@ -69,7 +69,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_equal.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertEqualModule(BaseModule):
     """Assert that two values are equal."""
@@ -77,7 +78,7 @@ class AssertEqualModule(BaseModule):
     module_name = "Assert Equal"
     module_description = "Assert that two values are equal"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'actual' not in self.params:
             raise ValueError("Parameter 'actual' is required")
         if 'expected' not in self.params:

@@ -13,7 +13,7 @@ from ...schema import compose, presets, field
     module_id='browser.geolocation',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'geolocation', 'location', 'gps'],
+    tags=['browser', 'geolocation', 'location', 'gps', 'ssrf_protected'],
     label='Mock Geolocation',
     label_key='modules.browser.geolocation.label',
     description='Mock browser geolocation',
@@ -81,16 +81,18 @@ from ...schema import compose, presets, field
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserGeolocationModule(BaseModule):
     """Mock Geolocation Module"""
 
     module_name = "Mock Geolocation"
     module_description = "Mock browser geolocation"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'latitude' not in self.params:
             raise ValueError("Missing required parameter: latitude")
         if 'longitude' not in self.params:

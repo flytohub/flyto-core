@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='ai',
     subcategory='ai',
-    tags=['ai', 'ollama', 'local', 'llm', 'offline', 'chat'],
+    tags=['ai', 'ollama', 'local', 'llm', 'offline', 'chat', 'network', 'ssrf_protected'],
     label='Local Ollama Chat',
     label_key='modules.ai.local_ollama.chat.label',
     description='Chat with local LLM via Ollama (completely offline)',
@@ -34,15 +34,15 @@ logger = logging.getLogger(__name__)
     can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
 
     # Phase 2: Execution settings
-    timeout=120,  # Local LLM can take time depending on hardware
+    timeout_ms=120000,  # Local LLM can take time depending on hardware
     retryable=True,
     max_retries=3,
-    concurrent_safe=True,
+    concurrent_safe=False,  # Local LLM may have resource contention
 
     # Phase 2: Security settings
     requires_credentials=False,  # No API key needed for local
     handles_sensitive_data=True,  # User prompts may contain PII
-    required_permissions=['network.access'],  # For localhost connection
+    required_permissions=['shell.execute'],  # For localhost connection
 
     params_schema={
         'prompt': {
@@ -161,7 +161,7 @@ logger = logging.getLogger(__name__)
 class LocalOllamaChatModule(BaseModule):
     """Local Ollama Chat Module - Completely offline LLM"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         import os
         from urllib.parse import urlparse
 

@@ -13,7 +13,7 @@ from ...schema import compose, presets
     module_id='browser.scroll',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'scroll', 'navigation'],
+    tags=['browser', 'scroll', 'navigation', 'ssrf_protected'],
     label='Scroll Page',
     label_key='modules.browser.scroll.label',
     description='Scroll page to element, position, or direction',
@@ -54,16 +54,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserScrollModule(BaseModule):
     """Scroll Page Module"""
 
     module_name = "Scroll Page"
     module_description = "Scroll page to element or position"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.selector = self.params.get('selector')
         self.direction = self.params.get('direction', 'down')
         self.amount = self.params.get('amount', 500)

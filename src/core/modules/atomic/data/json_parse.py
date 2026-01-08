@@ -7,6 +7,7 @@ import json
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidValueError
 
 
 @register_module(
@@ -62,7 +63,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def json_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     """Parse JSON string into object."""
@@ -70,20 +72,15 @@ async def json_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     json_string = params.get('json_string')
 
     if json_string is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: json_string',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: json_string", field="json_string")
 
     try:
         data = json.loads(json_string)
         return {
-            'status': 'success',
-            'data': data
+            'ok': True,
+            'data': {
+                'result': data
+            }
         }
     except json.JSONDecodeError as e:
-        return {
-            'status': 'error',
-            'message': f'Invalid JSON: {str(e)}'
-        }
+        raise InvalidValueError(f"Invalid JSON: {str(e)}", field="json_string")

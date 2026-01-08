@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError
 
 
 @register_module(
@@ -54,7 +55,8 @@ from ...schema import compose, presets
             'description': 'String length'
         ,
                 'description_key': 'modules.string.reverse.output.length.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 async def string_reverse(context: Dict[str, Any]) -> Dict[str, Any]:
     """Reverse the characters in a string."""
@@ -62,17 +64,16 @@ async def string_reverse(context: Dict[str, Any]) -> Dict[str, Any]:
     text = params.get('text')
 
     if text is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: text',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: text", field="text")
 
     text_str = str(text)
     result = text_str[::-1]
 
     return {
-        'result': result,
-        'original': text,
-        'length': len(text_str)
+        'ok': True,
+        'data': {
+            'result': result,
+            'original': text,
+            'length': len(text_str)
+        }
     }

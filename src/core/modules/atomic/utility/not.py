@@ -26,7 +26,19 @@ from ...registry import register_module
     output_types=['boolean'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],)
+    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],
+    params_schema={},
+    output_schema={
+        "type": "object",
+        "properties": {
+            "result": {"type": "boolean", "description": "Negated boolean result"},
+            "original": {"type": "any", "description": "Original input value (any type)"},
+            "original_as_bool": {"type": "boolean", "description": "Original value converted to boolean"},
+            "status": {"type": "string", "description": "Operation status (success/error)"}
+        }
+    },
+    timeout_ms=5000,
+)
 class Not(BaseModule):
     """
     Logical negation - inverts the boolean value of the input

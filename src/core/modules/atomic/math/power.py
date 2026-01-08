@@ -7,6 +7,7 @@ import math
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError
 
 
 @register_module(
@@ -30,7 +31,7 @@ from ...schema import compose, presets
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
 
     # Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -87,23 +88,18 @@ async def math_power(context: Dict[str, Any]) -> Dict[str, Any]:
     exponent = params.get('exponent')
 
     if base is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: base',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: base", field="base")
 
     if exponent is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: exponent',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: exponent", field="exponent")
 
     result = math.pow(base, exponent)
 
     return {
-        'result': result,
-        'base': base,
-        'exponent': exponent
+        'ok': True,
+        'data': {
+            'result': result,
+            'base': base,
+            'exponent': exponent
+        }
     }

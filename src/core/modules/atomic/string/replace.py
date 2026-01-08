@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError
 
 
 @register_module(
@@ -66,7 +67,8 @@ from ...schema import compose, presets
             'description': 'Operation status'
         ,
                 'description_key': 'modules.string.replace.output.status.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 async def string_replace(context: Dict[str, Any]) -> Dict[str, Any]:
     """Replace occurrences of a substring in a string."""
@@ -76,32 +78,22 @@ async def string_replace(context: Dict[str, Any]) -> Dict[str, Any]:
     replace_with = params.get('replace')
 
     if text is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: text',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: text", field="text")
 
     if search is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: search',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: search", field="search")
 
     if replace_with is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: replace',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: replace", field="replace")
 
     result = str(text).replace(str(search), str(replace_with))
 
     return {
-        'result': result,
-        'original': text,
-        'search': search,
-        'replace': replace_with,
-        'status': 'success'
+        'ok': True,
+        'data': {
+            'result': result,
+            'original': text,
+            'search': search,
+            'replace': replace_with
+        }
     }

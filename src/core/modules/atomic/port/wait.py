@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='port',
-    tags=['port', 'wait', 'network', 'server', 'ready', 'atomic'],
+    tags=['port', 'wait', 'network', 'server', 'ready', 'atomic', 'ssrf_protected', 'path_restricted'],
     label='Wait for Port',
     label_key='modules.port.wait.label',
     description='Wait for a network port to become available',
@@ -35,14 +35,14 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=120,  # 2 minutes max wait
+    timeout_ms=120000,  # 2 minutes max wait
     retryable=False,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['network.connect'],
+    required_permissions=[],
 
     params_schema={
         'port': {

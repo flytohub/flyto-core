@@ -29,7 +29,7 @@ from ....utils import validate_url_with_env_config, SSRFError
     module_id='browser.goto',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'navigation', 'url'],
+    tags=['browser', 'navigation', 'url', 'ssrf_protected'],
     label='Go to URL',
     label_key='modules.browser.goto.label',
     description='Navigate to a specific URL',
@@ -44,6 +44,17 @@ from ....utils import validate_url_with_env_config, SSRFError
     # Connection rules
     can_receive_from=['browser.launch', 'browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'data.*', 'flow.*', 'file.*'],
+
+    # Execution settings
+    timeout_ms=30000,
+    retryable=True,
+    max_retries=2,
+    concurrent_safe=True,
+
+    # Security settings
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=['browser.read', 'browser.write'],
 
     # Schema-driven params
     params_schema=compose(
@@ -76,7 +87,7 @@ class BrowserGotoModule(BaseModule):
     module_description = "Navigate to a specific URL"
     required_permission = "browser.navigate"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']

@@ -13,7 +13,7 @@ from ...schema import compose, presets
     module_id='browser.storage',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'storage', 'localStorage', 'sessionStorage'],
+    tags=['browser', 'storage', 'localStorage', 'sessionStorage', 'ssrf_protected', 'path_restricted'],
     label='Browser Storage',
     label_key='modules.browser.storage.label',
     description='Access localStorage and sessionStorage',
@@ -62,16 +62,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserStorageModule(BaseModule):
     """Browser Storage Module"""
 
     module_name = "Browser Storage"
     module_description = "Access localStorage and sessionStorage"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

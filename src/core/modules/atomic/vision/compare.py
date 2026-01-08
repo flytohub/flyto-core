@@ -37,15 +37,16 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
 
     # Execution settings
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=False,
-    required_permissions=['ai.vision'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.VISION_IMAGE_BEFORE(),

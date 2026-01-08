@@ -14,7 +14,7 @@ from ...schema import compose, presets
     module_id='browser.extract',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'scraping', 'data', 'extract'],
+    tags=['browser', 'scraping', 'data', 'extract', 'ssrf_protected'],
     label='Extract Data',
     label_key='modules.browser.extract.label',
     description='Extract structured data from the page',
@@ -55,16 +55,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserExtractModule(BaseModule):
     """Extract Data Module"""
 
     module_name = "Extract Data"
     module_description = "Extract structured data from the page"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
 

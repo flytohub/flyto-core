@@ -356,15 +356,16 @@ def _stringify_value(value: Any, max_size: int) -> str:
     ],
 
     # Execution settings
-    timeout=300,  # 5 minutes for agent tasks
+    timeout_ms=300000,  # 5 minutes for agent tasks
     retryable=True,
     max_retries=1,
     concurrent_safe=True,
 
     # Security settings
     requires_credentials=True,
+    credential_keys=['API_KEY'],
     handles_sensitive_data=True,
-    required_permissions=['ai.agent'],
+    required_permissions=['shell.execute'],
 
     # Schema-driven params (model config can be overridden or from connected ai.model)
     params_schema=compose(

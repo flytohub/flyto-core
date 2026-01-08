@@ -1,8 +1,17 @@
 """
-Base Module Class with Phase 2 execution support
+Base Module Class with Phase 2 execution support.
+
+This module provides the BaseModule class that all atomic modules inherit from.
+It includes execution support, parameter validation, and unified return helpers.
+
+Design Principles:
+- Single responsibility: Base class for module execution
+- Atomic: Modules are independent units
+- No hardcoding: Uses constants for defaults
 """
 import asyncio
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Type, Union
 
@@ -12,7 +21,9 @@ from ..constants import (
     ErrorCode,
     ErrorMessages,
 )
-from .validation import ModuleError, validate_required, validate_type, validate_all
+from .validation import ModuleError as ModuleErrorData, validate_required, validate_type, validate_all
+from .result import ModuleResult
+from .errors import ModuleError, ValidationError
 
 
 logger = logging.getLogger(__name__)
@@ -322,3 +333,76 @@ class BaseModule(ABC):
             return errors[0].to_result()
 
         return None
+
+    # =========================================================================
+    # New Exception-Based Error Handling (Recommended)
+    # =========================================================================
+
+    def raise_validation_error(
+        self,
+        message: str,
+        field: Optional[str] = None,
+        hint: Optional[str] = None
+    ) -> None:
+        """
+        Raise a validation error.
+
+        This is the recommended way to report validation errors.
+        The runtime will catch this and convert to ModuleResult.failure().
+
+        Usage:
+            if not url:
+                self.raise_validation_error("URL is required", field="url")
+
+        Args:
+            message: Error message
+            field: Field that caused the error
+            hint: Suggestion for fixing the error
+
+        Raises:
+            ValidationError: Always raises
+        """
+        raise ValidationError(message, field=field, hint=hint)
+
+    def raise_error(
+        self,
+        error_class: type,
+        message: str,
+        **kwargs
+    ) -> None:
+        """
+        Raise a module error.
+
+        Usage:
+            from core.modules.errors import NetworkError, NotFoundError
+
+            self.raise_error(NetworkError, "Connection failed", url=url)
+            self.raise_error(NotFoundError, "File not found", path=path)
+
+        Args:
+            error_class: ModuleError subclass to raise
+            message: Error message
+            **kwargs: Additional error attributes
+
+        Raises:
+            ModuleError: The specified error
+        """
+        raise error_class(message, **kwargs)
+
+    def make_result(self, data: Any = None) -> ModuleResult:
+        """
+        Create a ModuleResult from data.
+
+        This is an alternative to returning raw dicts.
+        The runtime will accept ModuleResult directly.
+
+        Usage:
+            return self.make_result({"title": "Example"})
+
+        Args:
+            data: Result data
+
+        Returns:
+            ModuleResult with ok=True
+        """
+        return ModuleResult.success(data=data)

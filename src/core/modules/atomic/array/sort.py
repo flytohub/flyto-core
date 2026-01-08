@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError, InvalidTypeError
 
 
 @register_module(
@@ -62,7 +63,8 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 async def array_sort(context):
     """Sort array elements"""
@@ -73,8 +75,11 @@ async def array_sort(context):
     sorted_array = sorted(array, reverse=(order == 'desc'))
 
     return {
-        'sorted': sorted_array,
-        'count': len(sorted_array)
+        'ok': True,
+        'data': {
+            'sorted': sorted_array,
+            'count': len(sorted_array)
+        }
     }
 
 

@@ -56,7 +56,8 @@ _executor = HuggingFaceTaskExecutor(TaskType.SUMMARIZATION)
                 'description_key': 'modules.huggingface.summarization.output.summary_text.description'}
     },
     author=ModuleDefaults.AUTHOR,
-    license=ModuleDefaults.LICENSE
+    license=ModuleDefaults.LICENSE,
+    timeout_ms=30000,
 )
 async def huggingface_summarization(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate summaries using HuggingFace models"""

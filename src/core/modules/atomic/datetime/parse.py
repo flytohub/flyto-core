@@ -31,7 +31,7 @@ import time
 
     can_receive_from=['*'],
     can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -84,7 +84,7 @@ import time
 class DateTimeParseModule(BaseModule):
     """DateTime Parse Module"""
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         self.datetime_string = self.params.get('datetime_string')
         self.format = self.params.get('format')
 

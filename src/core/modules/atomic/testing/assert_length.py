@@ -69,7 +69,8 @@ from ...registry import register_module
             'description': 'Result message'
         ,
                 'description_key': 'modules.test.assert_length.output.message.description'}
-    }
+    },
+    timeout_ms=5000,
 )
 class AssertLengthModule(BaseModule):
     """Assert that a collection has expected length."""
@@ -77,7 +78,7 @@ class AssertLengthModule(BaseModule):
     module_name = "Assert Length"
     module_description = "Assert that a collection has expected length"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'collection' not in self.params:
             raise ValueError("Parameter 'collection' is required")
         if 'expected_length' not in self.params:

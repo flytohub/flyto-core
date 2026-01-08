@@ -12,7 +12,7 @@ from ....schema import compose, presets
     module_id='db.mongodb.insert',
     version='1.0.0',
     category='database',
-    tags=['database', 'mongodb', 'nosql', 'insert', 'db', 'document'],
+    tags=['ssrf_protected', 'database', 'mongodb', 'nosql', 'insert', 'db', 'document', 'path_restricted'],
     label='MongoDB Insert',
     label_key='modules.db.mongodb.insert.label',
     description='Insert one or more documents into MongoDB collection',
@@ -27,14 +27,15 @@ from ....schema import compose, presets
     can_connect_to=['data.*', 'notification.*'],
 
     # Phase 2: Execution settings
-    timeout=30,  # Insert operations should be faster than queries
+    timeout_ms=30000,  # Insert operations should be faster than queries
     retryable=False,  # Could create duplicate documents if retried
     concurrent_safe=True,  # Multiple inserts can run in parallel
 
     # Phase 2: Security settings
-    requires_credentials=True,  # Needs database credentials
+    requires_credentials=True,
+    credential_keys=['MONGODB_URI'],
     handles_sensitive_data=True,  # Database data is typically sensitive
-    required_permissions=['network.access', 'database.write'],
+    required_permissions=['database.query'],
 
     params_schema=compose(
         presets.MONGO_CONNECTION_STRING(),

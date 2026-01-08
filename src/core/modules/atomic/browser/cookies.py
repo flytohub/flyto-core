@@ -13,7 +13,7 @@ from ...schema import compose, presets
     module_id='browser.cookies',
     version='1.0.0',
     category='browser',
-    tags=['browser', 'cookies', 'session', 'storage'],
+    tags=['browser', 'cookies', 'session', 'storage', 'ssrf_protected', 'path_restricted'],
     label='Manage Cookies',
     label_key='modules.browser.cookies.label',
     description='Get, set, or clear browser cookies',
@@ -69,16 +69,18 @@ from ...schema import compose, presets
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
+    required_permissions=["browser.automation"],
 )
 class BrowserCookiesModule(BaseModule):
     """Manage Cookies Module"""
 
     module_name = "Manage Cookies"
     module_description = "Get, set, or clear browser cookies"
-    required_permission = "browser.interact"
+    required_permission = "browser.automation"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'action' not in self.params:
             raise ValueError("Missing required parameter: action")
 

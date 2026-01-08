@@ -86,7 +86,8 @@ import uuid
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=5000,
 )
 class DelayModule(BaseModule):
     """Pause workflow execution"""
@@ -94,7 +95,7 @@ class DelayModule(BaseModule):
     module_name = "Delay/Sleep"
     module_description = "Pause workflow execution for specified duration"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         # Support both milliseconds and seconds
         self.duration_ms = self.params.get('duration_ms')
         self.duration_seconds = self.params.get('duration_seconds')

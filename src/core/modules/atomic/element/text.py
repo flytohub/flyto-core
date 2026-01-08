@@ -27,7 +27,7 @@ from ..element_registry import get_element_registry
     can_connect_to=['data.*', 'string.*', 'notification.*'],
 
     # Phase 2: Execution settings
-    timeout=5,  # Text extraction should be quick
+    timeout_ms=5000,  # Text extraction should be quick
     retryable=True,  # Can retry if element not ready
     max_retries=2,
     concurrent_safe=True,  # Stateless element operations
@@ -35,7 +35,7 @@ from ..element_registry import get_element_registry
     # Phase 2: Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['browser.read'],
+    required_permissions=[],
 
     params_schema={
         'element_id': {
@@ -86,7 +86,7 @@ class ElementTextModule(BaseModule):
     module_description = "Get element's text content"
     required_permission = "browser.read"
 
-    def validate_params(self):
+    def validate_params(self) -> None:
         if 'element_id' not in self.params:
             raise ValueError("Missing parameter: element_id")
 

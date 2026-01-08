@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='pdf',
-    tags=['pdf', 'form', 'fill', 'template', 'document', 'image'],
+    tags=['pdf', 'form', 'fill', 'template', 'document', 'image', 'path_restricted'],
     label='Fill PDF Form',
     label_key='modules.pdf.fill_form.label',
     description='Fill PDF form fields with data and optionally insert images',
@@ -32,14 +32,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['file.*'],
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
-    timeout=120,
+    timeout_ms=120000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['file.read', 'file.write'],
+    required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
         presets.PDF_TEMPLATE(),

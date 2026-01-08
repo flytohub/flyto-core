@@ -6,6 +6,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ValidationError
 
 
 @register_module(
@@ -27,7 +28,7 @@ from ...schema import compose, presets
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
 
-    timeout=None,
+    timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,
 
@@ -74,15 +75,14 @@ async def math_abs(context: Dict[str, Any]) -> Dict[str, Any]:
     number = params.get('number')
 
     if number is None:
-        return {
-            'ok': False,
-            'error': 'Missing required parameter: number',
-            'error_code': 'MISSING_PARAM'
-        }
+        raise ValidationError("Missing required parameter: number", field="number")
 
     result = abs(number)
 
     return {
-        'result': result,
-        'original': number
+        'ok': True,
+        'data': {
+            'result': result,
+            'original': number
+        }
     }

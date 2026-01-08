@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='document',
     subcategory='word',
-    tags=['word', 'docx', 'parse', 'extract', 'document'],
+    tags=['word', 'docx', 'parse', 'extract', 'document', 'path_restricted'],
     label='Parse Word Document',
     label_key='modules.word.parse.label',
     description='Extract text and content from Word documents (.docx)',
@@ -32,14 +32,14 @@ logger = logging.getLogger(__name__)
     can_connect_to=['data.*', 'string.*', 'ai.*'],
     can_receive_from=['file.*', 'data.*', 'api.*', 'flow.*', 'start'],
 
-    timeout=60,
+    timeout_ms=60000,
     retryable=True,
     max_retries=2,
     concurrent_safe=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,
-    required_permissions=['file.read'],
+    required_permissions=[],
 
     params_schema=compose(
         presets.WORD_FILE_PATH(),

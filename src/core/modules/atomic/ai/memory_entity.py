@@ -48,7 +48,7 @@ from ...types import NodeType, EdgeType, DataType
     concurrent_safe=True,
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['ai.memory'],
+    required_permissions=['filesystem.read'],
 
     params_schema=compose(
         field(
@@ -146,7 +146,8 @@ from ...types import NodeType, EdgeType, DataType
         }
     ],
     author='Flyto2 Team',
-    license='MIT'
+    license='MIT',
+    timeout_ms=30000,
 )
 async def ai_memory_entity(context: Dict[str, Any]) -> Dict[str, Any]:
     """
