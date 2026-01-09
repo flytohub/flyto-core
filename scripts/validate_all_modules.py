@@ -310,6 +310,11 @@ Strict Levels:
   stable    Strict for stable modules
   release   All modules must pass all rules
   all       WARN → ERROR (strictest)
+
+Output Formats:
+  text      Human-readable text (default)
+  json      Machine-readable JSON
+  markdown  Markdown report
         """
     )
     parser.add_argument(
@@ -321,7 +326,17 @@ Strict Levels:
     parser.add_argument(
         "--json",
         action="store_true",
-        help="Output results as JSON"
+        help="Output results as JSON (shortcut for --format=json)"
+    )
+    parser.add_argument(
+        "--format",
+        choices=["text", "json", "markdown"],
+        default="text",
+        help="Output format (default: text)"
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Output file path (default: stdout)"
     )
     parser.add_argument(
         "--verbose", "-v",
@@ -349,8 +364,26 @@ Strict Levels:
         action="store_true",
         help="Include mypy type checking (requires mypy installed)"
     )
+    parser.add_argument(
+        "--baseline",
+        help="Path to baseline JSON file for exemptions"
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Show fixes that would be applied (dry-run)"
+    )
+    parser.add_argument(
+        "--fix-apply",
+        action="store_true",
+        help="Actually apply fixes to files"
+    )
 
     args = parser.parse_args()
+
+    # Handle --json shortcut
+    if args.json:
+        args.format = "json"
 
     # Import validation system (quality module)
     try:
@@ -358,6 +391,8 @@ Strict Levels:
             ValidationEngine,
             StrictLevel,
             Severity,
+            Baseline,
+            generate_report,
         )
         from src.core.modules.quality.rules import get_all_rules
     except ImportError:
@@ -366,6 +401,8 @@ Strict Levels:
                 ValidationEngine,
                 StrictLevel,
                 Severity,
+                Baseline,
+                generate_report,
             )
             from core.modules.quality.rules import get_all_rules
         except ImportError as e:
@@ -427,11 +464,17 @@ Strict Levels:
     file_paths = get_module_source_paths()
     source_codes = get_module_source_codes(file_paths)
 
+    # Load baseline if specified
+    baseline = None
+    if args.baseline:
+        baseline = Baseline.from_file(Path(args.baseline))
+
     # Create engine and run validation
     engine = ValidationEngine(
         strict_level=strict_level,
         enabled_categories=enabled_categories,
         disabled_rules=disabled_rules,
+        baseline=baseline,
     )
 
     report = engine.validate_all(
@@ -440,11 +483,20 @@ Strict Levels:
         file_paths=file_paths,
     )
 
-    # Output report
-    if args.json:
-        print(format_json_report(report))
+    # Generate output
+    if args.format == "json":
+        output = generate_report(report, format="json")
+    elif args.format == "markdown":
+        output = generate_report(report, format="markdown")
     else:
-        print(format_text_report(report, verbose=args.verbose))
+        output = format_text_report(report, verbose=args.verbose)
+
+    # Write output
+    if args.output:
+        Path(args.output).write_text(output, encoding="utf-8")
+        print(f"Report written to: {args.output}")
+    else:
+        print(output)
 
     # Run mypy check if requested
     mypy_failed = False

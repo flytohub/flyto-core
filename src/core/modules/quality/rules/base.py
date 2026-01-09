@@ -7,7 +7,7 @@ import ast
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from ..types import Severity, ValidationIssue
+from ..types import Severity, ValidationIssue, RuleStage
 from ..constants import SEVERITY_BY_STABILITY
 
 
@@ -18,6 +18,9 @@ class BaseRule(ABC):
     rule_id: str = ""           # e.g., "CORE-ID-001"
     description: str = ""       # Human-readable description
     category: str = ""          # e.g., "identity", "execution", "schema"
+
+    # Execution stage (determines when the rule runs)
+    stage: RuleStage = RuleStage.METADATA
 
     # Default severity (can be overridden by stability)
     default_severity: Severity = Severity.ERROR
@@ -93,6 +96,9 @@ class BaseRule(ABC):
 class MetadataRule(BaseRule):
     """Base class for rules that only check metadata (no AST)."""
 
+    # Metadata rules run in Stage 1
+    stage: RuleStage = RuleStage.METADATA
+
     @classmethod
     @abstractmethod
     def validate(
@@ -107,6 +113,35 @@ class MetadataRule(BaseRule):
 
 class ASTRule(BaseRule):
     """Base class for rules that require AST analysis."""
+
+    # AST rules run in Stage 2
+    stage: RuleStage = RuleStage.AST
+
+    @classmethod
+    @abstractmethod
+    def validate(
+        cls,
+        module_id: str,
+        metadata: Dict[str, Any],
+        source_code: Optional[str] = None,
+        ast_tree: Optional[ast.AST] = None,
+    ) -> List[ValidationIssue]:
+        pass
+
+    @classmethod
+    def parse_source(cls, source_code: str) -> Optional[ast.AST]:
+        """Parse source code to AST."""
+        try:
+            return ast.parse(source_code)
+        except SyntaxError:
+            return None
+
+
+class SecurityRule(BaseRule):
+    """Base class for deep security scan rules."""
+
+    # Security rules run in Stage 3
+    stage: RuleStage = RuleStage.SECURITY
 
     @classmethod
     @abstractmethod

@@ -26,6 +26,21 @@ class StrictLevel(str, Enum):
     ALL = "all"            # + WARN becomes ERROR
 
 
+class RuleStage(str, Enum):
+    """3-stage execution stages for lint rules."""
+    METADATA = "metadata"  # Stage 1: Registry metadata only (fast)
+    AST = "ast"            # Stage 2: AST parsing required
+    SECURITY = "security"  # Stage 3: Deep security scan
+
+
+class GateLevel(str, Enum):
+    """CI/CD gate levels for severity policy."""
+    DEV = "dev"            # Development: only FATAL blocks
+    CI = "ci"              # CI: ERROR and above blocks
+    RELEASE = "release"    # Release: BLOCKER and above blocks
+    STRICT = "strict"      # Strict: all issues block
+
+
 @dataclass
 class ValidationIssue:
     """A single validation issue."""

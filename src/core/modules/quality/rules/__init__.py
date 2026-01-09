@@ -4,7 +4,8 @@ Validation Rules Registry
 All validation rules are registered here.
 """
 from typing import Dict, List, Type
-from .base import BaseRule
+from .base import BaseRule, MetadataRule, ASTRule, SecurityRule
+from ..types import RuleStage
 
 # Rule registry
 _RULES: Dict[str, Type[BaseRule]] = {}
@@ -31,6 +32,11 @@ def get_rules_by_category(category: str) -> List[Type[BaseRule]]:
     return [r for r in _RULES.values() if r.rule_id.startswith(category)]
 
 
+def get_rules_by_stage(stage: RuleStage) -> List[Type[BaseRule]]:
+    """Get rules by execution stage."""
+    return [r for r in _RULES.values() if r.stage == stage]
+
+
 # Import rule modules to trigger registration
 from . import identity
 from . import execution
@@ -45,5 +51,9 @@ __all__ = [
     "get_rule",
     "get_all_rules",
     "get_rules_by_category",
+    "get_rules_by_stage",
     "BaseRule",
+    "MetadataRule",
+    "ASTRule",
+    "SecurityRule",
 ]

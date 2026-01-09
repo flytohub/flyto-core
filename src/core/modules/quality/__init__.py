@@ -5,10 +5,13 @@ A comprehensive quality validation framework for flyto modules.
 Validates code quality, security, permissions, and metadata compliance.
 
 Features:
-- 28 validation rules across 6 categories
+- 3-stage execution: Metadata -> AST -> Security
+- 28+ validation rules across 6 categories
 - Stability-aware severity adjustment
 - AST-based code analysis
-- Strict mode levels for CI gates
+- SeverityPolicy for CI gate control
+- Baseline exemptions support
+- Auto-fix infrastructure
 
 Categories:
 - Identity (CORE-ID): module_id, stability, version
@@ -36,6 +39,8 @@ Usage:
 from .types import (
     Severity,
     StrictLevel,
+    RuleStage,
+    GateLevel,
     ValidationIssue,
     ValidationReport,
     AggregateReport,
@@ -52,11 +57,24 @@ from .constants import (
     SECRET_PATTERNS,
     SENSITIVE_PARAM_PATTERNS,
 )
+from .policy import (
+    SeverityPolicy,
+    get_policy,
+    DEV_POLICY,
+    CI_POLICY,
+    RELEASE_POLICY,
+    STRICT_POLICY,
+)
+from .baseline import Baseline, create_baseline
+from .report import ReportGenerator, generate_report
+from .fixer import FixRunner, FixResult, FixableRule
 
 __all__ = [
     # Types
     "Severity",
     "StrictLevel",
+    "RuleStage",
+    "GateLevel",
     "ValidationIssue",
     "ValidationReport",
     "AggregateReport",
@@ -65,6 +83,23 @@ __all__ = [
     "discover_modules",
     "validate_single_file",
     "run_validation",
+    # Policy
+    "SeverityPolicy",
+    "get_policy",
+    "DEV_POLICY",
+    "CI_POLICY",
+    "RELEASE_POLICY",
+    "STRICT_POLICY",
+    # Baseline
+    "Baseline",
+    "create_baseline",
+    # Report
+    "ReportGenerator",
+    "generate_report",
+    # Fixer
+    "FixRunner",
+    "FixResult",
+    "FixableRule",
     # Constants
     "VALID_PERMISSIONS",
     "IMPORT_CAPABILITY_MAP",
@@ -72,4 +107,4 @@ __all__ = [
     "SENSITIVE_PARAM_PATTERNS",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

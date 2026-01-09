@@ -54,8 +54,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          python -m mypy src/core/modules/quality --ignore-missing-imports
-        continue-on-error: true  # Don't fail on mypy errors for now
+          python -m mypy src/core/modules/quality --strict --ignore-missing-imports
 
   validate-strict:
     name: Strict Validation (Release Gate)

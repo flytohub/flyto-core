@@ -2,6 +2,7 @@
 Validation Engine
 
 Orchestrates all validation rules and produces unified reports.
+Implements 3-stage execution: Metadata -> AST -> Security
 """
 
 import ast
@@ -9,17 +10,20 @@ import logging
 import pkgutil
 import importlib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Type
 
 from .types import (
     Severity,
     StrictLevel,
+    RuleStage,
     ValidationIssue,
     ValidationReport,
     AggregateReport,
 )
-from .rules import get_all_rules, get_rules_by_category
+from .rules import get_all_rules, get_rules_by_category, get_rules_by_stage, BaseRule
 from .detectors import verify_params_usage, verify_return_schema
+from .policy import SeverityPolicy, get_policy, CI_POLICY
+from .baseline import Baseline
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +33,10 @@ class ValidationEngine:
     Central validation engine that runs all rules against modules.
 
     Features:
-    - Runs all registered rules
+    - 3-stage execution: Metadata -> AST -> Security
+    - Baseline exemptions support
+    - SeverityPolicy for gate-level control
     - Stability-aware severity adjustment
-    - Strict mode enforcement
     - AST-based detectors for params/return verification
     """
 
@@ -40,6 +45,8 @@ class ValidationEngine:
         strict_level: StrictLevel = StrictLevel.DEFAULT,
         enabled_categories: Optional[Set[str]] = None,
         disabled_rules: Optional[Set[str]] = None,
+        policy: Optional[SeverityPolicy] = None,
+        baseline: Optional[Baseline] = None,
     ):
         """
         Initialize validation engine.
@@ -48,10 +55,14 @@ class ValidationEngine:
             strict_level: Strictness level for validation
             enabled_categories: Only run rules from these categories (None = all)
             disabled_rules: Skip these rule IDs
+            policy: SeverityPolicy for gate-level blocking decisions
+            baseline: Baseline for rule exemptions
         """
         self.strict_level = strict_level
         self.enabled_categories = enabled_categories
         self.disabled_rules = disabled_rules or set()
+        self.policy = policy or CI_POLICY
+        self.baseline = baseline or Baseline()
 
     def validate_module(
         self,
@@ -61,7 +72,13 @@ class ValidationEngine:
         file_path: Optional[str] = None,
     ) -> ValidationReport:
         """
-        Validate a single module.
+        Validate a single module using 3-stage execution.
+
+        Stage 1: METADATA - Fast checks on registry metadata only
+        Stage 2: AST - Parse source code and run AST-based rules
+        Stage 3: SECURITY - Deep security scans
+
+        Early exit on FATAL errors in Stage 1.
 
         Args:
             module_id: Module identifier
@@ -73,20 +90,103 @@ class ValidationEngine:
             ValidationReport with all issues
         """
         issues: List[ValidationIssue] = []
-
-        # Parse AST once for all rules
         ast_tree = None
+
+        # Stage 1: METADATA rules (fast, no AST needed)
+        stage1_issues = self._run_stage(
+            stage=RuleStage.METADATA,
+            module_id=module_id,
+            metadata=metadata,
+            source_code=None,  # Don't pass source to metadata rules
+            ast_tree=None,
+            file_path=file_path,
+        )
+        issues.extend(stage1_issues)
+
+        # Early exit if FATAL error in Stage 1
+        if self._has_fatal(stage1_issues):
+            return self._create_report(module_id, issues, metadata)
+
+        # Stage 2: AST rules (requires source code parsing)
         if source_code:
             try:
                 ast_tree = ast.parse(source_code)
-            except SyntaxError:
-                # AST rules will report this
-                pass
+            except SyntaxError as e:
+                issues.append(ValidationIssue(
+                    rule_id="CORE-AST-000",
+                    severity=Severity.FATAL,
+                    message=f"Syntax error: {e}",
+                    module_id=module_id,
+                    file=file_path or "",
+                    line=e.lineno or 0,
+                    col=e.offset or 0,
+                ))
+                return self._create_report(module_id, issues, metadata)
 
-        # Get all applicable rules
-        all_rules = get_all_rules()
+            stage2_issues = self._run_stage(
+                stage=RuleStage.AST,
+                module_id=module_id,
+                metadata=metadata,
+                source_code=source_code,
+                ast_tree=ast_tree,
+                file_path=file_path,
+            )
+            issues.extend(stage2_issues)
 
-        for rule in all_rules:
+            # Run AST detectors for schema verification
+            params_schema = metadata.get("params_schema", {})
+            output_schema = metadata.get("output_schema", {})
+
+            if params_schema:
+                issues.extend(verify_params_usage(
+                    source_code=source_code,
+                    params_schema=params_schema,
+                    module_id=module_id,
+                    ast_tree=ast_tree,
+                ))
+
+            if output_schema:
+                issues.extend(verify_return_schema(
+                    source_code=source_code,
+                    output_schema=output_schema,
+                    module_id=module_id,
+                    ast_tree=ast_tree,
+                ))
+
+        # Stage 3: SECURITY rules (deep security scan)
+        if source_code:
+            stage3_issues = self._run_stage(
+                stage=RuleStage.SECURITY,
+                module_id=module_id,
+                metadata=metadata,
+                source_code=source_code,
+                ast_tree=ast_tree,
+                file_path=file_path,
+            )
+            issues.extend(stage3_issues)
+
+        # Apply baseline exemptions
+        issues = self._apply_baseline(issues, module_id)
+
+        # Apply strict level adjustments
+        issues = self._apply_strict_level(issues, metadata)
+
+        return self._create_report(module_id, issues, metadata)
+
+    def _run_stage(
+        self,
+        stage: RuleStage,
+        module_id: str,
+        metadata: Dict[str, Any],
+        source_code: Optional[str],
+        ast_tree: Optional[ast.AST],
+        file_path: Optional[str],
+    ) -> List[ValidationIssue]:
+        """Run all rules for a specific stage."""
+        issues: List[ValidationIssue] = []
+        rules = get_rules_by_stage(stage)
+
+        for rule in rules:
             # Skip disabled rules
             if rule.rule_id in self.disabled_rules:
                 continue
@@ -120,31 +220,30 @@ class ValidationEngine:
                     file=file_path or "",
                 ))
 
-        # Run AST detectors for schema verification
-        if source_code:
-            params_schema = metadata.get("params_schema", {})
-            output_schema = metadata.get("output_schema", {})
+        return issues
 
-            if params_schema:
-                issues.extend(verify_params_usage(
-                    source_code=source_code,
-                    params_schema=params_schema,
-                    module_id=module_id,
-                    ast_tree=ast_tree,
-                ))
+    def _has_fatal(self, issues: List[ValidationIssue]) -> bool:
+        """Check if any issue is FATAL severity."""
+        return any(i.severity == Severity.FATAL for i in issues)
 
-            if output_schema:
-                issues.extend(verify_return_schema(
-                    source_code=source_code,
-                    output_schema=output_schema,
-                    module_id=module_id,
-                    ast_tree=ast_tree,
-                ))
+    def _apply_baseline(
+        self,
+        issues: List[ValidationIssue],
+        module_id: str,
+    ) -> List[ValidationIssue]:
+        """Apply baseline exemptions to filter out exempt issues."""
+        return [
+            issue for issue in issues
+            if not self.baseline.is_exempt(module_id, issue.rule_id)
+        ]
 
-        # Apply strict level adjustments
-        issues = self._apply_strict_level(issues, metadata)
-
-        # Create report
+    def _create_report(
+        self,
+        module_id: str,
+        issues: List[ValidationIssue],
+        metadata: Dict[str, Any],
+    ) -> ValidationReport:
+        """Create a ValidationReport from issues."""
         return ValidationReport(
             module_id=module_id,
             issues=issues,
