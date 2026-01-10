@@ -61,6 +61,11 @@ from ..base import CompositeModule, register_composite
                 'multiple': True
             },
             'on_error': 'continue'
+        },
+        {
+            'id': 'close',
+            'module': 'browser.close',
+            'params': {}
         }
     ],
 
@@ -80,11 +85,13 @@ from ..base import CompositeModule, register_composite
         'link_selector': {
             'type': 'string',
             'label': 'Link Selector',
+            'default': 'a',
             'placeholder': 'a.item-link'
         },
         'content_selector': {
             'type': 'string',
             'label': 'Content Selector',
+            'default': 'p',
             'placeholder': '.content, p'
         },
         'wait_selector': {
@@ -121,8 +128,8 @@ class WebScrapeToJson(CompositeModule):
             'status': 'success',
             'url': self.params.get('url', ''),
             'data': {
-                'titles': self.step_results.get('extract_titles', {}).get('results', []),
-                'links': self.step_results.get('extract_links', {}).get('results', []),
-                'content': self.step_results.get('extract_content', {}).get('results', [])
+                'titles': self.step_results.get('extract_titles', {}).get('data', []),
+                'links': self.step_results.get('extract_links', {}).get('data', []),
+                'content': self.step_results.get('extract_content', {}).get('data', [])
             }
         }

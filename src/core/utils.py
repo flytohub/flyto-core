@@ -391,6 +391,9 @@ def validate_url_ssrf(
         # Allow all (development)
         validate_url_ssrf("http://localhost:8080", allow_private=True)
     """
+    # Strip whitespace from URL (common user input error)
+    url = url.strip()
+
     # Development/self-hosted mode - allow all
     if allow_private:
         return url

@@ -41,9 +41,23 @@ class CompositeModule(ABC):
             params: Input parameters for the composite
             context: Execution context (shared state, browser instance, etc.)
         """
-        self.params = params
+        # Apply defaults from params_schema
+        self.params = self._apply_defaults(params)
         self.context = context
         self.step_results: Dict[str, Any] = {}
+
+    def _apply_defaults(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply default values from params_schema to params"""
+        metadata = CompositeRegistry.get_metadata(self.module_id) or {}
+        params_schema = metadata.get('params_schema', {})
+
+        result = dict(params)  # Copy input params
+        for key, schema in params_schema.items():
+            if key not in result or result[key] is None or result[key] == '':
+                default = schema.get('default')
+                if default is not None:
+                    result[key] = default
+        return result
 
     async def execute(self) -> Dict[str, Any]:
         """
