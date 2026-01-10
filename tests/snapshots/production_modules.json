@@ -1,8 +1,8 @@
 {
-  "version": "1.14.0",
+  "version": "1.14.2",
   "environment": "production",
-  "generated_at": "2026-01-06T11:26:00.093646+00:00",
-  "total": 177,
+  "generated_at": "2026-01-10T15:55:42.915635+00:00",
+  "total": 182,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -24,6 +24,48 @@
       "category": "ai",
       "stability": "stable",
       "label": "Local Ollama Chat"
+    },
+    {
+      "id": "analysis.html.analyze_readability",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "HTML Readability"
+    },
+    {
+      "id": "analysis.html.extract_forms",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "Extract Forms"
+    },
+    {
+      "id": "analysis.html.extract_metadata",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "Extract Metadata"
+    },
+    {
+      "id": "analysis.html.extract_tables",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "Extract Tables"
+    },
+    {
+      "id": "analysis.html.find_patterns",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "Find Patterns"
+    },
+    {
+      "id": "analysis.html.structure",
+      "version": "1.0.0",
+      "category": "analysis",
+      "stability": "stable",
+      "label": "HTML Structure"
     },
     {
       "id": "api.anthropic.chat",
@@ -649,13 +691,6 @@
       "label": "Branch"
     },
     {
-      "id": "flow.breakpoint",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "Breakpoint"
-    },
-    {
       "id": "flow.container",
       "version": "1.0.0",
       "category": "flow",
@@ -1246,6 +1281,7 @@
   ],
   "categories": {
     "ai": 7,
+    "analysis": 6,
     "api": 7,
     "array": 7,
     "atomic": 26,
@@ -1256,7 +1292,7 @@
     "document": 8,
     "element": 3,
     "file": 3,
-    "flow": 14,
+    "flow": 13,
     "image": 5,
     "math": 5,
     "meta": 4,

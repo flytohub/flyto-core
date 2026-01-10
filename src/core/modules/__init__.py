@@ -15,7 +15,9 @@ Key classes:
 """
 
 from .registry import ModuleRegistry
+from .registry import register_module
 from .base import BaseModule
+from .express import module, mod, ParamHelper, create_simple_module
 from .result import ModuleResult
 from .errors import (
     ModuleError,
@@ -116,7 +118,13 @@ from . import composite
 __all__ = [
     # Core
     'ModuleRegistry',
+    'register_module',
     'BaseModule',
+    # Express Mode (simplified decorator)
+    'module',
+    'mod',
+    'ParamHelper',
+    'create_simple_module',
     # Result & Errors (New)
     'ModuleResult',
     'ModuleError',

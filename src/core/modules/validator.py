@@ -117,11 +117,15 @@ class ModuleValidator:
         S002: output_schema presence (error)
         S003: schema field types valid
         S004: output field descriptions
+        S005: parameter default value type matches declared type
+        S006: required parameters should be validated in validate_params()
 
         C001: retryable + max_retries consistency
         C002: timeout for network modules
         C003: requires_credentials should declare credential source
         C004: handles_sensitive_data should have permissions
+        C005: network/file modules should have error handling (try-except)
+        C006: modules should use logging instead of print()
 
         SEC001: network modules should declare SSRF protection
         SEC002: file modules should declare path scope
@@ -135,20 +139,33 @@ class ModuleValidator:
         I002: description_key without description fallback
 
         RT001: module can be instantiated
+        RT002: execute() should return dict with 'ok' field
+        RT003: error returns should be consistent (dict, not raw string)
+        RT004: module should be instantiable with empty params
     """
 
-    def __init__(self, mode: Optional[ValidationMode] = None):
+    def __init__(
+        self,
+        mode: Optional[ValidationMode] = None,
+        disabled_rules: Optional[List[str]] = None,
+    ):
         """
         Initialize validator.
 
         Args:
             mode: Validation mode (defaults to env FLYTO_VALIDATION_MODE)
+            disabled_rules: List of rule IDs to skip (e.g., ['Q010', 'Q012'])
         """
         self.mode = mode or get_validation_mode()
         self.issues: List[ValidationIssue] = []
         # Legacy compatibility
         self.errors: List[str] = []
         self.warnings: List[str] = []
+
+        # Load active rules based on disabled_rules
+        from .registry.rule_config import get_active_rules, get_mandatory_rules
+        self.active_rules = get_active_rules(disabled_rules=disabled_rules)
+        self.mandatory_rules = get_mandatory_rules()
 
     def reset(self) -> None:
         """Reset state between validations."""
@@ -185,6 +202,12 @@ class ModuleValidator:
             self._validate_behavior(metadata, module_class)
             self._validate_advanced_security(module_class, module_id, tags=tags)
             self._validate_runtime(module_class, module_id)
+            self._validate_required_params_checked(metadata, module_class)
+            self._validate_error_handling(metadata, module_class)
+            self._validate_logging_usage(metadata, module_class)
+            self._validate_output_format(module_class, module_id)
+            self._validate_error_format(module_class, module_id)
+            self._validate_instantiable(module_class, module_id)
 
         # Convert to legacy format and determine blocking
         has_blocking = False
@@ -207,7 +230,11 @@ class ModuleValidator:
         hint: Optional[str] = None,
         line: Optional[int] = None,
     ) -> None:
-        """Add a validation issue."""
+        """Add a validation issue (if rule is active)."""
+        # Skip if rule is disabled (but never skip mandatory rules)
+        if rule_id not in self.active_rules and rule_id not in self.mandatory_rules:
+            return
+
         self.issues.append(ValidationIssue(
             rule_id=rule_id,
             severity=severity,
@@ -379,6 +406,81 @@ class ModuleValidator:
                 hint="Add description='English text' for i18n fallback"
             )
 
+        # S005: Parameter default value type consistency
+        self._validate_param_defaults(metadata)
+
+    def _validate_param_defaults(self, metadata: Dict[str, Any]) -> None:
+        """S005: Parameter default values should match declared types."""
+        params_schema = metadata.get('params_schema', {})
+        if not isinstance(params_schema, dict):
+            return
+
+        properties = params_schema.get('properties', params_schema)
+        for field_name, field_spec in properties.items():
+            if not isinstance(field_spec, dict):
+                continue
+
+            field_type = field_spec.get('type')
+            default = field_spec.get('default')
+
+            if default is not None and field_type:
+                # Type checking
+                type_valid = True
+                if field_type == 'string' and not isinstance(default, str):
+                    type_valid = False
+                elif field_type == 'number' and not isinstance(default, (int, float)):
+                    type_valid = False
+                elif field_type == 'integer' and not isinstance(default, int):
+                    type_valid = False
+                elif field_type == 'boolean' and not isinstance(default, bool):
+                    type_valid = False
+                elif field_type == 'array' and not isinstance(default, list):
+                    type_valid = False
+                elif field_type == 'object' and not isinstance(default, dict):
+                    type_valid = False
+
+                if not type_valid:
+                    self._add_issue(
+                        "S005", Severity.ERROR,
+                        f"Parameter '{field_name}' default value type mismatch: "
+                        f"expected {field_type}, got {type(default).__name__}",
+                        field=field_name,
+                        hint=f"Change default to match type '{field_type}'"
+                    )
+
+    def _validate_required_params_checked(
+        self, metadata: Dict[str, Any], module_class: Type
+    ) -> None:
+        """S006: Required parameters should be validated in validate_params()."""
+        params_schema = metadata.get('params_schema', {})
+        if not isinstance(params_schema, dict):
+            return
+
+        required = params_schema.get('required', [])
+        if not required:
+            return
+
+        # Check if validate_params exists and contains validation logic
+        if not hasattr(module_class, 'validate_params'):
+            return
+
+        try:
+            source = inspect.getsource(module_class.validate_params)
+            # Check if required fields are validated
+            for field_name in required:
+                # Look for the field name in the source code
+                if (field_name not in source and
+                    f"'{field_name}'" not in source and
+                    f'"{field_name}"' not in source):
+                    self._add_issue(
+                        "S006", Severity.WARNING,
+                        f"Required parameter '{field_name}' may not be validated in validate_params()",
+                        field=field_name,
+                        hint=f"Add validation for '{field_name}' in validate_params()"
+                    )
+        except (TypeError, OSError):
+            pass
+
     # =========================================================================
     # Consistency Validation (C00x)
     # =========================================================================
@@ -432,6 +534,63 @@ class ModuleValidator:
                     "handles_sensitive_data=True but no required_permissions",
                     field="required_permissions"
                 )
+
+    def _validate_error_handling(
+        self, metadata: Dict[str, Any], module_class: Type
+    ) -> None:
+        """C005: Network/file modules should have try-except blocks."""
+        category = metadata.get('category', '')
+
+        # Only check categories that need error handling
+        error_prone_categories = {'api', 'http', 'browser', 'file', 'database', 'cloud'}
+        if category not in error_prone_categories:
+            return
+
+        try:
+            source = inspect.getsource(module_class)
+            tree = ast.parse(source)
+
+            has_try_except = False
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Try):
+                    has_try_except = True
+                    break
+
+            if not has_try_except:
+                self._add_issue(
+                    "C005", Severity.WARNING,
+                    f"Module in '{category}' category should have error handling (try-except)",
+                    hint="Add try-except to handle network/IO failures gracefully"
+                )
+        except (TypeError, OSError, SyntaxError):
+            pass
+
+    def _validate_logging_usage(
+        self, metadata: Dict[str, Any], module_class: Type
+    ) -> None:
+        """C006: Modules should use logging for debugging."""
+        try:
+            source = inspect.getsource(module_class)
+
+            # Check if logging is imported or used
+            has_logging = (
+                'import logging' in source or
+                'from logging' in source or
+                'logger.' in source or
+                'logging.' in source
+            )
+
+            # Check for print() usage (should not exist)
+            has_print = 'print(' in source
+
+            if has_print and not has_logging:
+                self._add_issue(
+                    "C006", Severity.WARNING,
+                    "Module uses print() but not logging",
+                    hint="Import logging and use logger.debug/info/warning/error"
+                )
+        except (TypeError, OSError):
+            pass
 
     # =========================================================================
     # Security Validation (SEC00x)
@@ -797,6 +956,84 @@ class ModuleValidator:
                 "RT001", Severity.WARNING,
                 "Module class missing validate_params() method",
                 hint="Add def validate_params(self) -> None"
+            )
+
+    def _validate_output_format(self, module_class: Type, module_id: str) -> None:
+        """RT002: Execute should return {'ok': bool, 'data'|'error': ...}."""
+        try:
+            execute_method = getattr(module_class, 'execute', None)
+            if not execute_method:
+                return
+
+            source = inspect.getsource(execute_method)
+
+            # Check return format
+            has_ok = "'ok'" in source or '"ok"' in source
+            has_data = "'data'" in source or '"data"' in source
+            has_error = "'error'" in source or '"error"' in source
+
+            if not has_ok:
+                self._add_issue(
+                    "RT002", Severity.WARNING,
+                    "execute() should return dict with 'ok' field",
+                    hint="Return {'ok': True, 'data': {...}} or {'ok': False, 'error': '...'}"
+                )
+
+            if not (has_data or has_error):
+                self._add_issue(
+                    "RT002", Severity.WARNING,
+                    "execute() should return 'data' (success) or 'error' (failure)",
+                    hint="Include 'data' for success cases, 'error' for failures"
+                )
+        except (TypeError, OSError, AttributeError):
+            pass
+
+    def _validate_error_format(self, module_class: Type, module_id: str) -> None:
+        """RT003: Error returns should be consistent."""
+        try:
+            source = inspect.getsource(module_class)
+            tree = ast.parse(source)
+
+            # Check all return statements
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Return) and node.value:
+                    # Check if returning raw string error (should use dict)
+                    if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                        self._add_issue(
+                            "RT003", Severity.WARNING,
+                            "Returning raw string instead of error dict",
+                            line=node.lineno,
+                            hint="Return {'ok': False, 'error': 'message'} instead"
+                        )
+        except (TypeError, OSError, SyntaxError):
+            pass
+
+    def _validate_instantiable(self, module_class: Type, module_id: str) -> None:
+        """RT004: Module should be instantiable with empty params."""
+        try:
+            # Try to instantiate (without executing)
+            instance = module_class({}, {})
+
+            # Check if execute method exists
+            if not hasattr(instance, 'execute'):
+                self._add_issue(
+                    "RT004", Severity.ERROR,
+                    "Module instance missing execute() method",
+                    hint="Ensure execute() is defined as async method"
+                )
+
+            # Check if validate_params method exists
+            if not hasattr(instance, 'validate_params'):
+                self._add_issue(
+                    "RT004", Severity.WARNING,
+                    "Module instance missing validate_params() method",
+                    hint="Add validate_params() for input validation"
+                )
+        except Exception as e:
+            self._add_issue(
+                "RT004", Severity.WARNING,
+                f"Module cannot be instantiated with empty params: {type(e).__name__}",
+                hint="Ensure __init__ handles empty params gracefully"
             )
 
 

@@ -16,6 +16,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from core.modules.errors import ValidationError, InvalidTypeError
+
 
 class TestObjectKeys:
     """Tests for object.keys module."""
@@ -35,23 +37,25 @@ class TestObjectKeys:
             "object": {"name": "John", "age": 30, "city": "NYC"}
         }, {})
         result = await instance.execute()
-        assert set(result["keys"]) == {"name", "age", "city"}
-        assert result["count"] == 3
+        assert result["ok"] is True
+        assert set(result["data"]["keys"]) == {"name", "age", "city"}
+        assert result["data"]["count"] == 3
 
     @pytest.mark.asyncio
     async def test_empty_object(self, module_class):
         """Test with empty object."""
         instance = module_class({"object": {}}, {})
         result = await instance.execute()
-        assert result["keys"] == []
-        assert result["count"] == 0
+        assert result["ok"] is True
+        assert result["data"]["keys"] == []
+        assert result["data"]["count"] == 0
 
     @pytest.mark.asyncio
     async def test_invalid_type(self, module_class):
-        """Test with invalid type."""
+        """Test with invalid type raises InvalidTypeError."""
         instance = module_class({"object": "not an object"}, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
+        with pytest.raises(InvalidTypeError):
+            await instance.execute()
 
 
 class TestObjectValues:
@@ -72,16 +76,18 @@ class TestObjectValues:
             "object": {"name": "John", "age": 30}
         }, {})
         result = await instance.execute()
-        assert set(result["values"]) == {"John", 30}
-        assert result["count"] == 2
+        assert result["ok"] is True
+        assert set(result["data"]["values"]) == {"John", 30}
+        assert result["data"]["count"] == 2
 
     @pytest.mark.asyncio
     async def test_empty_object(self, module_class):
         """Test with empty object."""
         instance = module_class({"object": {}}, {})
         result = await instance.execute()
-        assert result["values"] == []
-        assert result["count"] == 0
+        assert result["ok"] is True
+        assert result["data"]["values"] == []
+        assert result["data"]["count"] == 0
 
 
 class TestObjectMerge:
@@ -105,7 +111,8 @@ class TestObjectMerge:
             ]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {
+        assert result["ok"] is True
+        assert result["data"]["result"] == {
             "name": "John",
             "age": 30,
             "city": "NYC",
@@ -122,14 +129,16 @@ class TestObjectMerge:
             ]
         }, {})
         result = await instance.execute()
-        assert result["result"]["name"] == "Jane"
+        assert result["ok"] is True
+        assert result["data"]["result"]["name"] == "Jane"
 
     @pytest.mark.asyncio
     async def test_merge_empty_array(self, module_class):
         """Test merging empty array."""
         instance = module_class({"objects": []}, {})
         result = await instance.execute()
-        assert result["result"] == {}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {}
 
 
 class TestObjectPick:
@@ -151,7 +160,8 @@ class TestObjectPick:
             "keys": ["name", "email"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {"name": "John", "email": "john@example.com"}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"name": "John", "email": "john@example.com"}
 
     @pytest.mark.asyncio
     async def test_pick_nonexistent_key(self, module_class):
@@ -161,7 +171,8 @@ class TestObjectPick:
             "keys": ["name", "nonexistent"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {"name": "John"}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"name": "John"}
 
     @pytest.mark.asyncio
     async def test_pick_all_keys(self, module_class):
@@ -171,7 +182,8 @@ class TestObjectPick:
             "keys": ["a", "b"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {"a": 1, "b": 2}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"a": 1, "b": 2}
 
 
 class TestObjectOmit:
@@ -193,7 +205,8 @@ class TestObjectOmit:
             "keys": ["password", "ssn"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {"name": "John", "age": 30}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"name": "John", "age": 30}
 
     @pytest.mark.asyncio
     async def test_omit_nonexistent_key(self, module_class):
@@ -203,7 +216,8 @@ class TestObjectOmit:
             "keys": ["nonexistent"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {"name": "John", "age": 30}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"name": "John", "age": 30}
 
     @pytest.mark.asyncio
     async def test_omit_all_keys(self, module_class):
@@ -213,4 +227,5 @@ class TestObjectOmit:
             "keys": ["a", "b"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == {}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {}

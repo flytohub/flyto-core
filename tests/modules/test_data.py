@@ -14,6 +14,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from core.modules.errors import ValidationError, InvalidTypeError, InvalidValueError, ModuleError
+
 
 class TestDataJsonParse:
     """Tests for data.json.parse module."""
@@ -33,8 +35,8 @@ class TestDataJsonParse:
             "json_string": '{"name": "John", "age": 30}'
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert result["data"] == {"name": "John", "age": 30}
+        assert result["ok"] is True
+        assert result["data"]["result"] == {"name": "John", "age": 30}
 
     @pytest.mark.asyncio
     async def test_parse_array(self, module_class):
@@ -43,25 +45,24 @@ class TestDataJsonParse:
             "json_string": '[1, 2, 3]'
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert result["data"] == [1, 2, 3]
+        assert result["ok"] is True
+        assert result["data"]["result"] == [1, 2, 3]
 
     @pytest.mark.asyncio
     async def test_invalid_json(self, module_class):
-        """Test with invalid JSON."""
+        """Test with invalid JSON raises InvalidValueError."""
         instance = module_class({
             "json_string": 'not valid json'
         }, {})
-        result = await instance.execute()
-        assert result["status"] == "error"
-        assert "Invalid JSON" in result["message"]
+        with pytest.raises(InvalidValueError):
+            await instance.execute()
 
     @pytest.mark.asyncio
     async def test_missing_param(self, module_class):
-        """Test missing json_string parameter."""
+        """Test missing json_string parameter raises ValidationError."""
         instance = module_class({}, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
+        with pytest.raises(ValidationError):
+            await instance.execute()
 
 
 class TestDataJsonStringify:
@@ -82,9 +83,9 @@ class TestDataJsonStringify:
             "data": {"name": "John", "age": 30}
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
+        assert result["ok"] is True
         import json
-        assert json.loads(result["json"]) == {"name": "John", "age": 30}
+        assert json.loads(result["data"]["json"]) == {"name": "John", "age": 30}
 
     @pytest.mark.asyncio
     async def test_stringify_pretty(self, module_class):
@@ -95,8 +96,8 @@ class TestDataJsonStringify:
             "indent": 2
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert "\n" in result["json"]
+        assert result["ok"] is True
+        assert "\n" in result["data"]["json"]
 
     @pytest.mark.asyncio
     async def test_stringify_array(self, module_class):
@@ -105,8 +106,8 @@ class TestDataJsonStringify:
             "data": [1, 2, 3]
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert result["json"] == "[1, 2, 3]"
+        assert result["ok"] is True
+        assert result["data"]["json"] == "[1, 2, 3]"
 
 
 class TestDataTextTemplate:
@@ -128,19 +129,18 @@ class TestDataTextTemplate:
             "variables": {"name": "Alice", "score": 95}
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert result["result"] == "Hello Alice, you scored 95 points!"
+        assert result["ok"] is True
+        assert result["data"]["result"] == "Hello Alice, you scored 95 points!"
 
     @pytest.mark.asyncio
     async def test_missing_variable(self, module_class):
-        """Test template with missing variable."""
+        """Test template with missing variable raises ModuleError."""
         instance = module_class({
             "template": "Hello {name}, {missing}!",
             "variables": {"name": "Alice"}
         }, {})
-        result = await instance.execute()
-        assert result["status"] == "error"
-        assert "Missing variable" in result["message"]
+        with pytest.raises(ModuleError):
+            await instance.execute()
 
     @pytest.mark.asyncio
     async def test_no_placeholders(self, module_class):
@@ -150,15 +150,15 @@ class TestDataTextTemplate:
             "variables": {}
         }, {})
         result = await instance.execute()
-        assert result["status"] == "success"
-        assert result["result"] == "Hello World!"
+        assert result["ok"] is True
+        assert result["data"]["result"] == "Hello World!"
 
     @pytest.mark.asyncio
     async def test_invalid_variables_type(self, module_class):
-        """Test with invalid variables type."""
+        """Test with invalid variables type raises InvalidTypeError."""
         instance = module_class({
             "template": "Hello {name}",
             "variables": "not an object"
         }, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
+        with pytest.raises(InvalidTypeError):
+            await instance.execute()

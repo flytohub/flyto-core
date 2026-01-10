@@ -15,6 +15,8 @@ Validation Rules:
     Q008: output_schema must be defined
     Q009: Methods should have return type hints
     Q010: Cyclomatic complexity should be reasonable
+    Q011: No unused imports
+    Q012: Function length should not exceed 50 lines
 """
 
 import ast
@@ -68,16 +70,29 @@ class ModuleQualityValidator:
         report = validator.validate(module_class, module_id, metadata)
     """
 
-    def __init__(self, max_complexity: int = 15, skip_rules: Optional[List[str]] = None):
+    def __init__(
+        self,
+        max_complexity: int = 15,
+        skip_rules: Optional[List[str]] = None,
+        disabled_rules: Optional[List[str]] = None,
+    ):
         """
         Initialize validator.
 
         Args:
             max_complexity: Maximum allowed cyclomatic complexity
             skip_rules: List of rule IDs to skip (e.g., ['Q009', 'Q010'])
+            disabled_rules: List of user-disabled rules (merged with skip_rules)
         """
         self.max_complexity = max_complexity
-        self.skip_rules = set(skip_rules or [])
+
+        # Merge skip_rules and disabled_rules
+        all_skipped = set(skip_rules or []) | set(disabled_rules or [])
+
+        # Never skip mandatory rules
+        from .rule_config import get_mandatory_rules
+        mandatory = get_mandatory_rules()
+        self.skip_rules = all_skipped - mandatory
 
     def validate(
         self,
@@ -118,6 +133,8 @@ class ModuleQualityValidator:
             issues.extend(self._check_no_print(source_code, module_id))
             issues.extend(self._check_no_chinese_identifiers(source_code, module_id))
             issues.extend(self._check_complexity(source_code, module_id))
+            issues.extend(self._check_unused_imports(source_code, module_id))
+            issues.extend(self._check_function_length(source_code, module_id))
 
         # Type-specific checks
         if is_function_based:
@@ -445,6 +462,78 @@ class ModuleQualityValidator:
             elif isinstance(child, (ast.With, ast.AsyncWith)):
                 complexity += 1
         return complexity
+
+    # =========================================================================
+    # Q011: Unused imports
+    # =========================================================================
+
+    def _check_unused_imports(self, source: str, module_id: str) -> List[ValidationIssue]:
+        """Q011: Detect unused imports."""
+        issues = []
+        try:
+            tree = ast.parse(source)
+
+            # Collect all imported names
+            imported_names = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imported_names.add(alias.asname or alias.name.split('.')[0])
+                elif isinstance(node, ast.ImportFrom):
+                    for alias in node.names:
+                        if alias.name != '*':
+                            imported_names.add(alias.asname or alias.name)
+
+            # Collect all used names
+            used_names = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                    used_names.add(node.id)
+                elif isinstance(node, ast.Attribute):
+                    # obj.attr - obj is used
+                    if isinstance(node.value, ast.Name):
+                        used_names.add(node.value.id)
+
+            # Find unused imports
+            unused = imported_names - used_names
+            for name in unused:
+                issues.append(ValidationIssue(
+                    rule_id="Q011",
+                    severity=Severity.WARNING,
+                    message=f"Unused import: {name}",
+                    hint=f"Remove 'import {name}' or use it",
+                    fixable=True,
+                ))
+        except SyntaxError:
+            pass
+        return issues
+
+    # =========================================================================
+    # Q012: Function length limit
+    # =========================================================================
+
+    def _check_function_length(self, source: str, module_id: str) -> List[ValidationIssue]:
+        """Q012: Function should not exceed 50 lines."""
+        issues = []
+        max_lines = 50
+        try:
+            tree = ast.parse(source)
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    # Calculate function line count
+                    if hasattr(node, 'end_lineno') and node.end_lineno:
+                        length = node.end_lineno - node.lineno + 1
+                        if length > max_lines:
+                            issues.append(ValidationIssue(
+                                rule_id="Q012",
+                                severity=Severity.WARNING,
+                                message=f"Function '{node.name}' is {length} lines (max {max_lines})",
+                                line=node.lineno,
+                                hint="Consider breaking into smaller functions",
+                            ))
+        except SyntaxError:
+            pass
+        return issues
 
 
 # =============================================================================

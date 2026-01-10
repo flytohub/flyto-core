@@ -6,6 +6,7 @@ Re-exports all public APIs for backward compatibility.
 
 from .core import ModuleRegistry, get_localized_value
 from .decorators import register_module
+from ..express import module, mod, ParamHelper, create_simple_module
 from .ports import generate_dynamic_ports, slugify
 from .catalog import ModuleCatalogManager, get_catalog_manager
 from .quality_validator import (
@@ -56,6 +57,12 @@ __all__ = [
 
     # Decorators
     'register_module',
+
+    # Express Mode (simplified decorator)
+    'module',
+    'mod',
+    'ParamHelper',
+    'create_simple_module',
 
     # Convenience functions
     'get_module',

@@ -26,10 +26,13 @@ class TestProductionModules:
         from core.modules.registry import ModuleRegistry
         from core.modules import atomic  # Trigger registration
 
-        return ModuleRegistry.get_all_metadata(
+        modules = ModuleRegistry.get_all_metadata(
             filter_by_stability=True,
             env="production"
         )
+        # Exclude test fixture modules (keep test.assert_* which are real modules)
+        return {k: v for k, v in modules.items()
+                if not (k.startswith('test.') and '_fixture' in k)}
 
     @pytest.fixture(scope="class")
     def snapshot_data(self):

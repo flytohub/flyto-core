@@ -18,6 +18,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from core.modules.errors import ValidationError
+
 
 class TestStringUppercase:
     """Tests for string.uppercase module."""
@@ -35,31 +37,30 @@ class TestStringUppercase:
         """Test basic uppercase conversion."""
         instance = module_class({"text": "hello"}, {})
         result = await instance.execute()
-        assert result["result"] == "HELLO"
-        assert result["original"] == "hello"
-        assert result["status"] == "success"
+        assert result["ok"] is True
+        assert result["data"]["result"] == "HELLO"
+        assert result["data"]["original"] == "hello"
 
     @pytest.mark.asyncio
     async def test_mixed_case(self, module_class):
         """Test mixed case input."""
         instance = module_class({"text": "Hello World"}, {})
         result = await instance.execute()
-        assert result["result"] == "HELLO WORLD"
+        assert result["data"]["result"] == "HELLO WORLD"
 
     @pytest.mark.asyncio
     async def test_empty_string(self, module_class):
         """Test empty string input."""
         instance = module_class({"text": ""}, {})
         result = await instance.execute()
-        assert result["result"] == ""
+        assert result["data"]["result"] == ""
 
     @pytest.mark.asyncio
     async def test_missing_param(self, module_class):
-        """Test missing text parameter."""
+        """Test missing text parameter raises ValidationError."""
         instance = module_class({}, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
-        assert "error" in result
+        with pytest.raises(ValidationError):
+            await instance.execute()
 
 
 class TestStringLowercase:
@@ -78,14 +79,14 @@ class TestStringLowercase:
         """Test basic lowercase conversion."""
         instance = module_class({"text": "HELLO"}, {})
         result = await instance.execute()
-        assert result["result"] == "hello"
+        assert result["data"]["result"] == "hello"
 
     @pytest.mark.asyncio
     async def test_mixed_case(self, module_class):
         """Test mixed case input."""
         instance = module_class({"text": "Hello World"}, {})
         result = await instance.execute()
-        assert result["result"] == "hello world"
+        assert result["data"]["result"] == "hello world"
 
 
 class TestStringTrim:
@@ -104,21 +105,21 @@ class TestStringTrim:
         """Test trimming leading/trailing spaces."""
         instance = module_class({"text": "  hello  "}, {})
         result = await instance.execute()
-        assert result["result"] == "hello"
+        assert result["data"]["result"] == "hello"
 
     @pytest.mark.asyncio
     async def test_trim_tabs_newlines(self, module_class):
         """Test trimming tabs and newlines."""
         instance = module_class({"text": "\t\nhello\n\t"}, {})
         result = await instance.execute()
-        assert result["result"] == "hello"
+        assert result["data"]["result"] == "hello"
 
     @pytest.mark.asyncio
     async def test_no_trim_needed(self, module_class):
         """Test string without whitespace."""
         instance = module_class({"text": "hello"}, {})
         result = await instance.execute()
-        assert result["result"] == "hello"
+        assert result["data"]["result"] == "hello"
 
 
 class TestStringSplit:
@@ -137,23 +138,23 @@ class TestStringSplit:
         """Test splitting by space (default)."""
         instance = module_class({"text": "hello world foo"}, {})
         result = await instance.execute()
-        assert result["parts"] == ["hello", "world", "foo"]
-        assert result["length"] == 3
+        assert result["data"]["parts"] == ["hello", "world", "foo"]
+        assert result["data"]["length"] == 3
 
     @pytest.mark.asyncio
     async def test_split_by_comma(self, module_class):
         """Test splitting by comma."""
         instance = module_class({"text": "a,b,c", "delimiter": ","}, {})
         result = await instance.execute()
-        assert result["parts"] == ["a", "b", "c"]
+        assert result["data"]["parts"] == ["a", "b", "c"]
 
     @pytest.mark.asyncio
     async def test_split_no_delimiter(self, module_class):
         """Test string without delimiter."""
         instance = module_class({"text": "hello", "delimiter": ","}, {})
         result = await instance.execute()
-        assert result["parts"] == ["hello"]
-        assert result["length"] == 1
+        assert result["data"]["parts"] == ["hello"]
+        assert result["data"]["length"] == 1
 
 
 class TestStringReplace:
@@ -176,7 +177,7 @@ class TestStringReplace:
             "replace": "flyto"
         }, {})
         result = await instance.execute()
-        assert result["result"] == "hello flyto"
+        assert result["data"]["result"] == "hello flyto"
 
     @pytest.mark.asyncio
     async def test_replace_multiple(self, module_class):
@@ -187,7 +188,7 @@ class TestStringReplace:
             "replace": "b"
         }, {})
         result = await instance.execute()
-        assert result["result"] == "bbb"
+        assert result["data"]["result"] == "bbb"
 
     @pytest.mark.asyncio
     async def test_replace_not_found(self, module_class):
@@ -198,7 +199,7 @@ class TestStringReplace:
             "replace": "y"
         }, {})
         result = await instance.execute()
-        assert result["result"] == "hello"
+        assert result["data"]["result"] == "hello"
 
 
 class TestStringReverse:
@@ -217,22 +218,22 @@ class TestStringReverse:
         """Test basic string reversal."""
         instance = module_class({"text": "hello"}, {})
         result = await instance.execute()
-        assert result["result"] == "olleh"
-        assert result["length"] == 5
+        assert result["data"]["result"] == "olleh"
+        assert result["data"]["length"] == 5
 
     @pytest.mark.asyncio
     async def test_reverse_palindrome(self, module_class):
         """Test palindrome reversal."""
         instance = module_class({"text": "racecar"}, {})
         result = await instance.execute()
-        assert result["result"] == "racecar"
+        assert result["data"]["result"] == "racecar"
 
     @pytest.mark.asyncio
     async def test_reverse_empty(self, module_class):
         """Test empty string reversal."""
         instance = module_class({"text": ""}, {})
         result = await instance.execute()
-        assert result["result"] == ""
+        assert result["data"]["result"] == ""
 
 
 class TestStringTitlecase:
@@ -251,18 +252,18 @@ class TestStringTitlecase:
         """Test basic title case conversion."""
         instance = module_class({"text": "hello world"}, {})
         result = await instance.execute()
-        assert result["result"] == "Hello World"
+        assert result["data"]["result"] == "Hello World"
 
     @pytest.mark.asyncio
     async def test_titlecase_mixed(self, module_class):
         """Test mixed case input."""
         instance = module_class({"text": "hELLO wORLD"}, {})
         result = await instance.execute()
-        assert result["result"] == "Hello World"
+        assert result["data"]["result"] == "Hello World"
 
     @pytest.mark.asyncio
     async def test_titlecase_single_word(self, module_class):
         """Test single word title case."""
         instance = module_class({"text": "flyto"}, {})
         result = await instance.execute()
-        assert result["result"] == "Flyto"
+        assert result["data"]["result"] == "Flyto"

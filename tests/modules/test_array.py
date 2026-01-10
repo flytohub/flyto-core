@@ -18,6 +18,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from core.modules.errors import ValidationError, InvalidTypeError, InvalidValueError
+
 
 class TestArrayMap:
     """Tests for array.map module."""
@@ -39,8 +41,8 @@ class TestArrayMap:
             "value": 2
         }, {})
         result = await instance.execute()
-        assert result["result"] == [2, 4, 6, 8, 10]
-        assert result["length"] == 5
+        assert result["data"]["result"] == [2, 4, 6, 8, 10]
+        assert result["data"]["length"] == 5
 
     @pytest.mark.asyncio
     async def test_add_operation(self, module_class):
@@ -51,7 +53,7 @@ class TestArrayMap:
             "value": 10
         }, {})
         result = await instance.execute()
-        assert result["result"] == [11, 12, 13]
+        assert result["data"]["result"] == [11, 12, 13]
 
     @pytest.mark.asyncio
     async def test_extract_operation(self, module_class):
@@ -62,7 +64,7 @@ class TestArrayMap:
             "value": "name"
         }, {})
         result = await instance.execute()
-        assert result["result"] == ["Alice", "Bob"]
+        assert result["data"]["result"] == ["Alice", "Bob"]
 
     @pytest.mark.asyncio
     async def test_uppercase_operation(self, module_class):
@@ -72,18 +74,17 @@ class TestArrayMap:
             "operation": "uppercase"
         }, {})
         result = await instance.execute()
-        assert result["result"] == ["HELLO", "WORLD"]
+        assert result["data"]["result"] == ["HELLO", "WORLD"]
 
     @pytest.mark.asyncio
     async def test_invalid_array(self, module_class):
-        """Test with invalid array type."""
+        """Test with invalid array type raises InvalidTypeError."""
         instance = module_class({
             "array": "not an array",
             "operation": "multiply"
         }, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
-        assert "error" in result
+        with pytest.raises(InvalidTypeError):
+            await instance.execute()
 
 
 class TestArrayReduce:
@@ -105,8 +106,8 @@ class TestArrayReduce:
             "operation": "sum"
         }, {})
         result = await instance.execute()
-        assert result["result"] == 15
-        assert result["operation"] == "sum"
+        assert result["data"]["result"] == 15
+        assert result["data"]["operation"] == "sum"
 
     @pytest.mark.asyncio
     async def test_product_operation(self, module_class):
@@ -116,7 +117,7 @@ class TestArrayReduce:
             "operation": "product"
         }, {})
         result = await instance.execute()
-        assert result["result"] == 24
+        assert result["data"]["result"] == 24
 
     @pytest.mark.asyncio
     async def test_average_operation(self, module_class):
@@ -126,7 +127,7 @@ class TestArrayReduce:
             "operation": "average"
         }, {})
         result = await instance.execute()
-        assert result["result"] == 20
+        assert result["data"]["result"] == 20
 
     @pytest.mark.asyncio
     async def test_min_max_operations(self, module_class):
@@ -136,14 +137,14 @@ class TestArrayReduce:
             "operation": "min"
         }, {})
         result = await instance.execute()
-        assert result["result"] == 1
+        assert result["data"]["result"] == 1
 
         instance = module_class({
             "array": [5, 2, 8, 1, 9],
             "operation": "max"
         }, {})
         result = await instance.execute()
-        assert result["result"] == 9
+        assert result["data"]["result"] == 9
 
     @pytest.mark.asyncio
     async def test_join_operation(self, module_class):
@@ -154,7 +155,7 @@ class TestArrayReduce:
             "separator": " "
         }, {})
         result = await instance.execute()
-        assert result["result"] == "Hello World"
+        assert result["data"]["result"] == "Hello World"
 
     @pytest.mark.asyncio
     async def test_empty_array(self, module_class):
@@ -164,7 +165,7 @@ class TestArrayReduce:
             "operation": "sum"
         }, {})
         result = await instance.execute()
-        assert result["result"] is None
+        assert result["data"]["result"] is None
 
 
 class TestArrayFlatten:
@@ -186,8 +187,8 @@ class TestArrayFlatten:
             "depth": 1
         }, {})
         result = await instance.execute()
-        assert result["result"] == [1, 2, 3, 4, 5, 6]
-        assert result["length"] == 6
+        assert result["data"]["result"] == [1, 2, 3, 4, 5, 6]
+        assert result["data"]["length"] == 6
 
     @pytest.mark.asyncio
     async def test_flatten_deep(self, module_class):
@@ -197,7 +198,7 @@ class TestArrayFlatten:
             "depth": -1
         }, {})
         result = await instance.execute()
-        assert result["result"] == [1, 2, 3, 4]
+        assert result["data"]["result"] == [1, 2, 3, 4]
 
     @pytest.mark.asyncio
     async def test_flatten_mixed(self, module_class):
@@ -207,7 +208,7 @@ class TestArrayFlatten:
             "depth": 1
         }, {})
         result = await instance.execute()
-        assert result["result"] == [1, 2, 3, 4, 5]
+        assert result["data"]["result"] == [1, 2, 3, 4, 5]
 
 
 class TestArrayJoin:
@@ -229,7 +230,7 @@ class TestArrayJoin:
             "separator": ", "
         }, {})
         result = await instance.execute()
-        assert result["result"] == "apple, banana, cherry"
+        assert result["data"]["result"] == "apple, banana, cherry"
 
     @pytest.mark.asyncio
     async def test_join_default_separator(self, module_class):
@@ -238,7 +239,7 @@ class TestArrayJoin:
             "array": ["a", "b", "c"]
         }, {})
         result = await instance.execute()
-        assert result["result"] == "a,b,c"
+        assert result["data"]["result"] == "a,b,c"
 
     @pytest.mark.asyncio
     async def test_join_numbers(self, module_class):
@@ -248,7 +249,7 @@ class TestArrayJoin:
             "separator": "-"
         }, {})
         result = await instance.execute()
-        assert result["result"] == "1-2-3"
+        assert result["data"]["result"] == "1-2-3"
 
 
 class TestArrayChunk:
@@ -270,8 +271,8 @@ class TestArrayChunk:
             "size": 2
         }, {})
         result = await instance.execute()
-        assert result["result"] == [[1, 2], [3, 4], [5, 6]]
-        assert result["chunks"] == 3
+        assert result["data"]["result"] == [[1, 2], [3, 4], [5, 6]]
+        assert result["data"]["chunks"] == 3
 
     @pytest.mark.asyncio
     async def test_chunk_uneven_split(self, module_class):
@@ -281,19 +282,18 @@ class TestArrayChunk:
             "size": 2
         }, {})
         result = await instance.execute()
-        assert result["result"] == [[1, 2], [3, 4], [5]]
-        assert result["chunks"] == 3
+        assert result["data"]["result"] == [[1, 2], [3, 4], [5]]
+        assert result["data"]["chunks"] == 3
 
     @pytest.mark.asyncio
     async def test_chunk_invalid_size(self, module_class):
-        """Test chunking with invalid size."""
+        """Test chunking with invalid size raises InvalidValueError."""
         instance = module_class({
             "array": [1, 2, 3],
             "size": 0
         }, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
-        assert "error" in result
+        with pytest.raises(InvalidValueError):
+            await instance.execute()
 
 
 class TestArrayIntersection:
@@ -314,8 +314,8 @@ class TestArrayIntersection:
             "arrays": [[1, 2, 3, 4], [2, 3, 5]]
         }, {})
         result = await instance.execute()
-        assert set(result["result"]) == {2, 3}
-        assert result["length"] == 2
+        assert set(result["data"]["result"]) == {2, 3}
+        assert result["data"]["length"] == 2
 
     @pytest.mark.asyncio
     async def test_three_arrays(self, module_class):
@@ -324,7 +324,7 @@ class TestArrayIntersection:
             "arrays": [[1, 2, 3, 4], [2, 3, 5], [2, 3, 6]]
         }, {})
         result = await instance.execute()
-        assert set(result["result"]) == {2, 3}
+        assert set(result["data"]["result"]) == {2, 3}
 
     @pytest.mark.asyncio
     async def test_no_common_elements(self, module_class):
@@ -333,17 +333,17 @@ class TestArrayIntersection:
             "arrays": [[1, 2], [3, 4]]
         }, {})
         result = await instance.execute()
-        assert result["result"] == []
-        assert result["length"] == 0
+        assert result["data"]["result"] == []
+        assert result["data"]["length"] == 0
 
     @pytest.mark.asyncio
     async def test_insufficient_arrays(self, module_class):
-        """Test with less than 2 arrays."""
+        """Test with less than 2 arrays raises InvalidValueError."""
         instance = module_class({
             "arrays": [[1, 2, 3]]
         }, {})
-        result = await instance.execute()
-        assert result.get("ok") is False
+        with pytest.raises(InvalidValueError):
+            await instance.execute()
 
 
 class TestArrayDifference:
@@ -365,7 +365,7 @@ class TestArrayDifference:
             "subtract": [[2, 4]]
         }, {})
         result = await instance.execute()
-        assert set(result["result"]) == {1, 3, 5}
+        assert set(result["data"]["result"]) == {1, 3, 5}
 
     @pytest.mark.asyncio
     async def test_multiple_subtract(self, module_class):
@@ -375,7 +375,7 @@ class TestArrayDifference:
             "subtract": [[2, 4], [5]]
         }, {})
         result = await instance.execute()
-        assert set(result["result"]) == {1, 3}
+        assert set(result["data"]["result"]) == {1, 3}
 
     @pytest.mark.asyncio
     async def test_no_difference(self, module_class):
@@ -385,5 +385,5 @@ class TestArrayDifference:
             "subtract": [[1, 2, 3]]
         }, {})
         result = await instance.execute()
-        assert result["result"] == []
-        assert result["length"] == 0
+        assert result["data"]["result"] == []
+        assert result["data"]["length"] == 0
