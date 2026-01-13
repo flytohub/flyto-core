@@ -4,7 +4,13 @@ Module Registry - Registration and Management
 Re-exports all public APIs for backward compatibility.
 """
 
-from .core import ModuleRegistry, get_localized_value
+from .core import (
+    ModuleRegistry,
+    get_localized_value,
+    PluginInfo,
+    RegistrySnapshot,
+    REGISTRY_VERSION,
+)
 from .decorators import register_module
 from ..express import module, mod, ParamHelper, create_simple_module
 from .ports import generate_dynamic_ports, slugify
@@ -54,6 +60,11 @@ def get_registry():
 __all__ = [
     # Core
     'ModuleRegistry',
+    'REGISTRY_VERSION',
+
+    # Plugin System (Open Core)
+    'PluginInfo',
+    'RegistrySnapshot',
 
     # Decorators
     'register_module',

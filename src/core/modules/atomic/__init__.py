@@ -1,7 +1,8 @@
 """
-Atomic Modules - Atomic Modules
+Atomic Modules - Community Edition
 
-Provides basic, composable operation units
+Provides basic, composable operation units for workflow automation.
+This is the open-source (MIT) module set for flyto-core.
 
 Design Principles:
 1. Single Responsibility - Each module does one thing
@@ -9,14 +10,81 @@ Design Principles:
 3. Composable - Can be freely combined to complete complex tasks
 4. Testable - Each module can be tested independently
 
-Implemented Atomic Modules:
-- browser.find: Find elements in page
-- element.query: Find child elements within element
-- element.text: Get element text
-- element.attribute: Get element attribute
+Plugin System:
+- This module provides a `register_all()` function for entry_points discovery
+- flyto-modules-pro can extend with additional modules
+- See: pyproject.toml [project.entry-points."flyto.modules"]
 """
 
-# Import element registry (utility for browser/element modules)
+_registered = False
+
+
+def register_all():
+    """
+    Register all community atomic modules.
+
+    This function is called by ModuleRegistry.discover_plugins() via entry_points.
+    It imports all module categories, which triggers registration via @register_module.
+
+    Usage in pyproject.toml:
+        [project.entry-points."flyto.modules"]
+        community = "core.modules.atomic:register_all"
+    """
+    global _registered
+    if _registered:
+        return
+
+    # Import all module categories (triggers @register_module decorators)
+    from . import array  # noqa: F401
+    from . import browser  # noqa: F401
+    from . import communication  # noqa: F401
+    from . import data  # noqa: F401
+    from . import database  # noqa: F401
+    from . import datetime  # noqa: F401
+    from . import document  # noqa: F401
+    from . import element  # noqa: F401
+    from . import file  # noqa: F401
+    from . import flow  # noqa: F401
+    from . import image  # noqa: F401
+    from . import math  # noqa: F401
+    from . import meta  # noqa: F401
+    from . import object  # noqa: F401
+    from . import string  # noqa: F401
+    from . import training  # noqa: F401
+    from . import utility  # noqa: F401
+    from . import vector  # noqa: F401
+
+    # Testing infrastructure modules
+    from . import shell  # noqa: F401
+    from . import http  # noqa: F401
+    from . import process  # noqa: F401
+    from . import port  # noqa: F401
+    from . import api  # noqa: F401
+
+    # AI vision and LLM modules
+    from . import vision  # noqa: F401
+    from . import ui  # noqa: F401
+    from . import llm  # noqa: F401
+    from . import ai  # noqa: F401
+
+    # HuggingFace AI modules (optional dependency)
+    try:
+        from . import huggingface  # noqa: F401
+    except ImportError:
+        pass  # Optional: transformers/huggingface_hub not installed
+
+    # Legacy/helper imports
+    from . import analysis  # noqa: F401
+    from . import testing  # noqa: F401
+
+    _registered = True
+
+
+# Auto-register on import (backwards compatibility)
+register_all()
+
+
+# Re-exports for direct access (backwards compatibility)
 from .element_registry import (
     ElementRegistry,
     get_element_registry,
@@ -24,7 +92,6 @@ from .element_registry import (
     ELEMENT_REGISTRY_CONTEXT_KEY,
 )
 
-# Import module categories (all subdirectories with modules)
 from . import array
 from . import browser
 from . import communication
@@ -43,27 +110,15 @@ from . import string
 from . import training
 from . import utility
 from . import vector
-
-# New testing infrastructure modules
 from . import shell
 from . import http
 from . import process
 from . import port
 from . import api
-
-# AI vision and LLM modules
 from . import vision
 from . import ui
 from . import llm
-from . import ai  # AI sub-nodes (model, memory)
-
-# HuggingFace AI modules
-try:
-    from . import huggingface
-except ImportError:
-    pass  # Optional: transformers/huggingface_hub not installed
-
-# Legacy/helper imports
+from . import ai
 from . import analysis
 from . import testing
 
@@ -77,6 +132,8 @@ from .element import ElementQueryModule, ElementTextModule, ElementAttributeModu
 from .browser.find import BrowserFindModule
 
 __all__ = [
+    # Plugin registration function
+    'register_all',
     # Shell/Process/Port/API modules (testing infrastructure)
     'shell',
     'http',

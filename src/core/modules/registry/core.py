@@ -2,16 +2,59 @@
 Module Registry - Core Registration and Lookup
 
 Manages all registered modules and their metadata.
+Supports plugin discovery via entry_points for Open Core architecture.
 """
 # Registry version for sync tracking
-REGISTRY_VERSION = "1.0.4"
+REGISTRY_VERSION = "1.0.5"
 
 import logging
+import hashlib
+import sys
 from typing import Dict, Type, Any, Optional, List
+from dataclasses import dataclass, field
+from datetime import datetime
 
 from ..base import BaseModule
 from ...constants import ErrorMessages
 from ..types import StabilityLevel, is_module_visible, get_current_env
+
+
+@dataclass
+class PluginInfo:
+    """Information about a discovered plugin package"""
+    name: str
+    version: str
+    module_count: int
+    loaded_at: datetime = field(default_factory=datetime.now)
+    entry_point: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "version": self.version,
+            "module_count": self.module_count,
+            "loaded_at": self.loaded_at.isoformat(),
+            "entry_point": self.entry_point
+        }
+
+
+@dataclass
+class RegistrySnapshot:
+    """Snapshot of registry state for execution version binding"""
+    registry_version: str
+    plugins: Dict[str, str]  # plugin_name -> version
+    module_count: int
+    modules_hash: str
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "registry_version": self.registry_version,
+            "plugins": self.plugins,
+            "module_count": self.module_count,
+            "modules_hash": self.modules_hash,
+            "created_at": self.created_at.isoformat()
+        }
 
 
 def get_localized_value(value: Any, lang: str = 'en') -> str:
@@ -43,11 +86,18 @@ class ModuleRegistry:
 
     Manages all registered modules and their metadata.
     Provides querying, filtering, and execution capabilities.
+
+    Supports plugin discovery via entry_points:
+    - flyto-core registers 'community' modules
+    - flyto-modules-pro can register 'pro' modules
+    - Any package can add modules via entry_points
     """
 
     _instance = None
     _modules: Dict[str, Type[BaseModule]] = {}
     _metadata: Dict[str, Dict[str, Any]] = {}
+    _plugins: Dict[str, PluginInfo] = {}
+    _initialized: bool = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -276,3 +326,158 @@ class ModuleRegistry:
         module_class = cls.get(module_id)
         module_instance = module_class(params, context)
         return await module_instance.execute()
+
+    # ========================================
+    # Plugin Discovery (Open Core Architecture)
+    # ========================================
+
+    @classmethod
+    def discover_plugins(cls, force: bool = False) -> Dict[str, PluginInfo]:
+        """
+        Discover and load module plugins via entry_points.
+
+        Uses Python's entry_points mechanism to find packages that provide
+        flyto modules. Each plugin package should define:
+
+            [project.entry-points."flyto.modules"]
+            plugin_name = "package.module:register_all"
+
+        The register_all function should call ModuleRegistry.register()
+        for each module it provides.
+
+        Args:
+            force: If True, reload all plugins even if already initialized
+
+        Returns:
+            Dict of plugin_name -> PluginInfo
+        """
+        if cls._initialized and not force:
+            return cls._plugins
+
+        # Python 3.9+ uses importlib.metadata
+        if sys.version_info >= (3, 10):
+            from importlib.metadata import entry_points, version as get_version
+            eps = entry_points(group='flyto.modules')
+        else:
+            from importlib.metadata import entry_points, version as get_version
+            all_eps = entry_points()
+            eps = all_eps.get('flyto.modules', [])
+
+        for ep in eps:
+            try:
+                # Track module count before loading
+                count_before = len(cls._modules)
+
+                # Load the register_all function and call it
+                register_func = ep.load()
+                if callable(register_func):
+                    register_func()
+
+                # Track module count after loading
+                count_after = len(cls._modules)
+                modules_added = count_after - count_before
+
+                # Get package version
+                try:
+                    pkg_version = get_version(ep.value.split(':')[0].split('.')[0])
+                except Exception:
+                    pkg_version = "unknown"
+
+                # Record plugin info
+                cls._plugins[ep.name] = PluginInfo(
+                    name=ep.name,
+                    version=pkg_version,
+                    module_count=modules_added,
+                    entry_point=f"{ep.value}"
+                )
+
+                logger.info(f"Plugin loaded: {ep.name} ({modules_added} modules, v{pkg_version})")
+
+            except Exception as e:
+                logger.error(f"Failed to load plugin {ep.name}: {e}")
+
+        cls._initialized = True
+        return cls._plugins
+
+    @classmethod
+    def refresh(cls) -> Dict[str, PluginInfo]:
+        """
+        Refresh the registry by re-discovering all plugins.
+
+        This is used for hot-update scenarios where packages have been
+        updated via pip. Note: This does NOT reload already-imported
+        Python modules. For true hot-reload, the worker process should
+        be restarted.
+
+        Returns:
+            Dict of plugin_name -> PluginInfo
+        """
+        logger.info("Refreshing module registry...")
+
+        # Clear existing state
+        cls._modules.clear()
+        cls._metadata.clear()
+        cls._plugins.clear()
+        cls._initialized = False
+
+        # Re-discover plugins
+        return cls.discover_plugins(force=True)
+
+    @classmethod
+    def get_snapshot(cls) -> RegistrySnapshot:
+        """
+        Get a snapshot of current registry state.
+
+        Used for execution version binding - each workflow execution
+        should record the registry snapshot to ensure checkpoint/resume
+        uses the same module versions.
+
+        Returns:
+            RegistrySnapshot with version info and module hash
+        """
+        # Ensure plugins are discovered
+        if not cls._initialized:
+            cls.discover_plugins()
+
+        # Build plugins version dict
+        plugins = {name: info.version for name, info in cls._plugins.items()}
+
+        # Calculate modules hash (for detecting changes)
+        module_ids = sorted(cls._modules.keys())
+        hash_input = "|".join(module_ids)
+        modules_hash = hashlib.md5(hash_input.encode()).hexdigest()[:12]
+
+        return RegistrySnapshot(
+            registry_version=REGISTRY_VERSION,
+            plugins=plugins,
+            module_count=len(cls._modules),
+            modules_hash=modules_hash
+        )
+
+    @classmethod
+    def get_plugins(cls) -> Dict[str, PluginInfo]:
+        """Get information about all loaded plugins"""
+        if not cls._initialized:
+            cls.discover_plugins()
+        return cls._plugins.copy()
+
+    @classmethod
+    def is_plugin_loaded(cls, plugin_name: str) -> bool:
+        """Check if a specific plugin is loaded"""
+        return plugin_name in cls._plugins
+
+    @classmethod
+    def get_plugin_modules(cls, plugin_name: str) -> List[str]:
+        """
+        Get list of module IDs provided by a specific plugin.
+
+        Note: This requires modules to have 'plugin' in their metadata.
+        """
+        if not cls._initialized:
+            cls.discover_plugins()
+
+        return [
+            module_id
+            for module_id, metadata in cls._metadata.items()
+            if metadata.get('plugin') == plugin_name
+        ]

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "1.15.0"
+version = "1.16.0"
 description = "Atomic workflow automation modules for git-native automation"
 readme = "README.md"
 license = "MIT"
@@ -84,6 +84,13 @@ Changelog = "https://github.com/flytohub/flyto-core/blob/main/CHANGELOG.md"
 
 [project.scripts]
 flyto = "cli.main:main"
+
+# Entry points for plugin discovery
+# Other packages can register modules by adding:
+# [project.entry-points."flyto.modules"]
+# my_modules = "my_package.modules:register_all"
+[project.entry-points."flyto.modules"]
+community = "core.modules.atomic:register_all"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
