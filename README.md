@@ -9,7 +9,7 @@
 
 Flyto Core is an **open-source workflow automation engine** designed with three principles:
 
-- **Atomic-first** — 150+ fine-grained modules that compose like LEGO bricks
+- **Atomic-first** — 210+ fine-grained modules that compose like LEGO bricks
 - **Local-first & Git-native** — YAML workflows that version, diff, and test like code
 - **Designed for AI automation** — Rich module metadata lets AI understand and compose workflows
 
@@ -120,7 +120,7 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 | Level | Type | For | Count |
 |-------|------|-----|-------|
 | **1** | Workflow Templates | Beginners | 6 ready-to-use templates |
-| **2** | Atomic Modules | Developers/AI | 150+ fine-grained modules |
+| **2** | Atomic Modules | Developers/AI | 210+ fine-grained modules |
 | **3** | Composite Modules | Power Users | 7 high-level workflows |
 | **4** | Advanced Patterns | Enterprise | 9 resilience patterns |
 
@@ -128,14 +128,15 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 
 | Category | Modules | Examples |
 |----------|---------|----------|
-| `string.*` | 8 | reverse, split, replace, trim |
+| `string.*` | 7 | reverse, split, replace, trim |
 | `array.*` | 10 | filter, sort, map, reduce, unique |
 | `object.*` | 5 | keys, values, merge, pick |
 | `file.*` | 6 | read, write, copy, delete |
-| `browser.*` | 9 | launch, goto, click, extract |
-| `api.*` | 4+ | http_get, http_post, github |
-| `ai.*` | 4 | openai, ollama, anthropic |
-| `notification.*` | 4 | slack, discord, telegram, email |
+| `browser.*` | 27 | launch, goto, click, extract, scroll |
+| `api.*` | 12 | http_get, http_post, github, google |
+| `ai.*` | 6 | openai, ollama, anthropic, gemini |
+| `flow.*` | 14 | switch, loop, foreach, delay |
+| `document.*` | 8 | pdf, excel, word parsing |
 
 ## Why Flyto Core?
 
@@ -214,7 +215,7 @@ pip install -r requirements-integrations.txt
 flyto-core/
 ├── src/core/
 │   ├── modules/
-│   │   ├── atomic/        # Level 2: 150+ atomic modules
+│   │   ├── atomic/        # Level 2: 210+ atomic modules
 │   │   ├── composite/     # Level 3: 7 composite modules
 │   │   ├── patterns/      # Level 4: 9 advanced patterns
 │   │   └── third_party/   # External integrations
