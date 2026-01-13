@@ -7,7 +7,7 @@ name = "flyto-core"
 version = "1.16.0"
 description = "Atomic workflow automation modules for git-native automation"
 readme = "README.md"
-license = "MIT"
+license = {text = "Source Available License v1.0"}
 authors = [
     {name = "Flyto Team", email = "team@flyto.dev"}
 ]
