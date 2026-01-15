@@ -30,9 +30,11 @@ class TestProductionModules:
             filter_by_stability=True,
             env="production"
         )
-        # Exclude test fixture modules (keep test.assert_* which are real modules)
+        # Exclude test modules except test.assert_* (real testing utilities)
+        # Also exclude express test modules like math.express_abs
         return {k: v for k, v in modules.items()
-                if not (k.startswith('test.') and '_fixture' in k)}
+                if (not k.startswith('test.') or k.startswith('test.assert'))
+                and '.express_' not in k}
 
     @pytest.fixture(scope="class")
     def snapshot_data(self):
