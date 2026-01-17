@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
     input_types=['number'],
     output_types=['object'],
-    can_connect_to=['flow.*', 'notify.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     timeout_ms=1000,

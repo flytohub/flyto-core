@@ -116,7 +116,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
 
     input_types=['text', 'object'],
     output_types=['object'],
-    can_connect_to=['flow.*', 'data.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     timeout_ms=30000,

@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['string', 'object'],
     output_types=['object'],
-    can_connect_to=['test.*', 'data.*', 'file.*'],
-    can_receive_from=['start', 'flow.*'],
+    can_connect_to=['*'],
+    can_receive_from=['*'],
 
     # Execution settings
     timeout_ms=60000,

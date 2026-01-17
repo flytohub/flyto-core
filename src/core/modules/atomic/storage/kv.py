@@ -71,7 +71,7 @@ def _is_expired(entry: Dict[str, Any]) -> bool:
 
     input_types=['text'],
     output_types=['object', 'text', 'number'],
-    can_connect_to=['flow.*', 'data.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     timeout_ms=5000,
@@ -222,7 +222,7 @@ async def storage_get(context: Dict[str, Any]) -> Dict[str, Any]:
 
     input_types=['object', 'text', 'number'],
     output_types=['object'],
-    can_connect_to=['flow.*', 'data.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     timeout_ms=5000,
@@ -381,7 +381,7 @@ async def storage_set(context: Dict[str, Any]) -> Dict[str, Any]:
 
     input_types=['text'],
     output_types=['object'],
-    can_connect_to=['flow.*', 'data.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     timeout_ms=5000,
