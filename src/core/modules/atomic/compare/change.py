@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
     icon='ArrowUpDown',
     color='#F59E0B',
 
-    input_types=['number'],
+    input_types=['number', 'object', 'text'],
     output_types=['object'],
     can_connect_to=['*'],
     can_receive_from=['*'],

@@ -69,7 +69,7 @@ def _is_expired(entry: Dict[str, Any]) -> bool:
     icon='Database',
     color='#10B981',
 
-    input_types=['text'],
+    input_types=['text', 'object'],
     output_types=['object', 'text', 'number'],
     can_connect_to=['*'],
     can_receive_from=['*'],
@@ -379,7 +379,7 @@ async def storage_set(context: Dict[str, Any]) -> Dict[str, Any]:
     icon='Trash2',
     color='#EF4444',
 
-    input_types=['text'],
+    input_types=['text', 'object'],
     output_types=['object'],
     can_connect_to=['*'],
     can_receive_from=['*'],
