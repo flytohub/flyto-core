@@ -656,3 +656,91 @@ def SLACK_ATTACHMENTS(
         description='Message attachments',
         group=FieldGroup.OPTIONS,
     )
+
+
+# ============== Notification Presets ==============
+
+def NOTIFY_URL(
+    *,
+    key: str = "url",
+    required: bool = True,
+    placeholder: str = "https://api.telegram.org/bot<TOKEN>/sendMessage",
+    label: str = "Webhook URL",
+    label_key: str = "schema.field.notify_url",
+) -> Dict[str, Dict[str, Any]]:
+    """Notification webhook URL (auto-detects platform)."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        placeholder=placeholder,
+        required=required,
+        secret=True,
+        description='Webhook URL for Telegram, Discord, Slack, LINE, or custom',
+        group=FieldGroup.BASIC,
+    )
+
+
+def NOTIFY_MESSAGE(
+    *,
+    key: str = "message",
+    required: bool = True,
+    placeholder: str = "Hello from Flyto!",
+    label: str = "Message",
+    label_key: str = "schema.field.notify_message",
+) -> Dict[str, Dict[str, Any]]:
+    """Notification message content."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        placeholder=placeholder,
+        required=required,
+        multiline=True,
+        description='Notification message content',
+        group=FieldGroup.BASIC,
+    )
+
+
+def NOTIFY_TITLE(
+    *,
+    key: str = "title",
+    required: bool = False,
+    placeholder: str = "Alert",
+    label: str = "Title",
+    label_key: str = "schema.field.notify_title",
+) -> Dict[str, Dict[str, Any]]:
+    """Optional notification title."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        placeholder=placeholder,
+        required=required,
+        description='Optional title (for Discord, Slack, Teams)',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def TELEGRAM_CHAT_ID(
+    *,
+    key: str = "chat_id",
+    required: bool = False,
+    placeholder: str = "123456789",
+    label: str = "Chat ID",
+    label_key: str = "schema.field.telegram_chat_id",
+) -> Dict[str, Dict[str, Any]]:
+    """Telegram chat ID."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        placeholder=placeholder,
+        required=required,
+        description='Telegram chat ID (required for Telegram)',
+        group=FieldGroup.OPTIONS,
+    )

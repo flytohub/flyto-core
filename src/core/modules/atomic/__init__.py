@@ -77,6 +77,11 @@ def register_all():
     from . import analysis  # noqa: F401
     from . import testing  # noqa: F401
 
+    # Notification and storage modules
+    from . import notification  # noqa: F401
+    from . import storage  # noqa: F401
+    from . import compare  # noqa: F401
+
     _registered = True
 
 
@@ -121,6 +126,9 @@ from . import llm
 from . import ai
 from . import analysis
 from . import testing
+from . import notification
+from . import storage
+from . import compare
 
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule

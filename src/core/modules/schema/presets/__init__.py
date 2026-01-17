@@ -19,13 +19,15 @@ Modular structure:
 - process: COMMAND, WORKING_DIR
 - database: DB, REDIS, MONGO
 - document: PDF, Excel, Word
-- communication: Email, Slack, Webhook
+- communication: Email, Slack, Webhook, Notification (Telegram, Discord)
 - image: IMAGE, QRCODE
 - vision: VISION_IMAGE
 - assertion: HTTP_STATUS, BODY_CONTAINS
 - analysis: HTML_CONTENT
 - search: SEARCH_KEYWORD
 - training: PRACTICE_URL
+- storage: STORAGE_NAMESPACE, KV_STORAGE_KEY, STORAGE_TTL
+- compare: COMPARE_CURRENT_VALUE, COMPARE_THRESHOLD, COMPARE_MODE
 
 Usage:
     from core.modules.schema.presets import URL, SELECTOR, TIMEOUT_MS
@@ -366,6 +368,10 @@ from .communication import (
     SLACK_ICON_EMOJI,
     SLACK_BLOCKS,
     SLACK_ATTACHMENTS,
+    NOTIFY_URL,
+    NOTIFY_MESSAGE,
+    NOTIFY_TITLE,
+    TELEGRAM_CHAT_ID,
 )
 from .image import (
     IMAGE_INPUT_PATH,
@@ -407,6 +413,20 @@ from .training import (
     PRACTICE_URL,
     PRACTICE_MAX_ITEMS,
     PRACTICE_SAMPLE_SIZE,
+)
+from .storage import (
+    STORAGE_NAMESPACE,
+    STORAGE_KEY as KV_STORAGE_KEY,
+    STORAGE_VALUE as KV_STORAGE_VALUE,
+    STORAGE_DEFAULT,
+    STORAGE_TTL,
+)
+from .compare import (
+    COMPARE_CURRENT_VALUE,
+    COMPARE_PREVIOUS_VALUE,
+    COMPARE_MODE,
+    COMPARE_THRESHOLD,
+    COMPARE_DIRECTION,
 )
 
 
@@ -736,4 +756,21 @@ __all__ = [
     'WORD_FILE_PATH',
     'WORKING_DIR',
     'WRITE_MODE',
+    # KV Storage presets
+    'STORAGE_NAMESPACE',
+    'KV_STORAGE_KEY',
+    'KV_STORAGE_VALUE',
+    'STORAGE_DEFAULT',
+    'STORAGE_TTL',
+    # Notification presets
+    'NOTIFY_URL',
+    'NOTIFY_MESSAGE',
+    'NOTIFY_TITLE',
+    'TELEGRAM_CHAT_ID',
+    # Compare presets
+    'COMPARE_CURRENT_VALUE',
+    'COMPARE_PREVIOUS_VALUE',
+    'COMPARE_MODE',
+    'COMPARE_THRESHOLD',
+    'COMPARE_DIRECTION',
 ]
