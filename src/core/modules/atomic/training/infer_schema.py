@@ -19,7 +19,7 @@ from core.training.daily_practice import DailyPracticeEngine
     label_key='modules.training.practice.infer_schema.label',
     description='Infer data schema from website',
     description_key='modules.training.practice.infer_schema.description',
-    icon='FileJson',
+    icon='FileCode',
     color='#10B981',
 
     # Connection types

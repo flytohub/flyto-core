@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
     label_key='modules.image.compress.label',
     description='Compress images to reduce file size while maintaining quality',
     description_key='modules.image.compress.description',
-    icon='ImageIcon',
+    icon='Image',
     color='#FF5722',
 
     input_types=['file', 'bytes'],

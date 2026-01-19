@@ -20,7 +20,7 @@ from ...errors import ValidationError, InvalidTypeError
     label_key='modules.array.filter.label',
     description='Filter array elements by condition',
     description_key='modules.array.filter.description',
-    icon='Filter',
+    icon='ListFilter',
     color='#10B981',
 
     # Connection types

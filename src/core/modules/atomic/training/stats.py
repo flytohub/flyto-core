@@ -18,7 +18,7 @@ from core.training.daily_practice import DailyPracticeEngine
     label_key='modules.training.practice.stats.label',
     description='Get practice statistics',
     description_key='modules.training.practice.stats.description',
-    icon='BarChart',
+    icon='ChartBar',
     color='#10B981',
 
     # Connection types

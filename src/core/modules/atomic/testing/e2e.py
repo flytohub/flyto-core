@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
     label_key='modules.testing.e2e.run_steps.label',
     description='Execute end-to-end test steps sequentially',
     description_key='modules.testing.e2e.run_steps.description',
-    icon='PlayCircle',
+    icon='CirclePlay',
     color='#8B5CF6',
 
     input_types=['array', 'object'],

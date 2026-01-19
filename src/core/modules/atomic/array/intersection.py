@@ -20,7 +20,7 @@ from ...errors import ValidationError, InvalidValueError
     label_key='modules.array.intersection.label',
     description='Find common elements between arrays',
     description_key='modules.array.intersection.description',
-    icon='Intersect',
+    icon='Blend',
     color='#8B5CF6',
 
     # Connection types

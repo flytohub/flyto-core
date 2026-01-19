@@ -19,7 +19,7 @@ from ...registry import register_module
     label_key='modules.test.assert_greater_than.label',
     description='Assert that a value is greater than another',
     description_key='modules.test.assert_greater_than.description',
-    icon='CheckCircle',
+    icon='CircleCheck',
     color='#22C55E',
 
     # Connection types

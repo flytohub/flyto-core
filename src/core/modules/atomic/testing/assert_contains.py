@@ -19,7 +19,7 @@ from ...registry import register_module
     label_key='modules.test.assert_contains.label',
     description='Assert that a collection contains a value',
     description_key='modules.test.assert_contains.description',
-    icon='CheckCircle',
+    icon='CircleCheck',
     color='#22C55E',
 
     # Connection types

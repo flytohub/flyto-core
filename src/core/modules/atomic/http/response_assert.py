@@ -58,7 +58,7 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     label_key='modules.http.response_assert.label',
     description='Assert and validate HTTP response properties',
     description_key='modules.http.response_assert.description',
-    icon='CheckCircle',
+    icon='CircleCheck',
     color='#10B981',
 
     # Connection types

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
     label_key='modules.image.resize.label',
     description='Resize images to specified dimensions with various algorithms',
     description_key='modules.image.resize.description',
-    icon='ImageIcon',
+    icon='Image',
     color='#9C27B0',
 
     input_types=['file', 'bytes'],

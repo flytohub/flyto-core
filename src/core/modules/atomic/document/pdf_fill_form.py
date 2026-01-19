@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
     label_key='modules.pdf.fill_form.label',
     description='Fill PDF form fields with data and optionally insert images',
     description_key='modules.pdf.fill_form.description',
-    icon='FileEdit',
+    icon='FilePenLine',
     color='#D32F2F',
 
     input_types=['object', 'file'],

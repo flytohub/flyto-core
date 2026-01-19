@@ -19,7 +19,7 @@ from ...registry import register_module
     label_key='modules.test.assert_length.label',
     description='Assert that a collection has expected length',
     description_key='modules.test.assert_length.description',
-    icon='CheckCircle',
+    icon='CircleCheck',
     color='#22C55E',
 
     # Connection types

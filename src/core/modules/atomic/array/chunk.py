@@ -20,7 +20,7 @@ from ...errors import ValidationError, InvalidTypeError, InvalidValueError
     label_key='modules.array.chunk.label',
     description='Split array into chunks of specified size',
     description_key='modules.array.chunk.description',
-    icon='Grid',
+    icon='Grid3x3',
     color='#8B5CF6',
 
     # Connection types

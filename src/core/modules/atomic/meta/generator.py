@@ -81,7 +81,7 @@ class TestGeneratorModule(BaseModule):
     label_key='modules.meta.modules.generate.label',
     description='Generate new module from specification',
     description_key='modules.meta.modules.generate.description',
-    icon='PlusCircle',
+    icon='CirclePlus',
     color='#8B5CF6',
 
     # Connection types

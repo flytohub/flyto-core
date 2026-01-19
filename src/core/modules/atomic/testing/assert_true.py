@@ -19,7 +19,7 @@ from ...registry import register_module
     label_key='modules.test.assert_true.label',
     description='Assert that a condition is true',
     description_key='modules.test.assert_true.description',
-    icon='CheckCircle',
+    icon='CircleCheck',
     color='#22C55E',
 
     # Connection types
