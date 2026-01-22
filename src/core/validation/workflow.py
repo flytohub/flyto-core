@@ -164,18 +164,31 @@ def validate_workflow(
             ))
             continue
 
-        # Validate connection
+        # Check for node-level self-connection (different from module-level)
+        if source_id == target_id:
+            errors.append(WorkflowError(
+                code=ErrorCode.SELF_CONNECTION,
+                message='A node cannot connect to itself',
+                path=f'edges[{edge_id}]',
+                meta={'source': source_id, 'target': target_id}
+            ))
+            continue
+
+        # Validate connection (module compatibility)
         source_module = node_map[source_id].get('module_id', '')
         target_module = node_map[target_id].get('module_id', '')
 
-        result = validate_connection(source_module, target_module)
-        if not result.valid:
-            errors.append(WorkflowError(
-                code=result.error_code or ErrorCode.INCOMPATIBLE_MODULES,
-                message=result.error_message or 'Invalid connection',
-                path=f'edges[{edge_id}]',
-                meta=result.meta
-            ))
+        # Skip module-level self-connection check if nodes are different
+        # (e.g., two different flow.end nodes connected is NOT a self-connection)
+        if source_module != target_module:
+            result = validate_connection(source_module, target_module)
+            if not result.valid:
+                errors.append(WorkflowError(
+                    code=result.error_code or ErrorCode.INCOMPATIBLE_MODULES,
+                    message=result.error_message or 'Invalid connection',
+                    path=f'edges[{edge_id}]',
+                    meta=result.meta
+                ))
 
         # Track connections
         outgoing[source_id].append(target_id)
