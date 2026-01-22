@@ -26,6 +26,7 @@ FLOW_CONTROL_MODULES: FrozenSet[str] = frozenset([
     'flow.merge',
     'flow.container',
     'flow.breakpoint',
+    'flow.end',  # Terminal node - signals workflow end
 
     # Core namespaced IDs
     'core.flow.branch',
@@ -37,6 +38,7 @@ FLOW_CONTROL_MODULES: FrozenSet[str] = frozenset([
     'core.flow.merge',
     'core.flow.container',
     'core.flow.breakpoint',
+    'core.flow.end',
 
     # Legacy short names (backward compatibility)
     'loop',
@@ -44,6 +46,7 @@ FLOW_CONTROL_MODULES: FrozenSet[str] = frozenset([
     'branch',
     'switch',
     'goto',
+    'end',
 ])
 
 # Modules that can change execution flow (jump to different step)

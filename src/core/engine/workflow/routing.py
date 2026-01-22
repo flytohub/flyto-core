@@ -137,6 +137,12 @@ class WorkflowRouter:
             return current_idx + 1
 
         event = result.get('__event__')
+
+        # Special case: __end__ event signals workflow termination
+        if event == '__end__':
+            logger.debug(f"End event from {step_id}, terminating workflow")
+            return 999999  # Return high value to exit step loop
+
         next_step_id = None
 
         # Priority 1: step.connections (v1.2)
