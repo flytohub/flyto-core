@@ -35,6 +35,7 @@ from ...types import NodeType, EdgeType, DataType
         'object.*',     # Object operations
         'element.*',    # Element checks
         'ai.*',         # AI outputs
+        'llm.*',        # LLM outputs (chat, agent, etc.)
         'database.*',   # Database results
         'file.*',       # File operations
         'math.*',       # Math comparisons

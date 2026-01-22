@@ -38,6 +38,7 @@ from ...types import NodeType, EdgeType, DataType
         'element.text',  # Element text
         'element.attribute', # Element attribute
         'ai.*',         # AI outputs
+        'llm.*',        # LLM outputs (chat, agent, etc.)
         'database.*',   # Database query results
         'file.*',       # File read results
         'math.*',       # Math operations
