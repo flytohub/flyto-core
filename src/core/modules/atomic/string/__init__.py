@@ -37,4 +37,24 @@ try:
 except ImportError:
     pass
 
+try:
+    from .pad import *
+except ImportError:
+    pass
+
+try:
+    from .truncate import *
+except ImportError:
+    pass
+
+try:
+    from .slugify import *
+except ImportError:
+    pass
+
+try:
+    from .template import *
+except ImportError:
+    pass
+
 __all__ = []

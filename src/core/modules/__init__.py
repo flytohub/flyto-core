@@ -19,6 +19,27 @@ from .registry import register_module
 from .base import BaseModule
 from .express import module, mod, ParamHelper, create_simple_module
 from .result import ModuleResult
+from .items import (
+    Item,
+    ItemMeta,
+    ItemError,
+    ItemContext,
+    PairedItemInfo,
+    BinaryData,
+    NodeExecutionResult,
+    ExecutionStatus,
+    ExecutionMeta,
+    NodeError,
+    StepInputItems,
+    EdgeType,
+    EdgeInfo,
+    MergeStrategy,
+    wrap_legacy_result,
+    items_to_legacy_context,
+    merge_items,
+    merge_items_append,
+    merge_items_multiplex,
+)
 from .errors import (
     ModuleError,
     ValidationError,
@@ -76,6 +97,12 @@ from .lint import (
     LintReport,
     Severity,
 )
+from .validation import (
+    ValidationResult,
+    ValidationError as FieldValidationError,
+    ValidationWarning,
+    SchemaValidator,
+)
 from .types import (
     ModuleLevel,
     UIVisibility,
@@ -127,6 +154,27 @@ __all__ = [
     'create_simple_module',
     # Result & Errors (New)
     'ModuleResult',
+    # Item-based execution (ITEM_PIPELINE_SPEC.md)
+    'Item',
+    'ItemMeta',
+    'ItemError',
+    'ItemContext',
+    'PairedItemInfo',
+    'BinaryData',
+    'NodeExecutionResult',
+    'ExecutionStatus',
+    'ExecutionMeta',
+    'NodeError',
+    'StepInputItems',
+    'EdgeType',
+    'EdgeInfo',
+    'MergeStrategy',
+    'wrap_legacy_result',
+    'items_to_legacy_context',
+    'merge_items',
+    'merge_items_append',
+    'merge_items_multiplex',
+    # Errors
     'ModuleError',
     'ValidationError',
     'InvalidTypeError',
@@ -210,4 +258,9 @@ __all__ = [
     'LintResult',
     'LintReport',
     'Severity',
+    # Validation (ITEM_PIPELINE_SPEC.md Section 7)
+    'ValidationResult',
+    'FieldValidationError',
+    'ValidationWarning',
+    'SchemaValidator',
 ]

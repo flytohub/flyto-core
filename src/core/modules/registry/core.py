@@ -16,7 +16,13 @@ from datetime import datetime
 
 from ..base import BaseModule
 from ...constants import ErrorMessages
-from ..types import StabilityLevel, is_module_visible, get_current_env
+from ..types import (
+    StabilityLevel,
+    ModuleTier,
+    TIER_DISPLAY_ORDER,
+    is_module_visible,
+    get_current_env,
+)
 
 
 @dataclass
@@ -481,3 +487,195 @@ class ModuleRegistry:
             for module_id, metadata in cls._metadata.items()
             if metadata.get('plugin') == plugin_name
         ]
+
+    # ========================================
+    # Catalog Service (Frontend API)
+    # ========================================
+
+    @classmethod
+    def get_catalog(
+        cls,
+        lang: str = 'en',
+        filter_by_stability: bool = True,
+        env: Optional[str] = None,
+        include_internal: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Get module catalog grouped by tier for frontend display.
+
+        Returns a structured catalog optimized for node picker dialogs:
+        - Modules grouped by tier (featured, standard, toolkit)
+        - Within each tier, grouped by category
+        - Sorted by tier display order
+
+        Args:
+            lang: Language code for localization
+            filter_by_stability: Filter modules by stability/environment
+            env: Environment override
+            include_internal: Include INTERNAL tier modules (default False)
+
+        Returns:
+            {
+                "tiers": [
+                    {
+                        "id": "featured",
+                        "label": "Featured",
+                        "display_order": 1,
+                        "categories": [
+                            {
+                                "id": "browser",
+                                "label": "Browser",
+                                "modules": [...]
+                            }
+                        ]
+                    },
+                    ...
+                ],
+                "total_count": 305,
+                "tier_counts": {"featured": 10, "standard": 200, "toolkit": 95}
+            }
+        """
+        # Get all visible metadata
+        all_metadata = cls.get_all_metadata(
+            lang=lang,
+            filter_by_stability=filter_by_stability,
+            env=env,
+        )
+
+        # Group by tier
+        tier_groups: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        tier_counts: Dict[str, int] = {}
+
+        for module_id, metadata in all_metadata.items():
+            tier_value = metadata.get('tier', 'standard')
+
+            # Skip internal unless explicitly requested
+            if tier_value == 'internal' and not include_internal:
+                continue
+
+            category = metadata.get('category', 'other')
+
+            if tier_value not in tier_groups:
+                tier_groups[tier_value] = {}
+                tier_counts[tier_value] = 0
+
+            if category not in tier_groups[tier_value]:
+                tier_groups[tier_value][category] = []
+
+            tier_groups[tier_value][category].append(metadata)
+            tier_counts[tier_value] += 1
+
+        # Build structured response
+        tiers = []
+        for tier_enum in ModuleTier:
+            tier_value = tier_enum.value
+            if tier_value not in tier_groups:
+                continue
+            if tier_value == 'internal' and not include_internal:
+                continue
+
+            categories = []
+            for cat_id, modules in sorted(tier_groups[tier_value].items()):
+                categories.append({
+                    "id": cat_id,
+                    "label": cat_id.replace('_', ' ').title(),
+                    "modules": sorted(modules, key=lambda m: m.get('ui_label', m.get('module_id', ''))),
+                })
+
+            tiers.append({
+                "id": tier_value,
+                "label": tier_value.replace('_', ' ').title(),
+                "display_order": TIER_DISPLAY_ORDER.get(tier_enum, 99),
+                "categories": categories,
+            })
+
+        # Sort tiers by display order
+        tiers.sort(key=lambda t: t['display_order'])
+
+        return {
+            "tiers": tiers,
+            "total_count": sum(tier_counts.values()),
+            "tier_counts": tier_counts,
+        }
+
+    @classmethod
+    def get_start_modules(
+        cls,
+        lang: str = 'en',
+        filter_by_stability: bool = True,
+        env: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get modules that can be used as workflow start nodes.
+
+        Filters catalog to only include modules where can_be_start=True.
+
+        Args:
+            lang: Language code
+            filter_by_stability: Filter by stability level
+            env: Environment override
+
+        Returns:
+            Same structure as get_catalog() but filtered
+        """
+        all_metadata = cls.get_all_metadata(
+            lang=lang,
+            filter_by_stability=filter_by_stability,
+            env=env,
+        )
+
+        # Group by tier, only include start-capable modules
+        tier_groups: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        tier_counts: Dict[str, int] = {}
+
+        for module_id, metadata in all_metadata.items():
+            # Skip non-start modules
+            if not metadata.get('can_be_start', False):
+                continue
+
+            tier_value = metadata.get('tier', 'standard')
+            # Skip internal for start modules
+            if tier_value == 'internal':
+                continue
+
+            category = metadata.get('category', 'other')
+
+            if tier_value not in tier_groups:
+                tier_groups[tier_value] = {}
+                tier_counts[tier_value] = 0
+
+            if category not in tier_groups[tier_value]:
+                tier_groups[tier_value][category] = []
+
+            tier_groups[tier_value][category].append(metadata)
+            tier_counts[tier_value] += 1
+
+        # Build structured response
+        tiers = []
+        for tier_enum in ModuleTier:
+            tier_value = tier_enum.value
+            if tier_value not in tier_groups:
+                continue
+
+            categories = []
+            for cat_id, modules in sorted(tier_groups[tier_value].items()):
+                categories.append({
+                    "id": cat_id,
+                    "label": cat_id.replace('_', ' ').title(),
+                    "modules": sorted(modules, key=lambda m: m.get('ui_label', m.get('module_id', ''))),
+                })
+
+            tiers.append({
+                "id": tier_value,
+                "label": tier_value.replace('_', ' ').title(),
+                "display_order": TIER_DISPLAY_ORDER.get(tier_enum, 99),
+                "categories": categories,
+            })
+
+        tiers.sort(key=lambda t: t['display_order'])
+
+        return {
+            "tiers": tiers,
+            "total_count": sum(tier_counts.values()),
+            "tier_counts": tier_counts,
+        }

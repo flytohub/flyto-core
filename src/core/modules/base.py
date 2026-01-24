@@ -1,19 +1,21 @@
 """
-Base Module Class with Phase 2 execution support.
+Base Module Class with Phase 2 execution support and Item-based execution.
 
 This module provides the BaseModule class that all atomic modules inherit from.
-It includes execution support, parameter validation, and unified return helpers.
+It includes execution support, parameter validation, unified return helpers,
+and item-based execution support as per ITEM_PIPELINE_SPEC.md.
 
 Design Principles:
 - Single responsibility: Base class for module execution
 - Atomic: Modules are independent units
 - No hardcoding: Uses constants for defaults
+- Item-based: Support for processing items[] arrays
 """
 import asyncio
 import logging
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union, TYPE_CHECKING
 
 from ..constants import (
     DEFAULT_MAX_RETRIES,
@@ -24,6 +26,9 @@ from ..constants import (
 from .validation import ModuleError as ModuleErrorData, validate_required, validate_type, validate_all
 from .result import ModuleResult
 from .errors import ModuleError, ValidationError
+
+if TYPE_CHECKING:
+    from .items import Item, ItemContext, NodeExecutionResult
 
 
 logger = logging.getLogger(__name__)
@@ -37,11 +42,21 @@ class BaseModule(ABC):
     - validate_params(): Validate input parameters
     - execute(): Execute the module logic
 
+    For item-based execution, modules can optionally implement:
+    - execute_item(): Process single item (for execution_mode="items")
+    - execute_all(): Process all items at once (for execution_mode="all")
+
+    Execution Modes:
+    - "single": Traditional mode, processes params, returns single result
+    - "items": Processes each input item independently (1:1 or 1:N mapping)
+    - "all": Receives all items at once (for aggregate/sort/limit operations)
+
     Attributes:
         module_id: Unique module identifier
         module_name: Human-readable module name
         module_description: Module description
         required_permission: Required permission for execution
+        execution_mode: Execution mode ("single", "items", or "all")
         params: Input parameters
         context: Execution context
     """
@@ -53,6 +68,12 @@ class BaseModule(ABC):
 
     # Permission requirements
     required_permission: str = ""
+
+    # Item-based execution mode (see ITEM_PIPELINE_SPEC.md)
+    # - "single": Traditional mode, ignores input items, uses params only
+    # - "items": Process each input item independently
+    # - "all": Receive all items at once (for aggregate operations)
+    execution_mode: str = "single"
 
     def __init__(self, params: Dict[str, Any], context: Dict[str, Any]):
         """
@@ -75,6 +96,90 @@ class BaseModule(ABC):
     async def execute(self) -> Any:
         """Execute module logic and return result."""
         pass
+
+    # =========================================================================
+    # Item-Based Execution Methods (ITEM_PIPELINE_SPEC.md)
+    # =========================================================================
+
+    async def execute_item(
+        self,
+        item: "Item",
+        index: int,
+        context: "ItemContext"
+    ) -> "Item":
+        """
+        Process a single item (execution_mode="items").
+
+        Override this method for modules that process items independently.
+        The default implementation calls execute() and wraps the result.
+
+        Args:
+            item: Input item to process
+            index: Item index in the input array
+            context: Item execution context with access to all items
+
+        Returns:
+            Processed item (or multiple items for 1:N operations)
+
+        Example:
+            async def execute_item(self, item, index, context):
+                # Transform item data
+                transformed = self._apply_transform(item.json)
+                return Item(json=transformed, pairedItem=PairedItemInfo(item=index))
+        """
+        from .items import Item, PairedItemInfo
+
+        # Default behavior: inject item into params and call execute()
+        self.params['$item'] = item.json
+        self.params['$index'] = index
+
+        result = await self.execute()
+
+        # Wrap result as Item
+        if isinstance(result, Item):
+            return result
+        if isinstance(result, dict):
+            data = result.get('data', result) if result.get('ok', True) else {}
+            return Item(json=data, pairedItem=PairedItemInfo(item=index))
+        return Item(json={'value': result}, pairedItem=PairedItemInfo(item=index))
+
+    async def execute_all(
+        self,
+        items: List["Item"],
+        context: "ItemContext"
+    ) -> List["Item"]:
+        """
+        Process all items at once (execution_mode="all").
+
+        Override this method for modules that need to see all data at once,
+        such as aggregate, sort, limit, or merge operations.
+
+        Args:
+            items: All input items
+            context: Item execution context
+
+        Returns:
+            List of processed items
+
+        Example:
+            async def execute_all(self, items, context):
+                # Aggregate all items
+                field = self.params.get('field')
+                total = sum(item.json.get(field, 0) for item in items)
+                return [Item(json={'total': total, 'count': len(items)})]
+        """
+        from .items import Item, ItemContext as ItemCtx
+
+        # Default behavior: process items sequentially using execute_item
+        results = []
+        for i, item in enumerate(items):
+            item_ctx = ItemCtx(items=items, totalItems=len(items))
+            result = await self.execute_item(item, i, item_ctx)
+            if isinstance(result, list):
+                results.extend(result)
+            else:
+                results.append(result)
+        return results
 
     async def run(self) -> Any:
         """

@@ -80,6 +80,87 @@ def check_capabilities(
     return None
 
 
+def _check_license(
+    module_id: str,
+    required_tier: Optional[str],
+    required_feature: Optional[str],
+    meta: Dict[str, Any],
+) -> Optional[ModuleResult]:
+    """
+    Check if current license allows module execution.
+
+    Args:
+        module_id: Module identifier
+        required_tier: Required license tier ("free", "pro", "enterprise")
+        required_feature: Required feature flag (e.g., "DESKTOP_AUTOMATION")
+        meta: Execution metadata for error response
+
+    Returns:
+        None if license check passes, ModuleResult.failure() if denied
+    """
+    try:
+        from ..licensing import LicenseManager, LicenseError, FeatureFlag, LicenseTier
+
+        manager = LicenseManager.get_instance()
+        current_tier = manager.get_tier()
+
+        # Check tier requirement
+        if required_tier:
+            tier_order = {
+                LicenseTier.FREE: 0,
+                LicenseTier.PRO: 1,
+                LicenseTier.ENTERPRISE: 2,
+            }
+            required_tier_enum = LicenseTier(required_tier.lower())
+            if tier_order.get(current_tier, 0) < tier_order.get(required_tier_enum, 0):
+                logger.warning(
+                    f"License tier denied for module {module_id}: requires {required_tier}, has {current_tier.value}",
+                    extra={"module_id": module_id, "required_tier": required_tier, "current_tier": current_tier.value}
+                )
+                return ModuleResult.failure(
+                    error=f"Module '{module_id}' requires {required_tier} license (current: {current_tier.value})",
+                    error_code=ErrorCode.FORBIDDEN,
+                    meta=meta,
+                    details={
+                        "required_tier": required_tier,
+                        "current_tier": current_tier.value,
+                        "upgrade_url": "/pricing",
+                    }
+                )
+
+        # Check feature requirement
+        if required_feature:
+            try:
+                feature = FeatureFlag(required_feature.upper()) if isinstance(required_feature, str) else required_feature
+                if not manager.has_feature(feature):
+                    logger.warning(
+                        f"Feature denied for module {module_id}: requires {required_feature}",
+                        extra={"module_id": module_id, "required_feature": required_feature}
+                    )
+                    return ModuleResult.failure(
+                        error=f"Module '{module_id}' requires feature '{required_feature}' which is not available in your license",
+                        error_code=ErrorCode.FORBIDDEN,
+                        meta=meta,
+                        details={
+                            "required_feature": required_feature,
+                            "current_tier": current_tier.value,
+                            "upgrade_url": "/pricing",
+                        }
+                    )
+            except ValueError:
+                # Unknown feature flag - allow (fail open for forwards compatibility)
+                pass
+
+    except ImportError:
+        # Licensing module not available - allow execution (fail open)
+        pass
+    except Exception as e:
+        # License check error - log but allow execution (fail open)
+        logger.debug(f"License check error for {module_id}: {e}")
+
+    return None
+
+
 async def execute_module(
     module_fn: Callable[..., Coroutine[Any, Any, Any]],
     params: Dict[str, Any],
@@ -88,7 +169,9 @@ async def execute_module(
     timeout_ms: Optional[int] = None,
     request_id: Optional[str] = None,
     capabilities: Optional[list] = None,
-    env: Optional[str] = None
+    env: Optional[str] = None,
+    required_tier: Optional[str] = None,
+    required_feature: Optional[str] = None,
 ) -> ModuleResult:
     """
     Execute a module function with standardized result handling.
@@ -144,6 +227,12 @@ async def execute_module(
         if capability_result is not None:
             # Capability denied - return failure immediately
             return capability_result
+
+    # License tier check before execution
+    if required_tier or required_feature:
+        license_result = _check_license(module_id, required_tier, required_feature, meta)
+        if license_result is not None:
+            return license_result
 
     try:
         # Build execution context

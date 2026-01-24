@@ -283,12 +283,16 @@ PUBLIC_FIELDS: Set[str] = {
     "retryable",
     "max_retries",
     "capabilities",  # Expose capabilities so UI can show warnings
+    # License tier requirements (for UI feature gating display)
+    "required_tier",
+    "required_feature",
 }
 
 
 def get_public_catalog_view(
     metadata: Dict[str, Any],
-    include_schema: bool = True
+    include_schema: bool = True,
+    include_access_info: bool = True,
 ) -> Dict[str, Any]:
     """
     Get public view of module metadata.
@@ -298,6 +302,7 @@ def get_public_catalog_view(
     Args:
         metadata: Raw or scrubbed metadata
         include_schema: Whether to include params_schema and output_schema
+        include_access_info: Whether to include license access info
 
     Returns:
         Public view with only allowed fields
@@ -314,12 +319,47 @@ def get_public_catalog_view(
                 continue
             result[field] = scrubbed[field]
 
+    # Add license access info for UI display
+    if include_access_info:
+        result["access"] = _get_module_access_info(metadata)
+
     return result
+
+
+def _get_module_access_info(metadata: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Get license access info for a module.
+
+    Returns:
+        Dict with accessible, required_tier, current_tier
+    """
+    try:
+        from ..licensing import LicenseManager
+
+        module_id = metadata.get("module_id", "")
+        manager = LicenseManager.get_instance()
+        return manager.get_module_access_info(module_id)
+    except ImportError:
+        # Licensing module not available - all accessible
+        return {
+            "accessible": True,
+            "required_tier": metadata.get("required_tier"),
+            "current_tier": "free",
+        }
+    except Exception:
+        # Error getting access info - default to accessible
+        return {
+            "accessible": True,
+            "required_tier": metadata.get("required_tier"),
+            "current_tier": None,
+        }
 
 
 def get_public_catalog(
     all_metadata: Dict[str, Dict[str, Any]],
-    include_schema: bool = True
+    include_schema: bool = True,
+    include_access_info: bool = True,
+    filter_by_license: bool = False,
 ) -> Dict[str, Dict[str, Any]]:
     """
     Get public catalog with all metadata scrubbed and filtered.
@@ -327,11 +367,20 @@ def get_public_catalog(
     Args:
         all_metadata: Dict of module_id -> metadata
         include_schema: Whether to include params_schema and output_schema
+        include_access_info: Whether to include license access info
+        filter_by_license: If True, exclude modules not accessible with current license
 
     Returns:
         Public catalog safe for API response
     """
-    return {
-        module_id: get_public_catalog_view(metadata, include_schema)
-        for module_id, metadata in all_metadata.items()
-    }
+    result = {}
+    for module_id, metadata in all_metadata.items():
+        view = get_public_catalog_view(metadata, include_schema, include_access_info)
+
+        # Filter out inaccessible modules if requested
+        if filter_by_license and not view.get("access", {}).get("accessible", True):
+            continue
+
+        result[module_id] = view
+
+    return result

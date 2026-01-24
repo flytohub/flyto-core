@@ -163,6 +163,33 @@ class StabilityLevel(str, Enum):
     DEPRECATED = "deprecated"
 
 
+class ModuleTier(str, Enum):
+    """
+    Module tier - determines UI display grouping and visibility.
+
+    Controls how modules are organized in the node picker dialog.
+    Frontend reads this value and displays accordingly.
+
+    FEATURED: Prominent display, recommended for most users
+    STANDARD: Normal display in category sections
+    TOOLKIT: Collapsed "Toolkit" section for advanced/atomic modules
+    INTERNAL: Hidden from UI, system use only
+    """
+    FEATURED = "featured"    # ⭐ Recommended/Popular
+    STANDARD = "standard"    # 📦 Standard modules
+    TOOLKIT = "toolkit"      # 🔧 Developer toolkit (atomic/advanced)
+    INTERNAL = "internal"    # 🔒 System internal
+
+
+# Display order for tiers (lower = higher in list)
+TIER_DISPLAY_ORDER = {
+    ModuleTier.FEATURED: 1,
+    ModuleTier.STANDARD: 2,
+    ModuleTier.TOOLKIT: 3,
+    ModuleTier.INTERNAL: 99,
+}
+
+
 # Priority order for module selection (lower = higher priority)
 LEVEL_PRIORITY = {
     ModuleLevel.ATOMIC: 1,

@@ -65,8 +65,15 @@ def validate_node_params(
     params_schema = meta.get('params_schema', {})
     if not params_schema:
         return results  # No schema to validate against
+    # Support JSON Schema style: {type, properties, required}
+    if isinstance(params_schema, dict) and 'properties' in params_schema:
+        properties = params_schema.get('properties') or {}
+        required_list = params_schema.get('required') or []
+    else:
+        properties = params_schema
+        required_list = []
 
-    valid_keys = set(params_schema.keys())
+    valid_keys = set(properties.keys()) if isinstance(properties, dict) else set()
 
     # Check for unknown params
     for param_key in params.keys():
@@ -84,20 +91,35 @@ def validate_node_params(
             ))
 
     # Check for missing required params
-    for param_key, param_def in params_schema.items():
-        if param_def.get('required', False):
-            value = params.get(param_key)
-            if value is None or value == '':
-                results.append(WorkflowError(
-                    code=ErrorCode.MISSING_REQUIRED_PARAM,
-                    message=f'Missing required parameter: {param_key}',
-                    path=f'nodes[{node_id}].params.{param_key}',
-                    meta={
-                        'node_id': node_id,
-                        'module_id': module_id,
-                        'param': param_key,
-                    }
-                ))
+    for param_key in required_list:
+        value = params.get(param_key)
+        if value is None or value == '':
+            results.append(WorkflowError(
+                code=ErrorCode.MISSING_REQUIRED_PARAM,
+                message=f'Missing required parameter: {param_key}',
+                path=f'nodes[{node_id}].params.{param_key}',
+                meta={
+                    'node_id': node_id,
+                    'module_id': module_id,
+                    'param': param_key,
+                }
+            ))
+
+    if isinstance(properties, dict):
+        for param_key, param_def in properties.items():
+            if isinstance(param_def, dict) and param_def.get('required', False):
+                value = params.get(param_key)
+                if value is None or value == '':
+                    results.append(WorkflowError(
+                        code=ErrorCode.MISSING_REQUIRED_PARAM,
+                        message=f'Missing required parameter: {param_key}',
+                        path=f'nodes[{node_id}].params.{param_key}',
+                        meta={
+                            'node_id': node_id,
+                            'module_id': module_id,
+                            'param': param_key,
+                        }
+                    ))
 
     return results
 
@@ -143,6 +165,8 @@ def validate_workflow(
     for i, edge in enumerate(edges):
         source_id = edge.get('source')
         target_id = edge.get('target')
+        source_handle = edge.get('sourceHandle') or edge.get('source_handle') or edge.get('from_port')
+        target_handle = edge.get('targetHandle') or edge.get('target_handle') or edge.get('to_port')
         edge_id = edge.get('id', f'edge_{i}')
 
         # Check nodes exist
@@ -181,7 +205,12 @@ def validate_workflow(
         # Skip module-level self-connection check if nodes are different
         # (e.g., two different flow.end nodes connected is NOT a self-connection)
         if source_module != target_module:
-            result = validate_connection(source_module, target_module)
+            result = validate_connection(
+                source_module,
+                target_module,
+                from_port=source_handle or 'output',
+                to_port=target_handle or 'input',
+            )
             if not result.valid:
                 errors.append(WorkflowError(
                     code=result.error_code or ErrorCode.INCOMPATIBLE_MODULES,
@@ -209,9 +238,9 @@ def validate_workflow(
         for node in nodes:
             param_errors = validate_node_params(node, strict=False)
             for err in param_errors:
-                # Only missing required params are errors
-                # Unknown params are silently ignored (might be custom/dynamic)
-                if err.code != ErrorCode.UNKNOWN_PARAM:
+                if err.code == ErrorCode.UNKNOWN_PARAM:
+                    warnings.append(err)
+                else:
                     errors.append(err)
 
     # Check for cycles (simple DFS)

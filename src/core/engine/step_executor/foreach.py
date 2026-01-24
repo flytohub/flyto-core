@@ -5,12 +5,13 @@ Step execution for each item in an array.
 """
 
 import logging
-from typing import Any, Callable, Coroutine, Dict, List, TYPE_CHECKING
+from typing import Any, Callable, Coroutine, Dict, List, Optional, TYPE_CHECKING
 
 from ..exceptions import StepExecutionError
 
 if TYPE_CHECKING:
     from ..variable_resolver import VariableResolver
+    from ..trace import StepTrace
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,11 @@ async def execute_foreach_step(
     foreach_array: Any,
     foreach_var: str,
     execute_single_fn: Callable[
-        [Dict[str, Any], "VariableResolver", Dict[str, Any], int, int],
+        [Dict[str, Any], "VariableResolver", Dict[str, Any], int, int, Optional["StepTrace"]],
         Coroutine[Any, Any, Any]
     ],
     step_index: int = 0,
+    step_trace: Optional["StepTrace"] = None,
 ) -> List[Any]:
     """
     Execute a step for each item in an array.
@@ -63,7 +65,7 @@ async def execute_foreach_step(
 
         try:
             result = await execute_single_fn(
-                step_config, resolver, context, timeout, step_index
+                step_config, resolver, context, timeout, step_index, step_trace
             )
             results.append(result)
         except Exception as e:

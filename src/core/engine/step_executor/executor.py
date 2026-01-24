@@ -1,9 +1,14 @@
 """
 Step Executor
 
-Handles execution of individual workflow steps.
+Handles execution of individual workflow steps with item-based execution support.
 
 SECURITY: Includes redaction of sensitive data from module outputs.
+
+Item-Based Execution:
+- Supports execution_mode: "single", "items", "all"
+- Wraps legacy results via wrap_legacy_result()
+- Stores items in context for downstream access
 """
 
 import asyncio
@@ -20,6 +25,8 @@ from .retry import execute_with_retry
 
 if TYPE_CHECKING:
     from ..variable_resolver import VariableResolver
+    from ...modules.items import Item, NodeExecutionResult, StepInputItems
+    from ..trace import StepTrace, TraceCollector
 
 logger = logging.getLogger(__name__)
 
@@ -129,6 +136,7 @@ class StepExecutor:
         context: Dict[str, Any],
         resolver: "VariableResolver",
         should_execute: bool = True,
+        trace_collector: Optional["TraceCollector"] = None,
     ) -> Optional[Any]:
         """
         Execute a single step with timeout and foreach support.
@@ -139,6 +147,7 @@ class StepExecutor:
             context: Current workflow context (will be modified)
             resolver: Variable resolver instance
             should_execute: Whether the step should execute (from 'when' condition)
+            trace_collector: Optional trace collector for execution tracing
 
         Returns:
             Step execution result, or None if skipped
@@ -158,6 +167,22 @@ class StepExecutor:
         if pinned_output is not None:
             logger.info(f"Step '{step_id}': Using pinned output (skipping execution)")
 
+            # Record pinned output as a completed step trace
+            if trace_collector and module_id:
+                step_trace = trace_collector.start_step(step_id, step_index, module_id)
+                params_raw = step_config.get('params', {})
+                resolved_params = resolver.resolve(params_raw)
+                step_trace.set_input(params=resolved_params, params_raw=params_raw)
+                items_output = []
+                if isinstance(pinned_output, dict):
+                    items = pinned_output.get('items', [])
+                    if items:
+                        items_output = [items]
+                    elif pinned_output.get('data'):
+                        items_output = [[pinned_output.get('data')]]
+                step_trace.set_output(items=items_output)
+                step_trace.complete()
+
             # Store pinned result in context (same as normal execution)
             context[step_id] = pinned_output
 
@@ -174,7 +199,15 @@ class StepExecutor:
 
         if not should_execute:
             logger.info(f"Skipping step '{step_id}' (condition not met)")
+            # Record skipped step in trace
+            if trace_collector:
+                trace_collector.skip_step(step_id, step_index, module_id or "unknown", "condition not met")
             return None
+
+        # Start step trace if collector provided
+        step_trace = None
+        if trace_collector and module_id:
+            step_trace = trace_collector.start_step(step_id, step_index, module_id)
 
         step_start_time = time.time()
 
@@ -204,11 +237,11 @@ class StepExecutor:
             if foreach_array:
                 result = await execute_foreach_step(
                     step_config, resolver, context, foreach_array, foreach_var,
-                    self._execute_single_step, step_index
+                    self._execute_single_step, step_index, step_trace
                 )
             else:
                 result = await self._execute_single_step(
-                    step_config, resolver, context, timeout, step_index
+                    step_config, resolver, context, timeout, step_index, step_trace
                 )
 
             # Store result in context
@@ -220,8 +253,25 @@ class StepExecutor:
 
             logger.info(f"Step '{step_id}' completed successfully")
 
+            # Record successful step trace
+            if step_trace:
+                from ..trace import StepOutput
+                items_output = []
+                if isinstance(result, dict):
+                    items = result.get('items', [])
+                    if items:
+                        items_output = [items]
+                    elif result.get('data'):
+                        items_output = [[result.get('data')]]
+                step_trace.set_output(items=items_output)
+                if step_trace.status in ("running", "pending"):
+                    step_trace.complete()
+
         except Exception as e:
             error = e
+            # Record failed step trace
+            if step_trace:
+                step_trace.fail(e)
             raise
 
         finally:
@@ -247,6 +297,7 @@ class StepExecutor:
         context: Dict[str, Any],
         timeout: int,
         step_index: int = 0,
+        step_trace: Optional["StepTrace"] = None,
     ) -> Any:
         """Execute a single step with optional timeout."""
         step_id = step_config.get('id', f'step_{id(step_config)}')
@@ -257,11 +308,36 @@ class StepExecutor:
 
         retry_config = step_config.get('retry', {})
 
+        # Get input items from upstream steps (item-based execution)
+        # Support both flat list and by-port structure for multi-input
+        upstream_by_port = step_config.get('$upstream_by_port')
+        upstream_step_ids = step_config.get('$upstream_steps') or step_config.get('inputs')
+
+        if upstream_by_port:
+            # Multi-input: get items grouped by port, then merge
+            input_items = self._get_input_items_by_port(context, upstream_by_port, resolved_params)
+        else:
+            # Single input: flat list
+            input_items = self._get_input_items_from_context(context, upstream_step_ids)
+
+        # Propagate workflow on_error to item-based execution
+        resolved_params.setdefault('$on_error', on_error)
+
+        if step_trace:
+            trace_items = None
+            if input_items is not None:
+                trace_items = [item.json for item in input_items]
+            step_trace.set_input(
+                params=resolved_params,
+                params_raw=step_params,
+                items=trace_items,
+            )
+
         try:
             if retry_config:
                 async def execute_fn():
                     return await self._execute_module_with_timeout(
-                        step_id, module_id, resolved_params, context, timeout
+                        step_id, module_id, resolved_params, context, timeout, input_items, step_trace
                     )
 
                 return await execute_with_retry(
@@ -278,7 +354,7 @@ class StepExecutor:
                 )
             else:
                 return await self._execute_module_with_timeout(
-                    step_id, module_id, resolved_params, context, timeout
+                    step_id, module_id, resolved_params, context, timeout, input_items, step_trace
                 )
 
         except StepTimeoutError as e:
@@ -305,15 +381,17 @@ class StepExecutor:
         module_id: str,
         params: Dict[str, Any],
         context: Dict[str, Any],
-        timeout: int
+        timeout: int,
+        input_items: Optional[List["Item"]] = None,
+        step_trace: Optional["StepTrace"] = None,
     ) -> Any:
         """Execute a module with optional timeout."""
         if timeout <= 0:
-            return await self._execute_module(step_id, module_id, params, context)
+            return await self._execute_module(step_id, module_id, params, context, input_items, step_trace)
 
         try:
             return await asyncio.wait_for(
-                self._execute_module(step_id, module_id, params, context),
+                self._execute_module(step_id, module_id, params, context, input_items, step_trace),
                 timeout=timeout
             )
         except asyncio.TimeoutError:
@@ -324,10 +402,23 @@ class StepExecutor:
         step_id: str,
         module_id: str,
         params: Dict[str, Any],
-        context: Dict[str, Any]
+        context: Dict[str, Any],
+        input_items: Optional[List["Item"]] = None,
+        step_trace: Optional["StepTrace"] = None,
     ) -> Any:
-        """Execute a module and return result."""
+        """
+        Execute a module and return result.
+
+        Supports item-based execution based on module's execution_mode:
+        - "single": Traditional execution, ignores input_items
+        - "items": Process each input item independently
+        - "all": Process all items at once
+        """
         from ...modules.registry import ModuleRegistry
+        from ...modules.items import (
+            Item, ItemContext, NodeExecutionResult, ExecutionStatus,
+            ItemError, ExecutionMeta, wrap_legacy_result, items_to_legacy_context
+        )
 
         module_class = ModuleRegistry.get(module_id)
 
@@ -335,8 +426,191 @@ class StepExecutor:
             raise StepExecutionError(step_id, f"Module not found: {module_id}")
 
         module_instance = module_class(params, context)
+        execution_mode = getattr(module_instance, 'execution_mode', 'single')
 
         try:
-            return await module_instance.run()
+            if execution_mode == 'single':
+                # Traditional mode: ignore input_items, use params
+                result = await module_instance.run()
+                # Wrap legacy result for consistent handling
+                if isinstance(result, dict) and 'ok' in result:
+                    node_result = wrap_legacy_result(result)
+                    # Return legacy format for backward compatibility
+                    return items_to_legacy_context(node_result)
+                return result
+
+            elif execution_mode == 'items':
+                # Process each item independently
+                items = input_items if input_items is not None else [Item(json={})]
+                output_items = []
+                errors = []
+                on_error = params.get('$on_error', 'stop')
+
+                for i, item in enumerate(items):
+                    item_trace = None
+                    if step_trace:
+                        from ..trace import ItemTrace
+                        item_trace = ItemTrace(index=i, input=item.json).start()
+                    try:
+                        item_ctx = ItemContext(items=items, totalItems=len(items))
+                        result_item = await module_instance.execute_item(item, i, item_ctx)
+                        if isinstance(result_item, list):
+                            output_items.extend(result_item)
+                            if item_trace:
+                                item_trace.complete({
+                                    "items": [
+                                        (ri.json if isinstance(ri, Item) else Item.from_value(ri).json)
+                                        for ri in result_item
+                                    ]
+                                })
+                        else:
+                            output_items.append(result_item)
+                            if item_trace:
+                                if isinstance(result_item, Item):
+                                    item_trace.complete(result_item.json)
+                                elif isinstance(result_item, dict):
+                                    item_trace.complete(result_item)
+                                else:
+                                    item_trace.complete({"value": result_item})
+                    except Exception as e:
+                        if on_error == 'continue':
+                            error_item = Item(
+                                json={},
+                                error=ItemError(message=str(e), itemIndex=i)
+                            )
+                            output_items.append(error_item)
+                            errors.append(e)
+                            if item_trace:
+                                item_trace.fail(str(e))
+                        else:
+                            raise
+                    finally:
+                        if item_trace and step_trace:
+                            step_trace.add_item_trace(item_trace)
+
+                status = ExecutionStatus.PARTIAL if errors else ExecutionStatus.SUCCESS
+                node_result = NodeExecutionResult(
+                    data=[output_items],
+                    status=status,
+                    meta=ExecutionMeta(
+                        itemsProcessed=len(items),
+                        itemsFailed=len(errors)
+                    )
+                )
+                return items_to_legacy_context(node_result)
+
+            elif execution_mode == 'all':
+                # Process all items at once
+                items = input_items or []
+                item_ctx = ItemContext(items=items, totalItems=len(items))
+                output_items = await module_instance.execute_all(items, item_ctx)
+
+                node_result = NodeExecutionResult(
+                    data=[output_items],
+                    status=ExecutionStatus.SUCCESS,
+                    meta=ExecutionMeta(itemsProcessed=len(items))
+                )
+                return items_to_legacy_context(node_result)
+
+            else:
+                # Unknown mode, fall back to single
+                logger.warning(f"Unknown execution_mode '{execution_mode}', using single")
+                return await module_instance.run()
+
         except Exception as e:
             raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
+
+    def _get_input_items_from_context(
+        self,
+        context: Dict[str, Any],
+        upstream_step_ids: Optional[List[str]] = None
+    ) -> Optional[List["Item"]]:
+        """
+        Extract input items from context based on upstream steps.
+
+        Args:
+            context: Workflow context
+            upstream_step_ids: List of upstream step IDs to get items from
+
+        Returns:
+            List of input items merged from all upstream steps,
+            or None if no upstream info is provided.
+        """
+        from ...modules.items import Item
+
+        if upstream_step_ids is None:
+            return None
+        if not upstream_step_ids:
+            return []
+
+        items = []
+        for step_id in upstream_step_ids:
+            step_result = context.get(step_id, {})
+            if isinstance(step_result, dict):
+                # Check for items array
+                step_items = step_result.get('items', [])
+                if step_items:
+                    for item_data in step_items:
+                        items.append(Item.from_value(item_data))
+                elif step_result.get('data'):
+                    # Legacy format: wrap data as single item
+                    items.append(Item(json=step_result.get('data', {})))
+
+        return items
+
+    def _get_input_items_by_port(
+        self,
+        context: Dict[str, Any],
+        upstream_by_port: Dict[str, List[str]],
+        params: Dict[str, Any],
+    ) -> Optional[List["Item"]]:
+        """
+        Extract input items from context grouped by port, then merge.
+
+        Supports multi-input with merge strategies as per ITEM_PIPELINE_SPEC.md.
+
+        Args:
+            context: Workflow context
+            upstream_by_port: Dict mapping port name to list of upstream step IDs
+            params: Resolved params (may contain $merge_strategy)
+
+        Returns:
+            Merged list of input items
+        """
+        from ...modules.items import Item, MergeStrategy, merge_items
+
+        if not upstream_by_port:
+            return None
+
+        # Collect items by port
+        items_by_port: Dict[str, List[Item]] = {}
+
+        for port_name, step_ids in upstream_by_port.items():
+            port_items: List[Item] = []
+            for step_id in step_ids:
+                step_result = context.get(step_id, {})
+                if isinstance(step_result, dict):
+                    step_items = step_result.get('items', [])
+                    if step_items:
+                        for item_data in step_items:
+                            port_items.append(Item.from_value(item_data))
+                    elif step_result.get('data'):
+                        port_items.append(Item(json=step_result.get('data', {})))
+            if port_items:
+                items_by_port[port_name] = port_items
+
+        if not items_by_port:
+            return []
+
+        # Inject items_by_port into params for modules that need it
+        params['$input_items_by_port'] = {
+            port: [item.json for item in items]
+            for port, items in items_by_port.items()
+        }
+
+        # Get merge strategy from params or use default
+        strategy_str = params.get('$merge_strategy', 'append')
+        strategy = MergeStrategy.from_string(strategy_str)
+
+        # Merge items using strategy
+        return merge_items(items_by_port, strategy)

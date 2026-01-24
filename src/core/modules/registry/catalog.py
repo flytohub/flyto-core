@@ -207,6 +207,89 @@ class ModuleCatalogManager:
         """Get current ISO timestamp"""
         return datetime.now().isoformat()
 
+    # ========================================
+    # Tier-based Catalog (Frontend API)
+    # ========================================
+
+    def get_tiered_catalog(
+        self,
+        lang: str = 'en',
+        filter_by_stability: bool = True,
+        env: Optional[str] = None,
+        include_internal: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Get module catalog grouped by tier for frontend display.
+
+        Returns structured catalog for node picker dialogs:
+        - Modules grouped by tier (featured, standard, toolkit)
+        - Within each tier, grouped by category
+        - Sorted by tier display order
+
+        Args:
+            lang: Language code for localization
+            filter_by_stability: Filter modules by stability level
+            env: Environment override
+            include_internal: Include INTERNAL tier modules
+
+        Returns:
+            Tiered catalog structure
+        """
+        return self.registry.get_catalog(
+            lang=lang,
+            filter_by_stability=filter_by_stability,
+            env=env,
+            include_internal=include_internal,
+        )
+
+    def get_start_module_catalog(
+        self,
+        lang: str = 'en',
+        filter_by_stability: bool = True,
+        env: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get modules that can be used as workflow start nodes.
+
+        For "Select Start Module" dialog.
+
+        Args:
+            lang: Language code
+            filter_by_stability: Filter by stability level
+            env: Environment override
+
+        Returns:
+            Tiered catalog of start-capable modules
+        """
+        return self.registry.get_start_modules(
+            lang=lang,
+            filter_by_stability=filter_by_stability,
+            env=env,
+        )
+
+    def get_tier_statistics(self) -> Dict[str, Any]:
+        """Get statistics by tier"""
+        all_modules = self.registry.get_all_metadata()
+
+        tier_counts = {}
+        tier_categories = {}
+
+        for module_id, metadata in all_modules.items():
+            tier = metadata.get('tier', 'standard')
+            category = metadata.get('category', 'unknown')
+
+            tier_counts[tier] = tier_counts.get(tier, 0) + 1
+
+            if tier not in tier_categories:
+                tier_categories[tier] = set()
+            tier_categories[tier].add(category)
+
+        return {
+            "tier_counts": tier_counts,
+            "tier_categories": {t: list(cats) for t, cats in tier_categories.items()},
+            "total_modules": len(all_modules),
+        }
+
 
 # Global catalog manager instance
 _catalog_manager = None

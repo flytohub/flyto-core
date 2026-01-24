@@ -6,6 +6,7 @@ from typing import Dict, Type, Any, Optional, List
 from ..base import BaseModule
 from ..types import (
     ModuleLevel,
+    ModuleTier,
     UIVisibility,
     ExecutionEnvironment,
     NodeType,
@@ -18,6 +19,81 @@ from ..types import (
 )
 from ..connection_rules import get_default_connection_rules
 from .core import ModuleRegistry
+
+
+def _resolve_tier(
+    tier: Optional[ModuleTier],
+    level: ModuleLevel,
+    tags: Optional[List[str]],
+    category: str,
+    subcategory: Optional[str] = None,
+    module_id: Optional[str] = None,
+) -> ModuleTier:
+    """
+    Resolve module tier based on explicit value or auto-detection.
+
+    Priority:
+    1. Explicit tier parameter (if provided)
+    2. INTERNAL for system/internal categories
+    3. TOOLKIT for low-level utility categories (string, array, object, math, etc.)
+       - Checks category, subcategory, and module_id prefix
+    4. TOOLKIT for 'advanced' tag
+    5. FEATURED for template level
+    6. STANDARD for user-facing categories (browser, api, ai, etc.)
+    """
+    if tier is not None:
+        return tier
+
+    # Internal categories are always INTERNAL
+    internal_categories = {'meta', 'testing', 'debug', 'training'}
+    if category in internal_categories:
+        return ModuleTier.INTERNAL
+
+    # Low-level utility categories -> TOOLKIT (collapsed by default)
+    # These are building blocks that power users need
+    toolkit_categories = {
+        # Data manipulation
+        'string', 'array', 'object', 'math', 'datetime',
+        # Type operations
+        'validate', 'encode', 'convert', 'check', 'logic',
+        # Text processing
+        'text', 'regex', 'format', 'hash',
+        # Collections
+        'set', 'stats',
+        # Low-level utilities
+        'utility', 'random', 'crypto', 'path',
+        # Development/testing tools
+        'shell', 'process', 'port',
+        # Vector/embedding utilities
+        'vector',
+    }
+
+    # Check category directly
+    if category in toolkit_categories:
+        return ModuleTier.TOOLKIT
+
+    # Check subcategory (for modules with category='atomic')
+    if subcategory and subcategory in toolkit_categories:
+        return ModuleTier.TOOLKIT
+
+    # Check module_id prefix (e.g., 'array' from 'array.filter')
+    if module_id:
+        id_prefix = module_id.split('.')[0]
+        if id_prefix in toolkit_categories:
+            return ModuleTier.TOOLKIT
+
+    # 'advanced' tag also goes to TOOLKIT
+    if tags and 'advanced' in tags:
+        return ModuleTier.TOOLKIT
+
+    # Template modules -> FEATURED
+    if level == ModuleLevel.TEMPLATE:
+        return ModuleTier.FEATURED
+
+    # User-facing categories -> STANDARD (visible by default)
+    # These are what most users interact with
+    # browser, api, ai, llm, vision, http, file, image, document, etc.
+    return ModuleTier.STANDARD
 
 
 def _validate_module_registration(
@@ -184,7 +260,25 @@ def register_module(
     examples: Optional[List[Dict[str, Any]]] = None,
     docs_url: Optional[str] = None,
     author: Optional[str] = None,
-    license: str = "MIT"
+    license: str = "MIT",
+
+    # License tier requirement (for feature gating)
+    # "free" = available in all tiers
+    # "pro" = requires PRO or ENTERPRISE tier
+    # "enterprise" = requires ENTERPRISE tier only
+    required_tier: Optional[str] = None,
+    # Specific feature flag requirement (e.g., "DESKTOP_AUTOMATION")
+    required_feature: Optional[str] = None,
+
+    # ==========================================================================
+    # UI Display Tier (for node picker dialog grouping)
+    # ==========================================================================
+    # None = auto-detect based on level/tags/category
+    # FEATURED: Prominent display, recommended modules
+    # STANDARD: Normal display in category sections
+    # TOOLKIT: Collapsed section for atomic/advanced modules
+    # INTERNAL: Hidden from UI, system use only
+    tier: Optional[ModuleTier] = None,
 ):
     """
     Module registration decorator
@@ -369,6 +463,16 @@ def register_module(
             else:
                 resolved_can_be_start = True
 
+        # Resolve tier from level/tags/category/subcategory/module_id
+        resolved_tier = _resolve_tier(
+            tier=tier,
+            level=level,
+            tags=tags,
+            category=resolved_category,
+            subcategory=subcategory,
+            module_id=module_id,
+        )
+
         # Resolve timeout_ms from timeout (deprecated) if not set
         resolved_timeout_ms = timeout_ms
         if resolved_timeout_ms is None and timeout is not None:
@@ -410,6 +514,7 @@ def register_module(
             "category": resolved_category,
             "subcategory": subcategory,
             "tags": tags or [],
+            "tier": resolved_tier.value if isinstance(resolved_tier, ModuleTier) else resolved_tier,
 
             # Context for connection validation
             "requires_context": resolved_requires_context,
@@ -460,7 +565,7 @@ def register_module(
 
             # Execution settings
             "timeout_ms": resolved_timeout_ms,
-            "timeout": resolved_timeout_ms // 1000 if resolved_timeout_ms else None,  # Legacy (seconds)
+            "timeout": resolved_timeout_ms / 1000.0 if resolved_timeout_ms else None,  # Legacy (seconds)
             "retryable": retryable,
             # If retryable=False, max_retries should be 0 (consistency fix)
             "max_retries": max_retries if retryable else 0,
@@ -494,7 +599,11 @@ def register_module(
             "examples": examples or [],
             "docs_url": docs_url,
             "author": author,
-            "license": license
+            "license": license,
+
+            # License tier requirement
+            "required_tier": required_tier,
+            "required_feature": required_feature,
         }
 
         # ======================================================================

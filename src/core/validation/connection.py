@@ -112,7 +112,69 @@ def validate_connection(
                 }
             )
 
-    # Check output_types / input_types compatibility
+    # Check port-level compatibility when ports are defined
+    from_ports = from_meta.get('output_ports') or []
+    to_ports = to_meta.get('input_ports') or []
+
+    from_port_meta = next((p for p in from_ports if p.get('id') == from_port), None) if from_ports else None
+    to_port_meta = next((p for p in to_ports if p.get('id') == to_port), None) if to_ports else None
+
+    if from_ports and not from_port_meta:
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.PORT_NOT_FOUND,
+            error_message=f'Port not found: {from_port}',
+            meta={'from_module': from_module_id, 'from_port': from_port}
+        )
+    if to_ports and not to_port_meta:
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.PORT_NOT_FOUND,
+            error_message=f'Port not found: {to_port}',
+            meta={'to_module': to_module_id, 'to_port': to_port}
+        )
+
+    if from_port_meta and to_port_meta:
+        from_edge_type = from_port_meta.get('edge_type')
+        to_edge_type = to_port_meta.get('edge_type')
+        if from_edge_type and to_edge_type and from_edge_type != to_edge_type:
+            return ConnectionResult(
+                valid=False,
+                error_code=ErrorCode.INCOMPATIBLE_MODULES,
+                error_message=f'Incompatible edge type: {from_edge_type} -> {to_edge_type}',
+                meta={
+                    'from_module': from_module_id,
+                    'to_module': to_module_id,
+                    'from_port': from_port,
+                    'to_port': to_port,
+                    'from_edge_type': from_edge_type,
+                    'to_edge_type': to_edge_type,
+                }
+            )
+
+        from_data_type = from_port_meta.get('data_type')
+        to_data_type = to_port_meta.get('data_type')
+        if from_data_type and to_data_type:
+            from_types = from_data_type if isinstance(from_data_type, list) else [from_data_type]
+            to_types = to_data_type if isinstance(to_data_type, list) else [to_data_type]
+            if 'any' not in from_types and 'any' not in to_types:
+                if not any(t in to_types for t in from_types):
+                    return ConnectionResult(
+                        valid=False,
+                        error_code=ErrorCode.TYPE_MISMATCH,
+                        error_message=f'{to_module_id} requires {to_types}, but received {from_types}',
+                        meta={
+                            'to_module': to_module_id,
+                            'expected': to_types,
+                            'received': from_types,
+                            'from_port': from_port,
+                            'to_port': to_port,
+                        }
+                    )
+        # Port-level checks passed; skip module-level type checks
+        return ConnectionResult(valid=True)
+
+    # Check output_types / input_types compatibility (module-level fallback)
     output_types = from_meta.get('output_types', [])
     input_types = to_meta.get('input_types', [])
 

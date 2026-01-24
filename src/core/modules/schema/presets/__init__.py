@@ -429,6 +429,92 @@ from .compare import (
     COMPARE_DIRECTION,
 )
 
+# New presets (v2)
+from .validate import (
+    VALIDATE_EMAIL,
+    VALIDATE_URL,
+    VALIDATE_PHONE,
+    VALIDATE_UUID,
+    VALIDATE_IP,
+    VALIDATE_CARD,
+)
+from .encode import (
+    ENCODE_TEXT,
+    ENCODING_TYPE,
+    URL_SAFE,
+)
+from .text_analysis import (
+    ANALYSIS_TEXT,
+    UNIQUE_ONLY,
+    CASE_SENSITIVE,
+)
+from .path_ops import (
+    PATH_INPUT,
+    PATH_PARTS,
+    REMOVE_EXTENSION,
+    RESOLVE_PATH,
+)
+from .format_ops import (
+    FORMAT_NUMBER_INPUT,
+    FORMAT_DECIMAL_PLACES,
+    THOUSAND_SEPARATOR,
+    CURRENCY_CODE,
+    BYTES_INPUT,
+    SECONDS_INPUT,
+)
+from .logic_ops import (
+    LOGIC_VALUES,
+    LOGIC_VALUE,
+    COMPARE_VALUE_A,
+    COMPARE_VALUE_B,
+    STRICT_COMPARE,
+)
+from .set_ops import (
+    SET_ARRAYS,
+    SET_SOURCE,
+    SET_EXCLUDE,
+    SET_ARRAY,
+    PRESERVE_ORDER,
+)
+
+# New presets (v3)
+from .hash import (
+    HASH_TEXT,
+    HASH_ENCODING,
+    HASH_ALGORITHM,
+)
+from .random import (
+    RANDOM_ARRAY,
+    RANDOM_COUNT,
+    RANDOM_MIN,
+    RANDOM_MAX,
+    RANDOM_UNIQUE,
+)
+from .convert import (
+    CONVERT_VALUE,
+    CONVERT_DEFAULT,
+    CONVERT_STRICT,
+    CONVERT_PRETTY,
+)
+from .regex import (
+    REGEX_TEXT,
+    REGEX_PATTERN,
+    REGEX_REPLACEMENT,
+    REGEX_IGNORE_CASE,
+    REGEX_MULTILINE,
+    REGEX_MAX_COUNT,
+)
+from .string_ext import (
+    STRING_PAD_LENGTH,
+    STRING_PAD_CHAR,
+    STRING_PAD_POSITION,
+    STRING_MAX_LENGTH,
+    STRING_SUFFIX,
+    STRING_SEPARATOR,
+    STRING_TEMPLATE,
+    STRING_VARIABLES,
+)
+
 
 __all__ = [
     'API_KEY',
@@ -773,4 +859,74 @@ __all__ = [
     'COMPARE_MODE',
     'COMPARE_THRESHOLD',
     'COMPARE_DIRECTION',
+    # Validation presets
+    'VALIDATE_EMAIL',
+    'VALIDATE_URL',
+    'VALIDATE_PHONE',
+    'VALIDATE_UUID',
+    'VALIDATE_IP',
+    'VALIDATE_CARD',
+    # Encoding presets
+    'ENCODE_TEXT',
+    'ENCODING_TYPE',
+    'URL_SAFE',
+    # Text analysis presets
+    'ANALYSIS_TEXT',
+    'UNIQUE_ONLY',
+    'CASE_SENSITIVE',
+    # Path presets
+    'PATH_INPUT',
+    'PATH_PARTS',
+    'REMOVE_EXTENSION',
+    'RESOLVE_PATH',
+    # Format presets
+    'FORMAT_NUMBER_INPUT',
+    'FORMAT_DECIMAL_PLACES',
+    'THOUSAND_SEPARATOR',
+    'CURRENCY_CODE',
+    'BYTES_INPUT',
+    'SECONDS_INPUT',
+    # Logic presets
+    'LOGIC_VALUES',
+    'LOGIC_VALUE',
+    'COMPARE_VALUE_A',
+    'COMPARE_VALUE_B',
+    'STRICT_COMPARE',
+    # Set presets
+    'SET_ARRAYS',
+    'SET_SOURCE',
+    'SET_EXCLUDE',
+    'SET_ARRAY',
+    'PRESERVE_ORDER',
+    # Hash presets
+    'HASH_TEXT',
+    'HASH_ENCODING',
+    'HASH_ALGORITHM',
+    # Random presets
+    'RANDOM_ARRAY',
+    'RANDOM_COUNT',
+    'RANDOM_MIN',
+    'RANDOM_MAX',
+    'RANDOM_UNIQUE',
+    # Convert presets
+    'CONVERT_VALUE',
+    'CONVERT_DEFAULT',
+    'CONVERT_STRICT',
+    'CONVERT_PRETTY',
+    # Regex presets
+    'REGEX_TEXT',
+    'REGEX_PATTERN',
+    'REGEX_REPLACEMENT',
+    'REGEX_IGNORE_CASE',
+    'REGEX_MULTILINE',
+    'REGEX_MAX_COUNT',
+    # String extension presets
+    'STRING_PAD_LENGTH',
+    'STRING_PAD_CHAR',
+    'STRING_PAD_POSITION',
+    'STRING_MAX_LENGTH',
+    'STRING_SUFFIX',
+    'STRING_SEPARATOR',
+    'STRING_TEMPLATE',
+    'STRING_VARIABLES',
 ]

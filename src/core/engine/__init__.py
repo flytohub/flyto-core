@@ -30,6 +30,18 @@ from .flow_control import (
 # Variable resolver - always available
 from .variable_resolver import VariableResolver
 
+# Execution Trace (ITEM_PIPELINE_SPEC.md Section 8)
+from .trace import (
+    ExecutionTrace,
+    StepTrace,
+    ItemTrace,
+    TraceCollector,
+    TraceStatus,
+    TraceError,
+    StepInput,
+    StepOutput,
+)
+
 # Optional imports - may not exist in all configurations
 WorkflowEngine = None
 StepExecutor = None
@@ -185,6 +197,15 @@ __all__ = [
     # Workflow Engine
     'WorkflowEngine',
     'VariableResolver',
+    # Execution Trace
+    'ExecutionTrace',
+    'StepTrace',
+    'ItemTrace',
+    'TraceCollector',
+    'TraceStatus',
+    'TraceError',
+    'StepInput',
+    'StepOutput',
     # Step Executor
     'StepExecutor',
     'create_step_executor',

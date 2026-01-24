@@ -18,14 +18,19 @@ class WorkflowRouter:
     - Edge-based routing (Workflow Spec v1.1)
     - Step connections (Workflow Spec v1.2)
     - Legacy next_step routing
+    - Upstream step tracking for item propagation (ITEM_PIPELINE_SPEC.md)
     """
 
     def __init__(self):
         # Index mapping step_id to position
         self._step_index: Dict[str, int] = {}
+        self._step_map: Dict[str, Dict[str, Any]] = {}
 
         # Edge index: source_id -> [edges from this source]
         self._edge_index: Dict[str, List[Dict[str, Any]]] = {}
+
+        # Reverse edge index: target_id -> [edges to this target]
+        self._incoming_edges: Dict[str, List[Dict[str, Any]]] = {}
 
         # Event routes: "source_id:event" -> target_id
         self._event_routes: Dict[str, str] = {}
@@ -36,10 +41,12 @@ class WorkflowRouter:
     def build_step_index(self, steps: List[Dict[str, Any]]) -> None:
         """Build index mapping step IDs to their positions."""
         self._step_index = {}
+        self._step_map = {}
         for idx, step in enumerate(steps):
             step_id = step.get('id')
             if step_id:
                 self._step_index[step_id] = idx
+                self._step_map[step_id] = step
 
     def build_edge_index(
         self,
@@ -60,17 +67,20 @@ class WorkflowRouter:
         3. next_step/params.target (lowest - legacy)
         """
         self._edge_index = {}
+        self._incoming_edges = {}
         self._event_routes = {}
         self._step_connections = {}
+
+        step_map = self._step_map
 
         # Build routes from edges (v1.1 pattern)
         for edge in edges:
             source = edge.get('source', '')
             source_handle = edge.get('sourceHandle', 'success')
             target = edge.get('target', '')
-            edge_type = edge.get('type', edge.get('edge_type', 'control'))
+            edge_type = edge.get('type', edge.get('edge_type', 'data'))  # Default to 'data' for item propagation
 
-            # Only process control edges for flow routing
+            # Only process control/data edges for flow routing (skip resource edges)
             if edge_type == 'resource':
                 continue
 
@@ -82,9 +92,24 @@ class WorkflowRouter:
                 self._edge_index[source] = []
             self._edge_index[source].append(edge)
 
+            # Build target -> incoming edges index (for upstream tracking)
+            if target not in self._incoming_edges:
+                self._incoming_edges[target] = []
+            self._incoming_edges[target].append(edge)
+
             # Build event route: "source:handle" -> target
             route_key = f"{source}:{source_handle}"
             self._event_routes[route_key] = target
+
+            # Add normalized event routes for UI handle IDs
+            step = step_map.get(source)
+            normalized_events = self._normalize_handle_to_events(source_handle, step)
+            for event in normalized_events:
+                if not event:
+                    continue
+                normalized_key = f"{source}:{event}"
+                if normalized_key not in self._event_routes:
+                    self._event_routes[normalized_key] = target
 
         # Build routes from step.connections (v1.2 pattern)
         for step in steps:
@@ -103,6 +128,13 @@ class WorkflowRouter:
                         route_key = f"{step_id}:{port_name}"
                         if route_key not in self._event_routes:
                             self._event_routes[route_key] = targets[0]
+                        # Add normalized event aliases for connections
+                        for event in self._normalize_handle_to_events(port_name, step):
+                            if not event:
+                                continue
+                            normalized_key = f"{step_id}:{event}"
+                            if normalized_key not in self._event_routes:
+                                self._event_routes[normalized_key] = targets[0]
 
         self._log_build_summary(edges)
 
@@ -137,6 +169,7 @@ class WorkflowRouter:
             return current_idx + 1
 
         event = result.get('__event__')
+        step = self._step_map.get(step_id)
 
         # Special case: __end__ event signals workflow termination
         if event == '__end__':
@@ -151,6 +184,8 @@ class WorkflowRouter:
 
             # Try explicit event first, then fallback to 'default' or 'success'
             events_to_try = [event] if event else []
+            if event:
+                events_to_try.extend(self._normalize_handle_to_events(event, step))
             events_to_try.extend(['default', 'success'])
 
             for try_event in events_to_try:
@@ -161,10 +196,14 @@ class WorkflowRouter:
 
         # Priority 2: Edge-based routing (v1.1)
         if not next_step_id and event and self._event_routes:
-            route_key = f"{step_id}:{event}"
-            if route_key in self._event_routes:
-                next_step_id = self._event_routes[route_key]
-                logger.debug(f"Edge routing: {route_key} -> {next_step_id}")
+            events_to_try = [event]
+            events_to_try.extend(self._normalize_handle_to_events(event, step))
+            for try_event in events_to_try:
+                route_key = f"{step_id}:{try_event}"
+                if route_key in self._event_routes:
+                    next_step_id = self._event_routes[route_key]
+                    logger.debug(f"Edge routing: {route_key} -> {next_step_id}")
+                    break
 
         # Priority 3: Legacy next_step field
         if not next_step_id:
@@ -196,3 +235,160 @@ class WorkflowRouter:
     def step_connections(self) -> Dict[str, Dict[str, List[str]]]:
         """Get step connections mapping."""
         return self._step_connections
+
+    def get_upstream_steps(
+        self,
+        step_id: str,
+        data_edges_only: bool = True
+    ) -> Dict[str, List[str]]:
+        """
+        Get upstream step IDs that feed into this step.
+
+        Args:
+            step_id: Target step ID
+            data_edges_only: If True, only return edges that pass items (data, iterate)
+
+        Returns:
+            Dict mapping input port name to list of source step IDs
+            e.g. {"input": ["step1", "step2"], "secondary": ["step3"]}
+        """
+        incoming = self._incoming_edges.get(step_id, [])
+        result: Dict[str, List[str]] = {}
+
+        for edge in incoming:
+            source = edge.get('source', '')
+            edge_type = edge.get('type', edge.get('edge_type', 'data'))
+            target_handle = edge.get('targetHandle', 'input')
+
+            # Filter by edge type if requested
+            if data_edges_only:
+                # Only data and iterate edges pass items
+                if edge_type not in ('data', 'iterate'):
+                    continue
+
+            # Group by target handle (input port)
+            port = target_handle or 'input'
+            if port not in result:
+                result[port] = []
+            if source and source not in result[port]:
+                result[port].append(source)
+
+        return result
+
+    def get_upstream_step_ids(
+        self,
+        step_id: str,
+        data_edges_only: bool = True
+    ) -> List[str]:
+        """
+        Get flat list of upstream step IDs (convenience method).
+
+        Args:
+            step_id: Target step ID
+            data_edges_only: If True, only return edges that pass items
+
+        Returns:
+            List of unique source step IDs
+        """
+        by_port = self.get_upstream_steps(step_id, data_edges_only)
+        seen: Set[str] = set()
+        result: List[str] = []
+        for sources in by_port.values():
+            for source in sources:
+                if source not in seen:
+                    result.append(source)
+                    seen.add(source)
+        return result
+
+    def _normalize_handle_to_events(
+        self,
+        handle_id: str,
+        step: Dict[str, Any] = None,
+    ) -> List[str]:
+        """
+        Normalize UI handle IDs to canonical event names.
+
+        Examples:
+        - source-true -> true
+        - source-item -> iterate
+        - source-case-<id> -> case:<id> (+ case:<value> if available in step params)
+        """
+        if not handle_id:
+            return []
+
+        # Case: already an event key (case:xxx)
+        if handle_id.startswith('case:'):
+            return self._expand_case_events(handle_id, step)
+
+        # Case: UI dynamic handle for switch
+        if handle_id.startswith('source-case-'):
+            case_id = handle_id.replace('source-case-', '')
+            return self._expand_case_events(f"case:{case_id}", step)
+
+        normalized = handle_id
+        if normalized.startswith('source-'):
+            normalized = normalized[len('source-'):]
+
+        if normalized.startswith('branch-') or normalized.startswith('branch_'):
+            return ['fork', normalized]
+
+        alias_map = {
+            'main': 'success',
+            'success': 'success',
+            'error': 'error',
+            'true': 'true',
+            'false': 'false',
+            'default': 'default',
+            'item': 'iterate',
+            'iterate': 'iterate',
+            'done': 'done',
+            'body_out': 'iterate',
+            'done_out': 'done',
+            'trigger': 'trigger',
+            'triggered': 'trigger',
+            'start': 'start',
+        }
+
+        if normalized in ('merged', 'joined'):
+            return [normalized, 'success']
+
+        return [alias_map.get(normalized, normalized)]
+
+    def _expand_case_events(
+        self,
+        case_event: str,
+        step: Dict[str, Any] = None,
+    ) -> List[str]:
+        """
+        Expand case events to include both id/value variants when possible.
+        """
+        if not case_event.startswith('case:'):
+            return [case_event]
+
+        events = [case_event]
+        case_value = case_event.replace('case:', '')
+
+        if step:
+            params = step.get('params') or {}
+            cases = params.get('cases') if isinstance(params, dict) else None
+            if isinstance(cases, list):
+                for item in cases:
+                    if not isinstance(item, dict):
+                        continue
+                    item_id = str(item.get('id')) if item.get('id') is not None else None
+                    item_value = str(item.get('value')) if item.get('value') is not None else None
+                    if item_id == case_value and item_value:
+                        events.append(f"case:{item_value}")
+                        break
+                    if item_value == case_value and item_id:
+                        events.append(f"case:{item_id}")
+                        break
+
+        # Deduplicate while preserving order
+        seen = set()
+        unique = []
+        for event in events:
+            if event not in seen:
+                unique.append(event)
+                seen.add(event)
+        return unique

@@ -377,3 +377,453 @@ def failure(
         field=field,
         hint=hint
     ).to_result()
+
+
+# =============================================================================
+# Field-Level Validation (ITEM_PIPELINE_SPEC.md Section 7)
+# =============================================================================
+
+
+@dataclass
+class ValidationError:
+    """
+    Single validation error with field path.
+
+    The path follows dot notation: "params.url", "params.headers[0].value"
+    This allows frontend to map errors directly to form fields.
+    """
+    path: str              # Field path, e.g. "params.url" or "params.headers[0].value"
+    message: str           # Human-readable error message
+    code: str              # Error code for programmatic handling
+
+    # Optional details
+    expected: Optional[Any] = None
+    actual: Optional[Any] = None
+    suggestion: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        result = {
+            "path": self.path,
+            "message": self.message,
+            "code": self.code,
+        }
+        if self.expected is not None:
+            result["expected"] = self.expected
+        if self.actual is not None:
+            result["actual"] = self.actual
+        if self.suggestion:
+            result["suggestion"] = self.suggestion
+        return result
+
+
+@dataclass
+class ValidationWarning:
+    """
+    Validation warning (non-blocking).
+
+    Warnings don't prevent execution but should be shown to user.
+    """
+    path: str
+    message: str
+    code: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            "path": self.path,
+            "message": self.message,
+            "code": self.code,
+        }
+
+
+@dataclass
+class ValidationResult:
+    """
+    Complete validation result with field-level errors.
+
+    This structure supports:
+    - Multiple errors per validation
+    - Field path mapping for UI
+    - Warnings for non-blocking issues
+    - Easy serialization for API responses
+
+    Example:
+        result = ValidationResult(
+            valid=False,
+            errors=[
+                ValidationError(
+                    path="params.url",
+                    message="URL is required",
+                    code="REQUIRED"
+                ),
+                ValidationError(
+                    path="params.timeout",
+                    message="Timeout must be positive",
+                    code="RANGE",
+                    expected="> 0",
+                    actual=-1
+                )
+            ]
+        )
+    """
+    valid: bool
+    errors: List[ValidationError] = None
+    warnings: List[ValidationWarning] = None
+
+    def __post_init__(self):
+        if self.errors is None:
+            self.errors = []
+        if self.warnings is None:
+            self.warnings = []
+
+    def add_error(
+        self,
+        path: str,
+        message: str,
+        code: str,
+        expected: Optional[Any] = None,
+        actual: Optional[Any] = None,
+        suggestion: Optional[str] = None
+    ) -> "ValidationResult":
+        """Add an error and mark as invalid."""
+        self.errors.append(ValidationError(
+            path=path,
+            message=message,
+            code=code,
+            expected=expected,
+            actual=actual,
+            suggestion=suggestion
+        ))
+        self.valid = False
+        return self
+
+    def add_warning(
+        self,
+        path: str,
+        message: str,
+        code: str
+    ) -> "ValidationResult":
+        """Add a warning (doesn't affect validity)."""
+        self.warnings.append(ValidationWarning(
+            path=path,
+            message=message,
+            code=code
+        ))
+        return self
+
+    def get_errors_for_field(self, field_path: str) -> List[ValidationError]:
+        """Get all errors for a specific field path."""
+        return [e for e in self.errors if e.path == field_path]
+
+    def has_error_for_field(self, field_path: str) -> bool:
+        """Check if a field has any errors."""
+        return any(e.path == field_path for e in self.errors)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API response."""
+        result = {
+            "valid": self.valid,
+            "errors": [e.to_dict() for e in self.errors],
+        }
+        if self.warnings:
+            result["warnings"] = [w.to_dict() for w in self.warnings]
+        return result
+
+    @classmethod
+    def success(cls) -> "ValidationResult":
+        """Create a successful validation result."""
+        return cls(valid=True)
+
+    @classmethod
+    def from_errors(cls, errors: List[ValidationError]) -> "ValidationResult":
+        """Create result from list of errors."""
+        return cls(valid=len(errors) == 0, errors=errors)
+
+
+class SchemaValidator:
+    """
+    Validate parameters against a schema with field-level error reporting.
+
+    Supports:
+    - Required field validation
+    - Type checking
+    - Range validation
+    - Enum validation
+    - showIf/hideIf conditional fields
+
+    Example:
+        validator = SchemaValidator()
+        result = validator.validate(params, schema)
+        if not result.valid:
+            # Send errors to frontend
+            return {"ok": False, "validation": result.to_dict()}
+    """
+
+    def validate(
+        self,
+        params: Dict[str, Any],
+        schema: Dict[str, Dict[str, Any]],
+        path_prefix: str = "params"
+    ) -> ValidationResult:
+        """
+        Validate parameters against schema.
+
+        Args:
+            params: Parameter values to validate
+            schema: Schema definition with field configs
+            path_prefix: Prefix for error paths (default: "params")
+
+        Returns:
+            ValidationResult with all errors found
+        """
+        result = ValidationResult(valid=True)
+
+        for field_key, field_schema in schema.items():
+            field_errors = self._validate_field(
+                path=f"{path_prefix}.{field_key}",
+                value=params.get(field_key),
+                schema=field_schema,
+                params=params
+            )
+            result.errors.extend(field_errors)
+
+        result.valid = len(result.errors) == 0
+        return result
+
+    def _validate_field(
+        self,
+        path: str,
+        value: Any,
+        schema: Dict[str, Any],
+        params: Dict[str, Any]
+    ) -> List[ValidationError]:
+        """Validate a single field against its schema."""
+        errors = []
+
+        # Check conditional visibility
+        if not self._should_validate(schema, params):
+            return []  # Field not shown, skip validation
+
+        # Required check
+        if schema.get('required') and value in (None, '', []):
+            errors.append(ValidationError(
+                path=path,
+                message=f"{schema.get('label', path)} is required",
+                code="REQUIRED"
+            ))
+            return errors  # Don't continue if required field is missing
+
+        # Skip other validations if value is None/empty
+        if value in (None, '', []):
+            return errors
+
+        # Type check
+        expected_type = schema.get('type')
+        if expected_type:
+            type_error = self._validate_type(path, value, expected_type, schema)
+            if type_error:
+                errors.append(type_error)
+                return errors  # Don't continue if type is wrong
+
+        # Range check for numbers
+        if expected_type == 'number' and isinstance(value, (int, float)):
+            range_errors = self._validate_range(path, value, schema)
+            errors.extend(range_errors)
+
+        # Enum check
+        options = schema.get('options')
+        if options:
+            enum_error = self._validate_enum(path, value, options, schema)
+            if enum_error:
+                errors.append(enum_error)
+
+        # Custom validation rules
+        validation_rules = schema.get('validation')
+        if validation_rules:
+            rule_errors = self._validate_rules(path, value, validation_rules)
+            errors.extend(rule_errors)
+
+        return errors
+
+    def _should_validate(
+        self,
+        schema: Dict[str, Any],
+        params: Dict[str, Any]
+    ) -> bool:
+        """Check if field should be validated based on showIf/hideIf."""
+        if 'showIf' in schema:
+            if not self._evaluate_condition(schema['showIf'], params):
+                return False
+        if 'hideIf' in schema:
+            if self._evaluate_condition(schema['hideIf'], params):
+                return False
+        return True
+
+    def _evaluate_condition(
+        self,
+        condition: Dict[str, Any],
+        params: Dict[str, Any]
+    ) -> bool:
+        """
+        Evaluate a condition expression.
+
+        Supports:
+        - {"field": "value"} - equality
+        - {"field": {"$ne": "value"}} - not equal
+        - {"field": {"$in": ["a", "b"]}} - in list
+        - {"field": {"$exists": True}} - field exists and not empty
+        - {"$and": [...]} - all conditions true
+        - {"$or": [...]} - any condition true
+        """
+        if '$and' in condition:
+            return all(self._evaluate_condition(c, params) for c in condition['$and'])
+
+        if '$or' in condition:
+            return any(self._evaluate_condition(c, params) for c in condition['$or'])
+
+        for field, expected in condition.items():
+            if field.startswith('$'):
+                continue  # Skip operators
+
+            value = params.get(field)
+
+            if isinstance(expected, dict):
+                if '$ne' in expected:
+                    if value == expected['$ne']:
+                        return False
+                elif '$in' in expected:
+                    if value not in expected['$in']:
+                        return False
+                elif '$exists' in expected:
+                    exists = value is not None and value != ''
+                    if expected['$exists'] != exists:
+                        return False
+            else:
+                if value != expected:
+                    return False
+
+        return True
+
+    def _validate_type(
+        self,
+        path: str,
+        value: Any,
+        expected_type: str,
+        schema: Dict[str, Any]
+    ) -> Optional[ValidationError]:
+        """Validate field type."""
+        type_map = {
+            'string': str,
+            'number': (int, float),
+            'integer': int,
+            'boolean': bool,
+            'array': list,
+            'object': dict,
+        }
+
+        python_type = type_map.get(expected_type)
+        if python_type and not isinstance(value, python_type):
+            return ValidationError(
+                path=path,
+                message=f"Expected {expected_type}, got {type(value).__name__}",
+                code="TYPE",
+                expected=expected_type,
+                actual=type(value).__name__
+            )
+        return None
+
+    def _validate_range(
+        self,
+        path: str,
+        value: Union[int, float],
+        schema: Dict[str, Any]
+    ) -> List[ValidationError]:
+        """Validate numeric range."""
+        errors = []
+        min_val = schema.get('min')
+        max_val = schema.get('max')
+
+        if min_val is not None and value < min_val:
+            errors.append(ValidationError(
+                path=path,
+                message=f"Value must be at least {min_val}",
+                code="MIN",
+                expected=f">= {min_val}",
+                actual=value
+            ))
+
+        if max_val is not None and value > max_val:
+            errors.append(ValidationError(
+                path=path,
+                message=f"Value must be at most {max_val}",
+                code="MAX",
+                expected=f"<= {max_val}",
+                actual=value
+            ))
+
+        return errors
+
+    def _validate_enum(
+        self,
+        path: str,
+        value: Any,
+        options: List[Dict[str, Any]],
+        schema: Dict[str, Any]
+    ) -> Optional[ValidationError]:
+        """Validate value is in allowed options."""
+        allowed_values = [opt.get('value') for opt in options if 'value' in opt]
+        if value not in allowed_values:
+            return ValidationError(
+                path=path,
+                message=f"Invalid value: {value}",
+                code="ENUM",
+                expected=allowed_values,
+                actual=value
+            )
+        return None
+
+    def _validate_rules(
+        self,
+        path: str,
+        value: Any,
+        rules: Dict[str, Any]
+    ) -> List[ValidationError]:
+        """Validate against custom rules."""
+        errors = []
+
+        # Pattern validation
+        pattern = rules.get('pattern')
+        if pattern and isinstance(value, str):
+            import re
+            if not re.match(pattern, value):
+                errors.append(ValidationError(
+                    path=path,
+                    message=rules.get('patternMessage', f"Value doesn't match pattern"),
+                    code="PATTERN",
+                    expected=pattern,
+                    actual=value
+                ))
+
+        # Length validation
+        min_length = rules.get('minLength')
+        max_length = rules.get('maxLength')
+        if isinstance(value, (str, list)):
+            if min_length is not None and len(value) < min_length:
+                errors.append(ValidationError(
+                    path=path,
+                    message=f"Minimum length is {min_length}",
+                    code="MIN_LENGTH",
+                    expected=f">= {min_length} characters",
+                    actual=len(value)
+                ))
+            if max_length is not None and len(value) > max_length:
+                errors.append(ValidationError(
+                    path=path,
+                    message=f"Maximum length is {max_length}",
+                    code="MAX_LENGTH",
+                    expected=f"<= {max_length} characters",
+                    actual=len(value)
+                ))
+
+        return errors

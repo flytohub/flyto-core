@@ -19,9 +19,11 @@ from .enums import (
     ExecutionEnvironment,
     LEVEL_PRIORITY,
     ModuleLevel,
+    ModuleTier,
     NodeType,
     PortImportance,
     StabilityLevel,
+    TIER_DISPLAY_ORDER,
     UIVisibility,
 )
 from .data_types import (
@@ -65,9 +67,11 @@ __all__ = [
     "ExecutionEnvironment",
     "LEVEL_PRIORITY",
     "ModuleLevel",
+    "ModuleTier",
     "NodeType",
     "PortImportance",
     "StabilityLevel",
+    "TIER_DISPLAY_ORDER",
     "UIVisibility",
     # Data types
     "DATA_TYPE_COMPATIBILITY",

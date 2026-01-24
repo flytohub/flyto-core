@@ -24,6 +24,7 @@ from ..hooks import ExecutorHooks, NullHooks, HookContext, HookAction
 from ..exceptions import StepTimeoutError, WorkflowExecutionError, StepExecutionError
 from ..flow_control import is_flow_control_module
 from ..step_executor import StepExecutor, create_step_executor
+from ..trace import ExecutionTrace, TraceCollector
 from ...constants import WorkflowStatus
 
 from .routing import WorkflowRouter
@@ -54,6 +55,7 @@ class WorkflowEngine:
         breakpoints: Optional[Set[str]] = None,
         step_mode: bool = False,
         initial_context: Optional[Dict[str, Any]] = None,
+        enable_trace: bool = False,
     ):
         """
         Initialize workflow engine.
@@ -69,6 +71,7 @@ class WorkflowEngine:
             breakpoints: Optional set of step IDs where execution should pause
             step_mode: If True, pause after each step
             initial_context: Optional initial context to inject
+            enable_trace: If True, collect detailed execution trace
         """
         self.workflow = workflow
         self.params = self._parse_params(workflow.get('params', []), params or {})
@@ -114,6 +117,11 @@ class WorkflowEngine:
         # Inject initial context
         if initial_context:
             self.context.update(initial_context)
+
+        # Execution tracing (ITEM_PIPELINE_SPEC.md Section 8)
+        self._enable_trace = enable_trace
+        self._trace_collector: Optional[TraceCollector] = None
+        self._execution_trace: Optional[ExecutionTrace] = None
 
     def _parse_params(
         self,
@@ -185,6 +193,15 @@ class WorkflowEngine:
             total_steps=self._total_steps,
         )
 
+        # Initialize trace collector if tracing enabled
+        if self._enable_trace:
+            self._trace_collector = TraceCollector(
+                workflow_id=self.workflow_id,
+                workflow_name=self.workflow_name,
+                input_params=self.params,
+            )
+            self._trace_collector.start()
+
         start_context = self._create_workflow_context()
         start_result = self._hooks.on_workflow_start(start_context)
         if start_result.action == HookAction.ABORT:
@@ -210,13 +227,23 @@ class WorkflowEngine:
             complete_context = self._create_workflow_context()
             self._hooks.on_workflow_complete(complete_context)
 
-            return self._collect_output()
+            output = self._collect_output()
+
+            # Complete trace if enabled
+            if self._trace_collector:
+                self._execution_trace = self._trace_collector.complete(output)
+
+            return output
 
         except Exception as e:
             self.status = WorkflowStatus.FAILURE
             self.end_time = time.time()
 
             logger.error(f"Workflow failed: {str(e)}")
+
+            # Fail trace if enabled
+            if self._trace_collector:
+                self._execution_trace = self._trace_collector.fail(e)
 
             failed_context = self._create_workflow_context(error=e)
             self._hooks.on_workflow_failed(failed_context)
@@ -406,6 +433,19 @@ class WorkflowEngine:
         module_id = step_config.get('module')
         description = step_config.get('description', '')
 
+        # Inject upstream step IDs from edges (ITEM_PIPELINE_SPEC.md)
+        # Only if not already specified in step config
+        if '$upstream_steps' not in step_config and 'inputs' not in step_config:
+            upstream_ids = self._router.get_upstream_step_ids(step_id, data_edges_only=True)
+            if upstream_ids:
+                step_config['$upstream_steps'] = upstream_ids
+
+        # Inject upstream steps by port for multi-input support
+        if '$upstream_by_port' not in step_config:
+            upstream_by_port = self._router.get_upstream_steps(step_id, data_edges_only=True)
+            if upstream_by_port:
+                step_config['$upstream_by_port'] = upstream_by_port
+
         should_execute = await self._should_execute_step(step_config)
         resolver = self._get_resolver()
 
@@ -415,6 +455,7 @@ class WorkflowEngine:
             context=self.context,
             resolver=resolver,
             should_execute=should_execute,
+            trace_collector=self._trace_collector,
         )
 
         if result is not None:
@@ -577,3 +618,23 @@ class WorkflowEngine:
             'start_time': self.start_time,
             'execution_log': self.execution_log.copy(),
         }
+
+    def get_execution_trace(self) -> Optional[ExecutionTrace]:
+        """
+        Get the execution trace (if tracing was enabled).
+
+        Returns:
+            ExecutionTrace object or None if tracing not enabled
+        """
+        return self._execution_trace
+
+    def get_execution_trace_dict(self) -> Optional[Dict[str, Any]]:
+        """
+        Get the execution trace as dictionary (for API response).
+
+        Returns:
+            Trace dictionary or None if tracing not enabled
+        """
+        if self._execution_trace:
+            return self._execution_trace.to_dict()
+        return None

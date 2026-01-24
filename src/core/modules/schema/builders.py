@@ -105,11 +105,20 @@ def field(
     advanced: bool = False,
     visibility: Optional[str] = None,
     group: Optional[str] = None,
+    # Dynamic schema conditions (ITEM_PIPELINE_SPEC.md Section 6)
+    showIf: Optional[dict] = None,
+    hideIf: Optional[dict] = None,
+    dependsOn: Optional[List[str]] = None,
+    displayOptions: Optional[dict] = None,
+    # Dynamic options
+    optionsFrom: Optional[str] = None,
+    loadOptions: Optional[dict] = None,
     **extra: Any,
 ) -> Schema:
     """
     Helper to build a single field schema fragment.
     Supports i18n via label_key/description_key.
+    Supports dynamic conditions via showIf/hideIf/dependsOn/displayOptions.
 
     Args:
         key: Field name in params
@@ -132,6 +141,12 @@ def field(
         advanced: Mark as advanced/expert option (legacy, prefer visibility)
         visibility: Field visibility level ('default', 'expert', 'hidden')
         group: Field group name ('basic', 'connection', 'options', 'advanced')
+        showIf: Condition to show field (e.g., {"operation": "create"})
+        hideIf: Condition to hide field (e.g., {"mode": "simple"})
+        dependsOn: List of fields this field depends on
+        displayOptions: n8n-compatible display options (show/hide)
+        optionsFrom: Dynamic options source (API endpoint or method name)
+        loadOptions: Configuration for loading dynamic options
         **extra: Additional custom properties
 
     Returns:
@@ -145,6 +160,23 @@ def field(
             placeholder="https://example.com",
             required=True,
             validation={"pattern": r"^https?://"}
+        )
+
+    Dynamic conditions example:
+        schema = compose(
+            field("operation", type="select", options=[
+                {"value": "get", "label": "Get"},
+                {"value": "create", "label": "Create"},
+            ]),
+            field("id", type="string",
+                label="Record ID",
+                showIf={"operation": {"$in": ["get", "update"]}},
+                required=True
+            ),
+            field("data", type="object",
+                label="Record Data",
+                showIf={"operation": {"$in": ["create", "update"]}}
+            ),
         )
     """
     d: Dict[str, Any] = {"type": type}
@@ -204,6 +236,22 @@ def field(
     # Group
     if group is not None:
         d["group"] = group
+
+    # Dynamic schema conditions (ITEM_PIPELINE_SPEC.md Section 6)
+    if showIf is not None:
+        d["showIf"] = showIf
+    if hideIf is not None:
+        d["hideIf"] = hideIf
+    if dependsOn is not None:
+        d["dependsOn"] = dependsOn
+    if displayOptions is not None:
+        d["displayOptions"] = displayOptions
+
+    # Dynamic options
+    if optionsFrom is not None:
+        d["optionsFrom"] = optionsFrom
+    if loadOptions is not None:
+        d["loadOptions"] = loadOptions
 
     # Extra properties
     d.update(extra)

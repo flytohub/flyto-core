@@ -16,6 +16,7 @@ from .merge import MergeModule
 from .fork import ForkModule
 from .join import JoinModule
 from .subflow_ref import SubflowModule
+from .invoke import InvokeWorkflow
 from .trigger import TriggerModule
 from .start import StartModule
 from .end import EndModule
@@ -31,6 +32,7 @@ __all__ = [
     # Container/Subflow
     'ContainerModule',
     'SubflowModule',
+    'InvokeWorkflow',
     # Parallel execution
     'MergeModule',
     'ForkModule',

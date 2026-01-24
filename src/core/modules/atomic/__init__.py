@@ -82,6 +82,26 @@ def register_all():
     from . import storage  # noqa: F401
     from . import compare  # noqa: F401
 
+    # New atomic modules (v2)
+    from . import validate  # noqa: F401
+    from . import encode  # noqa: F401
+    from . import text  # noqa: F401
+    from . import path  # noqa: F401
+    from . import format  # noqa: F401
+    from . import logic  # noqa: F401
+    from . import set  # noqa: F401
+
+    # New atomic modules (v3)
+    from . import hash  # noqa: F401
+    from . import random  # noqa: F401
+    from . import convert  # noqa: F401
+    from . import regex  # noqa: F401
+
+    # New atomic modules (v4)
+    from . import stats  # noqa: F401
+    from . import check  # noqa: F401
+    from . import crypto  # noqa: F401
+
     _registered = True
 
 
@@ -130,6 +150,26 @@ from . import notification
 from . import storage
 from . import compare
 
+# New atomic modules (v2)
+from . import validate
+from . import encode
+from . import text
+from . import path
+from . import format
+from . import logic
+from . import set
+
+# New atomic modules (v3)
+from . import hash
+from . import random
+from . import convert
+from . import regex
+
+# New atomic modules (v4)
+from . import stats
+from . import check
+from . import crypto
+
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
@@ -169,4 +209,21 @@ __all__ = [
     'BranchModule',
     'SwitchModule',
     'GotoModule',
+    # New atomic modules (v2)
+    'validate',
+    'encode',
+    'text',
+    'path',
+    'format',
+    'logic',
+    'set',
+    # New atomic modules (v3)
+    'hash',
+    'random',
+    'convert',
+    'regex',
+    # New atomic modules (v4)
+    'stats',
+    'check',
+    'crypto',
 ]
