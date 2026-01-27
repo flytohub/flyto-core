@@ -1,8 +1,8 @@
 {
-  "version": "1.15.0",
+  "version": "1.16.7",
   "environment": "production",
-  "generated_at": "2026-01-15T08:02:11.027968+00:00",
-  "total": 182,
+  "generated_at": "2026-01-25T03:18:42.477054+00:00",
+  "total": 276,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -159,11 +159,25 @@
       "label": "Array Chunk"
     },
     {
+      "id": "array.compact",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Compact"
+    },
+    {
       "id": "array.difference",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
       "label": "Array Difference"
+    },
+    {
+      "id": "array.drop",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Drop"
     },
     {
       "id": "array.filter",
@@ -178,6 +192,13 @@
       "category": "array",
       "stability": "stable",
       "label": "Array Flatten"
+    },
+    {
+      "id": "array.group_by",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Group By"
     },
     {
       "id": "array.intersection",
@@ -215,11 +236,25 @@
       "label": "Sort Array"
     },
     {
+      "id": "array.take",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Take"
+    },
+    {
       "id": "array.unique",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
       "label": "Array Unique"
+    },
+    {
+      "id": "array.zip",
+      "version": "1.0.0",
+      "category": "array",
+      "stability": "stable",
+      "label": "Zip Arrays"
     },
     {
       "id": "browser.click",
@@ -411,6 +446,55 @@
       "label": "Wait"
     },
     {
+      "id": "check.is_array",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is Array"
+    },
+    {
+      "id": "check.is_empty",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is Empty"
+    },
+    {
+      "id": "check.is_null",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is Null"
+    },
+    {
+      "id": "check.is_number",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is Number"
+    },
+    {
+      "id": "check.is_object",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is Object"
+    },
+    {
+      "id": "check.is_string",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Is String"
+    },
+    {
+      "id": "check.type_of",
+      "version": "1.0.0",
+      "category": "check",
+      "stability": "stable",
+      "label": "Type Of"
+    },
+    {
       "id": "cloud.aws_s3.download",
       "version": "1.0.0",
       "category": "cloud",
@@ -467,6 +551,48 @@
       "label": "Twilio Send SMS"
     },
     {
+      "id": "compare.change",
+      "version": "1.0.0",
+      "category": "compare",
+      "stability": "stable",
+      "label": "Detect Change"
+    },
+    {
+      "id": "convert.to_array",
+      "version": "1.0.0",
+      "category": "convert",
+      "stability": "stable",
+      "label": "To Array"
+    },
+    {
+      "id": "convert.to_boolean",
+      "version": "1.0.0",
+      "category": "convert",
+      "stability": "stable",
+      "label": "To Boolean"
+    },
+    {
+      "id": "convert.to_number",
+      "version": "1.0.0",
+      "category": "convert",
+      "stability": "stable",
+      "label": "To Number"
+    },
+    {
+      "id": "convert.to_object",
+      "version": "1.0.0",
+      "category": "convert",
+      "stability": "stable",
+      "label": "To Object"
+    },
+    {
+      "id": "convert.to_string",
+      "version": "1.0.0",
+      "category": "convert",
+      "stability": "stable",
+      "label": "To String"
+    },
+    {
       "id": "core.api.google_search",
       "version": "1.0.0",
       "category": "api",
@@ -493,6 +619,27 @@
       "category": "api",
       "stability": "stable",
       "label": "Google Search (SerpAPI)"
+    },
+    {
+      "id": "crypto.hmac",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "HMAC"
+    },
+    {
+      "id": "crypto.random_bytes",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "Random Bytes"
+    },
+    {
+      "id": "crypto.random_string",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "Random String"
     },
     {
       "id": "data.csv.read",
@@ -607,6 +754,27 @@
       "label": "Redis Set"
     },
     {
+      "id": "decode.base64",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "Base64 Decode"
+    },
+    {
+      "id": "decode.hex",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "Hex Decode"
+    },
+    {
+      "id": "decode.url",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "URL Decode"
+    },
+    {
       "id": "element.attribute",
       "version": "1.0.0",
       "category": "element",
@@ -626,6 +794,34 @@
       "category": "element",
       "stability": "stable",
       "label": "Get Text"
+    },
+    {
+      "id": "encode.base64",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "Base64 Encode"
+    },
+    {
+      "id": "encode.hex",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "Hex Encode"
+    },
+    {
+      "id": "encode.html",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "HTML Encode"
+    },
+    {
+      "id": "encode.url",
+      "version": "1.0.0",
+      "category": "encode",
+      "stability": "stable",
+      "label": "URL Encode"
     },
     {
       "id": "excel.read",
@@ -726,6 +922,13 @@
       "label": "Goto"
     },
     {
+      "id": "flow.invoke",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Invoke Workflow"
+    },
+    {
       "id": "flow.join",
       "version": "1.0.0",
       "category": "flow",
@@ -775,6 +978,55 @@
       "label": "Trigger"
     },
     {
+      "id": "format.currency",
+      "version": "1.0.0",
+      "category": "format",
+      "stability": "stable",
+      "label": "Format Currency"
+    },
+    {
+      "id": "format.duration",
+      "version": "1.0.0",
+      "category": "format",
+      "stability": "stable",
+      "label": "Format Duration"
+    },
+    {
+      "id": "format.filesize",
+      "version": "1.0.0",
+      "category": "format",
+      "stability": "stable",
+      "label": "Format Filesize"
+    },
+    {
+      "id": "format.number",
+      "version": "1.0.0",
+      "category": "format",
+      "stability": "stable",
+      "label": "Format Number"
+    },
+    {
+      "id": "format.percentage",
+      "version": "1.0.0",
+      "category": "format",
+      "stability": "stable",
+      "label": "Format Percentage"
+    },
+    {
+      "id": "hash.sha256",
+      "version": "1.0.0",
+      "category": "hash",
+      "stability": "stable",
+      "label": "SHA-256 Hash"
+    },
+    {
+      "id": "hash.sha512",
+      "version": "1.0.0",
+      "category": "hash",
+      "stability": "stable",
+      "label": "SHA-512 Hash"
+    },
+    {
       "id": "http.request",
       "version": "1.0.0",
       "category": "atomic",
@@ -822,6 +1074,41 @@
       "category": "image",
       "stability": "stable",
       "label": "Resize Image"
+    },
+    {
+      "id": "logic.and",
+      "version": "1.0.0",
+      "category": "logic",
+      "stability": "stable",
+      "label": "Logic AND"
+    },
+    {
+      "id": "logic.contains",
+      "version": "1.0.0",
+      "category": "logic",
+      "stability": "stable",
+      "label": "Logic Contains"
+    },
+    {
+      "id": "logic.equals",
+      "version": "1.0.0",
+      "category": "logic",
+      "stability": "stable",
+      "label": "Logic Equals"
+    },
+    {
+      "id": "logic.not",
+      "version": "1.0.0",
+      "category": "logic",
+      "stability": "stable",
+      "label": "Logic NOT"
+    },
+    {
+      "id": "logic.or",
+      "version": "1.0.0",
+      "category": "logic",
+      "stability": "stable",
+      "label": "Logic OR"
     },
     {
       "id": "math.abs",
@@ -922,6 +1209,34 @@
       "label": "Send Telegram Message"
     },
     {
+      "id": "notify.send",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "Send Notification"
+    },
+    {
+      "id": "object.deep_merge",
+      "version": "1.0.0",
+      "category": "object",
+      "stability": "stable",
+      "label": "Deep Merge"
+    },
+    {
+      "id": "object.flatten",
+      "version": "1.0.0",
+      "category": "object",
+      "stability": "stable",
+      "label": "Flatten Object"
+    },
+    {
+      "id": "object.get",
+      "version": "1.0.0",
+      "category": "object",
+      "stability": "stable",
+      "label": "Get Value"
+    },
+    {
       "id": "object.keys",
       "version": "1.0.0",
       "category": "data",
@@ -950,11 +1265,67 @@
       "label": "Object Pick"
     },
     {
+      "id": "object.set",
+      "version": "1.0.0",
+      "category": "object",
+      "stability": "stable",
+      "label": "Set Value"
+    },
+    {
+      "id": "object.unflatten",
+      "version": "1.0.0",
+      "category": "object",
+      "stability": "stable",
+      "label": "Unflatten Object"
+    },
+    {
       "id": "object.values",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
       "label": "Object Values"
+    },
+    {
+      "id": "path.basename",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Basename"
+    },
+    {
+      "id": "path.dirname",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Dirname"
+    },
+    {
+      "id": "path.extension",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Extension"
+    },
+    {
+      "id": "path.is_absolute",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Is Absolute"
+    },
+    {
+      "id": "path.join",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Join"
+    },
+    {
+      "id": "path.normalize",
+      "version": "1.0.0",
+      "category": "path",
+      "stability": "stable",
+      "label": "Path Normalize"
     },
     {
       "id": "payment.stripe.create_payment",
@@ -1062,6 +1433,97 @@
       "label": "Airtable Update Record"
     },
     {
+      "id": "random.choice",
+      "version": "1.0.0",
+      "category": "random",
+      "stability": "stable",
+      "label": "Random Choice"
+    },
+    {
+      "id": "random.number",
+      "version": "1.0.0",
+      "category": "random",
+      "stability": "stable",
+      "label": "Random Number"
+    },
+    {
+      "id": "random.shuffle",
+      "version": "1.0.0",
+      "category": "random",
+      "stability": "stable",
+      "label": "Shuffle Array"
+    },
+    {
+      "id": "random.uuid",
+      "version": "1.0.0",
+      "category": "random",
+      "stability": "stable",
+      "label": "Generate UUID"
+    },
+    {
+      "id": "regex.extract",
+      "version": "1.0.0",
+      "category": "regex",
+      "stability": "stable",
+      "label": "Regex Extract"
+    },
+    {
+      "id": "regex.match",
+      "version": "1.0.0",
+      "category": "regex",
+      "stability": "stable",
+      "label": "Regex Match"
+    },
+    {
+      "id": "regex.replace",
+      "version": "1.0.0",
+      "category": "regex",
+      "stability": "stable",
+      "label": "Regex Replace"
+    },
+    {
+      "id": "regex.split",
+      "version": "1.0.0",
+      "category": "regex",
+      "stability": "stable",
+      "label": "Regex Split"
+    },
+    {
+      "id": "regex.test",
+      "version": "1.0.0",
+      "category": "regex",
+      "stability": "stable",
+      "label": "Regex Test"
+    },
+    {
+      "id": "set.difference",
+      "version": "1.0.0",
+      "category": "set",
+      "stability": "stable",
+      "label": "Set Difference"
+    },
+    {
+      "id": "set.intersection",
+      "version": "1.0.0",
+      "category": "set",
+      "stability": "stable",
+      "label": "Set Intersection"
+    },
+    {
+      "id": "set.union",
+      "version": "1.0.0",
+      "category": "set",
+      "stability": "stable",
+      "label": "Set Union"
+    },
+    {
+      "id": "set.unique",
+      "version": "1.0.0",
+      "category": "set",
+      "stability": "stable",
+      "label": "Set Unique"
+    },
+    {
       "id": "shell.exec",
       "version": "1.0.0",
       "category": "atomic",
@@ -1069,11 +1531,95 @@
       "label": "Execute Shell Command"
     },
     {
+      "id": "stats.mean",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Mean (Average)"
+    },
+    {
+      "id": "stats.median",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Median"
+    },
+    {
+      "id": "stats.min_max",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Min/Max"
+    },
+    {
+      "id": "stats.mode",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Mode"
+    },
+    {
+      "id": "stats.percentile",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Percentile"
+    },
+    {
+      "id": "stats.std_dev",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Standard Deviation"
+    },
+    {
+      "id": "stats.sum",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Sum"
+    },
+    {
+      "id": "stats.variance",
+      "version": "1.0.0",
+      "category": "stats",
+      "stability": "stable",
+      "label": "Variance"
+    },
+    {
+      "id": "storage.delete",
+      "version": "1.0.0",
+      "category": "storage",
+      "stability": "stable",
+      "label": "Delete Stored Value"
+    },
+    {
+      "id": "storage.get",
+      "version": "1.0.0",
+      "category": "storage",
+      "stability": "stable",
+      "label": "Get Stored Value"
+    },
+    {
+      "id": "storage.set",
+      "version": "1.0.0",
+      "category": "storage",
+      "stability": "stable",
+      "label": "Store Value"
+    },
+    {
       "id": "string.lowercase",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
       "label": "String Lowercase"
+    },
+    {
+      "id": "string.pad",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Pad String"
     },
     {
       "id": "string.replace",
@@ -1090,11 +1636,25 @@
       "label": "String Reverse"
     },
     {
+      "id": "string.slugify",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Slugify"
+    },
+    {
       "id": "string.split",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
       "label": "Split String"
+    },
+    {
+      "id": "string.template",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Template"
     },
     {
       "id": "string.titlecase",
@@ -1109,6 +1669,13 @@
       "category": "string",
       "stability": "stable",
       "label": "String Trim"
+    },
+    {
+      "id": "string.truncate",
+      "version": "1.0.0",
+      "category": "string",
+      "stability": "stable",
+      "label": "Truncate String"
     },
     {
       "id": "string.uppercase",
@@ -1230,6 +1797,48 @@
       "label": "Visual Compare"
     },
     {
+      "id": "text.char_count",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Character Count"
+    },
+    {
+      "id": "text.detect_encoding",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Detect Encoding"
+    },
+    {
+      "id": "text.extract_emails",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Extract Emails"
+    },
+    {
+      "id": "text.extract_numbers",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Extract Numbers"
+    },
+    {
+      "id": "text.extract_urls",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Extract URLs"
+    },
+    {
+      "id": "text.word_count",
+      "version": "1.0.0",
+      "category": "text",
+      "stability": "stable",
+      "label": "Word Count"
+    },
+    {
       "id": "utility.datetime.now",
       "version": "1.0.0",
       "category": "utility",
@@ -1265,6 +1874,55 @@
       "label": "Random String"
     },
     {
+      "id": "validate.credit_card",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate Credit Card"
+    },
+    {
+      "id": "validate.email",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate Email"
+    },
+    {
+      "id": "validate.ip",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate IP"
+    },
+    {
+      "id": "validate.json_schema",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate JSON Schema"
+    },
+    {
+      "id": "validate.phone",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate Phone"
+    },
+    {
+      "id": "validate.url",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate URL"
+    },
+    {
+      "id": "validate.uuid",
+      "version": "1.0.0",
+      "category": "validate",
+      "stability": "stable",
+      "label": "Validate UUID"
+    },
+    {
       "id": "word.parse",
       "version": "1.0.0",
       "category": "document",
@@ -1283,23 +1941,40 @@
     "ai": 7,
     "analysis": 6,
     "api": 7,
-    "array": 7,
+    "array": 12,
     "atomic": 26,
     "browser": 27,
+    "check": 7,
     "cloud": 6,
+    "compare": 1,
+    "convert": 5,
+    "crypto": 3,
     "data": 11,
     "database": 6,
     "document": 8,
     "element": 3,
+    "encode": 7,
     "file": 3,
-    "flow": 13,
+    "flow": 14,
+    "format": 5,
+    "hash": 2,
     "image": 5,
+    "logic": 5,
     "math": 5,
     "meta": 4,
-    "notification": 6,
+    "notification": 7,
+    "object": 5,
+    "path": 6,
     "productivity": 10,
-    "string": 7,
+    "random": 4,
+    "regex": 5,
+    "set": 4,
+    "stats": 8,
+    "storage": 3,
+    "string": 11,
     "testing": 6,
-    "utility": 9
+    "text": 6,
+    "utility": 9,
+    "validate": 7
   }
 }

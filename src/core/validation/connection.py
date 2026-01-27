@@ -116,8 +116,38 @@ def validate_connection(
     from_ports = from_meta.get('output_ports') or []
     to_ports = to_meta.get('input_ports') or []
 
-    from_port_meta = next((p for p in from_ports if p.get('id') == from_port), None) if from_ports else None
-    to_port_meta = next((p for p in to_ports if p.get('id') == to_port), None) if to_ports else None
+    # Port alias mapping: VueFlow handle IDs ↔ flyto-core port IDs
+    # VueFlow uses: 'output', 'target', 'in', etc.
+    # flyto-core uses: 'success', 'error', 'input', 'iterate', 'done', etc.
+    OUTPUT_PORT_ALIASES = {
+        'output': 'success',
+        'source': 'success',
+        'body_out': 'iterate',
+        'done_out': 'done',
+    }
+    INPUT_PORT_ALIASES = {
+        'input': 'input',
+        'target': 'input',
+        'in': 'input',  # LoopNode uses 'in' for input
+        'loop_back_in': 'input',  # LoopNode loop-back input
+    }
+
+    def find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
+        """Find port by ID or alias"""
+        if not ports:
+            return None
+        # Direct match
+        match = next((p for p in ports if p.get('id') == port_id), None)
+        if match:
+            return match
+        # Try alias
+        alias_id = aliases.get(port_id)
+        if alias_id:
+            return next((p for p in ports if p.get('id') == alias_id), None)
+        return None
+
+    from_port_meta = find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
+    to_port_meta = find_port(to_ports, to_port, INPUT_PORT_ALIASES)
 
     if from_ports and not from_port_meta:
         return ConnectionResult(

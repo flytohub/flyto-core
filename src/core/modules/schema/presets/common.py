@@ -38,6 +38,7 @@ def TEXT(
     placeholder: str = "",
     label: str = "Text",
     label_key: str = "schema.field.text",
+    description: str = "",
     multiline: bool = False,
     max_length: Optional[int] = None,
 ) -> Dict[str, Dict[str, Any]]:
@@ -51,6 +52,7 @@ def TEXT(
         type="string",
         label=label,
         label_key=label_key,
+        description=description,
         placeholder=placeholder,
         required=required,
         validation=validation,
@@ -207,6 +209,7 @@ def NUMBER(
     step: float = 1,
     label: str,
     label_key: Optional[str] = None,
+    description: str = "",
 ) -> Dict[str, Dict[str, Any]]:
     """Numeric input field."""
     return field(
@@ -214,6 +217,7 @@ def NUMBER(
         type="number",
         label=label,
         label_key=label_key,
+        description=description,
         default=default,
         min=min_val,
         max=max_val,

@@ -97,6 +97,7 @@ def DATA_OBJECT(
     required: bool = True,
     label: str = "Data",
     label_key: str = "schema.field.data_object",
+    description: str = "",
 ) -> Dict[str, Dict[str, Any]]:
     """Data object input field."""
     return field(
@@ -104,6 +105,7 @@ def DATA_OBJECT(
         type="object",
         label=label,
         label_key=label_key,
+        description=description,
         required=required,
         group=FieldGroup.BASIC,
     )
