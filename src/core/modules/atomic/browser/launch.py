@@ -24,7 +24,7 @@ from ...schema import compose, presets
     output_types=['browser', 'page'],  # Browser launch also creates a default page
 
     # Connection rules
-    can_connect_to=['browser.*', 'element.*', 'page.*'],  # Can connect to browser modules
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*'],  # Can connect to browser and flow modules
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
