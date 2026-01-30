@@ -102,6 +102,9 @@ def register_all():
     from . import check  # noqa: F401
     from . import crypto  # noqa: F401
 
+    # Template as Node
+    from . import template  # noqa: F401
+
     _registered = True
 
 
@@ -170,6 +173,9 @@ from . import stats
 from . import check
 from . import crypto
 
+# Template as Node
+from . import template
+
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
@@ -226,4 +232,6 @@ __all__ = [
     'stats',
     'check',
     'crypto',
+    # Template as Node
+    'template',
 ]

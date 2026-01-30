@@ -23,6 +23,14 @@ from .context_builder import create_step_context
 from .foreach import execute_foreach_step
 from .retry import execute_with_retry
 
+# Phase 0: Runtime invoker for future plugin support
+# This import will be used when we transition to subprocess plugins
+try:
+    from ...runtime.invoke import get_invoker, parse_module_id
+    _RUNTIME_INVOKER_AVAILABLE = True
+except ImportError:
+    _RUNTIME_INVOKER_AVAILABLE = False
+
 if TYPE_CHECKING:
     from ..variable_resolver import VariableResolver
     from ...modules.items import Item, NodeExecutionResult, StepInputItems
@@ -614,3 +622,79 @@ class StepExecutor:
 
         # Merge items using strategy
         return merge_items(items_by_port, strategy)
+
+    # =========================================================================
+    # Phase 0: Runtime Invoker Integration
+    # =========================================================================
+    # The following methods prepare for future plugin system integration.
+    # Currently, they delegate to the existing in-process module execution.
+    # In Phase 1+, these will route to subprocess plugins when available.
+
+    def _parse_module_id(self, module_id: str) -> tuple:
+        """
+        Parse legacy module_id into plugin_id and step_id.
+
+        Examples:
+            "database.query" -> ("flyto-official/database", "query")
+            "llm.chat" -> ("flyto-official/llm", "chat")
+
+        This method is used to convert between the legacy module format
+        and the new plugin/step format for future plugin routing.
+        """
+        if _RUNTIME_INVOKER_AVAILABLE:
+            return parse_module_id(module_id)
+
+        # Fallback implementation
+        parts = module_id.split(".")
+        if len(parts) >= 2:
+            category = parts[0]
+            action = ".".join(parts[1:])
+            return (f"flyto-official/{category}", action)
+        else:
+            return (f"flyto-official/{module_id}", "execute")
+
+    async def _invoke_via_runtime(
+        self,
+        module_id: str,
+        params: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> Any:
+        """
+        Invoke a module via the RuntimeInvoker.
+
+        This method provides a clean interface for future plugin routing.
+        Currently delegates to the in-process module registry.
+
+        Phase 0: Direct in-process execution (current)
+        Phase 1+: Will route to subprocess plugins when available
+
+        Args:
+            module_id: Legacy module ID (e.g., "database.query")
+            params: Resolved parameters
+            context: Execution context
+
+        Returns:
+            Module execution result
+        """
+        if not _RUNTIME_INVOKER_AVAILABLE:
+            # Fallback: use direct registry access
+            from ...modules.registry import ModuleRegistry
+            module_class = ModuleRegistry.get(module_id)
+            if not module_class:
+                raise StepExecutionError("unknown", f"Module not found: {module_id}")
+            module_instance = module_class(params, context)
+            return await module_instance.run()
+
+        # Use RuntimeInvoker
+        plugin_id, step_id = self._parse_module_id(module_id)
+        invoker = get_invoker()
+
+        result = await invoker.invoke(
+            module_id=plugin_id,
+            step_id=step_id,
+            input_data=params,
+            config={},
+            context=context,
+        )
+
+        return result

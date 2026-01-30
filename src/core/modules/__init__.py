@@ -1,7 +1,11 @@
 """
 Module System - Core Registration and Execution
 
-Organized by architecture:
+Phase 4: Core Minimal Architecture
+- Builtin: Flow control modules (in-process, essential)
+- Plugins: All other modules (subprocess, isolated)
+
+Legacy Architecture (deprecated):
 - Atomic: Core building blocks, no external dependencies (Level 1)
 - Third-party: External service integrations (Level 2)
 - AI Tools: AI-powered analysis tools (Level 3)
@@ -12,6 +16,9 @@ Key classes:
 - ModuleResult: Standardized execution result
 - ModuleError: Exception hierarchy for module errors
 - execute_module: Unified execution wrapper
+
+Note: For new modules, use the plugin system instead of atomic modules.
+See docs/PLUGIN_DEVELOPMENT.md for plugin development guide.
 """
 
 from .registry import ModuleRegistry
@@ -123,12 +130,22 @@ from .connection_rules import (
     CONNECTION_RULES,
 )
 
-# Import atomic modules
+# Phase 4: Import builtin modules (flow control only)
+from .builtin import (
+    BUILTIN_MODULE_IDS,
+    is_builtin_module,
+    get_builtin_module_ids,
+    register_builtin_modules,
+    get_module_category,
+    get_builtin_module_meta,
+)
+
+# Import atomic modules (legacy - being migrated to plugins)
 from .atomic import browser
 from .atomic import data
 from .atomic import utility
 
-# Import legacy atomic modules (to be migrated)
+# Import legacy atomic modules (deprecated - use plugins instead)
 from . import atomic
 
 # Import third-party integration modules
@@ -251,6 +268,13 @@ __all__ = [
     'developer',
     # Composite
     'composite',
+    # Builtin (Phase 4)
+    'BUILTIN_MODULE_IDS',
+    'is_builtin_module',
+    'get_builtin_module_ids',
+    'register_builtin_modules',
+    'get_module_category',
+    'get_builtin_module_meta',
     # Lint
     'lint_module',
     'lint_all_modules',
