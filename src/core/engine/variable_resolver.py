@@ -22,6 +22,7 @@ class VariableResolver:
     - ${$item.field} - Current item (new: items mode execution)
     - ${$index} - Current item index (new: items mode execution)
     - ${params.name} - Workflow parameters
+    - ${name} - Shorthand for ${params.name} (fallback when no other match)
     - ${env.VAR} - Environment variables
     - ${timestamp} - Built-in timestamp
     - ${workflow.id} - Workflow metadata
@@ -145,8 +146,19 @@ class VariableResolver:
                 return None
             param_name = parts[1]
             value = self.params.get(param_name)
+
             if len(parts) > 2:
-                return self._get_nested_value(value, parts[2:])
+                nested_value = self._get_nested_value(value, parts[2:])
+                # Fallback: ${params.ui.xxx} -> ${params.xxx}
+                # Templates use ${params.ui.input_1} for form inputs,
+                # but template.invoke passes params directly without 'ui' nesting
+                if nested_value is None and param_name == 'ui':
+                    fallback_key = parts[2]
+                    fallback_value = self.params.get(fallback_key)
+                    if len(parts) > 3:
+                        return self._get_nested_value(fallback_value, parts[3:])
+                    return fallback_value
+                return nested_value
             return value
 
         # Item-based execution variables (ITEM_PIPELINE_SPEC.md)
@@ -171,6 +183,14 @@ class VariableResolver:
             else:
                 # Handle items access
                 return self._get_step_value(step_output, parts[1:])
+
+        # Fallback to params: support ${url} as shorthand for ${params.url}
+        # This makes template usage more intuitive - users write ${url} instead of ${params.url}
+        if var_type in self.params:
+            value = self.params[var_type]
+            if len(parts) > 1:
+                return self._get_nested_value(value, parts[1:])
+            return value
 
         return None
 

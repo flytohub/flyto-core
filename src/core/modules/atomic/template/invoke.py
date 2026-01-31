@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
     can_receive_from=['*'],
     can_connect_to=['*'],
     node_type=NodeType.SUBFLOW,
+    can_be_start=True,  # Templates can start workflows
 
     input_ports=[
         {
@@ -81,14 +82,12 @@ logger = logging.getLogger(__name__)
         presets.TEXT(
             key='template_id',
             required=True,
-            hidden=True,
             label='Template ID',
             description='ID of the template to execute'
         ),
         presets.TEXT(
             key='library_id',
             required=True,
-            hidden=True,
             label='Library ID',
             description='ID of the library item (purchase/fork/owned)'
         ),
@@ -186,11 +185,23 @@ class InvokeTemplate(BaseModule):
         """
         start_time = time.time()
 
+        logger.debug(f"execute() called for template_id={self.template_id}, library_id={self.library_id}")
+        logger.debug(f"Context keys: {list(self.context.keys()) if self.context else 'NO CONTEXT'}")
+
         try:
             # Load template definition from context or API
+            logger.debug("Calling _load_template_definition()")
             definition = await self._load_template_definition()
 
+            logger.debug(f"Loaded definition: {definition is not None}")
+            if definition:
+                steps = definition.get('steps', [])
+                logger.debug(f"Definition has {len(steps)} steps")
+                for i, step in enumerate(steps):
+                    logger.debug(f"Step {i}: module={step.get('module')}, id={step.get('id')}")
+
             if not definition or not definition.get('steps'):
+                logger.error("No steps found in definition!")
                 return self._error_result(
                     'TEMPLATE_EMPTY',
                     'Template has no steps to execute'
@@ -198,14 +209,18 @@ class InvokeTemplate(BaseModule):
 
             # Resolve input parameters (from context + explicit params)
             resolved_params = self._resolve_params()
+            logger.debug(f"Resolved params: {resolved_params}")
 
             # Execute template with timeout
+            logger.debug("Calling _execute_template()")
             result = await self._execute_template(definition, resolved_params)
+            logger.debug(f"_execute_template returned: {type(result)}")
 
             execution_time_ms = (time.time() - start_time) * 1000
 
             # Map outputs if specified
             mapped_result = self._map_outputs(result)
+            logger.debug(f"Execution completed in {execution_time_ms}ms")
 
             return {
                 '__event__': 'success',
@@ -238,18 +253,34 @@ class InvokeTemplate(BaseModule):
         In cloud environment, this fetches from the API.
         Definition may also be pre-loaded in context by the engine.
         """
+        logger.debug("_load_template_definition called")
+        logger.debug(f"Looking for library_id={self.library_id}, template_id={self.template_id}")
+
         # Check if definition is already in context (pre-loaded by engine)
         if 'template_definition' in self.context:
+            logger.debug("Found 'template_definition' in context")
             return self.context['template_definition']
+
+        # Check template_definitions dict (pre-loaded by ExecutionManager)
+        template_definitions = self.context.get('template_definitions', {})
+        logger.debug(f"template_definitions keys: {list(template_definitions.keys())}")
+
+        if self.library_id in template_definitions:
+            logger.debug(f"Found definition by library_id: {self.library_id}")
+            return template_definitions[self.library_id]
+        if self.template_id in template_definitions:
+            logger.debug(f"Found definition by template_id: {self.template_id}")
+            return template_definitions[self.template_id]
 
         # Check if steps are directly provided (for testing/local use)
         if 'template_steps' in self.context:
+            logger.debug("Found 'template_steps' in context")
             return {'steps': self.context['template_steps']}
 
         # In production, the engine should pre-load the definition
         # This is a fallback for local/testing scenarios
         logger.warning(
-            f"Template definition not in context for {self.library_id}. "
+            f"Template definition NOT FOUND for library_id={self.library_id}, template_id={self.template_id}. "
             "Engine should pre-load definitions for cloud execution."
         )
 
@@ -316,9 +347,17 @@ class InvokeTemplate(BaseModule):
         """
         Execute the template workflow.
 
-        Routes to subprocess for non-official templates (security isolation).
-        Official templates run in-process for performance.
+        Currently uses in-process execution for all templates.
+        Subprocess isolation (for non-official templates) will be enabled
+        when the plugin runtime infrastructure is ready.
         """
+        # TODO: Enable subprocess execution when PoolRouter is ready
+        # For now, use in-process execution for all templates
+        force_in_process = self.context.get('force_in_process', True)
+
+        if force_in_process:
+            return await self._execute_in_process(definition, params)
+
         # Determine execution path based on template vendor
         template_vendor = self.context.get('template_vendor', 'unknown')
         is_official = template_vendor in ('flyto-official', 'flyto2', 'official')
@@ -337,12 +376,17 @@ class InvokeTemplate(BaseModule):
         params: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Execute template in the same process (for official templates)."""
+        logger.debug("_execute_in_process called")
+        logger.debug(f"params: {params}")
+
         # Import WorkflowEngine here to avoid circular imports
         try:
             from ....engine.workflow import WorkflowEngine
+            logger.debug("Imported WorkflowEngine from ....engine.workflow")
         except ImportError:
             try:
                 from core.engine.workflow import WorkflowEngine
+                logger.debug("Imported WorkflowEngine from core.engine.workflow")
             except ImportError:
                 # Fallback for environments without full engine
                 logger.warning("WorkflowEngine not available, returning mock result")
@@ -352,20 +396,41 @@ class InvokeTemplate(BaseModule):
                     'params': params
                 }
 
+        # Build initial context from parent context
+        # This shares browser, credentials, and other runtime state
+        initial_context = {}
+        if self.context:
+            # Copy relevant context items
+            for key in ['browser', 'page', 'credentials', 'execution_id', 'user_id',
+                        'secrets', 'template_definitions', 'screenshots_dir']:
+                if key in self.context:
+                    initial_context[key] = self.context[key]
+                    logger.debug(f"Copied context key: {key}")
+
+        steps = definition.get('steps', [])
+        logger.debug(f"Creating inner WorkflowEngine with {len(steps)} steps")
+
         engine = WorkflowEngine(
-            workflow={'steps': definition['steps']},
-            params=params
+            workflow={'steps': steps},
+            params=params,
+            initial_context=initial_context if initial_context else None
         )
 
         # Execute with timeout
         try:
+            logger.debug("Starting inner engine execution...")
             result = await asyncio.wait_for(
                 engine.execute(),
                 timeout=self.timeout_seconds
             )
+            logger.debug(f"Inner engine completed with result keys: {list(result.keys()) if isinstance(result, dict) else type(result)}")
             return result
         except asyncio.TimeoutError:
+            logger.error("Inner engine timed out!")
             engine.cancel()
+            raise
+        except Exception as e:
+            logger.exception(f"Inner engine failed: {e}")
             raise
 
     async def _execute_in_subprocess(

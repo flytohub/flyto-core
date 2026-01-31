@@ -428,7 +428,19 @@ class StepExecutor:
             ItemError, ExecutionMeta, wrap_legacy_result, items_to_legacy_context
         )
 
-        module_class = ModuleRegistry.get(module_id)
+        # Handle template.invoke:xxx format - strip suffix for registry lookup
+        # but preserve full ID for the module to know which template to invoke
+        lookup_id = module_id
+        if module_id.startswith('template.invoke:'):
+            lookup_id = 'template.invoke'
+            # Ensure template_id is in params
+            template_id = module_id.replace('template.invoke:', '')
+            if 'template_id' not in params:
+                params['template_id'] = template_id
+            if 'library_id' not in params:
+                params['library_id'] = template_id
+
+        module_class = ModuleRegistry.get(lookup_id)
 
         if not module_class:
             raise StepExecutionError(step_id, f"Module not found: {module_id}")
@@ -679,9 +691,20 @@ class StepExecutor:
         if not _RUNTIME_INVOKER_AVAILABLE:
             # Fallback: use direct registry access
             from ...modules.registry import ModuleRegistry
-            module_class = ModuleRegistry.get(module_id)
+
+            # Handle template.invoke:xxx format
+            lookup_id = module_id
+            if module_id.startswith('template.invoke:'):
+                lookup_id = 'template.invoke'
+                template_id = module_id.replace('template.invoke:', '')
+                if 'template_id' not in params:
+                    params['template_id'] = template_id
+                if 'library_id' not in params:
+                    params['library_id'] = template_id
+
+            module_class = ModuleRegistry.get(lookup_id)
             if not module_class:
-                raise StepExecutionError("unknown", f"Module not found: {module_id}")
+                raise StepExecutionError("unknown", f"Module not found: {lookup_id}")
             module_instance = module_class(params, context)
             return await module_instance.run()
 

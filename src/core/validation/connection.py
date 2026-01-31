@@ -60,10 +60,19 @@ def validate_connection(
     # Get module metadata
     from ..modules.registry import ModuleRegistry
 
-    from_meta = ModuleRegistry.get_metadata(from_module_id)
-    to_meta = ModuleRegistry.get_metadata(to_module_id)
+    # Special handling for user templates (template.XXX) - they're not in core registry
+    # Templates can connect to/from anything, so we allow all connections
+    is_from_template = from_module_id.startswith('template.')
+    is_to_template = to_module_id.startswith('template.')
 
-    if not from_meta:
+    if is_from_template and is_to_template:
+        # Both are templates - allow connection
+        return ConnectionResult(valid=True)
+
+    from_meta = ModuleRegistry.get_metadata(from_module_id) if not is_from_template else None
+    to_meta = ModuleRegistry.get_metadata(to_module_id) if not is_to_template else None
+
+    if not from_meta and not is_from_template:
         return ConnectionResult(
             valid=False,
             error_code=ErrorCode.MODULE_NOT_FOUND,
@@ -71,13 +80,17 @@ def validate_connection(
             meta={'module_id': from_module_id}
         )
 
-    if not to_meta:
+    if not to_meta and not is_to_template:
         return ConnectionResult(
             valid=False,
             error_code=ErrorCode.MODULE_NOT_FOUND,
             error_message=f'Module not found: {to_module_id}',
             meta={'module_id': to_module_id}
         )
+
+    # If one side is a template, allow connection (templates are flexible)
+    if is_from_template or is_to_template:
+        return ConnectionResult(valid=True)
 
     # Check can_connect_to / can_receive_from rules
     can_connect_to = from_meta.get('can_connect_to', ['*'])
