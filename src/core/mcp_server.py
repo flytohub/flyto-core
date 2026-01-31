@@ -20,10 +20,15 @@ Claude Code config (~/.claude/mcp_servers.json):
 
 import json
 import sys
+import os
 import asyncio
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 
+# ============================================================
+# Local Development: Allow localhost for browser testing
+# ============================================================
+os.environ.setdefault('FLYTO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 # MCP Protocol
 def send_response(id: Any, result: Any):
