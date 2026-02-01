@@ -25,8 +25,53 @@ from .exceptions import (
     PluginTimeoutError,
     PluginProtocolError,
 )
+from .languages import (
+    LanguageConfig,
+    get_language_config,
+    detect_language,
+    LANGUAGE_CONFIGS,
+)
 
 logger = logging.getLogger(__name__)
+
+
+# Security: Whitelist of safe environment variables that can be inherited
+# Everything else is blocked to prevent credential leakage
+SAFE_ENV_VARS = frozenset([
+    # System essentials
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "SHELL",
+    "TERM",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    # Locale settings
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "LC_MESSAGES",
+    "LC_COLLATE",
+    "LC_NUMERIC",
+    "LC_TIME",
+    "LANGUAGE",
+    # Runtime paths (read-only, non-sensitive)
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "XDG_RUNTIME_DIR",
+    # Common runtime needs
+    "TZ",  # Timezone
+    "PWD",  # Current directory (will be overridden by cwd anyway)
+    "COLORTERM",
+    "TERM_PROGRAM",
+    # Platform-specific
+    "SYSTEMROOT",  # Windows
+    "WINDIR",  # Windows
+    "COMSPEC",  # Windows
+])
 
 
 class ProcessStatus(Enum):
@@ -45,7 +90,8 @@ class ProcessConfig:
     plugin_id: str
     plugin_dir: Path
     entry_point: str = "main.py"
-    python_executable: str = "python3"
+    language: str = "python"  # Language identifier (python, node, go, rust, java, etc.)
+    python_executable: str = "python3"  # Deprecated: use language instead
     env: Dict[str, str] = field(default_factory=dict)
 
     # Timeouts
@@ -56,6 +102,56 @@ class ProcessConfig:
     # Resource limits
     max_memory_mb: int = 512
     max_cpu_percent: int = 100
+
+    def get_language_config(self) -> LanguageConfig:
+        """Get the language configuration for this plugin."""
+        return get_language_config(self.language)
+
+    def build_command(self) -> List[str]:
+        """
+        Build the command to execute this plugin.
+
+        Returns:
+            Command list for subprocess execution
+        """
+        lang_config = self.get_language_config()
+        entry_path = self.plugin_dir / self.entry_point
+        return lang_config.build_command(entry_path, self.plugin_dir)
+
+    def get_process_env(self) -> Dict[str, str]:
+        """
+        Get combined environment variables for the process.
+
+        Security: Only whitelisted environment variables are inherited.
+        This prevents leaking secrets like DB passwords, API keys, etc.
+
+        Returns:
+            Merged environment dictionary with only safe variables
+        """
+        lang_config = self.get_language_config()
+
+        # Security: Start with empty env, only copy whitelisted vars
+        # This prevents credential leakage (API keys, DB passwords, etc.)
+        env: Dict[str, str] = {}
+        for key in SAFE_ENV_VARS:
+            value = os.environ.get(key)
+            if value is not None:
+                env[key] = value
+
+        # Add language-specific env vars (trusted, from language config)
+        env.update(lang_config.env)
+
+        # Add user-specified env vars (highest priority)
+        # These should only contain plugin-specific config, not secrets
+        # Secrets should be injected via the secrets proxy
+        env.update(self.env)
+
+        # Add Flyto-specific env vars
+        env["FLYTO_PLUGIN_ID"] = self.plugin_id
+        env["FLYTO_PROTOCOL_VERSION"] = PROTOCOL_VERSION
+        env["FLYTO_LANGUAGE"] = self.language
+
+        return env
 
 
 @dataclass
@@ -151,17 +247,16 @@ class PluginProcess:
         self._status = ProcessStatus.STARTING
 
         try:
-            # Build command
-            entry_path = self.config.plugin_dir / self.config.entry_point
-            cmd = [self.config.python_executable, str(entry_path)]
+            # Build command using language-aware configuration
+            cmd = self.config.build_command()
 
-            # Build environment
-            env = os.environ.copy()
-            env.update(self.config.env)
-            env["FLYTO_PLUGIN_ID"] = self.config.plugin_id
-            env["FLYTO_PROTOCOL_VERSION"] = PROTOCOL_VERSION
+            # Build environment using language-specific settings
+            env = self.config.get_process_env()
 
-            logger.info(f"Starting plugin process: {self.config.plugin_id}")
+            logger.info(
+                f"Starting plugin process: {self.config.plugin_id} "
+                f"(language: {self.config.language}, cmd: {cmd[0]})"
+            )
 
             # Start subprocess
             self._process = await asyncio.create_subprocess_exec(

@@ -3,6 +3,7 @@ Plugin Runtime Module
 
 Phase 0: Abstraction layer for module invocation.
 Phase 1+: Full subprocess plugin support.
+Phase L: Multi-language plugin support (Python, Node.js, Go, Rust, Java, C#, etc.)
 
 This module provides a unified interface for invoking modules,
 whether they are in-process legacy modules or subprocess plugins.
@@ -14,6 +15,26 @@ from .invoke import (
     get_invoker,
     invoke,
     parse_module_id,
+)
+
+# Phase L: Multi-language support
+from .languages import (
+    LanguageConfig,
+    LANGUAGE_CONFIGS,
+    LANGUAGE_ALIASES,
+    get_language_config,
+    detect_language,
+    list_available_languages,
+    get_install_instructions,
+)
+
+# Browser session management (for cross-subprocess browser sharing)
+from .browser_session import (
+    BrowserSession,
+    BrowserSessionManager,
+    get_browser_manager,
+    reset_browser_manager,
+    get_or_create_browser_session,
 )
 
 # Types
@@ -61,6 +82,7 @@ from .manager import (
     PluginManager,
     PluginManifest,
     PluginInfo,
+    RuntimeConfig as ManifestRuntimeConfig,
 )
 from .health import (
     HealthChecker,
@@ -156,6 +178,7 @@ __all__ = [
     "PluginManager",
     "PluginManifest",
     "PluginInfo",
+    "ManifestRuntimeConfig",
 
     # Health checking (Phase 1)
     "HealthChecker",
@@ -192,6 +215,22 @@ __all__ = [
     "TenantTier",
     "get_pool_router",
     "reset_pool_router",
+
+    # Multi-language support (Phase L)
+    "LanguageConfig",
+    "LANGUAGE_CONFIGS",
+    "LANGUAGE_ALIASES",
+    "get_language_config",
+    "detect_language",
+    "list_available_languages",
+    "get_install_instructions",
+
+    # Browser session management
+    "BrowserSession",
+    "BrowserSessionManager",
+    "get_browser_manager",
+    "reset_browser_manager",
+    "get_or_create_browser_session",
 
     # Testing utilities
     "reset_invoker",

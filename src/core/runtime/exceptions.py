@@ -204,3 +204,54 @@ class PluginUnhealthyError(RuntimeError):
         )
         self.plugin_id = plugin_id
         self.cooldown_remaining_seconds = cooldown_remaining_seconds
+
+
+class SecurityError(RuntimeError):
+    """Raised when a security violation is detected."""
+
+    def __init__(
+        self,
+        message: str,
+        violation_type: str,
+        details: Optional[Dict[str, Any]] = None,
+    ):
+        super().__init__(
+            message=message,
+            code="SECURITY_VIOLATION",
+            details={"violation_type": violation_type, **(details or {})},
+            retryable=False,
+        )
+        self.violation_type = violation_type
+
+
+class PathTraversalError(SecurityError):
+    """Raised when path traversal attack is detected."""
+
+    def __init__(self, path: str, base_dir: str):
+        super().__init__(
+            message=f"Path traversal detected: path escapes allowed directory",
+            violation_type="PATH_TRAVERSAL",
+            details={"attempted_path": path, "base_dir": base_dir},
+        )
+
+
+class UnauthorizedAccessError(SecurityError):
+    """Raised when unauthorized access is attempted."""
+
+    def __init__(self, resource: str, plugin_id: Optional[str] = None):
+        super().__init__(
+            message=f"Unauthorized access to resource: {resource}",
+            violation_type="UNAUTHORIZED_ACCESS",
+            details={"resource": resource, "plugin_id": plugin_id},
+        )
+
+
+class InvalidSessionTokenError(SecurityError):
+    """Raised when an invalid session token is provided."""
+
+    def __init__(self, session_id: str):
+        super().__init__(
+            message="Invalid or missing session token",
+            violation_type="INVALID_SESSION_TOKEN",
+            details={"session_id": session_id},
+        )

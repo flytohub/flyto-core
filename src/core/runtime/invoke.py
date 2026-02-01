@@ -12,6 +12,7 @@ import time
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from .types import InvokeRequest, InvokeResponse, InvokeMetrics, InvokeError, InvokeStatus
+from .browser_session import get_browser_manager, BrowserSessionManager
 from .exceptions import (
     PluginNotFoundError,
     PluginUnhealthyError,
@@ -48,6 +49,7 @@ class RuntimeInvoker:
         self,
         plugin_manager: Optional["PluginManager"] = None,
         router: Optional[ModuleRouter] = None,
+        browser_manager: Optional[BrowserSessionManager] = None,
     ):
         """
         Initialize the runtime invoker.
@@ -55,10 +57,77 @@ class RuntimeInvoker:
         Args:
             plugin_manager: Optional PluginManager for subprocess plugins
             router: Optional ModuleRouter for routing decisions
+            browser_manager: Optional BrowserSessionManager for browser sharing
         """
         self._plugin_manager = plugin_manager
         self._router = router or get_router()
+        self._browser_manager = browser_manager
         self._legacy_modules_loaded = False
+
+    def set_browser_manager(self, manager: BrowserSessionManager):
+        """Set the browser session manager."""
+        self._browser_manager = manager
+
+    async def _prepare_plugin_context(
+        self,
+        context: Dict[str, Any],
+        execution_id: Optional[str] = None,
+        plugin_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Prepare context for plugin invocation.
+
+        Transforms non-serializable objects (like browser instances) into
+        serializable references (like WebSocket endpoints).
+
+        Security: Browser sessions now require authentication tokens.
+
+        Args:
+            context: Original execution context
+            execution_id: Optional execution ID for session naming
+            plugin_id: Plugin ID for browser session authorization
+
+        Returns:
+            Plugin-safe context dictionary
+        """
+        plugin_context = dict(context)
+
+        # Check if context contains a browser object that needs to be converted
+        # to a WebSocket endpoint for cross-process access
+        browser = context.get("browser")
+        if browser is not None:
+            # If browser is already a string (ws_endpoint), use it directly
+            if isinstance(browser, str):
+                plugin_context["browser_ws_endpoint"] = browser
+            # If browser has ws_endpoint attribute (Playwright Browser)
+            elif hasattr(browser, "ws_endpoint"):
+                plugin_context["browser_ws_endpoint"] = browser.ws_endpoint
+                # Remove the non-serializable browser object
+                plugin_context.pop("browser", None)
+            # Otherwise, create a shared session
+            else:
+                try:
+                    session_id = f"exec-{execution_id}" if execution_id else "default"
+                    manager = self._browser_manager or get_browser_manager()
+                    # Security: get_or_create_session now returns dict with token
+                    session_info = await manager.get_or_create_session(
+                        session_id=session_id,
+                        headless=True,
+                        owner_plugin=plugin_id,
+                    )
+                    plugin_context["browser_ws_endpoint"] = session_info["ws_endpoint"]
+                    plugin_context["browser_session_token"] = session_info["session_token"]
+                    plugin_context.pop("browser", None)
+                except Exception as e:
+                    logger.warning(f"Could not create browser session: {e}")
+
+        # If there's already a browser_ws_endpoint in context, ensure it's passed through
+        if "browser_ws_endpoint" in context:
+            plugin_context["browser_ws_endpoint"] = context["browser_ws_endpoint"]
+        if "browser_session_token" in context:
+            plugin_context["browser_session_token"] = context["browser_session_token"]
+
+        return plugin_context
 
     def set_plugin_manager(self, manager: "PluginManager"):
         """Set the plugin manager for subprocess plugins."""
@@ -242,14 +311,19 @@ class RuntimeInvoker:
 
         logger.debug(f"Invoking plugin: {plugin_id}.{step_id}")
 
+        # Prepare context for plugin (convert browser objects to ws_endpoints)
+        # Security: Pass plugin_id for browser session authorization
+        plugin_context = await self._prepare_plugin_context(
+            context, execution_id, plugin_id=plugin_id
+        )
+
         result = await self._plugin_manager.invoke(
             plugin_id=plugin_id,
-            step_id=step_id,
+            step=step_id,
             input_data=input_data,
             config=config,
-            context=context,
+            context=plugin_context,
             timeout_ms=timeout_ms,
-            execution_id=execution_id,
         )
 
         return result
