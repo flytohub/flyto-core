@@ -265,12 +265,22 @@ class InvokeTemplate(BaseModule):
         template_definitions = self.context.get('template_definitions', {})
         logger.debug(f"template_definitions keys: {list(template_definitions.keys())}")
 
-        if self.library_id in template_definitions:
+        # Try to find by library_id or template_id
+        if self.library_id and self.library_id in template_definitions:
             logger.debug(f"Found definition by library_id: {self.library_id}")
             return template_definitions[self.library_id]
-        if self.template_id in template_definitions:
+        if self.template_id and self.template_id in template_definitions:
             logger.debug(f"Found definition by template_id: {self.template_id}")
             return template_definitions[self.template_id]
+
+        # Fallback: If library_id/template_id are empty but we have exactly one definition,
+        # use it (ExecutionManager pre-loaded it from module_id like "template.invoke:xxx")
+        if (not self.library_id or self.library_id == '') and \
+           (not self.template_id or self.template_id == '') and \
+           len(template_definitions) == 1:
+            fallback_key = list(template_definitions.keys())[0]
+            logger.debug(f"Using fallback definition with key: {fallback_key}")
+            return template_definitions[fallback_key]
 
         # Check if steps are directly provided (for testing/local use)
         if 'template_steps' in self.context:
@@ -401,11 +411,19 @@ class InvokeTemplate(BaseModule):
         initial_context = {}
         if self.context:
             # Copy relevant context items
+            # Note: browser_owner is NOT copied - child templates should not own parent's browser
+            # This enables browser.release to correctly skip closing parent's browser
             for key in ['browser', 'page', 'credentials', 'execution_id', 'user_id',
                         'secrets', 'template_definitions', 'screenshots_dir']:
                 if key in self.context:
                     initial_context[key] = self.context[key]
                     logger.debug(f"Copied context key: {key}")
+
+            # Mark that browser was inherited (not owned by child)
+            # This tells browser.release to NOT close the browser
+            if 'browser' in initial_context:
+                initial_context['browser_inherited'] = True
+                logger.debug("Marked browser as inherited from parent")
 
         steps = definition.get('steps', [])
         logger.debug(f"Creating inner WorkflowEngine with {len(steps)} steps")

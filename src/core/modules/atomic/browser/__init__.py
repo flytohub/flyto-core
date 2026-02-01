@@ -15,6 +15,10 @@ from .press import *
 from .close import *
 from .find import *
 
+# Smart session management (composable templates)
+from .ensure import *
+from .release import *
+
 # New browser modules
 from .console import *
 from .scroll import *
