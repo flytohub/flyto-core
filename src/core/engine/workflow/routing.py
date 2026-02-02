@@ -347,6 +347,9 @@ class WorkflowRouter:
             'trigger': 'trigger',
             'triggered': 'trigger',
             'start': 'start',
+            # Error handling events
+            'handled': 'handled',
+            'escalate': 'escalate',
         }
 
         if normalized in ('merged', 'joined'):

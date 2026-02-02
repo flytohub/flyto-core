@@ -21,6 +21,8 @@ from .trigger import TriggerModule
 from .start import StartModule
 from .end import EndModule
 from .breakpoint import BreakpointModule
+from .error_handle import ErrorHandleModule
+from .error_workflow_trigger import ErrorWorkflowTriggerModule
 
 __all__ = [
     # Conditional branching
@@ -43,4 +45,7 @@ __all__ = [
     'EndModule',
     # Human-in-the-loop
     'BreakpointModule',
+    # Error handling
+    'ErrorHandleModule',
+    'ErrorWorkflowTriggerModule',
 ]
