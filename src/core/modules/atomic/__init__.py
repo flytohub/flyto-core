@@ -105,6 +105,9 @@ def register_all():
     # Template as Node
     from . import template  # noqa: F401
 
+    # Error handling modules (v5)
+    from . import error  # noqa: F401
+
     _registered = True
 
 
@@ -176,6 +179,9 @@ from . import crypto
 # Template as Node
 from . import template
 
+# Error handling modules (v5)
+from . import error
+
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
@@ -234,4 +240,6 @@ __all__ = [
     'crypto',
     # Template as Node
     'template',
+    # Error handling modules (v5)
+    'error',
 ]

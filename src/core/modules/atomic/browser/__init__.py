@@ -38,6 +38,11 @@ from .drag import *
 from .geolocation import *
 from .record import *
 
+# Higher-level browser operations (v2)
+from .form import *
+from .login import *
+from .pagination import *
+
 __all__ = [
     # Browser modules will be auto-discovered by module registry
 ]

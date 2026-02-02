@@ -40,6 +40,8 @@ from .builders import (
     deep_merge,
     SchemaComposeError,
 )
+# Alias for backward compatibility (some modules use Field instead of field)
+Field = field
 from .constants import (
     Visibility,
     FieldGroup,
@@ -52,6 +54,7 @@ __all__ = [
     # Core builders
     "compose",
     "field",
+    "Field",  # Alias for backward compatibility
     "patch",
     "extend",
     "deep_merge",

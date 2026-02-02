@@ -1,18 +1,12 @@
 """
-Atomic Data Transformation
-Data processing modules with no external dependencies
+Data Processing Modules
+
+Advanced data transformation and processing modules including:
+- pipeline: Chain multiple transformations in a single step
 """
 
-from .json_parse import *
-from .json_stringify import *
-from .csv_read import *
-from .csv_write import *
-from .text_template import *
-try:
-    from .json_to_csv import *
-except ImportError:
-    pass
+from .pipeline import DataPipelineModule
 
 __all__ = [
-    # Data modules will be auto-discovered by module registry
+    'DataPipelineModule',
 ]
