@@ -17,6 +17,9 @@ Validation Rules:
     Q010: Cyclomatic complexity should be reasonable
     Q011: No unused imports
     Q012: Function length should not exceed 50 lines
+    Q013: params_schema fields should have description
+    Q014: String params should have placeholder
+    Q015: input_types/output_types should be defined
 """
 
 import ast
@@ -148,6 +151,10 @@ class ModuleQualityValidator:
 
         # Schema checks
         issues.extend(self._check_schemas(metadata, module_id))
+
+        # Schema quality checks (Q013-Q015)
+        issues.extend(self._check_params_schema_quality(metadata, module_id))
+        issues.extend(self._check_types_defined(metadata, module_id))
 
         # Filter out skipped rules
         issues = [i for i in issues if i.rule_id not in self.skip_rules]
@@ -533,6 +540,87 @@ class ModuleQualityValidator:
                             ))
         except SyntaxError:
             pass
+        return issues
+
+    # =========================================================================
+    # Q013/Q014: params_schema quality
+    # =========================================================================
+
+    def _check_params_schema_quality(self, metadata: Dict[str, Any], module_id: str) -> List[ValidationIssue]:
+        """
+        Q013: params_schema fields should have description
+        Q014: String params should have placeholder
+        """
+        issues = []
+        params_schema = metadata.get('params_schema')
+
+        if not params_schema or not isinstance(params_schema, dict):
+            return issues
+
+        for field_key, field_def in params_schema.items():
+            # Skip special fields
+            if field_key.startswith('__'):
+                continue
+
+            if not isinstance(field_def, dict):
+                continue
+
+            field_type = field_def.get('type', 'string')
+
+            # Q013: Check for description
+            if 'description' not in field_def:
+                issues.append(ValidationIssue(
+                    rule_id="Q013",
+                    severity=Severity.WARNING,
+                    message=f"params_schema field '{field_key}' missing description",
+                    field=field_key,
+                    hint="Add 'description' to help users understand this parameter",
+                ))
+
+            # Q014: String params should have placeholder
+            if field_type == 'string' and 'placeholder' not in field_def:
+                issues.append(ValidationIssue(
+                    rule_id="Q014",
+                    severity=Severity.WARNING,
+                    message=f"String param '{field_key}' missing placeholder",
+                    field=field_key,
+                    hint="Add 'placeholder' to show example value in UI",
+                ))
+
+        return issues
+
+    # =========================================================================
+    # Q015: input_types/output_types
+    # =========================================================================
+
+    def _check_types_defined(self, metadata: Dict[str, Any], module_id: str) -> List[ValidationIssue]:
+        """Q015: input_types/output_types should be defined for connection validation."""
+        issues = []
+
+        input_types = metadata.get('input_types')
+        output_types = metadata.get('output_types')
+        category = metadata.get('category', '')
+
+        # Skip flow/meta modules as they often have special type handling
+        if category in ('flow', 'meta'):
+            return issues
+
+        if not input_types:
+            issues.append(ValidationIssue(
+                rule_id="Q015",
+                severity=Severity.WARNING,
+                message="Missing input_types",
+                hint="Add input_types=['string'] (or appropriate types) for connection validation",
+            ))
+
+        if not output_types:
+            issues.append(ValidationIssue(
+                rule_id="Q015",
+                severity=Severity.WARNING,
+                message="Missing output_types",
+                hint="Add output_types=['string'] (or appropriate types) for connection validation",
+            ))
+
         return issues
 
 

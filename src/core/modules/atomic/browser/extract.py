@@ -86,8 +86,8 @@ class BrowserExtractModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Use playwright to extract data
-        elements = await browser.page.query_selector_all(self.selector)
+        # Use browser driver to find elements (supports CSS and XPath)
+        elements = await browser._query_selector_all(self.selector)
 
         if self.limit:
             elements = elements[:self.limit]

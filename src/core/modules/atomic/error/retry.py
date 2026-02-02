@@ -37,6 +37,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='RefreshCw',
     color='#F59E0B',
 
+    # Type definitions for connection validation
+    input_types=['any'],
+    output_types=['any'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 

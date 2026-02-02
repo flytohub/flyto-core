@@ -41,6 +41,10 @@ class CircuitState(str, Enum):
     icon='Zap',
     color='#EF4444',
 
+    # Type definitions for connection validation
+    input_types=['any'],
+    output_types=['any'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 

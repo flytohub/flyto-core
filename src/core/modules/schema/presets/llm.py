@@ -22,6 +22,7 @@ def LLM_PROMPT(
         type="string",
         label=label,
         label_key=label_key,
+        description="The prompt or question to send to the AI model",
         placeholder=placeholder,
         required=required,
         format="multiline",
@@ -43,6 +44,7 @@ def SYSTEM_PROMPT(
         type="string",
         label=label,
         label_key=label_key,
+        description="System instructions to set AI behavior and context",
         placeholder=placeholder,
         required=required,
         format="multiline",
@@ -100,7 +102,12 @@ def LLM_PROVIDER(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["openai", "anthropic", "ollama"],
+        options=[
+            {"value": "openai", "label": "OpenAI (GPT-4, GPT-3.5)"},
+            {"value": "anthropic", "label": "Anthropic (Claude)"},
+            {"value": "ollama", "label": "Ollama (Local)"},
+        ],
+        description='AI model provider',
         group=FieldGroup.CONNECTION,
     )
 
@@ -188,7 +195,13 @@ def LLM_RESPONSE_FORMAT(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["text", "json", "code", "markdown"],
+        options=[
+            {"value": "text", "label": "Plain Text"},
+            {"value": "json", "label": "JSON (structured data)"},
+            {"value": "code", "label": "Code (programming)"},
+            {"value": "markdown", "label": "Markdown (formatted)"},
+        ],
+        description='Expected format of the AI response',
         group=FieldGroup.OPTIONS,
     )
 
@@ -286,12 +299,12 @@ def FIX_MODE(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["suggest", "apply", "dry_run"],
         options=[
-            {"value": "suggest", "label": "Suggest Only - Return fixes without applying"},
-            {"value": "apply", "label": "Apply - Write fixes to files"},
-            {"value": "dry_run", "label": "Dry Run - Show what would change"},
+            {"value": "suggest", "label": "Suggest Only (don't modify files)"},
+            {"value": "apply", "label": "Apply (write fixes to files)"},
+            {"value": "dry_run", "label": "Dry Run (show diff only)"},
         ],
+        description='How to handle the suggested fixes',
         group=FieldGroup.OPTIONS,
     )
 

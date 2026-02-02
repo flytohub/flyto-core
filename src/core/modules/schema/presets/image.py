@@ -159,7 +159,14 @@ def IMAGE_FORMAT(
         label_key=label_key,
         required=required,
         default=default,
-        enum=["jpeg", "png", "webp", "gif", "bmp", "tiff"],
+        options=[
+            {"value": "png", "label": "PNG (lossless, transparent)"},
+            {"value": "jpeg", "label": "JPEG (lossy, small size)"},
+            {"value": "webp", "label": "WebP (modern, best compression)"},
+            {"value": "gif", "label": "GIF (animation, 256 colors)"},
+            {"value": "bmp", "label": "BMP (uncompressed)"},
+            {"value": "tiff", "label": "TIFF (print quality)"},
+        ],
         description='Output image format',
         group=FieldGroup.OPTIONS,
     )
@@ -179,8 +186,13 @@ def IMAGE_RESIZE_ALGORITHM(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["lanczos", "bilinear", "bicubic", "nearest"],
-        description='Resampling algorithm',
+        options=[
+            {"value": "lanczos", "label": "Lanczos (best quality, slower)"},
+            {"value": "bicubic", "label": "Bicubic (high quality)"},
+            {"value": "bilinear", "label": "Bilinear (good balance)"},
+            {"value": "nearest", "label": "Nearest (fastest, pixelated)"},
+        ],
+        description='Resampling algorithm for resize',
         group=FieldGroup.OPTIONS,
     )
 

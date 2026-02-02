@@ -1,0 +1,2120 @@
+{
+  "issue_type": "missing_placeholder",
+  "total_count": 302,
+  "issues": [
+    {
+      "module_id": "array.filter",
+      "field_name": "condition",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'condition'",
+      "suggested_fix": "value > 0"
+    },
+    {
+      "module_id": "array.sort",
+      "field_name": "order",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'order'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.console",
+      "field_name": "level",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'level'",
+      "suggested_fix": "1"
+    },
+    {
+      "module_id": "browser.scroll",
+      "field_name": "direction",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'direction'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.scroll",
+      "field_name": "behavior",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'behavior'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.select",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value'",
+      "suggested_fix": "Enter value..."
+    },
+    {
+      "module_id": "browser.select",
+      "field_name": "label",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'label'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.cookies",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.cookies",
+      "field_name": "name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'name'",
+      "suggested_fix": "Enter name..."
+    },
+    {
+      "module_id": "browser.cookies",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value'",
+      "suggested_fix": "Enter value..."
+    },
+    {
+      "module_id": "browser.cookies",
+      "field_name": "domain",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'domain'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.cookies",
+      "field_name": "path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'path'",
+      "suggested_fix": "/path/to/file"
+    },
+    {
+      "module_id": "browser.storage",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.storage",
+      "field_name": "type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.storage",
+      "field_name": "key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'key'",
+      "suggested_fix": "key_name"
+    },
+    {
+      "module_id": "browser.storage",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value'",
+      "suggested_fix": "Enter value..."
+    },
+    {
+      "module_id": "browser.dialog",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.dialog",
+      "field_name": "prompt_text",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'prompt_text'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.frame",
+      "field_name": "name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'name'",
+      "suggested_fix": "Enter name..."
+    },
+    {
+      "module_id": "browser.frame",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'url'",
+      "suggested_fix": "https://example.com"
+    },
+    {
+      "module_id": "browser.frame",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.network",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.network",
+      "field_name": "resource_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'resource_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.tab",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pdf",
+      "field_name": "page_size",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'page_size'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pdf",
+      "field_name": "orientation",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'orientation'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pdf",
+      "field_name": "header",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'header'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pdf",
+      "field_name": "footer",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'footer'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.record",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.record",
+      "field_name": "output_format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'output_format'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.login",
+      "field_name": "username",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'username'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.login",
+      "field_name": "password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pagination",
+      "field_name": "mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "browser.pagination",
+      "field_name": "wait_for_selector",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'wait_for_selector'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "subject",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'subject'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "body",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'body'",
+      "suggested_fix": "{}"
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "from_email",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'from_email'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "cc",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'cc'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "bcc",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'bcc'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "smtp_user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'smtp_user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.send",
+      "field_name": "smtp_password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'smtp_password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "folder",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'folder'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "since_date",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'since_date'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "from_filter",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'from_filter'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "subject_filter",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'subject_filter'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "imap_user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'imap_user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "email.read",
+      "field_name": "imap_password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'imap_password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "slack.send",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "slack.send",
+      "field_name": "channel",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'channel'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "slack.send",
+      "field_name": "username",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'username'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "webhook.trigger",
+      "field_name": "method",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'method'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "webhook.trigger",
+      "field_name": "content_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "webhook.trigger",
+      "field_name": "auth_token",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'auth_token'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "database_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.query",
+      "field_name": "fetch",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'fetch'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "table",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'table'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "database_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.insert",
+      "field_name": "password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "table",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'table'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "database_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "database.update",
+      "field_name": "password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "datetime.format",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "datetime.parse",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "pdf.parse",
+      "field_name": "pages",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'pages'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "content",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content'",
+      "suggested_fix": "Enter content..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "title",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'title'",
+      "suggested_fix": "Enter title..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "author",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'author'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "page_size",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'page_size'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "orientation",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'orientation'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "header",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'header'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.generate",
+      "field_name": "footer",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'footer'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.fill_form",
+      "field_name": "template",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'template'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "excel.read",
+      "field_name": "sheet",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'sheet'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "excel.read",
+      "field_name": "range",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'range'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "excel.write",
+      "field_name": "sheet_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'sheet_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "word.parse",
+      "field_name": "file_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'file_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "word.parse",
+      "field_name": "images_output_dir",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'images_output_dir'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "pdf.to_word",
+      "field_name": "pages",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'pages'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "element.query",
+      "field_name": "element_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'element_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "element.query",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'selector'",
+      "suggested_fix": "#id, .class, or //xpath"
+    },
+    {
+      "module_id": "element.text",
+      "field_name": "element_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'element_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "element.attribute",
+      "field_name": "element_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'element_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "file.read",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "file.write",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "file.write",
+      "field_name": "mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.switch",
+      "field_name": "expression",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'expression'",
+      "suggested_fix": "value"
+    },
+    {
+      "module_id": "flow.goto",
+      "field_name": "target",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'target'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.foreach",
+      "field_name": "item_var",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'item_var'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.foreach",
+      "field_name": "index_var",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'index_var'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.foreach",
+      "field_name": "output_mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'output_mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.loop",
+      "field_name": "target",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'target'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.loop",
+      "field_name": "index_var",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'index_var'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.merge",
+      "field_name": "strategy",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'strategy'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.join",
+      "field_name": "strategy",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'strategy'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.subflow",
+      "field_name": "execution_mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'execution_mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.trigger",
+      "field_name": "trigger_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'trigger_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.trigger",
+      "field_name": "event_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'event_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "title",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'title'",
+      "suggested_fix": "Enter title..."
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "approval_mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'approval_mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.error_handle",
+      "field_name": "action",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'action'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "flow.error_workflow_trigger",
+      "field_name": "description",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'description'",
+      "suggested_fix": "Enter description..."
+    },
+    {
+      "module_id": "flow.parallel",
+      "field_name": "mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "output_dir",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'output_dir'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "image.convert",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "image.resize",
+      "field_name": "algorithm",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'algorithm'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "image.compress",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "image.qrcode_generate",
+      "field_name": "color",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'color'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "image.qrcode_generate",
+      "field_name": "background",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'background'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "image.qrcode_generate",
+      "field_name": "logo_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'logo_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "math.calculate",
+      "field_name": "operation",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'operation'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "meta.modules.list",
+      "field_name": "category",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'category'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "meta.modules.update_docs",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'output_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "object.flatten",
+      "field_name": "separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'separator'",
+      "suggested_fix": ","
+    },
+    {
+      "module_id": "object.unflatten",
+      "field_name": "separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'separator'",
+      "suggested_fix": ","
+    },
+    {
+      "module_id": "object.deep_merge",
+      "field_name": "array_merge",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'array_merge'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "string.split",
+      "field_name": "delimiter",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'delimiter'",
+      "suggested_fix": ","
+    },
+    {
+      "module_id": "string.pad",
+      "field_name": "pad_char",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'pad_char'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "string.pad",
+      "field_name": "position",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'position'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "string.truncate",
+      "field_name": "suffix",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'suffix'",
+      "suggested_fix": ""
+    },
+    {
+      "module_id": "string.slugify",
+      "field_name": "separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'separator'",
+      "suggested_fix": ","
+    },
+    {
+      "module_id": "string.template",
+      "field_name": "missing_value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'missing_value'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "utility.hash.md5",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "method",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'method'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "content_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "response_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'response_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "http.response_assert",
+      "field_name": "content_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "log_file",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'log_file'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "process_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'process_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "signal",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'signal'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "process.list",
+      "field_name": "filter_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'filter_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "port.wait",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "port.check",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "analysis_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'analysis_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "output_format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'output_format'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "header_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'header_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "detail",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'detail'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.compare",
+      "field_name": "comparison_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'comparison_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.compare",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "vision.compare",
+      "field_name": "header_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'header_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ui.evaluate",
+      "field_name": "app_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'app_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ui.evaluate",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "provider",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'provider'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "response_format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'response_format'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.code_fix",
+      "field_name": "fix_mode",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'fix_mode'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.code_fix",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.code_fix",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "prompt_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'prompt_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "join_separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'join_separator'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "system_prompt",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'system_prompt'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "provider",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'provider'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "llm.agent",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.model",
+      "field_name": "provider",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'provider'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.model",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.model",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.structure",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.find_patterns",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.extract_tables",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.extract_forms",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.extract_metadata",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "analysis.html.analyze_readability",
+      "field_name": "html",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'html'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "actual",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'actual'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "expected",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'expected'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "test.assert_true",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "test.assert_contains",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value'",
+      "suggested_fix": "Enter value..."
+    },
+    {
+      "module_id": "test.assert_contains",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "test.assert_greater_than",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "test.assert_length",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "test.assert_not_null",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value'",
+      "suggested_fix": "Enter value..."
+    },
+    {
+      "module_id": "test.assert_not_null",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "testing.lint.run",
+      "field_name": "linter",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'linter'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "testing.report.generate",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "testing.report.generate",
+      "field_name": "title",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'title'",
+      "suggested_fix": "Enter title..."
+    },
+    {
+      "module_id": "testing.security.scan",
+      "field_name": "scan_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'scan_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "testing.security.scan",
+      "field_name": "severity_threshold",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'severity_threshold'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "testing.unit.run",
+      "field_name": "pattern",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'pattern'",
+      "suggested_fix": "\\d+"
+    },
+    {
+      "module_id": "testing.visual.compare",
+      "field_name": "actual",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'actual'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "testing.visual.compare",
+      "field_name": "expected",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'expected'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "validate.phone",
+      "field_name": "region",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'region'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "validate.ip",
+      "field_name": "version",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'version'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "encode.base64",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "decode.base64",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "encode.url",
+      "field_name": "safe",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'safe'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "encode.hex",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "encode.hex",
+      "field_name": "separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'separator'",
+      "suggested_fix": ","
+    },
+    {
+      "module_id": "decode.hex",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "format.number",
+      "field_name": "thousand_separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'thousand_separator'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "format.number",
+      "field_name": "decimal_separator",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'decimal_separator'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "format.currency",
+      "field_name": "currency",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'currency'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "format.currency",
+      "field_name": "symbol_position",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'symbol_position'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "format.duration",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'format'",
+      "suggested_fix": "json"
+    },
+    {
+      "module_id": "hash.sha256",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "hash.sha512",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "convert.to_object",
+      "field_name": "key_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'key_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "crypto.hmac",
+      "field_name": "algorithm",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'algorithm'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "crypto.hmac",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "crypto.random_bytes",
+      "field_name": "encoding",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'encoding'",
+      "suggested_fix": "utf-8"
+    },
+    {
+      "module_id": "crypto.random_string",
+      "field_name": "charset",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'charset'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "error.circuit_breaker",
+      "field_name": "circuit_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'circuit_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.anthropic.chat",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.anthropic.chat",
+      "field_name": "system",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'system'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.google_gemini.chat",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.openai.chat",
+      "field_name": "prompt",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'prompt'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.openai.chat",
+      "field_name": "system_message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'system_message'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.openai.image",
+      "field_name": "prompt",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'prompt'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.local_ollama.chat",
+      "field_name": "prompt",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'prompt'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.local_ollama.chat",
+      "field_name": "system_message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'system_message'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "ai.local_ollama.chat",
+      "field_name": "ollama_url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'ollama_url'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.autonomous",
+      "field_name": "goal",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'goal'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.autonomous",
+      "field_name": "context",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'context'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.autonomous",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.autonomous",
+      "field_name": "ollama_url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'ollama_url'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.chain",
+      "field_name": "input",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'input'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.chain",
+      "field_name": "model",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'model'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "agent.chain",
+      "field_name": "ollama_url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'ollama_url'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "notification.discord.send_message",
+      "field_name": "avatar_url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'avatar_url'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.send_sms",
+      "field_name": "account_sid",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'account_sid'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.send_sms",
+      "field_name": "auth_token",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'auth_token'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.send_sms",
+      "field_name": "from_number",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'from_number'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.send_sms",
+      "field_name": "to_number",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'to_number'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.send_sms",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'message'",
+      "suggested_fix": "Enter message..."
+    },
+    {
+      "module_id": "communication.twilio.make_call",
+      "field_name": "account_sid",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'account_sid'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.make_call",
+      "field_name": "auth_token",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'auth_token'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.make_call",
+      "field_name": "from_number",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'from_number'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.make_call",
+      "field_name": "to_number",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'to_number'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "communication.twilio.make_call",
+      "field_name": "twiml_url",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'twiml_url'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.postgresql.query",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mysql.query",
+      "field_name": "host",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'host'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mysql.query",
+      "field_name": "user",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'user'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mysql.query",
+      "field_name": "password",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'password'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mysql.query",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mongodb.find",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mongodb.find",
+      "field_name": "collection",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'collection'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mongodb.insert",
+      "field_name": "database",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.mongodb.insert",
+      "field_name": "collection",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'collection'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "db.redis.get",
+      "field_name": "key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'key'",
+      "suggested_fix": "key_name"
+    },
+    {
+      "module_id": "db.redis.set",
+      "field_name": "key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'key'",
+      "suggested_fix": "key_name"
+    },
+    {
+      "module_id": "cloud.aws_s3.upload",
+      "field_name": "file_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'file_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.aws_s3.upload",
+      "field_name": "content",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content'",
+      "suggested_fix": "Enter content..."
+    },
+    {
+      "module_id": "cloud.aws_s3.upload",
+      "field_name": "acl",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'acl'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.aws_s3.download",
+      "field_name": "bucket",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'bucket'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.aws_s3.download",
+      "field_name": "key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'key'",
+      "suggested_fix": "key_name"
+    },
+    {
+      "module_id": "cloud.aws_s3.download",
+      "field_name": "file_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'file_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.upload",
+      "field_name": "file_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'file_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.upload",
+      "field_name": "bucket",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'bucket'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.upload",
+      "field_name": "object_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'object_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.upload",
+      "field_name": "content_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.download",
+      "field_name": "bucket",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'bucket'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.download",
+      "field_name": "object_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'object_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.gcs.download",
+      "field_name": "destination_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'destination_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.upload",
+      "field_name": "file_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'file_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.upload",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.upload",
+      "field_name": "container",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'container'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.upload",
+      "field_name": "blob_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'blob_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.upload",
+      "field_name": "content_type",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'content_type'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.download",
+      "field_name": "connection_string",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'connection_string'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.download",
+      "field_name": "container",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'container'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.download",
+      "field_name": "blob_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'blob_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "cloud.azure.download",
+      "field_name": "destination_path",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'destination_path'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.notion.query_database",
+      "field_name": "database_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'database_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.google_sheets.write",
+      "field_name": "value_input_option",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'value_input_option'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.read",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.read",
+      "field_name": "base_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'base_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.read",
+      "field_name": "table_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'table_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.read",
+      "field_name": "view",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'view'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.create",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.create",
+      "field_name": "base_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'base_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.create",
+      "field_name": "table_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'table_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.update",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.update",
+      "field_name": "base_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'base_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.update",
+      "field_name": "table_name",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'table_name'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "productivity.airtable.update",
+      "field_name": "record_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'record_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.github.list_issues",
+      "field_name": "owner",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'owner'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.github.list_issues",
+      "field_name": "repo",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'repo'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.github.create_issue",
+      "field_name": "owner",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'owner'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "api.github.create_issue",
+      "field_name": "repo",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'repo'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.create_payment",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.create_payment",
+      "field_name": "currency",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'currency'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.create_payment",
+      "field_name": "description",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'description'",
+      "suggested_fix": "Enter description..."
+    },
+    {
+      "module_id": "payment.stripe.create_payment",
+      "field_name": "customer",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'customer'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.get_customer",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.get_customer",
+      "field_name": "customer_id",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'customer_id'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.list_charges",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'api_key'",
+      "suggested_fix": "Enter text..."
+    },
+    {
+      "module_id": "payment.stripe.list_charges",
+      "field_name": "customer",
+      "level": "warning",
+      "message": "Missing placeholder for string param 'customer'",
+      "suggested_fix": "Enter text..."
+    }
+  ]
+}

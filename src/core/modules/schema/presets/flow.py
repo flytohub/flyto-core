@@ -35,6 +35,7 @@ def SWITCH_EXPRESSION(
     required: bool = True,
     label: str = "Expression",
     label_key: str = "schema.field.switch_expression",
+    placeholder: str = "${step1.status}",
 ) -> Dict[str, Dict[str, Any]]:
     """Value to match against switch cases."""
     return field(
@@ -43,6 +44,7 @@ def SWITCH_EXPRESSION(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Value to match against cases (supports variable reference)',
         group=FieldGroup.BASIC,
     )
@@ -81,7 +83,12 @@ def TRIGGER_TYPE(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["manual", "webhook", "schedule", "event"],
+        options=[
+            {"value": "manual", "label": "Manual (click to run)"},
+            {"value": "webhook", "label": "Webhook (HTTP trigger)"},
+            {"value": "schedule", "label": "Schedule (cron-based)"},
+            {"value": "event", "label": "Event (listen to events)"},
+        ],
         group=FieldGroup.OPTIONS,
     )
 
@@ -131,6 +138,7 @@ def EVENT_NAME(
     key: str = "event_name",
     label: str = "Event Name",
     label_key: str = "schema.field.event_name",
+    placeholder: str = "user.created",
 ) -> Dict[str, Dict[str, Any]]:
     """Event name to listen for."""
     return field(
@@ -139,6 +147,7 @@ def EVENT_NAME(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         description='Event name to listen for',
         group=FieldGroup.OPTIONS,
     )
@@ -177,7 +186,11 @@ def MERGE_STRATEGY(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["first", "last", "all"],
+        options=[
+            {"value": "first", "label": "First (use first input)"},
+            {"value": "last", "label": "Last (use latest)"},
+            {"value": "all", "label": "All (merge all inputs)"},
+        ],
         description='How to merge multiple inputs',
         group=FieldGroup.OPTIONS,
     )
@@ -197,7 +210,11 @@ def JOIN_STRATEGY(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["all", "any", "first"],
+        options=[
+            {"value": "all", "label": "All (wait for all)"},
+            {"value": "any", "label": "Any (wait for any)"},
+            {"value": "first", "label": "First (use first result)"},
+        ],
         description='How to handle multiple inputs',
         group=FieldGroup.OPTIONS,
     )
@@ -253,6 +270,7 @@ def TARGET_STEP(
     required: bool = True,
     label: str = "Target Step",
     label_key: str = "schema.field.target_step",
+    placeholder: str = "step_id",
 ) -> Dict[str, Dict[str, Any]]:
     """Step ID to jump to."""
     return field(
@@ -261,6 +279,7 @@ def TARGET_STEP(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Step ID to jump to',
         group=FieldGroup.BASIC,
     )
@@ -334,6 +353,7 @@ def APPROVAL_TITLE(
     default: str = "Approval Required",
     label: str = "Title",
     label_key: str = "schema.field.approval_title",
+    placeholder: str = "Approval Required",
 ) -> Dict[str, Dict[str, Any]]:
     """Title displayed to approvers."""
     return field(
@@ -342,6 +362,7 @@ def APPROVAL_TITLE(
         label=label,
         label_key=label_key,
         default=default,
+        placeholder=placeholder,
         description='Title displayed to approvers',
         group=FieldGroup.OPTIONS,
     )
@@ -361,7 +382,12 @@ def APPROVAL_MODE(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["single", "all", "majority", "first"],
+        options=[
+            {"value": "single", "label": "Single (one approval)"},
+            {"value": "all", "label": "All (unanimous)"},
+            {"value": "majority", "label": "Majority (>50%)"},
+            {"value": "first", "label": "First (first response)"},
+        ],
         description='How approvals are counted',
         group=FieldGroup.OPTIONS,
     )

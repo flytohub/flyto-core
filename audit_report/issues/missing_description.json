@@ -1,0 +1,895 @@
+{
+  "issue_type": "missing_description",
+  "total_count": 127,
+  "issues": [
+    {
+      "module_id": "browser.launch",
+      "field_name": "width",
+      "level": "warning",
+      "message": "Missing description for param 'width'",
+      "suggested_fix": "Width in pixels"
+    },
+    {
+      "module_id": "browser.launch",
+      "field_name": "height",
+      "level": "warning",
+      "message": "Missing description for param 'height'",
+      "suggested_fix": "Height in pixels"
+    },
+    {
+      "module_id": "browser.goto",
+      "field_name": "wait_until",
+      "level": "warning",
+      "message": "Missing description for param 'wait_until'",
+      "suggested_fix": "Select an option"
+    },
+    {
+      "module_id": "browser.goto",
+      "field_name": "timeout_ms",
+      "level": "warning",
+      "message": "Missing description for param 'timeout_ms'",
+      "suggested_fix": "Numeric value"
+    },
+    {
+      "module_id": "browser.click",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.click",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.type",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.screenshot",
+      "field_name": "path",
+      "level": "warning",
+      "message": "Missing description for param 'path'",
+      "suggested_fix": "File or directory path"
+    },
+    {
+      "module_id": "browser.screenshot",
+      "field_name": "full_page",
+      "level": "warning",
+      "message": "Missing description for param 'full_page'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "browser.screenshot",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing description for param 'format'",
+      "suggested_fix": "Output format"
+    },
+    {
+      "module_id": "browser.wait",
+      "field_name": "duration_ms",
+      "level": "warning",
+      "message": "Missing description for param 'duration_ms'",
+      "suggested_fix": "Numeric value"
+    },
+    {
+      "module_id": "browser.wait",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.wait",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.extract",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.find",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.ensure",
+      "field_name": "width",
+      "level": "warning",
+      "message": "Missing description for param 'width'",
+      "suggested_fix": "Width in pixels"
+    },
+    {
+      "module_id": "browser.ensure",
+      "field_name": "height",
+      "level": "warning",
+      "message": "Missing description for param 'height'",
+      "suggested_fix": "Height in pixels"
+    },
+    {
+      "module_id": "browser.console",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.scroll",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.hover",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.hover",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.hover",
+      "field_name": "position",
+      "level": "warning",
+      "message": "Missing description for param 'position'",
+      "suggested_fix": "Key-value data structure"
+    },
+    {
+      "module_id": "browser.select",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.select",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.dialog",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.upload",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.upload",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.download",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.download",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.frame",
+      "field_name": "selector",
+      "level": "warning",
+      "message": "Missing description for param 'selector'",
+      "suggested_fix": "CSS/XPath selector to locate element"
+    },
+    {
+      "module_id": "browser.frame",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.network",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.pdf",
+      "field_name": "path",
+      "level": "warning",
+      "message": "Missing description for param 'path'",
+      "suggested_fix": "File or directory path"
+    },
+    {
+      "module_id": "browser.drag",
+      "field_name": "source",
+      "level": "warning",
+      "message": "Missing description for param 'source'",
+      "suggested_fix": "Source data or path"
+    },
+    {
+      "module_id": "browser.drag",
+      "field_name": "target",
+      "level": "warning",
+      "message": "Missing description for param 'target'",
+      "suggested_fix": "Target data or path"
+    },
+    {
+      "module_id": "browser.drag",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "browser.record",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "webhook.trigger",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "webhook.trigger",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "flow.container",
+      "field_name": "isolated_variables",
+      "level": "warning",
+      "message": "Missing description for param 'isolated_variables'",
+      "suggested_fix": "List of items"
+    },
+    {
+      "module_id": "flow.container",
+      "field_name": "export_variables",
+      "level": "warning",
+      "message": "Missing description for param 'export_variables'",
+      "suggested_fix": "List of items"
+    },
+    {
+      "module_id": "flow.join",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "flow.subflow",
+      "field_name": "execution_mode",
+      "level": "warning",
+      "message": "Missing description for param 'execution_mode'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "flow.subflow",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "flow.trigger",
+      "field_name": "trigger_type",
+      "level": "warning",
+      "message": "Missing description for param 'trigger_type'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "flow.trigger",
+      "field_name": "description",
+      "level": "warning",
+      "message": "Missing description for param 'description'",
+      "suggested_fix": "Description text"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "description",
+      "level": "warning",
+      "message": "Missing description for param 'description'",
+      "suggested_fix": "Description text"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "required_approvers",
+      "level": "warning",
+      "message": "Missing description for param 'required_approvers'",
+      "suggested_fix": "List of items"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "custom_fields",
+      "level": "warning",
+      "message": "Missing description for param 'custom_fields'",
+      "suggested_fix": "List of items"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "include_context",
+      "level": "warning",
+      "message": "Missing description for param 'include_context'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing description for param 'url'",
+      "suggested_fix": "URL to navigate or request"
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "output_dir",
+      "level": "warning",
+      "message": "Missing description for param 'output_dir'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "image.download",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "image.convert",
+      "field_name": "input_path",
+      "level": "warning",
+      "message": "Missing description for param 'input_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.convert",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.resize",
+      "field_name": "input_path",
+      "level": "warning",
+      "message": "Missing description for param 'input_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.resize",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.compress",
+      "field_name": "input_path",
+      "level": "warning",
+      "message": "Missing description for param 'input_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.compress",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "image.qrcode_generate",
+      "field_name": "output_path",
+      "level": "warning",
+      "message": "Missing description for param 'output_path'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "math.calculate",
+      "field_name": "operation",
+      "level": "warning",
+      "message": "Missing description for param 'operation'",
+      "suggested_fix": "Operation type"
+    },
+    {
+      "module_id": "training.practice.analyze",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing description for param 'url'",
+      "suggested_fix": "URL to navigate or request"
+    },
+    {
+      "module_id": "training.practice.infer_schema",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing description for param 'url'",
+      "suggested_fix": "URL to navigate or request"
+    },
+    {
+      "module_id": "training.practice.execute",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing description for param 'url'",
+      "suggested_fix": "URL to navigate or request"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "command",
+      "level": "warning",
+      "message": "Missing description for param 'command'",
+      "suggested_fix": "Command to run"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "cwd",
+      "level": "warning",
+      "message": "Missing description for param 'cwd'",
+      "suggested_fix": "Working directory"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "env",
+      "level": "warning",
+      "message": "Missing description for param 'env'",
+      "suggested_fix": "Environment variables"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "capture_stderr",
+      "level": "warning",
+      "message": "Missing description for param 'capture_stderr'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "shell.exec",
+      "field_name": "raise_on_error",
+      "level": "warning",
+      "message": "Missing description for param 'raise_on_error'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "body",
+      "level": "warning",
+      "message": "Missing description for param 'body'",
+      "suggested_fix": "Request body"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "query",
+      "level": "warning",
+      "message": "Missing description for param 'query'",
+      "suggested_fix": "Query string or parameters"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "auth",
+      "level": "warning",
+      "message": "Missing description for param 'auth'",
+      "suggested_fix": "Key-value data structure"
+    },
+    {
+      "module_id": "http.request",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "command",
+      "level": "warning",
+      "message": "Missing description for param 'command'",
+      "suggested_fix": "Command to run"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "cwd",
+      "level": "warning",
+      "message": "Missing description for param 'cwd'",
+      "suggested_fix": "Working directory"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "env",
+      "level": "warning",
+      "message": "Missing description for param 'env'",
+      "suggested_fix": "Environment variables"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "name",
+      "level": "warning",
+      "message": "Missing description for param 'name'",
+      "suggested_fix": "Name identifier"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "wait_timeout",
+      "level": "warning",
+      "message": "Missing description for param 'wait_timeout'",
+      "suggested_fix": "Numeric value"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "capture_output",
+      "level": "warning",
+      "message": "Missing description for param 'capture_output'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "log_file",
+      "level": "warning",
+      "message": "Missing description for param 'log_file'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "process.start",
+      "field_name": "auto_restart",
+      "level": "warning",
+      "message": "Missing description for param 'auto_restart'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "process_id",
+      "level": "warning",
+      "message": "Missing description for param 'process_id'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "name",
+      "level": "warning",
+      "message": "Missing description for param 'name'",
+      "suggested_fix": "Name identifier"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "pid",
+      "level": "warning",
+      "message": "Missing description for param 'pid'",
+      "suggested_fix": "Numeric value"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "signal",
+      "level": "warning",
+      "message": "Missing description for param 'signal'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "force",
+      "level": "warning",
+      "message": "Missing description for param 'force'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "process.stop",
+      "field_name": "stop_all",
+      "level": "warning",
+      "message": "Missing description for param 'stop_all'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "process.list",
+      "field_name": "filter_name",
+      "level": "warning",
+      "message": "Missing description for param 'filter_name'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "process.list",
+      "field_name": "include_status",
+      "level": "warning",
+      "message": "Missing description for param 'include_status'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "api.http_get",
+      "field_name": "url",
+      "level": "warning",
+      "message": "Missing description for param 'url'",
+      "suggested_fix": "URL to navigate or request"
+    },
+    {
+      "module_id": "api.http_get",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "api.http_get",
+      "field_name": "query",
+      "level": "warning",
+      "message": "Missing description for param 'query'",
+      "suggested_fix": "Query string or parameters"
+    },
+    {
+      "module_id": "api.http_get",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing description for param 'api_key'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "vision.analyze",
+      "field_name": "header_name",
+      "level": "warning",
+      "message": "Missing description for param 'header_name'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "vision.compare",
+      "field_name": "api_key",
+      "level": "warning",
+      "message": "Missing description for param 'api_key'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "vision.compare",
+      "field_name": "header_name",
+      "level": "warning",
+      "message": "Missing description for param 'header_name'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "prompt",
+      "level": "warning",
+      "message": "Missing description for param 'prompt'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "llm.chat",
+      "field_name": "system_prompt",
+      "level": "warning",
+      "message": "Missing description for param 'system_prompt'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "testing.e2e.run_steps",
+      "field_name": "stop_on_failure",
+      "level": "warning",
+      "message": "Missing description for param 'stop_on_failure'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "testing.e2e.run_steps",
+      "field_name": "timeout_per_step",
+      "level": "warning",
+      "message": "Missing description for param 'timeout_per_step'",
+      "suggested_fix": "Numeric value"
+    },
+    {
+      "module_id": "testing.gate.evaluate",
+      "field_name": "fail_on_breach",
+      "level": "warning",
+      "message": "Missing description for param 'fail_on_breach'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "testing.http.run_suite",
+      "field_name": "base_url",
+      "level": "warning",
+      "message": "Missing description for param 'base_url'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "testing.http.run_suite",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "testing.lint.run",
+      "field_name": "linter",
+      "level": "warning",
+      "message": "Missing description for param 'linter'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "testing.lint.run",
+      "field_name": "fix",
+      "level": "warning",
+      "message": "Missing description for param 'fix'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "testing.report.generate",
+      "field_name": "results",
+      "level": "warning",
+      "message": "Missing description for param 'results'",
+      "suggested_fix": "Key-value data structure"
+    },
+    {
+      "module_id": "testing.report.generate",
+      "field_name": "format",
+      "level": "warning",
+      "message": "Missing description for param 'format'",
+      "suggested_fix": "Output format"
+    },
+    {
+      "module_id": "testing.report.generate",
+      "field_name": "title",
+      "level": "warning",
+      "message": "Missing description for param 'title'",
+      "suggested_fix": "Title text"
+    },
+    {
+      "module_id": "testing.scenario.run",
+      "field_name": "context",
+      "level": "warning",
+      "message": "Missing description for param 'context'",
+      "suggested_fix": "Key-value data structure"
+    },
+    {
+      "module_id": "testing.security.scan",
+      "field_name": "scan_type",
+      "level": "warning",
+      "message": "Missing description for param 'scan_type'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "testing.security.scan",
+      "field_name": "severity_threshold",
+      "level": "warning",
+      "message": "Missing description for param 'severity_threshold'",
+      "suggested_fix": "Text input"
+    },
+    {
+      "module_id": "testing.suite.run",
+      "field_name": "parallel",
+      "level": "warning",
+      "message": "Missing description for param 'parallel'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "testing.unit.run",
+      "field_name": "pattern",
+      "level": "warning",
+      "message": "Missing description for param 'pattern'",
+      "suggested_fix": "Pattern to match"
+    },
+    {
+      "module_id": "testing.unit.run",
+      "field_name": "verbose",
+      "level": "warning",
+      "message": "Missing description for param 'verbose'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "testing.visual.compare",
+      "field_name": "output_diff",
+      "level": "warning",
+      "message": "Missing description for param 'output_diff'",
+      "suggested_fix": "True or false toggle"
+    },
+    {
+      "module_id": "core.api.http_get",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "core.api.http_get",
+      "field_name": "params",
+      "level": "warning",
+      "message": "Missing description for param 'params'",
+      "suggested_fix": "Parameters"
+    },
+    {
+      "module_id": "core.api.http_get",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    },
+    {
+      "module_id": "core.api.http_post",
+      "field_name": "headers",
+      "level": "warning",
+      "message": "Missing description for param 'headers'",
+      "suggested_fix": "HTTP headers"
+    },
+    {
+      "module_id": "core.api.http_post",
+      "field_name": "json",
+      "level": "warning",
+      "message": "Missing description for param 'json'",
+      "suggested_fix": "Json value"
+    },
+    {
+      "module_id": "core.api.http_post",
+      "field_name": "timeout",
+      "level": "warning",
+      "message": "Missing description for param 'timeout'",
+      "suggested_fix": "Maximum time to wait in milliseconds"
+    }
+  ]
+}

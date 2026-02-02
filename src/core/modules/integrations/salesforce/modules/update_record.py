@@ -36,6 +36,8 @@ from ..integration import SalesforceIntegration
         "instance_url": {
             "type": "string",
             "label": "Instance URL",
+            "description": "Salesforce instance URL",
+            "description_key": "modules.integration.salesforce.update_record.params.instance_url.description",
             "placeholder": "${env.SALESFORCE_INSTANCE_URL}",
             "required": True,
         },
@@ -67,7 +69,7 @@ from ..integration import SalesforceIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
     },
     author="Flyto Team",
     license="MIT",

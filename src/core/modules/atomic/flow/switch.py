@@ -26,6 +26,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='GitMerge',
     color='#9C27B0',
 
+    # Type definitions for connection validation
+    input_types=['control', 'any'],
+    output_types=['control'],
+
     # Connection rules - switch needs a value to switch on
     can_receive_from=[
         'data.*',       # Data modules output values

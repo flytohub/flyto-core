@@ -36,6 +36,8 @@ from ..integration import SalesforceIntegration
         "instance_url": {
             "type": "string",
             "label": "Instance URL",
+            "description": "Salesforce instance URL",
+            "description_key": "modules.integration.salesforce.query.params.instance_url.description",
             "placeholder": "${env.SALESFORCE_INSTANCE_URL}",
             "required": True,
         },
@@ -64,9 +66,9 @@ from ..integration import SalesforceIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
-        "records": {"type": "array"},
-        "total_size": {"type": "number"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
+        "records": {"type": "array", "description": "Query result records"},
+        "total_size": {"type": "number", "description": "Total number of records"},
     },
     examples=[
         {

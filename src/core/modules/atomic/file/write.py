@@ -27,6 +27,10 @@ import shutil
     color='#6B7280',
 
 
+    # Type definitions for connection validation
+    input_types=['string'],
+    output_types=['string'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],    # Execution settings
     timeout_ms=30000,

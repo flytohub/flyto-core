@@ -27,6 +27,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='Square',
     color='#EF4444',
 
+    # Type definitions for connection validation
+    input_types=['control'],
+    output_types=['result'],
 
     can_receive_from=['*'],
     can_connect_to=[],    # Workflow Spec v1.1

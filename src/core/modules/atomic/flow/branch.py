@@ -26,6 +26,10 @@ from ...types import NodeType, EdgeType, DataType
     color='#E91E63',
 
     # Connection rules - branch needs a value to evaluate condition
+    # Type definitions for connection validation
+    input_types=['control', 'any'],
+    output_types=['control'],
+
     can_receive_from=[
         'data.*',       # Data modules output values
         'api.*',        # API responses

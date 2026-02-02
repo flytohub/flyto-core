@@ -97,10 +97,10 @@ from ..integration import JiraIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
-        "key": {"type": "string"},
-        "id": {"type": "string"},
-        "url": {"type": "string"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
+        "key": {"type": "string", "description": "Issue key (e.g., PROJ-123)"},
+        "id": {"type": "string", "description": "Issue ID"},
+        "url": {"type": "string", "description": "Issue URL"},
     },
     examples=[
         {

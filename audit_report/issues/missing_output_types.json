@@ -1,0 +1,202 @@
+{
+  "issue_type": "missing_output_types",
+  "total_count": 28,
+  "issues": [
+    {
+      "module_id": "array.sort",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "array.unique",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "browser.close",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['browser']"
+    },
+    {
+      "module_id": "browser.release",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['browser']"
+    },
+    {
+      "module_id": "data.pipeline",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "file.exists",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "file.write",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "flow.branch",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.switch",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.goto",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.loop",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.container",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.merge",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.fork",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.join",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.subflow",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.invoke",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.start",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.end",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.error_handle",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.parallel",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.batch",
+      "field_name": "output_types",
+      "level": "warning",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "utility.delay",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "template.invoke",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.retry",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.fallback",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.circuit_breaker",
+      "field_name": "output_types",
+      "level": "info",
+      "message": "Missing output_types for module",
+      "suggested_fix": "['any']"
+    }
+  ]
+}

@@ -25,6 +25,10 @@ import shutil
     color='#6B7280',
 
 
+    # Type definitions for connection validation
+    input_types=['string'],
+    output_types=['boolean'],
+
     can_receive_from=['start', 'flow.*'],
     can_connect_to=['*'],    # Execution settings
     retryable=True,

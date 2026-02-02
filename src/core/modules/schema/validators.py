@@ -21,7 +21,14 @@ EMAIL_PATTERN = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
 NON_EMPTY_PATTERN = r"^.+$"
 ALPHANUMERIC_PATTERN = r"^[a-zA-Z0-9]+$"
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
-SELECTOR_PATTERN = r"^(#|\.|\[|//|xpath=|css=|text=).+"
+# Selector pattern supports:
+# - CSS: #id, .class, [attr], div
+# - XPath: //div, xpath=//div
+# - Playwright: text=, role=, label=
+# - Shortcuts: placeholder=, name=, value=, type=, id=
+# - Fuzzy: id*=, class*=, id^=, id$= (contains, starts, ends)
+# - Modifiers: :nth=0, :near=selector
+SELECTOR_PATTERN = r"^(#|\.|\[|//|xpath=|css=|text=|role=|label=|placeholder=|name=|value=|type=|id=|class=|data-|id\*=|class\*=|name\*=|id\^=|id\$=|class\^=|class\$=).+"
 JSON_PATH_PATTERN = r"^\$(\..+|\[.+\])+"
 
 

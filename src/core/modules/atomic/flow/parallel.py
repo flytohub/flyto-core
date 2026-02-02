@@ -37,6 +37,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='Layers',
     color='#8B5CF6',
 
+    # Type definitions for connection validation
+    input_types=['control'],
+    output_types=['control'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 
@@ -105,7 +109,11 @@ from ...types import NodeType, EdgeType, DataType
             description='Parallel execution mode',
             description_key='modules.flow.parallel.params.mode.description',
             default='all',
-            enum=['all', 'race', 'settle'],
+            options=[
+                {'value': 'all', 'label': 'All (wait for all tasks)'},
+                {'value': 'race', 'label': 'Race (first completed wins)'},
+                {'value': 'settle', 'label': 'Settle (all with status)'},
+            ],
         ),
         flow_presets.TIMEOUT_MS(default=60000),
         field(

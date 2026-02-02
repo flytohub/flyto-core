@@ -42,7 +42,12 @@ from ...schema import compose, field
             label_key='modules.browser.pagination.params.mode.label',
             description='How to navigate between pages',
             default='next_button',
-            enum=['next_button', 'infinite_scroll', 'page_numbers', 'load_more'],
+            options=[
+                {'value': 'next_button', 'label': 'Next Button (click to advance)'},
+                {'value': 'infinite_scroll', 'label': 'Infinite Scroll (scroll to load)'},
+                {'value': 'page_numbers', 'label': 'Page Numbers (numbered links)'},
+                {'value': 'load_more', 'label': 'Load More (click button to append)'},
+            ],
         ),
         field(
             'item_selector',

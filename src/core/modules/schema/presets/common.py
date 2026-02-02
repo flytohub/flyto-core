@@ -15,6 +15,7 @@ def URL(
     placeholder: str = "https://example.com",
     label: str = "URL",
     label_key: str = "schema.field.url",
+    description: str = "URL to navigate to",
     http_only: bool = True,
 ) -> Dict[str, Dict[str, Any]]:
     """URL input field with validation."""
@@ -24,6 +25,7 @@ def URL(
         type="string",
         label=label,
         label_key=label_key,
+        description=description,
         placeholder=placeholder,
         required=required,
         validation=validation,
@@ -67,6 +69,7 @@ def FILE_PATH(
     label: str = "File Path",
     label_key: str = "schema.field.file_path",
     placeholder: str = "/path/to/file",
+    description: str = "Path to the file",
 ) -> Dict[str, Dict[str, Any]]:
     """File path input field."""
     return field(
@@ -74,6 +77,7 @@ def FILE_PATH(
         type="string",
         label=label,
         label_key=label_key,
+        description=description,
         placeholder=placeholder,
         required=required,
         format="path",
@@ -96,6 +100,7 @@ def TIMEOUT_MS(
         type="number",
         label=label,
         label_key=label_key,
+        description="Maximum time to wait in milliseconds",
         default=default,
         min=min_ms,
         max=max_ms,
@@ -121,6 +126,7 @@ def TIMEOUT_S(
         type="number",
         label=label,
         label_key=label_key,
+        description="Maximum time to wait in seconds",
         default=default,
         min=min_s,
         max=max_s,
@@ -146,6 +152,7 @@ def DURATION_MS(
         type="number",
         label=label,
         label_key=label_key,
+        description="Duration of the operation in milliseconds",
         default=default,
         min=min_ms,
         max=max_ms,
@@ -171,6 +178,7 @@ def DURATION_S(
         type="number",
         label=label,
         label_key=label_key,
+        description="Duration of the operation in seconds",
         default=default,
         min=min_s,
         max=max_s,
@@ -233,6 +241,7 @@ def SELECT(
     required: bool = False,
     label: str,
     label_key: Optional[str] = None,
+    description: str = "Select an option",
 ) -> Dict[str, Dict[str, Any]]:
     """Select dropdown field."""
     return field(
@@ -240,6 +249,7 @@ def SELECT(
         type="select",
         label=label,
         label_key=label_key,
+        description=description,
         options=options,
         default=default or (options[0]["value"] if options else None),
         required=required,
@@ -251,7 +261,7 @@ def DESCRIPTION(
     label: str = "Description",
     label_key: str = "schema.field.description",
     multiline: bool = False,
-    placeholder: str = "",
+    placeholder: str = "Enter description...",
 ) -> Dict[str, Dict[str, Any]]:
     """Generic description field."""
     return field(
@@ -259,6 +269,7 @@ def DESCRIPTION(
         type="string",
         label=label,
         label_key=label_key,
+        description="Optional description text",
         required=False,
         placeholder=placeholder,
         format="multiline" if multiline else None,
@@ -266,23 +277,4 @@ def DESCRIPTION(
     )
 
 
-def SELECT(
-    *,
-    key: str,
-    label: str,
-    options: list,
-    default: str = None,
-    required: bool = False,
-    label_key: str = None,
-) -> Dict[str, Dict[str, Any]]:
-    """Generic select field with custom options."""
-    return field(
-        key,
-        type="string",
-        label=label,
-        label_key=label_key or f"schema.field.{key}",
-        default=default,
-        required=required,
-        options=options,
-    )
 

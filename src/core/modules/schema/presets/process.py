@@ -22,6 +22,7 @@ def COMMAND(
         type="string",
         label=label,
         label_key=label_key,
+        description="Shell command to execute",
         placeholder=placeholder,
         required=required,
         group=FieldGroup.BASIC,
@@ -41,6 +42,7 @@ def WORKING_DIR(
         type="string",
         label=label,
         label_key=label_key,
+        description="Directory to execute command in",
         placeholder=placeholder,
         required=False,
         format="path",
@@ -60,6 +62,7 @@ def ENV_VARS(
         type="object",
         label=label,
         label_key=label_key,
+        description="Additional environment variables to set",
         required=False,
         ui={"widget": "key_value"},
         group=FieldGroup.OPTIONS,
@@ -100,6 +103,7 @@ def CAPTURE_STDERR(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Capture stderr separately from stdout",
         default=default,
         advanced=True,
         group=FieldGroup.ADVANCED,
@@ -120,6 +124,7 @@ def RAISE_ON_ERROR(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Raise exception if command returns non-zero exit code",
         default=default,
         advanced=True,
         group=FieldGroup.ADVANCED,
@@ -140,6 +145,7 @@ def PROCESS_NAME(
         type="string",
         label=label,
         label_key=label_key,
+        description="Friendly name to identify the process",
         placeholder=placeholder,
         required=False,
         group=FieldGroup.OPTIONS,
@@ -179,6 +185,7 @@ def CAPTURE_OUTPUT(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Capture stdout/stderr output from the process",
         default=default,
         group=FieldGroup.OPTIONS,
     )
@@ -189,6 +196,7 @@ def LOG_FILE(
     key: str = "log_file",
     label: str = "Log File",
     label_key: str = "schema.field.log_file",
+    placeholder: str = "/tmp/process.log",
 ) -> Dict[str, Dict[str, Any]]:
     """File to write process output to."""
     return field(
@@ -196,6 +204,8 @@ def LOG_FILE(
         type="string",
         label=label,
         label_key=label_key,
+        description="File path to write process output to",
+        placeholder=placeholder,
         required=False,
         format="path",
         advanced=True,
@@ -217,6 +227,7 @@ def AUTO_RESTART(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Automatically restart the process if it exits",
         default=default,
         advanced=True,
         group=FieldGroup.ADVANCED,
@@ -237,8 +248,13 @@ def SIGNAL_TYPE(
         type="string",
         label=label,
         label_key=label_key,
+        description="Signal to send to the process",
         default=default,
-        enum=["SIGTERM", "SIGKILL", "SIGINT"],
+        options=[
+            {"value": "SIGTERM", "label": "SIGTERM (graceful termination)"},
+            {"value": "SIGKILL", "label": "SIGKILL (force kill)"},
+            {"value": "SIGINT", "label": "SIGINT (interrupt)"},
+        ],
         advanced=True,
         group=FieldGroup.ADVANCED,
         visibility=Visibility.EXPERT,
@@ -258,6 +274,7 @@ def FORCE_KILL(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Force kill the process immediately with SIGKILL",
         default=default,
         group=FieldGroup.OPTIONS,
     )
@@ -276,6 +293,7 @@ def STOP_ALL(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Stop all tracked processes",
         default=default,
         group=FieldGroup.OPTIONS,
     )
@@ -286,6 +304,7 @@ def PROCESS_ID(
     key: str = "process_id",
     label: str = "Process ID",
     label_key: str = "schema.field.process_id",
+    placeholder: str = "dev-server-abc123",
 ) -> Dict[str, Dict[str, Any]]:
     """Internal process ID."""
     return field(
@@ -293,6 +312,8 @@ def PROCESS_ID(
         type="string",
         label=label,
         label_key=label_key,
+        description="Internal process identifier (from process.start)",
+        placeholder=placeholder,
         required=False,
         group=FieldGroup.OPTIONS,
     )
@@ -310,6 +331,7 @@ def PID(
         type="number",
         label=label,
         label_key=label_key,
+        description="System process ID (PID) of the process",
         required=False,
         group=FieldGroup.OPTIONS,
     )
@@ -320,6 +342,7 @@ def FILTER_NAME(
     key: str = "filter_name",
     label: str = "Filter by Name",
     label_key: str = "schema.field.filter_name",
+    placeholder: str = "server",
 ) -> Dict[str, Dict[str, Any]]:
     """Filter by name (substring match)."""
     return field(
@@ -327,6 +350,8 @@ def FILTER_NAME(
         type="string",
         label=label,
         label_key=label_key,
+        description="Filter processes by name (substring match)",
+        placeholder=placeholder,
         required=False,
         group=FieldGroup.OPTIONS,
     )
@@ -345,6 +370,7 @@ def INCLUDE_STATUS(
         type="boolean",
         label=label,
         label_key=label_key,
+        description="Include running/stopped status check for each process",
         default=default,
         group=FieldGroup.OPTIONS,
     )

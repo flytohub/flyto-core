@@ -27,6 +27,10 @@ from ...types import NodeType, EdgeType, DataType
     color='#F59E0B',
 
 
+    # Type definitions for connection validation
+    input_types=['control'],
+    output_types=['control'],
+
     can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.JOIN,

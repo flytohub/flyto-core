@@ -23,6 +23,10 @@ from ...errors import ValidationError, InvalidTypeError, InvalidValueError, Modu
     icon='Save',
     color='#10B981',
 
+    # Type definitions for connection validation
+    input_types=['array'],
+    output_types=['string'],
+
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 

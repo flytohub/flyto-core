@@ -279,8 +279,8 @@ class BrowserDriver:
             logger.info(f"Extracting data: {selector} (multiple={multiple})")
 
             if multiple:
-                # Extract from multiple elements
-                elements = await self._page.query_selector_all(selector)
+                # Extract from multiple elements (supports CSS and XPath)
+                elements = await self._query_selector_all(selector)
 
                 results = []
                 for element in elements:
@@ -295,8 +295,8 @@ class BrowserDriver:
                     'data': results
                 }
             else:
-                # Extract from single element
-                element = await self._page.query_selector(selector)
+                # Extract from single element (supports CSS and XPath)
+                element = await self._query_selector(selector)
 
                 if not element:
                     raise ValueError(f"Element not found: {selector}")
@@ -470,6 +470,209 @@ class BrowserDriver:
         """Ensure page is available"""
         if not self._page:
             raise RuntimeError("Browser not launched. Call launch() first.")
+
+    def _needs_locator_api(self, selector: str) -> bool:
+        """
+        Check if selector needs Playwright's locator API.
+
+        Locator API is needed for:
+        - XPath: starts with //, .., or xpath=
+        - Text: starts with text=
+        - Role: starts with role=
+        - Label: starts with label=
+
+        CSS selectors can use faster query_selector.
+        """
+        return (
+            selector.startswith('//') or
+            selector.startswith('..') or
+            selector.startswith('xpath=') or
+            selector.startswith('text=') or
+            selector.startswith('role=') or
+            selector.startswith('label=')
+        )
+
+    def _parse_modifiers(self, selector: str) -> tuple:
+        """
+        Parse selector modifiers like :nth=N and :near=selector.
+
+        Supports:
+        - selector:nth=0
+        - selector:near=other
+        - selector:nth=0:near=other
+
+        Returns:
+            (base_selector, nth_index, near_selector)
+        """
+        nth_index = None
+        near_selector = None
+        base_selector = selector
+
+        # Parse :near= first (it comes last in the string)
+        if ':near=' in base_selector:
+            parts = base_selector.rsplit(':near=', 1)
+            base_selector = parts[0]
+            near_selector = parts[1]
+
+        # Parse :nth=N from the remaining base
+        if ':nth=' in base_selector:
+            parts = base_selector.rsplit(':nth=', 1)
+            base_selector = parts[0]
+            try:
+                nth_index = int(parts[1])
+            except ValueError:
+                nth_index = 0
+
+        return base_selector, nth_index, near_selector
+
+    def _normalize_selector(self, selector: str) -> str:
+        """
+        Normalize user-friendly selectors to CSS or locator format.
+
+        Conversions:
+        - placeholder=xxx → [placeholder="xxx"] (exact match)
+        - name=xxx → [name="xxx"] (exact match)
+        - id*=xxx → [id*="xxx"] (contains)
+        - class*=xxx → [class*="xxx"] (contains)
+        - id^=xxx → [id^="xxx"] (starts with)
+        - id$=xxx → [id$="xxx"] (ends with)
+        """
+        # Fuzzy matching: attr*=, attr^=, attr$= (contains, starts, ends)
+        import re
+        fuzzy_match = re.match(r'^(id|class|name|placeholder|value|type|data-\w+)([*^$]?)=(.+)$', selector)
+        if fuzzy_match:
+            attr = fuzzy_match.group(1)
+            operator = fuzzy_match.group(2) or ''  # *, ^, $, or empty for exact
+            attr_value = fuzzy_match.group(3)
+
+            # Handle quoted and unquoted values
+            if not (attr_value.startswith('"') or attr_value.startswith("'")):
+                attr_value = f'"{attr_value}"'
+
+            return f'[{attr}{operator}={attr_value}]'
+
+        return selector
+
+    def _get_locator_selector(self, selector: str) -> str:
+        """
+        Convert selector to Playwright locator format.
+
+        - //div → xpath=//div
+        - ../parent → xpath=../parent
+        - text=Hello → text=Hello (unchanged)
+        - xpath=//div → xpath=//div (unchanged)
+        - css=div → div (strip prefix for CSS)
+        """
+        if selector.startswith('//') or selector.startswith('..'):
+            return f'xpath={selector}'
+        if selector.startswith('css='):
+            return selector[4:]
+        return selector
+
+    async def _query_selector(self, selector: str) -> Optional[ElementHandle]:
+        """
+        Query single element with CSS, XPath, text, or shortcut selectors.
+
+        Supported formats:
+        - CSS: .class, #id, div[attr=value]
+        - XPath: //div[@class="x"], xpath=//div
+        - Text: text=按鈕文字, text=Submit
+        - Role: role=button[name="Submit"]
+        - Label: label=Email (for associated input)
+        - Shortcuts: placeholder=請輸入, name=email, value=送出
+        - Fuzzy: id*=login, class*=btn (contains match)
+        - Modifiers: selector:nth=0, selector:near=other
+
+        Returns:
+            ElementHandle or None
+        """
+        self._ensure_page()
+
+        # Parse modifiers first
+        base_selector, nth_index, near_selector = self._parse_modifiers(selector)
+
+        # Normalize shortcuts like placeholder=xxx → [placeholder="xxx"]
+        base_selector = self._normalize_selector(base_selector)
+
+        # Get locator for the base selector
+        if self._needs_locator_api(base_selector):
+            locator_selector = self._get_locator_selector(base_selector)
+            locator = self._page.locator(locator_selector)
+        else:
+            css_selector = base_selector[4:] if base_selector.startswith('css=') else base_selector
+            locator = self._page.locator(css_selector)
+
+        # Apply :near= modifier if present
+        if near_selector:
+            near_base = self._normalize_selector(near_selector)
+            if self._needs_locator_api(near_base):
+                near_locator = self._page.locator(self._get_locator_selector(near_base))
+            else:
+                near_locator = self._page.locator(near_base)
+            locator = locator.near(near_locator)
+
+        # Apply :nth= modifier or get first
+        count = await locator.count()
+        if count == 0:
+            return None
+
+        if nth_index is not None:
+            if nth_index < count:
+                return await locator.nth(nth_index).element_handle()
+            return None
+        else:
+            return await locator.first.element_handle()
+
+    async def _query_selector_all(self, selector: str) -> List[ElementHandle]:
+        """
+        Query all matching elements with CSS, XPath, text, or shortcut selectors.
+
+        Supported formats:
+        - CSS: .class, #id, div[attr=value]
+        - XPath: //div[@class="x"], xpath=//div
+        - Text: text=按鈕文字, text=Submit
+        - Role: role=button[name="Submit"]
+        - Label: label=Email (for associated input)
+        - Shortcuts: placeholder=請輸入, name=email, value=送出
+        - Fuzzy: id*=login, class*=btn (contains match)
+        - Modifiers: selector:near=other
+
+        Returns:
+            List of ElementHandle
+        """
+        self._ensure_page()
+
+        # Parse modifiers (note: :nth= doesn't make sense for _all, ignore it)
+        base_selector, _, near_selector = self._parse_modifiers(selector)
+
+        # Normalize shortcuts like placeholder=xxx → [placeholder="xxx"]
+        base_selector = self._normalize_selector(base_selector)
+
+        # Get locator for the base selector
+        if self._needs_locator_api(base_selector):
+            locator_selector = self._get_locator_selector(base_selector)
+            locator = self._page.locator(locator_selector)
+        else:
+            css_selector = base_selector[4:] if base_selector.startswith('css=') else base_selector
+            locator = self._page.locator(css_selector)
+
+        # Apply :near= modifier if present
+        if near_selector:
+            near_base = self._normalize_selector(near_selector)
+            if self._needs_locator_api(near_base):
+                near_locator = self._page.locator(self._get_locator_selector(near_base))
+            else:
+                near_locator = self._page.locator(near_base)
+            locator = locator.near(near_locator)
+
+        # Get all matching elements
+        count = await locator.count()
+        elements = []
+        for i in range(count):
+            el = await locator.nth(i).element_handle()
+            if el:
+                elements.append(el)
+        return elements
 
     @property
     def page(self) -> Page:

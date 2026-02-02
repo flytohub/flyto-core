@@ -1,0 +1,335 @@
+{
+  "issue_type": "missing_input_types",
+  "total_count": 47,
+  "issues": [
+    {
+      "module_id": "array.sort",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "array.unique",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "browser.launch",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['browser']"
+    },
+    {
+      "module_id": "browser.ensure",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['browser']"
+    },
+    {
+      "module_id": "data.pipeline",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "file.exists",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "file.write",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "flow.branch",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.switch",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.goto",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.loop",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.container",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.merge",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.fork",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.join",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.subflow",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.invoke",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.trigger",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.start",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.end",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.breakpoint",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.error_handle",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.error_workflow_trigger",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.parallel",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "flow.batch",
+      "field_name": "input_types",
+      "level": "warning",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['control']"
+    },
+    {
+      "module_id": "training.practice.stats",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "utility.delay",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "utility.random.number",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "utility.random.string",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "utility.datetime.now",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "process.list",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "ai.model",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "ai.memory",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "ai.memory.vector",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "ai.memory.entity",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "ai.memory.redis",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "random.uuid",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "random.number",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "crypto.random_bytes",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "crypto.random_string",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "template.invoke",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.retry",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.fallback",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "error.circuit_breaker",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "core.api.google_search",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "core.api.serpapi_search",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    },
+    {
+      "module_id": "core.api.http_get",
+      "field_name": "input_types",
+      "level": "info",
+      "message": "Missing input_types for module",
+      "suggested_fix": "['any']"
+    }
+  ]
+}

@@ -22,6 +22,10 @@ from ...errors import ValidationError, ModuleError
     icon='FileCode',
     color='#F59E0B',
 
+    # Type definitions for connection validation
+    input_types=['object'],
+    output_types=['string'],
+
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 

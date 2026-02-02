@@ -22,6 +22,10 @@ from ...errors import ValidationError, InvalidValueError
     icon='Code',
     color='#F59E0B',
 
+    # Type definitions for connection validation
+    input_types=['string'],
+    output_types=['object'],
+
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 

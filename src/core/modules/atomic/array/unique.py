@@ -24,6 +24,10 @@ from ...errors import ValidationError, InvalidTypeError
     color='#10B981',
 
 
+    # Type definitions for connection validation
+    input_types=['array'],
+    output_types=['array'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],    # Phase 2: Execution settings
     # No timeout - instant array operation

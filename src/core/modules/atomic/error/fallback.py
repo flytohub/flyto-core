@@ -34,6 +34,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='Shield',
     color='#10B981',
 
+    # Type definitions for connection validation
+    input_types=['any'],
+    output_types=['any'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 

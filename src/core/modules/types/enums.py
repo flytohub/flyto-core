@@ -135,6 +135,10 @@ class DataType(str, Enum):
     AI_MEMORY = "ai_memory"
     AI_TOOL = "ai_tool"
     AI_OUTPUT_PARSER = "ai_output_parser"
+    # Flow control types
+    CONTROL = "control"    # Control flow signal
+    TRIGGER = "trigger"    # Trigger signal (start node)
+    RESULT = "result"      # Result signal (end node)
 
 
 class PortImportance(str, Enum):

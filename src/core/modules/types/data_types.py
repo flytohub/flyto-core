@@ -29,6 +29,10 @@ DATA_TYPE_COMPATIBILITY: Dict[DataType, List[DataType]] = {
     DataType.XML: [DataType.ANY, DataType.XML, DataType.STRING],
     DataType.HTML: [DataType.ANY, DataType.HTML, DataType.STRING],
     DataType.CREDENTIAL: [DataType.ANY, DataType.CREDENTIAL],
+    # Flow control types
+    DataType.CONTROL: [DataType.ANY, DataType.CONTROL],
+    DataType.TRIGGER: [DataType.ANY, DataType.TRIGGER, DataType.CONTROL],
+    DataType.RESULT: [DataType.ANY, DataType.RESULT, DataType.CONTROL],
 }
 
 

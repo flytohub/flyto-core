@@ -101,8 +101,8 @@ class BrowserFindModule(BaseModule):
         if not browser or not browser.page:
             raise RuntimeError("Browser not started")
 
-        # Use Playwright to find elements
-        elements = await browser.page.query_selector_all(self.selector)
+        # Use browser driver to find elements (supports CSS and XPath)
+        elements = await browser._query_selector_all(self.selector)
 
         # Limit count
         if self.limit is not None:

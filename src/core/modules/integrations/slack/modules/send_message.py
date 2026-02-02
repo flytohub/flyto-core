@@ -69,10 +69,10 @@ from ..integration import SlackIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
-        "channel": {"type": "string"},
-        "ts": {"type": "string"},
-        "message": {"type": "object"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
+        "channel": {"type": "string", "description": "Channel where message was sent"},
+        "ts": {"type": "string", "description": "Message timestamp"},
+        "message": {"type": "object", "description": "Full message object"},
     },
     examples=[
         {

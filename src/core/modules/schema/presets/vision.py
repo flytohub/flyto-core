@@ -65,7 +65,14 @@ def VISION_ANALYSIS_TYPE(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["general", "ui_review", "accessibility", "bug_detection", "comparison", "data_extraction"],
+        options=[
+            {"value": "general", "label": "General Analysis"},
+            {"value": "ui_review", "label": "UI/UX Review"},
+            {"value": "accessibility", "label": "Accessibility Check"},
+            {"value": "bug_detection", "label": "Bug Detection"},
+            {"value": "comparison", "label": "Image Comparison"},
+            {"value": "data_extraction", "label": "Data Extraction"},
+        ],
         description='Type of analysis to perform',
         group=FieldGroup.OPTIONS,
     )
@@ -85,7 +92,12 @@ def VISION_OUTPUT_FORMAT(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["text", "structured", "json", "checklist"],
+        options=[
+            {"value": "text", "label": "Plain Text"},
+            {"value": "structured", "label": "Structured Text"},
+            {"value": "json", "label": "JSON (machine-readable)"},
+            {"value": "checklist", "label": "Checklist"},
+        ],
         description='Format of the analysis output',
         group=FieldGroup.OPTIONS,
     )
@@ -127,7 +139,11 @@ def VISION_DETAIL(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["low", "high", "auto"],
+        options=[
+            {"value": "low", "label": "Low (fast)"},
+            {"value": "high", "label": "High (detailed)"},
+            {"value": "auto", "label": "Auto"},
+        ],
         description='Level of detail for image analysis',
         group=FieldGroup.OPTIONS,
     )
@@ -189,7 +205,12 @@ def VISION_COMPARISON_TYPE(
         label=label,
         label_key=label_key,
         default=default,
-        enum=["visual_regression", "layout_diff", "content_diff", "full_analysis"],
+        options=[
+            {"value": "visual_regression", "label": "Visual Regression (pixel-level)"},
+            {"value": "layout_diff", "label": "Layout Diff (structure)"},
+            {"value": "content_diff", "label": "Content Diff (text)"},
+            {"value": "full_analysis", "label": "Full Analysis"},
+        ],
         description='Type of comparison to perform',
         group=FieldGroup.OPTIONS,
     )

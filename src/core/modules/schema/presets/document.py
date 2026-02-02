@@ -411,7 +411,13 @@ def PDF_PAGE_SIZE(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["A4", "Letter", "Legal", "A3", "A5"],
+        options=[
+            {"value": "A4", "label": "A4 (210×297mm, International)"},
+            {"value": "Letter", "label": "Letter (8.5×11in, US)"},
+            {"value": "Legal", "label": "Legal (8.5×14in, US)"},
+            {"value": "A3", "label": "A3 (297×420mm, Large)"},
+            {"value": "A5", "label": "A5 (148×210mm, Small)"},
+        ],
         description='Page size format',
         group=FieldGroup.OPTIONS,
     )
@@ -432,7 +438,10 @@ def PDF_ORIENTATION(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["portrait", "landscape"],
+        options=[
+            {"value": "portrait", "label": "Portrait (vertical)"},
+            {"value": "landscape", "label": "Landscape (horizontal)"},
+        ],
         description='Page orientation',
         group=FieldGroup.OPTIONS,
     )

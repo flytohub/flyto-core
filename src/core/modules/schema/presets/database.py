@@ -23,7 +23,12 @@ def DB_TYPE(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["postgresql", "mysql", "sqlite"],
+        options=[
+            {"value": "postgresql", "label": "PostgreSQL"},
+            {"value": "mysql", "label": "MySQL / MariaDB"},
+            {"value": "sqlite", "label": "SQLite (file-based)"},
+        ],
+        description='Database type to connect to',
         group=FieldGroup.CONNECTION,
     )
 
@@ -33,6 +38,7 @@ def DB_CONNECTION_STRING(
     key: str = "connection_string",
     label: str = "Connection String",
     label_key: str = "schema.field.db_connection_string",
+    placeholder: str = "postgresql://user:pass@host:5432/db",
 ) -> Dict[str, Dict[str, Any]]:
     """Database connection string."""
     return field(
@@ -41,6 +47,7 @@ def DB_CONNECTION_STRING(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         secret=True,
         description='Database connection string',
         group=FieldGroup.CONNECTION,
@@ -52,6 +59,7 @@ def DB_HOST(
     key: str = "host",
     label: str = "Host",
     label_key: str = "schema.field.db_host",
+    placeholder: str = "localhost",
 ) -> Dict[str, Dict[str, Any]]:
     """Database host."""
     return field(
@@ -60,6 +68,7 @@ def DB_HOST(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         description='Database host',
         group=FieldGroup.CONNECTION,
     )
@@ -90,6 +99,7 @@ def DB_NAME(
     key: str = "database",
     label: str = "Database Name",
     label_key: str = "schema.field.db_name",
+    placeholder: str = "mydb",
 ) -> Dict[str, Dict[str, Any]]:
     """Database name."""
     return field(
@@ -98,6 +108,7 @@ def DB_NAME(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         description='Database name',
         group=FieldGroup.CONNECTION,
     )
@@ -108,6 +119,7 @@ def DB_USER(
     key: str = "user",
     label: str = "Username",
     label_key: str = "schema.field.db_user",
+    placeholder: str = "postgres",
 ) -> Dict[str, Dict[str, Any]]:
     """Database username."""
     return field(
@@ -116,6 +128,7 @@ def DB_USER(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         description='Database username',
         group=FieldGroup.CONNECTION,
     )
@@ -126,6 +139,7 @@ def DB_PASSWORD(
     key: str = "password",
     label: str = "Password",
     label_key: str = "schema.field.db_password",
+    placeholder: str = "********",
 ) -> Dict[str, Dict[str, Any]]:
     """Database password."""
     return field(
@@ -134,6 +148,7 @@ def DB_PASSWORD(
         label=label,
         label_key=label_key,
         required=False,
+        placeholder=placeholder,
         secret=True,
         description='Database password',
         group=FieldGroup.CONNECTION,
@@ -146,6 +161,7 @@ def DB_TABLE(
     required: bool = True,
     label: str = "Table Name",
     label_key: str = "schema.field.db_table",
+    placeholder: str = "users",
 ) -> Dict[str, Dict[str, Any]]:
     """Database table name."""
     return field(
@@ -154,6 +170,7 @@ def DB_TABLE(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Name of the table',
         group=FieldGroup.BASIC,
     )
@@ -215,8 +232,12 @@ def FETCH_MODE(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["all", "one", "none"],
-        description='How to fetch results: all, one, or none (for INSERT/UPDATE)',
+        options=[
+            {"value": "all", "label": "All Rows"},
+            {"value": "one", "label": "First Row Only"},
+            {"value": "none", "label": "None (INSERT/UPDATE)"},
+        ],
+        description='How many rows to return from the query',
         group=FieldGroup.OPTIONS,
     )
 
@@ -282,6 +303,7 @@ def REDIS_KEY(
     required: bool = True,
     label: str = "Key",
     label_key: str = "schema.field.redis_key",
+    placeholder: str = "user:123",
 ) -> Dict[str, Dict[str, Any]]:
     """Redis key."""
     return field(
@@ -290,6 +312,7 @@ def REDIS_KEY(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Redis key',
         group=FieldGroup.BASIC,
     )
@@ -418,6 +441,7 @@ def MONGO_DATABASE(
     required: bool = True,
     label: str = "Database",
     label_key: str = "schema.field.mongo_database",
+    placeholder: str = "mydb",
 ) -> Dict[str, Dict[str, Any]]:
     """MongoDB database name."""
     return field(
@@ -426,6 +450,7 @@ def MONGO_DATABASE(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Database name',
         group=FieldGroup.CONNECTION,
     )
@@ -437,6 +462,7 @@ def MONGO_COLLECTION(
     required: bool = True,
     label: str = "Collection",
     label_key: str = "schema.field.mongo_collection",
+    placeholder: str = "users",
 ) -> Dict[str, Dict[str, Any]]:
     """MongoDB collection name."""
     return field(
@@ -445,6 +471,7 @@ def MONGO_COLLECTION(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Collection name',
         group=FieldGroup.BASIC,
     )

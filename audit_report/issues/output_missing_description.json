@@ -1,0 +1,48 @@
+{
+  "issue_type": "output_missing_description",
+  "total_count": 6,
+  "issues": [
+    {
+      "module_id": "analysis.html.structure",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    },
+    {
+      "module_id": "analysis.html.find_patterns",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    },
+    {
+      "module_id": "analysis.html.extract_tables",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    },
+    {
+      "module_id": "analysis.html.extract_forms",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    },
+    {
+      "module_id": "analysis.html.extract_metadata",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    },
+    {
+      "module_id": "analysis.html.analyze_readability",
+      "field_name": "output.properties",
+      "level": "info",
+      "message": "Missing description for output field 'properties'",
+      "suggested_fix": "Properties value"
+    }
+  ]
+}

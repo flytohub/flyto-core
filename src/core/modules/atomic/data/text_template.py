@@ -21,6 +21,10 @@ from ...errors import ValidationError, InvalidTypeError, ModuleError
     icon='FileText',
     color='#8B5CF6',
 
+    # Type definitions for connection validation
+    input_types=['string', 'object'],
+    output_types=['string'],
+
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
 

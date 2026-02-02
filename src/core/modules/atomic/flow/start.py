@@ -25,6 +25,9 @@ from ...types import NodeType, EdgeType, DataType
     icon='Play',
     color='#10B981',
 
+    # Type definitions for connection validation
+    input_types=['trigger'],
+    output_types=['control'],
 
     can_receive_from=[],
     can_connect_to=['*'],    # Workflow Spec v1.1

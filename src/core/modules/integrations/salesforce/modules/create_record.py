@@ -64,9 +64,9 @@ from ..integration import SalesforceIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
-        "id": {"type": "string"},
-        "success": {"type": "boolean"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
+        "id": {"type": "string", "description": "Created record ID"},
+        "success": {"type": "boolean", "description": "Salesforce success status"},
     },
     examples=[
         {

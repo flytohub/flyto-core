@@ -31,6 +31,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='ShieldAlert',
     color='#EF4444',  # Red for error handling
 
+    # Type definitions for connection validation
+    input_types=['control'],
+    output_types=['control'],
+
     # Connection rules - can receive from any node that might error
     can_receive_from=['*'],
     can_connect_to=['*'],
@@ -87,7 +91,12 @@ from ...types import NodeType, EdgeType, DataType
             description='What to do with the error',
             description_key='modules.flow.error_handle.params.action.description',
             default='log_and_continue',
-            enum=['log_and_continue', 'transform', 'escalate', 'suppress'],
+            options=[
+                {'value': 'log_and_continue', 'label': 'Log and Continue (record error, proceed)'},
+                {'value': 'transform', 'label': 'Transform (convert to different format)'},
+                {'value': 'escalate', 'label': 'Escalate (pass to parent handler)'},
+                {'value': 'suppress', 'label': 'Suppress (ignore error silently)'},
+            ],
             required=True
         ),
         Field(

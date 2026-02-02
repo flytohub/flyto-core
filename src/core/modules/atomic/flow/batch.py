@@ -34,6 +34,10 @@ from ...types import NodeType, EdgeType, DataType
     icon='LayoutGrid',
     color='#06B6D4',
 
+    # Type definitions for connection validation
+    input_types=['control', 'array'],
+    output_types=['control', 'array'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 

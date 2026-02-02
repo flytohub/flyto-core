@@ -36,6 +36,8 @@ from ..integration import JiraIntegration
         "domain": {
             "type": "string",
             "label": "Jira Domain",
+            "description": "Your Jira Cloud domain (e.g., your-domain.atlassian.net)",
+            "description_key": "modules.integration.jira.search_issues.params.domain.description",
             "placeholder": "${env.JIRA_DOMAIN}",
             "required": True,
         },
@@ -68,9 +70,9 @@ from ..integration import JiraIntegration
         },
     },
     output_schema={
-        "ok": {"type": "boolean", "description": "The ok value"},
-        "issues": {"type": "array"},
-        "total": {"type": "number"},
+        "ok": {"type": "boolean", "description": "Whether the operation was successful"},
+        "issues": {"type": "array", "description": "List of matching issues"},
+        "total": {"type": "number", "description": "Total number of matching issues"},
     },
     author="Flyto Team",
     license="MIT",

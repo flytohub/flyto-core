@@ -38,7 +38,12 @@ from ....utils import validate_url_with_env_config, SSRFError
             label_key='modules.browser.tab.params.action.label',
             description='Tab action to perform',
             required=True,
-            enum=['new', 'switch', 'close', 'list'],
+            options=[
+                {'value': 'new', 'label': 'New Tab (create new)'},
+                {'value': 'switch', 'label': 'Switch Tab (change focus)'},
+                {'value': 'close', 'label': 'Close Tab'},
+                {'value': 'list', 'label': 'List All Tabs'},
+            ],
         ),
         presets.URL(required=False, placeholder='https://example.com'),
         field(

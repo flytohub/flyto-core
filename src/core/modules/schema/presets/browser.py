@@ -14,14 +14,15 @@ def SELECTOR(
     required: bool = True,
     label: str = "Element Selector",
     label_key: str = "schema.field.selector",
-    placeholder: str = "#element, .class, or xpath=//div",
+    placeholder: str = "#id, .class, text=Button, //xpath",
 ) -> Dict[str, Dict[str, Any]]:
-    """CSS/XPath selector field for browser automation."""
+    """CSS/XPath/Text selector field for browser automation."""
     return field(
         key,
         type="string",
         label=label,
         label_key=label_key,
+        description="CSS selector, XPath, or text selector to find the element",
         placeholder=placeholder,
         required=required,
         validation=validators.SELECTOR,
@@ -48,6 +49,7 @@ def WAIT_CONDITION(
         type="select",
         label=label,
         label_key=label_key,
+        description="When to consider navigation complete",
         options=options,
         default=default,
         group=FieldGroup.OPTIONS,
@@ -68,6 +70,7 @@ def VIEWPORT(
             type="number",
             label="Width",
             label_key="schema.field.viewport_width",
+            description="Browser viewport width in pixels",
             default=default_width,
             min=320,
             max=3840,
@@ -79,6 +82,7 @@ def VIEWPORT(
             type="number",
             label="Height",
             label_key="schema.field.viewport_height",
+            description="Browser viewport height in pixels",
             default=default_height,
             min=240,
             max=2160,
@@ -100,6 +104,7 @@ def SCREENSHOT_OPTIONS(
             type="boolean",
             label="Full Page",
             label_key="schema.field.full_page",
+            description="Capture the entire scrollable page",
             default=False,
             group=FieldGroup.OPTIONS,
         ),
@@ -108,6 +113,7 @@ def SCREENSHOT_OPTIONS(
             type="select",
             label="Format",
             label_key="schema.field.screenshot_format",
+            description="Image format for the screenshot",
             options=[
                 {"value": "png", "label": "PNG"},
                 {"value": "jpeg", "label": "JPEG"},
@@ -152,6 +158,7 @@ def DURATION_S(
         type="number",
         label=label,
         label_key=label_key,
+        description="Duration of the operation in seconds",
         default=default,
         min=min_s,
         max=max_s,
@@ -177,6 +184,7 @@ def OUTPUT_PATH(
         type="string",
         label=label,
         label_key=label_key,
+        description="Path where the output file will be saved",
         placeholder=placeholder,
         default=default,
         required=required,
@@ -197,12 +205,13 @@ def POSITION(
         type="object",
         label=label,
         label_key=label_key,
+        description="Click position relative to element (0-1 range)",
         required=False,
         visibility=Visibility.EXPERT,
         group=FieldGroup.ADVANCED,
         properties={
-            "x": {"type": "number", "min": 0, "max": 1, "default": 0.5},
-            "y": {"type": "number", "min": 0, "max": 1, "default": 0.5},
+            "x": {"type": "number", "min": 0, "max": 1, "default": 0.5, "description": "Horizontal position (0=left, 1=right)"},
+            "y": {"type": "number", "min": 0, "max": 1, "default": 0.5, "description": "Vertical position (0=top, 1=bottom)"},
         },
     )
 
@@ -221,8 +230,13 @@ def SCROLL_DIRECTION(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["up", "down", "left", "right"],
-        description='Scroll direction (up, down, left, right)',
+        options=[
+            {"value": "down", "label": "↓ Down"},
+            {"value": "up", "label": "↑ Up"},
+            {"value": "left", "label": "← Left"},
+            {"value": "right", "label": "→ Right"},
+        ],
+        description='Direction to scroll the page',
         group=FieldGroup.OPTIONS,
     )
 
@@ -262,8 +276,11 @@ def SCROLL_BEHAVIOR(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["smooth", "instant"],
-        description='Scroll behavior (smooth or instant)',
+        options=[
+            {"value": "smooth", "label": "Smooth (animated)"},
+            {"value": "instant", "label": "Instant (immediate)"},
+        ],
+        description='How the scroll animation behaves',
         group=FieldGroup.OPTIONS,
     )
 
@@ -274,6 +291,7 @@ def SELECT_VALUE(
     required: bool = False,
     label: str = "Value",
     label_key: str = "schema.field.select_value",
+    placeholder: str = "option-value",
 ) -> Dict[str, Dict[str, Any]]:
     """Select option value."""
     return field(
@@ -282,6 +300,7 @@ def SELECT_VALUE(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Option value attribute to select',
         group=FieldGroup.BASIC,
     )
@@ -293,6 +312,7 @@ def SELECT_LABEL(
     required: bool = False,
     label: str = "Label",
     label_key: str = "schema.field.select_label",
+    placeholder: str = "Option Text",
 ) -> Dict[str, Dict[str, Any]]:
     """Select option label."""
     return field(
@@ -301,6 +321,7 @@ def SELECT_LABEL(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Option text content to select (alternative to value)',
         group=FieldGroup.BASIC,
     )
@@ -329,19 +350,24 @@ def BROWSER_ACTION(
     *,
     key: str = "action",
     required: bool = True,
-    options: List[str] = None,
+    options: List[Dict[str, str]] = None,
     label: str = "Action",
     label_key: str = "schema.field.browser_action",
 ) -> Dict[str, Dict[str, Any]]:
     """Browser action type."""
+    default_options = [
+        {"value": "get", "label": "Get (read value)"},
+        {"value": "set", "label": "Set (write value)"},
+        {"value": "clear", "label": "Clear (remove)"},
+    ]
     return field(
         key,
         type="string",
         label=label,
         label_key=label_key,
         required=required,
-        enum=options or ["get", "set", "clear"],
-        description='Action to perform',
+        options=options or default_options,
+        description='Action to perform on the storage',
         group=FieldGroup.BASIC,
     )
 
@@ -352,6 +378,7 @@ def COOKIE_NAME(
     required: bool = False,
     label: str = "Cookie Name",
     label_key: str = "schema.field.cookie_name",
+    placeholder: str = "session_id",
 ) -> Dict[str, Dict[str, Any]]:
     """Cookie name."""
     return field(
@@ -360,6 +387,7 @@ def COOKIE_NAME(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Name of the cookie',
         group=FieldGroup.BASIC,
     )
@@ -371,6 +399,7 @@ def COOKIE_VALUE(
     required: bool = False,
     label: str = "Cookie Value",
     label_key: str = "schema.field.cookie_value",
+    placeholder: str = "cookie_value_here",
 ) -> Dict[str, Dict[str, Any]]:
     """Cookie value."""
     return field(
@@ -379,6 +408,7 @@ def COOKIE_VALUE(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Value of the cookie',
         group=FieldGroup.BASIC,
     )
@@ -390,6 +420,7 @@ def COOKIE_DOMAIN(
     required: bool = False,
     label: str = "Domain",
     label_key: str = "schema.field.cookie_domain",
+    placeholder: str = ".example.com",
 ) -> Dict[str, Dict[str, Any]]:
     """Cookie domain."""
     return field(
@@ -398,6 +429,7 @@ def COOKIE_DOMAIN(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Cookie domain',
         group=FieldGroup.OPTIONS,
     )
@@ -409,6 +441,7 @@ def COOKIE_PATH(
     default: str = "/",
     label: str = "Path",
     label_key: str = "schema.field.cookie_path",
+    placeholder: str = "/",
 ) -> Dict[str, Dict[str, Any]]:
     """Cookie path."""
     return field(
@@ -418,6 +451,7 @@ def COOKIE_PATH(
         label_key=label_key,
         default=default,
         required=False,
+        placeholder=placeholder,
         description='Cookie path',
         group=FieldGroup.OPTIONS,
     )
@@ -497,8 +531,11 @@ def STORAGE_TYPE(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["local", "session"],
-        description='Type of storage to access',
+        options=[
+            {"value": "local", "label": "localStorage (persistent)"},
+            {"value": "session", "label": "sessionStorage (tab only)"},
+        ],
+        description='Browser storage type to access',
         group=FieldGroup.OPTIONS,
     )
 
@@ -509,6 +546,7 @@ def STORAGE_KEY(
     required: bool = False,
     label: str = "Key",
     label_key: str = "schema.field.storage_key",
+    placeholder: str = "storage_key",
 ) -> Dict[str, Dict[str, Any]]:
     """Storage key."""
     return field(
@@ -517,6 +555,7 @@ def STORAGE_KEY(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Storage key',
         group=FieldGroup.BASIC,
     )
@@ -528,6 +567,7 @@ def STORAGE_VALUE(
     required: bool = False,
     label: str = "Value",
     label_key: str = "schema.field.storage_value",
+    placeholder: str = "value_to_store",
 ) -> Dict[str, Dict[str, Any]]:
     """Storage value."""
     return field(
@@ -536,6 +576,7 @@ def STORAGE_VALUE(
         label=label,
         label_key=label_key,
         required=required,
+        placeholder=placeholder,
         description='Value to store',
         group=FieldGroup.BASIC,
     )
@@ -597,8 +638,12 @@ def DIALOG_ACTION(
         label=label,
         label_key=label_key,
         required=required,
-        enum=["accept", "dismiss", "listen"],
-        description='How to handle the dialog',
+        options=[
+            {"value": "accept", "label": "Accept (OK/Confirm)"},
+            {"value": "dismiss", "label": "Dismiss (Cancel)"},
+            {"value": "listen", "label": "Listen (capture only)"},
+        ],
+        description='How to respond to the dialog',
         group=FieldGroup.BASIC,
     )
 
@@ -739,8 +784,14 @@ def CONSOLE_LEVEL(
         label_key=label_key,
         default=default,
         required=False,
-        enum=["all", "error", "warning", "info", "log"],
-        description='Filter by log level',
+        options=[
+            {"value": "all", "label": "All Levels"},
+            {"value": "error", "label": "🔴 Error"},
+            {"value": "warning", "label": "🟡 Warning"},
+            {"value": "info", "label": "🔵 Info"},
+            {"value": "log", "label": "⚪ Log"},
+        ],
+        description='Filter console messages by level',
         group=FieldGroup.OPTIONS,
     )
 

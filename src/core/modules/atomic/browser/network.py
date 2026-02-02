@@ -37,7 +37,11 @@ from ...schema import compose, presets, field
             label_key='modules.browser.network.params.action.label',
             description='Network action to perform',
             required=True,
-            enum=['monitor', 'block', 'intercept'],
+            options=[
+                {'value': 'monitor', 'label': 'Monitor (capture requests)'},
+                {'value': 'block', 'label': 'Block (abort matching requests)'},
+                {'value': 'intercept', 'label': 'Intercept (mock responses)'},
+            ],
         ),
         field(
             'url_pattern',

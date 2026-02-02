@@ -1,0 +1,118 @@
+{
+  "issue_type": "missing_label",
+  "total_count": 16,
+  "issues": [
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "actual",
+      "level": "warning",
+      "message": "Missing label for param 'actual'",
+      "suggested_fix": "Actual"
+    },
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "expected",
+      "level": "warning",
+      "message": "Missing label for param 'expected'",
+      "suggested_fix": "Expected"
+    },
+    {
+      "module_id": "test.assert_equal",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    },
+    {
+      "module_id": "test.assert_true",
+      "field_name": "condition",
+      "level": "warning",
+      "message": "Missing label for param 'condition'",
+      "suggested_fix": "Condition"
+    },
+    {
+      "module_id": "test.assert_true",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    },
+    {
+      "module_id": "test.assert_contains",
+      "field_name": "collection",
+      "level": "warning",
+      "message": "Missing label for param 'collection'",
+      "suggested_fix": "Collection"
+    },
+    {
+      "module_id": "test.assert_contains",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing label for param 'value'",
+      "suggested_fix": "Value"
+    },
+    {
+      "module_id": "test.assert_contains",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    },
+    {
+      "module_id": "test.assert_greater_than",
+      "field_name": "actual",
+      "level": "warning",
+      "message": "Missing label for param 'actual'",
+      "suggested_fix": "Actual"
+    },
+    {
+      "module_id": "test.assert_greater_than",
+      "field_name": "threshold",
+      "level": "warning",
+      "message": "Missing label for param 'threshold'",
+      "suggested_fix": "Threshold"
+    },
+    {
+      "module_id": "test.assert_greater_than",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    },
+    {
+      "module_id": "test.assert_length",
+      "field_name": "collection",
+      "level": "warning",
+      "message": "Missing label for param 'collection'",
+      "suggested_fix": "Collection"
+    },
+    {
+      "module_id": "test.assert_length",
+      "field_name": "expected_length",
+      "level": "warning",
+      "message": "Missing label for param 'expected_length'",
+      "suggested_fix": "Expected Length"
+    },
+    {
+      "module_id": "test.assert_length",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    },
+    {
+      "module_id": "test.assert_not_null",
+      "field_name": "value",
+      "level": "warning",
+      "message": "Missing label for param 'value'",
+      "suggested_fix": "Value"
+    },
+    {
+      "module_id": "test.assert_not_null",
+      "field_name": "message",
+      "level": "warning",
+      "message": "Missing label for param 'message'",
+      "suggested_fix": "Message"
+    }
+  ]
+}

@@ -111,6 +111,10 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     icon='GitBranch',
     color='#EC4899',
 
+    # Type definitions for connection validation
+    input_types=['any'],
+    output_types=['any'],
+
     can_receive_from=['*'],
     can_connect_to=['*'],
 

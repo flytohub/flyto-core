@@ -1,0 +1,2782 @@
+{
+  "array.filter": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "condition": {
+        "placeholder": "value > 0"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "array.sort": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "order": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "array.unique": {
+    "category": "atomic",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "browser.launch": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "width": {
+        "description": "Width in pixels"
+      },
+      "height": {
+        "description": "Height in pixels"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['browser']"
+    }
+  },
+  "browser.goto": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "wait_until": {
+        "description": "Select an option"
+      },
+      "timeout_ms": {
+        "description": "Numeric value"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.click": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.type": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.screenshot": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "path": {
+        "description": "File or directory path"
+      },
+      "full_page": {
+        "description": "True or false toggle"
+      },
+      "format": {
+        "description": "Output format"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.wait": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "duration_ms": {
+        "description": "Numeric value"
+      },
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.extract": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.close": {
+    "category": "browser",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_output_types": "['browser']"
+    }
+  },
+  "browser.find": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.ensure": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "width": {
+        "description": "Width in pixels"
+      },
+      "height": {
+        "description": "Height in pixels"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['browser']"
+    }
+  },
+  "browser.release": {
+    "category": "browser",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_output_types": "['browser']"
+    }
+  },
+  "browser.console": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "level": {
+        "placeholder": "1"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.scroll": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "direction": {
+        "placeholder": "Enter text..."
+      },
+      "behavior": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.hover": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      },
+      "position": {
+        "description": "Key-value data structure"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.select": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "value": {
+        "placeholder": "Enter value..."
+      },
+      "label": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.cookies": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "name": {
+        "placeholder": "Enter name..."
+      },
+      "value": {
+        "placeholder": "Enter value..."
+      },
+      "domain": {
+        "placeholder": "Enter text..."
+      },
+      "path": {
+        "placeholder": "/path/to/file"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.storage": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "type": {
+        "placeholder": "Enter text..."
+      },
+      "key": {
+        "placeholder": "key_name"
+      },
+      "value": {
+        "placeholder": "Enter value..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.dialog": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "prompt_text": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.upload": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.download": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.frame": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "selector": {
+        "description": "CSS/XPath selector to locate element"
+      },
+      "name": {
+        "placeholder": "Enter name..."
+      },
+      "url": {
+        "placeholder": "https://example.com"
+      },
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.network": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "resource_type": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.tab": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.pdf": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "path": {
+        "description": "File or directory path"
+      },
+      "page_size": {
+        "placeholder": "Enter text..."
+      },
+      "orientation": {
+        "placeholder": "Enter text..."
+      },
+      "header": {
+        "placeholder": "Enter text..."
+      },
+      "footer": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.drag": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "source": {
+        "description": "Source data or path"
+      },
+      "target": {
+        "description": "Target data or path"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.record": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      },
+      "output_format": {
+        "placeholder": "Enter text..."
+      },
+      "output_path": {
+        "description": "Text input"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.login": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "username": {
+        "placeholder": "Enter text..."
+      },
+      "password": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "browser.pagination": {
+    "category": "browser",
+    "params_schema_fixes": {
+      "mode": {
+        "placeholder": "Enter text..."
+      },
+      "wait_for_selector": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "email.send": {
+    "category": "communication",
+    "params_schema_fixes": {
+      "subject": {
+        "placeholder": "Enter text..."
+      },
+      "body": {
+        "placeholder": "{}"
+      },
+      "from_email": {
+        "placeholder": "Enter text..."
+      },
+      "cc": {
+        "placeholder": "Enter text..."
+      },
+      "bcc": {
+        "placeholder": "Enter text..."
+      },
+      "smtp_user": {
+        "placeholder": "Enter text..."
+      },
+      "smtp_password": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "email.read": {
+    "category": "communication",
+    "params_schema_fixes": {
+      "folder": {
+        "placeholder": "Enter text..."
+      },
+      "since_date": {
+        "placeholder": "Enter text..."
+      },
+      "from_filter": {
+        "placeholder": "Enter text..."
+      },
+      "subject_filter": {
+        "placeholder": "Enter text..."
+      },
+      "imap_user": {
+        "placeholder": "Enter text..."
+      },
+      "imap_password": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "slack.send": {
+    "category": "communication",
+    "params_schema_fixes": {
+      "message": {
+        "placeholder": "Enter message..."
+      },
+      "channel": {
+        "placeholder": "Enter text..."
+      },
+      "username": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "webhook.trigger": {
+    "category": "communication",
+    "params_schema_fixes": {
+      "method": {
+        "placeholder": "Enter text..."
+      },
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "content_type": {
+        "placeholder": "Enter text..."
+      },
+      "auth_token": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "data.pipeline": {
+    "category": "data",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "database.query": {
+    "category": "database",
+    "params_schema_fixes": {
+      "database_type": {
+        "placeholder": "Enter text..."
+      },
+      "connection_string": {
+        "placeholder": "Enter text..."
+      },
+      "host": {
+        "placeholder": "Enter text..."
+      },
+      "database": {
+        "placeholder": "Enter text..."
+      },
+      "user": {
+        "placeholder": "Enter text..."
+      },
+      "password": {
+        "placeholder": "Enter text..."
+      },
+      "fetch": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "database.insert": {
+    "category": "database",
+    "params_schema_fixes": {
+      "table": {
+        "placeholder": "Enter text..."
+      },
+      "database_type": {
+        "placeholder": "Enter text..."
+      },
+      "connection_string": {
+        "placeholder": "Enter text..."
+      },
+      "host": {
+        "placeholder": "Enter text..."
+      },
+      "database": {
+        "placeholder": "Enter text..."
+      },
+      "user": {
+        "placeholder": "Enter text..."
+      },
+      "password": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "database.update": {
+    "category": "database",
+    "params_schema_fixes": {
+      "table": {
+        "placeholder": "Enter text..."
+      },
+      "database_type": {
+        "placeholder": "Enter text..."
+      },
+      "connection_string": {
+        "placeholder": "Enter text..."
+      },
+      "host": {
+        "placeholder": "Enter text..."
+      },
+      "database": {
+        "placeholder": "Enter text..."
+      },
+      "user": {
+        "placeholder": "Enter text..."
+      },
+      "password": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "datetime.format": {
+    "category": "utility",
+    "params_schema_fixes": {
+      "format": {
+        "placeholder": "json"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "datetime.parse": {
+    "category": "utility",
+    "params_schema_fixes": {
+      "format": {
+        "placeholder": "json"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "pdf.parse": {
+    "category": "document",
+    "params_schema_fixes": {
+      "pages": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "pdf.generate": {
+    "category": "document",
+    "params_schema_fixes": {
+      "content": {
+        "placeholder": "Enter content..."
+      },
+      "title": {
+        "placeholder": "Enter title..."
+      },
+      "author": {
+        "placeholder": "Enter text..."
+      },
+      "page_size": {
+        "placeholder": "Enter text..."
+      },
+      "orientation": {
+        "placeholder": "Enter text..."
+      },
+      "header": {
+        "placeholder": "Enter text..."
+      },
+      "footer": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "pdf.fill_form": {
+    "category": "document",
+    "params_schema_fixes": {
+      "template": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "excel.read": {
+    "category": "document",
+    "params_schema_fixes": {
+      "sheet": {
+        "placeholder": "Enter text..."
+      },
+      "range": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "excel.write": {
+    "category": "document",
+    "params_schema_fixes": {
+      "sheet_name": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "word.parse": {
+    "category": "document",
+    "params_schema_fixes": {
+      "file_path": {
+        "placeholder": "Enter text..."
+      },
+      "images_output_dir": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "pdf.to_word": {
+    "category": "document",
+    "params_schema_fixes": {
+      "pages": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "element.query": {
+    "category": "element",
+    "params_schema_fixes": {
+      "element_id": {
+        "placeholder": "Enter text..."
+      },
+      "selector": {
+        "placeholder": "#id, .class, or //xpath"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "element.text": {
+    "category": "element",
+    "params_schema_fixes": {
+      "element_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "element.attribute": {
+    "category": "element",
+    "params_schema_fixes": {
+      "element_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "file.exists": {
+    "category": "atomic",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "file.read": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "file.write": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      },
+      "mode": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "flow.branch": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.switch": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "expression": {
+        "placeholder": "value"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.goto": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "target": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.foreach": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "item_var": {
+        "placeholder": "Enter text..."
+      },
+      "index_var": {
+        "placeholder": "Enter text..."
+      },
+      "output_mode": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "flow.loop": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "target": {
+        "placeholder": "Enter text..."
+      },
+      "index_var": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.container": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "isolated_variables": {
+        "description": "List of items"
+      },
+      "export_variables": {
+        "description": "List of items"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.merge": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "strategy": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.fork": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.join": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "strategy": {
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.subflow": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "execution_mode": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.invoke": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.trigger": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "trigger_type": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "event_name": {
+        "placeholder": "Enter text..."
+      },
+      "description": {
+        "description": "Description text"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']"
+    }
+  },
+  "flow.start": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.end": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.breakpoint": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "title": {
+        "placeholder": "Enter title..."
+      },
+      "description": {
+        "description": "Description text"
+      },
+      "required_approvers": {
+        "description": "List of items"
+      },
+      "approval_mode": {
+        "placeholder": "Enter text..."
+      },
+      "custom_fields": {
+        "description": "List of items"
+      },
+      "include_context": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.error_handle": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "action": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.error_workflow_trigger": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "description": {
+        "placeholder": "Enter description..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']"
+    }
+  },
+  "flow.parallel": {
+    "category": "flow",
+    "params_schema_fixes": {
+      "mode": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "flow.batch": {
+    "category": "flow",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['control']",
+      "missing_output_types": "['control']"
+    }
+  },
+  "image.download": {
+    "category": "image",
+    "params_schema_fixes": {
+      "url": {
+        "description": "URL to navigate or request"
+      },
+      "output_path": {
+        "description": "Text input"
+      },
+      "output_dir": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "image.convert": {
+    "category": "image",
+    "params_schema_fixes": {
+      "input_path": {
+        "description": "Text input"
+      },
+      "output_path": {
+        "description": "Text input"
+      },
+      "format": {
+        "placeholder": "json"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "image.resize": {
+    "category": "image",
+    "params_schema_fixes": {
+      "input_path": {
+        "description": "Text input"
+      },
+      "output_path": {
+        "description": "Text input"
+      },
+      "algorithm": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "image.compress": {
+    "category": "image",
+    "params_schema_fixes": {
+      "input_path": {
+        "description": "Text input"
+      },
+      "output_path": {
+        "description": "Text input"
+      },
+      "format": {
+        "placeholder": "json"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "image.qrcode_generate": {
+    "category": "image",
+    "params_schema_fixes": {
+      "output_path": {
+        "description": "Text input"
+      },
+      "color": {
+        "placeholder": "Enter text..."
+      },
+      "background": {
+        "placeholder": "Enter text..."
+      },
+      "logo_path": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "math.calculate": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "operation": {
+        "description": "Operation type",
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "meta.modules.list": {
+    "category": "meta",
+    "params_schema_fixes": {
+      "category": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "meta.modules.update_docs": {
+    "category": "meta",
+    "params_schema_fixes": {
+      "output_path": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "object.flatten": {
+    "category": "object",
+    "params_schema_fixes": {
+      "separator": {
+        "placeholder": ","
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "object.unflatten": {
+    "category": "object",
+    "params_schema_fixes": {
+      "separator": {
+        "placeholder": ","
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "object.deep_merge": {
+    "category": "object",
+    "params_schema_fixes": {
+      "array_merge": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "string.split": {
+    "category": "string",
+    "params_schema_fixes": {
+      "delimiter": {
+        "placeholder": ","
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "string.pad": {
+    "category": "string",
+    "params_schema_fixes": {
+      "pad_char": {
+        "placeholder": "Enter text..."
+      },
+      "position": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "string.slugify": {
+    "category": "string",
+    "params_schema_fixes": {
+      "separator": {
+        "placeholder": ","
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "string.template": {
+    "category": "string",
+    "params_schema_fixes": {
+      "missing_value": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "training.practice.analyze": {
+    "category": "training",
+    "params_schema_fixes": {
+      "url": {
+        "description": "URL to navigate or request"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "training.practice.infer_schema": {
+    "category": "training",
+    "params_schema_fixes": {
+      "url": {
+        "description": "URL to navigate or request"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "training.practice.execute": {
+    "category": "training",
+    "params_schema_fixes": {
+      "url": {
+        "description": "URL to navigate or request"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "training.practice.stats": {
+    "category": "training",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "utility.delay": {
+    "category": "utility",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "utility.random.number": {
+    "category": "utility",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "utility.random.string": {
+    "category": "utility",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "utility.datetime.now": {
+    "category": "utility",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "utility.hash.md5": {
+    "category": "utility",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "shell.exec": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "command": {
+        "description": "Command to run"
+      },
+      "cwd": {
+        "description": "Working directory"
+      },
+      "env": {
+        "description": "Environment variables"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      },
+      "capture_stderr": {
+        "description": "True or false toggle"
+      },
+      "encoding": {
+        "placeholder": "utf-8"
+      },
+      "raise_on_error": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "http.request": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "method": {
+        "placeholder": "Enter text..."
+      },
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "body": {
+        "description": "Request body"
+      },
+      "query": {
+        "description": "Query string or parameters"
+      },
+      "content_type": {
+        "placeholder": "Enter text..."
+      },
+      "auth": {
+        "description": "Key-value data structure"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      },
+      "response_type": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "http.response_assert": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "content_type": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "process.start": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "command": {
+        "description": "Command to run"
+      },
+      "cwd": {
+        "description": "Working directory"
+      },
+      "env": {
+        "description": "Environment variables"
+      },
+      "name": {
+        "description": "Name identifier"
+      },
+      "wait_timeout": {
+        "description": "Numeric value"
+      },
+      "capture_output": {
+        "description": "True or false toggle"
+      },
+      "log_file": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "auto_restart": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "process.stop": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "process_id": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "name": {
+        "description": "Name identifier"
+      },
+      "pid": {
+        "description": "Numeric value"
+      },
+      "signal": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      },
+      "force": {
+        "description": "True or false toggle"
+      },
+      "stop_all": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "process.list": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "filter_name": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "include_status": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "port.wait": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "host": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "port.check": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "host": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.http_get": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "url": {
+        "description": "URL to navigate or request"
+      },
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "query": {
+        "description": "Query string or parameters"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "vision.analyze": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "analysis_type": {
+        "placeholder": "Enter text..."
+      },
+      "output_format": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "description": "Text input"
+      },
+      "header_name": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "detail": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "vision.compare": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "comparison_type": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "description": "Text input"
+      },
+      "header_name": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "ui.evaluate": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "app_type": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "llm.chat": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "prompt": {
+        "description": "Text input"
+      },
+      "system_prompt": {
+        "description": "Text input"
+      },
+      "provider": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "response_format": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "llm.code_fix": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "fix_mode": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "llm.agent": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "prompt_path": {
+        "placeholder": "Enter text..."
+      },
+      "join_separator": {
+        "placeholder": "Enter text..."
+      },
+      "system_prompt": {
+        "placeholder": "Enter text..."
+      },
+      "provider": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "ai.model": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "provider": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "api_key": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "ai.memory": {
+    "category": "ai",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "ai.memory.vector": {
+    "category": "ai",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "ai.memory.entity": {
+    "category": "ai",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "ai.memory.redis": {
+    "category": "ai",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "analysis.html.structure": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "analysis.html.find_patterns": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "analysis.html.extract_tables": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "analysis.html.extract_forms": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "analysis.html.extract_metadata": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "analysis.html.analyze_readability": {
+    "category": "analysis",
+    "params_schema_fixes": {
+      "html": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {
+      "properties": {
+        "description": "Properties value"
+      }
+    },
+    "type_fixes": {}
+  },
+  "test.assert_equal": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "actual": {
+        "label": "Actual",
+        "placeholder": "Enter text..."
+      },
+      "expected": {
+        "label": "Expected",
+        "placeholder": "Enter text..."
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "test.assert_true": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "condition": {
+        "label": "Condition"
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "test.assert_contains": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "collection": {
+        "label": "Collection"
+      },
+      "value": {
+        "label": "Value",
+        "placeholder": "Enter value..."
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "test.assert_greater_than": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "actual": {
+        "label": "Actual"
+      },
+      "threshold": {
+        "label": "Threshold"
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "test.assert_length": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "collection": {
+        "label": "Collection"
+      },
+      "expected_length": {
+        "label": "Expected Length"
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "test.assert_not_null": {
+    "category": "testing",
+    "params_schema_fixes": {
+      "value": {
+        "label": "Value",
+        "placeholder": "Enter value..."
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.e2e.run_steps": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "stop_on_failure": {
+        "description": "True or false toggle"
+      },
+      "timeout_per_step": {
+        "description": "Numeric value"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.gate.evaluate": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "fail_on_breach": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.http.run_suite": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "base_url": {
+        "description": "Text input"
+      },
+      "headers": {
+        "description": "HTTP headers"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.lint.run": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "linter": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "fix": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.report.generate": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "results": {
+        "description": "Key-value data structure"
+      },
+      "format": {
+        "description": "Output format",
+        "placeholder": "json"
+      },
+      "title": {
+        "description": "Title text",
+        "placeholder": "Enter title..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.scenario.run": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "context": {
+        "description": "Key-value data structure"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.security.scan": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "scan_type": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      },
+      "severity_threshold": {
+        "description": "Text input",
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.suite.run": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "parallel": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.unit.run": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "pattern": {
+        "description": "Pattern to match",
+        "placeholder": "\\d+"
+      },
+      "verbose": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "testing.visual.compare": {
+    "category": "atomic",
+    "params_schema_fixes": {
+      "actual": {
+        "placeholder": "Enter text..."
+      },
+      "expected": {
+        "placeholder": "Enter text..."
+      },
+      "output_diff": {
+        "description": "True or false toggle"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "validate.phone": {
+    "category": "validate",
+    "params_schema_fixes": {
+      "region": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "validate.ip": {
+    "category": "validate",
+    "params_schema_fixes": {
+      "version": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "encode.base64": {
+    "category": "encode",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "decode.base64": {
+    "category": "encode",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "encode.url": {
+    "category": "encode",
+    "params_schema_fixes": {
+      "safe": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "encode.hex": {
+    "category": "encode",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      },
+      "separator": {
+        "placeholder": ","
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "decode.hex": {
+    "category": "encode",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "format.number": {
+    "category": "format",
+    "params_schema_fixes": {
+      "thousand_separator": {
+        "placeholder": "Enter text..."
+      },
+      "decimal_separator": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "format.currency": {
+    "category": "format",
+    "params_schema_fixes": {
+      "currency": {
+        "placeholder": "Enter text..."
+      },
+      "symbol_position": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "format.duration": {
+    "category": "format",
+    "params_schema_fixes": {
+      "format": {
+        "placeholder": "json"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "hash.sha256": {
+    "category": "hash",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "hash.sha512": {
+    "category": "hash",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "random.uuid": {
+    "category": "random",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "random.number": {
+    "category": "random",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "convert.to_object": {
+    "category": "convert",
+    "params_schema_fixes": {
+      "key_name": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "crypto.hmac": {
+    "category": "crypto",
+    "params_schema_fixes": {
+      "algorithm": {
+        "placeholder": "Enter text..."
+      },
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "crypto.random_bytes": {
+    "category": "crypto",
+    "params_schema_fixes": {
+      "encoding": {
+        "placeholder": "utf-8"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "crypto.random_string": {
+    "category": "crypto",
+    "params_schema_fixes": {
+      "charset": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "template.invoke": {
+    "category": "template",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "error.retry": {
+    "category": "error",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "error.fallback": {
+    "category": "error",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "error.circuit_breaker": {
+    "category": "error",
+    "params_schema_fixes": {
+      "circuit_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']",
+      "missing_output_types": "['any']"
+    }
+  },
+  "api.anthropic.chat": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "system": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.google_gemini.chat": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "model": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.openai.chat": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "prompt": {
+        "placeholder": "Enter text..."
+      },
+      "system_message": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.openai.image": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "prompt": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "ai.local_ollama.chat": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "prompt": {
+        "placeholder": "Enter text..."
+      },
+      "system_message": {
+        "placeholder": "Enter text..."
+      },
+      "ollama_url": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "agent.autonomous": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "goal": {
+        "placeholder": "Enter text..."
+      },
+      "context": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "ollama_url": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "agent.chain": {
+    "category": "ai",
+    "params_schema_fixes": {
+      "input": {
+        "placeholder": "Enter text..."
+      },
+      "model": {
+        "placeholder": "Enter text..."
+      },
+      "ollama_url": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "notification.discord.send_message": {
+    "category": "notification",
+    "params_schema_fixes": {
+      "avatar_url": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "communication.twilio.send_sms": {
+    "category": "notification",
+    "params_schema_fixes": {
+      "account_sid": {
+        "placeholder": "Enter text..."
+      },
+      "auth_token": {
+        "placeholder": "Enter text..."
+      },
+      "from_number": {
+        "placeholder": "Enter text..."
+      },
+      "to_number": {
+        "placeholder": "Enter text..."
+      },
+      "message": {
+        "placeholder": "Enter message..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "communication.twilio.make_call": {
+    "category": "notification",
+    "params_schema_fixes": {
+      "account_sid": {
+        "placeholder": "Enter text..."
+      },
+      "auth_token": {
+        "placeholder": "Enter text..."
+      },
+      "from_number": {
+        "placeholder": "Enter text..."
+      },
+      "to_number": {
+        "placeholder": "Enter text..."
+      },
+      "twiml_url": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.postgresql.query": {
+    "category": "database",
+    "params_schema_fixes": {
+      "connection_string": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.mysql.query": {
+    "category": "database",
+    "params_schema_fixes": {
+      "host": {
+        "placeholder": "Enter text..."
+      },
+      "user": {
+        "placeholder": "Enter text..."
+      },
+      "password": {
+        "placeholder": "Enter text..."
+      },
+      "database": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.mongodb.find": {
+    "category": "database",
+    "params_schema_fixes": {
+      "database": {
+        "placeholder": "Enter text..."
+      },
+      "collection": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.mongodb.insert": {
+    "category": "database",
+    "params_schema_fixes": {
+      "database": {
+        "placeholder": "Enter text..."
+      },
+      "collection": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.redis.get": {
+    "category": "database",
+    "params_schema_fixes": {
+      "key": {
+        "placeholder": "key_name"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "db.redis.set": {
+    "category": "database",
+    "params_schema_fixes": {
+      "key": {
+        "placeholder": "key_name"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.aws_s3.upload": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "file_path": {
+        "placeholder": "Enter text..."
+      },
+      "content": {
+        "placeholder": "Enter content..."
+      },
+      "acl": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.aws_s3.download": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "bucket": {
+        "placeholder": "Enter text..."
+      },
+      "key": {
+        "placeholder": "key_name"
+      },
+      "file_path": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.gcs.upload": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "file_path": {
+        "placeholder": "Enter text..."
+      },
+      "bucket": {
+        "placeholder": "Enter text..."
+      },
+      "object_name": {
+        "placeholder": "Enter text..."
+      },
+      "content_type": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.gcs.download": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "bucket": {
+        "placeholder": "Enter text..."
+      },
+      "object_name": {
+        "placeholder": "Enter text..."
+      },
+      "destination_path": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.azure.upload": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "file_path": {
+        "placeholder": "Enter text..."
+      },
+      "connection_string": {
+        "placeholder": "Enter text..."
+      },
+      "container": {
+        "placeholder": "Enter text..."
+      },
+      "blob_name": {
+        "placeholder": "Enter text..."
+      },
+      "content_type": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "cloud.azure.download": {
+    "category": "cloud",
+    "params_schema_fixes": {
+      "connection_string": {
+        "placeholder": "Enter text..."
+      },
+      "container": {
+        "placeholder": "Enter text..."
+      },
+      "blob_name": {
+        "placeholder": "Enter text..."
+      },
+      "destination_path": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.notion.query_database": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "database_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.google_sheets.write": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "value_input_option": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "productivity.airtable.read": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "base_id": {
+        "placeholder": "Enter text..."
+      },
+      "table_name": {
+        "placeholder": "Enter text..."
+      },
+      "view": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "productivity.airtable.create": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "base_id": {
+        "placeholder": "Enter text..."
+      },
+      "table_name": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "productivity.airtable.update": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "base_id": {
+        "placeholder": "Enter text..."
+      },
+      "table_name": {
+        "placeholder": "Enter text..."
+      },
+      "record_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.github.list_issues": {
+    "category": "api",
+    "params_schema_fixes": {
+      "owner": {
+        "placeholder": "Enter text..."
+      },
+      "repo": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "api.github.create_issue": {
+    "category": "api",
+    "params_schema_fixes": {
+      "owner": {
+        "placeholder": "Enter text..."
+      },
+      "repo": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "core.api.google_search": {
+    "category": "api",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "core.api.serpapi_search": {
+    "category": "api",
+    "params_schema_fixes": {},
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "core.api.http_get": {
+    "category": "api",
+    "params_schema_fixes": {
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "params": {
+        "description": "Parameters"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {
+      "missing_input_types": "['any']"
+    }
+  },
+  "core.api.http_post": {
+    "category": "api",
+    "params_schema_fixes": {
+      "headers": {
+        "description": "HTTP headers"
+      },
+      "json": {
+        "description": "Json value"
+      },
+      "timeout": {
+        "description": "Maximum time to wait in milliseconds"
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "payment.stripe.create_payment": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "currency": {
+        "placeholder": "Enter text..."
+      },
+      "description": {
+        "placeholder": "Enter description..."
+      },
+      "customer": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "payment.stripe.get_customer": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "customer_id": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  },
+  "payment.stripe.list_charges": {
+    "category": "productivity",
+    "params_schema_fixes": {
+      "api_key": {
+        "placeholder": "Enter text..."
+      },
+      "customer": {
+        "placeholder": "Enter text..."
+      }
+    },
+    "output_schema_fixes": {},
+    "type_fixes": {}
+  }
+}
