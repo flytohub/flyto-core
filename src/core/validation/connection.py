@@ -357,3 +357,130 @@ def get_connectable_summary(
 
     index = ConnectionIndex.get_instance()
     return index.get_summary(module_id, direction)
+
+
+def get_connectable_for_replacement(
+    upstream_module_id: Optional[str] = None,
+    downstream_module_id: Optional[str] = None,
+    limit: int = 200,
+) -> List[Dict[str, Any]]:
+    """
+    Get modules that can replace a node (compatible with both upstream and downstream).
+
+    Returns intersection of:
+    - Modules that can receive from upstream (if upstream exists)
+    - Modules that can send to downstream (if downstream exists)
+
+    Args:
+        upstream_module_id: Module ID of the upstream node (optional)
+        downstream_module_id: Module ID of the downstream node (optional)
+        limit: Maximum results to return
+
+    Returns:
+        List of modules compatible with both upstream and downstream
+    """
+    from .index import ConnectionIndex
+    from ..modules.registry import ModuleRegistry
+
+    index = ConnectionIndex.get_instance()
+
+    upstream_compatible = None
+    downstream_compatible = None
+
+    # Get modules that can receive from upstream (what comes AFTER upstream)
+    if upstream_module_id:
+        upstream_compatible = set(index.connectable_next.get(upstream_module_id, []))
+
+    # Get modules that can send to downstream (what comes BEFORE downstream)
+    if downstream_module_id:
+        downstream_compatible = set(index.connectable_prev.get(downstream_module_id, []))
+
+    # Calculate intersection
+    if upstream_compatible is not None and downstream_compatible is not None:
+        # Both connected: need intersection
+        compatible_ids = upstream_compatible & downstream_compatible
+    elif upstream_compatible is not None:
+        # Only upstream connected
+        compatible_ids = upstream_compatible
+    elif downstream_compatible is not None:
+        # Only downstream connected
+        compatible_ids = downstream_compatible
+    else:
+        # No connections: return empty (caller should show all modules)
+        return []
+
+    # Get metadata for compatible modules
+    results = []
+    for module_id in compatible_ids:
+        meta = ModuleRegistry.get_metadata(module_id)
+        if meta:
+            results.append({
+                'module_id': module_id,
+                'label': meta.get('ui_label', module_id),
+                'category': meta.get('category', ''),
+                'icon': meta.get('ui_icon', 'Box'),
+                'color': meta.get('ui_color', '#6B7280'),
+            })
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
+def validate_replacement(
+    new_module_id: str,
+    upstream_module_id: Optional[str] = None,
+    downstream_module_id: Optional[str] = None,
+    upstream_port: str = 'output',
+    downstream_port: str = 'input',
+) -> ConnectionResult:
+    """
+    Validate if a module can replace an existing node.
+
+    Validates connections based on what's connected:
+    1. If upstream exists: upstream → new_module
+    2. If downstream exists: new_module → downstream
+
+    Args:
+        new_module_id: New module ID to replace with
+        upstream_module_id: Upstream module ID (optional)
+        downstream_module_id: Downstream module ID (optional)
+        upstream_port: Upstream module's output port
+        downstream_port: Downstream module's input port
+
+    Returns:
+        ConnectionResult with valid=True/False and error details
+    """
+    errors = []
+
+    # Validate upstream → new_module
+    if upstream_module_id:
+        result = validate_connection(
+            from_module_id=upstream_module_id,
+            to_module_id=new_module_id,
+            from_port=upstream_port,
+            to_port='input',
+        )
+        if not result.valid:
+            errors.append(f"Upstream → New: {result.error_message}")
+
+    # Validate new_module → downstream
+    if downstream_module_id:
+        result = validate_connection(
+            from_module_id=new_module_id,
+            to_module_id=downstream_module_id,
+            from_port='output',
+            to_port=downstream_port,
+        )
+        if not result.valid:
+            errors.append(f"New → Downstream: {result.error_message}")
+
+    if errors:
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.INCOMPATIBLE_MODULES,
+            error_message="; ".join(errors),
+        )
+
+    return ConnectionResult(valid=True)

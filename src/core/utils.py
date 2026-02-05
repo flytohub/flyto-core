@@ -425,6 +425,7 @@ def validate_url_ssrf(
                 return url
 
     # Block known dangerous hostnames (metadata endpoints, etc.)
+    # Note: localhost/127.0.0.1 are in BLOCKED_HOSTNAMES but can be unblocked via allowed_hosts
     if hostname_lower in BLOCKED_HOSTNAMES:
         raise SSRFError(f"Hostname blocked: {hostname}")
 
@@ -451,6 +452,9 @@ def get_ssrf_config() -> dict:
     Environment variables:
     - FLYTO_ALLOW_PRIVATE_NETWORK: true/false (default: false)
     - FLYTO_ALLOWED_HOSTS: comma-separated list of allowed hosts
+    - FLYTO_VSCODE_LOCAL_MODE: true/false (default: false)
+      When enabled, allows localhost/127.0.0.1/::1 while blocking other private IPs.
+      This is designed for VS Code extension local development.
 
     Returns:
         dict with allow_private and allowed_hosts
@@ -458,6 +462,16 @@ def get_ssrf_config() -> dict:
     allow_private = os.environ.get('FLYTO_ALLOW_PRIVATE_NETWORK', 'false').lower() == 'true'
     allowed_hosts_str = os.environ.get('FLYTO_ALLOWED_HOSTS', '')
     allowed_hosts = [h.strip() for h in allowed_hosts_str.split(',') if h.strip()]
+
+    # VS Code local mode: allow localhost only, still block other private IPs
+    vscode_local_mode = os.environ.get('FLYTO_VSCODE_LOCAL_MODE', 'false').lower() == 'true'
+    if vscode_local_mode:
+        # Add localhost variants to allowed hosts
+        localhost_hosts = ['localhost', '127.0.0.1', '::1']
+        for host in localhost_hosts:
+            if host not in allowed_hosts:
+                allowed_hosts.append(host)
+        logger.debug("VS Code local mode enabled: allowing localhost connections")
 
     return {
         'allow_private': allow_private,

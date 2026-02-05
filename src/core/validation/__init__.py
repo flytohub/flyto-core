@@ -15,8 +15,10 @@ Usage:
 
 from .connection import (
     validate_connection,
+    validate_replacement,
     get_connectable,
     get_connectable_summary,
+    get_connectable_for_replacement,
     ConnectionResult,
 )
 from .workflow import (
@@ -33,8 +35,10 @@ from .index import ConnectionIndex
 __all__ = [
     # Connection validation
     'validate_connection',
+    'validate_replacement',
     'get_connectable',
     'get_connectable_summary',
+    'get_connectable_for_replacement',
     'ConnectionResult',
 
     # Workflow validation
