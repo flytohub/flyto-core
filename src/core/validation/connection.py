@@ -314,6 +314,11 @@ def get_connectable(
 
     results = []
     for candidate_id in candidates:
+        # P2 Fix: Filter out self-connection (same module cannot connect to itself)
+        # This aligns with validate_connection() which rejects self-connections
+        if candidate_id == module_id:
+            continue
+
         if category and not candidate_id.startswith(category + '.'):
             continue
 

@@ -1,0 +1,43 @@
+# 埋点事件验证范例
+# 验证 Google Sheets 定义的事件是否都在代码中实现
+
+name: "Analytics Tracking Verification"
+
+rules:
+  # 规则 1: 定义的事件 vs 代码实现
+  - name: "event_implementation"
+    source:
+      module: "api.google_sheets.read"
+      params:
+        spreadsheet_id: "YOUR_TRACKING_SHEET_ID"
+        range: "Events!A:D"
+        include_header: true
+      key_field: "event_name"
+    target:
+      module: "file.grep"
+      params:
+        pattern: "**/*.{vue,ts,js}"
+        regex: "track\\(['\"]([^'\"]+)['\"]"
+        extract_group: 1
+      key_field: "matches"
+    compare: "bidirectional"
+    pass_criteria: "no_missing"
+
+  # 规则 2: data-track 属性检查
+  - name: "data_track_attributes"
+    source:
+      module: "api.google_sheets.read"
+      params:
+        spreadsheet_id: "YOUR_TRACKING_SHEET_ID"
+        range: "DataAttributes!A:B"
+        include_header: true
+      key_field: "attribute"
+    target:
+      module: "file.grep"
+      params:
+        pattern: "**/*.vue"
+        regex: "data-track=['\"]([^'\"]+)['\"]"
+        extract_group: 1
+      key_field: "matches"
+    compare: "bidirectional"
+    pass_criteria: "exact"

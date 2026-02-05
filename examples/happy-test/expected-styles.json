@@ -1,0 +1,53 @@
+{
+  "hero_title": {
+    "font_size": 56,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#ffffff"
+  },
+  "section_title": {
+    "font_size": 40,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#24303d"
+  },
+  "body_text": {
+    "font_size": 18,
+    "font_family": "Barlow",
+    "color": "#808297"
+  },
+  "nav_item": {
+    "font_size": 18,
+    "font_family": "Barlow",
+    "color": "#ffffff"
+  },
+  "button_text": {
+    "font_size": 15,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#24303e"
+  },
+  "button_yellow": {
+    "background_color": "#fad400"
+  },
+  "button_red": {
+    "background_color": "#fe7766"
+  },
+  "graphic_design_title": {
+    "font_size": 28,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#245449"
+  },
+  "photography_title": {
+    "font_size": 28,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#042b3a"
+  },
+  "testimonial_name": {
+    "font_size": 18,
+    "font_family": "Fraunces 9pt Soft",
+    "color": "#24303e"
+  },
+  "testimonial_role": {
+    "font_size": 14,
+    "font_family": "Barlow",
+    "color": "#a7aaad"
+  }
+}

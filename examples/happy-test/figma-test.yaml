@@ -1,0 +1,25 @@
+# Figma 样式验证测试
+#
+# 使用前需设置环境变量:
+# export FIGMA_TOKEN="your-figma-token"
+#
+# Figma file: sunnyside-agency-landing-page
+# URL: https://www.figma.com/design/xE5iMjQQLKOinPwWaoCVOw
+
+name: "Sunnyside Landing Page - Figma vs Browser"
+
+rules:
+  # 从 Figma 获取设计稿样式
+  - name: "hero_title_style"
+    source:
+      module: "verify.figma"
+      params:
+        file_id: "xE5iMjQQLKOinPwWaoCVOw"
+        node_name: "WE ARE CREATIVES"  # 根据实际 Figma 节点名称调整
+    target:
+      module: "verify.capture"
+      params:
+        url: "https://sunnyside-agency-landing-page.example.com"  # 实际网站 URL
+        selector: "h1"
+    compare: "source_to_target"
+    pass_criteria: "90%"

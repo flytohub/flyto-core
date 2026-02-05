@@ -1,0 +1,54 @@
+# Figma 样式验证 - 动态 Spec-as-Test
+#
+# 这个 YAML 定义了验证规则:
+# 1. 从哪里读取规格 (source)
+# 2. 从哪里读取目标 (target)
+# 3. 如何比较 (compare)
+# 4. 什么条件算通过 (pass_criteria)
+#
+# 核心思想: 你可以用任意 flyto-core 模组作为 source/target
+# 例如: file.read, api.google_sheets.read, verify.figma, verify.capture
+
+name: "Sunnyside Agency - Style Verification"
+
+rules:
+  # 规则 1: 验证样式 key 覆盖率
+  - name: "style_keys_coverage"
+    source:
+      module: "file.read"
+      params:
+        path: "./examples/happy-test/figma-styles.json"
+    target:
+      module: "file.read"
+      params:
+        path: "./examples/happy-test/expected-styles.json"
+    compare: "bidirectional"  # 双向检查
+    pass_criteria: "exact"    # 必须完全匹配
+
+  # 规则 2: 检查颜色定义
+  - name: "color_definitions"
+    source:
+      keys: ["hero_title", "section_title", "body_text", "button_yellow", "button_red"]
+    target:
+      module: "file.read"
+      params:
+        path: "./examples/happy-test/figma-styles.json"
+    compare: "source_to_target"
+    pass_criteria: "100%"
+
+# 未来可以这样用:
+#
+# rules:
+#   - name: "figma_to_browser"
+#     source:
+#       module: "verify.figma"
+#       params:
+#         file_id: "xE5iMjQQLKOinPwWaoCVOw"
+#         node_name: "hero_title"
+#     target:
+#       module: "verify.capture"
+#       params:
+#         url: "https://example.com"
+#         selector: "h1.hero"
+#     compare: "source_to_target"
+#     pass_criteria: "90%"

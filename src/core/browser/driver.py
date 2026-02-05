@@ -674,6 +674,22 @@ class BrowserDriver:
                 elements.append(el)
         return elements
 
+    async def new_page(self) -> Page:
+        """
+        Create a new page (or return existing if only one needed).
+
+        Returns:
+            Page instance
+        """
+        if not self._browser:
+            raise RuntimeError("Browser not launched. Call launch() first.")
+
+        # If no page exists, create one
+        if not self._page:
+            self._page = await self._context.new_page()
+
+        return self._page
+
     @property
     def page(self) -> Page:
         """Get current page instance"""

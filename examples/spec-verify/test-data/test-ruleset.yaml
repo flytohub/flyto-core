@@ -1,0 +1,15 @@
+name: "Test i18n Verification"
+
+rules:
+  - name: "translation_coverage"
+    source:
+      module: "file.read"
+      params:
+        path: "./examples/spec-verify/test-data/spec.json"
+      # 会自动解析 JSON 并提取 keys
+    target:
+      module: "file.read"
+      params:
+        path: "./examples/spec-verify/test-data/en.json"
+    compare: "bidirectional"
+    pass_criteria: "no_missing"

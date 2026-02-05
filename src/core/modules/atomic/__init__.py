@@ -108,6 +108,9 @@ def register_all():
     # Error handling modules (v5)
     from . import error  # noqa: F401
 
+    # Design verification modules (v6)
+    from . import verify  # noqa: F401
+
     _registered = True
 
 
@@ -182,6 +185,9 @@ from . import template
 # Error handling modules (v5)
 from . import error
 
+# Design verification modules (v6)
+from . import verify
+
 # Re-export flow control modules
 from .flow import LoopModule, BranchModule, SwitchModule, GotoModule
 
@@ -242,4 +248,6 @@ __all__ = [
     'template',
     # Error handling modules (v5)
     'error',
+    # Design verification modules (v6)
+    'verify',
 ]

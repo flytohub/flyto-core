@@ -1,0 +1,53 @@
+# i18n 翻译验证范例
+# 动态组合任意模组进行验证
+
+name: "i18n Translation Verification"
+
+rules:
+  # 规则 1: Google Sheets 翻译表 vs JSON 档案
+  - name: "translations_sheet_to_json"
+    source:
+      module: "api.google_sheets.read"
+      params:
+        spreadsheet_id: "YOUR_SPREADSHEET_ID"
+        range: "Translations!A:B"
+        include_header: true
+      key_field: "key"  # 从返回的 data 中取哪个字段作为 key
+    target:
+      module: "file.read_json"
+      params:
+        path: "./locales/en.json"
+      # 不指定 key_field 时，自动用 dict keys
+    compare: "bidirectional"  # source_to_target | target_to_source | bidirectional
+    pass_criteria: "no_missing"  # no_missing | no_orphaned | exact | 90%
+
+  # 规则 2: 检查代码中使用的 i18n key 是否都有翻译
+  - name: "code_usage_coverage"
+    source:
+      # 从 JSON 翻译档案取所有 key
+      module: "file.read_json"
+      params:
+        path: "./locales/en.json"
+    target:
+      # 从代码中搜索使用的 key
+      module: "file.grep"
+      params:
+        pattern: "**/*.{vue,ts,js}"
+        regex: "\\$t\\(['\"]([^'\"]+)['\"]\\)"
+        extract_group: 1
+      key_field: "matches"
+    compare: "target_to_source"  # 确保代码用的 key 都有翻译
+    pass_criteria: "exact"
+
+  # 规则 3: 多语系覆盖率检查
+  - name: "zh_coverage"
+    source:
+      module: "file.read_json"
+      params:
+        path: "./locales/en.json"
+    target:
+      module: "file.read_json"
+      params:
+        path: "./locales/zh-TW.json"
+    compare: "source_to_target"
+    pass_criteria: "95%"  # 至少 95% 覆盖率
