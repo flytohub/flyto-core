@@ -52,8 +52,14 @@ class SpecResult:
 
     @property
     def coverage(self) -> float:
+        """计算覆盖率百分比
+
+        Returns:
+            100.0 if source_keys is empty (no spec = 100% coverage)
+            Otherwise: matched / source_keys * 100
+        """
         if not self.source_keys:
-            return 100.0
+            return 100.0  # No source keys means nothing to cover
         return round(len(self.matched) / len(self.source_keys) * 100, 1)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,15 +79,33 @@ class SpecResult:
 
 
 async def execute_module_dynamic(module_id: str, params: Dict[str, Any], context: Optional[Dict] = None) -> Dict[str, Any]:
-    """动态执行任意 flyto-core 模组"""
-    module_class = get_module(module_id)
-    if not module_class:
-        raise ValueError(f"Module not found: {module_id}")
+    """动态执行任意 flyto-core 模组
 
-    # 正确的实例化方式：传入 params 和 context
-    ctx = context or {}
-    instance = module_class(params, ctx)
-    return await instance.execute()
+    Args:
+        module_id: 模组 ID，如 "file.read", "api.google_sheets.read"
+        params: 模组参数
+        context: 执行上下文
+
+    Returns:
+        模组执行结果 {"ok": bool, "data": ...}
+
+    Raises:
+        ValueError: 模组不存在
+        Exception: 模组执行失败
+    """
+    try:
+        module_class = get_module(module_id)
+        if not module_class:
+            raise ValueError(f"Module not found: {module_id}")
+
+        ctx = context or {}
+        instance = module_class(params, ctx)
+        return await instance.execute()
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"Module '{module_id}' execution failed: {e}")
+        return {"ok": False, "error": str(e)}
 
 
 def extract_keys(data: Any, key_field: Optional[str] = None) -> Set[str]:
@@ -125,14 +149,19 @@ def extract_keys(data: Any, key_field: Optional[str] = None) -> Set[str]:
     # 自动推断
     if isinstance(data, set):
         return {str(k) for k in data}
+
     if isinstance(data, list):
-        if data and isinstance(data[0], str):
-            return set(data)
-        if data and isinstance(data[0], dict):
+        if not data:
+            return set()  # Empty list
+        if isinstance(data[0], str):
+            return set(data)  # List of strings
+        if isinstance(data[0], dict):
             # 尝试常见字段名
             for field_name in ["key", "id", "name", "code"]:
                 if field_name in data[0]:
                     return {str(item.get(field_name, "")) for item in data if item.get(field_name)}
+            return set()  # List of dicts but no matching field
+
     if isinstance(data, dict):
         # 尝试常见容器字段
         for container in ["keys", "items", "data", "values", "rows"]:
