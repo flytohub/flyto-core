@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
     module_id='template.invoke',
     version='1.0.0',
     category='template',
+    tier='internal',  # Hidden from module selector; user templates appear as template.invoke:{id}
     tags=['template', 'invoke', 'workflow', 'subflow', 'reuse', 'library'],
     label='Invoke Template',
     label_key='modules.template.invoke.label',

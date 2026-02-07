@@ -815,3 +815,205 @@ def CONSOLE_CLEAR_EXISTING(
         group=FieldGroup.OPTIONS,
     )
 
+
+# =============================================================================
+# Performance & Tracing Presets
+# =============================================================================
+
+
+def TRACE_ACTION(
+    *,
+    key: str = "action",
+    required: bool = True,
+    label: str = "Trace Action",
+    label_key: str = "schema.field.trace_action",
+) -> Dict[str, Dict[str, Any]]:
+    """Trace action (start/stop)."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        required=required,
+        options=[
+            {"value": "start", "label": "Start Tracing"},
+            {"value": "stop", "label": "Stop Tracing"},
+        ],
+        description='Start or stop performance tracing',
+        group=FieldGroup.BASIC,
+    )
+
+
+def TRACE_CATEGORIES(
+    *,
+    key: str = "categories",
+    required: bool = False,
+    label: str = "Trace Categories",
+    label_key: str = "schema.field.trace_categories",
+) -> Dict[str, Dict[str, Any]]:
+    """CDP trace categories for performance tracing."""
+    return field(
+        key,
+        type="array",
+        label=label,
+        label_key=label_key,
+        required=required,
+        default=["devtools.timeline"],
+        description='CDP trace categories (e.g., devtools.timeline, v8.execute)',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def PERFORMANCE_METRICS(
+    *,
+    key: str = "metrics",
+    required: bool = False,
+    label: str = "Metrics to Collect",
+    label_key: str = "schema.field.performance_metrics",
+) -> Dict[str, Dict[str, Any]]:
+    """Performance metrics selection."""
+    return field(
+        key,
+        type="array",
+        label=label,
+        label_key=label_key,
+        required=required,
+        default=["all"],
+        description='Which metrics to collect: all, lcp, fcp, cls, fid, ttfb',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+# =============================================================================
+# Device Emulation Presets
+# =============================================================================
+
+
+def DEVICE_PRESET(
+    *,
+    key: str = "device",
+    required: bool = True,
+    label: str = "Device",
+    label_key: str = "schema.field.device_preset",
+) -> Dict[str, Dict[str, Any]]:
+    """Device preset for emulation."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        required=required,
+        options=[
+            {"value": "iphone_12", "label": "iPhone 12"},
+            {"value": "iphone_14", "label": "iPhone 14"},
+            {"value": "iphone_14_pro_max", "label": "iPhone 14 Pro Max"},
+            {"value": "pixel_7", "label": "Pixel 7"},
+            {"value": "galaxy_s21", "label": "Galaxy S21"},
+            {"value": "ipad_pro", "label": "iPad Pro"},
+            {"value": "ipad_mini", "label": "iPad Mini"},
+            {"value": "desktop_chrome", "label": "Desktop Chrome"},
+            {"value": "desktop_safari", "label": "Desktop Safari"},
+            {"value": "laptop", "label": "Laptop (1366x768)"},
+            {"value": "custom", "label": "Custom"},
+        ],
+        description='Device preset or custom for manual settings',
+        group=FieldGroup.BASIC,
+    )
+
+
+def DEVICE_SCALE_FACTOR(
+    *,
+    key: str = "device_scale_factor",
+    default: float = 1,
+    required: bool = False,
+    label: str = "Device Scale Factor",
+    label_key: str = "schema.field.device_scale_factor",
+) -> Dict[str, Dict[str, Any]]:
+    """Device pixel ratio (DPR)."""
+    return field(
+        key,
+        type="number",
+        label=label,
+        label_key=label_key,
+        default=default,
+        required=required,
+        min=1,
+        max=3,
+        step=0.5,
+        description='Device pixel ratio (1-3)',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def IS_MOBILE(
+    *,
+    key: str = "is_mobile",
+    default: bool = False,
+    required: bool = False,
+    label: str = "Mobile Mode",
+    label_key: str = "schema.field.is_mobile",
+) -> Dict[str, Dict[str, Any]]:
+    """Mobile browser behavior toggle."""
+    return field(
+        key,
+        type="boolean",
+        label=label,
+        label_key=label_key,
+        default=default,
+        required=required,
+        description='Enable mobile browser behavior',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def HAS_TOUCH(
+    *,
+    key: str = "has_touch",
+    default: bool = False,
+    required: bool = False,
+    label: str = "Touch Support",
+    label_key: str = "schema.field.has_touch",
+) -> Dict[str, Dict[str, Any]]:
+    """Touch event support toggle."""
+    return field(
+        key,
+        type="boolean",
+        label=label,
+        label_key=label_key,
+        default=default,
+        required=required,
+        description='Enable touch event support',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+# =============================================================================
+# Snapshot Presets
+# =============================================================================
+
+
+def SNAPSHOT_FORMAT(
+    *,
+    key: str = "format",
+    default: str = "html",
+    required: bool = False,
+    label: str = "Snapshot Format",
+    label_key: str = "schema.field.snapshot_format",
+) -> Dict[str, Dict[str, Any]]:
+    """DOM snapshot format."""
+    return field(
+        key,
+        type="string",
+        label=label,
+        label_key=label_key,
+        default=default,
+        required=required,
+        options=[
+            {"value": "html", "label": "HTML (page source)"},
+            {"value": "mhtml", "label": "MHTML (single file, Chromium only)"},
+            {"value": "text", "label": "Text (plain text content)"},
+        ],
+        description='Format for DOM snapshot',
+        group=FieldGroup.OPTIONS,
+    )
+

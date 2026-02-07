@@ -43,6 +43,14 @@ from .form import *
 from .login import *
 from .pagination import *
 
+# Performance & Debug modules (Chrome DevTools MCP compatible)
+from .trace import *
+from .performance import *
+from .emulate import *
+from .viewport import *
+from .snapshot import *
+from .pages import *
+
 __all__ = [
     # Browser modules will be auto-discovered by module registry
 ]

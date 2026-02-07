@@ -316,6 +316,10 @@ class StepExecutor:
 
         retry_config = step_config.get('retry', {})
 
+        # on_error: retry — auto-create default retry config if not explicitly set
+        if on_error == 'retry' and not retry_config:
+            retry_config = {'count': 3, 'delay_ms': 1000, 'backoff': 'linear'}
+
         # Get input items from upstream steps (item-based execution)
         # Support both flat list and by-port structure for multi-input
         upstream_by_port = step_config.get('$upstream_by_port')

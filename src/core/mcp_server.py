@@ -262,73 +262,149 @@ def get_module_examples(module_id: str) -> dict:
 # ============================================================
 
 TOOLS = [
+    # =========================================================================
+    # Module Discovery
+    # =========================================================================
     {
         "name": "list_modules",
-        "description": "List all available flyto-core modules, organized by category. Use this to see what modules are available.",
+        "description": (
+            "List all available flyto-core modules organized by category. "
+            "Use this FIRST to discover what capabilities are available. "
+            "384+ modules across 41 categories including: "
+            "browser (38 modules: launch, goto, click, type, extract, screenshot, evaluate, wait, etc), "
+            "string, array, datetime, file, image, api, database, notification, and more. "
+            "Returns: category names, module counts, descriptions, and common use cases. "
+            "Pass a category name to list all modules within that category."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "category": {
                     "type": "string",
-                    "description": "Filter by category (e.g., 'string', 'datetime', 'array', 'browser')"
+                    "description": (
+                        "Filter to a specific category. Key categories: "
+                        "'browser' (38 modules for web automation and E2E testing), "
+                        "'string' (text manipulation), 'array' (list operations), "
+                        "'file' (file I/O), 'image' (image processing), "
+                        "'api' (HTTP requests), 'database' (DB operations), "
+                        "'notification' (email/Slack/Telegram). "
+                        "Omit to list all categories."
+                    ),
                 },
             },
         },
     },
     {
         "name": "search_modules",
-        "description": "Search modules by keyword. Returns matching modules with descriptions.",
+        "description": (
+            "Search for modules by keyword across all categories. "
+            "Use this when you know WHAT you want to do but not which module to use. "
+            "Examples: 'click button', 'send email', 'resize image', 'parse json'. "
+            "Returns: matching modules with ID, label, description, and relevance score."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Search keyword (e.g., 'uppercase', 'format', 'json')"
+                    "description": "What you want to do. Examples: 'extract text from page', 'take screenshot', 'fill form', 'send slack message'",
                 },
                 "category": {
                     "type": "string",
-                    "description": "Filter by category (optional)"
+                    "description": "Narrow search to a specific category (optional)",
                 },
                 "limit": {
                     "type": "integer",
                     "default": 20,
-                    "description": "Maximum results"
+                    "description": "Max results to return",
                 },
             },
             "required": ["query"],
         },
     },
+    # =========================================================================
+    # Module Details
+    # =========================================================================
     {
         "name": "get_module_info",
-        "description": "Get detailed module information including parameter schema and examples. Use this before executing a module.",
+        "description": (
+            "Get the full specification of a module: parameter schema (names, types, required, defaults), "
+            "output schema, and usage examples. "
+            "ALWAYS call this before execute_module to know the exact parameters required. "
+            "Returns: params_schema (JSON Schema), output_schema, examples with expected output."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "module_id": {
                     "type": "string",
-                    "description": "Module ID (e.g., 'string.uppercase', 'datetime.format')"
+                    "description": "Module ID in dot notation. Examples: 'browser.launch', 'browser.extract', 'string.uppercase', 'image.resize'",
                 },
             },
             "required": ["module_id"],
         },
     },
     {
-        "name": "execute_module",
-        "description": "Execute a flyto-core module with given parameters. Returns the module output.",
+        "name": "get_module_examples",
+        "description": (
+            "Get concrete usage examples for a module, showing exact parameter values and expected output. "
+            "Use this if get_module_info's examples are not enough to understand usage."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "module_id": {
                     "type": "string",
-                    "description": "Module ID to execute"
+                    "description": "Module ID. Example: 'browser.extract', 'browser.evaluate'",
+                },
+            },
+            "required": ["module_id"],
+        },
+    },
+    # =========================================================================
+    # Execution
+    # =========================================================================
+    {
+        "name": "execute_module",
+        "description": (
+            "Execute a flyto-core module and return its output. This is the main action tool. "
+            "ALWAYS call get_module_info first to know the required parameters. "
+            "Returns: {ok: true, data: {...}} on success, {ok: false, error: '...'} on failure. "
+            "\n"
+            "BROWSER MODULE STRATEGY (important for E2E testing): "
+            "- DEFAULT: Use DOM-based modules for accuracy. "
+            "  browser.extract → read text, attributes, element properties from DOM. "
+            "  browser.evaluate → run JavaScript to inspect page state, read DOM, check conditions. "
+            "  browser.snapshot → get full DOM structure (HTML/text) for analysis. "
+            "  browser.find → locate elements by selector, get their properties. "
+            "  browser.wait → wait for element/condition before acting. "
+            "- INTERACTION: browser.click, browser.type, browser.select, browser.scroll, browser.form, browser.login. "
+            "- SCREENSHOT: Use ONLY for visual/style verification (CSS comparison, layout regression, design matching). "
+            "  Do NOT use screenshot to read text or find elements — use browser.extract or browser.evaluate instead. "
+            "- LIFECYCLE: browser.launch → browser.goto → [actions] → browser.close. "
+            "  browser.launch returns a session; all subsequent calls reuse it until browser.close."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "module_id": {
+                    "type": "string",
+                    "description": (
+                        "Module ID to execute. Common browser modules: "
+                        "browser.launch, browser.goto, browser.click, browser.type, "
+                        "browser.extract (read DOM elements), browser.evaluate (run JS), "
+                        "browser.snapshot (DOM dump), browser.screenshot (visual only), "
+                        "browser.wait, browser.find, browser.form, browser.login, "
+                        "browser.select, browser.scroll, browser.close"
+                    ),
                 },
                 "params": {
                     "type": "object",
-                    "description": "Module parameters (see get_module_info for schema)"
+                    "description": "Module parameters. Call get_module_info first to see the exact schema.",
                 },
                 "context": {
                     "type": "object",
-                    "description": "Execution context (optional)"
+                    "description": "Execution context. For browser modules, pass {browser_session: '...'} to reuse an existing session.",
                 },
             },
             "required": ["module_id", "params"],
@@ -336,34 +412,24 @@ TOOLS = [
     },
     {
         "name": "validate_params",
-        "description": "Validate module parameters without executing. Use this to check if params are correct.",
+        "description": (
+            "Dry-run parameter validation for a module without executing it. "
+            "Use this to check if your parameters are correct before running a destructive or slow operation. "
+            "Returns: {valid: true} or {valid: false, errors: ['...']}."
+        ),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "module_id": {
                     "type": "string",
-                    "description": "Module ID"
+                    "description": "Module ID to validate against",
                 },
                 "params": {
                     "type": "object",
-                    "description": "Parameters to validate"
+                    "description": "Parameters to validate",
                 },
             },
             "required": ["module_id", "params"],
-        },
-    },
-    {
-        "name": "get_module_examples",
-        "description": "Get usage examples for a specific module.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "module_id": {
-                    "type": "string",
-                    "description": "Module ID"
-                },
-            },
-            "required": ["module_id"],
         },
     },
 ]
