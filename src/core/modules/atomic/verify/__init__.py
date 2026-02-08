@@ -68,6 +68,10 @@ from .spec_runner import (
     compare_keys,
 )
 
+# Visual annotation & diff
+from .annotate import VerifyAnnotateModule, draw_annotations
+from .visual_diff import VerifyVisualDiffModule
+
 # Aliases
 StyleComparator = VerifyCompareModule
 BrowserCapture = VerifyCaptureModule
@@ -100,6 +104,11 @@ __all__ = [
     "load_spec_ruleset",
     "extract_keys",
     "compare_keys",
+
+    # Visual annotation & diff
+    "VerifyAnnotateModule",
+    "draw_annotations",
+    "VerifyVisualDiffModule",
 
     # Aliases
     "StyleComparator",
