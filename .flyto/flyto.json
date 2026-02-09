@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-02-09T00:42:57Z",
+  "project": {
+    "name": "flyto-core",
+    "root": ".",
+    "languageHint": [
+      "python"
+    ]
+  },
+  "generator": {
+    "name": "flyto-indexer",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "map": "nav/map.json",
+    "brief": "brief.md",
+    "descriptions": "descriptions.jsonl",
+    "indexSummary": "index/summary.json"
+  }
+}
