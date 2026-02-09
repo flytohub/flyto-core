@@ -13,6 +13,16 @@ except ImportError:
     pass
 
 try:
+    from .diff import *
+except ImportError:
+    pass
+
+try:
+    from .edit import *
+except ImportError:
+    pass
+
+try:
     from .exists import *
 except ImportError:
     pass
