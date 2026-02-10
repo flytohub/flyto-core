@@ -34,13 +34,19 @@ from ...registry import register_module
             'required': True,
             'description': 'Value to check'
         ,
-                'description_key': 'modules.test.assert_not_null.params.value.description'},
+                'description_key': 'modules.test.assert_not_null.params.value.description',
+            'placeholder': 'value',
+            'label': 'Value',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_not_null.params.message.description'}
+                'description_key': 'modules.test.assert_not_null.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

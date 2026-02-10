@@ -49,7 +49,8 @@ from ...errors import ValidationError
             'description': 'Character encoding',
             'description_key': 'modules.encode.hex.params.encoding.description',
             'default': 'utf-8',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Encoding...',
         },
         'uppercase': {
             'type': 'boolean',
@@ -67,7 +68,8 @@ from ...errors import ValidationError
             'description': 'Separator between hex bytes',
             'description_key': 'modules.encode.hex.params.separator.description',
             'default': '',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Separator...',
         }
     },
     output_schema={

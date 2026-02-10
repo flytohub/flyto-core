@@ -44,7 +44,8 @@ import json
             'description': 'Path to write MODULES.md file',
             'description_key': 'modules.meta.modules.update_docs.params.output_path.description',
             'default': 'docs/MODULES.md',
-            'required': False
+            'required': False,
+            'placeholder': '/path/to/file',
         },
         'include_examples': {
             'type': 'boolean',

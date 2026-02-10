@@ -40,25 +40,32 @@ logger = logging.getLogger(__name__)
             'required': True,
             'description': 'Path or base64 of actual image'
         ,
-                'description_key': 'modules.testing.visual.compare.params.actual.description'},
+                'description_key': 'modules.testing.visual.compare.params.actual.description',
+            'placeholder': 'Enter Actual...',
+        },
         'expected': {
             'type': 'string',
             'label': 'Expected Image',
             'required': True,
             'description': 'Path or base64 of expected image'
         ,
-                'description_key': 'modules.testing.visual.compare.params.expected.description'},
+                'description_key': 'modules.testing.visual.compare.params.expected.description',
+            'placeholder': 'Enter Expected...',
+        },
         'threshold': {
             'type': 'number',
             'label': 'Difference Threshold',
             'default': 0.1,
             'description': 'Max allowed difference (0-1)'
         ,
-                'description_key': 'modules.testing.visual.compare.params.threshold.description'},
+                'description_key': 'modules.testing.visual.compare.params.threshold.description',
+            'placeholder': '0',
+        },
         'output_diff': {
             'type': 'boolean',
             'label': 'Output Diff Image',
-            'default': True
+            'default': True,
+            'description': 'Whether to output diff',
         }
     },
     output_schema={

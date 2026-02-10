@@ -113,18 +113,73 @@ chmod 600 .env
 
 When creating custom modules, always validate and sanitize inputs:
 
+All network modules use `validate_url_with_env_config()` from `src/core/utils.py`.
+
 ```python
-def validate_params(self):
-    url = self.params.get('url', '')
+from core.utils import validate_url_with_env_config, SSRFError
 
-    # Validate URL format
-    if not url.startswith(('http://', 'https://')):
-        raise ValueError("URL must start with http:// or https://")
+try:
+    validate_url_with_env_config(url)
+except SSRFError as e:
+    return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
+```
 
-    # Prevent SSRF attacks
-    parsed = urllib.parse.urlparse(url)
-    if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0']:
-        raise ValueError("Local URLs are not allowed")
+#### Blocked IP Ranges (Default)
+
+| Range | Reason |
+|-------|--------|
+| `10.0.0.0/8` | RFC 1918 private |
+| `172.16.0.0/12` | RFC 1918 private |
+| `192.168.0.0/16` | RFC 1918 private |
+| `127.0.0.0/8`, `::1/128` | Loopback |
+| `169.254.0.0/16`, `fe80::/10` | Link-local |
+| `0.0.0.0/8` | Reserved |
+| `100.64.0.0/10` | Shared address (CGN) |
+| `192.0.0.0/24`, `192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24` | Documentation/test |
+| `224.0.0.0/4`, `240.0.0.0/4` | Multicast/reserved |
+
+#### Blocked Hostnames
+
+`localhost`, `localhost.localdomain`, `127.0.0.1`, `::1`, `0.0.0.0`, `metadata.google.internal`, `169.254.169.254` (cloud metadata), `metadata.internal`
+
+#### DNS Resolution Check
+
+After hostname resolution, the resolved IP is checked against all blocked ranges. This prevents DNS rebinding attacks where a hostname resolves to a private IP.
+
+#### Protected Modules (11 total)
+
+| Module | Protection |
+|--------|-----------|
+| `http.request` | `validate_url_with_env_config()` |
+| `api.http_get` | `validate_url_with_env_config()` |
+| `browser.goto` | `validate_url_with_env_config()` |
+| `browser.tab` | `validate_url_with_env_config()` |
+| `image.download` | `validate_url_with_env_config()` |
+| `notification.send` | `validate_url_with_env_config()` |
+| `communication.webhook_trigger` | `validate_url_with_env_config()` |
+| `llm.chat` | `validate_url_with_env_config()` (custom base URL) |
+| `vector.connector` | `validate_url_with_env_config()` |
+| `port.check` | `is_private_ip()` direct check |
+| `ai.local_ollama` | localhost-only enforcement |
+
+#### Validator Enforcement
+
+The module validator (`validator.py`) requires all network modules to declare SSRF protection via the `ssrf_protected` tag (rule `SEC001` / `CORE-SEC-003`).
+
+#### Configuration
+
+```bash
+# Allow private networks (development only)
+FLYTO_ALLOW_PRIVATE_NETWORK=true
+
+# Allowlist specific hosts (comma-separated, supports wildcards)
+FLYTO_ALLOWED_HOSTS=localhost,127.0.0.1,*.internal.corp.com
+
+# VS Code local mode (allow localhost only)
+FLYTO_VSCODE_LOCAL_MODE=true
+
+# Allow remote Ollama server (default: localhost only)
+FLYTO_ALLOW_REMOTE_OLLAMA=true
 ```
 
 ### Browser Automation Security
@@ -169,7 +224,7 @@ Some modules make network requests. Consider:
 
 - Using firewall rules to restrict outbound connections
 - Monitoring network traffic from workflow executions
-- Using allowlists for permitted domains
+- Using allowlists for permitted domains (see SSRF configuration above)
 
 ### Browser Automation
 

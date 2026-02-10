@@ -66,7 +66,8 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
             'description': 'Host to connect to',
             'description_key': 'modules.port.check.params.host.description',
             'required': False,
-            'default': 'localhost'
+            'default': 'localhost',
+            'placeholder': 'localhost',
         },
         'connect_timeout': {
             'type': 'number',
@@ -75,7 +76,8 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
             'description': 'Timeout for each connection attempt',
             'description_key': 'modules.port.check.params.connect_timeout.description',
             'required': False,
-            'default': 2
+            'default': 2,
+            'placeholder': '30000',
         },
         'expect_open': {
             'type': 'boolean',

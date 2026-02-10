@@ -44,7 +44,8 @@ from ..element_registry import get_element_registry
             'label_key': 'modules.element.query.params.element_id.label',
             'description': 'Parent element ID (UUID)',
             'description_key': 'modules.element.query.params.element_id.description',
-            'required': True
+            'required': True,
+            'placeholder': 'example-id',
         },
         'selector': {
             'type': 'string',
@@ -52,7 +53,8 @@ from ..element_registry import get_element_registry
             'label_key': 'modules.element.query.params.selector.label',
             'description': 'CSS selector to find child elements',
             'description_key': 'modules.element.query.params.selector.description',
-            'required': True
+            'required': True,
+            'placeholder': 'Enter Selector...',
         },
         'all': {
             'type': 'boolean',

@@ -37,18 +37,23 @@ logger = logging.getLogger(__name__)
         'results': {
             'type': 'object',
             'label': 'Test Results',
-            'required': True
+            'required': True,
+            'description': 'Results data',
         },
         'format': {
             'type': 'string',
             'label': 'Report Format',
             'default': 'json',
-            'options': ['json', 'html', 'markdown', 'junit']
+            'options': ['json', 'html', 'markdown', 'junit'],
+            'placeholder': 'format-string',
+            'description': 'Format',
         },
         'title': {
             'type': 'string',
             'label': 'Report Title',
-            'default': 'Test Report'
+            'default': 'Test Report',
+            'placeholder': 'Title',
+            'description': 'Title',
         }
     },
     output_schema={

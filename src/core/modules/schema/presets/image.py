@@ -24,6 +24,7 @@ def IMAGE_INPUT_PATH(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        description='Path to the input image file',
         format="path",
         group=FieldGroup.BASIC,
     )
@@ -45,6 +46,7 @@ def IMAGE_OUTPUT_PATH(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        description='Path where the processed image will be saved',
         format="path",
         group=FieldGroup.BASIC,
     )
@@ -290,6 +292,7 @@ def IMAGE_URL(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        description='URL of the image to download',
         validation=validators.URL_HTTP,
         group=FieldGroup.BASIC,
     )
@@ -311,6 +314,7 @@ def OUTPUT_DIRECTORY(
         label_key=label_key,
         required=required,
         default=default,
+        description='Directory where output files will be saved',
         format="path",
         group=FieldGroup.BASIC,
     )

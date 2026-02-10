@@ -50,7 +50,8 @@ from ...errors import ValidationError
             'description': 'Character encoding for output',
             'description_key': 'modules.decode.hex.params.encoding.description',
             'default': 'utf-8',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Encoding...',
         }
     },
     output_schema={

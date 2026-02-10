@@ -34,13 +34,18 @@ from ...registry import register_module
             'required': True,
             'description': 'Condition to check'
         ,
-                'description_key': 'modules.test.assert_true.params.condition.description'},
+                'description_key': 'modules.test.assert_true.params.condition.description',
+            'label': 'Condition',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_true.params.message.description'}
+                'description_key': 'modules.test.assert_true.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

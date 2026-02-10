@@ -34,19 +34,28 @@ from ...registry import register_module
             'required': True,
             'description': 'Collection to search in'
         ,
-                'description_key': 'modules.test.assert_contains.params.collection.description'},
+                'description_key': 'modules.test.assert_contains.params.collection.description',
+            'placeholder': 'collection_name',
+            'label': 'Collection',
+        },
         'value': {
             'type': ['string', 'number', 'boolean'],
             'required': True,
             'description': 'Value to find'
         ,
-                'description_key': 'modules.test.assert_contains.params.value.description'},
+                'description_key': 'modules.test.assert_contains.params.value.description',
+            'placeholder': 'value',
+            'label': 'Value',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_contains.params.message.description'}
+                'description_key': 'modules.test.assert_contains.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

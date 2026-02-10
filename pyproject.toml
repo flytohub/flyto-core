@@ -107,7 +107,7 @@ target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "2.1.1"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "B", "A", "C4", "SIM"]
@@ -120,7 +120,7 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 
 [tool.mypy]
-python_version = "2.1.1"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true

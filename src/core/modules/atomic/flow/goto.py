@@ -100,7 +100,7 @@ class GotoModule(BaseModule):
 
     module_name = "Goto"
     module_description = "Unconditional jump to another step"
-    required_permission = ITERATION_PREFIX = '__goto_iteration_'
+    ITERATION_PREFIX = '__goto_iteration_'
 
     def validate_params(self) -> None:
         if 'target' not in self.params:

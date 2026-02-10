@@ -60,7 +60,8 @@ from ...errors import ValidationError
             'default': 1,
             'min': 0,
             'max': 6,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         },
         'include_sign': {
             'type': 'boolean',

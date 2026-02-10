@@ -48,7 +48,8 @@ import uuid
             'description': 'Minimum value (inclusive)',
             'description_key': 'modules.utility.random.number.params.min.description',
             'default': 0,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         },
         'max': {
             'type': 'number',
@@ -57,7 +58,8 @@ import uuid
             'description': 'Maximum value (inclusive)',
             'description_key': 'modules.utility.random.number.params.max.description',
             'default': 100,
-            'required': False
+            'required': False,
+            'placeholder': '100',
         },
         'decimals': {
             'type': 'number',
@@ -68,7 +70,8 @@ import uuid
             'default': 0,
             'min': 0,
             'max': 10,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         }
     },
     output_schema={

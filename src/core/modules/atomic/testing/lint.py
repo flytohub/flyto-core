@@ -45,12 +45,15 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Linter',
             'default': 'auto',
-            'options': ['auto', 'eslint', 'pylint', 'flake8', 'ruff']
+            'options': ['auto', 'eslint', 'pylint', 'flake8', 'ruff'],
+            'placeholder': 'Enter Linter...',
+            'description': 'Linter',
         },
         'fix': {
             'type': 'boolean',
             'label': 'Auto-fix',
-            'default': False
+            'default': False,
+            'description': 'Whether to fix',
         }
     },
     output_schema={

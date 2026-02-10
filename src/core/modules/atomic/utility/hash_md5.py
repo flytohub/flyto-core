@@ -57,7 +57,8 @@ import uuid
             'description': 'Text encoding',
             'description_key': 'modules.utility.hash.md5.params.encoding.description',
             'default': 'utf-8',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Encoding...',
         }
     },
     output_schema={

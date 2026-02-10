@@ -45,13 +45,17 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'Scan Type',
             'default': 'all',
-            'options': ['all', 'dependencies', 'code', 'secrets']
+            'options': ['all', 'dependencies', 'code', 'secrets'],
+            'placeholder': 'type',
+            'description': 'Scan Type',
         },
         'severity_threshold': {
             'type': 'string',
             'label': 'Severity Threshold',
             'default': 'medium',
-            'options': ['low', 'medium', 'high', 'critical']
+            'options': ['low', 'medium', 'high', 'critical'],
+            'placeholder': 'Enter Severity Threshold...',
+            'description': 'Severity Threshold',
         }
     },
     output_schema={

@@ -64,7 +64,8 @@ DECIMAL_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
             'default': 2,
             'min': 0,
             'max': 4,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         }
     },
     output_schema={

@@ -44,12 +44,15 @@ logger = logging.getLogger(__name__)
         'stop_on_failure': {
             'type': 'boolean',
             'label': 'Stop on Failure',
-            'default': True
+            'default': True,
+            'description': 'Whether to stop on failure',
         },
         'timeout_per_step': {
             'type': 'number',
             'label': 'Timeout per Step (ms)',
-            'default': 30000
+            'default': 30000,
+            'placeholder': '30000',
+            'description': 'Timeout Per Step value',
         }
     },
     output_schema={

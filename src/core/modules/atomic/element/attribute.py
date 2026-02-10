@@ -44,7 +44,8 @@ from ..element_registry import get_element_registry
             'label_key': 'modules.element.attribute.params.element_id.label',
             'description': 'Element ID (UUID)',
             'description_key': 'modules.element.attribute.params.element_id.description',
-            'required': True
+            'required': True,
+            'placeholder': 'example-id',
         },
         'name': {
             'type': 'string',

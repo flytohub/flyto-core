@@ -51,7 +51,8 @@ logger = logging.getLogger(__name__)
         'fail_on_breach': {
             'type': 'boolean',
             'label': 'Fail on Breach',
-            'default': True
+            'default': True,
+            'description': 'Whether to fail on breach',
         }
     },
     output_schema={

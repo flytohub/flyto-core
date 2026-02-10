@@ -54,6 +54,7 @@ def JSON_PATH(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        description='JSONPath expression to select data (e.g., $.data.items[0])',
         validation=validators.JSON_PATH,
         group=FieldGroup.OPTIONS,
     )
@@ -103,6 +104,7 @@ def JSON_STRING(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        description='JSON string to parse into an object or array',
         format="multiline",
         group=FieldGroup.BASIC,
     )
@@ -114,7 +116,7 @@ def DATA_OBJECT(
     required: bool = True,
     label: str = "Data",
     label_key: str = "schema.field.data_object",
-    description: str = "",
+    description: str = "Data object to process",
 ) -> Dict[str, Dict[str, Any]]:
     """Data object input field."""
     return field(
@@ -142,6 +144,7 @@ def DATA_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        description='Array of data items to process',
         group=FieldGroup.BASIC,
     )
 

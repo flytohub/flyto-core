@@ -51,7 +51,8 @@ from ...errors import ValidationError
             'default': 2,
             'min': 0,
             'max': 10,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         },
         'thousand_separator': {
             'type': 'string',
@@ -60,7 +61,8 @@ from ...errors import ValidationError
             'description': 'Separator for thousands',
             'description_key': 'modules.format.number.params.thousand_separator.description',
             'default': ',',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Thousand Separator...',
         },
         'decimal_separator': {
             'type': 'string',
@@ -69,7 +71,8 @@ from ...errors import ValidationError
             'description': 'Separator for decimals',
             'description_key': 'modules.format.number.params.decimal_separator.description',
             'default': '.',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Decimal Separator...',
         }
     },
     output_schema={

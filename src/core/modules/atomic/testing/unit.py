@@ -44,12 +44,15 @@ logger = logging.getLogger(__name__)
         'pattern': {
             'type': 'string',
             'label': 'Pattern',
-            'default': 'test_*.py'
+            'default': 'test_*.py',
+            'placeholder': '^pattern$',
+            'description': 'Pattern',
         },
         'verbose': {
             'type': 'boolean',
             'label': 'Verbose',
-            'default': False
+            'default': False,
+            'description': 'Whether to verbose',
         }
     },
     output_schema={

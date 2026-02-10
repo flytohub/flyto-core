@@ -34,19 +34,28 @@ from ...registry import register_module
             'required': True,
             'description': 'Actual value'
         ,
-                'description_key': 'modules.test.assert_greater_than.params.actual.description'},
+                'description_key': 'modules.test.assert_greater_than.params.actual.description',
+            'placeholder': '0',
+            'label': 'Actual',
+        },
         'threshold': {
             'type': 'number',
             'required': True,
             'description': 'Threshold value'
         ,
-                'description_key': 'modules.test.assert_greater_than.params.threshold.description'},
+                'description_key': 'modules.test.assert_greater_than.params.threshold.description',
+            'placeholder': '0',
+            'label': 'Threshold',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_greater_than.params.message.description'}
+                'description_key': 'modules.test.assert_greater_than.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

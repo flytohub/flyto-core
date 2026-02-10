@@ -312,7 +312,7 @@ def main():
     sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
     from core.modules.registry import ModuleRegistry
-    from core.modules import *  # Load all modules
+    import core.modules.atomic  # Load all modules
 
     all_issues = []
 

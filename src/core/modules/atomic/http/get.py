@@ -15,15 +15,15 @@ logger = logging.getLogger(__name__)
 
 
 @register_module(
-    module_id='api.http_get',
+    module_id='http.get',
     version='1.0.0',
-    category='atomic',
-    subcategory='api',
+    category='http',
+    subcategory='client',
     tags=['api', 'http', 'get', 'request', 'atomic', 'ssrf_protected'],
     label='HTTP GET',
-    label_key='modules.api.http_get.label',
+    label_key='modules.http.get.label',
     description='Send HTTP GET request to an API endpoint',
-    description_key='modules.api.http_get.description',
+    description_key='modules.http.get.description',
     icon='Download',
     color='#3B82F6',
 
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     retryable=True,
     max_retries=3,
     requires_credentials=True,
-    credential_keys=['API_KEY'],  # API calls may require authentication
+    credential_keys=['API_KEY'],
 
     params_schema={
         'url': {
@@ -64,17 +64,17 @@ logger = logging.getLogger(__name__)
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
-                'description_key': 'modules.api.http_get.output.ok.description'},
-        'status': {'type': 'number', 'description': 'Operation status (success/error)',
-                'description_key': 'modules.api.http_get.output.status.description'},
+               'description_key': 'modules.http.get.output.ok.description'},
+        'status': {'type': 'number', 'description': 'HTTP status code',
+                   'description_key': 'modules.http.get.output.status.description'},
         'body': {'type': 'any', 'description': 'Response body content',
-                'description_key': 'modules.api.http_get.output.body.description'},
-        'headers': {'type': 'object', 'description': 'HTTP headers',
-                'description_key': 'modules.api.http_get.output.headers.description'}
+                 'description_key': 'modules.http.get.output.body.description'},
+        'headers': {'type': 'object', 'description': 'Response headers',
+                    'description_key': 'modules.http.get.output.headers.description'}
     }
 )
-async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
-    """Send HTTP GET request"""
+async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Send HTTP GET request."""
     try:
         import aiohttp
     except ImportError:
@@ -92,14 +92,12 @@ async def api_http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     query = params.get('query', {})
     timeout_s = params.get('timeout', 30)
 
-    # SECURITY: Validate URL against SSRF attacks
     try:
         validate_url_with_env_config(url)
     except SSRFError as e:
         logger.warning(f"SSRF protection blocked GET to: {url}")
         raise NetworkError(str(e), url=url, status_code=0)
 
-    # Add query params to URL
     if query:
         parsed = urlparse(url)
         separator = '&' if parsed.query else ''

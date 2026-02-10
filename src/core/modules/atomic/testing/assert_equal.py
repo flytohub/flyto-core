@@ -34,19 +34,28 @@ from ...registry import register_module
             'required': True,
             'description': 'Actual value'
         ,
-                'description_key': 'modules.test.assert_equal.params.actual.description'},
+                'description_key': 'modules.test.assert_equal.params.actual.description',
+            'placeholder': 'Enter Actual...',
+            'label': 'Actual',
+        },
         'expected': {
             'type': ['string', 'number', 'boolean', 'object', 'array'],
             'required': True,
             'description': 'Expected value'
         ,
-                'description_key': 'modules.test.assert_equal.params.expected.description'},
+                'description_key': 'modules.test.assert_equal.params.expected.description',
+            'placeholder': 'Enter Expected...',
+            'label': 'Expected',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_equal.params.message.description'}
+                'description_key': 'modules.test.assert_equal.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

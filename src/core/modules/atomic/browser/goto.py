@@ -7,8 +7,14 @@ All modules use i18n keys for multi-language support.
 Example of schema presets usage - compare before/after:
     BEFORE (36 lines for params_schema):
         params_schema={
-            'url': {'type': 'string', 'label': 'URL', ...},
-            'wait_until': {'type': 'select', 'options': [...], ...}
+            'url': {'type': 'string', 'label': 'URL', ...,
+            'placeholder': 'https://example.com',
+            'description': 'Url',
+        },
+            'wait_until': {'type': 'select', 'options': [...], ...,
+            'description': 'Wait Until option',
+            'label': 'Wait Until',
+        }
         }
 
     AFTER (4 lines with presets):

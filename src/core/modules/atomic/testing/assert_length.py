@@ -34,19 +34,28 @@ from ...registry import register_module
             'required': True,
             'description': 'Collection to check'
         ,
-                'description_key': 'modules.test.assert_length.params.collection.description'},
+                'description_key': 'modules.test.assert_length.params.collection.description',
+            'placeholder': 'collection_name',
+            'label': 'Collection',
+        },
         'expected_length': {
             'type': 'number',
             'required': True,
             'description': 'Expected length'
         ,
-                'description_key': 'modules.test.assert_length.params.expected_length.description'},
+                'description_key': 'modules.test.assert_length.params.expected_length.description',
+            'placeholder': '0',
+            'label': 'Expected Length',
+        },
         'message': {
             'type': 'string',
             'required': False,
             'description': 'Custom error message'
         ,
-                'description_key': 'modules.test.assert_length.params.message.description'}
+                'description_key': 'modules.test.assert_length.params.message.description',
+            'placeholder': 'Your message here',
+            'label': 'Message',
+        }
     },
     output_schema={
         'passed': {

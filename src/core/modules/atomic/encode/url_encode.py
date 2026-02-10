@@ -59,7 +59,8 @@ from ...errors import ValidationError
             'description': 'Characters that should not be encoded',
             'description_key': 'modules.encode.url.params.safe.description',
             'default': '',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Safe...',
         }
     },
     output_schema={

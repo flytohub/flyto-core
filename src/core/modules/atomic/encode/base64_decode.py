@@ -50,7 +50,8 @@ from ...errors import ValidationError
             'description': 'Character encoding for output',
             'description_key': 'modules.decode.base64.params.encoding.description',
             'default': 'utf-8',
-            'required': False
+            'required': False,
+            'placeholder': 'Enter Encoding...',
         },
         'url_safe': {
             'type': 'boolean',

@@ -57,7 +57,8 @@ UUID_REGEX = re.compile(
             'default': 0,
             'min': 0,
             'max': 5,
-            'required': False
+            'required': False,
+            'placeholder': '0',
         }
     },
     output_schema={

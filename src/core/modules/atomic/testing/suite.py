@@ -44,7 +44,8 @@ logger = logging.getLogger(__name__)
         'parallel': {
             'type': 'boolean',
             'label': 'Run in Parallel',
-            'default': False
+            'default': False,
+            'description': 'Whether to parallel',
         },
         'max_failures': {
             'type': 'number',
@@ -52,7 +53,9 @@ logger = logging.getLogger(__name__)
             'default': 0,
             'description': '0 = no limit'
         ,
-                'description_key': 'modules.testing.suite.run.params.max_failures.description'}
+                'description_key': 'modules.testing.suite.run.params.max_failures.description',
+            'placeholder': '100',
+        }
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
