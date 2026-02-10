@@ -577,8 +577,8 @@ class ModuleQualityValidator:
                     hint="Add 'description' to help users understand this parameter",
                 ))
 
-            # Q014: String params should have placeholder
-            if field_type == 'string' and 'placeholder' not in field_def:
+            # Q014: String params should have placeholder (skip select-style with options)
+            if field_type == 'string' and 'placeholder' not in field_def and 'options' not in field_def:
                 issues.append(ValidationIssue(
                     rule_id="Q014",
                     severity=Severity.WARNING,
