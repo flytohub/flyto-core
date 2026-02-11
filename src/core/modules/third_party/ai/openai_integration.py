@@ -55,7 +55,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.openai.chat.params.prompt.description',
             'required': True,
             'multiline': True
-        },
+        ,
+            'placeholder': 'Enter your prompt...',
+},
         'model': {
             'type': 'select',
             'label': 'Model',
@@ -98,7 +100,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.openai.chat.params.system_message.description',
             'required': False,
             'multiline': True
-        }
+        ,
+            'placeholder': 'You are a helpful assistant.',
+}
     },
     output_schema={
         'response': {'type': 'string', 'description': 'Response from the operation',
@@ -244,7 +248,8 @@ class OpenAIChatModule(BaseModule):
             'description': 'Description of the image to generate',
             'description_key': 'modules.api.openai.image.params.prompt.description',
             'required': True,
-            'multiline': True
+            'multiline': True,
+            'placeholder': 'Enter your prompt...',
         },
         'size': {
             'type': 'select',

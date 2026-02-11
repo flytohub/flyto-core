@@ -68,6 +68,7 @@ from ...errors import ValidationError
             description_key='modules.string.template.params.missing_value.description',
             default='',
             group=FieldGroup.OPTIONS,
+            placeholder='value',
         ),
         field(
             'preserve_missing',

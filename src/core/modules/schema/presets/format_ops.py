@@ -66,7 +66,9 @@ def THOUSAND_SEPARATOR(
         default=default,
         description='Separator for thousands',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder=',',
+)
 
 
 def CURRENCY_CODE(

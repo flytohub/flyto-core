@@ -115,7 +115,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.api.anthropic.chat.params.system.description',
             'required': False,
             'multiline': True
-        }
+        ,
+            'placeholder': 'Enter system...',
+}
     },
     output_schema={
         'content': {

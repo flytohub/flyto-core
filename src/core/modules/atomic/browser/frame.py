@@ -27,7 +27,8 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='iframe#content'),
         field(
             'name',
@@ -35,6 +36,7 @@ from ...schema import compose, presets, field
             label='Frame Name',
             label_key='modules.browser.frame.params.name.label',
             description='Name attribute of the frame (alternative to selector)',
+            placeholder='my-name',
             required=False,
         ),
         field(
@@ -43,6 +45,7 @@ from ...schema import compose, presets, field
             label='Frame URL',
             label_key='modules.browser.frame.params.url.label',
             description='URL pattern to match frame (alternative to selector)',
+            placeholder='https://example.com',
             required=False,
         ),
         field(

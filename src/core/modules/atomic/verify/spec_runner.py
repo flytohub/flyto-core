@@ -325,7 +325,9 @@ def load_spec_ruleset(path: Union[str, Path]) -> Dict[str, Any]:
     timeout_ms=300000,
     params_schema=compose(
         schema_field("ruleset_path", type="string", required=False,
-                    description="Path to YAML ruleset file"),
+                    description="Path to YAML ruleset file",
+                    placeholder='/path/to/file',
+),
         schema_field("ruleset", type="object", required=False,
                     description="Inline ruleset object"),
     ),

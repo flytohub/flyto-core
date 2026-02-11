@@ -68,6 +68,7 @@ from ...errors import ValidationError
             description_key='modules.string.truncate.params.suffix.description',
             default='...',
             group=FieldGroup.OPTIONS,
+            placeholder='-suffix',
         ),
         field(
             'word_boundary',

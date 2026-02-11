@@ -22,6 +22,7 @@ def PRACTICE_URL(
         type="string",
         label=label,
         label_key=label_key,
+        description='Target URL',
         placeholder=placeholder,
         required=required,
         validation=validators.URL_HTTP,

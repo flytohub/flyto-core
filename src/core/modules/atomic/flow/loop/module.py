@@ -98,6 +98,7 @@ LOOP_CONFIG = {
             'label_key': 'modules.flow.loop.params.target.label',
             'description': 'DEPRECATED: Use output ports and edges instead',
             'description_key': 'modules.flow.loop.params.target.description',
+            'placeholder': 'step_id',
             'required': False,
             'deprecated': True
         },
@@ -115,6 +116,7 @@ LOOP_CONFIG = {
             'label_key': 'modules.flow.loop.params.index_var.label',
             'description': 'Variable name for current index',
             'description_key': 'modules.flow.loop.params.index_var.description',
+            'placeholder': 'index',
             'default': 'index'
         }
     },
@@ -241,6 +243,7 @@ FOREACH_CONFIG = {
             'label_key': 'modules.flow.foreach.params.item_var.label',
             'description': 'Variable name for current item',
             'description_key': 'modules.flow.foreach.params.item_var.description',
+            'placeholder': 'item',
             'default': 'item'
         },
         'index_var': {
@@ -249,6 +252,7 @@ FOREACH_CONFIG = {
             'label_key': 'modules.flow.foreach.params.index_var.label',
             'description': 'Variable name for current index',
             'description_key': 'modules.flow.foreach.params.index_var.description',
+            'placeholder': 'index',
             'default': 'index'
         },
         'output_mode': {

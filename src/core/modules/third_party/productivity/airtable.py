@@ -55,7 +55,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.productivity.airtable.read.params.api_key.description',
             'required': False,
             'sensitive': True
-        },
+        ,
+            'placeholder': 'sk-...',
+},
         'base_id': {
             'type': 'string',
             'label': 'Base ID',
@@ -63,7 +65,9 @@ logger = logging.getLogger(__name__)
             'description': 'Airtable base ID',
             'description_key': 'modules.productivity.airtable.read.params.base_id.description',
             'required': True
-        },
+        ,
+            'placeholder': 'app12345',
+},
         'table_name': {
             'type': 'string',
             'label': 'Table Name',
@@ -71,7 +75,9 @@ logger = logging.getLogger(__name__)
             'description': 'Name of the table',
             'description_key': 'modules.productivity.airtable.read.params.table_name.description',
             'required': True
-        },
+        ,
+            'placeholder': 'my_table',
+},
         'view': {
             'type': 'string',
             'label': 'View',
@@ -79,7 +85,9 @@ logger = logging.getLogger(__name__)
             'description': 'View name to use (optional)',
             'description_key': 'modules.productivity.airtable.read.params.view.description',
             'required': False
-        },
+        ,
+            'placeholder': 'Enter view...',
+},
         'max_records': {
             'type': 'number',
             'label': 'Max Records',
@@ -221,6 +229,7 @@ class AirtableReadModule(BaseModule):
             'label_key': 'modules.productivity.airtable.create.params.api_key.label',
             'description': 'Airtable API key (or use AIRTABLE_API_KEY env)',
             'description_key': 'modules.productivity.airtable.create.params.api_key.description',
+            'placeholder': 'sk-...',
             'required': False,
             'sensitive': True
         },
@@ -230,6 +239,7 @@ class AirtableReadModule(BaseModule):
             'label_key': 'modules.productivity.airtable.create.params.base_id.label',
             'description': 'Airtable base ID',
             'description_key': 'modules.productivity.airtable.create.params.base_id.description',
+            'placeholder': 'app12345',
             'required': True
         },
         'table_name': {
@@ -238,6 +248,7 @@ class AirtableReadModule(BaseModule):
             'label_key': 'modules.productivity.airtable.create.params.table_name.label',
             'description': 'Name of the table',
             'description_key': 'modules.productivity.airtable.create.params.table_name.description',
+            'placeholder': 'my_table',
             'required': True
         },
         'fields': {
@@ -374,6 +385,7 @@ class AirtableCreateModule(BaseModule):
             'label_key': 'modules.productivity.airtable.update.params.api_key.label',
             'description': 'Airtable API key (or use AIRTABLE_API_KEY env)',
             'description_key': 'modules.productivity.airtable.update.params.api_key.description',
+            'placeholder': 'sk-...',
             'required': False,
             'sensitive': True
         },
@@ -383,6 +395,7 @@ class AirtableCreateModule(BaseModule):
             'label_key': 'modules.productivity.airtable.update.params.base_id.label',
             'description': 'Airtable base ID',
             'description_key': 'modules.productivity.airtable.update.params.base_id.description',
+            'placeholder': 'app12345',
             'required': True
         },
         'table_name': {
@@ -391,6 +404,7 @@ class AirtableCreateModule(BaseModule):
             'label_key': 'modules.productivity.airtable.update.params.table_name.label',
             'description': 'Name of the table',
             'description_key': 'modules.productivity.airtable.update.params.table_name.description',
+            'placeholder': 'my_table',
             'required': True
         },
         'record_id': {
@@ -400,7 +414,9 @@ class AirtableCreateModule(BaseModule):
             'description': 'ID of the record to update',
             'description_key': 'modules.productivity.airtable.update.params.record_id.description',
             'required': True
-        },
+        ,
+            'placeholder': 'recXXXXXXXX',
+},
         'fields': {
             'type': 'json',
             'label': 'Fields',

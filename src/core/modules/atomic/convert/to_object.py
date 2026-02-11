@@ -56,6 +56,7 @@ from ...errors import ValidationError
             description_key='modules.convert.to_object.params.key_name.description',
             default='value',
             group=FieldGroup.OPTIONS,
+            placeholder='my-name',
         ),
     ),
     output_schema={

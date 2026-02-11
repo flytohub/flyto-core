@@ -41,10 +41,14 @@ from ...schema import compose, field as schema_field
 
     params_schema=compose(
         schema_field('results', type='array', required=True, description='Comparison results from verify.compare'),
-        schema_field('name', type='string', required=False, default='verify-report', description='Report name'),
-        schema_field('url', type='string', required=False, description='URL that was verified'),
-        schema_field('format', type='string', required=False, default='html', description='Output format (html, json, markdown, all)'),
-        schema_field('output_dir', type='string', required=False, default='./verify-reports', description='Output directory'),
+        schema_field('name', type='string', required=False, default='verify-report', description='Report name',
+                     placeholder='my-name'),
+        schema_field('url', type='string', required=False, description='URL that was verified',
+                     placeholder='https://example.com'),
+        schema_field('format', type='string', required=False, default='html', description='Output format (html, json, markdown, all)',
+                     placeholder='html'),
+        schema_field('output_dir', type='string', required=False, default='./verify-reports', description='Output directory',
+                     placeholder='/path/to/output'),
         schema_field('screenshots', type='array', required=False, description='Screenshot paths to include'),
     ),
     output_schema={

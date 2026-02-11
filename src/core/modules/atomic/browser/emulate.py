@@ -220,6 +220,7 @@ DEVICE_PRESETS = {
             label_key='modules.browser.emulate.params.user_agent.label',
             description='Custom user agent string',
             required=False,
+            placeholder='Mozilla/5.0...',
         ),
         field(
             'is_mobile',

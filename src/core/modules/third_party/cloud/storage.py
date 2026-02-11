@@ -95,7 +95,9 @@ import base64
             'description_key': 'modules.cloud.aws_s3.upload.params.file_path.description',
             'required': False,
             'help': 'Either file_path or content must be provided'
-        },
+        ,
+            'placeholder': '/path/to/file',
+},
         'content': {
             'type': 'string',
             'label': 'Content',
@@ -105,7 +107,9 @@ import base64
             'required': False,
             'multiline': True,
             'help': 'Either file_path or content must be provided'
-        },
+        ,
+            'placeholder': 'Enter content...',
+},
         'content_type': {
             'type': 'string',
             'label': 'Content Type',
@@ -307,6 +311,7 @@ async def aws_s3_upload(context):
             'label_key': 'modules.cloud.aws_s3.download.params.bucket.label',
             'description': 'S3 bucket name',
             'description_key': 'modules.cloud.aws_s3.download.params.bucket.description',
+            'placeholder': 'my-bucket',
             'required': True
         },
         'key': {
@@ -315,6 +320,7 @@ async def aws_s3_upload(context):
             'label_key': 'modules.cloud.aws_s3.download.params.key.label',
             'description': 'S3 object key (file path in bucket)',
             'description_key': 'modules.cloud.aws_s3.download.params.key.description',
+            'placeholder': 'my-key',
             'required': True
         },
         'file_path': {
@@ -323,6 +329,7 @@ async def aws_s3_upload(context):
             'label_key': 'modules.cloud.aws_s3.download.params.file_path.label',
             'description': 'Local file path to save downloaded content',
             'description_key': 'modules.cloud.aws_s3.download.params.file_path.description',
+            'placeholder': '/path/to/file',
             'required': False,
             'help': 'If not provided, content is returned in memory'
         }

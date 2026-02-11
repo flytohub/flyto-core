@@ -158,9 +158,12 @@ def _get_font(size: int):
     required_permissions=['file.write'],
 
     params_schema=compose(
-        schema_field('image_path', type='string', required=True, description='Path to the screenshot image'),
+        schema_field('image_path', type='string', required=True, description='Path to the screenshot image',
+                     placeholder='/path/to/file'),
         schema_field('annotations', type='array', required=True, description='Array of annotations: [{label, x, y, width, height, color?, description?}]'),
-        schema_field('output_path', type='string', required=False, description='Output path for annotated image (default: adds _annotated suffix)'),
+        schema_field('output_path', type='string', required=False, description='Output path for annotated image (default: adds _annotated suffix)',
+            placeholder='/path/to/output',
+),
     ),
     output_schema={
         'output_path': {'type': 'string', 'description': 'Path to annotated image'},

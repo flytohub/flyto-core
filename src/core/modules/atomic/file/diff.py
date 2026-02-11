@@ -34,10 +34,17 @@ from ...schema import compose, field
     handles_sensitive_data=False,
 
     params_schema=compose(
-        field('original', type='string', label='Original Content', required=True, format='multiline'),
-        field('modified', type='string', label='Modified Content', required=True, format='multiline'),
-        field('context_lines', type='number', label='Context Lines', default=3),
-        field('filename', type='string', label='Filename', default='file'),
+        field('original', type='string', label='Original Content', required=True, format='multiline',
+              description='Original content for comparison',
+              placeholder='Enter Original...'),
+        field('modified', type='string', label='Modified Content', required=True, format='multiline',
+              description='Modified content for comparison',
+              placeholder='Enter Modified...'),
+        field('context_lines', type='number', label='Context Lines', default=3,
+              description='Number of context lines around changes'),
+        field('filename', type='string', label='Filename', default='file',
+              description='Name of the file',
+              placeholder='my-name'),
     ),
     output_schema={
         'diff': {

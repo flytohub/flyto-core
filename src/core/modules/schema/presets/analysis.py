@@ -24,5 +24,7 @@ def HTML_CONTENT(
         required=required,
         description='HTML content to analyze',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='<html><body>content</body></html>',
+)
 

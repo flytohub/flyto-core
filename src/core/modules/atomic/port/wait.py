@@ -65,8 +65,9 @@ logger = logging.getLogger(__name__)
             'description': 'Host to connect to',
             'description_key': 'modules.port.wait.params.host.description',
             'required': False,
-            'default': 'localhost'
-        },
+            'default': 'localhost',
+            'placeholder': 'localhost',
+},
         'timeout': {
             'type': 'number',
             'label': 'Timeout (seconds)',

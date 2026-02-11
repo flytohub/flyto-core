@@ -166,7 +166,8 @@ def save_ruleset(ruleset: Ruleset, path: Union[str, Path]) -> None:
     required_permissions=['file.read'],
 
     params_schema=compose(
-        schema_field('path', type='string', required=True, description='Path to YAML ruleset file'),
+        schema_field('path', type='string', required=True, description='Path to YAML ruleset file',
+                     placeholder='/path/to/file'),
     ),
     output_schema={
         'ruleset': {'type': 'object', 'description': 'Parsed ruleset'},

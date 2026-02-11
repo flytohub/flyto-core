@@ -57,6 +57,7 @@ from ...errors import ValidationError
             description_key='modules.hash.sha256.params.encoding.description',
             default='utf-8',
             group=FieldGroup.OPTIONS,
+            placeholder='Enter Encoding...',
         ),
     ),
     output_schema={

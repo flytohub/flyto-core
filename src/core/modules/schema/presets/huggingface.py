@@ -43,7 +43,9 @@ def HF_PROMPT(
         required=required,
         multiline=True,
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Enter your prompt...',
+)
 
 
 def HF_TEXT_INPUT(
@@ -62,7 +64,9 @@ def HF_TEXT_INPUT(
         required=required,
         multiline=True,
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Enter text...',
+)
 
 
 def HF_MAX_NEW_TOKENS(
@@ -205,7 +209,9 @@ def HF_SOURCE_LANG(
         label_key=label_key,
         required=False,
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='en',
+)
 
 
 def HF_TARGET_LANG(
@@ -222,7 +228,9 @@ def HF_TARGET_LANG(
         label_key=label_key,
         required=False,
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='zh',
+)
 
 
 def HF_AUDIO_PATH(
@@ -239,7 +247,9 @@ def HF_AUDIO_PATH(
         label_key=label_key,
         required=True,
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='/path/to/audio.wav',
+)
 
 
 def HF_IMAGE_PATH(
@@ -256,7 +266,9 @@ def HF_IMAGE_PATH(
         label_key=label_key,
         required=True,
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='/path/to/image.png',
+)
 
 
 def HF_LANGUAGE(
@@ -274,7 +286,9 @@ def HF_LANGUAGE(
         required=False,
         description='Language code (e.g., "en", "zh"). Leave empty for auto-detection.',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='en',
+)
 
 
 def HF_RETURN_TIMESTAMPS(

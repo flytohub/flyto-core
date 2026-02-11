@@ -47,7 +47,9 @@ from ...registry import register_module
             'description': 'Local file path to upload',
             'description_key': 'modules.cloud.gcs.upload.params.file_path.description',
             'required': True
-        },
+        ,
+            'placeholder': '/path/to/file',
+},
         'bucket': {
             'type': 'string',
             'label': 'Bucket',
@@ -55,7 +57,9 @@ from ...registry import register_module
             'description': 'GCS bucket name',
             'description_key': 'modules.cloud.gcs.upload.params.bucket.description',
             'required': True
-        },
+        ,
+            'placeholder': 'my-bucket',
+},
         'object_name': {
             'type': 'string',
             'label': 'Object Name',
@@ -63,7 +67,9 @@ from ...registry import register_module
             'description': 'Name for the uploaded object (default: filename)',
             'description_key': 'modules.cloud.gcs.upload.params.object_name.description',
             'required': False
-        },
+        ,
+            'placeholder': 'my-name',
+},
         'content_type': {
             'type': 'string',
             'label': 'Content Type',
@@ -71,7 +77,9 @@ from ...registry import register_module
             'description': 'MIME type (optional)',
             'description_key': 'modules.cloud.gcs.upload.params.content_type.description',
             'required': False
-        },
+        ,
+            'placeholder': 'application/json',
+},
         'public': {
             'type': 'boolean',
             'label': 'Public',
@@ -225,6 +233,7 @@ class GCSUploadModule(BaseModule):
             'label_key': 'modules.cloud.gcs.download.params.bucket.label',
             'description': 'GCS bucket name',
             'description_key': 'modules.cloud.gcs.download.params.bucket.description',
+            'placeholder': 'my-bucket',
             'required': True
         },
         'object_name': {
@@ -233,6 +242,7 @@ class GCSUploadModule(BaseModule):
             'label_key': 'modules.cloud.gcs.download.params.object_name.label',
             'description': 'Object to download',
             'description_key': 'modules.cloud.gcs.download.params.object_name.description',
+            'placeholder': 'path/to/object',
             'required': True
         },
         'destination_path': {
@@ -242,7 +252,9 @@ class GCSUploadModule(BaseModule):
             'description': 'Local path to save file',
             'description_key': 'modules.cloud.gcs.download.params.destination_path.description',
             'required': True
-        }
+        ,
+            'placeholder': '/path/to/file',
+}
     },
     output_schema={
         'file_path': {'type': 'string', 'description': 'The file path'},

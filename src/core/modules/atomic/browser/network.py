@@ -29,7 +29,8 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    params_schema=compose(
         field(
             'action',
             type='string',
@@ -58,6 +59,7 @@ from ...schema import compose, presets, field
             label='Resource Type',
             label_key='modules.browser.network.params.resource_type.label',
             description='Filter by resource type (document, script, image, etc)',
+            placeholder='document',
             required=False,
         ),
         presets.TIMEOUT_MS(default=30000),

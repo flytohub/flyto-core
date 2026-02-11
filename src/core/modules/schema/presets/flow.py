@@ -83,6 +83,7 @@ def TRIGGER_TYPE(
         label=label,
         label_key=label_key,
         default=default,
+        description='Type of trigger event',
         options=[
             {"value": "manual", "label": "Manual (click to run)"},
             {"value": "webhook", "label": "Webhook (HTTP trigger)"},

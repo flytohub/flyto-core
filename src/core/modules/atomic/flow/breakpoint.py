@@ -92,7 +92,7 @@ from ...types import NodeType, EdgeType, DataType
         presets.DATA_ARRAY(key='required_approvers', label='Required Approvers'),
         presets.APPROVAL_MODE(default='single'),
         presets.DATA_ARRAY(key='custom_fields', label='Custom Input Fields'),
-        presets.BOOLEAN(key='include_context', label='Include Context', default=True),
+        presets.BOOLEAN(key='include_context', label='Include Context', default=True, description='Whether to include execution context'),
         presets.TEXT(key='auto_approve_condition', label='Auto-Approve Condition'),
     ),
 

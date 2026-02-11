@@ -149,9 +149,12 @@ CAPTURE_SCRIPT = """(selector) => {
     required_permissions=['browser.read'],
 
     params_schema=compose(
-        schema_field('url', type='string', required=True, description='URL to capture from'),
-        schema_field('selector', type='string', required=True, description='CSS selector'),
-        schema_field('wait_for', type='string', required=False, description='Wait for selector before capture'),
+        schema_field('url', type='string', required=True, description='URL to capture from',
+                     placeholder='https://example.com'),
+        schema_field('selector', type='string', required=True, description='CSS selector',
+                     placeholder='#element or .class'),
+        schema_field('wait_for', type='string', required=False, description='Wait for selector before capture',
+                     placeholder='Enter Wait For...'),
         schema_field('viewport_width', type='integer', required=False, default=1280, description='Viewport width'),
         schema_field('viewport_height', type='integer', required=False, default=800, description='Viewport height'),
     ),

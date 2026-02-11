@@ -48,7 +48,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.autonomous.params.goal.description',
             'required': True,
             'multiline': True
-        },
+        ,
+            'placeholder': 'Describe the goal...',
+},
         'context': {
             'type': 'string',
             'label': 'Context',
@@ -57,7 +59,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.autonomous.params.context.description',
             'required': False,
             'multiline': True
-        },
+        ,
+            'placeholder': 'Additional context...',
+},
         'max_iterations': {
             'type': 'number',
             'label': 'Max Iterations',
@@ -90,7 +94,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.autonomous.params.model.description',
             'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
-        },
+        ,
+            'placeholder': 'gpt-4o',
+},
         'ollama_url': {
             'type': 'string',
             'label': 'Ollama URL',
@@ -99,7 +105,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.autonomous.params.ollama_url.description',
             'default': OLLAMA_DEFAULT_URL,
             'required': False
-        },
+        ,
+            'placeholder': 'http://localhost:11434',
+},
         'temperature': {
             'type': 'number',
             'label': 'Temperature',

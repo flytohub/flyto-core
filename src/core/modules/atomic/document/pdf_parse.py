@@ -58,7 +58,9 @@ logger = logging.getLogger(__name__)
             'type': 'array',
             'description': 'Text content per page'
         ,
-                'description_key': 'modules.pdf.parse.output.pages.description'},
+                'description_key': 'modules.pdf.parse.output.pages.description',
+            'placeholder': '1-5',
+},
         'metadata': {
             'type': 'object',
             'description': 'PDF metadata (title, author, etc.)'

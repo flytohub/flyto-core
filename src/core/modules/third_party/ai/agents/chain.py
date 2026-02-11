@@ -48,7 +48,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.chain.params.input.description',
             'required': True,
             'multiline': True
-        },
+        ,
+            'placeholder': 'Input data...',
+},
         'chain_steps': {
             'type': 'array',
             'label': 'Chain Steps',
@@ -78,7 +80,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.chain.params.model.description',
             'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
-        },
+        ,
+            'placeholder': 'gpt-4o',
+},
         'ollama_url': {
             'type': 'string',
             'label': 'Ollama URL',
@@ -87,7 +91,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.chain.params.ollama_url.description',
             'default': OLLAMA_DEFAULT_URL,
             'required': False
-        },
+        ,
+            'placeholder': 'http://localhost:11434',
+},
         'temperature': {
             'type': 'number',
             'label': 'Temperature',

@@ -44,23 +44,27 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'label': 'URL',
             'required': True,
-            'placeholder': 'https://api.example.com/data'
+            'placeholder': 'https://api.example.com/data',
+            'description': 'Target URL',
         },
         'headers': {
             'type': 'object',
             'label': 'Headers',
-            'default': {}
+            'default': {},
+            'description': 'HTTP request headers',
         },
         'query': {
             'type': 'object',
             'label': 'Query Parameters',
-            'default': {}
+            'default': {},
+            'description': 'Query string',
         },
         'timeout': {
             'type': 'number',
             'label': 'Timeout (seconds)',
-            'default': 30
-        }
+            'default': 30,
+            'description': 'Maximum time to wait in milliseconds',
+        },
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',

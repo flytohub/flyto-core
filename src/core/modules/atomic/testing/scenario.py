@@ -38,14 +38,15 @@ logger = logging.getLogger(__name__)
             'type': 'object',
             'label': 'Scenario',
             'required': True,
-            'description': 'Scenario definition with given/when/then'
-        ,
-                'description_key': 'modules.testing.scenario.run.params.scenario.description'},
+            'description': 'Scenario definition with given/when/then',
+            'description_key': 'modules.testing.scenario.run.params.scenario.description',
+        },
         'context': {
             'type': 'object',
             'label': 'Context',
-            'default': {}
-        }
+            'default': {},
+            'description': 'Additional context data',
+        },
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',

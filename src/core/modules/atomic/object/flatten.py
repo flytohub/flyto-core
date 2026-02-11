@@ -56,6 +56,7 @@ from ...errors import ValidationError
             description_key='modules.object.flatten.params.separator.description',
             default='.',
             group=FieldGroup.OPTIONS,
+            placeholder=',',
         ),
         field(
             'max_depth',

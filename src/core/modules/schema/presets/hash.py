@@ -43,7 +43,9 @@ def HASH_ENCODING(
         default=default,
         description='Text encoding',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='hex',
+)
 
 
 def HASH_ALGORITHM(

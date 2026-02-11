@@ -41,6 +41,7 @@ from ...schema import compose, field, presets
             label_key='modules.browser.login.params.username.label',
             description='Username or email to login with',
             required=True,
+            placeholder='username',
         ),
         field(
             'password',
@@ -50,6 +51,7 @@ from ...schema import compose, field, presets
             description='Password for login',
             required=True,
             format='password',
+            placeholder='********',
         ),
         field(
             'username_selector',

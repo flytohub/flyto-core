@@ -664,7 +664,9 @@ def DIALOG_PROMPT_TEXT(
         required=required,
         description='Text to enter in prompt dialog (for accept action)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Enter text here',
+)
 
 
 def JS_SCRIPT(

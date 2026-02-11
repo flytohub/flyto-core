@@ -83,7 +83,9 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Model used'
         ,
-                'description_key': 'modules.llm.chat.output.model.description'},
+                'description_key': 'modules.llm.chat.output.model.description',
+            'placeholder': 'gpt-4o',
+},
         'tokens_used': {
             'type': 'number',
             'description': 'Total tokens consumed'

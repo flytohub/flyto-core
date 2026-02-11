@@ -185,10 +185,14 @@ def parse_node(data: Dict[str, Any]) -> FigmaNode:
     required_permissions=['figma.read'],
 
     params_schema=compose(
-        schema_field('file_id', type='string', required=True, description='Figma file key (from URL)'),
-        schema_field('node_id', type='string', required=False, description='Specific node ID to fetch'),
-        schema_field('node_name', type='string', required=False, description='Find node by name'),
-        schema_field('token', type='string', required=False, description='Figma token (or use FIGMA_TOKEN env)'),
+        schema_field('file_id', type='string', required=True, description='Figma file key (from URL)',
+                     placeholder='unique-id'),
+        schema_field('node_id', type='string', required=False, description='Specific node ID to fetch',
+                     placeholder='unique-id'),
+        schema_field('node_name', type='string', required=False, description='Find node by name',
+                     placeholder='my-name'),
+        schema_field('token', type='string', required=False, description='Figma token (or use FIGMA_TOKEN env var)',
+                     placeholder='your-token'),
     ),
     output_schema={
         'node': {'type': 'object', 'description': 'Figma node data'},

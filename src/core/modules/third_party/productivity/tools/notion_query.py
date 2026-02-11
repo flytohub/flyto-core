@@ -62,7 +62,9 @@ logger = logging.getLogger(__name__)
             'description': 'Notion database ID',
             'description_key': 'modules.api.notion.query_database.params.database_id.description',
             'required': True
-        },
+        ,
+            'placeholder': 'database-id',
+},
         'filter': {
             'type': 'object',
             'label': 'Filter',

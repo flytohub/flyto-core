@@ -120,6 +120,7 @@ from ...schema import compose, field
             label_key='modules.browser.pagination.params.wait_for_selector.label',
             description='Wait for this element after page change',
             required=False,
+            placeholder='#element or .class',
         ),
         field(
             'scroll_amount',

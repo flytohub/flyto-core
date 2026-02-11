@@ -44,7 +44,9 @@ def STRING_PAD_CHAR(
         default=default,
         description='Character to pad with',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder=' ',
+)
 
 
 def STRING_PAD_POSITION(
@@ -108,7 +110,9 @@ def STRING_SUFFIX(
         default=default,
         description='Text to append if truncated',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='-suffix',
+)
 
 
 def STRING_SEPARATOR(
@@ -127,7 +131,9 @@ def STRING_SEPARATOR(
         default=default,
         description='Word separator',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder=',',
+)
 
 
 def STRING_TEMPLATE(

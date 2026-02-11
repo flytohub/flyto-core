@@ -111,6 +111,7 @@ class CircuitState(str, Enum):
             label='Circuit ID',
             label_key='modules.error.circuit_breaker.params.circuit_id.label',
             description='Unique identifier for this circuit (for state tracking)',
+            placeholder='unique-id',
             description_key='modules.error.circuit_breaker.params.circuit_id.description',
             required=True,
         ),

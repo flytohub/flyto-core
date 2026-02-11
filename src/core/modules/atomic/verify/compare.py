@@ -118,7 +118,8 @@ def colors_match(color1: str, color2: str, tolerance: int = 5) -> bool:
     params_schema=compose(
         schema_field('actual', type='object', required=True, description='Captured element styles (from verify.capture)'),
         schema_field('expected', type='object', required=True, description='Expected styles to compare against'),
-        schema_field('selector', type='string', required=False, description='Selector for reporting'),
+        schema_field('selector', type='string', required=False, description='Selector for reporting',
+                     placeholder='#element or .class'),
         schema_field('size_tolerance', type='number', required=False, default=2.0, description='Tolerance for size (px)'),
         schema_field('spacing_tolerance', type='number', required=False, default=2.0, description='Tolerance for spacing (px)'),
         schema_field('font_size_tolerance', type='number', required=False, default=1.0, description='Tolerance for font size (px)'),

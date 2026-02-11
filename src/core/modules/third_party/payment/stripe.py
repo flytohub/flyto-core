@@ -55,7 +55,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.payment.stripe.create_payment.params.api_key.description',
             'required': False,
             'sensitive': True
-        },
+        ,
+            'placeholder': 'sk-...',
+},
         'amount': {
             'type': 'number',
             'label': 'Amount',
@@ -73,7 +75,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.payment.stripe.create_payment.params.currency.description',
             'default': 'usd',
             'required': False
-        },
+        ,
+            'placeholder': 'usd',
+},
         'description': {
             'type': 'string',
             'label': 'Description',
@@ -81,7 +85,9 @@ logger = logging.getLogger(__name__)
             'description': 'Payment description',
             'description_key': 'modules.payment.stripe.create_payment.params.description.description',
             'required': False
-        },
+        ,
+            'placeholder': 'Description text',
+},
         'customer': {
             'type': 'string',
             'label': 'Customer ID',
@@ -89,7 +95,9 @@ logger = logging.getLogger(__name__)
             'description': 'Stripe customer ID (optional)',
             'description_key': 'modules.payment.stripe.create_payment.params.customer.description',
             'required': False
-        }
+        ,
+            'placeholder': 'Enter customer...',
+}
     },
     output_schema={
         'id': {'type': 'string', 'description': 'Unique identifier',
@@ -227,6 +235,7 @@ class StripeCreatePaymentModule(BaseModule):
             'label_key': 'modules.payment.stripe.get_customer.params.api_key.label',
             'description': 'Stripe secret key (or use STRIPE_API_KEY env)',
             'description_key': 'modules.payment.stripe.get_customer.params.api_key.description',
+            'placeholder': 'sk-...',
             'required': False,
             'sensitive': True
         },
@@ -237,7 +246,9 @@ class StripeCreatePaymentModule(BaseModule):
             'description': 'Stripe customer ID',
             'description_key': 'modules.payment.stripe.get_customer.params.customer_id.description',
             'required': True
-        }
+        ,
+            'placeholder': 'cus_xxxxx',
+}
     },
     output_schema={
         'id': {'type': 'string', 'description': 'Unique identifier'},
@@ -344,6 +355,7 @@ class StripeGetCustomerModule(BaseModule):
             'label_key': 'modules.payment.stripe.list_charges.params.api_key.label',
             'description': 'Stripe secret key (or use STRIPE_API_KEY env)',
             'description_key': 'modules.payment.stripe.list_charges.params.api_key.description',
+            'placeholder': 'sk-...',
             'required': False,
             'sensitive': True
         },
@@ -364,6 +376,7 @@ class StripeGetCustomerModule(BaseModule):
             'label_key': 'modules.payment.stripe.list_charges.params.customer.label',
             'description': 'Filter by customer ID (optional)',
             'description_key': 'modules.payment.stripe.list_charges.params.customer.description',
+            'placeholder': 'cus_xxxxx',
             'required': False
         }
     },

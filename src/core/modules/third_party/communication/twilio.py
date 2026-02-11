@@ -55,7 +55,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.communication.twilio.send_sms.params.account_sid.description',
             'required': False,
             'sensitive': True
-        },
+        ,
+            'placeholder': 'ACxxxxxxxx',
+},
         'auth_token': {
             'type': 'string',
             'label': 'Auth Token',
@@ -64,7 +66,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.communication.twilio.send_sms.params.auth_token.description',
             'required': False,
             'sensitive': True
-        },
+        ,
+            'placeholder': 'Bearer your-token',
+},
         'from_number': {
             'type': 'string',
             'label': 'From Number',
@@ -72,7 +76,9 @@ logger = logging.getLogger(__name__)
             'description': 'Twilio phone number (e.g. +1234567890)',
             'description_key': 'modules.communication.twilio.send_sms.params.from_number.description',
             'required': True
-        },
+        ,
+            'placeholder': '+1234567890',
+},
         'to_number': {
             'type': 'string',
             'label': 'To Number',
@@ -80,7 +86,9 @@ logger = logging.getLogger(__name__)
             'description': 'Recipient phone number (e.g. +1234567890)',
             'description_key': 'modules.communication.twilio.send_sms.params.to_number.description',
             'required': True
-        },
+        ,
+            'placeholder': '+1234567890',
+},
         'message': {
             'type': 'string',
             'label': 'Message',
@@ -89,7 +97,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.communication.twilio.send_sms.params.message.description',
             'required': True,
             'multiline': True
-        }
+        ,
+            'placeholder': 'Your message here',
+}
     },
     output_schema={
         'sid': {'type': 'string', 'description': 'The sid',
@@ -222,6 +232,7 @@ class TwilioSendSMSModule(BaseModule):
             'label_key': 'modules.communication.twilio.make_call.params.account_sid.label',
             'description': 'Twilio Account SID (or use TWILIO_ACCOUNT_SID env)',
             'description_key': 'modules.communication.twilio.make_call.params.account_sid.description',
+            'placeholder': 'ACxxxxxxxx',
             'required': False,
             'sensitive': True
         },
@@ -231,6 +242,7 @@ class TwilioSendSMSModule(BaseModule):
             'label_key': 'modules.communication.twilio.make_call.params.auth_token.label',
             'description': 'Twilio Auth Token (or use TWILIO_AUTH_TOKEN env)',
             'description_key': 'modules.communication.twilio.make_call.params.auth_token.description',
+            'placeholder': 'your-token',
             'required': False,
             'sensitive': True
         },
@@ -240,6 +252,7 @@ class TwilioSendSMSModule(BaseModule):
             'label_key': 'modules.communication.twilio.make_call.params.from_number.label',
             'description': 'Twilio phone number',
             'description_key': 'modules.communication.twilio.make_call.params.from_number.description',
+            'placeholder': '+1234567890',
             'required': True
         },
         'to_number': {
@@ -248,6 +261,7 @@ class TwilioSendSMSModule(BaseModule):
             'label_key': 'modules.communication.twilio.make_call.params.to_number.label',
             'description': 'Recipient phone number',
             'description_key': 'modules.communication.twilio.make_call.params.to_number.description',
+            'placeholder': '+1234567890',
             'required': True
         },
         'twiml_url': {
@@ -257,7 +271,9 @@ class TwilioSendSMSModule(BaseModule):
             'description': 'URL to TwiML instructions',
             'description_key': 'modules.communication.twilio.make_call.params.twiml_url.description',
             'required': True
-        }
+        ,
+            'placeholder': 'https://example.com',
+}
     },
     output_schema={
         'sid': {'type': 'string', 'description': 'The sid'},

@@ -317,7 +317,9 @@ def OUTPUT_DIRECTORY(
         description='Directory where output files will be saved',
         format="path",
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='/path/to/output',
+)
 
 
 # QR Code Presets
@@ -381,7 +383,9 @@ def QRCODE_COLOR(
         default=default,
         description='Color of the QR code (hex or name)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='#000000',
+)
 
 
 def QRCODE_BACKGROUND(
@@ -400,7 +404,9 @@ def QRCODE_BACKGROUND(
         default=default,
         description='Background color (hex or name)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='#FFFFFF',
+)
 
 
 def QRCODE_ERROR_CORRECTION(
@@ -445,4 +451,6 @@ def QRCODE_LOGO_PATH(
         format="path",
         description='Path to logo image to embed in center',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='/path/to/logo.png',
+)

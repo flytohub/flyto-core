@@ -47,7 +47,9 @@ from ...registry import register_module
             'description': 'Local file path to upload',
             'description_key': 'modules.cloud.azure.upload.params.file_path.description',
             'required': True
-        },
+        ,
+            'placeholder': '/path/to/file',
+},
         'connection_string': {
             'type': 'string',
             'label': 'Connection String',
@@ -56,7 +58,9 @@ from ...registry import register_module
             'description_key': 'modules.cloud.azure.upload.params.connection_string.description',
             'required': False,
             'sensitive': True
-        },
+        ,
+            'placeholder': 'Enter connection string...',
+},
         'container': {
             'type': 'string',
             'label': 'Container',
@@ -64,7 +68,9 @@ from ...registry import register_module
             'description': 'Azure container name',
             'description_key': 'modules.cloud.azure.upload.params.container.description',
             'required': True
-        },
+        ,
+            'placeholder': 'my-container',
+},
         'blob_name': {
             'type': 'string',
             'label': 'Blob Name',
@@ -72,7 +78,9 @@ from ...registry import register_module
             'description': 'Name for the uploaded blob (default: filename)',
             'description_key': 'modules.cloud.azure.upload.params.blob_name.description',
             'required': False
-        },
+        ,
+            'placeholder': 'my-name',
+},
         'content_type': {
             'type': 'string',
             'label': 'Content Type',
@@ -80,7 +88,9 @@ from ...registry import register_module
             'description': 'MIME type (optional)',
             'description_key': 'modules.cloud.azure.upload.params.content_type.description',
             'required': False
-        }
+        ,
+            'placeholder': 'application/json',
+}
     },
     output_schema={
         'url': {'type': 'string', 'description': 'URL address',
@@ -234,6 +244,7 @@ class AzureUploadModule(BaseModule):
             'label_key': 'modules.cloud.azure.download.params.connection_string.label',
             'description': 'Azure Storage connection string (use env var AZURE_STORAGE_CONNECTION_STRING)',
             'description_key': 'modules.cloud.azure.download.params.connection_string.description',
+            'placeholder': 'DefaultEndpointsProtocol=https;...',
             'required': False,
             'sensitive': True
         },
@@ -243,6 +254,7 @@ class AzureUploadModule(BaseModule):
             'label_key': 'modules.cloud.azure.download.params.container.label',
             'description': 'Azure container name',
             'description_key': 'modules.cloud.azure.download.params.container.description',
+            'placeholder': 'my-container',
             'required': True
         },
         'blob_name': {
@@ -251,6 +263,7 @@ class AzureUploadModule(BaseModule):
             'label_key': 'modules.cloud.azure.download.params.blob_name.label',
             'description': 'Blob to download',
             'description_key': 'modules.cloud.azure.download.params.blob_name.description',
+            'placeholder': 'my-blob',
             'required': True
         },
         'destination_path': {
@@ -260,7 +273,9 @@ class AzureUploadModule(BaseModule):
             'description': 'Local path to save file',
             'description_key': 'modules.cloud.azure.download.params.destination_path.description',
             'required': True
-        }
+        ,
+            'placeholder': '/path/to/file',
+}
     },
     output_schema={
         'file_path': {'type': 'string', 'description': 'The file path'},

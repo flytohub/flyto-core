@@ -189,12 +189,14 @@ class GitHubGetRepoModule(BaseModule):
             'type': 'string',
             'label': 'Owner',
             'description': 'Repository owner',
+            'placeholder': 'username',
             'required': True
         },
         'repo': {
             'type': 'string',
             'label': 'Repository',
             'description': 'Repository name',
+            'placeholder': 'username/repo',
             'required': True
         },
         'state': {
@@ -355,12 +357,14 @@ class GitHubListIssuesModule(BaseModule):
             'type': 'string',
             'label': 'Owner',
             'description': 'Repository owner',
+            'placeholder': 'username',
             'required': True
         },
         'repo': {
             'type': 'string',
             'label': 'Repository',
             'description': 'Repository name',
+            'placeholder': 'username/repo',
             'required': True
         },
         'title': {

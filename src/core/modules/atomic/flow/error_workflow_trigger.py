@@ -61,6 +61,7 @@ from ...types import NodeType, EdgeType, DataType
             label_key='common.params.description.label',
             description='Description of this error workflow',
             description_key='common.params.description.description',
+            placeholder='Description text',
             default='',
             required=False
         ),

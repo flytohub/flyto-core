@@ -77,7 +77,9 @@ logger = logging.getLogger(__name__)
             'description': 'Bot avatar image URL (optional)',
                 'description_key': 'modules.notification.discord.send_message.params.avatar_url.description',
             'required': False
-        }
+        ,
+            'placeholder': 'https://example.com',
+}
     },
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',

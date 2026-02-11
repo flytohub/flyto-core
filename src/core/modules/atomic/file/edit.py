@@ -39,9 +39,14 @@ import os
 
     params_schema=compose(
         presets.FILE_PATH(key='path', required=True, placeholder='/path/to/file.txt'),
-        field('old_string', type='string', label='Old String', required=True, format='multiline'),
-        field('new_string', type='string', label='New String', required=True, format='multiline'),
-        field('replace_all', type='boolean', label='Replace All', default=False),
+        field('old_string', type='string', label='Old String', required=True, format='multiline',
+              description='Text to find and replace',
+              placeholder='Enter Old String...'),
+        field('new_string', type='string', label='New String', required=True, format='multiline',
+              description='Replacement text',
+              placeholder='Enter New String...'),
+        field('replace_all', type='boolean', label='Replace All', default=False,
+              description='Whether to replace all occurrences'),
         presets.ENCODING(default='utf-8'),
     ),
     output_schema={

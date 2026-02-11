@@ -68,6 +68,7 @@ from ...errors import ValidationError
             description_key='modules.string.pad.params.pad_char.description',
             default=' ',
             group=FieldGroup.OPTIONS,
+            placeholder='Enter Pad Char...',
         ),
         field(
             'position',

@@ -101,6 +101,7 @@ def MATH_OPERATION(
         label=label,
         label_key=label_key,
         required=required,
+        description='Operation to perform',
         options=[
             {'value': 'add', 'label': 'Add'},
             {'value': 'subtract', 'label': 'Subtract'},

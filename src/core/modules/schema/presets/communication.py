@@ -65,7 +65,9 @@ def WEBHOOK_AUTH_TOKEN(
         secret=True,
         description='Bearer token for authorization',
         group=FieldGroup.CONNECTION,
-    )
+    
+        placeholder='Bearer your-token',
+)
 
 def EMAIL_TO(
     *,
@@ -104,7 +106,9 @@ def EMAIL_SUBJECT(
         required=required,
         description='Email subject line',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Email Subject',
+)
 
 
 def EMAIL_BODY(
@@ -124,7 +128,9 @@ def EMAIL_BODY(
         multiline=True,
         description='Email body content',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Email body content...',
+)
 
 
 def EMAIL_HTML(
@@ -163,7 +169,9 @@ def EMAIL_FROM(
         required=required,
         description='Sender email (uses SMTP_FROM_EMAIL env if not provided)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='sender@example.com',
+)
 
 
 def EMAIL_CC(
@@ -182,7 +190,9 @@ def EMAIL_CC(
         required=required,
         description='CC recipients, comma-separated',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='cc@example.com',
+)
 
 
 def EMAIL_BCC(
@@ -201,7 +211,9 @@ def EMAIL_BCC(
         required=required,
         description='BCC recipients, comma-separated',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='bcc@example.com',
+)
 
 
 def EMAIL_ATTACHMENTS(
@@ -281,7 +293,9 @@ def SMTP_USER(
         required=required,
         description='SMTP username (uses SMTP_USER env if not provided)',
         group=FieldGroup.CONNECTION,
-    )
+    
+        placeholder='user@example.com',
+)
 
 
 def SMTP_PASSWORD(
@@ -301,7 +315,9 @@ def SMTP_PASSWORD(
         secret=True,
         description='SMTP password (uses SMTP_PASSWORD env if not provided)',
         group=FieldGroup.CONNECTION,
-    )
+    
+        placeholder='********',
+)
 
 
 def USE_TLS(
@@ -381,7 +397,9 @@ def IMAP_USER(
         required=required,
         description='IMAP username',
         group=FieldGroup.CONNECTION,
-    )
+    
+        placeholder='user@example.com',
+)
 
 
 def IMAP_PASSWORD(
@@ -401,7 +419,9 @@ def IMAP_PASSWORD(
         secret=True,
         description='IMAP password',
         group=FieldGroup.CONNECTION,
-    )
+    
+        placeholder='********',
+)
 
 
 def EMAIL_FOLDER(
@@ -421,7 +441,9 @@ def EMAIL_FOLDER(
         required=False,
         description='Mailbox folder to read from',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='INBOX',
+)
 
 
 def EMAIL_LIMIT(
@@ -480,7 +502,9 @@ def EMAIL_SINCE_DATE(
         required=required,
         description='Fetch emails since this date (YYYY-MM-DD)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='2024-01-01',
+)
 
 
 def EMAIL_FROM_FILTER(
@@ -499,7 +523,9 @@ def EMAIL_FROM_FILTER(
         required=required,
         description='Filter by sender email address',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='sender@example.com',
+)
 
 
 def EMAIL_SUBJECT_FILTER(
@@ -518,7 +544,9 @@ def EMAIL_SUBJECT_FILTER(
         required=required,
         description='Filter by subject (contains)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='keyword',
+)
 
 def SLACK_MESSAGE(
     *,
@@ -536,7 +564,9 @@ def SLACK_MESSAGE(
         required=required,
         description='Message text to send',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Your message here',
+)
 
 
 def SLACK_WEBHOOK_URL(
@@ -577,7 +607,9 @@ def SLACK_CHANNEL(
         required=required,
         description='Override channel (optional)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='#general',
+)
 
 
 def SLACK_USERNAME(
@@ -596,7 +628,9 @@ def SLACK_USERNAME(
         required=required,
         description='Override bot username',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Bot',
+)
 
 
 def SLACK_ICON_EMOJI(

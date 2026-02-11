@@ -67,7 +67,9 @@ def DOC_PAGES(
         required=False,
         description='Page range (e.g., "1-5", "1,3,5", or "all")',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='1-5',
+)
 
 
 def DOC_EXTRACT_TABLES(
@@ -145,7 +147,9 @@ def DOC_IMAGES_OUTPUT_DIR(
         required=False,
         description='Directory to save extracted images',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='/path/to/images',
+)
 
 def EXCEL_PATH(
     *,
@@ -183,7 +187,9 @@ def EXCEL_SHEET(
         required=False,
         description='Sheet name (default: first sheet)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Sheet1',
+)
 
 
 def EXCEL_HEADER_ROW(
@@ -221,7 +227,9 @@ def EXCEL_RANGE(
         required=False,
         description='Cell range to read (e.g., "A1:D10")',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='A1:Z100',
+)
 
 
 def EXCEL_AS_DICT(
@@ -298,7 +306,9 @@ def EXCEL_SHEET_NAME(
         required=False,
         description='Name of the worksheet',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Sheet1',
+)
 
 
 def EXCEL_AUTO_WIDTH(
@@ -357,7 +367,9 @@ def PDF_CONTENT(
         required=required,
         description='HTML or text content to convert to PDF',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='Document content...',
+)
 
 
 def PDF_TITLE(
@@ -375,7 +387,9 @@ def PDF_TITLE(
         required=False,
         description='Document title (metadata)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Document Title',
+)
 
 
 def PDF_AUTHOR(
@@ -393,7 +407,9 @@ def PDF_AUTHOR(
         required=False,
         description='Document author (metadata)',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Author Name',
+)
 
 
 def PDF_PAGE_SIZE(
@@ -482,7 +498,9 @@ def PDF_HEADER(
         required=False,
         description='Header text for each page',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Header text',
+)
 
 
 def PDF_FOOTER(
@@ -500,7 +518,9 @@ def PDF_FOOTER(
         required=False,
         description='Footer text for each page',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='Footer text',
+)
 
 
 def PDF_TEMPLATE(
@@ -519,7 +539,9 @@ def PDF_TEMPLATE(
         required=required,
         description='Path to the PDF template file',
         group=FieldGroup.OPTIONS,
-    )
+    
+        placeholder='/path/to/template.pdf',
+)
 
 
 def PDF_FORM_FIELDS(
@@ -595,7 +617,9 @@ def WORD_FILE_PATH(
         required=required,
         description='Path to the Word document (.docx)',
         group=FieldGroup.BASIC,
-    )
+    
+        placeholder='/path/to/document.docx',
+)
 
 
 def DOC_CONVERSION_METHOD(

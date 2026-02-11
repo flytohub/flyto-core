@@ -79,7 +79,9 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Model used for analysis'
         ,
-                'description_key': 'modules.vision.analyze.output.model.description'},
+                'description_key': 'modules.vision.analyze.output.model.description',
+            'placeholder': 'gpt-4o',
+},
         'tokens_used': {
             'type': 'number',
             'description': 'Total tokens used'

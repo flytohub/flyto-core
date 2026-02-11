@@ -43,8 +43,9 @@ import json
             'label_key': 'modules.meta.modules.list.params.category.label',
             'description': 'Filter modules by category (e.g., browser, data, ai)',
             'description_key': 'modules.meta.modules.list.params.category.description',
-            'required': False
-        },
+            'required': False,
+            'placeholder': 'Enter Category...',
+},
         'tags': {
             'type': 'array',
             'label': 'Tags Filter',

@@ -53,7 +53,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.ai.local_ollama.chat.params.prompt.description',
             'required': True,
             'multiline': True
-        },
+        ,
+            'placeholder': 'Enter your prompt...',
+},
         'model': {
             'type': 'select',
             'label': 'Model',
@@ -94,7 +96,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.ai.local_ollama.chat.params.system_message.description',
             'required': False,
             'multiline': True
-        },
+        ,
+            'placeholder': 'You are a helpful assistant.',
+},
         'ollama_url': {
             'type': 'string',
             'label': 'Ollama URL',
@@ -103,7 +107,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.ai.local_ollama.chat.params.ollama_url.description',
             'default': OLLAMA_DEFAULT_URL,
             'required': False
-        },
+        ,
+            'placeholder': 'http://localhost:11434',
+},
         'max_tokens': {
             'type': 'number',
             'label': 'Max Tokens',

@@ -56,6 +56,7 @@ from ...errors import ValidationError
             description_key='modules.object.unflatten.params.separator.description',
             default='.',
             group=FieldGroup.OPTIONS,
+            placeholder=',',
         ),
     ),
     output_schema={

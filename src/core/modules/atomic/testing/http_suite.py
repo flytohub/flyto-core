@@ -38,19 +38,21 @@ logger = logging.getLogger(__name__)
             'type': 'array',
             'label': 'Test Cases',
             'required': True,
-            'description': 'Array of HTTP test definitions'
-        ,
-                'description_key': 'modules.testing.http.run_suite.params.tests.description'},
+            'description': 'Array of HTTP test definitions',
+            'description_key': 'modules.testing.http.run_suite.params.tests.description',
+        },
         'base_url': {
             'type': 'string',
             'label': 'Base URL',
-            'placeholder': 'https://api.example.com'
+            'placeholder': 'https://api.example.com',
+            'description': 'Base URL for API requests',
         },
         'headers': {
             'type': 'object',
             'label': 'Common Headers',
-            'default': {}
-        }
+            'default': {},
+            'description': 'HTTP request headers',
+        },
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
