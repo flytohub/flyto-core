@@ -15,6 +15,44 @@ from ...schema import compose, presets
 
 logger = logging.getLogger(__name__)
 
+# Allowlist of safe command base names
+_ALLOWED_COMMANDS = frozenset({
+    'node', 'npm', 'npx', 'yarn', 'pnpm', 'bun',
+    'git', 'python', 'python3', 'pip', 'pip3', 'pytest',
+    'cat', 'ls', 'find', 'grep', 'head', 'tail', 'wc', 'echo', 'pwd', 'which',
+    'tsc', 'eslint', 'prettier', 'jest', 'vitest',
+    'cargo', 'go', 'make', 'docker', 'env',
+    'mkdir', 'cp', 'mv', 'touch', 'sort', 'uniq', 'diff', 'tree',
+})
+
+
+def _validate_command(command: str) -> None:
+    """
+    Validate a command against the allowlist.
+    Extracts the base command name (first token) and checks it.
+
+    Raises:
+        ValueError: If the command is not in the allowlist.
+    """
+    args = shlex.split(command)
+    if not args:
+        raise ValueError("Empty command")
+
+    # Strip env var prefixes (e.g., "NODE_ENV=production npm run build")
+    cmd_token = args[0]
+    idx = 0
+    while idx < len(args) and '=' in args[idx]:
+        idx += 1
+    if idx < len(args):
+        cmd_token = args[idx]
+
+    base_cmd = os.path.basename(cmd_token)
+    if base_cmd not in _ALLOWED_COMMANDS:
+        raise ValueError(
+            f"Command '{base_cmd}' is not in the allowed commands list. "
+            f"Allowed: {', '.join(sorted(_ALLOWED_COMMANDS))}"
+        )
+
 
 @register_module(
     module_id='shell.exec',
@@ -141,11 +179,20 @@ async def shell_exec(context: Dict[str, Any]) -> Dict[str, Any]:
     cwd = params.get('cwd')
     env_vars = params.get('env', {})
     timeout_seconds = params.get('timeout', 300)
-    # SECURITY: Default to False to prevent shell injection attacks
-    use_shell = params.get('shell', False)
     capture_stderr = params.get('capture_stderr', True)
     encoding = params.get('encoding', 'utf-8')
     raise_on_error = params.get('raise_on_error', False)
+
+    # SECURITY: Validate command against allowlist
+    try:
+        _validate_command(command)
+    except ValueError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'COMMAND_NOT_ALLOWED',
+            'command': command,
+        }
 
     # Resolve working directory
     if cwd:
@@ -169,25 +216,15 @@ async def shell_exec(context: Dict[str, Any]) -> Dict[str, Any]:
     start_time = time.time()
 
     try:
-        if use_shell:
-            # Execute through shell
-            process = await asyncio.create_subprocess_shell(
-                command,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=stderr_pipe,
-                cwd=cwd,
-                env=env
-            )
-        else:
-            # Execute directly (safer, no shell injection)
-            args = shlex.split(command)
-            process = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=stderr_pipe,
-                cwd=cwd,
-                env=env
-            )
+        # SECURITY: Always use exec (no shell) to prevent injection
+        args = shlex.split(command)
+        process = await asyncio.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=stderr_pipe,
+            cwd=cwd,
+            env=env
+        )
 
         # Wait for completion with timeout
         try:

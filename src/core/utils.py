@@ -586,7 +586,7 @@ def get_safe_path_config() -> dict:
     Get path safety configuration from environment.
 
     Environment variables:
-    - FLYTO_SANDBOX_DIR: Base directory for file operations (default: None = no restriction)
+    - FLYTO_SANDBOX_DIR: Base directory for file operations (default: cwd)
     - FLYTO_ALLOW_ABSOLUTE_PATHS: true/false (default: true)
 
     Returns:
@@ -594,6 +594,14 @@ def get_safe_path_config() -> dict:
     """
     sandbox_dir = os.environ.get('FLYTO_SANDBOX_DIR')
     allow_absolute = os.environ.get('FLYTO_ALLOW_ABSOLUTE_PATHS', 'true').lower() == 'true'
+
+    if not sandbox_dir:
+        sandbox_dir = os.getcwd()
+        logger.warning(
+            "FLYTO_SANDBOX_DIR is not set — defaulting to current working directory: %s. "
+            "Set FLYTO_SANDBOX_DIR explicitly for production use.",
+            sandbox_dir,
+        )
 
     return {
         'base_dir': sandbox_dir,
