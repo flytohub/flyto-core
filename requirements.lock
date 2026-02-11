@@ -1,0 +1,56 @@
+#
+# requirements.lock - Pinned dependency versions for flyto-core
+#
+# This file pins all dependencies to their minimum known-good versions.
+# Generated manually from pyproject.toml and requirements.txt.
+#
+# To regenerate with pip-tools (preferred):
+#   pip install pip-tools
+#   pip-compile --output-file=requirements.lock pyproject.toml
+#
+# Or run: ./scripts/lock-deps.sh
+#
+
+# ============================================
+# Core dependencies (from pyproject.toml)
+# ============================================
+pyyaml==6.0
+aiohttp==3.11.0
+beautifulsoup4==4.12.0
+lxml==4.9.0
+pydantic==2.0.0
+python-dotenv==1.0.0
+aiofiles==23.0.0
+
+# ============================================
+# Optional: Browser automation
+# ============================================
+# pip install flyto-core[browser]
+playwright==1.40.0
+
+# ============================================
+# Optional: API server
+# ============================================
+# pip install flyto-core[api]
+fastapi==0.115.0
+uvicorn==0.24.0
+
+# ============================================
+# Optional: Vector database / embeddings
+# ============================================
+# pip install flyto-core[vector]
+qdrant-client==1.7.0
+sentence-transformers==2.2.0
+
+# ============================================
+# Optional: Telegram bot
+# ============================================
+# pip install flyto-core[telegram]
+python-telegram-bot==20.0
+
+# ============================================
+# Additional runtime deps (from requirements.txt)
+# ============================================
+firebase-admin==6.2.0
+requests==2.31.0
+openai==1.0.0
