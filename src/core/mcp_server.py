@@ -244,16 +244,13 @@ async def execute_module(
         result = await module_instance.run()
 
         # After browser.launch: store the driver for future calls
-        if is_browser and module_id == "browser.launch" and result.get("ok"):
-            session_id = str(uuid.uuid4())[:8]
+        # Module stores driver in ctx['browser'] via self.context; success = no exception
+        if is_browser and module_id == "browser.launch":
             driver = ctx.get("browser")
             if driver:
+                session_id = str(uuid.uuid4())[:8]
                 _browser_sessions[session_id] = driver
-                # Inject session_id into result so client can reference it
-                if isinstance(result.get("data"), dict):
-                    result["data"]["browser_session"] = session_id
-                else:
-                    result["browser_session"] = session_id
+                result["browser_session"] = session_id
 
         # After browser.close: remove session
         if is_browser and module_id == "browser.close":

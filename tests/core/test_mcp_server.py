@@ -42,26 +42,29 @@ class TestBrowserLaunchStoresSession:
     """browser.launch should store the driver and return a session_id."""
 
     async def test_launch_stores_session(self):
-        mock_class, mock_instance = _make_mock_module(ok=True, data={"status": "launched"})
-
-        # Simulate browser.launch putting a driver into ctx
+        # Real browser.launch returns {"status": "success", ...}
+        # and stores driver in self.context['browser'] (= the ctx dict)
         fake_driver = MagicMock()
+        launch_result = {"status": "success", "message": "Browser launched successfully"}
+
+        mock_instance = MagicMock()
+        mock_instance.run = AsyncMock(return_value=launch_result)
 
         def capture_ctx(params, ctx):
-            ctx["browser"] = fake_driver
+            ctx["browser"] = fake_driver  # simulate what BrowserLaunchModule.execute does
             return mock_instance
 
-        mock_class.side_effect = capture_ctx
+        mock_class = MagicMock(side_effect=capture_ctx)
 
         with patch("core.modules.registry.ModuleRegistry.get", return_value=mock_class):
             result = await execute_module("browser.launch", {"headless": True})
 
-        assert result["ok"] is True
-        assert len(_browser_sessions) == 1
-        session_id = list(_browser_sessions.keys())[0]
+        assert result["status"] == "success"
+        assert "browser_session" in result
+        session_id = result["browser_session"]
         assert len(session_id) == 8  # uuid4()[:8]
+        assert len(_browser_sessions) == 1
         assert _browser_sessions[session_id] is fake_driver
-        assert result["data"]["browser_session"] == session_id
 
 
 class TestBrowserSessionAutoResolve:
