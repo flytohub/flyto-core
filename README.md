@@ -1,5 +1,6 @@
 # Flyto Core
 
+[![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
@@ -16,14 +17,14 @@ Flyto Core is an **open-source workflow automation engine** designed with three 
 ## Quick Start
 
 ```bash
-# Clone the repository
+pip install flyto-core
+```
+
+Or from source:
+```bash
 git clone https://github.com/flytohub/flyto-core.git
 cd flyto-core
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Run your first workflow
 python run.py workflows/_test/test_text_reverse.yaml
 ```
 
