@@ -22,6 +22,7 @@ import json
 import sys
 import os
 import asyncio
+import importlib.metadata
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 
@@ -29,6 +30,24 @@ from typing import Any, Dict, Optional, List
 # Local Development: Allow localhost for browser testing
 # ============================================================
 os.environ.setdefault('FLYTO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+
+# Version
+def _get_version() -> str:
+    """Read version from installed package or pyproject.toml fallback."""
+    try:
+        return importlib.metadata.version("flyto-core")
+    except importlib.metadata.PackageNotFoundError:
+        pass
+    toml_path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+    if toml_path.exists():
+        for line in toml_path.read_text().splitlines():
+            if line.strip().startswith("version"):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return "0.0.0"
+
+
+SERVER_VERSION = _get_version()
+
 
 # MCP Protocol
 def send_response(id: Any, result: Any):
@@ -267,6 +286,7 @@ TOOLS = [
     # =========================================================================
     {
         "name": "list_modules",
+        "title": "List Modules",
         "description": (
             "List all available flyto-core modules organized by category. "
             "Use this FIRST to discover what capabilities are available. "
@@ -293,9 +313,16 @@ TOOLS = [
                 },
             },
         },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
     },
     {
         "name": "search_modules",
+        "title": "Search Modules",
         "description": (
             "Search for modules by keyword across all categories. "
             "Use this when you know WHAT you want to do but not which module to use. "
@@ -321,12 +348,19 @@ TOOLS = [
             },
             "required": ["query"],
         },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
     },
     # =========================================================================
     # Module Details
     # =========================================================================
     {
         "name": "get_module_info",
+        "title": "Get Module Info",
         "description": (
             "Get the full specification of a module: parameter schema (names, types, required, defaults), "
             "output schema, and usage examples. "
@@ -343,9 +377,16 @@ TOOLS = [
             },
             "required": ["module_id"],
         },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
     },
     {
         "name": "get_module_examples",
+        "title": "Get Module Examples",
         "description": (
             "Get concrete usage examples for a module, showing exact parameter values and expected output. "
             "Use this if get_module_info's examples are not enough to understand usage."
@@ -360,12 +401,19 @@ TOOLS = [
             },
             "required": ["module_id"],
         },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
     },
     # =========================================================================
     # Execution
     # =========================================================================
     {
         "name": "execute_module",
+        "title": "Execute Module",
         "description": (
             "Execute a flyto-core module and return its output. This is the main action tool. "
             "ALWAYS call get_module_info first to know the required parameters. "
@@ -409,9 +457,16 @@ TOOLS = [
             },
             "required": ["module_id", "params"],
         },
+        "annotations": {
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": True,
+        },
     },
     {
         "name": "validate_params",
+        "title": "Validate Parameters",
         "description": (
             "Dry-run parameter validation for a module without executing it. "
             "Use this to check if your parameters are correct before running a destructive or slow operation. "
@@ -431,6 +486,12 @@ TOOLS = [
             },
             "required": ["module_id", "params"],
         },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
     },
 ]
 
@@ -447,11 +508,14 @@ def handle_request(request: dict):
 
     if method == "initialize":
         send_response(id, {
-            "protocolVersion": "2024-11-05",
-            "capabilities": {"tools": {}},
+            "protocolVersion": "2025-11-25",
+            "capabilities": {
+                "tools": {"listChanged": False},
+            },
             "serverInfo": {
                 "name": "flyto-core",
-                "version": "1.0.0",
+                "title": "Flyto Core Execution Engine",
+                "version": SERVER_VERSION,
             },
         })
 
@@ -496,14 +560,31 @@ def handle_request(request: dict):
                 send_error(id, -32601, f"Unknown tool: {tool_name}")
                 return
 
-            send_response(id, {
-                "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, indent=2)}],
-            })
+            text = json.dumps(result, ensure_ascii=False, indent=2)
+            is_error = (
+                isinstance(result, dict)
+                and (result.get("error") is not None or result.get("ok") is False)
+            )
+            response_body = {
+                "content": [{"type": "text", "text": text}],
+                "structuredContent": result,
+                "isError": is_error,
+            }
+            send_response(id, response_body)
         except Exception as e:
-            send_error(id, -32000, str(e))
+            send_response(id, {
+                "content": [{"type": "text", "text": str(e)}],
+                "isError": True,
+            })
+
+    elif method == "ping":
+        send_response(id, {})
 
     elif method == "notifications/initialized":
         pass  # No response needed
+
+    elif method.startswith("notifications/"):
+        pass  # Notifications require no response
 
     else:
         send_error(id, -32601, f"Method not found: {method}")
