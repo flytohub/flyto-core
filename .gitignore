@@ -54,6 +54,7 @@ cache/
 *.pem
 service-account-key.json
 firebase-credentials.json
+.mcpregistry_*
 
 # OS
 .DS_Store

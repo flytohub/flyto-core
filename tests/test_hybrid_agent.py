@@ -243,7 +243,7 @@ async def main():
     )
 
     result = await execute_login_workflow(task)
-    print(f"\nFinal result: ok={result.get('ok')}")
+    print(f"\nLogin {'succeeded' if result.get('ok') else 'failed'}")
 
 
 if __name__ == '__main__':
