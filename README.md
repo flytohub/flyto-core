@@ -126,14 +126,14 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 | `array.*` | 15 | filter, sort, map, reduce, unique, chunk |
 | `object.*` | 10 | keys, values, merge, pick, omit |
 | `file.*` | 8 | read, write, copy, move, delete, diff |
-| `browser.*` | 39 | launch, goto, click, extract, scroll, screenshot |
+| `browser.*` | 38 | launch, goto, click, extract, scroll, screenshot |
 | `flow.*` | 21 | switch, loop, foreach, branch, parallel |
 | `http.*` | 3 | request, response_assert |
 | `ai.*` | 5 | model, memory, memory_vector |
 | `document.*` | 8 | pdf_parse, excel_read, word_parse |
 | `data.*` | 7 | json_parse, csv_read, text_template |
 
-**Total: 300+ atomic modules** across 50 categories, plus 28 third-party integrations.
+**Total: 300+ atomic modules** across 40+ categories, plus 28 third-party integrations.
 
 ## Connect Any AI via MCP
 
