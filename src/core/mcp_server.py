@@ -22,9 +22,13 @@ import json
 import sys
 import os
 import asyncio
+import uuid
 import importlib.metadata
 from pathlib import Path
 from typing import Any, Dict, Optional, List
+
+# Browser session store — persists BrowserDriver across MCP tool calls
+_browser_sessions: Dict[str, Any] = {}
 
 # ============================================================
 # Local Development: Allow localhost for browser testing
@@ -176,7 +180,7 @@ def get_module_info(module_id: str) -> dict:
         return {"error": str(e)}
 
 
-def execute_module(
+async def execute_module(
     module_id: str,
     params: Dict[str, Any],
     context: Dict[str, Any] = None,
@@ -202,13 +206,62 @@ def execute_module(
 
         # Create instance
         ctx = context or {}
+
+        # Browser session injection: reuse existing driver for browser.* modules
+        is_browser = module_id.startswith("browser.")
+        if is_browser and module_id != "browser.launch":
+            session_id = ctx.get("browser_session")
+            if session_id and session_id in _browser_sessions:
+                ctx["browser"] = _browser_sessions[session_id]
+            elif not session_id and len(_browser_sessions) == 1:
+                # Auto-resolve: single session, no explicit ID
+                only_id = next(iter(_browser_sessions))
+                ctx["browser"] = _browser_sessions[only_id]
+                session_id = only_id
+            elif not session_id and len(_browser_sessions) > 1:
+                return {
+                    "ok": False,
+                    "error": (
+                        f"Multiple browser sessions active ({len(_browser_sessions)}). "
+                        f"Pass browser_session in context. IDs: {list(_browser_sessions.keys())}"
+                    ),
+                }
+            elif session_id and session_id not in _browser_sessions:
+                return {
+                    "ok": False,
+                    "error": f"Browser session not found: {session_id}. Active: {list(_browser_sessions.keys())}",
+                }
+            else:
+                # No sessions at all
+                return {
+                    "ok": False,
+                    "error": "No active browser session. Call browser.launch first.",
+                }
+
         module_instance = module_class(params, ctx)
 
-        # Execute (sync wrapper for async)
-        async def run():
-            return await module_instance.run()
+        # Execute directly (no asyncio.run — we're already in an async context)
+        result = await module_instance.run()
 
-        result = asyncio.run(run())
+        # After browser.launch: store the driver for future calls
+        if is_browser and module_id == "browser.launch" and result.get("ok"):
+            session_id = str(uuid.uuid4())[:8]
+            driver = ctx.get("browser")
+            if driver:
+                _browser_sessions[session_id] = driver
+                # Inject session_id into result so client can reference it
+                if isinstance(result.get("data"), dict):
+                    result["data"]["browser_session"] = session_id
+                else:
+                    result["browser_session"] = session_id
+
+        # After browser.close: remove session
+        if is_browser and module_id == "browser.close":
+            session_id = ctx.get("browser_session")
+            if session_id and session_id in _browser_sessions:
+                del _browser_sessions[session_id]
+            elif len(_browser_sessions) == 1:
+                _browser_sessions.clear()
 
         return result
 
@@ -500,7 +553,7 @@ TOOLS = [
 # MCP Request Handler
 # ============================================================
 
-def handle_request(request: dict):
+async def handle_request(request: dict):
     """Handle MCP request"""
     method = request.get("method", "")
     id = request.get("id")
@@ -542,7 +595,7 @@ def handle_request(request: dict):
                     module_id=arguments.get("module_id", ""),
                 )
             elif tool_name == "execute_module":
-                result = execute_module(
+                result = await execute_module(
                     module_id=arguments.get("module_id", ""),
                     params=arguments.get("params", {}),
                     context=arguments.get("context"),
@@ -590,16 +643,33 @@ def handle_request(request: dict):
         send_error(id, -32601, f"Method not found: {method}")
 
 
-def main():
-    """MCP Server main loop"""
-    for line in sys.stdin:
+async def async_main():
+    """MCP Server main loop — persistent event loop for browser session survival."""
+    loop = asyncio.get_event_loop()
+    while True:
+        line = await loop.run_in_executor(None, sys.stdin.readline)
+        if not line:
+            break  # EOF
         try:
             request = json.loads(line.strip())
-            handle_request(request)
+            await handle_request(request)
         except json.JSONDecodeError:
             pass
         except Exception as e:
             print(json.dumps({"jsonrpc": "2.0", "error": {"code": -32000, "message": str(e)}}), flush=True)
+
+    # Cleanup: close all browser sessions to prevent zombie Chromium processes
+    for session_id, driver in list(_browser_sessions.items()):
+        try:
+            await driver.close()
+        except Exception:
+            pass
+    _browser_sessions.clear()
+
+
+def main():
+    """Entry point — runs the async main loop."""
+    asyncio.run(async_main())
 
 
 if __name__ == "__main__":
