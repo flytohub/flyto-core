@@ -1,8 +1,8 @@
 {
-  "version": "1.16.7",
+  "version": "2.2.2",
   "environment": "production",
-  "generated_at": "2026-01-25T03:18:42.477054+00:00",
-  "total": 276,
+  "generated_at": "2026-02-12T14:29:45.212618+00:00",
+  "total": 301,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -115,13 +115,6 @@
       "category": "productivity",
       "stability": "stable",
       "label": "Google Sheets Write"
-    },
-    {
-      "id": "api.http_get",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "HTTP GET"
     },
     {
       "id": "api.notion.create_page",
@@ -306,6 +299,20 @@
       "label": "Drag and Drop"
     },
     {
+      "id": "browser.emulate",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Device Emulation"
+    },
+    {
+      "id": "browser.ensure",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Ensure Browser"
+    },
+    {
       "id": "browser.evaluate",
       "version": "1.0.0",
       "category": "browser",
@@ -325,6 +332,13 @@
       "category": "browser",
       "stability": "stable",
       "label": "Find Elements"
+    },
+    {
+      "id": "browser.form",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Fill Form"
     },
     {
       "id": "browser.frame",
@@ -362,6 +376,13 @@
       "label": "Launch Browser"
     },
     {
+      "id": "browser.login",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Login"
+    },
+    {
       "id": "browser.network",
       "version": "1.0.0",
       "category": "browser",
@@ -369,11 +390,32 @@
       "label": "Network Monitor"
     },
     {
+      "id": "browser.pages",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "List Pages"
+    },
+    {
+      "id": "browser.pagination",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Paginate & Extract"
+    },
+    {
       "id": "browser.pdf",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
       "label": "Generate PDF"
+    },
+    {
+      "id": "browser.performance",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Performance Metrics"
     },
     {
       "id": "browser.press",
@@ -388,6 +430,13 @@
       "category": "browser",
       "stability": "stable",
       "label": "Record Actions"
+    },
+    {
+      "id": "browser.release",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Release Browser"
     },
     {
       "id": "browser.screenshot",
@@ -411,6 +460,13 @@
       "label": "Select Option"
     },
     {
+      "id": "browser.snapshot",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "DOM Snapshot"
+    },
+    {
       "id": "browser.storage",
       "version": "1.0.0",
       "category": "browser",
@@ -425,6 +481,13 @@
       "label": "Manage Tabs"
     },
     {
+      "id": "browser.trace",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Performance Trace"
+    },
+    {
       "id": "browser.type",
       "version": "1.0.0",
       "category": "browser",
@@ -437,6 +500,13 @@
       "category": "browser",
       "stability": "stable",
       "label": "Upload File"
+    },
+    {
+      "id": "browser.viewport",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "Resize Viewport"
     },
     {
       "id": "browser.wait",
@@ -642,46 +712,11 @@
       "label": "Random String"
     },
     {
-      "id": "data.csv.read",
+      "id": "data.pipeline",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Read CSV File"
-    },
-    {
-      "id": "data.csv.write",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "Write CSV File"
-    },
-    {
-      "id": "data.json.parse",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "Parse JSON"
-    },
-    {
-      "id": "data.json.stringify",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "JSON Stringify"
-    },
-    {
-      "id": "data.json_to_csv",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "JSON to CSV"
-    },
-    {
-      "id": "data.text.template",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "Text Template"
+      "label": "Data Pipeline"
     },
     {
       "id": "datetime.add",
@@ -824,6 +859,27 @@
       "label": "URL Encode"
     },
     {
+      "id": "error.circuit_breaker",
+      "version": "1.0.0",
+      "category": "error",
+      "stability": "stable",
+      "label": "Circuit Breaker"
+    },
+    {
+      "id": "error.fallback",
+      "version": "1.0.0",
+      "category": "error",
+      "stability": "stable",
+      "label": "Fallback"
+    },
+    {
+      "id": "error.retry",
+      "version": "1.0.0",
+      "category": "error",
+      "stability": "stable",
+      "label": "Retry"
+    },
+    {
       "id": "excel.read",
       "version": "1.0.0",
       "category": "document",
@@ -850,6 +906,20 @@
       "category": "file",
       "stability": "stable",
       "label": "Delete File"
+    },
+    {
+      "id": "file.diff",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Diff Content"
+    },
+    {
+      "id": "file.edit",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "Edit File"
     },
     {
       "id": "file.exists",
@@ -880,6 +950,13 @@
       "label": "Write File"
     },
     {
+      "id": "flow.batch",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Batch Process"
+    },
+    {
       "id": "flow.branch",
       "version": "2.0.0",
       "category": "flow",
@@ -899,6 +976,20 @@
       "category": "flow",
       "stability": "stable",
       "label": "End"
+    },
+    {
+      "id": "flow.error_handle",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Error Handler"
+    },
+    {
+      "id": "flow.error_workflow_trigger",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Error Workflow Trigger"
     },
     {
       "id": "flow.foreach",
@@ -948,6 +1039,13 @@
       "category": "flow",
       "stability": "stable",
       "label": "Merge"
+    },
+    {
+      "id": "flow.parallel",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "Parallel"
     },
     {
       "id": "flow.start",
@@ -1025,6 +1123,13 @@
       "category": "hash",
       "stability": "stable",
       "label": "SHA-512 Hash"
+    },
+    {
+      "id": "http.get",
+      "version": "1.0.0",
+      "category": "http",
+      "stability": "stable",
+      "label": "HTTP GET"
     },
     {
       "id": "http.request",
@@ -1685,6 +1790,13 @@
       "label": "String Uppercase"
     },
     {
+      "id": "template.invoke",
+      "version": "1.0.0",
+      "category": "template",
+      "stability": "stable",
+      "label": "Invoke Template"
+    },
+    {
       "id": "test.assert_contains",
       "version": "1.0.0",
       "category": "testing",
@@ -1923,6 +2035,69 @@
       "label": "Validate UUID"
     },
     {
+      "id": "verify.annotate",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Annotate Screenshot"
+    },
+    {
+      "id": "verify.capture",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Capture Element Styles"
+    },
+    {
+      "id": "verify.compare",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Compare Styles"
+    },
+    {
+      "id": "verify.figma",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Fetch Figma Style"
+    },
+    {
+      "id": "verify.report",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Generate Report"
+    },
+    {
+      "id": "verify.ruleset",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Load Ruleset"
+    },
+    {
+      "id": "verify.run",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Run Verification"
+    },
+    {
+      "id": "verify.spec",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Run Spec Verification"
+    },
+    {
+      "id": "verify.visual_diff",
+      "version": "1.0.0",
+      "category": "verify",
+      "stability": "stable",
+      "label": "Visual Diff"
+    },
+    {
       "id": "word.parse",
       "version": "1.0.0",
       "category": "document",
@@ -1942,22 +2117,24 @@
     "analysis": 6,
     "api": 7,
     "array": 12,
-    "atomic": 26,
-    "browser": 27,
+    "atomic": 27,
+    "browser": 38,
     "check": 7,
     "cloud": 6,
     "compare": 1,
     "convert": 5,
     "crypto": 3,
-    "data": 11,
+    "data": 6,
     "database": 6,
     "document": 8,
     "element": 3,
     "encode": 7,
+    "error": 3,
     "file": 3,
-    "flow": 14,
+    "flow": 18,
     "format": 5,
     "hash": 2,
+    "http": 1,
     "image": 5,
     "logic": 5,
     "math": 5,
@@ -1972,9 +2149,11 @@
     "stats": 8,
     "storage": 3,
     "string": 11,
+    "template": 1,
     "testing": 6,
     "text": 6,
     "utility": 9,
-    "validate": 7
+    "validate": 7,
+    "verify": 9
   }
 }
