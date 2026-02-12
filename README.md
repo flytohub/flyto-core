@@ -4,6 +4,8 @@
 [![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
+<!-- mcp-name: io.github.flytohub/flyto-core -->
+
 > The open-source execution engine for AI agents. 300+ atomic modules, MCP-native, secure by default.
 
 ## What is Flyto Core?
