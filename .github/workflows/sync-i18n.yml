@@ -12,6 +12,9 @@ on:
         required: false
         default: 'false'
 
+permissions:
+  contents: read
+
 jobs:
   sync:
     runs-on: ubuntu-latest

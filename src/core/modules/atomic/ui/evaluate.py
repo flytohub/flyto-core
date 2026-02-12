@@ -274,7 +274,7 @@ async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:
     overall_score = evaluation.get('overall_score', 0)
     passed = overall_score >= min_score
 
-    logger.info(f"UI evaluation: score={overall_score}, passed={passed}")
+    logger.info("UI evaluation completed: passed=%s", passed)
 
     return {
         'ok': True,

@@ -77,6 +77,9 @@ on:
       OPENAI_API_KEY:
         required: true
 
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '20'
   SCREENSHOT_DIR: './ui-review-screenshots'
@@ -317,6 +320,9 @@ jobs:
     needs: [ui-review, verify-fixes]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code

@@ -21,6 +21,9 @@ on:
       - 'src/core/modules/**'
       - 'scripts/validate_all_modules.py'
 
+permissions:
+  contents: read
+
 env:
   FLYTO_VALIDATION_MODE: ci
 

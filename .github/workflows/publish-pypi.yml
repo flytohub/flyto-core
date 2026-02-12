@@ -15,6 +15,9 @@ on:
           - testpypi
           - pypi
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build distribution

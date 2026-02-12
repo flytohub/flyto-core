@@ -99,7 +99,7 @@ async def find_element(context: dict, selectors: List[str], timeout: int = 5000)
         try:
             element = await page.wait_for_selector(selector, timeout=timeout)
             if element:
-                print(f"  ✓ Found: {selector}")
+                print("  ✓ Found matching selector")
                 return selector
         except Exception:
             continue
@@ -243,7 +243,7 @@ async def main():
     )
 
     result = await execute_login_workflow(task)
-    print(f"\nFinal result: {result}")
+    print(f"\nFinal result: ok={result.get('ok')}")
 
 
 if __name__ == '__main__':

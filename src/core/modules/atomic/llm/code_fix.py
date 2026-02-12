@@ -225,7 +225,7 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
                 try:
                     path.write_text(new_content, encoding='utf-8')
                     applied.append(fix)
-                    logger.info(f"Applied fix to {file_path}")
+                    logger.info("Applied fix to source file")
                 except Exception as e:
                     failed.append({**fix, 'error': str(e)})
             else:

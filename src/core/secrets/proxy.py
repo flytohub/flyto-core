@@ -131,7 +131,7 @@ class SecretsProxy:
         self._refs[ref_uri] = ref
         self._values[ref_uri] = value
 
-        logger.debug(f"Created secret ref: {ref_uri} for {name}")
+        logger.debug("Created secret ref")
 
         return ref
 

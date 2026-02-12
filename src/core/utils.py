@@ -45,7 +45,7 @@ def get_api_key(env_var: str, required: bool = True) -> Optional[str]:
             ErrorMessages.API_KEY_MISSING,
             env_var=env_var
         )
-        logger.error(error_msg)
+        logger.error("Required API key environment variable is not set")
         raise ValueError(error_msg)
 
     return value
@@ -417,11 +417,11 @@ def validate_url_ssrf(
     if allowed_hosts:
         for allowed in allowed_hosts:
             if hostname_lower == allowed.lower():
-                logger.debug(f"SSRF: Allowing {hostname} (in allowlist)")
+                logger.debug("SSRF: Allowing host (in allowlist)")
                 return url
             # Support wildcard: *.example.com
             if allowed.startswith('*.') and hostname_lower.endswith(allowed[1:].lower()):
-                logger.debug(f"SSRF: Allowing {hostname} (matches {allowed})")
+                logger.debug("SSRF: Allowing host (matches wildcard allowlist entry)")
                 return url
 
     # Block known dangerous hostnames (metadata endpoints, etc.)
