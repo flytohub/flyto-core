@@ -74,7 +74,7 @@ from ...schema import compose, presets
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class FileCopyModule(BaseModule):

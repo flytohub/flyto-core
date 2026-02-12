@@ -202,7 +202,7 @@ from ...schema import compose, field
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=300000,  # 5 minutes for multi-page operations
     required_permissions=['browser.automation'],

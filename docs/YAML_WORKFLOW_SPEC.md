@@ -1,6 +1,6 @@
 # YAML Workflow Specification v1.0
 
-This document defines the complete specification for Flyto2 YAML workflows.
+This document defines the complete specification for Flyto YAML workflows.
 
 **Audience**: Users, Developers, Frontend Engineers
 

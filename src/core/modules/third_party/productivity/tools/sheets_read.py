@@ -102,7 +102,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     docs_url='https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get'
 )

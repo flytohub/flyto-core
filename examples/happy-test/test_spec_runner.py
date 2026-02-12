@@ -9,8 +9,9 @@
 """
 import asyncio
 import sys
+from pathlib import Path
 
-sys.path.insert(0, '/Library/其他專案/flytohub/flyto-core')
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.modules.atomic.verify.spec_runner import (
     run_spec_ruleset,

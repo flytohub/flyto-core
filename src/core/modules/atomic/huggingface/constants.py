@@ -108,7 +108,7 @@ class ModuleDefaults:
     AUDIO_TIMEOUT = 300
     MAX_RETRIES = 2
     CATEGORY = "huggingface"
-    AUTHOR = "Flyto2 Team"
+    AUTHOR = "Flyto Team"
     LICENSE = "MIT"
     RETRYABLE = True
     CONCURRENT_SAFE = True

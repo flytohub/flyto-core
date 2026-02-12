@@ -162,7 +162,7 @@ def _get_nested_value(obj: Any, path: str) -> Any:
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def http_response_assert(context: Dict[str, Any]) -> Dict[str, Any]:

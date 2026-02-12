@@ -79,7 +79,7 @@ from ...schema import compose, field
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
 )
 async def file_diff(context):

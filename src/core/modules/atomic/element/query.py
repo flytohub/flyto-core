@@ -83,7 +83,7 @@ from ..element_registry import get_element_registry
             'selector': 'h3'
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class ElementQueryModule(BaseModule):

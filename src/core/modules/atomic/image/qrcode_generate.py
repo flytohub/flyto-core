@@ -73,7 +73,7 @@ logger = logging.getLogger(__name__)
             'title': 'Generate URL QR code',
             'title_key': 'modules.image.qrcode_generate.examples.url.title',
             'params': {
-                'data': 'https://flyto2.com',
+                'data': 'https://flyto.dev',
                 'output_path': '/tmp/flyto_qr.png'
             }
         },
@@ -88,7 +88,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:

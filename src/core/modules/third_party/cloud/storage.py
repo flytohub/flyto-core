@@ -179,7 +179,7 @@ import base64
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     docs_url='https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html'
 )
@@ -371,7 +371,7 @@ async def aws_s3_upload(context):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     docs_url='https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html'
 )

@@ -235,7 +235,7 @@ from ...types import NodeType, EdgeType, DataType
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=600000,  # 10 minutes to allow for retries
 )

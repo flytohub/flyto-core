@@ -18,7 +18,7 @@ sys.path.insert(0, 'src')
 
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / "flyto-pro" / ".env")
+load_dotenv(Path(__file__).parent / ".env")
 
 # Import browser modules
 import core.modules.atomic.browser.launch
@@ -229,8 +229,8 @@ async def main():
     """測試登入流程"""
     task = LoginTask(
         url="http://localhost:3000",
-        email="dans15987@gmail.com",
-        password="@Wen9520520",
+        email="user@example.com",
+        password="your_password",
         # 可以自訂選擇器
         success_indicators=[
             '/dashboard',

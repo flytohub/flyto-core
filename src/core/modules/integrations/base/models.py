@@ -21,7 +21,7 @@ class IntegrationConfig:
     rate_limit_calls: int = 100
     rate_limit_period: int = 60  # seconds
     verify_ssl: bool = True
-    user_agent: str = "Flyto2-Integration/1.0"
+    user_agent: str = "Flyto-Integration/1.0"
 
     def get_api_url(self, endpoint: str) -> str:
         """Build full API URL."""

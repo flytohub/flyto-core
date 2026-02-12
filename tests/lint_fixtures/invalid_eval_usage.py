@@ -62,7 +62,7 @@ from core.modules.types import NodeType, EdgeType, DataType
             'description_key': 'test.output.result'
         }
     },
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=5000,
 )

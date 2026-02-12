@@ -100,7 +100,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GitHubGetRepoModule(BaseModule):
@@ -124,7 +124,7 @@ class GitHubGetRepoModule(BaseModule):
 
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
-            'User-Agent': 'Flyto2-Workflow-Engine'
+            'User-Agent': 'Flyto-Workflow-Engine'
         }
 
         if self.token:
@@ -248,7 +248,7 @@ class GitHubGetRepoModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GitHubListIssuesModule(BaseModule):
@@ -275,7 +275,7 @@ class GitHubListIssuesModule(BaseModule):
 
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
-            'User-Agent': 'Flyto2-Workflow-Engine'
+            'User-Agent': 'Flyto-Workflow-Engine'
         }
 
         if self.token:
@@ -422,7 +422,7 @@ class GitHubListIssuesModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GitHubCreateIssueModule(BaseModule):
@@ -458,7 +458,7 @@ class GitHubCreateIssueModule(BaseModule):
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'Authorization': f'token {self.token}',
-            'User-Agent': 'Flyto2-Workflow-Engine'
+            'User-Agent': 'Flyto-Workflow-Engine'
         }
 
         payload = {

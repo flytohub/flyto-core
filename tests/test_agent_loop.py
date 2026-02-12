@@ -19,9 +19,9 @@ from pathlib import Path
 os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 sys.path.insert(0, 'src')
 
-# Load .env
+# Load .env from project root
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / "flyto-pro" / ".env")
+load_dotenv(Path(__file__).parent / ".env")
 
 import openai
 
@@ -192,5 +192,5 @@ async def run_agent(task: str, start_url: str, max_steps: int = 15):
 
 
 if __name__ == '__main__':
-    task = "Login with email dans15987@gmail.com and password @Wen9520520"
+    task = "Login with email user@example.com and password your_password"
     asyncio.run(run_agent(task, "http://localhost:3000", max_steps=10))

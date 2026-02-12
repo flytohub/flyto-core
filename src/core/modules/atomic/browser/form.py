@@ -139,7 +139,7 @@ from ...schema import compose, field
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=60000,
     required_permissions=['browser.automation'],

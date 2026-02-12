@@ -63,7 +63,7 @@ from ...errors import InvalidTypeError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def object_keys(context: Dict[str, Any]) -> Dict[str, Any]:

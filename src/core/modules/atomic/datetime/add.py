@@ -71,7 +71,7 @@ import time
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class DateTimeAddModule(BaseModule):

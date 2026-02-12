@@ -1,0 +1,13 @@
+name: Variable Chaining Test
+description: Chain two steps - reverse a string then uppercase it
+
+steps:
+  - id: reverse
+    module: string.reverse
+    params:
+      text: "Hello Flyto"
+
+  - id: shout
+    module: string.uppercase
+    params:
+      text: "${reverse.result}"

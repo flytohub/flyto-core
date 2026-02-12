@@ -25,7 +25,7 @@ sys.path.insert(0, 'src')
 
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / "flyto-pro" / ".env")
+load_dotenv(Path(__file__).parent / ".env")
 
 import openai
 
@@ -314,5 +314,5 @@ async def run_smart_agent(task: str, start_url: str, max_steps: int = 10):
 
 
 if __name__ == '__main__':
-    task = "Login with email dans15987@gmail.com and password @Wen9520520"
+    task = "Login with email user@example.com and password your_password"
     asyncio.run(run_smart_agent(task, "http://localhost:3000", max_steps=8))

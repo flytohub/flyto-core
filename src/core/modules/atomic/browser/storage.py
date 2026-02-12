@@ -61,7 +61,7 @@ from ...schema import compose, presets
             'params': {'action': 'keys', 'type': 'local'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

@@ -46,7 +46,7 @@ from ...schema import compose, presets
             'params': {'selector': 'a.link-class'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

@@ -123,7 +123,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class AirtableReadModule(BaseModule):
@@ -291,7 +291,7 @@ class AirtableReadModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class AirtableCreateModule(BaseModule):
@@ -455,7 +455,7 @@ class AirtableCreateModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class AirtableUpdateModule(BaseModule):

@@ -17,7 +17,7 @@ class KnowledgeStore:
     def __init__(
         self,
         connector: VectorDBConnector,
-        collection_name: str = "flyto2_knowledge",
+        collection_name: str = "flyto_knowledge",
         embedding_provider: str = "local"
     ):
         """

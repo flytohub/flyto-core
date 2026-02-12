@@ -66,7 +66,7 @@ from ...errors import ValidationError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def math_abs(context: Dict[str, Any]) -> Dict[str, Any]:

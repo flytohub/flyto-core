@@ -129,7 +129,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class TwilioSendSMSModule(BaseModule):
@@ -291,7 +291,7 @@ class TwilioSendSMSModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class TwilioMakeCallModule(BaseModule):

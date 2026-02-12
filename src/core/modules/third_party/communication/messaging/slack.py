@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
             'label': 'Message Text',
             'description': 'The message to send',
                 'description_key': 'modules.notification.slack.send_message.params.text.description',
-            'placeholder': 'Hello from Flyto2!',
+            'placeholder': 'Hello from Flyto!',
             'required': True
         },
         'channel': {
@@ -76,7 +76,7 @@ logger = logging.getLogger(__name__)
             'label': 'Username',
             'description': 'Override bot username (optional)',
                 'description_key': 'modules.notification.slack.send_message.params.username.description',
-            'placeholder': 'Flyto2 Bot',
+            'placeholder': 'Flyto Bot',
             'required': False
         },
         'icon_emoji': {
@@ -113,7 +113,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class SlackSendMessageModule(BaseModule):

@@ -76,7 +76,7 @@ from ...errors import ValidationError, InvalidTypeError, InvalidValueError, Modu
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:

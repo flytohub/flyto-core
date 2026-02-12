@@ -66,7 +66,7 @@ from ...errors import ValidationError, InvalidValueError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
 )

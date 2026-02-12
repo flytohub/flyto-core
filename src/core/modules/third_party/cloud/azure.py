@@ -121,7 +121,7 @@ from ...registry import register_module
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class AzureUploadModule(BaseModule):
@@ -301,7 +301,7 @@ class AzureUploadModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class AzureDownloadModule(BaseModule):

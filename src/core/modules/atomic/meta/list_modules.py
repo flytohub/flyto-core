@@ -143,7 +143,7 @@ import json
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class ListModulesModule(BaseModule):

@@ -80,7 +80,7 @@ from ...schema import compose, presets, field
             'params': {'latitude': 35.6762, 'longitude': 139.6503}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

@@ -167,7 +167,7 @@ def _validate_command(command: str) -> None:
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def shell_exec(context: Dict[str, Any]) -> Dict[str, Any]:

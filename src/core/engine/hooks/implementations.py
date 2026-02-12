@@ -23,7 +23,7 @@ class LoggingHooks(ExecutorHooks):
 
     def __init__(
         self,
-        logger_name: str = "flyto2.executor",
+        logger_name: str = "flyto.executor",
         log_level: int = logging.INFO,
         log_params: bool = False,
         log_results: bool = False,

@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
             'label': 'Message Content',
             'description': 'The message to send',
                 'description_key': 'modules.notification.discord.send_message.params.content.description',
-            'placeholder': 'Hello from Flyto2!',
+            'placeholder': 'Hello from Flyto!',
             'required': True
         },
         'username': {
@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
             'label': 'Username',
             'description': 'Override bot username (optional)',
                 'description_key': 'modules.notification.discord.send_message.params.username.description',
-            'placeholder': 'Flyto2 Bot',
+            'placeholder': 'Flyto Bot',
             'required': False
         },
         'avatar_url': {
@@ -97,7 +97,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class DiscordSendMessageModule(BaseModule):

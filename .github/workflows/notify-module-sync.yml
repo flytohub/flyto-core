@@ -8,7 +8,7 @@ on:
       - 'src/core/modules/atomic/**/*.py'
 
 jobs:
-  notify-flyto-pro:
+  notify-module-sync:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,21 +37,9 @@ jobs:
           echo "module_ids=${MODULE_IDS%,}" >> $GITHUB_OUTPUT
           echo "Changed modules: ${MODULE_IDS%,}"
 
-      - name: Dispatch to flyto-pro
+      - name: Log changed modules
         if: steps.changes.outputs.module_ids != ''
-        uses: peter-evans/repository-dispatch@v2
-        with:
-          token: ${{ secrets.FLYTO_PRO_DISPATCH_TOKEN }}
-          repository: anthropics/flyto-pro  # Change to actual repo
-          event-type: module-sync
-          client-payload: |
-            {
-              "module_ids": "${{ steps.changes.outputs.module_ids }}",
-              "changed_files": "${{ steps.changes.outputs.changed_files }}",
-              "commit_sha": "${{ github.sha }}",
-              "commit_message": "${{ github.event.head_commit.message }}"
-            }
-
-      - name: Log dispatch
         run: |
-          echo "Dispatched sync event for modules: ${{ steps.changes.outputs.module_ids }}"
+          echo "Module sync triggered for: ${{ steps.changes.outputs.module_ids }}"
+          echo "Changed files: ${{ steps.changes.outputs.changed_files }}"
+          echo "Commit: ${{ github.sha }}"

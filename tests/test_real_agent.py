@@ -39,7 +39,7 @@ sys.path.insert(0, 'src')
 
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv(Path(__file__).parent.parent / "flyto-pro" / ".env")
+load_dotenv(Path(__file__).parent / ".env")
 
 import openai
 
@@ -447,7 +447,7 @@ Respond with JSON only."""
 async def main():
     # 用自然語言描述目標，讓 AI 自己規劃
     agent = RealAgent(
-        goal="Test the login functionality with email dans15987@gmail.com and password @Wen9520520",
+        goal="Test the login functionality with email user@example.com and password your_password",
         start_url="http://localhost:3000"
     )
     await agent.run()

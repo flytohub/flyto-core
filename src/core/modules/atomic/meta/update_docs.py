@@ -73,7 +73,7 @@ import json
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class UpdateModuleDocsModule(BaseModule):
@@ -113,7 +113,7 @@ class UpdateModuleDocsModule(BaseModule):
         from datetime import datetime
 
         lines = [
-            '# Flyto2 Module Registry\n\n',
+            '# Flyto Module Registry\n\n',
             'Complete reference of all available modules.\n\n',
             f'**Last Updated:** {datetime.now().strftime("%Y-%m-%d")}\n',
             f'**Total Modules:** {sum(len(mods) for mods in by_category.values())}\n\n',

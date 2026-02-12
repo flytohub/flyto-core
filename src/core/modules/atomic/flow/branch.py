@@ -141,7 +141,7 @@ from ...types import NodeType, EdgeType, DataType
             'note': 'Connect true port to continue_processing, false port to error_handler'
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=5000,
 )

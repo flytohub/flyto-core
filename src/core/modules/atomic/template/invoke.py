@@ -144,7 +144,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=300000,
 )
@@ -371,7 +371,7 @@ class InvokeTemplate(BaseModule):
 
         # Determine execution path based on template vendor
         template_vendor = self.context.get('template_vendor', 'unknown')
-        is_official = template_vendor in ('flyto-official', 'flyto2', 'official')
+        is_official = template_vendor in ('flyto-official', 'flyto', 'official')
         force_subprocess = self.context.get('force_subprocess', False)
 
         if is_official and not force_subprocess:

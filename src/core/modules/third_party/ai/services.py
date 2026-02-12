@@ -170,7 +170,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     docs_url='https://docs.anthropic.com/claude/reference/messages_post'
 )
@@ -346,7 +346,7 @@ async def anthropic_chat(context):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     docs_url='https://ai.google.dev/api/rest/v1/models/generateContent'
 )

@@ -72,7 +72,7 @@ def main() -> None:
 
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
-        description='Flyto2 Workflow Automation Engine',
+        description='Flyto Workflow Automation Engine',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -125,9 +125,12 @@ Examples:
     if args.command == 'run':
         # Use run subcommand's workflow argument
         workflow_arg = args.workflow
+    elif args.command and args.command not in ('run', 'modules'):
+        # Legacy mode: argparse treated the .yaml path as the command name
+        workflow_arg = args.command
     else:
-        # Legacy mode: flyto workflow.yaml
-        workflow_arg = args.workflow
+        # No command, check top-level workflow positional
+        workflow_arg = getattr(args, 'workflow', None)
 
     # Determine mode: interactive or non-interactive
     if workflow_arg:

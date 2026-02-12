@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flyto-core"
 version = "2.2.0"
-description = "Atomic workflow automation modules for git-native automation"
+description = "The open-source execution engine for AI agents. 300+ atomic modules, MCP-native, secure by default."
 readme = "README.md"
 license = {text = "Source Available License v1.0"}
 authors = [

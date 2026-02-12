@@ -78,7 +78,7 @@ from ...errors import ValidationError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def math_power(context: Dict[str, Any]) -> Dict[str, Any]:

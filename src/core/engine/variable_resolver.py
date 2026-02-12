@@ -261,7 +261,17 @@ class VariableResolver:
                 return None
 
         # Backward compat: data.field or direct field access
-        return self._get_nested_value(step_output, path)
+        value = self._get_nested_value(step_output, path)
+        if value is not None:
+            return value
+
+        # Fallback: check inside 'data' for legacy module format
+        # Modules return {'ok': True, 'data': {'result': ...}}
+        # so ${step.result} should resolve to step.data.result
+        if isinstance(step_output, dict) and 'data' in step_output:
+            return self._get_nested_value(step_output['data'], path)
+
+        return None
 
     def _get_items_from_output(self, step_output: Any) -> List[Any]:
         """

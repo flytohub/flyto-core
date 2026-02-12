@@ -239,7 +239,7 @@ def _get_nested_value(obj: Any, path: str) -> Any:
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
 )

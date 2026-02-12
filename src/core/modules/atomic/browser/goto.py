@@ -83,7 +83,7 @@ from ....utils import validate_url_with_env_config, SSRFError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class BrowserGotoModule(BaseModule):

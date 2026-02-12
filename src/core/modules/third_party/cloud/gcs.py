@@ -122,7 +122,7 @@ from ...registry import register_module
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GCSUploadModule(BaseModule):
@@ -280,7 +280,7 @@ class GCSUploadModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GCSDownloadModule(BaseModule):

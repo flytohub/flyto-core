@@ -153,7 +153,7 @@ LOOP_CONFIG = {
             }
         }
     ],
-    'author': 'Flyto2 Team',
+    'author': 'Flyto Team',
     'license': 'MIT'
 }
 
@@ -322,7 +322,7 @@ FOREACH_CONFIG = {
             }
         }
     ],
-    'author': 'Flyto2 Team',
+    'author': 'Flyto Team',
     'license': 'MIT'
 }
 

@@ -54,7 +54,7 @@ from ...errors import ValidationError
         {
             'title': 'Convert to title case',
             'params': {
-                'text': 'hello world from flyto2'
+                'text': 'hello world from flyto'
             }
         },
         {
@@ -64,7 +64,7 @@ from ...errors import ValidationError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def string_titlecase(context: Dict[str, Any]) -> Dict[str, Any]:

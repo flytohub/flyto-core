@@ -59,7 +59,7 @@ from ....schema import compose, presets
             'limit': 10
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class GoogleSearchAPIModule(BaseModule):
@@ -168,7 +168,7 @@ class GoogleSearchAPIModule(BaseModule):
             'limit': 10
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class SerpAPISearchModule(BaseModule):

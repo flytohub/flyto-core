@@ -42,7 +42,7 @@ from ...schema import compose, presets
             'params': {'path': 'output/page.png'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

@@ -130,7 +130,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class StripeCreatePaymentModule(BaseModule):
@@ -265,7 +265,7 @@ class StripeCreatePaymentModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class StripeGetCustomerModule(BaseModule):
@@ -400,7 +400,7 @@ class StripeGetCustomerModule(BaseModule):
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class StripeListChargesModule(BaseModule):

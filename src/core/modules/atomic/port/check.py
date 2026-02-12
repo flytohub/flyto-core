@@ -141,7 +141,7 @@ _LOCALHOST_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0'})
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def port_check(context: Dict[str, Any]) -> Dict[str, Any]:

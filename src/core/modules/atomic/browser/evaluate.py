@@ -58,7 +58,7 @@ from ...schema import compose, presets
             'params': {'script': 'document.body.style.backgroundColor = "red"; return "done"'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

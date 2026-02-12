@@ -59,7 +59,7 @@ from ..element_registry import get_element_registry
             'limit': 10
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class BrowserFindModule(BaseModule):

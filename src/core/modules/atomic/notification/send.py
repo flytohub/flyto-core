@@ -219,7 +219,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def notify_send(context: Dict[str, Any]) -> Dict[str, Any]:

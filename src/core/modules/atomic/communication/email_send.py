@@ -93,7 +93,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:

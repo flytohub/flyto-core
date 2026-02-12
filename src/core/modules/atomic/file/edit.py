@@ -77,7 +77,7 @@ import os
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
 )
 async def file_edit(context):

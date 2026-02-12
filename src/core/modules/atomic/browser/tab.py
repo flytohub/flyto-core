@@ -83,7 +83,7 @@ from ....utils import validate_url_with_env_config, SSRFError
             'params': {'action': 'list'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

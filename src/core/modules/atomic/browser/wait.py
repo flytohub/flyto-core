@@ -62,7 +62,7 @@ from ...schema import compose, presets
             'params': {'selector': '#loading-complete', 'timeout': 5000}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class BrowserWaitModule(BaseModule):

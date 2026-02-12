@@ -78,7 +78,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def webhook_trigger(context: Dict[str, Any]) -> Dict[str, Any]:

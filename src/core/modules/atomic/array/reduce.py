@@ -69,13 +69,13 @@ from ...errors import ValidationError, InvalidTypeError
         {
             'title': 'Join strings',
             'params': {
-                'array': ['Hello', 'World', 'from', 'Flyto2'],
+                'array': ['Hello', 'World', 'from', 'Flyto'],
                 'operation': 'join',
                 'separator': ' '
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def array_reduce(context: Dict[str, Any]) -> Dict[str, Any]:

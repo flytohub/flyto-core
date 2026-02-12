@@ -13,7 +13,7 @@ Claude Code config (~/.claude/mcp_servers.json):
     "flyto-core": {
         "command": "python",
         "args": ["-m", "core.mcp_server"],
-        "cwd": "/Library/其他專案/flytohub/flyto-core/src"
+        "cwd": "/path/to/flyto-core/src"
     }
 }
 """
@@ -270,8 +270,8 @@ TOOLS = [
         "description": (
             "List all available flyto-core modules organized by category. "
             "Use this FIRST to discover what capabilities are available. "
-            "384+ modules across 41 categories including: "
-            "browser (38 modules: launch, goto, click, type, extract, screenshot, evaluate, wait, etc), "
+            "300+ modules across 50 categories including: "
+            "browser (39 modules: launch, goto, click, type, extract, screenshot, evaluate, wait, etc), "
             "string, array, datetime, file, image, api, database, notification, and more. "
             "Returns: category names, module counts, descriptions, and common use cases. "
             "Pass a category name to list all modules within that category."

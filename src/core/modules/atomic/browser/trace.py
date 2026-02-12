@@ -110,7 +110,7 @@ from ...schema import compose, field, presets
             'params': {'action': 'stop', 'path': '/tmp/performance-trace.json'}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=60000,
     required_permissions=['browser.automation'],

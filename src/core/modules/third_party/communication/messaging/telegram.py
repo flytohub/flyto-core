@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
             'label': 'Message Text',
             'description': 'The message to send',
                 'description_key': 'modules.notification.telegram.send_message.params.text.description',
-            'placeholder': 'Hello from Flyto2!',
+            'placeholder': 'Hello from Flyto!',
             'required': True
         },
         'parse_mode': {
@@ -108,7 +108,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class TelegramSendMessageModule(BaseModule):

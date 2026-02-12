@@ -81,7 +81,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite']
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def database_insert(context: Dict[str, Any]) -> Dict[str, Any]:

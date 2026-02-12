@@ -60,7 +60,7 @@ from ...errors import InvalidTypeError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def object_pick(context: Dict[str, Any]) -> Dict[str, Any]:

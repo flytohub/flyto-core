@@ -87,7 +87,7 @@ from ...errors import ValidationError, FileNotFoundError, ModuleError
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:

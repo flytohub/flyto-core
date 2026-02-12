@@ -44,7 +44,7 @@ async def test_login():
     type_cls = ModuleRegistry.get('browser.type')
     type_email = type_cls({
         'selector': 'input[type="email"], input[name="email"], #email, input[placeholder*="mail"]',
-        'text': 'dans15987@gmail.com'
+        'text': 'user@example.com'
     }, context)
     result = await type_email.execute()
     print(f'   Result: ok={result.get("ok", False)}')
@@ -53,7 +53,7 @@ async def test_login():
     print('4. Typing password...')
     type_pass = type_cls({
         'selector': 'input[type="password"], input[name="password"], #password',
-        'text': '@Wen9520520'
+        'text': 'your_password'
     }, context)
     result = await type_pass.execute()
     print(f'   Result: ok={result.get("ok", False)}')

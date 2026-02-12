@@ -60,7 +60,7 @@ from ...registry import register_module
             'params': {}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class BrowserCloseModule(BaseModule):

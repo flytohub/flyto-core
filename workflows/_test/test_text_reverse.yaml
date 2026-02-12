@@ -1,0 +1,8 @@
+name: Text Reverse Test
+description: Reverse a string - simplest possible workflow
+
+steps:
+  - id: reverse
+    module: string.reverse
+    params:
+      text: "Hello Flyto"

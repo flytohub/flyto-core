@@ -53,7 +53,7 @@ from ....schema import compose, presets
             'url': 'https://api.github.com/users/octocat'
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=60000,
 )
@@ -140,7 +140,7 @@ class HTTPGetModule(BaseModule):
             'json': {'name': 'John', 'email': 'john@example.com'}
         }
     }],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT',
     timeout_ms=60000,
 )

@@ -221,7 +221,7 @@ MAX_ITERATIONS = 10
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:

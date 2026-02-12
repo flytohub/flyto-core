@@ -109,7 +109,7 @@ def get_format_from_extension(path: str) -> Optional[str]:
             }
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 async def image_convert(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -94,7 +94,7 @@ from ...schema import compose, presets
             'params': {'force': True}
         }
     ],
-    author='Flyto2 Team',
+    author='Flyto Team',
     license='MIT'
 )
 class BrowserReleaseModule(BaseModule):
