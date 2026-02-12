@@ -102,7 +102,7 @@ class TestPluginsInstalledReturnsModuleItemShape:
         assert module["color"] == "#6366F1"
 
         assert "level" in module
-        assert module["level"] == 2  # Plugin level
+        assert module["level"] == "plugin"
 
         assert "version" in module
         assert module["version"] == "1.0.0"

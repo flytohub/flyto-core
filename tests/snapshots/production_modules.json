@@ -2,7 +2,7 @@
   "version": "2.2.2",
   "environment": "production",
   "generated_at": "2026-02-12T14:29:45.212618+00:00",
-  "total": 301,
+  "total": 304,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -712,11 +712,32 @@
       "label": "Random String"
     },
     {
+      "id": "data.json.parse",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Parse JSON"
+    },
+    {
+      "id": "data.json.stringify",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "JSON Stringify"
+    },
+    {
       "id": "data.pipeline",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
       "label": "Data Pipeline"
+    },
+    {
+      "id": "data.text.template",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "Text Template"
     },
     {
       "id": "datetime.add",
