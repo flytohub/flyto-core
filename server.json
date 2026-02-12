@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.flytohub/flyto-core",
-  "description": "Secure execution engine for AI agents. 300+ atomic modules (browser, file, HTTP, image, database, etc.) with SSRF protection, secrets proxy, and credential redaction. MCP-native — any MCP client can discover and execute all modules.",
+  "description": "Secure execution engine for AI agents. 300+ modules, SSRF protection, secrets proxy.",
   "repository": {
     "url": "https://github.com/flytohub/flyto-core",
     "source": "github"
   },
-  "version": "2.2.1",
+  "version": "2.2.2",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "flyto-core",
-      "version": "2.2.1",
+      "version": "2.2.2",
       "transport": {
         "type": "stdio"
       },
