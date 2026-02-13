@@ -46,6 +46,32 @@ from .runner import run_workflow
 from .modules import add_modules_parser, run_modules_command
 
 
+def add_serve_parser(subparsers) -> None:
+    """Add serve subcommand for HTTP Execution API server."""
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Start HTTP Execution API server",
+        description="Start the flyto-core HTTP Execution API server."
+    )
+    serve_parser.add_argument('--host', default='127.0.0.1',
+                              help='Host to bind (default: 127.0.0.1)')
+    serve_parser.add_argument('--port', '-p', type=int, default=8333,
+                              help='Port to listen on (default: 8333)')
+
+
+def run_serve_command(host: str = '127.0.0.1', port: int = 8333) -> int:
+    """Start the HTTP Execution API server."""
+    try:
+        from core.api.server import main as serve_main
+        serve_main(host=host, port=port)
+        return 0
+    except ImportError as e:
+        print(f"{Colors.FAIL}Error: Missing dependencies for serve command.{Colors.ENDC}")
+        print(f"Install with: pip install flyto-core[api]")
+        print(f"Details: {e}")
+        return 1
+
+
 def add_run_parser(subparsers) -> None:
     """Add run subcommand for workflow execution."""
     run_parser = subparsers.add_parser(
@@ -87,6 +113,10 @@ Examples:
   flyto modules --env production --format json
   flyto modules --env development --format table
 
+  # Start HTTP API server
+  flyto serve
+  flyto serve --port 9000
+
   # Legacy mode (backward compatible)
   flyto workflow.yaml
         """
@@ -96,6 +126,7 @@ Examples:
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     add_run_parser(subparsers)
     add_modules_parser(subparsers)
+    add_serve_parser(subparsers)
 
     # Also support legacy mode: flyto workflow.yaml (without 'run' subcommand)
     parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file (legacy mode)')
@@ -112,6 +143,13 @@ Examples:
                              'can be used multiple times')
 
     args = parser.parse_args()
+
+    # Handle 'serve' command
+    if args.command == 'serve':
+        sys.exit(run_serve_command(
+            host=args.host,
+            port=args.port,
+        ))
 
     # Handle 'modules' command
     if args.command == 'modules':

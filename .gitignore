@@ -81,3 +81,8 @@ test-results/
 
 # Runtime metrics data
 metrics/*.json
+
+# Generated demo videos
+examples/demo_video/*.mp4
+examples/demo_video/*.gif
+examples/demo_video/*.webm

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.2.2"
+version = "2.3.0"
 description = "The open-source execution engine for AI agents. 300+ atomic modules, MCP-native, secure by default."
 readme = "README.md"
 license = {text = "Source Available License v1.0"}
@@ -84,6 +84,7 @@ Changelog = "https://github.com/flytohub/flyto-core/blob/main/CHANGELOG.md"
 
 [project.scripts]
 flyto = "cli.main:main"
+flyto-serve = "core.api:main"
 
 # Entry points for plugin discovery
 # Other packages can register modules by adding:
@@ -107,7 +108,7 @@ target-version = ["py39", "py310", "py311", "py312"]
 
 [tool.ruff]
 line-length = 100
-target-version = "2.2.2"
+target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "B", "A", "C4", "SIM"]
@@ -120,7 +121,7 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 
 [tool.mypy]
-python_version = "2.2.2"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
