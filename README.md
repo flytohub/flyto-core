@@ -123,15 +123,15 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 | Category | Modules | Examples |
 |----------|---------|----------|
 | `string.*` | 11 | reverse, uppercase, split, replace, trim |
-| `array.*` | 15 | filter, sort, map, reduce, unique, chunk |
-| `object.*` | 10 | keys, values, merge, pick, omit |
-| `file.*` | 8 | read, write, copy, move, delete, diff |
+| `array.*` | 12 | filter, sort, map, reduce, unique, chunk |
+| `object.*` | 5 | keys, values, merge, pick, omit |
+| `file.*` | 3 | read, write, copy |
 | `browser.*` | 38 | launch, goto, click, extract, scroll, screenshot |
-| `flow.*` | 21 | switch, loop, foreach, branch, parallel |
-| `http.*` | 3 | request, response_assert |
-| `ai.*` | 5 | model, memory, memory_vector |
+| `flow.*` | 18 | switch, loop, foreach, branch, parallel |
+| `http.*` | 1 | request |
+| `ai.*` | 7 | model, memory, memory_vector, local_ollama |
 | `document.*` | 8 | pdf_parse, excel_read, word_parse |
-| `data.*` | 7 | json_parse, csv_read, text_template |
+| `data.*` | 9 | json_parse, csv_read, text_template |
 
 **Total: 300+ atomic modules** across 40+ categories, plus 28 third-party integrations.
 
@@ -154,8 +154,7 @@ Add to your MCP client config (e.g. `~/.claude/mcp_servers.json`):
 {
   "flyto-core": {
     "command": "python",
-    "args": ["-m", "core.mcp_server"],
-    "cwd": "/path/to/flyto-core/src"
+    "args": ["-m", "core.mcp_server"]
   }
 }
 ```
@@ -246,8 +245,7 @@ flyto-core/
 │   │   └── third_party/   # External integrations
 │   └── engine/            # Workflow execution engine
 ├── workflows/             # Example workflows
-├── docs/                  # Documentation
-└── i18n/                  # Internationalization (en, zh, ja)
+└── docs/                  # Documentation
 ```
 
 ## Documentation
