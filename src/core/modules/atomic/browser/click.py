@@ -102,6 +102,10 @@ class BrowserClickModule(BaseModule):
         target = self.params.get('target', '').strip()
         raw_selector = self.params.get('selector', '').strip()
 
+        # Backward compatibility: selector provided without click_method → selector mode
+        if 'click_method' not in self.params and raw_selector and not target:
+            method = 'selector'
+
         if method == 'selector':
             if not raw_selector:
                 raise ValueError("CSS/XPath selector is required in advanced mode")
