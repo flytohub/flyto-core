@@ -10,7 +10,8 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup
 from ...types import NodeType, EdgeType, DataType
 
 
@@ -68,6 +69,13 @@ from ...types import NodeType, EdgeType, DataType
         presets.WEBHOOK_PATH(),
         presets.CRON_SCHEDULE(),
         presets.EVENT_NAME(),
+        field("config", type="object",
+              label="Configuration",
+              label_key="modules.flow.trigger.param.config.label",
+              description="Custom trigger config (for composites: LINE BOT, Telegram, Slack, etc.)",
+              description_key="modules.flow.trigger.param.config.description",
+              default={},
+              group=FieldGroup.ADVANCED),
         presets.DESCRIPTION(),
     ),
 
@@ -129,6 +137,7 @@ class TriggerModule(BaseModule):
         self.webhook_path = self.params.get('webhook_path')
         self.schedule = self.params.get('schedule')
         self.event_name = self.params.get('event_name')
+        self.config = self.params.get('config', {})
         self.description = self.params.get('description')
 
         if self.trigger_type not in ('manual', 'webhook', 'schedule', 'event'):
@@ -158,8 +167,12 @@ class TriggerModule(BaseModule):
             trigger_data = {
                 'trigger_type': self.trigger_type,
                 'triggered_at': triggered_at,
-                'payload': trigger_payload
+                'payload': trigger_payload,
             }
+
+            # Merge custom config (passthrough for composites)
+            if self.config:
+                trigger_data['config'] = self.config
 
             # Add type-specific info
             if self.trigger_type == 'webhook':
