@@ -56,6 +56,18 @@ class CompositeRegistry:
         return module_id in cls._composites
 
     @classmethod
+    def module_count(cls) -> int:
+        """Get number of registered composite modules"""
+        return len(cls._composites)
+
+    @classmethod
+    def clear(cls):
+        """Clear all registered composites and metadata (for hot-reload)"""
+        cls._composites.clear()
+        cls._metadata.clear()
+        logger.debug("Composite registry cleared")
+
+    @classmethod
     def list_all(
         cls,
         filter_by_stability: bool = False,

@@ -168,6 +168,20 @@ class ModuleRegistry:
         return module_id in cls._modules
 
     @classmethod
+    def module_count(cls) -> int:
+        """Get number of registered modules"""
+        return len(cls._modules)
+
+    @classmethod
+    def clear(cls):
+        """Clear all registered modules and metadata (for hot-reload)"""
+        cls._modules.clear()
+        cls._metadata.clear()
+        cls._plugins.clear()
+        cls._initialized = False
+        logger.debug("Registry cleared")
+
+    @classmethod
     def list_all(
         cls,
         filter_by_stability: bool = False,

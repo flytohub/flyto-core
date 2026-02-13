@@ -8,6 +8,12 @@ Key APIs:
 - core.catalog: Module catalog (used by flyto-pro LLM)
 - core.modules: Module registry and execution
 """
+try:
+    from importlib.metadata import version as _pkg_version
+    __version__ = _pkg_version("flyto-core")
+except Exception:
+    __version__ = "0.0.0"
+
 from .constants import (
     # Execution defaults
     DEFAULT_MAX_RETRIES,
@@ -90,4 +96,6 @@ __all__ = [
     "ensure_dict",
     "safe_execute",
     "log_execution",
+    # Version
+    "__version__",
 ]
