@@ -6,33 +6,76 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> The open-source execution engine for AI agents. 300+ atomic modules, MCP-native, secure by default.
-
-## What is Flyto Core?
-
-Flyto Core is an **open-source workflow automation engine** designed with three principles:
-
-- **Atomic-first** — 300+ fine-grained modules that compose like LEGO bricks
-- **Local-first & Git-native** — YAML workflows that version, diff, and test like code
-- **Designed for AI automation** — Rich module metadata lets AI understand and compose workflows
+> Deterministic execution engine for AI agents. 300+ atomic modules, evidence snapshots, execution trace, replay from any step.
 
 ## Quick Start
 
 ```bash
-pip install flyto-core
+pip install flyto-core[api]
+python -m core.quickstart
 ```
 
-Or from source:
+That's it. In 30 seconds you'll see:
+
+1. A 5-step workflow execute with full trace
+2. Evidence snapshots (context_before/after) for every step
+3. Replay from step 3 — without re-running steps 1-2
+
+## Why Flyto Core?
+
+AI agents are running multi-step tasks — browsing, calling APIs, moving data. But after they finish, all you have is a chat log.
+
+Flyto Core gives you:
+
+- **Execution Trace** — structured record of every step: input, output, timing, status
+- **Evidence Snapshots** — full context_before and context_after at every step boundary
+- **Replay** — re-execute from any step with the original (or modified) context
+- **300+ Atomic Modules** — composable building blocks for any workflow
+
+## HTTP Execution API
+
 ```bash
-git clone https://github.com/flytohub/flyto-core.git
-cd flyto-core
-pip install -r requirements.txt
-python run.py workflows/_test/test_text_reverse.yaml
+flyto serve
+# ✓ flyto-core running on 127.0.0.1:8333
 ```
 
-## 30-Second Example
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /v1/workflow/run` | Execute workflow with evidence + trace |
+| `GET /v1/workflow/{id}/evidence` | Get step-by-step state snapshots |
+| `POST /v1/workflow/{id}/replay/{step}` | Replay from any step |
+| `POST /v1/execute` | Execute a single module |
+| `GET /v1/modules` | Discover all 300+ modules |
 
-**workflow.yaml**
+### Run a workflow
+
+```bash
+curl -X POST localhost:8333/v1/workflow/run \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "workflow": {
+      "name": "example",
+      "steps": [
+        {"id": "step1", "module": "string.uppercase", "params": {"text": "hello"}},
+        {"id": "step2", "module": "string.reverse", "params": {"text": "world"}}
+      ]
+    },
+    "enable_evidence": true,
+    "enable_trace": true
+  }'
+```
+
+### Replay from a failed step
+
+```bash
+# Step 3 failed? Replay from there.
+curl -X POST localhost:8333/v1/workflow/{execution_id}/replay/step3
+```
+
+The engine loads the context snapshot at step 3 and re-executes from that point. No wasted computation.
+
+## YAML Workflows
+
 ```yaml
 name: Hello World
 steps:
@@ -47,16 +90,16 @@ steps:
       text: "${reverse.result}"
 ```
 
-**Run it:**
 ```bash
-python run.py workflow.yaml
+flyto run workflow.yaml
 # Output: "OTYLF OLLEH"
 ```
 
-**Or use Python directly:**
+## Python API
+
 ```python
 import asyncio
-from src.core.modules.registry import ModuleRegistry
+from core.modules.registry import ModuleRegistry
 
 async def main():
     result = await ModuleRegistry.execute(
@@ -68,55 +111,6 @@ async def main():
 
 asyncio.run(main())
 ```
-
-## Use Cases
-
-### Local AI Agent Lab
-Build AI agents that run entirely on your machine with Ollama integration.
-
-```yaml
-steps:
-  - id: ask_ai
-    module: ai.ollama.chat
-    params:
-      model: llama3
-      prompt: "Summarize this: ${input.text}"
-```
-
-### Web Automation & Scraping
-Automate browsers with the `browser.*` module family.
-
-```yaml
-steps:
-  - id: browser
-    module: browser.launch
-    params: { headless: true }
-
-  - id: navigate
-    module: browser.goto
-    params: { url: "https://example.com" }
-
-  - id: extract
-    module: browser.extract
-    params: { selector: "h1" }
-```
-
-### API Orchestration
-Chain API calls with built-in retry and error handling.
-
-```yaml
-steps:
-  - id: fetch
-    module: http.request
-    params:
-      url: "https://api.example.com/data"
-    retry:
-      max_attempts: 3
-      delay_ms: 1000
-```
-
-### Internal Tooling
-Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned in Git.
 
 ## Module Categories
 
@@ -133,11 +127,11 @@ Companies can build custom `crm.*`, `billing.*`, `internal.*` modules versioned 
 | `document.*` | 8 | pdf_parse, excel_read, word_parse |
 | `data.*` | 9 | json_parse, csv_read, text_template |
 
-**Total: 300+ atomic modules** across 40+ categories, plus 28 third-party integrations.
+**300+ atomic modules** across 40+ categories, plus 28 third-party integrations.
 
-## Connect Any AI via MCP
+## MCP Integration
 
-Every module is automatically available as an [MCP](https://modelcontextprotocol.io/) tool. Any MCP-compatible AI can discover, inspect, and execute all 300+ modules — zero glue code.
+Every module is automatically available as an [MCP](https://modelcontextprotocol.io/) tool. Any MCP-compatible AI can discover, inspect, and execute all 300+ modules.
 
 ```
 Claude ──┐
@@ -147,9 +141,7 @@ Any AI ──┘                    ├─ file.read
                               └─ ... 300+ modules
 ```
 
-**Setup (30 seconds):**
-
-Add to your MCP client config (e.g. `~/.claude/mcp_servers.json`):
+Add to your MCP client config:
 ```json
 {
   "flyto-core": {
@@ -159,33 +151,38 @@ Add to your MCP client config (e.g. `~/.claude/mcp_servers.json`):
 }
 ```
 
-Then your AI can:
-1. `list_modules` — discover all available capabilities
-2. `get_module_info("browser.extract")` — see params schema and examples
-3. `execute_module("browser.extract", {"selector": "h1"})` — run it
+## Installation
 
-**Why this matters:** n8n, Airflow, and Zapier can't be called by AI agents directly. Flyto Core can. Every `@register_module` is instantly an MCP tool — add a module, and every connected AI sees it immediately.
+```bash
+# Core engine
+pip install flyto-core
 
-## Why Flyto Core?
+# With HTTP API server
+pip install flyto-core[api]
 
-### vs. n8n / Zapier
-- **Finer granularity** — Atomic modules vs. monolithic nodes
-- **Git-native** — Version control your workflows
-- **No cloud dependency** — Runs entirely local
+# With browser automation
+pip install flyto-core[browser]
+playwright install chromium
 
-### vs. Python Scripts
-- **Declarative YAML** — Non-programmers can read and modify
-- **Built-in resilience** — Retry, timeout, error handling included
-- **Module reuse** — Don't rewrite the same HTTP/browser code
+# Everything
+pip install flyto-core[all]
+```
 
-### vs. Airflow / Prefect
-- **Lightweight** — No scheduler, database, or infrastructure needed
-- **Developer-friendly** — Just YAML + Python, no DAG ceremony
-- **AI-ready** — Module metadata designed for LLM consumption
+## Use Cases
+
+### Auditable Agent Execution
+Run multi-step agent workflows with full evidence trail — every step's state captured, replayable, on disk.
+
+### Web Automation
+Automate browsers with the `browser.*` module family (38 modules: launch, goto, click, extract, screenshot, etc.)
+
+### API Orchestration
+Chain API calls with built-in retry and error handling.
+
+### Internal Tooling
+Build custom `crm.*`, `billing.*`, `internal.*` modules versioned in Git.
 
 ## For Module Authors
-
-Modules use the `@register_module` decorator with rich metadata:
 
 ```python
 from core.modules.registry import register_module
@@ -215,59 +212,28 @@ async def string_reverse(context):
 
 See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete guide.
 
-## Installation
-
-### Basic
-```bash
-pip install -r requirements.txt
-```
-
-### With Browser Automation
-```bash
-pip install playwright
-playwright install chromium
-```
-
-### With AI Integrations
-```bash
-pip install -r requirements-integrations.txt
-```
-
 ## Project Structure
 
 ```
 flyto-core/
 ├── src/core/
+│   ├── api/              # HTTP Execution API (FastAPI)
 │   ├── modules/
-│   │   ├── atomic/        # 300+ atomic modules
-│   │   ├── composite/     # High-level composite modules
-│   │   ├── patterns/      # Advanced resilience patterns
-│   │   └── third_party/   # External integrations
-│   └── engine/            # Workflow execution engine
-├── workflows/             # Example workflows
-└── docs/                  # Documentation
+│   │   ├── atomic/       # 300+ atomic modules
+│   │   ├── composite/    # High-level composite modules
+│   │   ├── patterns/     # Advanced resilience patterns
+│   │   └── third_party/  # External integrations
+│   └── engine/
+│       ├── workflow/     # Workflow execution engine
+│       ├── evidence/     # Evidence collection & storage
+│       └── replay/       # Replay manager
+├── workflows/            # Example workflows
+└── docs/                 # Documentation
 ```
-
-## Documentation
-
-- **[Module Specification](docs/MODULE_SPECIFICATION.md)** — Complete module API reference
-- **[Writing Modules](docs/WRITING_MODULES.md)** — Guide to creating custom modules
-- **[CLI Reference](docs/CLI.md)** — Command-line options
-- **[DSL Reference](docs/DSL.md)** — YAML workflow syntax
 
 ## Contributing
 
 We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
-
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/flyto-core.git
-
-# Create feature branch
-git checkout -b feature/my-module
-
-# Make changes, then submit PR
-```
 
 ## Security
 
@@ -285,17 +251,11 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 | Internal business tools | Free |
 | Commercial products/services | [Commercial License](LICENSE-COMMERCIAL.md) |
 
-See **[LICENSE](LICENSE)** for complete terms.
-
-For commercial licensing inquiries: licensing@flyto.dev
+See **[LICENSE](LICENSE)** for complete terms. For commercial licensing: licensing@flyto.dev
 
 ---
 
 <p align="center">
-  <b>Source-available core engine of the Flyto automation platform.</b><br>
-  Built for developers. Designed for AI.
+  <b>Deterministic execution engine for AI agents.</b><br>
+  Evidence. Trace. Replay.
 </p>
-
----
-
-*Copyright (c) 2025 Flyto. All Rights Reserved.*
