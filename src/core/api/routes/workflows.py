@@ -49,16 +49,16 @@ async def run_workflow(body: RunWorkflowRequest, request: Request):
 
         state.running_workflows[execution_id] = engine
 
+        # Persist workflow definition early so replay works even if execution fails
+        if body.enable_evidence:
+            _save_workflow_definition(state, execution_id, body.workflow)
+
         try:
             result = await engine.execute()
         finally:
             state.running_workflows.pop(execution_id, None)
 
         duration_ms = int((time.time() - t0) * 1000)
-
-        # Persist workflow definition for replay
-        if body.enable_evidence:
-            _save_workflow_definition(state, execution_id, body.workflow)
 
         trace = engine.get_execution_trace_dict() if body.enable_trace else None
 
@@ -79,11 +79,17 @@ async def run_workflow(body: RunWorkflowRequest, request: Request):
     except Exception as e:
         duration_ms = int((time.time() - t0) * 1000)
         logger.error("Workflow %s failed: %s", execution_id, e)
+
+        evidence_path = None
+        if body.enable_evidence:
+            evidence_path = str(state.evidence_store.get_execution_dir(execution_id))
+
         return WorkflowRunResponse(
             ok=False,
             execution_id=execution_id,
             status="failed",
             error=str(e),
+            evidence_path=evidence_path,
             duration_ms=duration_ms,
         )
 

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>flyto-core — Execution Audit for AI Agents</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --fg: #e6edf3;
+    --dim: #8b949e;
+    --cyan: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --border: #30363d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .container { display: flex; height: 100vh; }
+
+  /* ── LEFT PANEL ─────────────────────────────────── */
+  .left {
+    width: 38%;
+    padding: 44px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    position: relative;
+  }
+
+  .left .section {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+  .left .section.active { display: block; }
+
+  .left h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+  }
+
+  .left h2 {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--cyan);
+    margin-bottom: 10px;
+  }
+
+  .left p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--dim);
+    margin-bottom: 10px;
+  }
+
+  .left .highlight { color: var(--yellow); font-weight: 600; }
+  .left .fg { color: var(--fg); }
+
+  .left .quote {
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--fg);
+    border-left: 3px solid var(--yellow);
+    padding-left: 16px;
+    margin: 20px 0;
+    line-height: 1.5;
+  }
+
+  .left .tag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  .tag.green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag.red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .tag.blue { background: rgba(88,166,255,0.15); color: var(--cyan); }
+  .tag.yellow { background: rgba(210,153,34,0.15); color: var(--yellow); }
+
+  .phase-label {
+    position: absolute;
+    bottom: 28px;
+    left: 36px;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  /* ── RIGHT PANEL ────────────────────────────────── */
+  .right {
+    width: 62%;
+    padding: 22px 26px;
+    background: var(--bg2);
+    overflow-y: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .right::-webkit-scrollbar { width: 5px; }
+  .right::-webkit-scrollbar-track { background: transparent; }
+  .right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .term-line {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.25s, transform 0.25s;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .term-line.show { opacity: 1; transform: translateY(0); }
+
+  .cmd { color: var(--green); font-weight: 600; }
+  .ok { color: var(--green); }
+  .err { color: var(--red); }
+  .info { color: var(--cyan); }
+  .warn { color: var(--yellow); }
+  .muted { color: var(--dim); }
+
+  .term-table {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 6px 0;
+    overflow: hidden;
+  }
+  .term-table table { width: 100%; border-collapse: collapse; }
+  .term-table th {
+    background: rgba(88,166,255,0.08);
+    text-align: left;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: var(--cyan);
+    border-bottom: 1px solid var(--border);
+  }
+  .term-table td {
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .term-table tr:last-child td { border-bottom: none; }
+
+  .term-box {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: rgba(255,255,255,0.02);
+    font-size: 12px;
+  }
+  .term-box.green-border { border-color: var(--green); }
+  .term-box.red-border { border-color: var(--red); }
+  .term-box.blue-border { border-color: var(--cyan); }
+
+  .comparison {
+    display: flex;
+    gap: 10px;
+    margin: 6px 0;
+  }
+  .comparison > div {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 12px;
+  }
+  .comparison .col-bad { border-color: var(--red); }
+  .comparison .col-good { border-color: var(--green); }
+  .comparison h4 { font-size: 12px; margin-bottom: 6px; }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: var(--cyan);
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<div class="container">
+  <!-- ═══ LEFT PANEL ═══ -->
+  <div class="left">
+
+    <!-- S0: Hook -->
+    <div class="section active" id="s0">
+      <h1>Your AI agent just ran<br>7 steps on production.</h1>
+      <p class="fg" style="font-size:17px; margin-top:12px;">It says it succeeded.</p>
+      <p class="highlight" style="font-size:18px; margin-top:16px;">
+        Can you prove what it did?
+      </p>
+    </div>
+
+    <!-- S1: Black Box -->
+    <div class="section" id="s1">
+      <h2>The Audit Question</h2>
+      <p class="fg">Your auditor asks:</p>
+      <p style="margin-top:8px;">"Show me the exact state before and after data sanitization."</p>
+      <p>"Prove PII was removed before it left step 3."</p>
+      <p>"Can you replay step 4 to verify the output?"</p>
+      <p class="highlight" style="margin-top:16px;">You have nothing to show.</p>
+    </div>
+
+    <!-- S2: Engine -->
+    <div class="section" id="s2">
+      <h2>Deterministic Execution</h2>
+      <p><strong style="color:var(--fg);">flyto-core</strong> — execution engine with built-in audit trail.</p>
+      <p>Every step captures full state. Not logs. <span class="highlight">Evidence.</span></p>
+      <div style="margin: 14px 0;">
+        <span class="tag green">Evidence</span>
+        <span class="tag blue">Trace</span>
+        <span class="tag yellow">Replay</span>
+        <span class="tag red">Audit</span>
+      </div>
+    </div>
+
+    <!-- S3: Workflow -->
+    <div class="section" id="s3">
+      <h2>7-Step Compliance Pipeline</h2>
+      <p>Same task. Full audit trail.</p>
+      <p>Evidence: <span class="highlight">ON</span> &nbsp; Trace: <span class="highlight">ON</span></p>
+      <p style="margin-top:10px;">Every step: input, output, timing, context before, context after.</p>
+      <p style="color:var(--dim); font-size:13px; margin-top:8px;">Stored to disk. Queryable. Replayable.</p>
+    </div>
+
+    <!-- S4: Trace + Evidence -->
+    <div class="section" id="s4">
+      <h2>Audit Trail</h2>
+      <p>Structured trace — not a log file.</p>
+      <p>Evidence snapshots — the full state at every step boundary.</p>
+      <p style="margin-top:10px;">Your auditor can now verify:</p>
+      <p class="fg" style="font-size:14px;">
+        <span class="ok">&#10003;</span> What entered each step<br>
+        <span class="ok">&#10003;</span> What left each step<br>
+        <span class="ok">&#10003;</span> Exactly when, and how long
+      </p>
+    </div>
+
+    <!-- S5: Failure -->
+    <div class="section" id="s5">
+      <h2 style="color:var(--red);">Step 4 Fails.</h2>
+      <p class="fg">Typical agent: re-run everything from scratch.</p>
+      <p class="fg">flyto-core: evidence captured <em>even on failure</em>.</p>
+      <p style="margin-top:10px;">You know exactly:</p>
+      <p class="fg" style="font-size:14px;">
+        <span class="err">&#10007;</span> What state caused the failure<br>
+        <span class="ok">&#10003;</span> What succeeded before it<br>
+        <span class="ok">&#10003;</span> The exact error output
+      </p>
+    </div>
+
+    <!-- S6: Replay -->
+    <div class="section" id="s6">
+      <h2>Replay From Failure</h2>
+      <p class="fg">Fix the issue. Replay from step 4.</p>
+      <p>The engine loads the context snapshot at that step.</p>
+      <p>Re-executes only steps 4-7.</p>
+      <p class="highlight" style="margin-top:10px;">No re-fetch. No re-sanitization. Deterministic.</p>
+    </div>
+
+    <!-- S7: Closing -->
+    <div class="section" id="s7">
+      <div class="quote">
+        Execution shouldn't be<br>a black box.
+      </div>
+      <p style="margin-top:16px; color:var(--fg); font-size:15px;">
+        Auditability is not optional.
+      </p>
+    </div>
+
+    <div class="phase-label" id="counter"></div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="right" id="terminal"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+const term = document.getElementById('terminal');
+const progress = document.getElementById('progress');
+const counter = document.getElementById('counter');
+const TOTAL = 8;
+
+function setSection(n) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('s' + n);
+  if (el) el.classList.add('active');
+  progress.style.width = ((n + 1) / TOTAL * 100) + '%';
+  counter.textContent = `${n + 1} / ${TOTAL}`;
+}
+
+function addLine(html, cls = '') {
+  const div = document.createElement('div');
+  div.className = 'term-line ' + cls;
+  div.innerHTML = html;
+  term.appendChild(div);
+  requestAnimationFrame(() => requestAnimationFrame(() => div.classList.add('show')));
+  term.scrollTop = term.scrollHeight;
+  return div;
+}
+
+function addBlock(html) {
+  const div = document.createElement('div');
+  div.className = 'term-line';
+  div.innerHTML = html;
+  term.appendChild(div);
+  requestAnimationFrame(() => requestAnimationFrame(() => div.classList.add('show')));
+  term.scrollTop = term.scrollHeight;
+}
+
+function clearTerm() { term.innerHTML = ''; }
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════════════════════════════
+// Demo Data
+// ═══════════════════════════════════════════════════════════════════
+
+const EID = 'exec_a7c3f219b4e8';
+const EID2 = 'exec_8b2e41f9c307';
+const RID = 'replay_d41f8e92c3a1';
+
+const pipeline = [
+  { id: 'fetch_config', module: 'string.uppercase',  output: 'COMPLIANCE_RULES_V3',  ms: 1 },
+  { id: 'validate',     module: 'string.trim',       output: 'input_validated',       ms: 0 },
+  { id: 'sanitize',     module: 'string.replace',    output: 'data [PII_REMOVED]',    ms: 1 },
+  { id: 'transform',    module: 'string.lowercase',  output: 'normalized_schema',     ms: 0 },
+  { id: 'verify',       module: 'string.reverse',    output: 'ko_muskcehc',           ms: 0 },
+  { id: 'encrypt',      module: 'string.uppercase',  output: 'ENCRYPTED_PAYLOAD',     ms: 1 },
+  { id: 'store',        module: 'string.lowercase',  output: 'stored_to_audit_log',   ms: 0 },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+// PLAY — Total: ~260s (4.3 min)
+// ═══════════════════════════════════════════════════════════════════
+
+async function play() {
+
+  // ── S0: HOOK (0:00 – 0:35) ─────────────────────────────────────
+  setSection(0);
+
+  await wait(4000);
+  addLine('<span class="muted">agent &gt;</span> Running compliance data pipeline...');
+  await wait(1200);
+  for (let i = 1; i <= 7; i++) {
+    addLine(`<span class="muted">agent &gt;</span> Step ${i} done.`);
+    await wait(400);
+  }
+  addLine('<span class="muted">agent &gt;</span> Pipeline complete!');
+  await wait(4000);
+  addLine('');
+  addLine('<span class="warn" style="font-size:14px;">That\'s all you have. Text output.</span>');
+  await wait(3500);
+  addLine('<span class="muted">No state. No evidence. No proof.</span>');
+  await wait(7000);
+
+  // ── S1: BLACK BOX (0:35 – 1:25) ───────────────────────────────
+  setSection(1);
+
+  addLine('');
+  addLine('<span class="warn">Auditor:</span>');
+  await wait(3000);
+  addLine('  "Show me the state before sanitization."');
+  await wait(4500);
+  addLine('  "Prove PII was removed before step 4."');
+  await wait(4500);
+  addLine('  "Replay step 4 to verify the transform."');
+  await wait(5000);
+  addLine('');
+  addLine('<span class="err">You: ...</span>');
+  await wait(3000);
+  addLine('<span class="muted">You have a chat log. That\'s it.</span>');
+  await wait(8000);
+
+  // ── S2: ENGINE (1:25 – 1:55) ──────────────────────────────────
+  setSection(2);
+  clearTerm();
+
+  addLine('<span class="cmd">$ flyto serve</span>');
+  await wait(1500);
+  addLine('<span class="ok">✓</span> flyto-core v2.2.2 · 127.0.0.1:8333');
+  await wait(1000);
+  addLine('<span class="ok">✓</span> 304 modules · 42 categories');
+  await wait(1000);
+  addLine('<span class="ok">✓</span> Evidence collection: enabled');
+  await wait(1000);
+  addLine('<span class="ok">✓</span> Execution trace: enabled');
+  await wait(1000);
+  addLine('<span class="ok">✓</span> Replay engine: ready');
+  await wait(8000);
+
+  // ── S3: WORKFLOW (1:55 – 2:55) ────────────────────────────────
+  setSection(3);
+
+  addLine('');
+  addLine('<span class="cmd">$ curl -X POST localhost:8333/v1/workflow/run \\</span>');
+  addLine('<span class="cmd">    -H \'Content-Type: application/json\' \\</span>');
+  addLine('<span class="cmd">    -d @compliance-pipeline.json</span>');
+  await wait(2500);
+  addLine('');
+  addLine('<span class="muted">Running 7-step compliance pipeline · evidence: on · trace: on</span>');
+  await wait(2000);
+
+  for (const s of pipeline) {
+    addLine(`  <span class="ok">✓</span> ${s.id.padEnd(16)} <span class="muted">${s.module.padEnd(18)}</span> → <strong>${s.output}</strong>`);
+    await wait(1200);
+  }
+
+  addLine('');
+  addLine(`<span class="ok">✓ Completed</span> in <span class="warn">3ms</span> · <span class="info">${EID}</span>`);
+  addLine(`<span class="muted">  7/7 steps · 7 evidence records · full trace on disk</span>`);
+  await wait(8000);
+
+  // ── S4: TRACE + EVIDENCE (2:55 – 4:05) ────────────────────────
+  setSection(4);
+
+  addLine('');
+  addLine(`<span class="cmd">$ curl localhost:8333/v1/workflow/${EID}</span>`);
+  await wait(1500);
+
+  let t = '<div class="term-table"><table>';
+  t += '<tr><th>#</th><th>Step</th><th>Module</th><th>Status</th><th>Duration</th><th>Output</th></tr>';
+  pipeline.forEach((s, i) => {
+    t += `<tr><td class="muted">${i+1}</td><td><strong>${s.id}</strong></td><td class="muted">${s.module}</td><td><span class="ok">success</span></td><td class="warn">${s.ms}ms</td><td>${s.output}</td></tr>`;
+  });
+  t += '</table></div>';
+  addBlock(t);
+  await wait(10000);
+
+  addLine('');
+  addLine(`<span class="cmd">$ curl localhost:8333/v1/workflow/${EID}/evidence</span>`);
+  await wait(1500);
+
+  const keySteps = [2, 3, 5];
+  const ctxKeys = [];
+  for (let i = 0; i < pipeline.length; i++) {
+    ctxKeys.push(pipeline[i].id);
+    if (!keySteps.includes(i)) continue;
+    const s = pipeline[i];
+    const before = ctxKeys.slice(0, -1).join(', ') || '{}';
+    const after = ctxKeys.join(', ');
+
+    addBlock(`<div class="term-box blue-border">
+      <strong>${s.id}</strong> <span class="muted">· ${s.module}</span>
+      <div style="margin-top:3px;">
+        <span class="muted">context_before:</span> { ${before} }<br>
+        <span class="muted">context_after: </span> { ${after} }<br>
+        <span class="ok">+ ${s.id}</span> → <strong>${s.output}</strong>
+      </div>
+    </div>`);
+    await wait(4000);
+  }
+
+  await wait(2000);
+  addLine('');
+  addLine('<span class="muted">Full state snapshot at every step boundary. On disk. Queryable.</span>');
+  await wait(8000);
+
+  // ── S5: FAILURE (4:05 – 4:50) ─────────────────────────────────
+  setSection(5);
+  clearTerm();
+
+  addLine('<span class="muted">--- Second run: edge-case input ---</span>');
+  await wait(2500);
+  addLine('');
+  addLine('<span class="cmd">$ curl -X POST localhost:8333/v1/workflow/run \\</span>');
+  addLine('<span class="cmd">    -d @compliance-pipeline-v2.json</span>');
+  await wait(2000);
+  addLine('');
+
+  for (let i = 0; i < 3; i++) {
+    const s = pipeline[i];
+    addLine(`  <span class="ok">✓</span> ${s.id.padEnd(16)} → ${s.output}`);
+    await wait(800);
+  }
+  await wait(800);
+  addLine(`  <span class="err">✗ transform        → ERROR: schema_mismatch</span>`);
+  await wait(3000);
+  addLine('');
+  addLine(`<span class="err">Pipeline failed at step 4</span> · <span class="info">${EID2}</span>`);
+  await wait(3500);
+
+  addLine('');
+  addLine('<span class="warn">But evidence was captured — including the failure:</span>');
+  await wait(2500);
+
+  addBlock(`<div class="term-box red-border">
+    <strong>transform</strong> <span class="err">· FAILED</span>
+    <div style="margin-top:3px;">
+      <span class="muted">context_before:</span> { fetch_config, validate, sanitize }<br>
+      <span class="muted">context_after: </span> { fetch_config, validate, sanitize }<br>
+      <span class="err">error:</span> schema_mismatch — field "amount" expected number, got string<br>
+      <span class="muted">input:</span> { text: "corrupted_data", ... }
+    </div>
+  </div>`);
+  await wait(7000);
+
+  addLine('');
+  addLine('<span class="muted">You know exactly what went in. What went wrong. And where.</span>');
+  await wait(5000);
+
+  // ── S6: REPLAY (4:50 – 5:25) ──────────────────────────────────
+  setSection(6);
+
+  addLine('');
+  addLine('<span class="muted">Fix the schema. Replay from step 4.</span>');
+  await wait(2500);
+  addLine(`<span class="cmd">$ curl -X POST localhost:8333/v1/workflow/${EID2}/replay/transform</span>`);
+  await wait(2500);
+
+  addBlock(`<div class="term-box green-border">
+    <span class="ok" style="font-size:14px;">✓ Replay successful</span>
+    <div style="margin-top:6px;">
+      Original:  <span class="muted">${EID2}</span><br>
+      Replay:    <span class="info">${RID}</span><br>
+      From:      <strong>transform</strong> (step 4)<br>
+      Re-ran:    <span class="warn">4 steps</span> (transform → verify → encrypt → store)<br>
+      Duration:  <span class="warn">2ms</span>
+    </div>
+  </div>`);
+  await wait(5000);
+
+  addLine('');
+  addLine('  <span class="ok">✓</span> transform   → <strong>normalized_schema</strong>');
+  await wait(700);
+  addLine('  <span class="ok">✓</span> verify      → <strong>ko_muskcehc</strong>');
+  await wait(700);
+  addLine('  <span class="ok">✓</span> encrypt     → <strong>ENCRYPTED_PAYLOAD</strong>');
+  await wait(700);
+  addLine('  <span class="ok">✓</span> store       → <strong>stored_to_audit_log</strong>');
+  await wait(3500);
+
+  addLine('');
+  addLine('<span class="muted">Context at step 4 was loaded from evidence.</span>');
+  addLine('<span class="muted">Steps 1-3 were not re-executed. Deterministic.</span>');
+  await wait(8000);
+
+  // ── S7: CLOSING (5:25 – 5:50) ─────────────────────────────────
+  setSection(7);
+  clearTerm();
+
+  await wait(3500);
+  addLine('<span class="info" style="font-size:15px;">Execution shouldn\'t be a black box.</span>');
+  await wait(4000);
+  addLine('<span class="warn" style="font-size:15px;">Auditability is not optional.</span>');
+  await wait(5000);
+  addLine('');
+  addLine('<span class="cmd">$ pip install flyto-core[api]</span>');
+  await wait(800);
+  addLine('<span class="cmd">$ flyto serve</span>');
+  await wait(3000);
+  addLine('');
+  addLine('<span class="info">github.com/flytohub/flyto-core</span>');
+  await wait(8000);
+}
+
+setTimeout(play, 1200);
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+name: "Browser Research with Evidence"
+description: "10-step browser workflow demonstrating deterministic execution"
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: false
+
+  - id: goto_site
+    module: browser.goto
+    params:
+      url: "https://news.ycombinator.com"
+
+  - id: extract_titles
+    module: browser.extract
+    params:
+      selector: ".titleline > a"
+      attribute: "textContent"
+      multiple: true
+
+  - id: count_results
+    module: array.length
+    params:
+      array: "${extract_titles.data.values}"
+
+  - id: extract_first_link
+    module: browser.extract
+    params:
+      selector: ".titleline > a"
+      attribute: "href"
+
+  - id: goto_first
+    module: browser.goto
+    params:
+      url: "${extract_first_link.data.value}"
+
+  - id: extract_content
+    module: browser.extract
+    params:
+      selector: "body"
+      attribute: "textContent"
+
+  - id: take_screenshot
+    module: browser.screenshot
+    params:
+      full_page: true
+
+  - id: format_report
+    module: string.template
+    params:
+      template: "Found ${count_results.data.length} articles. First article content length: ${extract_content.data.value.length} chars"
+
+  - id: close
+    module: browser.close

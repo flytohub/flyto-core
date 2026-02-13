@@ -86,3 +86,8 @@ metrics/*.json
 examples/demo_video/*.mp4
 examples/demo_video/*.gif
 examples/demo_video/*.webm
+
+# Evidence data (generated at runtime)
+evidence/
+_quickstart_evidence/
+src/_quickstart_evidence/

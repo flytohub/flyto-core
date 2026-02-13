@@ -25,7 +25,14 @@ Y = "\033[33m"  # yellow
 C = "\033[36m"  # cyan
 D = "\033[90m"  # dim
 B = "\033[1m"   # bold
+P = "\033[35m"  # purple
 X = "\033[0m"   # reset
+
+LOGO = f"""
+  {P}┌─┐┬  ┬ ┬┌┬┐┌─┐{X}
+  {P}├┤ │  └┬┘ │ │ │{X}  {B}core{X} {D}v2.3.1{X}
+  {P}└  ┴─┘ ┴  ┴ └─┘{X}  {D}Deterministic execution for AI agents{X}
+"""
 
 
 def header(title):
@@ -50,6 +57,8 @@ def info(msg):
 # ── Main ─────────────────────────────────────────────────────────────
 
 async def main():
+    print(LOGO)
+
     from core.engine import WorkflowEngine
     from core.engine.evidence import create_evidence_store
     from core.api.evidence_hooks import APIEvidenceHooks
@@ -208,7 +217,7 @@ async def main():
     curl -X POST localhost:8333/v1/workflow/run -H 'Content-Type: application/json' \\
       -d '{{"workflow": ...}}'
 
-  {C}github.com/flytohub/flyto-core{X}
+  {P}github.com/flytohub/flyto-core{X}
 """)
 
     # Cleanup
