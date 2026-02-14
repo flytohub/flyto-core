@@ -29,6 +29,7 @@ def URL(
         placeholder=placeholder,
         required=required,
         validation=validation,
+        format="url",
         group=FieldGroup.BASIC,
     )
 

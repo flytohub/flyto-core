@@ -74,6 +74,7 @@ from ...schema import compose, field
             description='CSS selector for next page button',
             placeholder='.next, a[rel="next"], .pagination-next',
             required=False,
+            showIf={"mode": {"$in": ["next_button", "page_numbers"]}},
         ),
         field(
             'load_more_selector',
@@ -83,6 +84,7 @@ from ...schema import compose, field
             description='CSS selector for load more button',
             placeholder='.load-more, button.show-more',
             required=False,
+            showIf={"mode": "load_more"},
         ),
         field(
             'max_pages',
@@ -131,6 +133,7 @@ from ...schema import compose, field
             default=1000,
             min=100,
             max=5000,
+            showIf={"mode": "infinite_scroll"},
         ),
         field(
             'no_more_indicator',

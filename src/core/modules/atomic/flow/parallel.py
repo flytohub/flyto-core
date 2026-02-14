@@ -124,6 +124,7 @@ from ...types import NodeType, EdgeType, DataType
             description='Stop all tasks on first failure (only for mode=all)',
             description_key='modules.flow.parallel.params.fail_fast.description',
             default=True,
+            showIf={"mode": "all"},
         ),
         field(
             'concurrency_limit',

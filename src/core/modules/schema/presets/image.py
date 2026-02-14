@@ -294,6 +294,7 @@ def IMAGE_URL(
         required=required,
         description='URL of the image to download',
         validation=validators.URL_HTTP,
+        format="url",
         group=FieldGroup.BASIC,
     )
 
@@ -381,11 +382,11 @@ def QRCODE_COLOR(
         label=label,
         label_key=label_key,
         default=default,
+        format="color",
         description='Color of the QR code (hex or name)',
         group=FieldGroup.OPTIONS,
-    
         placeholder='#000000',
-)
+    )
 
 
 def QRCODE_BACKGROUND(
@@ -402,11 +403,11 @@ def QRCODE_BACKGROUND(
         label=label,
         label_key=label_key,
         default=default,
+        format="color",
         description='Background color (hex or name)',
         group=FieldGroup.OPTIONS,
-    
         placeholder='#FFFFFF',
-)
+    )
 
 
 def QRCODE_ERROR_CORRECTION(

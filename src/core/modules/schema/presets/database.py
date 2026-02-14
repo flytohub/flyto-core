@@ -49,6 +49,7 @@ def DB_CONNECTION_STRING(
         required=False,
         placeholder=placeholder,
         secret=True,
+        format="password",
         description='Database connection string',
         group=FieldGroup.CONNECTION,
     )
@@ -150,6 +151,7 @@ def DB_PASSWORD(
         required=False,
         placeholder=placeholder,
         secret=True,
+        format="password",
         description='Database password',
         group=FieldGroup.CONNECTION,
     )
@@ -430,6 +432,7 @@ def MONGO_CONNECTION_STRING(
         required=False,
         placeholder=placeholder,
         secret=True,
+        format="password",
         description='MongoDB connection string (defaults to env.MONGODB_URL)',
         group=FieldGroup.CONNECTION,
     )

@@ -20,6 +20,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, field, presets
+from ...schema.constants import Visibility
 from ...types import NodeType, EdgeType, DataType
 
 from ._prompt import resolve_task_prompt, stringify_value
@@ -127,14 +128,14 @@ MAX_ITERATIONS = 10
               description_key='modules.llm.agent.params.task.description',
               required=False, format='multiline',
               placeholder='Analyze the following data: {{input}}',
-              ui={'depends_on': {'prompt_source': 'manual'}}),
+              showIf={'prompt_source': 'manual'}),
         field('prompt_path', type='string', label='Prompt Path',
               label_key='modules.llm.agent.params.prompt_path',
               description='Path to extract prompt from input (e.g., {{input.message}})',
               placeholder='Enter your prompt...',
               description_key='modules.llm.agent.params.prompt_path.description',
               default='{{input}}', required=False,
-              ui={'visibility': 'advanced', 'depends_on': {'prompt_source': 'auto'}}),
+              showIf={'prompt_source': 'auto'}, visibility=Visibility.EXPERT),
         field('join_strategy', type='select', label='Array Join Strategy',
               label_key='modules.llm.agent.params.join_strategy',
               description='How to handle array inputs',
@@ -146,20 +147,20 @@ MAX_ITERATIONS = 10
                   {'label': 'As JSON array', 'value': 'json'},
               ],
               default='first', required=False,
-              ui={'visibility': 'advanced', 'depends_on': {'prompt_source': 'auto'}}),
+              showIf={'prompt_source': 'auto'}, visibility=Visibility.EXPERT),
         field('join_separator', type='string', label='Join Separator',
               label_key='modules.llm.agent.params.join_separator',
               description='Separator for joining array items',
               description_key='modules.llm.agent.params.join_separator.description',
               default='\n\n---\n\n', required=False,
-              ui={'visibility': 'advanced', 'depends_on': {'join_strategy': 'separator'}},
+              showIf={'join_strategy': 'separator'}, visibility=Visibility.EXPERT,
               placeholder=','),
         field('max_input_size', type='number', label='Max Input Size',
               label_key='modules.llm.agent.params.max_input_size',
               description='Maximum characters for prompt (prevents overflow)',
               description_key='modules.llm.agent.params.max_input_size.description',
               required=False, default=10000, min=100, max=100000,
-              ui={'visibility': 'advanced'}),
+              visibility=Visibility.EXPERT),
         field('system_prompt', type='string', label='System Prompt',
               label_key='modules.llm.agent.params.system_prompt',
               description='Instructions for the agent behavior',

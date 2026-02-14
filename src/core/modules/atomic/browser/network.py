@@ -70,6 +70,7 @@ from ...schema import compose, presets, field
             label_key='modules.browser.network.params.mock_response.label',
             description='Response to return for intercepted requests',
             required=False,
+            showIf={"action": "intercept"},
         ),
     ),
     output_schema={

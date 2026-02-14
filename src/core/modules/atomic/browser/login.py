@@ -114,6 +114,7 @@ from ...schema import compose, field, presets
             description='CSS selector for remember me checkbox',
             placeholder='input[name="remember"], #remember-me',
             required=False,
+            showIf={"remember_me": True},
         ),
         field(
             'timeout_ms',

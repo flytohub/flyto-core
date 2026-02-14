@@ -225,9 +225,9 @@ def LLM_API_KEY(
         description='API key (defaults to provider env var)',
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
-    
+        hideIf={"provider": "ollama"},
         placeholder='sk-...',
-)
+    )
 
 
 def LLM_BASE_URL(
@@ -245,9 +245,11 @@ def LLM_BASE_URL(
         label_key=label_key,
         placeholder=placeholder,
         required=False,
+        format="url",
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
         description='Custom API base URL (for Ollama or proxies)',
+        showIf={"provider": "ollama"},
     )
 
 

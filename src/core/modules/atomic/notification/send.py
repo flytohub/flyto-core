@@ -137,7 +137,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             'description_key': 'modules.notify.send.params.url.description',
             'required': True,
             'placeholder': 'https://api.telegram.org/bot<TOKEN>/sendMessage',
-            'secret': True
+            'format': 'url'
         },
         'message': {
             'type': 'string',
@@ -146,7 +146,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             'description': 'Notification message content',
             'description_key': 'modules.notify.send.params.message.description',
             'required': True,
-            'multiline': True,
+            'format': 'multiline',
             'placeholder': 'Hello from Flyto!'
         },
         'title': {
@@ -165,8 +165,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             'description': 'Telegram chat ID (required for Telegram)',
             'description_key': 'modules.notify.send.params.chat_id.description',
             'required': False,
-            'placeholder': '123456789',
-            'show_if': {'url': {'contains': 'telegram'}}
+            'placeholder': '123456789'
         }
     },
     output_schema={

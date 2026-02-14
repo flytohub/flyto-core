@@ -72,6 +72,7 @@ def REQUEST_BODY(
         format="multiline",
         ui={"widget": "json_editor"},
         group=FieldGroup.OPTIONS,
+        showIf={"method": {"$in": ["POST", "PUT", "PATCH"]}},
     )
 
 
@@ -100,6 +101,7 @@ def CONTENT_TYPE(
         description='Content type of the request body',
         ui={'allowCustomValue': True},
         group=FieldGroup.OPTIONS,
+        showIf={"method": {"$in": ["POST", "PUT", "PATCH"]}},
     )
 
 

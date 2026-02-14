@@ -24,6 +24,7 @@ def WEBHOOK_URL(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        format="url",
         description='Target webhook URL',
         group=FieldGroup.BASIC,
     )
@@ -45,6 +46,7 @@ def WEBHOOK_PAYLOAD(
         required=required,
         description='JSON payload to send',
         group=FieldGroup.OPTIONS,
+        showIf={"method": {"$in": ["POST", "PUT", "PATCH"]}},
     )
 
 
@@ -63,11 +65,11 @@ def WEBHOOK_AUTH_TOKEN(
         label_key=label_key,
         required=required,
         secret=True,
+        format="password",
         description='Bearer token for authorization',
         group=FieldGroup.CONNECTION,
-    
         placeholder='Bearer your-token',
-)
+    )
 
 def EMAIL_TO(
     *,
@@ -85,6 +87,7 @@ def EMAIL_TO(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        format="email",
         description='Recipient email address(es), comma-separated for multiple',
         group=FieldGroup.BASIC,
     )
@@ -167,11 +170,11 @@ def EMAIL_FROM(
         label=label,
         label_key=label_key,
         required=required,
+        format="email",
         description='Sender email (uses SMTP_FROM_EMAIL env if not provided)',
         group=FieldGroup.OPTIONS,
-    
         placeholder='sender@example.com',
-)
+    )
 
 
 def EMAIL_CC(
@@ -291,11 +294,11 @@ def SMTP_USER(
         label=label,
         label_key=label_key,
         required=required,
+        format="email",
         description='SMTP username (uses SMTP_USER env if not provided)',
         group=FieldGroup.CONNECTION,
-    
         placeholder='user@example.com',
-)
+    )
 
 
 def SMTP_PASSWORD(
@@ -313,11 +316,11 @@ def SMTP_PASSWORD(
         label_key=label_key,
         required=required,
         secret=True,
+        format="password",
         description='SMTP password (uses SMTP_PASSWORD env if not provided)',
         group=FieldGroup.CONNECTION,
-    
         placeholder='********',
-)
+    )
 
 
 def USE_TLS(
@@ -417,11 +420,11 @@ def IMAP_PASSWORD(
         label_key=label_key,
         required=required,
         secret=True,
+        format="password",
         description='IMAP password',
         group=FieldGroup.CONNECTION,
-    
         placeholder='********',
-)
+    )
 
 
 def EMAIL_FOLDER(
@@ -586,6 +589,7 @@ def SLACK_WEBHOOK_URL(
         placeholder=placeholder,
         required=required,
         secret=True,
+        format="password",
         description='Slack incoming webhook URL',
         group=FieldGroup.CONNECTION,
     )
@@ -710,7 +714,7 @@ def NOTIFY_URL(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
-        secret=True,
+        format="url",
         description='Webhook URL for Telegram, Discord, Slack, LINE, or custom',
         group=FieldGroup.BASIC,
     )

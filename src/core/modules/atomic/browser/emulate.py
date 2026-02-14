@@ -202,6 +202,7 @@ DEVICE_PRESETS = {
             required=False,
             min=320,
             max=3840,
+            showIf={"device": "custom"},
         ),
         field(
             'height',
@@ -212,6 +213,7 @@ DEVICE_PRESETS = {
             required=False,
             min=240,
             max=2160,
+            showIf={"device": "custom"},
         ),
         field(
             'user_agent',
@@ -221,6 +223,7 @@ DEVICE_PRESETS = {
             description='Custom user agent string',
             required=False,
             placeholder='Mozilla/5.0...',
+            showIf={"device": "custom"},
         ),
         field(
             'is_mobile',
@@ -230,6 +233,7 @@ DEVICE_PRESETS = {
             description='Enable mobile browser behavior',
             required=False,
             default=None,
+            showIf={"device": "custom"},
         ),
         field(
             'has_touch',
@@ -239,6 +243,7 @@ DEVICE_PRESETS = {
             description='Enable touch event support',
             required=False,
             default=None,
+            showIf={"device": "custom"},
         ),
         field(
             'device_scale_factor',
@@ -249,6 +254,7 @@ DEVICE_PRESETS = {
             required=False,
             min=1,
             max=3,
+            showIf={"device": "custom"},
         ),
     ),
     output_schema={

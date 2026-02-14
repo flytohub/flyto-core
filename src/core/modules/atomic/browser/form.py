@@ -85,6 +85,7 @@ from ...schema import compose, field
             description='CSS selector for submit button',
             placeholder='button[type="submit"], input[type="submit"]',
             required=False,
+            showIf={"submit": True},
         ),
         field(
             'delay_between_fields_ms',
