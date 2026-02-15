@@ -65,7 +65,7 @@ def create_app(
     # Auth — auto-generate token + write to file
     token = init_auth(port)
     if token:
-        logger.info("API token: %s", token)
+        logger.info("API token written to ~/.flyto/.api-token-%s", port)
 
     state = ServerState(evidence_path=evidence_path or Path("./evidence"))
     app.state.server = state
