@@ -6,16 +6,17 @@ POST /v1/workflow/{id}/replay/{step_id}  — Replay from step
 
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from ..models import ReplayRequest, ReplayResponse
+from ..security import require_auth
 
 router = APIRouter(tags=["replay"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("/workflow/{execution_id}/replay/{step_id}", response_model=ReplayResponse)
+@router.post("/workflow/{execution_id}/replay/{step_id}", response_model=ReplayResponse, dependencies=[Depends(require_auth)])
 async def replay_from_step(
     execution_id: str,
     step_id: str,

@@ -56,14 +56,20 @@ def SWITCH_CASES(
     required: bool = True,
     label: str = "Cases",
     label_key: str = "schema.field.switch_cases",
+    default: list = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Switch case definitions."""
+    if default is None:
+        default = [
+            {"id": "case_1", "value": "case1", "label": "Case 1"},
+        ]
     return field(
         key,
         type="array",
         label=label,
         label_key=label_key,
         required=required,
+        default=default,
         description='List of case definitions',
         group=FieldGroup.BASIC,
     )

@@ -11,11 +11,12 @@ import logging
 import time
 import uuid
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from ..models import RunWorkflowRequest, WorkflowRunResponse, StepEvidenceResponse
 from ..evidence_hooks import APIEvidenceHooks
+from ..security import require_auth, module_filter
 
 router = APIRouter(tags=["workflows"])
 logger = logging.getLogger(__name__)
@@ -25,9 +26,23 @@ logger = logging.getLogger(__name__)
 # POST /v1/workflow/run
 # ---------------------------------------------------------------------------
 
-@router.post("/workflow/run", response_model=WorkflowRunResponse)
+@router.post("/workflow/run", response_model=WorkflowRunResponse, dependencies=[Depends(require_auth)])
 async def run_workflow(body: RunWorkflowRequest, request: Request):
     """Run a multi-step workflow with optional evidence collection and tracing."""
+    # Module filter check — validate all steps before execution
+    blocked = [
+        s.get("module", s.get("module_id", ""))
+        for s in (body.workflow.get("steps") or [])
+        if not module_filter.is_allowed(s.get("module", s.get("module_id", "")))
+    ]
+    if blocked:
+        return WorkflowRunResponse(
+            ok=False,
+            execution_id="",
+            status="blocked",
+            error=f"Modules blocked by security policy: {blocked}",
+        )
+
     state = request.app.state.server
     execution_id = f"exec_{uuid.uuid4().hex[:12]}"
     t0 = time.time()

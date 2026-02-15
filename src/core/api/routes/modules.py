@@ -10,10 +10,11 @@ import time
 import uuid
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from ..models import ExecuteModuleRequest, ExecuteModuleResponse
+from ..security import require_auth, module_filter
 
 router = APIRouter(tags=["modules"])
 
@@ -87,9 +88,15 @@ async def get_module_info(module_id: str):
 # POST /v1/execute
 # ---------------------------------------------------------------------------
 
-@router.post("/execute", response_model=ExecuteModuleResponse)
+@router.post("/execute", response_model=ExecuteModuleResponse, dependencies=[Depends(require_auth)])
 async def execute_module(body: ExecuteModuleRequest, request: Request):
     """Execute a single module."""
+    # Module filter check
+    if not module_filter.is_allowed(body.module_id):
+        return ExecuteModuleResponse(
+            ok=False, error=f"Module blocked by security policy: {body.module_id}"
+        )
+
     state = request.app.state.server
     t0 = time.time()
 

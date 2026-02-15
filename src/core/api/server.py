@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .state import ServerState
 from .routes import modules_router, workflows_router, replay_router
+from .security import get_cors_origins, init_auth
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,10 @@ def _get_version() -> str:
 SERVER_VERSION = _get_version()
 
 
-def create_app(evidence_path: Optional[Path] = None) -> FastAPI:
+def create_app(
+    evidence_path: Optional[Path] = None,
+    port: int = 8333,
+) -> FastAPI:
     """Create and configure the FastAPI application."""
     app = FastAPI(
         title="flyto-core Execution API",
@@ -48,12 +52,20 @@ def create_app(evidence_path: Optional[Path] = None) -> FastAPI:
                     "300+ atomic modules, workflow execution, evidence collection, and replay.",
     )
 
+    # CORS — configurable via FLYTO_CORS_ORIGINS env var
+    cors_origins = get_cors_origins()
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    logger.info("CORS origins: %s", cors_origins)
+
+    # Auth — auto-generate token + write to file
+    token = init_auth(port)
+    if token:
+        logger.info("API token: %s", token)
 
     state = ServerState(evidence_path=evidence_path or Path("./evidence"))
     app.state.server = state
@@ -113,5 +125,5 @@ def main(host: str = "127.0.0.1", port: int = 8333):
     )
     logger.info("Starting flyto-core Execution API v%s on %s:%d", SERVER_VERSION, host, port)
 
-    app = create_app()
+    app = create_app(port=port)
     uvicorn.run(app, host=host, port=port)

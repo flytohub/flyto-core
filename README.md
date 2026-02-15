@@ -6,48 +6,91 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> Deterministic execution engine for AI agents. 300+ atomic modules, evidence snapshots, execution trace, replay from any step.
+> Deterministic execution engine for AI agents. 329 modules across 63 categories, MCP-native, evidence snapshots, execution trace, replay from any step.
 
-## Quick Start
+## Quick Start — Use with Your AI (MCP)
+
+```bash
+pip install flyto-core
+```
+
+Add to your MCP client config:
+
+<details open>
+<summary><b>Claude Code</b></summary>
+
+Run:
+```bash
+claude mcp add flyto-core -- python -m core.mcp_server
+```
+
+Or add to `~/.claude/settings.json`:
+```json
+{
+  "mcpServers": {
+    "flyto-core": {
+      "command": "python",
+      "args": ["-m", "core.mcp_server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+Add to `.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "flyto-core": {
+      "command": "python",
+      "args": ["-m", "core.mcp_server"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf</b></summary>
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+```json
+{
+  "mcpServers": {
+    "flyto-core": {
+      "command": "python",
+      "args": ["-m", "core.mcp_server"]
+    }
+  }
+}
+```
+
+</details>
+
+**Done.** Your AI now has 329 tools — browser automation, file I/O, data parsing, APIs, notifications, and more.
+
+```
+Claude ──┐
+Cursor ──┤                    ┌─ browser.launch, .click, .extract (38 tools)
+Windsurf ┼── MCP Protocol ──→ ├─ file.read, .write, .copy (8 tools)
+Any AI ──┘                    ├─ data.csv.read, .json.parse, .text.template
+                              └─ ... 329 modules across 63 categories
+```
+
+See the **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
+
+## Quick Start — HTTP API
 
 ```bash
 pip install flyto-core[api]
-python -m core.quickstart
-```
-
-That's it. In 30 seconds you'll see:
-
-1. A 5-step workflow execute with full trace
-2. Evidence snapshots (context_before/after) for every step
-3. Replay from step 3 — without re-running steps 1-2
-
-## Why Flyto Core?
-
-AI agents are running multi-step tasks — browsing, calling APIs, moving data. But after they finish, all you have is a chat log.
-
-Flyto Core gives you:
-
-- **Execution Trace** — structured record of every step: input, output, timing, status
-- **Evidence Snapshots** — full context_before and context_after at every step boundary
-- **Replay** — re-execute from any step with the original (or modified) context
-- **300+ Atomic Modules** — composable building blocks for any workflow
-
-## HTTP Execution API
-
-```bash
 flyto serve
 # ✓ flyto-core running on 127.0.0.1:8333
 ```
-
-| Endpoint | Purpose |
-|----------|---------|
-| `POST /v1/workflow/run` | Execute workflow with evidence + trace |
-| `GET /v1/workflow/{id}/evidence` | Get step-by-step state snapshots |
-| `POST /v1/workflow/{id}/replay/{step}` | Replay from any step |
-| `POST /v1/execute` | Execute a single module |
-| `GET /v1/modules` | Discover all 300+ modules |
-
-### Run a workflow
 
 ```bash
 curl -X POST localhost:8333/v1/workflow/run \
@@ -65,14 +108,53 @@ curl -X POST localhost:8333/v1/workflow/run \
   }'
 ```
 
-### Replay from a failed step
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /v1/workflow/run` | Execute workflow with evidence + trace |
+| `GET /v1/workflow/{id}/evidence` | Get step-by-step state snapshots |
+| `POST /v1/workflow/{id}/replay/{step}` | Replay from any step |
+| `POST /v1/execute` | Execute a single module |
+| `GET /v1/modules` | Discover all modules |
+
+## Quick Start — Interactive Demo
 
 ```bash
-# Step 3 failed? Replay from there.
-curl -X POST localhost:8333/v1/workflow/{execution_id}/replay/step3
+pip install flyto-core[api]
+python -m core.quickstart
 ```
 
-The engine loads the context snapshot at step 3 and re-executes from that point. No wasted computation.
+Runs a 5-step data pipeline (file → JSON parse → template → format → export), shows the execution trace, evidence snapshots, and replays from step 3 — all in 30 seconds.
+
+## Why Flyto Core?
+
+AI agents are running multi-step tasks — browsing, calling APIs, moving data. But after they finish, all you have is a chat log.
+
+Flyto Core gives you:
+
+- **329 Modules** — composable building blocks across 63 categories ([full catalog](docs/TOOL_CATALOG.md))
+- **Execution Trace** — structured record of every step: input, output, timing, status
+- **Evidence Snapshots** — full context_before and context_after at every step boundary
+- **Replay** — re-execute from any step with the original (or modified) context
+
+## Module Categories
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| `browser.*` | 38 | launch, goto, click, extract, screenshot, fill forms, wait |
+| `flow.*` | 19 | switch, loop, foreach, branch, parallel, retry |
+| `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
+| `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
+| `api.*` | 11 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
+| `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
+| `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
+| `validate.*` | 7 | email, url, json, phone, credit card |
+| `math.*` | 6 | calculate, round, ceil, floor, power, abs |
+| `image.*` | 5 | resize, convert, crop, watermark, compress |
+| `data.*` | 4 | json.parse, json.stringify, text.template, pipeline |
+| `pdf.*` | 4 | parse, extract text, merge, compress |
+
+**329 modules** across 63 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
 
 ## YAML Workflows
 
@@ -112,49 +194,19 @@ async def main():
 asyncio.run(main())
 ```
 
-## Module Categories
+## Replay from a Failed Step
 
-| Category | Modules | Examples |
-|----------|---------|----------|
-| `string.*` | 11 | reverse, uppercase, split, replace, trim |
-| `array.*` | 12 | filter, sort, map, reduce, unique, chunk |
-| `object.*` | 5 | keys, values, merge, pick, omit |
-| `file.*` | 3 | read, write, copy |
-| `browser.*` | 38 | launch, goto, click, extract, scroll, screenshot |
-| `flow.*` | 18 | switch, loop, foreach, branch, parallel |
-| `http.*` | 1 | request |
-| `ai.*` | 7 | model, memory, memory_vector, local_ollama |
-| `document.*` | 8 | pdf_parse, excel_read, word_parse |
-| `data.*` | 9 | json_parse, csv_read, text_template |
-
-**300+ atomic modules** across 40+ categories, plus 28 third-party integrations.
-
-## MCP Integration
-
-Every module is automatically available as an [MCP](https://modelcontextprotocol.io/) tool. Any MCP-compatible AI can discover, inspect, and execute all 300+ modules.
-
-```
-Claude ──┐
-GPT    ──┤                    ┌─ browser.launch
-Cursor ──┼── MCP Protocol ──→ ├─ string.reverse
-Any AI ──┘                    ├─ file.read
-                              └─ ... 300+ modules
+```bash
+# Step 3 failed? Replay from there.
+curl -X POST localhost:8333/v1/workflow/{execution_id}/replay/step3
 ```
 
-Add to your MCP client config:
-```json
-{
-  "flyto-core": {
-    "command": "python",
-    "args": ["-m", "core.mcp_server"]
-  }
-}
-```
+The engine loads the context snapshot at step 3 and re-executes from that point. No wasted computation.
 
 ## Installation
 
 ```bash
-# Core engine
+# Core engine (includes MCP server)
 pip install flyto-core
 
 # With HTTP API server
@@ -167,20 +219,6 @@ playwright install chromium
 # Everything
 pip install flyto-core[all]
 ```
-
-## Use Cases
-
-### Auditable Agent Execution
-Run multi-step agent workflows with full evidence trail — every step's state captured, replayable, on disk.
-
-### Web Automation
-Automate browsers with the `browser.*` module family (38 modules: launch, goto, click, extract, screenshot, etc.)
-
-### API Orchestration
-Chain API calls with built-in retry and error handling.
-
-### Internal Tooling
-Build custom `crm.*`, `billing.*`, `internal.*` modules versioned in Git.
 
 ## For Module Authors
 
@@ -218,8 +256,9 @@ See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete gu
 flyto-core/
 ├── src/core/
 │   ├── api/              # HTTP Execution API (FastAPI)
+│   ├── mcp_server.py     # MCP server (Claude, Cursor, etc.)
 │   ├── modules/
-│   │   ├── atomic/       # 300+ atomic modules
+│   │   ├── atomic/       # 329 atomic modules
 │   │   ├── composite/    # High-level composite modules
 │   │   ├── patterns/     # Advanced resilience patterns
 │   │   └── third_party/  # External integrations
