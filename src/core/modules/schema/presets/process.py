@@ -46,6 +46,7 @@ def WORKING_DIR(
         placeholder=placeholder,
         required=False,
         format="path",
+        pathMode="directory",
         group=FieldGroup.OPTIONS,
     )
 

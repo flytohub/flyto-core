@@ -106,6 +106,7 @@ def DIRECTORY_PATH(
         placeholder=placeholder,
         required=required,
         format="path",
+        pathMode="directory",
         description='Path to the directory',
         group=FieldGroup.BASIC,
     )

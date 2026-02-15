@@ -317,8 +317,8 @@ def OUTPUT_DIRECTORY(
         default=default,
         description='Directory where output files will be saved',
         format="path",
+        pathMode="directory",
         group=FieldGroup.BASIC,
-    
         placeholder='/path/to/output',
 )
 
