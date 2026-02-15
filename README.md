@@ -198,7 +198,9 @@ asyncio.run(main())
 
 ```bash
 # Step 3 failed? Replay from there.
-curl -X POST localhost:8333/v1/workflow/{execution_id}/replay/step3
+curl -X POST localhost:8333/v1/workflow/{execution_id}/replay/step3 \
+  -H 'Content-Type: application/json' \
+  -d '{}'
 ```
 
 The engine loads the context snapshot at step 3 and re-executes from that point. No wasted computation.
