@@ -18,7 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .state import ServerState
-from .routes import modules_router, workflows_router, replay_router
+from .routes import modules_router, workflows_router, replay_router, mcp_router
 from .security import get_cors_origins, init_auth
 
 logger = logging.getLogger(__name__)
@@ -73,6 +73,7 @@ def create_app(
     app.include_router(modules_router, prefix="/v1")
     app.include_router(workflows_router, prefix="/v1")
     app.include_router(replay_router, prefix="/v1")
+    app.include_router(mcp_router, prefix="/mcp")
 
     # ------------------------------------------------------------------
     # Top-level endpoints
