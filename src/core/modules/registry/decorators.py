@@ -96,6 +96,34 @@ def _resolve_tier(
     return ModuleTier.STANDARD
 
 
+def _enrich_port_handle_metadata(port: dict, port_type: str, node_type: NodeType) -> dict:
+    """Auto-fill handle_id and position if not explicitly set."""
+    if 'handle_id' in port:
+        return port
+
+    enriched = dict(port)
+    pid = port['id']
+
+    if port_type == 'input':
+        enriched.setdefault('position', 'left')
+        if pid == 'input':
+            enriched['handle_id'] = 'in' if node_type == NodeType.LOOP else 'target'
+        else:
+            enriched['handle_id'] = 'target-%s' % pid
+    else:  # output
+        enriched.setdefault('position', 'right')
+        if pid in ('success', 'trigger', 'start', 'output'):
+            enriched['handle_id'] = 'output'
+        elif pid == 'iterate':
+            enriched['handle_id'] = 'body_out'
+        elif pid == 'done':
+            enriched['handle_id'] = 'done_out'
+        else:
+            enriched['handle_id'] = 'source-%s' % pid
+
+    return enriched
+
+
 def _validate_module_registration(
     module_id: str,
     category: str,
@@ -428,6 +456,14 @@ def register_module(
         default_ports = get_default_ports(node_type)
         resolved_input_ports = input_ports if input_ports is not None else default_ports.get("input", [])
         resolved_output_ports = output_ports if output_ports is not None else default_ports.get("output", [])
+
+        # Enrich ports with handle_id/position if not set (for custom ports)
+        resolved_input_ports = [
+            _enrich_port_handle_metadata(p, 'input', node_type) for p in resolved_input_ports
+        ]
+        resolved_output_ports = [
+            _enrich_port_handle_metadata(p, 'output', node_type) for p in resolved_output_ports
+        ]
 
         # Resolve connection rules from category defaults if not explicitly provided
         default_can_connect, default_can_receive = get_default_connection_rules(resolved_category)
