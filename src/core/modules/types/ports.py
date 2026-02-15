@@ -18,7 +18,7 @@ DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
              "handle_id": "target", "position": "left"}
         ],
         "output": [
-            {"id": "success", "label": "Success", "event": "success",
+            {"id": "success", "label": "Success", "event": "success", "color": "#10B981",
              "handle_id": "output", "position": "right"},
             {"id": "error", "label": "Error", "event": "error", "color": "#EF4444",
              "handle_id": "source-error", "position": "right"}
@@ -71,7 +71,7 @@ DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
              "handle_id": "target", "position": "left"}
         ],
         "output": [
-            {"id": "output", "label": "Output", "event": "success",
+            {"id": "output", "label": "Output", "event": "success", "color": "#10B981",
              "handle_id": "output", "position": "right"}
         ]
     },
@@ -88,7 +88,7 @@ DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
              "handle_id": "target", "position": "left"}
         ],
         "output": [
-            {"id": "output", "label": "Output", "event": "success",
+            {"id": "output", "label": "Output", "event": "success", "color": "#10B981",
              "handle_id": "output", "position": "right"},
             {"id": "timeout", "label": "Timeout", "event": "timeout", "color": "#F59E0B",
              "handle_id": "source-timeout", "position": "bottom"},
@@ -102,21 +102,21 @@ DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
              "handle_id": "target", "position": "left"}
         ],
         "output": [
-            {"id": "success", "label": "Success", "event": "success",
+            {"id": "success", "label": "Success", "event": "success", "color": "#10B981",
              "handle_id": "output", "position": "right"}
         ]
     },
     NodeType.TRIGGER: {
         "input": [],
         "output": [
-            {"id": "trigger", "label": "Trigger", "event": "trigger",
+            {"id": "trigger", "label": "Trigger", "event": "trigger", "color": "#10B981",
              "handle_id": "output", "position": "right"}
         ]
     },
     NodeType.START: {
         "input": [],
         "output": [
-            {"id": "start", "label": "Start", "event": "start",
+            {"id": "start", "label": "Start", "event": "start", "color": "#10B981",
              "handle_id": "output", "position": "right"}
         ]
     },
@@ -141,19 +141,31 @@ DEFAULT_PORTS_BY_NODE_TYPE: Dict[NodeType, Dict[str, List[Dict[str, Any]]]] = {
              "handle_id": "source-timeout", "position": "right"}
         ]
     },
+    NodeType.SUBFLOW: {
+        "input": [
+            {"id": "input", "label": "Input", "max_connections": 1, "required": True,
+             "handle_id": "target", "position": "left"}
+        ],
+        "output": [
+            {"id": "success", "label": "Success", "event": "success", "color": "#10B981",
+             "handle_id": "output", "position": "right"},
+            {"id": "error", "label": "Error", "event": "error", "color": "#EF4444",
+             "handle_id": "source-error", "position": "right"}
+        ]
+    },
     NodeType.AI_AGENT: {
         "input": [
             {"id": "input", "label": "Input", "max_connections": 1, "required": True,
              "handle_id": "target", "position": "left"},
             {"id": "model", "label": "Model", "edge_type": "resource", "data_type": "ai_model",
-             "handle_id": "target-model", "position": "bottom"},
+             "color": "#10B981", "handle_id": "target-model", "position": "bottom"},
             {"id": "memory", "label": "Memory", "edge_type": "resource", "data_type": "ai_memory",
-             "handle_id": "target-memory", "position": "bottom"},
+             "color": "#8B5CF6", "handle_id": "target-memory", "position": "bottom"},
             {"id": "tools", "label": "Tools", "edge_type": "resource", "data_type": "ai_tool",
-             "handle_id": "target-tools", "position": "bottom"},
+             "color": "#F59E0B", "handle_id": "target-tools", "position": "bottom"},
         ],
         "output": [
-            {"id": "success", "label": "Success", "event": "success",
+            {"id": "success", "label": "Success", "event": "success", "color": "#10B981",
              "handle_id": "output", "position": "right"},
             {"id": "error", "label": "Error", "event": "error", "color": "#EF4444",
              "handle_id": "source-error", "position": "right"}
