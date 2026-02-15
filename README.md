@@ -72,6 +72,31 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 </details>
 
+<details>
+<summary><b>Remote MCP Server (HTTP)</b></summary>
+
+Run the server:
+```bash
+pip install flyto-core[api]
+flyto serve
+# ✓ flyto-core running on 127.0.0.1:8333
+```
+
+Then point any MCP client to the HTTP endpoint:
+```json
+{
+  "mcpServers": {
+    "flyto-core": {
+      "url": "http://localhost:8333/mcp"
+    }
+  }
+}
+```
+
+Supports [MCP Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http) — works with Cursor, Windsurf, and any standard MCP client that connects over HTTP.
+
+</details>
+
 **Done.** Your AI now has 329 tools — browser automation, file I/O, data parsing, APIs, notifications, and more.
 
 ```
@@ -110,6 +135,7 @@ curl -X POST localhost:8333/v1/workflow/run \
 
 | Endpoint | Purpose |
 |----------|---------|
+| `POST /mcp` | MCP Streamable HTTP transport (remote MCP server) |
 | `POST /v1/workflow/run` | Execute workflow with evidence + trace |
 | `GET /v1/workflow/{id}/evidence` | Get step-by-step state snapshots |
 | `POST /v1/workflow/{id}/replay/{step}` | Replay from any step |
@@ -257,8 +283,9 @@ See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete gu
 ```
 flyto-core/
 ├── src/core/
-│   ├── api/              # HTTP Execution API (FastAPI)
-│   ├── mcp_server.py     # MCP server (Claude, Cursor, etc.)
+│   ├── api/              # HTTP Execution API + MCP HTTP transport (FastAPI)
+│   ├── mcp_handler.py    # Shared MCP logic (tools, dispatch)
+│   ├── mcp_server.py     # MCP STDIO transport (Claude Code, local)
 │   ├── modules/
 │   │   ├── atomic/       # 329 atomic modules
 │   │   ├── composite/    # High-level composite modules
