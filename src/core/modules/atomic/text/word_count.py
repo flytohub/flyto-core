@@ -24,7 +24,7 @@ from ...errors import ValidationError
     output_types=['object'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'flow.*', 'notification.*'],
+    can_connect_to=['data.*', 'flow.*', 'notify.*'],
 
     retryable=False,
     concurrent_safe=True,

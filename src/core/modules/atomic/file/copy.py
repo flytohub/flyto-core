@@ -30,7 +30,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['*'],
-    can_connect_to=['file.*', 'data.*', 'document.*', 'image.*', 'ai.*', 'notification.*', 'flow.*'],    # Execution settings
+    can_connect_to=['file.*', 'data.*', 'pdf.*', 'image.*', 'ai.*', 'notify.*', 'flow.*'],    # Execution settings
     timeout_ms=30000,
     retryable=True,
     max_retries=2,

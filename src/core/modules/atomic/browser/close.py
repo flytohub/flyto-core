@@ -25,8 +25,8 @@ from ...registry import register_module
     output_types=[],
 
     # Connection rules
-    can_receive_from=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
-    can_connect_to=['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
+    can_receive_from=['browser.*', 'element.*', 'flow.*'],
+    can_connect_to=['notify.*', 'data.*', 'file.*', 'flow.*', 'end'],
 
     # Execution settings
     timeout_ms=10000,

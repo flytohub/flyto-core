@@ -26,7 +26,7 @@ from ...errors import ValidationError
     output_types=['number'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
 
     timeout_ms=5000,
     retryable=False,

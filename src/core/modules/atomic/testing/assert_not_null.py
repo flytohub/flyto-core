@@ -28,7 +28,7 @@ from ...registry import register_module
 
 
     can_receive_from=['*'],
-    can_connect_to=['testing.*', 'test.*', 'flow.*', 'notification.*', 'data.*'],    params_schema={
+    can_connect_to=['testing.*', 'test.*', 'flow.*', 'notify.*', 'data.*'],    params_schema={
         'value': {
             'type': ['string', 'number', 'boolean', 'object', 'array', 'null'],
             'required': True,

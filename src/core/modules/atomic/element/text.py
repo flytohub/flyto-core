@@ -24,7 +24,7 @@ from ..element_registry import get_element_registry
     input_types=['element'],
     output_types=['text', 'string'],
     can_receive_from=['browser.find', 'element.*'],
-    can_connect_to=['data.*', 'string.*', 'notification.*'],
+    can_connect_to=['data.*', 'string.*', 'notify.*'],
 
     # Phase 2: Execution settings
     timeout_ms=5000,  # Text extraction should be quick

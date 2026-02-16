@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     input_types=['string', 'object'],
     output_types=['file_path', 'bytes'],
     can_connect_to=['file.*', 'image.*'],
-    can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['file.*', 'browser.*', 'http.*', 'flow.*', 'start'],
 
     # Execution settings
     timeout_ms=60000,

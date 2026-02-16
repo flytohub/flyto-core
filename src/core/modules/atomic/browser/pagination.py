@@ -32,7 +32,7 @@ from ...schema import compose, field
     output_types=['page', 'array'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*'],
 
     params_schema=compose(
         field(
@@ -283,9 +283,10 @@ class BrowserPaginationModule(BaseModule):
 
                 # Check for end indicator
                 if self.no_more_indicator:
-                    end_reached = await browser.evaluate(f'''
-                        document.querySelector("{self.no_more_indicator}") !== null
-                    ''')
+                    end_reached = await browser.evaluate(
+                        '(selector) => document.querySelector(selector) !== null',
+                        self.no_more_indicator
+                    )
                     if end_reached:
                         stopped_reason = 'no_more'
                         break
@@ -342,49 +343,48 @@ class BrowserPaginationModule(BaseModule):
                     'attribute': config.get('attribute')
                 })
 
-        script = f'''
-            (() => {{
-                const items = document.querySelectorAll("{self.item_selector}");
-                const fields = {field_configs};
+        script = '''
+            ([itemSelector, fields]) => {
+                const items = document.querySelectorAll(itemSelector);
                 const results = [];
 
-                items.forEach((item, idx) => {{
-                    const data = {{}};
-                    fields.forEach(field => {{
+                items.forEach((item, idx) => {
+                    const data = {};
+                    fields.forEach(field => {
                         const el = item.querySelector(field.selector);
-                        if (el) {{
-                            if (field.attribute) {{
+                        if (el) {
+                            if (field.attribute) {
                                 data[field.name] = el.getAttribute(field.attribute);
-                            }} else {{
+                            } else {
                                 data[field.name] = el.textContent.trim();
-                            }}
-                        }} else {{
+                            }
+                        } else {
                             data[field.name] = null;
-                        }}
-                    }});
+                        }
+                    });
                     data.__index = idx;
                     results.push(data);
-                }});
+                });
 
                 return results;
-            }})()
+            }
         '''
 
-        return await browser.evaluate(script)
+        return await browser.evaluate(script, [self.item_selector, field_configs])
 
     async def _extract_raw(self, browser) -> List[Dict[str, Any]]:
         """Extract raw text content from items."""
-        script = f'''
-            (() => {{
-                const items = document.querySelectorAll("{self.item_selector}");
-                return Array.from(items).map((item, idx) => ({{
+        script = '''
+            (itemSelector) => {
+                const items = document.querySelectorAll(itemSelector);
+                return Array.from(items).map((item, idx) => ({
                     __index: idx,
                     text: item.textContent.trim(),
                     html: item.innerHTML
-                }}));
-            }})()
+                }));
+            }
         '''
-        return await browser.evaluate(script)
+        return await browser.evaluate(script, self.item_selector)
 
     async def _navigate_next(self, browser) -> bool:
         """Navigate to next page based on mode."""
@@ -408,16 +408,16 @@ class BrowserPaginationModule(BaseModule):
                 continue
             try:
                 # Check if button exists and is not disabled
-                can_click = await browser.evaluate(f'''
-                    (() => {{
-                        const el = document.querySelector("{selector}");
+                can_click = await browser.evaluate('''
+                    (selector) => {
+                        const el = document.querySelector(selector);
                         if (!el) return false;
                         if (el.disabled) return false;
                         if (el.classList.contains('disabled')) return false;
                         if (el.getAttribute('aria-disabled') === 'true') return false;
                         return true;
-                    }})()
-                ''')
+                    }
+                ''', selector)
                 if can_click:
                     await browser.click(selector)
                     return True
@@ -432,7 +432,7 @@ class BrowserPaginationModule(BaseModule):
         before_height = await browser.evaluate('document.body.scrollHeight')
 
         # Scroll down
-        await browser.evaluate(f'window.scrollBy(0, {self.scroll_amount})')
+        await browser.evaluate('(amount) => window.scrollBy(0, amount)', self.scroll_amount)
 
         # Wait a bit for content to load
         import asyncio
@@ -448,12 +448,12 @@ class BrowserPaginationModule(BaseModule):
         selector = self.load_more_selector or 'button.load-more, .load-more-btn, [data-action="load-more"]'
 
         try:
-            exists = await browser.evaluate(f'''
-                (() => {{
-                    const el = document.querySelector("{selector}");
+            exists = await browser.evaluate('''
+                (selector) => {
+                    const el = document.querySelector(selector);
                     return el && !el.disabled && el.offsetParent !== null;
-                }})()
-            ''')
+                }
+            ''', selector)
             if exists:
                 await browser.click(selector)
                 return True

@@ -11,7 +11,7 @@ from ...registry import register_module
 @register_module(
     module_id='cloud.azure.upload',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'file.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
     subcategory='storage',
@@ -209,7 +209,7 @@ class AzureUploadModule(BaseModule):
 @register_module(
     module_id='cloud.azure.download',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'file.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'file.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='cloud',
     subcategory='storage',

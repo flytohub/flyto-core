@@ -23,8 +23,8 @@ from ....schema import compose, presets
     # Connection types
     input_types=['json', 'object'],
     output_types=['json', 'array'],
-    can_receive_from=['data.*', 'api.*'],
-    can_connect_to=['data.*', 'notification.*'],
+    can_receive_from=['data.*', 'http.*'],
+    can_connect_to=['data.*', 'notify.*'],
 
     # Phase 2: Execution settings
     timeout_ms=30000,  # Insert operations should be faster than queries

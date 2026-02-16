@@ -25,7 +25,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    # Schema-driven params
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    # Schema-driven params
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='input[name="email"]'),
         presets.TEXT(key='text', required=True, label='Text Content', placeholder='Text to type'),

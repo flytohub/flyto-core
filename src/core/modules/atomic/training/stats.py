@@ -27,7 +27,7 @@ from core.training.daily_practice import DailyPracticeEngine
 
 
     can_receive_from=['data.*', 'file.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'file.*', 'notification.*', 'flow.*'],    # No params needed for stats
+    can_connect_to=['data.*', 'file.*', 'notify.*', 'flow.*'],    # No params needed for stats
     params_schema={},
     output_schema={
         'total_sessions': {'type': 'number', 'description': 'The total sessions',

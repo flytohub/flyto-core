@@ -27,7 +27,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.BROWSER_ACTION(options=['get', 'set', 'clear', 'delete']),
         presets.COOKIE_NAME(),
         presets.COOKIE_VALUE(),

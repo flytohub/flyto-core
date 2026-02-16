@@ -31,7 +31,7 @@ from ...schema import compose, field, presets
     output_types=['page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
 
     params_schema=compose(
         field(
@@ -330,9 +330,10 @@ class BrowserLoginModule(BaseModule):
             return custom_selector
 
         for selector in fallback_selectors:
-            exists = await browser.evaluate(f'''
-                document.querySelector("{selector}") !== null
-            ''')
+            exists = await browser.evaluate(
+                '(selector) => document.querySelector(selector) !== null',
+                selector
+            )
             if exists:
                 return selector
 
@@ -352,14 +353,17 @@ class BrowserLoginModule(BaseModule):
             if not selector:
                 continue
             try:
-                exists = await browser.evaluate(f'''
-                    document.querySelector("{selector}") !== null
-                ''')
+                exists = await browser.evaluate(
+                    '(selector) => document.querySelector(selector) !== null',
+                    selector
+                )
                 if exists:
-                    await browser.evaluate(f'''
-                        const cb = document.querySelector("{selector}");
-                        if (cb && !cb.checked) cb.click();
-                    ''')
+                    await browser.evaluate('''
+                        (selector) => {
+                            const cb = document.querySelector(selector);
+                            if (cb && !cb.checked) cb.click();
+                        }
+                    ''', selector)
                     return
             except Exception:
                 continue
@@ -383,9 +387,10 @@ class BrowserLoginModule(BaseModule):
 
             # Check for success indicator
             if self.success_selector:
-                success = await browser.evaluate(f'''
-                    document.querySelector("{self.success_selector}") !== null
-                ''')
+                success = await browser.evaluate(
+                    '(selector) => document.querySelector(selector) !== null',
+                    self.success_selector
+                )
                 if success:
                     return {
                         'success': True,
@@ -396,12 +401,12 @@ class BrowserLoginModule(BaseModule):
 
             # Check for error indicator
             if self.error_selector:
-                error_el = await browser.evaluate(f'''
-                    (() => {{
-                        const el = document.querySelector("{self.error_selector}");
+                error_el = await browser.evaluate('''
+                    (selector) => {
+                        const el = document.querySelector(selector);
                         return el ? el.textContent.trim() : null;
-                    }})()
-                ''')
+                    }
+                ''', self.error_selector)
                 if error_el:
                     return {
                         'success': False,
@@ -412,9 +417,10 @@ class BrowserLoginModule(BaseModule):
 
             # Check for 2FA
             for tfa_selector in self.TWO_FA_INDICATORS:
-                tfa_present = await browser.evaluate(f'''
-                    document.querySelector("{tfa_selector}") !== null
-                ''')
+                tfa_present = await browser.evaluate(
+                    '(selector) => document.querySelector(selector) !== null',
+                    tfa_selector
+                )
                 if tfa_present:
                     return {
                         'success': False,

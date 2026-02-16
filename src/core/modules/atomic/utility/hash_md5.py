@@ -31,7 +31,7 @@ import uuid
 
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     retryable=False,  # Hash operations are deterministic
     concurrent_safe=True,  # Multiple hash operations can run in parallel
 

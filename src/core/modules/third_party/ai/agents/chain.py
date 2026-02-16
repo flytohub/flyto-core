@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 @register_module(
     module_id='agent.chain',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='ai',
     subcategory='agent',

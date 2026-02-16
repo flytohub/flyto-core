@@ -29,7 +29,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='a.download-link'),
         presets.DOWNLOAD_SAVE_PATH(),
         presets.TIMEOUT_MS(default=60000),

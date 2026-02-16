@@ -35,7 +35,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
     input_types=['audio', 'file'],
     output_types=['text'],
     can_connect_to=['string.*', 'file.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'audio.*', 'api.*', 'flow.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*'],
 
     timeout=ModuleDefaults.AUDIO_TIMEOUT,
     retryable=ModuleDefaults.RETRYABLE,

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @register_module(
     module_id='api.google_sheets.read',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     tags=['productivity', 'google', 'sheets', 'spreadsheet', 'read', 'data', 'path_restricted', 'ssrf_protected'],

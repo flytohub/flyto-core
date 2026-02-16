@@ -22,7 +22,7 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     # Browser - STRICT: Must stay in browser context
     'browser': {
         'can_receive_from': ['browser.*', 'flow.*'],
-        'can_connect_to': ['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+        'can_connect_to': ['browser.*', 'element.*', 'flow.*'],
     },
 
     # Element - Requires browser context
@@ -33,136 +33,136 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
 
     # Page - Requires browser context
     'page': {
-        'can_receive_from': ['browser.*', 'page.*', 'element.*', 'flow.*'],
-        'can_connect_to': ['page.*', 'browser.*', 'element.*', 'data.*', 'flow.*'],
+        'can_receive_from': ['browser.*', 'element.*', 'flow.*'],
+        'can_connect_to': ['browser.*', 'element.*', 'data.*', 'flow.*'],
     },
 
     # Screenshot - From browser, outputs image
     'screenshot': {
-        'can_receive_from': ['browser.*', 'page.*', 'element.*', 'flow.*'],
-        'can_connect_to': ['file.*', 'image.*', 'ai.*', 'data.*', 'flow.*', 'notification.*'],
+        'can_receive_from': ['browser.*', 'element.*', 'flow.*'],
+        'can_connect_to': ['file.*', 'image.*', 'ai.*', 'data.*', 'flow.*', 'notify.*'],
     },
 
     # Flow control - Can output anywhere, input from data producers
     'flow': {
-        'can_receive_from': ['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
+        'can_receive_from': ['data.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*', 'start'],
         'can_connect_to': ['*'],
     },
 
     # Data - Universal input, no browser output
     'data': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Array - Same as data
     'array': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Object - Same as data
     'object': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # String - Same as data
     'string': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Math - Same as data
     'math': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'math.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
     },
 
     # DateTime - Same as data
     'datetime': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'string.*', 'file.*', 'database.*', 'api.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'string.*', 'file.*', 'database.*', 'http.*', 'notify.*', 'flow.*'],
     },
 
     # File - Wide input, structured output
     'file': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['file.*', 'data.*', 'document.*', 'image.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['file.*', 'data.*', 'pdf.*', 'image.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Image - From specific sources
     'image': {
-        'can_receive_from': ['screenshot.*', 'file.*', 'image.*', 'browser.*', 'api.*', 'flow.*', 'start'],
-        'can_connect_to': ['image.*', 'file.*', 'ai.*', 'data.*', 'notification.*', 'flow.*'],
+        'can_receive_from': ['file.*', 'image.*', 'browser.*', 'http.*', 'flow.*', 'start'],
+        'can_connect_to': ['image.*', 'file.*', 'ai.*', 'data.*', 'notify.*', 'flow.*'],
     },
 
     # Database - Structured data
     'database': {
-        'can_receive_from': ['data.*', 'array.*', 'object.*', 'file.*', 'api.*', 'http.*', 'flow.*', 'start'],
-        'can_connect_to': ['database.*', 'data.*', 'array.*', 'object.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+        'can_receive_from': ['data.*', 'array.*', 'object.*', 'file.*', 'http.*', 'flow.*', 'start'],
+        'can_connect_to': ['database.*', 'data.*', 'array.*', 'object.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
     },
 
     # API/HTTP - No browser output
     'api': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'http.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     'http': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'api.*', 'http.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # AI - No browser output
     'ai': {
-        'can_receive_from': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'image.*', 'screenshot.*', 'api.*', 'http.*', 'database.*', 'ai.*', 'flow.*', 'start'],
-        'can_connect_to': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'database.*', 'api.*', 'notification.*', 'flow.*', 'ai.*'],
+        'can_receive_from': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'image.*', 'http.*', 'database.*', 'ai.*', 'flow.*', 'start'],
+        'can_connect_to': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'database.*', 'http.*', 'notify.*', 'flow.*', 'ai.*'],
     },
 
     'llm': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
     },
 
     # Analysis - Can receive from browser, no browser output
     'analysis': {
-        'can_receive_from': ['browser.*', 'element.*', 'page.*', 'file.*', 'data.*', 'api.*', 'flow.*', 'start'],
-        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_receive_from': ['browser.*', 'element.*', 'file.*', 'data.*', 'http.*', 'flow.*', 'start'],
+        'can_connect_to': ['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Document - File-based
     'document': {
-        'can_receive_from': ['file.*', 'browser.*', 'api.*', 'document.*', 'flow.*', 'start'],
-        'can_connect_to': ['document.*', 'data.*', 'string.*', 'file.*', 'ai.*', 'notification.*', 'flow.*'],
+        'can_receive_from': ['file.*', 'browser.*', 'http.*', 'pdf.*', 'flow.*', 'start'],
+        'can_connect_to': ['pdf.*', 'data.*', 'string.*', 'file.*', 'ai.*', 'notify.*', 'flow.*'],
     },
 
     # Notification - End point
     'notification': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['notification.*', 'data.*', 'flow.*', 'end'],
+        'can_connect_to': ['notify.*', 'data.*', 'flow.*', 'end'],
     },
 
     'communication': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['notification.*', 'communication.*', 'data.*', 'flow.*', 'end'],
+        'can_connect_to': ['notify.*', 'email.*', 'data.*', 'flow.*', 'end'],
     },
 
     # Testing
     'test': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['test.*', 'flow.*', 'notification.*', 'data.*'],
+        'can_connect_to': ['test.*', 'flow.*', 'notify.*', 'data.*'],
     },
 
     'testing': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['testing.*', 'test.*', 'flow.*', 'notification.*', 'data.*'],
+        'can_connect_to': ['testing.*', 'test.*', 'flow.*', 'notify.*', 'data.*'],
     },
 
     # Utility
     'utility': {
         'can_receive_from': ['*'],
-        'can_connect_to': ['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],
+        'can_connect_to': ['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*', 'utility.*'],
     },
 
     # Meta - Universal (logging, debug)
@@ -173,8 +173,8 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
 
     # HuggingFace - AI models
     'huggingface': {
-        'can_receive_from': ['data.*', 'string.*', 'file.*', 'image.*', 'api.*', 'huggingface.*', 'flow.*', 'start'],
-        'can_connect_to': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'huggingface.*', 'notification.*', 'flow.*'],
+        'can_receive_from': ['data.*', 'string.*', 'file.*', 'image.*', 'http.*', 'huggingface.*', 'flow.*', 'start'],
+        'can_connect_to': ['data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'huggingface.*', 'notify.*', 'flow.*'],
     },
 
     # Vector/Embedding
@@ -186,7 +186,7 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
     # Training
     'training': {
         'can_receive_from': ['data.*', 'file.*', 'flow.*', 'start'],
-        'can_connect_to': ['data.*', 'file.*', 'notification.*', 'flow.*'],
+        'can_connect_to': ['data.*', 'file.*', 'notify.*', 'flow.*'],
     },
 
     # Shell/Process
@@ -202,7 +202,7 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
 
     'port': {
         'can_receive_from': ['process.*', 'flow.*', 'start'],
-        'can_connect_to': ['browser.*', 'http.*', 'api.*', 'flow.*', 'test.*'],
+        'can_connect_to': ['browser.*', 'http.*', 'flow.*', 'test.*'],
     },
 
     # UI
@@ -213,7 +213,7 @@ CATEGORY_RULES: Dict[str, Dict[str, List[str]]] = {
 
     # Vision
     'vision': {
-        'can_receive_from': ['screenshot.*', 'image.*', 'file.*', 'flow.*'],
+        'can_receive_from': ['image.*', 'file.*', 'flow.*'],
         'can_connect_to': ['data.*', 'test.*', 'file.*', 'flow.*', 'ui.*'],
     },
 }
@@ -235,12 +235,12 @@ SPECIAL_MODULES: Dict[str, Dict[str, List[str]]] = {
 
     # browser.close - End of browser chain
     'browser.close': {
-        'can_receive_from': ['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
-        'can_connect_to': ['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
+        'can_receive_from': ['browser.*', 'element.*', 'flow.*'],
+        'can_connect_to': ['notify.*', 'data.*', 'file.*', 'flow.*', 'end'],
     },
     'core.browser.close': {
-        'can_receive_from': ['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
-        'can_connect_to': ['notification.*', 'data.*', 'file.*', 'flow.*', 'end'],
+        'can_receive_from': ['browser.*', 'element.*', 'flow.*'],
+        'can_connect_to': ['notify.*', 'data.*', 'file.*', 'flow.*', 'end'],
     },
 
     # flow.start - Beginning of workflow

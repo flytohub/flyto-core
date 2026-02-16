@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 @register_module(
     module_id='payment.stripe.create_payment',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='payment',
@@ -200,7 +200,7 @@ class StripeCreatePaymentModule(BaseModule):
 @register_module(
     module_id='payment.stripe.get_customer',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='payment',
@@ -320,7 +320,7 @@ class StripeGetCustomerModule(BaseModule):
 @register_module(
     module_id='payment.stripe.list_charges',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
     version='1.0.0',
     category='productivity',
     subcategory='payment',

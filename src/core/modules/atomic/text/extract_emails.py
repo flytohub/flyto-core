@@ -30,7 +30,7 @@ EMAIL_PATTERN = re.compile(
     output_types=['array'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'flow.*', 'communication.*'],
+    can_connect_to=['data.*', 'array.*', 'flow.*', 'email.*'],
 
     retryable=False,
     concurrent_safe=True,

@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'json', 'any'],
     output_types=['api_response'],
-    can_receive_from=['data.*', 'api.*', 'string.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'flow.*', 'notification.*', 'end'],
+    can_receive_from=['data.*', 'http.*', 'string.*', 'flow.*', 'start'],
+    can_connect_to=['data.*', 'flow.*', 'notify.*', 'end'],
 
     # Phase 2: Execution settings
     timeout_ms=30000,  # API calls should complete within 30s

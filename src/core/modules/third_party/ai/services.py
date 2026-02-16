@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
-    can_connect_to=['data.*', 'notification.*', 'file.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*'],
+    can_connect_to=['data.*', 'notify.*', 'file.*'],
 
     # Phase 2: Execution settings
     timeout_ms=60000,  # AI responses can take up to 60s
@@ -241,8 +241,8 @@ async def anthropic_chat(context):
     # Connection types
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
-    can_connect_to=['data.*', 'notification.*', 'file.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*'],
+    can_connect_to=['data.*', 'notify.*', 'file.*'],
 
     # Phase 2: Execution settings
     timeout_ms=60000,  # AI responses can take up to 60s

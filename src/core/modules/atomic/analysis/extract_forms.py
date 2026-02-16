@@ -23,8 +23,8 @@ from core.analysis.html_analyzer import HTMLAnalyzer
     input_types=['html', 'string'],
     output_types=['array'],
 
-    can_receive_from=['browser.*', 'element.*', 'page.*', 'file.*', 'data.*', 'api.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notification.*', 'flow.*'],
+    can_receive_from=['browser.*', 'element.*', 'file.*', 'data.*', 'http.*', 'flow.*', 'start'],
+    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'ai.*', 'notify.*', 'flow.*'],
     params_schema=compose(
         presets.HTML_CONTENT(),
     ),

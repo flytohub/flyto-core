@@ -27,7 +27,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.BROWSER_ACTION(options=['get', 'set', 'remove', 'clear', 'keys', 'length']),
         presets.STORAGE_TYPE(),
         presets.STORAGE_KEY(),
@@ -102,7 +102,10 @@ class BrowserStorageModule(BaseModule):
         storage_name = 'localStorage' if self.storage_type == 'local' else 'sessionStorage'
 
         if self.action == 'get':
-            value = await page.evaluate(f'{storage_name}.getItem("{self.key}")')
+            value = await page.evaluate(
+                '([storageName, key]) => window[storageName].getItem(key)',
+                [storage_name, self.key]
+            )
             return {
                 "status": "success",
                 "key": self.key,
@@ -110,9 +113,10 @@ class BrowserStorageModule(BaseModule):
             }
 
         elif self.action == 'set':
-            # Escape value for JavaScript string
-            escaped_value = self.value.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
-            await page.evaluate(f'{storage_name}.setItem("{self.key}", "{escaped_value}")')
+            await page.evaluate(
+                '([storageName, key, value]) => window[storageName].setItem(key, value)',
+                [storage_name, self.key, str(self.value)]
+            )
             return {
                 "status": "success",
                 "key": self.key,
@@ -120,7 +124,10 @@ class BrowserStorageModule(BaseModule):
             }
 
         elif self.action == 'remove':
-            await page.evaluate(f'{storage_name}.removeItem("{self.key}")')
+            await page.evaluate(
+                '([storageName, key]) => window[storageName].removeItem(key)',
+                [storage_name, self.key]
+            )
             return {
                 "status": "success",
                 "key": self.key,
@@ -128,22 +135,26 @@ class BrowserStorageModule(BaseModule):
             }
 
         elif self.action == 'clear':
-            await page.evaluate(f'{storage_name}.clear()')
+            await page.evaluate(
+                '(storageName) => window[storageName].clear()',
+                storage_name
+            )
             return {
                 "status": "success",
                 "cleared": True
             }
 
         elif self.action == 'keys':
-            keys = await page.evaluate(f'''
-                () => {{
+            keys = await page.evaluate('''
+                (storageName) => {
+                    const storage = window[storageName];
                     const keys = [];
-                    for (let i = 0; i < {storage_name}.length; i++) {{
-                        keys.push({storage_name}.key(i));
-                    }}
+                    for (let i = 0; i < storage.length; i++) {
+                        keys.push(storage.key(i));
+                    }
                     return keys;
-                }}
-            ''')
+                }
+            ''', storage_name)
             return {
                 "status": "success",
                 "keys": keys,
@@ -151,7 +162,10 @@ class BrowserStorageModule(BaseModule):
             }
 
         elif self.action == 'length':
-            length = await page.evaluate(f'{storage_name}.length')
+            length = await page.evaluate(
+                '(storageName) => window[storageName].length',
+                storage_name
+            )
             return {
                 "status": "success",
                 "length": length

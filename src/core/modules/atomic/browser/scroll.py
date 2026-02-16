@@ -27,7 +27,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='#element-id'),
         presets.SCROLL_DIRECTION(),
         presets.SCROLL_AMOUNT(),
@@ -87,16 +87,16 @@ class BrowserScrollModule(BaseModule):
             # Scroll to element
             await page.locator(self.selector).scroll_into_view_if_needed()
             # Get element position
-            position = await page.evaluate(f'''
-                () => {{
-                    const el = document.querySelector("{self.selector}");
-                    if (el) {{
+            position = await page.evaluate('''
+                (selector) => {
+                    const el = document.querySelector(selector);
+                    if (el) {
                         const rect = el.getBoundingClientRect();
-                        return {{ x: rect.left + window.scrollX, y: rect.top + window.scrollY }};
-                    }}
-                    return {{ x: 0, y: 0 }};
-                }}
-            ''')
+                        return { x: rect.left + window.scrollX, y: rect.top + window.scrollY };
+                    }
+                    return { x: 0, y: 0 };
+                }
+            ''', self.selector)
             return {
                 "status": "success",
                 "scrolled_to": position,
@@ -118,15 +118,15 @@ class BrowserScrollModule(BaseModule):
 
             behavior = 'smooth' if self.behavior == 'smooth' else 'auto'
 
-            await page.evaluate(f'''
-                () => {{
-                    window.scrollBy({{
-                        left: {scroll_x},
-                        top: {scroll_y},
-                        behavior: '{behavior}'
-                    }});
-                }}
-            ''')
+            await page.evaluate('''
+                ([scrollX, scrollY, behavior]) => {
+                    window.scrollBy({
+                        left: scrollX,
+                        top: scrollY,
+                        behavior: behavior
+                    });
+                }
+            ''', [scroll_x, scroll_y, behavior])
 
             # Get current scroll position
             position = await page.evaluate('''

@@ -28,7 +28,7 @@ from ...schema import compose, field as schema_field
     output_types=['object', 'file'],
 
     can_receive_from=['*'],
-    can_connect_to=['notification.*', 'flow.*', 'file.*'],
+    can_connect_to=['notify.*', 'flow.*', 'file.*'],
 
     timeout_ms=120000,
     retryable=True,

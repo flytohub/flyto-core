@@ -27,7 +27,7 @@ from ....schema import compose, presets
     color='#3B82F6',
     input_types=[],
     output_types=['json', 'text', 'api_response'],
-    can_connect_to=['data.*', 'notification.*', 'file.*', 'flow.*'],
+    can_connect_to=['data.*', 'notify.*', 'file.*', 'flow.*'],
     can_receive_from=['start', 'flow.*'],
 
     # Schema-driven params
@@ -117,7 +117,7 @@ class HTTPGetModule(BaseModule):
     input_types=['json', 'text', 'any'],
     output_types=['json', 'text', 'api_response'],
     can_receive_from=['data.*'],
-    can_connect_to=['data.*', 'notification.*', 'file.*'],
+    can_connect_to=['data.*', 'notify.*', 'file.*'],
 
     # Schema-driven params
     params_schema=compose(

@@ -31,7 +31,7 @@ import uuid
 
 
     can_receive_from=['start', 'flow.*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     retryable=False,  # Delay operations are deterministic
     concurrent_safe=True,  # Multiple delays can run in parallel
 

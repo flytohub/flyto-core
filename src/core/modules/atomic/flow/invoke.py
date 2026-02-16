@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
     input_types=['control', 'any'],
     output_types=['control', 'any'],
 
-    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
+    can_receive_from=['data.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
     can_connect_to=['*'],
     node_type=NodeType.SUBFLOW,
 

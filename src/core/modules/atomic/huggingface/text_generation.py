@@ -34,7 +34,7 @@ _executor = HuggingFaceTaskExecutor(TaskType.TEXT_GENERATION)
     input_types=['text'],
     output_types=['text'],
     can_connect_to=['string.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*'],
 
     timeout=ModuleDefaults.TIMEOUT,
     retryable=ModuleDefaults.RETRYABLE,

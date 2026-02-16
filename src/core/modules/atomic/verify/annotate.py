@@ -147,7 +147,7 @@ def _get_font(size: int):
     output_types=['image', 'file'],
 
     can_receive_from=['verify.*', 'vision.*', 'browser.*'],
-    can_connect_to=['verify.*', 'file.*', 'notification.*'],
+    can_connect_to=['verify.*', 'file.*', 'notify.*'],
 
     timeout_ms=15000,
     retryable=False,

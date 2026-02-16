@@ -10,24 +10,24 @@ from pathlib import Path
 # Category-based can_receive_from rules
 CATEGORY_RULES = {
     'data': "['*']",
-    'database': "['data.*', 'api.*', 'http.*', 'flow.*', 'start']",
+    'database': "['data.*', 'http.*', 'flow.*', 'start']",
     'communication': "['*']",
     'email': "['*']",
     'slack': "['*']",
     'webhook': "['*']",
-    'document': "['file.*', 'data.*', 'api.*', 'flow.*', 'start']",
-    'excel': "['file.*', 'data.*', 'api.*', 'flow.*', 'start']",
-    'pdf': "['file.*', 'data.*', 'api.*', 'flow.*', 'start']",
-    'word': "['file.*', 'data.*', 'api.*', 'flow.*', 'start']",
+    'document': "['file.*', 'data.*', 'http.*', 'flow.*', 'start']",
+    'excel': "['file.*', 'data.*', 'http.*', 'flow.*', 'start']",
+    'pdf': "['file.*', 'data.*', 'http.*', 'flow.*', 'start']",
+    'word': "['file.*', 'data.*', 'http.*', 'flow.*', 'start']",
     'http': "['*']",
-    'image': "['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start']",
-    'llm': "['data.*', 'string.*', 'file.*', 'api.*', 'flow.*', 'start']",
-    'huggingface': "['data.*', 'string.*', 'file.*', 'image.*', 'api.*', 'flow.*', 'start']",
+    'image': "['file.*', 'browser.*', 'http.*', 'flow.*', 'start']",
+    'llm': "['data.*', 'string.*', 'file.*', 'http.*', 'flow.*', 'start']",
+    'huggingface': "['data.*', 'string.*', 'file.*', 'image.*', 'http.*', 'flow.*', 'start']",
     'process': "['flow.*', 'start']",
     'port': "['process.*', 'flow.*', 'start']",
     'shell': "['data.*', 'string.*', 'file.*', 'flow.*', 'start']",
     'ui': "['browser.*', 'element.*', 'flow.*']",
-    'vision': "['image.*', 'file.*', 'screenshot.*', 'api.*', 'flow.*', 'start']",
+    'vision': "['image.*', 'file.*', 'http.*', 'flow.*', 'start']",
 }
 
 def get_category(content: str) -> str:

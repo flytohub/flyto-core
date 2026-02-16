@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
     input_types=['object'],
     output_types=['object'],
     can_connect_to=['data.*'],
-    can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
 
     timeout_ms=60000,
     retryable=True,

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
     input_types=['object', 'text'],
     output_types=['object'],
-    can_connect_to=['notification.*', 'api.*'],
+    can_connect_to=['notify.*', 'http.*'],
     can_receive_from=['*'],
 
     timeout_ms=30000,

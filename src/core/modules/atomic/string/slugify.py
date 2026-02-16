@@ -28,7 +28,7 @@ from ...errors import ValidationError
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['string.*', 'data.*', 'flow.*', 'api.*'],
+    can_connect_to=['string.*', 'data.*', 'flow.*', 'http.*'],
 
     retryable=False,
     concurrent_safe=True,

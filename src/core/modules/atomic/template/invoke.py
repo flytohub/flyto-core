@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
     icon='Package',
     color='#8B5CF6',
 
+    input_types=['control', 'any'],
+    output_types=['control', 'any'],
     can_receive_from=['*'],
     can_connect_to=['*'],
     node_type=NodeType.SUBFLOW,

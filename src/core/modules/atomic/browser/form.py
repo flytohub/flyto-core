@@ -33,7 +33,7 @@ from ...schema import compose, field
     output_types=['page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
 
     params_schema=compose(
         field(
@@ -189,14 +189,16 @@ class BrowserFormModule(BaseModule):
 
                 # Clear field if requested
                 if self.clear_before_fill:
-                    await browser.evaluate(f'''
-                        const el = document.querySelector("{selector}");
-                        if (el) {{
-                            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {{
-                                el.value = '';
-                            }}
-                        }}
-                    ''')
+                    await browser.evaluate('''
+                        (selector) => {
+                            const el = document.querySelector(selector);
+                            if (el) {
+                                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                                    el.value = '';
+                                }
+                            }
+                        }
+                    ''', selector)
 
                 # Fill the field based on type
                 await self._fill_field(browser, selector, value)
@@ -263,19 +265,19 @@ class BrowserFormModule(BaseModule):
     async def _fill_field(self, browser, selector: str, value: Any) -> None:
         """Fill a field based on its type."""
         # Get element info to determine type
-        element_info = await browser.evaluate(f'''
-            (() => {{
-                const el = document.querySelector("{selector}");
+        element_info = await browser.evaluate('''
+            (selector) => {
+                const el = document.querySelector(selector);
                 if (!el) return null;
-                return {{
+                return {
                     tagName: el.tagName,
                     type: el.type || '',
                     isSelect: el.tagName === 'SELECT',
                     isCheckbox: el.type === 'checkbox',
                     isRadio: el.type === 'radio'
-                }};
-            }})()
-        ''')
+                };
+            }
+        ''', selector)
 
         if not element_info:
             # Try to find by name attribute
@@ -284,26 +286,33 @@ class BrowserFormModule(BaseModule):
 
         if element_info.get('isSelect'):
             # Handle select dropdown
-            await browser.evaluate(f'''
-                document.querySelector("{selector}").value = "{value}";
-                document.querySelector("{selector}").dispatchEvent(new Event('change', {{ bubbles: true }}));
-            ''')
+            await browser.evaluate('''
+                ([selector, value]) => {
+                    document.querySelector(selector).value = value;
+                    document.querySelector(selector).dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            ''', [selector, str(value)])
         elif element_info.get('isCheckbox'):
             # Handle checkbox
             should_check = bool(value)
-            await browser.evaluate(f'''
-                const cb = document.querySelector("{selector}");
-                if (cb.checked !== {str(should_check).lower()}) {{
-                    cb.click();
-                }}
-            ''')
+            await browser.evaluate('''
+                ([selector, shouldCheck]) => {
+                    const cb = document.querySelector(selector);
+                    if (cb.checked !== shouldCheck) {
+                        cb.click();
+                    }
+                }
+            ''', [selector, should_check])
         elif element_info.get('isRadio'):
             # Handle radio button
-            await browser.evaluate(f'''
-                const radio = document.querySelector("{selector}[value='{value}']") ||
-                             document.querySelector("{selector}");
-                if (radio) radio.click();
-            ''')
+            await browser.evaluate('''
+                ([selector, value]) => {
+                    const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\\\"');
+                    const radio = document.querySelector(selector + '[value="' + escaped + '"]') ||
+                                 document.querySelector(selector);
+                    if (radio) radio.click();
+                }
+            ''', [selector, str(value)])
         else:
             # Regular text input
             await browser.type(selector, str(value))

@@ -30,7 +30,7 @@ import time
 
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
+    can_connect_to=['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*', 'utility.*'],    # Phase 2: Execution settings
     timeout_ms=5000,
     retryable=False,
     concurrent_safe=True,

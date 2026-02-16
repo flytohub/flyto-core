@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'object'],
     output_types=['object'],
-    can_connect_to=['notification.*'],
+    can_connect_to=['notify.*'],
     can_receive_from=['*'],
 
     # Execution settings

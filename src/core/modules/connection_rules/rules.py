@@ -26,8 +26,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
         can_connect_to=[
             "browser.*",    # Chain browser actions
             "element.*",    # Element operations
-            "page.*",       # Page operations
-            "screenshot.*", # Screenshots
             "flow.*",       # Flow control
         ],
         can_receive_from=[
@@ -60,50 +58,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
     ),
 
     # =========================================================================
-    # Page Operations - STRICT: Requires browser context
-    # =========================================================================
-    "page": ConnectionRule(
-        category="page",
-        can_connect_to=[
-            "page.*",
-            "browser.*",
-            "element.*",
-            "data.*",
-            "flow.*",
-            "file.*",
-        ],
-        can_receive_from=[
-            "browser.*",
-            "page.*",
-            "element.*",
-            "flow.*",
-        ],
-        description="Page modules require browser context"
-    ),
-
-    # =========================================================================
-    # Screenshot - Requires browser context
-    # =========================================================================
-    "screenshot": ConnectionRule(
-        category="screenshot",
-        can_connect_to=[
-            "file.*",       # Save screenshot
-            "image.*",      # Image processing
-            "ai.*",         # AI analysis of screenshot
-            "data.*",       # Data operations
-            "flow.*",       # Flow control
-            "notification.*",  # Send screenshot
-        ],
-        can_receive_from=[
-            "browser.*",
-            "page.*",
-            "element.*",
-            "flow.*",
-        ],
-        description="Screenshot requires browser context, outputs image"
-    ),
-
-    # =========================================================================
     # Flow Control - RESTRICTED: Different rules for different flow modules
     # Category default is restrictive; specific modules override in their definition
     # =========================================================================
@@ -113,7 +67,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
         can_receive_from=[
             # Flow control should receive from data-producing modules
             "data.*",
-            "api.*",
             "http.*",
             "string.*",
             "array.*",
@@ -142,10 +95,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "math.*",
             "file.*",
             "database.*",
-            "api.*",
             "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
             # NO browser.* - data can't control browser
         ],
@@ -162,9 +114,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
+            "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -180,9 +132,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
+            "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -198,9 +150,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
+            "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -217,8 +169,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "math.*",
             "file.*",
             "database.*",
-            "api.*",
-            "notification.*",
+            "http.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -232,8 +184,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
-            "notification.*",
+            "http.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -248,10 +200,10 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
         can_connect_to=[
             "file.*",       # Chain file operations
             "data.*",       # Process file content
-            "document.*",   # Document processing
+            "pdf.*",        # PDF processing
             "image.*",      # Image processing
             "ai.*",         # AI analysis
-            "notification.*",  # Send file
+            "notify.*",     # Send file
             "flow.*",       # Flow control
         ],
         can_receive_from=["*"],  # Any module can trigger file ops
@@ -268,15 +220,14 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "file.*",
             "ai.*",
             "data.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=[
-            "screenshot.*",
             "file.*",
             "image.*",
             "browser.*",  # Download image
-            "api.*",
+            "http.*",
             "flow.*",
             "start",
         ],
@@ -294,8 +245,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "array.*",      # Array operations
             "object.*",     # Object operations
             "file.*",       # Export to file
-            "api.*",        # Send to API
-            "notification.*",  # Notify
+            "http.*",       # Send to API
+            "notify.*",     # Notify
             "flow.*",       # Flow control
         ],
         can_receive_from=[
@@ -303,7 +254,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "array.*",
             "object.*",
             "file.*",
-            "api.*",
             "http.*",
             "flow.*",
             "start",
@@ -323,10 +273,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
             "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
             # NO browser.* - API responses don't control browser
         ],
@@ -343,10 +292,9 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "database.*",
-            "api.*",
             "http.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -365,8 +313,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "object.*",
             "file.*",
             "database.*",
-            "api.*",
-            "notification.*",
+            "http.*",
+            "notify.*",
             "flow.*",
             "ai.*",
             # NO browser.* - AI cannot control browser
@@ -378,8 +326,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "object.*",
             "file.*",
             "image.*",
-            "screenshot.*",
-            "api.*",
             "http.*",
             "database.*",
             "ai.*",
@@ -396,8 +342,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "data.*",
             "string.*",
             "file.*",
-            "api.*",
-            "notification.*",
+            "http.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=["*"],
@@ -417,17 +363,16 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "file.*",
             "database.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
             # NO browser.* - analysis results don't control browser
         ],
         can_receive_from=[
             "browser.*",    # Analyze page
             "element.*",    # Analyze element
-            "page.*",       # Analyze page
             "file.*",       # Analyze file
             "data.*",       # Analyze data
-            "api.*",        # Analyze response
+            "http.*",       # Analyze response
             "flow.*",
             "start",
         ],
@@ -440,19 +385,19 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
     "document": ConnectionRule(
         category="document",
         can_connect_to=[
-            "document.*",
+            "pdf.*",
             "data.*",
             "string.*",
             "file.*",
             "ai.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=[
             "file.*",
             "browser.*",    # Download from browser
-            "api.*",        # Receive from API
-            "document.*",
+            "http.*",       # Receive from API
+            "pdf.*",
             "flow.*",
             "start",
         ],
@@ -465,7 +410,7 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
     "notification": ConnectionRule(
         category="notification",
         can_connect_to=[
-            "notification.*",  # Chain notifications
+            "notify.*",       # Chain notifications
             "data.*",          # Log response
             "flow.*",          # Continue after
             "end",             # End workflow
@@ -477,8 +422,10 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
     "communication": ConnectionRule(
         category="communication",
         can_connect_to=[
-            "notification.*",
-            "communication.*",
+            "notify.*",
+            "email.*",
+            "slack.*",
+            "webhook.*",
             "data.*",
             "flow.*",
             "end",
@@ -495,7 +442,7 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
         can_connect_to=[
             "test.*",
             "flow.*",
-            "notification.*",
+            "notify.*",
             "data.*",
         ],
         can_receive_from=["*"],
@@ -508,7 +455,7 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "testing.*",
             "test.*",
             "flow.*",
-            "notification.*",
+            "notify.*",
             "data.*",
         ],
         can_receive_from=["*"],
@@ -524,8 +471,8 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "data.*",
             "string.*",
             "file.*",
-            "api.*",
-            "notification.*",
+            "http.*",
+            "notify.*",
             "flow.*",
             "utility.*",
         ],
@@ -553,7 +500,7 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "file.*",
             "ai.*",
             "huggingface.*",
-            "notification.*",
+            "notify.*",
             "flow.*",
         ],
         can_receive_from=[
@@ -561,36 +508,12 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
             "string.*",
             "file.*",
             "image.*",
-            "api.*",
+            "http.*",
             "huggingface.*",
             "flow.*",
             "start",
         ],
         description="HuggingFace AI models - no browser interaction"
-    ),
-
-    # =========================================================================
-    # Vector / Embedding - AI-related
-    # =========================================================================
-    "vector": ConnectionRule(
-        category="vector",
-        can_connect_to=[
-            "data.*",
-            "array.*",
-            "ai.*",
-            "database.*",
-            "file.*",
-            "flow.*",
-        ],
-        can_receive_from=[
-            "data.*",
-            "string.*",
-            "file.*",
-            "ai.*",
-            "huggingface.*",
-            "flow.*",
-        ],
-        description="Vector/embedding operations"
     ),
 
     # =========================================================================
@@ -647,7 +570,6 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
         can_connect_to=[
             "browser.*",  # Port ready, launch browser
             "http.*",
-            "api.*",
             "flow.*",
             "test.*",
         ],

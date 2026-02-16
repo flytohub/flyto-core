@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'json'],
     output_types=['text', 'json'],
-    can_connect_to=['data.*', 'notification.*', 'file.*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'api.*', 'flow.*'],
+    can_connect_to=['data.*', 'notify.*', 'file.*'],
+    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*'],
 
     # Phase 2: Execution settings
     timeout_ms=120000,  # Local LLM can take time depending on hardware

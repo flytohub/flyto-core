@@ -27,7 +27,7 @@ DECIMAL_UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['string.*', 'data.*', 'flow.*', 'notification.*'],
+    can_connect_to=['string.*', 'data.*', 'flow.*', 'notify.*'],
 
     retryable=False,
     concurrent_safe=True,

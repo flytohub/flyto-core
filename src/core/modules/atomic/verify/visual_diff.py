@@ -285,7 +285,7 @@ def _score_color(score) -> str:
     output_types=['object', 'image', 'file'],
 
     can_receive_from=['verify.*', 'browser.*', 'vision.*'],
-    can_connect_to=['verify.*', 'file.*', 'notification.*'],
+    can_connect_to=['verify.*', 'file.*', 'notify.*'],
 
     timeout_ms=120000,
     retryable=True,

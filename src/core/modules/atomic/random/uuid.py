@@ -26,7 +26,7 @@ from ...schema.constants import FieldGroup
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
 
     retryable=False,
     concurrent_safe=True,

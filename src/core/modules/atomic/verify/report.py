@@ -29,7 +29,7 @@ from ...schema import compose, field as schema_field
     output_types=['string', 'file'],
 
     can_receive_from=['verify.compare', 'verify.*'],
-    can_connect_to=['file.*', 'notification.*', 'flow.*'],
+    can_connect_to=['file.*', 'notify.*', 'flow.*'],
 
     timeout_ms=10000,
     retryable=False,

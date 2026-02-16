@@ -28,7 +28,7 @@ from core.training.daily_practice import DailyPracticeEngine
 
 
     can_receive_from=['data.*', 'file.*', 'flow.*', 'start'],
-    can_connect_to=['data.*', 'file.*', 'notification.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['data.*', 'file.*', 'notify.*', 'flow.*'],    params_schema=compose(
         presets.PRACTICE_URL(),
         presets.PRACTICE_MAX_ITEMS(),
     ),

@@ -29,7 +29,7 @@ UUID_REGEX = re.compile(
     output_types=['object'],
 
     can_receive_from=['*'],
-    can_connect_to=['flow.*', 'data.*', 'notification.*'],
+    can_connect_to=['flow.*', 'data.*', 'notify.*'],
 
     retryable=False,
     concurrent_safe=True,

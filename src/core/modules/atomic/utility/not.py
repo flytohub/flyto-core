@@ -26,7 +26,7 @@ from ...registry import register_module
     output_types=['boolean'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'string.*', 'file.*', 'api.*', 'notification.*', 'flow.*', 'utility.*'],
+    can_connect_to=['data.*', 'string.*', 'file.*', 'http.*', 'notify.*', 'flow.*', 'utility.*'],
     params_schema={},
     output_schema={
         "type": "object",

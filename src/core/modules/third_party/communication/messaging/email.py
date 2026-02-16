@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['text', 'json', 'any'],
     output_types=['api_response'],
-    can_receive_from=['data.*', 'api.*', 'string.*', 'utility.*', 'flow.*', 'notification.*'],
+    can_receive_from=['data.*', 'http.*', 'string.*', 'utility.*', 'flow.*', 'notify.*'],
     can_connect_to=['*'],  # Notifications can connect to any module
 
     # Phase 2: Execution settings

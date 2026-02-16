@@ -30,7 +30,7 @@ from ...types import NodeType, EdgeType, DataType
     input_types=['control', 'any'],
     output_types=['control', 'any'],
 
-    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
+    can_receive_from=['data.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.SUBFLOW,
 

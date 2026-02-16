@@ -35,7 +35,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
     input_types=['text', 'object'],
     output_types=['array', 'object'],
     can_connect_to=['data.*', 'array.*'],
-    can_receive_from=['data.*', 'api.*', 'http.*', 'flow.*', 'start'],
+    can_receive_from=['data.*', 'http.*', 'flow.*', 'start'],
 
     # Execution settings
     timeout_ms=120000,

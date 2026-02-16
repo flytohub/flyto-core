@@ -57,7 +57,7 @@ def get_format_from_extension(path: str) -> Optional[str]:
     input_types=['file_path', 'binary'],
     output_types=['file_path', 'binary'],
     can_connect_to=['image.*', 'file.*'],
-    can_receive_from=['file.*', 'browser.*', 'screenshot.*', 'api.*', 'flow.*', 'start'],
+    can_receive_from=['file.*', 'browser.*', 'http.*', 'flow.*', 'start'],
 
     # Execution settings
     timeout_ms=120000,

@@ -34,6 +34,8 @@ LOOP_CONFIG = {
     'icon': 'Repeat',
     'color': '#8B5CF6',
     'node_type': NodeType.LOOP,
+    'input_types': ['control', 'any'],
+    'output_types': ['control'],
 
     # Connection rules
     'can_receive_from': ['*'],  # Flow control accepts any input (routing construct)
