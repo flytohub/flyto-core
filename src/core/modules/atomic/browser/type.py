@@ -83,9 +83,12 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Wait for element to be visible before interacting
+        await browser.wait(self.selector, state='visible', timeout_ms=10000)
+
         # Clear field first if requested
         if self.clear:
-            await browser.fill(self.selector, '')
+            await browser.page.fill(self.selector, '')
 
         await browser.type(self.selector, self.text, delay_ms=self.delay)
 

@@ -163,6 +163,10 @@ class BrowserClickModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Wait for element to be visible before clicking (unless force mode)
+        if not self.force:
+            await browser.wait(self.selector, state='visible', timeout_ms=10000)
+
         page = browser.page
 
         click_options = {

@@ -116,7 +116,7 @@ class BrowserDriver:
 
     async def goto(self,
                    url: str,
-                   wait_until: str = 'networkidle',
+                   wait_until: str = 'domcontentloaded',
                    timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS) -> Dict[str, Any]:
         """
         Navigate to URL
