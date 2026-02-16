@@ -25,7 +25,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    # Schema-driven params
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    # Schema-driven params
     params_schema=compose(
         presets.OUTPUT_PATH(default='screenshot.png', placeholder='screenshot.png'),
         presets.SCREENSHOT_OPTIONS(),
@@ -56,13 +56,28 @@ class BrowserScreenshotModule(BaseModule):
 
     def validate_params(self) -> None:
         self.path = self.params.get('path', 'screenshot.png')
+        self.full_page = self.params.get('full_page', False)
+        self.format = self.params.get('format', 'png')
+        self.quality = self.params.get('quality', None)
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        filepath = await browser.screenshot(self.path)
-        return {"status": "success", "filepath": filepath}
+        # Build screenshot kwargs
+        kwargs = {
+            'full_page': self.full_page,
+        }
+        if self.format and self.format != 'png':
+            kwargs['type'] = self.format
+        if self.quality is not None and self.format in ('jpeg', 'webp'):
+            kwargs['quality'] = self.quality
+
+        result = await browser.screenshot(self.path, **kwargs)
+        if isinstance(result, dict):
+            return {"status": "success", "filepath": result.get('path', self.path)}
+        else:
+            return {"status": "success", "filepath": result}
 
 

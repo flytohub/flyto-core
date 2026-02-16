@@ -29,7 +29,7 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
     params_schema=compose(
         field(
             'action',
@@ -146,7 +146,7 @@ class BrowserNetworkModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        page = browser.page
+        page = browser.real_page
         requests: List[Dict[str, Any]] = []
         blocked_count = 0
 

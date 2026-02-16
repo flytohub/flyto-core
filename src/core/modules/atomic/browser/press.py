@@ -28,7 +28,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.KEYBOARD_KEY(),
     ),
     output_schema={
@@ -69,5 +69,5 @@ class BrowserPressModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        await browser.page.keyboard.press(self.key)
+        await browser.real_page.keyboard.press(self.key)
         return {"status": "success", "key": self.key}

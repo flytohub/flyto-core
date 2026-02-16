@@ -30,7 +30,7 @@ from ...types import NodeType, EdgeType, DataType
     input_types=['control'],
     output_types=['control'],
 
-    can_receive_from=['data.*', 'api.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
+    can_receive_from=['*'],  # Flow control accepts any input (routing construct)
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.FORK,
 

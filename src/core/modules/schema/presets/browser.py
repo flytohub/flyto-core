@@ -96,8 +96,9 @@ def SCREENSHOT_OPTIONS(
     *,
     full_page_key: str = "full_page",
     format_key: str = "format",
+    quality_key: str = "quality",
 ) -> Dict[str, Dict[str, Any]]:
-    """Screenshot options (full page toggle, format select)."""
+    """Screenshot options (full page toggle, format select, quality)."""
     return compose(
         field(
             full_page_key,
@@ -121,6 +122,18 @@ def SCREENSHOT_OPTIONS(
             ],
             default="png",
             group=FieldGroup.OPTIONS,
+        ),
+        field(
+            quality_key,
+            type="number",
+            label="Image Quality",
+            label_key="schema.field.screenshot_quality",
+            description="Quality for JPEG/WebP format (0-100)",
+            required=False,
+            min=0,
+            max=100,
+            group=FieldGroup.OPTIONS,
+            showIf={format_key: {"$in": ["jpeg", "webp"]}},
         ),
     )
 

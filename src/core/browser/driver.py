@@ -370,14 +370,18 @@ class BrowserDriver:
 
     async def screenshot(self,
                         path: Optional[str] = None,
-                        full_page: bool = False) -> Dict[str, Any]:
+                        full_page: bool = False,
+                        type: Optional[str] = None,
+                        quality: Optional[int] = None) -> Dict[str, Any]:
         """
         Take screenshot
 
         Args:
-            path: File path to save screenshot (PNG format)
+            path: File path to save screenshot
                  If None, returns base64-encoded image
             full_page: Capture full scrollable page
+            type: Image format ('png', 'jpeg', or 'webp'). Defaults to 'png'.
+            quality: Image quality 0-100 (only for 'jpeg' and 'webp' formats)
 
         Returns:
             Screenshot result with path or base64 data
@@ -385,12 +389,18 @@ class BrowserDriver:
         self._ensure_page()
 
         try:
-            logger.info(f"Taking screenshot (full_page={full_page})")
+            logger.info(f"Taking screenshot (full_page={full_page}, type={type})")
 
-            screenshot_data = await self._page.screenshot(
-                path=path,
-                full_page=full_page
-            )
+            kwargs: Dict[str, Any] = {
+                'path': path,
+                'full_page': full_page,
+            }
+            if type:
+                kwargs['type'] = type
+            if quality is not None and type in ('jpeg', 'webp'):
+                kwargs['quality'] = quality
+
+            screenshot_data = await self.real_page.screenshot(**kwargs)
 
             result = {
                 'status': 'success',
@@ -443,7 +453,9 @@ class BrowserDriver:
             logger.info("Closing browser")
 
             if self._page:
-                await self._page.close()
+                # _page may be a Frame (set by browser.frame); only Page has close()
+                if hasattr(self._page, 'close'):
+                    await self._page.close()
                 self._page = None
 
             if self._context:
@@ -694,6 +706,15 @@ class BrowserDriver:
     def page(self) -> Page:
         """Get current page instance"""
         self._ensure_page()
+        return self._page
+
+    @property
+    def real_page(self):
+        """Get the actual Page object, even when inside a frame context.
+        Use this for Page-only APIs: screenshot, pdf, keyboard, mouse,
+        route, on/off events, expect_download, context."""
+        if self._page is not None and hasattr(self._page, 'page'):
+            return self._page.page  # Frame.page returns the owning Page
         return self._page
 
     @property

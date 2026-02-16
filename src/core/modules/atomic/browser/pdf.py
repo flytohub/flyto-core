@@ -28,7 +28,7 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.OUTPUT_PATH(placeholder='/path/to/output.pdf'),
         presets.PDF_PAGE_SIZE(default='A4'),
         presets.PDF_ORIENTATION(default='portrait'),
@@ -118,7 +118,7 @@ class BrowserPdfModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        page = browser.page
+        page = browser.real_page
 
         # Build PDF options
         pdf_options = {

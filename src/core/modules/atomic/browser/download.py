@@ -29,7 +29,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='a.download-link'),
         presets.DOWNLOAD_SAVE_PATH(),
         presets.TIMEOUT_MS(default=60000),
@@ -91,9 +91,11 @@ class BrowserDownloadModule(BaseModule):
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         page = browser.page
+        # expect_download is a Page-only API; use real_page
+        real_page = browser.real_page
 
         # Wait for download event
-        async with page.expect_download(timeout=self.timeout) as download_info:
+        async with real_page.expect_download(timeout=self.timeout) as download_info:
             if self.selector:
                 await page.click(self.selector)
             # If no selector, assume download is already being triggered

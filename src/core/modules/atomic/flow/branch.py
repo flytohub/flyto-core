@@ -30,22 +30,7 @@ from ...types import NodeType, EdgeType, DataType
     input_types=['control', 'any'],
     output_types=['control'],
 
-    can_receive_from=[
-        'data.*',       # Data modules output values
-        'api.*',        # API responses
-        'http.*',       # HTTP responses
-        'string.*',     # String comparisons
-        'array.*',      # Array operations
-        'object.*',     # Object operations
-        'element.*',    # Element checks
-        'ai.*',         # AI outputs
-        'llm.*',        # LLM outputs (chat, agent, etc.)
-        'database.*',   # Database results
-        'file.*',       # File operations
-        'math.*',       # Math comparisons
-        'flow.*',       # Chain from other flow control
-        'test.*',       # Test assertions
-    ],
+    can_receive_from=['*'],  # Flow control accepts any input (routing construct)
     can_connect_to=['*'],  # Branch outputs can go anywhere
 
     # Workflow Spec v1.1

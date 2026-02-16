@@ -162,7 +162,7 @@ DEVICE_PRESETS = {
     output_types=['page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
 
     params_schema=compose(
         field(

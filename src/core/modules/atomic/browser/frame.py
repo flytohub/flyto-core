@@ -2,6 +2,12 @@
 Browser Frame Module
 
 Switch to iframe or frame context.
+
+After entering a frame, all subsequent browser modules (click, type, extract,
+evaluate, etc.) automatically operate within the frame because browser._page
+is set to the Frame object (Playwright Frame shares the same API as Page).
+
+Use action="exit" to return to the main page context.
 """
 from typing import Any, Dict, Optional
 from ...base import BaseModule
@@ -11,7 +17,7 @@ from ...schema import compose, presets, field
 
 @register_module(
     module_id='browser.frame',
-    version='1.0.0',
+    version='1.1.0',
     category='browser',
     tags=['browser', 'frame', 'iframe', 'ssrf_protected'],
     label='Switch Frame',
@@ -27,7 +33,7 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
     params_schema=compose(
         presets.SELECTOR(required=False, placeholder='iframe#content'),
         field(
@@ -57,6 +63,7 @@ from ...schema import compose, presets, field
             default='enter',
             options=[
                 {'value': 'enter', 'label': 'Enter Frame (switch context)'},
+                {'value': 'exit', 'label': 'Exit Frame (return to main page)'},
                 {'value': 'list', 'label': 'List All Frames'},
             ],
         ),
@@ -80,6 +87,10 @@ from ...schema import compose, presets, field
         {
             'name': 'Switch to frame by name',
             'params': {'name': 'main-content'}
+        },
+        {
+            'name': 'Exit frame (back to main page)',
+            'params': {'action': 'exit'}
         },
         {
             'name': 'List all frames',
@@ -113,10 +124,29 @@ class BrowserFrameModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        page = browser.page
+        # Exit frame: restore original page context
+        if self.action == 'exit':
+            original_page = self.context.get('_original_page')
+            if original_page:
+                browser._page = original_page
+                self.context.pop('_original_page', None)
+                self.context.pop('current_frame', None)
+                return {
+                    "status": "success",
+                    "message": "Returned to main page context"
+                }
+            else:
+                return {
+                    "status": "success",
+                    "message": "Already in main page context"
+                }
+
+        # Use the original page for listing/finding frames (not a frame object)
+        original_page = self.context.get('_original_page')
+        page = original_page if original_page else browser.page
 
         if self.action == 'list':
-            # List all frames
+            # List all frames (always from the main page)
             frames = []
             for frame in page.frames:
                 frames.append({
@@ -157,7 +187,16 @@ class BrowserFrameModule(BaseModule):
         if not frame:
             raise RuntimeError(f"Frame not found")
 
-        # Store the frame in context for subsequent operations
+        # Save original page for restoration (only if not already inside a frame)
+        if not original_page:
+            self.context['_original_page'] = browser._page
+
+        # Set browser._page to the frame so all subsequent modules
+        # (click, type, extract, evaluate, etc.) operate within the frame.
+        # Playwright Frame has the same API as Page for these operations.
+        browser._page = frame
+
+        # Also keep in context for backward compatibility
         self.context['current_frame'] = frame
 
         return {

@@ -27,7 +27,7 @@ from ...schema import compose, presets, field
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(key='source', required=True, placeholder='#draggable', label='Source Selector'),
         presets.SELECTOR(key='target', required=True, placeholder='#dropzone', label='Target Selector'),
         field(
@@ -100,6 +100,8 @@ class BrowserDragModule(BaseModule):
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         page = browser.page
+        # mouse is a Page-only API; use real_page for mouse operations
+        real_page = browser.real_page
 
         # Wait for both elements
         source_locator = page.locator(self.source)
@@ -132,11 +134,11 @@ class BrowserDragModule(BaseModule):
             target_x = target_box['x'] + target_box['width'] / 2
             target_y = target_box['y'] + target_box['height'] / 2
 
-        # Perform drag and drop
-        await page.mouse.move(source_x, source_y)
-        await page.mouse.down()
-        await page.mouse.move(target_x, target_y, steps=10)
-        await page.mouse.up()
+        # Perform drag and drop (mouse is Page-only)
+        await real_page.mouse.move(source_x, source_y)
+        await real_page.mouse.down()
+        await real_page.mouse.move(target_x, target_y, steps=10)
+        await real_page.mouse.up()
 
         return {
             "status": "success",

@@ -32,7 +32,7 @@ from ...schema import compose, field
     output_types=['page', 'array'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*', 'data.*', 'array.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*'],
 
     params_schema=compose(
         field(

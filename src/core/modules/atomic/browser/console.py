@@ -28,7 +28,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.CONSOLE_LEVEL(),
         presets.TIMEOUT_MS(default=5000),
         presets.CONSOLE_CLEAR_EXISTING(),
@@ -76,7 +76,7 @@ class BrowserConsoleModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        page = browser.page
+        page = browser.real_page
         messages: List[Dict[str, Any]] = []
 
         def handle_console(msg):

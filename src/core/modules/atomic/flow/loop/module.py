@@ -36,7 +36,7 @@ LOOP_CONFIG = {
     'node_type': NodeType.LOOP,
 
     # Connection rules
-    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'flow.*', 'browser.*', 'start'],
+    'can_receive_from': ['*'],  # Flow control accepts any input (routing construct)
     'can_connect_to': ['*'],
     'input_ports': [
         {
@@ -169,11 +169,12 @@ FOREACH_CONFIG = {
     'description_key': 'modules.flow.foreach.description',
     'icon': 'List',
     'color': '#10B981',
+    'node_type': NodeType.LOOP,
     'input_types': ['array'],
     'output_types': ['array'],
 
     # Connection rules
-    'can_receive_from': ['data.*', 'array.*', 'object.*', 'api.*', 'http.*', 'database.*', 'file.*', 'element.*', 'flow.*', 'browser.*', 'start'],
+    'can_receive_from': ['*'],  # Flow control accepts any input (routing construct)
     'can_connect_to': ['*'],
 
     # Port definitions (required for flow modules)

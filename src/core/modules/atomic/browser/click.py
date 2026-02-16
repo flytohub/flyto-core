@@ -26,7 +26,7 @@ from ...schema import presets
     output_types=['page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*'],
+    can_connect_to=['browser.*', 'element.*', 'page.*', 'screenshot.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
     params_schema=compose(
         field("click_method", type="select",
               label="How to find the element",
