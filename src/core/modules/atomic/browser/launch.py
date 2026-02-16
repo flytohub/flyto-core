@@ -150,6 +150,7 @@ class BrowserLaunchModule(BaseModule):
 
         # Store in context for later use
         self.context['browser'] = driver
+        self.context['browser_headless'] = self.headless
 
         return {
             "status": "success",
