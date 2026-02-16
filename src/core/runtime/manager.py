@@ -643,3 +643,7 @@ class PluginManager:
     def list_available_plugins(self) -> List[str]:
         """List all discovered (available) plugins."""
         return list(self._manifests.keys())
+
+    def get_manifest(self, plugin_id: str) -> Optional["PluginManifest"]:
+        """Get the manifest for a specific plugin."""
+        return self._manifests.get(plugin_id)
