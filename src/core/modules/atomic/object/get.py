@@ -26,7 +26,7 @@ from ...errors import ValidationError
     output_types=['any'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'flow.*'],
+    can_connect_to=['*'],
 
     retryable=False,
     concurrent_safe=True,

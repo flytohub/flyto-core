@@ -28,7 +28,7 @@ from ...errors import ValidationError, InvalidTypeError
     output_types=['array'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
+    can_connect_to=['*'],
 
     # Execution settings
     timeout_ms=5000,

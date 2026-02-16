@@ -21,7 +21,7 @@ from ...errors import ValidationError
     icon='FileText',
     color='#F59E0B',
     input_types=['string'],
-    output_types=['object'],
+    output_types=['object', 'number'],
 
     can_receive_from=['*'],
     can_connect_to=['data.*', 'flow.*', 'notify.*'],

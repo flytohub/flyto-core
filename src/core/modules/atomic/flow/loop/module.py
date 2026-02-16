@@ -172,7 +172,7 @@ FOREACH_CONFIG = {
     'icon': 'List',
     'color': '#10B981',
     'node_type': NodeType.LOOP,
-    'input_types': ['array'],
+    'input_types': ['control', 'array'],
     'output_types': ['array'],
 
     # Connection rules

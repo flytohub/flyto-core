@@ -24,10 +24,10 @@ from ...errors import ValidationError, InvalidValueError
 
     # Type definitions for connection validation
     input_types=['string'],
-    output_types=['object'],
+    output_types=['object', 'array'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
+    can_connect_to=['*'],
 
     # Execution settings
     retryable=False,

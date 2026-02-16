@@ -27,7 +27,7 @@ from ...errors import ValidationError, ModuleError
     output_types=['string'],
 
     can_receive_from=['*'],
-    can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
+    can_connect_to=['*'],
 
     # Execution settings
     retryable=False,

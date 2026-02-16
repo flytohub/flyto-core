@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['object', 'array', 'file_path'],
     output_types=['file_path', 'string'],
-    can_connect_to=['file.*', 'data.*'],
+    can_connect_to=['*'],
     can_receive_from=['*'],
 
     # Execution settings

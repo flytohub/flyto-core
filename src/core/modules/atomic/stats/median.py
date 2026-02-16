@@ -26,7 +26,7 @@ from ...errors import ValidationError
     output_types=['number'],
 
     can_receive_from=['*'],
-    can_connect_to=['math.*', 'data.*', 'flow.*'],
+    can_connect_to=['math.*', 'data.*', 'flow.*', 'string.*', 'notify.*'],
 
     retryable=False,
     concurrent_safe=True,
