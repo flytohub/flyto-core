@@ -312,13 +312,11 @@ class BrowserPaginationModule(BaseModule):
             stopped_reason = f'error: {str(e)}'
 
         return {
-            'ok': True,
-            'data': {
-                'items': all_items,
-                'total_items': len(all_items),
-                'pages_processed': pages_processed,
-                'stopped_reason': stopped_reason
-            }
+            'status': 'success',
+            'items': all_items,
+            'total_items': len(all_items),
+            'pages_processed': pages_processed,
+            'stopped_reason': stopped_reason,
         }
 
     async def _extract_items(self, browser) -> List[Dict[str, Any]]:
@@ -471,7 +469,7 @@ class BrowserPaginationModule(BaseModule):
                 if (!current) return null;
 
                 const next = current.nextElementSibling;
-                if (next && next.tagName === 'A' || next.tagName === 'BUTTON') {
+                if (next && (next.tagName === 'A' || next.tagName === 'BUTTON')) {
                     return next;
                 }
 

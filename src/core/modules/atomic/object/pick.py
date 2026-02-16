@@ -23,8 +23,8 @@ from ...errors import InvalidTypeError
     color='#F59E0B',
 
     # Connection types
-    input_types=['json'],
-    output_types=['json'],
+    input_types=['object'],
+    output_types=['object'],
 
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],
@@ -46,7 +46,7 @@ from ...errors import InvalidTypeError
     ),
     output_schema={
         'result': {
-            'type': 'json',
+            'type': 'object',
             'description': 'Object with only picked keys'
         ,
                 'description_key': 'modules.object.pick.output.result.description'}

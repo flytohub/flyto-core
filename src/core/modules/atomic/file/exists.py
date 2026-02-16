@@ -29,7 +29,7 @@ import shutil
     input_types=['string'],
     output_types=['boolean'],
 
-    can_receive_from=['start', 'flow.*'],
+    can_receive_from=['*'],
     can_connect_to=['*'],    # Execution settings
     retryable=True,
     max_retries=2,

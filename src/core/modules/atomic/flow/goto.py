@@ -22,9 +22,9 @@ from ...types import DataType, EdgeType
     icon='CornerUpLeft',
     color='#FF5722',
 
-    # Control flow - no data input/output
-    input_types=[],
-    output_types=[],
+    # Control flow
+    input_types=['control'],
+    output_types=['control'],
 
 
     can_receive_from=['data.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],

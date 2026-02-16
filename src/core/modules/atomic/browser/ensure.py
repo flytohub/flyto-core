@@ -119,14 +119,10 @@ class BrowserEnsureModule(BaseModule):
             # Browser exists - reuse it
             # Don't change browser_owner - whoever created it owns it
             return {
-                "ok": True,
-                "status": "reused",
+                "status": "success",
+                "action": "reused",
                 "message": "Reusing existing browser session",
                 "is_owner": False,
-                "data": {
-                    "status": "reused",
-                    "is_owner": False
-                }
             }
 
         # No browser - launch a new one
@@ -148,13 +144,9 @@ class BrowserEnsureModule(BaseModule):
         self.context['browser_owned_by_ensure'] = True  # Flag for release module
 
         return {
-            "ok": True,
-            "status": "launched",
+            "status": "success",
+            "action": "launched",
             "message": "Browser launched successfully",
             "is_owner": True,
-            "data": {
-                "status": "launched",
-                "is_owner": True,
-                "headless": self.headless
-            }
+            "headless": self.headless,
         }

@@ -4,7 +4,8 @@ Browser Launch Module - Launch a new browser instance with Playwright
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup, Visibility
 
 
 @register_module(
@@ -42,12 +43,65 @@ from ...schema import compose, presets
     params_schema=compose(
         presets.BROWSER_HEADLESS(default=False),
         presets.VIEWPORT(),
+        field(
+            'browser_type',
+            type='select',
+            label='Browser Type',
+            label_key='modules.browser.launch.params.browser_type.label',
+            description='Browser engine to use',
+            default='chromium',
+            options=[
+                {'value': 'chromium', 'label': 'Chromium'},
+                {'value': 'firefox', 'label': 'Firefox'},
+                {'value': 'webkit', 'label': 'WebKit (Safari)'},
+            ],
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
+            'proxy',
+            type='string',
+            label='Proxy',
+            label_key='modules.browser.launch.params.proxy.label',
+            description='HTTP/SOCKS proxy server URL',
+            placeholder='http://proxy:8080',
+            required=False,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
+        field(
+            'user_agent',
+            type='string',
+            label='User Agent',
+            label_key='modules.browser.launch.params.user_agent.label',
+            description='Custom user agent string',
+            required=False,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
+        field(
+            'slow_mo',
+            type='integer',
+            label='Slow Motion (ms)',
+            label_key='modules.browser.launch.params.slow_mo.label',
+            description='Delay between actions in ms',
+            default=0,
+            min=0,
+            max=5000,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.launch.output.status.description'},
         'message': {'type': 'string', 'description': 'Result message describing the outcome',
-                'description_key': 'modules.browser.launch.output.message.description'}
+                'description_key': 'modules.browser.launch.output.message.description'},
+        'browser_type': {'type': 'string', 'description': 'Browser engine used',
+                'description_key': 'modules.browser.launch.output.browser_type.description'},
+        'headless': {'type': 'boolean', 'description': 'Whether browser is in headless mode',
+                'description_key': 'modules.browser.launch.output.headless.description'},
+        'viewport': {'type': 'object', 'description': 'Browser viewport dimensions',
+                'description_key': 'modules.browser.launch.output.viewport.description'},
     },
     examples=[
         {
@@ -71,16 +125,38 @@ class BrowserLaunchModule(BaseModule):
 
     def validate_params(self) -> None:
         self.headless = self.params.get('headless', False)
+        self.browser_type = self.params.get('browser_type', 'chromium')
+        self.proxy = self.params.get('proxy')
+        self.user_agent = self.params.get('user_agent')
+        self.slow_mo = self.params.get('slow_mo', 0)
+        self.viewport = {
+            'width': self.params.get('width', 1280),
+            'height': self.params.get('height', 720),
+        }
 
     async def execute(self) -> Any:
         from core.browser.driver import BrowserDriver
 
-        driver = BrowserDriver(headless=self.headless)
-        await driver.launch()
+        driver = BrowserDriver(
+            headless=self.headless,
+            viewport=self.viewport,
+            browser_type=self.browser_type,
+        )
+        await driver.launch(
+            proxy=self.proxy,
+            user_agent=self.user_agent,
+            slow_mo=self.slow_mo,
+        )
 
         # Store in context for later use
         self.context['browser'] = driver
 
-        return {"status": "success", "message": "Browser launched successfully"}
+        return {
+            "status": "success",
+            "message": "Browser launched successfully",
+            "browser_type": self.browser_type,
+            "headless": self.headless,
+            "viewport": self.viewport,
+        }
 
 

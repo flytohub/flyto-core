@@ -28,7 +28,7 @@ from ...schema import compose, presets
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    # Schema-driven params
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='#element-id or .element-class'),
-        presets.TIMEOUT_MS(default=30000),
+        presets.TIMEOUT_MS(key='timeout_ms', default=30000),
         presets.POSITION(),
     ),
     output_schema={
@@ -44,7 +44,7 @@ from ...schema import compose, presets
         },
         {
             'name': 'Hover with timeout',
-            'params': {'selector': '#dropdown-trigger', 'timeout': 5000}
+            'params': {'selector': '#dropdown-trigger', 'timeout_ms': 5000}
         }
     ],
     author='Flyto Team',
@@ -63,7 +63,7 @@ class BrowserHoverModule(BaseModule):
         if 'selector' not in self.params:
             raise ValueError("Missing required parameter: selector")
         self.selector = self.params['selector']
-        self.timeout = self.params.get('timeout', 30000)
+        self.timeout = self.params.get('timeout_ms', 30000)
         self.position = self.params.get('position')
 
     async def execute(self) -> Any:

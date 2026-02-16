@@ -23,7 +23,7 @@ from ...errors import InvalidTypeError
     color='#F59E0B',
 
     # Connection types
-    input_types=['json'],
+    input_types=['object'],
     output_types=['array'],
 
     can_receive_from=['*'],

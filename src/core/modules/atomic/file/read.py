@@ -31,7 +31,7 @@ import shutil
     output_types=['string', 'binary'],
 
 
-    can_receive_from=['start', 'flow.*'],
+    can_receive_from=['*'],
     can_connect_to=['*'],    # Execution settings
     timeout_ms=30000,
     retryable=True,

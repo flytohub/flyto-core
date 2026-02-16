@@ -232,15 +232,13 @@ class BrowserFormModule(BaseModule):
                 })
 
         return {
-            'ok': True,
-            'data': {
-                'filled_fields': filled_fields,
-                'failed_fields': failed_fields,
-                'submitted': submitted,
-                'total_fields': len(self.data),
-                'success_count': len(filled_fields),
-                'fail_count': len(failed_fields)
-            }
+            'status': 'success',
+            'filled_fields': filled_fields,
+            'failed_fields': failed_fields,
+            'submitted': submitted,
+            'total_fields': len(self.data),
+            'success_count': len(filled_fields),
+            'fail_count': len(failed_fields),
         }
 
     def _get_field_selector(self, field_name: str) -> str:

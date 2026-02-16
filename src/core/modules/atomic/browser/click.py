@@ -60,6 +60,37 @@ from ...schema import presets
               placeholder='#submit-btn, .btn-primary, //button[@type="submit"]',
               showIf={"click_method": "selector"},
               group=FieldGroup.BASIC),
+        field("button", type="select",
+              label="Mouse Button",
+              label_key="modules.browser.click.param.button.label",
+              description="Which mouse button to use for clicking",
+              default="left",
+              options=[
+                  {"value": "left", "label": "Left"},
+                  {"value": "right", "label": "Right"},
+                  {"value": "middle", "label": "Middle"},
+              ],
+              group=FieldGroup.OPTIONS),
+        field("click_count", type="integer",
+              label="Click Count",
+              label_key="modules.browser.click.param.click_count.label",
+              description="Number of clicks (2 for double-click, 3 for triple-click)",
+              default=1,
+              min=1,
+              max=3,
+              group=FieldGroup.OPTIONS),
+        field("force", type="boolean",
+              label="Force Click",
+              label_key="modules.browser.click.param.force.label",
+              description="Force click even if element is not actionable (covered, invisible)",
+              default=False,
+              group=FieldGroup.ADVANCED),
+        field("modifiers", type="array",
+              label="Keyboard Modifiers",
+              label_key="modules.browser.click.param.modifiers.label",
+              description="Modifier keys to hold during click",
+              required=False,
+              group=FieldGroup.ADVANCED),
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
@@ -122,13 +153,27 @@ class BrowserClickModule(BaseModule):
             self.selector = f'text={target}'
 
         self.method = method
+        self.button = self.params.get('button', 'left')
+        self.click_count = self.params.get('click_count', 1)
+        self.force = self.params.get('force', False)
+        self.modifiers = self.params.get('modifiers', [])
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        await browser.click(self.selector)
+        page = browser.page
+
+        click_options = {
+            'button': self.button,
+            'click_count': self.click_count,
+            'force': self.force,
+        }
+        if self.modifiers:
+            click_options['modifiers'] = self.modifiers
+
+        await page.click(self.selector, **click_options)
         return {"status": "success", "selector": self.selector, "method": self.method}
 
 

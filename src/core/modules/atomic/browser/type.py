@@ -73,13 +73,9 @@ class BrowserTypeModule(BaseModule):
 
         await browser.type(self.selector, self.text)
         return {
-            "ok": True,
-            "output": {
-                "selector": self.selector,
-                "text": self.text
-            },
-            "error": None,
-            "meta": {}
+            "status": "success",
+            "selector": self.selector,
+            "text": self.text,
         }
 
 

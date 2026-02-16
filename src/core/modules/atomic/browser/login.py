@@ -301,21 +301,24 @@ class BrowserLoginModule(BaseModule):
             # Wait for result
             result = await self._wait_for_result(browser)
 
-            return {
-                'ok': True,
-                'data': result
-            }
+            if result.get('success'):
+                return {
+                    'status': 'success',
+                    **result,
+                }
+            else:
+                return {
+                    'status': 'error',
+                    **result,
+                }
 
         except Exception as e:
             return {
-                'ok': False,
-                'error': str(e),
-                'data': {
-                    'success': False,
-                    'error_message': str(e),
-                    'requires_2fa': False,
-                    'redirect_url': None
-                }
+                'status': 'error',
+                'success': False,
+                'error_message': str(e),
+                'requires_2fa': False,
+                'redirect_url': None,
             }
 
     async def _find_selector(

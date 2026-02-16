@@ -23,8 +23,8 @@ from ...errors import ValidationError
     color='#8B5CF6',
 
     # Connection types
-    input_types=['text', 'string'],
-    output_types=['text', 'string'],
+    input_types=['string'],
+    output_types=['string'],
 
     can_receive_from=['*'],
     can_connect_to=['data.*', 'array.*', 'object.*', 'string.*', 'file.*', 'database.*', 'http.*', 'ai.*', 'notify.*', 'flow.*'],

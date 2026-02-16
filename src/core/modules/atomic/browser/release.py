@@ -127,14 +127,10 @@ class BrowserReleaseModule(BaseModule):
         # No browser to release
         if not browser:
             return {
-                "ok": True,
-                "status": "no_browser",
+                "status": "success",
+                "action": "no_browser",
                 "message": "No browser session to release",
                 "was_owner": False,
-                "data": {
-                    "status": "no_browser",
-                    "was_owner": False
-                }
             }
 
         # Check ownership
@@ -159,16 +155,12 @@ class BrowserReleaseModule(BaseModule):
             # Not owner, don't close (parent will handle it)
             reason = "inherited from parent" if browser_inherited else "not launched by this template"
             return {
-                "ok": True,
-                "status": "skipped",
+                "status": "success",
+                "action": "skipped",
                 "message": f"Browser {reason}, not closing (parent will handle cleanup)",
                 "was_owner": False,
-                "data": {
-                    "status": "skipped",
-                    "was_owner": False,
-                    "reason": reason,
-                    "browser_inherited": browser_inherited
-                }
+                "reason": reason,
+                "browser_inherited": browser_inherited,
             }
 
         # Close the browser
@@ -180,12 +172,8 @@ class BrowserReleaseModule(BaseModule):
         self.context.pop('browser_owned_by_ensure', None)
 
         return {
-            "ok": True,
-            "status": "closed",
+            "status": "success",
+            "action": "closed",
             "message": "Browser closed successfully",
             "was_owner": True,
-            "data": {
-                "status": "closed",
-                "was_owner": True
-            }
         }

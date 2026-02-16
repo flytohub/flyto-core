@@ -4,7 +4,8 @@ Browser Wait Module - Wait for a duration or until an element appears
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup
 
 
 @register_module(
@@ -42,7 +43,23 @@ from ...schema import compose, presets
     params_schema=compose(
         presets.DURATION_MS(key='duration_ms', default=1000, label='Wait Duration (ms)'),
         presets.SELECTOR(required=False, placeholder='.element-to-wait-for'),
-        presets.TIMEOUT_MS(default=30000),
+        field(
+            'state',
+            type='select',
+            label='Wait State',
+            label_key='modules.browser.wait.params.state.label',
+            description='Element state to wait for',
+            default='visible',
+            options=[
+                {'value': 'visible', 'label': 'Visible (element is visible)'},
+                {'value': 'hidden', 'label': 'Hidden (element is hidden)'},
+                {'value': 'attached', 'label': 'Attached (element exists in DOM)'},
+                {'value': 'detached', 'label': 'Detached (element removed from DOM)'},
+            ],
+            group=FieldGroup.OPTIONS,
+            showIf={"selector": {"$ne": ""}},
+        ),
+        presets.TIMEOUT_MS(key='timeout_ms', default=30000),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -59,7 +76,7 @@ from ...schema import compose, presets
         },
         {
             'name': 'Wait for element',
-            'params': {'selector': '#loading-complete', 'timeout': 5000}
+            'params': {'selector': '#loading-complete', 'timeout_ms': 5000}
         }
     ],
     author='Flyto Team',
@@ -85,7 +102,8 @@ class BrowserWaitModule(BaseModule):
             self.duration_ms = 1000  # Default 1 second
 
         self.selector = self.params.get('selector')
-        self.timeout = self.params.get('timeout', 30000)
+        self.state = self.params.get('state', 'visible')
+        self.timeout = self.params.get('timeout_ms', 30000)
 
     async def execute(self) -> Any:
         import asyncio
@@ -93,11 +111,11 @@ class BrowserWaitModule(BaseModule):
         browser = self.context.get('browser')
 
         if self.selector:
-            # Wait for element to appear
+            # Wait for element to reach specified state
             if not browser:
                 raise RuntimeError("Browser not launched. Please run browser.launch first")
-            await browser.wait(self.selector, timeout_ms=self.timeout)
-            return {"status": "success", "selector": self.selector}
+            await browser.wait(self.selector, state=self.state, timeout_ms=self.timeout)
+            return {"status": "success", "selector": self.selector, "state": self.state}
         else:
             # Wait for specified duration
             await asyncio.sleep(self.duration_ms / 1000)

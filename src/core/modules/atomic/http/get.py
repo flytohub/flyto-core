@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 
     input_types=['string'],
     output_types=['object', 'json'],
-    can_receive_from=['start', 'flow.*'],
-    can_connect_to=['data.*', 'array.*', 'notify.*', 'file.*', 'flow.*'],
+    can_receive_from=['*'],
+    can_connect_to=['*'],
 
     timeout_ms=60000,
     required_permissions=["network.access"],

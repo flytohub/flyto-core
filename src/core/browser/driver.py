@@ -52,9 +52,19 @@ class BrowserDriver:
         self._page: Optional[Page] = None
         self._context = None
 
-    async def launch(self) -> Dict[str, Any]:
+    async def launch(
+        self,
+        proxy: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        slow_mo: int = 0,
+    ) -> Dict[str, Any]:
         """
         Launch browser instance
+
+        Args:
+            proxy: HTTP/SOCKS proxy server URL (e.g., 'http://proxy:8080')
+            user_agent: Custom user agent string (overrides default)
+            slow_mo: Delay between actions in milliseconds
 
         Returns:
             Status dictionary
@@ -72,13 +82,21 @@ class BrowserDriver:
             else:
                 browser_launcher = self._playwright.chromium
 
+            # Build launch options
+            launch_kwargs: Dict[str, Any] = {'headless': self.headless}
+            if slow_mo > 0:
+                launch_kwargs['slow_mo'] = slow_mo
+            if proxy:
+                launch_kwargs['proxy'] = {'server': proxy}
+
             # Launch browser
-            self._browser = await browser_launcher.launch(headless=self.headless)
+            self._browser = await browser_launcher.launch(**launch_kwargs)
 
             # Create context with viewport
+            context_user_agent = user_agent or DEFAULT_USER_AGENT
             self._context = await self._browser.new_context(
                 viewport=self.viewport,
-                user_agent=DEFAULT_USER_AGENT
+                user_agent=context_user_agent
             )
 
             # Create page

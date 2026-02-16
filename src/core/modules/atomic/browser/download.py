@@ -32,7 +32,7 @@ from ...schema import compose, presets
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(required=False, placeholder='a.download-link'),
         presets.DOWNLOAD_SAVE_PATH(),
-        presets.TIMEOUT_MS(default=60000),
+        presets.TIMEOUT_MS(key='timeout_ms', default=60000),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -57,7 +57,7 @@ from ...schema import compose, presets
             'params': {
                 'selector': 'a.download',
                 'save_path': '/downloads/large-file.zip',
-                'timeout': 120000
+                'timeout_ms': 120000
             }
         }
     ],
@@ -79,7 +79,7 @@ class BrowserDownloadModule(BaseModule):
 
         self.selector = self.params.get('selector')
         self.save_path = self.params['save_path']
-        self.timeout = self.params.get('timeout', 60000)
+        self.timeout = self.params.get('timeout_ms', 60000)
 
         # Ensure directory exists
         save_dir = Path(self.save_path).parent

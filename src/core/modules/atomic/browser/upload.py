@@ -31,7 +31,7 @@ from ...schema import compose, presets
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
         presets.SELECTOR(required=True, placeholder='input[type="file"]'),
         presets.UPLOAD_FILE_PATH(),
-        presets.TIMEOUT_MS(default=30000),
+        presets.TIMEOUT_MS(key='timeout_ms', default=30000),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -79,7 +79,7 @@ class BrowserUploadModule(BaseModule):
 
         self.selector = self.params['selector']
         self.file_path = self.params['file_path']
-        self.timeout = self.params.get('timeout', 30000)
+        self.timeout = self.params.get('timeout_ms', 30000)
 
         # Verify file exists
         path = Path(self.file_path)

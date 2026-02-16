@@ -135,6 +135,9 @@ def validate_connection(
     OUTPUT_PORT_ALIASES = {
         'output': 'success',
         'source': 'success',
+        'source-true': 'true',
+        'source-false': 'false',
+        'source-error': 'error',
         'body_out': 'iterate',
         'done_out': 'done',
     }
@@ -146,17 +149,29 @@ def validate_connection(
     }
 
     def find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
-        """Find port by ID or alias"""
+        """Find port by ID or alias, also checks handle_id"""
         if not ports:
             return None
-        # Direct match
+        # Direct match by id
         match = next((p for p in ports if p.get('id') == port_id), None)
+        if match:
+            return match
+        # Match by handle_id (frontend sends VueFlow handle IDs like 'source-true')
+        match = next((p for p in ports if p.get('handle_id') == port_id), None)
         if match:
             return match
         # Try alias
         alias_id = aliases.get(port_id)
         if alias_id:
-            return next((p for p in ports if p.get('id') == alias_id), None)
+            match = next((p for p in ports if p.get('id') == alias_id), None)
+            if match:
+                return match
+        # Strip 'source-' prefix as general pattern (e.g. 'source-case-xxx' -> 'case-xxx')
+        if port_id.startswith('source-'):
+            stripped = port_id[len('source-'):]
+            match = next((p for p in ports if p.get('id') == stripped), None)
+            if match:
+                return match
         return None
 
     from_port_meta = find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
