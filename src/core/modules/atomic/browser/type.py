@@ -75,8 +75,8 @@ class BrowserTypeModule(BaseModule):
 
         self.selector = self.params['selector']
         self.text = self.params['text']
-        self.delay = self.params.get('delay', 0)
-        self.clear = self.params.get('clear', False)
+        self.delay = int(self.params.get('delay') or 0)
+        self.clear = bool(self.params.get('clear'))
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
