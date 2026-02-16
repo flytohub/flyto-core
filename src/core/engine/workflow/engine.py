@@ -252,6 +252,21 @@ class WorkflowEngine:
 
             raise WorkflowExecutionError(f"Workflow execution failed: {str(e)}") from e
 
+        finally:
+            await self._cleanup_resources()
+
+    async def _cleanup_resources(self):
+        """Clean up resources (browser sessions, etc.) after workflow execution."""
+        browser = self.context.get('browser')
+        if browser is not None:
+            try:
+                await browser.close()
+                logger.debug("Auto-closed browser session after workflow execution")
+            except Exception as e:
+                logger.warning(f"Failed to auto-close browser session: {e}")
+            finally:
+                self.context.pop('browser', None)
+
     async def _execute_steps(self, steps: List[Dict[str, Any]]):
         """Execute workflow steps with flow control support."""
         start_idx = self._start_step if self._start_step is not None else 0
