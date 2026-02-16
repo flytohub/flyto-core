@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
     input_types=['object'],
     output_types=['object'],
-    can_connect_to=['data.*'],
-    can_receive_from=['data.*', 'http.*', 'flow.*', 'start', 'object.*', 'array.*', 'string.*'],
+    can_connect_to=['database.*', 'data.*', 'array.*', 'object.*', 'file.*', 'http.*', 'notify.*', 'flow.*'],
+    can_receive_from=['*'],
 
     timeout_ms=60000,
     retryable=True,

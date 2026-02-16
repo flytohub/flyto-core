@@ -35,7 +35,7 @@ MAX_CONTAINER_DEPTH = 5
     input_types=['control'],
     output_types=['control'],
 
-    can_receive_from=['data.*', 'http.*', 'string.*', 'array.*', 'object.*', 'math.*', 'file.*', 'database.*', 'ai.*', 'flow.*', 'element.*'],
+    can_receive_from=['*'],
     can_connect_to=['*'],    # Workflow Spec v1.1
     node_type=NodeType.CONTAINER,
 

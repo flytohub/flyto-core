@@ -36,6 +36,7 @@ from .tab import *
 from .pdf import *
 from .drag import *
 from .geolocation import *
+from .navigation import *
 from .record import *
 
 # Higher-level browser operations (v2)

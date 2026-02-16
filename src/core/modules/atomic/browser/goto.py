@@ -44,7 +44,7 @@ from ....utils import validate_url_with_env_config, SSRFError
     color='#5CB85C',
 
     # Connection types
-    input_types=['browser'],
+    input_types=['browser', 'page'],
     output_types=['page'],
 
     # Connection rules

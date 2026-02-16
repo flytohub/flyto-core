@@ -22,7 +22,7 @@ from ...schema import compose, presets, field
     color='#0D6EFD',
 
     # Connection types
-    input_types=['browser'],
+    input_types=['browser', 'page'],
     output_types=['object'],
 
 

@@ -405,6 +405,16 @@ CONNECTION_RULES: Dict[str, ConnectionRule] = {
     ),
 
     # =========================================================================
+    # Notify - Notification output endpoint
+    # =========================================================================
+    "notify": ConnectionRule(
+        category="notify",
+        can_connect_to=["notify.*", "data.*", "flow.*", "end"],
+        can_receive_from=["*"],
+        description="Notification modules - output endpoint"
+    ),
+
+    # =========================================================================
     # Notification / Output - End point, can receive from anywhere
     # =========================================================================
     "notification": ConnectionRule(

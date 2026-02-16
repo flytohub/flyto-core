@@ -24,7 +24,7 @@ from ..element_registry import get_element_registry
     input_types=['element'],
     output_types=['element', 'array'],
     can_receive_from=['browser.find', 'element.query'],
-    can_connect_to=['element.*', 'data.*'],
+    can_connect_to=['element.*', 'data.*', 'browser.*', 'flow.*', 'string.*', 'file.*', 'object.*', 'array.*'],
 
     # Phase 2: Execution settings
     timeout_ms=5000,  # Element query should be quick

@@ -22,9 +22,9 @@ from ..element_registry import get_element_registry
 
     # Connection types
     input_types=['element'],
-    output_types=['text', 'string'],
+    output_types=['string'],
     can_receive_from=['browser.find', 'element.*'],
-    can_connect_to=['data.*', 'string.*', 'notify.*'],
+    can_connect_to=['data.*', 'string.*', 'flow.*', 'file.*', 'notify.*', 'object.*', 'array.*', 'browser.*'],
 
     # Phase 2: Execution settings
     timeout_ms=5000,  # Text extraction should be quick

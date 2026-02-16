@@ -25,7 +25,7 @@ from ...errors import ValidationError, InvalidTypeError
 
     # Connection types
     input_types=['array'],
-    output_types=['text', 'string'],
+    output_types=['string'],
 
     can_receive_from=['*'],
     can_connect_to=['*'],

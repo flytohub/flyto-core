@@ -146,7 +146,7 @@ class BrowserClickModule(BaseModule):
         elif method == 'button':
             if not target:
                 raise ValueError("Button or link text is required")
-            self.selector = f'text={target}'
+            self.selector = f':is(button, a, [role="button"]):has-text("{target}")'
         else:  # text (default)
             if not target:
                 raise ValueError("Text content is required")

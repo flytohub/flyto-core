@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
     # Connection types
     input_types=['file_path'],
     output_types=['array', 'object'],
-    can_connect_to=['array.*', 'data.*', 'database.*'],
+    can_connect_to=['array.*', 'data.*', 'database.*', 'flow.*'],
     can_receive_from=['file.*', 'data.*', 'http.*', 'flow.*', 'start'],
 
     # Execution settings

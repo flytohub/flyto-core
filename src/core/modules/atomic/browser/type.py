@@ -4,7 +4,7 @@ Browser Type Module - Type text into an input field
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, presets, field
 
 
 @register_module(
@@ -29,6 +29,16 @@ from ...schema import compose, presets
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='input[name="email"]'),
         presets.TEXT(key='text', required=True, label='Text Content', placeholder='Text to type'),
+        field('delay', type='number', label='Typing Delay (ms)',
+              label_key='modules.browser.type.param.delay.label',
+              description='Delay between keystrokes in milliseconds',
+              description_key='modules.browser.type.param.delay.description',
+              default=0, min=0),
+        field('clear', type='boolean', label='Clear Field First',
+              label_key='modules.browser.type.param.clear.label',
+              description='Clear the input field before typing',
+              description_key='modules.browser.type.param.clear.description',
+              default=False),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -65,17 +75,27 @@ class BrowserTypeModule(BaseModule):
 
         self.selector = self.params['selector']
         self.text = self.params['text']
+        self.delay = self.params.get('delay', 0)
+        self.clear = self.params.get('clear', False)
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        await browser.type(self.selector, self.text)
+        # Clear field first if requested
+        if self.clear:
+            await browser.fill(self.selector, '')
+
+        await browser.type(self.selector, self.text, delay_ms=self.delay)
+
+        # Mask sensitive text in return value
+        is_sensitive = any(kw in self.selector.lower() for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential'])
         return {
             "status": "success",
             "selector": self.selector,
-            "text": self.text,
+            "text": '***' if is_sensitive else self.text,
+            "text_length": len(self.text),
         }
 
 

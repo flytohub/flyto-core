@@ -22,7 +22,7 @@ from ...schema import compose, presets
     color='#D4A373',
 
     # Connection types
-    input_types=['browser'],
+    input_types=['browser', 'page'],
     output_types=['array', 'json'],
 
 
