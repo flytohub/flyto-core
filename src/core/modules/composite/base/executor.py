@@ -52,7 +52,8 @@ class CompositeExecutor:
         module_class = CompositeRegistry.get(module_id)
         metadata = CompositeRegistry.get_metadata(module_id) or {}
 
-        timeout = metadata.get('timeout', DEFAULT_TIMEOUT_SECONDS)
+        timeout_ms = metadata.get('timeout_ms')
+        timeout = timeout_ms / 1000.0 if timeout_ms else DEFAULT_TIMEOUT_SECONDS
 
         try:
             module_instance = module_class(params, self.context)

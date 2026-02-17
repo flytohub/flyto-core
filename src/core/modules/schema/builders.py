@@ -113,6 +113,9 @@ def field(
     # Dynamic options
     optionsFrom: Optional[str] = None,
     loadOptions: Optional[dict] = None,
+    # Nested schema (for object/array types)
+    properties: Optional[dict] = None,
+    items: Optional[dict] = None,
     **extra: Any,
 ) -> Schema:
     """
@@ -147,6 +150,8 @@ def field(
         displayOptions: n8n-compatible display options (show/hide)
         optionsFrom: Dynamic options source (API endpoint or method name)
         loadOptions: Configuration for loading dynamic options
+        properties: Sub-field definitions for type="object" (JSON Schema properties)
+        items: Element schema for type="array" (JSON Schema items)
         **extra: Additional custom properties
 
     Returns:
@@ -252,6 +257,12 @@ def field(
         d["optionsFrom"] = optionsFrom
     if loadOptions is not None:
         d["loadOptions"] = loadOptions
+
+    # Nested schema (for object/array types)
+    if properties is not None:
+        d["properties"] = properties
+    if items is not None:
+        d["items"] = items
 
     # Extra properties
     d.update(extra)

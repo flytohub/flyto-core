@@ -295,10 +295,10 @@ class ModuleRegistry:
         result = metadata.copy()
 
         # Localize top-level fields
-        if 'label' in result:
-            result['label'] = get_localized_value(result['label'], lang)
-        if 'description' in result:
-            result['description'] = get_localized_value(result['description'], lang)
+        if 'ui_label' in result:
+            result['ui_label'] = get_localized_value(result['ui_label'], lang)
+        if 'ui_description' in result:
+            result['ui_description'] = get_localized_value(result['ui_description'], lang)
 
         # Localize params_schema labels
         if 'params_schema' in result:

@@ -9,7 +9,6 @@ Defines core types for module system including:
 - NodeType: Workflow node types (v1.1 spec)
 - EdgeType: Connection types (control/resource)
 - DataType: Port data types
-- PortImportance: Port UI visibility level
 """
 
 from .enums import (
@@ -21,7 +20,6 @@ from .enums import (
     ModuleLevel,
     ModuleTier,
     NodeType,
-    PortImportance,
     StabilityLevel,
     TIER_DISPLAY_ORDER,
     UIVisibility,
@@ -69,7 +67,6 @@ __all__ = [
     "ModuleLevel",
     "ModuleTier",
     "NodeType",
-    "PortImportance",
     "StabilityLevel",
     "TIER_DISPLAY_ORDER",
     "UIVisibility",

@@ -570,12 +570,6 @@ def register_module(
             "ui_help": ui_help,
             "ui_help_key": ui_help_key,
 
-            # Legacy fields (for backward compatibility)
-            "label": ui_label or label or module_id,
-            "description": ui_description or description or "",
-            "icon": ui_icon or icon,
-            "color": ui_color or color,
-
             # Connection types
             "input_types": input_types or [],
             "output_types": output_types or [],
@@ -601,7 +595,6 @@ def register_module(
 
             # Execution settings
             "timeout_ms": resolved_timeout_ms,
-            "timeout": resolved_timeout_ms / 1000.0 if resolved_timeout_ms else None,  # Legacy (seconds)
             "retryable": retryable,
             # If retryable=False, max_retries should be 0 (consistency fix)
             "max_retries": max_retries if retryable else 0,

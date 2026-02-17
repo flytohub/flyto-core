@@ -31,7 +31,7 @@ from .models import (
     Artifact,
     Decision,
     Step,
-    EdgeType,
+    LineageEdgeType,
     Edge,
     Run,
 )
@@ -104,7 +104,7 @@ __all__ = [
     "Artifact",
     "Decision",
     "Step",
-    "EdgeType",
+    "LineageEdgeType",
     "Edge",
     "Run",
     # Context

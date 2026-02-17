@@ -230,7 +230,7 @@ class Step:
 # Edge (Data Flow Relationship)
 # =============================================================================
 
-class EdgeType(str, Enum):
+class LineageEdgeType(str, Enum):
     """Edge types for data flow graph"""
     PRODUCES = "produces"    # Step produces Artifact
     CONSUMES = "consumes"    # Step consumes Artifact
@@ -245,7 +245,7 @@ class Edge:
     """
     source: str  # step_id or artifact_id
     target: str  # artifact_id or step_id
-    edge_type: EdgeType
+    edge_type: LineageEdgeType
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -261,7 +261,7 @@ class Edge:
         return cls(
             source=data["source"],
             target=data["target"],
-            edge_type=EdgeType(data["type"]),
+            edge_type=LineageEdgeType(data["type"]),
         )
 
 

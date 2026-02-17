@@ -32,22 +32,12 @@ class TimeoutRequired(MetadataRule):
         issues = []
 
         timeout_ms = metadata.get("timeout_ms")
-        timeout = metadata.get("timeout")  # Legacy field
         stability = metadata.get("stability", "stable")
 
         severity = cls.get_severity(stability)
 
         if timeout_ms is None:
-            if timeout is not None:
-                # Legacy timeout field used
-                issues.append(cls.create_issue(
-                    message="Using deprecated 'timeout' (seconds). Use 'timeout_ms' (milliseconds) instead",
-                    module_id=module_id,
-                    severity=Severity.WARN,
-                    suggestion=f"Replace timeout={timeout} with timeout_ms={timeout * 1000}",
-                ))
-            else:
-                issues.append(cls.create_issue(
+            issues.append(cls.create_issue(
                     message="timeout_ms is required for production use",
                     module_id=module_id,
                     severity=severity,

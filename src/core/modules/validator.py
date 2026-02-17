@@ -383,7 +383,7 @@ class ModuleValidator:
 
         # I001: label_key without label fallback
         label_key = metadata.get("label_key") or metadata.get("ui_label_key")
-        label = metadata.get("label") or metadata.get("ui_label")
+        label = metadata.get("ui_label")
         module_id = metadata.get("module_id", "")
 
         if label_key and (not label or label == module_id):
@@ -502,7 +502,7 @@ class ModuleValidator:
 
         # C002: timeout for network modules
         if category in NETWORK_CATEGORIES:
-            if metadata.get("timeout") is None:
+            if metadata.get("timeout_ms") is None:
                 self._add_issue(
                     "C002", Severity.WARNING,
                     f"Network module ({category}) missing timeout",

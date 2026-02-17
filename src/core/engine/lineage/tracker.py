@@ -23,7 +23,7 @@ from .models import (
     ArtifactType,
     Decision,
     Edge,
-    EdgeType,
+    LineageEdgeType,
 )
 
 logger = logging.getLogger(__name__)
@@ -236,7 +236,7 @@ class RunTracker:
         self.run.edges.append(Edge(
             source=step_id,
             target=artifact.id,
-            edge_type=EdgeType.PRODUCES,
+            edge_type=LineageEdgeType.PRODUCES,
         ))
 
         # Update step's artifact list
@@ -259,7 +259,7 @@ class RunTracker:
         self.run.edges.append(Edge(
             source=artifact_id,
             target=step_id,
-            edge_type=EdgeType.CONSUMES,
+            edge_type=LineageEdgeType.CONSUMES,
         ))
 
     # =========================================================================

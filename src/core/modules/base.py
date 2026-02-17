@@ -75,6 +75,11 @@ class BaseModule(ABC):
     # - "all": Receive all items at once (for aggregate operations)
     execution_mode: str = "single"
 
+    # When True, automatically validate params against registry params_schema
+    # before calling validate_params(). Subclasses can opt-in by setting this
+    # to True in their class definition.
+    auto_validate_schema: bool = False
+
     def __init__(self, params: Dict[str, Any], context: Dict[str, Any]):
         """
         Initialize module with parameters and context.
@@ -85,7 +90,34 @@ class BaseModule(ABC):
         """
         self.params = params
         self.context = context
+
+        if self.auto_validate_schema and self.module_id:
+            self._auto_validate_schema()
+
         self.validate_params()
+
+    def _auto_validate_schema(self) -> None:
+        """Validate params against registry schema if available."""
+        from .registry import ModuleRegistry
+        from .validation import SchemaValidator
+
+        metadata = ModuleRegistry.get_metadata(self.module_id)
+        if not metadata:
+            return
+
+        params_schema = metadata.get('params_schema')
+        if not params_schema:
+            return
+
+        validator = SchemaValidator()
+        result = validator.validate(self.params, params_schema)
+        if not result.valid:
+            messages = "; ".join(
+                e.message for e in result.errors[:3]
+            )
+            raise ValueError(
+                f"Schema validation failed for {self.module_id}: {messages}"
+            )
 
     @abstractmethod
     def validate_params(self) -> None:
@@ -197,7 +229,8 @@ class BaseModule(ABC):
         # Get module metadata for Phase 2 settings
         metadata = ModuleRegistry.get_metadata(self.module_id) or {}
 
-        timeout = metadata.get('timeout')
+        timeout_ms = metadata.get('timeout_ms')
+        timeout = timeout_ms / 1000.0 if timeout_ms else None
         retryable = metadata.get('retryable', False)
         max_retries = metadata.get('max_retries', DEFAULT_MAX_RETRIES)
 

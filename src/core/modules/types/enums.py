@@ -141,17 +141,6 @@ class DataType(str, Enum):
     RESULT = "result"      # Result signal (end node)
 
 
-class PortImportance(str, Enum):
-    """
-    Port UI importance level.
-
-    Controls where ports are displayed on the node.
-    """
-    PRIMARY = "primary"
-    SECONDARY = "secondary"
-    ADVANCED = "advanced"
-
-
 class StabilityLevel(str, Enum):
     """
     Module stability level - determines which environment sees the module.

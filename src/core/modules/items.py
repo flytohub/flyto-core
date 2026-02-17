@@ -22,7 +22,7 @@ class ExecutionStatus(Enum):
     PARTIAL = "partial"      # Some items failed (continue execution)
 
 
-class EdgeType(Enum):
+class ItemEdgeType(Enum):
     """
     Edge types for item propagation (ITEM_PIPELINE_SPEC.md Section 2.6).
 
@@ -37,7 +37,7 @@ class EdgeType(Enum):
     DONE = "done"
 
     @classmethod
-    def from_string(cls, value: str) -> "EdgeType":
+    def from_string(cls, value: str) -> "ItemEdgeType":
         """Parse edge type from string with default fallback."""
         if not value:
             return cls.DATA  # Default is data
@@ -502,7 +502,7 @@ class EdgeInfo:
     """
     source_id: str
     target_id: str
-    edge_type: EdgeType = EdgeType.DATA
+    edge_type: ItemEdgeType = ItemEdgeType.DATA
     source_handle: Optional[str] = None
     target_handle: Optional[str] = None
 
@@ -512,11 +512,11 @@ class EdgeInfo:
         return cls(
             source_id=data.get("source", ""),
             target_id=data.get("target", ""),
-            edge_type=EdgeType.from_string(data.get("edge_type", "data")),
+            edge_type=ItemEdgeType.from_string(data.get("edge_type", "data")),
             source_handle=data.get("sourceHandle"),
             target_handle=data.get("targetHandle"),
         )
 
     def passes_items(self) -> bool:
         """Check if this edge type passes items."""
-        return self.edge_type in (EdgeType.DATA, EdgeType.ITERATE)
+        return self.edge_type in (ItemEdgeType.DATA, ItemEdgeType.ITERATE)
