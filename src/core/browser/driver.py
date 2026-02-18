@@ -89,8 +89,13 @@ class BrowserDriver:
             if proxy:
                 launch_kwargs['proxy'] = {'server': proxy}
 
-            # Launch browser
-            self._browser = await browser_launcher.launch(**launch_kwargs)
+            # Launch browser (with fallback for desktop binary)
+            if self.browser_type == 'chromium':
+                self._browser = await self._launch_with_fallback(
+                    browser_launcher, launch_kwargs
+                )
+            else:
+                self._browser = await browser_launcher.launch(**launch_kwargs)
 
             # Create context with viewport
             context_user_agent = user_agent or DEFAULT_USER_AGENT
@@ -495,6 +500,36 @@ class BrowserDriver:
         except Exception as e:
             logger.error(f"Close failed: {str(e)}")
             raise RuntimeError(f"Failed to close browser: {str(e)}") from e
+
+    async def _launch_with_fallback(self, launcher, kwargs):
+        """Try multiple browser sources to ensure desktop binary works."""
+        # 1. Playwright bundled Chromium (dev mode or background install complete)
+        try:
+            return await launcher.launch(**kwargs)
+        except Exception as e:
+            first_error = e
+            logger.warning(f"Playwright Chromium unavailable: {e}")
+
+        # 2. System Chrome (available on ~90% of machines)
+        try:
+            logger.info("Trying system Chrome...")
+            return await launcher.launch(channel='chrome', **kwargs)
+        except Exception:
+            logger.warning("System Chrome not found")
+
+        # 3. Microsoft Edge (common on Windows)
+        try:
+            logger.info("Trying Microsoft Edge...")
+            return await launcher.launch(channel='msedge', **kwargs)
+        except Exception:
+            logger.warning("Microsoft Edge not found")
+
+        # 4. All failed
+        raise RuntimeError(
+            "No browser engine available. The browser is being downloaded "
+            "in the background — please try again in a few minutes. "
+            "Or install Google Chrome for immediate use."
+        ) from first_error
 
     def _ensure_page(self):
         """Ensure page is available"""
