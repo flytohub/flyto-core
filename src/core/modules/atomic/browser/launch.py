@@ -96,6 +96,16 @@ from ...schema.constants import FieldGroup, Visibility
             group=FieldGroup.ADVANCED,
             visibility=Visibility.EXPERT,
         ),
+        field(
+            'record_video_dir',
+            type='string',
+            label='Record Video Directory',
+            label_key='modules.browser.launch.params.record_video_dir.label',
+            description='Directory to save recorded videos (enables Playwright video recording)',
+            required=False,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -135,6 +145,7 @@ class BrowserLaunchModule(BaseModule):
         self.proxy = self.params.get('proxy')
         self.user_agent = self.params.get('user_agent')
         self.slow_mo = self.params.get('slow_mo', 0)
+        self.record_video_dir = self.params.get('record_video_dir')
         self.viewport = {
             'width': self.params.get('width', 1280),
             'height': self.params.get('height', 720),
@@ -152,6 +163,7 @@ class BrowserLaunchModule(BaseModule):
             proxy=self.proxy,
             user_agent=self.user_agent,
             slow_mo=self.slow_mo,
+            record_video_dir=self.record_video_dir,
         )
 
         # Store in context for later use

@@ -63,6 +63,8 @@ class BrowserDriver:
         proxy: Optional[str] = None,
         user_agent: Optional[str] = None,
         slow_mo: int = 0,
+        record_video_dir: Optional[str] = None,
+        record_video_size: Optional[Dict[str, int]] = None,
     ) -> Dict[str, Any]:
         """
         Launch browser instance
@@ -71,6 +73,8 @@ class BrowserDriver:
             proxy: HTTP/SOCKS proxy server URL (e.g., 'http://proxy:8080')
             user_agent: Custom user agent string (overrides default)
             slow_mo: Delay between actions in milliseconds
+            record_video_dir: Directory to save recorded videos (enables Playwright video recording)
+            record_video_size: Video resolution (e.g., {'width': 1280, 'height': 720}). Defaults to viewport size.
 
         Returns:
             Status dictionary
@@ -103,12 +107,18 @@ class BrowserDriver:
             else:
                 self._browser = await browser_launcher.launch(**launch_kwargs)
 
-            # Create context with viewport
+            # Create context with viewport and optional video recording
             context_user_agent = user_agent or DEFAULT_USER_AGENT
-            self._context = await self._browser.new_context(
-                viewport=self.viewport,
-                user_agent=context_user_agent
-            )
+            context_kwargs: Dict[str, Any] = {
+                'viewport': self.viewport,
+                'user_agent': context_user_agent,
+            }
+            if record_video_dir:
+                Path(record_video_dir).mkdir(parents=True, exist_ok=True)
+                context_kwargs['record_video_dir'] = record_video_dir
+                context_kwargs['record_video_size'] = record_video_size or self.viewport
+                logger.info(f"Video recording enabled: {record_video_dir}")
+            self._context = await self._browser.new_context(**context_kwargs)
 
             # Create page
             self._page = await self._context.new_page()
