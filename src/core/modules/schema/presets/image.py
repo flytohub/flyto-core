@@ -458,6 +458,75 @@ def QRCODE_LOGO_PATH(
         format="path",
         description='Path to logo image to embed in center',
         group=FieldGroup.OPTIONS,
-    
+
         placeholder='/path/to/logo.png',
 )
+
+
+def QRCODE_BORDER(
+    *,
+    key: str = "border",
+    default: int = 4,
+    min_val: int = 0,
+    max_val: int = 20,
+    label: str = "Border Width",
+    label_key: str = "schema.field.qrcode_border",
+) -> Dict[str, Dict[str, Any]]:
+    """QR code border width (in modules)."""
+    return field(
+        key,
+        type="number",
+        label=label,
+        label_key=label_key,
+        default=default,
+        min=min_val,
+        max=max_val,
+        description='Border width in modules (quiet zone)',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def QRCODE_VERSION(
+    *,
+    key: str = "version",
+    required: bool = False,
+    min_val: int = 1,
+    max_val: int = 40,
+    label: str = "Version",
+    label_key: str = "schema.field.qrcode_version",
+) -> Dict[str, Dict[str, Any]]:
+    """QR code version (1-40, leave empty for auto)."""
+    return field(
+        key,
+        type="number",
+        label=label,
+        label_key=label_key,
+        required=required,
+        min=min_val,
+        max=max_val,
+        description='QR code version 1-40 (leave empty for auto-detect)',
+        group=FieldGroup.OPTIONS,
+    )
+
+
+def QRCODE_FORMAT(
+    *,
+    key: str = "format",
+    default: str = "png",
+    label: str = "Output Format",
+    label_key: str = "schema.field.qrcode_format",
+) -> Dict[str, Dict[str, Any]]:
+    """QR code output format."""
+    return field(
+        key,
+        type="select",
+        label=label,
+        label_key=label_key,
+        default=default,
+        options=[
+            {"value": "png", "label": "PNG"},
+            {"value": "svg", "label": "SVG"},
+        ],
+        description='Output image format',
+        group=FieldGroup.OPTIONS,
+    )

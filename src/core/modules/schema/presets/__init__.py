@@ -420,6 +420,16 @@ from .image import (
     QRCODE_BACKGROUND,
     QRCODE_ERROR_CORRECTION,
     QRCODE_LOGO_PATH,
+    QRCODE_BORDER,
+    QRCODE_VERSION,
+    QRCODE_FORMAT,
+)
+from .output import (
+    DISPLAY_TYPE,
+    DISPLAY_CONTENT,
+    DISPLAY_TITLE,
+    DISPLAY_MODE,
+    DISPLAY_OUTPUT_KEY,
 )
 from .vision import (
     VISION_IMAGE,
@@ -962,4 +972,14 @@ __all__ = [
     'STRING_SEPARATOR',
     'STRING_TEMPLATE',
     'STRING_VARIABLES',
+    # QR Code extension presets
+    'QRCODE_BORDER',
+    'QRCODE_VERSION',
+    'QRCODE_FORMAT',
+    # Display/Output presets
+    'DISPLAY_TYPE',
+    'DISPLAY_CONTENT',
+    'DISPLAY_TITLE',
+    'DISPLAY_MODE',
+    'DISPLAY_OUTPUT_KEY',
 ]

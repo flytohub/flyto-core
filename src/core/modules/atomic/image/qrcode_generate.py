@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @register_module(
     module_id='image.qrcode_generate',
-    version='1.0.0',
+    version='1.1.0',
     category='image',
     subcategory='generate',
     tags=['qrcode', 'qr', 'image', 'generate', 'barcode', 'path_restricted'],
@@ -56,23 +56,26 @@ logger = logging.getLogger(__name__)
         presets.QRCODE_BACKGROUND(),
         presets.QRCODE_ERROR_CORRECTION(),
         presets.QRCODE_LOGO_PATH(),
+        presets.QRCODE_BORDER(),
+        presets.QRCODE_VERSION(),
+        presets.QRCODE_FORMAT(),
     ),
     output_schema={
         'output_path': {
             'type': 'string',
-            'description': 'Path to the generated QR code image'
-        ,
-                'description_key': 'modules.image.qrcode_generate.output.output_path.description'},
+            'description': 'Path to the generated QR code image',
+            'description_key': 'modules.image.qrcode_generate.output.output_path.description',
+        },
         'file_size': {
             'type': 'number',
-            'description': 'Size of the output file in bytes'
-        ,
-                'description_key': 'modules.image.qrcode_generate.output.file_size.description'},
+            'description': 'Size of the output file in bytes',
+            'description_key': 'modules.image.qrcode_generate.output.file_size.description',
+        },
         'dimensions': {
             'type': 'object',
-            'description': 'Image dimensions {width, height}'
-        ,
-                'description_key': 'modules.image.qrcode_generate.output.dimensions.description'}
+            'description': 'Image dimensions {width, height}',
+            'description_key': 'modules.image.qrcode_generate.output.dimensions.description',
+        },
     },
     examples=[
         {
@@ -80,8 +83,8 @@ logger = logging.getLogger(__name__)
             'title_key': 'modules.image.qrcode_generate.examples.url.title',
             'params': {
                 'data': 'https://flyto.dev',
-                'output_path': '/tmp/flyto_qr.png'
-            }
+                'output_path': '/tmp/flyto_qr.png',
+            },
         },
         {
             'title': 'Custom styled QR code',
@@ -90,12 +93,21 @@ logger = logging.getLogger(__name__)
                 'data': 'Hello World',
                 'color': '#6366F1',
                 'size': 500,
-                'error_correction': 'H'
-            }
-        }
+                'error_correction': 'H',
+            },
+        },
+        {
+            'title': 'SVG QR code',
+            'title_key': 'modules.image.qrcode_generate.examples.svg.title',
+            'params': {
+                'data': 'https://flyto.dev',
+                'format': 'svg',
+                'border': 2,
+            },
+        },
     ],
     author='Flyto Team',
-    license='MIT'
+    license='MIT',
 )
 async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate QR code image"""
@@ -104,11 +116,6 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
         from qrcode.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, ERROR_CORRECT_H
     except ImportError:
         raise ImportError("qrcode is required. Install with: pip install qrcode[pil]")
-
-    try:
-        from PIL import Image
-    except ImportError:
-        raise ImportError("Pillow is required. Install with: pip install Pillow")
 
     params = context['params']
     data = params['data']
@@ -125,6 +132,11 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     background = _clean(params.get('background'), '#FFFFFF')
     error_correction = _clean(params.get('error_correction'), 'M')
     logo_path = params.get('logo_path')
+    border = params.get('border')
+    border = int(border) if border is not None and border != '' else 4
+    version_param = params.get('version')
+    version = int(version_param) if version_param is not None and version_param != '' else None
+    output_format = _clean(params.get('format'), 'png')
 
     # Map error correction level
     ec_map = {
@@ -135,6 +147,10 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     }
     ec_level = ec_map.get(error_correction, ERROR_CORRECT_M)
 
+    # Adjust output path extension for SVG
+    if output_format == 'svg' and output_path.endswith('.png'):
+        output_path = output_path[:-4] + '.svg'
+
     # Create output directory if needed
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
@@ -142,57 +158,82 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
     # Generate QR code
     qr = qrcode.QRCode(
-        version=1,
+        version=version,
         error_correction=ec_level,
         box_size=10,
-        border=4,
+        border=border,
     )
     qr.add_data(data)
     qr.make(fit=True)
 
-    # Create image
-    img = qr.make_image(fill_color=color, back_color=background)
-
-    # Resize to desired size
-    img = img.resize((size, size), Image.Resampling.LANCZOS)
-
-    # Add logo if provided
-    if logo_path and os.path.exists(logo_path):
-        try:
-            logo = Image.open(logo_path)
-            # Logo should be ~25% of QR code size
-            logo_size = int(size * 0.25)
-            logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
-
-            # Calculate center position
-            logo_pos = ((size - logo_size) // 2, (size - logo_size) // 2)
-
-            # Convert to RGBA if needed
-            if img.mode != 'RGBA':
-                img = img.convert('RGBA')
-
-            # Paste logo
-            if logo.mode == 'RGBA':
-                img.paste(logo, logo_pos, logo)
-            else:
-                img.paste(logo, logo_pos)
-        except Exception as e:
-            logger.warning(f"Could not add logo: {e}")
-
-    # Save image
-    img.save(output_path)
-
-    # Get file size
-    file_size = os.path.getsize(output_path)
-
-    # Generate base64 for inline display
     import base64
     from io import BytesIO
-    buf = BytesIO()
-    img.save(buf, format='PNG')
-    base64_image = base64.b64encode(buf.getvalue()).decode('utf-8')
 
-    logger.info(f"Generated QR code: {output_path} ({size}x{size})")
+    if output_format == 'svg':
+        # SVG output
+        import qrcode.image.svg
+        img = qr.make_image(
+            image_factory=qrcode.image.svg.SvgImage,
+            fill_color=color,
+            back_color=background,
+        )
+        # Save SVG
+        img.save(output_path)
+        file_size = os.path.getsize(output_path)
+
+        # Generate base64 for inline display
+        buf = BytesIO()
+        img.save(buf)
+        svg_data = buf.getvalue()
+        base64_image = base64.b64encode(svg_data).decode('utf-8')
+        data_uri = f'data:image/svg+xml;base64,{base64_image}'
+        mime_type = 'image/svg+xml'
+
+        # SVG dimensions are based on the QR matrix
+        modules_count = qr.modules_count
+        svg_size = (modules_count + border * 2) * 10
+        dimensions = {'width': svg_size, 'height': svg_size}
+    else:
+        # PNG output
+        try:
+            from PIL import Image
+        except ImportError:
+            raise ImportError("Pillow is required. Install with: pip install Pillow")
+
+        img = qr.make_image(fill_color=color, back_color=background)
+
+        # Resize to desired size
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+
+        # Add logo if provided
+        if logo_path and os.path.exists(logo_path):
+            try:
+                logo = Image.open(logo_path)
+                logo_size = int(size * 0.25)
+                logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+                logo_pos = ((size - logo_size) // 2, (size - logo_size) // 2)
+                if img.mode != 'RGBA':
+                    img = img.convert('RGBA')
+                if logo.mode == 'RGBA':
+                    img.paste(logo, logo_pos, logo)
+                else:
+                    img.paste(logo, logo_pos)
+            except Exception as e:
+                logger.warning(f"Could not add logo: {e}")
+
+        # Save image
+        img.save(output_path)
+        file_size = os.path.getsize(output_path)
+
+        # Generate base64 for inline display
+        buf = BytesIO()
+        img.save(buf, format='PNG')
+        base64_image = base64.b64encode(buf.getvalue()).decode('utf-8')
+        data_uri = f'data:image/png;base64,{base64_image}'
+        mime_type = 'image/png'
+        dimensions = {'width': size, 'height': size}
+
+    logger.info(f"Generated QR code: {output_path} ({output_format})")
 
     return {
         'ok': True,
@@ -201,12 +242,10 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
         'title': data[:50],
         'output_path': output_path,
         'file_size': file_size,
-        'dimensions': {
-            'width': size,
-            'height': size
-        },
+        'dimensions': dimensions,
         'data_length': len(data),
+        'format': output_format,
         'base64': base64_image,
-        'data_uri': f'data:image/png;base64,{base64_image}',
-        'message': f'Generated QR code with {len(data)} characters of data'
+        'data_uri': data_uri,
+        'message': f'Generated {output_format.upper()} QR code with {len(data)} characters of data',
     }
