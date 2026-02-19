@@ -1,12 +1,16 @@
 """
-Cloud Storage Integrations
-AWS S3, Google Cloud Storage, Azure Blob Storage
+Cloud Integrations
+AWS S3, Google Workspace, Google Cloud Storage, Azure Blob Storage
 """
 
 from .storage import *
 from .gcs import *
 from .azure import *
+from . import aws
+from . import google
 
 __all__ = [
     # Cloud modules will be auto-discovered by module registry
+    'aws',
+    'google',
 ]

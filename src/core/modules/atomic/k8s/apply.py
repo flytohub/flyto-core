@@ -1,0 +1,221 @@
+"""
+Kubernetes Apply Module
+Apply a Kubernetes manifest (YAML or dict) via kubectl apply
+"""
+
+import asyncio
+import json
+import logging
+import os
+import tempfile
+from typing import Any, Dict
+
+from ...registry import register_module
+from ...schema import compose
+from ...schema.builders import field
+from ...schema.constants import FieldGroup
+from ...errors import ModuleError
+
+logger = logging.getLogger(__name__)
+
+
+def _to_yaml_string(manifest: Any) -> str:
+    """Convert a manifest (dict or string) to a YAML string suitable for kubectl."""
+    if isinstance(manifest, str):
+        return manifest
+
+    if isinstance(manifest, dict):
+        # Try yaml first, fall back to json (kubectl accepts both)
+        try:
+            import yaml
+            return yaml.dump(manifest, default_flow_style=False)
+        except ImportError:
+            return json.dumps(manifest, indent=2)
+
+    raise ModuleError(
+        f'Manifest must be a YAML string or dict, got {type(manifest).__name__}',
+        code='K8S_INVALID_MANIFEST',
+    )
+
+
+def _parse_apply_output(output: str) -> Dict[str, Any]:
+    """Parse the JSON output from kubectl apply to extract action details."""
+    try:
+        data = json.loads(output)
+    except json.JSONDecodeError:
+        # kubectl may return non-JSON on some actions; parse text
+        # e.g. "deployment.apps/nginx configured"
+        action = 'unknown'
+        for keyword in ('created', 'configured', 'unchanged'):
+            if keyword in output.lower():
+                action = keyword
+                break
+        return {
+            'kind': 'Unknown',
+            'name': 'Unknown',
+            'namespace': '',
+            'action': action,
+            'raw': output.strip(),
+        }
+
+    metadata = data.get('metadata', {})
+    kind = data.get('kind', 'Unknown')
+    name = metadata.get('name', 'Unknown')
+    namespace = metadata.get('namespace', '')
+
+    # Determine action from managedFields or annotation
+    action = 'configured'
+    managed = metadata.get('managedFields', [])
+    if managed:
+        last_op = managed[-1].get('operation', '')
+        if last_op == 'Update':
+            action = 'configured'
+        elif last_op == 'Apply':
+            action = 'configured'
+
+    # Check creation timestamp vs last-applied to infer created
+    creation = metadata.get('creationTimestamp', '')
+    resource_version = metadata.get('resourceVersion', '')
+    if resource_version and creation:
+        # If resourceVersion is "1" it's likely just created
+        # This is a heuristic; kubectl annotates differently
+        pass
+
+    return {
+        'kind': kind,
+        'name': name,
+        'namespace': namespace,
+        'action': action,
+    }
+
+
+@register_module(
+    module_id='k8s.apply',
+    version='1.0.0',
+    category='k8s',
+    tags=['kubernetes', 'k8s', 'apply', 'deploy', 'manifest', 'yaml'],
+    label='Apply Manifest',
+    description='Apply a Kubernetes manifest via kubectl apply',
+    icon='Cloud',
+    color='#326CE5',
+    input_types=['string', 'object'],
+    output_types=['object'],
+    can_receive_from=['*'],
+    can_connect_to=['*'],
+    retryable=True,
+    concurrent_safe=True,
+    timeout_ms=60000,
+    params_schema=compose(
+        field('manifest', type='string', label='Manifest',
+              required=True, group=FieldGroup.BASIC,
+              format='multiline',
+              description='Kubernetes manifest as YAML string or JSON object',
+              placeholder='apiVersion: v1\nkind: Pod\n...'),
+        field('namespace', type='string', label='Namespace',
+              group=FieldGroup.OPTIONS,
+              description='Override namespace for the resource (optional)'),
+        field('kubeconfig', type='string', label='Kubeconfig Path',
+              group=FieldGroup.CONNECTION,
+              description='Path to kubeconfig file (uses default if not set)'),
+    ),
+    output_schema={
+        'kind': {
+            'type': 'string',
+            'description': 'Resource kind (e.g. Deployment, Service)',
+        },
+        'name': {
+            'type': 'string',
+            'description': 'Resource name',
+        },
+        'namespace': {
+            'type': 'string',
+            'description': 'Resource namespace',
+        },
+        'action': {
+            'type': 'string',
+            'description': 'Action taken (created, configured, unchanged)',
+        },
+    },
+)
+async def k8s_apply(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Apply a Kubernetes manifest via kubectl apply."""
+    params = context.get('params', {})
+    manifest = params.get('manifest')
+    namespace = params.get('namespace', '')
+    kubeconfig = params.get('kubeconfig', '')
+
+    if not manifest:
+        raise ModuleError('Manifest is required', code='K8S_MISSING_MANIFEST')
+
+    # Convert dict manifest to YAML/JSON string
+    manifest_str = _to_yaml_string(manifest)
+
+    logger.info(f"k8s.apply: applying manifest ({len(manifest_str)} bytes)")
+
+    # Write manifest to a temp file
+    tmp_fd = None
+    tmp_path = None
+    try:
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.yaml', prefix='flyto-k8s-')
+        os.write(tmp_fd, manifest_str.encode('utf-8'))
+        os.close(tmp_fd)
+        tmp_fd = None  # Mark as closed
+
+        cmd = ['kubectl', 'apply', '-f', tmp_path, '--output=json']
+
+        if namespace:
+            cmd.append(f'--namespace={namespace}')
+
+        if kubeconfig:
+            cmd.append(f'--kubeconfig={kubeconfig}')
+
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            process.communicate(),
+            timeout=55,
+        )
+
+        if process.returncode != 0:
+            stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
+            raise ModuleError(
+                f"kubectl apply failed (exit {process.returncode}): {stderr_text}",
+                code='K8S_COMMAND_FAILED',
+            )
+
+        stdout_text = stdout_bytes.decode('utf-8', errors='replace')
+        result = _parse_apply_output(stdout_text)
+
+        return {
+            'ok': True,
+            'data': result,
+        }
+
+    except asyncio.TimeoutError:
+        raise ModuleError(
+            'kubectl apply timed out after 55 seconds',
+            code='K8S_TIMEOUT',
+        )
+    except ModuleError:
+        raise
+    except Exception as exc:
+        raise ModuleError(
+            f'Failed to apply manifest: {exc}',
+            code='K8S_ERROR',
+        )
+    finally:
+        # Clean up temp file
+        if tmp_fd is not None:
+            try:
+                os.close(tmp_fd)
+            except OSError:
+                pass
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
