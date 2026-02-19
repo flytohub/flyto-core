@@ -22,13 +22,14 @@ _registered = False
 _ALL_CATEGORIES = [
     'ai', 'analysis', 'array',
     'browser', 'check', 'communication', 'compare', 'convert', 'crypto',
-    'data', 'database', 'datetime', 'document',
+    'data', 'database', 'datetime', 'dns', 'document',
     'element', 'encode', 'error',
     'file', 'flow', 'format',
+    'git',
     'hash', 'http',
     'image',
     'llm', 'logic',
-    'math', 'meta',
+    'math', 'meta', 'monitor',
     'notification',
     'object',
     'path', 'port', 'process',
@@ -39,7 +40,7 @@ _ALL_CATEGORIES = [
     'validate', 'vector', 'verify', 'vision',
 ]
 
-_OPTIONAL_CATEGORIES = ['huggingface']
+_OPTIONAL_CATEGORIES = ['huggingface', 'ssh']
 
 
 def register_all():
@@ -77,13 +78,14 @@ register_all()
 from . import (  # noqa: F401
     ai, analysis, array,
     browser, check, communication, compare, convert, crypto,
-    data, database, datetime, document,
+    data, database, datetime, dns, document,
     element, encode, error,
     file, flow, format,
+    git,
     hash, http,
     image,
     llm, logic,
-    math, meta,
+    math, meta, monitor,
     notification,
     object,
     path, port, process,

@@ -25,3 +25,19 @@ try:
     from .qrcode_generate import *
 except ImportError:
     pass
+try:
+    from .ocr import *
+except ImportError:
+    pass
+try:
+    from .crop import *
+except ImportError:
+    pass
+try:
+    from .rotate import *
+except ImportError:
+    pass
+try:
+    from .watermark import *
+except ImportError:
+    pass

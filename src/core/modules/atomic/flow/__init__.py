@@ -3,7 +3,7 @@ Flow Control Modules
 
 Provides branching, looping, jump control, parallel execution,
 subflow references, triggers, breakpoints, batch processing,
-and container execution for workflows.
+container execution, and resilience patterns for workflows.
 
 Workflow Spec v1.1 compliant.
 """
@@ -26,6 +26,11 @@ from .error_handle import ErrorHandleModule
 from .error_workflow_trigger import ErrorWorkflowTriggerModule
 from .parallel import ParallelModule
 from .batch import BatchModule
+from .retry import RetryModule
+from .rate_limit import RateLimitModule
+from .circuit_breaker import CircuitBreakerModule
+from .debounce import DebounceModule
+from .throttle import ThrottleModule
 
 __all__ = [
     # Conditional branching
@@ -45,6 +50,13 @@ __all__ = [
     'ParallelModule',
     # Batch processing
     'BatchModule',
+    # Resilience patterns
+    'RetryModule',
+    'RateLimitModule',
+    'CircuitBreakerModule',
+    # Timing control
+    'DebounceModule',
+    'ThrottleModule',
     # Entry/Exit points
     'TriggerModule',
     'StartModule',
