@@ -45,6 +45,7 @@ logs/
 
 # Output
 output/
+!src/core/modules/atomic/output/
 screenshots/
 cache/
 

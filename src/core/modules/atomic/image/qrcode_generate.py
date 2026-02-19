@@ -112,11 +112,18 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
     params = context['params']
     data = params['data']
-    output_path = params.get('output_path') or '/tmp/qrcode.png'
-    size = params.get('size') or 300
-    color = params.get('color') or '#000000'
-    background = params.get('background') or '#FFFFFF'
-    error_correction = params.get('error_correction') or 'M'
+
+    def _clean(val, default):
+        """Return default if value is empty, falsy, or an unresolved variable."""
+        if not val or (isinstance(val, str) and val.startswith('${')):
+            return default
+        return val
+
+    output_path = _clean(params.get('output_path'), '/tmp/qrcode.png')
+    size = _clean(params.get('size'), 300)
+    color = _clean(params.get('color'), '#000000')
+    background = _clean(params.get('background'), '#FFFFFF')
+    error_correction = _clean(params.get('error_correction'), 'M')
     logo_path = params.get('logo_path')
 
     # Map error correction level
@@ -178,10 +185,20 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     # Get file size
     file_size = os.path.getsize(output_path)
 
+    # Generate base64 for inline display
+    import base64
+    from io import BytesIO
+    buf = BytesIO()
+    img.save(buf, format='PNG')
+    base64_image = base64.b64encode(buf.getvalue()).decode('utf-8')
+
     logger.info(f"Generated QR code: {output_path} ({size}x{size})")
 
     return {
         'ok': True,
+        '__display__': True,
+        'type': 'image',
+        'title': data[:50],
         'output_path': output_path,
         'file_size': file_size,
         'dimensions': {
@@ -189,5 +206,7 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
             'height': size
         },
         'data_length': len(data),
+        'base64': base64_image,
+        'data_uri': f'data:image/png;base64,{base64_image}',
         'message': f'Generated QR code with {len(data)} characters of data'
     }
