@@ -112,11 +112,11 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
     params = context['params']
     data = params['data']
-    output_path = params.get('output_path', '/tmp/qrcode.png')
-    size = params.get('size', 300)
-    color = params.get('color', '#000000')
-    background = params.get('background', '#FFFFFF')
-    error_correction = params.get('error_correction', 'M')
+    output_path = params.get('output_path') or '/tmp/qrcode.png'
+    size = params.get('size') or 300
+    color = params.get('color') or '#000000'
+    background = params.get('background') or '#FFFFFF'
+    error_correction = params.get('error_correction') or 'M'
     logo_path = params.get('logo_path')
 
     # Map error correction level

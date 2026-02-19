@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.12.1"
+version = "2.12.2"
 description = "The open-source execution engine for AI agents. 412 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = {text = "Source Available License v1.0"}
@@ -58,11 +58,15 @@ vector = [
     "qdrant-client>=1.7.0",
     "sentence-transformers>=2.2.0",
 ]
+image = [
+    "qrcode[pil]>=7.0",
+    "Pillow>=10.0.0",
+]
 telegram = [
     "python-telegram-bot>=20.0",
 ]
 all = [
-    "flyto-core[browser,api,vector,telegram]",
+    "flyto-core[browser,api,vector,telegram,image]",
 ]
 dev = [
     "pytest>=7.4.0",
