@@ -1,3 +1,9 @@
+# Flyto2 Core - Source Available License
+# Copyright (c) 2025 Flyto2. All Rights Reserved.
+#
+# This source code is licensed under the Flyto2 Source Available License v1.0.
+# Commercial use requires a license. See LICENSE for details.
+
 """
 Browser Wait Module - Wait for a duration or until an element appears
 """

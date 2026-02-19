@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Flyto2 Core - Source Available License
+# Copyright (c) 2025 Flyto2. All Rights Reserved.
+#
+# This source code is licensed under the Flyto2 Source Available License v1.0.
+# Commercial use requires a license. See LICENSE for details.
+
 """
 Flyto2 Core MCP Server — STDIO Transport
 
