@@ -324,7 +324,16 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
                 tool_result = await execute_tool(tool_name, tool_args, context)
                 steps.append({'type': 'tool_result', 'tool': tool_name, 'result': tool_result, 'iteration': iteration + 1})
 
-                messages.append({"role": "assistant", "content": None, "tool_calls": [tool_call]})
+                # Rebuild tool_call in OpenAI's expected format
+                openai_tool_call = {
+                    "id": tool_call.get('id', tool_name),
+                    "type": "function",
+                    "function": {
+                        "name": tool_call['name'],
+                        "arguments": json.dumps(tool_call['arguments'], ensure_ascii=False)
+                    }
+                }
+                messages.append({"role": "assistant", "content": None, "tool_calls": [openai_tool_call]})
                 messages.append({"role": "tool", "tool_call_id": tool_call.get('id', tool_name), "content": json.dumps(tool_result, ensure_ascii=False)})
         else:
             final_response = result.get('response', '')

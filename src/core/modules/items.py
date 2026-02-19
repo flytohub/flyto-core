@@ -349,7 +349,10 @@ def wrap_legacy_result(result: Dict[str, Any]) -> NodeExecutionResult:
     """
     if result.get("ok", True):
         # Success: wrap data as single item
-        data = result.get("data", {})
+        data = result.get("data")
+        if data is None:
+            # No 'data' key — preserve all non-meta fields as data
+            data = {k: v for k, v in result.items() if k not in ('ok', 'error', 'error_code')}
         if isinstance(data, list):
             # Already a list - convert each to Item
             items = [Item.from_value(d) for d in data]

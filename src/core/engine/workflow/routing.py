@@ -47,6 +47,9 @@ class WorkflowRouter:
         # Resource edge index: target_id -> {port_name: [source_ids]}
         self._resource_edges: Dict[str, Dict[str, List[str]]] = {}
 
+        # Set of step IDs that are resource sources (sub-nodes like ai.tool, ai.model)
+        self._resource_source_ids: Set[str] = set()
+
     def build_step_index(self, steps: List[Dict[str, Any]]) -> None:
         """Build index mapping step IDs to their positions."""
         self._step_index = {}
@@ -80,6 +83,7 @@ class WorkflowRouter:
         self._event_routes = {}
         self._step_connections = {}
         self._resource_edges = {}
+        self._resource_source_ids = set()
 
         step_map = self._step_map
 
@@ -102,6 +106,7 @@ class WorkflowRouter:
                         self._resource_edges[target][port_name] = []
                     if source not in self._resource_edges[target][port_name]:
                         self._resource_edges[target][port_name].append(source)
+                    self._resource_source_ids.add(source)
                 continue
 
             if not source or not target:
@@ -329,6 +334,10 @@ class WorkflowRouter:
             e.g. {"model": ["ai_model_1"], "tools": ["tool_1", "tool_2"]}
         """
         return self._resource_edges.get(step_id, {})
+
+    def is_resource_source(self, step_id: str) -> bool:
+        """Check if a step is a resource sub-node (only connects via resource edges)."""
+        return step_id in self._resource_source_ids
 
     def _normalize_handle_to_events(
         self,

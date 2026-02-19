@@ -305,6 +305,12 @@ class WorkflowEngine:
             step_id = step.get('id', f'step_{current_idx}')
             self.current_step = current_idx
 
+            # Skip resource sub-nodes — they are executed on-demand by their parent
+            if self._router.is_resource_source(step_id):
+                logger.debug(f"Skipping resource sub-node '{step_id}' (executed by parent)")
+                current_idx += 1
+                continue
+
             # Handle pause
             await self._handle_pause_check(current_idx, step_id)
 
@@ -520,12 +526,6 @@ class WorkflowEngine:
         for port_name, source_ids in resource_sources.items():
             port_results = []
             for source_id in source_ids:
-                # Check if already executed (result cached in context)
-                if source_id in self.context:
-                    port_results.append(self.context[source_id])
-                    continue
-
-                # Execute the sub-node
                 source_step = self._router._step_map.get(source_id)
                 if not source_step:
                     logger.warning(f"Resource sub-node not found: {source_id}")
@@ -544,10 +544,8 @@ class WorkflowEngine:
                     module_instance = module_class(resolved_params, self.context)
                     result = await module_instance.run()
 
-                    # Cache in context
-                    self.context[source_id] = result
                     port_results.append(result)
-                    logger.info(f"Resource sub-node '{source_id}' ({sub_module_id}) executed")
+                    logger.info(f"Resource sub-node '{source_id}' ({sub_module_id}) executed: {list(result.keys())}")
                 except Exception as e:
                     logger.error(f"Resource sub-node '{source_id}' failed: {e}")
 
