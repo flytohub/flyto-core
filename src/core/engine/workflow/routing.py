@@ -44,6 +44,9 @@ class WorkflowRouter:
         # Step connections: step_id -> {port: [targets]}
         self._step_connections: Dict[str, Dict[str, List[str]]] = {}
 
+        # Resource edge index: target_id -> {port_name: [source_ids]}
+        self._resource_edges: Dict[str, Dict[str, List[str]]] = {}
+
     def build_step_index(self, steps: List[Dict[str, Any]]) -> None:
         """Build index mapping step IDs to their positions."""
         self._step_index = {}
@@ -76,6 +79,7 @@ class WorkflowRouter:
         self._incoming_edges = {}
         self._event_routes = {}
         self._step_connections = {}
+        self._resource_edges = {}
 
         step_map = self._step_map
 
@@ -86,8 +90,18 @@ class WorkflowRouter:
             target = edge.get('target', '')
             edge_type = edge.get('type', edge.get('edge_type', 'data'))  # Default to 'data' for item propagation
 
-            # Only process control/data edges for flow routing (skip resource edges)
+            # Track resource edges separately (for AI Agent sub-nodes)
             if edge_type == 'resource':
+                if target and source:
+                    target_handle = edge.get('targetHandle', '')
+                    # Normalize handle: "target-model" -> "model"
+                    port_name = target_handle.replace('target-', '') if target_handle.startswith('target-') else (target_handle or 'input')
+                    if target not in self._resource_edges:
+                        self._resource_edges[target] = {}
+                    if port_name not in self._resource_edges[target]:
+                        self._resource_edges[target][port_name] = []
+                    if source not in self._resource_edges[target][port_name]:
+                        self._resource_edges[target][port_name].append(source)
                 continue
 
             if not source or not target:
@@ -305,6 +319,16 @@ class WorkflowRouter:
                     result.append(source)
                     seen.add(source)
         return result
+
+    def get_resource_sources(self, step_id: str) -> Dict[str, List[str]]:
+        """
+        Get resource sub-node sources for a step.
+
+        Returns:
+            Dict mapping port name to list of source step IDs
+            e.g. {"model": ["ai_model_1"], "tools": ["tool_1", "tool_2"]}
+        """
+        return self._resource_edges.get(step_id, {})
 
     def _normalize_handle_to_events(
         self,

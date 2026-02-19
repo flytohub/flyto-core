@@ -29,15 +29,26 @@ async def build_tool_definitions(tool_ids: List[str]) -> List[Dict]:
 
     for tool_id in tool_ids:
         try:
-            module_info = registry.get_module(tool_id)
-            if not module_info:
+            metadata = registry.get_metadata(tool_id)
+            if not metadata:
                 logger.warning(f"Tool not found: {tool_id}")
                 continue
 
+            # params_schema can be dict (keyed by param name) or list
+            raw_schema = metadata.get('params_schema', {})
+            if isinstance(raw_schema, dict):
+                params_list = [
+                    {**v, 'name': k}
+                    for k, v in raw_schema.items()
+                    if isinstance(v, dict)
+                ]
+            else:
+                params_list = raw_schema
+
             function_def = {
                 "name": tool_id.replace('.', '_'),
-                "description": module_info.get('description', f'Execute {tool_id}'),
-                "parameters": _schema_to_json_schema(module_info.get('params_schema', []))
+                "description": metadata.get('ui_description') or metadata.get('description', f'Execute {tool_id}'),
+                "parameters": _schema_to_json_schema(params_list)
             }
 
             tools.append({
@@ -102,23 +113,29 @@ async def execute_tool(tool_name: str, arguments: Dict, parent_context: Dict) ->
     module_id = tool_name.replace('_', '.')
 
     registry = get_registry()
-    module_func = registry.get_module_function(module_id)
 
-    if not module_func:
+    if not registry.has(module_id):
         return {
             'ok': False,
             'error': f'Tool not found: {module_id}'
         }
 
     try:
+        module_class = registry.get(module_id)
         tool_context = {
             'params': arguments,
             'variables': parent_context.get('variables', {}),
             'execution_id': parent_context.get('execution_id'),
-            'step_id': f"agent_tool_{tool_name}"
+            'step_id': f"agent_tool_{tool_name}",
         }
 
-        result = await module_func(tool_context)
+        # Pass through browser/page context if available
+        for ctx_key in ('browser', 'page', 'browser_context'):
+            if ctx_key in parent_context:
+                tool_context[ctx_key] = parent_context[ctx_key]
+
+        module_instance = module_class(arguments, tool_context)
+        result = await module_instance.run()
         return result
 
     except Exception as e:

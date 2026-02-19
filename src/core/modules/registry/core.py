@@ -159,6 +159,8 @@ class ModuleRegistry:
         Raises:
             ValueError: If module not found
         """
+        if not cls._initialized:
+            cls.discover_plugins()
         if module_id not in cls._modules:
             raise ValueError(
                 ErrorMessages.format(
@@ -286,6 +288,8 @@ class ModuleRegistry:
         Returns:
             Localized metadata or None if not found
         """
+        if not cls._initialized:
+            cls.discover_plugins()
         metadata = cls._metadata.get(module_id)
         if not metadata:
             return None

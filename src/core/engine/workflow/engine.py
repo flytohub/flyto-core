@@ -476,6 +476,9 @@ class WorkflowEngine:
             if upstream_by_port:
                 step_config['$upstream_by_port'] = upstream_by_port
 
+        # Execute resource sub-nodes (ai.model, ai.memory, ai.tool) and inject into context
+        await self._execute_resource_sub_nodes(step_id)
+
         should_execute = await self._should_execute_step(step_config)
         resolver = self._get_resolver()
 
@@ -498,6 +501,65 @@ class WorkflowEngine:
             })
 
         return result
+
+    async def _execute_resource_sub_nodes(self, step_id: str) -> None:
+        """
+        Execute resource sub-nodes (ai.model, ai.memory, ai.tool) before the main step.
+
+        Resource edges connect sub-nodes (e.g. ai.model -> llm.agent) without
+        affecting control flow. This method executes them and injects their outputs
+        into context['inputs'] so the main step can access them.
+        """
+        resource_sources = self._router.get_resource_sources(step_id)
+        if not resource_sources:
+            return
+
+        from ...modules.registry import ModuleRegistry
+
+        inputs = {}
+        for port_name, source_ids in resource_sources.items():
+            port_results = []
+            for source_id in source_ids:
+                # Check if already executed (result cached in context)
+                if source_id in self.context:
+                    port_results.append(self.context[source_id])
+                    continue
+
+                # Execute the sub-node
+                source_step = self._router._step_map.get(source_id)
+                if not source_step:
+                    logger.warning(f"Resource sub-node not found: {source_id}")
+                    continue
+
+                sub_module_id = source_step.get('module')
+                if not sub_module_id:
+                    continue
+
+                try:
+                    sub_params = source_step.get('params', {})
+                    resolver = self._get_resolver()
+                    resolved_params = resolver.resolve(sub_params)
+
+                    module_class = ModuleRegistry.get(sub_module_id)
+                    module_instance = module_class(resolved_params, self.context)
+                    result = await module_instance.run()
+
+                    # Cache in context
+                    self.context[source_id] = result
+                    port_results.append(result)
+                    logger.info(f"Resource sub-node '{source_id}' ({sub_module_id}) executed")
+                except Exception as e:
+                    logger.error(f"Resource sub-node '{source_id}' failed: {e}")
+
+            # Single result: inject directly; multiple: inject as list
+            if len(port_results) == 1:
+                inputs[port_name] = port_results[0]
+            elif port_results:
+                inputs[port_name] = port_results
+
+        if inputs:
+            self.context['inputs'] = inputs
+            logger.debug(f"Injected resource inputs for {step_id}: {list(inputs.keys())}")
 
     async def _should_execute_step(self, step_config: Dict[str, Any]) -> bool:
         """Check if step should be executed based on 'when' condition."""
