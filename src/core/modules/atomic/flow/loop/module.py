@@ -108,7 +108,8 @@ LOOP_CONFIG = {
             'description_key': 'modules.flow.loop.params.target.description',
             'placeholder': 'step_id',
             'required': False,
-            'deprecated': True
+            'deprecated': True,
+            'hidden': True
         },
         'steps': {
             'type': 'array',
@@ -116,7 +117,8 @@ LOOP_CONFIG = {
             'label_key': 'modules.flow.loop.params.steps.label',
             'description': 'Steps to execute for each iteration (nested mode)',
             'description_key': 'modules.flow.loop.params.steps.description',
-            'required': False
+            'required': False,
+            'hidden': True
         },
         'index_var': {
             'type': 'string',
@@ -231,20 +233,22 @@ FOREACH_CONFIG = {
     'required_permissions': [],
     'params_schema': {
         'items': {
-            'type': 'array',
+            'type': 'string',
             'label': 'Items',
             'label_key': 'modules.flow.foreach.params.items.label',
-            'description': 'List of items to iterate over (supports ${variable} reference)',
+            'description': 'Array to iterate over — use gear icon to reference a previous step output',
             'description_key': 'modules.flow.foreach.params.items.description',
+            'placeholder': '${steps.step_id.result}',
             'required': True
         },
         'steps': {
             'type': 'array',
             'label': 'Steps',
             'label_key': 'modules.flow.foreach.params.steps.label',
-            'description': 'Steps to execute for each item (nested mode only, optional for edge mode)',
+            'description': 'Steps to execute for each item (nested mode only)',
             'description_key': 'modules.flow.foreach.params.steps.description',
-            'required': False  # Not required for edge mode
+            'required': False,
+            'hidden': True
         },
         'item_var': {
             'type': 'string',

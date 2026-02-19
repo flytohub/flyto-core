@@ -339,6 +339,10 @@ class WorkflowRouter:
         """Check if a step is a resource sub-node (only connects via resource edges)."""
         return step_id in self._resource_source_ids
 
+    def has_outgoing_edges(self, step_id: str) -> bool:
+        """Check if a step has outgoing edges (used by loop-back detection)."""
+        return step_id in self._edge_index
+
     def _normalize_handle_to_events(
         self,
         handle_id: str,

@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from ..variable_resolver import VariableResolver
 from ..hooks import ExecutorHooks, NullHooks, HookContext, HookAction
 from ..exceptions import StepTimeoutError, WorkflowExecutionError, StepExecutionError
-from ..flow_control import is_flow_control_module
+from ..flow_control import is_flow_control_module, is_iteration_module
 from ..step_executor import StepExecutor, create_step_executor
 from ..trace import ExecutionTrace, TraceCollector
 from ...constants import WorkflowStatus
@@ -119,6 +119,11 @@ class WorkflowEngine:
 
         # Goto tracking
         self._visited_gotos: Dict[str, int] = {}
+
+        # Loop controller stack for edge-mode foreach/loop iteration.
+        # When a foreach emits 'iterate', its index is pushed here.
+        # Child steps with no outgoing edges route back to the top of the stack.
+        self._loop_stack: List[int] = []
 
         # Inject initial context
         if initial_context:
@@ -439,6 +444,13 @@ class WorkflowEngine:
     ) -> int:
         """Execute a step and handle flow control directives."""
         step_id = step_config.get('id', f'step_{current_idx}')
+        module_id = step_config.get('module', '')
+
+        # Inject __current_step_id so edge_mode.py can create unique
+        # iteration keys per foreach/loop instance
+        if is_iteration_module(module_id):
+            self.context['__current_step_id'] = step_id
+
         result = await self._execute_step(step_config, current_idx)
 
         if result is None:
@@ -450,12 +462,30 @@ class WorkflowEngine:
             if isinstance(set_context, dict):
                 self.context.update(set_context)
 
-        module_id = step_config.get('module', '')
         has_connections = bool(step_config.get('connections'))
 
         # Use router for flow control modules OR steps with explicit connections
         if is_flow_control_module(module_id) or has_connections:
-            return self._router.get_next_step_index(step_id, result, current_idx)
+            next_idx = self._router.get_next_step_index(step_id, result, current_idx)
+
+            # Track iteration loop controllers (foreach/loop) for edge-mode.
+            # When 'iterate' is emitted, push the foreach index so child steps
+            # know to route back here. When 'done', pop it.
+            if isinstance(result, dict) and is_iteration_module(module_id):
+                event = result.get('__event__')
+                if event == 'iterate':
+                    if not self._loop_stack or self._loop_stack[-1] != current_idx:
+                        self._loop_stack.append(current_idx)
+                elif event == 'done':
+                    if self._loop_stack and self._loop_stack[-1] == current_idx:
+                        self._loop_stack.pop()
+
+            return next_idx
+
+        # Non-flow-control step: if inside a loop body with no outgoing
+        # edges, route back to the loop controller for next iteration
+        if self._loop_stack and not self._router.has_outgoing_edges(step_id):
+            return self._loop_stack[-1]
 
         return current_idx + 1
 
