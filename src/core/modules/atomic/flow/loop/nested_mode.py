@@ -43,6 +43,7 @@ async def execute_nested_mode(
     from ....registry import ModuleRegistry
 
     results = []
+    display_items = []
 
     for index, item in enumerate(items):
         # Set loop variables in context
@@ -68,6 +69,10 @@ async def execute_nested_mode(
             module_instance = module_class(resolved_params, loop_context)
             step_result = await module_instance.run()
 
+            # Collect __display__ outputs from sub-steps
+            if isinstance(step_result, dict) and step_result.get('__display__'):
+                display_items.append(step_result)
+
             # Save output to context for next step
             if output_var:
                 loop_context[output_var] = step_result
@@ -79,9 +84,12 @@ async def execute_nested_mode(
             results = step_result
 
     # Return results based on output_mode
+    base = {"status": "success"}
+    if display_items:
+        base["__display_items__"] = display_items
     if output_mode == 'collect':
-        return {"status": "success", "results": results, "count": len(results)}
+        return {**base, "results": results, "count": len(results)}
     elif output_mode == 'last':
-        return {"status": "success", "result": results}
+        return {**base, "result": results}
     else:  # 'none'
-        return {"status": "success"}
+        return base

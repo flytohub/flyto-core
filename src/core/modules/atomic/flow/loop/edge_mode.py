@@ -74,26 +74,28 @@ async def execute_edge_mode(
             'message': f"Loop completed after {current_index} iterations",
             '__set_context': {
                 iteration_key: 0,  # Reset for next execution
-                # Clear loop scope
-                f'loop.{item_var}': None,
-                f'loop.{index_var}': None,
-                'loop.item': None,
-                'loop.index': None,
+                # Clear loop scope (nested structure for VariableResolver)
+                'loop': None,
             }
         }
 
     # Continue iterating - emit 'iterate' event
-    set_context = {
-        iteration_key: current_index + 1,  # Increment for next iteration
-        f'loop.{index_var}': current_index,
-        'loop.index': current_index,
+    # Use nested 'loop' dict so ${loop.item} resolves via VariableResolver
+    loop_scope = {
+        index_var: current_index,
+        'index': current_index,
     }
 
     # ForEach mode: set current item in scope
     if items is not None:
         current_item = items[current_index]
-        set_context[f'loop.{item_var}'] = current_item
-        set_context['loop.item'] = current_item
+        loop_scope[item_var] = current_item
+        loop_scope['item'] = current_item
+
+    set_context = {
+        iteration_key: current_index + 1,  # Increment for next iteration
+        'loop': loop_scope,
+    }
 
     response = {
         '__event__': 'iterate',
