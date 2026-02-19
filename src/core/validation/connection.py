@@ -277,6 +277,9 @@ def _matches_any_pattern(module_id: str, patterns: List[str]) -> bool:
 
 def _types_compatible(output_types: List[str], input_types: List[str]) -> bool:
     """Check if output types are compatible with input types"""
+    # 'control' is a universal flow type — compatible with everything
+    if 'any' in output_types or 'control' in output_types:
+        return True
     # Any common type means compatible
     for out_type in output_types:
         if out_type in input_types:

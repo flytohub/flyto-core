@@ -33,7 +33,7 @@ from ...types import NodeType, EdgeType, DataType
 
     # Type definitions for connection validation
     input_types=['trigger'],
-    output_types=['control'],
+    output_types=['any'],
 
     can_receive_from=[],
     can_connect_to=['*'],    # Workflow Spec v1.1

@@ -135,6 +135,9 @@ class ConnectionIndex:
         # Check type compatibility
         if from_output_types and to_input_types:
             if '*' not in to_input_types and '*' not in from_output_types:
+                # 'control' is a universal flow type (e.g., flow.start outputs control)
+                if 'any' in from_output_types or 'control' in from_output_types:
+                    return True
                 # Check if any output type matches any input type
                 if not any(t in to_input_types for t in from_output_types):
                     if 'any' not in to_input_types:
