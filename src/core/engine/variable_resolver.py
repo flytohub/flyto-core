@@ -184,6 +184,11 @@ class VariableResolver:
             return self.params.get('$index', 0)
 
         # Step outputs (e.g., step_id.field or step_id.field.subfield)
+        # Frontend generates ${steps.step_id.field}, strip the "steps." prefix
+        if var_type == 'steps' and len(parts) >= 2:
+            parts = parts[1:]
+            var_type = parts[0]
+
         # First part is step_id
         step_id = parts[0]
         if step_id in self.context:
