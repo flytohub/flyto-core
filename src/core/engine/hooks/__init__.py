@@ -26,11 +26,17 @@ from .implementations import (
     LoggingHooks,
     MetricsHooks,
 )
+from .metering import (
+    MeteringHook,
+    UsageRecord,
+)
 
 
 def create_hooks(
     logging_enabled: bool = False,
     metrics_enabled: bool = False,
+    metering_enabled: bool = False,
+    metering_callback: Optional[object] = None,
     custom_hooks: Optional[List[ExecutorHooks]] = None,
     log_params: bool = False,
     log_results: bool = False,
@@ -41,6 +47,8 @@ def create_hooks(
     Args:
         logging_enabled: Enable logging hooks
         metrics_enabled: Enable metrics hooks
+        metering_enabled: Enable usage metering hooks (Pro license required)
+        metering_callback: Optional callback for metering records
         custom_hooks: Additional custom hooks
         log_params: Log step parameters (if logging enabled)
         log_results: Log step results (if logging enabled)
@@ -58,6 +66,11 @@ def create_hooks(
 
     if metrics_enabled:
         hooks_list.append(MetricsHooks())
+
+    if metering_enabled:
+        hooks_list.append(MeteringHook(
+            on_record=metering_callback,
+        ))
 
     if custom_hooks:
         hooks_list.extend(custom_hooks)
@@ -83,6 +96,9 @@ __all__ = [
     "CompositeHooks",
     "LoggingHooks",
     "MetricsHooks",
+    # Metering
+    "MeteringHook",
+    "UsageRecord",
     # Factory
     "create_hooks",
 ]
