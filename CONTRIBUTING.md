@@ -465,41 +465,11 @@ Contributors are recognized in:
 
 ## License and Contributor Agreement
 
-### Source Available License
+### Apache 2.0 License
 
-Flyto2 Core is licensed under the **Flyto2 Source Available License v1.0**. This license:
+Flyto2 Core is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE) for complete terms.
 
-- Allows free non-commercial use
-- Requires a commercial license for commercial use
-- See [LICENSE](LICENSE) for complete terms
-
-### Contributor License Agreement (CLA)
-
-By submitting a contribution (pull request, issue, code, documentation, or any other content), you agree to the following:
-
-1. **Original Work**: Your contribution is your original work, or you have the right to submit it.
-
-2. **License Grant**: You grant Flyto2 a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to:
-   - Use, modify, and distribute your contribution
-   - Incorporate your contribution into both open-source and commercial versions of Flyto2 Core
-   - Sublicense your contribution as part of Flyto2 Core
-
-3. **No Compensation**: Unless separately agreed in writing, contributions are provided without expectation of compensation.
-
-4. **Representation**: You represent that you are legally entitled to grant the above license.
-
-5. **Patent Grant**: If your contribution contains any patent claims, you grant Flyto2 a royalty-free license to those patent claims.
-
-### Why a CLA?
-
-This CLA allows Flyto2 to:
-- Maintain a dual-licensing model (open source + commercial)
-- Protect the project from legal issues
-- Ensure all contributions can be used freely
-
-### Your Rights
-
-You retain copyright to your contributions. You can use, modify, and distribute your own contributions however you like.
+By submitting a contribution, you agree that your contribution is licensed under Apache 2.0.
 
 ---
 

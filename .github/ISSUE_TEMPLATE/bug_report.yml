@@ -1,0 +1,74 @@
+name: Bug Report
+description: Report a bug in flyto-core
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+
+  - type: input
+    id: version
+    attributes:
+      label: flyto-core version
+      description: Run `pip show flyto-core` to check
+      placeholder: "2.12.12"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal code or steps to reproduce the issue
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error logs
+      description: Paste any relevant error output
+      render: shell
+
+  - type: dropdown
+    id: module-category
+    attributes:
+      label: Module category (if applicable)
+      options:
+        - N/A
+        - browser
+        - string
+        - array
+        - file
+        - image
+        - api / http
+        - database
+        - notification
+        - other

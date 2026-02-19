@@ -1,8 +1,4 @@
-# Flyto2 Core - Source Available License
-# Copyright (c) 2025 Flyto2. All Rights Reserved.
-#
-# This source code is licensed under the Flyto2 Source Available License v1.0.
-# Commercial use requires a license. See LICENSE for details.
+# Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
 Edge-Based Loop Execution
@@ -107,6 +103,7 @@ async def execute_edge_mode(
             }
         },
         'iteration': current_index,
+        'result': items[current_index] if items is not None else current_index,
         '__set_context': set_context,
     }
 

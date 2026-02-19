@@ -1,7 +1,7 @@
 # Flyto2 Core
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
-[![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
@@ -352,16 +352,7 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ## License
 
-**Source Available License** — Free for non-commercial use.
-
-| Use Case | License Required |
-|----------|-----------------|
-| Personal projects | Free |
-| Education & research | Free |
-| Internal business tools | Free |
-| Commercial products/services | [Commercial License](LICENSE-COMMERCIAL.md) |
-
-See **[LICENSE](LICENSE)** for complete terms. For commercial licensing: licensing@flyto.dev
+[Apache License 2.0](LICENSE) — free for personal and commercial use.
 
 ---
 

@@ -1,0 +1,61 @@
+name: Module Request
+description: Request a new automation module
+title: "[Module]: "
+labels: ["module-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Request a new atomic module for flyto-core. We currently have 412 modules across 40+ categories.
+
+  - type: input
+    id: module-name
+    attributes:
+      label: Suggested module ID
+      description: "Follow the pattern: category.action (e.g. string.slugify, image.watermark)"
+      placeholder: "category.action_name"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What should this module do?
+      description: Describe the input, processing, and expected output
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: How would you use this module in a workflow?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - browser
+        - string
+        - array
+        - file
+        - image
+        - api / http
+        - database
+        - notification
+        - datetime
+        - math
+        - crypto
+        - other / new category
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Would you like to contribute this module?
+      options:
+        - label: I'd like to implement this myself and submit a PR

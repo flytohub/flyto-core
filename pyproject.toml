@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.12.11"
+version = "2.12.12"
 description = "The open-source execution engine for AI agents. 412 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
-license = {text = "Source Available License v1.0"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Flyto2 Team", email = "team@flyto.dev"}
 ]
@@ -17,9 +17,14 @@ maintainers = [
 keywords = [
     "automation",
     "workflow",
-    "atomic-modules",
+    "mcp",
+    "mcp-server",
+    "ai-agents",
+    "browser-automation",
     "web-scraping",
-    "browser-automation"
+    "playwright",
+    "atomic-modules",
+    "workflow-engine",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -30,9 +35,14 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Testing",
     "Topic :: Internet :: WWW/HTTP :: Browsers",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Framework :: AsyncIO",
+    "Framework :: Pydantic :: 2",
+    "License :: OSI Approved :: Apache Software License",
 ]
 requires-python = ">=3.9"
 
