@@ -490,8 +490,6 @@ def QRCODE_VERSION(
     *,
     key: str = "version",
     required: bool = False,
-    min_val: int = 1,
-    max_val: int = 40,
     label: str = "Version",
     label_key: str = "schema.field.qrcode_version",
 ) -> Dict[str, Dict[str, Any]]:
@@ -502,8 +500,7 @@ def QRCODE_VERSION(
         label=label,
         label_key=label_key,
         required=required,
-        min=min_val,
-        max=max_val,
+        placeholder='Auto (1-40)',
         description='QR code version 1-40 (leave empty for auto-detect)',
         group=FieldGroup.OPTIONS,
     )

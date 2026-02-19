@@ -13,7 +13,7 @@ import os
 from typing import Any, Dict
 
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, patch, presets
 
 
 logger = logging.getLogger(__name__)
@@ -49,16 +49,23 @@ logger = logging.getLogger(__name__)
     required_permissions=[],
 
     params_schema=compose(
+        # --- Basic ---
         presets.QRCODE_DATA(),
         presets.IMAGE_OUTPUT_PATH(key='output_path', placeholder='/tmp/qrcode.png'),
-        presets.QRCODE_SIZE(),
-        presets.QRCODE_COLOR(),
-        presets.QRCODE_BACKGROUND(),
-        presets.QRCODE_ERROR_CORRECTION(),
-        presets.QRCODE_LOGO_PATH(),
-        presets.QRCODE_BORDER(),
-        presets.QRCODE_VERSION(),
-        presets.QRCODE_FORMAT(),
+        presets.QRCODE_FORMAT(),         # early: controls conditional visibility below
+        # --- Appearance ---
+        presets.QRCODE_SIZE(),           # slider 100-2000  (hidden when SVG)
+        presets.QRCODE_COLOR(),          # color picker
+        presets.QRCODE_BACKGROUND(),     # color picker
+        presets.QRCODE_ERROR_CORRECTION(),  # select dropdown
+        presets.QRCODE_BORDER(),         # slider 0-20
+        # --- Advanced ---
+        presets.QRCODE_VERSION(),        # number input (empty = auto)
+        presets.QRCODE_LOGO_PATH(),      # path selector (hidden when SVG)
+        # --- Conditional visibility: SVG doesn't support resize or logo ---
+        patch("size", displayOptions={"hide": {"format": ["svg"]}}),
+        patch("logo_path", displayOptions={"hide": {"format": ["svg"]}}),
+        on_conflict="merge",
     ),
     output_schema={
         'output_path': {
@@ -135,7 +142,12 @@ async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     border = params.get('border')
     border = int(border) if border is not None and border != '' else 4
     version_param = params.get('version')
-    version = int(version_param) if version_param is not None and version_param != '' else None
+    try:
+        version = int(version_param) if version_param else None
+        if version is not None and version < 1:
+            version = None
+    except (ValueError, TypeError):
+        version = None
     output_format = _clean(params.get('format'), 'png')
 
     # Map error correction level
