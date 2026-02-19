@@ -6,7 +6,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> Deterministic execution engine for AI agents. 329 modules across 63 categories, MCP-native, evidence snapshots, execution trace, replay from any step.
+> Deterministic execution engine for AI agents. 362 modules across 65 categories, MCP-native, evidence snapshots, execution trace, replay from any step.
 
 ## Quick Start — Use with Your AI (MCP)
 
@@ -97,14 +97,14 @@ Supports [MCP Streamable HTTP transport](https://modelcontextprotocol.io/specifi
 
 </details>
 
-**Done.** Your AI now has 329 tools — browser automation, file I/O, data parsing, APIs, notifications, and more.
+**Done.** Your AI now has 362 tools — browser automation, file I/O, data parsing, crypto, APIs, notifications, and more.
 
 ```
 Claude ──┐
 Cursor ──┤                    ┌─ browser.launch, .click, .extract (38 tools)
 Windsurf ┼── MCP Protocol ──→ ├─ file.read, .write, .copy (8 tools)
-Any AI ──┘                    ├─ data.csv.read, .json.parse, .text.template
-                              └─ ... 329 modules across 63 categories
+Any AI ──┘                    ├─ data.csv.read, .json.parse, .xml.parse, .yaml.parse
+                              └─ ... 362 modules across 65 categories
 ```
 
 See the **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
@@ -157,7 +157,7 @@ AI agents are running multi-step tasks — browsing, calling APIs, moving data. 
 
 Flyto2 Core gives you:
 
-- **329 Modules** — composable building blocks across 63 categories ([full catalog](docs/TOOL_CATALOG.md))
+- **362 Modules** — composable building blocks across 65 categories ([full catalog](docs/TOOL_CATALOG.md))
 - **Execution Trace** — structured record of every step: input, output, timing, status
 - **Evidence Snapshots** — full context_before and context_after at every step boundary
 - **Replay** — re-execute from any step with the original (or modified) context
@@ -167,20 +167,26 @@ Flyto2 Core gives you:
 | Category | Count | Examples |
 |----------|-------|----------|
 | `browser.*` | 38 | launch, goto, click, extract, screenshot, fill forms, wait |
-| `flow.*` | 19 | switch, loop, foreach, branch, parallel, retry |
+| `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit, debounce |
 | `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
 | `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
 | `api.*` | 11 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
 | `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
+| `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
+| `data.*` | 8 | json.parse, json.stringify, xml.parse, xml.generate, yaml.parse, yaml.generate |
 | `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
 | `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
 | `validate.*` | 7 | email, url, json, phone, credit card |
 | `math.*` | 6 | calculate, round, ceil, floor, power, abs |
-| `image.*` | 5 | resize, convert, crop, watermark, compress |
-| `data.*` | 4 | json.parse, json.stringify, text.template, pipeline |
+| `crypto.*` | 4 | AES encrypt/decrypt, JWT create/verify |
 | `pdf.*` | 4 | parse, extract text, merge, compress |
+| `ai.*` | 3 | vision analyze, structured extraction, text embeddings |
+| `git.*` | 3 | clone, commit, diff |
+| `ssh.*` | 3 | remote exec, SFTP upload, SFTP download |
+| `dns.*` | 1 | DNS lookup (A, AAAA, MX, CNAME, TXT, NS) |
+| `monitor.*` | 1 | HTTP health check with SSL cert verification |
 
-**329 modules** across 63 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
+**362 modules** across 65 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
 
 ## YAML Workflows
 
@@ -287,7 +293,7 @@ flyto-core/
 │   ├── mcp_handler.py    # Shared MCP logic (tools, dispatch)
 │   ├── mcp_server.py     # MCP STDIO transport (Claude Code, local)
 │   ├── modules/
-│   │   ├── atomic/       # 329 atomic modules
+│   │   ├── atomic/       # 362 atomic modules
 │   │   ├── composite/    # High-level composite modules
 │   │   ├── patterns/     # Advanced resilience patterns
 │   │   └── third_party/  # External integrations
