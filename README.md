@@ -6,7 +6,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> Deterministic execution engine for AI agents. 362 modules across 65 categories, MCP-native, evidence snapshots, execution trace, replay from any step.
+> Deterministic execution engine for AI agents. 412 modules across 78 categories, MCP-native, evidence snapshots, execution trace, replay from any step.
 
 ## Quick Start — Use with Your AI (MCP)
 
@@ -97,14 +97,14 @@ Supports [MCP Streamable HTTP transport](https://modelcontextprotocol.io/specifi
 
 </details>
 
-**Done.** Your AI now has 362 tools — browser automation, file I/O, data parsing, crypto, APIs, notifications, and more.
+**Done.** Your AI now has 412 tools — browser automation, Docker, file I/O, data parsing, crypto, scheduling, APIs, and more.
 
 ```
 Claude ──┐
 Cursor ──┤                    ┌─ browser.launch, .click, .extract (38 tools)
 Windsurf ┼── MCP Protocol ──→ ├─ file.read, .write, .copy (8 tools)
 Any AI ──┘                    ├─ data.csv.read, .json.parse, .xml.parse, .yaml.parse
-                              └─ ... 362 modules across 65 categories
+                              └─ ... 412 modules across 78 categories
 ```
 
 See the **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
@@ -157,7 +157,7 @@ AI agents are running multi-step tasks — browsing, calling APIs, moving data. 
 
 Flyto2 Core gives you:
 
-- **362 Modules** — composable building blocks across 65 categories ([full catalog](docs/TOOL_CATALOG.md))
+- **412 Modules** — composable building blocks across 78 categories ([full catalog](docs/TOOL_CATALOG.md))
 - **Execution Trace** — structured record of every step: input, output, timing, status
 - **Evidence Snapshots** — full context_before and context_after at every step boundary
 - **Replay** — re-execute from any step with the original (or modified) context
@@ -173,20 +173,33 @@ Flyto2 Core gives you:
 | `api.*` | 11 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
 | `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
 | `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
-| `data.*` | 8 | json.parse, json.stringify, xml.parse, xml.generate, yaml.parse, yaml.generate |
+| `data.*` | 8 | json/xml/yaml/csv parse and generate |
 | `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
 | `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
 | `validate.*` | 7 | email, url, json, phone, credit card |
+| `docker.*` | 6 | run, ps, logs, stop, build, inspect |
+| `archive.*` | 6 | zip create/extract, tar create/extract, gzip, gunzip |
 | `math.*` | 6 | calculate, round, ceil, floor, power, abs |
+| `k8s.*` | 5 | get_pods, apply, logs, scale, describe |
 | `crypto.*` | 4 | AES encrypt/decrypt, JWT create/verify |
+| `network.*` | 4 | ping, traceroute, whois, port scan |
 | `pdf.*` | 4 | parse, extract text, merge, compress |
+| `aws.s3.*` | 4 | upload, download, list, delete |
+| `google.*` | 4 | Gmail send/search, Calendar create/list events |
+| `cache.*` | 4 | get, set, delete, clear (memory + Redis) |
 | `ai.*` | 3 | vision analyze, structured extraction, text embeddings |
+| `env.*` | 3 | get, set, load .env file |
 | `git.*` | 3 | clone, commit, diff |
+| `markdown.*` | 3 | to HTML, parse frontmatter, table of contents |
+| `queue.*` | 3 | enqueue, dequeue, size (memory + Redis) |
+| `sandbox.*` | 3 | execute Python, Shell, JavaScript |
+| `scheduler.*` | 3 | cron parse, interval, delay |
 | `ssh.*` | 3 | remote exec, SFTP upload, SFTP download |
+| `graphql.*` | 2 | query, mutation |
 | `dns.*` | 1 | DNS lookup (A, AAAA, MX, CNAME, TXT, NS) |
 | `monitor.*` | 1 | HTTP health check with SSL cert verification |
 
-**362 modules** across 65 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
+**412 modules** across 78 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
 
 ## YAML Workflows
 
@@ -293,7 +306,7 @@ flyto-core/
 │   ├── mcp_handler.py    # Shared MCP logic (tools, dispatch)
 │   ├── mcp_server.py     # MCP STDIO transport (Claude Code, local)
 │   ├── modules/
-│   │   ├── atomic/       # 362 atomic modules
+│   │   ├── atomic/       # 412 atomic modules
 │   │   ├── composite/    # High-level composite modules
 │   │   ├── patterns/     # Advanced resilience patterns
 │   │   └── third_party/  # External integrations
