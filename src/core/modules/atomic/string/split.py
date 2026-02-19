@@ -91,7 +91,11 @@ async def string_split(context: Dict[str, Any]) -> Dict[str, Any]:
     if text is None:
         raise ValidationError("Missing required parameter: text", field="text")
 
-    parts = str(text).split(delimiter)
+    # Empty delimiter falls back to whitespace splitting (handles \n, \t, spaces)
+    if not delimiter:
+        parts = str(text).split()
+    else:
+        parts = str(text).split(delimiter)
 
     return {
         'ok': True,

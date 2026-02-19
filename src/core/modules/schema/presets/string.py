@@ -92,7 +92,7 @@ def STRING_DELIMITER(
         {"value": ";", "label": "; (Semicolon)"},
         {"value": "\t", "label": "Tab"},
         {"value": " ", "label": "Space"},
-        {"value": "\n", "label": "Newline"},
+        {"value": "\n", "label": "↵ Enter"},
         {"value": "|", "label": "| (Pipe)"},
         {"value": "-", "label": "- (Dash)"},
         {"value": "_", "label": "_ (Underscore)"},
