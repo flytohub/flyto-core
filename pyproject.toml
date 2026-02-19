@@ -9,10 +9,10 @@ description = "The open-source execution engine for AI agents. 300+ atomic modul
 readme = "README.md"
 license = {text = "Source Available License v1.0"}
 authors = [
-    {name = "Flyto Team", email = "team@flyto.dev"}
+    {name = "Flyto2 Team", email = "team@flyto.dev"}
 ]
 maintainers = [
-    {name = "Flyto Team", email = "team@flyto.dev"}
+    {name = "Flyto2 Team", email = "team@flyto.dev"}
 ]
 keywords = [
     "automation",

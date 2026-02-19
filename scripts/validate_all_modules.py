@@ -189,7 +189,7 @@ def format_text_report(report, verbose: bool = False) -> str:
     """Format aggregate report as text."""
     lines = [
         "═" * 70,
-        "Flyto-Core Module Validation Report",
+        "Flyto2 Core Module Validation Report",
         "═" * 70,
         "",
         f"Total Modules:     {report.total_modules}",

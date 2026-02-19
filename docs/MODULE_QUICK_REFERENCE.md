@@ -1,6 +1,6 @@
 # Module Quick Reference
 
-Quick guide for creating compliant Flyto Core modules.
+Quick guide for creating compliant Flyto2 Core modules.
 
 ---
 
@@ -254,7 +254,7 @@ Before submitting a PR, verify:
         'title': 'Parse API response',
         'params': {'json_string': '{"key": "value"}'}
     }],
-    author='Flyto Core Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def json_parse(context):

@@ -48,7 +48,7 @@ class LoginTask:
     def __post_init__(self):
         if self.email_selectors is None:
             self.email_selectors = [
-                # Flyto Cloud 專用
+                # Flyto2 Cloud 專用
                 'input[autocomplete="email"]',
                 # 通用
                 'input[type="email"]',
@@ -58,7 +58,7 @@ class LoginTask:
             ]
         if self.password_selectors is None:
             self.password_selectors = [
-                # Flyto Cloud 專用
+                # Flyto2 Cloud 專用
                 'input[autocomplete="current-password"]',
                 # 通用
                 'input[type="password"]',
@@ -67,7 +67,7 @@ class LoginTask:
             ]
         if self.submit_selectors is None:
             self.submit_selectors = [
-                # Flyto Cloud 專用
+                # Flyto2 Cloud 專用
                 'button.submit-btn',
                 # 通用
                 'button[type="submit"]',

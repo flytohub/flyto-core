@@ -1,7 +1,7 @@
 """
 HTML Analyzer - Stub for OSS version
 
-Full implementation available in Flyto Pro.
+Full implementation available in Flyto2 Pro.
 """
 
 from typing import Any, Dict, List, Optional
@@ -11,7 +11,7 @@ class HTMLAnalyzer:
     """
     HTML content analyzer stub.
 
-    Full implementation in Flyto Pro provides:
+    Full implementation in Flyto2 Pro provides:
     - Readability analysis
     - Form extraction
     - Table extraction
@@ -27,7 +27,7 @@ class HTMLAnalyzer:
         """Analyze content readability (stub)."""
         return {
             "status": "stub",
-            "message": "Readability analysis requires Flyto Pro",
+            "message": "Readability analysis requires Flyto2 Pro",
             "flesch_score": 0,
             "grade_level": "N/A"
         }
@@ -44,7 +44,7 @@ class HTMLAnalyzer:
         """Extract metadata from HTML (stub)."""
         return {
             "status": "stub",
-            "message": "Metadata extraction requires Flyto Pro"
+            "message": "Metadata extraction requires Flyto2 Pro"
         }
 
     def find_patterns(self, pattern: str) -> List[Dict[str, Any]]:
@@ -55,5 +55,5 @@ class HTMLAnalyzer:
         """Analyze HTML structure (stub)."""
         return {
             "status": "stub",
-            "message": "Structure analysis requires Flyto Pro"
+            "message": "Structure analysis requires Flyto2 Pro"
         }

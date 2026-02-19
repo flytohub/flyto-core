@@ -7,7 +7,7 @@
 
 **Status:** Accepted
 **Date:** 2025-12-06
-**Author:** Flyto Core Team
+**Author:** Flyto2 Team
 
 ## Context
 

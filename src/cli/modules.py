@@ -76,7 +76,7 @@ def format_table(data: Dict[str, Any]) -> str:
     lines = []
 
     # Header
-    lines.append(f"{Colors.HEADER}Flyto Modules - {data['environment'].upper()}{Colors.ENDC}")
+    lines.append(f"{Colors.HEADER}Flyto2 Modules - {data['environment'].upper()}{Colors.ENDC}")
     lines.append(f"Version: {data['version']} | Total: {data['total']} modules")
     lines.append("")
 

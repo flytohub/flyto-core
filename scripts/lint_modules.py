@@ -561,7 +561,7 @@ def print_text_report(data: Dict[str, Any], verbose: bool = False) -> None:
 
     print()
     print("=" * 70)
-    print("Flyto-Core Module Validation Report")
+    print("Flyto2 Core Module Validation Report")
     print("=" * 70)
     print()
     print(f"Mode:           {summary['mode']}")

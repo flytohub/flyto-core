@@ -11,7 +11,7 @@ We release patches for security vulnerabilities in the following versions:
 
 ## Reporting a Vulnerability
 
-We take security seriously. If you discover a security vulnerability within Flyto Core, please report it responsibly.
+We take security seriously. If you discover a security vulnerability within Flyto2 Core, please report it responsibly.
 
 ### How to Report
 
@@ -55,7 +55,7 @@ Please include the following information in your report:
 
 ## Security Best Practices
 
-When using Flyto Core, please follow these security best practices:
+When using Flyto2 Core, please follow these security best practices:
 
 ### Environment Variables
 
@@ -202,7 +202,7 @@ When using browser modules:
 
 ### Logging and Secrets
 
-Flyto Core automatically redacts sensitive values in logs. However, be careful when:
+Flyto2 Core automatically redacts sensitive values in logs. However, be careful when:
 
 - Writing custom modules that log parameter values
 - Using the `utility.log` module with sensitive data
@@ -212,7 +212,7 @@ Flyto Core automatically redacts sensitive values in logs. However, be careful w
 
 ### Code Execution
 
-Flyto Core executes workflow definitions. Be aware that:
+Flyto2 Core executes workflow definitions. Be aware that:
 
 - Workflow files should be treated as code
 - Only run workflows from trusted sources
@@ -264,4 +264,4 @@ For general questions:
 
 ---
 
-Thank you for helping keep Flyto Core and its users safe.
+Thank you for helping keep Flyto2 Core and its users safe.

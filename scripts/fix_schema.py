@@ -443,7 +443,7 @@ Examples:
 
     # Header
     print("=" * 70)
-    print("🔧 Flyto Core Schema Fixer")
+    print("🔧 Flyto2 Core Schema Fixer")
     print("=" * 70)
     print(f"📁 Root: {core_root}")
     print(f"🎯 Mode: {'DRY RUN (preview only)' if args.dry_run else 'LIVE (will modify files)'}")

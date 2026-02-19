@@ -98,7 +98,7 @@ def main() -> None:
 
     # Parse command-line arguments
     parser = argparse.ArgumentParser(
-        description='Flyto Workflow Automation Engine',
+        description='Flyto2 Workflow Automation Engine',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

@@ -1,4 +1,4 @@
-# Flyto Core
+# Flyto2 Core
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License: Source Available](https://img.shields.io/badge/License-Source%20Available-blue.svg)](LICENSE)
@@ -151,11 +151,11 @@ python -m core.quickstart
 
 Runs a 5-step data pipeline (file → JSON parse → template → format → export), shows the execution trace, evidence snapshots, and replays from step 3 — all in 30 seconds.
 
-## Why Flyto Core?
+## Why Flyto2 Core?
 
 AI agents are running multi-step tasks — browsing, calling APIs, moving data. But after they finish, all you have is a chat log.
 
-Flyto Core gives you:
+Flyto2 Core gives you:
 
 - **329 Modules** — composable building blocks across 63 categories ([full catalog](docs/TOOL_CATALOG.md))
 - **Execution Trace** — structured record of every step: input, output, timing, status

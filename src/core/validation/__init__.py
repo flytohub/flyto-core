@@ -1,5 +1,5 @@
 """
-Flyto Core Validation API
+Flyto2 Core Validation API
 
 Single Source of Truth for workflow validation.
 Used by flyto-cloud and flyto-pro.

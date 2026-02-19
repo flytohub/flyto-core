@@ -1,5 +1,5 @@
 """
-Flyto Core - YAML Workflow Automation Engine
+Flyto2 Core - YAML Workflow Automation Engine
 
 This package provides the core functionality for executing YAML-based workflows.
 

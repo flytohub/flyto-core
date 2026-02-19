@@ -1,6 +1,6 @@
-# Flyto Core CLI Guide
+# Flyto2 Core CLI Guide
 
-Complete reference for the Flyto Core command-line interface.
+Complete reference for the Flyto2 Core command-line interface.
 
 ---
 
@@ -113,7 +113,7 @@ GITHUB_TOKEN=ghp_xxxxx
 OPENAI_API_KEY=sk-xxxxx
 ```
 
-Flyto Core automatically loads `.env` file if it exists.
+Flyto2 Core automatically loads `.env` file if it exists.
 
 ---
 
@@ -296,7 +296,7 @@ Create service file: `/etc/systemd/system/flyto-core-daily.service`
 
 ```ini
 [Unit]
-Description=Flyto Core Daily Report
+Description=Flyto2 Core Daily Report
 
 [Service]
 Type=oneshot
@@ -310,7 +310,7 @@ Create timer: `/etc/systemd/system/flyto-core-daily.timer`
 
 ```ini
 [Unit]
-Description=Run Flyto Core Daily Report
+Description=Run Flyto2 Core Daily Report
 
 [Timer]
 OnCalendar=daily
@@ -458,7 +458,7 @@ playwright install chromium
 `.github/workflows/workflow.yml`:
 
 ```yaml
-name: Run Flyto Core Workflow
+name: Run Flyto2 Core Workflow
 
 on:
   schedule:

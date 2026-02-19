@@ -1,5 +1,5 @@
 """
-Flyto Core MCP Handler — transport-independent MCP logic.
+Flyto2 Core MCP Handler — transport-independent MCP logic.
 
 Shared by both STDIO transport (mcp_server.py) and HTTP transport (api/routes/mcp.py).
 Contains tool definitions, dispatch, and execution functions.
@@ -35,7 +35,7 @@ SERVER_INFO = {
     },
     "serverInfo": {
         "name": "flyto-core",
-        "title": "Flyto Core Execution Engine",
+        "title": "Flyto2 Core Execution Engine",
         "version": SERVER_VERSION,
     },
 }

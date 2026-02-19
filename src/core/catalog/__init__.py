@@ -1,5 +1,5 @@
 """
-Flyto Core Catalog API
+Flyto2 Core Catalog API
 
 Module catalog for LLM consumption.
 Three-layer structure: Outline -> Category -> Module

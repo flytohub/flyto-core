@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flyto Core - Simple Workflow Runner
+Flyto2 Core - Simple Workflow Runner
 
 Usage:
     python run.py workflow.yaml

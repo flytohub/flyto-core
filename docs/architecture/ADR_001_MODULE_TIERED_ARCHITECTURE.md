@@ -2,7 +2,7 @@
 
 **Status:** Implemented
 **Date:** 2025-12-06 (Updated: 2025-01-24)
-**Author:** Flyto Core Team
+**Author:** Flyto2 Team
 
 ## Context
 

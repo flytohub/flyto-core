@@ -1,6 +1,6 @@
 # Register Module Guide
 
-A beginner-friendly guide to creating your first Flyto Core module using the `@register_module` decorator.
+A beginner-friendly guide to creating your first Flyto2 Core module using the `@register_module` decorator.
 
 ---
 

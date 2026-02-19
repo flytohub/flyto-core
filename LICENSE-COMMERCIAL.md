@@ -1,8 +1,8 @@
-# Flyto Core Commercial License
+# Flyto2 Core Commercial License
 
 ## Overview
 
-This document describes the commercial licensing options for Flyto Core. If you wish to use Flyto Core for commercial purposes, you must obtain a commercial license from Flyto.
+This document describes the commercial licensing options for Flyto2 Core. If you wish to use Flyto2 Core for commercial purposes, you must obtain a commercial license from Flyto2.
 
 ---
 
@@ -26,20 +26,20 @@ You **MUST** obtain a commercial license if you intend to:
 
 | Activity | Requires License |
 |----------|-----------------|
-| Sell software that includes Flyto Core | Yes |
-| Offer Flyto Core as a hosted service (SaaS) | Yes |
-| Offer Flyto Core as part of a PaaS offering | Yes |
-| Include Flyto Core in a commercial product | Yes |
-| Distribute Flyto Core with commercial hardware | Yes |
+| Sell software that includes Flyto2 Core | Yes |
+| Offer Flyto2 Core as a hosted service (SaaS) | Yes |
+| Offer Flyto2 Core as part of a PaaS offering | Yes |
+| Include Flyto2 Core in a commercial product | Yes |
+| Distribute Flyto2 Core with commercial hardware | Yes |
 
 ### 1.2 Service-Based Commercial Activities
 
 | Activity | Requires License |
 |----------|-----------------|
-| Provide paid automation services using Flyto Core | Yes |
-| Offer consulting services where Flyto Core is core deliverable | Yes |
+| Provide paid automation services using Flyto2 Core | Yes |
+| Offer consulting services where Flyto2 Core is core deliverable | Yes |
 | Build and sell workflows/templates for third parties | Yes |
-| Operate a paid workflow marketplace using Flyto Core | Yes |
+| Operate a paid workflow marketplace using Flyto2 Core | Yes |
 
 ### 1.3 Activities That Do NOT Require a Commercial License
 
@@ -49,7 +49,7 @@ You **MUST** obtain a commercial license if you intend to:
 | Academic research | No |
 | Internal business automation (not sold to others) | No |
 | Non-profit organizational use | No |
-| Contributing to Flyto Core development | No |
+| Contributing to Flyto2 Core development | No |
 | Evaluating for potential commercial use (up to 30 days) | No |
 
 ---
@@ -94,7 +94,7 @@ You **MUST** obtain a commercial license if you intend to:
 
 **For embedding in other products**
 
-- Redistribute Flyto Core in your product
+- Redistribute Flyto2 Core in your product
 - White-label options available
 - Volume-based pricing
 - Custom terms negotiable
@@ -138,7 +138,7 @@ Accredited educational institutions may qualify for a 75% discount on all tiers.
 
 Upon purchasing a commercial license, you receive:
 
-- **Use Rights**: Deploy Flyto Core in commercial applications
+- **Use Rights**: Deploy Flyto2 Core in commercial applications
 - **Modification Rights**: Modify the source code for your products
 - **Distribution Rights**: Distribute as part of your commercial offerings
 - **Support Access**: Based on your tier level
@@ -148,10 +148,10 @@ Upon purchasing a commercial license, you receive:
 
 Even with a commercial license, you may NOT:
 
-- **Sublicense**: Grant others the right to use Flyto Core independently
-- **Resell**: Sell Flyto Core licenses to third parties
+- **Sublicense**: Grant others the right to use Flyto2 Core independently
+- **Resell**: Sell Flyto2 Core licenses to third parties
 - **Open Source**: Release your modifications under an open-source license that would conflict with this license
-- **Compete**: Use Flyto Core to create a competing workflow engine product
+- **Compete**: Use Flyto2 Core to create a competing workflow engine product
 - **Transfer**: Transfer your license without written consent
 
 ### 4.3 License Duration
@@ -165,7 +165,7 @@ Even with a commercial license, you may NOT:
 
 ### 4.4 Audit Rights
 
-Flyto reserves the right to audit licensees to verify compliance:
+Flyto2 reserves the right to audit licensees to verify compliance:
 
 - 30 days written notice required
 - Maximum once per year
@@ -177,15 +177,15 @@ Flyto reserves the right to audit licensees to verify compliance:
 
 ## 5. Frequently Asked Questions
 
-### Q1: Can I evaluate Flyto Core before purchasing?
+### Q1: Can I evaluate Flyto2 Core before purchasing?
 
-**A:** Yes. You have a 30-day free evaluation period for commercial purposes. During this time, you may test Flyto Core in a non-production environment to determine if it meets your needs.
+**A:** Yes. You have a 30-day free evaluation period for commercial purposes. During this time, you may test Flyto2 Core in a non-production environment to determine if it meets your needs.
 
 ### Q2: What happens if my company grows beyond the tier limits?
 
 **A:** You must upgrade to the appropriate tier within 90 days of exceeding the limits. We will prorate the difference.
 
-### Q3: Can I use Flyto Core for internal tools?
+### Q3: Can I use Flyto2 Core for internal tools?
 
 **A:** If the tools are purely internal and not sold or offered to third parties, no commercial license is required. However, if you offer these tools as a service to clients, a commercial license is required.
 
@@ -195,11 +195,11 @@ Flyto reserves the right to audit licensees to verify compliance:
 
 ### Q5: What about contractors and consultants?
 
-**A:** Contractors working on your project count toward your developer limit. Consultants offering Flyto Core services need their own license.
+**A:** Contractors working on your project count toward your developer limit. Consultants offering Flyto2 Core services need their own license.
 
 ### Q6: Can I get a refund?
 
-**A:** We offer a 30-day money-back guarantee from the date of purchase, provided you have not deployed Flyto Core in a production commercial environment.
+**A:** We offer a 30-day money-back guarantee from the date of purchase, provided you have not deployed Flyto2 Core in a production commercial environment.
 
 ### Q7: What support do I receive?
 
@@ -312,12 +312,12 @@ Below is a summary of the commercial license agreement terms. The full agreement
 FLYTO CORE COMMERCIAL LICENSE AGREEMENT
 
 1. PARTIES
-   - Licensor: Flyto ("Company")
+   - Licensor: Flyto2 ("Company")
    - Licensee: [Customer Name] ("Customer")
 
 2. GRANT OF LICENSE
    Subject to payment and compliance, Company grants Customer
-   a non-exclusive, non-transferable license to use Flyto Core
+   a non-exclusive, non-transferable license to use Flyto2 Core
    for commercial purposes as specified in the selected tier.
 
 3. PAYMENT TERMS
@@ -350,7 +350,7 @@ FLYTO CORE COMMERCIAL LICENSE AGREEMENT
 
 SIGNATURES:
 _______________________    _______________________
-Flyto                      [Customer]
+Flyto2                     [Customer]
 ```
 
 ---
@@ -408,4 +408,4 @@ We're here to help you find the right licensing solution.
 
 **Version:** 1.0
 
-Copyright (c) 2025 Flyto. All Rights Reserved.
+Copyright (c) 2025 Flyto2. All Rights Reserved.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flyto Core MCP Server — STDIO Transport
+Flyto2 Core MCP Server — STDIO Transport
 
 Thin shell over mcp_handler.py for STDIO-based MCP communication.
 

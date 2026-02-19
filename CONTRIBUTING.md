@@ -1,6 +1,6 @@
-# Contributing to Flyto Core
+# Contributing to Flyto2 Core
 
-Thank you for your interest in contributing to Flyto Core! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to Flyto2 Core! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -467,7 +467,7 @@ Contributors are recognized in:
 
 ### Source Available License
 
-Flyto Core is licensed under the **Flyto Source Available License v1.0**. This license:
+Flyto2 Core is licensed under the **Flyto2 Source Available License v1.0**. This license:
 
 - Allows free non-commercial use
 - Requires a commercial license for commercial use
@@ -479,20 +479,20 @@ By submitting a contribution (pull request, issue, code, documentation, or any o
 
 1. **Original Work**: Your contribution is your original work, or you have the right to submit it.
 
-2. **License Grant**: You grant Flyto a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to:
+2. **License Grant**: You grant Flyto2 a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to:
    - Use, modify, and distribute your contribution
-   - Incorporate your contribution into both open-source and commercial versions of Flyto Core
-   - Sublicense your contribution as part of Flyto Core
+   - Incorporate your contribution into both open-source and commercial versions of Flyto2 Core
+   - Sublicense your contribution as part of Flyto2 Core
 
 3. **No Compensation**: Unless separately agreed in writing, contributions are provided without expectation of compensation.
 
 4. **Representation**: You represent that you are legally entitled to grant the above license.
 
-5. **Patent Grant**: If your contribution contains any patent claims, you grant Flyto a royalty-free license to those patent claims.
+5. **Patent Grant**: If your contribution contains any patent claims, you grant Flyto2 a royalty-free license to those patent claims.
 
 ### Why a CLA?
 
-This CLA allows Flyto to:
+This CLA allows Flyto2 to:
 - Maintain a dual-licensing model (open source + commercial)
 - Protect the project from legal issues
 - Ensure all contributions can be used freely
@@ -507,8 +507,8 @@ You retain copyright to your contributions. You can use, modify, and distribute 
 
 ---
 
-Thank you for contributing to Flyto Core!
+Thank you for contributing to Flyto2 Core!
 
 ---
 
-*Copyright (c) 2025 Flyto. All Rights Reserved.*
+*Copyright (c) 2025 Flyto2. All Rights Reserved.*

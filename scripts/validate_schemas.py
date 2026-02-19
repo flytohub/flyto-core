@@ -144,7 +144,7 @@ def generate_text_report(data: Dict[str, Any]) -> str:
 
     lines = [
         "=" * 70,
-        "Flyto-Core Module Schema Validation Report",
+        "Flyto2 Core Module Schema Validation Report",
         "=" * 70,
         "",
         f"Total Modules:    {summary['total_modules']}",

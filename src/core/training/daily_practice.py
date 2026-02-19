@@ -1,7 +1,7 @@
 """
 Daily Practice Engine - Stub for OSS version
 
-Full implementation available in Flyto Pro.
+Full implementation available in Flyto2 Pro.
 """
 
 from typing import Any, Dict, List, Optional
@@ -11,7 +11,7 @@ class DailyPracticeEngine:
     """
     Daily practice engine stub.
 
-    Full implementation in Flyto Pro provides:
+    Full implementation in Flyto2 Pro provides:
     - Website structure analysis for practice
     - Training execution
     - Schema inference
@@ -25,7 +25,7 @@ class DailyPracticeEngine:
         """Analyze website for practice (stub)."""
         return {
             "status": "stub",
-            "message": "Practice analysis requires Flyto Pro",
+            "message": "Practice analysis requires Flyto2 Pro",
             "url": url
         }
 
@@ -33,7 +33,7 @@ class DailyPracticeEngine:
         """Execute practice session (stub)."""
         return {
             "status": "stub",
-            "message": "Practice execution requires Flyto Pro",
+            "message": "Practice execution requires Flyto2 Pro",
             "practice_id": practice_id
         }
 
@@ -41,14 +41,14 @@ class DailyPracticeEngine:
         """Infer schema from data (stub)."""
         return {
             "status": "stub",
-            "message": "Schema inference requires Flyto Pro"
+            "message": "Schema inference requires Flyto2 Pro"
         }
 
     def get_stats(self) -> Dict[str, Any]:
         """Get training statistics (stub)."""
         return {
             "status": "stub",
-            "message": "Statistics requires Flyto Pro",
+            "message": "Statistics requires Flyto2 Pro",
             "total_sessions": 0,
             "success_rate": 0.0
         }

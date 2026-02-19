@@ -237,7 +237,7 @@ class AggregateReport:
         """Format summary for CLI output."""
         lines = [
             "=" * 60,
-            "Flyto-Core Module Validation Report",
+            "Flyto2 Core Module Validation Report",
             "=" * 60,
             "",
             f"Strict Level:     {self.strict_level.value}",

@@ -284,7 +284,7 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 ## [1.0.0] - 2025-12-04
 
 ### Added
-- Initial release of Flyto Core
+- Initial release of Flyto2 Core
 - YAML workflow automation engine
 - 127+ atomic modules across categories:
   - `string.*` - Text manipulation (8 modules)

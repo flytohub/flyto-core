@@ -919,7 +919,7 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Flyto Module Linter")
+    parser = argparse.ArgumentParser(description="Flyto2 Module Linter")
 
     parser.add_argument(
         "--strict",

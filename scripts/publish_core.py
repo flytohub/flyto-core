@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flyto Core Publishing Script
+Flyto2 Core Publishing Script
 Builds and publishes flyto-core to PyPI
 
 Usage:

@@ -2,7 +2,7 @@
 
 **Version**: 1.0.0
 **Status**: Official Standard
-**Purpose**: Strict guidelines for creating Flyto Core modules to ensure consistency, UI compatibility, and maintainability
+**Purpose**: Strict guidelines for creating Flyto2 Core modules to ensure consistency, UI compatibility, and maintainability
 
 ---
 
@@ -469,7 +469,7 @@ class ModuleValidator:
             'json_string': '{"name": "John", "age": 30}',
         }
     }],
-    author='Flyto Core Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def json_parse(context):
