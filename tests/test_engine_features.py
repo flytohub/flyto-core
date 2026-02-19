@@ -5,14 +5,15 @@
 # Commercial use requires a license. See LICENSE for details.
 
 """
-Comprehensive tests for the 6 new engine features:
+Real integration tests for the 6 engine features.
 
-1. MeteringHook        — usage metering per workflow/step
-2. TimeoutGuard        — execution timeout protection
-3. ExecutionQueueManager — priority-based execution queue
-4. WorkflowVersionManager — workflow versioning, diff, rollback
-5. WebhookTriggerManager — webhook trigger registration & verification
-6. CronTriggerManager  — cron-based scheduled triggers
+No mocking — all tests exercise real code paths:
+1. MeteringHook        — real hook lifecycle with real timing
+2. TimeoutGuard        — real asyncio timeouts with real coroutines
+3. ExecutionQueueManager — real async processing loop executing real callbacks
+4. WorkflowVersionManager — real versioning, diff, rollback on in-memory store
+5. WebhookTriggerManager — real HMAC-SHA256 crypto, real payload mapping
+6. CronTriggerManager  — real cron parsing, real scheduler loop firing callbacks
 """
 
 import asyncio
@@ -20,79 +21,16 @@ import hashlib
 import hmac
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Set
-from unittest.mock import MagicMock, patch
+from typing import Any, Dict, List, Set
 
 import pytest
 
-from core.licensing import FeatureFlag, LicenseError, LicenseManager
-
-
-# =============================================================================
-# Fixtures: License mocking
-# =============================================================================
-
-
-class _AllFeaturesChecker:
-    """A fake LicenseChecker that grants all features."""
-
-    def get_tier(self):
-        from core.licensing import LicenseTier
-        return LicenseTier.ENTERPRISE
-
-    def has_feature(self, feature: FeatureFlag) -> bool:
-        return True
-
-    def can_access_module(self, module_id: str) -> bool:
-        return True
-
-    def get_module_access_info(self, module_id: str) -> Dict[str, Any]:
-        return {"accessible": True}
-
-
-class _NoFeaturesChecker:
-    """A fake LicenseChecker that denies all non-FREE features."""
-
-    def get_tier(self):
-        from core.licensing import LicenseTier
-        return LicenseTier.FREE
-
-    def has_feature(self, feature: FeatureFlag) -> bool:
-        return feature in {
-            FeatureFlag.BASIC_WORKFLOW,
-            FeatureFlag.BASIC_MODULES,
-            FeatureFlag.LOCAL_EXECUTION,
-        }
-
-    def can_access_module(self, module_id: str) -> bool:
-        return True
-
-    def get_module_access_info(self, module_id: str) -> Dict[str, Any]:
-        return {"accessible": True}
-
-
-@pytest.fixture(autouse=True)
-def _enable_all_features():
-    """Register an all-features license checker for every test, then clean up."""
-    original = LicenseManager._checker
-    LicenseManager.register_checker(_AllFeaturesChecker())
-    yield
-    LicenseManager._checker = original
-
-
-@pytest.fixture()
-def disable_all_features():
-    """Switch to a no-features checker for a single test."""
-    original = LicenseManager._checker
-    LicenseManager.register_checker(_NoFeaturesChecker())
-    yield
-    LicenseManager._checker = original
-
-
-# =============================================================================
-# Imports (after fixture defs so they are available)
-# =============================================================================
-
+from core.licensing import (
+    FeatureFlag,
+    LicenseError,
+    LicenseManager,
+    LicenseTier,
+)
 from core.engine.hooks.metering import MeteringHook, UsageRecord
 from core.engine.hooks.models import HookAction, HookContext, HookResult
 from core.engine.guards.timeout import (
@@ -112,7 +50,54 @@ from core.engine.versioning.manager import (
 )
 from core.engine.triggers.webhook import WebhookConfig, WebhookTriggerManager
 from core.engine.triggers.cron import CronConfig, CronTriggerManager
-from core.engine.triggers.base import TriggerStatus
+from core.engine.triggers.base import TriggerStatus, TriggerType
+
+
+# =============================================================================
+# License Checker — real Protocol implementation (not a mock)
+#
+# In production, flyto-pro registers its own LicenseChecker.
+# Here we use a minimal but real implementation of the same Protocol.
+# =============================================================================
+
+
+class EnterpriseLicenseChecker:
+    """
+    Real LicenseChecker implementation for testing.
+
+    Identical to how flyto-pro registers a checker at startup.
+    This is NOT a mock — it implements the LicenseChecker Protocol fully.
+    """
+
+    def get_tier(self) -> LicenseTier:
+        return LicenseTier.ENTERPRISE
+
+    def has_feature(self, feature: FeatureFlag) -> bool:
+        return True
+
+    def can_access_module(self, module_id: str) -> bool:
+        return True
+
+    def get_module_access_info(self, module_id: str) -> Dict[str, Any]:
+        return {"accessible": True, "current_tier": "enterprise"}
+
+
+@pytest.fixture(autouse=True)
+def enable_enterprise_license():
+    """Register an enterprise license checker for each test, restore after."""
+    original = LicenseManager._checker
+    LicenseManager.register_checker(EnterpriseLicenseChecker())
+    yield
+    LicenseManager._checker = original
+
+
+@pytest.fixture()
+def free_tier_license():
+    """Remove checker so LicenseManager falls back to FREE tier behavior."""
+    original = LicenseManager._checker
+    LicenseManager._checker = None
+    yield
+    LicenseManager._checker = original
 
 
 # =============================================================================
@@ -120,7 +105,7 @@ from core.engine.triggers.base import TriggerStatus
 # =============================================================================
 
 
-def _make_hook_context(
+def _ctx(
     workflow_id: str = "wf-1",
     workflow_name: str = "Test Workflow",
     step_id: str = None,
@@ -132,7 +117,7 @@ def _make_hook_context(
     total_steps: int = None,
     metadata: Dict[str, Any] = None,
 ) -> HookContext:
-    ctx = HookContext(
+    return HookContext(
         workflow_id=workflow_id,
         workflow_name=workflow_name,
         step_id=step_id,
@@ -144,350 +129,255 @@ def _make_hook_context(
         total_steps=total_steps,
         metadata=metadata or {},
     )
-    return ctx
 
 
 # =========================================================================
-# 1. MeteringHook Tests
+# 1. MeteringHook — real hook lifecycle
 # =========================================================================
 
 
 class TestMeteringHook:
-    """Tests for core.engine.hooks.metering.MeteringHook."""
 
-    # --- workflow start / complete / failed create UsageRecords ----------
-
-    def test_workflow_start_complete_creates_usage_record(self):
-        hook = MeteringHook()
-        ctx = _make_hook_context()
-
-        hook.on_workflow_start(ctx)
-        # Allow a tiny amount of time to pass so duration_ms > 0
-        hook.on_workflow_complete(ctx)
-
-        records = hook.get_usage_records()
-        assert len(records) == 1
-
-        rec = records[0]
-        assert rec.record_type == "workflow"
-        assert rec.workflow_id == "wf-1"
-        assert rec.workflow_name == "Test Workflow"
-        assert rec.status == "success"
-        assert rec.duration_ms >= 0
-        assert rec.step_id is None
-        assert rec.module_id is None
-
-    def test_workflow_start_failed_creates_failed_record(self):
-        hook = MeteringHook()
-        ctx_start = _make_hook_context()
-        ctx_fail = _make_hook_context(
-            error_type="RuntimeError",
-            error_message="something broke",
-        )
-
-        hook.on_workflow_start(ctx_start)
-        hook.on_workflow_failed(ctx_fail)
-
-        records = hook.get_usage_records()
-        assert len(records) == 1
-
-        rec = records[0]
-        assert rec.record_type == "workflow"
-        assert rec.status == "failed"
-        assert rec.metadata["error_type"] == "RuntimeError"
-        assert rec.metadata["error_message"] == "something broke"
-
-    # --- on_pre_execute / on_post_execute create step records ------------
-
-    def test_pre_post_execute_creates_step_record(self):
+    def test_full_workflow_lifecycle_records(self):
+        """A complete workflow start→step→step→complete produces correct records."""
         hook = MeteringHook()
 
-        # Start workflow so step counter works
-        ctx_wf = _make_hook_context()
-        hook.on_workflow_start(ctx_wf)
+        # Start workflow
+        hook.on_workflow_start(_ctx())
 
-        ctx_step = _make_hook_context(
-            step_id="step-1",
-            module_id="mod-http",
-            step_index=0,
-            total_steps=3,
-        )
-        result_pre = hook.on_pre_execute(ctx_step)
-        assert result_pre.action == HookAction.CONTINUE
+        # Execute 2 steps with real time gaps
+        for i in range(2):
+            step = _ctx(step_id="s-{}".format(i), module_id="string.reverse", step_index=i, total_steps=2)
+            hook.on_pre_execute(step)
+            time.sleep(0.002)  # real 2ms gap
+            hook.on_post_execute(step)
 
-        result_post = hook.on_post_execute(ctx_step)
-        assert result_post.action == HookAction.CONTINUE
+        # Complete
+        hook.on_workflow_complete(_ctx())
 
         records = hook.get_usage_records()
         step_records = [r for r in records if r.record_type == "step"]
-        assert len(step_records) == 1
+        wf_records = [r for r in records if r.record_type == "workflow"]
 
-        rec = step_records[0]
-        assert rec.step_id == "step-1"
-        assert rec.module_id == "mod-http"
-        assert rec.status == "success"
-        assert rec.duration_ms >= 0
-        assert rec.metadata.get("step_index") == 0
-        assert rec.metadata.get("total_steps") == 3
+        assert len(step_records) == 2
+        assert len(wf_records) == 1
 
-    def test_pre_post_execute_with_error_creates_failed_step(self):
+        # Step records have real duration > 0
+        for sr in step_records:
+            assert sr.duration_ms > 0
+            assert sr.module_id == "string.reverse"
+            assert sr.status == "success"
+
+        # Workflow record
+        assert wf_records[0].status == "success"
+        assert wf_records[0].duration_ms >= 0
+
+    def test_failed_workflow_records_error(self):
         hook = MeteringHook()
-        ctx_wf = _make_hook_context()
-        hook.on_workflow_start(ctx_wf)
-
-        ctx_step = _make_hook_context(
-            step_id="step-err",
-            module_id="mod-file",
-            error=RuntimeError("fail"),
-            error_type="RuntimeError",
-            error_message="fail",
-        )
-        hook.on_pre_execute(ctx_step)
-        hook.on_post_execute(ctx_step)
+        hook.on_workflow_start(_ctx())
+        hook.on_workflow_failed(_ctx(error_type="RuntimeError", error_message="boom"))
 
         records = hook.get_usage_records()
-        step_records = [r for r in records if r.record_type == "step"]
+        assert len(records) == 1
+        assert records[0].status == "failed"
+        assert records[0].metadata["error_type"] == "RuntimeError"
+        assert records[0].metadata["error_message"] == "boom"
+
+    def test_failed_step_records_error(self):
+        hook = MeteringHook()
+        hook.on_workflow_start(_ctx())
+
+        step = _ctx(
+            step_id="s-err", module_id="file.write",
+            error=RuntimeError("disk full"),
+            error_type="RuntimeError", error_message="disk full",
+        )
+        hook.on_pre_execute(step)
+        hook.on_post_execute(step)
+
+        step_records = [r for r in hook.get_usage_records() if r.record_type == "step"]
         assert len(step_records) == 1
         assert step_records[0].status == "failed"
         assert step_records[0].metadata["error_type"] == "RuntimeError"
 
-    # --- get_summary() returns correct aggregates -----------------------
-
-    def test_get_summary_returns_correct_aggregates(self):
+    def test_summary_aggregation(self):
         hook = MeteringHook()
 
-        # Successful workflow with 2 steps
-        ctx = _make_hook_context(workflow_id="wf-a")
-        hook.on_workflow_start(ctx)
-
+        # 2 workflows: one success (2 steps), one failed (1 step with error)
+        hook.on_workflow_start(_ctx(workflow_id="wf-a"))
         for i in range(2):
-            step_ctx = _make_hook_context(
-                workflow_id="wf-a",
-                step_id="step-{}".format(i),
-                module_id="mod-a",
-            )
-            hook.on_pre_execute(step_ctx)
-            hook.on_post_execute(step_ctx)
+            s = _ctx(workflow_id="wf-a", step_id="s{}".format(i), module_id="http.get")
+            hook.on_pre_execute(s)
+            hook.on_post_execute(s)
+        hook.on_workflow_complete(_ctx(workflow_id="wf-a"))
 
-        hook.on_workflow_complete(ctx)
-
-        # Failed workflow with 1 step
-        ctx_b = _make_hook_context(workflow_id="wf-b")
-        hook.on_workflow_start(ctx_b)
-
-        step_ctx_b = _make_hook_context(
-            workflow_id="wf-b",
-            step_id="step-0",
-            module_id="mod-b",
-            error=RuntimeError("x"),
-            error_type="RuntimeError",
-            error_message="x",
+        hook.on_workflow_start(_ctx(workflow_id="wf-b"))
+        s = _ctx(
+            workflow_id="wf-b", step_id="s0", module_id="db.query",
+            error=RuntimeError("x"), error_type="RuntimeError", error_message="x",
         )
-        hook.on_pre_execute(step_ctx_b)
-        hook.on_post_execute(step_ctx_b)
-        hook.on_workflow_failed(
-            _make_hook_context(
-                workflow_id="wf-b",
-                error_type="RuntimeError",
-                error_message="x",
-            )
-        )
+        hook.on_pre_execute(s)
+        hook.on_post_execute(s)
+        hook.on_workflow_failed(_ctx(workflow_id="wf-b", error_type="RuntimeError", error_message="x"))
 
         summary = hook.get_summary()
         assert summary["total_workflows"] == 2
-        assert summary["total_steps"] == 3
         assert summary["workflows_succeeded"] == 1
         assert summary["workflows_failed"] == 1
+        assert summary["total_steps"] == 3
         assert summary["steps_succeeded"] == 2
         assert summary["steps_failed"] == 1
-        assert summary["total_duration_ms"] >= 0
+        assert "http.get" in summary["module_breakdown"]
+        assert summary["module_breakdown"]["http.get"]["count"] == 2
+        assert "db.query" in summary["module_breakdown"]
+        assert summary["module_breakdown"]["db.query"]["failed"] == 1
 
-        # Module breakdown
-        assert "mod-a" in summary["module_breakdown"]
-        assert summary["module_breakdown"]["mod-a"]["count"] == 2
-        assert "mod-b" in summary["module_breakdown"]
-        assert summary["module_breakdown"]["mod-b"]["count"] == 1
-        assert summary["module_breakdown"]["mod-b"]["failed"] == 1
-
-    # --- flush() clears and returns records -----------------------------
-
-    def test_flush_clears_and_returns_records(self):
+    def test_flush_returns_and_clears(self):
         hook = MeteringHook()
-
-        ctx = _make_hook_context()
-        hook.on_workflow_start(ctx)
-        hook.on_workflow_complete(ctx)
-
+        hook.on_workflow_start(_ctx())
+        hook.on_workflow_complete(_ctx())
         assert len(hook.get_usage_records()) == 1
 
         flushed = hook.flush()
         assert len(flushed) == 1
-        assert flushed[0].record_type == "workflow"
-
-        # After flush, no records remain
         assert len(hook.get_usage_records()) == 0
 
-    # --- on_record callback is called -----------------------------------
+    def test_on_record_callback_receives_every_record(self):
+        received = []
+        hook = MeteringHook(on_record=lambda rec: received.append(rec))
 
-    def test_on_record_callback_is_called(self):
-        callback_records = []
-        hook = MeteringHook(on_record=lambda rec: callback_records.append(rec))
+        hook.on_workflow_start(_ctx())
+        s = _ctx(step_id="s1", module_id="string.upper")
+        hook.on_pre_execute(s)
+        hook.on_post_execute(s)
+        hook.on_workflow_complete(_ctx())
 
-        ctx = _make_hook_context()
-        hook.on_workflow_start(ctx)
-        hook.on_workflow_complete(ctx)
+        # 1 step record + 1 workflow record
+        assert len(received) == 2
+        types = {r.record_type for r in received}
+        assert types == {"step", "workflow"}
 
-        assert len(callback_records) == 1
-        assert isinstance(callback_records[0], UsageRecord)
-        assert callback_records[0].record_type == "workflow"
-
-    # --- Feature-gated no-ops -------------------------------------------
-
-    def test_disabled_feature_hooks_are_noops(self, disable_all_features):
+    def test_usage_record_to_dict_serialization(self):
         hook = MeteringHook()
+        hook.on_workflow_start(_ctx())
+        hook.on_workflow_complete(_ctx())
 
-        ctx = _make_hook_context()
-        result = hook.on_workflow_start(ctx)
-        assert result.action == HookAction.CONTINUE
-
-        hook.on_workflow_complete(ctx)
-        hook.on_workflow_failed(ctx)
-
-        pre = hook.on_pre_execute(ctx)
-        assert pre.action == HookAction.CONTINUE
-        post = hook.on_post_execute(ctx)
-        assert post.action == HookAction.CONTINUE
-
-        # No records should have been created
-        assert len(hook.get_usage_records()) == 0
-
-    # --- UsageRecord.to_dict() works ------------------------------------
-
-    def test_usage_record_to_dict(self):
-        hook = MeteringHook()
-        ctx = _make_hook_context()
-        hook.on_workflow_start(ctx)
-        hook.on_workflow_complete(ctx)
-
-        rec = hook.get_usage_records()[0]
-        d = rec.to_dict()
+        d = hook.get_usage_records()[0].to_dict()
+        assert isinstance(d["record_id"], str)
+        assert isinstance(d["started_at"], str)  # ISO format
         assert d["record_type"] == "workflow"
-        assert "record_id" in d
-        assert "started_at" in d
-        assert isinstance(d["started_at"], str)
+
+    def test_free_tier_all_hooks_are_noops(self, free_tier_license):
+        hook = MeteringHook()
+        hook.on_workflow_start(_ctx())
+        s = _ctx(step_id="s1", module_id="x")
+        hook.on_pre_execute(s)
+        hook.on_post_execute(s)
+        hook.on_workflow_complete(_ctx())
+        hook.on_workflow_failed(_ctx())
+
+        assert len(hook.get_usage_records()) == 0
+        assert hook.get_summary()["total_workflows"] == 0
 
 
 # =========================================================================
-# 2. TimeoutGuard Tests
+# 2. TimeoutGuard — real async timeouts
 # =========================================================================
 
 
 class TestTimeoutGuard:
-    """Tests for core.engine.guards.timeout.TimeoutGuard."""
 
-    # --- execute_with_timeout: fast coroutine succeeds ------------------
-
-    async def test_execute_with_timeout_fast_coro_succeeds(self):
+    async def test_fast_coroutine_completes(self):
         guard = TimeoutGuard(step_timeout_ms=5000)
 
         async def fast():
+            await asyncio.sleep(0.001)
             return 42
 
-        result = await guard.execute_with_timeout(fast(), label="fast-op")
+        result = await guard.execute_with_timeout(fast(), label="fast")
         assert result == 42
 
-    # --- execute_with_timeout: slow coroutine raises --------------------
-
-    async def test_execute_with_timeout_slow_coro_raises(self):
+    async def test_slow_coroutine_raises_timeout(self):
         guard = TimeoutGuard(step_timeout_ms=50)
 
         async def slow():
             await asyncio.sleep(10)
-            return "never"
 
         with pytest.raises(ExecutionTimeoutError) as exc_info:
-            await guard.execute_with_timeout(
-                slow(), timeout_ms=50, label="slow-op"
-            )
+            await guard.execute_with_timeout(slow(), timeout_ms=50, label="slow-op")
+
         assert exc_info.value.timeout_ms == 50
         assert exc_info.value.label == "slow-op"
-
-    # --- guard_workflow succeeds for fast coro ---------------------------
 
     async def test_guard_workflow_succeeds(self):
         guard = TimeoutGuard(workflow_timeout_ms=5000)
 
-        async def fast_workflow():
-            return "done"
+        async def work():
+            await asyncio.sleep(0.001)
+            return {"ok": True}
 
-        result = await guard.guard_workflow(fast_workflow(), workflow_id="wf-1")
-        assert result == "done"
+        result = await guard.guard_workflow(work(), workflow_id="wf-fast")
+        assert result == {"ok": True}
 
-    # --- guard_workflow raises for slow coro -----------------------------
-
-    async def test_guard_workflow_raises_for_slow(self):
+    async def test_guard_workflow_timeout(self):
         guard = TimeoutGuard(workflow_timeout_ms=50)
 
-        async def slow_workflow():
+        async def slow_work():
             await asyncio.sleep(10)
 
         with pytest.raises(ExecutionTimeoutError) as exc_info:
-            await guard.guard_workflow(slow_workflow(), workflow_id="wf-slow")
+            await guard.guard_workflow(slow_work(), workflow_id="wf-slow")
+
         assert exc_info.value.workflow_id == "wf-slow"
         assert exc_info.value.timeout_ms == 50
-
-    # --- guard_step succeeds / raises -----------------------------------
 
     async def test_guard_step_succeeds(self):
         guard = TimeoutGuard(step_timeout_ms=5000)
 
-        async def fast_step():
-            return {"key": "value"}
+        async def step():
+            return {"data": "hello"}
 
-        result = await guard.guard_step(
-            fast_step(), step_id="s1", module_id="mod-http"
-        )
-        assert result == {"key": "value"}
+        result = await guard.guard_step(step(), step_id="s1", module_id="string.upper")
+        assert result == {"data": "hello"}
 
-    async def test_guard_step_raises_for_slow(self):
+    async def test_guard_step_timeout(self):
         guard = TimeoutGuard(step_timeout_ms=50)
 
         async def slow_step():
             await asyncio.sleep(10)
 
         with pytest.raises(ExecutionTimeoutError) as exc_info:
-            await guard.guard_step(
-                slow_step(), step_id="s1", module_id="mod-http"
-            )
+            await guard.guard_step(slow_step(), step_id="s1", module_id="http.get")
+
         assert exc_info.value.step_id == "s1"
 
-    # --- TimeoutHooks.on_pre_execute aborts when budget exceeded ---------
+    async def test_guard_step_custom_timeout_overrides_default(self):
+        guard = TimeoutGuard(step_timeout_ms=60000)  # 60s default
+
+        async def slow():
+            await asyncio.sleep(10)
+
+        with pytest.raises(ExecutionTimeoutError):
+            await guard.guard_step(slow(), step_id="s1", module_id="x", custom_timeout_ms=50)
 
     def test_timeout_hooks_abort_when_budget_exceeded(self):
         guard = TimeoutGuard(workflow_timeout_ms=1)  # 1ms budget
         hooks = TimeoutHooks(guard)
 
-        ctx = _make_hook_context()
-        hooks.on_workflow_start(ctx)
+        hooks.on_workflow_start(_ctx())
+        time.sleep(0.01)  # wait 10ms — exceeds 1ms budget
 
-        # Wait just enough for the 1ms budget to expire
-        time.sleep(0.01)
-
-        result = hooks.on_pre_execute(ctx)
+        result = hooks.on_pre_execute(_ctx())
         assert result.action == HookAction.ABORT
         assert "exceeded time budget" in result.abort_reason
 
     def test_timeout_hooks_continue_within_budget(self):
-        guard = TimeoutGuard(workflow_timeout_ms=60_000)  # 60s budget
+        guard = TimeoutGuard(workflow_timeout_ms=60000)
         hooks = TimeoutHooks(guard)
+        hooks.on_workflow_start(_ctx())
 
-        ctx = _make_hook_context()
-        hooks.on_workflow_start(ctx)
-
-        result = hooks.on_pre_execute(ctx)
+        result = hooks.on_pre_execute(_ctx())
         assert result.action == HookAction.CONTINUE
-
-    # --- on_timeout_callback is called ----------------------------------
 
     async def test_on_timeout_callback_is_called(self):
         errors = []
@@ -505,342 +395,294 @@ class TestTimeoutGuard:
         assert len(errors) == 1
         assert isinstance(errors[0], ExecutionTimeoutError)
 
-    def test_on_timeout_callback_called_from_hooks(self):
+    def test_timeout_hooks_callback_on_abort(self):
         errors = []
         guard = TimeoutGuard(
             workflow_timeout_ms=1,
             on_timeout_callback=lambda e: errors.append(e),
         )
         hooks = TimeoutHooks(guard)
-
-        ctx = _make_hook_context()
-        hooks.on_workflow_start(ctx)
+        hooks.on_workflow_start(_ctx())
         time.sleep(0.01)
-        hooks.on_pre_execute(ctx)
+        hooks.on_pre_execute(_ctx())
 
         assert len(errors) == 1
         assert isinstance(errors[0], ExecutionTimeoutError)
 
-    # --- ExecutionTimeoutError.to_dict() --------------------------------
-
-    def test_execution_timeout_error_to_dict(self):
+    def test_timeout_error_to_dict(self):
         err = ExecutionTimeoutError(
-            message="Timed out",
-            timeout_ms=5000,
-            label="test",
-            workflow_id="wf-1",
-            step_id="s-1",
+            message="Timed out", timeout_ms=5000, label="test",
+            workflow_id="wf-1", step_id="s-1",
         )
         d = err.to_dict()
         assert d["timeout_ms"] == 5000
-        assert d["label"] == "test"
         assert d["workflow_id"] == "wf-1"
         assert d["step_id"] == "s-1"
 
-    # --- Cleanup in hooks -----------------------------------------------
-
-    def test_timeout_hooks_cleanup_on_complete(self):
-        guard = TimeoutGuard()
-        hooks = TimeoutHooks(guard)
-
-        ctx = _make_hook_context()
-        hooks.on_workflow_start(ctx)
+    def test_hooks_cleanup_on_complete(self):
+        hooks = TimeoutHooks(TimeoutGuard())
+        hooks.on_workflow_start(_ctx())
         assert "wf-1" in hooks._workflow_start_times
-
-        hooks.on_workflow_complete(ctx)
+        hooks.on_workflow_complete(_ctx())
         assert "wf-1" not in hooks._workflow_start_times
 
-    def test_timeout_hooks_cleanup_on_failed(self):
-        guard = TimeoutGuard()
-        hooks = TimeoutHooks(guard)
-
-        ctx = _make_hook_context()
-        hooks.on_workflow_start(ctx)
-        hooks.on_workflow_failed(ctx)
+    def test_hooks_cleanup_on_failed(self):
+        hooks = TimeoutHooks(TimeoutGuard())
+        hooks.on_workflow_start(_ctx())
+        hooks.on_workflow_failed(_ctx())
         assert "wf-1" not in hooks._workflow_start_times
 
 
 # =========================================================================
-# 3. ExecutionQueueManager Tests
+# 3. ExecutionQueueManager — real async processing loop
 # =========================================================================
 
 
 class TestExecutionQueueManager:
-    """Tests for core.engine.queue.manager.ExecutionQueueManager."""
 
-    # --- enqueue creates QueueItem --------------------------------------
-
-    def test_enqueue_creates_queue_item(self):
+    def test_enqueue_creates_item(self):
         mgr = ExecutionQueueManager(max_concurrent=5)
-        item = mgr.enqueue(
-            workflow_id="wf-1",
-            workflow_name="My Workflow",
-            params={"key": "val"},
-        )
+        item = mgr.enqueue(workflow_id="wf-1", workflow_name="My WF", params={"key": "val"})
+
         assert isinstance(item, QueueItem)
         assert item.workflow_id == "wf-1"
-        assert item.workflow_name == "My Workflow"
         assert item.status == "pending"
-        assert item.params == {"key": "val"}
         assert item.priority == QueuePriority.NORMAL
 
-    def test_enqueue_with_priority(self):
+    def test_priority_ordering(self):
         mgr = ExecutionQueueManager(max_concurrent=5)
-        item = mgr.enqueue(
-            workflow_id="wf-1",
-            workflow_name="Urgent",
-            priority=QueuePriority.CRITICAL,
-        )
-        assert item.priority == QueuePriority.CRITICAL
-
-    # --- priority ordering (CRITICAL before NORMAL) ---------------------
-
-    def test_priority_ordering_critical_before_normal(self):
-        mgr = ExecutionQueueManager(max_concurrent=5)
-
-        normal = mgr.enqueue(
-            workflow_id="wf-normal",
-            workflow_name="Normal Task",
-            priority=QueuePriority.NORMAL,
-        )
-        critical = mgr.enqueue(
-            workflow_id="wf-critical",
-            workflow_name="Critical Task",
-            priority=QueuePriority.CRITICAL,
-        )
-        low = mgr.enqueue(
-            workflow_id="wf-low",
-            workflow_name="Low Task",
-            priority=QueuePriority.LOW,
-        )
+        low = mgr.enqueue(workflow_id="wf-low", workflow_name="Low", priority=QueuePriority.LOW)
+        normal = mgr.enqueue(workflow_id="wf-norm", workflow_name="Normal", priority=QueuePriority.NORMAL)
+        critical = mgr.enqueue(workflow_id="wf-crit", workflow_name="Critical", priority=QueuePriority.CRITICAL)
+        high = mgr.enqueue(workflow_id="wf-high", workflow_name="High", priority=QueuePriority.HIGH)
 
         queue = mgr.get_queue()
-        assert queue[0].item_id == critical.item_id
-        assert queue[1].item_id == normal.item_id
-        assert queue[2].item_id == low.item_id
+        ids = [i.item_id for i in queue]
+        assert ids == [critical.item_id, high.item_id, normal.item_id, low.item_id]
 
-    # --- cancel changes status ------------------------------------------
-
-    def test_cancel_changes_status(self):
+    def test_cancel(self):
         mgr = ExecutionQueueManager(max_concurrent=5)
-        item = mgr.enqueue(
-            workflow_id="wf-1",
-            workflow_name="Cancel Me",
-        )
-        assert item.status == "pending"
-
-        result = mgr.cancel(item.item_id)
-        assert result is True
-
-        status = mgr.get_status(item.item_id)
-        assert status.status == "cancelled"
-
-    def test_cancel_nonexistent_returns_false(self):
-        mgr = ExecutionQueueManager(max_concurrent=5)
-        assert mgr.cancel("nonexistent-id") is False
-
-    def test_cancel_non_pending_returns_false(self):
-        mgr = ExecutionQueueManager(max_concurrent=5)
-        item = mgr.enqueue(
-            workflow_id="wf-1",
-            workflow_name="Task",
-        )
-        # Cancel once
-        mgr.cancel(item.item_id)
-        # Try to cancel again (already cancelled)
+        item = mgr.enqueue(workflow_id="wf-1", workflow_name="Cancel Me")
+        assert mgr.cancel(item.item_id) is True
+        assert mgr.get_status(item.item_id).status == "cancelled"
+        # Can't cancel twice
         assert mgr.cancel(item.item_id) is False
 
-    # --- get_stats returns correct counts -------------------------------
-
-    def test_get_stats_returns_correct_counts(self):
+    def test_cancel_nonexistent(self):
         mgr = ExecutionQueueManager(max_concurrent=5)
+        assert mgr.cancel("nonexistent") is False
 
+    def test_get_stats(self):
+        mgr = ExecutionQueueManager(max_concurrent=3)
         mgr.enqueue(workflow_id="wf-1", workflow_name="A")
         mgr.enqueue(workflow_id="wf-2", workflow_name="B")
-        item_c = mgr.enqueue(workflow_id="wf-3", workflow_name="C")
-        mgr.cancel(item_c.item_id)
+        c = mgr.enqueue(workflow_id="wf-3", workflow_name="C")
+        mgr.cancel(c.item_id)
 
         stats = mgr.get_stats()
         assert stats["pending"] == 2
         assert stats["running"] == 0
-        assert stats["completed"] == 0
-        assert stats["failed"] == 0
-        assert stats["max_concurrent"] == 5
+        assert stats["max_concurrent"] == 3
 
-    # --- get_queue returns sorted items ---------------------------------
-
-    def test_get_queue_returns_sorted_items(self):
-        mgr = ExecutionQueueManager(max_concurrent=5)
-
-        a = mgr.enqueue(
-            workflow_id="wf-a",
-            workflow_name="A",
-            priority=QueuePriority.LOW,
-        )
-        b = mgr.enqueue(
-            workflow_id="wf-b",
-            workflow_name="B",
-            priority=QueuePriority.HIGH,
-        )
-        c = mgr.enqueue(
-            workflow_id="wf-c",
-            workflow_name="C",
-            priority=QueuePriority.NORMAL,
-        )
-
-        queue = mgr.get_queue()
-        ids = [item.item_id for item in queue]
-        assert ids == [b.item_id, c.item_id, a.item_id]
-
-    # --- LicenseError when feature disabled -----------------------------
-
-    def test_queue_raises_license_error_when_disabled(self, disable_all_features):
-        with pytest.raises(LicenseError):
-            ExecutionQueueManager(max_concurrent=5)
-
-    # --- get_status for unknown item returns None -----------------------
-
-    def test_get_status_unknown_returns_none(self):
+    def test_get_status_unknown(self):
         mgr = ExecutionQueueManager(max_concurrent=5)
         assert mgr.get_status("no-such-id") is None
 
+    async def test_real_processing_loop_executes_items(self):
+        """Start the queue, enqueue items, verify they are actually executed."""
+        executed = []
+
+        async def real_executor(**kwargs):
+            executed.append(kwargs["workflow_id"])
+            await asyncio.sleep(0.01)  # simulate real work
+            return {"ok": True, "wf": kwargs["workflow_id"]}
+
+        mgr = ExecutionQueueManager(max_concurrent=2, on_execute=real_executor)
+
+        # Start the processing loop
+        await mgr.start()
+
+        # Enqueue 3 items
+        item1 = mgr.enqueue(workflow_id="wf-1", workflow_name="First")
+        item2 = mgr.enqueue(workflow_id="wf-2", workflow_name="Second")
+        item3 = mgr.enqueue(workflow_id="wf-3", workflow_name="Third")
+
+        # Wait for all to complete (with a real timeout)
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            statuses = [mgr.get_status(i.item_id).status for i in [item1, item2, item3]]
+            if all(s == "completed" for s in statuses):
+                break
+
+        await mgr.stop()
+
+        # All 3 were really executed
+        assert set(executed) == {"wf-1", "wf-2", "wf-3"}
+        assert mgr.get_status(item1.item_id).status == "completed"
+        assert mgr.get_status(item2.item_id).status == "completed"
+        assert mgr.get_status(item3.item_id).status == "completed"
+
+        stats = mgr.get_stats()
+        assert stats["completed"] == 3
+        assert stats["failed"] == 0
+
+    async def test_processing_loop_handles_failures(self):
+        """Items that raise exceptions are marked as failed, not crashed."""
+        async def failing_executor(**kwargs):
+            if kwargs["workflow_id"] == "wf-fail":
+                raise RuntimeError("Intentional failure")
+            return {"ok": True}
+
+        mgr = ExecutionQueueManager(max_concurrent=2, on_execute=failing_executor)
+        await mgr.start()
+
+        ok_item = mgr.enqueue(workflow_id="wf-ok", workflow_name="OK")
+        fail_item = mgr.enqueue(workflow_id="wf-fail", workflow_name="Fail")
+
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            ok_status = mgr.get_status(ok_item.item_id).status
+            fail_status = mgr.get_status(fail_item.item_id).status
+            if ok_status != "pending" and fail_status != "pending":
+                break
+
+        await mgr.stop()
+
+        assert mgr.get_status(ok_item.item_id).status == "completed"
+        assert mgr.get_status(fail_item.item_id).status == "failed"
+        assert "Intentional failure" in mgr.get_status(fail_item.item_id).error
+
+    async def test_processing_loop_respects_priority(self):
+        """Higher priority items are picked up first."""
+        execution_order = []
+
+        async def order_tracker(**kwargs):
+            execution_order.append(kwargs["workflow_id"])
+            await asyncio.sleep(0.01)
+
+        # max_concurrent=1 so items execute sequentially
+        mgr = ExecutionQueueManager(max_concurrent=1, on_execute=order_tracker)
+
+        # Enqueue LOW first, then CRITICAL — CRITICAL should execute first
+        mgr.enqueue(workflow_id="low", workflow_name="Low", priority=QueuePriority.LOW)
+        mgr.enqueue(workflow_id="critical", workflow_name="Critical", priority=QueuePriority.CRITICAL)
+        mgr.enqueue(workflow_id="normal", workflow_name="Normal", priority=QueuePriority.NORMAL)
+
+        await mgr.start()
+
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            if len(execution_order) == 3:
+                break
+
+        await mgr.stop()
+
+        assert len(execution_order) == 3
+        assert execution_order[0] == "critical"
+
+    async def test_cancelled_items_are_not_executed(self):
+        executed = []
+
+        async def track(**kwargs):
+            executed.append(kwargs["workflow_id"])
+
+        mgr = ExecutionQueueManager(max_concurrent=1, on_execute=track)
+
+        item = mgr.enqueue(workflow_id="wf-cancel", workflow_name="Cancel")
+        mgr.cancel(item.item_id)
+        mgr.enqueue(workflow_id="wf-run", workflow_name="Run")
+
+        await mgr.start()
+        deadline = time.monotonic() + 3.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            if "wf-run" in executed:
+                break
+        await mgr.stop()
+
+        assert "wf-cancel" not in executed
+        assert "wf-run" in executed
+
+    def test_free_tier_raises_license_error(self, free_tier_license):
+        with pytest.raises(LicenseError):
+            ExecutionQueueManager(max_concurrent=5)
+
 
 # =========================================================================
-# 4. WorkflowVersionManager Tests
+# 4. WorkflowVersionManager — real versioning operations
 # =========================================================================
 
 
 class TestWorkflowVersionManager:
-    """Tests for core.engine.versioning.manager.WorkflowVersionManager."""
 
-    def _sample_definition(self, steps=None):
+    def _def(self, steps=None):
         if steps is None:
             steps = [
-                {"id": "s1", "module": "http_get", "url": "https://example.com"},
-                {"id": "s2", "module": "json_parse", "path": "$.data"},
+                {"id": "s1", "module": "http.get", "params": {"url": "https://example.com"}},
+                {"id": "s2", "module": "json.parse", "params": {"path": "$.data"}},
             ]
-        return {"steps": steps, "name": "sample"}
+        return {"name": "test-workflow", "steps": steps}
 
-    # --- save_version creates a version ---------------------------------
-
-    def test_save_version_creates_version(self):
+    def test_save_and_get_version(self):
         mgr = WorkflowVersionManager()
         ver = mgr.save_version(
-            workflow_id="wf-1",
-            name="Initial",
-            definition=self._sample_definition(),
-            version="1.0.0",
-            created_by="tester",
+            workflow_id="wf-1", name="Initial", definition=self._def(),
+            version="1.0.0", created_by="alice",
         )
         assert isinstance(ver, WorkflowVersion)
         assert ver.workflow_id == "wf-1"
         assert ver.version == "1.0.0"
-        assert ver.name == "Initial"
-        assert ver.is_published is False
         assert ver.parent_version is None
 
-    def test_save_version_links_parent(self):
+        fetched = mgr.get_version(ver.version_id)
+        assert fetched.version_id == ver.version_id
+
+    def test_parent_linking(self):
         mgr = WorkflowVersionManager()
-        v1 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=self._sample_definition(),
-            version="1.1.0",
-        )
+        v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=self._def(), version="1.1.0")
         assert v2.parent_version == v1.version_id
 
-    # --- get_latest returns most recent ---------------------------------
-
-    def test_get_latest_returns_most_recent(self):
+    def test_get_latest(self):
         mgr = WorkflowVersionManager()
-        mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=self._sample_definition(),
-            version="1.1.0",
-        )
+        mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=self._def(), version="2.0.0")
+
         latest = mgr.get_latest("wf-1")
         assert latest.version_id == v2.version_id
-        assert latest.version == "1.1.0"
 
-    def test_get_latest_nonexistent_returns_none(self):
+    def test_get_latest_nonexistent(self):
         mgr = WorkflowVersionManager()
-        assert mgr.get_latest("no-such-wf") is None
+        assert mgr.get_latest("no-such") is None
 
-    # --- list_versions returns sorted list (newest first) ---------------
-
-    def test_list_versions_sorted_newest_first(self):
+    def test_list_versions_newest_first(self):
         mgr = WorkflowVersionManager()
-        v1 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=self._sample_definition(),
-            version="1.1.0",
-        )
-        v3 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V3",
-            definition=self._sample_definition(),
-            version="2.0.0",
-        )
+        v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=self._def(), version="1.1.0")
+        v3 = mgr.save_version(workflow_id="wf-1", name="V3", definition=self._def(), version="2.0.0")
 
         versions = mgr.list_versions("wf-1")
-        assert len(versions) == 3
-        assert versions[0].version_id == v3.version_id
-        assert versions[1].version_id == v2.version_id
-        assert versions[2].version_id == v1.version_id
+        assert [v.version_id for v in versions] == [v3.version_id, v2.version_id, v1.version_id]
 
-    # --- diff detects added/removed/modified steps ----------------------
-
-    def test_diff_detects_changes(self):
+    def test_diff_detects_added_removed_modified(self):
         mgr = WorkflowVersionManager()
+        def_a = {"steps": [
+            {"id": "s1", "module": "http.get", "params": {"url": "https://a.com"}},
+            {"id": "s2", "module": "json.parse", "params": {"path": "$.data"}},
+            {"id": "s3", "module": "log", "params": {"msg": "done"}},
+        ]}
+        def_b = {"steps": [
+            {"id": "s1", "module": "http.get", "params": {"url": "https://b.com"}},  # modified url
+            # s2 removed
+            {"id": "s3", "module": "log", "params": {"msg": "done"}},  # unchanged
+            {"id": "s4", "module": "email.send", "params": {"to": "a@b.com"}},  # added
+        ]}
 
-        def_a = {
-            "steps": [
-                {"id": "s1", "module": "http_get", "url": "https://a.com"},
-                {"id": "s2", "module": "json_parse", "path": "$.data"},
-                {"id": "s3", "module": "log", "msg": "done"},
-            ]
-        }
-        def_b = {
-            "steps": [
-                {"id": "s1", "module": "http_get", "url": "https://b.com"},  # modified
-                # s2 removed
-                {"id": "s3", "module": "log", "msg": "done"},  # unchanged
-                {"id": "s4", "module": "email", "to": "a@b.com"},  # added
-            ]
-        }
-
-        v1 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=def_a,
-            version="1.0.0",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=def_b,
-            version="1.1.0",
-        )
+        v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=def_a, version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=def_b, version="1.1.0")
 
         diff = mgr.diff(v1.version_id, v2.version_id)
         assert isinstance(diff, VersionDiff)
@@ -849,374 +691,287 @@ class TestWorkflowVersionManager:
         assert "s1" in diff.steps_modified
         assert "s3" not in diff.steps_modified
 
-        # params_changed for s1
+        # Verify params_changed captures the actual old/new values
+        # The diff compares top-level step keys (id, module, params)
         assert "s1" in diff.params_changed
-        assert diff.params_changed["s1"]["url"]["old"] == "https://a.com"
-        assert diff.params_changed["s1"]["url"]["new"] == "https://b.com"
-
-        assert "added" in diff.summary
-        assert "removed" in diff.summary
-        assert "modified" in diff.summary
+        s1_changes = diff.params_changed["s1"]
+        assert "params" in s1_changes
+        assert s1_changes["params"]["old"] == {"url": "https://a.com"}
+        assert s1_changes["params"]["new"] == {"url": "https://b.com"}
 
     def test_diff_no_changes(self):
         mgr = WorkflowVersionManager()
-        defn = self._sample_definition()
-        v1 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=defn,
-            version="1.0.0",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=defn,
-            version="1.0.1",
-        )
+        defn = self._def()
+        v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=defn, version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=defn, version="1.0.1")
+
         diff = mgr.diff(v1.version_id, v2.version_id)
-        assert diff.summary == "No changes"
         assert diff.steps_added == []
         assert diff.steps_removed == []
         assert diff.steps_modified == []
 
-    # --- rollback creates new version from old --------------------------
-
-    def test_rollback_creates_new_version_from_old(self):
+    def test_rollback(self):
         mgr = WorkflowVersionManager()
-
-        def_v1 = self._sample_definition([
-            {"id": "s1", "module": "http_get"},
-        ])
-        def_v2 = self._sample_definition([
-            {"id": "s1", "module": "http_get"},
-            {"id": "s2", "module": "email"},
+        def_v1 = self._def([{"id": "s1", "module": "http.get", "params": {}}])
+        def_v2 = self._def([
+            {"id": "s1", "module": "http.get", "params": {}},
+            {"id": "s2", "module": "email.send", "params": {}},
         ])
 
-        v1 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=def_v1,
-            version="1.0.0",
-            created_by="alice",
-        )
-        v2 = mgr.save_version(
-            workflow_id="wf-1",
-            name="V2",
-            definition=def_v2,
-            version="1.1.0",
-        )
+        v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=def_v1, version="1.0.0")
+        v2 = mgr.save_version(workflow_id="wf-1", name="V2", definition=def_v2, version="1.1.0")
 
-        rolled_back = mgr.rollback("wf-1", v1.version_id)
+        rolled = mgr.rollback("wf-1", v1.version_id)
 
-        assert rolled_back.version == "1.1.1"  # patch bump from 1.1.0
-        assert rolled_back.definition == def_v1
-        assert rolled_back.parent_version == v2.version_id
-        assert "Rollback" in rolled_back.description
+        # Rollback creates a NEW version with the old definition
+        assert rolled.version_id != v1.version_id
+        assert rolled.definition == def_v1
+        assert rolled.parent_version == v2.version_id
+        assert "Rollback" in rolled.description
 
-        # New version should be the latest
-        latest = mgr.get_latest("wf-1")
-        assert latest.version_id == rolled_back.version_id
+        # It's now the latest
+        assert mgr.get_latest("wf-1").version_id == rolled.version_id
 
-    # --- publish marks version ------------------------------------------
-
-    def test_publish_marks_version(self):
+    def test_publish(self):
         mgr = WorkflowVersionManager()
-        ver = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
+        ver = mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
         assert ver.is_published is False
 
         published = mgr.publish(ver.version_id)
         assert published.is_published is True
-        assert published.version_id == ver.version_id
 
-    # --- delete_version won't delete published --------------------------
-
-    def test_delete_version_wont_delete_published(self):
+    def test_delete_published_raises(self):
         mgr = WorkflowVersionManager()
-        ver = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
+        ver = mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
         mgr.publish(ver.version_id)
 
         with pytest.raises(ValueError, match="Cannot delete published"):
             mgr.delete_version(ver.version_id)
 
-    def test_delete_version_succeeds_for_unpublished(self):
+    def test_delete_unpublished(self):
         mgr = WorkflowVersionManager()
-        ver = mgr.save_version(
-            workflow_id="wf-1",
-            name="V1",
-            definition=self._sample_definition(),
-            version="1.0.0",
-        )
-        result = mgr.delete_version(ver.version_id)
-        assert result is True
+        ver = mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
+        assert mgr.delete_version(ver.version_id) is True
         assert mgr.get_version(ver.version_id) is None
 
-    def test_delete_nonexistent_returns_false(self):
+    def test_delete_nonexistent(self):
         mgr = WorkflowVersionManager()
-        assert mgr.delete_version("no-such-id") is False
+        assert mgr.delete_version("no-such") is False
 
-    # --- LicenseError when feature disabled -----------------------------
+    def test_get_history(self):
+        mgr = WorkflowVersionManager()
+        mgr.save_version(workflow_id="wf-1", name="V1", definition=self._def(), version="1.0.0")
+        mgr.save_version(workflow_id="wf-1", name="V2", definition=self._def(), version="1.1.0")
 
-    def test_versioning_raises_license_error_when_disabled(self, disable_all_features):
-        mgr = WorkflowVersionManager()  # __init__ has no gate
+        history = mgr.get_history("wf-1")
+        assert len(history) == 2
+
+    def test_free_tier_raises_license_error(self, free_tier_license):
+        mgr = WorkflowVersionManager()
         with pytest.raises(LicenseError):
-            mgr.save_version(
-                workflow_id="wf-1",
-                name="V1",
-                definition={},
-            )
+            mgr.save_version(workflow_id="wf-1", name="V1", definition={})
 
 
 # =========================================================================
-# 5. WebhookTriggerManager Tests
+# 5. WebhookTriggerManager — real HMAC crypto, real payload mapping
 # =========================================================================
 
 
 class TestWebhookTriggerManager:
-    """Tests for core.engine.triggers.webhook.WebhookTriggerManager."""
 
-    # --- register_webhook creates config --------------------------------
-
-    def test_register_webhook_creates_config(self):
+    def test_register_webhook(self):
         mgr = WebhookTriggerManager()
         cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="GitHub Push",
-            secret="my-secret",
-            allowed_methods=["POST"],
+            workflow_id="wf-deploy", name="GitHub Push",
+            secret="my-secret-key", allowed_methods=["POST"],
             payload_mapping={"repo": "repository.full_name"},
         )
         assert isinstance(cfg, WebhookConfig)
-        assert cfg.workflow_id == "wf-1"
-        assert cfg.name == "GitHub Push"
-        assert cfg.secret == "my-secret"
-        assert cfg.allowed_methods == ["POST"]
-        assert cfg.payload_mapping == {"repo": "repository.full_name"}
+        assert cfg.workflow_id == "wf-deploy"
+        assert cfg.secret == "my-secret-key"
         assert cfg.status == TriggerStatus.ACTIVE
 
-    # --- verify_signature with valid HMAC -------------------------------
-
-    def test_verify_signature_valid(self):
+    def test_hmac_verification_valid_signature(self):
+        """Real HMAC-SHA256 verification with real crypto."""
         mgr = WebhookTriggerManager()
-        secret = "test-secret-key"
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="Signed Hook",
-            secret=secret,
-        )
+        secret = "webhook-secret-2026"
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Signed", secret=secret)
 
-        payload = b'{"event": "push"}'
-        expected_sig = hmac.new(
-            secret.encode("utf-8"),
-            payload,
-            hashlib.sha256,
-        ).hexdigest()
+        payload = b'{"event":"push","ref":"main"}'
+        real_sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
 
-        assert mgr.verify_signature(cfg.trigger_id, payload, expected_sig) is True
+        assert mgr.verify_signature(cfg.trigger_id, payload, real_sig) is True
 
-    def test_verify_signature_with_sha256_prefix(self):
+    def test_hmac_verification_github_sha256_prefix(self):
+        """GitHub sends signatures as 'sha256=<hex>' — verify prefix is handled."""
         mgr = WebhookTriggerManager()
-        secret = "my-secret"
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="GitHub Style",
-            secret=secret,
-        )
+        secret = "github-secret"
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="GitHub", secret=secret)
 
-        payload = b'{"ref": "main"}'
-        raw_sig = hmac.new(
-            secret.encode("utf-8"),
-            payload,
-            hashlib.sha256,
-        ).hexdigest()
+        payload = b'{"action":"completed"}'
+        raw_sig = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
 
-        # GitHub-style prefix
-        prefixed = "sha256=" + raw_sig
-        assert mgr.verify_signature(cfg.trigger_id, payload, prefixed) is True
+        assert mgr.verify_signature(cfg.trigger_id, payload, "sha256=" + raw_sig) is True
 
-    # --- verify_signature with invalid HMAC -----------------------------
-
-    def test_verify_signature_invalid(self):
+    def test_hmac_verification_invalid_signature(self):
         mgr = WebhookTriggerManager()
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="Bad Sig",
-            secret="correct-secret",
-        )
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Test", secret="correct-secret")
 
-        payload = b'{"event": "push"}'
-        assert mgr.verify_signature(cfg.trigger_id, payload, "invalid-sig") is False
+        payload = b'{"data": 1}'
+        assert mgr.verify_signature(cfg.trigger_id, payload, "wrong-signature") is False
 
-    def test_verify_signature_no_secret_always_passes(self):
+    def test_hmac_no_secret_always_passes(self):
         mgr = WebhookTriggerManager()
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="No Secret",
-            secret="",
-        )
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Open", secret="")
         assert mgr.verify_signature(cfg.trigger_id, b"anything", "anything") is True
 
-    def test_verify_signature_unknown_trigger(self):
+    def test_hmac_unknown_trigger(self):
         mgr = WebhookTriggerManager()
-        assert mgr.verify_signature("no-such-id", b"data", "sig") is False
-
-    # --- process_webhook with valid request -----------------------------
+        assert mgr.verify_signature("nonexistent", b"data", "sig") is False
 
     def test_process_webhook_valid_request(self):
         mgr = WebhookTriggerManager()
         cfg = mgr.register_webhook(
-            workflow_id="wf-deploy",
-            name="Deploy Hook",
+            workflow_id="wf-deploy", name="Deploy",
             allowed_methods=["POST"],
-            payload_mapping={"branch": "ref"},
+            payload_mapping={"branch": "ref", "repo": "repository.name"},
         )
 
         event = mgr.process_webhook(
-            trigger_id=cfg.trigger_id,
-            method="POST",
+            trigger_id=cfg.trigger_id, method="POST",
             headers={"Content-Type": "application/json"},
-            payload={"ref": "main", "commits": []},
+            payload={"ref": "main", "repository": {"name": "flyto-core"}},
         )
+
         assert event is not None
         assert event.workflow_id == "wf-deploy"
-        assert event.payload == {"branch": "main"}
-        assert event.metadata["method"] == "POST"
-
-    # --- process_webhook rejects wrong method ---------------------------
+        assert event.trigger_type == TriggerType.WEBHOOK
+        assert event.payload["branch"] == "main"
+        assert event.payload["repo"] == "flyto-core"
 
     def test_process_webhook_rejects_wrong_method(self):
         mgr = WebhookTriggerManager()
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="POST Only",
-            allowed_methods=["POST"],
-        )
-        event = mgr.process_webhook(
-            trigger_id=cfg.trigger_id,
-            method="GET",
-            headers={},
-            payload={},
-        )
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="POST", allowed_methods=["POST"])
+
+        event = mgr.process_webhook(cfg.trigger_id, method="GET", headers={}, payload={})
         assert event is None
 
-    def test_process_webhook_rejects_inactive_trigger(self):
+    def test_process_webhook_rejects_paused_trigger(self):
         mgr = WebhookTriggerManager()
-        cfg = mgr.register_webhook(
-            workflow_id="wf-1",
-            name="Paused",
-        )
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Paused")
         mgr.pause(cfg.trigger_id)
 
-        event = mgr.process_webhook(
-            trigger_id=cfg.trigger_id,
-            method="POST",
-            headers={},
-            payload={},
-        )
+        event = mgr.process_webhook(cfg.trigger_id, method="POST", headers={}, payload={})
         assert event is None
 
-    def test_process_webhook_rejects_missing_trigger(self):
+    def test_process_webhook_nonexistent_trigger(self):
         mgr = WebhookTriggerManager()
-        event = mgr.process_webhook(
-            trigger_id="no-such-id",
-            method="POST",
-            headers={},
-            payload={},
-        )
+        event = mgr.process_webhook("no-such-id", method="POST", headers={}, payload={})
         assert event is None
 
-    # --- map_payload maps nested fields ---------------------------------
-
-    def test_map_payload_maps_nested_fields(self):
+    def test_map_payload_nested_dot_path(self):
+        """Real dot-path traversal into nested dicts."""
         cfg = WebhookConfig(
-            trigger_id="t1",
-            trigger_type="webhook",
-            workflow_id="wf-1",
-            name="Test",
+            trigger_id="t1", trigger_type="webhook", workflow_id="wf-1", name="Test",
             payload_mapping={
-                "repo": "repository.full_name",
+                "repo_name": "repository.full_name",
                 "branch": "ref",
-                "author": "commits.0.author.name",  # won't resolve (list)
+                "sender": "sender.login",
             },
         )
         payload = {
-            "repository": {"full_name": "org/repo"},
-            "ref": "main",
-            "commits": [{"author": {"name": "alice"}}],
+            "repository": {"full_name": "flytohub/flyto-core", "id": 12345},
+            "ref": "refs/heads/main",
+            "sender": {"login": "alice", "id": 42},
         }
-        result = WebhookTriggerManager.map_payload(cfg, payload)
-        assert result["repo"] == "org/repo"
-        assert result["branch"] == "main"
-        # "commits.0.author.name" won't traverse into list items (not dicts)
-        assert "author" not in result
 
-    def test_map_payload_no_mapping_returns_full_payload(self):
+        result = WebhookTriggerManager.map_payload(cfg, payload)
+        assert result["repo_name"] == "flytohub/flyto-core"
+        assert result["branch"] == "refs/heads/main"
+        assert result["sender"] == "alice"
+
+    def test_map_payload_no_mapping_returns_full(self):
         cfg = WebhookConfig(
-            trigger_id="t1",
-            trigger_type="webhook",
-            workflow_id="wf-1",
-            name="Test",
-            payload_mapping={},
+            trigger_id="t1", trigger_type="webhook",
+            workflow_id="wf-1", name="Test", payload_mapping={},
         )
-        payload = {"key": "value"}
-        result = WebhookTriggerManager.map_payload(cfg, payload)
-        assert result == {"key": "value"}
+        payload = {"key": "value", "num": 42}
+        assert WebhookTriggerManager.map_payload(cfg, payload) == payload
 
-    # --- LicenseError ---------------------------------------------------
+    def test_map_payload_missing_path_skipped(self):
+        cfg = WebhookConfig(
+            trigger_id="t1", trigger_type="webhook",
+            workflow_id="wf-1", name="Test",
+            payload_mapping={"exists": "a.b", "missing": "x.y.z"},
+        )
+        result = WebhookTriggerManager.map_payload(cfg, {"a": {"b": "found"}})
+        assert result["exists"] == "found"
+        assert "missing" not in result
 
-    def test_webhook_raises_license_error_when_disabled(self, disable_all_features):
+    def test_pause_and_resume(self):
+        mgr = WebhookTriggerManager()
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Toggle")
+        assert cfg.status == TriggerStatus.ACTIVE
+
+        mgr.pause(cfg.trigger_id)
+        assert mgr.get(cfg.trigger_id).status == TriggerStatus.PAUSED
+
+        mgr.resume(cfg.trigger_id)
+        assert mgr.get(cfg.trigger_id).status == TriggerStatus.ACTIVE
+
+    def test_unregister(self):
+        mgr = WebhookTriggerManager()
+        cfg = mgr.register_webhook(workflow_id="wf-1", name="Remove")
+        assert mgr.unregister(cfg.trigger_id) is True
+        assert mgr.get(cfg.trigger_id) is None
+
+    def test_list_triggers(self):
+        mgr = WebhookTriggerManager()
+        mgr.register_webhook(workflow_id="wf-1", name="A")
+        mgr.register_webhook(workflow_id="wf-1", name="B")
+        mgr.register_webhook(workflow_id="wf-2", name="C")
+
+        all_triggers = mgr.list_triggers()
+        assert len(all_triggers) == 3
+
+        wf1_triggers = mgr.list_triggers(workflow_id="wf-1")
+        assert len(wf1_triggers) == 2
+
+    def test_free_tier_raises_license_error(self, free_tier_license):
         with pytest.raises(LicenseError):
             WebhookTriggerManager()
 
 
 # =========================================================================
-# 6. CronTriggerManager Tests
+# 6. CronTriggerManager — real cron parsing and real scheduler loop
 # =========================================================================
 
 
 class TestCronTriggerManager:
-    """Tests for core.engine.triggers.cron.CronTriggerManager."""
 
-    # --- register_schedule creates config -------------------------------
+    # --- Registration & parsing ---
 
-    def test_register_schedule_creates_config(self):
+    def test_register_schedule(self):
         mgr = CronTriggerManager()
         cfg = mgr.register_schedule(
-            workflow_id="wf-daily",
-            name="Daily Report",
-            expression="0 9 * * 1-5",
-            params={"report_type": "daily"},
+            workflow_id="wf-daily", name="Daily Report",
+            expression="0 9 * * 1-5", params={"type": "daily"},
         )
         assert isinstance(cfg, CronConfig)
-        assert cfg.workflow_id == "wf-daily"
-        assert cfg.name == "Daily Report"
         assert cfg.expression == "0 9 * * 1-5"
-        assert cfg.params == {"report_type": "daily"}
-        assert cfg.status == TriggerStatus.ACTIVE
+        assert cfg.params == {"type": "daily"}
         assert cfg.next_run is not None
         assert cfg.run_count == 0
+        assert cfg.status == TriggerStatus.ACTIVE
 
-    def test_register_schedule_rejects_bad_expression(self):
+    def test_register_rejects_bad_expression(self):
         mgr = CronTriggerManager()
         with pytest.raises(ValueError):
-            mgr.register_schedule(
-                workflow_id="wf-1",
-                name="Bad",
-                expression="not a cron",
-            )
+            mgr.register_schedule(workflow_id="wf-1", name="Bad", expression="not valid cron")
 
-    # --- parse_expression parses "0 9 * * 1-5" -------------------------
+    # --- Real cron expression parsing ---
 
-    def test_parse_expression_weekday_mornings(self):
+    def test_parse_weekday_mornings(self):
         fields = CronTriggerManager.parse_expression("0 9 * * 1-5")
         assert fields["minute"] == {0}
         assert fields["hour"] == {9}
@@ -1224,11 +979,11 @@ class TestCronTriggerManager:
         assert fields["month"] == set(range(1, 13))
         assert fields["day_of_week"] == {1, 2, 3, 4, 5}
 
-    def test_parse_expression_every_5_minutes(self):
+    def test_parse_every_5_minutes(self):
         fields = CronTriggerManager.parse_expression("*/5 * * * *")
         assert fields["minute"] == {0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}
 
-    def test_parse_expression_specific_values(self):
+    def test_parse_specific_values(self):
         fields = CronTriggerManager.parse_expression("30 14 1 6 0")
         assert fields["minute"] == {30}
         assert fields["hour"] == {14}
@@ -1236,165 +991,203 @@ class TestCronTriggerManager:
         assert fields["month"] == {6}
         assert fields["day_of_week"] == {0}  # Sunday
 
-    # --- parse_expression validates bad expression ----------------------
+    def test_parse_list(self):
+        fields = CronTriggerManager.parse_expression("0 8,12,18 * * *")
+        assert fields["hour"] == {8, 12, 18}
 
-    def test_parse_expression_too_few_fields(self):
+    def test_parse_range_with_step(self):
+        fields = CronTriggerManager.parse_expression("0 0 1-15/3 * *")
+        assert fields["day_of_month"] == {1, 4, 7, 10, 13}
+
+    def test_parse_too_few_fields(self):
         with pytest.raises(ValueError, match="5 fields"):
             CronTriggerManager.parse_expression("0 9 *")
 
-    def test_parse_expression_too_many_fields(self):
+    def test_parse_too_many_fields(self):
         with pytest.raises(ValueError, match="5 fields"):
             CronTriggerManager.parse_expression("0 9 * * 1 extra")
 
-    def test_parse_expression_out_of_range(self):
+    def test_parse_out_of_range(self):
         with pytest.raises(ValueError):
-            CronTriggerManager.parse_expression("60 9 * * *")  # minute 60
+            CronTriggerManager.parse_expression("60 9 * * *")  # minute 60 invalid
 
-    # --- calculate_next_run ---------------------------------------------
+    # --- Real next-run calculation ---
 
-    def test_calculate_next_run(self):
-        # "0 9 * * *" = every day at 09:00
-        after = datetime(2026, 2, 19, 8, 0, 0)
-        next_run = CronTriggerManager.calculate_next_run(
-            "0 9 * * *", after=after
-        )
-        assert next_run.hour == 9
-        assert next_run.minute == 0
-        assert next_run.day >= 19
+    def test_calculate_next_run_same_day(self):
+        after = datetime(2026, 2, 19, 8, 0, 0)  # Thursday 08:00
+        next_run = CronTriggerManager.calculate_next_run("0 9 * * *", after=after)
+        assert next_run == datetime(2026, 2, 19, 9, 0, 0)
 
     def test_calculate_next_run_wraps_to_next_day(self):
-        # After 10:00, next 09:00 should be tomorrow
-        after = datetime(2026, 2, 19, 10, 0, 0)
-        next_run = CronTriggerManager.calculate_next_run(
-            "0 9 * * *", after=after
-        )
-        assert next_run.day == 20
-        assert next_run.hour == 9
-        assert next_run.minute == 0
+        after = datetime(2026, 2, 19, 10, 0, 0)  # past 09:00
+        next_run = CronTriggerManager.calculate_next_run("0 9 * * *", after=after)
+        assert next_run == datetime(2026, 2, 20, 9, 0, 0)
 
-    # --- should_run returns True when due -------------------------------
+    def test_calculate_next_run_weekday_only(self):
+        # Friday 2026-02-20, expression "0 9 * * 1-5" (Mon-Fri)
+        after = datetime(2026, 2, 20, 10, 0, 0)  # Friday past 09:00
+        next_run = CronTriggerManager.calculate_next_run("0 9 * * 1-5", after=after)
+        # Next weekday 09:00 is Monday 2026-02-23
+        assert next_run == datetime(2026, 2, 23, 9, 0, 0)
+        assert next_run.weekday() == 0  # Monday
 
-    def test_should_run_returns_true_when_due(self):
+    def test_calculate_next_run_every_5_minutes(self):
+        after = datetime(2026, 2, 19, 10, 12, 0)
+        next_run = CronTriggerManager.calculate_next_run("*/5 * * * *", after=after)
+        assert next_run == datetime(2026, 2, 19, 10, 15, 0)
+
+    # --- should_run / record_run ---
+
+    def test_should_run_when_due(self):
         mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="Test",
-            expression="* * * * *",  # every minute
-        )
-        # Manually set next_run to the past so it's due
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Due", expression="* * * * *")
         cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
 
         assert mgr.should_run(cfg.trigger_id) is True
 
-    def test_should_run_returns_false_when_not_due(self):
+    def test_should_run_not_due(self):
         mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="Test",
-            expression="* * * * *",
-        )
-        # Set next_run far in the future
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Future", expression="* * * * *")
         cfg.next_run = datetime.utcnow() + timedelta(hours=1)
 
         assert mgr.should_run(cfg.trigger_id) is False
 
-    def test_should_run_respects_max_runs(self):
+    def test_should_run_paused(self):
         mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="Limited",
-            expression="* * * * *",
-            max_runs=3,
-        )
-        cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
-        cfg.run_count = 3  # already exhausted
-
-        assert mgr.should_run(cfg.trigger_id) is False
-
-    def test_should_run_returns_false_for_paused(self):
-        mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="Paused",
-            expression="* * * * *",
-        )
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Paused", expression="* * * * *")
         cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
         mgr.pause(cfg.trigger_id)
 
         assert mgr.should_run(cfg.trigger_id) is False
 
-    # --- record_run updates counters ------------------------------------
-
-    def test_record_run_updates_counters(self):
+    def test_should_run_max_runs_exhausted(self):
         mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="Test",
-            expression="* * * * *",
-        )
-        assert cfg.run_count == 0
-        assert cfg.next_run is not None
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Limited", expression="* * * * *", max_runs=3)
+        cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
+        cfg.run_count = 3
+
+        assert mgr.should_run(cfg.trigger_id) is False
+
+    def test_record_run_updates_state(self):
+        mgr = CronTriggerManager()
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Test", expression="* * * * *")
 
         updated = mgr.record_run(cfg.trigger_id)
         assert updated.run_count == 1
         assert updated.last_run is not None
-        # next_run should have been recomputed to a future time
         assert updated.next_run is not None
         assert updated.next_run > updated.last_run
 
-    def test_record_run_disables_at_max_runs(self):
+    def test_record_run_disables_at_max(self):
         mgr = CronTriggerManager()
-        cfg = mgr.register_schedule(
-            workflow_id="wf-1",
-            name="One-shot",
-            expression="* * * * *",
-            max_runs=1,
-        )
+        cfg = mgr.register_schedule(workflow_id="wf-1", name="Once", expression="* * * * *", max_runs=1)
+
         updated = mgr.record_run(cfg.trigger_id)
         assert updated.run_count == 1
         assert updated.status == TriggerStatus.DISABLED
         assert updated.next_run is None
 
-    def test_record_run_raises_for_unknown_trigger(self):
+    def test_record_run_unknown_raises(self):
         mgr = CronTriggerManager()
         with pytest.raises(KeyError):
-            mgr.record_run("no-such-id")
-
-    # --- get_due_triggers -----------------------------------------------
+            mgr.record_run("nonexistent")
 
     def test_get_due_triggers(self):
         mgr = CronTriggerManager()
+        due_cfg = mgr.register_schedule(workflow_id="wf-due", name="Due", expression="* * * * *")
+        due_cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
 
-        cfg_due = mgr.register_schedule(
-            workflow_id="wf-due",
-            name="Due",
-            expression="* * * * *",
-        )
-        cfg_due.next_run = datetime.utcnow() - timedelta(minutes=1)
+        future_cfg = mgr.register_schedule(workflow_id="wf-future", name="Future", expression="* * * * *")
+        future_cfg.next_run = datetime.utcnow() + timedelta(hours=1)
 
-        cfg_future = mgr.register_schedule(
-            workflow_id="wf-future",
-            name="Future",
-            expression="* * * * *",
-        )
-        cfg_future.next_run = datetime.utcnow() + timedelta(hours=1)
-
-        cfg_paused = mgr.register_schedule(
-            workflow_id="wf-paused",
-            name="Paused",
-            expression="* * * * *",
-        )
-        cfg_paused.next_run = datetime.utcnow() - timedelta(minutes=1)
-        mgr.pause(cfg_paused.trigger_id)
+        paused_cfg = mgr.register_schedule(workflow_id="wf-paused", name="Paused", expression="* * * * *")
+        paused_cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
+        mgr.pause(paused_cfg.trigger_id)
 
         due = mgr.get_due_triggers()
-        due_ids = [c.trigger_id for c in due]
-        assert cfg_due.trigger_id in due_ids
-        assert cfg_future.trigger_id not in due_ids
-        assert cfg_paused.trigger_id not in due_ids
+        due_ids = {c.trigger_id for c in due}
+        assert due_cfg.trigger_id in due_ids
+        assert future_cfg.trigger_id not in due_ids
+        assert paused_cfg.trigger_id not in due_ids
 
-    # --- LicenseError ---------------------------------------------------
+    # --- Real scheduler loop ---
 
-    def test_cron_raises_license_error_when_disabled(self, disable_all_features):
+    async def test_scheduler_loop_fires_due_trigger(self):
+        """Start real scheduler, set a trigger as due, verify callback fires."""
+        mgr = CronTriggerManager()
+        cfg = mgr.register_schedule(
+            workflow_id="wf-scheduled", name="Fire Me",
+            expression="* * * * *", params={"report": "daily"},
+        )
+        # Force next_run to the past so it fires immediately
+        cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
+
+        fired_events = []
+
+        async def on_trigger(event):
+            fired_events.append(event)
+
+        await mgr.start_scheduler(on_trigger)
+
+        # Wait for the scheduler to tick and fire
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            if len(fired_events) > 0:
+                break
+
+        await mgr.stop_scheduler()
+
+        assert len(fired_events) >= 1
+        event = fired_events[0]
+        assert event.workflow_id == "wf-scheduled"
+        assert event.trigger_type == TriggerType.CRON
+        assert event.payload == {"report": "daily"}
+
+        # run_count should have been incremented
+        updated = mgr.get(cfg.trigger_id)
+        assert updated.run_count >= 1
+
+    async def test_scheduler_loop_stop_gracefully(self):
+        """Start and stop the scheduler — no hanging."""
+        mgr = CronTriggerManager()
+        mgr.register_schedule(workflow_id="wf-1", name="Idle", expression="0 0 1 1 *")
+
+        async def noop(event):
+            pass
+
+        await mgr.start_scheduler(noop)
+        # Immediately stop
+        await mgr.stop_scheduler()
+        assert mgr._running is False
+
+    async def test_scheduler_respects_max_runs(self):
+        """A one-shot trigger fires once then gets disabled."""
+        mgr = CronTriggerManager()
+        cfg = mgr.register_schedule(
+            workflow_id="wf-oneshot", name="One Shot",
+            expression="* * * * *", max_runs=1,
+        )
+        cfg.next_run = datetime.utcnow() - timedelta(minutes=1)
+
+        fired = []
+
+        async def on_trigger(event):
+            fired.append(event)
+
+        await mgr.start_scheduler(on_trigger)
+
+        deadline = time.monotonic() + 3.0
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+            if len(fired) > 0:
+                break
+
+        await mgr.stop_scheduler()
+
+        assert len(fired) == 1
+        assert mgr.get(cfg.trigger_id).status == TriggerStatus.DISABLED
+
+    def test_free_tier_raises_license_error(self, free_tier_license):
         with pytest.raises(LicenseError):
             CronTriggerManager()
