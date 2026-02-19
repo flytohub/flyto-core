@@ -87,7 +87,11 @@ class VariableResolver:
         match = self.VAR_PATTERN.fullmatch(text)
         if match:
             # Return the actual value (might not be a string)
-            return self._get_variable_value(match.group(1))
+            value = self._get_variable_value(match.group(1))
+            if value is not None:
+                return value
+            # Preserve unresolved expression (may be resolved later by sub-module)
+            return text
 
         # Otherwise, replace all variable references with their string representations
         def replacer(match):
