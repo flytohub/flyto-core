@@ -161,6 +161,11 @@ Flyto2 Core gives you:
 - **Execution Trace** — structured record of every step: input, output, timing, status
 - **Evidence Snapshots** — full context_before and context_after at every step boundary
 - **Replay** — re-execute from any step with the original (or modified) context
+- **Triggers** — webhook (HMAC-verified) and cron scheduling for automated workflows
+- **Execution Queue** — priority-based queue with concurrency control
+- **Workflow Versioning** — semantic versioning, diff, and rollback
+- **Usage Metering** — built-in billing hooks for step/workflow tracking
+- **Timeout Guard** — configurable workflow and step-level timeout protection
 
 ## Module Categories
 
@@ -200,6 +205,24 @@ Flyto2 Core gives you:
 | `monitor.*` | 1 | HTTP health check with SSL cert verification |
 
 **412 modules** across 78 categories. See **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module with parameters and descriptions.
+
+## Engine Features
+
+Beyond atomic modules, flyto-core provides production-grade engine infrastructure:
+
+| Feature | Tier | Description |
+|---------|------|-------------|
+| Execution Trace | Free | Structured record of every step: input, output, timing, status |
+| Evidence Snapshots | Free | Full context_before and context_after at every step boundary |
+| Replay | Free | Re-execute from any step with original or modified context |
+| Breakpoints | Free | Pause execution at any step, inspect state, resume |
+| Data Lineage | Free | Track data flow across steps, build dependency graphs |
+| Timeout Guard | Free | Configurable workflow/step-level timeout protection |
+| Webhook Triggers | Pro | HMAC-SHA256 verified webhooks with payload mapping |
+| Cron Triggers | Pro | 5-field cron scheduling with async scheduler loop |
+| Execution Queue | Pro | Priority-based queue (LOW→CRITICAL) with concurrency control |
+| Workflow Versioning | Pro | Semantic versioning, diff between versions, rollback |
+| Usage Metering | Pro | Built-in billing hooks for step/workflow/module tracking |
 
 ## YAML Workflows
 
