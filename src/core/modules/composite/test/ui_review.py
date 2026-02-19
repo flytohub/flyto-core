@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.test.ui_review',
     label='UI Review',
+    label_key='modules.composite.test.ui_review.label',
+    description='Visual regression testing and UI review workflow',
+    description_key='modules.composite.test.ui_review.description',
     icon='Eye',
     color='#F59E0B',
 

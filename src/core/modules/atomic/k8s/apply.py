@@ -101,7 +101,9 @@ def _parse_apply_output(output: str) -> Dict[str, Any]:
     category='k8s',
     tags=['kubernetes', 'k8s', 'apply', 'deploy', 'manifest', 'yaml'],
     label='Apply Manifest',
+    label_key='modules.k8s.apply.label',
     description='Apply a Kubernetes manifest via kubectl apply',
+    description_key='modules.k8s.apply.description',
     icon='Cloud',
     color='#326CE5',
     input_types=['string', 'object'],
@@ -128,18 +130,22 @@ def _parse_apply_output(output: str) -> Dict[str, Any]:
         'kind': {
             'type': 'string',
             'description': 'Resource kind (e.g. Deployment, Service)',
+            'description_key': 'modules.k8s.apply.output.kind.description',
         },
         'name': {
             'type': 'string',
             'description': 'Resource name',
+            'description_key': 'modules.k8s.apply.output.name.description',
         },
         'namespace': {
             'type': 'string',
             'description': 'Resource namespace',
+            'description_key': 'modules.k8s.apply.output.namespace.description',
         },
         'action': {
             'type': 'string',
             'description': 'Action taken (created, configured, unchanged)',
+            'description_key': 'modules.k8s.apply.output.action.description',
         },
     },
 )

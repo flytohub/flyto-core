@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.notification.multi_channel_alert',
     label='Multi-Channel Alert',
+    label_key='modules.composite.notification.multi_channel_alert.label',
+    description='Send alerts to multiple notification channels simultaneously',
+    description_key='modules.composite.notification.multi_channel_alert.description',
     icon='Bell',
     color='#EF4444',
 

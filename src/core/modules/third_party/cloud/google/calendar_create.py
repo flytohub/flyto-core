@@ -29,7 +29,9 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
     category='cloud',
     tags=['cloud', 'google', 'calendar', 'event', 'create', 'schedule'],
     label='Calendar Create Event',
+    label_key='modules.google.calendar.create_event.label',
     description='Create a new event in Google Calendar',
+    description_key='modules.google.calendar.create_event.description',
     icon='Calendar',
     color='#4285F4',
     input_types=['object', 'string'],
@@ -78,11 +80,11 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
               default='UTC', placeholder='America/New_York'),
     ),
     output_schema={
-        'event_id': {'type': 'string', 'description': 'Created event ID'},
-        'summary': {'type': 'string', 'description': 'Event title'},
-        'start': {'type': 'string', 'description': 'Event start time'},
-        'end': {'type': 'string', 'description': 'Event end time'},
-        'html_link': {'type': 'string', 'description': 'Link to view the event in Google Calendar'},
+        'event_id': {'type': 'string', 'description': 'Created event ID', 'description_key': 'modules.google.calendar.create_event.output.event_id.description'},
+        'summary': {'type': 'string', 'description': 'Event title', 'description_key': 'modules.google.calendar.create_event.output.summary.description'},
+        'start': {'type': 'string', 'description': 'Event start time', 'description_key': 'modules.google.calendar.create_event.output.start.description'},
+        'end': {'type': 'string', 'description': 'Event end time', 'description_key': 'modules.google.calendar.create_event.output.end.description'},
+        'html_link': {'type': 'string', 'description': 'Link to view the event in Google Calendar', 'description_key': 'modules.google.calendar.create_event.output.html_link.description'},
     },
     examples=[
         {

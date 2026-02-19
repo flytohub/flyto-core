@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.data.csv_to_json',
     label='CSV to JSON',
+    label_key='modules.composite.data.csv_to_json.label',
+    description='Read a CSV file and convert it to JSON format',
+    description_key='modules.composite.data.csv_to_json.description',
     icon='FileSpreadsheet',
     color='#059669',
 

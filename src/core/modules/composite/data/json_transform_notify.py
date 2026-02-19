@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.data.json_transform_notify',
     label='JSON Transform and Notify',
+    label_key='modules.composite.data.json_transform_notify.label',
+    description='Transform JSON data and send notification with results',
+    description_key='modules.composite.data.json_transform_notify.description',
     icon='Braces',
     color='#8B5CF6',
 

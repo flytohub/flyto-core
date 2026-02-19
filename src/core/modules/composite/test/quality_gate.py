@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.test.quality_gate',
     label='Quality Gate',
+    label_key='modules.composite.test.quality_gate.label',
+    description='Run quality checks and gate deployments based on thresholds',
+    description_key='modules.composite.test.quality_gate.description',
     icon='Shield',
     color='#10B981',
 

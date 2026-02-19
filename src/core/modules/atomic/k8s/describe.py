@@ -54,7 +54,9 @@ _COMMON_RESOURCE_TYPES = frozenset({
     category='k8s',
     tags=['kubernetes', 'k8s', 'describe', 'inspect', 'detail', 'debug'],
     label='Describe Resource',
+    label_key='modules.k8s.describe.label',
     description='Describe a Kubernetes resource in detail',
+    description_key='modules.k8s.describe.description',
     icon='Cloud',
     color='#326CE5',
     input_types=['string', 'object'],
@@ -84,18 +86,22 @@ _COMMON_RESOURCE_TYPES = frozenset({
         'resource_type': {
             'type': 'string',
             'description': 'Resource type that was described',
+            'description_key': 'modules.k8s.describe.output.resource_type.description',
         },
         'name': {
             'type': 'string',
             'description': 'Resource name',
+            'description_key': 'modules.k8s.describe.output.name.description',
         },
         'namespace': {
             'type': 'string',
             'description': 'Kubernetes namespace',
+            'description_key': 'modules.k8s.describe.output.namespace.description',
         },
         'description': {
             'type': 'string',
             'description': 'Full kubectl describe output text',
+            'description_key': 'modules.k8s.describe.output.description.description',
         },
     },
 )

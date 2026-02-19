@@ -29,7 +29,9 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
     category='cloud',
     tags=['cloud', 'google', 'gmail', 'email', 'search', 'query'],
     label='Gmail Search',
+    label_key='modules.google.gmail.search.label',
     description='Search Gmail messages using Gmail search query syntax',
+    description_key='modules.google.gmail.search.description',
     icon='Mail',
     color='#4285F4',
     input_types=['string'],
@@ -61,6 +63,7 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
         'messages': {
             'type': 'array',
             'description': 'List of matching messages',
+            'description_key': 'modules.google.gmail.search.output.messages.description',
             'items': {
                 'type': 'object',
                 'properties': {
@@ -73,7 +76,7 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
                 },
             },
         },
-        'total': {'type': 'number', 'description': 'Total number of messages returned'},
+        'total': {'type': 'number', 'description': 'Total number of messages returned', 'description_key': 'modules.google.gmail.search.output.total.description'},
     },
     examples=[
         {

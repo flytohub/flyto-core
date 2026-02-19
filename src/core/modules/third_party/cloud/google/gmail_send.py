@@ -32,7 +32,9 @@ GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
     category='cloud',
     tags=['cloud', 'google', 'gmail', 'email', 'send', 'notification'],
     label='Gmail Send',
+    label_key='modules.google.gmail.send.label',
     description='Send an email via the Gmail API',
+    description_key='modules.google.gmail.send.description',
     icon='Mail',
     color='#4285F4',
     input_types=['string', 'object'],
@@ -77,9 +79,9 @@ GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
               placeholder='bcc@example.com'),
     ),
     output_schema={
-        'message_id': {'type': 'string', 'description': 'Gmail message ID'},
-        'thread_id': {'type': 'string', 'description': 'Gmail thread ID'},
-        'to': {'type': 'string', 'description': 'Recipient email address'},
+        'message_id': {'type': 'string', 'description': 'Gmail message ID', 'description_key': 'modules.google.gmail.send.output.message_id.description'},
+        'thread_id': {'type': 'string', 'description': 'Gmail thread ID', 'description_key': 'modules.google.gmail.send.output.thread_id.description'},
+        'to': {'type': 'string', 'description': 'Recipient email address', 'description_key': 'modules.google.gmail.send.output.to.description'},
     },
     examples=[
         {

@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.developer.github_daily_digest',
     label='GitHub Daily Digest',
+    label_key='modules.composite.developer.github_daily_digest.label',
+    description='Fetch GitHub repository updates and send a daily digest notification',
+    description_key='modules.composite.developer.github_daily_digest.description',
     icon='Github',
     color='#333333',
 

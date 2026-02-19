@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.test.e2e_flow',
     label='E2E Flow Test',
+    label_key='modules.composite.test.e2e_flow.label',
+    description='End-to-end workflow testing with browser automation',
+    description_key='modules.composite.test.e2e_flow.description',
     icon='Monitor',
     color='#8B5CF6',
 

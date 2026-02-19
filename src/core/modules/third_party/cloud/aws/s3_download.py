@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'download', 'file', 'path_restricted'],
     label='S3 Download',
+    label_key='modules.aws.s3.download.label',
     description='Download a file from an AWS S3 bucket to a local path',
+    description_key='modules.aws.s3.download.description',
     icon='Cloud',
     color='#FF9900',
     input_types=['string'],
@@ -67,9 +69,9 @@ logger = logging.getLogger(__name__)
               placeholder='${env.AWS_SECRET_ACCESS_KEY}', format='password'),
     ),
     output_schema={
-        'path': {'type': 'string', 'description': 'Local file path where the file was saved'},
-        'size': {'type': 'number', 'description': 'File size in bytes'},
-        'content_type': {'type': 'string', 'description': 'MIME type of the downloaded file'},
+        'path': {'type': 'string', 'description': 'Local file path where the file was saved', 'description_key': 'modules.aws.s3.download.output.path.description'},
+        'size': {'type': 'number', 'description': 'File size in bytes', 'description_key': 'modules.aws.s3.download.output.size.description'},
+        'content_type': {'type': 'string', 'description': 'MIME type of the downloaded file', 'description_key': 'modules.aws.s3.download.output.content_type.description'},
     },
     examples=[
         {

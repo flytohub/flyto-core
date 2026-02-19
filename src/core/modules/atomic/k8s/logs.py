@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
     category='k8s',
     tags=['kubernetes', 'k8s', 'logs', 'pod', 'debug', 'troubleshoot'],
     label='Get Pod Logs',
+    label_key='modules.k8s.logs.label',
     description='Retrieve logs from a Kubernetes pod',
+    description_key='modules.k8s.logs.description',
     icon='Cloud',
     color='#326CE5',
     input_types=['string', 'object'],
@@ -64,14 +66,17 @@ logger = logging.getLogger(__name__)
         'pod': {
             'type': 'string',
             'description': 'Pod name',
+            'description_key': 'modules.k8s.logs.output.pod.description',
         },
         'logs': {
             'type': 'string',
             'description': 'Log output text',
+            'description_key': 'modules.k8s.logs.output.logs.description',
         },
         'lines': {
             'type': 'number',
             'description': 'Number of log lines returned',
+            'description_key': 'modules.k8s.logs.output.lines.description',
         },
     },
 )

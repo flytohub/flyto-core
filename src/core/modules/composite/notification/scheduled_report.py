@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.notification.scheduled_report',
     label='Scheduled Report',
+    label_key='modules.composite.notification.scheduled_report.label',
+    description='Generate and send scheduled reports to notification channels',
+    description_key='modules.composite.notification.scheduled_report.description',
     icon='FileText',
     color='#3B82F6',
 

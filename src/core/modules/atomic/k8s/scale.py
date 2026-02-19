@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
     category='k8s',
     tags=['kubernetes', 'k8s', 'scale', 'deployment', 'replicas', 'autoscale'],
     label='Scale Deployment',
+    label_key='modules.k8s.scale.label',
     description='Scale a Kubernetes deployment to a specified replica count',
+    description_key='modules.k8s.scale.description',
     icon='Cloud',
     color='#326CE5',
     input_types=['string', 'object'],
@@ -58,18 +60,22 @@ logger = logging.getLogger(__name__)
         'deployment': {
             'type': 'string',
             'description': 'Deployment name',
+            'description_key': 'modules.k8s.scale.output.deployment.description',
         },
         'replicas': {
             'type': 'number',
             'description': 'Requested replica count',
+            'description_key': 'modules.k8s.scale.output.replicas.description',
         },
         'namespace': {
             'type': 'string',
             'description': 'Kubernetes namespace',
+            'description_key': 'modules.k8s.scale.output.namespace.description',
         },
         'scaled': {
             'type': 'boolean',
             'description': 'Whether the scale operation succeeded',
+            'description_key': 'modules.k8s.scale.output.scaled.description',
         },
     },
 )

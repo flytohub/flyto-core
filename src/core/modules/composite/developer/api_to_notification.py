@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.developer.api_to_notification',
     label='API to Notification',
+    label_key='modules.composite.developer.api_to_notification.label',
+    description='Fetch data from any API and send it to a notification channel',
+    description_key='modules.composite.developer.api_to_notification.description',
     icon='Zap',
     color='#F59E0B',
 

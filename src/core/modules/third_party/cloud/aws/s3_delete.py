@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'delete', 'remove'],
     label='S3 Delete Object',
+    label_key='modules.aws.s3.delete.label',
     description='Delete an object from an AWS S3 bucket',
+    description_key='modules.aws.s3.delete.description',
     icon='Cloud',
     color='#FF9900',
     input_types=['string'],
@@ -64,9 +66,9 @@ logger = logging.getLogger(__name__)
               placeholder='${env.AWS_SECRET_ACCESS_KEY}', format='password'),
     ),
     output_schema={
-        'bucket': {'type': 'string', 'description': 'S3 bucket name'},
-        'key': {'type': 'string', 'description': 'Deleted object key'},
-        'deleted': {'type': 'boolean', 'description': 'Whether the object was deleted successfully'},
+        'bucket': {'type': 'string', 'description': 'S3 bucket name', 'description_key': 'modules.aws.s3.delete.output.bucket.description'},
+        'key': {'type': 'string', 'description': 'Deleted object key', 'description_key': 'modules.aws.s3.delete.output.key.description'},
+        'deleted': {'type': 'boolean', 'description': 'Whether the object was deleted successfully', 'description_key': 'modules.aws.s3.delete.output.deleted.description'},
     },
     examples=[
         {

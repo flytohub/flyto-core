@@ -30,7 +30,9 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
     category='cloud',
     tags=['cloud', 'google', 'calendar', 'event', 'list', 'schedule'],
     label='Calendar List Events',
+    label_key='modules.google.calendar.list_events.label',
     description='List upcoming events from Google Calendar',
+    description_key='modules.google.calendar.list_events.description',
     icon='Calendar',
     color='#4285F4',
     input_types=['string'],
@@ -66,6 +68,7 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
         'events': {
             'type': 'array',
             'description': 'List of calendar events',
+            'description_key': 'modules.google.calendar.list_events.output.events.description',
             'items': {
                 'type': 'object',
                 'properties': {
@@ -77,7 +80,7 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
                 },
             },
         },
-        'count': {'type': 'number', 'description': 'Number of events returned'},
+        'count': {'type': 'number', 'description': 'Number of events returned', 'description_key': 'modules.google.calendar.list_events.output.count.description'},
     },
     examples=[
         {

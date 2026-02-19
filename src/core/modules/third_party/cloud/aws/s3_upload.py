@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'upload', 'file', 'path_restricted'],
     label='S3 Upload',
+    label_key='modules.aws.s3.upload.label',
     description='Upload a local file to an AWS S3 bucket',
+    description_key='modules.aws.s3.upload.description',
     icon='Cloud',
     color='#FF9900',
     input_types=['file', 'string'],
@@ -71,10 +73,10 @@ logger = logging.getLogger(__name__)
               placeholder='application/octet-stream'),
     ),
     output_schema={
-        'bucket': {'type': 'string', 'description': 'S3 bucket name'},
-        'key': {'type': 'string', 'description': 'S3 object key'},
-        'url': {'type': 'string', 'description': 'Public URL of the uploaded object'},
-        'size': {'type': 'number', 'description': 'File size in bytes'},
+        'bucket': {'type': 'string', 'description': 'S3 bucket name', 'description_key': 'modules.aws.s3.upload.output.bucket.description'},
+        'key': {'type': 'string', 'description': 'S3 object key', 'description_key': 'modules.aws.s3.upload.output.key.description'},
+        'url': {'type': 'string', 'description': 'Public URL of the uploaded object', 'description_key': 'modules.aws.s3.upload.output.url.description'},
+        'size': {'type': 'number', 'description': 'File size in bytes', 'description_key': 'modules.aws.s3.upload.output.size.description'},
     },
     examples=[
         {

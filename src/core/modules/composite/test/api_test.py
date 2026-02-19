@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.test.api_test',
     label='API Test Suite',
+    label_key='modules.composite.test.api_test.label',
+    description='Run API tests with HTTP requests and assertions',
+    description_key='modules.composite.test.api_test.description',
     icon='Zap',
     color='#3B82F6',
 

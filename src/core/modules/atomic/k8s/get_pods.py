@@ -76,7 +76,9 @@ def _parse_pod_status(pod: Dict[str, Any]) -> Dict[str, Any]:
     category='k8s',
     tags=['kubernetes', 'k8s', 'pods', 'list', 'container'],
     label='Get Pods',
+    label_key='modules.k8s.get_pods.label',
     description='List Kubernetes pods in a namespace',
+    description_key='modules.k8s.get_pods.description',
     icon='Cloud',
     color='#326CE5',
     input_types=['string', 'object'],
@@ -102,10 +104,12 @@ def _parse_pod_status(pod: Dict[str, Any]) -> Dict[str, Any]:
         'pods': {
             'type': 'array',
             'description': 'List of pods with status information',
+            'description_key': 'modules.k8s.get_pods.output.pods.description',
         },
         'count': {
             'type': 'number',
             'description': 'Total number of pods found',
+            'description_key': 'modules.k8s.get_pods.output.count.description',
         },
     },
 )

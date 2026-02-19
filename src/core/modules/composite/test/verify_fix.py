@@ -15,6 +15,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.test.verify_fix',
     label='Verify Fix',
+    label_key='modules.composite.test.verify_fix.label',
+    description='Verify bug fixes with before/after testing and regression suites',
+    description_key='modules.composite.test.verify_fix.description',
     icon='CheckCircle',
     color='#22C55E',
 

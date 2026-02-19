@@ -16,6 +16,9 @@ from ..base import CompositeModule, register_composite
 @register_composite(
     module_id='composite.browser.scrape_to_json',
     label='Scrape Web to JSON',
+    label_key='modules.composite.browser.scrape_to_json.label',
+    description='Scrape a webpage and output structured JSON data',
+    description_key='modules.composite.browser.scrape_to_json.description',
     icon='FileJson',
     color='#10B981',
 

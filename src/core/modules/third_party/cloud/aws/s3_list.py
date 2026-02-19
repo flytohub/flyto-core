@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
     category='cloud',
     tags=['cloud', 'aws', 's3', 'storage', 'list', 'browse'],
     label='S3 List Objects',
+    label_key='modules.aws.s3.list.label',
     description='List objects in an AWS S3 bucket with optional prefix filter',
+    description_key='modules.aws.s3.list.description',
     icon='Cloud',
     color='#FF9900',
     input_types=['string'],
@@ -71,6 +73,7 @@ logger = logging.getLogger(__name__)
         'objects': {
             'type': 'array',
             'description': 'List of S3 objects',
+            'description_key': 'modules.aws.s3.list.output.objects.description',
             'items': {
                 'type': 'object',
                 'properties': {
@@ -80,8 +83,8 @@ logger = logging.getLogger(__name__)
                 },
             },
         },
-        'count': {'type': 'number', 'description': 'Number of objects returned'},
-        'truncated': {'type': 'boolean', 'description': 'Whether the results are truncated'},
+        'count': {'type': 'number', 'description': 'Number of objects returned', 'description_key': 'modules.aws.s3.list.output.count.description'},
+        'truncated': {'type': 'boolean', 'description': 'Whether the results are truncated', 'description_key': 'modules.aws.s3.list.output.truncated.description'},
     },
     examples=[
         {
