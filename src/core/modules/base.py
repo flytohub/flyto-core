@@ -305,7 +305,7 @@ class BaseModule(ABC):
                         attempts=attempts
                     )
                     logger.error(f"{error_msg}: {e}")
-                    raise Exception(error_msg) from e
+                    raise Exception(f"{error_msg}: {e}") from e
                 logger.warning(f"Module {self.module_id} failed, retrying: {e}")
 
             # Exponential backoff between retries
