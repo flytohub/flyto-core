@@ -101,7 +101,7 @@ def _format_json(content: Any) -> Any:
     icon='Monitor',
     color='#6366F1',
 
-    input_types=['string', 'object'],
+    input_types=['any'],
     output_types=['object'],
     can_connect_to=['*'],
     can_receive_from=['*'],
