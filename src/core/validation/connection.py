@@ -147,7 +147,6 @@ def validate_connection(
         'input': 'input',
         'target': 'input',
         'in': 'input',  # LoopNode uses 'in' for input
-        'loop_back_in': 'input',  # LoopNode loop-back input
     }
 
     def find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
