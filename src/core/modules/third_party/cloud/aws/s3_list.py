@@ -105,6 +105,17 @@ async def aws_s3_list(context: Dict[str, Any]) -> Dict[str, Any]:
 
     prefix = params.get('prefix', '')
     max_keys = int(params.get('max_keys', 100))
+    client = _make_s3_client(params)
+
+    objects, truncated = await _list_objects(client, bucket, prefix, max_keys)
+    return {
+        'ok': True,
+        'data': {'objects': objects, 'count': len(objects), 'truncated': truncated},
+    }
+
+
+def _make_s3_client(params: Dict[str, Any]):
+    """Build an S3 client from params or environment."""
     region = params.get('region') or os.getenv('AWS_REGION', 'us-east-1')
     access_key_id = params.get('access_key_id') or os.getenv('AWS_ACCESS_KEY_ID')
     secret_access_key = params.get('secret_access_key') or os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -117,33 +128,29 @@ async def aws_s3_list(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         import boto3
-        from botocore.exceptions import ClientError, BotoCoreError
     except ImportError:
-        raise ModuleError(
-            'boto3 package is required. Install with: pip install boto3'
-        )
+        raise ModuleError('boto3 package is required. Install with: pip install boto3')
 
+    return boto3.client(
+        's3',
+        region_name=region,
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_access_key,
+    )
+
+
+async def _list_objects(client, bucket: str, prefix: str, max_keys: int):
+    """Run list_objects_v2 in executor and return (objects, truncated)."""
     objects = []
     truncated = False
 
-    def _list():
+    def _run():
         nonlocal objects, truncated
-        client = boto3.client(
-            's3',
-            region_name=region,
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-        )
-        kwargs = {
-            'Bucket': bucket,
-            'MaxKeys': max_keys,
-        }
+        kwargs = {'Bucket': bucket, 'MaxKeys': max_keys}
         if prefix:
             kwargs['Prefix'] = prefix
-
         response = client.list_objects_v2(**kwargs)
         truncated = response.get('IsTruncated', False)
-
         for obj in response.get('Contents', []):
             last_modified = obj.get('LastModified')
             objects.append({
@@ -154,16 +161,9 @@ async def aws_s3_list(context: Dict[str, Any]) -> Dict[str, Any]:
 
     loop = asyncio.get_event_loop()
     try:
-        await loop.run_in_executor(None, _list)
+        await loop.run_in_executor(None, _run)
     except Exception as exc:
         error_name = type(exc).__name__
         raise ModuleError(f'S3 list failed ({error_name}): {exc}')
 
-    return {
-        'ok': True,
-        'data': {
-            'objects': objects,
-            'count': len(objects),
-            'truncated': truncated,
-        },
-    }
+    return objects, truncated

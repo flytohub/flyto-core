@@ -27,7 +27,7 @@ from ....schema import compose, presets
     description_key='modules.api.http_get.description',
     icon='Globe',
     color='#3B82F6',
-    input_types=[],
+    input_types=['string'],
     output_types=['json', 'text', 'api_response'],
     can_connect_to=['data.*', 'notify.*', 'file.*', 'flow.*'],
     can_receive_from=['start', 'flow.*'],

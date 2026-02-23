@@ -18,6 +18,37 @@ from ....constants import APIEndpoints, EnvVars
 logger = logging.getLogger(__name__)
 
 
+def _github_headers(token=None):
+    """Build common GitHub API headers."""
+    headers = {'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER, 'User-Agent': 'Flyto-Workflow-Engine'}
+    if token:
+        headers['Authorization'] = f'token {token}'
+    return headers
+
+
+def _simplify_issues(data):
+    """Extract essential fields from GitHub issue list."""
+    return [{
+        'number': i.get('number'), 'title': i.get('title'), 'state': i.get('state'),
+        'url': i.get('html_url'), 'created_at': i.get('created_at'),
+        'updated_at': i.get('updated_at'),
+        'labels': [l['name'] for l in i.get('labels', [])],
+        'user': i.get('user', {}).get('login'),
+    } for i in data]
+
+
+def _simplify_repos(data):
+    """Extract essential fields from GitHub repo list."""
+    return [{
+        'name': r.get('name'), 'full_name': r.get('full_name'),
+        'description': r.get('description'), 'url': r.get('html_url'),
+        'private': r.get('private'), 'language': r.get('language'),
+        'stars': r.get('stargazers_count'), 'forks': r.get('forks_count'),
+        'created_at': r.get('created_at'), 'updated_at': r.get('updated_at'),
+        'pushed_at': r.get('pushed_at'),
+    } for r in data]
+
+
 @register_module(
     module_id='api.github.get_repo',
     can_connect_to=['*'],
@@ -274,55 +305,20 @@ class GitHubListIssuesModule(BaseModule):
 
     async def execute(self) -> Any:
         url = APIEndpoints.github_issues(self.owner, self.repo)
-
-        headers = {
-            'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
-            'User-Agent': 'Flyto-Workflow-Engine'
-        }
-
-        if self.token:
-            headers['Authorization'] = f'token {self.token}'
-
-        params = {
-            'state': self.state,
-            'per_page': min(self.limit, 100)
-        }
-
+        headers = _github_headers(self.token)
+        params = {'state': self.state, 'per_page': min(self.limit, 100)}
         if self.labels:
             params['labels'] = self.labels
 
-        # SECURITY: Set timeout to prevent hanging API calls
         timeout = aiohttp.ClientTimeout(total=30, connect=10)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-
-                    # Simplify issue data
-                    issues = []
-                    for issue in data:
-                        issues.append({
-                            'number': issue.get('number'),
-                            'title': issue.get('title'),
-                            'state': issue.get('state'),
-                            'url': issue.get('html_url'),
-                            'created_at': issue.get('created_at'),
-                            'updated_at': issue.get('updated_at'),
-                            'labels': [label['name'] for label in issue.get('labels', [])],
-                            'user': issue.get('user', {}).get('login')
-                        })
-
-                    return {
-                        'status': 'success',
-                        'issues': issues,
-                        'count': len(issues)
-                    }
-                else:
-                    error_text = await response.text()
-                    return {
-                        'status': 'error',
-                        'message': f'Failed to fetch issues: HTTP {response.status} - {error_text}'
-                    }
+                    issues = _simplify_issues(data)
+                    return {'status': 'success', 'issues': issues, 'count': len(issues)}
+                error_text = await response.text()
+                return {'status': 'error', 'message': f'Failed to fetch issues: HTTP {response.status} - {error_text}'}
 
 
 @register_module(
@@ -792,7 +788,6 @@ class GitHubListReposModule(BaseModule):
 
         self.token = self.params.get('token') or os.getenv(EnvVars.GITHUB_TOKEN)
 
-        # "me" requires authentication
         if self.owner == 'me' and not self.token:
             raise ValueError(
                 f"GitHub token is required when using 'me' as owner. "
@@ -801,57 +796,20 @@ class GitHubListReposModule(BaseModule):
             )
 
     async def execute(self) -> Any:
-        # Determine API endpoint
         if self.owner == 'me':
             url = f"{APIEndpoints.GITHUB_BASE_URL}/user/repos"
         else:
             url = f"{APIEndpoints.GITHUB_BASE_URL}/users/{self.owner}/repos"
 
-        headers = {
-            'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
-            'User-Agent': 'Flyto-Workflow-Engine'
-        }
+        headers = _github_headers(self.token)
+        params = {'type': self.repo_type, 'sort': self.sort, 'per_page': min(int(self.limit), 100)}
 
-        if self.token:
-            headers['Authorization'] = f'token {self.token}'
-
-        params = {
-            'type': self.repo_type,
-            'sort': self.sort,
-            'per_page': min(int(self.limit), 100)
-        }
-
-        # SECURITY: Set timeout to prevent hanging API calls
         timeout = aiohttp.ClientTimeout(total=30, connect=10)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
                     data = await response.json()
-
-                    repos = []
-                    for repo in data:
-                        repos.append({
-                            'name': repo.get('name'),
-                            'full_name': repo.get('full_name'),
-                            'description': repo.get('description'),
-                            'url': repo.get('html_url'),
-                            'private': repo.get('private'),
-                            'language': repo.get('language'),
-                            'stars': repo.get('stargazers_count'),
-                            'forks': repo.get('forks_count'),
-                            'created_at': repo.get('created_at'),
-                            'updated_at': repo.get('updated_at'),
-                            'pushed_at': repo.get('pushed_at')
-                        })
-
-                    return {
-                        'status': 'success',
-                        'repos': repos,
-                        'count': len(repos)
-                    }
-                else:
-                    error_text = await response.text()
-                    return {
-                        'status': 'error',
-                        'message': f'Failed to list repositories: HTTP {response.status} - {error_text}'
-                    }
+                    repos = _simplify_repos(data)
+                    return {'status': 'success', 'repos': repos, 'count': len(repos)}
+                error_text = await response.text()
+                return {'status': 'error', 'message': f'Failed to list repositories: HTTP {response.status} - {error_text}'}

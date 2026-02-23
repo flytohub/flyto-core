@@ -48,7 +48,7 @@ GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
         field('access_token', type='string', label='Access Token', required=True,
               group=FieldGroup.CONNECTION,
               description='Google OAuth2 access token with Gmail send scope',
-              format='password'),
+              placeholder='ya29.a0AfH6SM...', format='password'),
         field('to', type='string', label='To', required=True,
               group=FieldGroup.BASIC,
               description='Recipient email address',
@@ -111,56 +111,8 @@ async def google_gmail_send(context: Dict[str, Any]) -> Dict[str, Any]:
     if not body:
         raise ValidationError('Body is required', field='body')
 
-    is_html = params.get('html', False)
-    cc = params.get('cc', '')
-    bcc = params.get('bcc', '')
-
-    # Build RFC 2822 MIME message
-    if is_html:
-        msg = MIMEMultipart('alternative')
-        msg.attach(MIMEText(body, 'html'))
-    else:
-        msg = MIMEText(body, 'plain')
-
-    msg['To'] = to
-    msg['Subject'] = subject
-    if cc:
-        msg['Cc'] = cc
-    if bcc:
-        msg['Bcc'] = bcc
-
-    # Base64url encode the message
-    raw_message = base64.urlsafe_b64encode(msg.as_bytes()).decode('ascii')
-
-    try:
-        import aiohttp
-    except ImportError:
-        raise ModuleError(
-            'aiohttp package is required. Install with: pip install aiohttp'
-        )
-
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json',
-    }
-    payload = {'raw': raw_message}
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                GMAIL_SEND_URL,
-                json=payload,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=25),
-            ) as resp:
-                resp_data = await resp.json()
-                if resp.status != 200:
-                    error_msg = resp_data.get('error', {}).get('message', str(resp_data))
-                    raise ModuleError(
-                        f'Gmail API error (HTTP {resp.status}): {error_msg}'
-                    )
-    except aiohttp.ClientError as exc:
-        raise ModuleError(f'Gmail API request failed: {exc}')
+    raw_message = _build_mime_message(params)
+    resp_data = await _send_message(access_token, raw_message)
 
     return {
         'ok': True,
@@ -170,3 +122,47 @@ async def google_gmail_send(context: Dict[str, Any]) -> Dict[str, Any]:
             'to': to,
         },
     }
+
+
+def _build_mime_message(params: Dict[str, Any]) -> str:
+    """Build RFC 2822 MIME message and return base64url-encoded raw."""
+    body = params['body']
+    is_html = params.get('html', False)
+
+    if is_html:
+        msg = MIMEMultipart('alternative')
+        msg.attach(MIMEText(body, 'html'))
+    else:
+        msg = MIMEText(body, 'plain')
+
+    msg['To'] = params['to']
+    msg['Subject'] = params['subject']
+    if params.get('cc'):
+        msg['Cc'] = params['cc']
+    if params.get('bcc'):
+        msg['Bcc'] = params['bcc']
+
+    return base64.urlsafe_b64encode(msg.as_bytes()).decode('ascii')
+
+
+async def _send_message(access_token: str, raw_message: str) -> Dict[str, Any]:
+    """POST the raw message to Gmail API."""
+    try:
+        import aiohttp
+    except ImportError:
+        raise ModuleError('aiohttp package is required. Install with: pip install aiohttp')
+
+    headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                GMAIL_SEND_URL, json={'raw': raw_message},
+                headers=headers, timeout=aiohttp.ClientTimeout(total=25),
+            ) as resp:
+                resp_data = await resp.json()
+                if resp.status != 200:
+                    error_msg = resp_data.get('error', {}).get('message', str(resp_data))
+                    raise ModuleError(f'Gmail API error (HTTP {resp.status}): {error_msg}')
+                return resp_data
+    except aiohttp.ClientError as exc:
+        raise ModuleError(f'Gmail API request failed: {exc}')

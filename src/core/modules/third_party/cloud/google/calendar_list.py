@@ -46,7 +46,7 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
         field('access_token', type='string', label='Access Token', required=True,
               group=FieldGroup.CONNECTION,
               description='Google OAuth2 access token with Calendar read scope',
-              format='password'),
+              placeholder='ya29.a0AfH6SM...', format='password'),
         field('max_results', type='number', label='Max Results',
               group=FieldGroup.OPTIONS,
               description='Maximum number of events to return',
@@ -99,24 +99,26 @@ async def google_calendar_list_events(context: Dict[str, Any]) -> Dict[str, Any]
         raise ValidationError('Access token is required', field='access_token')
 
     max_results = int(params.get('max_results', 10))
-    time_min = params.get('time_min', '')
+    time_min = params.get('time_min', '') or datetime.now(timezone.utc).isoformat()
     time_max = params.get('time_max', '')
 
-    # Default time_min to current UTC time if not provided
-    if not time_min:
-        time_min = datetime.now(timezone.utc).isoformat()
+    resp_data = await _fetch_events(access_token, max_results, time_min, time_max)
+    events = _parse_events(resp_data)
 
+    return {
+        'ok': True,
+        'data': {'events': events, 'count': len(events)},
+    }
+
+
+async def _fetch_events(access_token: str, max_results: int, time_min: str, time_max: str) -> Dict[str, Any]:
+    """GET events from Google Calendar API."""
     try:
         import aiohttp
     except ImportError:
-        raise ModuleError(
-            'aiohttp package is required. Install with: pip install aiohttp'
-        )
+        raise ModuleError('aiohttp package is required. Install with: pip install aiohttp')
 
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-    }
-
+    headers = {'Authorization': f'Bearer {access_token}'}
     query_params: Dict[str, str] = {
         'maxResults': str(max_results),
         'timeMin': time_min,
@@ -126,25 +128,24 @@ async def google_calendar_list_events(context: Dict[str, Any]) -> Dict[str, Any]
     if time_max:
         query_params['timeMax'] = time_max
 
-    events: List[Dict[str, Any]] = []
-
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                CALENDAR_EVENTS_URL,
-                params=query_params,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=25),
+                CALENDAR_EVENTS_URL, params=query_params,
+                headers=headers, timeout=aiohttp.ClientTimeout(total=25),
             ) as resp:
                 resp_data = await resp.json()
                 if resp.status != 200:
                     error_msg = resp_data.get('error', {}).get('message', str(resp_data))
-                    raise ModuleError(
-                        f'Google Calendar API error (HTTP {resp.status}): {error_msg}'
-                    )
+                    raise ModuleError(f'Google Calendar API error (HTTP {resp.status}): {error_msg}')
+                return resp_data
     except aiohttp.ClientError as exc:
         raise ModuleError(f'Google Calendar API request failed: {exc}')
 
+
+def _parse_events(resp_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Parse event items from Calendar API response."""
+    events: List[Dict[str, Any]] = []
     for item in resp_data.get('items', []):
         start_info = item.get('start', {})
         end_info = item.get('end', {})
@@ -155,11 +156,4 @@ async def google_calendar_list_events(context: Dict[str, Any]) -> Dict[str, Any]
             'end': end_info.get('dateTime', end_info.get('date', '')),
             'location': item.get('location', ''),
         })
-
-    return {
-        'ok': True,
-        'data': {
-            'events': events,
-            'count': len(events),
-        },
-    }
+    return events

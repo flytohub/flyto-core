@@ -141,7 +141,11 @@ DEFAULT_BROWSER_MAX_RETRIES: int = 2
 DEFAULT_HEADLESS: bool = True
 DEFAULT_VIEWPORT_WIDTH: int = 1920
 DEFAULT_VIEWPORT_HEIGHT: int = 1080
-DEFAULT_USER_AGENT: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+DEFAULT_USER_AGENT: str = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
 
 
 # =============================================================================

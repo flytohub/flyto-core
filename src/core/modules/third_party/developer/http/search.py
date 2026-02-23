@@ -16,6 +16,25 @@ from ....registry import register_module
 from ....schema import compose, presets
 
 
+def _google_search_setup_error():
+    return {
+        "status": "error",
+        "message": "Please set GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID environment variables",
+        "setup_guide": {
+            "step1": "Go to https://console.cloud.google.com/apis/credentials",
+            "step2": "Create API Key",
+            "step3": "Enable Custom Search API",
+            "step4": "Go to https://programmablesearchengine.google.com/",
+            "step5": "Create search engine and get Search Engine ID",
+            "step6": "Set environment variable: GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID"
+        }
+    }
+
+
+def _parse_search_results(items):
+    return [{'title': i.get('title'), 'url': i.get('link'), 'description': i.get('snippet')} for i in items]
+
+
 @register_module(
     module_id='core.api.google_search',
     version='1.0.0',
@@ -28,7 +47,7 @@ from ....schema import compose, presets
     description_key='modules.api.google_search.description',
     icon='Search',
     color='#4285F4',
-    input_types=[],
+    input_types=['string'],
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notify.*', 'file.*'],
     can_receive_from=['start', 'flow.*'],
@@ -82,52 +101,18 @@ class GoogleSearchAPIModule(BaseModule):
         search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
 
         if not api_key or not search_engine_id:
-            return {
-                "status": "error",
-                "message": "Please set GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID environment variables",
-                "setup_guide": {
-                    "step1": "Go to https://console.cloud.google.com/apis/credentials",
-                    "step2": "Create API Key",
-                    "step3": "Enable Custom Search API",
-                    "step4": "Go to https://programmablesearchengine.google.com/",
-                    "step5": "Create search engine and get Search Engine ID",
-                    "step6": "Set environment variable: GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID"
-                }
-            }
+            return _google_search_setup_error()
 
-        url = "https://www.googleapis.com/customsearch/v1"
-        params = {
-            'key': api_key,
-            'cx': search_engine_id,
-            'q': self.keyword,
-            'num': min(self.limit, 10)
-        }
-
+        params = {'key': api_key, 'cx': search_engine_id, 'q': self.keyword, 'num': min(self.limit, 10)}
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
+            async with session.get("https://www.googleapis.com/customsearch/v1", params=params) as response:
                 if response.status != 200:
                     error_data = await response.json()
-                    return {
-                        "status": "error",
-                        "message": f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"
-                    }
-
+                    return {"status": "error", "message": f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"}
                 data = await response.json()
-
-                results = []
-                for item in data.get('items', []):
-                    results.append({
-                        'title': item.get('title'),
-                        'url': item.get('link'),
-                        'description': item.get('snippet')
-                    })
-
-                return {
-                    "status": "success",
-                    "data": results,
-                    "count": len(results),
-                    "total_results": data.get('searchInformation', {}).get('totalResults', 0)
-                }
+                results = _parse_search_results(data.get('items', []))
+                return {"status": "success", "data": results, "count": len(results),
+                        "total_results": data.get('searchInformation', {}).get('totalResults', 0)}
 
 
 @register_module(
@@ -142,7 +127,7 @@ class GoogleSearchAPIModule(BaseModule):
     description_key='modules.api.serpapi_search.description',
     icon='Search',
     color='#F39C12',
-    input_types=[],
+    input_types=['string'],
     output_types=['json', 'array', 'api_response'],
     can_connect_to=['data.*', 'notify.*', 'file.*'],
     can_receive_from=['start', 'flow.*'],

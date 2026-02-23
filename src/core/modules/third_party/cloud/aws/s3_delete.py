@@ -90,6 +90,17 @@ async def aws_s3_delete(context: Dict[str, Any]) -> Dict[str, Any]:
     if not key:
         raise ValidationError('Object key is required', field='key')
 
+    client = _make_s3_client(params)
+    await _delete_object(client, bucket, key)
+
+    return {
+        'ok': True,
+        'data': {'bucket': bucket, 'key': key, 'deleted': True},
+    }
+
+
+def _make_s3_client(params: Dict[str, Any]):
+    """Build an S3 client from params or environment."""
     region = params.get('region') or os.getenv('AWS_REGION', 'us-east-1')
     access_key_id = params.get('access_key_id') or os.getenv('AWS_ACCESS_KEY_ID')
     secret_access_key = params.get('secret_access_key') or os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -102,39 +113,25 @@ async def aws_s3_delete(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         import boto3
-        from botocore.exceptions import ClientError, BotoCoreError
     except ImportError:
-        raise ModuleError(
-            'boto3 package is required. Install with: pip install boto3'
-        )
+        raise ModuleError('boto3 package is required. Install with: pip install boto3')
 
-    deleted = False
+    return boto3.client(
+        's3',
+        region_name=region,
+        aws_access_key_id=access_key_id,
+        aws_secret_access_key=secret_access_key,
+    )
 
-    def _delete():
-        nonlocal deleted
-        client = boto3.client(
-            's3',
-            region_name=region,
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-        )
-        # S3 delete_object does not raise an error if the object does not exist.
-        # It returns a 204 response regardless.
+
+async def _delete_object(client, bucket: str, key: str):
+    """Run delete_object in executor."""
+    def _run():
         client.delete_object(Bucket=bucket, Key=key)
-        deleted = True
 
     loop = asyncio.get_event_loop()
     try:
-        await loop.run_in_executor(None, _delete)
+        await loop.run_in_executor(None, _run)
     except Exception as exc:
         error_name = type(exc).__name__
         raise ModuleError(f'S3 delete failed ({error_name}): {exc}')
-
-    return {
-        'ok': True,
-        'data': {
-            'bucket': bucket,
-            'key': key,
-            'deleted': deleted,
-        },
-    }

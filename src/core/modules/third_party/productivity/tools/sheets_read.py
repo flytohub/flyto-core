@@ -110,31 +110,10 @@ logger = logging.getLogger(__name__)
 )
 async def google_sheets_read(context):
     """Read from Google Sheets"""
+    import asyncio
     params = context['params']
 
-    try:
-        from google.oauth2 import service_account
-        from googleapiclient.discovery import build
-        import asyncio
-    except ImportError:
-        raise ImportError("google-api-python-client package required. Install with: pip install google-api-python-client google-auth")
-
-    credentials_json = params.get('credentials')
-    if not credentials_json:
-        credentials_json = os.getenv('GOOGLE_CREDENTIALS_JSON')
-    if not credentials_json:
-        raise ValueError("Credentials required: provide 'credentials' param or set GOOGLE_CREDENTIALS_JSON env variable")
-
-    if isinstance(credentials_json, str):
-        credentials_json = json.loads(credentials_json)
-
-    credentials = service_account.Credentials.from_service_account_info(
-        credentials_json,
-        scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
-    )
-
-    service = build('sheets', 'v4', credentials=credentials)
-
+    service = _build_sheets_service(params)
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
@@ -145,21 +124,37 @@ async def google_sheets_read(context):
     )
 
     values = result.get('values', [])
-
     if params.get('include_header', True) and values:
         headers = values[0]
-        data = []
-        for row in values[1:]:
-            row_padded = row + [''] * (len(headers) - len(row))
-            data.append(dict(zip(headers, row_padded)))
+        data = [
+            dict(zip(headers, row + [''] * (len(headers) - len(row))))
+            for row in values[1:]
+        ]
+        return {'values': values, 'data': data, 'row_count': len(values)}
+    return {'values': values, 'row_count': len(values)}
 
-        return {
-            'values': values,
-            'data': data,
-            'row_count': len(values)
-        }
-    else:
-        return {
-            'values': values,
-            'row_count': len(values)
-        }
+
+def _build_sheets_service(params):
+    """Build Google Sheets API service from credentials."""
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+    except ImportError:
+        raise ImportError(
+            "google-api-python-client package required. "
+            "Install with: pip install google-api-python-client google-auth"
+        )
+
+    credentials_json = params.get('credentials') or os.getenv('GOOGLE_CREDENTIALS_JSON')
+    if not credentials_json:
+        raise ValueError(
+            "Credentials required: provide 'credentials' param or set GOOGLE_CREDENTIALS_JSON env variable"
+        )
+    if isinstance(credentials_json, str):
+        credentials_json = json.loads(credentials_json)
+
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_json,
+        scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
+    )
+    return build('sheets', 'v4', credentials=credentials)

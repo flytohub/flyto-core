@@ -6,7 +6,7 @@ Search Gmail messages using the Gmail API with OAuth2 access token and aiohttp.
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ....registry import register_module
 from ....schema import compose
@@ -45,7 +45,7 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
         field('access_token', type='string', label='Access Token', required=True,
               group=FieldGroup.CONNECTION,
               description='Google OAuth2 access token with Gmail read scope',
-              format='password'),
+              placeholder='ya29.a0AfH6SM...', format='password'),
         field('query', type='string', label='Search Query', required=True,
               group=FieldGroup.BASIC,
               description='Gmail search query (e.g. "from:user@example.com subject:invoice")',
@@ -100,83 +100,74 @@ async def google_gmail_search(context: Dict[str, Any]) -> Dict[str, Any]:
     if not query:
         raise ValidationError('Search query is required', field='query')
 
+    messages = await _search_messages(access_token, query, max_results)
+
+    return {
+        'ok': True,
+        'data': {'messages': messages, 'total': len(messages)},
+    }
+
+
+async def _search_messages(access_token: str, query: str, max_results: int) -> List[Dict[str, Any]]:
+    """Search Gmail and fetch message metadata."""
     try:
         import aiohttp
     except ImportError:
-        raise ModuleError(
-            'aiohttp package is required. Install with: pip install aiohttp'
-        )
+        raise ModuleError('aiohttp package is required. Install with: pip install aiohttp')
 
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-    }
-
+    headers = {'Authorization': f'Bearer {access_token}'}
     messages: List[Dict[str, Any]] = []
 
     try:
         async with aiohttp.ClientSession() as session:
             # Step 1: Search for message IDs
-            search_params = {
-                'q': query,
-                'maxResults': str(max_results),
-            }
             async with session.get(
                 GMAIL_MESSAGES_URL,
-                params=search_params,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=25),
+                params={'q': query, 'maxResults': str(max_results)},
+                headers=headers, timeout=aiohttp.ClientTimeout(total=25),
             ) as resp:
                 if resp.status != 200:
                     resp_data = await resp.json()
                     error_msg = resp_data.get('error', {}).get('message', str(resp_data))
-                    raise ModuleError(
-                        f'Gmail API error (HTTP {resp.status}): {error_msg}'
-                    )
+                    raise ModuleError(f'Gmail API error (HTTP {resp.status}): {error_msg}')
                 search_data = await resp.json()
 
-            message_refs = search_data.get('messages', [])
-
             # Step 2: Fetch details for each message
-            for msg_ref in message_refs:
-                msg_id = msg_ref['id']
-                msg_url = f'{GMAIL_MESSAGES_URL}/{msg_id}'
-                msg_params = {'format': 'metadata', 'metadataHeaders': 'Subject,From,Date'}
-
-                async with session.get(
-                    msg_url,
-                    params=msg_params,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=10),
-                ) as msg_resp:
-                    if msg_resp.status != 200:
-                        logger.warning('Failed to fetch message %s: HTTP %s', msg_id, msg_resp.status)
-                        continue
-                    msg_data = await msg_resp.json()
-
-                # Extract headers
-                header_map: Dict[str, str] = {}
-                payload_headers = msg_data.get('payload', {}).get('headers', [])
-                for hdr in payload_headers:
-                    name = hdr.get('name', '').lower()
-                    if name in ('subject', 'from', 'date'):
-                        header_map[name] = hdr.get('value', '')
-
-                messages.append({
-                    'id': msg_data.get('id', ''),
-                    'thread_id': msg_data.get('threadId', ''),
-                    'subject': header_map.get('subject', ''),
-                    'from': header_map.get('from', ''),
-                    'snippet': msg_data.get('snippet', ''),
-                    'date': header_map.get('date', ''),
-                })
-
+            for msg_ref in search_data.get('messages', []):
+                msg = await _fetch_message_metadata(session, headers, msg_ref['id'])
+                if msg:
+                    messages.append(msg)
     except aiohttp.ClientError as exc:
         raise ModuleError(f'Gmail API request failed: {exc}')
 
+    return messages
+
+
+async def _fetch_message_metadata(session, headers: dict, msg_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch metadata for a single Gmail message."""
+    msg_url = f'{GMAIL_MESSAGES_URL}/{msg_id}'
+    msg_params = {'format': 'metadata', 'metadataHeaders': 'Subject,From,Date'}
+
+    async with session.get(
+        msg_url, params=msg_params, headers=headers,
+        timeout=__import__('aiohttp').ClientTimeout(total=10),
+    ) as msg_resp:
+        if msg_resp.status != 200:
+            logger.warning('Failed to fetch message %s: HTTP %s', msg_id, msg_resp.status)
+            return None
+        msg_data = await msg_resp.json()
+
+    header_map: Dict[str, str] = {}
+    for hdr in msg_data.get('payload', {}).get('headers', []):
+        name = hdr.get('name', '').lower()
+        if name in ('subject', 'from', 'date'):
+            header_map[name] = hdr.get('value', '')
+
     return {
-        'ok': True,
-        'data': {
-            'messages': messages,
-            'total': len(messages),
-        },
+        'id': msg_data.get('id', ''),
+        'thread_id': msg_data.get('threadId', ''),
+        'subject': header_map.get('subject', ''),
+        'from': header_map.get('from', ''),
+        'snippet': msg_data.get('snippet', ''),
+        'date': header_map.get('date', ''),
     }

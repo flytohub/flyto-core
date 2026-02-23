@@ -58,6 +58,7 @@ class BrowserDriver:
         self,
         proxy: Optional[str] = None,
         user_agent: Optional[str] = None,
+        locale: Optional[str] = None,
         slow_mo: int = 0,
         record_video_dir: Optional[str] = None,
         record_video_size: Optional[Dict[str, int]] = None,
@@ -88,8 +89,15 @@ class BrowserDriver:
             else:
                 browser_launcher = self._playwright.chromium
 
-            # Build launch options
-            launch_kwargs: Dict[str, Any] = {'headless': self.headless}
+            # Build launch options with anti-detection args
+            launch_kwargs: Dict[str, Any] = {
+                'headless': self.headless,
+                'args': [
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                ],
+            }
             if slow_mo > 0:
                 launch_kwargs['slow_mo'] = slow_mo
             if proxy:
@@ -103,11 +111,20 @@ class BrowserDriver:
             else:
                 self._browser = await browser_launcher.launch(**launch_kwargs)
 
+            # Use explicit locale or default to en-US
+            if not locale:
+                locale = 'en-US'
+
+            # Build languages array: [locale, lang, "en"] (deduplicated)
+            lang = locale.split('-')[0]  # "zh-TW" → "zh"
+            languages = list(dict.fromkeys([locale, lang, 'en']))
+
             # Create context with viewport and optional video recording
             context_user_agent = user_agent or DEFAULT_USER_AGENT
             context_kwargs: Dict[str, Any] = {
                 'viewport': self.viewport,
                 'user_agent': context_user_agent,
+                'locale': locale,
             }
             if record_video_dir:
                 Path(record_video_dir).mkdir(parents=True, exist_ok=True)
@@ -115,6 +132,33 @@ class BrowserDriver:
                 context_kwargs['record_video_size'] = record_video_size or self.viewport
                 logger.info(f"Video recording enabled: {record_video_dir}")
             self._context = await self._browser.new_context(**context_kwargs)
+
+            # Stealth: hide automation signals
+            languages_js = str(languages)
+            await self._context.add_init_script(f"""
+                // Hide navigator.webdriver
+                Object.defineProperty(navigator, 'webdriver', {{ get: () => undefined }});
+
+                // Fix chrome runtime
+                window.chrome = {{ runtime: {{}}, loadTimes: () => {{}}, csi: () => {{}} }};
+
+                // Fix permissions query
+                const origQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (params) =>
+                    params.name === 'notifications'
+                        ? Promise.resolve({{ state: Notification.permission }})
+                        : origQuery(params);
+
+                // Fix plugins (headless has empty array)
+                Object.defineProperty(navigator, 'plugins', {{
+                    get: () => [1, 2, 3, 4, 5],
+                }});
+
+                // Match system languages
+                Object.defineProperty(navigator, 'languages', {{
+                    get: () => {languages_js},
+                }});
+            """)
 
             # Create page
             self._page = await self._context.new_page()

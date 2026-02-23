@@ -81,6 +81,17 @@ from ...schema.constants import FieldGroup, Visibility
             visibility=Visibility.EXPERT,
         ),
         field(
+            'locale',
+            type='string',
+            label='Locale',
+            label_key='modules.browser.launch.params.locale.label',
+            description='Browser locale (e.g. en-US, zh-TW, ja-JP)',
+            default='en-US',
+            required=False,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
+        field(
             'slow_mo',
             type='integer',
             label='Slow Motion (ms)',
@@ -140,6 +151,7 @@ class BrowserLaunchModule(BaseModule):
         self.browser_type = self.params.get('browser_type', 'chromium')
         self.proxy = self.params.get('proxy')
         self.user_agent = self.params.get('user_agent')
+        self.locale = self.params.get('locale', 'en-US')
         self.slow_mo = self.params.get('slow_mo', 0)
         self.record_video_dir = self.params.get('record_video_dir')
         self.viewport = {
@@ -158,6 +170,7 @@ class BrowserLaunchModule(BaseModule):
         await driver.launch(
             proxy=self.proxy,
             user_agent=self.user_agent,
+            locale=self.locale,
             slow_mo=self.slow_mo,
             record_video_dir=self.record_video_dir,
         )

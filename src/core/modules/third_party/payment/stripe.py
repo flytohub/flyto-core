@@ -17,6 +17,15 @@ from ....constants import APIEndpoints, EnvVars
 logger = logging.getLogger(__name__)
 
 
+def _simplify_charges(charges_data):
+    """Extract essential fields from Stripe charge list."""
+    return [{
+        'id': c['id'], 'amount': c['amount'], 'currency': c['currency'],
+        'status': c['status'], 'paid': c['paid'], 'created': c['created'],
+        'description': c.get('description'),
+    } for c in charges_data]
+
+
 @register_module(
     module_id='payment.stripe.create_payment',
     can_connect_to=['*'],
@@ -422,50 +431,20 @@ class StripeListChargesModule(BaseModule):
         try:
             import aiohttp
 
-            # Build query parameters
-            params = {
-                'limit': self.limit
-            }
+            params = {'limit': self.limit}
             if self.customer:
                 params['customer'] = self.customer
+            headers = {'Authorization': f'Bearer {self.api_key}'}
 
-            # Make API request
-            headers = {
-                'Authorization': f'Bearer {self.api_key}'
-            }
-
-            # SECURITY: Set timeout to prevent hanging API calls
             timeout = aiohttp.ClientTimeout(total=30, connect=10)
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(
-                    APIEndpoints.STRIPE_CHARGES,
-                    headers=headers,
-                    params=params
-                ) as response:
+                async with session.get(APIEndpoints.STRIPE_CHARGES, headers=headers, params=params) as response:
                     if response.status != 200:
                         error_text = await response.text()
                         raise RuntimeError(f"Stripe API error ({response.status}): {error_text}")
-
                     result = await response.json()
 
-                    # Simplify charge data
-                    simplified_charges = []
-                    for charge in result['data']:
-                        simplified_charges.append({
-                            'id': charge['id'],
-                            'amount': charge['amount'],
-                            'currency': charge['currency'],
-                            'status': charge['status'],
-                            'paid': charge['paid'],
-                            'created': charge['created'],
-                            'description': charge.get('description')
-                        })
-
-                    return {
-                        "charges": simplified_charges,
-                        "count": len(simplified_charges),
-                        "has_more": result.get('has_more', False)
-                    }
-
+            charges = _simplify_charges(result['data'])
+            return {"charges": charges, "count": len(charges), "has_more": result.get('has_more', False)}
         except Exception as e:
             raise RuntimeError(f"Stripe list charges error: {str(e)}")

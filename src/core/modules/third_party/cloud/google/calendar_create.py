@@ -45,7 +45,7 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
         field('access_token', type='string', label='Access Token', required=True,
               group=FieldGroup.CONNECTION,
               description='Google OAuth2 access token with Calendar write scope',
-              format='password'),
+              placeholder='ya29.a0AfH6SM...', format='password'),
         field('summary', type='string', label='Event Title', required=True,
               group=FieldGroup.BASIC,
               description='Title of the calendar event',
@@ -103,93 +103,70 @@ async def google_calendar_create_event(context: Dict[str, Any]) -> Dict[str, Any
     params = context.get('params', {})
 
     access_token = params.get('access_token')
-    summary = params.get('summary')
-    start_time = params.get('start_time')
-    end_time = params.get('end_time')
-
     if not access_token:
         raise ValidationError('Access token is required', field='access_token')
-    if not summary:
+    if not params.get('summary'):
         raise ValidationError('Event title (summary) is required', field='summary')
-    if not start_time:
+    if not params.get('start_time'):
         raise ValidationError('Start time is required', field='start_time')
-    if not end_time:
+    if not params.get('end_time'):
         raise ValidationError('End time is required', field='end_time')
 
-    description = params.get('description', '')
-    location = params.get('location', '')
-    attendees_str = params.get('attendees', '')
-    timezone = params.get('timezone', 'UTC')
+    event_body = _build_event_body(params)
+    resp_data = await _post_calendar_event(access_token, event_body)
 
-    # Build attendee list from comma-separated string
-    attendee_list: List[Dict[str, str]] = []
-    if attendees_str:
-        for email in attendees_str.split(','):
-            email = email.strip()
-            if email:
-                attendee_list.append({'email': email})
-
-    # Build event payload
-    event_body: Dict[str, Any] = {
-        'summary': summary,
-        'start': {
-            'dateTime': start_time,
-            'timeZone': timezone,
-        },
-        'end': {
-            'dateTime': end_time,
-            'timeZone': timezone,
-        },
-    }
-    if description:
-        event_body['description'] = description
-    if location:
-        event_body['location'] = location
-    if attendee_list:
-        event_body['attendees'] = attendee_list
-
-    try:
-        import aiohttp
-    except ImportError:
-        raise ModuleError(
-            'aiohttp package is required. Install with: pip install aiohttp'
-        )
-
-    headers = {
-        'Authorization': f'Bearer {access_token}',
-        'Content-Type': 'application/json',
-    }
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                CALENDAR_EVENTS_URL,
-                json=event_body,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=25),
-            ) as resp:
-                resp_data = await resp.json()
-                if resp.status != 200:
-                    error_msg = resp_data.get('error', {}).get('message', str(resp_data))
-                    raise ModuleError(
-                        f'Google Calendar API error (HTTP {resp.status}): {error_msg}'
-                    )
-    except aiohttp.ClientError as exc:
-        raise ModuleError(f'Google Calendar API request failed: {exc}')
-
-    # Extract start/end from response
     start_info = resp_data.get('start', {})
     end_info = resp_data.get('end', {})
-    result_start = start_info.get('dateTime', start_info.get('date', ''))
-    result_end = end_info.get('dateTime', end_info.get('date', ''))
-
     return {
         'ok': True,
         'data': {
             'event_id': resp_data.get('id', ''),
             'summary': resp_data.get('summary', ''),
-            'start': result_start,
-            'end': result_end,
+            'start': start_info.get('dateTime', start_info.get('date', '')),
+            'end': end_info.get('dateTime', end_info.get('date', '')),
             'html_link': resp_data.get('htmlLink', ''),
         },
     }
+
+
+def _build_event_body(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Build Google Calendar event JSON body."""
+    timezone = params.get('timezone', 'UTC')
+    body: Dict[str, Any] = {
+        'summary': params['summary'],
+        'start': {'dateTime': params['start_time'], 'timeZone': timezone},
+        'end': {'dateTime': params['end_time'], 'timeZone': timezone},
+    }
+    if params.get('description'):
+        body['description'] = params['description']
+    if params.get('location'):
+        body['location'] = params['location']
+    attendees_str = params.get('attendees', '')
+    if attendees_str:
+        body['attendees'] = [
+            {'email': e.strip()} for e in attendees_str.split(',') if e.strip()
+        ]
+    return body
+
+
+async def _post_calendar_event(access_token: str, event_body: Dict[str, Any]) -> Dict[str, Any]:
+    """POST event to Google Calendar API."""
+    try:
+        import aiohttp
+    except ImportError:
+        raise ModuleError('aiohttp package is required. Install with: pip install aiohttp')
+
+    headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                CALENDAR_EVENTS_URL, json=event_body,
+                headers=headers, timeout=aiohttp.ClientTimeout(total=25),
+            ) as resp:
+                resp_data = await resp.json()
+                if resp.status != 200:
+                    error_msg = resp_data.get('error', {}).get('message', str(resp_data))
+                    raise ModuleError(f'Google Calendar API error (HTTP {resp.status}): {error_msg}')
+                return resp_data
+    except aiohttp.ClientError as exc:
+        raise ModuleError(f'Google Calendar API request failed: {exc}')
