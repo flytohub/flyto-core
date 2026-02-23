@@ -88,7 +88,7 @@ def get_validation_mode() -> ValidationMode:
     Values: dev, ci, release (default: ci)
     """
     import os
-    mode_str = os.environ.get("FLYTO_VALIDATION_MODE", "ci").lower()
+    mode_str = os.environ.get("FLYTO_VALIDATION_MODE", "dev").lower()
     try:
         return ValidationMode(mode_str)
     except ValueError:
