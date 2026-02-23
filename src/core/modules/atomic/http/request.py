@@ -18,6 +18,83 @@ from ....utils import validate_url_with_env_config, SSRFError
 logger = logging.getLogger(__name__)
 
 
+def _build_url_with_query(url: str, query: dict) -> str:
+    """Merge query params into the URL."""
+    from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+
+    parsed = urlparse(url)
+    existing_query = parse_qs(parsed.query)
+    existing_query.update({k: [str(v)] for k, v in query.items()})
+    new_query = urlencode(existing_query, doseq=True)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+def _apply_auth(headers: Dict[str, str], auth: Dict[str, Any]) -> None:
+    """Apply authentication headers in-place."""
+    import base64
+
+    auth_type = auth.get('type', 'bearer')
+    if auth_type == 'bearer':
+        headers['Authorization'] = f'Bearer {auth.get("token", "")}'
+    elif auth_type == 'basic':
+        credentials = base64.b64encode(
+            '{}:{}'.format(auth.get('username', ''), auth.get('password', '')).encode()
+        ).decode()
+        headers['Authorization'] = f'Basic {credentials}'
+    elif auth_type == 'api_key':
+        headers[auth.get('header_name', 'X-API-Key')] = auth.get('api_key', '')
+
+
+def _build_request_kwargs(
+    headers: dict, body: Any, method: str,
+    content_type: str, follow_redirects: bool, verify_ssl: bool,
+) -> Dict[str, Any]:
+    """Build kwargs dict for aiohttp session.request()."""
+    kwargs: Dict[str, Any] = {
+        'headers': headers,
+        'allow_redirects': follow_redirects,
+        'ssl': verify_ssl if verify_ssl else False,
+    }
+    if body is not None and method in ('POST', 'PUT', 'PATCH'):
+        if content_type == 'application/json':
+            kwargs['json'] = body
+        elif content_type == 'application/x-www-form-urlencoded':
+            kwargs['data'] = body
+        else:
+            kwargs['data'] = str(body) if not isinstance(body, (bytes, str)) else body
+    return kwargs
+
+
+async def _read_response_body(response, response_type: str) -> Any:
+    """Read response body according to the requested type."""
+    if response_type == 'binary':
+        return await response.read()
+    if response_type == 'json':
+        return await response.json()
+    if response_type == 'text':
+        return await response.text()
+    # auto
+    ct = response.headers.get('Content-Type', '')
+    if 'application/json' in ct:
+        try:
+            return await response.json()
+        except Exception:
+            return await response.text()
+    return await response.text()
+
+
+def _compute_content_length(content_length_header: Optional[str], body_content: Any) -> int:
+    """Compute content length from header or body."""
+    if content_length_header:
+        return int(content_length_header)
+    return len(body_content if isinstance(body_content, (str, bytes)) else str(body_content))
+
+
+def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -> Dict[str, Any]:
+    """Build a standard error result dict."""
+    return {'ok': False, 'error': error_msg, 'error_code': error_code, 'url': url, 'duration_ms': duration_ms}
+
+
 @register_module(
     module_id='http.request',
     version='1.0.0',
@@ -149,83 +226,6 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
-def _build_url_with_query(url: str, query: dict) -> str:
-    """Merge query params into the URL."""
-    from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
-
-    parsed = urlparse(url)
-    existing_query = parse_qs(parsed.query)
-    existing_query.update({k: [str(v)] for k, v in query.items()})
-    new_query = urlencode(existing_query, doseq=True)
-    return urlunparse(parsed._replace(query=new_query))
-
-
-def _apply_auth(headers: Dict[str, str], auth: Dict[str, Any]) -> None:
-    """Apply authentication headers in-place."""
-    import base64
-
-    auth_type = auth.get('type', 'bearer')
-    if auth_type == 'bearer':
-        headers['Authorization'] = f'Bearer {auth.get("token", "")}'
-    elif auth_type == 'basic':
-        credentials = base64.b64encode(
-            '{}:{}'.format(auth.get('username', ''), auth.get('password', '')).encode()
-        ).decode()
-        headers['Authorization'] = f'Basic {credentials}'
-    elif auth_type == 'api_key':
-        headers[auth.get('header_name', 'X-API-Key')] = auth.get('api_key', '')
-
-
-def _build_request_kwargs(
-    headers: dict, body: Any, method: str,
-    content_type: str, follow_redirects: bool, verify_ssl: bool,
-) -> Dict[str, Any]:
-    """Build kwargs dict for aiohttp session.request()."""
-    kwargs: Dict[str, Any] = {
-        'headers': headers,
-        'allow_redirects': follow_redirects,
-        'ssl': verify_ssl if verify_ssl else False,
-    }
-    if body is not None and method in ('POST', 'PUT', 'PATCH'):
-        if content_type == 'application/json':
-            kwargs['json'] = body
-        elif content_type == 'application/x-www-form-urlencoded':
-            kwargs['data'] = body
-        else:
-            kwargs['data'] = str(body) if not isinstance(body, (bytes, str)) else body
-    return kwargs
-
-
-async def _read_response_body(response, response_type: str) -> Any:
-    """Read response body according to the requested type."""
-    if response_type == 'binary':
-        return await response.read()
-    if response_type == 'json':
-        return await response.json()
-    if response_type == 'text':
-        return await response.text()
-    # auto
-    ct = response.headers.get('Content-Type', '')
-    if 'application/json' in ct:
-        try:
-            return await response.json()
-        except Exception:
-            return await response.text()
-    return await response.text()
-
-
-def _compute_content_length(content_length_header: Optional[str], body_content: Any) -> int:
-    """Compute content length from header or body."""
-    if content_length_header:
-        return int(content_length_header)
-    return len(body_content if isinstance(body_content, (str, bytes)) else str(body_content))
-
-
-def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -> Dict[str, Any]:
-    """Build a standard error result dict."""
-    return {'ok': False, 'error': error_msg, 'error_code': error_code, 'url': url, 'duration_ms': duration_ms}
-
-
 async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     """Send HTTP request and return response"""
     try:

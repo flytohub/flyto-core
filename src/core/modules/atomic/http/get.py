@@ -16,6 +16,27 @@ from ....utils import validate_url_with_env_config, SSRFError
 logger = logging.getLogger(__name__)
 
 
+def _append_query_params(url: str, query: dict) -> str:
+    """Append query parameters to URL."""
+    from urllib.parse import urlencode, urlparse, urlunparse
+
+    parsed = urlparse(url)
+    separator = '&' if parsed.query else ''
+    new_query = parsed.query + separator + urlencode(query)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+async def _parse_response_body(response) -> Any:
+    """Parse response body, attempting JSON for JSON content types."""
+    content_type = response.headers.get('Content-Type', '')
+    if 'application/json' in content_type:
+        try:
+            return await response.json()
+        except Exception:
+            return await response.text()
+    return await response.text()
+
+
 @register_module(
     module_id='http.get',
     version='1.0.0',
@@ -79,27 +100,6 @@ logger = logging.getLogger(__name__)
                     'description_key': 'modules.http.get.output.headers.description'}
     }
 )
-def _append_query_params(url: str, query: dict) -> str:
-    """Append query parameters to URL."""
-    from urllib.parse import urlencode, urlparse, urlunparse
-
-    parsed = urlparse(url)
-    separator = '&' if parsed.query else ''
-    new_query = parsed.query + separator + urlencode(query)
-    return urlunparse(parsed._replace(query=new_query))
-
-
-async def _parse_response_body(response) -> Any:
-    """Parse response body, attempting JSON for JSON content types."""
-    content_type = response.headers.get('Content-Type', '')
-    if 'application/json' in content_type:
-        try:
-            return await response.json()
-        except Exception:
-            return await response.text()
-    return await response.text()
-
-
 async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     """Send HTTP GET request."""
     try:

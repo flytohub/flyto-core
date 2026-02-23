@@ -50,123 +50,6 @@ def _get_nested_value(obj: Any, path: str) -> Any:
     return current
 
 
-@register_module(
-    module_id='http.response_assert',
-    version='1.0.0',
-    category='atomic',
-    subcategory='http',
-    tags=['http', 'response', 'assert', 'test', 'validation', 'atomic', 'ssrf_protected', 'path_restricted'],
-    label='Assert HTTP Response',
-    label_key='modules.http.response_assert.label',
-    description='Assert and validate HTTP response properties',
-    description_key='modules.http.response_assert.description',
-    icon='CircleCheck',
-    color='#10B981',
-
-    # Connection types
-    input_types=['object'],
-    output_types=['object', 'boolean'],
-    can_connect_to=['test.*', 'flow.*'],
-    can_receive_from=['*'],
-
-    # Execution settings
-    timeout_ms=5000,
-    retryable=False,
-    concurrent_safe=True,
-
-    # Security settings (no network access - just validates response objects)
-    requires_credentials=False,
-    handles_sensitive_data=False,
-    required_permissions=[],  # This module doesn't make network calls
-
-    # Schema-driven params
-    params_schema=compose(
-        field('response', type='object', label='Response', label_key='schema.field.response',
-              required=True, description='HTTP response object from http.request'),
-        presets.HTTP_STATUS(),
-        presets.BODY_CONTAINS(),
-        presets.BODY_NOT_CONTAINS(),
-        presets.REGEX_PATTERN(key='body_matches', label='Body Matches Regex',
-                              label_key='schema.field.body_matches'),
-        presets.JSON_PATH_ASSERTIONS(),
-        presets.JSON_PATH_EXISTS(),
-        presets.HEADER_CONTAINS(),
-        presets.CONTENT_TYPE(key='content_type', default=''),
-        presets.MAX_DURATION_MS(),
-        presets.JSON_SCHEMA(),
-        presets.FAIL_FAST(default=False),
-    ),
-    output_schema={
-        'ok': {
-            'type': 'boolean',
-            'description': 'Whether all assertions passed'
-        ,
-                'description_key': 'modules.http.response_assert.output.ok.description'},
-        'passed': {
-            'type': 'number',
-            'description': 'Number of passed assertions'
-        ,
-                'description_key': 'modules.http.response_assert.output.passed.description'},
-        'failed': {
-            'type': 'number',
-            'description': 'Number of failed assertions'
-        ,
-                'description_key': 'modules.http.response_assert.output.failed.description'},
-        'total': {
-            'type': 'number',
-            'description': 'Total number of assertions'
-        ,
-                'description_key': 'modules.http.response_assert.output.total.description'},
-        'assertions': {
-            'type': 'array',
-            'description': 'Detailed assertion results'
-        ,
-                'description_key': 'modules.http.response_assert.output.assertions.description'},
-        'errors': {
-            'type': 'array',
-            'description': 'List of error messages for failed assertions'
-        ,
-                'description_key': 'modules.http.response_assert.output.errors.description'}
-    },
-    examples=[
-        {
-            'title': 'Assert status 200',
-            'title_key': 'modules.http.response_assert.examples.status.title',
-            'params': {
-                'response': '${http_request.result}',
-                'status': 200
-            }
-        },
-        {
-            'title': 'Assert JSON structure',
-            'title_key': 'modules.http.response_assert.examples.json.title',
-            'params': {
-                'response': '${http_request.result}',
-                'status': 200,
-                'json_path': {
-                    'data.id': '${expected_id}',
-                    'data.name': 'John'
-                },
-                'json_path_exists': ['data.created_at', 'data.email']
-            }
-        },
-        {
-            'title': 'Assert API response',
-            'title_key': 'modules.http.response_assert.examples.api.title',
-            'params': {
-                'response': '${api_result}',
-                'status': [200, 201],
-                'content_type': 'application/json',
-                'max_duration_ms': 1000,
-                'json_path': {
-                    'success': True
-                }
-            }
-        }
-    ],
-    author='Flyto Team',
-    license='MIT'
-)
 def _add_assertion(
     assertions: List[Dict[str, Any]], errors: List[str],
     name: str, passed: bool, expected: Any, actual: Any,
@@ -312,6 +195,123 @@ def _assert_json_schema(params: dict, response: dict, assertions: list, errors: 
                        'jsonschema library not installed', fail_fast)
 
 
+@register_module(
+    module_id='http.response_assert',
+    version='1.0.0',
+    category='atomic',
+    subcategory='http',
+    tags=['http', 'response', 'assert', 'test', 'validation', 'atomic', 'ssrf_protected', 'path_restricted'],
+    label='Assert HTTP Response',
+    label_key='modules.http.response_assert.label',
+    description='Assert and validate HTTP response properties',
+    description_key='modules.http.response_assert.description',
+    icon='CircleCheck',
+    color='#10B981',
+
+    # Connection types
+    input_types=['object'],
+    output_types=['object', 'boolean'],
+    can_connect_to=['test.*', 'flow.*'],
+    can_receive_from=['*'],
+
+    # Execution settings
+    timeout_ms=5000,
+    retryable=False,
+    concurrent_safe=True,
+
+    # Security settings (no network access - just validates response objects)
+    requires_credentials=False,
+    handles_sensitive_data=False,
+    required_permissions=[],  # This module doesn't make network calls
+
+    # Schema-driven params
+    params_schema=compose(
+        field('response', type='object', label='Response', label_key='schema.field.response',
+              required=True, description='HTTP response object from http.request'),
+        presets.HTTP_STATUS(),
+        presets.BODY_CONTAINS(),
+        presets.BODY_NOT_CONTAINS(),
+        presets.REGEX_PATTERN(key='body_matches', label='Body Matches Regex',
+                              label_key='schema.field.body_matches'),
+        presets.JSON_PATH_ASSERTIONS(),
+        presets.JSON_PATH_EXISTS(),
+        presets.HEADER_CONTAINS(),
+        presets.CONTENT_TYPE(key='content_type', default=''),
+        presets.MAX_DURATION_MS(),
+        presets.JSON_SCHEMA(),
+        presets.FAIL_FAST(default=False),
+    ),
+    output_schema={
+        'ok': {
+            'type': 'boolean',
+            'description': 'Whether all assertions passed'
+        ,
+                'description_key': 'modules.http.response_assert.output.ok.description'},
+        'passed': {
+            'type': 'number',
+            'description': 'Number of passed assertions'
+        ,
+                'description_key': 'modules.http.response_assert.output.passed.description'},
+        'failed': {
+            'type': 'number',
+            'description': 'Number of failed assertions'
+        ,
+                'description_key': 'modules.http.response_assert.output.failed.description'},
+        'total': {
+            'type': 'number',
+            'description': 'Total number of assertions'
+        ,
+                'description_key': 'modules.http.response_assert.output.total.description'},
+        'assertions': {
+            'type': 'array',
+            'description': 'Detailed assertion results'
+        ,
+                'description_key': 'modules.http.response_assert.output.assertions.description'},
+        'errors': {
+            'type': 'array',
+            'description': 'List of error messages for failed assertions'
+        ,
+                'description_key': 'modules.http.response_assert.output.errors.description'}
+    },
+    examples=[
+        {
+            'title': 'Assert status 200',
+            'title_key': 'modules.http.response_assert.examples.status.title',
+            'params': {
+                'response': '${http_request.result}',
+                'status': 200
+            }
+        },
+        {
+            'title': 'Assert JSON structure',
+            'title_key': 'modules.http.response_assert.examples.json.title',
+            'params': {
+                'response': '${http_request.result}',
+                'status': 200,
+                'json_path': {
+                    'data.id': '${expected_id}',
+                    'data.name': 'John'
+                },
+                'json_path_exists': ['data.created_at', 'data.email']
+            }
+        },
+        {
+            'title': 'Assert API response',
+            'title_key': 'modules.http.response_assert.examples.api.title',
+            'params': {
+                'response': '${api_result}',
+                'status': [200, 201],
+                'content_type': 'application/json',
+                'max_duration_ms': 1000,
+                'json_path': {
+                    'success': True
+                }
+            }
+        }
+    ],
+    author='Flyto Team',
+    license='MIT'
+)
 async def http_response_assert(context: Dict[str, Any]) -> Dict[str, Any]:
     """Assert HTTP response properties"""
     params = context['params']

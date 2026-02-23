@@ -20,6 +20,53 @@ from ...schema.constants import FieldGroup
 logger = logging.getLogger(__name__)
 
 
+def _inject_token_into_url(url: str, token: str) -> str:
+    """Inject access token into HTTPS URL for private repos."""
+    parsed = urlparse(url)
+    port_suffix = f':{parsed.port}' if parsed.port else ''
+    authed = parsed._replace(
+        netloc=f'x-access-token:{token}@{parsed.hostname}{port_suffix}'
+    )
+    return urlunparse(authed)
+
+
+def _build_clone_cmd(clone_url: str, destination: str, branch: str = None, depth: int = None) -> list:
+    """Build git clone command list."""
+    cmd = ['git', 'clone']
+    if branch:
+        cmd.extend(['--branch', branch])
+    if depth:
+        cmd.extend(['--depth', str(depth)])
+    cmd.extend([clone_url, destination])
+    return cmd
+
+
+async def _get_repo_info(destination: str) -> tuple:
+    """Get current branch and HEAD commit hash from cloned repo."""
+    branch_proc = await asyncio.create_subprocess_exec(
+        'git', '-C', destination, 'rev-parse', '--abbrev-ref', 'HEAD',
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    branch_out, _ = await branch_proc.communicate()
+    current_branch = branch_out.decode('utf-8').strip() if branch_proc.returncode == 0 else 'unknown'
+
+    commit_proc = await asyncio.create_subprocess_exec(
+        'git', '-C', destination, 'rev-parse', 'HEAD',
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    commit_out, _ = await commit_proc.communicate()
+    commit_hash = commit_out.decode('utf-8').strip() if commit_proc.returncode == 0 else 'unknown'
+
+    return current_branch, commit_hash
+
+
+def _sanitize_error(error_msg: str, token: str = None) -> str:
+    """Remove token from error messages."""
+    if token:
+        error_msg = error_msg.replace(token, '***')
+    return error_msg
+
+
 @register_module(
     module_id='git.clone',
     version='1.0.0',
@@ -98,55 +145,6 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
-def _inject_token_into_url(url: str, token: str) -> str:
-    """Inject access token into HTTPS URL for private repos."""
-    parsed = urlparse(url)
-    port_suffix = f':{parsed.port}' if parsed.port else ''
-    authed = parsed._replace(
-        netloc=f'x-access-token:{token}@{parsed.hostname}{port_suffix}'
-    )
-    return urlunparse(authed)
-
-
-def _build_clone_cmd(clone_url: str, destination: str, branch: str = None, depth: int = None) -> list:
-    """Build git clone command list."""
-    cmd = ['git', 'clone']
-    if branch:
-        cmd.extend(['--branch', branch])
-    if depth:
-        cmd.extend(['--depth', str(depth)])
-    cmd.extend([clone_url, destination])
-    return cmd
-
-
-async def _get_repo_info(destination: str) -> tuple:
-    """Get current branch and HEAD commit hash from cloned repo."""
-    branch_proc = await asyncio.create_subprocess_exec(
-        'git', '-C', destination, 'rev-parse', '--abbrev-ref', 'HEAD',
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    branch_out, _ = await branch_proc.communicate()
-    current_branch = branch_out.decode('utf-8').strip() if branch_proc.returncode == 0 else 'unknown'
-
-    commit_proc = await asyncio.create_subprocess_exec(
-        'git', '-C', destination, 'rev-parse', 'HEAD',
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    commit_out, _ = await commit_proc.communicate()
-    commit_hash = commit_out.decode('utf-8').strip() if commit_proc.returncode == 0 else 'unknown'
-
-    return current_branch, commit_hash
-
-
-def _sanitize_error(error_msg: str, token: str = None) -> str:
-    """Remove token from error messages."""
-    if token:
-        error_msg = error_msg.replace(token, '***')
-    return error_msg
-
-
 async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
     """Clone a git repository"""
     params = context['params']

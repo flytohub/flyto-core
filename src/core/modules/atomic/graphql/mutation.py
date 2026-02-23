@@ -16,6 +16,64 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _prepare_graphql_request(params: Dict[str, Any], operation_key: str = 'mutation'):
+    """Validate and prepare GraphQL request components.
+
+    Returns (url, payload, headers).
+    """
+    url = params.get('url', '').strip()
+    operation = params.get(operation_key, '').strip()
+    variables = params.get('variables') or None
+    headers = dict(params.get('headers') or {})
+    auth_token = params.get('auth_token', '').strip()
+
+    if not url:
+        raise ValidationError("Missing required parameter: url", field="url")
+    if not operation:
+        raise ValidationError("Missing required parameter: {}".format(operation_key), field=operation_key)
+
+    headers.setdefault('Content-Type', 'application/json')
+    if auth_token:
+        headers['Authorization'] = 'Bearer {}'.format(auth_token)
+
+    payload = {'query': operation}
+    if variables:
+        payload['variables'] = variables
+
+    return url, payload, headers
+
+
+async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -> Dict[str, Any]:
+    """Send the GraphQL POST and return the parsed response."""
+    try:
+        import aiohttp
+    except ImportError:
+        raise ModuleError("aiohttp is required for graphql modules. Install with: pip install aiohttp")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, headers=headers) as response:
+                status_code = response.status
+                try:
+                    body = await response.json(content_type=None)
+                except Exception:
+                    text = await response.text()
+                    raise ModuleError(
+                        "GraphQL endpoint returned non-JSON response (HTTP {}): {}".format(status_code, text[:500])
+                    )
+    except aiohttp.ClientError as e:
+        raise ModuleError("GraphQL {} request failed: {}".format(label, str(e)))
+
+    data = body.get('data')
+    errors = body.get('errors')
+    if errors:
+        error_msgs = [e.get('message', str(e)) for e in errors]
+        logger.warning("GraphQL %s returned errors: %s", label, error_msgs)
+
+    logger.info("GraphQL %s to %s completed (HTTP %d)", label, url, status_code)
+    return {'ok': True, 'data': {'data': data, 'errors': errors, 'status_code': status_code}}
+
+
 @register_module(
     module_id='graphql.mutation',
     version='1.0.0',
@@ -125,64 +183,6 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT',
 )
-def _prepare_graphql_request(params: Dict[str, Any], operation_key: str = 'mutation'):
-    """Validate and prepare GraphQL request components.
-
-    Returns (url, payload, headers).
-    """
-    url = params.get('url', '').strip()
-    operation = params.get(operation_key, '').strip()
-    variables = params.get('variables') or None
-    headers = dict(params.get('headers') or {})
-    auth_token = params.get('auth_token', '').strip()
-
-    if not url:
-        raise ValidationError("Missing required parameter: url", field="url")
-    if not operation:
-        raise ValidationError("Missing required parameter: {}".format(operation_key), field=operation_key)
-
-    headers.setdefault('Content-Type', 'application/json')
-    if auth_token:
-        headers['Authorization'] = 'Bearer {}'.format(auth_token)
-
-    payload = {'query': operation}
-    if variables:
-        payload['variables'] = variables
-
-    return url, payload, headers
-
-
-async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -> Dict[str, Any]:
-    """Send the GraphQL POST and return the parsed response."""
-    try:
-        import aiohttp
-    except ImportError:
-        raise ModuleError("aiohttp is required for graphql modules. Install with: pip install aiohttp")
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload, headers=headers) as response:
-                status_code = response.status
-                try:
-                    body = await response.json(content_type=None)
-                except Exception:
-                    text = await response.text()
-                    raise ModuleError(
-                        "GraphQL endpoint returned non-JSON response (HTTP {}): {}".format(status_code, text[:500])
-                    )
-    except aiohttp.ClientError as e:
-        raise ModuleError("GraphQL {} request failed: {}".format(label, str(e)))
-
-    data = body.get('data')
-    errors = body.get('errors')
-    if errors:
-        error_msgs = [e.get('message', str(e)) for e in errors]
-        logger.warning("GraphQL %s returned errors: %s", label, error_msgs)
-
-    logger.info("GraphQL %s to %s completed (HTTP %d)", label, url, status_code)
-    return {'ok': True, 'data': {'data': data, 'errors': errors, 'status_code': status_code}}
-
-
 async def graphql_mutation(context: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a GraphQL mutation against an endpoint."""
     url, payload, headers = _prepare_graphql_request(context['params'], 'mutation')

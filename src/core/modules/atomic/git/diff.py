@@ -19,6 +19,53 @@ from ...schema.constants import FieldGroup
 logger = logging.getLogger(__name__)
 
 
+async def _run_git(repo_path: str, *args: str) -> tuple:
+    """Run a git command in the given repo and return (returncode, stdout, stderr)."""
+    proc = await asyncio.create_subprocess_exec(
+        'git', '-C', repo_path, *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    out, err = await proc.communicate()
+    return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
+
+
+def _build_diff_args(staged: bool, ref1: str, ref2: str = None, extra_flags: List[str] = None) -> List[str]:
+    """Build git diff argument list."""
+    args: List[str] = ['diff']
+    if staged:
+        args.append('--cached')
+    elif ref2:
+        args.extend([ref1, ref2])
+    else:
+        args.append(ref1)
+    if extra_flags:
+        args.extend(extra_flags)
+    return args
+
+
+def _parse_numstat(numstat_out: str) -> tuple:
+    """Parse git diff --numstat output into (files_changed, insertions, deletions)."""
+    files_changed = 0
+    insertions = 0
+    deletions = 0
+    if not numstat_out.strip():
+        return files_changed, insertions, deletions
+    for line in numstat_out.strip().split('\n'):
+        parts = line.split('\t')
+        if len(parts) >= 3:
+            files_changed += 1
+            try:
+                insertions += int(parts[0])
+            except ValueError:
+                pass
+            try:
+                deletions += int(parts[1])
+            except ValueError:
+                pass
+    return files_changed, insertions, deletions
+
+
 @register_module(
     module_id='git.diff',
     version='1.0.0',
@@ -105,53 +152,6 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
-async def _run_git(repo_path: str, *args: str) -> tuple:
-    """Run a git command in the given repo and return (returncode, stdout, stderr)."""
-    proc = await asyncio.create_subprocess_exec(
-        'git', '-C', repo_path, *args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, err = await proc.communicate()
-    return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
-
-
-def _build_diff_args(staged: bool, ref1: str, ref2: str = None, extra_flags: List[str] = None) -> List[str]:
-    """Build git diff argument list."""
-    args: List[str] = ['diff']
-    if staged:
-        args.append('--cached')
-    elif ref2:
-        args.extend([ref1, ref2])
-    else:
-        args.append(ref1)
-    if extra_flags:
-        args.extend(extra_flags)
-    return args
-
-
-def _parse_numstat(numstat_out: str) -> tuple:
-    """Parse git diff --numstat output into (files_changed, insertions, deletions)."""
-    files_changed = 0
-    insertions = 0
-    deletions = 0
-    if not numstat_out.strip():
-        return files_changed, insertions, deletions
-    for line in numstat_out.strip().split('\n'):
-        parts = line.split('\t')
-        if len(parts) >= 3:
-            files_changed += 1
-            try:
-                insertions += int(parts[0])
-            except ValueError:
-                pass
-            try:
-                deletions += int(parts[1])
-            except ValueError:
-                pass
-    return files_changed, insertions, deletions
-
-
 async def git_diff(context: Dict[str, Any]) -> Dict[str, Any]:
     """Get git diff"""
     params = context['params']

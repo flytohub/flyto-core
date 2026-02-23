@@ -19,6 +19,49 @@ from ...schema.constants import FieldGroup
 logger = logging.getLogger(__name__)
 
 
+async def _run_git(repo_path: str, *args: str) -> tuple:
+    """Run a git command in the given repo and return (returncode, stdout, stderr)."""
+    proc = await asyncio.create_subprocess_exec(
+        'git', '-C', repo_path, *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    out, err = await proc.communicate()
+    return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
+
+
+async def _stage_files(repo_path: str, add_all: bool, files: List[str]):
+    """Stage files for commit. Returns error dict on failure, None on success."""
+    if add_all:
+        rc, _, err = await _run_git(repo_path, 'add', '-A')
+        if rc != 0:
+            return {'ok': False, 'error': f'git add -A failed: {err.strip()}', 'error_code': 'STAGE_FAILED'}
+    elif files:
+        for f in files:
+            rc, _, err = await _run_git(repo_path, 'add', f)
+            if rc != 0:
+                return {'ok': False, 'error': f'git add failed for {f}: {err.strip()}', 'error_code': 'STAGE_FAILED'}
+    return None
+
+
+def _parse_files_changed(stat_out: str) -> int:
+    """Parse files changed count from git diff --stat output."""
+    if not stat_out.strip():
+        return 0
+    lines = stat_out.strip().split('\n')
+    if not lines:
+        return 0
+    summary = lines[-1]
+    for part in summary.split(','):
+        part = part.strip()
+        if 'file' in part:
+            try:
+                return int(part.split()[0])
+            except (ValueError, IndexError):
+                pass
+    return 0
+
+
 @register_module(
     module_id='git.commit',
     version='1.0.0',
@@ -100,49 +143,6 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
-async def _run_git(repo_path: str, *args: str) -> tuple:
-    """Run a git command in the given repo and return (returncode, stdout, stderr)."""
-    proc = await asyncio.create_subprocess_exec(
-        'git', '-C', repo_path, *args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, err = await proc.communicate()
-    return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
-
-
-async def _stage_files(repo_path: str, add_all: bool, files: List[str]):
-    """Stage files for commit. Returns error dict on failure, None on success."""
-    if add_all:
-        rc, _, err = await _run_git(repo_path, 'add', '-A')
-        if rc != 0:
-            return {'ok': False, 'error': f'git add -A failed: {err.strip()}', 'error_code': 'STAGE_FAILED'}
-    elif files:
-        for f in files:
-            rc, _, err = await _run_git(repo_path, 'add', f)
-            if rc != 0:
-                return {'ok': False, 'error': f'git add failed for {f}: {err.strip()}', 'error_code': 'STAGE_FAILED'}
-    return None
-
-
-def _parse_files_changed(stat_out: str) -> int:
-    """Parse files changed count from git diff --stat output."""
-    if not stat_out.strip():
-        return 0
-    lines = stat_out.strip().split('\n')
-    if not lines:
-        return 0
-    summary = lines[-1]
-    for part in summary.split(','):
-        part = part.strip()
-        if 'file' in part:
-            try:
-                return int(part.split()[0])
-            except (ValueError, IndexError):
-                pass
-    return 0
-
-
 async def git_commit(context: Dict[str, Any]) -> Dict[str, Any]:
     """Create a git commit"""
     params = context['params']
