@@ -79,6 +79,27 @@ logger = logging.getLogger(__name__)
                     'description_key': 'modules.http.get.output.headers.description'}
     }
 )
+def _append_query_params(url: str, query: dict) -> str:
+    """Append query parameters to URL."""
+    from urllib.parse import urlencode, urlparse, urlunparse
+
+    parsed = urlparse(url)
+    separator = '&' if parsed.query else ''
+    new_query = parsed.query + separator + urlencode(query)
+    return urlunparse(parsed._replace(query=new_query))
+
+
+async def _parse_response_body(response) -> Any:
+    """Parse response body, attempting JSON for JSON content types."""
+    content_type = response.headers.get('Content-Type', '')
+    if 'application/json' in content_type:
+        try:
+            return await response.json()
+        except Exception:
+            return await response.text()
+    return await response.text()
+
+
 async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     """Send HTTP GET request."""
     try:
@@ -86,11 +107,8 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     except ImportError:
         raise ModuleError("aiohttp required. Install: pip install aiohttp")
 
-    from urllib.parse import urlencode, urlparse, urlunparse
-
     params = context['params']
     url = params.get('url')
-
     if not url:
         raise ValidationError("Missing required parameter: url", field="url")
 
@@ -105,43 +123,16 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
         raise NetworkError(str(e), url=url, status_code=0)
 
     if query:
-        parsed = urlparse(url)
-        separator = '&' if parsed.query else ''
-        new_query = parsed.query + separator + urlencode(query)
-        url = urlunparse(parsed._replace(query=new_query))
+        url = _append_query_params(url, query)
 
     try:
         timeout = aiohttp.ClientTimeout(total=timeout_s)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(url, headers=headers) as response:
-                content_type = response.headers.get('Content-Type', '')
-
-                if 'application/json' in content_type:
-                    try:
-                        body = await response.json()
-                    except Exception:
-                        body = await response.text()
-                else:
-                    body = await response.text()
-
-                is_success = 200 <= response.status < 300
-
-                if is_success:
-                    return {
-                        'ok': True,
-                        'data': {
-                            'status': response.status,
-                            'body': body,
-                            'headers': dict(response.headers)
-                        }
-                    }
-                else:
-                    raise NetworkError(
-                        f"HTTP {response.status} error",
-                        url=url,
-                        status_code=response.status
-                    )
-
+                body = await _parse_response_body(response)
+                if 200 <= response.status < 300:
+                    return {'ok': True, 'data': {'status': response.status, 'body': body, 'headers': dict(response.headers)}}
+                raise NetworkError(f"HTTP {response.status} error", url=url, status_code=response.status)
     except NetworkError:
         raise
     except Exception as e:

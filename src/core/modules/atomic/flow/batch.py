@@ -252,68 +252,12 @@ class BatchModule(BaseModule):
         4. Emit 'completed' when all batches done
         """
         try:
-            # Handle empty array
             if len(self.items) == 0:
-                return {
-                    '__event__': 'completed',
-                    'outputs': {
-                        'completed': {
-                            'batches': [],
-                            'total_batches': 0,
-                            'total_items': 0
-                        }
-                    },
-                    'batches': [],
-                    'total_batches': 0,
-                    'total_items': 0
-                }
+                return self._build_empty_batch_result()
 
-            # Split into batches
             batches = self._create_batches()
-            total_batches = len(batches)
-
-            # Build batch execution plan
-            batch_plan = {
-                'batches': batches,
-                'batch_size': self.batch_size,
-                'delay_ms': self.delay_ms,
-                'continue_on_error': self.continue_on_error,
-                'parallel_batches': self.parallel_batches,
-                'total_batches': total_batches,
-                'total_items': len(self.items)
-            }
-
-            # Return first batch and metadata
-            # The engine will iterate through batches
-            return {
-                '__event__': 'batch',
-                '__batch_execution__': batch_plan,
-                'outputs': {
-                    'batch': {
-                        'batch': batches[0] if batches else [],
-                        'batch_index': 0,
-                        'total_batches': total_batches,
-                        'total_items': len(self.items),
-                        'is_last_batch': total_batches == 1,
-                        'progress': {
-                            'current': 1,
-                            'total': total_batches,
-                            'percentage': (1 / total_batches * 100) if total_batches > 0 else 100
-                        }
-                    }
-                },
-                'batch': batches[0] if batches else [],
-                'batch_index': 0,
-                'total_batches': total_batches,
-                'total_items': len(self.items),
-                'is_last_batch': total_batches == 1,
-                'all_batches': batches,
-                'progress': {
-                    'current': 1,
-                    'total': total_batches,
-                    'percentage': (1 / total_batches * 100) if total_batches > 0 else 100
-                }
-            }
+            batch_plan = self._build_batch_plan(batches)
+            return self._build_batch_response(batches, batch_plan)
 
         except Exception as e:
             return {
@@ -326,6 +270,61 @@ class BatchModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_empty_batch_result(self) -> Dict[str, Any]:
+        return {
+            '__event__': 'completed',
+            'outputs': {
+                'completed': {
+                    'batches': [],
+                    'total_batches': 0,
+                    'total_items': 0
+                }
+            },
+            'batches': [],
+            'total_batches': 0,
+            'total_items': 0
+        }
+
+    def _build_batch_plan(self, batches: List) -> Dict[str, Any]:
+        return {
+            'batches': batches,
+            'batch_size': self.batch_size,
+            'delay_ms': self.delay_ms,
+            'continue_on_error': self.continue_on_error,
+            'parallel_batches': self.parallel_batches,
+            'total_batches': len(batches),
+            'total_items': len(self.items)
+        }
+
+    def _build_batch_response(self, batches, batch_plan) -> Dict[str, Any]:
+        total_batches = len(batches)
+        progress = {
+            'current': 1,
+            'total': total_batches,
+            'percentage': (1 / total_batches * 100) if total_batches > 0 else 100
+        }
+        return {
+            '__event__': 'batch',
+            '__batch_execution__': batch_plan,
+            'outputs': {
+                'batch': {
+                    'batch': batches[0] if batches else [],
+                    'batch_index': 0,
+                    'total_batches': total_batches,
+                    'total_items': len(self.items),
+                    'is_last_batch': total_batches == 1,
+                    'progress': progress
+                }
+            },
+            'batch': batches[0] if batches else [],
+            'batch_index': 0,
+            'total_batches': total_batches,
+            'total_items': len(self.items),
+            'is_last_batch': total_batches == 1,
+            'all_batches': batches,
+            'progress': progress
+        }
 
     def _create_batches(self) -> List[List[Any]]:
         """Split items into batches of specified size."""

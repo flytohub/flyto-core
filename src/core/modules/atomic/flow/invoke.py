@@ -186,79 +186,66 @@ class InvokeWorkflow(BaseModule):
         start_time = time.time()
 
         try:
-            # Load workflow definition
             workflow_def = await self._load_workflow()
-
-            # Resolve input parameters
             resolved_params = self._resolve_params()
-
-            # Execute workflow with timeout
             result = await self._execute_workflow(workflow_def, resolved_params)
-
             execution_time_ms = (time.time() - start_time) * 1000
-
-            # Map outputs
             mapped_result = self._map_outputs(result)
-
-            return {
-                '__event__': 'success',
-                'outputs': {
-                    'success': {
-                        'result': mapped_result,
-                        'workflow_id': workflow_def.get('id', 'unknown'),
-                        'execution_time_ms': execution_time_ms
-                    }
-                },
-                'result': mapped_result,
-                'workflow_id': workflow_def.get('id', 'unknown'),
-                'execution_time_ms': execution_time_ms
-            }
+            return self._build_invoke_success(
+                mapped_result, workflow_def, execution_time_ms
+            )
 
         except asyncio.TimeoutError:
-            return {
-                '__event__': 'error',
-                'outputs': {
-                    'error': {
-                        'message': f'Workflow execution timed out after {self.timeout_seconds}s',
-                        'workflow_source': self.workflow_source
-                    }
-                },
-                '__error__': {
-                    'code': 'INVOKE_TIMEOUT',
-                    'message': f'Workflow execution timed out after {self.timeout_seconds}s'
-                }
-            }
+            return self._build_invoke_error(
+                'INVOKE_TIMEOUT',
+                f'Workflow execution timed out after {self.timeout_seconds}s',
+            )
 
         except FileNotFoundError as e:
-            return {
-                '__event__': 'error',
-                'outputs': {
-                    'error': {
-                        'message': f'Workflow file not found: {self.workflow_source}',
-                        'workflow_source': self.workflow_source
-                    }
-                },
-                '__error__': {
-                    'code': 'WORKFLOW_NOT_FOUND',
-                    'message': str(e)
-                }
-            }
+            return self._build_invoke_error(
+                'WORKFLOW_NOT_FOUND', str(e),
+                message=f'Workflow file not found: {self.workflow_source}',
+            )
 
         except Exception as e:
             logger.exception(f"Error invoking workflow: {self.workflow_source}")
-            return {
-                '__event__': 'error',
-                'outputs': {
-                    'error': {
-                        'message': str(e),
-                        'workflow_source': self.workflow_source
-                    }
-                },
-                '__error__': {
-                    'code': 'INVOKE_ERROR',
-                    'message': str(e)
+            return self._build_invoke_error('INVOKE_ERROR', str(e))
+
+    def _build_invoke_success(
+        self, mapped_result, workflow_def, execution_time_ms
+    ) -> Dict[str, Any]:
+        workflow_id = workflow_def.get('id', 'unknown')
+        return {
+            '__event__': 'success',
+            'outputs': {
+                'success': {
+                    'result': mapped_result,
+                    'workflow_id': workflow_id,
+                    'execution_time_ms': execution_time_ms
                 }
+            },
+            'result': mapped_result,
+            'workflow_id': workflow_id,
+            'execution_time_ms': execution_time_ms
+        }
+
+    def _build_invoke_error(
+        self, code: str, error_msg: str, message: str = ''
+    ) -> Dict[str, Any]:
+        display_msg = message or error_msg
+        return {
+            '__event__': 'error',
+            'outputs': {
+                'error': {
+                    'message': display_msg,
+                    'workflow_source': self.workflow_source
+                }
+            },
+            '__error__': {
+                'code': code,
+                'message': error_msg
             }
+        }
 
     async def _load_workflow(self) -> Dict[str, Any]:
         """Load workflow from file path or parse inline YAML."""

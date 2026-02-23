@@ -16,6 +16,58 @@ from ...schema import compose, presets
 logger = logging.getLogger(__name__)
 
 
+def _build_compress_kwargs(ext: str, output_format, quality: int, optimize: bool) -> dict:
+    save_kwargs = {'optimize': optimize}
+    if ext in ('.jpg', '.jpeg') or output_format == 'jpeg':
+        save_kwargs['quality'] = quality
+        save_kwargs['progressive'] = True
+    elif ext == '.webp' or output_format == 'webp':
+        save_kwargs['quality'] = quality
+    elif ext == '.png' or output_format == 'png':
+        save_kwargs['compress_level'] = min(9, max(0, int((100 - quality) / 10)))
+    return save_kwargs
+
+
+def _build_compress_result(output_path, original_size, compressed_size):
+    compression_ratio = original_size / compressed_size if compressed_size > 0 else 0
+    savings_percent = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
+    return {
+        'ok': True,
+        'output_path': output_path,
+        'original_size_bytes': original_size,
+        'compressed_size_bytes': compressed_size,
+        'compression_ratio': round(compression_ratio, 2),
+        'savings_percent': round(savings_percent, 1),
+    }
+
+
+def _resolve_compress_output(input_path, output_path, output_format):
+    if not output_path:
+        base, ext = os.path.splitext(input_path)
+        if output_format:
+            ext = f'.{output_format}'
+        output_path = f"{base}_compressed{ext}"
+    return output_path
+
+
+def _compress_to_target_size(img, output_path, save_kwargs, ext, output_format, quality, max_size_kb):
+    target_bytes = max_size_kb * 1024
+    current_quality = quality
+
+    for _ in range(10):
+        if ext in ('.jpg', '.jpeg', '.webp') or output_format in ('jpeg', 'webp'):
+            save_kwargs['quality'] = current_quality
+
+        img.save(output_path, **save_kwargs)
+        current_size = os.path.getsize(output_path)
+
+        if current_size <= target_bytes or current_quality <= 10:
+            break
+
+        current_quality = int(current_quality * (target_bytes / current_size) * 0.95)
+        current_quality = max(10, min(100, current_quality))
+
+
 @register_module(
     module_id='image.compress',
     version='1.0.0',
@@ -113,69 +165,30 @@ async def image_compress(context: Dict[str, Any]) -> Dict[str, Any]:
         raise FileNotFoundError(f"Input file not found: {input_path}")
 
     original_size = os.path.getsize(input_path)
+    output_path = _resolve_compress_output(input_path, output_path, output_format)
 
     def _compress():
         with Image.open(input_path) as img:
             if img.mode in ('RGBA', 'P') and output_format == 'jpeg':
                 img = img.convert('RGB')
 
-            nonlocal output_path
-            if not output_path:
-                base, ext = os.path.splitext(input_path)
-                if output_format:
-                    ext = f'.{output_format}'
-                output_path = f"{base}_compressed{ext}"
-
             os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
-
-            save_kwargs = {'optimize': optimize}
-
             ext = os.path.splitext(output_path)[1].lower()
-            if ext in ('.jpg', '.jpeg') or output_format == 'jpeg':
-                save_kwargs['quality'] = quality
-                save_kwargs['progressive'] = True
-            elif ext == '.webp' or output_format == 'webp':
-                save_kwargs['quality'] = quality
-            elif ext == '.png' or output_format == 'png':
-                save_kwargs['compress_level'] = min(9, max(0, int((100 - quality) / 10)))
+            save_kwargs = _build_compress_kwargs(ext, output_format, quality, optimize)
 
             if max_size_kb:
-                current_quality = quality
-                target_bytes = max_size_kb * 1024
-
-                for _ in range(10):
-                    if ext in ('.jpg', '.jpeg', '.webp') or output_format in ('jpeg', 'webp'):
-                        save_kwargs['quality'] = current_quality
-
-                    img.save(output_path, **save_kwargs)
-                    current_size = os.path.getsize(output_path)
-
-                    if current_size <= target_bytes or current_quality <= 10:
-                        break
-
-                    current_quality = int(current_quality * (target_bytes / current_size) * 0.95)
-                    current_quality = max(10, min(100, current_quality))
+                _compress_to_target_size(
+                    img, output_path, save_kwargs, ext, output_format, quality, max_size_kb
+                )
             else:
                 img.save(output_path, **save_kwargs)
 
-        return output_path
-
-    output_path = await asyncio.to_thread(_compress)
+    await asyncio.to_thread(_compress)
     compressed_size = os.path.getsize(output_path)
 
-    compression_ratio = original_size / compressed_size if compressed_size > 0 else 0
-    savings_percent = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
-
+    result = _build_compress_result(output_path, original_size, compressed_size)
     logger.info(
         f"Compressed image: {original_size} -> {compressed_size} bytes "
-        f"({savings_percent:.1f}% reduction)"
+        f"({result['savings_percent']}% reduction)"
     )
-
-    return {
-        'ok': True,
-        'output_path': output_path,
-        'original_size_bytes': original_size,
-        'compressed_size_bytes': compressed_size,
-        'compression_ratio': round(compression_ratio, 2),
-        'savings_percent': round(savings_percent, 1)
-    }
+    return result

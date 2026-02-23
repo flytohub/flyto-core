@@ -252,150 +252,94 @@ class FallbackModule(BaseModule):
             return True
         return error_code in self.fallback_on
 
-    async def execute(self) -> Dict[str, Any]:
-        """
-        Execute with fallback handling.
+    def _propagate_error(self, error_obj: Dict[str, Any]) -> Dict[str, Any]:
+        """Propagate error without applying fallback."""
+        return {
+            '__event__': 'output', '__error__': error_obj,
+            'outputs': {'output': None},
+            'result': None, 'used_fallback': False, 'source': 'error_propagated',
+            'original_error': error_obj if self.include_error_info else None,
+        }
 
-        If receiving an error input, applies fallback logic.
-        Otherwise, wraps the primary operation with fallback.
-        """
+    def _build_execution_plan(self) -> Dict[str, Any]:
+        """Build fallback execution plan for the workflow engine."""
+        return {
+            '__event__': 'output',
+            '__fallback_execution__': {
+                'operation': self.operation,
+                'fallback_value': self.fallback_value,
+                'fallback_operation': self.fallback_operation,
+                'fallback_on': self.fallback_on,
+            },
+            'outputs': {'output': {'operation': self.operation, 'fallback_configured': True}},
+            'result': None, 'used_fallback': False, 'source': 'pending',
+        }
+
+    def _passthrough(self) -> Dict[str, Any]:
+        """Pass through input data unchanged."""
+        input_data = self.context.get('input')
+        shared = {'result': input_data, 'used_fallback': False, 'source': 'passthrough'}
+        return {'__event__': 'output', 'outputs': {'output': shared}, **shared}
+
+    async def execute(self) -> Dict[str, Any]:
+        """Execute with fallback handling."""
         try:
-            # Check if we received an error from upstream
             incoming_error = self.context.get('__incoming_error__')
             upstream_output = self.context.get('__upstream_output__', {})
             error_obj = incoming_error or upstream_output.get('__error__')
 
-            # If we have an error, apply fallback
             if error_obj:
-                error_code = error_obj.get('code', 'UNKNOWN')
-
-                if not self._should_fallback(error_code):
-                    # Don't fallback, propagate error
-                    return {
-                        '__event__': 'output',
-                        '__error__': error_obj,
-                        'outputs': {
-                            'output': None
-                        },
-                        'result': None,
-                        'used_fallback': False,
-                        'source': 'error_propagated',
-                        'original_error': error_obj if self.include_error_info else None
-                    }
-
-                # Use fallback
+                if not self._should_fallback(error_obj.get('code', 'UNKNOWN')):
+                    return self._propagate_error(error_obj)
                 return self._apply_fallback(error_obj)
-
-            # No error - if we have a primary operation, set up execution plan
             if self.operation:
-                return {
-                    '__event__': 'output',
-                    '__fallback_execution__': {
-                        'operation': self.operation,
-                        'fallback_value': self.fallback_value,
-                        'fallback_operation': self.fallback_operation,
-                        'fallback_on': self.fallback_on,
-                    },
-                    'outputs': {
-                        'output': {
-                            'operation': self.operation,
-                            'fallback_configured': True
-                        }
-                    },
-                    'result': None,
-                    'used_fallback': False,
-                    'source': 'pending'
-                }
-
-            # No operation, no error - just pass through input
-            input_data = self.context.get('input')
-            return {
-                '__event__': 'output',
-                'outputs': {
-                    'output': {
-                        'result': input_data,
-                        'used_fallback': False,
-                        'source': 'passthrough'
-                    }
-                },
-                'result': input_data,
-                'used_fallback': False,
-                'source': 'passthrough'
-            }
-
+                return self._build_execution_plan()
+            return self._passthrough()
         except Exception as e:
-            # Even fallback module can fail - return error
             return {
                 '__event__': 'output',
-                '__error__': {
-                    'code': 'FALLBACK_ERROR',
-                    'message': str(e)
-                },
-                'outputs': {
-                    'output': {
-                        'error': str(e)
-                    }
-                },
-                'result': None,
-                'used_fallback': False,
-                'source': 'error'
+                '__error__': {'code': 'FALLBACK_ERROR', 'message': str(e)},
+                'outputs': {'output': {'error': str(e)}},
+                'result': None, 'used_fallback': False, 'source': 'error',
             }
+
+    def _apply_fallback_value(self, original_error: Dict[str, Any]) -> Dict[str, Any]:
+        """Return static fallback value."""
+        error_info = original_error if self.include_error_info else None
+        result = {
+            '__event__': 'used_fallback',
+            'outputs': {
+                'output': {'result': self.fallback_value, 'used_fallback': True, 'source': 'fallback_value'},
+                'used_fallback': {'original_error': error_info},
+            },
+            'result': self.fallback_value, 'used_fallback': True, 'source': 'fallback_value',
+        }
+        if self.include_error_info:
+            result['original_error'] = original_error
+        return result
+
+    def _apply_fallback_operation(self, original_error: Dict[str, Any]) -> Dict[str, Any]:
+        """Return fallback operation execution plan."""
+        error_info = original_error if self.include_error_info else None
+        return {
+            '__event__': 'used_fallback',
+            '__execute_fallback__': self.fallback_operation,
+            'outputs': {
+                'output': {'fallback_operation': self.fallback_operation, 'used_fallback': True, 'source': 'fallback_operation'},
+                'used_fallback': {'original_error': error_info},
+            },
+            'result': None, 'used_fallback': True,
+            'source': 'fallback_operation', 'original_error': error_info,
+        }
 
     def _apply_fallback(self, original_error: Dict[str, Any]) -> Dict[str, Any]:
         """Apply fallback and return result."""
-
-        # Prefer static fallback value over operation
         if self.fallback_value is not None:
-            result = {
-                '__event__': 'used_fallback',
-                'outputs': {
-                    'output': {
-                        'result': self.fallback_value,
-                        'used_fallback': True,
-                        'source': 'fallback_value'
-                    },
-                    'used_fallback': {
-                        'original_error': original_error if self.include_error_info else None
-                    }
-                },
-                'result': self.fallback_value,
-                'used_fallback': True,
-                'source': 'fallback_value'
-            }
-
-            if self.include_error_info:
-                result['original_error'] = original_error
-
-            return result
-
-        # Use fallback operation
+            return self._apply_fallback_value(original_error)
         if self.fallback_operation:
-            return {
-                '__event__': 'used_fallback',
-                '__execute_fallback__': self.fallback_operation,
-                'outputs': {
-                    'output': {
-                        'fallback_operation': self.fallback_operation,
-                        'used_fallback': True,
-                        'source': 'fallback_operation'
-                    },
-                    'used_fallback': {
-                        'original_error': original_error if self.include_error_info else None
-                    }
-                },
-                'result': None,
-                'used_fallback': True,
-                'source': 'fallback_operation',
-                'original_error': original_error if self.include_error_info else None
-            }
-
-        # Should not reach here due to validation
+            return self._apply_fallback_operation(original_error)
         return {
             '__event__': 'output',
-            'outputs': {
-                'output': {'error': 'No fallback configured'}
-            },
-            'result': None,
-            'used_fallback': False,
-            'source': 'error'
+            'outputs': {'output': {'error': 'No fallback configured'}},
+            'result': None, 'used_fallback': False, 'source': 'error',
         }

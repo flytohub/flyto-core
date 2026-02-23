@@ -163,38 +163,11 @@ class MergeModule(BaseModule):
             Dict with __event__ (merged/error) for engine routing
         """
         try:
-            # Collect all inputs from context
             inputs = self._collect_inputs()
-
             if not inputs:
-                return {
-                    '__event__': 'error',
-                    'outputs': {
-                        'error': {'message': 'No inputs received'}
-                    },
-                    '__error__': {
-                        'code': 'NO_INPUTS',
-                        'message': 'No inputs received for merge'
-                    }
-                }
-
-            # Apply merge strategy
+                return self._build_no_inputs_error()
             merged_data = self._apply_strategy(inputs)
-
-            return {
-                '__event__': 'merged',
-                'outputs': {
-                    'output': {
-                        'merged_data': merged_data,
-                        'input_count': len(inputs),
-                        'strategy': self.strategy
-                    }
-                },
-                'merged_data': merged_data,
-                'input_count': len(inputs),
-                'strategy': self.strategy
-            }
-
+            return self._build_merged_result(merged_data, len(inputs))
         except Exception as e:
             return {
                 '__event__': 'error',
@@ -206,6 +179,33 @@ class MergeModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_no_inputs_error(self) -> Dict[str, Any]:
+        return {
+            '__event__': 'error',
+            'outputs': {
+                'error': {'message': 'No inputs received'}
+            },
+            '__error__': {
+                'code': 'NO_INPUTS',
+                'message': 'No inputs received for merge'
+            }
+        }
+
+    def _build_merged_result(self, merged_data, input_count: int) -> Dict[str, Any]:
+        return {
+            '__event__': 'merged',
+            'outputs': {
+                'output': {
+                    'merged_data': merged_data,
+                    'input_count': input_count,
+                    'strategy': self.strategy
+                }
+            },
+            'merged_data': merged_data,
+            'input_count': input_count,
+            'strategy': self.strategy
+        }
 
     def _collect_inputs(self) -> List[Any]:
         """Collect all input values from context."""

@@ -19,6 +19,63 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _ocr_text(img, language, custom_config):
+    import pytesseract
+    text = pytesseract.image_to_string(img, lang=language, config=custom_config)
+    try:
+        data = pytesseract.image_to_data(
+            img, lang=language, config=custom_config, output_type=pytesseract.Output.DICT
+        )
+        confidences = [int(c) for c in data['conf'] if int(c) > 0]
+        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+    except Exception:
+        avg_confidence = 0.0
+    return {
+        'text': text.strip(),
+        'confidence': round(avg_confidence, 2),
+        'language': language,
+    }
+
+
+def _ocr_data(img, language, custom_config):
+    import pytesseract
+    data = pytesseract.image_to_data(
+        img, lang=language, config=custom_config, output_type=pytesseract.Output.DICT
+    )
+    confidences = [int(c) for c in data['conf'] if int(c) > 0]
+    avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+    words = []
+    for i, word in enumerate(data['text']):
+        if word.strip():
+            words.append({
+                'text': word,
+                'confidence': int(data['conf'][i]),
+                'x': data['left'][i],
+                'y': data['top'][i],
+                'width': data['width'][i],
+                'height': data['height'][i],
+            })
+    full_text = ' '.join(w['text'] for w in words)
+    return {
+        'text': full_text,
+        'confidence': round(avg_confidence, 2),
+        'language': language,
+        'words': words,
+    }
+
+
+def _ocr_boxes(img, language, custom_config):
+    import pytesseract
+    boxes = pytesseract.image_to_boxes(img, lang=language, config=custom_config)
+    text = pytesseract.image_to_string(img, lang=language, config=custom_config)
+    return {
+        'text': text.strip(),
+        'confidence': 0.0,
+        'language': language,
+        'boxes': boxes,
+    }
+
+
 @register_module(
     module_id='image.ocr',
     version='1.0.0',
@@ -141,7 +198,7 @@ async def image_ocr(context: Dict[str, Any]) -> Dict[str, Any]:
 
     def _ocr():
         try:
-            import pytesseract
+            import pytesseract  # noqa: F401
             from PIL import Image
         except ImportError:
             raise ModuleError(
@@ -152,58 +209,15 @@ async def image_ocr(context: Dict[str, Any]) -> Dict[str, Any]:
         img = Image.open(image_path)
         custom_config = f'--psm {psm}'
 
-        if output_type == 'text':
-            text = pytesseract.image_to_string(img, lang=language, config=custom_config)
-            # Get confidence from detailed data
-            try:
-                data = pytesseract.image_to_data(img, lang=language, config=custom_config, output_type=pytesseract.Output.DICT)
-                confidences = [int(c) for c in data['conf'] if int(c) > 0]
-                avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-            except Exception:
-                avg_confidence = 0.0
-
-            return {
-                'text': text.strip(),
-                'confidence': round(avg_confidence, 2),
-                'language': language,
-            }
-
-        elif output_type == 'data':
-            data = pytesseract.image_to_data(img, lang=language, config=custom_config, output_type=pytesseract.Output.DICT)
-            confidences = [int(c) for c in data['conf'] if int(c) > 0]
-            avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
-            words = []
-            for i, word in enumerate(data['text']):
-                if word.strip():
-                    words.append({
-                        'text': word,
-                        'confidence': int(data['conf'][i]),
-                        'x': data['left'][i],
-                        'y': data['top'][i],
-                        'width': data['width'][i],
-                        'height': data['height'][i],
-                    })
-
-            full_text = ' '.join(w['text'] for w in words)
-            return {
-                'text': full_text,
-                'confidence': round(avg_confidence, 2),
-                'language': language,
-                'words': words,
-            }
-
-        elif output_type == 'boxes':
-            boxes = pytesseract.image_to_boxes(img, lang=language, config=custom_config)
-            text = pytesseract.image_to_string(img, lang=language, config=custom_config)
-            return {
-                'text': text.strip(),
-                'confidence': 0.0,
-                'language': language,
-                'boxes': boxes,
-            }
-
-        else:
+        handlers = {
+            'text': _ocr_text,
+            'data': _ocr_data,
+            'boxes': _ocr_boxes,
+        }
+        handler = handlers.get(output_type)
+        if not handler:
             raise ValidationError(f"Unsupported output_type: {output_type}", field="output_type")
+        return handler(img, language, custom_config)
 
     result = await asyncio.to_thread(_ocr)
     logger.info(f"OCR extracted {len(result['text'])} characters from {image_path}")

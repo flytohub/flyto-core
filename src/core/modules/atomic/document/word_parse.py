@@ -123,72 +123,10 @@ async def word_parse(context: Dict[str, Any]) -> Dict[str, Any]:
         except PackageNotFoundError:
             raise ValueError(f"Invalid or corrupted Word document: {file_path}")
 
-        paragraphs = []
-        full_text_parts = []
-
-        for para in doc.paragraphs:
-            text = para.text.strip()
-            if text:
-                if preserve_formatting:
-                    style_name = para.style.name if para.style else 'Normal'
-                    paragraphs.append({
-                        'text': text,
-                        'style': style_name
-                    })
-                else:
-                    paragraphs.append(text)
-                full_text_parts.append(text)
-
-        tables = []
-        if extract_tables:
-            for table in doc.tables:
-                table_data = []
-                for row in table.rows:
-                    row_data = []
-                    for cell in row.cells:
-                        row_data.append(cell.text.strip())
-                    table_data.append(row_data)
-                if table_data:
-                    tables.append(table_data)
-
-        images = []
-        if extract_images and images_output_dir:
-            os.makedirs(images_output_dir, exist_ok=True)
-            image_count = 0
-
-            for rel in doc.part.rels.values():
-                if "image" in rel.reltype:
-                    image_count += 1
-                    image_data = rel.target_part.blob
-                    content_type = rel.target_part.content_type
-
-                    ext = 'png'
-                    if 'jpeg' in content_type or 'jpg' in content_type:
-                        ext = 'jpg'
-                    elif 'gif' in content_type:
-                        ext = 'gif'
-
-                    image_path = os.path.join(
-                        images_output_dir,
-                        f"image_{image_count}.{ext}"
-                    )
-                    with open(image_path, 'wb') as f:
-                        f.write(image_data)
-                    images.append(image_path)
-
-        metadata = {}
-        try:
-            core_props = doc.core_properties
-            metadata = {
-                'title': core_props.title or '',
-                'author': core_props.author or '',
-                'subject': core_props.subject or '',
-                'created': str(core_props.created) if core_props.created else '',
-                'modified': str(core_props.modified) if core_props.modified else '',
-                'last_modified_by': core_props.last_modified_by or ''
-            }
-        except Exception:
-            pass
+        paragraphs, full_text_parts = _extract_paragraphs(doc, preserve_formatting)
+        tables = _extract_tables(doc) if extract_tables else []
+        images = _extract_images(doc, images_output_dir) if extract_images and images_output_dir else []
+        metadata = _extract_metadata(doc)
 
         return {
             'text': '\n\n'.join(full_text_parts),
@@ -209,3 +147,68 @@ async def word_parse(context: Dict[str, Any]) -> Dict[str, Any]:
         'ok': True,
         **result
     }
+
+
+def _extract_paragraphs(doc, preserve_formatting: bool):
+    paragraphs = []
+    full_text_parts = []
+    for para in doc.paragraphs:
+        text = para.text.strip()
+        if text:
+            if preserve_formatting:
+                style_name = para.style.name if para.style else 'Normal'
+                paragraphs.append({'text': text, 'style': style_name})
+            else:
+                paragraphs.append(text)
+            full_text_parts.append(text)
+    return paragraphs, full_text_parts
+
+
+def _extract_tables(doc) -> List:
+    tables = []
+    for table in doc.tables:
+        table_data = []
+        for row in table.rows:
+            table_data.append([cell.text.strip() for cell in row.cells])
+        if table_data:
+            tables.append(table_data)
+    return tables
+
+
+def _extract_images(doc, images_output_dir: str) -> List[str]:
+    os.makedirs(images_output_dir, exist_ok=True)
+    images = []
+    image_count = 0
+
+    for rel in doc.part.rels.values():
+        if "image" in rel.reltype:
+            image_count += 1
+            content_type = rel.target_part.content_type
+
+            ext = 'png'
+            if 'jpeg' in content_type or 'jpg' in content_type:
+                ext = 'jpg'
+            elif 'gif' in content_type:
+                ext = 'gif'
+
+            image_path = os.path.join(images_output_dir, f"image_{image_count}.{ext}")
+            with open(image_path, 'wb') as f:
+                f.write(rel.target_part.blob)
+            images.append(image_path)
+
+    return images
+
+
+def _extract_metadata(doc) -> Dict[str, Any]:
+    try:
+        core_props = doc.core_properties
+        return {
+            'title': core_props.title or '',
+            'author': core_props.author or '',
+            'subject': core_props.subject or '',
+            'created': str(core_props.created) if core_props.created else '',
+            'modified': str(core_props.modified) if core_props.modified else '',
+            'last_modified_by': core_props.last_modified_by or ''
+        }
+    except Exception:
+        return {}

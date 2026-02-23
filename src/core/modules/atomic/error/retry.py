@@ -302,62 +302,45 @@ class RetryModule(BaseModule):
 
         return error_code in self.retry_on
 
+    def _build_retry_plan(self) -> Dict[str, Any]:
+        """Build retry execution plan for the workflow engine."""
+        return {
+            'operation': self.operation,
+            'max_retries': self.max_retries,
+            'delays': [self._calculate_delay(i) for i in range(self.max_retries)],
+            'retry_on': self.retry_on,
+            'timeout_per_attempt_ms': self.timeout_per_attempt_ms,
+        }
+
+    def _build_success_result(self, retry_plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Build the success result with retry plan."""
+        shared = {
+            'operation': self.operation,
+            'max_retries': self.max_retries,
+            'retry_plan': retry_plan,
+            'attempts': 0,
+            'total_delay_ms': 0,
+            'errors': [],
+        }
+        return {
+            '__event__': 'success',
+            '__retry_execution__': retry_plan,
+            'outputs': {'success': shared},
+            **shared,
+        }
+
     async def execute(self) -> Dict[str, Any]:
-        """
-        Execute with retry logic.
+        """Execute with retry logic.
 
         Returns a retry execution plan for the workflow engine.
         The engine will handle actual execution and retry.
         """
         try:
-            # Build retry execution plan
-            retry_plan = {
-                'operation': self.operation,
-                'max_retries': self.max_retries,
-                'delays': [self._calculate_delay(i) for i in range(self.max_retries)],
-                'retry_on': self.retry_on,
-                'timeout_per_attempt_ms': self.timeout_per_attempt_ms,
-            }
-
-            # Track timing
-            start_time = datetime.utcnow()
-
-            # For direct execution simulation, return the plan
-            # The workflow engine will interpret this and execute with retries
-
-            return {
-                '__event__': 'success',
-                '__retry_execution__': retry_plan,
-                'outputs': {
-                    'success': {
-                        'operation': self.operation,
-                        'max_retries': self.max_retries,
-                        'retry_plan': retry_plan,
-                        'attempts': 0,
-                        'total_delay_ms': 0,
-                        'errors': []
-                    }
-                },
-                'operation': self.operation,
-                'max_retries': self.max_retries,
-                'retry_plan': retry_plan,
-                'attempts': 0,
-                'total_delay_ms': 0,
-                'errors': []
-            }
-
+            retry_plan = self._build_retry_plan()
+            return self._build_success_result(retry_plan)
         except Exception as e:
             return {
                 '__event__': 'exhausted',
-                'outputs': {
-                    'exhausted': {
-                        'message': str(e),
-                        'attempts': 0,
-                        'errors': [{'message': str(e)}]
-                    }
-                },
-                '__error__': {
-                    'code': 'RETRY_SETUP_ERROR',
-                    'message': str(e)
-                }
+                'outputs': {'exhausted': {'message': str(e), 'attempts': 0, 'errors': [{'message': str(e)}]}},
+                '__error__': {'code': 'RETRY_SETUP_ERROR', 'message': str(e)},
             }

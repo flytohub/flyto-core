@@ -256,74 +256,77 @@ class ContainerModule(BaseModule):
             edges = self.subflow.get('edges', [])
             node_count = len(nodes)
 
-            # Empty subflow - just pass through
             if node_count == 0:
-                return {
-                    '__event__': 'success',
-                    'outputs': {
-                        'success': {
-                            'message': 'Empty container - passed through',
-                            'node_count': 0
-                        }
-                    },
-                    'subflow_result': None,
-                    'exported_variables': {},
-                    'node_count': 0,
-                    'execution_time_ms': (time.time() - start_time) * 1000
-                }
+                return self._build_empty_result(start_time)
 
-            # Prepare subflow context
             subflow_context = self._prepare_subflow_context()
-
-            # Execute subflow
-            # Note: Actual execution is delegated to the workflow engine
-            # This module prepares the context and returns the subflow definition
-            # The engine will handle actual step execution
             subflow_result = await self._execute_subflow(
-                nodes=nodes,
-                edges=edges,
-                context=subflow_context
+                nodes=nodes, edges=edges, context=subflow_context
+            )
+            exported_variables = self._extract_exports(subflow_result)
+            return self._build_success_result(
+                subflow_result, exported_variables, node_count, start_time
             )
 
-            # Extract exports
-            exported_variables = self._extract_exports(subflow_result)
-
-            execution_time = (time.time() - start_time) * 1000
-
-            return {
-                '__event__': 'success',
-                'outputs': {
-                    'success': {
-                        'subflow_result': subflow_result,
-                        'exported_variables': exported_variables,
-                        'node_count': node_count
-                    }
-                },
-                'subflow_result': subflow_result,
-                'exported_variables': exported_variables,
-                'node_count': node_count,
-                'execution_time_ms': execution_time
-            }
-
         except Exception as e:
-            execution_time = (time.time() - start_time) * 1000
-            return {
-                '__event__': 'error',
-                'outputs': {
-                    'error': {
-                        'message': str(e),
-                        'type': type(e).__name__
-                    }
-                },
-                '__error__': {
-                    'code': 'CONTAINER_EXECUTION_ERROR',
-                    'message': str(e)
-                },
-                'subflow_result': None,
-                'exported_variables': {},
-                'node_count': len(self.subflow.get('nodes', [])),
-                'execution_time_ms': execution_time
-            }
+            return self._build_error_result(e, start_time)
+
+    def _build_empty_result(self, start_time: float) -> Dict[str, Any]:
+        import time
+        return {
+            '__event__': 'success',
+            'outputs': {
+                'success': {
+                    'message': 'Empty container - passed through',
+                    'node_count': 0
+                }
+            },
+            'subflow_result': None,
+            'exported_variables': {},
+            'node_count': 0,
+            'execution_time_ms': (time.time() - start_time) * 1000
+        }
+
+    def _build_success_result(
+        self, subflow_result, exported_variables, node_count, start_time
+    ) -> Dict[str, Any]:
+        import time
+        execution_time = (time.time() - start_time) * 1000
+        return {
+            '__event__': 'success',
+            'outputs': {
+                'success': {
+                    'subflow_result': subflow_result,
+                    'exported_variables': exported_variables,
+                    'node_count': node_count
+                }
+            },
+            'subflow_result': subflow_result,
+            'exported_variables': exported_variables,
+            'node_count': node_count,
+            'execution_time_ms': execution_time
+        }
+
+    def _build_error_result(self, e: Exception, start_time: float) -> Dict[str, Any]:
+        import time
+        execution_time = (time.time() - start_time) * 1000
+        return {
+            '__event__': 'error',
+            'outputs': {
+                'error': {
+                    'message': str(e),
+                    'type': type(e).__name__
+                }
+            },
+            '__error__': {
+                'code': 'CONTAINER_EXECUTION_ERROR',
+                'message': str(e)
+            },
+            'subflow_result': None,
+            'exported_variables': {},
+            'node_count': len(self.subflow.get('nodes', [])),
+            'execution_time_ms': execution_time
+        }
 
     async def _execute_subflow(
         self,

@@ -7,7 +7,6 @@ Convert Word documents (.docx) to PDF files
 import logging
 import os
 import subprocess
-import tempfile
 from typing import Any, Dict
 
 from ...registry import register_module
@@ -94,36 +93,10 @@ async def word_to_pdf(context: Dict[str, Any]) -> Dict[str, Any]:
     input_path = params['input_path']
     method = params.get('method', 'auto')
 
-    # Generate output path if not provided
-    output_path = params.get('output_path')
-    if not output_path:
-        base = os.path.splitext(input_path)[0]
-        output_path = f"{base}.pdf"
+    output_path = _resolve_output_path(params, input_path, '.pdf')
+    _validate_input_and_prepare_output(input_path, output_path, 'Word')
 
-    # Validate input file exists
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"Word file not found: {input_path}")
-
-    # Create output directory if needed
-    output_dir = os.path.dirname(output_path)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Try conversion methods
-    method_used = None
-    success = False
-
-    if method in ('auto', 'docx2pdf'):
-        # Try docx2pdf first (best quality on Windows/Mac)
-        success, method_used = await _try_docx2pdf(input_path, output_path)
-
-    if not success and method in ('auto', 'libreoffice'):
-        # Try LibreOffice
-        success, method_used = await _try_libreoffice(input_path, output_path)
-
-    if not success:
-        # Fallback: Use reportlab to create a basic PDF from text
-        success, method_used = await _try_fallback(input_path, output_path)
+    success, method_used = await _run_conversion(method, input_path, output_path)
 
     if not success:
         raise RuntimeError(
@@ -132,7 +105,6 @@ async def word_to_pdf(context: Dict[str, Any]) -> Dict[str, Any]:
             "- LibreOffice: brew install libreoffice (Mac) or apt install libreoffice (Linux)"
         )
 
-    # Get file size
     file_size = os.path.getsize(output_path)
 
     logger.info(f"Converted Word to PDF: {input_path} -> {output_path} (method: {method_used})")
@@ -144,6 +116,36 @@ async def word_to_pdf(context: Dict[str, Any]) -> Dict[str, Any]:
         'method_used': method_used,
         'message': f'Successfully converted Word document to PDF using {method_used}'
     }
+
+
+def _resolve_output_path(params: Dict[str, Any], input_path: str, ext: str) -> str:
+    output_path = params.get('output_path')
+    if not output_path:
+        base = os.path.splitext(input_path)[0]
+        output_path = f"{base}{ext}"
+    return output_path
+
+
+def _validate_input_and_prepare_output(input_path: str, output_path: str, file_type: str):
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"{file_type} file not found: {input_path}")
+    output_dir = os.path.dirname(output_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+
+async def _run_conversion(method: str, input_path: str, output_path: str) -> tuple:
+    if method in ('auto', 'docx2pdf'):
+        success, method_used = await _try_docx2pdf(input_path, output_path)
+        if success:
+            return success, method_used
+
+    if method in ('auto', 'libreoffice'):
+        success, method_used = await _try_libreoffice(input_path, output_path)
+        if success:
+            return success, method_used
+
+    return await _try_fallback(input_path, output_path)
 
 
 async def _try_docx2pdf(input_path: str, output_path: str) -> tuple:
@@ -162,7 +164,37 @@ async def _try_docx2pdf(input_path: str, output_path: str) -> tuple:
 
 async def _try_libreoffice(input_path: str, output_path: str) -> tuple:
     """Try conversion using LibreOffice"""
-    # Find LibreOffice executable
+    lo_exe = _find_libreoffice()
+    if not lo_exe:
+        logger.debug("LibreOffice not found")
+        return False, None
+
+    try:
+        output_dir = os.path.dirname(output_path) or '.'
+        subprocess.run([
+            lo_exe, '--headless',
+            '--convert-to', 'pdf',
+            '--outdir', output_dir,
+            input_path
+        ], capture_output=True, timeout=120)
+
+        expected_output = os.path.join(
+            output_dir,
+            os.path.splitext(os.path.basename(input_path))[0] + '.pdf'
+        )
+        if os.path.exists(expected_output):
+            if expected_output != output_path:
+                os.rename(expected_output, output_path)
+            return True, 'libreoffice'
+    except subprocess.TimeoutExpired:
+        logger.debug("LibreOffice conversion timed out")
+    except Exception as e:
+        logger.debug(f"LibreOffice conversion failed: {e}")
+
+    return False, None
+
+
+def _find_libreoffice():
     lo_paths = [
         '/usr/bin/libreoffice',
         '/usr/bin/soffice',
@@ -170,47 +202,10 @@ async def _try_libreoffice(input_path: str, output_path: str) -> tuple:
         'libreoffice',
         'soffice'
     ]
-
-    lo_exe = None
     for path in lo_paths:
         if os.path.exists(path) or _which(path):
-            lo_exe = path
-            break
-
-    if not lo_exe:
-        logger.debug("LibreOffice not found")
-        return False, None
-
-    try:
-        # LibreOffice outputs to directory, not specific file
-        output_dir = os.path.dirname(output_path) or '.'
-
-        result = subprocess.run([
-            lo_exe,
-            '--headless',
-            '--convert-to', 'pdf',
-            '--outdir', output_dir,
-            input_path
-        ], capture_output=True, timeout=120)
-
-        # LibreOffice creates file with same name but .pdf extension
-        expected_output = os.path.join(
-            output_dir,
-            os.path.splitext(os.path.basename(input_path))[0] + '.pdf'
-        )
-
-        if os.path.exists(expected_output):
-            # Rename if needed
-            if expected_output != output_path:
-                os.rename(expected_output, output_path)
-            return True, 'libreoffice'
-
-    except subprocess.TimeoutExpired:
-        logger.debug("LibreOffice conversion timed out")
-    except Exception as e:
-        logger.debug(f"LibreOffice conversion failed: {e}")
-
-    return False, None
+            return path
+    return None
 
 
 async def _try_fallback(input_path: str, output_path: str) -> tuple:
@@ -225,53 +220,51 @@ async def _try_fallback(input_path: str, output_path: str) -> tuple:
         return False, None
 
     try:
-        # Read Word document
         doc = Document(input_path)
-
-        # Create PDF
         c = canvas.Canvas(output_path, pagesize=letter)
         width, height = letter
         margin = inch
         y = height - margin
-        line_height = 14
 
+        y_top = height - margin
         for para in doc.paragraphs:
             text = para.text.strip()
             if not text:
-                y -= line_height
+                y -= 14
                 continue
-
-            # Simple text wrapping
-            words = text.split()
-            line = ""
-            for word in words:
-                test_line = f"{line} {word}".strip()
-                if c.stringWidth(test_line, "Helvetica", 11) < width - 2 * margin:
-                    line = test_line
-                else:
-                    if y < margin:
-                        c.showPage()
-                        y = height - margin
-                    c.drawString(margin, y, line)
-                    y -= line_height
-                    line = word
-
-            if line:
-                if y < margin:
-                    c.showPage()
-                    y = height - margin
-                c.drawString(margin, y, line)
-                y -= line_height
+            y = _write_paragraph(c, text, y, y_top, width, margin)
 
         c.save()
-
         if os.path.exists(output_path):
             return True, 'fallback'
-
     except Exception as e:
         logger.debug(f"Fallback conversion failed: {e}")
 
     return False, None
+
+
+def _write_paragraph(c, text: str, y: float, y_top: float, width: float, margin: float) -> float:
+    line_height = 14
+    words = text.split()
+    line = ""
+    for word in words:
+        test_line = f"{line} {word}".strip()
+        if c.stringWidth(test_line, "Helvetica", 11) < width - 2 * margin:
+            line = test_line
+        else:
+            if y < margin:
+                c.showPage()
+                y = y_top
+            c.drawString(margin, y, line)
+            y -= line_height
+            line = word
+    if line:
+        if y < margin:
+            c.showPage()
+            y = y_top
+        c.drawString(margin, y, line)
+        y -= line_height
+    return y
 
 
 def _which(program: str) -> str:

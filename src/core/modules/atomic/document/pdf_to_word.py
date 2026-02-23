@@ -94,10 +94,9 @@ async def pdf_to_word(context: Dict[str, Any]) -> Dict[str, Any]:
         import pypdf
     except ImportError:
         raise ImportError("pypdf is required. Install with: pip install pypdf")
-
     try:
         from docx import Document
-        from docx.shared import Pt, Inches
+        from docx.shared import Pt
         from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
     except ImportError:
         raise ImportError("python-docx is required. Install with: pip install python-docx")
@@ -106,74 +105,24 @@ async def pdf_to_word(context: Dict[str, Any]) -> Dict[str, Any]:
     input_path = params['input_path']
     pages_param = params.get('pages', 'all')
     preserve_formatting = params.get('preserve_formatting', True)
+    output_path = _resolve_pdf_output(params, input_path)
 
-    # Generate output path if not provided
-    output_path = params.get('output_path')
-    if not output_path:
-        base = os.path.splitext(input_path)[0]
-        output_path = f"{base}.docx"
-
-    # Validate input file exists
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"PDF file not found: {input_path}")
+    _ensure_output_dir(output_path)
 
-    # Create output directory if needed
-    output_dir = os.path.dirname(output_path)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # Open and parse PDF
     with open(input_path, 'rb') as f:
         reader = pypdf.PdfReader(f)
         total_pages = len(reader.pages)
-
-        # Determine pages to extract
         page_indices = _parse_page_range(pages_param, total_pages)
-
-        # Create Word document
         doc = Document()
+        _add_pdf_title(doc, reader, WD_PARAGRAPH_ALIGNMENT)
+        converted_pages = _convert_pages(
+            doc, reader, page_indices, total_pages, preserve_formatting, Pt
+        )
 
-        # Add title from metadata if available
-        if reader.metadata and reader.metadata.get('/Title'):
-            title = doc.add_heading(reader.metadata.get('/Title'), level=0)
-            title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-
-        # Extract and add text from each page
-        converted_pages = 0
-        for idx in page_indices:
-            if 0 <= idx < total_pages:
-                page = reader.pages[idx]
-                text = page.extract_text() or ""
-
-                if text.strip():
-                    # Add page header
-                    if len(page_indices) > 1:
-                        doc.add_heading(f"Page {idx + 1}", level=2)
-
-                    # Add text content
-                    # Split into paragraphs and add each
-                    paragraphs = text.split('\n\n')
-                    for para_text in paragraphs:
-                        para_text = para_text.strip()
-                        if para_text:
-                            para = doc.add_paragraph(para_text)
-                            if preserve_formatting:
-                                # Set reasonable font size
-                                for run in para.runs:
-                                    run.font.size = Pt(11)
-
-                    converted_pages += 1
-
-                    # Add page break between pages (except for last)
-                    if idx != page_indices[-1]:
-                        doc.add_page_break()
-
-    # Save the document
     doc.save(output_path)
-
-    # Get file size
     file_size = os.path.getsize(output_path)
-
     logger.info(f"Converted PDF to Word: {input_path} -> {output_path} ({converted_pages} pages)")
 
     return {
@@ -184,6 +133,53 @@ async def pdf_to_word(context: Dict[str, Any]) -> Dict[str, Any]:
         'file_size': file_size,
         'message': f'Successfully converted {converted_pages} pages to Word document'
     }
+
+
+def _resolve_pdf_output(params: Dict[str, Any], input_path: str) -> str:
+    output_path = params.get('output_path')
+    if not output_path:
+        base = os.path.splitext(input_path)[0]
+        output_path = f"{base}.docx"
+    return output_path
+
+
+def _ensure_output_dir(output_path: str):
+    output_dir = os.path.dirname(output_path)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+
+def _add_pdf_title(doc, reader, alignment_enum):
+    if reader.metadata and reader.metadata.get('/Title'):
+        title = doc.add_heading(reader.metadata.get('/Title'), level=0)
+        title.alignment = alignment_enum.CENTER
+
+
+def _convert_pages(doc, reader, page_indices, total_pages, preserve_formatting, Pt):
+    converted_pages = 0
+    for idx in page_indices:
+        if 0 <= idx < total_pages:
+            text = (reader.pages[idx].extract_text() or "").strip()
+            if not text:
+                continue
+
+            if len(page_indices) > 1:
+                doc.add_heading(f"Page {idx + 1}", level=2)
+
+            for para_text in text.split('\n\n'):
+                para_text = para_text.strip()
+                if para_text:
+                    para = doc.add_paragraph(para_text)
+                    if preserve_formatting:
+                        for run in para.runs:
+                            run.font.size = Pt(11)
+
+            converted_pages += 1
+
+            if idx != page_indices[-1]:
+                doc.add_page_break()
+
+    return converted_pages
 
 
 def _parse_page_range(pages: str, total: int) -> list:

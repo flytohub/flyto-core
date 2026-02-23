@@ -125,39 +125,39 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT',
 )
-async def graphql_mutation(context: Dict[str, Any]) -> Dict[str, Any]:
-    """Execute a GraphQL mutation against an endpoint."""
-    try:
-        import aiohttp
-    except ImportError:
-        raise ModuleError(
-            "aiohttp is required for graphql.mutation. "
-            "Install with: pip install aiohttp"
-        )
+def _prepare_graphql_request(params: Dict[str, Any], operation_key: str = 'mutation'):
+    """Validate and prepare GraphQL request components.
 
-    params = context['params']
+    Returns (url, payload, headers).
+    """
     url = params.get('url', '').strip()
-    mutation = params.get('mutation', '').strip()
+    operation = params.get(operation_key, '').strip()
     variables = params.get('variables') or None
     headers = dict(params.get('headers') or {})
     auth_token = params.get('auth_token', '').strip()
 
     if not url:
         raise ValidationError("Missing required parameter: url", field="url")
-    if not mutation:
-        raise ValidationError("Missing required parameter: mutation", field="mutation")
+    if not operation:
+        raise ValidationError("Missing required parameter: {}".format(operation_key), field=operation_key)
 
-    # Set default content type
     headers.setdefault('Content-Type', 'application/json')
-
-    # Add Bearer token if provided
     if auth_token:
         headers['Authorization'] = 'Bearer {}'.format(auth_token)
 
-    # Build request payload — GraphQL uses 'query' key for both queries and mutations
-    payload = {'query': mutation}
+    payload = {'query': operation}
     if variables:
         payload['variables'] = variables
+
+    return url, payload, headers
+
+
+async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -> Dict[str, Any]:
+    """Send the GraphQL POST and return the parsed response."""
+    try:
+        import aiohttp
+    except ImportError:
+        raise ModuleError("aiohttp is required for graphql modules. Install with: pip install aiohttp")
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -168,27 +168,22 @@ async def graphql_mutation(context: Dict[str, Any]) -> Dict[str, Any]:
                 except Exception:
                     text = await response.text()
                     raise ModuleError(
-                        "GraphQL endpoint returned non-JSON response (HTTP {}): {}".format(
-                            status_code, text[:500]
-                        )
+                        "GraphQL endpoint returned non-JSON response (HTTP {}): {}".format(status_code, text[:500])
                     )
     except aiohttp.ClientError as e:
-        raise ModuleError("GraphQL mutation request failed: {}".format(str(e)))
+        raise ModuleError("GraphQL {} request failed: {}".format(label, str(e)))
 
     data = body.get('data')
     errors = body.get('errors')
-
     if errors:
         error_msgs = [e.get('message', str(e)) for e in errors]
-        logger.warning("GraphQL mutation returned errors: %s", error_msgs)
+        logger.warning("GraphQL %s returned errors: %s", label, error_msgs)
 
-    logger.info("GraphQL mutation to %s completed (HTTP %d)", url, status_code)
+    logger.info("GraphQL %s to %s completed (HTTP %d)", label, url, status_code)
+    return {'ok': True, 'data': {'data': data, 'errors': errors, 'status_code': status_code}}
 
-    return {
-        'ok': True,
-        'data': {
-            'data': data,
-            'errors': errors,
-            'status_code': status_code,
-        },
-    }
+
+async def graphql_mutation(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Execute a GraphQL mutation against an endpoint."""
+    url, payload, headers = _prepare_graphql_request(context['params'], 'mutation')
+    return await _execute_graphql(url, payload, headers, 'mutation')

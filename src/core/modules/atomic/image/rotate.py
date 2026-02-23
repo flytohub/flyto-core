@@ -19,6 +19,24 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _validate_rotate_params(input_path, output_path, angle):
+    if not input_path:
+        raise ValidationError("Missing required parameter: input_path", field="input_path")
+    if not output_path:
+        raise ValidationError("Missing required parameter: output_path", field="output_path")
+    if angle is None:
+        raise ValidationError("Missing required parameter: angle", field="angle")
+    if not os.path.exists(input_path):
+        raise ModuleError(f"Input file not found: {input_path}")
+
+
+def _hex_to_rgb(hex_color: str) -> tuple:
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) == 3:
+        hex_color = ''.join(c * 2 for c in hex_color)
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+
 @register_module(
     module_id='image.rotate',
     version='1.0.0',
@@ -152,22 +170,7 @@ async def image_rotate(context: Dict[str, Any]) -> Dict[str, Any]:
     expand = params.get('expand', True)
     fill_color = params.get('fill_color', '#000000')
 
-    if not input_path:
-        raise ValidationError("Missing required parameter: input_path", field="input_path")
-    if not output_path:
-        raise ValidationError("Missing required parameter: output_path", field="output_path")
-    if angle is None:
-        raise ValidationError("Missing required parameter: angle", field="angle")
-
-    if not os.path.exists(input_path):
-        raise ModuleError(f"Input file not found: {input_path}")
-
-    def _hex_to_rgb(hex_color: str) -> tuple:
-        """Convert hex color string to RGB tuple."""
-        hex_color = hex_color.lstrip('#')
-        if len(hex_color) == 3:
-            hex_color = ''.join(c * 2 for c in hex_color)
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+    _validate_rotate_params(input_path, output_path, angle)
 
     def _rotate():
         with Image.open(input_path) as img:

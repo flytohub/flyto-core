@@ -19,6 +19,21 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _validate_crop_params(input_path, output_path, left, top, right, bottom):
+    if not input_path:
+        raise ValidationError("Missing required parameter: input_path", field="input_path")
+    if not output_path:
+        raise ValidationError("Missing required parameter: output_path", field="output_path")
+    if left is None or top is None or right is None or bottom is None:
+        raise ValidationError("All crop coordinates (left, top, right, bottom) are required")
+    if not os.path.exists(input_path):
+        raise ModuleError(f"Input file not found: {input_path}")
+    if left >= right:
+        raise ValidationError("left must be less than right", field="left")
+    if top >= bottom:
+        raise ValidationError("top must be less than bottom", field="top")
+
+
 @register_module(
     module_id='image.crop',
     version='1.0.0',
@@ -169,20 +184,7 @@ async def image_crop(context: Dict[str, Any]) -> Dict[str, Any]:
     right = params.get('right')
     bottom = params.get('bottom')
 
-    if not input_path:
-        raise ValidationError("Missing required parameter: input_path", field="input_path")
-    if not output_path:
-        raise ValidationError("Missing required parameter: output_path", field="output_path")
-    if left is None or top is None or right is None or bottom is None:
-        raise ValidationError("All crop coordinates (left, top, right, bottom) are required")
-
-    if not os.path.exists(input_path):
-        raise ModuleError(f"Input file not found: {input_path}")
-
-    if left >= right:
-        raise ValidationError("left must be less than right", field="left")
-    if top >= bottom:
-        raise ValidationError("top must be less than bottom", field="top")
+    _validate_crop_params(input_path, output_path, left, top, right, bottom)
 
     def _crop():
         with Image.open(input_path) as img:

@@ -181,75 +181,12 @@ class JoinModule(BaseModule):
             Dict with __event__ (joined/timeout/error) for engine routing
         """
         try:
-            start_time = datetime.utcnow()
-
-            # Collect all available inputs
             inputs = self._collect_inputs()
             completed_count = len(inputs)
-
-            # Apply strategy
-            if self.strategy == 'all':
-                # Need all inputs
-                if completed_count < self.input_count:
-                    # Check timeout (in real implementation, engine handles this)
-                    return {
-                        '__event__': 'timeout',
-                        'outputs': {
-                            'timeout': {
-                                'message': f'Only {completed_count}/{self.input_count} inputs completed',
-                                'completed_count': completed_count,
-                                'expected_count': self.input_count
-                            }
-                        },
-                        'completed_count': completed_count,
-                        'expected_count': self.input_count
-                    }
-                joined_data = inputs
-
-            elif self.strategy == 'any':
-                # Need at least one
-                if completed_count == 0:
-                    return {
-                        '__event__': 'timeout',
-                        'outputs': {
-                            'timeout': {
-                                'message': 'No inputs completed',
-                                'completed_count': 0
-                            }
-                        },
-                        'completed_count': 0
-                    }
-                joined_data = inputs
-
-            else:  # 'first'
-                # Use first input only
-                if completed_count == 0:
-                    return {
-                        '__event__': 'timeout',
-                        'outputs': {
-                            'timeout': {
-                                'message': 'No inputs completed',
-                                'completed_count': 0
-                            }
-                        },
-                        'completed_count': 0
-                    }
-                joined_data = [inputs[0]]
-
-            return {
-                '__event__': 'joined',
-                'outputs': {
-                    'output': {
-                        'joined_data': joined_data,
-                        'completed_count': completed_count,
-                        'strategy': self.strategy
-                    }
-                },
-                'joined_data': joined_data,
-                'completed_count': completed_count,
-                'strategy': self.strategy
-            }
-
+            joined_data = self._apply_join_strategy(inputs, completed_count)
+            if joined_data is None:
+                return self._build_timeout_response(completed_count)
+            return self._build_joined_response(joined_data, completed_count)
         except Exception as e:
             return {
                 '__event__': 'error',
@@ -261,6 +198,62 @@ class JoinModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _apply_join_strategy(self, inputs: List[Any], completed_count: int):
+        if self.strategy == 'all':
+            if completed_count < self.input_count:
+                return None
+            return inputs
+        elif self.strategy == 'any':
+            if completed_count == 0:
+                return None
+            return inputs
+        else:  # 'first'
+            if completed_count == 0:
+                return None
+            return [inputs[0]]
+
+    def _build_timeout_response(self, completed_count: int) -> Dict[str, Any]:
+        if self.strategy == 'all':
+            return {
+                '__event__': 'timeout',
+                'outputs': {
+                    'timeout': {
+                        'message': f'Only {completed_count}/{self.input_count} inputs completed',
+                        'completed_count': completed_count,
+                        'expected_count': self.input_count
+                    }
+                },
+                'completed_count': completed_count,
+                'expected_count': self.input_count
+            }
+        return {
+            '__event__': 'timeout',
+            'outputs': {
+                'timeout': {
+                    'message': 'No inputs completed',
+                    'completed_count': 0
+                }
+            },
+            'completed_count': 0
+        }
+
+    def _build_joined_response(
+        self, joined_data: List[Any], completed_count: int
+    ) -> Dict[str, Any]:
+        return {
+            '__event__': 'joined',
+            'outputs': {
+                'output': {
+                    'joined_data': joined_data,
+                    'completed_count': completed_count,
+                    'strategy': self.strategy
+                }
+            },
+            'joined_data': joined_data,
+            'completed_count': completed_count,
+            'strategy': self.strategy
+        }
 
     def _collect_inputs(self) -> List[Any]:
         """Collect all input values from context."""

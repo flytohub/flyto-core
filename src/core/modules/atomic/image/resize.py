@@ -7,13 +7,49 @@ Resize images to specified dimensions
 import asyncio
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from ...registry import register_module
 from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
+
+
+def _compute_new_dimensions(
+    original_width: int, original_height: int,
+    width: Optional[int], height: Optional[int],
+    scale: Optional[float], maintain_aspect: bool,
+) -> Tuple[int, int]:
+    if scale:
+        return int(original_width * scale), int(original_height * scale)
+    if maintain_aspect:
+        if width and height:
+            ratio = min(width / original_width, height / original_height)
+            return int(original_width * ratio), int(original_height * ratio)
+        if width:
+            ratio = width / original_width
+            return width, int(original_height * ratio)
+        ratio = height / original_height
+        return int(original_width * ratio), height
+    return width or original_width, height or original_height
+
+
+def _validate_resize_params(input_path, width, height, scale):
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    if not width and not height and not scale:
+        raise ValueError("Must specify either width/height or scale factor")
+
+
+def _get_resampling(Image, algorithm: str):
+    resampling_map = {
+        'lanczos': Image.Resampling.LANCZOS,
+        'bilinear': Image.Resampling.BILINEAR,
+        'bicubic': Image.Resampling.BICUBIC,
+        'nearest': Image.Resampling.NEAREST,
+    }
+    return resampling_map.get(algorithm, Image.Resampling.LANCZOS)
 
 
 @register_module(
@@ -107,62 +143,29 @@ async def image_resize(context: Dict[str, Any]) -> Dict[str, Any]:
     algorithm = params.get('algorithm', 'lanczos')
     maintain_aspect = params.get('maintain_aspect', True)
 
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"Input file not found: {input_path}")
+    _validate_resize_params(input_path, width, height, scale)
+    resampling = _get_resampling(Image, algorithm)
 
-    if not width and not height and not scale:
-        raise ValueError("Must specify either width/height or scale factor")
-
-    resampling_map = {
-        'lanczos': Image.Resampling.LANCZOS,
-        'bilinear': Image.Resampling.BILINEAR,
-        'bicubic': Image.Resampling.BICUBIC,
-        'nearest': Image.Resampling.NEAREST
-    }
-    resampling = resampling_map.get(algorithm, Image.Resampling.LANCZOS)
+    if not output_path:
+        base, ext = os.path.splitext(input_path)
+        output_path = f"{base}_resized{ext}"
 
     def _resize():
         with Image.open(input_path) as img:
-            original_size = img.size
-            original_width, original_height = original_size
-
-            if scale:
-                new_width = int(original_width * scale)
-                new_height = int(original_height * scale)
-            elif maintain_aspect:
-                if width and height:
-                    ratio = min(width / original_width, height / original_height)
-                    new_width = int(original_width * ratio)
-                    new_height = int(original_height * ratio)
-                elif width:
-                    ratio = width / original_width
-                    new_width = width
-                    new_height = int(original_height * ratio)
-                else:
-                    ratio = height / original_height
-                    new_width = int(original_width * ratio)
-                    new_height = height
-            else:
-                new_width = width or original_width
-                new_height = height or original_height
-
+            original_width, original_height = img.size
+            new_width, new_height = _compute_new_dimensions(
+                original_width, original_height,
+                width, height, scale, maintain_aspect,
+            )
             resized = img.resize((new_width, new_height), resampling)
-
-            nonlocal output_path
-            if not output_path:
-                base, ext = os.path.splitext(input_path)
-                output_path = f"{base}_resized{ext}"
-
             os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
             resized.save(output_path)
-
             return {
                 'original_size': {'width': original_width, 'height': original_height},
                 'new_size': {'width': new_width, 'height': new_height}
             }
 
     result = await asyncio.to_thread(_resize)
-
     logger.info(f"Resized image from {result['original_size']} to {result['new_size']}")
 
     return {

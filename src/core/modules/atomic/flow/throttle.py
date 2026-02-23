@@ -199,73 +199,26 @@ class ThrottleModule(BaseModule):
         try:
             now_ms = int(time.time() * 1000)
 
-            # Get throttle state from context
             th_state = {}
             if self.context:
                 th_state = self.context.get('__throttle_state__', {})
 
             last_execution_ms = th_state.get('last_execution_ms', 0)
             calls_throttled = th_state.get('calls_throttled', 0)
-
             time_since_last = now_ms - last_execution_ms if last_execution_ms > 0 else 0
             is_first_call = last_execution_ms == 0
 
-            # Determine if execution is allowed
-            should_execute = False
-
-            if is_first_call:
-                # First call ever
-                should_execute = self.leading
-            elif time_since_last >= self.interval_ms:
-                # Interval has passed
-                should_execute = True
+            should_execute = (is_first_call and self.leading) or (
+                not is_first_call and time_since_last >= self.interval_ms
+            )
 
             if should_execute:
-                new_state = {
-                    'last_execution_ms': now_ms,
-                    'calls_throttled': 0,
-                }
-
-                return {
-                    '__event__': 'executed',
-                    '__throttle_state__': new_state,
-                    'outputs': {
-                        'executed': {
-                            'last_execution_ms': now_ms,
-                            'calls_throttled': calls_throttled,
-                            'time_since_last_ms': time_since_last,
-                            'remaining_ms': 0,
-                        }
-                    },
-                    'last_execution_ms': now_ms,
-                    'calls_throttled': calls_throttled,
-                    'time_since_last_ms': time_since_last,
-                    'remaining_ms': 0,
-                }
-            else:
-                # Throttled
-                remaining_ms = max(0, self.interval_ms - time_since_last)
-                new_state = {
-                    'last_execution_ms': last_execution_ms,
-                    'calls_throttled': calls_throttled + 1,
-                }
-
-                return {
-                    '__event__': 'throttled',
-                    '__throttle_state__': new_state,
-                    'outputs': {
-                        'throttled': {
-                            'last_execution_ms': last_execution_ms,
-                            'calls_throttled': calls_throttled + 1,
-                            'time_since_last_ms': time_since_last,
-                            'remaining_ms': remaining_ms,
-                        }
-                    },
-                    'last_execution_ms': last_execution_ms,
-                    'calls_throttled': calls_throttled + 1,
-                    'time_since_last_ms': time_since_last,
-                    'remaining_ms': remaining_ms,
-                }
+                return self._build_executed_response(
+                    now_ms, calls_throttled, time_since_last
+                )
+            return self._build_throttled_response(
+                last_execution_ms, calls_throttled, time_since_last
+            )
 
         except Exception as e:
             return {
@@ -278,3 +231,49 @@ class ThrottleModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_executed_response(
+        self, now_ms, calls_throttled, time_since_last
+    ) -> Dict[str, Any]:
+        new_state = {'last_execution_ms': now_ms, 'calls_throttled': 0}
+        return {
+            '__event__': 'executed',
+            '__throttle_state__': new_state,
+            'outputs': {
+                'executed': {
+                    'last_execution_ms': now_ms,
+                    'calls_throttled': calls_throttled,
+                    'time_since_last_ms': time_since_last,
+                    'remaining_ms': 0,
+                }
+            },
+            'last_execution_ms': now_ms,
+            'calls_throttled': calls_throttled,
+            'time_since_last_ms': time_since_last,
+            'remaining_ms': 0,
+        }
+
+    def _build_throttled_response(
+        self, last_execution_ms, calls_throttled, time_since_last
+    ) -> Dict[str, Any]:
+        remaining_ms = max(0, self.interval_ms - time_since_last)
+        new_state = {
+            'last_execution_ms': last_execution_ms,
+            'calls_throttled': calls_throttled + 1,
+        }
+        return {
+            '__event__': 'throttled',
+            '__throttle_state__': new_state,
+            'outputs': {
+                'throttled': {
+                    'last_execution_ms': last_execution_ms,
+                    'calls_throttled': calls_throttled + 1,
+                    'time_since_last_ms': time_since_last,
+                    'remaining_ms': remaining_ms,
+                }
+            },
+            'last_execution_ms': last_execution_ms,
+            'calls_throttled': calls_throttled + 1,
+            'time_since_last_ms': time_since_last,
+            'remaining_ms': remaining_ms,
+        }

@@ -20,6 +20,23 @@ from ....utils import validate_url_with_env_config, SSRFError
 logger = logging.getLogger(__name__)
 
 
+def _validate_and_prepare_download(url: str, parsed, output_path, output_dir, headers):
+    default_headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+    default_headers.update(headers)
+
+    if not output_path:
+        url_path = parsed.path
+        filename = os.path.basename(url_path) or 'downloaded_image'
+        if '.' not in filename:
+            filename += '.jpg'
+        output_path = os.path.join(output_dir, filename)
+
+    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
+    return output_path, default_headers
+
+
 @register_module(
     module_id='image.download',
     version='1.0.0',
@@ -101,12 +118,10 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
     headers = params.get('headers', {})
     timeout = params.get('timeout', 30)
 
-    # Validate URL
     parsed = urlparse(url)
     if not parsed.scheme or not parsed.netloc:
         raise ValueError(f"Invalid URL: {url}")
 
-    # SECURITY: Validate URL against SSRF attacks
     try:
         validate_url_with_env_config(url)
     except SSRFError as e:
@@ -117,25 +132,10 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
             'error_code': 'SSRF_BLOCKED'
         }
 
-    # Set default headers
-    default_headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-    default_headers.update(headers)
+    output_path, default_headers = _validate_and_prepare_download(
+        url, parsed, output_path, output_dir, headers
+    )
 
-    # Determine output path
-    if not output_path:
-        # Extract filename from URL
-        url_path = parsed.path
-        filename = os.path.basename(url_path) or 'downloaded_image'
-        if '.' not in filename:
-            filename += '.jpg'  # Default extension
-        output_path = os.path.join(output_dir, filename)
-
-    # Ensure output directory exists
-    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
-
-    # Download image
     async with aiohttp.ClientSession() as session:
         async with session.get(
             url,
@@ -143,19 +143,13 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
             timeout=aiohttp.ClientTimeout(total=timeout)
         ) as response:
             response.raise_for_status()
-
             content_type = response.headers.get('Content-Type', 'image/jpeg')
-
-            # Read content
             content = await response.read()
-
-            # Write to file
             with open(output_path, 'wb') as f:
                 f.write(content)
 
     file_size = os.path.getsize(output_path)
     filename = os.path.basename(output_path)
-
     logger.info(f"Downloaded image: {url} -> {output_path} ({file_size} bytes)")
 
     return {

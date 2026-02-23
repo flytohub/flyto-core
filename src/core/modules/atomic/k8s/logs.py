@@ -18,6 +18,40 @@ from ...errors import ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _build_logs_cmd(pod: str, namespace: str, container: str,
+                    tail: int, previous: bool, kubeconfig: str) -> list:
+    """Build the kubectl logs command."""
+    cmd = ['kubectl', 'logs', pod, f'--namespace={namespace}', f'--tail={tail}']
+    if container:
+        cmd.extend(['--container', container])
+    if previous:
+        cmd.append('--previous')
+    if kubeconfig:
+        cmd.append(f'--kubeconfig={kubeconfig}')
+    return cmd
+
+
+async def _run_kubectl_logs(cmd: list, pod: str) -> Dict[str, Any]:
+    """Execute kubectl logs and return parsed result."""
+    process = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    stdout_bytes, stderr_bytes = await asyncio.wait_for(
+        process.communicate(), timeout=25,
+    )
+    if process.returncode != 0:
+        stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
+        raise ModuleError(
+            f"kubectl logs failed (exit {process.returncode}): {stderr_text}",
+            code='K8S_COMMAND_FAILED',
+        )
+    logs_text = stdout_bytes.decode('utf-8', errors='replace')
+    line_count = logs_text.count('\n')
+    if logs_text and not logs_text.endswith('\n'):
+        line_count += 1
+    return {'pod': pod, 'logs': logs_text, 'lines': line_count}
+
+
 @register_module(
     module_id='k8s.logs',
     version='1.0.0',
@@ -43,10 +77,12 @@ logger = logging.getLogger(__name__)
               placeholder='my-app-7d4b8c6f5-x2k9q'),
         field('namespace', type='string', label='Namespace',
               default='default', group=FieldGroup.BASIC,
-              description='Kubernetes namespace'),
+              description='Kubernetes namespace',
+              placeholder='default'),
         field('container', type='string', label='Container',
               group=FieldGroup.OPTIONS,
-              description='Specific container name (for multi-container pods)'),
+              description='Specific container name (for multi-container pods)',
+              placeholder='main'),
         field('tail', type='number', label='Tail Lines',
               default=100, group=FieldGroup.OPTIONS,
               min=1, max=10000,
@@ -56,7 +92,8 @@ logger = logging.getLogger(__name__)
               description='Get logs from the previous terminated container instance'),
         field('kubeconfig', type='string', label='Kubeconfig Path',
               group=FieldGroup.CONNECTION,
-              description='Path to kubeconfig file (uses default if not set)'),
+              description='Path to kubeconfig file (uses default if not set)',
+              placeholder='~/.kube/config'),
     ),
     output_schema={
         'pod': {
@@ -89,60 +126,15 @@ async def k8s_logs(context: Dict[str, Any]) -> Dict[str, Any]:
     if not pod:
         raise ModuleError('Pod name is required', code='K8S_MISSING_POD')
 
-    cmd = [
-        'kubectl', 'logs', pod,
-        f'--namespace={namespace}',
-        f'--tail={tail}',
-    ]
-
-    if container:
-        cmd.extend(['--container', container])
-
-    if previous:
-        cmd.append('--previous')
-
-    if kubeconfig:
-        cmd.append(f'--kubeconfig={kubeconfig}')
-
+    cmd = _build_logs_cmd(pod, namespace, container, tail, previous, kubeconfig)
     log_detail = f"pod={pod} ns={namespace}"
     if container:
         log_detail += f" container={container}"
     logger.info(f"k8s.logs: {log_detail} tail={tail}")
 
     try:
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            process.communicate(),
-            timeout=25,
-        )
-
-        if process.returncode != 0:
-            stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
-            raise ModuleError(
-                f"kubectl logs failed (exit {process.returncode}): {stderr_text}",
-                code='K8S_COMMAND_FAILED',
-            )
-
-        logs_text = stdout_bytes.decode('utf-8', errors='replace')
-        line_count = logs_text.count('\n')
-        # If the last line doesn't end with newline, count it too
-        if logs_text and not logs_text.endswith('\n'):
-            line_count += 1
-
-        return {
-            'ok': True,
-            'data': {
-                'pod': pod,
-                'logs': logs_text,
-                'lines': line_count,
-            },
-        }
-
+        data = await _run_kubectl_logs(cmd, pod)
+        return {'ok': True, 'data': data}
     except asyncio.TimeoutError:
         raise ModuleError(
             f'kubectl logs timed out after 25 seconds for pod {pod}',

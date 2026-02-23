@@ -62,6 +62,7 @@ logger = logging.getLogger(__name__)
             label_key='modules.env.get.params.default.label',
             description='Default value if the variable is not set',
             description_key='modules.env.get.params.default.description',
+            placeholder='fallback_value',
             group=FieldGroup.OPTIONS,
         ),
     ),

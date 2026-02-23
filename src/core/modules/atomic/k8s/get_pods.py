@@ -66,6 +66,39 @@ def _parse_pod_status(pod: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _build_get_pods_cmd(namespace: str, label_selector: str, kubeconfig: str) -> list:
+    """Build the kubectl get pods command."""
+    cmd = ['kubectl', 'get', 'pods', f'--namespace={namespace}', '--output=json']
+    if label_selector:
+        cmd.append(f'--selector={label_selector}')
+    if kubeconfig:
+        cmd.append(f'--kubeconfig={kubeconfig}')
+    return cmd
+
+
+async def _run_kubectl_get_pods(cmd: list) -> Dict[str, Any]:
+    """Execute kubectl get pods and return parsed pod list."""
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout_bytes, stderr_bytes = await asyncio.wait_for(
+        process.communicate(), timeout=25,
+    )
+    if process.returncode != 0:
+        stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
+        raise ModuleError(
+            f"kubectl get pods failed (exit {process.returncode}): {stderr_text}",
+            code='K8S_COMMAND_FAILED',
+        )
+    stdout_text = stdout_bytes.decode('utf-8', errors='replace')
+    data = json.loads(stdout_text)
+    items = data.get('items', [])
+    pods = [_parse_pod_status(pod) for pod in items]
+    return {'pods': pods, 'count': len(pods)}
+
+
 @register_module(
     module_id='k8s.get_pods',
     version='1.0.0',
@@ -87,14 +120,16 @@ def _parse_pod_status(pod: Dict[str, Any]) -> Dict[str, Any]:
     params_schema=compose(
         field('namespace', type='string', label='Namespace',
               default='default', group=FieldGroup.BASIC,
-              description='Kubernetes namespace to list pods from'),
+              description='Kubernetes namespace to list pods from',
+              placeholder='default'),
         field('label_selector', type='string', label='Label Selector',
               group=FieldGroup.OPTIONS,
               description='Filter pods by label selector (e.g. app=nginx)',
               placeholder='app=nginx,env=production'),
         field('kubeconfig', type='string', label='Kubeconfig Path',
               group=FieldGroup.CONNECTION,
-              description='Path to kubeconfig file (uses default if not set)'),
+              description='Path to kubeconfig file (uses default if not set)',
+              placeholder='~/.kube/config'),
     ),
     output_schema={
         'pods': {
@@ -116,49 +151,12 @@ async def k8s_get_pods(context: Dict[str, Any]) -> Dict[str, Any]:
     label_selector = params.get('label_selector', '')
     kubeconfig = params.get('kubeconfig', '')
 
-    cmd = ['kubectl', 'get', 'pods', f'--namespace={namespace}', '--output=json']
-
-    if label_selector:
-        cmd.append(f'--selector={label_selector}')
-
-    if kubeconfig:
-        cmd.append(f'--kubeconfig={kubeconfig}')
-
+    cmd = _build_get_pods_cmd(namespace, label_selector, kubeconfig)
     logger.info(f"k8s.get_pods: namespace={namespace} selector={label_selector or '(none)'}")
 
     try:
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            process.communicate(),
-            timeout=25,
-        )
-
-        if process.returncode != 0:
-            stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
-            raise ModuleError(
-                f"kubectl get pods failed (exit {process.returncode}): {stderr_text}",
-                code='K8S_COMMAND_FAILED',
-            )
-
-        stdout_text = stdout_bytes.decode('utf-8', errors='replace')
-        data = json.loads(stdout_text)
-        items = data.get('items', [])
-
-        pods = [_parse_pod_status(pod) for pod in items]
-
-        return {
-            'ok': True,
-            'data': {
-                'pods': pods,
-                'count': len(pods),
-            },
-        }
-
+        data = await _run_kubectl_get_pods(cmd)
+        return {'ok': True, 'data': data}
     except asyncio.TimeoutError:
         raise ModuleError(
             'kubectl get pods timed out after 25 seconds',

@@ -264,56 +264,13 @@ class ParallelModule(BaseModule):
         start_time = datetime.utcnow()
 
         try:
-            # Build task execution plan
-            task_plan = {
-                'tasks': self.tasks,
-                'mode': self.mode,
-                'timeout_ms': self.timeout_ms,
-                'fail_fast': self.fail_fast,
-                'concurrency_limit': self.concurrency_limit,
-            }
-
-            # For now, simulate execution results
-            # In actual workflow execution, the engine will:
-            # 1. Parse task definitions
-            # 2. Execute them in parallel
-            # 3. Return results based on mode
-
-            # Pass input data to all tasks
-            input_data = self.context.get('input', {})
-
-            results = []
-            for i, task in enumerate(self.tasks):
-                results.append({
-                    'index': i,
-                    'task': task,
-                    'status': 'pending',
-                    'input': input_data
-                })
+            task_plan = self._build_task_plan()
+            results = self._build_pending_results()
 
             end_time = datetime.utcnow()
             duration_ms = (end_time - start_time).total_seconds() * 1000
 
-            return {
-                '__event__': 'completed',
-                '__parallel_execution__': task_plan,
-                'outputs': {
-                    'completed': {
-                        'results': results,
-                        'completed_count': 0,
-                        'failed_count': 0,
-                        'total_count': len(self.tasks),
-                        'mode': self.mode,
-                        'duration_ms': duration_ms
-                    }
-                },
-                'results': results,
-                'completed_count': 0,
-                'failed_count': 0,
-                'total_count': len(self.tasks),
-                'mode': self.mode,
-                'duration_ms': duration_ms
-            }
+            return self._build_completed_response(task_plan, results, duration_ms)
 
         except asyncio.TimeoutError:
             return {
@@ -341,3 +298,48 @@ class ParallelModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_task_plan(self) -> Dict[str, Any]:
+        return {
+            'tasks': self.tasks,
+            'mode': self.mode,
+            'timeout_ms': self.timeout_ms,
+            'fail_fast': self.fail_fast,
+            'concurrency_limit': self.concurrency_limit,
+        }
+
+    def _build_pending_results(self) -> List[Dict[str, Any]]:
+        input_data = self.context.get('input', {})
+        results = []
+        for i, task in enumerate(self.tasks):
+            results.append({
+                'index': i,
+                'task': task,
+                'status': 'pending',
+                'input': input_data
+            })
+        return results
+
+    def _build_completed_response(
+        self, task_plan, results, duration_ms
+    ) -> Dict[str, Any]:
+        return {
+            '__event__': 'completed',
+            '__parallel_execution__': task_plan,
+            'outputs': {
+                'completed': {
+                    'results': results,
+                    'completed_count': 0,
+                    'failed_count': 0,
+                    'total_count': len(self.tasks),
+                    'mode': self.mode,
+                    'duration_ms': duration_ms
+                }
+            },
+            'results': results,
+            'completed_count': 0,
+            'failed_count': 0,
+            'total_count': len(self.tasks),
+            'mode': self.mode,
+            'duration_ms': duration_ms
+        }

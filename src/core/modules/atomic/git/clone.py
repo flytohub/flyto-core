@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
               group=FieldGroup.OPTIONS),
         field('token', type='string', label='Access Token', label_key='modules.git.clone.params.token.label',
               description='Personal access token for private repos', format='password',
-              group=FieldGroup.CONNECTION),
+              placeholder='ghp_xxxxxxxxxxxx', group=FieldGroup.CONNECTION),
     ),
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether clone succeeded'},
@@ -98,97 +98,85 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
-async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
-    """Clone a git repository"""
-    params = context['params']
-    url = params['url']
-    destination = params['destination']
-    branch = params.get('branch')
-    depth = params.get('depth')
-    token = params.get('token')
+def _inject_token_into_url(url: str, token: str) -> str:
+    """Inject access token into HTTPS URL for private repos."""
+    parsed = urlparse(url)
+    port_suffix = f':{parsed.port}' if parsed.port else ''
+    authed = parsed._replace(
+        netloc=f'x-access-token:{token}@{parsed.hostname}{port_suffix}'
+    )
+    return urlunparse(authed)
 
-    destination = os.path.abspath(os.path.expanduser(destination))
 
-    # Inject token into HTTPS URL for private repos
-    if token and url.startswith('https://'):
-        parsed = urlparse(url)
-        authed = parsed._replace(netloc=f'x-access-token:{token}@{parsed.hostname}' +
-                                 (f':{parsed.port}' if parsed.port else ''))
-        clone_url = urlunparse(authed)
-    else:
-        clone_url = url
-
-    # Build git clone command
+def _build_clone_cmd(clone_url: str, destination: str, branch: str = None, depth: int = None) -> list:
+    """Build git clone command list."""
     cmd = ['git', 'clone']
     if branch:
         cmd.extend(['--branch', branch])
     if depth:
         cmd.extend(['--depth', str(depth)])
     cmd.extend([clone_url, destination])
+    return cmd
+
+
+async def _get_repo_info(destination: str) -> tuple:
+    """Get current branch and HEAD commit hash from cloned repo."""
+    branch_proc = await asyncio.create_subprocess_exec(
+        'git', '-C', destination, 'rev-parse', '--abbrev-ref', 'HEAD',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    branch_out, _ = await branch_proc.communicate()
+    current_branch = branch_out.decode('utf-8').strip() if branch_proc.returncode == 0 else 'unknown'
+
+    commit_proc = await asyncio.create_subprocess_exec(
+        'git', '-C', destination, 'rev-parse', 'HEAD',
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    commit_out, _ = await commit_proc.communicate()
+    commit_hash = commit_out.decode('utf-8').strip() if commit_proc.returncode == 0 else 'unknown'
+
+    return current_branch, commit_hash
+
+
+def _sanitize_error(error_msg: str, token: str = None) -> str:
+    """Remove token from error messages."""
+    if token:
+        error_msg = error_msg.replace(token, '***')
+    return error_msg
+
+
+async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
+    """Clone a git repository"""
+    params = context['params']
+    url = params['url']
+    destination = os.path.abspath(os.path.expanduser(params['destination']))
+    branch = params.get('branch')
+    depth = params.get('depth')
+    token = params.get('token')
+
+    clone_url = _inject_token_into_url(url, token) if token and url.startswith('https://') else url
+    cmd = _build_clone_cmd(clone_url, destination, branch, depth)
 
     try:
         process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await process.communicate()
 
         if process.returncode != 0:
-            error_msg = stderr.decode('utf-8', errors='replace').strip()
-            # Sanitize token from error message
-            if token:
-                error_msg = error_msg.replace(token, '***')
+            error_msg = _sanitize_error(stderr.decode('utf-8', errors='replace').strip(), token)
             logger.error(f"Git clone failed: {error_msg}")
-            return {
-                'ok': False,
-                'error': f'Git clone failed: {error_msg}',
-                'error_code': 'CLONE_FAILED'
-            }
+            return {'ok': False, 'error': f'Git clone failed: {error_msg}', 'error_code': 'CLONE_FAILED'}
 
-        # Get current branch
-        branch_proc = await asyncio.create_subprocess_exec(
-            'git', '-C', destination, 'rev-parse', '--abbrev-ref', 'HEAD',
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        branch_out, _ = await branch_proc.communicate()
-        current_branch = branch_out.decode('utf-8').strip() if branch_proc.returncode == 0 else 'unknown'
-
-        # Get HEAD commit hash
-        commit_proc = await asyncio.create_subprocess_exec(
-            'git', '-C', destination, 'rev-parse', 'HEAD',
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        commit_out, _ = await commit_proc.communicate()
-        commit_hash = commit_out.decode('utf-8').strip() if commit_proc.returncode == 0 else 'unknown'
-
+        current_branch, commit_hash = await _get_repo_info(destination)
         logger.info(f"Git clone: {url} -> {destination} (branch={current_branch}, commit={commit_hash[:8]})")
-
-        return {
-            'ok': True,
-            'data': {
-                'path': destination,
-                'branch': current_branch,
-                'commit': commit_hash,
-            }
-        }
+        return {'ok': True, 'data': {'path': destination, 'branch': current_branch, 'commit': commit_hash}}
 
     except FileNotFoundError:
-        return {
-            'ok': False,
-            'error': 'git command not found. Ensure git is installed.',
-            'error_code': 'GIT_NOT_FOUND'
-        }
-
+        return {'ok': False, 'error': 'git command not found. Ensure git is installed.', 'error_code': 'GIT_NOT_FOUND'}
     except Exception as e:
-        error_msg = str(e)
-        if token:
-            error_msg = error_msg.replace(token, '***')
+        error_msg = _sanitize_error(str(e), token)
         logger.error(f"Git clone error: {error_msg}")
-        return {
-            'ok': False,
-            'error': error_msg,
-            'error_code': 'CLONE_ERROR'
-        }
+        return {'ok': False, 'error': error_msg, 'error_code': 'CLONE_ERROR'}

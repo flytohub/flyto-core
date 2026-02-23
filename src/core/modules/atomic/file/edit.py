@@ -13,6 +13,19 @@ from ...errors import ValidationError, FileNotFoundError, ModuleError
 import os
 
 
+def _generate_diff(original: str, modified: str, path: str) -> str:
+    """Generate a unified diff between original and modified content."""
+    import difflib
+    diff_lines = list(difflib.unified_diff(
+        original.splitlines(keepends=True),
+        modified.splitlines(keepends=True),
+        fromfile="a/{}".format(os.path.basename(path)),
+        tofile="b/{}".format(os.path.basename(path)),
+        n=3,
+    ))
+    return ''.join(diff_lines)
+
+
 @register_module(
     module_id='file.edit',
     version='1.0.0',
@@ -84,8 +97,6 @@ import os
 )
 async def file_edit(context):
     """Replace string in file (targeted edit, not full overwrite)."""
-    import difflib
-
     params = context['params']
     path = params['path']
     old_string = params['old_string']
@@ -93,7 +104,6 @@ async def file_edit(context):
     replace_all = params.get('replace_all', False)
     encoding = params.get('encoding', 'utf-8')
 
-    # SECURITY: Validate path to prevent path traversal attacks
     try:
         safe_path = validate_path_with_env_config(path)
     except PathTraversalError as e:
@@ -118,20 +128,11 @@ async def file_edit(context):
     with open(safe_path, 'w', encoding=encoding) as f:
         f.write(modified)
 
-    # Generate diff
-    diff_lines = list(difflib.unified_diff(
-        original.splitlines(keepends=True),
-        modified.splitlines(keepends=True),
-        fromfile="a/{}".format(os.path.basename(path)),
-        tofile="b/{}".format(os.path.basename(path)),
-        n=3,
-    ))
-
     return {
         'ok': True,
         'data': {
             'path': path,
             'replacements': count,
-            'diff': ''.join(diff_lines),
+            'diff': _generate_diff(original, modified, path),
         }
     }

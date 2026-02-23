@@ -257,66 +257,27 @@ class RetryModule(BaseModule):
         Returns __retry_execution__ plan for the engine.
         """
         try:
-            # Read retry state from context (engine provides this)
             retry_state = self.context.get('__retry_state__', {}) if self.context else {}
             current_attempt = retry_state.get('attempt', 0)
             last_error = retry_state.get('last_error', None)
             start_time_ms = retry_state.get('start_time_ms', int(time.time() * 1000))
 
-            # Check if this is an error that should be retried
-            if last_error and self.retry_on_errors:
-                error_code = str(last_error.get('code', ''))
-                if error_code not in self.retry_on_errors:
-                    # Error code not in retry list - treat as exhausted
-                    return self._build_exhausted_response(
-                        current_attempt, last_error, start_time_ms
-                    )
+            if self._should_skip_retry(last_error):
+                return self._build_exhausted_response(
+                    current_attempt, last_error, start_time_ms
+                )
 
-            # First execution (no error yet) - pass through as success
             if current_attempt == 0 and last_error is None:
                 return self._build_success_response(current_attempt, start_time_ms)
 
-            # Check if retries exhausted
             if current_attempt >= self.max_retries:
                 return self._build_exhausted_response(
                     current_attempt, last_error, start_time_ms
                 )
 
-            # Calculate delay with exponential backoff + jitter
-            delay_ms = self._calculate_delay(current_attempt)
-
-            # Build retry execution plan
-            retry_plan = {
-                'max_retries': self.max_retries,
-                'current_attempt': current_attempt + 1,
-                'delay_ms': delay_ms,
-                'backoff_multiplier': self.backoff_multiplier,
-                'max_delay_ms': self.max_delay_ms,
-                'retry_on_errors': self.retry_on_errors,
-                'start_time_ms': start_time_ms,
-            }
-
-            now_ms = int(time.time() * 1000)
-            total_elapsed_ms = now_ms - start_time_ms
-
-            return {
-                '__event__': 'retry',
-                '__retry_execution__': retry_plan,
-                'outputs': {
-                    'retry': {
-                        'attempt': current_attempt + 1,
-                        'max_retries': self.max_retries,
-                        'delay_ms': delay_ms,
-                        'last_error': last_error,
-                        'total_elapsed_ms': total_elapsed_ms,
-                    }
-                },
-                'attempt': current_attempt + 1,
-                'max_retries': self.max_retries,
-                'delay_ms': delay_ms,
-                'total_elapsed_ms': total_elapsed_ms,
-                'last_error': last_error,
-            }
+            return self._build_retry_response(
+                current_attempt, last_error, start_time_ms
+            )
 
         except Exception as e:
             return {
@@ -329,6 +290,47 @@ class RetryModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _should_skip_retry(self, last_error) -> bool:
+        if last_error and self.retry_on_errors:
+            error_code = str(last_error.get('code', ''))
+            return error_code not in self.retry_on_errors
+        return False
+
+    def _build_retry_response(
+        self, current_attempt: int, last_error, start_time_ms: int
+    ) -> Dict[str, Any]:
+        delay_ms = self._calculate_delay(current_attempt)
+        retry_plan = {
+            'max_retries': self.max_retries,
+            'current_attempt': current_attempt + 1,
+            'delay_ms': delay_ms,
+            'backoff_multiplier': self.backoff_multiplier,
+            'max_delay_ms': self.max_delay_ms,
+            'retry_on_errors': self.retry_on_errors,
+            'start_time_ms': start_time_ms,
+        }
+        now_ms = int(time.time() * 1000)
+        total_elapsed_ms = now_ms - start_time_ms
+
+        return {
+            '__event__': 'retry',
+            '__retry_execution__': retry_plan,
+            'outputs': {
+                'retry': {
+                    'attempt': current_attempt + 1,
+                    'max_retries': self.max_retries,
+                    'delay_ms': delay_ms,
+                    'last_error': last_error,
+                    'total_elapsed_ms': total_elapsed_ms,
+                }
+            },
+            'attempt': current_attempt + 1,
+            'max_retries': self.max_retries,
+            'delay_ms': delay_ms,
+            'total_elapsed_ms': total_elapsed_ms,
+            'last_error': last_error,
+        }
 
     def _calculate_delay(self, attempt: int) -> int:
         """

@@ -223,6 +223,19 @@ class CircuitBreakerModule(BaseModule):
         if self.half_open_max < 1:
             raise ValueError("half_open_max must be at least 1")
 
+    def _read_circuit_state(self):
+        cb_state = {}
+        if self.context:
+            cb_state = self.context.get('__circuit_breaker_state__', {})
+        incoming_error = self.context.get('__error__') if self.context else None
+        return (
+            cb_state.get('state', self.STATE_CLOSED),
+            cb_state.get('failure_count', 0),
+            cb_state.get('last_failure_time_ms', 0),
+            cb_state.get('half_open_count', 0),
+            incoming_error,
+        )
+
     async def execute(self) -> Dict[str, Any]:
         """
         Evaluate circuit breaker state and route accordingly.
@@ -232,113 +245,25 @@ class CircuitBreakerModule(BaseModule):
         """
         try:
             now_ms = int(time.time() * 1000)
-
-            # Get circuit breaker state from context
-            cb_state = {}
-            if self.context:
-                cb_state = self.context.get('__circuit_breaker_state__', {})
-
-            current_state = cb_state.get('state', self.STATE_CLOSED)
-            failure_count = cb_state.get('failure_count', 0)
-            last_failure_time_ms = cb_state.get('last_failure_time_ms', 0)
-            half_open_count = cb_state.get('half_open_count', 0)
-
-            # Check for incoming error signal (from previous node)
-            incoming_error = None
-            if self.context:
-                incoming_error = self.context.get('__error__')
-
-            # --- State machine logic ---
+            current_state, failure_count, last_failure_time_ms, half_open_count, incoming_error = self._read_circuit_state()
 
             if current_state == self.STATE_CLOSED:
-                if incoming_error:
-                    # Record failure
-                    failure_count += 1
-                    last_failure_time_ms = now_ms
-
-                    if failure_count >= self.failure_threshold:
-                        # Trip the circuit
-                        return self._build_response(
-                            state=self.STATE_OPEN,
-                            failure_count=failure_count,
-                            last_failure_time_ms=last_failure_time_ms,
-                            now_ms=now_ms,
-                        )
-                    else:
-                        # Stay closed, but record failure
-                        return self._build_response(
-                            state=self.STATE_CLOSED,
-                            failure_count=failure_count,
-                            last_failure_time_ms=last_failure_time_ms,
-                            now_ms=now_ms,
-                        )
-                else:
-                    # Success - reset failure count
-                    return self._build_response(
-                        state=self.STATE_CLOSED,
-                        failure_count=0,
-                        last_failure_time_ms=last_failure_time_ms,
-                        now_ms=now_ms,
-                    )
-
+                return self._handle_closed(
+                    incoming_error, failure_count, last_failure_time_ms, now_ms
+                )
             elif current_state == self.STATE_OPEN:
-                # Check if reset timeout has elapsed
-                elapsed = now_ms - last_failure_time_ms
-                if elapsed >= self.reset_timeout_ms:
-                    # Transition to half-open
-                    return self._build_response(
-                        state=self.STATE_HALF_OPEN,
-                        failure_count=failure_count,
-                        last_failure_time_ms=last_failure_time_ms,
-                        now_ms=now_ms,
-                        half_open_count=0,
-                    )
-                else:
-                    # Still open, block request
-                    time_until_half_open = self.reset_timeout_ms - elapsed
-                    return self._build_response(
-                        state=self.STATE_OPEN,
-                        failure_count=failure_count,
-                        last_failure_time_ms=last_failure_time_ms,
-                        now_ms=now_ms,
-                        time_until_half_open_ms=time_until_half_open,
-                    )
-
+                return self._handle_open(
+                    failure_count, last_failure_time_ms, now_ms
+                )
             elif current_state == self.STATE_HALF_OPEN:
-                if incoming_error:
-                    # Test failed, reopen circuit
-                    return self._build_response(
-                        state=self.STATE_OPEN,
-                        failure_count=failure_count,
-                        last_failure_time_ms=now_ms,
-                        now_ms=now_ms,
-                    )
-                else:
-                    half_open_count += 1
-                    if half_open_count >= self.half_open_max:
-                        # All test requests succeeded, close circuit
-                        return self._build_response(
-                            state=self.STATE_CLOSED,
-                            failure_count=0,
-                            last_failure_time_ms=last_failure_time_ms,
-                            now_ms=now_ms,
-                        )
-                    else:
-                        # More test requests needed
-                        return self._build_response(
-                            state=self.STATE_HALF_OPEN,
-                            failure_count=failure_count,
-                            last_failure_time_ms=last_failure_time_ms,
-                            now_ms=now_ms,
-                            half_open_count=half_open_count,
-                        )
+                return self._handle_half_open(
+                    incoming_error, failure_count, last_failure_time_ms,
+                    half_open_count, now_ms
+                )
 
-            # Fallback (should not reach here)
             return self._build_response(
-                state=self.STATE_CLOSED,
-                failure_count=0,
-                last_failure_time_ms=0,
-                now_ms=now_ms,
+                state=self.STATE_CLOSED, failure_count=0,
+                last_failure_time_ms=0, now_ms=now_ms,
             )
 
         except Exception as e:
@@ -352,6 +277,60 @@ class CircuitBreakerModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _handle_closed(
+        self, incoming_error, failure_count, last_failure_time_ms, now_ms
+    ) -> Dict[str, Any]:
+        if incoming_error:
+            failure_count += 1
+            last_failure_time_ms = now_ms
+            new_state = self.STATE_OPEN if failure_count >= self.failure_threshold else self.STATE_CLOSED
+            return self._build_response(
+                state=new_state, failure_count=failure_count,
+                last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+            )
+        return self._build_response(
+            state=self.STATE_CLOSED, failure_count=0,
+            last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+        )
+
+    def _handle_open(
+        self, failure_count, last_failure_time_ms, now_ms
+    ) -> Dict[str, Any]:
+        elapsed = now_ms - last_failure_time_ms
+        if elapsed >= self.reset_timeout_ms:
+            return self._build_response(
+                state=self.STATE_HALF_OPEN, failure_count=failure_count,
+                last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+                half_open_count=0,
+            )
+        time_until_half_open = self.reset_timeout_ms - elapsed
+        return self._build_response(
+            state=self.STATE_OPEN, failure_count=failure_count,
+            last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+            time_until_half_open_ms=time_until_half_open,
+        )
+
+    def _handle_half_open(
+        self, incoming_error, failure_count, last_failure_time_ms,
+        half_open_count, now_ms
+    ) -> Dict[str, Any]:
+        if incoming_error:
+            return self._build_response(
+                state=self.STATE_OPEN, failure_count=failure_count,
+                last_failure_time_ms=now_ms, now_ms=now_ms,
+            )
+        half_open_count += 1
+        if half_open_count >= self.half_open_max:
+            return self._build_response(
+                state=self.STATE_CLOSED, failure_count=0,
+                last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+            )
+        return self._build_response(
+            state=self.STATE_HALF_OPEN, failure_count=failure_count,
+            last_failure_time_ms=last_failure_time_ms, now_ms=now_ms,
+            half_open_count=half_open_count,
+        )
 
     def _build_response(
         self,

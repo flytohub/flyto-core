@@ -178,29 +178,9 @@ class TriggerModule(BaseModule):
             Dict with __event__ (triggered/error) for engine routing
         """
         try:
-            # Get trigger payload from context (injected by scheduler/webhook handler)
             trigger_payload = self.context.get('trigger_payload', {})
             triggered_at = datetime.utcnow().isoformat()
-
-            # Build trigger data
-            trigger_data = {
-                'trigger_type': self.trigger_type,
-                'triggered_at': triggered_at,
-                'payload': trigger_payload,
-            }
-
-            # Merge custom config (passthrough for composites)
-            if self.config:
-                trigger_data['config'] = self.config
-
-            # Add type-specific info
-            if self.trigger_type == 'webhook':
-                trigger_data['webhook_path'] = self.webhook_path
-            elif self.trigger_type == 'schedule':
-                trigger_data['schedule'] = self.schedule
-            elif self.trigger_type == 'event':
-                trigger_data['event_name'] = self.event_name
-
+            trigger_data = self._build_trigger_data(trigger_payload, triggered_at)
             return {
                 '__event__': 'triggered',
                 'outputs': {
@@ -210,7 +190,6 @@ class TriggerModule(BaseModule):
                 'trigger_type': self.trigger_type,
                 'triggered_at': triggered_at
             }
-
         except Exception as e:
             return {
                 '__event__': 'error',
@@ -222,3 +201,21 @@ class TriggerModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_trigger_data(
+        self, trigger_payload: Dict, triggered_at: str
+    ) -> Dict[str, Any]:
+        trigger_data = {
+            'trigger_type': self.trigger_type,
+            'triggered_at': triggered_at,
+            'payload': trigger_payload,
+        }
+        if self.config:
+            trigger_data['config'] = self.config
+        if self.trigger_type == 'webhook':
+            trigger_data['webhook_path'] = self.webhook_path
+        elif self.trigger_type == 'schedule':
+            trigger_data['schedule'] = self.schedule
+        elif self.trigger_type == 'event':
+            trigger_data['event_name'] = self.event_name
+        return trigger_data

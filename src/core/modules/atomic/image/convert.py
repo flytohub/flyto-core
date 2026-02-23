@@ -42,6 +42,52 @@ def get_format_from_extension(path: str) -> Optional[str]:
     return None
 
 
+def _resolve_convert_paths(input_path: str, output_path: Optional[str], output_format: str):
+    if output_format in FORMAT_ALIASES:
+        output_format = FORMAT_ALIASES[output_format]
+    if output_format not in SUPPORTED_FORMATS:
+        raise ValueError(f"Unsupported format: {output_format}")
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    if not output_path:
+        base_name = os.path.splitext(input_path)[0]
+        extension = SUPPORTED_FORMATS[output_format][0]
+        output_path = f"{base_name}{extension}"
+    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
+    return output_path, output_format
+
+
+def _apply_resize(img, resize):
+    from PIL import Image
+    width = resize.get('width')
+    height = resize.get('height')
+    keep_aspect = resize.get('keep_aspect', True)
+
+    if width and height:
+        if keep_aspect:
+            img.thumbnail((width, height), Image.Resampling.LANCZOS)
+        else:
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+    elif width:
+        ratio = width / img.width
+        new_height = int(img.height * ratio)
+        img = img.resize((width, new_height), Image.Resampling.LANCZOS)
+    elif height:
+        ratio = height / img.height
+        new_width = int(img.width * ratio)
+        img = img.resize((new_width, height), Image.Resampling.LANCZOS)
+    return img
+
+
+def _build_save_kwargs(output_format: str, quality: int) -> dict:
+    save_kwargs = {}
+    if output_format in ('jpeg', 'webp'):
+        save_kwargs['quality'] = quality
+    if output_format == 'png':
+        save_kwargs['optimize'] = True
+    return save_kwargs
+
+
 @register_module(
     module_id='image.convert',
     version='1.0.0',
@@ -128,65 +174,20 @@ async def image_convert(context: Dict[str, Any]) -> Dict[str, Any]:
     resize = params.get('resize')
     output_path = params.get('output_path')
 
-    # Normalize format
-    if output_format in FORMAT_ALIASES:
-        output_format = FORMAT_ALIASES[output_format]
+    output_path, output_format = _resolve_convert_paths(input_path, output_path, output_format)
 
-    if output_format not in SUPPORTED_FORMATS:
-        raise ValueError(f"Unsupported format: {output_format}")
-
-    # Validate input file
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"Input file not found: {input_path}")
-
-    # Determine output path
-    if not output_path:
-        base_name = os.path.splitext(input_path)[0]
-        extension = SUPPORTED_FORMATS[output_format][0]
-        output_path = f"{base_name}{extension}"
-
-    # Ensure output directory exists
-    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
-
-    # Open and convert image
     with Image.open(input_path) as img:
-        # Handle resize
         if resize:
-            width = resize.get('width')
-            height = resize.get('height')
-            keep_aspect = resize.get('keep_aspect', True)
+            img = _apply_resize(img, resize)
 
-            if width and height:
-                if keep_aspect:
-                    img.thumbnail((width, height), Image.Resampling.LANCZOS)
-                else:
-                    img = img.resize((width, height), Image.Resampling.LANCZOS)
-            elif width:
-                ratio = width / img.width
-                new_height = int(img.height * ratio)
-                img = img.resize((width, new_height), Image.Resampling.LANCZOS)
-            elif height:
-                ratio = height / img.height
-                new_width = int(img.width * ratio)
-                img = img.resize((new_width, height), Image.Resampling.LANCZOS)
-
-        # Convert color mode if needed
         if output_format == 'jpeg' and img.mode in ('RGBA', 'P'):
             img = img.convert('RGB')
 
-        # Save with appropriate options
-        save_kwargs = {}
-        if output_format in ('jpeg', 'webp'):
-            save_kwargs['quality'] = quality
-        if output_format == 'png':
-            save_kwargs['optimize'] = True
-
+        save_kwargs = _build_save_kwargs(output_format, quality)
         img.save(output_path, format=output_format.upper(), **save_kwargs)
-
         dimensions = {'width': img.width, 'height': img.height}
 
     file_size = os.path.getsize(output_path)
-
     logger.info(f"Converted image: {input_path} -> {output_path} ({output_format})")
 
     return {

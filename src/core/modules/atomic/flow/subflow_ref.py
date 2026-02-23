@@ -155,47 +155,11 @@ class SubflowModule(BaseModule):
             Dict with __event__ (success/error) for engine routing
         """
         try:
-            # Map inputs from parent context
             subflow_inputs = self._map_inputs()
-
-            # In a real implementation, this would:
-            # 1. Load the referenced workflow
-            # 2. Execute it with mapped inputs
-            # 3. Map outputs back to parent context
-
-            # For now, return placeholder result
-            # The actual execution is handled by the workflow engine
-            result = {
-                'workflow_ref': self.workflow_ref,
-                'execution_mode': self.execution_mode,
-                'inputs': subflow_inputs,
-                'status': 'executed'
-            }
-
-            # Generate execution ID for spawn/async modes
-            execution_id = None
-            if self.execution_mode in ('spawn', 'async'):
-                import uuid
-                execution_id = str(uuid.uuid4())
-                result['execution_id'] = execution_id
-
-            # Map outputs
+            result = self._build_execution_result(subflow_inputs)
+            execution_id = self._generate_execution_id(result)
             mapped_outputs = self._map_outputs(result)
-
-            return {
-                '__event__': 'success',
-                'outputs': {
-                    'success': {
-                        'result': mapped_outputs,
-                        'execution_id': execution_id,
-                        'workflow_ref': self.workflow_ref
-                    }
-                },
-                'result': mapped_outputs,
-                'execution_id': execution_id,
-                'workflow_ref': self.workflow_ref
-            }
-
+            return self._build_success_response(mapped_outputs, execution_id)
         except Exception as e:
             return {
                 '__event__': 'error',
@@ -210,6 +174,39 @@ class SubflowModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _build_execution_result(self, subflow_inputs: Dict) -> Dict[str, Any]:
+        return {
+            'workflow_ref': self.workflow_ref,
+            'execution_mode': self.execution_mode,
+            'inputs': subflow_inputs,
+            'status': 'executed'
+        }
+
+    def _generate_execution_id(self, result: Dict) -> Optional[str]:
+        if self.execution_mode in ('spawn', 'async'):
+            import uuid
+            execution_id = str(uuid.uuid4())
+            result['execution_id'] = execution_id
+            return execution_id
+        return None
+
+    def _build_success_response(
+        self, mapped_outputs: Dict, execution_id: Optional[str]
+    ) -> Dict[str, Any]:
+        return {
+            '__event__': 'success',
+            'outputs': {
+                'success': {
+                    'result': mapped_outputs,
+                    'execution_id': execution_id,
+                    'workflow_ref': self.workflow_ref
+                }
+            },
+            'result': mapped_outputs,
+            'execution_id': execution_id,
+            'workflow_ref': self.workflow_ref
+        }
 
     def _map_inputs(self) -> Dict[str, Any]:
         """Map parent context to subflow inputs."""

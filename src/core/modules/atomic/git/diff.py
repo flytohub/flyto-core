@@ -105,113 +105,80 @@ logger = logging.getLogger(__name__)
     author='Flyto Team',
     license='MIT'
 )
+async def _run_git(repo_path: str, *args: str) -> tuple:
+    """Run a git command in the given repo and return (returncode, stdout, stderr)."""
+    proc = await asyncio.create_subprocess_exec(
+        'git', '-C', repo_path, *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    out, err = await proc.communicate()
+    return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
+
+
+def _build_diff_args(staged: bool, ref1: str, ref2: str = None, extra_flags: List[str] = None) -> List[str]:
+    """Build git diff argument list."""
+    args: List[str] = ['diff']
+    if staged:
+        args.append('--cached')
+    elif ref2:
+        args.extend([ref1, ref2])
+    else:
+        args.append(ref1)
+    if extra_flags:
+        args.extend(extra_flags)
+    return args
+
+
+def _parse_numstat(numstat_out: str) -> tuple:
+    """Parse git diff --numstat output into (files_changed, insertions, deletions)."""
+    files_changed = 0
+    insertions = 0
+    deletions = 0
+    if not numstat_out.strip():
+        return files_changed, insertions, deletions
+    for line in numstat_out.strip().split('\n'):
+        parts = line.split('\t')
+        if len(parts) >= 3:
+            files_changed += 1
+            try:
+                insertions += int(parts[0])
+            except ValueError:
+                pass
+            try:
+                deletions += int(parts[1])
+            except ValueError:
+                pass
+    return files_changed, insertions, deletions
+
+
 async def git_diff(context: Dict[str, Any]) -> Dict[str, Any]:
     """Get git diff"""
     params = context['params']
-    repo_path = params['repo_path']
+    repo_path = os.path.abspath(os.path.expanduser(params['repo_path']))
     ref1 = params.get('ref1', 'HEAD')
     ref2 = params.get('ref2')
     staged = params.get('staged', False)
     stat_only = params.get('stat_only', False)
 
-    repo_path = os.path.abspath(os.path.expanduser(repo_path))
-
     if not os.path.isdir(os.path.join(repo_path, '.git')):
-        return {
-            'ok': False,
-            'error': f'Not a git repository: {repo_path}',
-            'error_code': 'NOT_A_REPO'
-        }
-
-    async def run_git(*args: str) -> tuple:
-        proc = await asyncio.create_subprocess_exec(
-            'git', '-C', repo_path, *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        out, err = await proc.communicate()
-        return proc.returncode, out.decode('utf-8', errors='replace'), err.decode('utf-8', errors='replace')
+        return {'ok': False, 'error': f'Not a git repository: {repo_path}', 'error_code': 'NOT_A_REPO'}
 
     try:
-        # Build diff command for content
-        diff_args: List[str] = ['diff']
-
-        if staged:
-            diff_args.append('--cached')
-        elif ref2:
-            diff_args.extend([ref1, ref2])
-        else:
-            # diff working tree against ref1
-            diff_args.append(ref1)
-
-        if stat_only:
-            diff_args.append('--stat')
-
-        rc, diff_out, err = await run_git(*diff_args)
-
+        diff_args = _build_diff_args(staged, ref1, ref2, ['--stat'] if stat_only else None)
+        rc, diff_out, err = await _run_git(repo_path, *diff_args)
         if rc != 0:
-            return {
-                'ok': False,
-                'error': f'git diff failed: {err.strip()}',
-                'error_code': 'DIFF_FAILED'
-            }
+            return {'ok': False, 'error': f'git diff failed: {err.strip()}', 'error_code': 'DIFF_FAILED'}
 
-        # Get numstat for insertions/deletions count
-        numstat_args: List[str] = ['diff', '--numstat']
-        if staged:
-            numstat_args.append('--cached')
-        elif ref2:
-            numstat_args.extend([ref1, ref2])
-        else:
-            numstat_args.append(ref1)
+        numstat_args = _build_diff_args(staged, ref1, ref2, ['--numstat'])
+        rc, numstat_out, _ = await _run_git(repo_path, *numstat_args)
+        files_changed, insertions, deletions = _parse_numstat(numstat_out) if rc == 0 else (0, 0, 0)
 
-        rc, numstat_out, _ = await run_git(*numstat_args)
-
-        files_changed = 0
-        insertions = 0
-        deletions = 0
-
-        if rc == 0 and numstat_out.strip():
-            for line in numstat_out.strip().split('\n'):
-                parts = line.split('\t')
-                if len(parts) >= 3:
-                    files_changed += 1
-                    # Binary files show '-' for insertions/deletions
-                    try:
-                        insertions += int(parts[0])
-                    except ValueError:
-                        pass
-                    try:
-                        deletions += int(parts[1])
-                    except ValueError:
-                        pass
-
-        logger.info(
-            f"Git diff: {files_changed} files, "
-            f"+{insertions}/-{deletions}"
-        )
-
-        return {
-            'ok': True,
-            'data': {
-                'diff': diff_out,
-                'files_changed': files_changed,
-                'insertions': insertions,
-                'deletions': deletions,
-            }
-        }
+        logger.info(f"Git diff: {files_changed} files, +{insertions}/-{deletions}")
+        return {'ok': True, 'data': {'diff': diff_out, 'files_changed': files_changed, 'insertions': insertions, 'deletions': deletions}}
 
     except FileNotFoundError:
-        return {
-            'ok': False,
-            'error': 'git command not found. Ensure git is installed.',
-            'error_code': 'GIT_NOT_FOUND'
-        }
-
+        return {'ok': False, 'error': 'git command not found. Ensure git is installed.', 'error_code': 'GIT_NOT_FOUND'}
     except Exception as e:
         logger.error(f"Git diff error: {e}")
-        return {
-            'ok': False,
-            'error': str(e),
-            'error_code': 'DIFF_ERROR'
-        }
+        return {'ok': False, 'error': str(e), 'error_code': 'DIFF_ERROR'}

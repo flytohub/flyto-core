@@ -100,55 +100,16 @@ async def excel_read(context: Dict[str, Any]) -> Dict[str, Any]:
     cell_range = params.get('range')
     as_dict = params.get('as_dict', True)
 
-    # Validate file exists
     if not os.path.exists(path):
         raise FileNotFoundError(f"Excel file not found: {path}")
 
-    # Open workbook
     wb = openpyxl.load_workbook(path, data_only=True)
     sheet_names = wb.sheetnames
+    ws = _select_sheet(wb, sheet_name, sheet_names)
 
-    # Select sheet
-    if sheet_name:
-        if sheet_name not in sheet_names:
-            raise ValueError(f"Sheet not found: {sheet_name}")
-        ws = wb[sheet_name]
-    else:
-        ws = wb.active
-
-    # Determine range to read
-    if cell_range:
-        cells = ws[cell_range]
-    else:
-        cells = ws.iter_rows()
-
-    # Read data
-    all_rows: List[List[Any]] = []
-    for row in cells:
-        row_data = [cell.value for cell in row]
-        all_rows.append(row_data)
-
-    # Extract headers
-    headers: List[str] = []
-    data_rows: List[Any] = []
-
-    if header_row > 0 and len(all_rows) >= header_row:
-        headers = [str(h) if h else f"col_{i}" for i, h in enumerate(all_rows[header_row - 1])]
-        data_rows = all_rows[header_row:]
-    else:
-        data_rows = all_rows
-
-    # Convert to dicts if requested
-    if as_dict and headers:
-        data = []
-        for row in data_rows:
-            row_dict = {}
-            for i, val in enumerate(row):
-                key = headers[i] if i < len(headers) else f"col_{i}"
-                row_dict[key] = val
-            data.append(row_dict)
-    else:
-        data = data_rows
+    all_rows = _read_rows(ws, cell_range)
+    headers, data_rows = _extract_headers(all_rows, header_row)
+    data = _rows_to_dicts(data_rows, headers) if as_dict and headers else data_rows
 
     wb.close()
 
@@ -162,3 +123,34 @@ async def excel_read(context: Dict[str, Any]) -> Dict[str, Any]:
         'sheet_names': sheet_names,
         'active_sheet': ws.title
     }
+
+
+def _select_sheet(wb, sheet_name: Optional[str], sheet_names: List[str]):
+    if sheet_name:
+        if sheet_name not in sheet_names:
+            raise ValueError(f"Sheet not found: {sheet_name}")
+        return wb[sheet_name]
+    return wb.active
+
+
+def _read_rows(ws, cell_range: Optional[str]) -> List[List[Any]]:
+    cells = ws[cell_range] if cell_range else ws.iter_rows()
+    return [[cell.value for cell in row] for row in cells]
+
+
+def _extract_headers(all_rows: List[List[Any]], header_row: int):
+    if header_row > 0 and len(all_rows) >= header_row:
+        headers = [str(h) if h else f"col_{i}" for i, h in enumerate(all_rows[header_row - 1])]
+        return headers, all_rows[header_row:]
+    return [], all_rows
+
+
+def _rows_to_dicts(data_rows: List[List[Any]], headers: List[str]) -> List[Dict[str, Any]]:
+    result = []
+    for row in data_rows:
+        row_dict = {}
+        for i, val in enumerate(row):
+            key = headers[i] if i < len(headers) else f"col_{i}"
+            row_dict[key] = val
+        result.append(row_dict)
+    return result

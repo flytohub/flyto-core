@@ -10,6 +10,61 @@ from ...registry import register_module
 from ...errors import ValidationError
 
 
+def _decompose_seconds(total_seconds: float) -> Dict[str, int]:
+    """Break total seconds into days, hours, minutes, seconds."""
+    days = int(total_seconds // 86400)
+    remaining = total_seconds % 86400
+    hours = int(remaining // 3600)
+    remaining = remaining % 3600
+    minutes = int(remaining // 60)
+    secs = int(remaining % 60)
+    return {'days': days, 'hours': hours, 'minutes': minutes, 'seconds': secs}
+
+
+def _format_clock(p: Dict[str, int]) -> str:
+    """Format parts as clock style (01:02:03)."""
+    if p['days'] > 0:
+        return f"{p['days']}:{p['hours']:02d}:{p['minutes']:02d}:{p['seconds']:02d}"
+    return f"{p['hours']:02d}:{p['minutes']:02d}:{p['seconds']:02d}"
+
+
+def _format_compact(p: Dict[str, int]) -> str:
+    """Format parts as compact style (1:02:03)."""
+    if p['days'] > 0:
+        return f"{p['days']}:{p['hours']}:{p['minutes']:02d}:{p['seconds']:02d}"
+    if p['hours'] > 0:
+        return f"{p['hours']}:{p['minutes']:02d}:{p['seconds']:02d}"
+    return f"{p['minutes']}:{p['seconds']:02d}"
+
+
+def _format_long(p: Dict[str, int], show_zero: bool) -> str:
+    """Format parts as long style (1 hour 2 minutes 3 seconds)."""
+    parts_str = []
+    if p['days'] > 0 or show_zero:
+        parts_str.append(f"{p['days']} day{'s' if p['days'] != 1 else ''}")
+    if p['hours'] > 0 or show_zero:
+        parts_str.append(f"{p['hours']} hour{'s' if p['hours'] != 1 else ''}")
+    if p['minutes'] > 0 or show_zero:
+        parts_str.append(f"{p['minutes']} minute{'s' if p['minutes'] != 1 else ''}")
+    if p['seconds'] > 0 or show_zero or not parts_str:
+        parts_str.append(f"{p['seconds']} second{'s' if p['seconds'] != 1 else ''}")
+    return ' '.join(parts_str)
+
+
+def _format_short(p: Dict[str, int], show_zero: bool) -> str:
+    """Format parts as short style (1h 2m 3s)."""
+    parts_str = []
+    if p['days'] > 0:
+        parts_str.append(f"{p['days']}d")
+    if p['hours'] > 0 or (p['days'] > 0 and show_zero):
+        parts_str.append(f"{p['hours']}h")
+    if p['minutes'] > 0 or ((p['days'] > 0 or p['hours'] > 0) and show_zero):
+        parts_str.append(f"{p['minutes']}m")
+    if p['seconds'] > 0 or show_zero or not parts_str:
+        parts_str.append(f"{p['seconds']}s")
+    return ' '.join(parts_str)
+
+
 @register_module(
     module_id='format.duration',
     version='1.0.0',
@@ -97,72 +152,25 @@ async def format_duration(context: Dict[str, Any]) -> Dict[str, Any]:
 
     if seconds is None:
         raise ValidationError("Missing required parameter: seconds", field="seconds")
-
     try:
         total_seconds = float(seconds)
     except (ValueError, TypeError):
         raise ValidationError("Invalid seconds value", field="seconds")
 
     is_negative = total_seconds < 0
-    total_seconds = abs(total_seconds)
+    parts = _decompose_seconds(abs(total_seconds))
 
-    days = int(total_seconds // 86400)
-    remaining = total_seconds % 86400
-    hours = int(remaining // 3600)
-    remaining = remaining % 3600
-    minutes = int(remaining // 60)
-    secs = int(remaining % 60)
-
-    parts = {
-        'days': days,
-        'hours': hours,
-        'minutes': minutes,
-        'seconds': secs
+    formatters = {
+        'clock': lambda: _format_clock(parts),
+        'compact': lambda: _format_compact(parts),
+        'long': lambda: _format_long(parts, show_zero),
     }
-
-    if fmt == 'clock':
-        if days > 0:
-            result = f"{days}:{hours:02d}:{minutes:02d}:{secs:02d}"
-        else:
-            result = f"{hours:02d}:{minutes:02d}:{secs:02d}"
-    elif fmt == 'compact':
-        if days > 0:
-            result = f"{days}:{hours}:{minutes:02d}:{secs:02d}"
-        elif hours > 0:
-            result = f"{hours}:{minutes:02d}:{secs:02d}"
-        else:
-            result = f"{minutes}:{secs:02d}"
-    elif fmt == 'long':
-        parts_str = []
-        if days > 0 or show_zero:
-            parts_str.append(f"{days} day{'s' if days != 1 else ''}")
-        if hours > 0 or show_zero:
-            parts_str.append(f"{hours} hour{'s' if hours != 1 else ''}")
-        if minutes > 0 or show_zero:
-            parts_str.append(f"{minutes} minute{'s' if minutes != 1 else ''}")
-        if secs > 0 or show_zero or not parts_str:
-            parts_str.append(f"{secs} second{'s' if secs != 1 else ''}")
-        result = ' '.join(parts_str)
-    else:
-        parts_str = []
-        if days > 0:
-            parts_str.append(f"{days}d")
-        if hours > 0 or (days > 0 and show_zero):
-            parts_str.append(f"{hours}h")
-        if minutes > 0 or ((days > 0 or hours > 0) and show_zero):
-            parts_str.append(f"{minutes}m")
-        if secs > 0 or show_zero or not parts_str:
-            parts_str.append(f"{secs}s")
-        result = ' '.join(parts_str)
+    result = formatters.get(fmt, lambda: _format_short(parts, show_zero))()
 
     if is_negative:
         result = f"-{result}"
 
     return {
         'ok': True,
-        'data': {
-            'result': result,
-            'original': seconds,
-            'parts': parts
-        }
+        'data': {'result': result, 'original': seconds, 'parts': parts}
     }

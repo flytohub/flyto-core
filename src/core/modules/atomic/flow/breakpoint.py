@@ -231,29 +231,28 @@ class BreakpointModule(BaseModule):
         Returns:
             Dict with __event__ and approval result
         """
-        from ....engine.breakpoint import (
-            get_breakpoint_manager,
-            ApprovalMode,
-            BreakpointStatus,
-        )
-
         start_time = datetime.utcnow()
 
-        # Check auto-approve condition
         if self.auto_approve_condition:
             try:
-                # Evaluate condition against context
                 result = self._evaluate_condition(self.auto_approve_condition)
                 if result:
                     return self._build_auto_approved_result(start_time)
-            except Exception as e:
-                # Log but don't fail - proceed with manual approval
+            except Exception:
                 pass
 
-        # Get breakpoint manager
-        manager = get_breakpoint_manager()
+        result = await self._create_and_wait_for_approval(start_time)
+        end_time = datetime.utcnow()
+        wait_duration_ms = int((end_time - start_time).total_seconds() * 1000)
+        return self._build_result(result, wait_duration_ms)
 
-        # Map approval mode
+    async def _create_and_wait_for_approval(self, start_time: datetime):
+        from ....engine.breakpoint import (
+            get_breakpoint_manager,
+            ApprovalMode,
+        )
+
+        manager = get_breakpoint_manager()
         mode_map = {
             'single': ApprovalMode.SINGLE,
             'all': ApprovalMode.ALL,
@@ -262,12 +261,10 @@ class BreakpointModule(BaseModule):
         }
         approval_mode = mode_map.get(self.approval_mode, ApprovalMode.SINGLE)
 
-        # Prepare context snapshot
         context_snapshot = {}
         if self.include_context:
             context_snapshot = self._sanitize_context(self.context)
 
-        # Create breakpoint
         request = await manager.create_breakpoint(
             execution_id=self.context.get('execution_id', 'unknown'),
             step_id=self.context.get('step_id', 'unknown'),
@@ -285,17 +282,10 @@ class BreakpointModule(BaseModule):
             },
         )
 
-        # Wait for resolution
-        result = await manager.wait_for_resolution(
+        return await manager.wait_for_resolution(
             request.breakpoint_id,
             check_timeout=True,
         )
-
-        end_time = datetime.utcnow()
-        wait_duration_ms = int((end_time - start_time).total_seconds() * 1000)
-
-        # Build output based on status
-        return self._build_result(result, wait_duration_ms)
 
     def _evaluate_condition(self, condition: str) -> bool:
         """Evaluate auto-approve condition"""

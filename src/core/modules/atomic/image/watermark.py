@@ -19,6 +19,73 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 
+def _validate_watermark_params(input_path, output_path, text, watermark_image_path):
+    if not input_path:
+        raise ValidationError("Missing required parameter: input_path", field="input_path")
+    if not output_path:
+        raise ValidationError("Missing required parameter: output_path", field="output_path")
+    if not text and not watermark_image_path:
+        raise ValidationError("Either 'text' or 'watermark_image' must be provided")
+    if not os.path.exists(input_path):
+        raise ModuleError(f"Input file not found: {input_path}")
+
+
+def _calculate_position(base_size, overlay_size, pos_name):
+    base_w, base_h = base_size
+    overlay_w, overlay_h = overlay_size
+    margin = 10
+    positions = {
+        'center': ((base_w - overlay_w) // 2, (base_h - overlay_h) // 2),
+        'top-left': (margin, margin),
+        'top-right': (base_w - overlay_w - margin, margin),
+        'bottom-left': (margin, base_h - overlay_h - margin),
+        'bottom-right': (base_w - overlay_w - margin, base_h - overlay_h - margin),
+    }
+    return positions.get(pos_name, positions['bottom-right'])
+
+
+def _apply_image_watermark(base_img, watermark_image_path, position, opacity):
+    from PIL import Image
+    with Image.open(watermark_image_path) as wm_img:
+        if wm_img.mode != 'RGBA':
+            wm_img = wm_img.convert('RGBA')
+        alpha = wm_img.split()[3]
+        alpha = alpha.point(lambda p: int(p * opacity))
+        wm_img.putalpha(alpha)
+        x, y = _calculate_position(base_img.size, wm_img.size, position)
+        layer = Image.new('RGBA', base_img.size, (0, 0, 0, 0))
+        layer.paste(wm_img, (x, y))
+        return Image.alpha_composite(base_img, layer)
+
+
+def _save_watermark_result(result, output_path):
+    os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
+    ext = os.path.splitext(output_path)[1].lower()
+    if ext in ('.jpg', '.jpeg'):
+        result = result.convert('RGB')
+    result.save(output_path)
+
+
+def _apply_text_watermark(base_img, text, position, opacity, font_size):
+    from PIL import Image, ImageDraw, ImageFont
+    txt_layer = Image.new('RGBA', base_img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(txt_layer)
+    try:
+        font = ImageFont.truetype("arial.ttf", int(font_size))
+    except (OSError, IOError):
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", int(font_size))
+        except (OSError, IOError):
+            font = ImageFont.load_default()
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    x, y = _calculate_position(base_img.size, (text_w, text_h), position)
+    alpha_value = int(255 * opacity)
+    draw.text((x, y), text, fill=(255, 255, 255, alpha_value), font=font)
+    return Image.alpha_composite(base_img, txt_layer)
+
+
 @register_module(
     module_id='image.watermark',
     version='1.0.0',
@@ -160,7 +227,7 @@ logger = logging.getLogger(__name__)
 async def image_watermark(context: Dict[str, Any]) -> Dict[str, Any]:
     """Add text or image watermark to an image."""
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image
     except ImportError:
         raise ModuleError("Pillow is required for image.watermark. Install with: pip install Pillow")
 
@@ -173,99 +240,26 @@ async def image_watermark(context: Dict[str, Any]) -> Dict[str, Any]:
     opacity = params.get('opacity', 0.5)
     font_size = params.get('font_size', 36)
 
-    if not input_path:
-        raise ValidationError("Missing required parameter: input_path", field="input_path")
-    if not output_path:
-        raise ValidationError("Missing required parameter: output_path", field="output_path")
-    if not text and not watermark_image_path:
-        raise ValidationError("Either 'text' or 'watermark_image' must be provided")
-
-    if not os.path.exists(input_path):
-        raise ModuleError(f"Input file not found: {input_path}")
-
-    # Clamp opacity to valid range
+    _validate_watermark_params(input_path, output_path, text, watermark_image_path)
     opacity = max(0.0, min(1.0, float(opacity)))
-
-    def _calculate_position(base_size, overlay_size, pos_name):
-        """Calculate x, y coordinates for the watermark position."""
-        base_w, base_h = base_size
-        overlay_w, overlay_h = overlay_size
-        margin = 10
-
-        positions = {
-            'center': ((base_w - overlay_w) // 2, (base_h - overlay_h) // 2),
-            'top-left': (margin, margin),
-            'top-right': (base_w - overlay_w - margin, margin),
-            'bottom-left': (margin, base_h - overlay_h - margin),
-            'bottom-right': (base_w - overlay_w - margin, base_h - overlay_h - margin),
-        }
-        return positions.get(pos_name, positions['bottom-right'])
 
     def _apply_watermark():
         with Image.open(input_path) as base_img:
-            # Convert to RGBA for compositing
             if base_img.mode != 'RGBA':
                 base_img = base_img.convert('RGBA')
 
-            watermark_type = 'text'
-
             if watermark_image_path and os.path.exists(watermark_image_path):
-                # Image watermark
                 watermark_type = 'image'
-                with Image.open(watermark_image_path) as wm_img:
-                    if wm_img.mode != 'RGBA':
-                        wm_img = wm_img.convert('RGBA')
-
-                    # Apply opacity
-                    alpha = wm_img.split()[3]
-                    alpha = alpha.point(lambda p: int(p * opacity))
-                    wm_img.putalpha(alpha)
-
-                    x, y = _calculate_position(base_img.size, wm_img.size, position)
-                    # Create transparent layer
-                    layer = Image.new('RGBA', base_img.size, (0, 0, 0, 0))
-                    layer.paste(wm_img, (x, y))
-                    result = Image.alpha_composite(base_img, layer)
-
+                result = _apply_image_watermark(base_img, watermark_image_path, position, opacity)
             elif text:
-                # Text watermark
                 watermark_type = 'text'
-                txt_layer = Image.new('RGBA', base_img.size, (0, 0, 0, 0))
-                draw = ImageDraw.Draw(txt_layer)
-
-                # Try to load a TrueType font, fall back to default
-                try:
-                    font = ImageFont.truetype("arial.ttf", int(font_size))
-                except (OSError, IOError):
-                    try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", int(font_size))
-                    except (OSError, IOError):
-                        font = ImageFont.load_default()
-
-                # Calculate text bounding box
-                bbox = draw.textbbox((0, 0), text, font=font)
-                text_w = bbox[2] - bbox[0]
-                text_h = bbox[3] - bbox[1]
-
-                x, y = _calculate_position(base_img.size, (text_w, text_h), position)
-                alpha_value = int(255 * opacity)
-                draw.text((x, y), text, fill=(255, 255, 255, alpha_value), font=font)
-
-                result = Image.alpha_composite(base_img, txt_layer)
+                result = _apply_text_watermark(base_img, text, position, opacity, font_size)
             else:
+                watermark_type = 'none'
                 result = base_img
 
-            # Save result - convert back to RGB if saving as JPEG
-            os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
-            ext = os.path.splitext(output_path)[1].lower()
-            if ext in ('.jpg', '.jpeg'):
-                result = result.convert('RGB')
-            result.save(output_path)
-
-            return {
-                'output_path': output_path,
-                'watermark_type': watermark_type,
-            }
+            _save_watermark_result(result, output_path)
+            return {'output_path': output_path, 'watermark_type': watermark_type}
 
     result = await asyncio.to_thread(_apply_watermark)
     logger.info(f"Applied {result['watermark_type']} watermark to {input_path}")

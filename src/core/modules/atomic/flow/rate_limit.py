@@ -280,53 +280,52 @@ class RateLimitModule(BaseModule):
         Tokens refill at a constant rate. Each request consumes one token.
         If no tokens available, the request is throttled.
         """
-        # Initialize or restore bucket state
         tokens = state.get('tokens', float(self.max_requests))
         last_refill_ms = state.get('last_refill_ms', now_ms)
 
-        # Calculate tokens to add based on elapsed time
         elapsed_ms = now_ms - last_refill_ms
-        refill_rate = self.max_requests / self.window_ms  # tokens per ms
+        refill_rate = self.max_requests / self.window_ms
         tokens_to_add = elapsed_ms * refill_rate
         tokens = min(tokens + tokens_to_add, float(self.max_requests))
 
-        # Try to consume a token
         if tokens >= 1.0:
-            tokens -= 1.0
-            requests_in_window = self.max_requests - int(tokens)
+            return self._token_bucket_allowed(tokens, now_ms)
 
-            # Update state
-            new_state = {
-                'tokens': tokens,
-                'last_refill_ms': now_ms,
-            }
+        return self._token_bucket_throttled(tokens, refill_rate, now_ms)
 
-            return {
-                '__event__': 'allowed',
-                '__rate_limit_state__': new_state,
-                'outputs': {
-                    'allowed': {
-                        'tokens_remaining': int(tokens),
-                        'requests_in_window': requests_in_window,
-                    }
-                },
-                'tokens_remaining': int(tokens),
-                'window_reset_ms': 0,
-                'requests_in_window': requests_in_window,
-                'wait_ms': 0,
-            }
-        else:
-            # Calculate wait time until next token
-            tokens_needed = 1.0 - tokens
-            wait_ms = int(tokens_needed / refill_rate) if refill_rate > 0 else self.window_ms
+    def _token_bucket_allowed(
+        self, tokens: float, now_ms: int
+    ) -> Dict[str, Any]:
+        tokens -= 1.0
+        requests_in_window = self.max_requests - int(tokens)
+        new_state = {'tokens': tokens, 'last_refill_ms': now_ms}
+        return {
+            '__event__': 'allowed',
+            '__rate_limit_state__': new_state,
+            'outputs': {
+                'allowed': {
+                    'tokens_remaining': int(tokens),
+                    'requests_in_window': requests_in_window,
+                }
+            },
+            'tokens_remaining': int(tokens),
+            'window_reset_ms': 0,
+            'requests_in_window': requests_in_window,
+            'wait_ms': 0,
+        }
 
-            return self._build_throttled_response(
-                tokens_remaining=0,
-                requests_in_window=self.max_requests,
-                window_reset_ms=wait_ms,
-                wait_ms=wait_ms,
-                state={'tokens': tokens, 'last_refill_ms': now_ms},
-            )
+    def _token_bucket_throttled(
+        self, tokens: float, refill_rate: float, now_ms: int
+    ) -> Dict[str, Any]:
+        tokens_needed = 1.0 - tokens
+        wait_ms = int(tokens_needed / refill_rate) if refill_rate > 0 else self.window_ms
+        return self._build_throttled_response(
+            tokens_remaining=0,
+            requests_in_window=self.max_requests,
+            window_reset_ms=wait_ms,
+            wait_ms=wait_ms,
+            state={'tokens': tokens, 'last_refill_ms': now_ms},
+        )
 
     def _sliding_window(
         self, now_ms: int, state: Dict[str, Any]
@@ -390,45 +389,43 @@ class RateLimitModule(BaseModule):
         window_start = state.get('window_start', now_ms)
         count = state.get('count', 0)
 
-        # Check if window has expired
         if now_ms - window_start >= self.window_ms:
             window_start = now_ms
             count = 0
 
         if count < self.max_requests:
-            count += 1
-            tokens_remaining = self.max_requests - count
-            window_reset_ms = max(0, window_start + self.window_ms - now_ms)
+            return self._fixed_window_allowed(window_start, count, now_ms)
 
-            new_state = {
-                'window_start': window_start,
-                'count': count,
-            }
+        window_reset_ms = max(0, window_start + self.window_ms - now_ms)
+        return self._build_throttled_response(
+            tokens_remaining=0,
+            requests_in_window=count,
+            window_reset_ms=window_reset_ms,
+            wait_ms=window_reset_ms,
+            state={'window_start': window_start, 'count': count},
+        )
 
-            return {
-                '__event__': 'allowed',
-                '__rate_limit_state__': new_state,
-                'outputs': {
-                    'allowed': {
-                        'tokens_remaining': tokens_remaining,
-                        'requests_in_window': count,
-                    }
-                },
-                'tokens_remaining': tokens_remaining,
-                'window_reset_ms': window_reset_ms,
-                'requests_in_window': count,
-                'wait_ms': 0,
-            }
-        else:
-            window_reset_ms = max(0, window_start + self.window_ms - now_ms)
-
-            return self._build_throttled_response(
-                tokens_remaining=0,
-                requests_in_window=count,
-                window_reset_ms=window_reset_ms,
-                wait_ms=window_reset_ms,
-                state={'window_start': window_start, 'count': count},
-            )
+    def _fixed_window_allowed(
+        self, window_start: int, count: int, now_ms: int
+    ) -> Dict[str, Any]:
+        count += 1
+        tokens_remaining = self.max_requests - count
+        window_reset_ms = max(0, window_start + self.window_ms - now_ms)
+        new_state = {'window_start': window_start, 'count': count}
+        return {
+            '__event__': 'allowed',
+            '__rate_limit_state__': new_state,
+            'outputs': {
+                'allowed': {
+                    'tokens_remaining': tokens_remaining,
+                    'requests_in_window': count,
+                }
+            },
+            'tokens_remaining': tokens_remaining,
+            'window_reset_ms': window_reset_ms,
+            'requests_in_window': count,
+            'wait_ms': 0,
+        }
 
     def _build_throttled_response(
         self,

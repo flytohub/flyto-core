@@ -208,7 +208,6 @@ class DebounceModule(BaseModule):
         try:
             now_ms = int(time.time() * 1000)
 
-            # Get debounce state from context
             db_state = {}
             if self.context:
                 db_state = self.context.get('__debounce_state__', {})
@@ -216,79 +215,27 @@ class DebounceModule(BaseModule):
             last_call_ms = db_state.get('last_call_ms', 0)
             calls_debounced = db_state.get('calls_debounced', 0)
             leading_executed = db_state.get('leading_executed', False)
-
             time_since_last = now_ms - last_call_ms if last_call_ms > 0 else self.delay_ms + 1
 
-            # Update state: record this call
             new_state = {
                 'last_call_ms': now_ms,
                 'calls_debounced': calls_debounced,
                 'leading_executed': leading_executed,
             }
 
-            # Leading edge: execute on first call or after delay has elapsed
             if self.leading and (not leading_executed or time_since_last > self.delay_ms):
-                new_state['leading_executed'] = True
-                new_state['calls_debounced'] = 0
+                return self._execute_leading(
+                    new_state, now_ms, calls_debounced, time_since_last
+                )
 
-                return {
-                    '__event__': 'executed',
-                    '__debounce_state__': new_state,
-                    'outputs': {
-                        'executed': {
-                            'last_call_ms': now_ms,
-                            'calls_debounced': calls_debounced,
-                            'time_since_last_ms': time_since_last,
-                            'edge': 'leading',
-                        }
-                    },
-                    'last_call_ms': now_ms,
-                    'calls_debounced': calls_debounced,
-                    'time_since_last_ms': time_since_last,
-                    'edge': 'leading',
-                }
-
-            # Trailing edge: execute only if enough time has passed since last call
             if self.trailing and time_since_last >= self.delay_ms and last_call_ms > 0:
-                new_state['calls_debounced'] = 0
-                new_state['leading_executed'] = False
+                return self._execute_trailing(
+                    new_state, now_ms, calls_debounced, time_since_last
+                )
 
-                return {
-                    '__event__': 'executed',
-                    '__debounce_state__': new_state,
-                    'outputs': {
-                        'executed': {
-                            'last_call_ms': now_ms,
-                            'calls_debounced': calls_debounced,
-                            'time_since_last_ms': time_since_last,
-                            'edge': 'trailing',
-                        }
-                    },
-                    'last_call_ms': now_ms,
-                    'calls_debounced': calls_debounced,
-                    'time_since_last_ms': time_since_last,
-                    'edge': 'trailing',
-                }
-
-            # Within debounce window - skip
-            new_state['calls_debounced'] = calls_debounced + 1
-
-            return {
-                '__event__': 'skipped',
-                '__debounce_state__': new_state,
-                'outputs': {
-                    'skipped': {
-                        'last_call_ms': now_ms,
-                        'calls_debounced': calls_debounced + 1,
-                        'time_since_last_ms': time_since_last,
-                        'remaining_ms': max(0, self.delay_ms - time_since_last),
-                    }
-                },
-                'last_call_ms': now_ms,
-                'calls_debounced': calls_debounced + 1,
-                'time_since_last_ms': time_since_last,
-                'edge': None,
-            }
+            return self._skip_debounced(
+                new_state, now_ms, calls_debounced, time_since_last
+            )
 
         except Exception as e:
             return {
@@ -301,3 +248,62 @@ class DebounceModule(BaseModule):
                     'message': str(e)
                 }
             }
+
+    def _execute_leading(
+        self, new_state, now_ms, calls_debounced, time_since_last
+    ) -> Dict[str, Any]:
+        new_state['leading_executed'] = True
+        new_state['calls_debounced'] = 0
+        return self._build_executed_response(
+            new_state, now_ms, calls_debounced, time_since_last, 'leading'
+        )
+
+    def _execute_trailing(
+        self, new_state, now_ms, calls_debounced, time_since_last
+    ) -> Dict[str, Any]:
+        new_state['calls_debounced'] = 0
+        new_state['leading_executed'] = False
+        return self._build_executed_response(
+            new_state, now_ms, calls_debounced, time_since_last, 'trailing'
+        )
+
+    def _build_executed_response(
+        self, new_state, now_ms, calls_debounced, time_since_last, edge
+    ) -> Dict[str, Any]:
+        return {
+            '__event__': 'executed',
+            '__debounce_state__': new_state,
+            'outputs': {
+                'executed': {
+                    'last_call_ms': now_ms,
+                    'calls_debounced': calls_debounced,
+                    'time_since_last_ms': time_since_last,
+                    'edge': edge,
+                }
+            },
+            'last_call_ms': now_ms,
+            'calls_debounced': calls_debounced,
+            'time_since_last_ms': time_since_last,
+            'edge': edge,
+        }
+
+    def _skip_debounced(
+        self, new_state, now_ms, calls_debounced, time_since_last
+    ) -> Dict[str, Any]:
+        new_state['calls_debounced'] = calls_debounced + 1
+        return {
+            '__event__': 'skipped',
+            '__debounce_state__': new_state,
+            'outputs': {
+                'skipped': {
+                    'last_call_ms': now_ms,
+                    'calls_debounced': calls_debounced + 1,
+                    'time_since_last_ms': time_since_last,
+                    'remaining_ms': max(0, self.delay_ms - time_since_last),
+                }
+            },
+            'last_call_ms': now_ms,
+            'calls_debounced': calls_debounced + 1,
+            'time_since_last_ms': time_since_last,
+            'edge': None,
+        }

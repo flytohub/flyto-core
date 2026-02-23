@@ -318,117 +318,85 @@ class CircuitBreakerModule(BaseModule):
             return True
         return error_code in self.track_errors
 
+    def _build_circuit_config(self) -> Dict[str, Any]:
+        """Build circuit breaker configuration for the workflow engine."""
+        return {
+            'circuit_id': self.circuit_id,
+            'action': self.action,
+            'failure_threshold': self.failure_threshold,
+            'failure_window_ms': self.failure_window_ms,
+            'recovery_timeout_ms': self.recovery_timeout_ms,
+            'success_threshold': self.success_threshold,
+            'fallback': self.fallback,
+            'fallback_value': self.fallback_value,
+            'track_errors': self.track_errors,
+        }
+
+    def _build_closed_result(self, circuit_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Build success result with initial closed state."""
+        state_info = {
+            'circuit_id': self.circuit_id,
+            'circuit_state': CircuitState.CLOSED.value,
+            'failure_count': 0,
+            'last_failure_time': None,
+            'circuit_opened_at': None,
+        }
+        return {
+            '__event__': 'success',
+            '__circuit_breaker_execution__': circuit_config,
+            'outputs': {'success': {**state_info, 'action': self.action}},
+            **state_info,
+        }
+
     async def execute(self) -> Dict[str, Any]:
-        """
-        Execute with circuit breaker protection.
-
-        Returns execution plan for workflow engine with circuit
-        breaker configuration and current state.
-        """
+        """Execute with circuit breaker protection."""
         try:
-            # Build circuit breaker execution plan
-            circuit_config = {
-                'circuit_id': self.circuit_id,
-                'action': self.action,
-                'failure_threshold': self.failure_threshold,
-                'failure_window_ms': self.failure_window_ms,
-                'recovery_timeout_ms': self.recovery_timeout_ms,
-                'success_threshold': self.success_threshold,
-                'fallback': self.fallback,
-                'fallback_value': self.fallback_value,
-                'track_errors': self.track_errors,
-            }
-
-            # Initial state - closed
-            # The workflow engine will manage actual state
-            current_state = CircuitState.CLOSED.value
-
-            return {
-                '__event__': 'success',
-                '__circuit_breaker_execution__': circuit_config,
-                'outputs': {
-                    'success': {
-                        'circuit_id': self.circuit_id,
-                        'circuit_state': current_state,
-                        'action': self.action,
-                        'failure_count': 0,
-                        'last_failure_time': None,
-                        'circuit_opened_at': None
-                    }
-                },
-                'circuit_id': self.circuit_id,
-                'circuit_state': current_state,
-                'failure_count': 0,
-                'last_failure_time': None,
-                'circuit_opened_at': None
-            }
-
+            circuit_config = self._build_circuit_config()
+            return self._build_closed_result(circuit_config)
         except Exception as e:
-            # If circuit breaker setup fails, fail fast
             return {
                 '__event__': 'circuit_open',
-                'outputs': {
-                    'circuit_open': {
-                        'message': f'Circuit breaker setup failed: {str(e)}',
-                        'circuit_id': self.circuit_id
-                    }
-                },
-                '__error__': {
-                    'code': 'CIRCUIT_BREAKER_ERROR',
-                    'message': str(e)
-                }
+                'outputs': {'circuit_open': {'message': f'Circuit breaker setup failed: {str(e)}', 'circuit_id': self.circuit_id}},
+                '__error__': {'code': 'CIRCUIT_BREAKER_ERROR', 'message': str(e)},
             }
+
+    def _handle_fallback_value(self) -> Dict[str, Any]:
+        """Return static fallback value when circuit is open."""
+        return {
+            '__event__': 'fallback',
+            'outputs': {'fallback': {
+                'result': self.fallback_value, 'circuit_state': CircuitState.OPEN.value,
+                'used_fallback': True, 'fallback_type': 'value',
+            }},
+            'result': self.fallback_value,
+            'circuit_state': CircuitState.OPEN.value, 'used_fallback': True,
+        }
+
+    def _handle_fallback_action(self) -> Dict[str, Any]:
+        """Execute fallback action when circuit is open."""
+        return {
+            '__event__': 'fallback',
+            '__execute_fallback__': self.fallback,
+            'outputs': {'fallback': {
+                'fallback_action': self.fallback, 'circuit_state': CircuitState.OPEN.value,
+                'used_fallback': True, 'fallback_type': 'action',
+            }},
+            'circuit_state': CircuitState.OPEN.value, 'used_fallback': True,
+        }
 
     def _handle_circuit_open(self) -> Dict[str, Any]:
         """Handle request when circuit is open."""
-
-        # Use fallback value if available
         if self.fallback_value is not None:
-            return {
-                '__event__': 'fallback',
-                'outputs': {
-                    'fallback': {
-                        'result': self.fallback_value,
-                        'circuit_state': CircuitState.OPEN.value,
-                        'used_fallback': True,
-                        'fallback_type': 'value'
-                    }
-                },
-                'result': self.fallback_value,
-                'circuit_state': CircuitState.OPEN.value,
-                'used_fallback': True
-            }
-
-        # Use fallback action if available
+            return self._handle_fallback_value()
         if self.fallback:
-            return {
-                '__event__': 'fallback',
-                '__execute_fallback__': self.fallback,
-                'outputs': {
-                    'fallback': {
-                        'fallback_action': self.fallback,
-                        'circuit_state': CircuitState.OPEN.value,
-                        'used_fallback': True,
-                        'fallback_type': 'action'
-                    }
-                },
-                'circuit_state': CircuitState.OPEN.value,
-                'used_fallback': True
-            }
-
-        # No fallback - signal circuit open
+            return self._handle_fallback_action()
         return {
             '__event__': 'circuit_open',
-            'outputs': {
-                'circuit_open': {
-                    'message': 'Circuit is open and no fallback configured',
-                    'circuit_id': self.circuit_id,
-                    'circuit_state': CircuitState.OPEN.value
-                }
-            },
-            '__error__': {
-                'code': 'CIRCUIT_OPEN',
-                'message': f'Circuit {self.circuit_id} is open'
-            },
-            'circuit_state': CircuitState.OPEN.value
+            'outputs': {'circuit_open': {
+                'message': 'Circuit is open and no fallback configured',
+                'circuit_id': self.circuit_id,
+                'circuit_state': CircuitState.OPEN.value,
+            }},
+            '__error__': {'code': 'CIRCUIT_OPEN', 'message': f'Circuit {self.circuit_id} is open'},
+            'circuit_state': CircuitState.OPEN.value,
         }

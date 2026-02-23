@@ -91,6 +91,47 @@ def _parse_apply_output(output: str) -> Dict[str, Any]:
     }
 
 
+def _write_manifest_to_tempfile(manifest_str: str):
+    """Write manifest string to a temp file, returning (fd, path)."""
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix='.yaml', prefix='flyto-k8s-')
+    os.write(tmp_fd, manifest_str.encode('utf-8'))
+    os.close(tmp_fd)
+    return tmp_path
+
+
+def _cleanup_tempfile(tmp_path: str) -> None:
+    """Remove a temp file if it exists."""
+    if tmp_path and os.path.exists(tmp_path):
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+
+async def _run_kubectl_apply(tmp_path: str, namespace: str, kubeconfig: str) -> Dict[str, Any]:
+    """Execute kubectl apply and return parsed result."""
+    cmd = ['kubectl', 'apply', '-f', tmp_path, '--output=json']
+    if namespace:
+        cmd.append(f'--namespace={namespace}')
+    if kubeconfig:
+        cmd.append(f'--kubeconfig={kubeconfig}')
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    stdout_bytes, stderr_bytes = await asyncio.wait_for(
+        process.communicate(), timeout=55,
+    )
+    if process.returncode != 0:
+        stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
+        raise ModuleError(
+            f"kubectl apply failed (exit {process.returncode}): {stderr_text}",
+            code='K8S_COMMAND_FAILED',
+        )
+    stdout_text = stdout_bytes.decode('utf-8', errors='replace')
+    return _parse_apply_output(stdout_text)
+
+
 @register_module(
     module_id='k8s.apply',
     version='1.0.0',
@@ -117,10 +158,12 @@ def _parse_apply_output(output: str) -> Dict[str, Any]:
               placeholder='apiVersion: v1\nkind: Pod\n...'),
         field('namespace', type='string', label='Namespace',
               group=FieldGroup.OPTIONS,
-              description='Override namespace for the resource (optional)'),
+              description='Override namespace for the resource (optional)',
+              placeholder='default'),
         field('kubeconfig', type='string', label='Kubeconfig Path',
               group=FieldGroup.CONNECTION,
-              description='Path to kubeconfig file (uses default if not set)'),
+              description='Path to kubeconfig file (uses default if not set)',
+              placeholder='~/.kube/config'),
     ),
     output_schema={
         'kind': {
@@ -155,75 +198,22 @@ async def k8s_apply(context: Dict[str, Any]) -> Dict[str, Any]:
     if not manifest:
         raise ModuleError('Manifest is required', code='K8S_MISSING_MANIFEST')
 
-    # Convert dict manifest to YAML/JSON string
     manifest_str = _to_yaml_string(manifest)
-
     logger.info(f"k8s.apply: applying manifest ({len(manifest_str)} bytes)")
 
-    # Write manifest to a temp file
-    tmp_fd = None
-    tmp_path = None
+    tmp_path = _write_manifest_to_tempfile(manifest_str)
     try:
-        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.yaml', prefix='flyto-k8s-')
-        os.write(tmp_fd, manifest_str.encode('utf-8'))
-        os.close(tmp_fd)
-        tmp_fd = None  # Mark as closed
-
-        cmd = ['kubectl', 'apply', '-f', tmp_path, '--output=json']
-
-        if namespace:
-            cmd.append(f'--namespace={namespace}')
-
-        if kubeconfig:
-            cmd.append(f'--kubeconfig={kubeconfig}')
-
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-
-        stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            process.communicate(),
-            timeout=55,
-        )
-
-        if process.returncode != 0:
-            stderr_text = stderr_bytes.decode('utf-8', errors='replace').strip()
-            raise ModuleError(
-                f"kubectl apply failed (exit {process.returncode}): {stderr_text}",
-                code='K8S_COMMAND_FAILED',
-            )
-
-        stdout_text = stdout_bytes.decode('utf-8', errors='replace')
-        result = _parse_apply_output(stdout_text)
-
-        return {
-            'ok': True,
-            'data': result,
-        }
-
+        result = await _run_kubectl_apply(tmp_path, namespace, kubeconfig)
+        return {'ok': True, 'data': result}
     except asyncio.TimeoutError:
         raise ModuleError(
-            'kubectl apply timed out after 55 seconds',
-            code='K8S_TIMEOUT',
+            'kubectl apply timed out after 55 seconds', code='K8S_TIMEOUT',
         )
     except ModuleError:
         raise
     except Exception as exc:
         raise ModuleError(
-            f'Failed to apply manifest: {exc}',
-            code='K8S_ERROR',
+            f'Failed to apply manifest: {exc}', code='K8S_ERROR',
         )
     finally:
-        # Clean up temp file
-        if tmp_fd is not None:
-            try:
-                os.close(tmp_fd)
-            except OSError:
-                pass
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except OSError:
-                pass
+        _cleanup_tempfile(tmp_path)
