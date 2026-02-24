@@ -10,6 +10,42 @@ flyto recipes  # list all
 
 ---
 
+## Audit & Performance
+
+### site-audit
+
+SEO + performance audit — meta tags, headings, missing alt tags, Web Vitals, and a full-page screenshot, all in one command.
+
+```bash
+flyto recipe site-audit --url https://github.com
+flyto recipe site-audit --url https://example.com --output report.json
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to audit |
+| `--output` | no | `audit.json` | Output report file |
+
+Output includes: page title, meta tags, h1/h2/h3 headings, image count, missing alt tags, link count, canonical URL. Also saves `audit-screenshot.png`.
+
+---
+
+### web-perf
+
+Get Core Web Vitals from the terminal — LCP, FCP, CLS, TTFB, and more.
+
+```bash
+flyto recipe web-perf --url https://example.com
+flyto recipe web-perf --url https://example.com --timeout 10000
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to measure |
+| `--timeout` | no | `5000` | Time to wait for metrics (ms) |
+
+---
+
 ## Browser
 
 ### screenshot
@@ -27,6 +63,56 @@ flyto recipe screenshot --url https://example.com --output home.png --width 1920
 | `--output` | no | `screenshot.png` | Output file path |
 | `--width` | no | `1280` | Viewport width |
 | `--height` | no | `720` | Viewport height |
+
+---
+
+### page-to-pdf
+
+Render any webpage as a PDF file.
+
+```bash
+flyto recipe page-to-pdf --url https://example.com
+flyto recipe page-to-pdf --url https://en.wikipedia.org/wiki/YAML --output yaml-wiki.pdf --size Letter
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to convert |
+| `--output` | no | `page.pdf` | Output PDF file path |
+| `--size` | no | `A4` | Page size (A4, Letter, Legal) |
+
+---
+
+### visual-snapshot
+
+Screenshot a page at both mobile (390×844) and desktop (1440×900) viewports.
+
+```bash
+flyto recipe visual-snapshot --url https://github.com
+flyto recipe visual-snapshot --url https://example.com --mobile_output m.png --desktop_output d.png
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to capture |
+| `--mobile_output` | no | `mobile.png` | Mobile screenshot output |
+| `--desktop_output` | no | `desktop.png` | Desktop screenshot output |
+
+---
+
+### webpage-archive
+
+Archive a webpage in 3 formats — screenshot (PNG), PDF, and HTML snapshot.
+
+```bash
+flyto recipe webpage-archive --url https://example.com
+flyto recipe webpage-archive --url https://news.ycombinator.com --prefix hn-2024
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to archive |
+| `--prefix` | no | `archive` | Output file prefix (creates prefix.png, prefix.pdf, prefix.html) |
 
 ---
 
@@ -65,7 +151,7 @@ flyto recipe scrape-links --url https://news.ycombinator.com --output hn-links.j
 
 ### scrape-table
 
-Extract an HTML table from a webpage and save the data.
+Extract an HTML table from a webpage and save as CSV.
 
 ```bash
 flyto recipe scrape-table --url https://en.wikipedia.org/wiki/Python_(programming_language) --selector .wikitable
@@ -94,19 +180,28 @@ flyto recipe stock-price --symbol TSLA --output tesla.json
 | `--symbol` | yes | — | Stock ticker symbol (e.g. AAPL, TSLA, NVDA) |
 | `--output` | no | `stock.json` | Output file path |
 
-Output:
-```json
-{
-  "symbol": "AAPL",
-  "price": "274.08",
-  "change": "+7.90",
-  "change_pct": "(+2.97%)"
-}
-```
-
 ---
 
-## Data
+## Data & OCR
+
+### ocr
+
+Extract text from an image using Tesseract OCR.
+
+```bash
+flyto recipe ocr --input scan.png
+flyto recipe ocr --input receipt.jpg --lang eng --output receipt.txt
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--input` | yes | — | Path to image file |
+| `--lang` | no | `eng` | Language code (`eng`, `chi_tra`, `jpn`, `deu`, `fra`, `spa`) |
+| `--output` | no | `ocr-result.txt` | Output text file path |
+
+Requires: `pip install pytesseract` and [Tesseract](https://github.com/tesseract-ocr/tesseract) installed.
+
+---
 
 ### csv-to-json
 
@@ -209,6 +304,40 @@ flyto recipe image-convert --input logo.jpg --format png --output logo
 
 ---
 
+## Network & Security
+
+### port-scan
+
+Scan open ports on a host.
+
+```bash
+flyto recipe port-scan --host github.com
+flyto recipe port-scan --host 192.168.1.1 --ports "80-443"
+flyto recipe port-scan --host example.com --ports "22,80,443,3306,5432,8080"
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--host` | yes | — | Hostname or IP to scan |
+| `--ports` | no | `22,80,443,3000,3306,5432,6379,8080,8443,9090` | Ports (comma-separated or range) |
+
+---
+
+### whois
+
+Look up domain registration info — registrar, creation date, expiration, name servers.
+
+```bash
+flyto recipe whois --domain github.com
+flyto recipe whois --domain example.com
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--domain` | yes | — | Domain name to look up |
+
+---
+
 ## DevOps
 
 ### monitor-site
@@ -260,19 +389,54 @@ flyto recipe docker-ps --all true
 
 ### git-changelog
 
-Generate a changelog from git commit history.
+Show git diff with file change statistics.
 
 ```bash
 flyto recipe git-changelog
-flyto recipe git-changelog --since "30 days ago" --output CHANGELOG.md
-flyto recipe git-changelog --repo /path/to/repo --since v1.0.0
+flyto recipe git-changelog --repo /path/to/repo --ref HEAD~5
 ```
 
 | Arg | Required | Default | Description |
 |-----|----------|---------|-------------|
 | `--repo` | no | `.` | Path to git repository |
-| `--since` | no | `7 days ago` | Show commits since (date, tag, or relative) |
-| `--output` | no | `CHANGELOG.txt` | Output file path |
+| `--ref` | no | `HEAD` | Reference to diff against (commit, branch, tag) |
+
+---
+
+## Integrations
+
+### scrape-to-slack
+
+Extract data from a webpage and send it to Slack.
+
+```bash
+flyto recipe scrape-to-slack --url https://example.com --selector h1 --webhook $SLACK_WEBHOOK_URL
+flyto recipe scrape-to-slack --url https://news.ycombinator.com --selector .titleline --webhook $SLACK_WEBHOOK_URL
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to scrape |
+| `--selector` | yes | — | CSS selector to extract text from |
+| `--webhook` | yes | — | Slack incoming webhook URL |
+
+---
+
+### github-issue
+
+Screenshot a page and create a GitHub issue with the screenshot attached.
+
+```bash
+flyto recipe github-issue --url https://example.com --owner myorg --repo myapp --title "Homepage bug" --token $GITHUB_TOKEN
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to screenshot |
+| `--owner` | yes | — | GitHub repository owner |
+| `--repo` | yes | — | GitHub repository name |
+| `--title` | yes | — | Issue title |
+| `--token` | yes | — | GitHub personal access token |
 
 ---
 

@@ -14,25 +14,33 @@
 pip install flyto-core[browser]
 playwright install chromium
 
-flyto recipe screenshot --url https://example.com
-# ✓ screenshot.png saved
+flyto recipe site-audit --url https://example.com
+# ✓ audit.json — SEO meta, headings, missing alt tags, Web Vitals, screenshot
 ```
 
 No config. No API key. Just pick a recipe and run.
 
-### 15 Built-in Recipes
+### 25 Built-in Recipes
 
 ```bash
 flyto recipes                  # List all recipes
 
-# Browser
+# Audit & Performance
+flyto recipe site-audit    --url https://example.com         # SEO + Web Vitals + screenshot report
+flyto recipe web-perf      --url https://example.com         # Core Web Vitals (LCP, FCP, CLS, TTFB)
+
+# Browser Automation
 flyto recipe screenshot    --url https://example.com
+flyto recipe page-to-pdf   --url https://example.com         # Render webpage as PDF
+flyto recipe visual-snapshot --url https://example.com       # Mobile + desktop screenshots
+flyto recipe webpage-archive --url https://example.com       # Save as PNG + PDF + HTML
 flyto recipe scrape-page   --url https://example.com --selector h1
 flyto recipe scrape-links  --url https://example.com
 flyto recipe scrape-table  --url https://en.wikipedia.org/wiki/Python_(programming_language) --selector .wikitable
 flyto recipe stock-price   --symbol AAPL
 
-# Data
+# Data & OCR
+flyto recipe ocr           --input scan.png                  # Extract text from image
 flyto recipe csv-to-json   --input data.csv
 flyto recipe json-to-csv   --input data.json
 flyto recipe pdf-extract   --input report.pdf
@@ -42,11 +50,19 @@ flyto recipe image-resize   --input photo.jpg --width 800
 flyto recipe image-compress --input photo.jpg --quality 80
 flyto recipe image-convert  --input photo.png --format webp
 
+# Network & Security
+flyto recipe port-scan     --host example.com                # Scan open ports
+flyto recipe whois         --domain example.com              # Domain registration lookup
+
 # DevOps
 flyto recipe monitor-site  --url https://myapp.com
 flyto recipe http-get      --url https://api.github.com/users/octocat
 flyto recipe docker-ps
-flyto recipe git-changelog --since "7 days ago"
+flyto recipe git-changelog
+
+# Integrations
+flyto recipe scrape-to-slack --url https://example.com --selector h1 --webhook $SLACK_URL
+flyto recipe github-issue    --url https://example.com --owner me --repo my-app --title "Bug" --token $GITHUB_TOKEN
 ```
 
 Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for full options.
@@ -55,21 +71,38 @@ Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for fu
 
 | Recipe | Description | Key args |
 |--------|-------------|----------|
+| **Audit & Performance** | | |
+| `site-audit` | SEO + performance audit with report | `--url` `--output` |
+| `web-perf` | Core Web Vitals (LCP, FCP, CLS, TTFB) | `--url` |
+| **Browser** | | |
 | `screenshot` | Screenshot any webpage | `--url` `--output` `--width` |
+| `page-to-pdf` | Render webpage as PDF | `--url` `--output` `--size` |
+| `visual-snapshot` | Mobile + desktop screenshots | `--url` |
+| `webpage-archive` | Save as PNG + PDF + HTML | `--url` `--prefix` |
 | `scrape-page` | Extract text via CSS selector | `--url` `--selector` |
 | `scrape-links` | Extract all links from a page | `--url` |
 | `scrape-table` | Extract HTML table data | `--url` `--selector` |
 | `stock-price` | Fetch stock price from Yahoo Finance | `--symbol` |
+| **Data & OCR** | | |
+| `ocr` | Extract text from image (Tesseract) | `--input` `--lang` |
 | `csv-to-json` | Convert CSV to JSON | `--input` |
 | `json-to-csv` | Convert JSON array to CSV | `--input` |
 | `pdf-extract` | Extract text from PDF | `--input` |
+| **Image** | | |
 | `image-resize` | Resize an image | `--input` `--width` |
 | `image-compress` | Compress an image | `--input` `--quality` |
 | `image-convert` | Convert image format | `--input` `--format` |
+| **Network & Security** | | |
+| `port-scan` | Scan open ports on a host | `--host` `--ports` |
+| `whois` | Domain registration lookup | `--domain` |
+| **DevOps** | | |
 | `monitor-site` | HTTP health check | `--url` |
 | `http-get` | Fetch URL and save response | `--url` |
 | `docker-ps` | List Docker containers | `--all` |
-| `git-changelog` | Generate git changelog | `--since` |
+| `git-changelog` | Git diff with file statistics | `--repo` `--ref` |
+| **Integrations** | | |
+| `scrape-to-slack` | Scrape a page → send to Slack | `--url` `--selector` `--webhook` |
+| `github-issue` | Screenshot a bug → create GitHub issue | `--url` `--owner` `--repo` `--title` |
 
 See **[docs/RECIPES.md](docs/RECIPES.md)** for full documentation with all arguments and examples.
 
@@ -89,12 +122,14 @@ steps:
     params: { url: "https://competitor.com/pricing" }
 
   - id: prices
-    module: browser.extract
-    params: { selector: ".price-card", extract_type: text, multiple: true }
+    module: browser.evaluate
+    params:
+      script: |
+        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
 
   - id: save
     module: file.write
-    params: { path: "prices.json", content: "${prices.data}" }
+    params: { path: "prices.json", content: "${prices.result}" }
 
   - id: close
     module: browser.close
