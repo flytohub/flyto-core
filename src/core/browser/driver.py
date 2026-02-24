@@ -232,14 +232,7 @@ class BrowserDriver:
             Navigation result with status and final URL
         """
         self._ensure_page()
-        return await self._goto_impl(url, wait_until, timeout_ms)
 
-    async def _goto_impl(self,
-                         url: str,
-                         wait_until: str,
-                         timeout_ms: int,
-                         _retried_www: bool = False) -> Dict[str, Any]:
-        """Inner navigation with www/non-www fallback."""
         try:
             logger.info(f"Navigating to: {url}")
 
@@ -253,9 +246,6 @@ class BrowserDriver:
             status_code = response.status if response else None
 
             # Best-effort wait for dynamic content (JS challenges, SPAs).
-            # Some sites (Cloudflare, etc.) serve empty HTML first, then JS
-            # populates the page. networkidle waits for that to finish.
-            # Timeout is non-fatal — some sites never reach networkidle.
             if wait_until != 'networkidle':
                 try:
                     await asyncio.wait_for(
@@ -277,53 +267,28 @@ class BrowserDriver:
         except Exception as e:
             err_str = str(e)
 
-            # www/non-www fallback: some sites block one variant but not the other
-            if not _retried_www and "ERR_HTTP_RESPONSE_CODE_FAILURE" in err_str:
-                alt_url = self._toggle_www(url)
-                if alt_url:
-                    logger.warning(f"HTTP error on {url}, trying {alt_url}")
-                    # Reset page to clear chrome-error:// navigation state
-                    try:
-                        await self._page.goto('about:blank', wait_until='load', timeout=5000)
-                    except Exception:
-                        pass
-                    return await self._goto_impl(alt_url, wait_until, timeout_ms, _retried_www=True)
-
             # Some sites return non-2xx but still serve a usable page.
             if "ERR_HTTP_RESPONSE_CODE_FAILURE" in err_str:
                 final_url = self._page.url
-                if not final_url or final_url == 'about:blank':
-                    logger.error(f"Navigation rejected by server: {url}")
-                    raise RuntimeError(
-                        "Server rejected the request (HTTP error). "
-                        "The site may require authentication or block automated access."
-                    ) from e
-                logger.warning(f"Navigation got HTTP error but page loaded: {final_url}")
-                try:
-                    await asyncio.wait_for(
-                        self._page.wait_for_load_state('networkidle'),
-                        timeout=10,
-                    )
-                    final_url = self._page.url
-                except (asyncio.TimeoutError, Exception):
-                    pass
-                return {
-                    'status': 'success',
-                    'url': final_url,
-                    'status_code': None,
-                    'warning': 'HTTP error response, but page loaded',
-                }
+                if final_url and final_url not in ('about:blank', 'chrome-error://chromewebdata/'):
+                    logger.warning(f"Navigation got HTTP error but page loaded: {final_url}")
+                    try:
+                        await asyncio.wait_for(
+                            self._page.wait_for_load_state('networkidle'),
+                            timeout=10,
+                        )
+                        final_url = self._page.url
+                    except (asyncio.TimeoutError, Exception):
+                        pass
+                    return {
+                        'status': 'success',
+                        'url': final_url,
+                        'status_code': None,
+                        'warning': 'HTTP error response, but page loaded',
+                    }
+
             logger.error(f"Navigation failed: {err_str}")
             raise RuntimeError(f"Failed to navigate to {url}: {err_str}") from e
-
-    @staticmethod
-    def _toggle_www(url: str) -> Optional[str]:
-        """Toggle www prefix: add www. if missing, remove if present."""
-        if '://www.' in url:
-            return url.replace('://www.', '://', 1)
-        if '://' in url:
-            return url.replace('://', '://www.', 1)
-        return None
 
     async def click(self,
                     selector: str,

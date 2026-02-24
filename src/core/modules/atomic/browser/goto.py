@@ -115,7 +115,32 @@ class BrowserGotoModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        await browser.goto(self.url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
-        return {"status": "success", "url": self.url}
+        try:
+            result = await browser.goto(self.url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+            return {"status": "success", "url": result.get('url', self.url)}
+        except RuntimeError as e:
+            # www/non-www fallback: some sites block one variant but not the other
+            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
+                alt_url = self._toggle_www(self.url)
+                if alt_url:
+                    # Replace page to clear chrome-error:// state
+                    try:
+                        old_page = browser._page
+                        browser._page = await browser._context.new_page()
+                        await old_page.close()
+                    except Exception:
+                        pass
+                    result = await browser.goto(alt_url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+                    return {"status": "success", "url": result.get('url', alt_url)}
+            raise
+
+    @staticmethod
+    def _toggle_www(url: str):
+        """Toggle www prefix."""
+        if '://www.' in url:
+            return url.replace('://www.', '://', 1)
+        if '://' in url:
+            return url.replace('://', '://www.', 1)
+        return None
 
 
