@@ -78,7 +78,10 @@ class BrowserScreenshotModule(BaseModule):
 
         result = await browser.screenshot(self.path, **kwargs)
         if isinstance(result, dict):
-            return {"status": "success", "filepath": result.get('path', self.path)}
+            out = {"status": "success", "filepath": result.get('path', self.path)}
+            if 'base64' in result:
+                out['_images'] = [{'base64': result['base64'], 'media_type': result.get('media_type', 'image/png')}]
+            return out
         else:
             return {"status": "success", "filepath": result}
 

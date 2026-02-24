@@ -96,6 +96,9 @@ class BrowserDriver:
                     '--disable-blink-features=AutomationControlled',
                     '--disable-dev-shm-usage',
                     '--no-sandbox',
+                    '--disable-infobars',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
                 ],
             }
             if slow_mo > 0:
@@ -125,6 +128,14 @@ class BrowserDriver:
                 'viewport': self.viewport,
                 'user_agent': context_user_agent,
                 'locale': locale,
+                'extra_http_headers': {
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': ','.join(languages) + ',en-US;q=0.9,en;q=0.8',
+                    'Sec-CH-UA': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+                    'Sec-CH-UA-Mobile': '?0',
+                    'Sec-CH-UA-Platform': '"macOS"',
+                    'Upgrade-Insecure-Requests': '1',
+                },
             }
             if record_video_dir:
                 Path(record_video_dir).mkdir(parents=True, exist_ok=True)
@@ -149,15 +160,44 @@ class BrowserDriver:
                         ? Promise.resolve({{ state: Notification.permission }})
                         : origQuery(params);
 
-                // Fix plugins (headless has empty array)
+                // Realistic plugins (headless returns empty array)
                 Object.defineProperty(navigator, 'plugins', {{
-                    get: () => [1, 2, 3, 4, 5],
+                    get: () => {{
+                        const arr = [
+                            {{ name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' }},
+                            {{ name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' }},
+                            {{ name: 'Native Client', filename: 'internal-nacl-plugin', description: '' }},
+                        ];
+                        arr.refresh = () => {{}};
+                        return arr;
+                    }},
                 }});
 
                 // Match system languages
                 Object.defineProperty(navigator, 'languages', {{
                     get: () => {languages_js},
                 }});
+
+                // Realistic hardware concurrency
+                Object.defineProperty(navigator, 'hardwareConcurrency', {{
+                    get: () => 8,
+                }});
+
+                // Realistic device memory
+                Object.defineProperty(navigator, 'deviceMemory', {{
+                    get: () => 8,
+                }});
+
+                // Hide automation-related properties
+                Object.defineProperty(navigator, 'maxTouchPoints', {{
+                    get: () => 0,
+                }});
+
+                // Fix iframe contentWindow access (headless detection vector)
+                const originalAttachShadow = Element.prototype.attachShadow;
+                Element.prototype.attachShadow = function(init) {{
+                    return originalAttachShadow.call(this, {{ ...init, mode: 'open' }});
+                }};
             """)
 
             # Create page
@@ -214,6 +254,18 @@ class BrowserDriver:
             }
 
         except Exception as e:
+            # Some sites (e.g. anti-bot) return non-2xx but still serve a usable page.
+            # Playwright throws ERR_HTTP_RESPONSE_CODE_FAILURE in this case,
+            # but the page is already navigated — treat it as a soft success.
+            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
+                final_url = self._page.url
+                logger.warning(f"Navigation got HTTP error but page loaded: {final_url}")
+                return {
+                    'status': 'success',
+                    'url': final_url,
+                    'status_code': None,
+                    'warning': 'HTTP error response, but page loaded',
+                }
             logger.error(f"Navigation failed: {str(e)}")
             raise RuntimeError(f"Failed to navigate to {url}: {str(e)}") from e
 
@@ -481,17 +533,18 @@ class BrowserDriver:
 
             screenshot_data = await self.real_page.screenshot(**kwargs)
 
+            import base64
             result = {
                 'status': 'success',
-                'full_page': full_page
+                'full_page': full_page,
+                'base64': base64.b64encode(screenshot_data).decode('utf-8'),
+                'media_type': 'image/{}'.format(type or 'png'),
             }
 
             if path:
                 result['path'] = path
                 logger.info(f"Screenshot saved: {path}")
             else:
-                import base64
-                result['base64'] = base64.b64encode(screenshot_data).decode('utf-8')
                 logger.info("Screenshot captured (base64)")
 
             return result
