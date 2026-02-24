@@ -232,7 +232,14 @@ class BrowserDriver:
             Navigation result with status and final URL
         """
         self._ensure_page()
+        return await self._goto_impl(url, wait_until, timeout_ms)
 
+    async def _goto_impl(self,
+                         url: str,
+                         wait_until: str,
+                         timeout_ms: int,
+                         _retried_www: bool = False) -> Dict[str, Any]:
+        """Inner navigation with www/non-www fallback."""
         try:
             logger.info(f"Navigating to: {url}")
 
@@ -268,13 +275,25 @@ class BrowserDriver:
             }
 
         except Exception as e:
-            # Some sites (e.g. anti-bot) return non-2xx but still serve a usable page.
-            # Playwright throws ERR_HTTP_RESPONSE_CODE_FAILURE in this case,
-            # but the page is already navigated — treat it as a soft success.
-            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
+            err_str = str(e)
+
+            # www/non-www fallback: some sites block one variant but not the other
+            if not _retried_www and "ERR_HTTP_RESPONSE_CODE_FAILURE" in err_str:
+                alt_url = self._toggle_www(url)
+                if alt_url:
+                    logger.warning(f"HTTP error on {url}, trying {alt_url}")
+                    return await self._goto_impl(alt_url, wait_until, timeout_ms, _retried_www=True)
+
+            # Some sites return non-2xx but still serve a usable page.
+            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in err_str:
                 final_url = self._page.url
+                if not final_url or final_url == 'about:blank':
+                    logger.error(f"Navigation rejected by server: {url}")
+                    raise RuntimeError(
+                        "Server rejected the request (HTTP error). "
+                        "The site may require authentication or block automated access."
+                    ) from e
                 logger.warning(f"Navigation got HTTP error but page loaded: {final_url}")
-                # Still try to wait for JS challenges to complete
                 try:
                     await asyncio.wait_for(
                         self._page.wait_for_load_state('networkidle'),
@@ -289,8 +308,17 @@ class BrowserDriver:
                     'status_code': None,
                     'warning': 'HTTP error response, but page loaded',
                 }
-            logger.error(f"Navigation failed: {str(e)}")
-            raise RuntimeError(f"Failed to navigate to {url}: {str(e)}") from e
+            logger.error(f"Navigation failed: {err_str}")
+            raise RuntimeError(f"Failed to navigate to {url}: {err_str}") from e
+
+    @staticmethod
+    def _toggle_www(url: str) -> Optional[str]:
+        """Toggle www prefix: add www. if missing, remove if present."""
+        if '://www.' in url:
+            return url.replace('://www.', '://', 1)
+        if '://' in url:
+            return url.replace('://', '://www.', 1)
+        return None
 
     async def click(self,
                     selector: str,
