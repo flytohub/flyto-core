@@ -611,20 +611,21 @@ class BrowserDriver:
             raise RuntimeError(f"Failed to close browser: {str(e)}") from e
 
     async def _launch_with_fallback(self, launcher, kwargs):
-        """Try multiple browser sources to ensure desktop binary works."""
-        # 1. Playwright bundled Chromium (dev mode or background install complete)
+        """Try multiple browser sources, preferring system Chrome for real TLS fingerprint."""
+        # 1. System Chrome — real TLS fingerprint, best anti-detection
         try:
-            return await launcher.launch(**kwargs)
+            logger.info("Launching system Chrome...")
+            return await launcher.launch(channel='chrome', **kwargs)
         except Exception as e:
             first_error = e
-            logger.warning(f"Playwright Chromium unavailable: {e}")
+            logger.warning(f"System Chrome not available: {e}")
 
-        # 2. System Chrome (available on ~90% of machines)
+        # 2. Playwright bundled Chromium — fallback
         try:
-            logger.info("Trying system Chrome...")
-            return await launcher.launch(channel='chrome', **kwargs)
+            logger.info("Falling back to Playwright Chromium...")
+            return await launcher.launch(**kwargs)
         except Exception:
-            logger.warning("System Chrome not found")
+            logger.warning("Playwright Chromium unavailable")
 
         # 3. Microsoft Edge (common on Windows)
         try:
