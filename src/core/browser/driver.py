@@ -282,6 +282,11 @@ class BrowserDriver:
                 alt_url = self._toggle_www(url)
                 if alt_url:
                     logger.warning(f"HTTP error on {url}, trying {alt_url}")
+                    # Reset page to clear chrome-error:// navigation state
+                    try:
+                        await self._page.goto('about:blank', wait_until='load', timeout=5000)
+                    except Exception:
+                        pass
                     return await self._goto_impl(alt_url, wait_until, timeout_ms, _retried_www=True)
 
             # Some sites return non-2xx but still serve a usable page.
