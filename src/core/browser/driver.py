@@ -245,6 +245,20 @@ class BrowserDriver:
             final_url = self._page.url
             status_code = response.status if response else None
 
+            # Best-effort wait for dynamic content (JS challenges, SPAs).
+            # Some sites (Cloudflare, etc.) serve empty HTML first, then JS
+            # populates the page. networkidle waits for that to finish.
+            # Timeout is non-fatal — some sites never reach networkidle.
+            if wait_until != 'networkidle':
+                try:
+                    await asyncio.wait_for(
+                        self._page.wait_for_load_state('networkidle'),
+                        timeout=10,
+                    )
+                except (asyncio.TimeoutError, Exception):
+                    pass
+
+            final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
 
             return {
@@ -260,6 +274,15 @@ class BrowserDriver:
             if "ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
                 final_url = self._page.url
                 logger.warning(f"Navigation got HTTP error but page loaded: {final_url}")
+                # Still try to wait for JS challenges to complete
+                try:
+                    await asyncio.wait_for(
+                        self._page.wait_for_load_state('networkidle'),
+                        timeout=10,
+                    )
+                    final_url = self._page.url
+                except (asyncio.TimeoutError, Exception):
+                    pass
                 return {
                     'status': 'success',
                     'url': final_url,
