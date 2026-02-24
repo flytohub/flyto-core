@@ -18,7 +18,7 @@ from ...schema import compose, presets
     tags=['browser', 'interaction', 'select', 'dropdown', 'form', 'ssrf_protected'],
     label='Select Option',
     label_key='modules.browser.select.label',
-    description='Select option from dropdown element',
+    description='Select option from dropdown element. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.select.description',
     icon='ChevronDown',
     color='#20C997',

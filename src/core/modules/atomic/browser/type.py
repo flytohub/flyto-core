@@ -16,7 +16,7 @@ from ...schema import compose, presets, field
     tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],
     label='Type Text',
     label_key='modules.browser.type.label',
-    description='Type text into an input field',
+    description='Type text into an input field. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.type.description',
     icon='Keyboard',
     color='#5BC0DE',

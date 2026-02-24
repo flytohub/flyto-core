@@ -26,7 +26,7 @@ from ...schema import compose, field
     tags=['browser', 'form', 'input', 'automation', 'ssrf_protected'],
     label='Fill Form',
     label_key='modules.browser.form.label',
-    description='Smart form filling with automatic field detection',
+    description='Smart form filling with automatic field detection. Run browser.snapshot first to find the correct selectors from the real page DOM.',
     description_key='modules.browser.form.description',
     icon='FormInput',
     color='#8B5CF6',

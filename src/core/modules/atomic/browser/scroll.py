@@ -18,7 +18,7 @@ from ...schema import compose, presets
     tags=['browser', 'scroll', 'navigation', 'ssrf_protected'],
     label='Scroll Page',
     label_key='modules.browser.scroll.label',
-    description='Scroll page to element, position, or direction',
+    description='Scroll page to element, position, or direction. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.scroll.description',
     icon='ArrowDownUp',
     color='#17A2B8',

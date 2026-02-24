@@ -19,7 +19,7 @@ from ...schema import compose, presets
     tags=['browser', 'scraping', 'data', 'extract', 'ssrf_protected'],
     label='Extract Data',
     label_key='modules.browser.extract.label',
-    description='Extract structured data from the page',
+    description='Extract structured data from the page. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.extract.description',
     icon='Database',
     color='#E74C3C',

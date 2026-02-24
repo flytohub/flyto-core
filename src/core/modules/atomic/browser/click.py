@@ -18,7 +18,7 @@ from ...schema import presets
     tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
     label_key='modules.browser.click.label',
-    description='Click an element on the page',
+    description='Click an element on the page. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.click.description',
     icon='MousePointerClick',
     color='#F0AD4E',

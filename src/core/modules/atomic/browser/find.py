@@ -20,7 +20,7 @@ from ..element_registry import get_element_registry
     tags=['browser', 'find', 'element', 'selector', 'ssrf_protected'],
     label='Find Elements',
     label_key='modules.browser.find.label',
-    description='Find elements in page and return element ID list',
+    description='Find elements in page and return element ID list. Run browser.snapshot first to find the correct selector from the real page DOM.',
     description_key='modules.browser.find.description',
     icon='Search',
     color='#8B5CF6',
