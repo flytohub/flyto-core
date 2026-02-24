@@ -15,16 +15,16 @@ steps:
   - id: read
     module: data.csv.read
     params:
-      path: "{{input}}"
+      file_path: "{{input}}"
 
   - id: stringify
     module: data.json.stringify
     params:
-      data: "${read.data}"
-      indent: 2
+      data: "${read.data.rows}"
+      pretty: true
 
   - id: save
     module: file.write
     params:
       path: "{{output}}"
-      content: "${stringify.data.result}"
+      content: "${stringify.data.json}"

@@ -33,17 +33,19 @@ steps:
       state: visible
 
   - id: extract
-    module: browser.extract
+    module: browser.evaluate
     params:
-      selector: "{{selector}}"
-      extract_type: text
-      multiple: true
+      script: |
+        (() => {
+          const els = document.querySelectorAll('{{selector}}');
+          return JSON.stringify(Array.from(els).map(e => e.textContent.trim()), null, 2);
+        })()
 
   - id: save
     module: file.write
     params:
       path: "{{output}}"
-      content: "${extract.data}"
+      content: "${extract.result}"
 
   - id: close
     module: browser.close

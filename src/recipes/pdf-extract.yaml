@@ -21,4 +21,4 @@ steps:
     module: file.write
     params:
       path: "{{output}}"
-      content: "${parse.data.text}"
+      content: "${parse.text}"

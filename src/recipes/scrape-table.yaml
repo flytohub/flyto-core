@@ -35,24 +35,24 @@ steps:
   - id: extract
     module: browser.evaluate
     params:
-      expression: |
+      script: |
         (() => {
           const table = document.querySelector('{{selector}}');
-          if (!table) return { rows: [] };
+          if (!table) return 'No table found';
           const rows = [];
           table.querySelectorAll('tr').forEach(tr => {
             const cells = [];
-            tr.querySelectorAll('th, td').forEach(td => cells.push(td.textContent.trim()));
-            rows.push(cells);
+            tr.querySelectorAll('th, td').forEach(td => cells.push('"' + td.textContent.trim().replace(/"/g, '""') + '"'));
+            rows.push(cells.join(','));
           });
-          return { rows };
+          return rows.join('\n');
         })()
 
   - id: save
     module: file.write
     params:
       path: "{{output}}"
-      content: "${extract.data}"
+      content: "${extract.result}"
 
   - id: close
     module: browser.close

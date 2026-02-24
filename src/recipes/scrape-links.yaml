@@ -23,17 +23,22 @@ steps:
       url: "{{url}}"
 
   - id: extract
-    module: browser.extract
+    module: browser.evaluate
     params:
-      selector: a
-      attribute: href
-      multiple: true
+      script: |
+        (() => {
+          const links = document.querySelectorAll('a[href]');
+          return JSON.stringify(Array.from(links).map(a => ({
+            text: a.textContent.trim(),
+            href: a.href
+          })), null, 2);
+        })()
 
   - id: save
     module: file.write
     params:
       path: "{{output}}"
-      content: "${extract.data}"
+      content: "${extract.result}"
 
   - id: close
     module: browser.close

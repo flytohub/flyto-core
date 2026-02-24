@@ -17,8 +17,14 @@ steps:
     params:
       url: "{{url}}"
 
+  - id: stringify
+    module: data.json.stringify
+    params:
+      data: "${fetch.data}"
+      pretty: true
+
   - id: save
     module: file.write
     params:
       path: "{{output}}"
-      content: "${fetch.data}"
+      content: "${stringify.data.json}"
