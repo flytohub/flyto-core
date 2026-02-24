@@ -51,6 +51,28 @@ flyto recipe git-changelog --since "7 days ago"
 
 Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for full options.
 
+### Recipe Reference
+
+| Recipe | Description | Key args |
+|--------|-------------|----------|
+| `screenshot` | Screenshot any webpage | `--url` `--output` `--width` |
+| `scrape-page` | Extract text via CSS selector | `--url` `--selector` |
+| `scrape-links` | Extract all links from a page | `--url` |
+| `scrape-table` | Extract HTML table data | `--url` `--selector` |
+| `stock-price` | Fetch stock price from Yahoo Finance | `--symbol` |
+| `csv-to-json` | Convert CSV to JSON | `--input` |
+| `json-to-csv` | Convert JSON array to CSV | `--input` |
+| `pdf-extract` | Extract text from PDF | `--input` |
+| `image-resize` | Resize an image | `--input` `--width` |
+| `image-compress` | Compress an image | `--input` `--quality` |
+| `image-convert` | Convert image format | `--input` `--format` |
+| `monitor-site` | HTTP health check | `--url` |
+| `http-get` | Fetch URL and save response | `--url` |
+| `docker-ps` | List Docker containers | `--all` |
+| `git-changelog` | Generate git changelog | `--since` |
+
+See **[docs/RECIPES.md](docs/RECIPES.md)** for full documentation with all arguments and examples.
+
 ## Write Your Own Workflows
 
 Recipes are just YAML files. Write your own:
