@@ -92,3 +92,11 @@ examples/demo_video/*.webm
 evidence/
 _quickstart_evidence/
 src/_quickstart_evidence/
+
+# Runtime output files
+.flyto-runs/
+*.png
+intel-report.json
+audit-report.json
+github-profile.json
+audit-page.pdf

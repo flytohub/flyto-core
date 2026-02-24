@@ -5,6 +5,7 @@ Load and execute pre-built recipe templates from the recipes/ directory.
 Recipes are YAML workflow templates with named arguments.
 """
 
+import json
 import sys
 import time
 from pathlib import Path
@@ -17,6 +18,9 @@ from .config import Colors
 
 # Recipes directory (bundled with package)
 RECIPES_DIR = Path(__file__).parent.parent / 'recipes'
+
+# Run state directory (for replay support)
+RUNS_DIR = Path('.flyto-runs')
 
 # Column width for module name alignment
 _COL_MODULE = 24  # "browser.performance"
@@ -304,7 +308,13 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
             'hint': _step_hint(s),
         }
 
-    # Real-time checkpoint callback: prints each step as it completes
+    # Prepare run state directory for replay support
+    run_dir = RUNS_DIR / 'latest'
+    run_dir.mkdir(parents=True, exist_ok=True)
+    _save_json(run_dir / 'workflow.json', workflow)
+    _save_json(run_dir / 'params.json', params)
+
+    # Real-time checkpoint callback: prints each step + saves context snapshot
     completed_count = 0
 
     async def _on_checkpoint(step_index, step_id, checkpoint_data, status):
@@ -323,6 +333,9 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
                 duration_ms = st.durationMs
 
         _print_step_line(completed_count, total_steps, module_id, status, duration_ms, hint)
+
+        # Save context snapshot for replay (skip non-serializable objects like browser)
+        _save_checkpoint_snapshot(run_dir, step_index, step_id, checkpoint_data, status)
 
     engine_ref = [None]  # Mutable ref for callback access
 
@@ -370,11 +383,16 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
         elapsed = time.time() - start_time
         # Show how far we got
         failed_at = completed_count + 1 if completed_count < total_steps else total_steps
+        failed_step_id = steps[failed_at - 1].get('id', '') if failed_at <= len(steps) else ''
         print()
         print(
             f"{Colors.FAIL}\u2717 Failed{Colors.ENDC} at step {failed_at}/{total_steps}"
             f" after {elapsed:.1f}s: {e}"
         )
+        if failed_step_id:
+            print(
+                f"  Replay from here: {Colors.BOLD}flyto replay --from-step {failed_step_id}{Colors.ENDC}"
+            )
         return 1
 
 
@@ -402,3 +420,180 @@ def _print_output_files(args: Dict[str, str], engine) -> None:
                         if p.exists() and str(p) not in shown:
                             shown.add(str(p))
                             print(f"  Output: {p} ({p.stat().st_size:,} bytes)")
+
+
+# ── Replay support helpers ─────────────────────────────────────────
+
+def _save_json(path: Path, data: Any) -> None:
+    """Save JSON, silently skip non-serializable data."""
+    try:
+        with open(path, 'w') as f:
+            json.dump(data, f, indent=2, default=str)
+    except Exception:
+        pass
+
+
+def _save_checkpoint_snapshot(
+    run_dir: Path, step_index: int, step_id: str,
+    checkpoint_data: Dict[str, Any], status: str,
+) -> None:
+    """Save a context snapshot after each step for replay."""
+    # Filter out non-serializable objects (browser sessions, etc.)
+    ctx = checkpoint_data.get('context', {})
+    clean_ctx = {}
+    for k, v in ctx.items():
+        try:
+            json.dumps(v, default=str)
+            clean_ctx[k] = v
+        except (TypeError, ValueError):
+            clean_ctx[k] = f"<{type(v).__name__}>"
+
+    snapshot = {
+        'step_index': step_index,
+        'step_id': step_id,
+        'status': status,
+        'context': clean_ctx,
+        'params': checkpoint_data.get('params', {}),
+    }
+    _save_json(run_dir / f'checkpoint_{step_index:03d}_{step_id}.json', snapshot)
+    # Also keep a "latest successful" pointer for easy replay
+    if status == 'success':
+        _save_json(run_dir / 'last_success.json', snapshot)
+
+
+def run_replay(from_step: str, run_dir_path: Optional[str] = None) -> int:
+    """Replay a workflow from a specific step using saved state."""
+    import asyncio
+
+    run_dir = Path(run_dir_path) if run_dir_path else RUNS_DIR / 'latest'
+
+    # Load workflow + params
+    wf_path = run_dir / 'workflow.json'
+    params_path = run_dir / 'params.json'
+    if not wf_path.exists():
+        print(f"{Colors.FAIL}No previous run found.{Colors.ENDC} Run a recipe first.")
+        return 1
+
+    with open(wf_path) as f:
+        workflow = json.load(f)
+    with open(params_path) as f:
+        params = json.load(f)
+
+    steps = workflow.get('steps', [])
+    total_steps = len(steps)
+
+    # Find the target step index
+    step_index = None
+    for i, s in enumerate(steps):
+        if s.get('id') == from_step:
+            step_index = i
+            break
+
+    # Also try numeric index
+    if step_index is None:
+        try:
+            idx = int(from_step) - 1  # user gives 1-based
+            if 0 <= idx < total_steps:
+                step_index = idx
+                from_step = steps[idx].get('id', from_step)
+        except ValueError:
+            pass
+
+    if step_index is None:
+        print(f"{Colors.FAIL}Step not found: {from_step}{Colors.ENDC}")
+        print(f"Available steps:")
+        for i, s in enumerate(steps):
+            print(f"  {i + 1}. {s.get('id', '?')} ({s.get('module', '?')})")
+        return 1
+
+    # Find the checkpoint just before the target step (context at step N-1)
+    initial_context = {}
+    if step_index > 0:
+        # Load context from the step right before (its post-execution context)
+        prev_idx = step_index - 1
+        prev_id = steps[prev_idx].get('id', '')
+        cp_path = run_dir / f'checkpoint_{prev_idx:03d}_{prev_id}.json'
+        if cp_path.exists():
+            with open(cp_path) as f:
+                cp = json.load(f)
+            initial_context = cp.get('context', {})
+            # Remove placeholder entries for non-serializable objects
+            initial_context = {
+                k: v for k, v in initial_context.items()
+                if not (isinstance(v, str) and v.startswith('<') and v.endswith('>'))
+            }
+
+    skipped = step_index
+    replay_steps = total_steps - step_index
+
+    print(f"{Colors.BOLD}Replay{Colors.ENDC} from step {step_index + 1}/{total_steps} ({from_step})")
+    print(f"{Colors.OKCYAN}Skipping {skipped} steps, running {replay_steps}{Colors.ENDC}")
+    print()
+
+    # Show skipped steps
+    for i in range(step_index):
+        s = steps[i]
+        _print_step_line(i + 1, total_steps, s.get('module', '?'), 'skipped')
+
+    try:
+        from core.engine.workflow.engine import WorkflowEngine
+    except ImportError as e:
+        print(f"{Colors.FAIL}Error: flyto-core engine not available: {e}{Colors.ENDC}")
+        return 1
+
+    # Build step metadata
+    step_meta = {}
+    for i, s in enumerate(steps):
+        step_meta[i] = {
+            'module': s.get('module', '?'),
+            'hint': _step_hint(s),
+        }
+
+    completed_count = step_index  # start counting from where we pick up
+
+    async def _on_checkpoint(si, sid, cp_data, status):
+        nonlocal completed_count
+        completed_count += 1
+        meta = step_meta.get(si, {})
+        duration_ms = 0
+        eng = engine_ref[0]
+        if eng and eng._trace_collector:
+            st = eng._trace_collector.trace.get_step_trace(sid)
+            if st:
+                duration_ms = st.durationMs
+        _print_step_line(completed_count, total_steps, meta.get('module', '?'),
+                         status, duration_ms, meta.get('hint', ''))
+
+    engine_ref = [None]
+    start_time = time.time()
+
+    async def _run():
+        engine = WorkflowEngine(
+            workflow, params,
+            start_step=step_index,
+            initial_context=initial_context,
+            enable_trace=True,
+            checkpoint_callback=_on_checkpoint,
+        )
+        engine_ref[0] = engine
+        result = await engine.execute()
+        return engine, result
+
+    try:
+        engine, result = asyncio.run(_run())
+        elapsed = time.time() - start_time
+        passed = completed_count - step_index
+        print()
+        print(
+            f"{Colors.OKGREEN}\u2713 Replay done{Colors.ENDC} in {elapsed:.1f}s"
+            f" \u2014 {passed}/{replay_steps} steps passed"
+            f" (skipped {skipped})"
+        )
+        _print_output_files(params, engine)
+        return 0
+
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print()
+        print(f"{Colors.FAIL}\u2717 Replay failed{Colors.ENDC} after {elapsed:.1f}s: {e}")
+        return 1

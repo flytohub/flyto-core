@@ -16,6 +16,10 @@ flyto recipe competitor-intel --url https://github.com/pricing
 
 12 steps run. Screenshots captured. Performance metrics extracted. JSON report saved. Zero Python scripts.
 
+<p align="center">
+  <img src="demo/flyto-core-demo.gif" alt="flyto-core demo: API pipeline → replay → browser automation" width="720">
+</p>
+
 ---
 
 ## What happens when step 8 fails?
@@ -23,7 +27,7 @@ flyto recipe competitor-intel --url https://github.com/pricing
 With a shell script you re-run the whole thing — re-launch the browser, re-navigate, re-extract. With flyto-core, every step records its input, output, and timing into an **execution trace**. When step 8 fails, you **replay from step 8** with the original context — the first 7 steps are instant.
 
 ```
-flyto replay workflow-trace.json --from-step 8
+flyto replay --from-step 8
 ```
 
 This is the difference between a script and an **engine**.

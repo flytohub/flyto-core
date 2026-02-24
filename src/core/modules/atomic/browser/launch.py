@@ -31,7 +31,7 @@ from ...schema.constants import FieldGroup, Visibility
     can_receive_from=['start', 'flow.*'],
 
     # Execution settings
-    timeout_ms=10000,
+    timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,

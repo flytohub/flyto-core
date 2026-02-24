@@ -44,7 +44,7 @@ from .workflow import collect_params, load_config, select_workflow
 from .params import merge_params
 from .runner import run_workflow
 from .modules import add_modules_parser, run_modules_command
-from .recipe import run_recipe, run_recipes_list
+from .recipe import run_recipe, run_recipes_list, run_replay
 
 
 def add_serve_parser(subparsers) -> None:
@@ -144,6 +144,17 @@ Examples:
     recipe_parser.add_argument('recipe_name', nargs='?', help='Recipe name')
     recipe_parser.add_argument('recipe_args', nargs=argparse.REMAINDER, help='Recipe arguments (--key value)')
 
+    # Replay command
+    replay_parser = subparsers.add_parser(
+        "replay",
+        help="Replay a workflow from a specific step",
+        description="Re-execute a previous workflow run from a specific step, skipping earlier steps."
+    )
+    replay_parser.add_argument('--from-step', required=True,
+                               help='Step ID or number (1-based) to replay from')
+    replay_parser.add_argument('--run-dir',
+                               help='Path to run state directory (default: .flyto-runs/latest)')
+
     # Also support legacy mode: flyto workflow.yaml (without 'run' subcommand)
     parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file (legacy mode)')
     parser.add_argument('--lang', '-l', default='en', choices=['en', 'zh', 'ja'],
@@ -184,6 +195,13 @@ Examples:
         if not args.recipe_name:
             sys.exit(run_recipes_list())
         sys.exit(run_recipe(args.recipe_name, args.recipe_args or []))
+
+    # Handle 'replay' command
+    if args.command == 'replay':
+        sys.exit(run_replay(
+            from_step=args.from_step,
+            run_dir_path=getattr(args, 'run_dir', None),
+        ))
 
     # Handle 'run' command or legacy mode
     if args.command == 'run':

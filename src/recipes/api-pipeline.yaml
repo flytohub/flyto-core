@@ -1,0 +1,43 @@
+name: API Pipeline
+description: "Fetch GitHub user data + recent repos, build a JSON profile report"
+
+args:
+  username:
+    type: string
+    required: true
+    description: GitHub username to look up
+  output:
+    type: string
+    default: github-profile.json
+    description: Output report file
+
+steps:
+  - id: fetch_user
+    module: http.get
+    params:
+      url: "https://api.github.com/users/{{username}}"
+
+  - id: fetch_repos
+    module: http.get
+    params:
+      url: "https://api.github.com/users/{{username}}/repos?per_page=5&sort=updated"
+
+  - id: build_report
+    module: object.merge
+    params:
+      objects:
+        - username: "{{username}}"
+        - "${fetch_user.data.body}"
+        - top_repos: "${fetch_repos.data.body}"
+
+  - id: save
+    module: data.json.stringify
+    params:
+      data: "${build_report.data.result}"
+      pretty: true
+
+  - id: write
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${save.data.json}"

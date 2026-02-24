@@ -3,125 +3,145 @@
 # record-demo.sh — Record a terminal demo with asciinema
 #
 # Usage:
-#   ./demo/record-demo.sh              # Record interactive session
-#   ./demo/record-demo.sh --play       # Play the recording locally
+#   ./demo/record-demo.sh              # Record the demo
+#   ./demo/record-demo.sh --play       # Play the recording
 #   ./demo/record-demo.sh --upload     # Upload to asciinema.org
+#   ./demo/record-demo.sh --dry-run    # Run demo without recording
 # ──────────────────────────────────────────────────────────
-set -euo pipefail
+set -uo pipefail
 
 DEMO_DIR="$(cd "$(dirname "$0")" && pwd)"
 CAST_FILE="$DEMO_DIR/flyto-core-demo.cast"
-DEMO_URL="${DEMO_URL:-https://github.com/pricing}"
 
 # Colors
 BOLD='\033[1m'
+DIM='\033[2m'
 CYAN='\033[96m'
+GREEN='\033[92m'
 RESET='\033[0m'
 
 # ── Helpers ────────────────────────────────────────────────
 
-check_deps() {
-    for cmd in asciinema flyto; do
-        if ! command -v "$cmd" &>/dev/null; then
-            echo "Error: $cmd is required. Install it first."
-            exit 1
-        fi
-    done
-}
-
-type_slow() {
-    # Simulate typing for demo effect
-    local text="$1"
-    local delay="${2:-0.04}"
-    for ((i = 0; i < ${#text}; i++)); do
-        printf '%s' "${text:$i:1}"
-        sleep "$delay"
+type_cmd() {
+    # Simulate typing a command, then run it
+    local cmd="$1"
+    printf '$ '
+    for ((i = 0; i < ${#cmd}; i++)); do
+        printf '%s' "${cmd:$i:1}"
+        sleep 0.03
     done
     echo
+    sleep 0.3
+    eval "$cmd" || true
 }
 
-pause() {
-    sleep "${1:-1.5}"
+pause() { sleep "${1:-1.5}"; }
+
+separator() {
+    echo
+    echo -e "${DIM}────────────────────────────────────────${RESET}"
+    echo
 }
 
 # ── Demo Script ────────────────────────────────────────────
 
 run_demo() {
+    export FLYTO_SANDBOX_DIR="$PWD"
     clear
-    echo -e "${BOLD}flyto-core demo${RESET} — competitor intel in 12 YAML steps"
+    echo -e "${BOLD}flyto-core${RESET} — 412 modules, trace every step, replay from any point"
     echo
     pause 2
 
-    # Show the recipe
-    echo -e "${CYAN}# First, let's look at the recipe:${RESET}"
-    pause 0.5
-    type_slow "cat src/recipes/competitor-intel.yaml"
-    pause 0.5
-    cat src/recipes/competitor-intel.yaml
-    pause 3
+    # ── Part 1: API Pipeline (no browser needed)
+    echo -e "${CYAN}# 1. Fetch GitHub user data in 5 steps — no code, just YAML${RESET}"
+    pause 1
 
-    echo
-    echo -e "${CYAN}# Now run it — one command:${RESET}"
-    pause 0.5
-    type_slow "flyto recipe competitor-intel --url $DEMO_URL"
-    pause 0.5
-    flyto recipe competitor-intel --url "$DEMO_URL"
+    type_cmd "flyto recipe api-pipeline --username torvalds"
     pause 2
 
-    echo
-    echo -e "${CYAN}# Check generated files:${RESET}"
+    separator
+
+    echo -e "${CYAN}# Check the output:${RESET}"
     pause 0.5
-    type_slow "ls -lh intel-*.png intel-report.json 2>/dev/null || true"
-    ls -lh intel-*.png intel-report.json 2>/dev/null || true
+    type_cmd "grep -E '\"(username|name|company|location|followers|top_repos)\"' github-profile.json | head -6"
     pause 2
 
-    echo
-    echo -e "${CYAN}# Peek at the report:${RESET}"
-    pause 0.5
-    type_slow "head -20 intel-report.json"
-    head -20 intel-report.json 2>/dev/null || echo "(no report generated)"
+    separator
+
+    # ── Part 2: Replay
+    echo -e "${CYAN}# 2. Now replay from step 3 — skip the API calls, reuse cached data${RESET}"
+    pause 1
+
+    type_cmd "flyto replay --from-step build_report"
+    pause 2
+
+    separator
+
+    echo -e "${CYAN}# Steps 1-2 skipped (HTTP calls). Steps 3-5 re-ran instantly.${RESET}"
+    echo -e "${CYAN}# If step 3 had failed, you'd fix the bug and replay — no re-fetching.${RESET}"
     pause 3
 
-    echo
-    echo -e "${BOLD}Done.${RESET} 12 steps, zero Python scripts."
-    echo "pip install flyto-core[browser] — https://pypi.org/project/flyto-core/"
-    pause 3
+    separator
+
+    # ── Part 3: Browser automation (the wow factor)
+    echo -e "${CYAN}# 3. Browser automation: competitor intel in 12 YAML steps${RESET}"
+    pause 1
+
+    type_cmd "flyto recipe competitor-intel --url https://github.com/pricing"
+    pause 2
+
+    separator
+
+    echo -e "${CYAN}# Generated: screenshots + performance metrics + JSON report${RESET}"
+    pause 0.5
+    type_cmd "ls -lh intel-desktop.png intel-mobile.png intel-report.json"
+    pause 2
+
+    separator
+
+    echo -e "${BOLD}pip install flyto-core${RESET}"
+    echo -e "412 modules. Trace every step. Replay from any point."
+    echo -e "https://github.com/flytohub/flyto-core"
+    pause 4
 }
 
 # ── Main ───────────────────────────────────────────────────
 
 case "${1:-record}" in
     --play|-p)
-        if [[ ! -f "$CAST_FILE" ]]; then
-            echo "No recording found. Run without flags to record first."
-            exit 1
-        fi
+        [[ -f "$CAST_FILE" ]] || { echo "No recording. Run without flags first."; exit 1; }
         asciinema play "$CAST_FILE"
         ;;
     --upload|-u)
-        if [[ ! -f "$CAST_FILE" ]]; then
-            echo "No recording found. Run without flags to record first."
-            exit 1
-        fi
+        [[ -f "$CAST_FILE" ]] || { echo "No recording. Run without flags first."; exit 1; }
         asciinema upload "$CAST_FILE"
         ;;
+    --dry-run|-d)
+        export BOLD DIM CYAN GREEN RESET
+        run_demo
+        ;;
     *)
-        check_deps
-        echo -e "${BOLD}Recording demo to:${RESET} $CAST_FILE"
-        echo "Press Ctrl-D when the demo finishes."
+        # Check dependencies
+        for cmd in asciinema flyto; do
+            command -v "$cmd" &>/dev/null || { echo "Error: $cmd required."; exit 1; }
+        done
+
+        echo -e "${BOLD}Recording to:${RESET} $CAST_FILE"
         echo
 
-        # Record the scripted demo
+        # Export functions and vars for subshell
+        export BOLD DIM CYAN GREEN RESET
+        export -f type_cmd pause separator run_demo
+
         asciinema rec \
-            --title "flyto-core: 412 modules, trace everything" \
-            --cols 100 \
-            --rows 30 \
-            --command "bash -c '$(declare -f type_slow pause run_demo); DEMO_URL=\"$DEMO_URL\" run_demo'" \
+            --title "flyto-core: 412 modules, trace everything, replay from any point" \
+            --cols 90 \
+            --rows 32 \
+            --command "bash -c 'run_demo'" \
+            --overwrite \
             "$CAST_FILE"
 
         echo
-        echo -e "${BOLD}Saved:${RESET} $CAST_FILE"
-        echo "Upload: asciinema upload $CAST_FILE"
-        echo "Play:   asciinema play $CAST_FILE"
+        echo -e "${BOLD}Done.${RESET} Upload: asciinema upload $CAST_FILE"
         ;;
 esac
