@@ -212,6 +212,17 @@ class BrowserDriver:
                 }};
             """)
 
+            # Create a fresh page so init_script applies (persistent context's
+            # initial page was created before add_init_script).
+            new_page = await self._context.new_page()
+            old_page = self._page
+            self._page = new_page
+            if old_page and old_page != new_page and hasattr(old_page, 'close'):
+                try:
+                    await old_page.close()
+                except Exception:
+                    pass
+
             logger.info("Browser launched successfully")
 
             return {
@@ -229,10 +240,20 @@ class BrowserDriver:
         user_data_dir = Path.home() / '.flyto' / 'chrome-profile'
         user_data_dir.mkdir(parents=True, exist_ok=True)
 
+        # Clean stale lock files from previous crashed sessions
+        for lock_name in ('SingletonLock', 'SingletonSocket', 'SingletonCookie'):
+            lock_file = user_data_dir / lock_name
+            if lock_file.exists():
+                try:
+                    lock_file.unlink()
+                except OSError:
+                    pass
+
         persistent_kwargs = {
             **context_kwargs,
             'headless': self.headless,
             'args': args,
+            'ignore_default_args': ['--enable-automation'],
         }
         if slow_mo > 0:
             persistent_kwargs['slow_mo'] = slow_mo
@@ -262,6 +283,7 @@ class BrowserDriver:
         launch_kwargs: Dict[str, Any] = {
             'headless': self.headless,
             'args': args,
+            'ignore_default_args': ['--enable-automation'],
         }
         if slow_mo > 0:
             launch_kwargs['slow_mo'] = slow_mo
