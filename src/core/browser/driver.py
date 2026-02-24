@@ -90,29 +90,14 @@ class BrowserDriver:
                 browser_launcher = self._playwright.chromium
 
             # Build launch options with anti-detection args
-            launch_kwargs: Dict[str, Any] = {
-                'headless': self.headless,
-                'args': [
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-dev-shm-usage',
-                    '--no-sandbox',
-                    '--disable-infobars',
-                    '--disable-background-timer-throttling',
-                    '--disable-renderer-backgrounding',
-                ],
-            }
-            if slow_mo > 0:
-                launch_kwargs['slow_mo'] = slow_mo
-            if proxy:
-                launch_kwargs['proxy'] = {'server': proxy}
-
-            # Launch browser (with fallback for desktop binary)
-            if self.browser_type == 'chromium':
-                self._browser = await self._launch_with_fallback(
-                    browser_launcher, launch_kwargs
-                )
-            else:
-                self._browser = await browser_launcher.launch(**launch_kwargs)
+            launch_args = [
+                '--disable-blink-features=AutomationControlled',
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+                '--disable-infobars',
+                '--disable-background-timer-throttling',
+                '--disable-renderer-backgrounding',
+            ]
 
             # Use explicit locale or default to en-US
             if not locale:
@@ -122,7 +107,6 @@ class BrowserDriver:
             lang = locale.split('-')[0]  # "zh-TW" → "zh"
             languages = list(dict.fromkeys([locale, lang, 'en']))
 
-            # Create context with viewport and optional video recording
             context_user_agent = user_agent or DEFAULT_USER_AGENT
             context_kwargs: Dict[str, Any] = {
                 'viewport': self.viewport,
@@ -142,7 +126,35 @@ class BrowserDriver:
                 context_kwargs['record_video_dir'] = record_video_dir
                 context_kwargs['record_video_size'] = record_video_size or self.viewport
                 logger.info(f"Video recording enabled: {record_video_dir}")
-            self._context = await self._browser.new_context(**context_kwargs)
+
+            # --- Try persistent context (preserves cookies across sessions) ---
+            if self.browser_type == 'chromium':
+                launched = await self._launch_persistent(
+                    browser_launcher, launch_args, context_kwargs,
+                    slow_mo=slow_mo, proxy=proxy,
+                )
+                if not launched:
+                    # Persistent context failed; fall back to regular launch
+                    launched = await self._launch_regular(
+                        browser_launcher, launch_args, context_kwargs,
+                        slow_mo=slow_mo, proxy=proxy,
+                    )
+                if not launched:
+                    raise RuntimeError(
+                        "No browser engine available. Install Google Chrome for immediate use."
+                    )
+            else:
+                launch_kwargs: Dict[str, Any] = {
+                    'headless': self.headless,
+                    'args': launch_args,
+                }
+                if slow_mo > 0:
+                    launch_kwargs['slow_mo'] = slow_mo
+                if proxy:
+                    launch_kwargs['proxy'] = {'server': proxy}
+                self._browser = await browser_launcher.launch(**launch_kwargs)
+                self._context = await self._browser.new_context(**context_kwargs)
+                self._page = await self._context.new_page()
 
             # Stealth: hide automation signals
             languages_js = str(languages)
@@ -200,9 +212,6 @@ class BrowserDriver:
                 }};
             """)
 
-            # Create page
-            self._page = await self._context.new_page()
-
             logger.info("Browser launched successfully")
 
             return {
@@ -214,6 +223,66 @@ class BrowserDriver:
         except Exception as e:
             logger.error(f"Failed to launch browser: {str(e)}")
             raise RuntimeError(f"Browser launch failed: {str(e)}") from e
+
+    async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None):
+        """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
+        user_data_dir = Path.home() / '.flyto' / 'chrome-profile'
+        user_data_dir.mkdir(parents=True, exist_ok=True)
+
+        persistent_kwargs = {
+            **context_kwargs,
+            'headless': self.headless,
+            'args': args,
+        }
+        if slow_mo > 0:
+            persistent_kwargs['slow_mo'] = slow_mo
+        if proxy:
+            persistent_kwargs['proxy'] = {'server': proxy}
+
+        for channel in ('chrome', None, 'msedge'):
+            try:
+                ch_label = channel or 'playwright-chromium'
+                logger.info(f"Launching persistent context ({ch_label})...")
+                kw = {**persistent_kwargs}
+                if channel:
+                    kw['channel'] = channel
+                self._context = await launcher.launch_persistent_context(
+                    str(user_data_dir), **kw
+                )
+                self._browser = None  # persistent context manages browser internally
+                self._page = self._context.pages[0] if self._context.pages else await self._context.new_page()
+                logger.info(f"Persistent context launched ({ch_label})")
+                return True
+            except Exception as e:
+                logger.warning(f"Persistent context ({channel or 'chromium'}) failed: {e}")
+        return False
+
+    async def _launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None):
+        """Fallback: regular launch + new_context (no cookie persistence)."""
+        launch_kwargs: Dict[str, Any] = {
+            'headless': self.headless,
+            'args': args,
+        }
+        if slow_mo > 0:
+            launch_kwargs['slow_mo'] = slow_mo
+        if proxy:
+            launch_kwargs['proxy'] = {'server': proxy}
+
+        for channel in ('chrome', None, 'msedge'):
+            try:
+                ch_label = channel or 'playwright-chromium'
+                logger.info(f"Launching regular ({ch_label})...")
+                kw = {**launch_kwargs}
+                if channel:
+                    kw['channel'] = channel
+                self._browser = await launcher.launch(**kw)
+                self._context = await self._browser.new_context(**context_kwargs)
+                self._page = await self._context.new_page()
+                logger.info(f"Regular launch succeeded ({ch_label})")
+                return True
+            except Exception as e:
+                logger.warning(f"Regular launch ({channel or 'chromium'}) failed: {e}")
+        return False
 
     async def goto(self,
                    url: str,
@@ -255,6 +324,16 @@ class BrowserDriver:
                 except (asyncio.TimeoutError, Exception):
                     pass
 
+            # Wait for page to have meaningful content (handles Cloudflare
+            # challenges that redirect after JS verification).
+            try:
+                await self._page.wait_for_function(
+                    'document.body && document.body.innerText.trim().length > 50',
+                    timeout=15000,
+                )
+            except Exception:
+                pass  # best-effort; don't fail if page is legitimately sparse
+
             final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
 
@@ -277,9 +356,16 @@ class BrowserDriver:
                             self._page.wait_for_load_state('networkidle'),
                             timeout=10,
                         )
-                        final_url = self._page.url
                     except (asyncio.TimeoutError, Exception):
                         pass
+                    try:
+                        await self._page.wait_for_function(
+                            'document.body && document.body.innerText.trim().length > 50',
+                            timeout=15000,
+                        )
+                    except Exception:
+                        pass
+                    final_url = self._page.url
                     return {
                         'status': 'success',
                         'url': final_url,
@@ -608,7 +694,10 @@ class BrowserDriver:
             if self._page:
                 # _page may be a Frame (set by browser.frame); only Page has close()
                 if hasattr(self._page, 'close'):
-                    await self._page.close()
+                    try:
+                        await self._page.close()
+                    except Exception:
+                        pass
                 self._page = None
 
             if self._context:
@@ -616,7 +705,10 @@ class BrowserDriver:
                 self._context = None
 
             if self._browser:
-                await self._browser.close()
+                try:
+                    await self._browser.close()
+                except Exception:
+                    pass
                 self._browser = None
 
             if self._playwright:
@@ -631,36 +723,7 @@ class BrowserDriver:
             logger.error(f"Close failed: {str(e)}")
             raise RuntimeError(f"Failed to close browser: {str(e)}") from e
 
-    async def _launch_with_fallback(self, launcher, kwargs):
-        """Try multiple browser sources, preferring system Chrome for real TLS fingerprint."""
-        # 1. System Chrome — real TLS fingerprint, best anti-detection
-        try:
-            logger.info("Launching system Chrome...")
-            return await launcher.launch(channel='chrome', **kwargs)
-        except Exception as e:
-            first_error = e
-            logger.warning(f"System Chrome not available: {e}")
-
-        # 2. Playwright bundled Chromium — fallback
-        try:
-            logger.info("Falling back to Playwright Chromium...")
-            return await launcher.launch(**kwargs)
-        except Exception:
-            logger.warning("Playwright Chromium unavailable")
-
-        # 3. Microsoft Edge (common on Windows)
-        try:
-            logger.info("Trying Microsoft Edge...")
-            return await launcher.launch(channel='msedge', **kwargs)
-        except Exception:
-            logger.warning("Microsoft Edge not found")
-
-        # 4. All failed
-        raise RuntimeError(
-            "No browser engine available. The browser is being downloaded "
-            "in the background — please try again in a few minutes. "
-            "Or install Google Chrome for immediate use."
-        ) from first_error
+    # _launch_persistent and _launch_regular handle all fallback logic above
 
     def _ensure_page(self):
         """Ensure page is available"""
