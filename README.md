@@ -6,150 +6,200 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> A workflow engine with 412 built-in modules. Trace every step. Replay from any point.
-
-## Quick Start — 30 Seconds
+> **A workflow engine with 412 built-in modules. Trace every step. Replay from any point.**
 
 ```bash
-pip install flyto-core[browser]
-playwright install chromium
+pip install flyto-core[browser] && playwright install chromium
 
-flyto recipe site-audit --url https://example.com
-# ✓ audit.json — SEO meta, headings, missing alt tags, Web Vitals, screenshot
+flyto recipe competitor-intel --url https://github.com/pricing
 ```
 
-No config. No API key. Just pick a recipe and run.
+12 steps run. Screenshots captured. Performance metrics extracted. JSON report saved. Zero Python scripts.
 
-### 30 Built-in Recipes
+---
+
+## What happens when step 8 fails?
+
+With a shell script you re-run the whole thing — re-launch the browser, re-navigate, re-extract. With flyto-core, every step records its input, output, and timing into an **execution trace**. When step 8 fails, you **replay from step 8** with the original context — the first 7 steps are instant.
+
+```
+flyto replay workflow-trace.json --from-step 8
+```
+
+This is the difference between a script and an **engine**.
+
+---
+
+## Install
 
 ```bash
-flyto recipes                  # List all recipes
-
-# Audit & Testing
-flyto recipe full-audit    --url https://example.com         # SEO + accessibility + Web Vitals + mobile/desktop screenshots + PDF
-flyto recipe site-audit    --url https://example.com         # SEO + Web Vitals + screenshot report
-flyto recipe web-perf      --url https://example.com         # Core Web Vitals (LCP, FCP, CLS, TTFB)
-flyto recipe login-test    --url https://myapp.com/login --username user --password pass --success_selector .dashboard
-flyto recipe form-fill     --url https://myapp.com/form --data '{"email":"test@example.com","name":"John"}'
-
-# Browser Automation
-flyto recipe screenshot    --url https://example.com
-flyto recipe responsive-report --url https://example.com     # Mobile + tablet + desktop screenshots (3 breakpoints)
-flyto recipe page-to-pdf   --url https://example.com         # Render webpage as PDF
-flyto recipe visual-snapshot --url https://example.com       # Mobile + desktop screenshots
-flyto recipe webpage-archive --url https://example.com       # Save as PNG + PDF + HTML
-flyto recipe scrape-page   --url https://example.com --selector h1
-flyto recipe scrape-links  --url https://example.com
-flyto recipe scrape-table  --url https://en.wikipedia.org/wiki/Python_(programming_language) --selector .wikitable
-flyto recipe scrape-to-csv --url https://example.com --selector "tr" --fields "td:nth-child(1),td:nth-child(2)"
-flyto recipe stock-price   --symbol AAPL
-
-# Data & OCR
-flyto recipe ocr           --input scan.png                  # Extract text from image
-flyto recipe csv-to-json   --input data.csv
-flyto recipe json-to-csv   --input data.json
-flyto recipe pdf-extract   --input report.pdf
-
-# Image
-flyto recipe image-resize   --input photo.jpg --width 800
-flyto recipe image-compress --input photo.jpg --quality 80
-flyto recipe image-convert  --input photo.png --format webp
-
-# Network & Security
-flyto recipe port-scan     --host example.com                # Scan open ports
-flyto recipe whois         --domain example.com              # Domain registration lookup
-
-# DevOps
-flyto recipe monitor-site  --url https://myapp.com
-flyto recipe http-get      --url https://api.github.com/users/octocat
-flyto recipe docker-ps
-flyto recipe git-changelog
-
-# Integrations
-flyto recipe scrape-to-slack --url https://example.com --selector h1 --webhook $SLACK_URL
-flyto recipe github-issue    --url https://example.com --owner me --repo my-app --title "Bug" --token $GITHUB_TOKEN
+pip install flyto-core            # Core engine + CLI + MCP server
+pip install flyto-core[browser]   # + browser automation (Playwright)
+playwright install chromium        # one-time browser setup
 ```
 
-Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for full options.
+---
 
-### Recipe Reference
+## The 85-line problem
 
-| Recipe | Description | Key args |
-|--------|-------------|----------|
-| **Audit & Testing** | | |
-| `full-audit` | Comprehensive audit: SEO + accessibility + Web Vitals + screenshots + PDF | `--url` `--output` |
-| `site-audit` | SEO + performance audit with report | `--url` `--output` |
-| `web-perf` | Core Web Vitals (LCP, FCP, CLS, TTFB) | `--url` |
-| `login-test` | E2E login test with auto field detection | `--url` `--username` `--password` `--success_selector` |
-| `form-fill` | Auto-fill web forms with JSON data | `--url` `--data` `--submit` |
-| **Browser** | | |
-| `screenshot` | Screenshot any webpage | `--url` `--output` `--width` |
-| `responsive-report` | 3-breakpoint responsive screenshots (390/768/1440px) | `--url` `--prefix` |
-| `page-to-pdf` | Render webpage as PDF | `--url` `--output` `--size` |
-| `visual-snapshot` | Mobile + desktop screenshots | `--url` |
-| `webpage-archive` | Save as PNG + PDF + HTML | `--url` `--prefix` |
-| `scrape-page` | Extract text via CSS selector | `--url` `--selector` |
-| `scrape-links` | Extract all links from a page | `--url` |
-| `scrape-table` | Extract HTML table data | `--url` `--selector` |
-| `scrape-to-csv` | Scrape structured data to CSV | `--url` `--selector` `--fields` |
-| `stock-price` | Fetch stock price from Yahoo Finance | `--symbol` |
-| **Data & OCR** | | |
-| `ocr` | Extract text from image (Tesseract) | `--input` `--lang` |
-| `csv-to-json` | Convert CSV to JSON | `--input` |
-| `json-to-csv` | Convert JSON array to CSV | `--input` |
-| `pdf-extract` | Extract text from PDF | `--input` |
-| **Image** | | |
-| `image-resize` | Resize an image | `--input` `--width` |
-| `image-compress` | Compress an image | `--input` `--quality` |
-| `image-convert` | Convert image format | `--input` `--format` |
-| **Network & Security** | | |
-| `port-scan` | Scan open ports on a host | `--host` `--ports` |
-| `whois` | Domain registration lookup | `--domain` |
-| **DevOps** | | |
-| `monitor-site` | HTTP health check | `--url` |
-| `http-get` | Fetch URL and save response | `--url` |
-| `docker-ps` | List Docker containers | `--all` |
-| `git-changelog` | Git diff with file statistics | `--repo` `--ref` |
-| **Integrations** | | |
-| `scrape-to-slack` | Scrape a page → send to Slack | `--url` `--selector` `--webhook` |
-| `github-issue` | Screenshot a bug → create GitHub issue | `--url` `--owner` `--repo` `--title` |
+Here's what competitive pricing analysis looks like in Python:
 
-See **[docs/RECIPES.md](docs/RECIPES.md)** for full documentation with all arguments and examples.
+<table>
+<tr>
+<td width="50%">
 
-## Write Your Own Workflows
+**Python** — 85 lines
 
-Recipes are just YAML files. Write your own:
+```python
+import asyncio, json, time
+from playwright.async_api import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.goto("https://competitor.com/pricing")
+
+        # Extract pricing
+        prices = await page.evaluate("""() => {
+            const cards = document.querySelectorAll(
+              '[class*="price"]'
+            );
+            return Array.from(cards).map(
+              c => c.textContent.trim()
+            );
+        }""")
+
+        # Desktop screenshot
+        await page.screenshot(
+            path="desktop.png", full_page=True
+        )
+
+        # Mobile
+        await page.set_viewport_size(
+            {"width": 390, "height": 844}
+        )
+        await page.screenshot(
+            path="mobile.png", full_page=True
+        )
+
+        # Performance
+        perf = await page.evaluate("""() => {
+            const nav = performance
+              .getEntriesByType('navigation')[0];
+            return {
+              ttfb: nav.responseStart,
+              loaded: nav.loadEventEnd
+            };
+        }""")
+
+        # Save report
+        report = {
+            "prices": prices,
+            "performance": perf,
+        }
+        with open("report.json", "w") as f:
+            json.dump(report, f, indent=2)
+
+        await browser.close()
+
+asyncio.run(main())
+```
+
+</td>
+<td width="50%">
+
+**flyto-core** — 12 steps
 
 ```yaml
-name: price-monitor
+name: Competitor Intel
 steps:
-  - id: open
+  - id: launch
     module: browser.launch
-    params: { headless: true }
-
-  - id: page
+  - id: navigate
     module: browser.goto
-    params: { url: "https://competitor.com/pricing" }
-
+    params: { url: "{{url}}" }
   - id: prices
     module: browser.evaluate
     params:
       script: |
-        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
-
+        JSON.stringify([
+          ...document.querySelectorAll(
+            '[class*="price"]'
+          )
+        ].map(e => e.textContent.trim()))
+  - id: desktop_shot
+    module: browser.screenshot
+    params: { path: desktop.png, full_page: true }
+  - id: mobile
+    module: browser.viewport
+    params: { width: 390, height: 844 }
+  - id: mobile_shot
+    module: browser.screenshot
+    params: { path: mobile.png, full_page: true }
+  - id: perf
+    module: browser.performance
   - id: save
     module: file.write
-    params: { path: "prices.json", content: "${prices.result}" }
-
+    params:
+      path: report.json
+      content: "${prices.result}"
   - id: close
     module: browser.close
 ```
 
+</td>
+</tr>
+<tr>
+<td>
+
+No trace. No replay. No timing. If step 5 fails, re-run everything.
+
+</td>
+<td>
+
+Full trace. Replay from any step. Per-step timing. Every run is debuggable.
+
+</td>
+</tr>
+</table>
+
 ```bash
-flyto run price-monitor.yaml
+flyto recipe competitor-intel --url https://github.com/pricing
 ```
 
-Every run produces an execution trace (input/output/timing per step) and state snapshots. If step 3 fails, replay from step 3 — no re-running the whole thing.
+```
+  Step  1/12  browser.launch         ✓      420ms
+  Step  2/12  browser.goto           ✓    1,203ms
+  Step  3/12  browser.evaluate       ✓       89ms
+  Step  4/12  browser.screenshot     ✓    1,847ms  → saved intel-desktop.png
+  Step  5/12  browser.viewport       ✓       12ms  → 390×844
+  Step  6/12  browser.screenshot     ✓    1,621ms  → saved intel-mobile.png
+  Step  7/12  browser.viewport       ✓        8ms  → 1280×720
+  Step  8/12  browser.performance    ✓    5,012ms  → Web Vitals captured
+  Step  9/12  browser.evaluate       ✓       45ms
+  Step 10/12  browser.evaluate       ✓       11ms
+  Step 11/12  file.write             ✓        3ms  → saved intel-report.json
+  Step 12/12  browser.close          ✓       67ms
+
+  ✓ Done in 10.3s — 12/12 steps passed
+  Output: intel-report.json (1,204 bytes)
+```
+
+---
+
+## Engine Features
+
+This is what makes flyto-core an engine, not a script runner:
+
+- **Execution Trace** — structured record of every step: input, output, timing, status
+- **Replay** — re-execute from any step with the original (or modified) context
+- **Breakpoints** — pause execution at any step, inspect state, resume
+- **Evidence Snapshots** — full state before and after each step boundary
+- **Data Lineage** — track data flow across steps, build dependency graphs
+- **Timeout Guard** — configurable workflow-level and per-step timeout protection
+
+---
 
 ## 412 Modules, 78 Categories
 
@@ -182,28 +232,40 @@ Every run produces an execution trace (input/output/timing per step) and state s
 | `dns.*` | 1 | DNS lookup (A, AAAA, MX, CNAME, TXT, NS) |
 | `monitor.*` | 1 | HTTP health check with SSL cert verification |
 
-See the **[Full Tool Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
+See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
 
-## Engine Features
-
-- **Execution Trace** — structured record of every step: input, output, timing, status
-- **Evidence Snapshots** — full state before and after each step boundary
-- **Replay** — re-execute from any step with the original (or modified) context
-- **Breakpoints** — pause execution at any step, inspect state, resume
-- **Data Lineage** — track data flow across steps, build dependency graphs
-- **Timeout Guard** — configurable workflow and step-level timeout protection
+---
 
 ## How is this different?
 
-| | flyto-core | Shell scripts | n8n / Zapier | Individual MCP servers |
-|---|---|---|---|---|
-| Setup | `pip install flyto-core` | Manual | SaaS account | 15+ packages |
-| Modules | 412 built-in | Write yourself | 500+ (GUI only) | 1-5 each |
-| Interface | CLI + YAML + Python + HTTP + MCP | CLI | GUI | MCP only |
-| Trace / Replay | Built-in | No | Partial | No |
-| License | Apache-2.0 | N/A | Proprietary / AGPL | Varies |
+| Pain point | Shell scripts | n8n / Zapier | flyto-core |
+|-----------|---------------|--------------|------------|
+| Step 8 fails, what now? | Re-run everything | Re-run from UI (partial) | `flyto replay --from-step 8` |
+| What happened at step 3? | Add print() | Check run log | Full trace: input, output, timing |
+| Need browser + API + file I/O | 3 languages, glue code | Install 5 plugins | All built-in (412 modules) |
+| Share with team | "Clone my repo" | Share org account ($$$) | `pip install flyto-core` |
+| Run headless in CI | Fragile bash + puppeteer | Not designed for CI | `flyto run workflow.yaml` |
+| Setup time | 30 min | SaaS signup + connect | `pip install flyto-core` |
 
-## Also Works As
+---
+
+## How to Use
+
+<details>
+<summary><b>CLI</b> — run workflows from the terminal</summary>
+
+```bash
+# Run a built-in recipe
+flyto recipe site-audit --url https://example.com
+
+# Run your own YAML workflow
+flyto run my-workflow.yaml
+
+# List all recipes
+flyto recipes
+```
+
+</details>
 
 <details>
 <summary><b>MCP Server</b> — for Claude Code, Cursor, Windsurf</summary>
@@ -268,22 +330,93 @@ asyncio.run(main())
 
 </details>
 
-## Installation
+---
+
+## 30+ Built-in Recipes
+
+No code required — every recipe is a YAML workflow template:
 
 ```bash
-# Core engine + CLI + MCP server
-pip install flyto-core
+flyto recipes                  # List all recipes
 
-# With browser automation (for screenshot, scrape recipes)
-pip install flyto-core[browser]
-playwright install chromium
+# Audit & Testing
+flyto recipe full-audit       --url https://example.com
+flyto recipe competitor-intel --url https://github.com/pricing
+flyto recipe site-audit       --url https://example.com
+flyto recipe web-perf         --url https://example.com
+flyto recipe login-test       --url https://myapp.com/login --username user --password pass --success_selector .dashboard
+flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"test@example.com"}'
 
-# With HTTP API server
-pip install flyto-core[api]
+# Browser Automation
+flyto recipe screenshot        --url https://example.com
+flyto recipe responsive-report --url https://example.com
+flyto recipe page-to-pdf       --url https://example.com
+flyto recipe visual-snapshot   --url https://example.com
+flyto recipe webpage-archive   --url https://example.com
+flyto recipe scrape-page       --url https://example.com --selector h1
+flyto recipe scrape-links      --url https://example.com
+flyto recipe scrape-table      --url https://en.wikipedia.org/wiki/YAML --selector .wikitable
+flyto recipe stock-price       --symbol AAPL
 
-# Everything
-pip install flyto-core[all]
+# Data & Image
+flyto recipe ocr               --input scan.png
+flyto recipe csv-to-json       --input data.csv
+flyto recipe image-resize      --input photo.jpg --width 800
+flyto recipe image-convert     --input photo.png --format webp
+
+# Network & DevOps
+flyto recipe port-scan         --host example.com
+flyto recipe whois             --domain example.com
+flyto recipe monitor-site      --url https://myapp.com
+flyto recipe docker-ps
+flyto recipe git-changelog
+
+# Integrations
+flyto recipe scrape-to-slack   --url https://example.com --selector h1 --webhook $SLACK_URL
+flyto recipe github-issue      --url https://example.com --owner me --repo my-app --title "Bug" --token $GITHUB_TOKEN
 ```
+
+Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for full options.
+See **[docs/RECIPES.md](docs/RECIPES.md)** for full documentation.
+
+---
+
+## Write Your Own Workflows
+
+Recipes are just YAML files. Write your own:
+
+```yaml
+name: price-monitor
+steps:
+  - id: open
+    module: browser.launch
+    params: { headless: true }
+
+  - id: page
+    module: browser.goto
+    params: { url: "https://competitor.com/pricing" }
+
+  - id: prices
+    module: browser.evaluate
+    params:
+      script: |
+        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
+
+  - id: save
+    module: file.write
+    params: { path: "prices.json", content: "${prices.result}" }
+
+  - id: close
+    module: browser.close
+```
+
+```bash
+flyto run price-monitor.yaml
+```
+
+Every run produces an execution trace and state snapshots. If step 3 fails, replay from step 3 — no re-running the whole thing.
+
+---
 
 ## For Module Authors
 
@@ -306,6 +439,8 @@ async def string_reverse(context):
 ```
 
 See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete guide.
+
+---
 
 ## Contributing
 

@@ -165,6 +165,20 @@ class BrowserClickModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Auto-snapshot if the AI skipped it — selectors should come from
+        # real DOM, not from guessing.
+        if not getattr(browser, '_snapshot_since_nav', True):
+            try:
+                body = await browser.page.evaluate(
+                    'document.body ? document.body.innerText.substring(0, 2000) : ""'
+                )
+                browser._snapshot_since_nav = True
+                self._auto_snapshot_text = body
+            except Exception:
+                self._auto_snapshot_text = None
+        else:
+            self._auto_snapshot_text = None
+
         # Wait for element to be visible before clicking (unless force mode)
         if not self.force:
             await browser.wait(self.selector, state='visible', timeout_ms=10000)
@@ -180,6 +194,9 @@ class BrowserClickModule(BaseModule):
             click_options['modifiers'] = self.modifiers
 
         await page.click(self.selector, **click_options)
-        return {"status": "success", "selector": self.selector, "method": self.method}
+        result = {"status": "success", "selector": self.selector, "method": self.method}
+        if self._auto_snapshot_text:
+            result["_page_hint"] = self._auto_snapshot_text[:800]
+        return result
 
 

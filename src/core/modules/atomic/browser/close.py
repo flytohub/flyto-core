@@ -31,7 +31,7 @@ from ...registry import register_module
     can_connect_to=['notify.*', 'data.*', 'file.*', 'flow.*', 'end'],
 
     # Execution settings
-    timeout_ms=10000,
+    timeout_ms=15000,
     retryable=False,
     max_retries=0,
     concurrent_safe=False,

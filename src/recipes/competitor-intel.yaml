@@ -1,0 +1,133 @@
+name: Competitor Intel
+description: "Competitor analysis: pricing data, desktop + mobile screenshots, Web Vitals, structured JSON report"
+
+args:
+  url:
+    type: string
+    required: true
+    description: Competitor URL to analyze (e.g. a pricing page)
+  output:
+    type: string
+    default: intel-report.json
+    description: Output report file
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: extract_pricing
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const plans = [];
+          const cards = document.querySelectorAll(
+            '[class*="price"], [class*="plan"], [class*="tier"], [class*="pricing"], [data-testid*="price"]'
+          );
+          cards.forEach(card => {
+            const text = card.textContent.replace(/\s+/g, ' ').trim().slice(0, 300);
+            if (text.length > 10) plans.push(text);
+          });
+          const prices = [];
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          while (walker.nextNode()) {
+            const m = walker.currentNode.textContent.match(/\$[\d,.]+(?:\s*\/\s*\w+)?/g);
+            if (m) prices.push(...m);
+          }
+          window.__flyto_pricing = { plans: plans.slice(0, 20), prices: [...new Set(prices)].slice(0, 30) };
+          return JSON.stringify(window.__flyto_pricing);
+        })()
+
+  - id: desktop_shot
+    module: browser.screenshot
+    params:
+      path: intel-desktop.png
+      full_page: true
+
+  - id: mobile_viewport
+    module: browser.viewport
+    params:
+      width: 390
+      height: 844
+
+  - id: mobile_shot
+    module: browser.screenshot
+    params:
+      path: intel-mobile.png
+      full_page: true
+
+  - id: restore_viewport
+    module: browser.viewport
+    params:
+      width: 1280
+      height: 720
+
+  - id: perf
+    module: browser.performance
+    params:
+      metrics: ["all"]
+      timeout_ms: 5000
+
+  - id: extract_meta
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const m = {};
+          document.querySelectorAll('meta').forEach(el => {
+            const k = el.getAttribute('name') || el.getAttribute('property');
+            if (k) m[k] = el.getAttribute('content');
+          });
+          window.__flyto_meta = {
+            description: m['description'] || null,
+            og_image: m['og:image'] || null,
+            tech_hints: {
+              scripts: document.querySelectorAll('script[src]').length,
+              stylesheets: document.querySelectorAll('link[rel="stylesheet"]').length,
+              has_react: !!document.querySelector('[data-reactroot], [id="__next"]'),
+              has_vue: !!document.querySelector('[data-v-], [id="app"]'),
+            }
+          };
+          return JSON.stringify(window.__flyto_meta);
+        })()
+
+  - id: build_report
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const nav = performance.getEntriesByType('navigation')[0] || {};
+          const paint = performance.getEntriesByType('paint') || [];
+          const fcp = paint.find(e => e.name === 'first-contentful-paint');
+          const report = {
+            generated_at: new Date().toISOString(),
+            url: location.href,
+            title: document.title,
+            pricing: window.__flyto_pricing || {},
+            performance: {
+              ttfb_ms: Math.round(nav.responseStart - nav.requestStart) || 0,
+              dom_loaded_ms: Math.round(nav.domContentLoadedEventEnd - nav.startTime) || 0,
+              fully_loaded_ms: Math.round(nav.loadEventEnd - nav.startTime) || 0,
+              fcp_ms: fcp ? Math.round(fcp.startTime) : null
+            },
+            meta: window.__flyto_meta || {},
+            screenshots: ['intel-desktop.png', 'intel-mobile.png']
+          };
+          return JSON.stringify(report, null, 2);
+        })()
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${build_report.result}"
+
+  - id: close
+    module: browser.close

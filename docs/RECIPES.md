@@ -12,6 +12,24 @@ flyto recipes  # list all
 
 ## Audit & Testing
 
+### competitor-intel
+
+Competitor analysis — extract pricing data, desktop + mobile screenshots, Web Vitals, SEO meta, structured JSON report. One command, full competitive intelligence.
+
+```bash
+flyto recipe competitor-intel --url https://github.com/pricing
+flyto recipe competitor-intel --url https://competitor.com/pricing --output comp-report.json
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | Competitor URL to analyze (e.g. a pricing page) |
+| `--output` | no | `intel-report.json` | Output report file |
+
+Output includes: pricing data (plan text + dollar amounts), desktop screenshot (`intel-desktop.png`), mobile screenshot (`intel-mobile.png`), Web Vitals performance metrics, SEO meta tags, technology hints. 12 steps, fully traced.
+
+---
+
 ### full-audit
 
 Comprehensive site audit — Web Vitals + SEO + accessibility + console errors + mobile/desktop screenshots + PDF. One command, complete report.

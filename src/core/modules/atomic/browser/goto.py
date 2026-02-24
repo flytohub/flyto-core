@@ -26,11 +26,14 @@ Example of schema presets usage - compare before/after:
             presets.TIMEOUT_MS(),
         )
 """
+import logging
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
@@ -110,6 +113,17 @@ class BrowserGotoModule(BaseModule):
         self.wait_until = self.params.get('wait_until', 'domcontentloaded')
         self.timeout_ms = self.params.get('timeout_ms', 30000)
 
+    # Error patterns where www/non-www toggle is likely to help
+    _WWW_TOGGLE_PATTERNS = (
+        "ERR_HTTP_RESPONSE_CODE_FAILURE",
+        "ERR_FAILED",
+        "ERR_ABORTED",
+        "ERR_CONNECTION_REFUSED",
+        "ERR_CONNECTION_RESET",
+        "ERR_TIMED_OUT",
+        "403",
+    )
+
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
@@ -117,22 +131,49 @@ class BrowserGotoModule(BaseModule):
 
         try:
             result = await browser.goto(self.url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+
+            # driver.goto() returns success even for HTTP errors (403 etc.)
+            # when the page URL isn't chrome-error://.  Detect and try www toggle.
+            if result.get('warning') and 'HTTP error' in str(result.get('warning', '')):
+                logger.info("goto: HTTP error warning detected, trying www toggle for %s", self.url)
+                alt = await self._try_www_toggle(browser)
+                if alt is not None:
+                    return alt
+
             return {"status": "success", "url": result.get('url', self.url)}
-        except RuntimeError as e:
-            # www/non-www fallback: some sites block one variant but not the other
-            if "ERR_HTTP_RESPONSE_CODE_FAILURE" in str(e):
-                alt_url = self._toggle_www(self.url)
-                if alt_url:
-                    # Replace page to clear chrome-error:// state
-                    try:
-                        old_page = browser._page
-                        browser._page = await browser._context.new_page()
-                        await old_page.close()
-                    except Exception:
-                        pass
-                    result = await browser.goto(alt_url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
-                    return {"status": "success", "url": result.get('url', alt_url)}
+
+        except (RuntimeError, Exception) as e:
+            err_str = str(e)
+            if any(p in err_str for p in self._WWW_TOGGLE_PATTERNS):
+                logger.info("goto: error matched toggle pattern, trying www toggle for %s: %s", self.url, err_str[:100])
+                alt = await self._try_www_toggle(browser)
+                if alt is not None:
+                    return alt
             raise
+
+    async def _try_www_toggle(self, browser) -> Any:
+        """Try navigating with toggled www prefix. Returns result dict or None."""
+        alt_url = self._toggle_www(self.url)
+        if not alt_url:
+            return None
+        logger.info("goto: www toggle %s → %s", self.url, alt_url)
+        # Replace page to clear chrome-error:// state
+        try:
+            old_page = browser._page
+            browser._page = await browser._context.new_page()
+            await old_page.close()
+        except Exception:
+            pass
+        try:
+            result = await browser.goto(alt_url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+            # Only accept if the toggle actually fixed it
+            if not result.get('warning'):
+                logger.info("goto: www toggle succeeded → %s", result.get('url', alt_url))
+                return {"status": "success", "url": result.get('url', alt_url)}
+            logger.info("goto: www toggle also got warning, giving up")
+        except Exception as e2:
+            logger.info("goto: www toggle also failed: %s", str(e2)[:100])
+        return None
 
     @staticmethod
     def _toggle_www(url: str):

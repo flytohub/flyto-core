@@ -133,6 +133,7 @@ class BrowserSnapshotModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        browser._snapshot_since_nav = True
         page = browser.page
 
         # MHTML requires Chromium

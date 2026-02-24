@@ -85,6 +85,20 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Auto-snapshot if the AI skipped it — selectors should come from
+        # real DOM, not from guessing.  The snapshot text is returned so the
+        # LLM can see page structure for subsequent calls.
+        if not getattr(browser, '_snapshot_since_nav', True):
+            try:
+                page = browser.page
+                body = await page.evaluate('document.body ? document.body.innerText.substring(0, 2000) : ""')
+                browser._snapshot_since_nav = True
+                self._auto_snapshot_text = body
+            except Exception:
+                self._auto_snapshot_text = None
+        else:
+            self._auto_snapshot_text = None
+
         # Wait for element to be visible before interacting
         await browser.wait(self.selector, state='visible', timeout_ms=10000)
 
@@ -96,11 +110,14 @@ class BrowserTypeModule(BaseModule):
 
         # Mask sensitive text in return value
         is_sensitive = any(kw in self.selector.lower() for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential'])
-        return {
+        result = {
             "status": "success",
             "selector": self.selector,
             "text": '***' if is_sensitive else self.text,
             "text_length": len(self.text),
         }
+        if self._auto_snapshot_text:
+            result["_page_hint"] = self._auto_snapshot_text[:800]
+        return result
 
 

@@ -6,6 +6,7 @@ Recipes are YAML workflow templates with named arguments.
 """
 
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -16,6 +17,43 @@ from .config import Colors
 
 # Recipes directory (bundled with package)
 RECIPES_DIR = Path(__file__).parent.parent / 'recipes'
+
+# Column width for module name alignment
+_COL_MODULE = 24  # "browser.performance"
+
+
+def _fmt_duration(ms: int) -> str:
+    """Format milliseconds as a human-readable string with comma separators."""
+    if ms < 1000:
+        return f"{ms:,}ms"
+    return f"{ms / 1000:,.1f}s"
+
+
+def _print_step_line(
+    step_num: int,
+    total: int,
+    module_id: str,
+    status: str,
+    duration_ms: int = 0,
+    hint: str = '',
+) -> None:
+    """Print a single step line with aligned columns."""
+    pad = len(str(total))
+    num_str = f"{step_num:>{pad}}/{total}"
+
+    if status == 'success':
+        icon = f"{Colors.OKGREEN}\u2713{Colors.ENDC}"
+    elif status in ('error', 'failed'):
+        icon = f"{Colors.FAIL}\u2717{Colors.ENDC}"
+    elif status == 'skipped':
+        icon = f"{Colors.WARNING}\u2015{Colors.ENDC}"
+    else:
+        icon = f"{Colors.OKCYAN}\u2026{Colors.ENDC}"
+
+    dur_str = _fmt_duration(duration_ms).rjust(8) if duration_ms else ''.rjust(8)
+    hint_str = f"  \u2192 {hint}" if hint else ''
+
+    print(f"  Step {num_str}  {module_id:<{_COL_MODULE}} {icon} {dur_str}{hint_str}")
 
 
 def load_recipe(recipe_name: str) -> Optional[Dict[str, Any]]:
@@ -188,6 +226,28 @@ def run_recipes_list() -> int:
     return 0
 
 
+def _step_hint(step: Dict[str, Any]) -> str:
+    """Generate a short hint for notable steps based on module type."""
+    module = step.get('module', '')
+    params = step.get('params', {})
+    if module == 'browser.performance':
+        return 'Web Vitals captured'
+    if module == 'browser.screenshot':
+        path = params.get('path', '')
+        return f'saved {path}' if path else ''
+    if module == 'browser.pdf':
+        path = params.get('path', '')
+        return f'saved {path}' if path else ''
+    if module == 'browser.viewport':
+        w = params.get('width', '')
+        h = params.get('height', '')
+        return f'{w}\u00d7{h}' if w else ''
+    if module == 'file.write':
+        path = params.get('path', '')
+        return f'saved {path}' if path and not path.startswith('$') else ''
+    return ''
+
+
 def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
     """Load, substitute, and execute a recipe."""
     recipe = load_recipe(recipe_name)
@@ -226,8 +286,6 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
 
     # Execute workflow directly via WorkflowEngine
     import asyncio
-    import json
-    import time
 
     try:
         from core.engine.workflow.engine import WorkflowEngine
@@ -238,13 +296,45 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
     steps = workflow.get('steps', [])
     total_steps = len(steps)
 
-    print(f"Running {total_steps} steps...")
-    print()
+    # Build step metadata lookup (index → module, hint)
+    step_meta = {}
+    for i, s in enumerate(steps):
+        step_meta[i] = {
+            'module': s.get('module', '?'),
+            'hint': _step_hint(s),
+        }
+
+    # Real-time checkpoint callback: prints each step as it completes
+    completed_count = 0
+
+    async def _on_checkpoint(step_index, step_id, checkpoint_data, status):
+        nonlocal completed_count
+        completed_count += 1
+        meta = step_meta.get(step_index, {})
+        module_id = meta.get('module', '?')
+        hint = meta.get('hint', '')
+
+        # Get duration from trace collector (available during execution)
+        duration_ms = 0
+        eng = engine_ref[0]
+        if eng and eng._trace_collector:
+            st = eng._trace_collector.trace.get_step_trace(step_id)
+            if st:
+                duration_ms = st.durationMs
+
+        _print_step_line(completed_count, total_steps, module_id, status, duration_ms, hint)
+
+    engine_ref = [None]  # Mutable ref for callback access
 
     start_time = time.time()
 
     async def _run():
-        engine = WorkflowEngine(workflow, params, enable_trace=True)
+        engine = WorkflowEngine(
+            workflow, params,
+            enable_trace=True,
+            checkpoint_callback=_on_checkpoint,
+        )
+        engine_ref[0] = engine
         result = await engine.execute()
         return engine, result
 
@@ -253,31 +343,62 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
 
         elapsed = time.time() - start_time
 
-        # Show step results
-        for entry in engine.execution_log:
-            step_id = entry.get('step_id', '?')
-            status = entry.get('status', 'unknown')
-            module = entry.get('module', '')
-            if status == 'success':
-                print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {step_id} ({module})")
-            else:
-                error = entry.get('error', '')
-                print(f"  {Colors.FAIL}✗{Colors.ENDC} {step_id} ({module}) — {error}")
+        # If checkpoint callback didn't fire (e.g. old engine), fall back to trace
+        if completed_count == 0:
+            trace = engine.get_execution_trace()
+            if trace:
+                for st in trace.steps:
+                    _print_step_line(
+                        st.stepIndex + 1, total_steps, st.moduleId,
+                        st.status, st.durationMs,
+                    )
 
+        # Summary line
+        passed = completed_count or len(engine.execution_log)
         print()
-        print(f"{Colors.OKGREEN}Done{Colors.ENDC} in {elapsed:.1f}s")
+        print(
+            f"{Colors.OKGREEN}\u2713 Done{Colors.ENDC} in {elapsed:.1f}s"
+            f" \u2014 {passed}/{total_steps} steps passed"
+        )
 
-        # Show output hints
-        for a_name, a_val in args.items():
-            if a_name == 'output' and a_val:
-                output_path = Path(a_val)
-                if output_path.exists():
-                    size = output_path.stat().st_size
-                    print(f"Output: {a_val} ({size:,} bytes)")
+        # Show output file sizes
+        _print_output_files(args, engine)
 
         return 0
 
     except Exception as e:
         elapsed = time.time() - start_time
-        print(f"{Colors.FAIL}Failed{Colors.ENDC} after {elapsed:.1f}s: {e}")
+        # Show how far we got
+        failed_at = completed_count + 1 if completed_count < total_steps else total_steps
+        print()
+        print(
+            f"{Colors.FAIL}\u2717 Failed{Colors.ENDC} at step {failed_at}/{total_steps}"
+            f" after {elapsed:.1f}s: {e}"
+        )
         return 1
+
+
+def _print_output_files(args: Dict[str, str], engine) -> None:
+    """Print sizes of any generated output files."""
+    shown = set()
+
+    # Check --output arg
+    output_val = args.get('output', '')
+    if output_val:
+        p = Path(output_val)
+        if p.exists():
+            shown.add(str(p))
+            print(f"  Output: {p} ({p.stat().st_size:,} bytes)")
+
+    # Check common output files from step params
+    trace = engine.get_execution_trace()
+    if trace:
+        for st in trace.steps:
+            if st.input and st.input.params:
+                for key in ('path', 'output'):
+                    val = st.input.params.get(key, '')
+                    if isinstance(val, str) and val and not val.startswith('$'):
+                        p = Path(val)
+                        if p.exists() and str(p) not in shown:
+                            shown.add(str(p))
+                            print(f"  Output: {p} ({p.stat().st_size:,} bytes)")

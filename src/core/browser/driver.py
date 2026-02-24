@@ -53,6 +53,9 @@ class BrowserDriver:
         self._browser: Optional[Browser] = None
         self._page: Optional[Page] = None
         self._context = None
+        # Track whether a snapshot was taken since last navigation.
+        # Used by modules to auto-snapshot before interaction.
+        self._snapshot_since_nav = False
 
     async def launch(
         self,
@@ -361,6 +364,7 @@ class BrowserDriver:
 
             final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
+            self._snapshot_since_nav = False
 
             return {
                 'status': 'success',
@@ -713,6 +717,8 @@ class BrowserDriver:
         Returns:
             Close result
         """
+        _CLOSE_TIMEOUT = 2  # seconds per sub-step (keep total < module timeout)
+
         try:
             logger.info("Closing browser")
 
@@ -720,24 +726,30 @@ class BrowserDriver:
                 # _page may be a Frame (set by browser.frame); only Page has close()
                 if hasattr(self._page, 'close'):
                     try:
-                        await self._page.close()
-                    except Exception:
-                        pass
+                        await asyncio.wait_for(self._page.close(), timeout=_CLOSE_TIMEOUT)
+                    except (asyncio.TimeoutError, Exception):
+                        logger.debug("Page close timed out or failed, continuing")
                 self._page = None
 
             if self._context:
-                await self._context.close()
+                try:
+                    await asyncio.wait_for(self._context.close(), timeout=_CLOSE_TIMEOUT)
+                except (asyncio.TimeoutError, Exception):
+                    logger.debug("Context close timed out or failed, continuing")
                 self._context = None
 
             if self._browser:
                 try:
-                    await self._browser.close()
-                except Exception:
-                    pass
+                    await asyncio.wait_for(self._browser.close(), timeout=_CLOSE_TIMEOUT)
+                except (asyncio.TimeoutError, Exception):
+                    logger.debug("Browser close timed out or failed, continuing")
                 self._browser = None
 
             if self._playwright:
-                await self._playwright.stop()
+                try:
+                    await asyncio.wait_for(self._playwright.stop(), timeout=_CLOSE_TIMEOUT)
+                except (asyncio.TimeoutError, Exception):
+                    logger.debug("Playwright stop timed out or failed, continuing")
                 self._playwright = None
 
             logger.info("Browser closed successfully")
