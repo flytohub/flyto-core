@@ -20,23 +20,28 @@ flyto recipe site-audit --url https://example.com
 
 No config. No API key. Just pick a recipe and run.
 
-### 25 Built-in Recipes
+### 30 Built-in Recipes
 
 ```bash
 flyto recipes                  # List all recipes
 
-# Audit & Performance
+# Audit & Testing
+flyto recipe full-audit    --url https://example.com         # SEO + accessibility + Web Vitals + mobile/desktop screenshots + PDF
 flyto recipe site-audit    --url https://example.com         # SEO + Web Vitals + screenshot report
 flyto recipe web-perf      --url https://example.com         # Core Web Vitals (LCP, FCP, CLS, TTFB)
+flyto recipe login-test    --url https://myapp.com/login --username user --password pass --success_selector .dashboard
+flyto recipe form-fill     --url https://myapp.com/form --data '{"email":"test@example.com","name":"John"}'
 
 # Browser Automation
 flyto recipe screenshot    --url https://example.com
+flyto recipe responsive-report --url https://example.com     # Mobile + tablet + desktop screenshots (3 breakpoints)
 flyto recipe page-to-pdf   --url https://example.com         # Render webpage as PDF
 flyto recipe visual-snapshot --url https://example.com       # Mobile + desktop screenshots
 flyto recipe webpage-archive --url https://example.com       # Save as PNG + PDF + HTML
 flyto recipe scrape-page   --url https://example.com --selector h1
 flyto recipe scrape-links  --url https://example.com
 flyto recipe scrape-table  --url https://en.wikipedia.org/wiki/Python_(programming_language) --selector .wikitable
+flyto recipe scrape-to-csv --url https://example.com --selector "tr" --fields "td:nth-child(1),td:nth-child(2)"
 flyto recipe stock-price   --symbol AAPL
 
 # Data & OCR
@@ -71,17 +76,22 @@ Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for fu
 
 | Recipe | Description | Key args |
 |--------|-------------|----------|
-| **Audit & Performance** | | |
+| **Audit & Testing** | | |
+| `full-audit` | Comprehensive audit: SEO + accessibility + Web Vitals + screenshots + PDF | `--url` `--output` |
 | `site-audit` | SEO + performance audit with report | `--url` `--output` |
 | `web-perf` | Core Web Vitals (LCP, FCP, CLS, TTFB) | `--url` |
+| `login-test` | E2E login test with auto field detection | `--url` `--username` `--password` `--success_selector` |
+| `form-fill` | Auto-fill web forms with JSON data | `--url` `--data` `--submit` |
 | **Browser** | | |
 | `screenshot` | Screenshot any webpage | `--url` `--output` `--width` |
+| `responsive-report` | 3-breakpoint responsive screenshots (390/768/1440px) | `--url` `--prefix` |
 | `page-to-pdf` | Render webpage as PDF | `--url` `--output` `--size` |
 | `visual-snapshot` | Mobile + desktop screenshots | `--url` |
 | `webpage-archive` | Save as PNG + PDF + HTML | `--url` `--prefix` |
 | `scrape-page` | Extract text via CSS selector | `--url` `--selector` |
 | `scrape-links` | Extract all links from a page | `--url` |
 | `scrape-table` | Extract HTML table data | `--url` `--selector` |
+| `scrape-to-csv` | Scrape structured data to CSV | `--url` `--selector` `--fields` |
 | `stock-price` | Fetch stock price from Yahoo Finance | `--symbol` |
 | **Data & OCR** | | |
 | `ocr` | Extract text from image (Tesseract) | `--input` `--lang` |

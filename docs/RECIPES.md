@@ -10,7 +10,25 @@ flyto recipes  # list all
 
 ---
 
-## Audit & Performance
+## Audit & Testing
+
+### full-audit
+
+Comprehensive site audit — Web Vitals + SEO + accessibility + console errors + mobile/desktop screenshots + PDF. One command, complete report.
+
+```bash
+flyto recipe full-audit --url https://example.com
+flyto recipe full-audit --url https://github.com --output github-audit.json
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to audit |
+| `--output` | no | `audit-report.json` | Output report file |
+
+Output includes: performance timing (TTFB, DOM loaded, fully loaded), SEO analysis (title, meta tags, OG tags, headings, canonical), accessibility check (missing alt tags, unlabeled inputs, empty buttons), page stats (links, scripts, stylesheets, iframes, forms). Also generates `audit-mobile.png`, `audit-desktop.png`, and `audit-page.pdf`.
+
+---
 
 ### site-audit
 
@@ -46,6 +64,43 @@ flyto recipe web-perf --url https://example.com --timeout 10000
 
 ---
 
+### login-test
+
+E2E login test — navigate to login page, fill credentials, submit, verify success element appears, screenshot the result.
+
+```bash
+flyto recipe login-test --url https://myapp.com/login --username user@example.com --password s3cret --success_selector .dashboard
+flyto recipe login-test --url https://the-internet.herokuapp.com/login --username tomsmith --password SuperSecretPassword! --success_selector ".flash.success"
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | Login page URL |
+| `--username` | yes | — | Username or email |
+| `--password` | yes | — | Password |
+| `--success_selector` | yes | — | CSS selector that appears after successful login |
+| `--output` | no | `login-result.png` | Screenshot output path |
+
+---
+
+### form-fill
+
+Auto-fill a web form with data and optionally submit it. Pass field:value pairs as JSON.
+
+```bash
+flyto recipe form-fill --url https://myapp.com/contact --data '{"email":"test@example.com","name":"John","message":"Hello"}'
+flyto recipe form-fill --url https://httpbin.org/forms/post --data '{"custname":"Jane","custtel":"555-0123"}' --submit false
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | Page URL containing the form |
+| `--data` | yes | — | JSON string of field:value pairs |
+| `--submit` | no | `true` | Submit the form after filling |
+| `--output` | no | `form-result.png` | Screenshot output path after submission |
+
+---
+
 ## Browser
 
 ### screenshot
@@ -63,6 +118,22 @@ flyto recipe screenshot --url https://example.com --output home.png --width 1920
 | `--output` | no | `screenshot.png` | Output file path |
 | `--width` | no | `1280` | Viewport width |
 | `--height` | no | `720` | Viewport height |
+
+---
+
+### responsive-report
+
+Screenshot a page at 3 breakpoints — mobile (390px), tablet (768px), desktop (1440px). Perfect for responsive design review.
+
+```bash
+flyto recipe responsive-report --url https://example.com
+flyto recipe responsive-report --url https://github.com --prefix github
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to capture |
+| `--prefix` | no | `responsive` | Output file prefix (creates prefix-mobile.png, prefix-tablet.png, prefix-desktop.png) |
 
 ---
 
@@ -163,6 +234,24 @@ flyto recipe scrape-table --url https://example.com/data --selector "#results" -
 | `--url` | yes | — | URL containing the table |
 | `--selector` | no | `table` | CSS selector for the table element |
 | `--output` | no | `table.csv` | Output file path |
+
+---
+
+### scrape-to-csv
+
+Scrape structured data from a webpage and save as CSV. Configure row selector and column field selectors.
+
+```bash
+flyto recipe scrape-to-csv --url https://en.wikipedia.org/wiki/List_of_largest_companies_by_revenue --selector "table.wikitable tbody tr" --fields "td:nth-child(2),td:nth-child(3),td:nth-child(4)"
+flyto recipe scrape-to-csv --url https://example.com/products --selector ".product" --fields ".name,.price,.rating" --output products.csv
+```
+
+| Arg | Required | Default | Description |
+|-----|----------|---------|-------------|
+| `--url` | yes | — | URL to scrape |
+| `--selector` | yes | — | CSS selector for rows (e.g. `tr`, `.item`, `.product`) |
+| `--fields` | yes | — | Comma-separated child selectors for columns |
+| `--output` | no | `scraped.csv` | Output CSV file path |
 
 ---
 

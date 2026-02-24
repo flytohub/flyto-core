@@ -70,7 +70,9 @@ def _substitute_deep(obj: Any, args: Dict[str, str]) -> Any:
 
 
 def _auto_type(value: str) -> Any:
-    """Convert string to int/float/bool if possible."""
+    """Convert string to int/float/bool/json if possible."""
+    import json as _json
+
     if value.lower() in ('true', 'false'):
         return value.lower() == 'true'
     try:
@@ -81,6 +83,12 @@ def _auto_type(value: str) -> Any:
         return float(value)
     except ValueError:
         pass
+    # Try JSON for objects/arrays (e.g. '{"email":"test@example.com"}')
+    if value.startswith(('{', '[')):
+        try:
+            return _json.loads(value)
+        except (ValueError, _json.JSONDecodeError):
+            pass
     return value
 
 

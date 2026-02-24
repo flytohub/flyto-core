@@ -1,0 +1,64 @@
+name: Scrape to CSV
+description: Scrape structured data from a webpage and save as CSV
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to scrape
+  selector:
+    type: string
+    required: true
+    description: CSS selector for rows (e.g. tr, .item, .product)
+  fields:
+    type: string
+    required: true
+    description: "Comma-separated child selectors for columns (e.g. 'td:nth-child(1),td:nth-child(2),td:nth-child(3)')"
+  output:
+    type: string
+    default: scraped.csv
+    description: Output CSV file path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: wait
+    module: browser.wait
+    params:
+      selector: "{{selector}}"
+      state: visible
+
+  - id: extract
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const rows = document.querySelectorAll('{{selector}}');
+          const fields = '{{fields}}'.split(',').map(s => s.trim());
+          const csv = [];
+          rows.forEach(row => {
+            const cells = fields.map(sel => {
+              const el = row.querySelector(sel);
+              return el ? '"' + el.textContent.trim().replace(/"/g, '""').replace(/\n/g, ' ') + '"' : '""';
+            });
+            csv.push(cells.join(','));
+          });
+          return csv.join('\n');
+        })()
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${extract.result}"
+
+  - id: close
+    module: browser.close

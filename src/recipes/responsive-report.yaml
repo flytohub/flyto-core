@@ -1,0 +1,62 @@
+name: Responsive Report
+description: Screenshot a page at 3 breakpoints — mobile (390px), tablet (768px), desktop (1440px)
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to capture
+  prefix:
+    type: string
+    default: responsive
+    description: Output file prefix
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: size_mobile
+    module: browser.viewport
+    params:
+      width: 390
+      height: 844
+
+  - id: shot_mobile
+    module: browser.screenshot
+    params:
+      path: "{{prefix}}-mobile.png"
+      full_page: true
+
+  - id: size_tablet
+    module: browser.viewport
+    params:
+      width: 768
+      height: 1024
+
+  - id: shot_tablet
+    module: browser.screenshot
+    params:
+      path: "{{prefix}}-tablet.png"
+      full_page: true
+
+  - id: size_desktop
+    module: browser.viewport
+    params:
+      width: 1440
+      height: 900
+
+  - id: shot_desktop
+    module: browser.screenshot
+    params:
+      path: "{{prefix}}-desktop.png"
+      full_page: true
+
+  - id: close
+    module: browser.close

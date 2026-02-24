@@ -1,0 +1,134 @@
+name: Full Audit
+description: "Comprehensive site audit: Web Vitals + SEO + accessibility + console errors + mobile/desktop screenshots + PDF"
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to audit
+  output:
+    type: string
+    default: audit-report.json
+    description: Output report file
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: perf
+    module: browser.performance
+    params:
+      metrics: ["all"]
+      timeout_ms: 5000
+
+  - id: audit
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const nav = performance.getEntriesByType('navigation')[0] || {};
+          const meta = {};
+          document.querySelectorAll('meta').forEach(m => {
+            const key = m.getAttribute('name') || m.getAttribute('property');
+            if (key) meta[key] = m.getAttribute('content');
+          });
+          const headings = {};
+          ['h1','h2','h3','h4'].forEach(tag => {
+            const els = document.querySelectorAll(tag);
+            if (els.length) headings[tag] = Array.from(els).map(e => e.textContent.trim().slice(0, 100));
+          });
+          const images = document.querySelectorAll('img');
+          const missingAlt = Array.from(images).filter(i => !i.alt);
+          const links = document.querySelectorAll('a[href]');
+          const externalLinks = Array.from(links).filter(a => a.hostname !== location.hostname);
+          return JSON.stringify({
+            url: location.href,
+            title: document.title,
+            performance: {
+              ttfb_ms: Math.round(nav.responseStart - nav.requestStart) || 0,
+              dom_loaded_ms: Math.round(nav.domContentLoadedEventEnd - nav.startTime) || 0,
+              fully_loaded_ms: Math.round(nav.loadEventEnd - nav.startTime) || 0,
+              dom_interactive_ms: Math.round(nav.domInteractive - nav.startTime) || 0
+            },
+            seo: {
+              title_length: document.title.length,
+              meta_description: meta['description'] || null,
+              canonical: document.querySelector('link[rel="canonical"]')?.href || null,
+              og_title: meta['og:title'] || null,
+              og_description: meta['og:description'] || null,
+              og_image: meta['og:image'] || null,
+              twitter_card: meta['twitter:card'] || null,
+              robots: meta['robots'] || null,
+              viewport: meta['viewport'] || null,
+              headings
+            },
+            accessibility: {
+              images_total: images.length,
+              images_missing_alt: missingAlt.length,
+              missing_alt_srcs: missingAlt.slice(0, 10).map(i => i.src),
+              inputs_without_label: document.querySelectorAll('input:not([aria-label]):not([id])').length,
+              buttons_without_text: Array.from(document.querySelectorAll('button')).filter(b => !b.textContent.trim() && !b.getAttribute('aria-label')).length
+            },
+            stats: {
+              links_total: links.length,
+              links_external: externalLinks.length,
+              scripts: document.querySelectorAll('script').length,
+              stylesheets: document.querySelectorAll('link[rel="stylesheet"]').length,
+              iframes: document.querySelectorAll('iframe').length,
+              forms: document.querySelectorAll('form').length
+            }
+          }, null, 2);
+        })()
+
+  - id: console_errors
+    module: browser.console
+    params:
+      level: error
+      timeout: 1000
+
+  - id: mobile_size
+    module: browser.viewport
+    params:
+      width: 390
+      height: 844
+
+  - id: shot_mobile
+    module: browser.screenshot
+    params:
+      path: audit-mobile.png
+      full_page: true
+
+  - id: desktop_size
+    module: browser.viewport
+    params:
+      width: 1440
+      height: 900
+
+  - id: shot_desktop
+    module: browser.screenshot
+    params:
+      path: audit-desktop.png
+      full_page: true
+
+  - id: pdf
+    module: browser.pdf
+    params:
+      path: audit-page.pdf
+      page_size: A4
+      print_background: true
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${audit.result}"
+
+  - id: close
+    module: browser.close

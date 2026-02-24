@@ -1,0 +1,51 @@
+name: Form Fill
+description: "Auto-fill a web form with data and optionally submit it"
+
+args:
+  url:
+    type: string
+    required: true
+    description: Page URL containing the form
+  data:
+    type: string
+    required: true
+    description: "JSON string of field:value pairs (e.g. '{\"email\":\"test@example.com\",\"name\":\"John\"}')"
+  submit:
+    type: boolean
+    default: true
+    description: Submit the form after filling
+  output:
+    type: string
+    default: form-result.png
+    description: Screenshot output path after submission
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: fill
+    module: browser.form
+    params:
+      data: "{{data}}"
+      submit: "{{submit}}"
+
+  - id: wait
+    module: browser.wait
+    params:
+      timeout: 2000
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: "{{output}}"
+      full_page: true
+
+  - id: close
+    module: browser.close
