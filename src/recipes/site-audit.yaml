@@ -1,0 +1,70 @@
+name: Site Audit
+description: SEO + performance audit — meta tags, headings, Web Vitals, screenshot
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to audit
+  output:
+    type: string
+    default: audit.json
+    description: Output report file
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: perf
+    module: browser.performance
+    params:
+      metrics: ["all"]
+      timeout_ms: 5000
+
+  - id: audit
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const meta = {};
+          document.querySelectorAll('meta').forEach(m => {
+            const key = m.getAttribute('name') || m.getAttribute('property');
+            if (key) meta[key] = m.getAttribute('content');
+          });
+          const headings = {};
+          ['h1','h2','h3'].forEach(tag => {
+            headings[tag] = Array.from(document.querySelectorAll(tag)).map(e => e.textContent.trim());
+          });
+          const images = document.querySelectorAll('img');
+          const missingAlt = Array.from(images).filter(i => !i.alt).map(i => i.src);
+          return JSON.stringify({
+            title: document.title,
+            meta,
+            headings,
+            images: { total: images.length, missing_alt: missingAlt.length, missing_alt_urls: missingAlt.slice(0, 10) },
+            links: document.querySelectorAll('a').length,
+            canonical: document.querySelector('link[rel="canonical"]')?.href || null
+          }, null, 2);
+        })()
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: audit-screenshot.png
+      full_page: true
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${audit.result}"
+
+  - id: close
+    module: browser.close

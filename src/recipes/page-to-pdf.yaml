@@ -1,0 +1,37 @@
+name: Page to PDF
+description: Render any webpage as a PDF file
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to convert
+  output:
+    type: string
+    default: page.pdf
+    description: Output PDF file path
+  size:
+    type: string
+    default: A4
+    description: Page size (A4, Letter, Legal)
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: pdf
+    module: browser.pdf
+    params:
+      path: "{{output}}"
+      page_size: "{{size}}"
+      print_background: true
+
+  - id: close
+    module: browser.close

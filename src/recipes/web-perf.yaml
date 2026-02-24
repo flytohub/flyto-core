@@ -1,0 +1,32 @@
+name: Web Performance
+description: Get Core Web Vitals (LCP, FCP, CLS, TTFB) for any URL
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to measure
+  timeout:
+    type: number
+    default: 5000
+    description: Time to wait for metrics (ms)
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: perf
+    module: browser.performance
+    params:
+      metrics: ["all"]
+      timeout_ms: "{{timeout}}"
+
+  - id: close
+    module: browser.close

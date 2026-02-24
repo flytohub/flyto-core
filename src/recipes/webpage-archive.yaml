@@ -1,0 +1,50 @@
+name: Webpage Archive
+description: Archive a webpage in 3 formats — screenshot, PDF, and HTML snapshot
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to archive
+  prefix:
+    type: string
+    default: archive
+    description: Output file prefix (creates prefix.png, prefix.pdf, prefix.html)
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: shot
+    module: browser.screenshot
+    params:
+      path: "{{prefix}}.png"
+      full_page: true
+
+  - id: pdf
+    module: browser.pdf
+    params:
+      path: "{{prefix}}.pdf"
+      page_size: A4
+      print_background: true
+
+  - id: snapshot
+    module: browser.snapshot
+    params:
+      format: html
+
+  - id: save_html
+    module: file.write
+    params:
+      path: "{{prefix}}.html"
+      content: "${snapshot.content}"
+
+  - id: close
+    module: browser.close

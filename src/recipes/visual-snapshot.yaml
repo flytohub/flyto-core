@@ -1,0 +1,54 @@
+name: Visual Snapshot
+description: Screenshot a page at both mobile (390x844) and desktop (1440x900) sizes
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to capture
+  mobile_output:
+    type: string
+    default: mobile.png
+    description: Mobile screenshot output path
+  desktop_output:
+    type: string
+    default: desktop.png
+    description: Desktop screenshot output path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: mobile_size
+    module: browser.viewport
+    params:
+      width: 390
+      height: 844
+
+  - id: shot_mobile
+    module: browser.screenshot
+    params:
+      path: "{{mobile_output}}"
+      full_page: true
+
+  - id: desktop_size
+    module: browser.viewport
+    params:
+      width: 1440
+      height: 900
+
+  - id: shot_desktop
+    module: browser.screenshot
+    params:
+      path: "{{desktop_output}}"
+      full_page: true
+
+  - id: close
+    module: browser.close

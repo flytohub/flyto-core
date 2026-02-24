@@ -1,0 +1,19 @@
+name: Port Scan
+description: Scan open ports on a host
+
+args:
+  host:
+    type: string
+    required: true
+    description: Hostname or IP to scan
+  ports:
+    type: string
+    default: "22,80,443,3000,3306,5432,6379,8080,8443,9090"
+    description: Ports to scan (comma-separated or range like 80-443)
+
+steps:
+  - id: scan
+    module: network.port_scan
+    params:
+      host: "{{host}}"
+      ports: "{{ports}}"

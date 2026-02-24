@@ -1,0 +1,45 @@
+name: Scrape to Slack
+description: Extract data from a webpage and send it to Slack
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to scrape
+  selector:
+    type: string
+    required: true
+    description: CSS selector to extract text from
+  webhook:
+    type: string
+    required: true
+    description: Slack webhook URL (or set SLACK_WEBHOOK_URL env var)
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: extract
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const els = document.querySelectorAll('{{selector}}');
+          return Array.from(els).map(e => e.textContent.trim()).join('\n');
+        })()
+
+  - id: notify
+    module: notification.slack.send_message
+    params:
+      webhook_url: "{{webhook}}"
+      text: "${extract.result}"
+
+  - id: close
+    module: browser.close

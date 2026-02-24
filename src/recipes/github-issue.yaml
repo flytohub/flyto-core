@@ -1,0 +1,54 @@
+name: GitHub Issue from Screenshot
+description: Screenshot a page and create a GitHub issue with the image
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to screenshot
+  owner:
+    type: string
+    required: true
+    description: GitHub repository owner
+  repo:
+    type: string
+    required: true
+    description: GitHub repository name
+  title:
+    type: string
+    required: true
+    description: Issue title
+  token:
+    type: string
+    required: true
+    description: GitHub personal access token (or set GITHUB_TOKEN env var)
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: shot
+    module: browser.screenshot
+    params:
+      path: issue-screenshot.png
+      full_page: true
+
+  - id: create
+    module: api.github.create_issue
+    params:
+      owner: "{{owner}}"
+      repo: "{{repo}}"
+      title: "{{title}}"
+      body: "Screenshot captured from {{url}}\n\n![screenshot](issue-screenshot.png)"
+      labels: ["bug"]
+      token: "{{token}}"
+
+  - id: close
+    module: browser.close

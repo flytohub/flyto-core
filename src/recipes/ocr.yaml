@@ -1,0 +1,29 @@
+name: OCR
+description: Extract text from an image using Tesseract OCR
+
+args:
+  input:
+    type: string
+    required: true
+    description: Path to image file
+  lang:
+    type: string
+    default: eng
+    description: Language code (eng, chi_tra, jpn, deu, fra, spa)
+  output:
+    type: string
+    default: ocr-result.txt
+    description: Output text file path
+
+steps:
+  - id: ocr
+    module: image.ocr
+    params:
+      image_path: "{{input}}"
+      language: "{{lang}}"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${ocr.text}"

@@ -1,0 +1,14 @@
+name: WHOIS Lookup
+description: Look up domain registration info — registrar, dates, name servers
+
+args:
+  domain:
+    type: string
+    required: true
+    description: Domain name to look up (e.g. example.com)
+
+steps:
+  - id: lookup
+    module: network.whois
+    params:
+      domain: "{{domain}}"
