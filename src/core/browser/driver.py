@@ -90,14 +90,19 @@ class BrowserDriver:
                 browser_launcher = self._playwright.chromium
 
             # Build launch options with anti-detection args
+            import platform
             launch_args = [
                 '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--no-sandbox',
-                '--disable-infobars',
-                '--disable-background-timer-throttling',
-                '--disable-renderer-backgrounding',
             ]
+            # Docker/CI args — only on Linux where sandbox/shm are issues;
+            # on macOS/Windows these block CDN resources (jQuery etc.).
+            if platform.system() == 'Linux':
+                launch_args += [
+                    '--disable-dev-shm-usage',
+                    '--no-sandbox',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
+                ]
 
             # Use explicit locale or default to en-US
             if not locale:
@@ -107,20 +112,18 @@ class BrowserDriver:
             lang = locale.split('-')[0]  # "zh-TW" → "zh"
             languages = list(dict.fromkeys([locale, lang, 'en']))
 
-            context_user_agent = user_agent or DEFAULT_USER_AGENT
+            # Only override UA when explicitly provided; let the real browser
+            # send its native UA + Sec-CH-UA so versions match the TLS
+            # fingerprint (Cloudflare detects mismatches as bot signals).
             context_kwargs: Dict[str, Any] = {
                 'viewport': self.viewport,
-                'user_agent': context_user_agent,
                 'locale': locale,
                 'extra_http_headers': {
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                     'Accept-Language': ','.join(languages) + ',en-US;q=0.9,en;q=0.8',
-                    'Sec-CH-UA': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
-                    'Sec-CH-UA-Mobile': '?0',
-                    'Sec-CH-UA-Platform': '"macOS"',
-                    'Upgrade-Insecure-Requests': '1',
                 },
             }
+            if user_agent:
+                context_kwargs['user_agent'] = user_agent
             if record_video_dir:
                 Path(record_video_dir).mkdir(parents=True, exist_ok=True)
                 context_kwargs['record_video_dir'] = record_video_dir
