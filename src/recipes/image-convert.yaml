@@ -1,0 +1,24 @@
+name: Image Convert
+description: Convert an image between formats (PNG, JPG, WebP, BMP)
+
+args:
+  input:
+    type: string
+    required: true
+    description: Path to input image
+  format:
+    type: string
+    required: true
+    description: Target format (png, jpg, webp, bmp)
+  output:
+    type: string
+    default: converted
+    description: Output file path (extension auto-added)
+
+steps:
+  - id: convert
+    module: image.convert
+    params:
+      input_path: "{{input}}"
+      format: "{{format}}"
+      output_path: "{{output}}.{{format}}"

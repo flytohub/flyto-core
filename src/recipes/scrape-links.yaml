@@ -1,0 +1,39 @@
+name: Scrape Links
+description: Extract all links from a webpage
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to scrape links from
+  output:
+    type: string
+    default: links.json
+    description: Output file path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: extract
+    module: browser.extract
+    params:
+      selector: a
+      attribute: href
+      multiple: true
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${extract.data}"
+
+  - id: close
+    module: browser.close

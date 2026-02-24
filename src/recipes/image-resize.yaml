@@ -1,0 +1,24 @@
+name: Image Resize
+description: Resize an image to specified dimensions
+
+args:
+  input:
+    type: string
+    required: true
+    description: Path to input image
+  width:
+    type: number
+    required: true
+    description: Target width in pixels
+  output:
+    type: string
+    default: resized.png
+    description: Path to output image
+
+steps:
+  - id: resize
+    module: image.resize
+    params:
+      input_path: "{{input}}"
+      width: "{{width}}"
+      output_path: "{{output}}"

@@ -1,0 +1,24 @@
+name: PDF Extract
+description: Extract text content from a PDF file
+
+args:
+  input:
+    type: string
+    required: true
+    description: Path to PDF file
+  output:
+    type: string
+    default: extracted.txt
+    description: Path to output text file
+
+steps:
+  - id: parse
+    module: pdf.parse
+    params:
+      path: "{{input}}"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${parse.data.text}"

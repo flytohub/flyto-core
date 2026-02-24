@@ -1,0 +1,49 @@
+name: Scrape Page
+description: Extract text content from a webpage using a CSS selector
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to scrape
+  selector:
+    type: string
+    required: true
+    description: CSS selector to extract (e.g. h1, .title, #content)
+  output:
+    type: string
+    default: scraped.json
+    description: Output file path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: wait
+    module: browser.wait
+    params:
+      selector: "{{selector}}"
+      state: visible
+
+  - id: extract
+    module: browser.extract
+    params:
+      selector: "{{selector}}"
+      extract_type: text
+      multiple: true
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${extract.data}"
+
+  - id: close
+    module: browser.close

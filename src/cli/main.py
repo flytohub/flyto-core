@@ -44,6 +44,7 @@ from .workflow import collect_params, load_config, select_workflow
 from .params import merge_params
 from .runner import run_workflow
 from .modules import add_modules_parser, run_modules_command
+from .recipe import run_recipe, run_recipes_list
 
 
 def add_serve_parser(subparsers) -> None:
@@ -102,23 +103,24 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Interactive mode
-  flyto
+  # Run a pre-built recipe
+  flyto recipe screenshot --url https://example.com
+  flyto recipe scrape-page --url https://example.com --selector h1
+  flyto recipe csv-to-json --input data.csv
+  flyto recipe monitor-site --url https://myapp.com
 
-  # Run workflow
+  # List all recipes
+  flyto recipes
+
+  # Run a custom workflow
   flyto run workflow.yaml
   flyto run workflow.yaml --params '{"keyword":"nodejs"}'
 
   # List modules
-  flyto modules --env production --format json
-  flyto modules --env development --format table
+  flyto modules
 
   # Start HTTP API server
   flyto serve
-  flyto serve --port 9000
-
-  # Legacy mode (backward compatible)
-  flyto workflow.yaml
         """
     )
 
@@ -127,6 +129,20 @@ Examples:
     add_run_parser(subparsers)
     add_modules_parser(subparsers)
     add_serve_parser(subparsers)
+
+    # Recipe commands
+    subparsers.add_parser(
+        "recipes",
+        help="List all available recipes",
+        description="Show all pre-built recipes with usage examples."
+    )
+    recipe_parser = subparsers.add_parser(
+        "recipe",
+        help="Run a pre-built recipe",
+        description="Execute a pre-built recipe template with arguments."
+    )
+    recipe_parser.add_argument('recipe_name', nargs='?', help='Recipe name')
+    recipe_parser.add_argument('recipe_args', nargs=argparse.REMAINDER, help='Recipe arguments (--key value)')
 
     # Also support legacy mode: flyto workflow.yaml (without 'run' subcommand)
     parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file (legacy mode)')
@@ -158,6 +174,16 @@ Examples:
             format=args.format,
             output_file=args.output
         ))
+
+    # Handle 'recipes' command (list all)
+    if args.command == 'recipes':
+        sys.exit(run_recipes_list())
+
+    # Handle 'recipe' command (run one)
+    if args.command == 'recipe':
+        if not args.recipe_name:
+            sys.exit(run_recipes_list())
+        sys.exit(run_recipe(args.recipe_name, args.recipe_args or []))
 
     # Handle 'run' command or legacy mode
     if args.command == 'run':

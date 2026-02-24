@@ -1,0 +1,24 @@
+name: HTTP GET
+description: Fetch data from a URL and save the response
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to fetch
+  output:
+    type: string
+    default: response.json
+    description: Path to save response
+
+steps:
+  - id: fetch
+    module: http.get
+    params:
+      url: "{{url}}"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${fetch.data}"

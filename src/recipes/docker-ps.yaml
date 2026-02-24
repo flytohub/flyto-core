@@ -1,0 +1,14 @@
+name: Docker Containers
+description: List running Docker containers
+
+args:
+  all:
+    type: boolean
+    default: false
+    description: Show all containers (including stopped)
+
+steps:
+  - id: list
+    module: docker.ps
+    params:
+      all: "{{all}}"

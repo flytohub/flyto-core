@@ -1,0 +1,53 @@
+name: Stock Price
+description: Fetch current stock price from Yahoo Finance
+
+args:
+  symbol:
+    type: string
+    required: true
+    description: Stock ticker symbol (e.g., AAPL, TSLA, NVDA)
+  output:
+    type: string
+    default: stock.json
+    description: Output file path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "https://finance.yahoo.com/quote/{{symbol}}"
+
+  - id: wait
+    module: browser.wait
+    params:
+      selector: "[data-testid='qsp-price']"
+      state: visible
+
+  - id: extract
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const price = document.querySelector("[data-testid='qsp-price']");
+          const changes = document.querySelectorAll("[data-testid='qsp-price-change']");
+          return JSON.stringify({
+            symbol: '{{symbol}}',
+            price: price ? price.textContent.trim() : null,
+            change: changes[0] ? changes[0].textContent.trim() : null,
+            change_pct: changes[1] ? changes[1].textContent.trim() : null,
+          }, null, 2);
+        })()
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${extract.result}"
+
+  - id: close
+    module: browser.close

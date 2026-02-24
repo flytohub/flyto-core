@@ -1,0 +1,58 @@
+name: Scrape Table
+description: Extract an HTML table from a webpage and save as CSV
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL containing the table
+  selector:
+    type: string
+    default: table
+    description: CSS selector for the table element
+  output:
+    type: string
+    default: table.csv
+    description: Output CSV file path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: wait
+    module: browser.wait
+    params:
+      selector: "{{selector}}"
+      state: visible
+
+  - id: extract
+    module: browser.evaluate
+    params:
+      expression: |
+        (() => {
+          const table = document.querySelector('{{selector}}');
+          if (!table) return { rows: [] };
+          const rows = [];
+          table.querySelectorAll('tr').forEach(tr => {
+            const cells = [];
+            tr.querySelectorAll('th, td').forEach(td => cells.push(td.textContent.trim()));
+            rows.push(cells);
+          });
+          return { rows };
+        })()
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${extract.data}"
+
+  - id: close
+    module: browser.close

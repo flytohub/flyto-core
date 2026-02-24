@@ -1,0 +1,46 @@
+name: Screenshot
+description: Take a screenshot of any webpage
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to screenshot
+  output:
+    type: string
+    default: screenshot.png
+    description: Output file path
+  width:
+    type: number
+    default: 1280
+    description: Viewport width
+  height:
+    type: number
+    default: 720
+    description: Viewport height
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  - id: resize
+    module: browser.viewport
+    params:
+      width: "{{width}}"
+      height: "{{height}}"
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  - id: capture
+    module: browser.screenshot
+    params:
+      path: "{{output}}"
+      full_page: true
+
+  - id: close
+    module: browser.close

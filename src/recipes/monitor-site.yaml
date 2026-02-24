@@ -1,0 +1,19 @@
+name: Monitor Site
+description: Check if a website is up and measure response time
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to check
+  timeout:
+    type: number
+    default: 5000
+    description: Timeout in milliseconds
+
+steps:
+  - id: check
+    module: monitor.http_check
+    params:
+      url: "{{url}}"
+      timeout: "{{timeout}}"

@@ -1,0 +1,29 @@
+name: Git Changelog
+description: Generate a changelog from git commit history
+
+args:
+  repo:
+    type: string
+    default: .
+    description: Path to git repository
+  since:
+    type: string
+    default: 7 days ago
+    description: Show commits since (e.g., "7 days ago", "2024-01-01", "v1.0.0")
+  output:
+    type: string
+    default: CHANGELOG.txt
+    description: Output file path
+
+steps:
+  - id: diff
+    module: git.diff
+    params:
+      repo_path: "{{repo}}"
+      since: "{{since}}"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${diff.data}"

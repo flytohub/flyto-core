@@ -1,0 +1,34 @@
+name: JSON to CSV
+description: Convert a JSON array file to CSV format
+
+args:
+  input:
+    type: string
+    required: true
+    description: Path to input JSON file
+  output:
+    type: string
+    default: output.csv
+    description: Path to output CSV file
+
+steps:
+  - id: read
+    module: file.read
+    params:
+      path: "{{input}}"
+
+  - id: parse
+    module: data.json.parse
+    params:
+      text: "${read.data.content}"
+
+  - id: convert
+    module: data.json_to_csv
+    params:
+      data: "${parse.data.result}"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${convert.data.result}"
