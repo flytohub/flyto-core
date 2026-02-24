@@ -289,9 +289,13 @@ TOOLS = [
         "name": "search_modules",
         "title": "Search Modules",
         "description": (
-            "Search for modules by keyword across all categories. "
-            "Use this when you know WHAT you want to do but not which module to use. "
-            "Examples: 'click button', 'send email', 'resize image', 'parse json'. "
+            "Search the flyto-core MODULE CATALOG by keyword. "
+            "⚠️ This searches automation modules ONLY — NOT the web. "
+            "Do NOT use this to search for people, news, products, lyrics, weather, or any real-world info. "
+            "For web search → use Browser Protocol: execute_module('browser.launch') → execute_module('browser.goto', {url: 'https://www.google.com/search?q=...'}) → execute_module('browser.snapshot'). "
+            "Use search_modules ONLY when you need to find which automation module to use. "
+            "Good examples: 'click button', 'send email', 'resize image', 'parse json'. "
+            "Bad examples: person names, news topics, product names — these need Browser Protocol. "
             "Returns: matching modules with ID, label, description, and relevance score."
         ),
         "inputSchema": {
@@ -299,7 +303,7 @@ TOOLS = [
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "What you want to do. Examples: 'extract text from page', 'take screenshot', 'fill form', 'send slack message'",
+                    "description": "Automation task keyword (NOT web search). Good: 'extract text', 'take screenshot', 'fill form', 'send email'. Bad: person names, news topics, real-world queries.",
                 },
                 "category": {
                     "type": "string",
