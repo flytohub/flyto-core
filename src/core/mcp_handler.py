@@ -244,6 +244,111 @@ def get_module_examples(module_id: str) -> dict:
         return {"error": str(e)}
 
 
+def list_recipes() -> dict:
+    """List all available recipes with metadata."""
+    try:
+        from cli.recipe import list_all_recipes
+        recipes = list_all_recipes()
+        return {
+            "total": len(recipes),
+            "recipes": recipes,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+async def run_recipe(
+    recipe_name: str,
+    args: Dict[str, Any] = None,
+    browser_sessions: Dict[str, Any] = None,
+) -> dict:
+    """Load and execute a recipe, returning step-by-step results.
+
+    Args:
+        recipe_name: Recipe name (without .yaml extension)
+        args: Substitution args for {{placeholder}} in recipe
+        browser_sessions: Browser session store (injected by transport)
+    """
+    if browser_sessions is None:
+        browser_sessions = {}
+    if args is None:
+        args = {}
+
+    try:
+        from cli.recipe import load_recipe, substitute_args
+        from core.engine.workflow.engine import WorkflowEngine
+
+        recipe = load_recipe(recipe_name)
+        if recipe is None:
+            return {"ok": False, "error": f"Recipe not found: {recipe_name}"}
+
+        # Substitute {{arg}} placeholders
+        workflow = substitute_args(recipe, args)
+
+        # Inject browser sessions into initial context so browser steps
+        # can reuse existing sessions from the chat.
+        initial_ctx = {}
+        if browser_sessions:
+            initial_ctx["_browser_sessions"] = browser_sessions
+
+        engine = WorkflowEngine(
+            workflow=workflow,
+            params=args,
+            enable_trace=True,
+            initial_context=initial_ctx,
+        )
+
+        await engine.execute()
+
+        # Build step summary from trace
+        trace = engine.get_execution_trace()
+        steps = []
+        output_files = []
+
+        if trace:
+            for st in trace.steps:
+                steps.append({
+                    "stepIndex": st.stepIndex,
+                    "stepId": st.stepId,
+                    "moduleId": st.moduleId,
+                    "status": st.status,
+                    "durationMs": st.durationMs,
+                })
+
+            # Collect output file paths from workflow output
+            wf_output = engine.context if hasattr(engine, 'context') else {}
+            for key, val in wf_output.items():
+                if isinstance(val, str) and (
+                    val.endswith(('.json', '.csv', '.png', '.jpg', '.pdf', '.html', '.txt'))
+                ):
+                    output_files.append(val)
+
+            passed = sum(1 for s in steps if s["status"] == "success")
+            return {
+                "ok": True,
+                "recipe_name": recipe_name,
+                "steps": steps,
+                "totalSteps": len(steps),
+                "passedSteps": passed,
+                "durationMs": trace.durationMs,
+                "output_files": output_files,
+            }
+
+        # Fallback if trace not available
+        return {
+            "ok": trace is None or engine.status.value in ("completed", "success"),
+            "recipe_name": recipe_name,
+            "steps": [],
+            "totalSteps": 0,
+            "passedSteps": 0,
+            "durationMs": 0,
+            "output_files": [],
+        }
+
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ============================================================
 # MCP Tool Definitions
 # ============================================================
@@ -411,7 +516,16 @@ TOOLS = [
                 },
                 "params": {
                     "type": "object",
-                    "description": "Module parameters. Call get_module_info first to see the exact schema.",
+                    "description": (
+                        "Module parameters as a JSON object. Common browser params: "
+                        "browser.launch: {} — "
+                        "browser.goto: {\"url\": \"https://example.com\"} — "
+                        "browser.snapshot: {} or {\"format\": \"text\"} — "
+                        "browser.type: {\"selector\": \"#id\", \"text\": \"value\"} — "
+                        "browser.click: {\"selector\": \"button.cls\"} — "
+                        "browser.screenshot: {\"path\": \"/tmp/shot.png\"} — "
+                        "For other modules call get_module_info first."
+                    ),
                 },
                 "context": {
                     "type": "object",
@@ -454,6 +568,56 @@ TOOLS = [
             "destructiveHint": False,
             "idempotentHint": True,
             "openWorldHint": False,
+        },
+    },
+    {
+        "name": "list_recipes",
+        "title": "List Recipes",
+        "description": (
+            "List all available flyto-core recipes (pre-built multi-step workflows). "
+            "Each recipe is a YAML file that chains multiple modules together. "
+            "Returns: recipe names, descriptions, and required args. "
+            "Use run_recipe to execute a recipe by name."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    },
+    {
+        "name": "run_recipe",
+        "title": "Run Recipe",
+        "description": (
+            "Execute a flyto-core recipe (pre-built multi-step workflow) by name. "
+            "Recipes chain multiple modules together (e.g., browser.launch → goto → extract → file.write). "
+            "Call list_recipes first to see available recipes and their required args. "
+            "Returns: per-step results with status and timing, plus output file paths."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "recipe_name": {
+                    "type": "string",
+                    "description": "Recipe name (without .yaml extension). Example: 'competitor-intel', 'api-pipeline'",
+                },
+                "args": {
+                    "type": "object",
+                    "description": "Arguments to substitute into {{placeholder}} values in the recipe. Example: {\"url\": \"https://example.com\", \"username\": \"torvalds\"}",
+                },
+            },
+            "required": ["recipe_name"],
+        },
+        "annotations": {
+            "readOnlyHint": False,
+            "destructiveHint": False,
+            "idempotentHint": False,
+            "openWorldHint": True,
         },
     },
 ]
@@ -515,6 +679,14 @@ async def handle_jsonrpc_request(
             elif tool_name == "get_module_examples":
                 result = get_module_examples(
                     module_id=arguments.get("module_id", ""),
+                )
+            elif tool_name == "list_recipes":
+                result = list_recipes()
+            elif tool_name == "run_recipe":
+                result = await run_recipe(
+                    recipe_name=arguments.get("recipe_name", ""),
+                    args=arguments.get("args", {}),
+                    browser_sessions=browser_sessions,
                 )
             else:
                 return {
