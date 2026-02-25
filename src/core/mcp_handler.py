@@ -269,8 +269,6 @@ async def run_recipe(
         args: Substitution args for {{placeholder}} in recipe
         browser_sessions: Browser session store (injected by transport)
     """
-    if browser_sessions is None:
-        browser_sessions = {}
     if args is None:
         args = {}
 
@@ -282,71 +280,71 @@ async def run_recipe(
         if recipe is None:
             return {"ok": False, "error": f"Recipe not found: {recipe_name}"}
 
-        # Substitute {{arg}} placeholders
         workflow = substitute_args(recipe, args)
-
-        # Inject browser sessions into initial context so browser steps
-        # can reuse existing sessions from the chat.
-        initial_ctx = {}
-        if browser_sessions:
-            initial_ctx["_browser_sessions"] = browser_sessions
 
         engine = WorkflowEngine(
             workflow=workflow,
             params=args,
             enable_trace=True,
-            initial_context=initial_ctx,
         )
 
-        await engine.execute()
+        error_msg = None
+        try:
+            await engine.execute()
+        except Exception as e:
+            error_msg = str(e)
 
-        # Build step summary from trace
+        # Trace is available even on failure (set before re-raise)
         trace = engine.get_execution_trace()
-        steps = []
-        output_files = []
-
-        if trace:
-            for st in trace.steps:
-                steps.append({
-                    "stepIndex": st.stepIndex,
-                    "stepId": st.stepId,
-                    "moduleId": st.moduleId,
-                    "status": st.status,
-                    "durationMs": st.durationMs,
-                })
-
-            # Collect output file paths from workflow output
-            wf_output = engine.context if hasattr(engine, 'context') else {}
-            for key, val in wf_output.items():
-                if isinstance(val, str) and (
-                    val.endswith(('.json', '.csv', '.png', '.jpg', '.pdf', '.html', '.txt'))
-                ):
-                    output_files.append(val)
-
-            passed = sum(1 for s in steps if s["status"] == "success")
-            return {
-                "ok": True,
-                "recipe_name": recipe_name,
-                "steps": steps,
-                "totalSteps": len(steps),
-                "passedSteps": passed,
-                "durationMs": trace.durationMs,
-                "output_files": output_files,
-            }
-
-        # Fallback if trace not available
-        return {
-            "ok": trace is None or engine.status.value in ("completed", "success"),
-            "recipe_name": recipe_name,
-            "steps": [],
-            "totalSteps": 0,
-            "passedSteps": 0,
-            "durationMs": 0,
-            "output_files": [],
-        }
+        return _build_recipe_result(recipe_name, trace, error_msg)
 
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+def _build_recipe_result(
+    recipe_name: str,
+    trace: Optional[Any],
+    error_msg: Optional[str] = None,
+) -> dict:
+    """Build the run_recipe response from engine trace."""
+    steps = []
+    output_files = []
+
+    if trace:
+        for st in trace.steps:
+            steps.append({
+                "stepIndex": st.stepIndex,
+                "stepId": st.stepId,
+                "moduleId": st.moduleId,
+                "status": st.status,
+                "durationMs": st.durationMs,
+            })
+
+        # Collect output file paths from step inputs (same as CLI)
+        for st in trace.steps:
+            if st.input and st.input.params:
+                for key in ('path', 'output'):
+                    val = st.input.params.get(key, '')
+                    if isinstance(val, str) and val and not val.startswith('$'):
+                        p = Path(val)
+                        if p.exists() and str(p) not in output_files:
+                            output_files.append(str(p))
+
+    passed = sum(1 for s in steps if s["status"] == "success")
+
+    result = {
+        "ok": error_msg is None,
+        "recipe_name": recipe_name,
+        "steps": steps,
+        "totalSteps": len(steps),
+        "passedSteps": passed,
+        "durationMs": trace.durationMs if trace else 0,
+        "output_files": output_files,
+    }
+    if error_msg:
+        result["error"] = error_msg
+    return result
 
 
 # ============================================================
