@@ -43,7 +43,6 @@ from .record import *
 
 # Higher-level browser operations (v2)
 from .form import *
-from .login import *
 from .pagination import *
 
 # Performance & Debug modules (Chrome DevTools MCP compatible)

@@ -492,7 +492,7 @@ TOOLS = [
             "  browser.snapshot → get full DOM structure (HTML/text) for analysis. "
             "  browser.find → locate elements by selector, get their properties. "
             "  browser.wait → wait for element/condition before acting. "
-            "- INTERACTION: browser.click, browser.type, browser.select, browser.scroll, browser.form, browser.login. "
+            "- INTERACTION: browser.click, browser.type, browser.select, browser.scroll, browser.form. "
             "- SCREENSHOT: Use ONLY for visual/style verification (CSS comparison, layout regression, design matching). "
             "  Do NOT use screenshot to read text or find elements — use browser.extract or browser.evaluate instead. "
             "- LIFECYCLE: browser.launch → browser.goto → [actions] → browser.close. "
@@ -508,7 +508,7 @@ TOOLS = [
                         "browser.launch, browser.goto, browser.click, browser.type, "
                         "browser.extract (read DOM elements), browser.evaluate (run JS), "
                         "browser.snapshot (DOM dump), browser.screenshot (visual only), "
-                        "browser.wait, browser.find, browser.form, browser.login, "
+                        "browser.wait, browser.find, browser.form, "
                         "browser.select, browser.scroll, browser.close"
                     ),
                 },

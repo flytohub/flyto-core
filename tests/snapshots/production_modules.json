@@ -376,13 +376,6 @@
       "label": "Launch Browser"
     },
     {
-      "id": "browser.login",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "Login"
-    },
-    {
       "id": "browser.network",
       "version": "1.0.0",
       "category": "browser",
