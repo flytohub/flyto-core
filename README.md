@@ -6,15 +6,33 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **A workflow engine with 412 built-in modules. Trace every step. Replay from any point.**
+> **A debuggable automation engine. 412 built-in modules. Trace every step. Replay from any point.**
+
+### Try in 30 seconds
 
 ```bash
 pip install flyto-core[browser] && playwright install chromium
-
 flyto recipe competitor-intel --url https://github.com/pricing
 ```
 
-12 steps run. Screenshots captured. Performance metrics extracted. JSON report saved. Zero Python scripts.
+```
+  Step  1/12  browser.launch         ✓      420ms
+  Step  2/12  browser.goto           ✓    1,203ms
+  Step  3/12  browser.evaluate       ✓       89ms
+  Step  4/12  browser.screenshot     ✓    1,847ms  → saved intel-desktop.png
+  Step  5/12  browser.viewport       ✓       12ms  → 390×844
+  Step  6/12  browser.screenshot     ✓    1,621ms  → saved intel-mobile.png
+  Step  7/12  browser.viewport       ✓        8ms  → 1280×720
+  Step  8/12  browser.performance    ✓    5,012ms  → Web Vitals captured
+  Step  9/12  browser.evaluate       ✓       45ms
+  Step 10/12  browser.evaluate       ✓       11ms
+  Step 11/12  file.write             ✓        3ms  → saved intel-report.json
+  Step 12/12  browser.close          ✓       67ms
+
+  ✓ Done in 10.3s — 12/12 steps passed
+```
+
+Screenshots captured. Performance metrics extracted. JSON report saved. **Every step traced.**
 
 <p align="center">
   <img src="demo/flyto-core-demo.gif" alt="flyto-core demo: API pipeline → replay → browser automation" width="720">
@@ -24,13 +42,30 @@ flyto recipe competitor-intel --url https://github.com/pricing
 
 ## What happens when step 8 fails?
 
-With a shell script you re-run the whole thing — re-launch the browser, re-navigate, re-extract. With flyto-core, every step records its input, output, and timing into an **execution trace**. When step 8 fails, you **replay from step 8** with the original context — the first 7 steps are instant.
+With a shell script you re-run the whole thing. With flyto-core:
 
-```
+```bash
 flyto replay --from-step 8
 ```
 
-This is the difference between a script and an **engine**.
+Steps 1–7 are instant. Only step 8 re-executes. Full context preserved. **This is the difference between a script and an engine.**
+
+---
+
+## 3 recipes to try now
+
+```bash
+# Competitive pricing: screenshots + Web Vitals + JSON report
+flyto recipe competitor-intel --url https://competitor.com/pricing
+
+# Full site audit: SEO + accessibility + performance
+flyto recipe full-audit --url https://your-site.com
+
+# Web scraping → CSV export
+flyto recipe scrape-to-csv --url https://news.ycombinator.com --selector ".titleline a"
+```
+
+Every recipe is traced. Every run is replayable. [See all 32 recipes →](docs/RECIPES.md)
 
 ---
 
@@ -167,28 +202,6 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 </td>
 </tr>
 </table>
-
-```bash
-flyto recipe competitor-intel --url https://github.com/pricing
-```
-
-```
-  Step  1/12  browser.launch         ✓      420ms
-  Step  2/12  browser.goto           ✓    1,203ms
-  Step  3/12  browser.evaluate       ✓       89ms
-  Step  4/12  browser.screenshot     ✓    1,847ms  → saved intel-desktop.png
-  Step  5/12  browser.viewport       ✓       12ms  → 390×844
-  Step  6/12  browser.screenshot     ✓    1,621ms  → saved intel-mobile.png
-  Step  7/12  browser.viewport       ✓        8ms  → 1280×720
-  Step  8/12  browser.performance    ✓    5,012ms  → Web Vitals captured
-  Step  9/12  browser.evaluate       ✓       45ms
-  Step 10/12  browser.evaluate       ✓       11ms
-  Step 11/12  file.write             ✓        3ms  → saved intel-report.json
-  Step 12/12  browser.close          ✓       67ms
-
-  ✓ Done in 10.3s — 12/12 steps passed
-  Output: intel-report.json (1,204 bytes)
-```
 
 ---
 
