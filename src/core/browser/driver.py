@@ -5,6 +5,9 @@ Browser Driver - Playwright wrapper for browser automation
 """
 import asyncio
 import logging
+import os
+import shutil
+import sys
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 from playwright.async_api import async_playwright, Browser, Page, ElementHandle
@@ -18,6 +21,26 @@ from ..constants import (
 
 
 logger = logging.getLogger(__name__)
+
+# Node.js version to auto-download when system node is unavailable
+_NODE_VERSION = '20.18.3'
+
+
+def _find_external_node() -> Optional[str]:
+    """Find a usable Node.js binary outside the PyInstaller temp dir.
+
+    Only uses the auto-downloaded copy at ~/.flyto/node/ to avoid
+    version/PATH issues with nvm, fnm, or system-installed node.
+    """
+    import platform as _platform
+
+    flyto_node = Path.home() / '.flyto' / 'node' / 'bin' / 'node'
+    if _platform.system() == 'Windows':
+        flyto_node = Path.home() / '.flyto' / 'node' / 'node.exe'
+    if flyto_node.exists():
+        return str(flyto_node)
+
+    return None
 
 
 class BrowserDriver:
@@ -81,6 +104,16 @@ class BrowserDriver:
         """
         try:
             logger.info(f"Launching {self.browser_type} browser (headless={self.headless})")
+
+            # PyInstaller --onefile: the bundled Node.js binary crashes with
+            # "Failed to reserve virtual memory for CodeRange" because the
+            # 2 GB temp extraction exhausts virtual address space.
+            # Use an external node binary instead.
+            if getattr(sys, 'frozen', False) and not os.environ.get('PLAYWRIGHT_NODEJS_PATH'):
+                node_path = _find_external_node()
+                if node_path:
+                    os.environ['PLAYWRIGHT_NODEJS_PATH'] = node_path
+                    logger.info(f"Using external node for Playwright: {node_path}")
 
             self._playwright = await async_playwright().start()
 
