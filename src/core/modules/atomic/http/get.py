@@ -88,6 +88,14 @@ async def _parse_response_body(response) -> Any:
             'default': 30,
             'description': 'Maximum time to wait in milliseconds',
         },
+        'verify_ssl': {
+            'type': 'boolean',
+            'label': 'Verify SSL',
+            'default': True,
+            'description': 'Verify SSL certificates',
+            'visibility': 'expert',
+            'group': 'advanced',
+        },
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
@@ -115,6 +123,7 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     headers = params.get('headers', {})
     query = params.get('query', {})
     timeout_s = params.get('timeout', 30)
+    verify_ssl = params.get('verify_ssl', True)
 
     try:
         validate_url_with_env_config(url)
@@ -126,9 +135,10 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
         url = _append_query_params(url, query)
 
     try:
+        ssl_param = None if verify_ssl else False
         timeout = aiohttp.ClientTimeout(total=timeout_s)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url, headers=headers) as response:
+            async with session.get(url, headers=headers, ssl=ssl_param) as response:
                 body = await _parse_response_body(response)
                 if 200 <= response.status < 300:
                     return {'ok': True, 'data': {'status': response.status, 'body': body, 'headers': dict(response.headers)}}

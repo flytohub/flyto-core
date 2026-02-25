@@ -38,6 +38,7 @@ from ....schema import compose, presets
         presets.HEADERS(),
         presets.QUERY_PARAMS(key='params'),
         presets.TIMEOUT_S(default=30),
+        presets.VERIFY_SSL(default=True),
     ),
     output_schema={
         'status_code': {'type': 'number', 'description': 'HTTP status code',
@@ -74,16 +75,19 @@ class HTTPGetModule(BaseModule):
         headers = self.params.get('headers', {})
         params = self.params.get('params', {})
         timeout = self.params.get('timeout', 30)
+        verify_ssl = self.params.get('verify_ssl', True)
 
         if not url:
             raise ValueError("URL is required")
 
+        ssl_param = None if verify_ssl else False
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url,
                 headers=headers,
                 params=params,
-                timeout=aiohttp.ClientTimeout(total=timeout)
+                timeout=aiohttp.ClientTimeout(total=timeout),
+                ssl=ssl_param,
             ) as response:
                 status_code = response.status
                 response_headers = dict(response.headers)
@@ -128,6 +132,7 @@ class HTTPGetModule(BaseModule):
         presets.TEXT(key='body', label='Body', label_key='schema.field.body', multiline=True),
         presets.REQUEST_BODY(key='json'),
         presets.TIMEOUT_S(default=30),
+        presets.VERIFY_SSL(default=True),
     ),
     output_schema={
         'status_code': {'type': 'number', 'description': 'HTTP status code'},
@@ -162,13 +167,16 @@ class HTTPPostModule(BaseModule):
         body = self.params.get('body')
         json_data = self.params.get('json')
         timeout = self.params.get('timeout', 30)
+        verify_ssl = self.params.get('verify_ssl', True)
 
         if not url:
             raise ValueError("URL is required")
 
+        ssl_param = None if verify_ssl else False
         kwargs = {
             'headers': headers,
-            'timeout': aiohttp.ClientTimeout(total=timeout)
+            'timeout': aiohttp.ClientTimeout(total=timeout),
+            'ssl': ssl_param,
         }
 
         if json_data:
