@@ -51,13 +51,9 @@ def validate_connection(
             error_message='browser.click requires browser_page, but received http_response'
         )
     """
-    # Self-connection check
-    if from_module_id == to_module_id:
-        return ConnectionResult(
-            valid=False,
-            error_code=ErrorCode.SELF_CONNECTION,
-            error_message='A node cannot connect to itself',
-        )
+    # Note: Self-connection (same node instance → itself) is validated by
+    # the caller using node IDs.  Same module_id is perfectly valid
+    # (e.g. browser.type → browser.type on two different nodes).
 
     # Get module metadata
     from ..modules.registry import ModuleRegistry
@@ -333,10 +329,8 @@ def get_connectable(
 
     results = []
     for candidate_id in candidates:
-        # P2 Fix: Filter out self-connection (same module cannot connect to itself)
-        # This aligns with validate_connection() which rejects self-connections
-        if candidate_id == module_id:
-            continue
+        # Same module_id is allowed (e.g. browser.type → browser.type)
+        # True self-connection (same node instance) is validated by frontend
 
         if category and not candidate_id.startswith(category + '.'):
             continue
