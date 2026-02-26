@@ -299,7 +299,7 @@ class BrowserDriver:
         if proxy:
             persistent_kwargs['proxy'] = {'server': proxy}
 
-        for channel in ('chrome', None, 'msedge'):
+        for channel in (None, 'chrome', 'msedge'):
             try:
                 ch_label = channel or 'playwright-chromium'
                 logger.info(f"Launching persistent context ({ch_label})...")
@@ -329,7 +329,7 @@ class BrowserDriver:
         if proxy:
             launch_kwargs['proxy'] = {'server': proxy}
 
-        for channel in ('chrome', None, 'msedge'):
+        for channel in (None, 'chrome', 'msedge'):
             try:
                 ch_label = channel or 'playwright-chromium'
                 logger.info(f"Launching regular ({ch_label})...")
