@@ -28,7 +28,7 @@ from ....utils import validate_url_with_env_config, SSRFError
 
     # Connection types
     input_types=['browser'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
 
     can_receive_from=['browser.*', 'flow.*'],

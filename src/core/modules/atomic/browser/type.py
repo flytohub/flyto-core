@@ -24,8 +24,7 @@ from ...schema.constants import FieldGroup
 
     # Connection types
     input_types=['page'],
-    output_types=['page'],
-
+    output_types=['browser', 'page'],
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
@@ -78,8 +77,11 @@ from ...schema.constants import FieldGroup
               description_key='modules.browser.type.param.clear.description',
               default=False,
               group=FieldGroup.OPTIONS),
+        presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
+        'browser': {'type': 'object', 'description': 'Browser session (pass-through for chaining)',
+                'description_key': 'modules.browser.type.output.browser.description'},
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.type.output.status.description'},
         'selector': {'type': 'string', 'description': 'CSS selector that was used',

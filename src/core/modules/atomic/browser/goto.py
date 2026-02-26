@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
     # Connection types
     input_types=['browser', 'page'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
     # Connection rules
     can_receive_from=['browser.launch', 'browser.*', 'flow.*'],

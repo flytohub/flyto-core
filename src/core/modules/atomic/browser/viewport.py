@@ -28,7 +28,7 @@ from ...schema import compose, field
 
     # Connection types
     input_types=['page'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],

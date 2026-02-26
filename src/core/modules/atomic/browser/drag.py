@@ -25,7 +25,7 @@ from ...schema import compose, presets, field
 
     # Connection types
     input_types=['page'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
 
     can_receive_from=['browser.*', 'flow.*'],

@@ -25,7 +25,7 @@ from ...schema import presets
 
     # Connection types
     input_types=['page'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
@@ -96,6 +96,8 @@ from ...schema import presets
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
+        'browser': {'type': 'object', 'description': 'Browser session (pass-through for chaining)',
+                'description_key': 'modules.browser.click.output.browser.description'},
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.click.output.status.description'},
         'selector': {'type': 'string', 'description': 'Selector that was used',

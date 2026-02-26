@@ -31,7 +31,7 @@ from ...schema import compose, field
     color='#F59E0B',
 
     input_types=['page'],
-    output_types=['page', 'array'],
+    output_types=['browser', 'page', 'array'],
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*'],

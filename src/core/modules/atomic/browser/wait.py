@@ -24,7 +24,7 @@ from ...schema.constants import FieldGroup
 
     # Connection types
     input_types=['page'],
-    output_types=['page'],
+    output_types=['browser', 'page'],
 
     # Connection rules
     can_receive_from=['browser.*', 'flow.*'],
