@@ -6,7 +6,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **A debuggable automation engine. 412 built-in modules. Trace every step. Replay from any point.**
+> **A debuggable automation engine. Trace every step. Replay from any point.**
 
 ### Try in 30 seconds
 
@@ -48,7 +48,7 @@ With a shell script you re-run the whole thing. With flyto-core:
 flyto replay --from-step 8
 ```
 
-Steps 1–7 are instant. Only step 8 re-executes. Full context preserved. **This is the difference between a script and an engine.**
+Steps 1–7 are instant. Only step 8 re-executes. Full context preserved.
 
 ---
 
@@ -207,8 +207,6 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ## Engine Features
 
-This is what makes flyto-core an engine, not a script runner:
-
 - **Execution Trace** — structured record of every step: input, output, timing, status
 - **Replay** — re-execute from any step with the original (or modified) context
 - **Breakpoints** — pause execution at any step, inspect state, resume
@@ -255,14 +253,13 @@ See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parame
 
 ## How is this different?
 
-| Pain point | Shell scripts | n8n / Zapier | flyto-core |
-|-----------|---------------|--------------|------------|
-| Step 8 fails, what now? | Re-run everything | Re-run from UI (partial) | `flyto replay --from-step 8` |
-| What happened at step 3? | Add print() | Check run log | Full trace: input, output, timing |
-| Need browser + API + file I/O | 3 languages, glue code | Install 5 plugins | All built-in (412 modules) |
-| Share with team | "Clone my repo" | Share org account ($$$) | `pip install flyto-core` |
-| Run headless in CI | Fragile bash + puppeteer | Not designed for CI | `flyto run workflow.yaml` |
-| Setup time | 30 min | SaaS signup + connect | `pip install flyto-core` |
+| | Playwright / Selenium | Shell scripts | flyto-core |
+|-|----------------------|---------------|------------|
+| Step 8 fails | Re-run everything | Re-run everything | `flyto replay --from-step 8` |
+| What happened at step 3? | Add print(), re-run | Add echo, re-run | Full trace: input, output, timing |
+| Browser + API + file I/O | Write glue code | 3 languages | All built-in |
+| Share with team | "Clone my repo" | "Clone my repo" | `pip install flyto-core` |
+| Run in CI | Wrap in pytest/bash | Fragile | `flyto run workflow.yaml` |
 
 ---
 
@@ -304,7 +301,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 412 modules as tools.
+Your AI gets all modules as tools.
 
 </details>
 
@@ -474,6 +471,4 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ---
 
-<p align="center">
-  <b>One package. 412 modules. Trace, replay, done.</b>
-</p>
+Desktop GUI available at [flyto2.com](https://flyto2.com)
