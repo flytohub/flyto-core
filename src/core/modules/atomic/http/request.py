@@ -113,6 +113,7 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
     output_types=['object'],
     can_connect_to=['*'],
     can_receive_from=['*'],
+    can_be_start=True,
 
     # Execution settings
     timeout_ms=60000,
