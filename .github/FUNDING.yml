@@ -1,6 +1,6 @@
 # These are supported funding model platforms
 
-github: [flytohub]
+# github: [flytohub]
 # patreon: # Replace with a single Patreon username
 # open_collective: # Replace with a single Open Collective username
 # ko_fi: # Replace with a single Ko-fi username
@@ -10,4 +10,4 @@ github: [flytohub]
 # issuehunt: # Replace with a single IssueHunt username
 # lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name
 # polar: # Replace with a single Polar username
-custom: ['https://flyto.dev/sponsor']
+custom: ['https://flyto2.com/sponsor.html']
