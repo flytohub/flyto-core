@@ -1,0 +1,30 @@
+{
+  "$schema": "https://flyto.dev/schemas/plugin-registry-v1.json",
+  "version": "1.0.0",
+  "updated_at": "2026-03-02T00:00:00Z",
+  "plugins": [
+    {
+      "name": "flyto-plugin-example",
+      "version": "0.1.0",
+      "description": "Example plugin demonstrating the flyto plugin architecture",
+      "author": "Flyto2 Team",
+      "homepage": "https://github.com/flytohub/flyto-plugin-example",
+      "repository": "https://github.com/flytohub/flyto-plugin-example",
+      "license": "MIT",
+      "categories": ["utility"],
+      "keywords": ["example", "template", "starter"],
+      "icon": "Package",
+      "downloads": 0,
+      "pypi_name": "flyto-plugin-example",
+      "min_flyto_version": "2.17.0",
+      "modules": [
+        {
+          "module_id": "example.hello",
+          "label": "Hello World",
+          "description": "A simple hello world module for testing",
+          "category": "utility"
+        }
+      ]
+    }
+  ]
+}

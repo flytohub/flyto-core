@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flyto-plugin-example"
+version = "0.1.0"
+description = "Example flyto plugin — use this as a template for your own plugins"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "you@example.com"}
+]
+keywords = ["flyto", "plugin", "automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "flyto-core>=2.17.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourname/flyto-plugin-example"
+Repository = "https://github.com/yourname/flyto-plugin-example"
+
+# This entry point is how flyto discovers your modules.
+# When users run `pip install flyto-plugin-example`, flyto-core
+# automatically finds and loads your modules.
+[project.entry-points."flyto.modules"]
+example = "flyto_plugin_example.modules:register_all"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.yaml", "*.yml"]

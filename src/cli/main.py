@@ -44,6 +44,7 @@ from .workflow import collect_params, load_config, select_workflow
 from .params import merge_params
 from .runner import run_workflow
 from .modules import add_modules_parser, run_modules_command
+from .plugin import add_plugin_parser, run_plugin_command
 from .recipe import run_recipe, run_recipes_list, run_replay
 
 
@@ -119,6 +120,11 @@ Examples:
   # List modules
   flyto modules
 
+  # Manage plugins
+  flyto plugin available
+  flyto plugin install slack
+  flyto plugin list
+
   # Start HTTP API server
   flyto serve
         """
@@ -128,6 +134,7 @@ Examples:
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     add_run_parser(subparsers)
     add_modules_parser(subparsers)
+    add_plugin_parser(subparsers)
     add_serve_parser(subparsers)
 
     # Recipe commands
@@ -185,6 +192,10 @@ Examples:
             format=args.format,
             output_file=args.output
         ))
+
+    # Handle 'plugin' command
+    if args.command == 'plugin':
+        sys.exit(run_plugin_command(args))
 
     # Handle 'recipes' command (list all)
     if args.command == 'recipes':

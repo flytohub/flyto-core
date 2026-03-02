@@ -92,7 +92,7 @@ class TestToolsList:
         assert resp.status_code == 200
         body = resp.json()
         tools = body["result"]["tools"]
-        assert len(tools) == 6
+        assert len(tools) == 8
         tool_names = {t["name"] for t in tools}
         assert "execute_module" in tool_names
         assert "list_modules" in tool_names
@@ -105,7 +105,7 @@ class TestToolsList:
             headers={"Accept": "application/json"},
         )
         assert resp.status_code == 200
-        assert len(resp.json()["result"]["tools"]) == 6
+        assert len(resp.json()["result"]["tools"]) == 8
 
 
 class TestToolsCall:

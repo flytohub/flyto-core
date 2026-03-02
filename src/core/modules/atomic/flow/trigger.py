@@ -5,7 +5,7 @@ Trigger Module - Workflow entry point
 
 Workflow Spec v1.1:
 - Trigger node as workflow entry point
-- Types: manual, webhook, schedule, event
+- Types: manual, webhook, schedule, event, mcp, polling
 - No input ports (entry point)
 """
 from typing import Any, Dict, Optional
@@ -21,10 +21,10 @@ from ...types import NodeType, EdgeType, DataType
     module_id='flow.trigger',
     version='1.0.0',
     category='flow',
-    tags=['flow', 'trigger', 'entry', 'webhook', 'schedule', 'control', 'ssrf_protected', 'path_restricted'],
+    tags=['flow', 'trigger', 'entry', 'webhook', 'schedule', 'mcp', 'polling', 'control', 'ssrf_protected', 'path_restricted'],
     label='Trigger',
     label_key='modules.flow.trigger.label',
-    description='Workflow entry point - manual, webhook, schedule, or event',
+    description='Workflow entry point - manual, webhook, schedule, event, mcp, or polling',
     description_key='modules.flow.trigger.description',
     icon='Zap',
     color='#F59E0B',
@@ -89,6 +89,66 @@ from ...types import NodeType, EdgeType, DataType
               description="Event name to listen for",
               showIf={"trigger_type": {"$in": ["event"]}},
               group=FieldGroup.OPTIONS),
+        field("tool_name", type="string",
+              label="Tool Name",
+              label_key="schema.field.tool_name",
+              placeholder="send-weekly-report",
+              description="MCP tool name exposed to AI agents",
+              showIf={"trigger_type": {"$in": ["mcp"]}},
+              group=FieldGroup.OPTIONS),
+        field("tool_description", type="string",
+              label="Tool Description",
+              label_key="schema.field.tool_description",
+              placeholder="Send a weekly summary report to the specified email",
+              description="Description shown to AI agents for this tool",
+              showIf={"trigger_type": {"$in": ["mcp"]}},
+              group=FieldGroup.OPTIONS),
+        field("poll_url", type="string",
+              label="Poll URL",
+              label_key="schema.field.poll_url",
+              placeholder="https://api.example.com/items",
+              description="API endpoint to poll for changes",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.OPTIONS),
+        field("poll_interval", type="number",
+              label="Poll Interval (seconds)",
+              label_key="schema.field.poll_interval",
+              default=300,
+              description="How often to check for changes (minimum 60 seconds)",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.OPTIONS),
+        field("poll_method", type="select",
+              label="HTTP Method",
+              label_key="schema.field.poll_method",
+              default="GET",
+              options=[
+                  {"value": "GET", "label": "GET"},
+                  {"value": "POST", "label": "POST"},
+              ],
+              description="HTTP method for polling request",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.OPTIONS),
+        field("poll_headers", type="object",
+              label="Headers",
+              label_key="schema.field.poll_headers",
+              default={},
+              description="Custom headers for polling request (e.g. API keys)",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.ADVANCED),
+        field("poll_body", type="object",
+              label="Request Body",
+              label_key="schema.field.poll_body",
+              default={},
+              description="Request body for POST polling",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.ADVANCED),
+        field("dedup_key", type="string",
+              label="Dedup Key",
+              label_key="schema.field.dedup_key",
+              placeholder="$.data[0].id",
+              description="JSON path to extract a unique value for deduplication",
+              showIf={"trigger_type": {"$in": ["polling"]}},
+              group=FieldGroup.OPTIONS),
         field("config", type="object",
               label="Configuration",
               label_key="modules.flow.trigger.param.config.label",
@@ -132,6 +192,25 @@ from ...types import NodeType, EdgeType, DataType
                 'trigger_type': 'schedule',
                 'schedule': '0 * * * *'
             }
+        },
+        {
+            'name': 'MCP trigger',
+            'description': 'Expose workflow as AI agent tool',
+            'params': {
+                'trigger_type': 'mcp',
+                'tool_name': 'send-report',
+                'tool_description': 'Send a weekly summary report'
+            }
+        },
+        {
+            'name': 'Polling trigger',
+            'description': 'Check API for new data every 5 minutes',
+            'params': {
+                'trigger_type': 'polling',
+                'poll_url': 'https://api.example.com/items',
+                'poll_interval': 300,
+                'dedup_key': '$.data[0].id'
+            }
         }
     ],
     author='Flyto2 Team',
@@ -147,6 +226,8 @@ class TriggerModule(BaseModule):
     - webhook: HTTP webhook call
     - schedule: Cron-based schedule
     - event: Internal or external event
+    - mcp: AI agent MCP tool call
+    - polling: Periodic API polling
     """
 
     module_name = "Trigger"
@@ -156,10 +237,19 @@ class TriggerModule(BaseModule):
         self.webhook_path = self.params.get('webhook_path')
         self.schedule = self.params.get('schedule')
         self.event_name = self.params.get('event_name')
+        self.tool_name = self.params.get('tool_name')
+        self.tool_description = self.params.get('tool_description')
+        self.poll_url = self.params.get('poll_url')
+        self.poll_interval = self.params.get('poll_interval', 300)
+        self.poll_method = self.params.get('poll_method', 'GET')
+        self.poll_headers = self.params.get('poll_headers', {})
+        self.poll_body = self.params.get('poll_body', {})
+        self.dedup_key = self.params.get('dedup_key')
         self.config = self.params.get('config', {})
         self.description = self.params.get('description')
 
-        if self.trigger_type not in ('manual', 'webhook', 'schedule', 'event'):
+        valid_types = ('manual', 'webhook', 'schedule', 'event', 'mcp', 'polling')
+        if self.trigger_type not in valid_types:
             raise ValueError(f"Invalid trigger_type: {self.trigger_type}")
 
         # Validate type-specific params
@@ -169,6 +259,10 @@ class TriggerModule(BaseModule):
             raise ValueError("schedule required for schedule trigger")
         if self.trigger_type == 'event' and not self.event_name:
             raise ValueError("event_name required for event trigger")
+        if self.trigger_type == 'mcp' and not self.tool_name:
+            raise ValueError("tool_name required for mcp trigger")
+        if self.trigger_type == 'polling' and not self.poll_url:
+            raise ValueError("poll_url required for polling trigger")
 
     async def execute(self) -> Dict[str, Any]:
         """
@@ -218,4 +312,9 @@ class TriggerModule(BaseModule):
             trigger_data['schedule'] = self.schedule
         elif self.trigger_type == 'event':
             trigger_data['event_name'] = self.event_name
+        elif self.trigger_type == 'mcp':
+            trigger_data['tool_name'] = self.tool_name
+        elif self.trigger_type == 'polling':
+            trigger_data['poll_url'] = self.poll_url
+            trigger_data['dedup_key'] = self.dedup_key
         return trigger_data

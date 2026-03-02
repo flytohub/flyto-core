@@ -98,6 +98,8 @@ def TRIGGER_TYPE(
             {"value": "webhook", "label": "Webhook (HTTP trigger)"},
             {"value": "schedule", "label": "Schedule (cron-based)"},
             {"value": "event", "label": "Event (listen to events)"},
+            {"value": "mcp", "label": "MCP (AI agent tool)"},
+            {"value": "polling", "label": "Polling (check for changes)"},
         ],
         group=FieldGroup.OPTIONS,
     )
