@@ -299,22 +299,17 @@ class BrowserDriver:
         if proxy:
             persistent_kwargs['proxy'] = {'server': proxy}
 
-        for channel in (None, 'chrome', 'msedge'):
-            try:
-                ch_label = channel or 'playwright-chromium'
-                logger.info(f"Launching persistent context ({ch_label})...")
-                kw = {**persistent_kwargs}
-                if channel:
-                    kw['channel'] = channel
-                self._context = await launcher.launch_persistent_context(
-                    str(user_data_dir), **kw
-                )
-                self._browser = None  # persistent context manages browser internally
-                self._page = self._context.pages[0] if self._context.pages else await self._context.new_page()
-                logger.info(f"Persistent context launched ({ch_label})")
-                return True
-            except Exception as e:
-                logger.warning(f"Persistent context ({channel or 'chromium'}) failed: {e}")
+        try:
+            logger.info("Launching persistent context (playwright-chromium)...")
+            self._context = await launcher.launch_persistent_context(
+                str(user_data_dir), **persistent_kwargs
+            )
+            self._browser = None  # persistent context manages browser internally
+            self._page = self._context.pages[0] if self._context.pages else await self._context.new_page()
+            logger.info("Persistent context launched (playwright-chromium)")
+            return True
+        except Exception as e:
+            logger.warning(f"Persistent context (chromium) failed: {e}")
         return False
 
     async def _launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None):
@@ -329,20 +324,15 @@ class BrowserDriver:
         if proxy:
             launch_kwargs['proxy'] = {'server': proxy}
 
-        for channel in (None, 'chrome', 'msedge'):
-            try:
-                ch_label = channel or 'playwright-chromium'
-                logger.info(f"Launching regular ({ch_label})...")
-                kw = {**launch_kwargs}
-                if channel:
-                    kw['channel'] = channel
-                self._browser = await launcher.launch(**kw)
-                self._context = await self._browser.new_context(**context_kwargs)
-                self._page = await self._context.new_page()
-                logger.info(f"Regular launch succeeded ({ch_label})")
-                return True
-            except Exception as e:
-                logger.warning(f"Regular launch ({channel or 'chromium'}) failed: {e}")
+        try:
+            logger.info("Launching regular (playwright-chromium)...")
+            self._browser = await launcher.launch(**launch_kwargs)
+            self._context = await self._browser.new_context(**context_kwargs)
+            self._page = await self._context.new_page()
+            logger.info("Regular launch succeeded (playwright-chromium)")
+            return True
+        except Exception as e:
+            logger.warning(f"Regular launch (chromium) failed: {e}")
         return False
 
     async def goto(self,
