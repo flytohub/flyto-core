@@ -130,7 +130,7 @@ def EMAIL_BODY(
         label=label,
         label_key=label_key,
         required=required,
-        multiline=True,
+        format="multiline",
         description='Email body content',
         group=FieldGroup.BASIC,
     
@@ -232,6 +232,7 @@ def EMAIL_ATTACHMENTS(
     return field(
         key,
         type="array",
+        items={"type": "string", "format": "path"},
         label=label,
         label_key=label_key,
         default=[],
@@ -671,6 +672,7 @@ def SLACK_BLOCKS(
     return field(
         key,
         type="array",
+        items={"type": "object"},
         label=label,
         label_key=label_key,
         required=required,
@@ -690,6 +692,7 @@ def SLACK_ATTACHMENTS(
     return field(
         key,
         type="array",
+        items={"type": "object"},
         label=label,
         label_key=label_key,
         required=required,
@@ -738,7 +741,7 @@ def NOTIFY_MESSAGE(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
-        multiline=True,
+        format="multiline",
         description='Notification message content',
         group=FieldGroup.BASIC,
     )

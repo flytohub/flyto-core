@@ -84,7 +84,7 @@ from ...types import NodeType, EdgeType, DataType
     params_schema=compose(
         field(
             'delay_ms',
-            type='integer',
+            type='number',
             label='Delay (ms)',
             label_key='modules.flow.debounce.params.delay_ms.label',
             description='Wait time in milliseconds before allowing execution',
@@ -120,17 +120,17 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.debounce.output.__event__.description'
         },
         'last_call_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Timestamp of the last call',
             'description_key': 'modules.flow.debounce.output.last_call_ms.description'
         },
         'calls_debounced': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of calls that were debounced (skipped)',
             'description_key': 'modules.flow.debounce.output.calls_debounced.description'
         },
         'time_since_last_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Time since last call in milliseconds',
             'description_key': 'modules.flow.debounce.output.time_since_last_ms.description'
         },

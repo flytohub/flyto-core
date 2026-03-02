@@ -19,7 +19,8 @@ def ANALYSIS_TEXT(
     """Text to analyze."""
     return field(
         key,
-        type="text",
+        type="string",
+        format="multiline",
         label=label,
         label_key=label_key,
         required=required,

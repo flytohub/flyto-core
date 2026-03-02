@@ -87,7 +87,7 @@ from ...types import NodeType, EdgeType, DataType
             default=10,
             min=1,
             max=100,
-            showIf={'memory_type': 'window'}
+            showIf={'memory_type': {'$in': ['window']}}
         ),
         field(
             'session_id',

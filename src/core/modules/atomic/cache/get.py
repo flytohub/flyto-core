@@ -98,7 +98,7 @@ def _cache_has(key: str) -> bool:
             description_key='modules.cache.get.params.redis_url.description',
             default='redis://localhost:6379',
             placeholder='redis://localhost:6379',
-            showIf={'backend': 'redis'},
+            showIf={'backend': {'$in': ['redis']}},
             group=FieldGroup.CONNECTION,
         ),
     ),

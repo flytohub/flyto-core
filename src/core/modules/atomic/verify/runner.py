@@ -52,8 +52,8 @@ from ...schema import compose, field as schema_field
         schema_field('output_dir', type='string', required=False, default='./verify-reports', description='Output directory', placeholder='/path/to/output'),
         schema_field('report_format', type='string', required=False, default='html', description='Report format', placeholder='html'),
         schema_field('take_screenshot', type='boolean', required=False, default=True, description='Capture screenshot'),
-        schema_field('viewport_width', type='integer', required=False, default=1280, description='Viewport width'),
-        schema_field('viewport_height', type='integer', required=False, default=800, description='Viewport height'),
+        schema_field('viewport_width', type='number', required=False, default=1280, description='Viewport width'),
+        schema_field('viewport_height', type='number', required=False, default=800, description='Viewport height'),
     ),
     output_schema={
         'passed': {'type': 'boolean', 'description': 'Overall verification passed'},

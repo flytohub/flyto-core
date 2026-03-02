@@ -95,7 +95,7 @@ from ...types import NodeType, EdgeType, DataType
     params_schema=compose(
         field(
             'max_retries',
-            type='integer',
+            type='number',
             label='Max Retries',
             label_key='modules.flow.retry.params.max_retries.label',
             description='Maximum number of retry attempts',
@@ -107,7 +107,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'initial_delay_ms',
-            type='integer',
+            type='number',
             label='Initial Delay (ms)',
             label_key='modules.flow.retry.params.initial_delay_ms.label',
             description='Initial delay before first retry in milliseconds',
@@ -129,7 +129,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'max_delay_ms',
-            type='integer',
+            type='number',
             label='Max Delay (ms)',
             label_key='modules.flow.retry.params.max_delay_ms.label',
             description='Maximum delay cap in milliseconds',
@@ -157,22 +157,22 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.retry.output.__event__.description'
         },
         'attempt': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Current attempt number (1-based)',
             'description_key': 'modules.flow.retry.output.attempt.description'
         },
         'max_retries': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Maximum retry attempts configured',
             'description_key': 'modules.flow.retry.output.max_retries.description'
         },
         'delay_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Delay before this attempt in milliseconds',
             'description_key': 'modules.flow.retry.output.delay_ms.description'
         },
         'total_elapsed_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Total time elapsed across all attempts',
             'description_key': 'modules.flow.retry.output.total_elapsed_ms.description'
         },

@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'code',
-            type='text',
+            type='string',
             label='JavaScript Code',
             label_key='modules.sandbox.execute_js.params.code.label',
             description='JavaScript code to execute via Node.js',

@@ -125,7 +125,7 @@ def colors_match(color1: str, color2: str, tolerance: int = 5) -> bool:
         schema_field('size_tolerance', type='number', required=False, default=2.0, description='Tolerance for size (px)'),
         schema_field('spacing_tolerance', type='number', required=False, default=2.0, description='Tolerance for spacing (px)'),
         schema_field('font_size_tolerance', type='number', required=False, default=1.0, description='Tolerance for font size (px)'),
-        schema_field('color_tolerance', type='integer', required=False, default=5, description='Tolerance for color (0-255)'),
+        schema_field('color_tolerance', type='number', required=False, default=5, description='Tolerance for color (0-255)'),
         schema_field('check_typography', type='boolean', required=False, default=True, description='Check typography'),
         schema_field('check_colors', type='boolean', required=False, default=True, description='Check colors'),
         schema_field('check_spacing', type='boolean', required=False, default=True, description='Check spacing'),
@@ -134,8 +134,8 @@ def colors_match(color1: str, color2: str, tolerance: int = 5) -> bool:
     output_schema={
         'passed': {'type': 'boolean', 'description': 'Whether comparison passed'},
         'violations': {'type': 'array', 'description': 'List of violations found'},
-        'error_count': {'type': 'integer', 'description': 'Number of errors'},
-        'warning_count': {'type': 'integer', 'description': 'Number of warnings'},
+        'error_count': {'type': 'number', 'description': 'Number of errors'},
+        'warning_count': {'type': 'number', 'description': 'Number of warnings'},
     },
 )
 class VerifyCompareModule(BaseModule):

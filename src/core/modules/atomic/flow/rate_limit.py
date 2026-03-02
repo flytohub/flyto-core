@@ -92,7 +92,7 @@ from ...types import NodeType, EdgeType, DataType
     params_schema=compose(
         field(
             'max_requests',
-            type='integer',
+            type='number',
             label='Max Requests',
             label_key='modules.flow.rate_limit.params.max_requests.label',
             description='Maximum number of requests allowed per window',
@@ -103,7 +103,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'window_ms',
-            type='integer',
+            type='number',
             label='Window (ms)',
             label_key='modules.flow.rate_limit.params.window_ms.label',
             description='Time window in milliseconds',
@@ -149,22 +149,22 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.rate_limit.output.__event__.description'
         },
         'tokens_remaining': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of tokens remaining in the bucket',
             'description_key': 'modules.flow.rate_limit.output.tokens_remaining.description'
         },
         'window_reset_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Milliseconds until the window resets',
             'description_key': 'modules.flow.rate_limit.output.window_reset_ms.description'
         },
         'requests_in_window': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of requests made in current window',
             'description_key': 'modules.flow.rate_limit.output.requests_in_window.description'
         },
         'wait_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Milliseconds to wait before retry (if throttled)',
             'description_key': 'modules.flow.rate_limit.output.wait_ms.description'
         }

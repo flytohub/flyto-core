@@ -87,7 +87,7 @@ from ...types import NodeType, EdgeType, DataType
     params_schema=compose(
         field(
             'interval_ms',
-            type='integer',
+            type='number',
             label='Interval (ms)',
             label_key='modules.flow.throttle.params.interval_ms.label',
             description='Minimum time between executions in milliseconds',
@@ -114,22 +114,22 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.throttle.output.__event__.description'
         },
         'last_execution_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Timestamp of last allowed execution',
             'description_key': 'modules.flow.throttle.output.last_execution_ms.description'
         },
         'calls_throttled': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of calls throttled since last execution',
             'description_key': 'modules.flow.throttle.output.calls_throttled.description'
         },
         'time_since_last_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Time elapsed since last execution in milliseconds',
             'description_key': 'modules.flow.throttle.output.time_since_last_ms.description'
         },
         'remaining_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Milliseconds remaining until next execution is allowed',
             'description_key': 'modules.flow.throttle.output.remaining_ms.description'
         }

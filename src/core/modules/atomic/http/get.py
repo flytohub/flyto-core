@@ -86,7 +86,7 @@ async def _parse_response_body(response) -> Any:
             'type': 'number',
             'label': 'Timeout (seconds)',
             'default': 30,
-            'description': 'Maximum time to wait in milliseconds',
+            'description': 'Maximum time to wait in seconds',
         },
         'verify_ssl': {
             'type': 'boolean',

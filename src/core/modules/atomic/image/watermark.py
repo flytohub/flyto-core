@@ -117,6 +117,7 @@ def _apply_text_watermark(base_img, text, position, opacity, font_size):
         field(
             'input_path',
             type='string',
+            format='path',
             label='Input Path',
             label_key='modules.image.watermark.params.input_path.label',
             description='Path to the source image',
@@ -128,6 +129,7 @@ def _apply_text_watermark(base_img, text, position, opacity, font_size):
         field(
             'output_path',
             type='string',
+            format='path',
             label='Output Path',
             label_key='modules.image.watermark.params.output_path.label',
             description='Path to save the watermarked image',
@@ -150,6 +152,7 @@ def _apply_text_watermark(base_img, text, position, opacity, font_size):
         field(
             'watermark_image',
             type='string',
+            format='path',
             label='Watermark Image',
             label_key='modules.image.watermark.params.watermark_image.label',
             description='Path to watermark image (optional if text is set)',
@@ -160,7 +163,7 @@ def _apply_text_watermark(base_img, text, position, opacity, font_size):
         ),
         field(
             'position',
-            type='string',
+            type='select',
             label='Position',
             label_key='modules.image.watermark.params.position.label',
             description='Watermark position on the image',

@@ -19,7 +19,7 @@ def HASH_TEXT(
     """Text to hash."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,
@@ -46,7 +46,7 @@ def HASH_ENCODING(
         description='Text encoding',
         group=FieldGroup.OPTIONS,
     
-        placeholder='hex',
+        placeholder='utf-8',
 )
 
 
@@ -60,7 +60,7 @@ def HASH_ALGORITHM(
     """Hash algorithm."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

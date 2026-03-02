@@ -41,7 +41,7 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Text',
             label_key='modules.regex.replace.params.text.label',
             description='Text to process',

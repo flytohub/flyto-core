@@ -65,6 +65,7 @@ def _validate_crop_params(input_path, output_path, left, top, right, bottom):
         field(
             'input_path',
             type='string',
+            format='path',
             label='Input Path',
             label_key='modules.image.crop.params.input_path.label',
             description='Path to the source image',
@@ -76,6 +77,7 @@ def _validate_crop_params(input_path, output_path, left, top, right, bottom):
         field(
             'output_path',
             type='string',
+            format='path',
             label='Output Path',
             label_key='modules.image.crop.params.output_path.label',
             description='Path to save the cropped image',

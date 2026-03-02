@@ -35,7 +35,7 @@ from ...schema import compose, presets, field
     params_schema=compose(
         field(
             'action',
-            type='string',
+            type='select',
             label='Action',
             label_key='modules.browser.network.params.action.label',
             description='Network action to perform',
@@ -72,7 +72,7 @@ from ...schema import compose, presets, field
             label_key='modules.browser.network.params.mock_response.label',
             description='Response to return for intercepted requests',
             required=False,
-            showIf={"action": "intercept"},
+            showIf={"action": {"$in": ["intercept"]}},
         ),
     ),
     output_schema={

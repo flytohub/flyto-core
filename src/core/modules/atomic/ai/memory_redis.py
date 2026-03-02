@@ -60,6 +60,7 @@ from ...types import NodeType, EdgeType, DataType
             label='Redis URL',
             label_key='modules.ai.memory.redis.params.redis_url',
             description='Redis connection URL',
+            format="url",
             required=True,
             default='redis://localhost:6379',
             placeholder='redis://localhost:6379'

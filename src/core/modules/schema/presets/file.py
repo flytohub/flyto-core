@@ -162,7 +162,7 @@ def WRITE_MODE(
     """Write mode: overwrite or append."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -185,7 +185,7 @@ def FILE_ENCODING(
     """File character encoding."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -257,7 +257,7 @@ def FILE_PATTERN(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

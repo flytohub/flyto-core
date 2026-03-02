@@ -54,7 +54,8 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'prompt',
-            type='text',
+            type='string',
+            format='multiline',
             label='Prompt',
             label_key='modules.agent.tool_use.params.prompt',
             description='The goal or task for the agent',
@@ -98,7 +99,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'api_key',
-            type='password',
+            type='string',
+            format='password',
             label='API Key',
             label_key='modules.agent.tool_use.params.api_key',
             description='API key (falls back to environment variable)',
@@ -119,7 +121,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'system_prompt',
-            type='text',
+            type='string',
+            format='multiline',
             label='System Prompt',
             label_key='modules.agent.tool_use.params.system_prompt',
             description='Optional system prompt to guide the agent',

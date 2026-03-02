@@ -57,7 +57,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'secret',
-            type='password',
+            type='string',
+            format='password',
             label='Secret Key',
             label_key='modules.crypto.jwt_create.params.secret.label',
             description='Secret key for signing the token',
@@ -68,7 +69,7 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'algorithm',
-            type='string',
+            type='select',
             label='Algorithm',
             label_key='modules.crypto.jwt_create.params.algorithm.label',
             description='Signing algorithm',

@@ -157,8 +157,8 @@ CAPTURE_SCRIPT = """(selector) => {
                      placeholder='#element or .class'),
         schema_field('wait_for', type='string', required=False, description='Wait for selector before capture',
                      placeholder='Enter Wait For...'),
-        schema_field('viewport_width', type='integer', required=False, default=1280, description='Viewport width'),
-        schema_field('viewport_height', type='integer', required=False, default=800, description='Viewport height'),
+        schema_field('viewport_width', type='number', required=False, default=1280, description='Viewport width'),
+        schema_field('viewport_height', type='number', required=False, default=800, description='Viewport height'),
     ),
     output_schema={
         'element': {'type': 'object', 'description': 'Captured element with styles'},

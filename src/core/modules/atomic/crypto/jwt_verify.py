@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'token',
-            type='text',
+            type='string',
             label='JWT Token',
             label_key='modules.crypto.jwt_verify.params.token.label',
             description='JWT token to verify and decode',
@@ -56,7 +56,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'secret',
-            type='password',
+            type='string',
+            format='password',
             label='Secret Key',
             label_key='modules.crypto.jwt_verify.params.secret.label',
             description='Secret key for verifying the token signature',

@@ -119,7 +119,7 @@ class CircuitState(str, Enum):
         ),
         field(
             'failure_threshold',
-            type='integer',
+            type='number',
             label='Failure Threshold',
             label_key='modules.error.circuit_breaker.params.failure_threshold.label',
             description='Number of failures before opening circuit',
@@ -130,7 +130,7 @@ class CircuitState(str, Enum):
         ),
         field(
             'failure_window_ms',
-            type='integer',
+            type='number',
             label='Failure Window (ms)',
             label_key='modules.error.circuit_breaker.params.failure_window_ms.label',
             description='Time window for counting failures',
@@ -141,7 +141,7 @@ class CircuitState(str, Enum):
         ),
         field(
             'recovery_timeout_ms',
-            type='integer',
+            type='number',
             label='Recovery Timeout (ms)',
             label_key='modules.error.circuit_breaker.params.recovery_timeout_ms.label',
             description='Time before attempting recovery (half-open state)',
@@ -152,7 +152,7 @@ class CircuitState(str, Enum):
         ),
         field(
             'success_threshold',
-            type='integer',
+            type='number',
             label='Success Threshold',
             label_key='modules.error.circuit_breaker.params.success_threshold.label',
             description='Successful requests needed in half-open to close circuit',
@@ -207,7 +207,7 @@ class CircuitState(str, Enum):
             'description_key': 'modules.error.circuit_breaker.output.circuit_state.description'
         },
         'failure_count': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Current failure count in window',
             'description_key': 'modules.error.circuit_breaker.output.failure_count.description'
         },

@@ -11,11 +11,16 @@ import time
 from typing import Any, Dict, List, Optional, Union
 
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, field, presets
+from ...schema.constants import Visibility, FieldGroup
 from ....utils import validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
+
+
+# Retry-After header status codes
+_RETRY_STATUS_CODES = {429, 503}
 
 
 def _build_url_with_query(url: str, query: dict) -> str:
@@ -139,6 +144,50 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
         presets.FOLLOW_REDIRECTS(default=True),
         presets.VERIFY_SSL(default=True),
         presets.RESPONSE_TYPE(default='auto'),
+        field(
+            'retry_count',
+            type='number',
+            label='Retry Count',
+            label_key='modules.http.request.retry_count',
+            description='Number of retries on failure or 429/503 status',
+            default=0,
+            min=0,
+            max=10,
+            step=1,
+            visibility=Visibility.EXPERT,
+            group=FieldGroup.ADVANCED,
+        ),
+        field(
+            'retry_backoff',
+            type='string',
+            label='Retry Backoff',
+            label_key='modules.http.request.retry_backoff',
+            description='Backoff strategy between retries',
+            default='exponential',
+            options=[
+                {'value': 'none', 'label': 'No delay'},
+                {'value': 'linear', 'label': 'Linear (1s, 2s, 3s...)'},
+                {'value': 'exponential', 'label': 'Exponential (1s, 2s, 4s...)'},
+            ],
+            showIf={'retry_count': {'$in': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}},
+            visibility=Visibility.EXPERT,
+            group=FieldGroup.ADVANCED,
+        ),
+        field(
+            'retry_delay',
+            type='number',
+            label='Base Retry Delay (seconds)',
+            label_key='modules.http.request.retry_delay',
+            description='Initial delay between retries in seconds',
+            default=1,
+            min=0.1,
+            max=30,
+            step=0.1,
+            ui={'unit': 's'},
+            showIf={'retry_count': {'$in': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}},
+            visibility=Visibility.EXPERT,
+            group=FieldGroup.ADVANCED,
+        ),
     ),
     output_schema={
         'ok': {
@@ -244,6 +293,9 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     auth = params.get('auth')
     timeout_seconds = params.get('timeout', 30)
     response_type = params.get('response_type', 'auto')
+    retry_count = int(params.get('retry_count', 0))
+    retry_backoff = params.get('retry_backoff', 'exponential')
+    retry_delay = float(params.get('retry_delay', 1))
 
     try:
         validate_url_with_env_config(url)
@@ -264,33 +316,75 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     )
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
     start_time = time.time()
+    last_error = None
+    max_attempts = 1 + retry_count
 
-    try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.request(method, url, **request_kwargs) as response:
-                duration_ms = int((time.time() - start_time) * 1000)
-                body_content = await _read_response_body(response, response_type)
-                logger.info(f"HTTP {method} {url} -> {response.status} ({duration_ms}ms)")
-                return {
-                    'ok': 200 <= response.status < 300,
-                    'status': response.status,
-                    'status_text': response.reason or '',
-                    'headers': dict(response.headers),
-                    'body': body_content,
-                    'url': str(response.url),
-                    'duration_ms': duration_ms,
-                    'content_type': response.headers.get('Content-Type', ''),
-                    'content_length': _compute_content_length(response.headers.get('Content-Length'), body_content),
-                }
-    except asyncio.TimeoutError:
-        duration_ms = int((time.time() - start_time) * 1000)
-        logger.error(f"HTTP request timeout: {method} {url}")
-        return _error_result(f'Request timed out after {timeout_seconds} seconds', 'TIMEOUT', url, duration_ms)
-    except aiohttp.ClientError as e:
-        duration_ms = int((time.time() - start_time) * 1000)
-        logger.error(f"HTTP client error: {e}")
-        return _error_result(str(e), 'CLIENT_ERROR', url, duration_ms)
-    except Exception as e:
-        duration_ms = int((time.time() - start_time) * 1000)
-        logger.error(f"HTTP request failed: {e}")
-        return _error_result(str(e), 'REQUEST_ERROR', url, duration_ms)
+    for attempt in range(max_attempts):
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.request(method, url, **request_kwargs) as response:
+                    duration_ms = int((time.time() - start_time) * 1000)
+                    body_content = await _read_response_body(response, response_type)
+
+                    # Retry on 429/503 if retries remaining
+                    if response.status in _RETRY_STATUS_CODES and attempt < max_attempts - 1:
+                        # Respect Retry-After header if present
+                        retry_after = response.headers.get('Retry-After')
+                        if retry_after and retry_after.isdigit():
+                            wait = float(retry_after)
+                        else:
+                            wait = _compute_backoff(attempt, retry_delay, retry_backoff)
+                        logger.warning(f"HTTP {method} {url} -> {response.status}, retry {attempt + 1}/{retry_count} in {wait:.1f}s")
+                        await asyncio.sleep(wait)
+                        continue
+
+                    logger.info(f"HTTP {method} {url} -> {response.status} ({duration_ms}ms)")
+                    result = {
+                        'ok': 200 <= response.status < 300,
+                        'status': response.status,
+                        'status_text': response.reason or '',
+                        'headers': dict(response.headers),
+                        'body': body_content,
+                        'url': str(response.url),
+                        'duration_ms': duration_ms,
+                        'content_type': response.headers.get('Content-Type', ''),
+                        'content_length': _compute_content_length(response.headers.get('Content-Length'), body_content),
+                    }
+                    if attempt > 0:
+                        result['retries'] = attempt
+                    return result
+
+        except asyncio.TimeoutError:
+            last_error = ('TIMEOUT', f'Request timed out after {timeout_seconds} seconds')
+        except aiohttp.ClientError as e:
+            last_error = ('CLIENT_ERROR', str(e))
+        except Exception as e:
+            last_error = ('REQUEST_ERROR', str(e))
+
+        # Retry on exception if retries remaining
+        if attempt < max_attempts - 1:
+            wait = _compute_backoff(attempt, retry_delay, retry_backoff)
+            logger.warning(f"HTTP {method} {url} failed ({last_error[0]}), retry {attempt + 1}/{retry_count} in {wait:.1f}s")
+            await asyncio.sleep(wait)
+        else:
+            duration_ms = int((time.time() - start_time) * 1000)
+            error_code, error_msg = last_error
+            logger.error(f"HTTP {method} {url} failed after {attempt + 1} attempts: {error_msg}")
+            result = _error_result(error_msg, error_code, url, duration_ms)
+            if attempt > 0:
+                result['retries'] = attempt
+            return result
+
+    # Should not reach here, but just in case
+    duration_ms = int((time.time() - start_time) * 1000)
+    return _error_result('Unexpected retry loop exit', 'REQUEST_ERROR', url, duration_ms)
+
+
+def _compute_backoff(attempt: int, base_delay: float, strategy: str) -> float:
+    """Compute retry delay based on backoff strategy."""
+    if strategy == 'none':
+        return 0
+    elif strategy == 'linear':
+        return base_delay * (attempt + 1)
+    else:  # exponential
+        return base_delay * (2 ** attempt)

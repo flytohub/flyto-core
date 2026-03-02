@@ -72,6 +72,7 @@ def SWITCH_CASES(
         label_key=label_key,
         required=required,
         default=default,
+        items={"type": "object"},
         description='List of case definitions',
         group=FieldGroup.BASIC,
     )
@@ -87,7 +88,7 @@ def TRIGGER_TYPE(
     """Trigger type selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -191,7 +192,7 @@ def MERGE_STRATEGY(
     """How to merge multiple inputs."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -215,7 +216,7 @@ def JOIN_STRATEGY(
     """How to handle multiple inputs in join."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -241,7 +242,7 @@ def PORT_COUNT(
     """Number of dynamic ports."""
     return field(
         key,
-        type="integer",
+        type="number",
         label=label,
         label_key=label_key,
         default=default,
@@ -262,7 +263,7 @@ def BRANCH_COUNT(
     """Number of parallel branches."""
     return field(
         key,
-        type="integer",
+        type="number",
         label=label,
         label_key=label_key,
         default=default,
@@ -324,7 +325,7 @@ def TIMEOUT_MS(
     """Maximum wait time in milliseconds."""
     return field(
         key,
-        type="integer",
+        type="number",
         label=label,
         label_key=label_key,
         default=default,
@@ -387,7 +388,7 @@ def APPROVAL_MODE(
     """How approvals are counted."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -412,7 +413,7 @@ def TIMEOUT_SECONDS(
     """Maximum wait time in seconds (0 for no timeout)."""
     return field(
         key,
-        type="integer",
+        type="number",
         label=label,
         label_key=label_key,
         default=default,

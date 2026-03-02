@@ -81,7 +81,7 @@ def DATETIME_FORMAT(
     """DateTime format selector with common presets."""
     field_def = field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -106,7 +106,7 @@ def DATETIME_PARSE_FORMAT(
     """DateTime parse format (for parsing non-standard input)."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -232,7 +232,7 @@ def TIMEZONE(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

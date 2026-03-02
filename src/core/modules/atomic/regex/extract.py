@@ -41,7 +41,7 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Text',
             label_key='modules.regex.extract.params.text.label',
             description='Text to extract from',

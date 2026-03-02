@@ -93,7 +93,7 @@ from ...schema.constants import FieldGroup, Visibility
         ),
         field(
             'slow_mo',
-            type='integer',
+            type='number',
             label='Slow Motion (ms)',
             label_key='modules.browser.launch.params.slow_mo.label',
             description='Delay between actions in ms',

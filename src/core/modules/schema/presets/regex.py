@@ -19,7 +19,7 @@ def REGEX_TEXT(
     """Text to process."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,

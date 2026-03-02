@@ -93,7 +93,7 @@ from ...types import NodeType, EdgeType, DataType
     params_schema=compose(
         field(
             'failure_threshold',
-            type='integer',
+            type='number',
             label='Failure Threshold',
             label_key='modules.flow.circuit_breaker.params.failure_threshold.label',
             description='Number of failures before opening the circuit',
@@ -105,7 +105,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'reset_timeout_ms',
-            type='integer',
+            type='number',
             label='Reset Timeout (ms)',
             label_key='modules.flow.circuit_breaker.params.reset_timeout_ms.label',
             description='Time to wait before transitioning from open to half-open',
@@ -116,7 +116,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'half_open_max',
-            type='integer',
+            type='number',
             label='Half-Open Max Requests',
             label_key='modules.flow.circuit_breaker.params.half_open_max.label',
             description='Maximum test requests allowed in half-open state',
@@ -139,17 +139,17 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.circuit_breaker.output.state.description'
         },
         'failure_count': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Current number of consecutive failures',
             'description_key': 'modules.flow.circuit_breaker.output.failure_count.description'
         },
         'last_failure_time_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Timestamp of last failure',
             'description_key': 'modules.flow.circuit_breaker.output.last_failure_time_ms.description'
         },
         'time_until_half_open_ms': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Milliseconds until circuit transitions to half-open',
             'description_key': 'modules.flow.circuit_breaker.output.time_until_half_open_ms.description'
         }

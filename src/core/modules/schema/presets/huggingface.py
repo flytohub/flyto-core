@@ -43,9 +43,9 @@ def HF_PROMPT(
         label=label,
         label_key=label_key,
         required=required,
-        multiline=True,
+        format="multiline",
         group=FieldGroup.BASIC,
-    
+
         placeholder='Enter your prompt...',
 )
 
@@ -64,9 +64,9 @@ def HF_TEXT_INPUT(
         label=label,
         label_key=label_key,
         required=required,
-        multiline=True,
+        format="multiline",
         group=FieldGroup.BASIC,
-    
+
         placeholder='Enter text...',
 )
 
@@ -248,8 +248,9 @@ def HF_AUDIO_PATH(
         label=label,
         label_key=label_key,
         required=True,
+        format="path",
         group=FieldGroup.BASIC,
-    
+
         placeholder='/path/to/audio.wav',
 )
 
@@ -267,8 +268,9 @@ def HF_IMAGE_PATH(
         label=label,
         label_key=label_key,
         required=True,
+        format="path",
         group=FieldGroup.BASIC,
-    
+
         placeholder='/path/to/image.png',
 )
 

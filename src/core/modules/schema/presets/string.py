@@ -95,7 +95,7 @@ def STRING_DELIMITER(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -147,7 +147,7 @@ def CASE_TYPE(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -167,7 +167,7 @@ def PADDING_SIDE(
     """Which side to pad."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -191,7 +191,7 @@ def PADDING_CHAR(
     """Character to use for padding."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -241,7 +241,7 @@ def TRIM_TYPE(
     """Which whitespace to trim."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

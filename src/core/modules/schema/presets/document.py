@@ -26,6 +26,7 @@ def DOC_INPUT_PATH(
         label_key=label_key,
         required=required,
         placeholder=placeholder,
+        format="path",
         description='Path to the input document',
         group=FieldGroup.BASIC,
     )
@@ -47,6 +48,7 @@ def DOC_OUTPUT_PATH(
         label_key=label_key,
         required=required,
         placeholder=placeholder,
+        format="path",
         description='Path for the output document',
         group=FieldGroup.BASIC,
     )
@@ -147,6 +149,7 @@ def DOC_IMAGES_OUTPUT_DIR(
         label=label,
         label_key=label_key,
         required=False,
+        format="path",
         description='Directory to save extracted images',
         group=FieldGroup.OPTIONS,
     
@@ -169,6 +172,7 @@ def EXCEL_PATH(
         label_key=label_key,
         required=required,
         placeholder=placeholder,
+        format="path",
         description='Path to the Excel file',
         group=FieldGroup.BASIC,
     )
@@ -268,6 +272,7 @@ def EXCEL_DATA(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "object"},
         description='Data to write (array of arrays or array of objects)',
         group=FieldGroup.BASIC,
     )
@@ -286,6 +291,7 @@ def EXCEL_HEADERS(
         label=label,
         label_key=label_key,
         required=False,
+        items={"type": "string"},
         description='Column headers (auto-detected from objects if not provided)',
         group=FieldGroup.OPTIONS,
     )
@@ -348,6 +354,7 @@ def PDF_PATH(
         label_key=label_key,
         required=required,
         placeholder=placeholder,
+        format="path",
         description='Path to the PDF file',
         group=FieldGroup.BASIC,
     )
@@ -367,6 +374,7 @@ def PDF_CONTENT(
         label=label,
         label_key=label_key,
         required=required,
+        format="multiline",
         description='HTML or text content to convert to PDF',
         group=FieldGroup.BASIC,
     
@@ -424,7 +432,7 @@ def PDF_PAGE_SIZE(
     """Page size format."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -451,7 +459,7 @@ def PDF_ORIENTATION(
     """Page orientation."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -539,6 +547,7 @@ def PDF_TEMPLATE(
         label=label,
         label_key=label_key,
         required=required,
+        format="path",
         description='Path to the PDF template file',
         group=FieldGroup.OPTIONS,
     
@@ -579,6 +588,7 @@ def PDF_IMAGES(
         label_key=label_key,
         required=False,
         default=[],
+        items={"type": "object"},
         description='List of images to insert with position info',
         group=FieldGroup.OPTIONS,
     )
@@ -617,6 +627,7 @@ def WORD_FILE_PATH(
         label=label,
         label_key=label_key,
         required=required,
+        format="path",
         description='Path to the Word document (.docx)',
         group=FieldGroup.BASIC,
     

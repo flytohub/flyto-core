@@ -87,11 +87,11 @@ from ...schema import compose, field
             description='CSS selector for submit button',
             placeholder='button[type="submit"], input[type="submit"]',
             required=False,
-            showIf={"submit": True},
+            showIf={"submit": {"$in": [True]}},
         ),
         field(
             'delay_between_fields_ms',
-            type='integer',
+            type='number',
             label='Delay Between Fields (ms)',
             label_key='modules.browser.form.params.delay_between_fields_ms.label',
             description='Delay between filling each field (for more human-like behavior)',

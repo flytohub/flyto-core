@@ -103,6 +103,7 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
         field(
             'url',
             type='string',
+            format='url',
             label='Endpoint URL',
             label_key='modules.graphql.mutation.params.url.label',
             description='GraphQL endpoint URL',
@@ -113,7 +114,7 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
         ),
         field(
             'mutation',
-            type='text',
+            type='string',
             label='Mutation',
             label_key='modules.graphql.mutation.params.mutation.label',
             description='GraphQL mutation string',
@@ -143,7 +144,8 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
         ),
         field(
             'auth_token',
-            type='password',
+            type='string',
+            format='password',
             label='Auth Token',
             label_key='modules.graphql.mutation.params.auth_token.label',
             description='Bearer token for authentication (added as Authorization header)',

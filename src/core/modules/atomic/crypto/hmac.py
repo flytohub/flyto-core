@@ -42,7 +42,8 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'message',
-            type='text',
+            type='string',
+            format='multiline',
             label='Message',
             label_key='modules.crypto.hmac.params.message.label',
             description='Message to sign',
@@ -53,7 +54,8 @@ from ...errors import ValidationError
         ),
         field(
             'key',
-            type='password',
+            type='string',
+            format='password',
             label='Secret Key',
             label_key='modules.crypto.hmac.params.key.label',
             description='Secret key for HMAC',
@@ -64,7 +66,7 @@ from ...errors import ValidationError
         ),
         field(
             'algorithm',
-            type='string',
+            type='select',
             label='Algorithm',
             label_key='modules.crypto.hmac.params.algorithm.label',
             description='Hash algorithm',
@@ -80,7 +82,7 @@ from ...errors import ValidationError
         ),
         field(
             'encoding',
-            type='string',
+            type='select',
             label='Output Encoding',
             label_key='modules.crypto.hmac.params.encoding.label',
             description='Output encoding format',

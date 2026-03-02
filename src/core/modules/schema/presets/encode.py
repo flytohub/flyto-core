@@ -19,7 +19,7 @@ def ENCODE_TEXT(
     """Text to encode."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,
@@ -39,7 +39,7 @@ def ENCODING_TYPE(
     """Character encoding type."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

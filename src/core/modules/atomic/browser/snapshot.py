@@ -39,7 +39,7 @@ from ...schema import compose, field, presets
     params_schema=compose(
         field(
             'format',
-            type='string',
+            type='select',
             label='Format',
             label_key='modules.browser.snapshot.params.format.label',
             description='Snapshot format',

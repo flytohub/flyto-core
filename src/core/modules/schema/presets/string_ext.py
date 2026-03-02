@@ -61,7 +61,7 @@ def STRING_PAD_POSITION(
     """Padding position."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -148,12 +148,13 @@ def STRING_TEMPLATE(
     """Template string."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,
         placeholder="Hello, {{name}}!",
         description='Template string with {{variable}} placeholders',
+        format="multiline",
         group=FieldGroup.BASIC,
     )
 

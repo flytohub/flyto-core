@@ -47,7 +47,7 @@ def VISION_PROMPT(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
-        multiline=True,
+        format="multiline",
         description='What to analyze in the image',
         group=FieldGroup.BASIC,
     )
@@ -63,7 +63,7 @@ def VISION_ANALYSIS_TYPE(
     """Type of vision analysis."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -90,7 +90,7 @@ def VISION_OUTPUT_FORMAT(
     """Output format for vision analysis."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -121,7 +121,7 @@ def VISION_CONTEXT(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
-        multiline=True,
+        format="multiline",
         description='Additional context about the image',
         group=FieldGroup.OPTIONS,
     )
@@ -137,7 +137,7 @@ def VISION_DETAIL(
     """Image detail level for vision analysis."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -203,7 +203,7 @@ def VISION_COMPARISON_TYPE(
     """Type of image comparison."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -255,6 +255,7 @@ def VISION_FOCUS_AREAS(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "string"},
         description='Specific areas to focus on',
         group=FieldGroup.OPTIONS,
     )
@@ -274,6 +275,7 @@ def VISION_IGNORE_AREAS(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "string"},
         description='Areas to ignore (dynamic content, ads, etc.)',
         group=FieldGroup.OPTIONS,
     )

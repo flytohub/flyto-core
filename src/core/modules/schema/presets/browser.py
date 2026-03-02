@@ -240,7 +240,7 @@ def SCROLL_DIRECTION(
     """Scroll direction."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -286,7 +286,7 @@ def SCROLL_BEHAVIOR(
     """Scroll behavior."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -377,7 +377,7 @@ def BROWSER_ACTION(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -541,7 +541,7 @@ def STORAGE_TYPE(
     """Browser storage type."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -613,6 +613,7 @@ def UPLOAD_FILE_PATH(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        format="path",
         description='Local path to the file to upload',
         group=FieldGroup.BASIC,
     )
@@ -634,6 +635,7 @@ def DOWNLOAD_SAVE_PATH(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        format="path",
         description='Path where to save the downloaded file',
         group=FieldGroup.BASIC,
     )
@@ -649,7 +651,7 @@ def DIALOG_ACTION(
     """Dialog action."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -700,7 +702,7 @@ def JS_SCRIPT(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
-        multiline=True,
+        format="multiline",
         description='JavaScript code to execute (can use return statement)',
         group=FieldGroup.BASIC,
     )
@@ -720,6 +722,7 @@ def JS_ARGS(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "any"},
         description='Arguments to pass to the script function',
         group=FieldGroup.OPTIONS,
     )
@@ -796,7 +799,7 @@ def CONSOLE_LEVEL(
     """Console log level filter."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -848,7 +851,7 @@ def TRACE_ACTION(
     """Trace action (start/stop)."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -876,6 +879,7 @@ def TRACE_CATEGORIES(
         label_key=label_key,
         required=required,
         default=["devtools.timeline"],
+        items={"type": "string"},
         description='CDP trace categories (e.g., devtools.timeline, v8.execute)',
         group=FieldGroup.OPTIONS,
     )
@@ -896,6 +900,7 @@ def PERFORMANCE_METRICS(
         label_key=label_key,
         required=required,
         default=["all"],
+        items={"type": "string"},
         description='Which metrics to collect: all, lcp, fcp, cls, fid, ttfb',
         group=FieldGroup.OPTIONS,
     )
@@ -916,7 +921,7 @@ def DEVICE_PRESET(
     """Device preset for emulation."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -1020,7 +1025,7 @@ def SNAPSHOT_FORMAT(
     """DOM snapshot format."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

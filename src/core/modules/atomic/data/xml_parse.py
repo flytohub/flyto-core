@@ -96,7 +96,7 @@ def _element_to_dict(element: ET.Element, preserve_attributes: bool) -> Any:
     params_schema=compose(
         field(
             'content',
-            type='text',
+            type='string',
             label='XML Content',
             label_key='modules.data.xml.parse.params.content.label',
             description='XML string to parse',

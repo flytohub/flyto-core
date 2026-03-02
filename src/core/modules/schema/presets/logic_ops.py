@@ -20,6 +20,7 @@ def LOGIC_VALUES(
     return field(
         key,
         type="array",
+        items={"type": "boolean"},
         label=label,
         label_key=label_key,
         required=required,
@@ -59,7 +60,7 @@ def COMPARE_VALUE_A(
     """First value to compare."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,
@@ -79,7 +80,7 @@ def COMPARE_VALUE_B(
     """Second value to compare."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         required=required,

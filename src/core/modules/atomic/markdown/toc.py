@@ -121,7 +121,7 @@ def _format_toc_markdown(headings: List[Dict[str, Any]]) -> str:
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Markdown Text',
             label_key='modules.markdown.toc.params.text.label',
             description='Markdown content to extract headings from',

@@ -39,7 +39,7 @@ from ...schema import compose, field
     params_schema=compose(
         field(
             'mode',
-            type='string',
+            type='select',
             label='Pagination Mode',
             label_key='modules.browser.pagination.params.mode.label',
             description='How to navigate between pages',
@@ -86,11 +86,11 @@ from ...schema import compose, field
             description='CSS selector for load more button',
             placeholder='.load-more, button.show-more',
             required=False,
-            showIf={"mode": "load_more"},
+            showIf={"mode": {"$in": ["load_more"]}},
         ),
         field(
             'max_pages',
-            type='integer',
+            type='number',
             label='Max Pages',
             label_key='modules.browser.pagination.params.max_pages.label',
             description='Maximum number of pages to process (0 = unlimited)',
@@ -100,7 +100,7 @@ from ...schema import compose, field
         ),
         field(
             'max_items',
-            type='integer',
+            type='number',
             label='Max Items',
             label_key='modules.browser.pagination.params.max_items.label',
             description='Stop after collecting this many items (0 = unlimited)',
@@ -109,7 +109,7 @@ from ...schema import compose, field
         ),
         field(
             'wait_between_pages_ms',
-            type='integer',
+            type='number',
             label='Wait Between Pages (ms)',
             label_key='modules.browser.pagination.params.wait_between_pages_ms.label',
             description='Wait time between page navigations',
@@ -128,14 +128,14 @@ from ...schema import compose, field
         ),
         field(
             'scroll_amount',
-            type='integer',
+            type='number',
             label='Scroll Amount (px)',
             label_key='modules.browser.pagination.params.scroll_amount.label',
             description='Pixels to scroll for infinite scroll mode',
             default=1000,
             min=100,
             max=5000,
-            showIf={"mode": "infinite_scroll"},
+            showIf={"mode": {"$in": ["infinite_scroll"]}},
         ),
         field(
             'no_more_indicator',

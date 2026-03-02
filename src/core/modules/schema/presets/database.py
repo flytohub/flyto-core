@@ -20,7 +20,7 @@ def DB_TYPE(
     """Database type selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -196,7 +196,7 @@ def SQL_QUERY(
         label_key=label_key,
         required=required,
         placeholder=placeholder,
-        multiline=True,
+        format="multiline",
         description='SQL query to execute',
         group=FieldGroup.BASIC,
     )
@@ -212,6 +212,7 @@ def DB_QUERY_PARAMS(
     return field(
         key,
         type="array",
+        items={"type": "any"},
         label=label,
         label_key=label_key,
         required=False,
@@ -231,7 +232,7 @@ def FETCH_MODE(
     """How to fetch query results."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -294,6 +295,7 @@ def RETURNING_COLUMNS(
     return field(
         key,
         type="array",
+        items={"type": "string"},
         label=label,
         label_key=label_key,
         required=False,
@@ -587,6 +589,7 @@ def MONGO_DOCUMENTS(
     return field(
         key,
         type="array",
+        items={"type": "object"},
         label=label,
         label_key=label_key,
         required=False,

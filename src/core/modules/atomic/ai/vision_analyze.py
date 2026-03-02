@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
         field(
             'image_path',
             type='string',
+            format='path',
             label='Image Path',
             label_key='modules.ai.vision.analyze.params.image_path',
             description='Path to the image file on disk',
@@ -63,6 +64,7 @@ logger = logging.getLogger(__name__)
         field(
             'image_url',
             type='string',
+            format='url',
             label='Image URL',
             label_key='modules.ai.vision.analyze.params.image_url',
             description='URL of the image (alternative to image_path)',
@@ -72,7 +74,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'prompt',
-            type='text',
+            type='string',
+            format='multiline',
             label='Prompt',
             label_key='modules.ai.vision.analyze.params.prompt',
             description='What to analyze in the image',
@@ -108,7 +111,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'api_key',
-            type='password',
+            type='string',
+            format='password',
             label='API Key',
             label_key='modules.ai.vision.analyze.params.api_key',
             description='API key (falls back to environment variable)',

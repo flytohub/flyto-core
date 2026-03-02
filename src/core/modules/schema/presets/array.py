@@ -24,6 +24,7 @@ def INPUT_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "any"},
         placeholder='[1, 2, 3] or ["a", "b", "c"]',
         description='Array of items to process. Can be numbers, strings, or objects.',
         group=FieldGroup.BASIC,
@@ -40,7 +41,7 @@ def FILTER_CONDITION(
     """Filter condition selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -147,7 +148,7 @@ def SORT_ORDER(
     """Sort order selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -319,7 +320,7 @@ def SEPARATOR(
     ]
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -345,6 +346,7 @@ def SECOND_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "any"},
         placeholder='[3, 4, 5]',
         description='Second array for comparison operations',
         group=FieldGroup.BASIC,
@@ -365,6 +367,7 @@ def ARRAYS(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "array", "items": {"type": "any"}},
         placeholder='[[1,2], [2,3], [3,4]]',
         description='Array of arrays to process (for intersection, union)',
         group=FieldGroup.BASIC,

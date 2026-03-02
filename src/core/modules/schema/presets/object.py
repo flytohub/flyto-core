@@ -20,7 +20,7 @@ def INPUT_OBJECT(
     """Input object/dictionary field."""
     return field(
         key,
-        type="json",
+        type="object",
         label=label,
         label_key=label_key,
         required=required,
@@ -40,6 +40,7 @@ def INPUT_OBJECTS(
     return field(
         key,
         type="array",
+        items={"type": "object"},
         label=label,
         label_key=label_key,
         required=required,
@@ -59,6 +60,7 @@ def OBJECT_KEYS(
     return field(
         key,
         type="array",
+        items={"type": "string"},
         label=label,
         label_key=label_key,
         required=required,

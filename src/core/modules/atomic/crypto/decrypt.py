@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'ciphertext',
-            type='text',
+            type='string',
             label='Ciphertext',
             label_key='modules.crypto.decrypt.params.ciphertext.label',
             description='Encrypted ciphertext to decrypt',
@@ -57,7 +57,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'key',
-            type='password',
+            type='string',
+            format='password',
             label='Passphrase',
             label_key='modules.crypto.decrypt.params.key.label',
             description='Decryption passphrase (must match encryption passphrase)',
@@ -68,7 +69,7 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'mode',
-            type='string',
+            type='select',
             label='Mode',
             label_key='modules.crypto.decrypt.params.mode.label',
             description='Decryption mode (must match encryption mode)',
@@ -82,7 +83,7 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'input_format',
-            type='string',
+            type='select',
             label='Input Format',
             label_key='modules.crypto.decrypt.params.input_format.label',
             description='Encoding format of the ciphertext input',

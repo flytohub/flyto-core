@@ -20,6 +20,7 @@ def RANDOM_ARRAY(
     return field(
         key,
         type="array",
+        items={"type": "any"},
         label=label,
         label_key=label_key,
         required=required,

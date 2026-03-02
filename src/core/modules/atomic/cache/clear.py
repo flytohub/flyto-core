@@ -76,7 +76,7 @@ from .get import _memory_cache
             description_key='modules.cache.clear.params.redis_url.description',
             default='redis://localhost:6379',
             placeholder='redis://localhost:6379',
-            showIf={'backend': 'redis'},
+            showIf={'backend': {'$in': ['redis']}},
             group=FieldGroup.CONNECTION,
         ),
     ),

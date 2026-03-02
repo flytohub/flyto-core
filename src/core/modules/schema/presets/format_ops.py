@@ -83,7 +83,7 @@ def CURRENCY_CODE(
     """Currency code."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

@@ -62,7 +62,7 @@ def _classify_type(data: Any) -> str:
     params_schema=compose(
         field(
             'content',
-            type='text',
+            type='string',
             label='YAML Content',
             label_key='modules.data.yaml.parse.params.content.label',
             description='YAML string to parse',

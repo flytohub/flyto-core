@@ -52,7 +52,8 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
+            format='multiline',
             label='Input Text',
             label_key='modules.ai.extract.params.text',
             description='The text to extract structured data from',
@@ -71,7 +72,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'instructions',
-            type='text',
+            type='string',
+            format='multiline',
             label='Instructions',
             label_key='modules.ai.extract.params.instructions',
             description='Additional extraction instructions for the LLM',
@@ -106,7 +108,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'api_key',
-            type='password',
+            type='string',
+            format='password',
             label='API Key',
             label_key='modules.ai.extract.params.api_key',
             description='API key (falls back to environment variable)',

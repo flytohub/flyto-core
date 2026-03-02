@@ -24,6 +24,7 @@ def HTML_CONTENT(
         label=label,
         label_key=label_key,
         required=required,
+        format="multiline",
         description='HTML content to analyze',
         group=FieldGroup.BASIC,
     

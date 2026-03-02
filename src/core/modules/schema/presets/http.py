@@ -20,7 +20,7 @@ def HTTP_METHOD(
     """HTTP method selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -88,7 +88,7 @@ def CONTENT_TYPE(
     """Content-Type header selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -176,7 +176,7 @@ def RESPONSE_TYPE(
     """Expected response format selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

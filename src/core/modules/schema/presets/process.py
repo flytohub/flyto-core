@@ -248,7 +248,7 @@ def SIGNAL_TYPE(
     """Signal to send to process."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         description="Signal to send to the process",

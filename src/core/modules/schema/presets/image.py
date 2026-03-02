@@ -158,7 +158,7 @@ def IMAGE_FORMAT(
     """Image output format."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,
@@ -186,7 +186,7 @@ def IMAGE_RESIZE_ALGORITHM(
     """Image resize algorithm."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

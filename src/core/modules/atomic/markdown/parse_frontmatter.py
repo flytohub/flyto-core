@@ -134,7 +134,7 @@ def _parse_value(raw: str) -> Any:
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Markdown Text',
             label_key='modules.markdown.parse_frontmatter.params.text.label',
             description='Markdown content with frontmatter',

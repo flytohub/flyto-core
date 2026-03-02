@@ -97,7 +97,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'max_retries',
-            type='integer',
+            type='number',
             label='Max Retries',
             label_key='modules.error.retry.params.max_retries.label',
             description='Maximum number of retry attempts',
@@ -108,7 +108,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'initial_delay_ms',
-            type='integer',
+            type='number',
             label='Initial Delay (ms)',
             label_key='modules.error.retry.params.initial_delay_ms.label',
             description='Initial delay before first retry',
@@ -119,7 +119,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'max_delay_ms',
-            type='integer',
+            type='number',
             label='Max Delay (ms)',
             label_key='modules.error.retry.params.max_delay_ms.label',
             description='Maximum delay between retries',
@@ -159,7 +159,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'timeout_per_attempt_ms',
-            type='integer',
+            type='number',
             label='Timeout Per Attempt (ms)',
             label_key='modules.error.retry.params.timeout_per_attempt_ms.label',
             description='Timeout for each attempt (0 for no timeout)',
@@ -182,7 +182,7 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.error.retry.output.result.description'
         },
         'attempts': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of attempts made',
             'description_key': 'modules.error.retry.output.attempts.description'
         },

@@ -61,7 +61,7 @@ from ...schema.constants import FieldGroup
               label_key="schema.field.selector",
               description="CSS selector, XPath, or text selector",
               placeholder='input[name="email"], #username',
-              showIf={"type_method": "selector"},
+              showIf={"type_method": {"$in": ["selector"]}},
               ui={"widget": "selector"},
               group=FieldGroup.BASIC),
         presets.TEXT(key='text', required=True, label='Text to type', placeholder='Text to type'),

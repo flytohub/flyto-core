@@ -41,13 +41,14 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'template',
-            type='text',
+            type='string',
             label='Template',
             label_key='modules.string.template.params.template.label',
             description='Template string with {{variable}} placeholders',
             description_key='modules.string.template.params.template.description',
             required=True,
             placeholder='Hello, {{name}}! You have {{count}} messages.',
+            format='multiline',
             group=FieldGroup.BASIC,
         ),
         field(

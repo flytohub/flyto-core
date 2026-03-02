@@ -86,6 +86,7 @@ def CONVERSATION_MESSAGES(
         label_key=label_key,
         required=False,
         description='Previous messages for multi-turn conversation',
+        items={"type": "object", "properties": {"role": {"type": "select", "options": [{"value": "user", "label": "User"}, {"value": "assistant", "label": "Assistant"}, {"value": "system", "label": "System"}]}, "content": {"type": "string", "format": "multiline"}}},
         group=FieldGroup.OPTIONS,
     )
 
@@ -100,7 +101,7 @@ def LLM_PROVIDER(
     """LLM provider selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -195,7 +196,7 @@ def LLM_RESPONSE_FORMAT(
     """Expected LLM response format."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -227,7 +228,7 @@ def LLM_API_KEY(
         description='API key (defaults to provider env var)',
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
-        hideIf={"provider": "ollama"},
+        hideIf={"provider": {"$in": ["ollama"]}},
         placeholder='sk-...',
     )
 
@@ -251,7 +252,7 @@ def LLM_BASE_URL(
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
         description='Custom API base URL (for Ollama or proxies)',
-        showIf={"provider": "ollama"},
+        showIf={"provider": {"$in": ["ollama"]}},
     )
 
 
@@ -270,6 +271,7 @@ def CODE_ISSUES(
         label_key=label_key,
         required=required,
         description='List of issues to fix (from ui.evaluate, test results, etc.)',
+        items={"type": "object"},
         group=FieldGroup.BASIC,
     )
 
@@ -289,6 +291,7 @@ def SOURCE_FILES(
         label_key=label_key,
         required=required,
         description='Files to analyze and potentially fix',
+        items={"type": "string", "format": "path"},
         group=FieldGroup.BASIC,
     )
 
@@ -303,7 +306,7 @@ def FIX_MODE(
     """How to apply code fixes."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,

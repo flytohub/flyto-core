@@ -47,7 +47,8 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'plaintext',
-            type='text',
+            type='string',
+            format='multiline',
             label='Plaintext',
             label_key='modules.crypto.encrypt.params.plaintext.label',
             description='Text to encrypt',
@@ -58,7 +59,8 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'key',
-            type='password',
+            type='string',
+            format='password',
             label='Passphrase',
             label_key='modules.crypto.encrypt.params.key.label',
             description='Encryption passphrase (key is derived via PBKDF2)',
@@ -69,7 +71,7 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'mode',
-            type='string',
+            type='select',
             label='Mode',
             label_key='modules.crypto.encrypt.params.mode.label',
             description='Encryption mode',
@@ -83,7 +85,7 @@ logger = logging.getLogger(__name__)
         ),
         field(
             'output_format',
-            type='string',
+            type='select',
             label='Output Format',
             label_key='modules.crypto.encrypt.params.output_format.label',
             description='Encoding format for the ciphertext output',

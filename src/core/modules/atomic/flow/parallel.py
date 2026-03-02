@@ -126,11 +126,11 @@ from ...types import NodeType, EdgeType, DataType
             description='Stop all tasks on first failure (only for mode=all)',
             description_key='modules.flow.parallel.params.fail_fast.description',
             default=True,
-            showIf={"mode": "all"},
+            showIf={"mode": {"$in": ["all"]}},
         ),
         field(
             'concurrency_limit',
-            type='integer',
+            type='number',
             label='Concurrency Limit',
             label_key='modules.flow.parallel.params.concurrency_limit.label',
             description='Maximum number of concurrent tasks (0 for unlimited)',
@@ -153,17 +153,17 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.parallel.output.results.description'
         },
         'completed_count': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of successfully completed tasks',
             'description_key': 'modules.flow.parallel.output.completed_count.description'
         },
         'failed_count': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Number of failed tasks',
             'description_key': 'modules.flow.parallel.output.failed_count.description'
         },
         'total_count': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Total number of tasks',
             'description_key': 'modules.flow.parallel.output.total_count.description'
         },

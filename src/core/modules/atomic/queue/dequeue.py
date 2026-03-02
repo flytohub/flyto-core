@@ -77,7 +77,7 @@ from .enqueue import _memory_queues, _get_memory_queue
             description_key='modules.queue.dequeue.params.redis_url.description',
             default='redis://localhost:6379',
             placeholder='redis://localhost:6379',
-            showIf={'backend': 'redis'},
+            showIf={'backend': {'$in': ['redis']}},
             group=FieldGroup.CONNECTION,
         ),
         field(

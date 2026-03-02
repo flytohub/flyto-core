@@ -71,7 +71,7 @@ logger = logging.getLogger(__name__)
               group=FieldGroup.OPTIONS),
         field('body', type='string', label='Body', label_key='modules.monitor.http_check.params.body.label',
               description='Request body (for POST)', format='multiline',
-              showIf={'method': 'POST'},
+              showIf={'method': {'$in': ['POST']}},
               group=FieldGroup.OPTIONS),
         field('check_ssl', type='boolean', label='Check SSL', label_key='modules.monitor.http_check.params.check_ssl.label',
               description='Check SSL certificate validity and expiry', default=True,

@@ -1,0 +1,131 @@
+name: "Demo: Web Scraping with Trace"
+description: "30-second web scraping demo — extract structured data with per-step screenshots for trace & replay"
+
+args:
+  url:
+    type: string
+    required: true
+    description: URL to scrape (e.g. https://news.ycombinator.com)
+  selector:
+    type: string
+    default: ".titleline > a"
+    description: CSS selector for items to extract
+  limit:
+    type: number
+    default: 30
+    description: Max items to extract
+  output:
+    type: string
+    default: demo-scrape-result.json
+    description: Output JSON report path
+
+steps:
+  # ── 1. Launch ──
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+
+  # ── 2. Navigate ──
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+
+  # ── 3. Wait for target elements ──
+  - id: wait_ready
+    module: browser.wait
+    params:
+      selector: "{{selector}}"
+      state: visible
+
+  # ── 4. Screenshot: page loaded ──
+  - id: shot_loaded
+    module: browser.screenshot
+    params:
+      path: demo-step-loaded.png
+      full_page: false
+
+  # ── 5. Extract structured data ──
+  - id: extract
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const items = [];
+          const els = document.querySelectorAll('{{selector}}');
+          const max = {{limit}};
+          els.forEach((el, i) => {
+            if (i >= max) return;
+            items.push({
+              index: i + 1,
+              title: el.textContent.trim(),
+              url: el.href || null
+            });
+          });
+          window.__flyto_extracted = items;
+          return JSON.stringify(items, null, 2);
+        })()
+
+  # ── 6. Screenshot: after extraction (highlight) ──
+  - id: shot_extracted
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          document.querySelectorAll('{{selector}}').forEach((el, i) => {
+            if (i >= {{limit}}) return;
+            el.style.outline = '2px solid #8B5CF6';
+            el.style.backgroundColor = 'rgba(139, 92, 246, 0.08)';
+          });
+          return 'highlighted';
+        })()
+
+  - id: shot_highlight
+    module: browser.screenshot
+    params:
+      path: demo-step-extracted.png
+      full_page: false
+
+  # ── 7. Collect page metadata ──
+  - id: metadata
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          return JSON.stringify({
+            title: document.title,
+            url: location.href,
+            item_count: (window.__flyto_extracted || []).length,
+            page_links: document.querySelectorAll('a').length,
+            page_images: document.querySelectorAll('img').length,
+            charset: document.characterSet,
+            language: document.documentElement.lang || null
+          });
+        })()
+
+  # ── 8. Build final report ──
+  - id: report
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const meta = JSON.parse('${metadata.result}');
+          return JSON.stringify({
+            scraped_at: new Date().toISOString(),
+            source: meta,
+            items: window.__flyto_extracted || [],
+            screenshots: ['demo-step-loaded.png', 'demo-step-extracted.png']
+          }, null, 2);
+        })()
+
+  # ── 9. Save report ──
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: "${report.result}"
+
+  # ── 10. Close ──
+  - id: close
+    module: browser.close

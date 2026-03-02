@@ -40,7 +40,7 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Text',
             label_key='modules.string.truncate.params.text.label',
             description='Text to truncate',

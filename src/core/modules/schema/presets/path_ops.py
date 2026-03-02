@@ -40,6 +40,7 @@ def PATH_PARTS(
     return field(
         key,
         type="array",
+        items={"type": "string"},
         label=label,
         label_key=label_key,
         required=required,

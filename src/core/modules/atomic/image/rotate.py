@@ -68,6 +68,7 @@ def _hex_to_rgb(hex_color: str) -> tuple:
         field(
             'input_path',
             type='string',
+            format='path',
             label='Input Path',
             label_key='modules.image.rotate.params.input_path.label',
             description='Path to the source image',
@@ -79,6 +80,7 @@ def _hex_to_rgb(hex_color: str) -> tuple:
         field(
             'output_path',
             type='string',
+            format='path',
             label='Output Path',
             label_key='modules.image.rotate.params.output_path.label',
             description='Path to save the rotated image',
@@ -111,6 +113,7 @@ def _hex_to_rgb(hex_color: str) -> tuple:
         field(
             'fill_color',
             type='string',
+            format='color',
             label='Fill Color',
             label_key='modules.image.rotate.params.fill_color.label',
             description='Background fill color for empty areas (hex)',

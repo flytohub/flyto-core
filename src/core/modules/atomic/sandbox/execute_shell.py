@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
     params_schema=compose(
         field(
             'command',
-            type='text',
+            type='string',
             label='Command',
             label_key='modules.sandbox.execute_shell.params.command.label',
             description='Shell command to execute',

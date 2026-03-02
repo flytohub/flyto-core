@@ -95,7 +95,7 @@ def _get_memory_queue(name: str) -> asyncio.Queue:
             description_key='modules.queue.enqueue.params.redis_url.description',
             default='redis://localhost:6379',
             placeholder='redis://localhost:6379',
-            showIf={'backend': 'redis'},
+            showIf={'backend': {'$in': ['redis']}},
             group=FieldGroup.CONNECTION,
         ),
     ),

@@ -41,7 +41,7 @@ from ...errors import ValidationError
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Text',
             label_key='modules.hash.sha256.params.text.label',
             description='Text to hash',

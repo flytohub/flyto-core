@@ -107,6 +107,7 @@ def _ocr_boxes(img, language, custom_config):
         field(
             'image_path',
             type='string',
+            format='path',
             label='Image Path',
             label_key='modules.image.ocr.params.image_path.label',
             description='Path to the image file',
@@ -138,7 +139,7 @@ def _ocr_boxes(img, language, custom_config):
         ),
         field(
             'output_type',
-            type='string',
+            type='select',
             label='Output Type',
             label_key='modules.image.ocr.params.output_type.label',
             description='Type of OCR output',

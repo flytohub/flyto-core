@@ -20,7 +20,7 @@ def ENCODING(
     """File encoding selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -72,7 +72,7 @@ def DELIMITER(
     """CSV/text delimiter field."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         default=default,
@@ -101,7 +101,7 @@ def JSON_STRING(
     """JSON string input field."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         placeholder=placeholder,
@@ -146,6 +146,7 @@ def DATA_ARRAY(
         label=label,
         label_key=label_key,
         required=required,
+        items={"type": "any"},
         description='Array of data items to process',
         group=FieldGroup.BASIC,
     )
@@ -263,6 +264,7 @@ def COLUMNS(
         label_key=label_key,
         required=False,
         default=[],
+        items={"type": "string"},
         description='Specific columns to include (empty = all columns)',
         group=FieldGroup.OPTIONS,
     )
@@ -278,7 +280,7 @@ def TEMPLATE(
     """Text template with {variable} placeholders."""
     return field(
         key,
-        type="text",
+        type="string",
         label=label,
         label_key=label_key,
         placeholder=placeholder,

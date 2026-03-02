@@ -96,7 +96,7 @@ from ...types import NodeType, EdgeType, DataType
         array_presets.INPUT_ARRAY(key='items', label='Items', label_key='modules.flow.batch.params.items.label'),
         field(
             'batch_size',
-            type='integer',
+            type='number',
             label='Batch Size',
             label_key='modules.flow.batch.params.batch_size.label',
             description='Number of items per batch',
@@ -108,7 +108,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'delay_ms',
-            type='integer',
+            type='number',
             label='Delay Between Batches (ms)',
             label_key='modules.flow.batch.params.delay_ms.label',
             description='Milliseconds to wait between batches (for rate limiting)',
@@ -128,7 +128,7 @@ from ...types import NodeType, EdgeType, DataType
         ),
         field(
             'parallel_batches',
-            type='integer',
+            type='number',
             label='Parallel Batches',
             label_key='modules.flow.batch.params.parallel_batches.label',
             description='Number of batches to process in parallel (1 for sequential)',
@@ -151,17 +151,17 @@ from ...types import NodeType, EdgeType, DataType
             'description_key': 'modules.flow.batch.output.batch.description'
         },
         'batch_index': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Current batch index (0-based)',
             'description_key': 'modules.flow.batch.output.batch_index.description'
         },
         'total_batches': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Total number of batches',
             'description_key': 'modules.flow.batch.output.total_batches.description'
         },
         'total_items': {
-            'type': 'integer',
+            'type': 'number',
             'description': 'Total number of items',
             'description_key': 'modules.flow.batch.output.total_items.description'
         },

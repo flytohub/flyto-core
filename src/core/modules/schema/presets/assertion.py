@@ -113,6 +113,7 @@ def JSON_PATH_EXISTS(
     return field(
         key,
         type="array",
+        items={"type": "string"},
         label=label,
         label_key=label_key,
         required=False,

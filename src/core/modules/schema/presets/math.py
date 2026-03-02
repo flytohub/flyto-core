@@ -99,7 +99,7 @@ def MATH_OPERATION(
     """Mathematical operation selector."""
     return field(
         key,
-        type="string",
+        type="select",
         label=label,
         label_key=label_key,
         required=required,

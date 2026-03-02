@@ -143,7 +143,7 @@ def _basic_markdown_to_html(text: str) -> str:
     params_schema=compose(
         field(
             'text',
-            type='text',
+            type='string',
             label='Markdown Text',
             label_key='modules.markdown.to_html.params.text.label',
             description='Markdown content to convert',
