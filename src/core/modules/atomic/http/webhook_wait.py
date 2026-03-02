@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def _find_free_port() -> int:
     """Find a free port on localhost."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('', 0))
+        s.bind(('127.0.0.1', 0))
         return s.getsockname()[1]
 
 
@@ -313,7 +313,7 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', port)
+    site = web.TCPSite(runner, '127.0.0.1', port)
 
     public_url = None
     try:
