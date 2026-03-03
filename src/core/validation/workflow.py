@@ -31,6 +31,67 @@ class WorkflowResult:
     warnings: List[WorkflowError] = field(default_factory=list)
 
 
+def _evaluate_show_condition(condition: Any, current_value: Any) -> bool:
+    """
+    Evaluate a single showIf/hideIf condition against a current param value.
+
+    Supports:
+    - {"$in": [values]}  → value in list
+    - {"$ne": value}     → value != condition
+    - {"$notEmpty": true} → value is not empty
+    - [values]           → value in list (shorthand)
+    - single value       → equality
+    """
+    if isinstance(condition, dict):
+        if '$in' in condition:
+            return current_value in condition['$in']
+        if '$ne' in condition:
+            return current_value != condition['$ne']
+        if '$notEmpty' in condition:
+            is_empty = current_value is None or current_value == ''
+            return not is_empty if condition['$notEmpty'] else is_empty
+        return False
+    if isinstance(condition, list):
+        return current_value in condition
+    return current_value == condition
+
+
+def _is_field_active(param_def: Dict[str, Any], params: Dict[str, Any]) -> bool:
+    """
+    Check if a field is currently active based on showIf/hideIf/displayOptions.
+    Returns True if the field should be visible (and thus required checks apply).
+    """
+    # showIf: ALL conditions must match for the field to be visible
+    show_if = param_def.get('showIf')
+    if show_if and isinstance(show_if, dict):
+        for dep_key, condition in show_if.items():
+            if not _evaluate_show_condition(condition, params.get(dep_key)):
+                return False
+
+    # hideIf: ANY condition matching hides the field
+    hide_if = param_def.get('hideIf')
+    if hide_if and isinstance(hide_if, dict):
+        for dep_key, condition in hide_if.items():
+            if _evaluate_show_condition(condition, params.get(dep_key)):
+                return False
+
+    # displayOptions (n8n-style): { show: { field: [values] }, hide: { field: [values] } }
+    display_options = param_def.get('displayOptions')
+    if display_options and isinstance(display_options, dict):
+        show = display_options.get('show')
+        if show and isinstance(show, dict):
+            for dep_key, condition in show.items():
+                if not _evaluate_show_condition(condition, params.get(dep_key)):
+                    return False
+        hide = display_options.get('hide')
+        if hide and isinstance(hide, dict):
+            for dep_key, condition in hide.items():
+                if _evaluate_show_condition(condition, params.get(dep_key)):
+                    return False
+
+    return True
+
+
 def validate_node_params(
     node: Dict[str, Any],
     strict: bool = False,
@@ -40,7 +101,7 @@ def validate_node_params(
 
     Checks:
     - All provided params keys exist in params_schema
-    - Required params are present
+    - Required params are present (respecting showIf/hideIf/displayOptions)
     - Param values match expected types
 
     Args:
@@ -92,10 +153,19 @@ def validate_node_params(
                 }
             ))
 
-    # Check for missing required params
+    # Track already-reported params to avoid duplicates
+    reported_missing = set()
+
+    # Check for missing required params (from top-level required list)
     for param_key in required_list:
+        # Skip if field is conditionally hidden
+        param_def = properties.get(param_key, {}) if isinstance(properties, dict) else {}
+        if isinstance(param_def, dict) and not _is_field_active(param_def, params):
+            continue
+
         value = params.get(param_key)
         if value is None or value == '':
+            reported_missing.add(param_key)
             results.append(WorkflowError(
                 code=ErrorCode.MISSING_REQUIRED_PARAM,
                 message=f'Missing required parameter: {param_key}',
@@ -107,9 +177,16 @@ def validate_node_params(
                 }
             ))
 
+    # Check per-property required flag
     if isinstance(properties, dict):
         for param_key, param_def in properties.items():
+            if param_key in reported_missing:
+                continue
             if isinstance(param_def, dict) and param_def.get('required', False):
+                # Skip if field is conditionally hidden
+                if not _is_field_active(param_def, params):
+                    continue
+
                 value = params.get(param_key)
                 if value is None or value == '':
                     results.append(WorkflowError(
