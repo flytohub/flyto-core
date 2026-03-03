@@ -64,7 +64,37 @@ from ...schema.constants import FieldGroup
               showIf={"type_method": {"$in": ["selector"]}},
               ui={"widget": "selector"},
               group=FieldGroup.BASIC),
-        presets.TEXT(key='text', required=True, label='Text to type', placeholder='Text to type'),
+        field("input_type", type="select",
+              label="Input type",
+              label_key="modules.browser.type.param.input_type.label",
+              description="Type of input field — use Password to mask the value in the builder",
+              description_key="modules.browser.type.param.input_type.description",
+              default="text",
+              options=[
+                  {"value": "text", "label": "Text",
+                   "label_key": "modules.browser.type.param.input_type.option.text"},
+                  {"value": "password", "label": "Password",
+                   "label_key": "modules.browser.type.param.input_type.option.password"},
+                  {"value": "email", "label": "Email",
+                   "label_key": "modules.browser.type.param.input_type.option.email"},
+              ],
+              group=FieldGroup.BASIC),
+        field("text", type="string",
+              label="Text to type",
+              label_key="modules.browser.type.param.text.label",
+              placeholder="Text to type",
+              required=True,
+              showIf={"input_type": {"$in": ["text", "email"]}},
+              group=FieldGroup.BASIC),
+        field("sensitive_text", type="string",
+              label="Text to type",
+              label_key="modules.browser.type.param.text.label",
+              placeholder="••••••••",
+              required=True,
+              format="password",
+              secret=True,
+              showIf={"input_type": {"$in": ["password"]}},
+              group=FieldGroup.BASIC),
         field('delay', type='number', label='Typing Delay (ms)',
               label_key='modules.browser.type.param.delay.label',
               description='Delay between keystrokes in milliseconds',
@@ -96,6 +126,10 @@ from ...schema.constants import FieldGroup
         {
             'name': 'Type by label',
             'params': {'type_method': 'label', 'target': 'Email', 'text': 'user@example.com'}
+        },
+        {
+            'name': 'Type password',
+            'params': {'type_method': 'placeholder', 'target': 'Password', 'input_type': 'password', 'sensitive_text': '${env.LOGIN_PASSWORD}'}
         },
         {
             'name': 'Type with selector',
@@ -144,11 +178,14 @@ class BrowserTypeModule(BaseModule):
                 raise ValueError("Placeholder text is required")
             self.selector = f'input[placeholder="{target}"], textarea[placeholder="{target}"]'
 
-        if 'text' not in self.params:
+        self.input_type = self.params.get('input_type', 'text')
+        # Merge text from the visible field (text or sensitive_text based on input_type)
+        text = self.params.get('text') or self.params.get('sensitive_text') or ''
+        if not text:
             raise ValueError("Missing required parameter: text")
 
         self.method = method
-        self.text = self.params['text']
+        self.text = text
         self.delay = int(self.params.get('delay') or 0)
         self.clear = bool(self.params.get('clear'))
 
@@ -181,11 +218,15 @@ class BrowserTypeModule(BaseModule):
         await browser.type(self.selector, self.text, delay_ms=self.delay)
 
         # Mask sensitive text in return value
-        is_sensitive = any(kw in self.selector.lower() for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential'])
+        is_sensitive = self.input_type == 'password' or any(
+            kw in self.selector.lower()
+            for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential']
+        )
         result = {
             "status": "success",
             "selector": self.selector,
             "method": self.method,
+            "input_type": self.input_type,
             "text": '***' if is_sensitive else self.text,
             "text_length": len(self.text),
         }
