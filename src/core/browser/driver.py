@@ -365,25 +365,30 @@ class BrowserDriver:
             final_url = self._page.url
             status_code = response.status if response else None
 
-            # Best-effort wait for dynamic content (JS challenges, SPAs).
-            if wait_until != 'networkidle':
-                try:
-                    await asyncio.wait_for(
-                        self._page.wait_for_load_state('networkidle'),
-                        timeout=10,
-                    )
-                except (asyncio.TimeoutError, Exception):
-                    pass
+            # Only do extended waits for suspected challenge pages (403/503)
+            # or when explicitly requesting networkidle.
+            # Normal pages: domcontentloaded is sufficient — no extra waiting.
+            is_challenge = status_code in (403, 503)
 
-            # Wait for page to have meaningful content (handles Cloudflare
-            # challenges that redirect after JS verification).
-            try:
-                await self._page.wait_for_function(
-                    'document.body && document.body.innerText.trim().length > 50',
-                    timeout=15000,
-                )
-            except Exception:
-                pass  # best-effort; don't fail if page is legitimately sparse
+            if is_challenge or wait_until == 'networkidle':
+                # Wait for network to settle (challenge pages redirect after JS)
+                if wait_until != 'networkidle':
+                    try:
+                        await asyncio.wait_for(
+                            self._page.wait_for_load_state('networkidle'),
+                            timeout=5,
+                        )
+                    except (asyncio.TimeoutError, Exception):
+                        pass
+
+                # Wait for meaningful content (Cloudflare challenge completion)
+                try:
+                    await self._page.wait_for_function(
+                        'document.body && document.body.innerText.trim().length > 50',
+                        timeout=5000,
+                    )
+                except Exception:
+                    pass
 
             final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
@@ -406,14 +411,14 @@ class BrowserDriver:
                     try:
                         await asyncio.wait_for(
                             self._page.wait_for_load_state('networkidle'),
-                            timeout=10,
+                            timeout=5,
                         )
                     except (asyncio.TimeoutError, Exception):
                         pass
                     try:
                         await self._page.wait_for_function(
                             'document.body && document.body.innerText.trim().length > 50',
-                            timeout=15000,
+                            timeout=5000,
                         )
                     except Exception:
                         pass
