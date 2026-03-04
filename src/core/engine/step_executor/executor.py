@@ -314,6 +314,7 @@ class StepExecutor:
         module_id = step_config.get('module')
         step_params = step_config.get('params', {})
         resolved_params = resolver.resolve(step_params)
+        resolved_params = self._substitute_local_vars(resolved_params)
         on_error = step_config.get('on_error', 'stop')
 
         retry_config = step_config.get('retry', {})
@@ -640,6 +641,32 @@ class StepExecutor:
 
         # Merge items using strategy
         return merge_items(items_by_port, strategy)
+
+    @staticmethod
+    def _substitute_local_vars(params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Substitute template variables ({{var}} / ${var}) with values from __vars__.
+
+        The frontend stores user-provided values in params.__vars__.
+        This pops __vars__ and replaces placeholders in all string values.
+        """
+        local_vars = params.pop('__vars__', None)
+        if not local_vars:
+            return params
+
+        def _replace(value: Any) -> Any:
+            if isinstance(value, str):
+                for var_name, var_value in local_vars.items():
+                    value = value.replace('{{' + var_name + '}}', str(var_value))
+                    value = value.replace('${' + var_name + '}', str(var_value))
+                return value
+            if isinstance(value, dict):
+                return {k: _replace(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [_replace(item) for item in value]
+            return value
+
+        return _replace(params)
 
     # =========================================================================
     # Phase 0: Runtime Invoker Integration
