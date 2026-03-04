@@ -33,6 +33,9 @@ class VariableResolver:
     # Pattern to match ${...} expressions
     VAR_PATTERN = re.compile(r'\$\{([^}]+)\}')
 
+    # Pattern to match {{...}} expressions (mustache/handlebars compat)
+    MUSTACHE_PATTERN = re.compile(r'\{\{([^}]+)\}\}')
+
     # Pattern to match array index access like items[0]
     INDEX_PATTERN = re.compile(r'^(\w+)\[(\d+)\]$')
 
@@ -79,6 +82,9 @@ class VariableResolver:
 
     def _resolve_string(self, text: str) -> Any:
         """Resolve variables in a string"""
+        # Normalize {{...}} (mustache) to ${...} before resolution
+        text = self.MUSTACHE_PATTERN.sub(r'${\1}', text)
+
         # Check if entire string is a single variable reference
         match = self.VAR_PATTERN.fullmatch(text)
         if match:

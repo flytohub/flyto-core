@@ -396,6 +396,10 @@ def validate_url_ssrf(
     # Strip whitespace from URL (common user input error)
     url = url.strip()
 
+    # Auto-prepend https:// if no scheme provided (common user input error)
+    if url and '://' not in url:
+        url = 'https://' + url
+
     # Development/self-hosted mode - allow all
     if allow_private:
         return url

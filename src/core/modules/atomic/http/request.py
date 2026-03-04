@@ -297,6 +297,16 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     retry_backoff = params.get('retry_backoff', 'exponential')
     retry_delay = float(params.get('retry_delay', 1))
 
+    # Detect unresolved template placeholders in URL
+    import re
+    unresolved = re.findall(r'\$\{[^}]+\}|\{\{[^}]+\}\}', url)
+    if unresolved:
+        placeholders = ', '.join(unresolved)
+        return _error_result(
+            f"URL contains unresolved variables: {placeholders}. "
+            f"Use ${{variable_name}} syntax and ensure the variable is defined.",
+            'UNRESOLVED_VARIABLE', url, 0)
+
     try:
         validate_url_with_env_config(url)
     except SSRFError as e:
@@ -339,8 +349,9 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
                         continue
 
                     logger.info(f"HTTP {method} {url} -> {response.status} ({duration_ms}ms)")
+                    is_ok = 200 <= response.status < 300
                     result = {
-                        'ok': 200 <= response.status < 300,
+                        'ok': is_ok,
                         'status': response.status,
                         'status_text': response.reason or '',
                         'headers': dict(response.headers),
@@ -350,6 +361,9 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
                         'content_type': response.headers.get('Content-Type', ''),
                         'content_length': _compute_content_length(response.headers.get('Content-Length'), body_content),
                     }
+                    if not is_ok:
+                        result['error'] = f"HTTP {response.status} {response.reason or ''}"
+                        result['error_code'] = f"HTTP_{response.status}"
                     if attempt > 0:
                         result['retries'] = attempt
                     return result
