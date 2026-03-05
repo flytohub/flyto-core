@@ -46,6 +46,7 @@ from .runner import run_workflow
 from .modules import add_modules_parser, run_modules_command
 from .plugin import add_plugin_parser, run_plugin_command
 from .recipe import run_recipe, run_recipes_list, run_replay
+from .template import add_template_parser, run_template_command
 
 
 def add_serve_parser(subparsers) -> None:
@@ -125,6 +126,18 @@ Examples:
   flyto plugin install slack
   flyto plugin list
 
+  # Template management
+  flyto template list
+  flyto template export <template-id> -o template.yaml
+  flyto template import template.yaml
+  flyto template push <template-id> template.yaml -m "Fix extraction"
+  flyto template push <template-id> template.yaml --pr -m "Add new step"
+  flyto template pull <template-id> -o template.yaml
+  flyto template diff <template-id> template.yaml
+  flyto template search "browser extract"
+  flyto template info <template-id>
+  flyto template history <template-id>
+
   # Start HTTP API server
   flyto serve
         """
@@ -136,6 +149,7 @@ Examples:
     add_modules_parser(subparsers)
     add_plugin_parser(subparsers)
     add_serve_parser(subparsers)
+    add_template_parser(subparsers)
 
     # Recipe commands
     subparsers.add_parser(
@@ -206,6 +220,10 @@ Examples:
         if not args.recipe_name:
             sys.exit(run_recipes_list())
         sys.exit(run_recipe(args.recipe_name, args.recipe_args or []))
+
+    # Handle 'template' command
+    if args.command == 'template':
+        sys.exit(run_template_command(args))
 
     # Handle 'replay' command
     if args.command == 'replay':
