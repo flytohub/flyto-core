@@ -209,6 +209,15 @@ class VariableResolver:
                 return self._get_nested_value(value, parts[1:])
             return value
 
+        # Fallback to params.ui: frontend wraps UI form values under { ui: { base: "..." } }
+        # This allows {{base}} in YAML templates to resolve from UI input values
+        ui_params = self.params.get("ui")
+        if isinstance(ui_params, dict) and var_type in ui_params:
+            value = ui_params[var_type]
+            if len(parts) > 1:
+                return self._get_nested_value(value, parts[1:])
+            return value
+
         return None
 
     def _get_step_value(self, step_output: Any, path: List[str]) -> Any:
