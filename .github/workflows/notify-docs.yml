@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/core/modules/**'
 
+permissions: {}
+
 jobs:
   notify:
     runs-on: ubuntu-latest
