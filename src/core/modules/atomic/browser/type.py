@@ -8,6 +8,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
 from ...schema.constants import FieldGroup
+from ._hints import extract_element_hints
 
 
 @register_module(
@@ -55,6 +56,7 @@ from ...schema.constants import FieldGroup
               description_key="modules.browser.type.param.target.description",
               placeholder="Enter your email",
               showIf={"type_method": {"$in": ["placeholder", "label", "name", "id"]}},
+              ui={"widget": "element_picker", "element_types": ["input"]},
               group=FieldGroup.BASIC),
         field("selector", type="string",
               label="CSS/XPath Selector",
@@ -62,7 +64,7 @@ from ...schema.constants import FieldGroup
               description="CSS selector, XPath, or text selector",
               placeholder='input[name="email"], #username',
               showIf={"type_method": {"$in": ["selector"]}},
-              ui={"widget": "selector"},
+              ui={"widget": "element_picker", "element_types": ["input"], "value_key": "selector"},
               group=FieldGroup.BASIC),
         field("input_type", type="select",
               label="Input type",
@@ -194,20 +196,6 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Auto-snapshot if the AI skipped it — selectors should come from
-        # real DOM, not from guessing.  The snapshot text is returned so the
-        # LLM can see page structure for subsequent calls.
-        if not getattr(browser, '_snapshot_since_nav', True):
-            try:
-                page = browser.page
-                body = await page.evaluate('document.body ? document.body.innerText.substring(0, 2000) : ""')
-                browser._snapshot_since_nav = True
-                self._auto_snapshot_text = body
-            except Exception:
-                self._auto_snapshot_text = None
-        else:
-            self._auto_snapshot_text = None
-
         # Wait for element to be visible before interacting
         await browser.wait(self.selector, state='visible', timeout_ms=10000)
 
@@ -230,6 +218,15 @@ class BrowserTypeModule(BaseModule):
             "text": '***' if is_sensitive else self.text,
             "text_length": len(self.text),
         }
-        if self._auto_snapshot_text:
-            result["_page_hint"] = self._auto_snapshot_text[:800]
+        # Post-action: capture current page elements for Element Picker UI
+        try:
+            hints = await extract_element_hints(browser.page)
+            browser._snapshot_since_nav = True
+            if hints.get('text'):
+                result["_page_hint"] = hints["text"][:800]
+            for key in ('buttons', 'inputs', 'links', 'selects'):
+                if hints.get(key):
+                    result[key] = hints[key]
+        except Exception:
+            pass
         return result

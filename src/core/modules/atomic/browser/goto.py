@@ -32,6 +32,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
+from ._hints import extract_element_hints
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,16 @@ class BrowserGotoModule(BaseModule):
                 if alt is not None:
                     return alt
 
-            return {"status": "success", "url": result.get('url', self.url)}
+            out = {"status": "success", "url": result.get('url', self.url)}
+            # Capture interactive elements for Element Picker UI
+            try:
+                hints = await extract_element_hints(browser.page)
+                for key in ('buttons', 'inputs', 'links', 'selects'):
+                    if hints.get(key):
+                        out[key] = hints[key]
+            except Exception:
+                pass
+            return out
 
         except (RuntimeError, Exception) as e:
             err_str = str(e)
@@ -169,7 +179,15 @@ class BrowserGotoModule(BaseModule):
             # Only accept if the toggle actually fixed it
             if not result.get('warning'):
                 logger.info("goto: www toggle succeeded → %s", result.get('url', alt_url))
-                return {"status": "success", "url": result.get('url', alt_url)}
+                out = {"status": "success", "url": result.get('url', alt_url)}
+                try:
+                    hints = await extract_element_hints(browser.page)
+                    for key in ('buttons', 'inputs', 'links', 'selects'):
+                        if hints.get(key):
+                            out[key] = hints[key]
+                except Exception:
+                    pass
+                return out
             logger.info("goto: www toggle also got warning, giving up")
         except Exception as e2:
             logger.info("goto: www toggle also failed: %s", str(e2)[:100])

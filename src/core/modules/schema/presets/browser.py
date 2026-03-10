@@ -17,6 +17,7 @@ def SELECTOR(
     label: str = "Element Selector",
     label_key: str = "schema.field.selector",
     placeholder: str = "#id, .class, text=Button, //xpath",
+    element_types: Optional[List[str]] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """CSS/XPath/Text selector field for browser automation."""
     return field(
@@ -28,7 +29,7 @@ def SELECTOR(
         placeholder=placeholder,
         required=required,
         validation=validators.SELECTOR,
-        ui={"widget": "selector"},
+        ui={"widget": "element_picker", "element_types": element_types or ["button", "link", "input"], "value_key": "selector"},
         group=FieldGroup.BASIC,
     )
 

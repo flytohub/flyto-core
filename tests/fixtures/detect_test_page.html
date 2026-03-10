@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Detect Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .section { margin: 20px 0; padding: 15px; background: white; border-radius: 8px; }
+        h2 { color: #333; margin-top: 0; }
+        input, textarea, select { padding: 8px; margin: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button, .btn { padding: 8px 16px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        a { color: #2196F3; margin: 5px; }
+        .hidden { display: none; }
+        .login-form { max-width: 400px; }
+        .login-form label { display: block; margin: 10px 0 5px; }
+        .login-form input { width: 100%; box-sizing: border-box; }
+        .near-group { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        [role="button"] { display: inline-block; padding: 8px 16px; background: #9C27B0; color: white; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <!-- Section 1: Login Form (standard pattern) -->
+    <div class="section login-form" id="login-section">
+        <h2>Login</h2>
+        <label for="email">Email Address</label>
+        <input id="email" type="email" name="email" placeholder="Enter your email" aria-label="Email Address">
+
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" placeholder="Enter your password">
+
+        <div style="margin-top: 15px;">
+            <button id="login-btn" class="btn-primary" type="submit">Login</button>
+            <button class="btn-danger" type="button">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Section 2: Multi-language buttons (for alternatives testing) -->
+    <div class="section" id="i18n-section">
+        <h2>Multi-Language Buttons</h2>
+        <button data-testid="submit-btn">Submit Form</button>
+        <button data-testid="signup-btn">Sign Up</button>
+        <button data-testid="search-btn">Search</button>
+    </div>
+
+    <!-- Section 3: ARIA roles and accessibility -->
+    <div class="section" id="aria-section">
+        <h2>ARIA & Roles</h2>
+        <div role="button" aria-label="Add to Cart" tabindex="0">Add to Cart</div>
+        <div role="button" aria-label="Remove Item" tabindex="0">Remove</div>
+        <a href="/products" role="link">View Products</a>
+        <input type="checkbox" id="agree" aria-label="I agree to terms">
+        <label for="agree">I agree to terms</label>
+    </div>
+
+    <!-- Section 4: Select / Dropdown -->
+    <div class="section" id="select-section">
+        <h2>Dropdowns</h2>
+        <label for="country">Country</label>
+        <select id="country" name="country">
+            <option value="">Select a country</option>
+            <option value="us">United States</option>
+            <option value="uk">United Kingdom</option>
+            <option value="tw">Taiwan</option>
+            <option value="jp">Japan</option>
+        </select>
+
+        <label for="language">Language</label>
+        <select id="language" name="language">
+            <option value="en">English</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+        </select>
+    </div>
+
+    <!-- Section 5: Links -->
+    <div class="section" id="links-section">
+        <h2>Navigation Links</h2>
+        <nav>
+            <a href="/home">Home</a>
+            <a href="/about">About Us</a>
+            <a href="/contact">Contact</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/docs" title="Documentation">Docs</a>
+        </nav>
+    </div>
+
+    <!-- Section 6: Proximity testing -->
+    <div class="section" id="proximity-section">
+        <h2>Proximity Test</h2>
+        <div class="near-group">
+            <span>Username:</span>
+            <input type="text" placeholder="Enter username" name="username">
+            <button class="btn-primary">Save</button>
+        </div>
+        <div class="near-group">
+            <span>Nickname:</span>
+            <input type="text" placeholder="Enter nickname" name="nickname">
+            <button class="btn-primary">Save</button>
+        </div>
+    </div>
+
+    <!-- Section 7: Fuzzy matching targets -->
+    <div class="section" id="fuzzy-section">
+        <h2>Fuzzy Match Targets</h2>
+        <button>Confirm Purchase</button>
+        <button>Confirm Subscription</button>
+        <button>Cancel Order</button>
+        <a href="/register">Create New Account</a>
+        <a href="/forgot">Forgot Password?</a>
+    </div>
+
+    <!-- Section 8: Hidden elements (should be skipped) -->
+    <div class="section hidden" id="hidden-section">
+        <button>Hidden Button</button>
+        <input type="text" placeholder="Hidden Input">
+    </div>
+
+    <!-- Section 9: Complex selectors -->
+    <div class="section" id="complex-section">
+        <h2>Complex Selectors</h2>
+        <div class="card">
+            <h3>Product A</h3>
+            <span class="price">$19.99</span>
+            <button class="btn-primary add-to-cart">Buy Now</button>
+        </div>
+        <div class="card">
+            <h3>Product B</h3>
+            <span class="price">$29.99</span>
+            <button class="btn-primary add-to-cart">Buy Now</button>
+        </div>
+    </div>
+
+    <!-- Section 10: Heading detection -->
+    <div class="section" id="heading-section">
+        <h1>Main Title</h1>
+        <h2>Subtitle Here</h2>
+        <h3>Section Header</h3>
+    </div>
+
+    <!-- Section 11: Image detection -->
+    <div class="section" id="image-section">
+        <h2>Images</h2>
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%234CAF50' width='100' height='100'/%3E%3C/svg%3E" alt="Product Photo" width="100" height="100">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%232196F3' width='100' height='100'/%3E%3C/svg%3E" alt="User Avatar" width="100" height="100">
+    </div>
+
+    <!-- Section 12: Radio buttons -->
+    <div class="section" id="radio-section">
+        <h2>Radio Buttons</h2>
+        <input type="radio" id="plan-free" name="plan" value="free" aria-label="Free Plan">
+        <label for="plan-free">Free Plan</label>
+        <input type="radio" id="plan-pro" name="plan" value="pro" aria-label="Pro Plan">
+        <label for="plan-pro">Pro Plan</label>
+    </div>
+
+    <!-- Section 13: Dynamic element (appears after 800ms) -->
+    <div class="section" id="dynamic-section">
+        <h2>Dynamic Content</h2>
+        <div id="dynamic-container"></div>
+    </div>
+    <script>
+        setTimeout(function() {
+            var container = document.getElementById('dynamic-container');
+            if (container) {
+                var btn = document.createElement('button');
+                btn.id = 'delayed-btn';
+                btn.className = 'btn-primary';
+                btn.textContent = 'Delayed Action';
+                container.appendChild(btn);
+            }
+        }, 800);
+    </script>
+
+    <!-- Section 14: Special characters in text -->
+    <div class="section" id="special-chars-section">
+        <h2>Special Characters</h2>
+        <button>It's a "test" &amp; <more></button>
+        <a href="/path?q=1&r=2">Link with "quotes"</a>
+    </div>
+
+    <!-- Section 15: iframe with interactive elements -->
+    <div class="section" id="iframe-section">
+        <h2>Iframe Content</h2>
+        <iframe id="test-iframe" srcdoc='
+            <!DOCTYPE html>
+            <html><body style="margin:0;padding:10px;font-family:Arial">
+                <button id="iframe-login-btn">Login Inside Frame</button>
+                <input id="iframe-email" type="email" placeholder="Email in iframe" name="iframe_email">
+                <a href="/iframe-link">Iframe Link</a>
+            </body></html>
+        ' width="400" height="100" style="border:1px solid #ccc;"></iframe>
+    </div>
+
+    <!-- Section 16: Shadow DOM -->
+    <div class="section" id="shadow-section">
+        <h2>Shadow DOM</h2>
+        <div id="shadow-host"></div>
+    </div>
+    <script>
+        // Create shadow DOM with interactive elements
+        var host = document.getElementById('shadow-host');
+        if (host) {
+            var shadow = host.attachShadow({ mode: 'open' });
+            shadow.innerHTML = '<button id="shadow-btn">Shadow Button</button><input type="text" placeholder="Shadow Input">';
+        }
+    </script>
+</body>
+</html>

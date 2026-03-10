@@ -9,6 +9,7 @@ from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
 from ...schema import presets
+from ._hints import extract_element_hints
 
 
 @register_module(
@@ -54,6 +55,7 @@ from ...schema import presets
               description_key="modules.browser.click.param.target.description",
               placeholder="Submit",
               showIf={"click_method": {"$in": ["text", "button", "id"]}},
+              ui={"widget": "element_picker", "element_types": ["button", "link"]},
               group=FieldGroup.BASIC),
         field("selector", type="string",
               label="CSS/XPath Selector",
@@ -61,6 +63,7 @@ from ...schema import presets
               description="CSS selector, XPath, or text selector",
               placeholder='#submit-btn, .btn-primary, //button[@type="submit"]',
               showIf={"click_method": {"$in": ["selector"]}},
+              ui={"widget": "element_picker", "element_types": ["button", "link"], "value_key": "selector"},
               group=FieldGroup.BASIC),
         field("button", type="select",
               label="Mouse Button",
@@ -167,20 +170,6 @@ class BrowserClickModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Auto-snapshot if the AI skipped it — selectors should come from
-        # real DOM, not from guessing.
-        if not getattr(browser, '_snapshot_since_nav', True):
-            try:
-                body = await browser.page.evaluate(
-                    'document.body ? document.body.innerText.substring(0, 2000) : ""'
-                )
-                browser._snapshot_since_nav = True
-                self._auto_snapshot_text = body
-            except Exception:
-                self._auto_snapshot_text = None
-        else:
-            self._auto_snapshot_text = None
-
         # Wait for element to be visible before clicking (unless force mode)
         if not self.force:
             await browser.wait(self.selector, state='visible', timeout_ms=10000)
@@ -196,9 +185,26 @@ class BrowserClickModule(BaseModule):
             click_options['modifiers'] = self.modifiers
 
         await page.click(self.selector, **click_options)
+
+        # Post-click: capture interactive elements of the NEW page state.
+        # This ensures the next step's Element Picker sees the correct elements
+        # (especially after click-induced navigation).
         result = {"status": "success", "selector": self.selector, "method": self.method}
-        if self._auto_snapshot_text:
-            result["_page_hint"] = self._auto_snapshot_text[:800]
+        try:
+            # Brief wait for potential navigation to settle
+            await page.wait_for_load_state('domcontentloaded', timeout=3000)
+        except Exception:
+            pass
+        try:
+            hints = await extract_element_hints(page)
+            browser._snapshot_since_nav = True
+            if hints.get('text'):
+                result["_page_hint"] = hints["text"][:800]
+            for key in ('buttons', 'inputs', 'links', 'selects'):
+                if hints.get(key):
+                    result[key] = hints[key]
+        except Exception:
+            pass
         return result
 
 

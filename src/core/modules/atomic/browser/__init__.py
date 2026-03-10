@@ -52,6 +52,7 @@ from .emulate import *
 from .viewport import *
 from .snapshot import *
 from .pages import *
+from .detect import *
 
 __all__ = [
     # Browser modules will be auto-discovered by module registry

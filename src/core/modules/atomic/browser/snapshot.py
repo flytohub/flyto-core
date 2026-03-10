@@ -15,6 +15,7 @@ from pathlib import Path
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
+from ._hints import extract_element_hints
 
 
 @register_module(
@@ -164,15 +165,12 @@ class BrowserSnapshotModule(BaseModule):
         # These appear early in the JSON and survive truncation.
         if not self.output_path and not self.selector:
             try:
-                hints = await self._extract_interactive_hints(page)
+                hints = await extract_element_hints(page)
                 if hints.get('text'):
                     result["text"] = hints["text"]
-                if hints.get('inputs'):
-                    result["inputs"] = hints["inputs"]
-                if hints.get('buttons'):
-                    result["buttons"] = hints["buttons"]
-                if hints.get('links'):
-                    result["links"] = hints["links"]
+                for key in ('inputs', 'buttons', 'links', 'selects'):
+                    if hints.get(key):
+                        result[key] = hints[key]
             except Exception:
                 pass
 
@@ -204,58 +202,6 @@ class BrowserSnapshotModule(BaseModule):
                     result["content"] = content
 
         return result
-
-    async def _extract_interactive_hints(self, page) -> dict:
-        """Extract interactive elements and text summary for AI callers."""
-        return await page.evaluate("""() => {
-            const hints = {};
-            // Text summary (first 3000 chars of visible text)
-            const body = document.body;
-            if (body) {
-                hints.text = body.innerText.substring(0, 3000);
-            }
-            // Inputs
-            const inputs = [];
-            document.querySelectorAll('input:not([type=hidden]), textarea, select').forEach(el => {
-                if (!el.offsetParent && el.type !== 'hidden') return;  // skip invisible
-                const id = el.id ? '#' + el.id : '';
-                const name = el.name ? '[name=\"' + el.name + '\"]' : '';
-                const tag = el.tagName.toLowerCase();
-                const selector = id || (tag + name) || (tag + '[type=\"' + (el.type || 'text') + '\"]');
-                inputs.push({
-                    selector: selector,
-                    type: el.type || tag,
-                    placeholder: (el.placeholder || '').substring(0, 50),
-                    value: (el.value || '').substring(0, 50),
-                });
-            });
-            if (inputs.length) hints.inputs = inputs.slice(0, 15);
-            // Buttons
-            const buttons = [];
-            document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"]').forEach(el => {
-                if (!el.offsetParent) return;
-                const id = el.id ? '#' + el.id : '';
-                const cls = el.className ? '.' + el.className.trim().split(/\\s+/).join('.') : '';
-                const text = (el.textContent || el.value || '').trim().substring(0, 50);
-                const selector = id || (cls ? 'button' + cls : '') || (text ? 'button:has-text(\"' + text + '\")' : '');
-                if (!selector) return;
-                const entry = {selector: selector};
-                if (text) entry.text = text;
-                if (el.type && el.type !== 'submit') entry.type = el.type;
-                buttons.push(entry);
-            });
-            if (buttons.length) hints.buttons = buttons.slice(0, 15);
-            // Links (top 20 visible with text)
-            const links = [];
-            document.querySelectorAll('a[href]').forEach(el => {
-                if (links.length >= 20) return;
-                const text = (el.textContent || '').trim().substring(0, 60);
-                if (!text) return;
-                links.push({text: text, href: (el.href || '').substring(0, 120)});
-            });
-            if (links.length) hints.links = links;
-            return hints;
-        }""")
 
     async def _capture_html(self, page) -> str:
         """Capture HTML content"""

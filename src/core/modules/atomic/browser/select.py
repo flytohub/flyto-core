@@ -8,7 +8,9 @@ Select option from dropdown element.
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup
+from ._hints import extract_element_hints
 
 
 @register_module(
@@ -30,9 +32,23 @@ from ...schema import compose, presets
 
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
-        presets.SELECTOR(required=True, placeholder='select#country'),
-        presets.SELECT_VALUE(),
-        presets.SELECT_LABEL(),
+        presets.SELECTOR(required=True, placeholder='select#country', element_types=["input"]),
+        field("value", type="string",
+              label="Value",
+              label_key="schema.field.select_value",
+              placeholder="option-value",
+              required=False,
+              description="Option value attribute to select",
+              ui={"widget": "element_picker", "element_types": ["select_option"], "value_key": "value"},
+              group=FieldGroup.BASIC),
+        field("label", type="string",
+              label="Label",
+              label_key="schema.field.select_label",
+              placeholder="Option Text",
+              required=False,
+              description="Option text content to select (alternative to value)",
+              ui={"widget": "element_picker", "element_types": ["select_option"]},
+              group=FieldGroup.BASIC),
         presets.SELECT_INDEX(),
         presets.TIMEOUT_MS(default=30000),
     ),
@@ -111,8 +127,17 @@ class BrowserSelectModule(BaseModule):
                 timeout=self.timeout
             )
 
-        return {
+        result = {
             "status": "success",
             "selected": selected,
             "selector": self.selector
         }
+        # Post-action: capture current page elements for Element Picker UI
+        try:
+            hints = await extract_element_hints(page)
+            for key in ('buttons', 'inputs', 'links', 'selects'):
+                if hints.get(key):
+                    result[key] = hints[key]
+        except Exception:
+            pass
+        return result
