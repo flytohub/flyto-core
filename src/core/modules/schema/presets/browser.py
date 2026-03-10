@@ -318,6 +318,7 @@ def SELECT_VALUE(
         required=required,
         placeholder=placeholder,
         description='Option value attribute to select',
+        ui={"widget": "element_picker", "element_types": ["select_option"], "value_key": "value"},
         group=FieldGroup.BASIC,
     )
 
@@ -339,6 +340,7 @@ def SELECT_LABEL(
         required=required,
         placeholder=placeholder,
         description='Option text content to select (alternative to value)',
+        ui={"widget": "element_picker", "element_types": ["select_option"], "value_key": "text"},
         group=FieldGroup.BASIC,
     )
 
