@@ -124,8 +124,6 @@ from .types import (
     is_module_allowed_in_environment,
 )
 from .connection_rules import (
-    can_connect,
-    validate_workflow_connections,
     get_connection_rules,
     get_suggested_connections,
     get_acceptable_sources,
@@ -251,8 +249,6 @@ __all__ = [
     'get_module_environment',
     'is_module_allowed_in_environment',
     # Connection rules
-    'can_connect',
-    'validate_workflow_connections',
     'get_connection_rules',
     'get_suggested_connections',
     'get_acceptable_sources',

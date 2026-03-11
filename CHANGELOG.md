@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.6] - 2026-03-12
+
+### Changed
+- **Unified connection validation** — Merged dual validation paths into single entry point `validate_connection()`. Context compatibility check (from `connection_rules/validation.py`) and data type compatibility matrix (from `types/data_types.py`) are now integrated into the main validation flow.
+- **Data type compatibility matrix** — `_validate_port_compatibility()` now uses `DATA_TYPE_COMPATIBILITY` matrix for type checking instead of simple string equality. Types like `string→json`, `image→file` are now correctly recognized as compatible.
+
+### Removed
+- **Deleted `connection_rules/validation.py`** — Redundant supplementary validation module. `can_connect()`, `validate_edge()`, and `validate_workflow_connections()` are no longer needed; their logic is consolidated into `validation/connection.py`.
+- **Cleaned up `modules/__init__.py`** — Removed exports of deleted functions (`can_connect`, `validate_workflow_connections`).
+
+### Fixed
+- **Context compatibility in main validation path** — AI/data modules connecting to browser/element modules are now correctly rejected at validation time (was previously only checked in the unused supplementary path).
+
 ## [2.18.5] - 2026-03-12
 
 ### Fixed

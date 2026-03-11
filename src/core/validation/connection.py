@@ -156,6 +156,59 @@ def _validate_connection_rules(
     return None
 
 
+def _get_module_category(module_id: str) -> str:
+    """
+    Extract category from module ID.
+
+    Examples:
+        "browser.click" -> "browser"
+        "core.browser.click" -> "browser"
+        "flow.if" -> "flow"
+    """
+    parts = module_id.split(".")
+    if len(parts) >= 2:
+        if parts[0] in ("core", "pro", "cloud"):
+            return parts[1]
+        return parts[0]
+    return module_id
+
+
+def _validate_context_compatibility(
+    from_module_id: str,
+    to_module_id: str,
+) -> Optional[ConnectionResult]:
+    """
+    Check context compatibility between source and target modules.
+    E.g. AI modules cannot directly connect to browser modules because
+    they don't provide browser context.
+
+    Returns ConnectionResult on failure, or None if compatible.
+    """
+    from ..modules.types.context import (
+        CONTEXT_INCOMPATIBLE_PAIRS,
+        get_context_error_message,
+    )
+
+    from_category = _get_module_category(from_module_id)
+    to_category = _get_module_category(to_module_id)
+
+    incompatible_targets = CONTEXT_INCOMPATIBLE_PAIRS.get(from_category, [])
+    if to_category in incompatible_targets:
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.INCOMPATIBLE_MODULES,
+            error_message=get_context_error_message(from_category, to_category),
+            meta={
+                'from_module': from_module_id,
+                'to_module': to_module_id,
+                'from_category': from_category,
+                'to_category': to_category,
+            }
+        )
+
+    return None
+
+
 def _validate_port_compatibility(
     from_module_id: str,
     to_module_id: str,
@@ -214,7 +267,7 @@ def _validate_port_compatibility(
             from_types = from_data_type if isinstance(from_data_type, list) else [from_data_type]
             to_types = to_data_type if isinstance(to_data_type, list) else [to_data_type]
             if 'any' not in from_types and 'any' not in to_types:
-                if not any(t in to_types for t in from_types):
+                if not _data_types_compatible(from_types, to_types):
                     return ConnectionResult(
                         valid=False,
                         error_code=ErrorCode.TYPE_MISMATCH,
@@ -300,6 +353,11 @@ def validate_connection(
     if rules_result is not None:
         return rules_result
 
+    # Check context compatibility (e.g. AI modules cannot connect to browser modules)
+    context_result = _validate_context_compatibility(from_module_id, to_module_id)
+    if context_result is not None:
+        return context_result
+
     # Check port-level and module-level type compatibility
     return _validate_port_compatibility(
         from_module_id, to_module_id, from_meta, to_meta, from_port, to_port
@@ -333,6 +391,37 @@ def _types_compatible(output_types: List[str], input_types: List[str]) -> bool:
         # 'any' type accepts everything
         if 'any' in input_types:
             return True
+    return False
+
+
+def _data_types_compatible(from_types: List[str], to_types: List[str]) -> bool:
+    """
+    Check port-level data type compatibility using the DATA_TYPE_COMPATIBILITY matrix.
+
+    Falls back to simple string matching if the type string is not a known DataType enum value.
+    """
+    from ..modules.types.data_types import DATA_TYPE_COMPATIBILITY
+    from ..modules.types.enums import DataType
+
+    # Build a set of known enum values for fast lookup
+    known_values = {dt.value for dt in DataType}
+
+    for ft in from_types:
+        for tt in to_types:
+            # If both are known DataType values, use the compatibility matrix
+            if ft in known_values and tt in known_values:
+                source_dt = DataType(ft)
+                target_dt = DataType(tt)
+                # ANY target accepts everything
+                if target_dt == DataType.ANY:
+                    return True
+                compatible = DATA_TYPE_COMPATIBILITY.get(source_dt, [DataType.ANY])
+                if target_dt in compatible:
+                    return True
+            else:
+                # Fallback: simple string equality for unknown types
+                if ft == tt:
+                    return True
     return False
 
 

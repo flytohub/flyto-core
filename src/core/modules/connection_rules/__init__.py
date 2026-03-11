@@ -3,25 +3,21 @@
 """
 Connection Rules Package
 
-Provides connection validation and rule management for workflow modules.
+Provides connection rule management for workflow modules.
+Validation is handled by validation/connection.py (the single validation entry point).
 """
 
 from .models import ConnectionCategory, ConnectionRule
 from .rules import CONNECTION_RULES, SPECIAL_NODES
-from .validation import (
-    can_connect,
-    get_connection_rules,
-    get_module_category,
-    matches_pattern,
-    validate_edge,
-    validate_workflow_connections,
-)
 from .management import (
     add_connection_rule,
     get_acceptable_sources,
     get_all_rules,
+    get_connection_rules,
     get_default_connection_rules,
+    get_module_category,
     get_suggested_connections,
+    matches_pattern,
 )
 
 __all__ = [
@@ -31,17 +27,13 @@ __all__ = [
     # Rules
     "CONNECTION_RULES",
     "SPECIAL_NODES",
-    # Validation
-    "can_connect",
-    "get_connection_rules",
-    "get_module_category",
-    "matches_pattern",
-    "validate_edge",
-    "validate_workflow_connections",
-    # Management
+    # Management (includes helpers moved from deleted validation.py)
     "add_connection_rule",
     "get_acceptable_sources",
     "get_all_rules",
+    "get_connection_rules",
     "get_default_connection_rules",
+    "get_module_category",
     "get_suggested_connections",
+    "matches_pattern",
 ]
