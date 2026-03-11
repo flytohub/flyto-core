@@ -24,7 +24,6 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ._hints import extract_element_hints
 
 logger = logging.getLogger(__name__)
 
@@ -409,14 +408,11 @@ class BrowserDetectModule(BaseModule):
             }
 
         # Post-action hints for Element Picker
-        try:
-            hints = await extract_element_hints(page)
-            browser._snapshot_since_nav = True
-            for key in ('buttons', 'inputs', 'links', 'selects'):
-                if hints.get(key):
-                    result[key] = hints[key]
-        except Exception:
-            pass
+        hints = await browser.get_hints(force=True)
+        browser._snapshot_since_nav = True
+        for key in ('buttons', 'inputs', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
 
         return result
 

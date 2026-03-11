@@ -10,12 +10,11 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ._hints import extract_element_hints
 
 
 @register_module(
     module_id='browser.select',
-    version='1.0.0',
+    version='1.1.0',
     category='browser',
     tags=['browser', 'interaction', 'select', 'dropdown', 'form', 'ssrf_protected'],
     label='Select Option',
@@ -31,25 +30,45 @@ from ._hints import extract_element_hints
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
-        presets.SELECTOR(required=True, placeholder='select#country', element_types=["input"]),
-        field("value", type="string",
-              label="Value",
-              label_key="schema.field.select_value",
-              placeholder="option-value",
-              required=False,
-              description="Option value attribute to select",
-              ui={"widget": "element_picker", "element_types": ["select_option"], "value_key": "value"},
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    params_schema=compose(
+        presets.SELECTOR(required=True, placeholder='select#country', element_types=["select"]),
+        field("select_method", type="select",
+              label="Select by",
+              label_key="modules.browser.select.param.select_method.label",
+              description="How to identify which option to select",
+              description_key="modules.browser.select.param.select_method.description",
+              default="value",
+              options=[
+                  {"value": "value", "label": "By option value",
+                   "label_key": "modules.browser.select.param.select_method.option.value"},
+                  {"value": "label", "label": "By option text",
+                   "label_key": "modules.browser.select.param.select_method.option.label"},
+                  {"value": "index", "label": "By index (position)",
+                   "label_key": "modules.browser.select.param.select_method.option.index"},
+              ],
               group=FieldGroup.BASIC),
-        field("label", type="string",
-              label="Label",
-              label_key="schema.field.select_label",
-              placeholder="Option Text",
-              required=False,
-              description="Option text content to select (alternative to value)",
-              ui={"widget": "element_picker", "element_types": ["select_option"]},
+        field("target", type="string",
+              label="Option",
+              label_key="modules.browser.select.param.target.label",
+              description="The option value or label text to select",
+              placeholder="us",
+              showIf={"select_method": {"$in": ["value", "label"]}},
+              ui={"widget": "element_picker", "element_types": ["select_option"],
+                  "value_key_from": "select_method",
+                  "value_key_map": {
+                      "value": "value",
+                      "label": "text",
+                  }},
               group=FieldGroup.BASIC),
-        presets.SELECT_INDEX(),
+        field("index", type="number",
+              label="Index",
+              label_key="schema.field.select_index",
+              description="Option index to select (0-based)",
+              placeholder="0",
+              min=0,
+              showIf={"select_method": {"$in": ["index"]}},
+              group=FieldGroup.BASIC),
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
@@ -63,15 +82,15 @@ from ._hints import extract_element_hints
     examples=[
         {
             'name': 'Select by value',
-            'params': {'selector': 'select#country', 'value': 'us'}
+            'params': {'selector': 'select#country', 'select_method': 'value', 'target': 'us'}
         },
         {
             'name': 'Select by label text',
-            'params': {'selector': 'select#country', 'label': 'United States'}
+            'params': {'selector': 'select#country', 'select_method': 'label', 'target': 'United States'}
         },
         {
             'name': 'Select by index',
-            'params': {'selector': 'select#country', 'index': 2}
+            'params': {'selector': 'select#country', 'select_method': 'index', 'index': 2}
         }
     ],
     author='Flyto Team',
@@ -91,14 +110,140 @@ class BrowserSelectModule(BaseModule):
             raise ValueError("Missing required parameter: selector")
 
         self.selector = self.params['selector']
-        self.value = self.params.get('value')
-        self.label = self.params.get('label')
-        self.index = self.params.get('index')
+        self.method = self.params.get('select_method', 'value')
         self.timeout = self.params.get('timeout', 30000)
 
-        # At least one selection method must be provided
-        if self.value is None and self.label is None and self.index is None:
-            raise ValueError("Must provide at least one of: value, label, or index")
+        # Backward compatibility: old params with direct value/label fields
+        if 'select_method' not in self.params:
+            if self.params.get('value') is not None:
+                self.method = 'value'
+                self.target = self.params['value']
+            elif self.params.get('label') is not None:
+                self.method = 'label'
+                self.target = self.params['label']
+            elif self.params.get('index') is not None:
+                self.method = 'index'
+                self.target = self.params['index']
+            else:
+                raise ValueError("Must provide at least one of: target, value, label, or index")
+            return
+
+        if self.method == 'index':
+            idx = self.params.get('index')
+            if idx is None:
+                raise ValueError("Index is required when select_method is 'index'")
+            self.target = int(idx)
+        else:
+            target = self.params.get('target', '').strip()
+            if not target:
+                raise ValueError("Option value or label text is required")
+            self.target = target
+
+    async def _select_native(self, page) -> List[str]:
+        """Select from a native <select> element using Playwright select_option()."""
+        if self.method == 'value':
+            selected = await page.select_option(
+                self.selector,
+                value=self.target,
+                timeout=self.timeout
+            )
+        elif self.method == 'label':
+            selected = await page.select_option(
+                self.selector,
+                label=self.target,
+                timeout=self.timeout
+            )
+        elif self.method == 'index':
+            selected = await page.select_option(
+                self.selector,
+                index=self.target,
+                timeout=self.timeout
+            )
+        return selected
+
+    async def _select_custom(self, page, browser) -> List[str]:
+        """Select from a custom (non-native) dropdown via click-based interaction."""
+        # Step 1: Click the trigger element to open the dropdown
+        await page.click(self.selector, timeout=self.timeout)
+
+        # Step 2: Wait for options to appear
+        # First wait for DOM presence, then for visibility (handles animation delays)
+        try:
+            await page.wait_for_selector(
+                '[role="option"], [role="menuitem"]',
+                state='attached',
+                timeout=3000
+            )
+            # Extra wait for CSS animations to complete (opacity/transform transitions)
+            await page.wait_for_selector(
+                '[role="option"], [role="menuitem"]',
+                state='visible',
+                timeout=2000
+            )
+        except Exception:
+            # Some frameworks keep options invisible until scrolled; proceed anyway
+            await page.wait_for_timeout(300)
+
+        # Step 3: Find and click the target option
+        # Use Playwright's built-in escaping via get_by_text/get_by_role to avoid CSS injection
+        option = None
+
+        if self.method == 'label':
+            # Try get_by_role first (handles text escaping safely)
+            option = page.get_by_role('option', name=self.target)
+            if await option.count() == 0:
+                option = page.get_by_role('menuitem', name=self.target)
+            if await option.count() == 0:
+                # Broader: any element with role in a listbox/menu, matched by text
+                option = page.locator('[role="option"], [role="menuitem"]').filter(has_text=self.target)
+            if await option.count() == 0:
+                # Last resort: li inside a role="listbox" or role="menu" container
+                option = page.locator('[role="listbox"] li, [role="menu"] li').filter(has_text=self.target)
+
+        elif self.method == 'value':
+            # Escape quotes in value for safe CSS attribute selector
+            escaped = self.target.replace('\\', '\\\\').replace('"', '\\"')
+            # Try data-value attribute on option elements
+            option = page.locator('[role="option"][data-value="{v}"], [role="menuitem"][data-value="{v}"]'.format(v=escaped))
+            if await option.count() == 0:
+                # Try value attribute
+                option = page.locator('[role="option"][value="{v}"], [role="menuitem"][value="{v}"]'.format(v=escaped))
+            if await option.count() == 0:
+                # Fall back: match by text on role="option" or role="menuitem"
+                option = page.locator('[role="option"], [role="menuitem"]').filter(has_text=self.target)
+
+        elif self.method == 'index':
+            option = page.locator('[role="option"]')
+            if await option.count() == 0:
+                option = page.locator('[role="menuitem"]')
+            if await option.count() == 0:
+                option = page.locator('[role="listbox"] li, [role="menu"] li')
+            option = option.nth(self.target)
+
+        if option is None or await option.count() == 0:
+            raise RuntimeError(
+                "Could not find option for {m}={t} in custom dropdown".format(
+                    m=self.method, t=self.target
+                )
+            )
+
+        # Step 4: Click the matched option
+        # Some frameworks (Google Material) render options with CSS animations/transforms
+        # that Playwright considers "not visible". Escalate: normal → force → dispatch_event.
+        target_el = option.first
+        try:
+            await target_el.click(timeout=3000)
+        except Exception:
+            try:
+                await target_el.click(force=True, timeout=3000)
+            except Exception:
+                # Last resort: fire click event via JS (bypasses all Playwright checks)
+                await target_el.dispatch_event('click')
+
+        # Step 5: Brief wait for dropdown to close
+        await page.wait_for_timeout(200)
+
+        return [str(self.target)]
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
@@ -107,37 +252,35 @@ class BrowserSelectModule(BaseModule):
 
         page = browser.page
 
-        # Build selection options
-        if self.value is not None:
-            selected = await page.select_option(
-                self.selector,
-                value=self.value,
-                timeout=self.timeout
+        # Pre-action: refresh element hints to ensure we have current page state
+        await browser.get_hints()
+
+        # Auto-detect native <select> vs custom dropdown
+        # Use Playwright's own locator to resolve the element (handles CSS, XPath, text= etc.)
+        try:
+            is_native = await page.locator(self.selector).evaluate(
+                'el => el.tagName === "SELECT"'
             )
-        elif self.label is not None:
-            selected = await page.select_option(
-                self.selector,
-                label=self.label,
-                timeout=self.timeout
-            )
-        elif self.index is not None:
-            selected = await page.select_option(
-                self.selector,
-                index=self.index,
-                timeout=self.timeout
-            )
+        except Exception:
+            is_native = False
+
+        if is_native:
+            selected = await self._select_native(page)
+        else:
+            selected = await self._select_custom(page, browser)
+
+        kind = "native" if is_native else "custom"
 
         result = {
             "status": "success",
             "selected": selected,
-            "selector": self.selector
+            "selector": self.selector,
+            "method": self.method,
+            "kind": kind,
         }
-        # Post-action: capture current page elements for Element Picker UI
-        try:
-            hints = await extract_element_hints(page)
-            for key in ('buttons', 'inputs', 'links', 'selects'):
-                if hints.get(key):
-                    result[key] = hints[key]
-        except Exception:
-            pass
+        # Post-action: refresh hints (select may change available options)
+        hints = await browser.get_hints(force=True)
+        for key in ('buttons', 'inputs', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
         return result

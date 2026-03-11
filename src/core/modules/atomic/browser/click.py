@@ -9,7 +9,6 @@ from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
 from ...schema import presets
-from ._hints import extract_element_hints
 
 
 @register_module(
@@ -55,7 +54,13 @@ from ._hints import extract_element_hints
               description_key="modules.browser.click.param.target.description",
               placeholder="Submit",
               showIf={"click_method": {"$in": ["text", "button", "id"]}},
-              ui={"widget": "element_picker", "element_types": ["button", "link"]},
+              ui={"widget": "element_picker", "element_types": ["button", "link"],
+                  "value_key_from": "click_method",
+                  "value_key_map": {
+                      "text": "text",
+                      "button": "text",
+                      "id": "id",
+                  }},
               group=FieldGroup.BASIC),
         field("selector", type="string",
               label="CSS/XPath Selector",
@@ -170,6 +175,9 @@ class BrowserClickModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Pre-action: refresh element hints to ensure we have current page state
+        await browser.get_hints()
+
         # Wait for element to be visible before clicking (unless force mode)
         if not self.force:
             await browser.wait(self.selector, state='visible', timeout_ms=10000)
@@ -190,21 +198,42 @@ class BrowserClickModule(BaseModule):
         # This ensures the next step's Element Picker sees the correct elements
         # (especially after click-induced navigation).
         result = {"status": "success", "selector": self.selector, "method": self.method}
+
+        # Wait for page to settle after click.
+        # Strategy: try domcontentloaded first (real navigation),
+        # then wait for URL change or DOM mutation (SPA navigation).
+        pre_url = page.url
         try:
-            # Brief wait for potential navigation to settle
-            await page.wait_for_load_state('domcontentloaded', timeout=3000)
+            await page.wait_for_load_state('domcontentloaded', timeout=2000)
         except Exception:
             pass
-        try:
-            hints = await extract_element_hints(page)
-            browser._snapshot_since_nav = True
-            if hints.get('text'):
-                result["_page_hint"] = hints["text"][:800]
-            for key in ('buttons', 'inputs', 'links', 'selects'):
-                if hints.get(key):
-                    result[key] = hints[key]
-        except Exception:
-            pass
+        # If URL didn't change, this might be an SPA — wait for DOM to stabilize
+        if page.url == pre_url:
+            try:
+                # Wait for any new interactive element to appear (SPA rendered new content)
+                await page.wait_for_function(
+                    '''() => {
+                        const els = document.querySelectorAll(
+                            'select, [role="combobox"], [role="listbox"], input:not([type=hidden]), button'
+                        );
+                        return els.length > 0;
+                    }''',
+                    timeout=3000,
+                )
+            except Exception:
+                pass
+            # Extra brief wait for SPA animations to finish
+            await page.wait_for_timeout(500)
+
+        # Post-click: refresh hints on the (potentially new) page
+        await browser.invalidate_hints()
+        hints = await browser.get_hints()
+        browser._snapshot_since_nav = True
+        if hints.get('text'):
+            result["_page_hint"] = hints["text"][:800]
+        for key in ('buttons', 'inputs', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
         return result
 
 

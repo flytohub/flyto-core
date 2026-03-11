@@ -117,10 +117,21 @@ class BrowserWaitModule(BaseModule):
             if not browser:
                 raise RuntimeError("Browser not launched. Please run browser.launch first")
             await browser.wait(self.selector, state=self.state, timeout_ms=self.timeout)
-            return {"status": "success", "selector": self.selector, "state": self.state}
+            result = {"status": "success", "selector": self.selector, "state": self.state}
         else:
             # Wait for specified duration
             await asyncio.sleep(self.duration_ms / 1000)
-            return {"status": "success", "duration_ms": self.duration_ms}
+            result = {"status": "success", "duration_ms": self.duration_ms}
+
+        # Post-wait: capture element hints for Element Picker UI.
+        # This is critical — wait nodes often follow navigation (click "下一步"),
+        # so they're the first node to see the NEW page's elements.
+        if browser:
+            hints = await browser.get_hints(force=True)
+            for key in ('buttons', 'inputs', 'links', 'selects'):
+                if hints.get(key):
+                    result[key] = hints[key]
+
+        return result
 
 

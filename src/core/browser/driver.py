@@ -79,6 +79,10 @@ class BrowserDriver:
         # Track whether a snapshot was taken since last navigation.
         # Used by modules to auto-snapshot before interaction.
         self._snapshot_since_nav = False
+        # Cached element hints (inputs/buttons/links/selects) for Element Picker UI.
+        # Invalidated automatically when the page URL changes.
+        self._cached_hints: Dict[str, Any] = {}
+        self._hints_url: Optional[str] = None
 
     async def launch(
         self,
@@ -393,6 +397,7 @@ class BrowserDriver:
             final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
             self._snapshot_since_nav = False
+            await self.invalidate_hints(clear_stamps=True)
 
             return {
                 'status': 'success',
@@ -789,6 +794,51 @@ class BrowserDriver:
             raise RuntimeError(f"Failed to close browser: {str(e)}") from e
 
     # _launch_persistent and _launch_regular handle all fallback logic above
+
+    async def get_hints(self, force: bool = False) -> Dict[str, Any]:
+        """Get interactive element hints for current page, with URL-based caching.
+
+        Returns cached hints if the page URL hasn't changed since last call.
+        Automatically re-fetches when URL changes (navigation occurred).
+
+        Args:
+            force: Force re-fetch even if URL hasn't changed.
+
+        Returns:
+            Dict with keys: text, inputs, buttons, links, selects
+        """
+        self._ensure_page()
+        from ..modules.atomic.browser._hints import extract_element_hints
+
+        current_url = self._page.url
+        if not force and self._hints_url == current_url and self._cached_hints:
+            return self._cached_hints
+
+        try:
+            self._cached_hints = await extract_element_hints(self._page)
+            self._hints_url = current_url
+        except Exception:
+            self._cached_hints = {}
+            self._hints_url = current_url
+        return self._cached_hints
+
+    async def invalidate_hints(self, clear_stamps: bool = False):
+        """Clear cached hints. Optionally remove data-flyto-hint stamps from the DOM.
+
+        Args:
+            clear_stamps: If True, also remove data-flyto-hint attributes from the page.
+                          Use True on navigation (new page). Use False when the same page
+                          changed (click, select) to keep selectors stable.
+        """
+        self._cached_hints = {}
+        self._hints_url = None
+        if clear_stamps and self._page:
+            try:
+                await self._page.evaluate(
+                    'document.querySelectorAll("[data-flyto-hint]").forEach(el => el.removeAttribute("data-flyto-hint"))'
+                )
+            except Exception:
+                pass
 
     def _ensure_page(self):
         """Ensure page is available"""

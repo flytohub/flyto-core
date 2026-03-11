@@ -8,7 +8,6 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
 from ...schema.constants import FieldGroup
-from ._hints import extract_element_hints
 
 
 @register_module(
@@ -56,7 +55,14 @@ from ._hints import extract_element_hints
               description_key="modules.browser.type.param.target.description",
               placeholder="Enter your email",
               showIf={"type_method": {"$in": ["placeholder", "label", "name", "id"]}},
-              ui={"widget": "element_picker", "element_types": ["input"]},
+              ui={"widget": "element_picker", "element_types": ["input"],
+                  "value_key_from": "type_method",
+                  "value_key_map": {
+                      "placeholder": "placeholder",
+                      "label": "label",
+                      "name": "name",
+                      "id": "id",
+                  }},
               group=FieldGroup.BASIC),
         field("selector", type="string",
               label="CSS/XPath Selector",
@@ -152,12 +158,13 @@ class BrowserTypeModule(BaseModule):
 
     def validate_params(self) -> None:
         method = self.params.get('type_method', 'placeholder')
-        target = self.params.get('target', '').strip()
         raw_selector = self.params.get('selector', '').strip()
 
         # Backward compatibility: selector provided without type_method → selector mode
         if 'type_method' not in self.params and raw_selector:
             method = 'selector'
+
+        target = self.params.get('target', '').strip()
 
         if method == 'selector':
             if not raw_selector:
@@ -196,6 +203,9 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # Pre-action: refresh element hints to ensure we have current page state
+        await browser.get_hints()
+
         # Wait for element to be visible before interacting
         await browser.wait(self.selector, state='visible', timeout_ms=10000)
 
@@ -218,15 +228,12 @@ class BrowserTypeModule(BaseModule):
             "text": '***' if is_sensitive else self.text,
             "text_length": len(self.text),
         }
-        # Post-action: capture current page elements for Element Picker UI
-        try:
-            hints = await extract_element_hints(browser.page)
-            browser._snapshot_since_nav = True
-            if hints.get('text'):
-                result["_page_hint"] = hints["text"][:800]
-            for key in ('buttons', 'inputs', 'links', 'selects'):
-                if hints.get(key):
-                    result[key] = hints[key]
-        except Exception:
-            pass
+        # Post-action: refresh hints (typing may trigger dynamic UI changes)
+        hints = await browser.get_hints(force=True)
+        browser._snapshot_since_nav = True
+        if hints.get('text'):
+            result["_page_hint"] = hints["text"][:800]
+        for key in ('buttons', 'inputs', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
         return result

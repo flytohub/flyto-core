@@ -15,7 +15,6 @@ from pathlib import Path
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
-from ._hints import extract_element_hints
 
 
 @register_module(
@@ -164,15 +163,12 @@ class BrowserSnapshotModule(BaseModule):
         # Extract interactive elements and text summary for AI callers.
         # These appear early in the JSON and survive truncation.
         if not self.output_path and not self.selector:
-            try:
-                hints = await extract_element_hints(page)
-                if hints.get('text'):
-                    result["text"] = hints["text"]
-                for key in ('inputs', 'buttons', 'links', 'selects'):
-                    if hints.get(key):
-                        result[key] = hints[key]
-            except Exception:
-                pass
+            hints = await browser.get_hints(force=True)
+            if hints.get('text'):
+                result["text"] = hints["text"]
+            for key in ('inputs', 'buttons', 'links', 'selects'):
+                if hints.get(key):
+                    result[key] = hints[key]
 
         result["size_bytes"] = len(content.encode('utf-8') if isinstance(content, str) else content)
 
