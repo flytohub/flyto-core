@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.4] - 2026-03-12
+
+### Added
+- **Browser Hint System: Shadow DOM support** — `deepQSA()` discovers all open shadow roots upfront and queries across them. Elements inside shadow DOM are automatically stamped with `data-flyto-hint` (Playwright CSS auto-pierces open shadow roots).
+- **Browser Hint System: contenteditable detection** — Rich text editors (Tiptap, ProseMirror, Slate.js) using `[contenteditable="true"]` are now detected as inputs with `type: 'contenteditable'`. Deduplicates against `[role="textbox"]`.
+- **Browser Hint System: Portal-rendered dropdown fallback** — When walk-up search fails, performs global search for `[role="listbox"]`/`[role="menu"]` via `aria-controls` ID cross-check, then `aria-label` matching. Only binds if exactly one candidate matches (ambiguous = stays lazy).
+- **Radio group merging** — Radio buttons with the same `name` attribute are merged into a single hint group with selectable options.
+- **Fieldset context** — Hints inside `<fieldset>` elements inherit the `<legend>` text as contextual label.
+- **Custom dropdown stable selectors** — Improved selector stability for custom dropdown components (MUI, Ant Design, etc.).
+
+### Changed
+- **Browser Hint System: enhanced isVisible** — Now filters `opacity: 0`, `clip-path: inset(100%)`, and zero-size + `overflow: hidden` elements in addition to `display: none` and `visibility: hidden`.
+- **Browser Hint System: combobox visibility check** — `[role="combobox"]` and `[aria-haspopup]` elements now go through `isVisible()` before being added as dropdown triggers (was missing before).
+- **Browser Hint System: deepQSA fast path** — When no shadow roots exist on the page (99% of sites), `deepQSA()` falls back to plain `document.querySelectorAll` with zero overhead.
+- **Browser Driver: Shadow DOM stamp clearing** — `invalidate_hints(clear_stamps=True)` now recursively clears `data-flyto-hint` attributes inside shadow roots.
+- **Browser Driver: hint extraction error logging** — Silent exception swallow replaced with `logger.debug("Failed to extract element hints", exc_info=True)`.
+- **Module registry refactoring** — Extracted `_resolve_module_config()` for cleaner module registration logic.
+- **CLI runner refactoring** — Extracted `_show_completion()`, `_save_results()`, `_handle_execution_error()` helpers.
+- **Connection validation** — Added VueFlow port alias mapping and `_find_port()` helper for robust frontend↔backend port matching.
+- **Removed `headless_manager.py`** — Unused headless browser manager module.
+- **Removed `auto_fixer.py`** — Unused audit auto-fixer module.
+
 ### Changed
 - **Loop Module Consolidation** - Simplified loop module registrations
   - Consolidated from 4 IDs (`core.flow.loop`, `flow.loop`, `loop`, `foreach`) to 2 clear modules

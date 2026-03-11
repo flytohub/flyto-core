@@ -5,6 +5,9 @@ Shared interactive element hints extraction for browser modules.
 
 Used by snapshot, click, type, goto etc. to capture page elements
 (buttons, inputs, links, selects) for the Element Picker UI.
+
+Supports: Shadow DOM (open), ARIA widgets, native HTML forms,
+          contenteditable editors, portal-rendered dropdowns.
 """
 
 # JS that extracts interactive elements from the current page.
@@ -16,11 +19,36 @@ EXTRACT_HINTS_JS = """() => {
         hints.text = body.innerText.substring(0, 3000);
     }
 
+    // === Shadow DOM: discover all roots (document + open shadow roots) ===
+    // Collected once upfront; deepQSA uses this to query across all roots.
+    // Fast path: skip the expensive querySelectorAll('*') scan when no shadow roots exist.
+    const _shadowRoots = [];
+    (function _discover(root) {
+        root.querySelectorAll('*').forEach(function(el) {
+            if (el.shadowRoot) {
+                _shadowRoots.push(el.shadowRoot);
+                _discover(el.shadowRoot);
+            }
+        });
+    })(document);
+    const _hasShadow = _shadowRoots.length > 0;
+
+    function deepQSA(selector) {
+        const results = Array.from(document.querySelectorAll(selector));
+        if (!_hasShadow) return results;
+        for (var i = 0; i < _shadowRoots.length; i++) {
+            _shadowRoots[i].querySelectorAll(selector).forEach(function(el) {
+                results.push(el);
+            });
+        }
+        return results;
+    }
+
     // --- stampSelector: guaranteed-unique selector via data-flyto-hint fallback ---
     // Preserve existing stamps so selectors stay stable across hint refreshes.
     // Continue numbering from the highest existing stamp to avoid collisions.
     let _hintCounter = 0;
-    document.querySelectorAll('[data-flyto-hint]').forEach(el => {
+    deepQSA('[data-flyto-hint]').forEach(function(el) {
         const n = parseInt(el.getAttribute('data-flyto-hint'), 10);
         if (n > _hintCounter) _hintCounter = n;
     });
@@ -29,23 +57,33 @@ EXTRACT_HINTS_JS = """() => {
         // 0. Reuse existing stamp (prevents duplicates when same element is visited twice)
         const existing = el.getAttribute('data-flyto-hint');
         if (existing) return '[data-flyto-hint="' + existing + '"]';
-        // 1. Unique #id
-        if (el.id) {
-            try {
-                if (document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) {
-                    return '#' + CSS.escape(el.id);
-                }
-            } catch (e) { /* invalid id for CSS — fall through */ }
+
+        // Shadow DOM elements: skip id/name uniqueness checks.
+        // document.querySelectorAll cannot pierce shadow DOM, so uniqueness checks
+        // would give wrong results. Playwright CSS selectors auto-pierce open shadow
+        // roots, so a data-flyto-hint stamp inside shadow DOM works correctly.
+        const inShadow = typeof ShadowRoot !== 'undefined' && el.getRootNode() instanceof ShadowRoot;
+
+        if (!inShadow) {
+            // 1. Unique #id
+            if (el.id) {
+                try {
+                    if (document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) {
+                        return '#' + CSS.escape(el.id);
+                    }
+                } catch (e) { /* invalid id for CSS — fall through */ }
+            }
+            // 2. tag[name="..."]
+            const nameAttr = el.getAttribute('name');
+            if (nameAttr) {
+                const tag = el.tagName.toLowerCase();
+                const sel = tag + '[name="' + nameAttr.replace(/"/g, '\\\\"') + '"]';
+                try {
+                    if (document.querySelectorAll(sel).length === 1) return sel;
+                } catch (e) { /* fall through */ }
+            }
         }
-        // 2. tag[name="..."]
-        const nameAttr = el.getAttribute('name');
-        if (nameAttr) {
-            const tag = el.tagName.toLowerCase();
-            const sel = tag + '[name="' + nameAttr.replace(/"/g, '\\\\"') + '"]';
-            try {
-                if (document.querySelectorAll(sel).length === 1) return sel;
-            } catch (e) { /* fall through */ }
-        }
+
         // 3. data-flyto-hint fallback
         _hintCounter++;
         el.setAttribute('data-flyto-hint', String(_hintCounter));
@@ -54,7 +92,7 @@ EXTRACT_HINTS_JS = """() => {
 
     // =====================================================================
     // Elimination-based classification:
-    //   1. Scan ALL interactive elements on the page
+    //   1. Scan ALL interactive elements on the page (including shadow DOM)
     //   2. Classify obvious ones by tag/type/role
     //   3. Remainder = identified by what they ARE, not pattern-matching
     //
@@ -145,17 +183,29 @@ EXTRACT_HINTS_JS = """() => {
     }
 
     function isVisible(el) {
+        // Fast path: offsetParent is non-null for most visible elements
         if (el.offsetParent) return true;
+        // position:fixed/sticky elements have null offsetParent but may be visible
         if (el.getClientRects && el.getClientRects().length > 0) return true;
+        // Computed style checks for hidden patterns
         const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
-        if (style && style.display !== 'none' && style.visibility !== 'hidden') return true;
-        return false;
+        if (!style) return false;
+        if (style.display === 'none') return false;
+        if (style.visibility === 'hidden') return false;
+        // opacity:0 — transparent, not interactable by user
+        if (parseFloat(style.opacity) === 0) return false;
+        // clip-path: inset(100%) — common screen-reader-only pattern
+        if (style.clipPath === 'inset(100%)') return false;
+        // Zero-size with overflow hidden — collapsed accordion, hidden panel
+        var rect = el.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0 && style.overflow === 'hidden') return false;
+        return true;
     }
 
     // === 1. TEXT INPUTS (input[text/email/password/number/...], textarea) ===
     const inputs = [];
     const INPUT_TYPES = new Set(['text','email','password','number','tel','url','search','date','time','datetime-local','month','week','color']);
-    document.querySelectorAll('input, textarea').forEach(el => {
+    deepQSA('input, textarea').forEach(el => {
         if (!isVisible(el)) return;
         const type = (el.type || 'text').toLowerCase();
         // Skip types that belong to other categories
@@ -179,7 +229,7 @@ EXTRACT_HINTS_JS = """() => {
         }
     });
     // ARIA textbox (custom text inputs)
-    document.querySelectorAll('[role="textbox"]').forEach(el => {
+    deepQSA('[role="textbox"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
@@ -194,11 +244,27 @@ EXTRACT_HINTS_JS = """() => {
             value: (el.textContent || '').substring(0, 50),
         });
     });
+    // contenteditable elements (rich text editors: Tiptap, ProseMirror, Slate.js)
+    deepQSA('[contenteditable="true"], [contenteditable=""]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
+        inputs.push({
+            selector: selector,
+            id: el.id || '',
+            name: '',
+            label: resolveName(el),
+            type: 'contenteditable',
+            placeholder: el.getAttribute('aria-placeholder') || el.getAttribute('data-placeholder') || '',
+            value: (el.textContent || '').substring(0, 50),
+        });
+    });
     if (inputs.length) hints.inputs = inputs.slice(0, 15);
 
     // === 2. CHECKBOXES (input[type=checkbox] + [role=checkbox]) ===
     const checkboxes = [];
-    document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+    deepQSA('input[type="checkbox"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         classified.add(selector);
@@ -210,7 +276,7 @@ EXTRACT_HINTS_JS = """() => {
             checked: el.checked,
         });
     });
-    document.querySelectorAll('[role="checkbox"]').forEach(el => {
+    deepQSA('[role="checkbox"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
@@ -228,7 +294,7 @@ EXTRACT_HINTS_JS = """() => {
     // === 3. RADIOS — grouped by name (like selects, single-choice) ===
     // Collect all radio elements, then group by name/radiogroup
     const _rawRadios = [];
-    document.querySelectorAll('input[type="radio"]').forEach(el => {
+    deepQSA('input[type="radio"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         classified.add(selector);
@@ -240,7 +306,7 @@ EXTRACT_HINTS_JS = """() => {
             checked: el.checked,
         });
     });
-    document.querySelectorAll('[role="radio"]').forEach(el => {
+    deepQSA('[role="radio"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
@@ -256,7 +322,7 @@ EXTRACT_HINTS_JS = """() => {
             checked: el.getAttribute('aria-checked') === 'true',
         });
     });
-    // Group by name → radio_groups (structured like selects)
+    // Group by name -> radio_groups (structured like selects)
     if (_rawRadios.length) {
         const radioGroups = [];
         const groupMap = new Map();
@@ -303,7 +369,7 @@ EXTRACT_HINTS_JS = """() => {
 
     // === 4. SWITCHES ([role=switch] — toggle on/off) ===
     const switches = [];
-    document.querySelectorAll('[role="switch"]').forEach(el => {
+    deepQSA('[role="switch"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
@@ -332,6 +398,7 @@ EXTRACT_HINTS_JS = """() => {
     }
 
     function addTrigger(el, kind) {
+        if (!isVisible(el)) return;
         const sel = stampSelector(el);
         if (seenTriggers.has(sel)) return;
         seenTriggers.add(sel);
@@ -342,20 +409,20 @@ EXTRACT_HINTS_JS = """() => {
     const triggers = [];
 
     // 5a. Native <select>
-    document.querySelectorAll('select').forEach(el => {
+    deepQSA('select').forEach(el => {
         if (!isVisible(el)) return;
         const t = addTrigger(el, 'native');
         if (t) triggers.push(t);
     });
 
     // 5b. [role="combobox"] — always detect
-    document.querySelectorAll('[role="combobox"]').forEach(el => {
+    deepQSA('[role="combobox"]').forEach(el => {
         const t = addTrigger(el, 'custom');
         if (t) triggers.push(t);
     });
 
     // 5c. [aria-haspopup="listbox"|"menu"|"true"]
-    document.querySelectorAll('[aria-haspopup="listbox"], [aria-haspopup="menu"], [aria-haspopup="true"]').forEach(el => {
+    deepQSA('[aria-haspopup="listbox"], [aria-haspopup="menu"], [aria-haspopup="true"]').forEach(el => {
         const t = addTrigger(el, 'custom');
         if (t) triggers.push(t);
     });
@@ -389,6 +456,7 @@ EXTRACT_HINTS_JS = """() => {
             if (popup) {
                 optEls = Array.from(popup.querySelectorAll(OPT_SELECTOR));
             }
+            // Walk-up search: find listbox/menu in ancestor containers
             if (!optEls.length) {
                 let wrapper = el.parentElement;
                 const tooWide = new Set(['BODY', 'HTML']);
@@ -404,6 +472,45 @@ EXTRACT_HINTS_JS = """() => {
                     }
                     if (optEls.length) break;
                     wrapper = wrapper.parentElement;
+                }
+            }
+            // Portal fallback: global search for listbox/menu matching the trigger.
+            // Handles React Portal, Vue Teleport, Angular CDK Overlay where the options
+            // container is rendered outside the trigger's ancestor chain.
+            // Safety: cross-check via aria-controls/aria-owns ID, then fall back to
+            // aria-label matching. If multiple candidates match the same label, stay
+            // lazy to avoid binding the wrong listbox.
+            if (!optEls.length) {
+                const allListboxes = deepQSA('[role="listbox"], [role="menu"]');
+                // 1. Cross-check: trigger has aria-controls/owns pointing to a listbox
+                //    that IS in the DOM but was empty at the popup reference — search globally
+                if (listId) {
+                    for (const cand of allListboxes) {
+                        if (cand === popup) continue;
+                        if (cand.id === listId) {
+                            optEls = Array.from(cand.querySelectorAll(OPT_SELECTOR));
+                            break;
+                        }
+                    }
+                }
+                // 2. aria-label matching — only if exactly one candidate matches
+                if (!optEls.length) {
+                    const triggerLabel = el.getAttribute('aria-label') || name;
+                    if (triggerLabel) {
+                        const matches = [];
+                        for (const cand of allListboxes) {
+                            if (cand === popup) continue;
+                            const candLabel = cand.getAttribute('aria-label') || '';
+                            if (candLabel && candLabel === triggerLabel) {
+                                const opts = Array.from(cand.querySelectorAll(OPT_SELECTOR));
+                                if (opts.length) matches.push(opts);
+                            }
+                        }
+                        // Only use if exactly one match — ambiguous matches stay lazy
+                        if (matches.length === 1) {
+                            optEls = matches[0];
+                        }
+                    }
                 }
             }
 
@@ -441,7 +548,7 @@ EXTRACT_HINTS_JS = """() => {
 
     // === 6. BUTTONS (button, [role=button], input[submit/button]) ===
     const buttons = [];
-    document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"]').forEach(el => {
+    deepQSA('button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
@@ -456,7 +563,7 @@ EXTRACT_HINTS_JS = """() => {
 
     // === 7. LINKS (a[href]) ===
     const links = [];
-    document.querySelectorAll('a[href]').forEach(el => {
+    deepQSA('a[href]').forEach(el => {
         if (links.length >= 20) return;
         const text = (el.textContent || '').trim().substring(0, 60);
         if (!text) return;

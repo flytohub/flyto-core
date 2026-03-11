@@ -18,6 +18,68 @@ from .config import CLI_LINE_WIDTH, Colors, DEFAULT_OUTPUT_DIR
 from .i18n import I18n
 
 
+def _show_completion(execution_time: float, i18n: I18n) -> None:
+    """Print the workflow-completed banner and execution time."""
+    print()
+    print("=" * CLI_LINE_WIDTH)
+    print(Colors.OKGREEN + Colors.BOLD +
+          i18n.t('cli.workflow_completed') + Colors.ENDC)
+    print("=" * CLI_LINE_WIDTH)
+    print(f"{i18n.t('cli.execution_time')}: {execution_time:.2f}s")
+
+
+def _save_results(
+    workflow: Dict[str, Any],
+    workflow_path: Path,
+    params: Dict[str, Any],
+    results: list,
+    execution_time: float,
+    config: Dict[str, Any],
+    i18n: I18n,
+) -> Path:
+    """Save execution results to a JSON file and print the path. Returns the output file path."""
+    output_dir = Path(config.get('storage', {}).get('output_dir',
+                                                     str(DEFAULT_OUTPUT_DIR)))
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output_file = output_dir / f"workflow_{workflow_path.stem}_{timestamp}.json"
+
+    output_data = {
+        'workflow': workflow.get('name', workflow_path.stem),
+        'params': params,
+        'steps': results,
+        'execution_time': execution_time,
+        'timestamp': timestamp
+    }
+
+    with open(output_file, 'w') as f:
+        json.dump(output_data, f, indent=2)
+
+    print(f"{i18n.t('cli.results_saved')}: {output_file}")
+
+    return output_file
+
+
+def _handle_execution_error(
+    exec_error: Exception,
+    engine: Any,
+    total_steps: int,
+    i18n: I18n,
+) -> None:
+    """Print error details and execution summary, then exit."""
+    print(f"\n{Colors.FAIL}{Colors.BOLD}"
+          f"{i18n.t('status.error')}{Colors.ENDC}")
+    print(f"{Colors.FAIL}Error: {str(exec_error)}{Colors.ENDC}")
+
+    summary = engine.get_execution_summary()
+    print(f"\n{Colors.WARNING}Execution Summary:{Colors.ENDC}")
+    print(f"  Steps executed: {summary['steps_executed']}/{total_steps}")
+    print(f"  Status: {summary['status']}")
+
+    sys.exit(1)
+
+
 def run_workflow(
     workflow_path: Path,
     params: Dict[str, Any],
@@ -85,51 +147,16 @@ def run_workflow(
                         show_step_progress()
 
         except Exception as exec_error:
-            print(f"\n{Colors.FAIL}{Colors.BOLD}"
-                  f"{i18n.t('status.error')}{Colors.ENDC}")
-            print(f"{Colors.FAIL}Error: {str(exec_error)}{Colors.ENDC}")
-
-            # Show execution summary
-            summary = engine.get_execution_summary()
-            print(f"\n{Colors.WARNING}Execution Summary:{Colors.ENDC}")
-            print(f"  Steps executed: {summary['steps_executed']}/{total_steps}")
-            print(f"  Status: {summary['status']}")
-
-            sys.exit(1)
+            _handle_execution_error(exec_error, engine, total_steps, i18n)
 
         results = execution_log
 
         # Calculate execution time
         execution_time = time.time() - start_time
 
-        # Show completion
-        print()
-        print("=" * CLI_LINE_WIDTH)
-        print(Colors.OKGREEN + Colors.BOLD +
-              i18n.t('cli.workflow_completed') + Colors.ENDC)
-        print("=" * CLI_LINE_WIDTH)
-        print(f"{i18n.t('cli.execution_time')}: {execution_time:.2f}s")
-
-        # Save results
-        output_dir = Path(config.get('storage', {}).get('output_dir',
-                                                         str(DEFAULT_OUTPUT_DIR)))
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = output_dir / f"workflow_{workflow_path.stem}_{timestamp}.json"
-
-        output_data = {
-            'workflow': workflow.get('name', workflow_path.stem),
-            'params': params,
-            'steps': results,
-            'execution_time': execution_time,
-            'timestamp': timestamp
-        }
-
-        with open(output_file, 'w') as f:
-            json.dump(output_data, f, indent=2)
-
-        print(f"{i18n.t('cli.results_saved')}: {output_file}")
+        _show_completion(execution_time, i18n)
+        _save_results(workflow, workflow_path, params, results,
+                      execution_time, config, i18n)
 
     except Exception as e:
         print()

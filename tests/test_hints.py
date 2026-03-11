@@ -1,6 +1,72 @@
 # Tests for _hints.py — stampSelector + two-pass dropdown detection
 import asyncio
+import json
+import os
+import subprocess
+import tempfile
+
 import pytest
+
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _run_js(js_source: str):
+    """Run JS via Node.js subprocess with jsdom available."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+        f.write(js_source)
+        f.flush()
+        try:
+            proc = subprocess.run(
+                ['node', f.name],
+                capture_output=True, text=True, timeout=10,
+                cwd=_PROJECT_ROOT,
+                env={**os.environ, 'NODE_PATH': os.path.join(_PROJECT_ROOT, 'node_modules')},
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(f"Node.js error: {proc.stderr}")
+            return json.loads(proc.stdout)
+        finally:
+            os.unlink(f.name)
+
+
+_JSDOM_POLYFILLS = """\
+Object.defineProperty(window.HTMLElement.prototype, 'offsetParent', {
+    get() { return this.style.display === 'none' ? null : this.parentElement; }
+});
+if (!window.CSS) window.CSS = {};
+if (!window.CSS.escape) {
+    window.CSS.escape = function(s) {
+        return s.replace(/([\\x00-\\x1f\\x7f]|^[0-9]|^-[0-9]|-$|[^\\x80-\\uffff\\w-])/g, function(ch) {
+            return '\\\\' + ch;
+        });
+    };
+}
+Object.defineProperty(window.HTMLElement.prototype, 'innerText', {
+    get() { return this.textContent; }
+});
+if (typeof ShadowRoot === 'undefined') {
+    global.ShadowRoot = window.ShadowRoot || function ShadowRoot() {};
+}
+if (!global.getComputedStyle) {
+    global.getComputedStyle = window.getComputedStyle.bind(window);
+}
+global.document = document;
+global.CSS = window.CSS;
+global.window = window;
+"""
+
+
+def _jsdom_preamble(html: str) -> str:
+    """Generate JS preamble: require jsdom, create DOM, apply polyfills."""
+    escaped = html.replace('`', '\\`').replace('${', '\\${')
+    return (
+        f"const {{ JSDOM }} = require('jsdom');\n"
+        f"const dom = new JSDOM(`{escaped}`, {{ pretendToBeVisual: true }});\n"
+        f"const document = dom.window.document;\n"
+        f"const window = dom.window;\n"
+        + _JSDOM_POLYFILLS
+    )
+
 
 # Minimal mock page for evaluate()
 class MockPage:
@@ -11,60 +77,11 @@ class MockPage:
 
     async def evaluate(self, js_code):
         """Run EXTRACT_HINTS_JS against self.html using Node.js."""
-        import subprocess, json, tempfile, os
-
-        # Wrap the JS: set up DOM from HTML, then run the extraction
-        wrapped = """
-const {{ JSDOM }} = require('jsdom');
-const dom = new JSDOM(`{html}`, {{ pretendToBeVisual: true }});
-const document = dom.window.document;
-const window = dom.window;
-
-// Polyfill offsetParent (jsdom doesn't support layout)
-Object.defineProperty(window.HTMLElement.prototype, 'offsetParent', {{
-    get() {{ return this.style.display === 'none' ? null : this.parentElement; }}
-}});
-
-// Polyfill CSS.escape
-if (!window.CSS) window.CSS = {{}};
-if (!window.CSS.escape) {{
-    window.CSS.escape = function(s) {{
-        return s.replace(/([\\x00-\\x1f\\x7f]|^[0-9]|^-[0-9]|-$|[^\\x80-\\uffff\\w-])/g, function(ch) {{
-            return '\\\\' + ch;
-        }});
-    }};
-}}
-
-// Polyfill innerText (jsdom doesn't implement it)
-Object.defineProperty(window.HTMLElement.prototype, 'innerText', {{
-    get() {{ return this.textContent; }}
-}});
-
-// Make document global for the extraction code
-global.document = document;
-global.CSS = window.CSS;
-
+        return _run_js(_jsdom_preamble(self.html) + """
 const fn = {js_fn};
 const result = fn();
 process.stdout.write(JSON.stringify(result, null, 2));
-""".format(
-            html=self.html.replace('`', '\\`').replace('${', '\\${'),
-            js_fn=js_code,
-        )
-
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
-            f.write(wrapped)
-            f.flush()
-            try:
-                proc = subprocess.run(
-                    ['node', f.name],
-                    capture_output=True, text=True, timeout=10
-                )
-                if proc.returncode != 0:
-                    raise RuntimeError(f"Node.js error: {proc.stderr}")
-                return json.loads(proc.stdout)
-            finally:
-                os.unlink(f.name)
+""".format(js_fn=js_code))
 
 
 # =========================================================================
@@ -796,3 +813,208 @@ class TestDeepNesting:
     def test_name_resolved(self, js_code):
         result = run(DEEP_NESTING_HTML, js_code)
         assert result['selects'][0]['name'] == 'Priority'
+
+
+# =========================================================================
+# Shadow DOM tests
+# =========================================================================
+
+SHADOW_DOM_HTML = """
+<html><body>
+  <div id="shadow-host"></div>
+</body></html>
+"""
+
+SHADOW_DOM_SELECT_HTML = """
+<html><body>
+  <div id="shadow-host-select"></div>
+</body></html>
+"""
+
+
+def run_shadow(html, shadow_js, js_code):
+    """Run extraction JS with shadow DOM setup via _run_js."""
+    return _run_js(
+        _jsdom_preamble(html)
+        + f"\n// Create shadow DOM programmatically\n{shadow_js}\n"
+        + f"\nconst fn = {js_code};\n"
+        + "const result = fn();\n"
+        + "process.stdout.write(JSON.stringify(result, null, 2));\n"
+    )
+
+
+SHADOW_INPUT_SETUP = """
+var host = document.getElementById('shadow-host');
+var shadow = host.attachShadow({mode: 'open'});
+shadow.innerHTML = '<input type="text" placeholder="Shadow Input" /><button>Shadow Button</button>';
+"""
+
+SHADOW_SELECT_SETUP = """
+var host = document.getElementById('shadow-host-select');
+var shadow = host.attachShadow({mode: 'open'});
+shadow.innerHTML = '<select aria-label="Shadow Select"><option value="a">Alpha</option><option value="b" selected>Beta</option></select>';
+"""
+
+
+class TestShadowDOM:
+    """Shadow DOM: elements inside open shadow roots should be detected"""
+
+    def test_shadow_input_detected(self, js_code):
+        """Input inside shadow root should appear in hints.inputs"""
+        result = run_shadow(SHADOW_DOM_HTML, SHADOW_INPUT_SETUP, js_code)
+        inputs = result.get('inputs', [])
+        assert len(inputs) >= 1
+        assert inputs[0]['placeholder'] == 'Shadow Input'
+
+    def test_shadow_button_detected(self, js_code):
+        """Button inside shadow root should appear in hints.buttons"""
+        result = run_shadow(SHADOW_DOM_HTML, SHADOW_INPUT_SETUP, js_code)
+        buttons = result.get('buttons', [])
+        assert len(buttons) >= 1
+        assert any('Shadow Button' in b.get('text', '') for b in buttons)
+
+    def test_shadow_selector_uses_hint_stamp(self, js_code):
+        """Shadow DOM elements should always use data-flyto-hint (no id/name check)"""
+        result = run_shadow(SHADOW_DOM_HTML, SHADOW_INPUT_SETUP, js_code)
+        inputs = result.get('inputs', [])
+        if inputs:
+            assert 'data-flyto-hint' in inputs[0]['selector']
+
+    def test_shadow_select_detected(self, js_code):
+        """Native select inside shadow root"""
+        result = run_shadow(SHADOW_DOM_SELECT_HTML, SHADOW_SELECT_SETUP, js_code)
+        selects = result.get('selects', [])
+        assert len(selects) >= 1
+        assert selects[0]['name'] == 'Shadow Select'
+        assert len(selects[0]['options']) == 2
+
+
+# =========================================================================
+# contenteditable tests
+# =========================================================================
+
+CONTENTEDITABLE_HTML = """
+<html><body>
+  <div contenteditable="true" aria-label="Rich Editor" id="editor">Hello world</div>
+  <div contenteditable="" data-placeholder="Type here..." id="editor2">Some text</div>
+  <div contenteditable="false" id="not-editable">Read only</div>
+  <input type="text" id="normal" placeholder="Normal input" />
+</body></html>
+"""
+
+CONTENTEDITABLE_WITH_ROLE_HTML = """
+<html><body>
+  <div role="textbox" contenteditable="true" aria-label="Dual Role" id="dual">Content</div>
+</body></html>
+"""
+
+
+class TestContentEditable:
+    """contenteditable elements should be detected as inputs"""
+
+    def test_contenteditable_true_detected(self, js_code):
+        result = run(CONTENTEDITABLE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        ce_inputs = [i for i in inputs if i['type'] == 'contenteditable']
+        assert len(ce_inputs) >= 1
+        assert ce_inputs[0]['label'] == 'Rich Editor'
+
+    def test_contenteditable_empty_detected(self, js_code):
+        """contenteditable="" (empty string = true in HTML)"""
+        result = run(CONTENTEDITABLE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        ce_inputs = [i for i in inputs if i['type'] == 'contenteditable']
+        assert len(ce_inputs) >= 2
+
+    def test_contenteditable_false_not_detected(self, js_code):
+        result = run(CONTENTEDITABLE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        ids = [i['id'] for i in inputs]
+        assert 'not-editable' not in ids
+
+    def test_normal_input_still_detected(self, js_code):
+        result = run(CONTENTEDITABLE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        normal = [i for i in inputs if i['id'] == 'normal']
+        assert len(normal) == 1
+
+    def test_role_textbox_not_duplicated(self, js_code):
+        """Element with both role=textbox and contenteditable should appear once"""
+        result = run(CONTENTEDITABLE_WITH_ROLE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        assert len(inputs) == 1
+        assert inputs[0]['label'] == 'Dual Role'
+
+
+# =========================================================================
+# Enhanced isVisible tests
+# =========================================================================
+
+DISPLAY_NONE_HTML = """
+<html><body>
+  <input type="text" id="visible" placeholder="Visible" />
+  <input type="text" id="hidden" placeholder="Hidden" style="display: none;" />
+</body></html>
+"""
+
+
+class TestEnhancedVisibility:
+    """Enhanced isVisible filters hidden elements"""
+
+    def test_display_none_filtered(self, js_code):
+        """Element with display:none should be filtered"""
+        result = run(DISPLAY_NONE_HTML, js_code)
+        inputs = result.get('inputs', [])
+        ids = [i['id'] for i in inputs]
+        assert 'visible' in ids
+        assert 'hidden' not in ids
+
+    def test_enhanced_checks_documented(self):
+        """Additional isVisible checks (opacity:0, clip-path:inset(100%),
+        zero-size+overflow:hidden) require a real layout engine.
+        jsdom has no layout — these are verified in Playwright e2e tests."""
+        pass
+
+
+# =========================================================================
+# Portal fallback tests
+# =========================================================================
+
+PORTAL_WITH_LABEL_HTML = """
+<html><body>
+  <div id="app">
+    <div role="combobox" aria-label="Timezone" aria-haspopup="listbox" tabindex="0">
+      <span>Select timezone</span>
+    </div>
+  </div>
+  <!-- Portal: rendered completely outside #app -->
+  <div id="portal-root" style="position: absolute; top: 200px;">
+    <ul role="listbox" aria-label="Timezone">
+      <li role="option" data-value="utc">UTC</li>
+      <li role="option" data-value="est">Eastern</li>
+      <li role="option" data-value="pst">Pacific</li>
+    </ul>
+  </div>
+</body></html>
+"""
+
+
+class TestPortalFallback:
+    """Portal-rendered dropdowns: global search by matching aria-label"""
+
+    def test_portal_options_found(self, js_code):
+        """Options in a portal should be found via aria-label matching"""
+        result = run(PORTAL_WITH_LABEL_HTML, js_code)
+        selects = result.get('selects', [])
+        assert len(selects) >= 1
+        combo = selects[0]
+        assert not combo.get('lazy', False), "Portal options should be found via label matching"
+        assert len(combo['options']) == 3
+
+    def test_portal_option_values(self, js_code):
+        result = run(PORTAL_WITH_LABEL_HTML, js_code)
+        combo = result['selects'][0]
+        values = [o['value'] for o in combo['options']]
+        assert 'utc' in values
+        assert 'est' in values
+        assert 'pst' in values

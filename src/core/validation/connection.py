@@ -22,44 +22,62 @@ class ConnectionResult:
     meta: Dict[str, Any] = field(default_factory=dict)
 
 
-def validate_connection(
+# Port alias mapping: VueFlow handle IDs ↔ flyto-core port IDs
+# VueFlow uses: 'output', 'target', 'in', etc.
+# flyto-core uses: 'success', 'error', 'input', 'iterate', 'done', etc.
+OUTPUT_PORT_ALIASES = {
+    'output': 'success',
+    'source': 'success',
+    'source-true': 'true',
+    'source-false': 'false',
+    'source-error': 'error',
+    'body_out': 'iterate',
+    'done_out': 'done',
+}
+INPUT_PORT_ALIASES = {
+    'input': 'input',
+    'target': 'input',
+    'in': 'input',  # LoopNode uses 'in' for input
+}
+
+
+def _find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
+    """Find port by ID or alias, also checks handle_id"""
+    if not ports:
+        return None
+    # Direct match by id
+    match = next((p for p in ports if p.get('id') == port_id), None)
+    if match:
+        return match
+    # Match by handle_id (frontend sends VueFlow handle IDs like 'source-true')
+    match = next((p for p in ports if p.get('handle_id') == port_id), None)
+    if match:
+        return match
+    # Try alias
+    alias_id = aliases.get(port_id)
+    if alias_id:
+        match = next((p for p in ports if p.get('id') == alias_id), None)
+        if match:
+            return match
+    # Strip 'source-' prefix as general pattern (e.g. 'source-case-xxx' -> 'case-xxx')
+    if port_id.startswith('source-'):
+        stripped = port_id[len('source-'):]
+        match = next((p for p in ports if p.get('id') == stripped), None)
+        if match:
+            return match
+    return None
+
+
+def _validate_template_connection(
     from_module_id: str,
     to_module_id: str,
-    from_port: str = 'output',
-    to_port: str = 'input',
-) -> ConnectionResult:
+) -> Optional[ConnectionResult]:
     """
-    Validate if two modules can be connected.
-
-    Args:
-        from_module_id: Source module ID (e.g., 'browser.click')
-        to_module_id: Target module ID (e.g., 'browser.screenshot')
-        from_port: Source port name (default: 'output')
-        to_port: Target port name (default: 'input')
-
-    Returns:
-        ConnectionResult with valid=True/False and error details
-
-    Example:
-        >>> validate_connection('browser.click', 'browser.screenshot')
-        ConnectionResult(valid=True)
-
-        >>> validate_connection('http.response', 'browser.click')
-        ConnectionResult(
-            valid=False,
-            error_code='TYPE_MISMATCH',
-            error_message='browser.click requires browser_page, but received http_response'
-        )
+    Handle template.XXX modules. Returns ConnectionResult if this is a
+    template case, or None to signal the caller should continue validation.
     """
-    # Note: Self-connection (same node instance → itself) is validated by
-    # the caller using node IDs.  Same module_id is perfectly valid
-    # (e.g. browser.type → browser.type on two different nodes).
-
-    # Get module metadata
     from ..modules.registry import ModuleRegistry
 
-    # Special handling for user templates (template.XXX) - they're not in core registry
-    # Templates can connect to/from anything, so we allow all connections
     is_from_template = from_module_id.startswith('template.')
     is_to_template = to_module_id.startswith('template.')
 
@@ -90,7 +108,19 @@ def validate_connection(
     if is_from_template or is_to_template:
         return ConnectionResult(valid=True)
 
-    # Check can_connect_to / can_receive_from rules
+    return None
+
+
+def _validate_connection_rules(
+    from_module_id: str,
+    to_module_id: str,
+    from_meta: Dict[str, Any],
+    to_meta: Dict[str, Any],
+) -> Optional[ConnectionResult]:
+    """
+    Check can_connect_to / can_receive_from rules.
+    Returns ConnectionResult on failure, or None if valid.
+    """
     can_connect_to = from_meta.get('can_connect_to', ['*'])
     can_receive_from = to_meta.get('can_receive_from', ['*'])
 
@@ -123,56 +153,27 @@ def validate_connection(
                 }
             )
 
+    return None
+
+
+def _validate_port_compatibility(
+    from_module_id: str,
+    to_module_id: str,
+    from_meta: Dict[str, Any],
+    to_meta: Dict[str, Any],
+    from_port: str,
+    to_port: str,
+) -> ConnectionResult:
+    """
+    Validate port-level compatibility, with module-level type fallback.
+    Always returns a ConnectionResult.
+    """
     # Check port-level compatibility when ports are defined
     from_ports = from_meta.get('output_ports') or []
     to_ports = to_meta.get('input_ports') or []
 
-    # Port alias mapping: VueFlow handle IDs ↔ flyto-core port IDs
-    # VueFlow uses: 'output', 'target', 'in', etc.
-    # flyto-core uses: 'success', 'error', 'input', 'iterate', 'done', etc.
-    OUTPUT_PORT_ALIASES = {
-        'output': 'success',
-        'source': 'success',
-        'source-true': 'true',
-        'source-false': 'false',
-        'source-error': 'error',
-        'body_out': 'iterate',
-        'done_out': 'done',
-    }
-    INPUT_PORT_ALIASES = {
-        'input': 'input',
-        'target': 'input',
-        'in': 'input',  # LoopNode uses 'in' for input
-    }
-
-    def find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
-        """Find port by ID or alias, also checks handle_id"""
-        if not ports:
-            return None
-        # Direct match by id
-        match = next((p for p in ports if p.get('id') == port_id), None)
-        if match:
-            return match
-        # Match by handle_id (frontend sends VueFlow handle IDs like 'source-true')
-        match = next((p for p in ports if p.get('handle_id') == port_id), None)
-        if match:
-            return match
-        # Try alias
-        alias_id = aliases.get(port_id)
-        if alias_id:
-            match = next((p for p in ports if p.get('id') == alias_id), None)
-            if match:
-                return match
-        # Strip 'source-' prefix as general pattern (e.g. 'source-case-xxx' -> 'case-xxx')
-        if port_id.startswith('source-'):
-            stripped = port_id[len('source-'):]
-            match = next((p for p in ports if p.get('id') == stripped), None)
-            if match:
-                return match
-        return None
-
-    from_port_meta = find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
-    to_port_meta = find_port(to_ports, to_port, INPUT_PORT_ALIASES)
+    from_port_meta = _find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
+    to_port_meta = _find_port(to_ports, to_port, INPUT_PORT_ALIASES)
 
     if from_ports and not from_port_meta:
         return ConnectionResult(
@@ -249,6 +250,60 @@ def validate_connection(
                 )
 
     return ConnectionResult(valid=True)
+
+
+def validate_connection(
+    from_module_id: str,
+    to_module_id: str,
+    from_port: str = 'output',
+    to_port: str = 'input',
+) -> ConnectionResult:
+    """
+    Validate if two modules can be connected.
+
+    Args:
+        from_module_id: Source module ID (e.g., 'browser.click')
+        to_module_id: Target module ID (e.g., 'browser.screenshot')
+        from_port: Source port name (default: 'output')
+        to_port: Target port name (default: 'input')
+
+    Returns:
+        ConnectionResult with valid=True/False and error details
+
+    Example:
+        >>> validate_connection('browser.click', 'browser.screenshot')
+        ConnectionResult(valid=True)
+
+        >>> validate_connection('http.response', 'browser.click')
+        ConnectionResult(
+            valid=False,
+            error_code='TYPE_MISMATCH',
+            error_message='browser.click requires browser_page, but received http_response'
+        )
+    """
+    # Note: Self-connection (same node instance → itself) is validated by
+    # the caller using node IDs.  Same module_id is perfectly valid
+    # (e.g. browser.type → browser.type on two different nodes).
+
+    # Handle template modules (not in core registry)
+    template_result = _validate_template_connection(from_module_id, to_module_id)
+    if template_result is not None:
+        return template_result
+
+    # Both modules resolved — get metadata for rule/port checks
+    from ..modules.registry import ModuleRegistry
+    from_meta = ModuleRegistry.get_metadata(from_module_id)
+    to_meta = ModuleRegistry.get_metadata(to_module_id)
+
+    # Check can_connect_to / can_receive_from rules
+    rules_result = _validate_connection_rules(from_module_id, to_module_id, from_meta, to_meta)
+    if rules_result is not None:
+        return rules_result
+
+    # Check port-level and module-level type compatibility
+    return _validate_port_compatibility(
+        from_module_id, to_module_id, from_meta, to_meta, from_port, to_port
+    )
 
 
 def _matches_any_pattern(module_id: str, patterns: List[str]) -> bool:

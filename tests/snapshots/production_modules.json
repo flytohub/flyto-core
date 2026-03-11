@@ -1,2166 +1,2816 @@
 {
-  "version": "2.2.2",
+  "version": "2.18.3",
   "environment": "production",
-  "generated_at": "2026-02-12T14:29:45.212618+00:00",
-  "total": 304,
+  "generated_at": "2026-03-11T16:09:04.019289+00:00",
+  "total": 394,
   "modules": [
     {
       "id": "agent.autonomous",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "Autonomous Agent"
+      "label": "agent.autonomous"
     },
     {
       "id": "agent.chain",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "Chain Agent"
+      "label": "agent.chain"
     },
     {
       "id": "ai.local_ollama.chat",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "Local Ollama Chat"
+      "label": "ai.local_ollama.chat"
     },
     {
       "id": "analysis.html.analyze_readability",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "HTML Readability"
+      "label": "analysis.html.analyze_readability"
     },
     {
       "id": "analysis.html.extract_forms",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "Extract Forms"
+      "label": "analysis.html.extract_forms"
     },
     {
       "id": "analysis.html.extract_metadata",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "Extract Metadata"
+      "label": "analysis.html.extract_metadata"
     },
     {
       "id": "analysis.html.extract_tables",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "Extract Tables"
+      "label": "analysis.html.extract_tables"
     },
     {
       "id": "analysis.html.find_patterns",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "Find Patterns"
+      "label": "analysis.html.find_patterns"
     },
     {
       "id": "analysis.html.structure",
       "version": "1.0.0",
       "category": "analysis",
       "stability": "stable",
-      "label": "HTML Structure"
+      "label": "analysis.html.structure"
     },
     {
       "id": "api.anthropic.chat",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "Claude Chat"
+      "label": "api.anthropic.chat"
     },
     {
       "id": "api.github.create_issue",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "Create GitHub Issue"
+      "label": "api.github.create_issue"
+    },
+    {
+      "id": "api.github.create_pr",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "api.github.create_pr"
     },
     {
       "id": "api.github.get_repo",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "Get GitHub Repository"
+      "label": "api.github.get_repo"
     },
     {
       "id": "api.github.list_issues",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "List GitHub Issues"
+      "label": "api.github.list_issues"
+    },
+    {
+      "id": "api.github.list_repos",
+      "version": "1.0.0",
+      "category": "api",
+      "stability": "stable",
+      "label": "api.github.list_repos"
     },
     {
       "id": "api.google_gemini.chat",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "Google Gemini Chat"
+      "label": "api.google_gemini.chat"
     },
     {
       "id": "api.google_sheets.read",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Google Sheets Read"
+      "label": "api.google_sheets.read"
     },
     {
       "id": "api.google_sheets.write",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Google Sheets Write"
+      "label": "api.google_sheets.write"
     },
     {
       "id": "api.notion.create_page",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Notion Create Page"
+      "label": "api.notion.create_page"
     },
     {
       "id": "api.notion.query_database",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Notion Query Database"
+      "label": "api.notion.query_database"
     },
     {
       "id": "api.openai.chat",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "OpenAI Chat"
+      "label": "api.openai.chat"
     },
     {
       "id": "api.openai.image",
       "version": "1.0.0",
       "category": "ai",
       "stability": "stable",
-      "label": "DALL-E Image Generation"
+      "label": "api.openai.image"
+    },
+    {
+      "id": "archive.gunzip",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.gunzip"
+    },
+    {
+      "id": "archive.gzip",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.gzip"
+    },
+    {
+      "id": "archive.tar_create",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.tar_create"
+    },
+    {
+      "id": "archive.tar_extract",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.tar_extract"
+    },
+    {
+      "id": "archive.zip_create",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.zip_create"
+    },
+    {
+      "id": "archive.zip_extract",
+      "version": "1.0.0",
+      "category": "archive",
+      "stability": "stable",
+      "label": "archive.zip_extract"
     },
     {
       "id": "array.chunk",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Chunk"
+      "label": "array.chunk"
     },
     {
       "id": "array.compact",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Compact"
+      "label": "array.compact"
     },
     {
       "id": "array.difference",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Difference"
+      "label": "array.difference"
     },
     {
       "id": "array.drop",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Drop"
+      "label": "array.drop"
     },
     {
       "id": "array.filter",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Filter Array"
+      "label": "array.filter"
     },
     {
       "id": "array.flatten",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Flatten"
+      "label": "array.flatten"
     },
     {
       "id": "array.group_by",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Group By"
+      "label": "array.group_by"
     },
     {
       "id": "array.intersection",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Intersection"
+      "label": "array.intersection"
     },
     {
       "id": "array.join",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Join"
+      "label": "array.join"
     },
     {
       "id": "array.map",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Map"
+      "label": "array.map"
     },
     {
       "id": "array.reduce",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Array Reduce"
+      "label": "array.reduce"
     },
     {
       "id": "array.sort",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Sort Array"
+      "label": "array.sort"
     },
     {
       "id": "array.take",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Take"
+      "label": "array.take"
     },
     {
       "id": "array.unique",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Array Unique"
+      "label": "array.unique"
     },
     {
       "id": "array.zip",
       "version": "1.0.0",
       "category": "array",
       "stability": "stable",
-      "label": "Zip Arrays"
+      "label": "array.zip"
+    },
+    {
+      "id": "auth.oauth2",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "auth.oauth2"
+    },
+    {
+      "id": "aws.s3.delete",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "aws.s3.delete"
+    },
+    {
+      "id": "aws.s3.download",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "aws.s3.download"
+    },
+    {
+      "id": "aws.s3.list",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "aws.s3.list"
+    },
+    {
+      "id": "aws.s3.upload",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "aws.s3.upload"
     },
     {
       "id": "browser.click",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Click Element"
+      "label": "browser.click"
     },
     {
       "id": "browser.close",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Close Browser"
+      "label": "browser.close"
     },
     {
       "id": "browser.console",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Capture Console"
+      "label": "browser.console"
     },
     {
       "id": "browser.cookies",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Manage Cookies"
+      "label": "browser.cookies"
+    },
+    {
+      "id": "browser.detect",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "browser.detect"
     },
     {
       "id": "browser.dialog",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Handle Dialog"
+      "label": "browser.dialog"
     },
     {
       "id": "browser.download",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Download File"
+      "label": "browser.download"
     },
     {
       "id": "browser.drag",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Drag and Drop"
+      "label": "browser.drag"
     },
     {
       "id": "browser.emulate",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Device Emulation"
+      "label": "browser.emulate"
     },
     {
       "id": "browser.ensure",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Ensure Browser"
+      "label": "browser.ensure"
     },
     {
       "id": "browser.evaluate",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Execute JavaScript"
+      "label": "browser.evaluate"
     },
     {
       "id": "browser.extract",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Extract Data"
+      "label": "browser.extract"
     },
     {
       "id": "browser.find",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Find Elements"
+      "label": "browser.find"
     },
     {
       "id": "browser.form",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Fill Form"
+      "label": "browser.form"
     },
     {
       "id": "browser.frame",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Switch Frame"
+      "label": "browser.frame"
     },
     {
       "id": "browser.geolocation",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Mock Geolocation"
+      "label": "browser.geolocation"
     },
     {
       "id": "browser.goto",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Go to URL"
+      "label": "browser.goto"
     },
     {
       "id": "browser.hover",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Hover Element"
+      "label": "browser.hover"
     },
     {
       "id": "browser.launch",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Launch Browser"
+      "label": "browser.launch"
+    },
+    {
+      "id": "browser.navigation",
+      "version": "1.0.0",
+      "category": "browser",
+      "stability": "stable",
+      "label": "browser.navigation"
     },
     {
       "id": "browser.network",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Network Monitor"
+      "label": "browser.network"
     },
     {
       "id": "browser.pages",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "List Pages"
+      "label": "browser.pages"
     },
     {
       "id": "browser.pagination",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Paginate & Extract"
+      "label": "browser.pagination"
     },
     {
       "id": "browser.pdf",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Generate PDF"
+      "label": "browser.pdf"
     },
     {
       "id": "browser.performance",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Performance Metrics"
+      "label": "browser.performance"
     },
     {
       "id": "browser.press",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Press Key"
+      "label": "browser.press"
     },
     {
       "id": "browser.record",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Record Actions"
+      "label": "browser.record"
     },
     {
       "id": "browser.release",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Release Browser"
+      "label": "browser.release"
     },
     {
       "id": "browser.screenshot",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Take Screenshot"
+      "label": "browser.screenshot"
     },
     {
       "id": "browser.scroll",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Scroll Page"
+      "label": "browser.scroll"
     },
     {
       "id": "browser.select",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Select Option"
+      "label": "browser.select"
     },
     {
       "id": "browser.snapshot",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "DOM Snapshot"
+      "label": "browser.snapshot"
     },
     {
       "id": "browser.storage",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Browser Storage"
+      "label": "browser.storage"
     },
     {
       "id": "browser.tab",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Manage Tabs"
+      "label": "browser.tab"
     },
     {
       "id": "browser.trace",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Performance Trace"
+      "label": "browser.trace"
     },
     {
       "id": "browser.type",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Type Text"
+      "label": "browser.type"
     },
     {
       "id": "browser.upload",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Upload File"
+      "label": "browser.upload"
     },
     {
       "id": "browser.viewport",
       "version": "1.0.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Resize Viewport"
+      "label": "browser.viewport"
     },
     {
       "id": "browser.wait",
       "version": "1.1.0",
       "category": "browser",
       "stability": "stable",
-      "label": "Wait"
+      "label": "browser.wait"
+    },
+    {
+      "id": "cache.clear",
+      "version": "1.0.0",
+      "category": "cache",
+      "stability": "stable",
+      "label": "cache.clear"
+    },
+    {
+      "id": "cache.delete",
+      "version": "1.0.0",
+      "category": "cache",
+      "stability": "stable",
+      "label": "cache.delete"
+    },
+    {
+      "id": "cache.get",
+      "version": "1.0.0",
+      "category": "cache",
+      "stability": "stable",
+      "label": "cache.get"
+    },
+    {
+      "id": "cache.set",
+      "version": "1.0.0",
+      "category": "cache",
+      "stability": "stable",
+      "label": "cache.set"
     },
     {
       "id": "check.is_array",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is Array"
+      "label": "check.is_array"
     },
     {
       "id": "check.is_empty",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is Empty"
+      "label": "check.is_empty"
     },
     {
       "id": "check.is_null",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is Null"
+      "label": "check.is_null"
     },
     {
       "id": "check.is_number",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is Number"
+      "label": "check.is_number"
     },
     {
       "id": "check.is_object",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is Object"
+      "label": "check.is_object"
     },
     {
       "id": "check.is_string",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Is String"
+      "label": "check.is_string"
     },
     {
       "id": "check.type_of",
       "version": "1.0.0",
       "category": "check",
       "stability": "stable",
-      "label": "Type Of"
+      "label": "check.type_of"
     },
     {
       "id": "cloud.aws_s3.download",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "AWS S3 Download"
+      "label": "cloud.aws_s3.download"
     },
     {
       "id": "cloud.aws_s3.upload",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "AWS S3 Upload"
+      "label": "cloud.aws_s3.upload"
     },
     {
       "id": "cloud.azure.download",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "Azure Download"
+      "label": "cloud.azure.download"
     },
     {
       "id": "cloud.azure.upload",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "Azure Upload"
+      "label": "cloud.azure.upload"
     },
     {
       "id": "cloud.gcs.download",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "GCS Download"
+      "label": "cloud.gcs.download"
     },
     {
       "id": "cloud.gcs.upload",
       "version": "1.0.0",
       "category": "cloud",
       "stability": "stable",
-      "label": "GCS Upload"
+      "label": "cloud.gcs.upload"
     },
     {
       "id": "communication.twilio.make_call",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Twilio Make Call"
+      "label": "communication.twilio.make_call"
     },
     {
       "id": "communication.twilio.send_sms",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Twilio Send SMS"
+      "label": "communication.twilio.send_sms"
     },
     {
       "id": "compare.change",
       "version": "1.0.0",
       "category": "compare",
       "stability": "stable",
-      "label": "Detect Change"
+      "label": "compare.change"
     },
     {
       "id": "convert.to_array",
       "version": "1.0.0",
       "category": "convert",
       "stability": "stable",
-      "label": "To Array"
+      "label": "convert.to_array"
     },
     {
       "id": "convert.to_boolean",
       "version": "1.0.0",
       "category": "convert",
       "stability": "stable",
-      "label": "To Boolean"
+      "label": "convert.to_boolean"
     },
     {
       "id": "convert.to_number",
       "version": "1.0.0",
       "category": "convert",
       "stability": "stable",
-      "label": "To Number"
+      "label": "convert.to_number"
     },
     {
       "id": "convert.to_object",
       "version": "1.0.0",
       "category": "convert",
       "stability": "stable",
-      "label": "To Object"
+      "label": "convert.to_object"
     },
     {
       "id": "convert.to_string",
       "version": "1.0.0",
       "category": "convert",
       "stability": "stable",
-      "label": "To String"
+      "label": "convert.to_string"
     },
     {
       "id": "core.api.google_search",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "Google Search (API)"
+      "label": "core.api.google_search"
     },
     {
       "id": "core.api.http_get",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "HTTP GET Request"
+      "label": "core.api.http_get"
     },
     {
       "id": "core.api.http_post",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "HTTP POST Request"
+      "label": "core.api.http_post"
     },
     {
       "id": "core.api.serpapi_search",
       "version": "1.0.0",
       "category": "api",
       "stability": "stable",
-      "label": "Google Search (SerpAPI)"
+      "label": "core.api.serpapi_search"
+    },
+    {
+      "id": "crypto.decrypt",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "crypto.decrypt"
+    },
+    {
+      "id": "crypto.encrypt",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "crypto.encrypt"
     },
     {
       "id": "crypto.hmac",
       "version": "1.0.0",
       "category": "crypto",
       "stability": "stable",
-      "label": "HMAC"
+      "label": "crypto.hmac"
+    },
+    {
+      "id": "crypto.jwt_create",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "crypto.jwt_create"
+    },
+    {
+      "id": "crypto.jwt_verify",
+      "version": "1.0.0",
+      "category": "crypto",
+      "stability": "stable",
+      "label": "crypto.jwt_verify"
     },
     {
       "id": "crypto.random_bytes",
       "version": "1.0.0",
       "category": "crypto",
       "stability": "stable",
-      "label": "Random Bytes"
+      "label": "crypto.random_bytes"
     },
     {
       "id": "crypto.random_string",
       "version": "1.0.0",
       "category": "crypto",
       "stability": "stable",
-      "label": "Random String"
+      "label": "crypto.random_string"
+    },
+    {
+      "id": "data.csv.read",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.csv.read"
+    },
+    {
+      "id": "data.csv.write",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.csv.write"
     },
     {
       "id": "data.json.parse",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Parse JSON"
+      "label": "data.json.parse"
     },
     {
       "id": "data.json.stringify",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "JSON Stringify"
+      "label": "data.json.stringify"
+    },
+    {
+      "id": "data.json_to_csv",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.json_to_csv"
     },
     {
       "id": "data.pipeline",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Data Pipeline"
+      "label": "data.pipeline"
     },
     {
       "id": "data.text.template",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Text Template"
+      "label": "data.text.template"
+    },
+    {
+      "id": "data.xml.generate",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.xml.generate"
+    },
+    {
+      "id": "data.xml.parse",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.xml.parse"
+    },
+    {
+      "id": "data.yaml.generate",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.yaml.generate"
+    },
+    {
+      "id": "data.yaml.parse",
+      "version": "1.0.0",
+      "category": "data",
+      "stability": "stable",
+      "label": "data.yaml.parse"
     },
     {
       "id": "datetime.add",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Add Time"
+      "label": "datetime.add"
     },
     {
       "id": "datetime.format",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Format DateTime"
+      "label": "datetime.format"
     },
     {
       "id": "datetime.parse",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Parse DateTime"
+      "label": "datetime.parse"
     },
     {
       "id": "datetime.subtract",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Subtract Time"
+      "label": "datetime.subtract"
     },
     {
       "id": "db.mongodb.find",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "MongoDB Find"
+      "label": "db.mongodb.find"
     },
     {
       "id": "db.mongodb.insert",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "MongoDB Insert"
+      "label": "db.mongodb.insert"
     },
     {
       "id": "db.mysql.query",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "MySQL Query"
+      "label": "db.mysql.query"
     },
     {
       "id": "db.postgresql.query",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "PostgreSQL Query"
+      "label": "db.postgresql.query"
     },
     {
       "id": "db.redis.get",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "Redis Get"
+      "label": "db.redis.get"
     },
     {
       "id": "db.redis.set",
       "version": "1.0.0",
       "category": "database",
       "stability": "stable",
-      "label": "Redis Set"
+      "label": "db.redis.set"
     },
     {
       "id": "decode.base64",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "Base64 Decode"
+      "label": "decode.base64"
     },
     {
       "id": "decode.hex",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "Hex Decode"
+      "label": "decode.hex"
     },
     {
       "id": "decode.url",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "URL Decode"
+      "label": "decode.url"
+    },
+    {
+      "id": "dns.lookup",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "dns.lookup"
+    },
+    {
+      "id": "docker.build",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.build"
+    },
+    {
+      "id": "docker.inspect_container",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.inspect_container"
+    },
+    {
+      "id": "docker.logs",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.logs"
+    },
+    {
+      "id": "docker.ps",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.ps"
+    },
+    {
+      "id": "docker.run",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.run"
+    },
+    {
+      "id": "docker.stop",
+      "version": "1.0.0",
+      "category": "docker",
+      "stability": "stable",
+      "label": "docker.stop"
     },
     {
       "id": "element.attribute",
       "version": "1.0.0",
       "category": "element",
       "stability": "stable",
-      "label": "Get Attribute"
+      "label": "element.attribute"
     },
     {
       "id": "element.query",
       "version": "1.0.0",
       "category": "element",
       "stability": "stable",
-      "label": "Query Element"
+      "label": "element.query"
     },
     {
       "id": "element.text",
       "version": "1.0.0",
       "category": "element",
       "stability": "stable",
-      "label": "Get Text"
+      "label": "element.text"
     },
     {
       "id": "encode.base64",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "Base64 Encode"
+      "label": "encode.base64"
     },
     {
       "id": "encode.hex",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "Hex Encode"
+      "label": "encode.hex"
     },
     {
       "id": "encode.html",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "HTML Encode"
+      "label": "encode.html"
     },
     {
       "id": "encode.url",
       "version": "1.0.0",
       "category": "encode",
       "stability": "stable",
-      "label": "URL Encode"
+      "label": "encode.url"
+    },
+    {
+      "id": "env.get",
+      "version": "1.0.0",
+      "category": "env",
+      "stability": "stable",
+      "label": "env.get"
+    },
+    {
+      "id": "env.load_dotenv",
+      "version": "1.0.0",
+      "category": "env",
+      "stability": "stable",
+      "label": "env.load_dotenv"
+    },
+    {
+      "id": "env.set",
+      "version": "1.0.0",
+      "category": "env",
+      "stability": "stable",
+      "label": "env.set"
     },
     {
       "id": "error.circuit_breaker",
       "version": "1.0.0",
       "category": "error",
       "stability": "stable",
-      "label": "Circuit Breaker"
+      "label": "error.circuit_breaker"
     },
     {
       "id": "error.fallback",
       "version": "1.0.0",
       "category": "error",
       "stability": "stable",
-      "label": "Fallback"
+      "label": "error.fallback"
     },
     {
       "id": "error.retry",
       "version": "1.0.0",
       "category": "error",
       "stability": "stable",
-      "label": "Retry"
+      "label": "error.retry"
     },
     {
       "id": "excel.read",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Read Excel"
+      "label": "excel.read"
     },
     {
       "id": "excel.write",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Write Excel"
+      "label": "excel.write"
     },
     {
       "id": "file.copy",
       "version": "1.0.0",
       "category": "file",
       "stability": "stable",
-      "label": "Copy File"
+      "label": "file.copy"
     },
     {
       "id": "file.delete",
       "version": "1.0.0",
       "category": "file",
       "stability": "stable",
-      "label": "Delete File"
+      "label": "file.delete"
     },
     {
       "id": "file.diff",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Diff Content"
+      "label": "file.diff"
     },
     {
       "id": "file.edit",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Edit File"
+      "label": "file.edit"
     },
     {
       "id": "file.exists",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Check File Exists"
+      "label": "file.exists"
     },
     {
       "id": "file.move",
       "version": "1.0.0",
       "category": "file",
       "stability": "stable",
-      "label": "Move File"
+      "label": "file.move"
     },
     {
       "id": "file.read",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Read File"
+      "label": "file.read"
     },
     {
       "id": "file.write",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Write File"
+      "label": "file.write"
     },
     {
       "id": "flow.batch",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Batch Process"
+      "label": "flow.batch"
     },
     {
       "id": "flow.branch",
       "version": "2.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Branch"
+      "label": "flow.branch"
+    },
+    {
+      "id": "flow.circuit_breaker",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "flow.circuit_breaker"
     },
     {
       "id": "flow.container",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Container"
+      "label": "flow.container"
+    },
+    {
+      "id": "flow.debounce",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "flow.debounce"
     },
     {
       "id": "flow.end",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "End"
+      "label": "flow.end"
     },
     {
       "id": "flow.error_handle",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Error Handler"
+      "label": "flow.error_handle"
     },
     {
       "id": "flow.error_workflow_trigger",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Error Workflow Trigger"
+      "label": "flow.error_workflow_trigger"
     },
     {
       "id": "flow.foreach",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "For Each"
+      "label": "flow.foreach"
     },
     {
       "id": "flow.fork",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Fork"
+      "label": "flow.fork"
     },
     {
       "id": "flow.goto",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Goto"
+      "label": "flow.goto"
     },
     {
       "id": "flow.invoke",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Invoke Workflow"
+      "label": "flow.invoke"
     },
     {
       "id": "flow.join",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Join"
+      "label": "flow.join"
     },
     {
       "id": "flow.loop",
       "version": "2.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Loop"
+      "label": "flow.loop"
     },
     {
       "id": "flow.merge",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Merge"
+      "label": "flow.merge"
     },
     {
       "id": "flow.parallel",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Parallel"
+      "label": "flow.parallel"
+    },
+    {
+      "id": "flow.rate_limit",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "flow.rate_limit"
+    },
+    {
+      "id": "flow.retry",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "flow.retry"
     },
     {
       "id": "flow.start",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Start"
+      "label": "flow.start"
     },
     {
       "id": "flow.subflow",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Subflow"
+      "label": "flow.subflow"
     },
     {
       "id": "flow.switch",
       "version": "2.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Switch"
+      "label": "flow.switch"
+    },
+    {
+      "id": "flow.throttle",
+      "version": "1.0.0",
+      "category": "flow",
+      "stability": "stable",
+      "label": "flow.throttle"
     },
     {
       "id": "flow.trigger",
       "version": "1.0.0",
       "category": "flow",
       "stability": "stable",
-      "label": "Trigger"
+      "label": "flow.trigger"
     },
     {
       "id": "format.currency",
       "version": "1.0.0",
       "category": "format",
       "stability": "stable",
-      "label": "Format Currency"
+      "label": "format.currency"
     },
     {
       "id": "format.duration",
       "version": "1.0.0",
       "category": "format",
       "stability": "stable",
-      "label": "Format Duration"
+      "label": "format.duration"
     },
     {
       "id": "format.filesize",
       "version": "1.0.0",
       "category": "format",
       "stability": "stable",
-      "label": "Format Filesize"
+      "label": "format.filesize"
     },
     {
       "id": "format.number",
       "version": "1.0.0",
       "category": "format",
       "stability": "stable",
-      "label": "Format Number"
+      "label": "format.number"
     },
     {
       "id": "format.percentage",
       "version": "1.0.0",
       "category": "format",
       "stability": "stable",
-      "label": "Format Percentage"
+      "label": "format.percentage"
+    },
+    {
+      "id": "git.clone",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "git.clone"
+    },
+    {
+      "id": "git.commit",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "git.commit"
+    },
+    {
+      "id": "git.diff",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "git.diff"
+    },
+    {
+      "id": "google.calendar.create_event",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "google.calendar.create_event"
+    },
+    {
+      "id": "google.calendar.list_events",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "google.calendar.list_events"
+    },
+    {
+      "id": "google.gmail.search",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "google.gmail.search"
+    },
+    {
+      "id": "google.gmail.send",
+      "version": "1.0.0",
+      "category": "cloud",
+      "stability": "stable",
+      "label": "google.gmail.send"
+    },
+    {
+      "id": "graphql.mutation",
+      "version": "1.0.0",
+      "category": "graphql",
+      "stability": "stable",
+      "label": "graphql.mutation"
+    },
+    {
+      "id": "graphql.query",
+      "version": "1.0.0",
+      "category": "graphql",
+      "stability": "stable",
+      "label": "graphql.query"
     },
     {
       "id": "hash.sha256",
       "version": "1.0.0",
       "category": "hash",
       "stability": "stable",
-      "label": "SHA-256 Hash"
+      "label": "hash.sha256"
     },
     {
       "id": "hash.sha512",
       "version": "1.0.0",
       "category": "hash",
       "stability": "stable",
-      "label": "SHA-512 Hash"
+      "label": "hash.sha512"
     },
     {
       "id": "http.get",
       "version": "1.0.0",
       "category": "http",
       "stability": "stable",
-      "label": "HTTP GET"
+      "label": "http.get"
+    },
+    {
+      "id": "http.paginate",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "http.paginate"
     },
     {
       "id": "http.request",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "HTTP Request"
+      "label": "http.request"
     },
     {
       "id": "http.response_assert",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Assert HTTP Response"
+      "label": "http.response_assert"
+    },
+    {
+      "id": "http.session",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "http.session"
+    },
+    {
+      "id": "http.webhook_wait",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "http.webhook_wait"
     },
     {
       "id": "image.compress",
       "version": "1.0.0",
       "category": "image",
       "stability": "stable",
-      "label": "Compress Image"
+      "label": "image.compress"
     },
     {
       "id": "image.convert",
       "version": "1.0.0",
       "category": "image",
       "stability": "stable",
-      "label": "Convert Image"
+      "label": "image.convert"
+    },
+    {
+      "id": "image.crop",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "image.crop"
     },
     {
       "id": "image.download",
       "version": "1.0.0",
       "category": "image",
       "stability": "stable",
-      "label": "Download Image"
+      "label": "image.download"
     },
     {
-      "id": "image.qrcode_generate",
+      "id": "image.ocr",
       "version": "1.0.0",
       "category": "image",
       "stability": "stable",
-      "label": "Generate QR Code"
+      "label": "image.ocr"
+    },
+    {
+      "id": "image.qrcode_generate",
+      "version": "1.1.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "image.qrcode_generate"
     },
     {
       "id": "image.resize",
       "version": "1.0.0",
       "category": "image",
       "stability": "stable",
-      "label": "Resize Image"
+      "label": "image.resize"
+    },
+    {
+      "id": "image.rotate",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "image.rotate"
+    },
+    {
+      "id": "image.watermark",
+      "version": "1.0.0",
+      "category": "image",
+      "stability": "stable",
+      "label": "image.watermark"
+    },
+    {
+      "id": "k8s.apply",
+      "version": "1.0.0",
+      "category": "k8s",
+      "stability": "stable",
+      "label": "k8s.apply"
+    },
+    {
+      "id": "k8s.describe",
+      "version": "1.0.0",
+      "category": "k8s",
+      "stability": "stable",
+      "label": "k8s.describe"
+    },
+    {
+      "id": "k8s.get_pods",
+      "version": "1.0.0",
+      "category": "k8s",
+      "stability": "stable",
+      "label": "k8s.get_pods"
+    },
+    {
+      "id": "k8s.logs",
+      "version": "1.0.0",
+      "category": "k8s",
+      "stability": "stable",
+      "label": "k8s.logs"
+    },
+    {
+      "id": "k8s.scale",
+      "version": "1.0.0",
+      "category": "k8s",
+      "stability": "stable",
+      "label": "k8s.scale"
     },
     {
       "id": "logic.and",
       "version": "1.0.0",
       "category": "logic",
       "stability": "stable",
-      "label": "Logic AND"
+      "label": "logic.and"
     },
     {
       "id": "logic.contains",
       "version": "1.0.0",
       "category": "logic",
       "stability": "stable",
-      "label": "Logic Contains"
+      "label": "logic.contains"
     },
     {
       "id": "logic.equals",
       "version": "1.0.0",
       "category": "logic",
       "stability": "stable",
-      "label": "Logic Equals"
+      "label": "logic.equals"
     },
     {
       "id": "logic.not",
       "version": "1.0.0",
       "category": "logic",
       "stability": "stable",
-      "label": "Logic NOT"
+      "label": "logic.not"
     },
     {
       "id": "logic.or",
       "version": "1.0.0",
       "category": "logic",
       "stability": "stable",
-      "label": "Logic OR"
+      "label": "logic.or"
+    },
+    {
+      "id": "markdown.parse_frontmatter",
+      "version": "1.0.0",
+      "category": "markdown",
+      "stability": "stable",
+      "label": "markdown.parse_frontmatter"
+    },
+    {
+      "id": "markdown.to_html",
+      "version": "1.0.0",
+      "category": "markdown",
+      "stability": "stable",
+      "label": "markdown.to_html"
+    },
+    {
+      "id": "markdown.toc",
+      "version": "1.0.0",
+      "category": "markdown",
+      "stability": "stable",
+      "label": "markdown.toc"
     },
     {
       "id": "math.abs",
       "version": "1.0.0",
       "category": "math",
       "stability": "stable",
-      "label": "Absolute Value"
+      "label": "math.abs"
     },
     {
       "id": "math.calculate",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Calculate"
+      "label": "math.calculate"
     },
     {
       "id": "math.ceil",
       "version": "1.0.0",
       "category": "math",
       "stability": "stable",
-      "label": "Ceiling Number"
+      "label": "math.ceil"
     },
     {
       "id": "math.floor",
       "version": "1.0.0",
       "category": "math",
       "stability": "stable",
-      "label": "Floor Number"
+      "label": "math.floor"
     },
     {
       "id": "math.power",
       "version": "1.0.0",
       "category": "math",
       "stability": "stable",
-      "label": "Power/Exponent"
+      "label": "math.power"
     },
     {
       "id": "math.round",
       "version": "1.0.0",
       "category": "math",
       "stability": "stable",
-      "label": "Round Number"
+      "label": "math.round"
     },
     {
       "id": "meta.modules.generate",
       "version": "1.0.0",
       "category": "meta",
       "stability": "stable",
-      "label": "Generate Module"
+      "label": "meta.modules.generate"
     },
     {
       "id": "meta.modules.list",
       "version": "1.0.0",
       "category": "meta",
       "stability": "stable",
-      "label": "List Available Modules"
+      "label": "meta.modules.list"
     },
     {
       "id": "meta.modules.test_generator",
       "version": "1.0.0",
       "category": "meta",
       "stability": "stable",
-      "label": "Test Generator"
+      "label": "meta.modules.test_generator"
     },
     {
       "id": "meta.modules.update_docs",
       "version": "1.0.0",
       "category": "meta",
       "stability": "stable",
-      "label": "Update Module Documentation"
+      "label": "meta.modules.update_docs"
+    },
+    {
+      "id": "monitor.http_check",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "monitor.http_check"
+    },
+    {
+      "id": "network.ping",
+      "version": "1.0.0",
+      "category": "network",
+      "stability": "stable",
+      "label": "network.ping"
+    },
+    {
+      "id": "network.port_scan",
+      "version": "1.0.0",
+      "category": "network",
+      "stability": "stable",
+      "label": "network.port_scan"
+    },
+    {
+      "id": "network.traceroute",
+      "version": "1.0.0",
+      "category": "network",
+      "stability": "stable",
+      "label": "network.traceroute"
+    },
+    {
+      "id": "network.whois",
+      "version": "1.0.0",
+      "category": "network",
+      "stability": "stable",
+      "label": "network.whois"
     },
     {
       "id": "notification.discord.send_message",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Send Discord Message"
+      "label": "notification.discord.send_message"
     },
     {
       "id": "notification.email.send",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Send Email"
+      "label": "notification.email.send"
     },
     {
       "id": "notification.slack.send_message",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Send Slack Message"
+      "label": "notification.slack.send_message"
+    },
+    {
+      "id": "notification.teams.send_message",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "notification.teams.send_message"
     },
     {
       "id": "notification.telegram.send_message",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Send Telegram Message"
+      "label": "notification.telegram.send_message"
+    },
+    {
+      "id": "notification.whatsapp.send_message",
+      "version": "1.0.0",
+      "category": "notification",
+      "stability": "stable",
+      "label": "notification.whatsapp.send_message"
     },
     {
       "id": "notify.send",
       "version": "1.0.0",
       "category": "notification",
       "stability": "stable",
-      "label": "Send Notification"
+      "label": "notify.send"
     },
     {
       "id": "object.deep_merge",
       "version": "1.0.0",
       "category": "object",
       "stability": "stable",
-      "label": "Deep Merge"
+      "label": "object.deep_merge"
     },
     {
       "id": "object.flatten",
       "version": "1.0.0",
       "category": "object",
       "stability": "stable",
-      "label": "Flatten Object"
+      "label": "object.flatten"
     },
     {
       "id": "object.get",
       "version": "1.0.0",
       "category": "object",
       "stability": "stable",
-      "label": "Get Value"
+      "label": "object.get"
     },
     {
       "id": "object.keys",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Object Keys"
+      "label": "object.keys"
     },
     {
       "id": "object.merge",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Object Merge"
+      "label": "object.merge"
     },
     {
       "id": "object.omit",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Object Omit"
+      "label": "object.omit"
     },
     {
       "id": "object.pick",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Object Pick"
+      "label": "object.pick"
     },
     {
       "id": "object.set",
       "version": "1.0.0",
       "category": "object",
       "stability": "stable",
-      "label": "Set Value"
+      "label": "object.set"
     },
     {
       "id": "object.unflatten",
       "version": "1.0.0",
       "category": "object",
       "stability": "stable",
-      "label": "Unflatten Object"
+      "label": "object.unflatten"
     },
     {
       "id": "object.values",
       "version": "1.0.0",
       "category": "data",
       "stability": "stable",
-      "label": "Object Values"
+      "label": "object.values"
+    },
+    {
+      "id": "output.display",
+      "version": "2.0.0",
+      "category": "output",
+      "stability": "stable",
+      "label": "output.display"
     },
     {
       "id": "path.basename",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Basename"
+      "label": "path.basename"
     },
     {
       "id": "path.dirname",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Dirname"
+      "label": "path.dirname"
     },
     {
       "id": "path.extension",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Extension"
+      "label": "path.extension"
     },
     {
       "id": "path.is_absolute",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Is Absolute"
+      "label": "path.is_absolute"
     },
     {
       "id": "path.join",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Join"
+      "label": "path.join"
     },
     {
       "id": "path.normalize",
       "version": "1.0.0",
       "category": "path",
       "stability": "stable",
-      "label": "Path Normalize"
+      "label": "path.normalize"
     },
     {
       "id": "payment.stripe.create_payment",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Stripe Create Payment"
+      "label": "payment.stripe.create_payment"
     },
     {
       "id": "payment.stripe.get_customer",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Stripe Get Customer"
+      "label": "payment.stripe.get_customer"
     },
     {
       "id": "payment.stripe.list_charges",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Stripe List Charges"
+      "label": "payment.stripe.list_charges"
     },
     {
       "id": "pdf.fill_form",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Fill PDF Form"
+      "label": "pdf.fill_form"
     },
     {
       "id": "pdf.generate",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Generate PDF"
+      "label": "pdf.generate"
     },
     {
       "id": "pdf.parse",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Parse PDF"
+      "label": "pdf.parse"
     },
     {
       "id": "pdf.to_word",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "PDF to Word"
+      "label": "pdf.to_word"
     },
     {
       "id": "port.check",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Check Port"
+      "label": "port.check"
     },
     {
       "id": "port.wait",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Wait for Port"
+      "label": "port.wait"
     },
     {
       "id": "process.list",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "List Processes"
+      "label": "process.list"
     },
     {
       "id": "process.start",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Start Background Process"
+      "label": "process.start"
     },
     {
       "id": "process.stop",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Stop Process"
+      "label": "process.stop"
     },
     {
       "id": "productivity.airtable.create",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Airtable Create Record"
+      "label": "productivity.airtable.create"
     },
     {
       "id": "productivity.airtable.read",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Airtable Read Records"
+      "label": "productivity.airtable.read"
     },
     {
       "id": "productivity.airtable.update",
       "version": "1.0.0",
       "category": "productivity",
       "stability": "stable",
-      "label": "Airtable Update Record"
+      "label": "productivity.airtable.update"
+    },
+    {
+      "id": "queue.dequeue",
+      "version": "1.0.0",
+      "category": "queue",
+      "stability": "stable",
+      "label": "queue.dequeue"
+    },
+    {
+      "id": "queue.enqueue",
+      "version": "1.0.0",
+      "category": "queue",
+      "stability": "stable",
+      "label": "queue.enqueue"
+    },
+    {
+      "id": "queue.size",
+      "version": "1.0.0",
+      "category": "queue",
+      "stability": "stable",
+      "label": "queue.size"
     },
     {
       "id": "random.choice",
       "version": "1.0.0",
       "category": "random",
       "stability": "stable",
-      "label": "Random Choice"
+      "label": "random.choice"
     },
     {
       "id": "random.number",
       "version": "1.0.0",
       "category": "random",
       "stability": "stable",
-      "label": "Random Number"
+      "label": "random.number"
     },
     {
       "id": "random.shuffle",
       "version": "1.0.0",
       "category": "random",
       "stability": "stable",
-      "label": "Shuffle Array"
+      "label": "random.shuffle"
     },
     {
       "id": "random.uuid",
       "version": "1.0.0",
       "category": "random",
       "stability": "stable",
-      "label": "Generate UUID"
+      "label": "random.uuid"
     },
     {
       "id": "regex.extract",
       "version": "1.0.0",
       "category": "regex",
       "stability": "stable",
-      "label": "Regex Extract"
+      "label": "regex.extract"
     },
     {
       "id": "regex.match",
       "version": "1.0.0",
       "category": "regex",
       "stability": "stable",
-      "label": "Regex Match"
+      "label": "regex.match"
     },
     {
       "id": "regex.replace",
       "version": "1.0.0",
       "category": "regex",
       "stability": "stable",
-      "label": "Regex Replace"
+      "label": "regex.replace"
     },
     {
       "id": "regex.split",
       "version": "1.0.0",
       "category": "regex",
       "stability": "stable",
-      "label": "Regex Split"
+      "label": "regex.split"
     },
     {
       "id": "regex.test",
       "version": "1.0.0",
       "category": "regex",
       "stability": "stable",
-      "label": "Regex Test"
+      "label": "regex.test"
+    },
+    {
+      "id": "sandbox.execute_js",
+      "version": "1.0.0",
+      "category": "sandbox",
+      "stability": "stable",
+      "label": "sandbox.execute_js"
+    },
+    {
+      "id": "sandbox.execute_python",
+      "version": "1.0.0",
+      "category": "sandbox",
+      "stability": "stable",
+      "label": "sandbox.execute_python"
+    },
+    {
+      "id": "sandbox.execute_shell",
+      "version": "1.0.0",
+      "category": "sandbox",
+      "stability": "stable",
+      "label": "sandbox.execute_shell"
+    },
+    {
+      "id": "scheduler.cron_parse",
+      "version": "1.0.0",
+      "category": "scheduler",
+      "stability": "stable",
+      "label": "scheduler.cron_parse"
+    },
+    {
+      "id": "scheduler.delay",
+      "version": "1.0.0",
+      "category": "scheduler",
+      "stability": "stable",
+      "label": "scheduler.delay"
+    },
+    {
+      "id": "scheduler.interval",
+      "version": "1.0.0",
+      "category": "scheduler",
+      "stability": "stable",
+      "label": "scheduler.interval"
     },
     {
       "id": "set.difference",
       "version": "1.0.0",
       "category": "set",
       "stability": "stable",
-      "label": "Set Difference"
+      "label": "set.difference"
     },
     {
       "id": "set.intersection",
       "version": "1.0.0",
       "category": "set",
       "stability": "stable",
-      "label": "Set Intersection"
+      "label": "set.intersection"
     },
     {
       "id": "set.union",
       "version": "1.0.0",
       "category": "set",
       "stability": "stable",
-      "label": "Set Union"
+      "label": "set.union"
     },
     {
       "id": "set.unique",
       "version": "1.0.0",
       "category": "set",
       "stability": "stable",
-      "label": "Set Unique"
+      "label": "set.unique"
     },
     {
       "id": "shell.exec",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Execute Shell Command"
+      "label": "shell.exec"
+    },
+    {
+      "id": "ssh.exec",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "ssh.exec"
+    },
+    {
+      "id": "ssh.sftp_download",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "ssh.sftp_download"
+    },
+    {
+      "id": "ssh.sftp_upload",
+      "version": "1.0.0",
+      "category": "atomic",
+      "stability": "stable",
+      "label": "ssh.sftp_upload"
     },
     {
       "id": "stats.mean",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Mean (Average)"
+      "label": "stats.mean"
     },
     {
       "id": "stats.median",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Median"
+      "label": "stats.median"
     },
     {
       "id": "stats.min_max",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Min/Max"
+      "label": "stats.min_max"
     },
     {
       "id": "stats.mode",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Mode"
+      "label": "stats.mode"
     },
     {
       "id": "stats.percentile",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Percentile"
+      "label": "stats.percentile"
     },
     {
       "id": "stats.std_dev",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Standard Deviation"
+      "label": "stats.std_dev"
     },
     {
       "id": "stats.sum",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Sum"
+      "label": "stats.sum"
     },
     {
       "id": "stats.variance",
       "version": "1.0.0",
       "category": "stats",
       "stability": "stable",
-      "label": "Variance"
+      "label": "stats.variance"
+    },
+    {
+      "id": "stealth.fingerprint",
+      "version": "1.0.0",
+      "category": "stealth",
+      "stability": "stable",
+      "label": "stealth.fingerprint"
+    },
+    {
+      "id": "stealth.launch",
+      "version": "1.0.0",
+      "category": "stealth",
+      "stability": "stable",
+      "label": "stealth.launch"
     },
     {
       "id": "storage.delete",
       "version": "1.0.0",
       "category": "storage",
       "stability": "stable",
-      "label": "Delete Stored Value"
+      "label": "storage.delete"
     },
     {
       "id": "storage.get",
       "version": "1.0.0",
       "category": "storage",
       "stability": "stable",
-      "label": "Get Stored Value"
+      "label": "storage.get"
     },
     {
       "id": "storage.set",
       "version": "1.0.0",
       "category": "storage",
       "stability": "stable",
-      "label": "Store Value"
+      "label": "storage.set"
     },
     {
       "id": "string.lowercase",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "String Lowercase"
+      "label": "string.lowercase"
     },
     {
       "id": "string.pad",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Pad String"
+      "label": "string.pad"
     },
     {
       "id": "string.replace",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "String Replace"
+      "label": "string.replace"
     },
     {
       "id": "string.reverse",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "String Reverse"
+      "label": "string.reverse"
     },
     {
       "id": "string.slugify",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Slugify"
+      "label": "string.slugify"
     },
     {
       "id": "string.split",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Split String"
+      "label": "string.split"
     },
     {
       "id": "string.template",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Template"
+      "label": "string.template"
     },
     {
       "id": "string.titlecase",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Title Case String"
+      "label": "string.titlecase"
     },
     {
       "id": "string.trim",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "String Trim"
+      "label": "string.trim"
     },
     {
       "id": "string.truncate",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "Truncate String"
+      "label": "string.truncate"
     },
     {
       "id": "string.uppercase",
       "version": "1.0.0",
       "category": "string",
       "stability": "stable",
-      "label": "String Uppercase"
+      "label": "string.uppercase"
     },
     {
       "id": "template.invoke",
       "version": "1.0.0",
       "category": "template",
       "stability": "stable",
-      "label": "Invoke Template"
+      "label": "template.invoke"
     },
     {
       "id": "test.assert_contains",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert Contains"
+      "label": "test.assert_contains"
     },
     {
       "id": "test.assert_equal",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert Equal"
+      "label": "test.assert_equal"
     },
     {
       "id": "test.assert_greater_than",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert Greater Than"
+      "label": "test.assert_greater_than"
     },
     {
       "id": "test.assert_length",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert Length"
+      "label": "test.assert_length"
     },
     {
       "id": "test.assert_not_null",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert Not Null"
+      "label": "test.assert_not_null"
     },
     {
       "id": "test.assert_true",
       "version": "1.0.0",
       "category": "testing",
       "stability": "stable",
-      "label": "Assert True"
+      "label": "test.assert_true"
     },
     {
       "id": "testing.e2e.run_steps",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run E2E Steps"
+      "label": "testing.e2e.run_steps"
     },
     {
       "id": "testing.gate.evaluate",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Quality Gate"
+      "label": "testing.gate.evaluate"
     },
     {
       "id": "testing.http.run_suite",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run HTTP Tests"
+      "label": "testing.http.run_suite"
     },
     {
       "id": "testing.lint.run",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run Linter"
+      "label": "testing.lint.run"
     },
     {
       "id": "testing.report.generate",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Generate Report"
+      "label": "testing.report.generate"
     },
     {
       "id": "testing.scenario.run",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run Scenario"
+      "label": "testing.scenario.run"
     },
     {
       "id": "testing.security.scan",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Security Scan"
+      "label": "testing.security.scan"
     },
     {
       "id": "testing.suite.run",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run Test Suite"
+      "label": "testing.suite.run"
     },
     {
       "id": "testing.unit.run",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Run Unit Tests"
+      "label": "testing.unit.run"
     },
     {
       "id": "testing.visual.compare",
       "version": "1.0.0",
       "category": "atomic",
       "stability": "stable",
-      "label": "Visual Compare"
+      "label": "testing.visual.compare"
     },
     {
       "id": "text.char_count",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Character Count"
+      "label": "text.char_count"
     },
     {
       "id": "text.detect_encoding",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Detect Encoding"
+      "label": "text.detect_encoding"
     },
     {
       "id": "text.extract_emails",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Extract Emails"
+      "label": "text.extract_emails"
     },
     {
       "id": "text.extract_numbers",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Extract Numbers"
+      "label": "text.extract_numbers"
     },
     {
       "id": "text.extract_urls",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Extract URLs"
+      "label": "text.extract_urls"
     },
     {
       "id": "text.word_count",
       "version": "1.0.0",
       "category": "text",
       "stability": "stable",
-      "label": "Word Count"
+      "label": "text.word_count"
     },
     {
       "id": "utility.datetime.now",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Current Date/Time"
+      "label": "utility.datetime.now"
     },
     {
       "id": "utility.delay",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Delay/Sleep"
+      "label": "utility.delay"
     },
     {
       "id": "utility.hash.md5",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "MD5 Hash"
+      "label": "utility.hash.md5"
     },
     {
       "id": "utility.random.number",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Random Number"
+      "label": "utility.random.number"
     },
     {
       "id": "utility.random.string",
       "version": "1.0.0",
       "category": "utility",
       "stability": "stable",
-      "label": "Random String"
+      "label": "utility.random.string"
     },
     {
       "id": "validate.credit_card",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate Credit Card"
+      "label": "validate.credit_card"
     },
     {
       "id": "validate.email",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate Email"
+      "label": "validate.email"
     },
     {
       "id": "validate.ip",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate IP"
+      "label": "validate.ip"
     },
     {
       "id": "validate.json_schema",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate JSON Schema"
+      "label": "validate.json_schema"
     },
     {
       "id": "validate.phone",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate Phone"
+      "label": "validate.phone"
     },
     {
       "id": "validate.url",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate URL"
+      "label": "validate.url"
     },
     {
       "id": "validate.uuid",
       "version": "1.0.0",
       "category": "validate",
       "stability": "stable",
-      "label": "Validate UUID"
+      "label": "validate.uuid"
     },
     {
       "id": "verify.annotate",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Annotate Screenshot"
+      "label": "verify.annotate"
     },
     {
       "id": "verify.capture",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Capture Element Styles"
+      "label": "verify.capture"
     },
     {
       "id": "verify.compare",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Compare Styles"
+      "label": "verify.compare"
     },
     {
       "id": "verify.figma",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Fetch Figma Style"
+      "label": "verify.figma"
     },
     {
       "id": "verify.report",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Generate Report"
+      "label": "verify.report"
     },
     {
       "id": "verify.ruleset",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Load Ruleset"
+      "label": "verify.ruleset"
     },
     {
       "id": "verify.run",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Run Verification"
+      "label": "verify.run"
     },
     {
       "id": "verify.spec",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Run Spec Verification"
+      "label": "verify.spec"
     },
     {
       "id": "verify.visual_diff",
       "version": "1.0.0",
       "category": "verify",
       "stability": "stable",
-      "label": "Visual Diff"
+      "label": "verify.visual_diff"
     },
     {
       "id": "word.parse",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Parse Word Document"
+      "label": "word.parse"
     },
     {
       "id": "word.to_pdf",
       "version": "1.0.0",
       "category": "document",
       "stability": "stable",
-      "label": "Word to PDF"
+      "label": "word.to_pdf"
     }
   ],
   "categories": {
     "ai": 7,
     "analysis": 6,
-    "api": 7,
+    "api": 9,
+    "archive": 6,
     "array": 12,
-    "atomic": 27,
-    "browser": 38,
+    "atomic": 39,
+    "browser": 39,
+    "cache": 4,
     "check": 7,
-    "cloud": 6,
+    "cloud": 14,
     "compare": 1,
     "convert": 5,
-    "crypto": 3,
-    "data": 6,
+    "crypto": 7,
+    "data": 16,
     "database": 6,
+    "docker": 6,
     "document": 8,
     "element": 3,
     "encode": 7,
+    "env": 3,
     "error": 3,
     "file": 3,
-    "flow": 18,
+    "flow": 23,
     "format": 5,
+    "graphql": 2,
     "hash": 2,
     "http": 1,
-    "image": 5,
+    "image": 9,
+    "k8s": 5,
     "logic": 5,
+    "markdown": 3,
     "math": 5,
     "meta": 4,
-    "notification": 7,
+    "network": 4,
+    "notification": 9,
     "object": 5,
+    "output": 1,
     "path": 6,
     "productivity": 10,
+    "queue": 3,
     "random": 4,
     "regex": 5,
+    "sandbox": 3,
+    "scheduler": 3,
     "set": 4,
     "stats": 8,
+    "stealth": 2,
     "storage": 3,
     "string": 11,
     "template": 1,

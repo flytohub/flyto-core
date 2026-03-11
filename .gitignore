@@ -57,6 +57,9 @@ service-account-key.json
 firebase-credentials.json
 .mcpregistry_*
 
+# Node
+node_modules/
+
 # OS
 .DS_Store
 Thumbs.db

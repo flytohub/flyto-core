@@ -800,6 +800,8 @@ class BrowserDriver:
 
         Returns cached hints if the page URL hasn't changed since last call.
         Automatically re-fetches when URL changes (navigation occurred).
+        Consumers should pass force=True after DOM-mutating actions (click, type)
+        that don't change the URL.
 
         Args:
             force: Force re-fetch even if URL hasn't changed.
@@ -818,6 +820,7 @@ class BrowserDriver:
             self._cached_hints = await extract_element_hints(self._page)
             self._hints_url = current_url
         except Exception:
+            logger.debug("Failed to extract element hints", exc_info=True)
             self._cached_hints = {}
             self._hints_url = current_url
         return self._cached_hints
@@ -834,9 +837,17 @@ class BrowserDriver:
         self._hints_url = None
         if clear_stamps and self._page:
             try:
-                await self._page.evaluate(
-                    'document.querySelectorAll("[data-flyto-hint]").forEach(el => el.removeAttribute("data-flyto-hint"))'
-                )
+                await self._page.evaluate("""() => {
+                    function clearAll(root) {
+                        root.querySelectorAll('[data-flyto-hint]').forEach(function(el) {
+                            el.removeAttribute('data-flyto-hint');
+                        });
+                        root.querySelectorAll('*').forEach(function(el) {
+                            if (el.shadowRoot) clearAll(el.shadowRoot);
+                        });
+                    }
+                    clearAll(document);
+                }""")
             except Exception:
                 pass
 
