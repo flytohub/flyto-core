@@ -839,10 +839,8 @@ class BrowserDriver:
             try:
                 await self._page.evaluate("""() => {
                     function clearAll(root) {
-                        root.querySelectorAll('[data-flyto-hint]').forEach(function(el) {
-                            el.removeAttribute('data-flyto-hint');
-                        });
                         root.querySelectorAll('*').forEach(function(el) {
+                            if (el.hasAttribute('data-flyto-hint')) el.removeAttribute('data-flyto-hint');
                             if (el.shadowRoot) clearAll(el.shadowRoot);
                         });
                     }

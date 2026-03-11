@@ -16,7 +16,7 @@ EXTRACT_HINTS_JS = """() => {
     const hints = {};
     const body = document.body;
     if (body) {
-        hints.text = body.innerText.substring(0, 3000);
+        hints.text = (body.textContent || '').substring(0, 3000);
     }
 
     // === Shadow DOM: discover all roots (document + open shadow roots) ===
@@ -77,7 +77,7 @@ EXTRACT_HINTS_JS = """() => {
             const nameAttr = el.getAttribute('name');
             if (nameAttr) {
                 const tag = el.tagName.toLowerCase();
-                const sel = tag + '[name="' + nameAttr.replace(/"/g, '\\\\"') + '"]';
+                const sel = tag + '[name="' + CSS.escape(nameAttr) + '"]';
                 try {
                     if (document.querySelectorAll(sel).length === 1) return sel;
                 } catch (e) { /* fall through */ }
@@ -102,6 +102,19 @@ EXTRACT_HINTS_JS = """() => {
 
     const classified = new Set(); // track stamped selectors already classified
 
+    // --- Helper: closest() that crosses shadow DOM boundaries ---
+    function closestAcrossShadow(el, selector) {
+        let current = el;
+        while (current) {
+            const found = current.closest(selector);
+            if (found) return found;
+            const root = current.getRootNode();
+            if (root === document || !root.host) break;
+            current = root.host;
+        }
+        return null;
+    }
+
     // --- Helper: resolve human-readable name for any element ---
     // Priority: aria-label > aria-labelledby > <label for> > wrapping <label>
     //         > title > placeholder > adjacent text > name attr
@@ -115,7 +128,7 @@ EXTRACT_HINTS_JS = """() => {
             const labelledBy = el.getAttribute('aria-labelledby');
             if (labelledBy) {
                 const text = labelledBy.split(/\\s+/).map(id => {
-                    const ref = document.getElementById(id);
+                    const ref = el.getRootNode().getElementById(id);
                     return ref ? (ref.textContent || '').trim() : '';
                 }).filter(Boolean).join(' ');
                 if (text) baseName = text.substring(0, 60);
@@ -168,7 +181,7 @@ EXTRACT_HINTS_JS = """() => {
 
         // Fieldset context: prepend legend text for disambiguation
         // e.g. "Shipping Address > City" instead of just "City"
-        const fs = el.closest('fieldset');
+        const fs = closestAcrossShadow(el, 'fieldset');
         if (fs && baseName) {
             const legend = fs.querySelector(':scope > legend');
             if (legend) {
@@ -183,6 +196,8 @@ EXTRACT_HINTS_JS = """() => {
     }
 
     function isVisible(el) {
+        // aria-hidden="true" — hidden from assistive tech and typically from UI
+        if (el.getAttribute('aria-hidden') === 'true') return false;
         // Fast path: offsetParent is non-null for most visible elements
         if (el.offsetParent) return true;
         // position:fixed/sticky elements have null offsetParent but may be visible
@@ -191,7 +206,7 @@ EXTRACT_HINTS_JS = """() => {
         const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
         if (!style) return false;
         if (style.display === 'none') return false;
-        if (style.visibility === 'hidden') return false;
+        if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
         // opacity:0 — transparent, not interactable by user
         if (parseFloat(style.opacity) === 0) return false;
         // clip-path: inset(100%) — common screen-reader-only pattern
@@ -204,14 +219,14 @@ EXTRACT_HINTS_JS = """() => {
 
     // === 1. TEXT INPUTS (input[text/email/password/number/...], textarea) ===
     const inputs = [];
-    const INPUT_TYPES = new Set(['text','email','password','number','tel','url','search','date','time','datetime-local','month','week','color']);
+    const INPUT_TYPES = new Set(['text','email','password','number','tel','url','search','date','time','datetime-local','month','week','color','range']);
     deepQSA('input, textarea').forEach(el => {
         if (!isVisible(el)) return;
         const type = (el.type || 'text').toLowerCase();
         // Skip types that belong to other categories
         if (type === 'hidden' || type === 'checkbox' || type === 'radio'
             || type === 'submit' || type === 'button' || type === 'reset'
-            || type === 'file' || type === 'image') return;
+            || type === 'image') return;
         // textarea or known text-like input
         if (el.tagName === 'TEXTAREA' || INPUT_TYPES.has(type)) {
             const selector = stampSelector(el);
@@ -261,6 +276,19 @@ EXTRACT_HINTS_JS = """() => {
         });
     });
     if (inputs.length) hints.inputs = inputs.slice(0, 15);
+
+    // === 1b. FILE INPUTS (input[type=file]) ===
+    const file_inputs = [];
+    deepQSA('input[type="file"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        classified.add(selector);
+        file_inputs.push({
+            selector: selector,
+            label: resolveName(el) || el.name || '',
+        });
+    });
+    if (file_inputs.length) hints.file_inputs = file_inputs.slice(0, 15);
 
     // === 2. CHECKBOXES (input[type=checkbox] + [role=checkbox]) ===
     const checkboxes = [];
@@ -506,7 +534,11 @@ EXTRACT_HINTS_JS = """() => {
                                 if (opts.length) matches.push(opts);
                             }
                         }
-                        // Only use if exactly one match — ambiguous matches stay lazy
+                        // Only use if exactly one match — ambiguous matches stay lazy.
+                        // Known limitation: multiple comboboxes with the same aria-label
+                        // (e.g. two "Country" dropdowns on a shipping/billing form) will
+                        // all stay lazy because we can't reliably determine which listbox
+                        // belongs to which trigger without aria-controls IDs.
                         if (matches.length === 1) {
                             optEls = matches[0];
                         }
@@ -582,5 +614,7 @@ async def extract_element_hints(page) -> dict:
     """Extract interactive elements from page. Returns dict with text/inputs/checkboxes/radios/switches/selects/buttons/links."""
     try:
         return await page.evaluate(EXTRACT_HINTS_JS)
-    except Exception:
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).debug("Failed to extract element hints: %s", e)
         return {}

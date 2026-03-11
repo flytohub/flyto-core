@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.18.5] - 2026-03-12
+
+### Fixed
+- **Browser Hints: CSS selector injection** — `stampSelector` now uses `CSS.escape()` for name attributes instead of manual quote escaping, preventing malformed selectors when names contain `]` or other special characters.
+- **Browser Hints: aria-labelledby in Shadow DOM** — `resolveName` now uses `el.getRootNode().getElementById()` so `aria-labelledby` resolves correctly inside shadow roots.
+- **Browser Hints: fieldset detection across Shadow DOM** — Added `closestAcrossShadow()` helper so fieldset legend context works for inputs inside shadow roots.
+- **Browser Hints: isVisible improvements** — Added `aria-hidden="true"` and `visibility: collapse` checks.
+- **Browser Hints: innerText reflow** — Changed `body.innerText` to `body.textContent` to avoid triggering layout reflow on large pages.
+- **Browser Hints: click.py force consistency** — Post-click `get_hints()` now uses `force=True` consistent with type/select modules.
+- **Browser Hints: stamp clearing optimization** — Merged two `querySelectorAll` passes in `invalidate_hints(clear_stamps=True)` into a single DOM traversal.
+- **Browser Hints: extract_element_hints logging** — Silent exception catch now logs at debug level.
+
+### Added
+- **Browser Hints: file input detection** — `<input type="file">` elements now appear as `file_inputs` category with selector and label.
+- **Browser Hints: range slider detection** — `<input type="range">` added to recognized input types.
+
 ## [2.18.4] - 2026-03-12
 
 ### Added

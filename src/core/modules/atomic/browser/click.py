@@ -227,7 +227,7 @@ class BrowserClickModule(BaseModule):
 
         # Post-click: refresh hints on the (potentially new) page
         await browser.invalidate_hints()
-        hints = await browser.get_hints()
+        hints = await browser.get_hints(force=True)
         browser._snapshot_since_nav = True
         if hints.get('text'):
             result["_page_hint"] = hints["text"][:800]
