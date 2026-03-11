@@ -54,7 +54,7 @@ from ...schema import presets
               description_key="modules.browser.click.param.target.description",
               placeholder="Submit",
               showIf={"click_method": {"$in": ["text", "button", "id"]}},
-              ui={"widget": "element_picker", "element_types": ["button", "link"],
+              ui={"widget": "element_picker", "element_types": ["button", "link", "checkbox", "radio", "switch"],
                   "value_key_from": "click_method",
                   "value_key_map": {
                       "text": "text",
@@ -68,7 +68,7 @@ from ...schema import presets
               description="CSS selector, XPath, or text selector",
               placeholder='#submit-btn, .btn-primary, //button[@type="submit"]',
               showIf={"click_method": {"$in": ["selector"]}},
-              ui={"widget": "element_picker", "element_types": ["button", "link"], "value_key": "selector"},
+              ui={"widget": "element_picker", "element_types": ["button", "link", "checkbox", "radio", "switch"], "value_key": "selector"},
               group=FieldGroup.BASIC),
         field("button", type="select",
               label="Mouse Button",
@@ -231,7 +231,7 @@ class BrowserClickModule(BaseModule):
         browser._snapshot_since_nav = True
         if hints.get('text'):
             result["_page_hint"] = hints["text"][:800]
-        for key in ('buttons', 'inputs', 'links', 'selects'):
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
             if hints.get(key):
                 result[key] = hints[key]
         return result

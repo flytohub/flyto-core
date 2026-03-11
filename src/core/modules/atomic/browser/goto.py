@@ -143,7 +143,7 @@ class BrowserGotoModule(BaseModule):
             out = {"status": "success", "url": result.get('url', self.url)}
             # Capture interactive elements for Element Picker UI
             hints = await browser.get_hints(force=True)
-            for key in ('buttons', 'inputs', 'links', 'selects'):
+            for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
                 if hints.get(key):
                     out[key] = hints[key]
             return out
@@ -177,7 +177,7 @@ class BrowserGotoModule(BaseModule):
                 logger.info("goto: www toggle succeeded → %s", result.get('url', alt_url))
                 out = {"status": "success", "url": result.get('url', alt_url)}
                 hints = await browser.get_hints(force=True)
-                for key in ('buttons', 'inputs', 'links', 'selects'):
+                for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
                     if hints.get(key):
                         out[key] = hints[key]
                 return out

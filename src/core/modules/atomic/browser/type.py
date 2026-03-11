@@ -233,7 +233,7 @@ class BrowserTypeModule(BaseModule):
         browser._snapshot_since_nav = True
         if hints.get('text'):
             result["_page_hint"] = hints["text"][:800]
-        for key in ('buttons', 'inputs', 'links', 'selects'):
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
             if hints.get(key):
                 result[key] = hints[key]
         return result

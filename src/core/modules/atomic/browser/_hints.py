@@ -8,7 +8,7 @@ Used by snapshot, click, type, goto etc. to capture page elements
 """
 
 # JS that extracts interactive elements from the current page.
-# Returns: { text, inputs[], buttons[], links[], selects[] }
+# Returns: { text, inputs[], checkboxes[], radios[], switches[], selects[], buttons[], links[] }
 EXTRACT_HINTS_JS = """() => {
     const hints = {};
     const body = document.body;
@@ -52,68 +52,99 @@ EXTRACT_HINTS_JS = """() => {
         return '[data-flyto-hint="' + _hintCounter + '"]';
     }
 
-    // --- Inputs (exclude <select>) ---
-    const inputs = [];
-    document.querySelectorAll('input:not([type=hidden]), textarea').forEach(el => {
-        if (!el.offsetParent && el.type !== 'hidden') return;
-        const selector = stampSelector(el);
-        const label = el.labels && el.labels[0] ? (el.labels[0].textContent || '').trim().substring(0, 50) : '';
-        inputs.push({
-            selector: selector,
-            id: el.id || '',
-            name: el.name || '',
-            label: label,
-            type: el.type || el.tagName.toLowerCase(),
-            placeholder: (el.placeholder || '').substring(0, 50),
-            value: (el.value || '').substring(0, 50),
-        });
-    });
-    if (inputs.length) hints.inputs = inputs.slice(0, 15);
+    // =====================================================================
+    // Elimination-based classification:
+    //   1. Scan ALL interactive elements on the page
+    //   2. Classify obvious ones by tag/type/role
+    //   3. Remainder = identified by what they ARE, not pattern-matching
+    //
+    // Categories: inputs, checkboxes, radios, switches, selects,
+    //             buttons, links
+    // =====================================================================
 
-    // --- Selects: two-pass dropdown detection ---
-    const selects = [];
-    const seenTriggers = new Set();
-    const MAX_OPTIONS = 20;
-    const MAX_SELECTS = 15;
+    const classified = new Set(); // track stamped selectors already classified
 
+    // --- Helper: resolve human-readable name for any element ---
+    // Priority: aria-label > aria-labelledby > <label for> > wrapping <label>
+    //         > title > placeholder > adjacent text > name attr
     function resolveName(el) {
-        // aria-label
+        let baseName = '';
+        // 1. aria-label
         const ariaLabel = el.getAttribute('aria-label');
-        if (ariaLabel) return ariaLabel.trim().substring(0, 60);
-        // aria-labelledby — resolve to text
-        const labelledBy = el.getAttribute('aria-labelledby');
-        if (labelledBy) {
-            const text = labelledBy.split(/\\s+/).map(id => {
-                const ref = document.getElementById(id);
-                return ref ? (ref.textContent || '').trim() : '';
-            }).filter(Boolean).join(' ');
-            if (text) return text.substring(0, 60);
+        if (ariaLabel) { baseName = ariaLabel.trim().substring(0, 60); }
+        // 2. aria-labelledby
+        if (!baseName) {
+            const labelledBy = el.getAttribute('aria-labelledby');
+            if (labelledBy) {
+                const text = labelledBy.split(/\\s+/).map(id => {
+                    const ref = document.getElementById(id);
+                    return ref ? (ref.textContent || '').trim() : '';
+                }).filter(Boolean).join(' ');
+                if (text) baseName = text.substring(0, 60);
+            }
         }
-        // associated <label> (for native elements)
-        if (el.labels && el.labels[0]) {
-            const lt = (el.labels[0].textContent || '').trim();
-            if (lt) return lt.substring(0, 60);
+        // 3. Associated <label> (via for= or wrapping)
+        if (!baseName && el.labels && el.labels[0]) {
+            const labelEl = el.labels[0];
+            let lt = '';
+            labelEl.childNodes.forEach(n => {
+                if (n !== el && n.nodeType === 3) lt += n.textContent;
+                else if (n !== el && n.nodeType === 1) lt += (n.textContent || '');
+            });
+            lt = lt.trim();
+            if (lt) baseName = lt.substring(0, 60);
         }
-        // name attribute as last resort
-        return el.getAttribute('name') || '';
-    }
+        // 4. title attribute
+        if (!baseName) {
+            const title = el.getAttribute('title');
+            if (title) baseName = title.trim().substring(0, 60);
+        }
+        // 5. placeholder (for inputs)
+        if (!baseName) {
+            const ph = el.getAttribute('placeholder');
+            if (ph) baseName = ph.trim().substring(0, 60);
+        }
+        // 6. Adjacent sibling text (common: <input type="checkbox"> Some text)
+        if (!baseName) {
+            const next = el.nextSibling;
+            if (next) {
+                const nt = (next.nodeType === 3 ? next.textContent : (next.textContent || '')).trim();
+                if (nt && nt.length > 1 && nt.length < 80) baseName = nt.substring(0, 60);
+            }
+        }
+        // 7. Parent's direct text (exclude children elements' text)
+        if (!baseName) {
+            const parent = el.parentElement;
+            if (parent && parent.childNodes.length <= 3) {
+                let pt = '';
+                parent.childNodes.forEach(n => {
+                    if (n !== el && n.nodeType === 3) pt += n.textContent;
+                    else if (n !== el && n.nodeType === 1 && n.tagName !== 'INPUT') pt += (n.textContent || '');
+                });
+                pt = pt.trim();
+                if (pt && pt.length > 1 && pt.length < 80) baseName = pt.substring(0, 60);
+            }
+        }
+        // 8. name attribute as last resort
+        if (!baseName) baseName = el.getAttribute('name') || '';
 
-    function currentValue(el) {
-        // Native select
-        if (el.tagName === 'SELECT') {
-            const opt = el.options && el.options[el.selectedIndex];
-            return opt ? (opt.textContent || '').trim().substring(0, 60) : '';
+        // Fieldset context: prepend legend text for disambiguation
+        // e.g. "Shipping Address > City" instead of just "City"
+        const fs = el.closest('fieldset');
+        if (fs && baseName) {
+            const legend = fs.querySelector(':scope > legend');
+            if (legend) {
+                const legendText = (legend.textContent || '').trim().substring(0, 40);
+                if (legendText && !baseName.startsWith(legendText)) {
+                    return (legendText + ' > ' + baseName).substring(0, 80);
+                }
+            }
         }
-        // Custom: displayed text
-        return (el.textContent || el.value || '').trim().substring(0, 60);
-    }
 
-    // Pass 1: collect triggers
-    const triggers = [];
+        return baseName;
+    }
 
     function isVisible(el) {
-        // Check multiple visibility signals — offsetParent alone misses
-        // position:fixed, elements in certain Google Material containers, etc.
         if (el.offsetParent) return true;
         if (el.getClientRects && el.getClientRects().length > 0) return true;
         const style = window.getComputedStyle ? window.getComputedStyle(el) : null;
@@ -121,30 +152,215 @@ EXTRACT_HINTS_JS = """() => {
         return false;
     }
 
+    // === 1. TEXT INPUTS (input[text/email/password/number/...], textarea) ===
+    const inputs = [];
+    const INPUT_TYPES = new Set(['text','email','password','number','tel','url','search','date','time','datetime-local','month','week','color']);
+    document.querySelectorAll('input, textarea').forEach(el => {
+        if (!isVisible(el)) return;
+        const type = (el.type || 'text').toLowerCase();
+        // Skip types that belong to other categories
+        if (type === 'hidden' || type === 'checkbox' || type === 'radio'
+            || type === 'submit' || type === 'button' || type === 'reset'
+            || type === 'file' || type === 'image') return;
+        // textarea or known text-like input
+        if (el.tagName === 'TEXTAREA' || INPUT_TYPES.has(type)) {
+            const selector = stampSelector(el);
+            classified.add(selector);
+            const label = resolveName(el);
+            inputs.push({
+                selector: selector,
+                id: el.id || '',
+                name: el.name || '',
+                label: label,
+                type: type,
+                placeholder: (el.placeholder || '').substring(0, 50),
+                value: (el.value || '').substring(0, 50),
+            });
+        }
+    });
+    // ARIA textbox (custom text inputs)
+    document.querySelectorAll('[role="textbox"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
+        inputs.push({
+            selector: selector,
+            id: el.id || '',
+            name: '',
+            label: resolveName(el),
+            type: 'textbox',
+            placeholder: el.getAttribute('aria-placeholder') || '',
+            value: (el.textContent || '').substring(0, 50),
+        });
+    });
+    if (inputs.length) hints.inputs = inputs.slice(0, 15);
+
+    // === 2. CHECKBOXES (input[type=checkbox] + [role=checkbox]) ===
+    const checkboxes = [];
+    document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        classified.add(selector);
+        checkboxes.push({
+            selector: selector,
+            id: el.id || '',
+            name: el.name || '',
+            label: resolveName(el),
+            checked: el.checked,
+        });
+    });
+    document.querySelectorAll('[role="checkbox"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
+        checkboxes.push({
+            selector: selector,
+            id: el.id || '',
+            name: '',
+            label: resolveName(el) || (el.textContent || '').trim().substring(0, 50),
+            checked: el.getAttribute('aria-checked') === 'true',
+        });
+    });
+    if (checkboxes.length) hints.checkboxes = checkboxes.slice(0, 15);
+
+    // === 3. RADIOS — grouped by name (like selects, single-choice) ===
+    // Collect all radio elements, then group by name/radiogroup
+    const _rawRadios = [];
+    document.querySelectorAll('input[type="radio"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        classified.add(selector);
+        _rawRadios.push({
+            selector: selector,
+            group: el.name || '',
+            label: resolveName(el),
+            value: el.value || '',
+            checked: el.checked,
+        });
+    });
+    document.querySelectorAll('[role="radio"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
+        // ARIA radios: group by closest [role=radiogroup] or parent
+        const rg = el.closest('[role="radiogroup"]');
+        const groupName = rg ? (rg.getAttribute('aria-label') || rg.id || '') : '';
+        _rawRadios.push({
+            selector: selector,
+            group: groupName,
+            label: resolveName(el) || (el.textContent || '').trim().substring(0, 50),
+            value: el.getAttribute('data-value') || (el.textContent || '').trim(),
+            checked: el.getAttribute('aria-checked') === 'true',
+        });
+    });
+    // Group by name → radio_groups (structured like selects)
+    if (_rawRadios.length) {
+        const radioGroups = [];
+        const groupMap = new Map();
+        for (const r of _rawRadios) {
+            const key = r.group || '__ungrouped_' + r.selector;
+            if (!groupMap.has(key)) groupMap.set(key, []);
+            groupMap.get(key).push(r);
+        }
+        groupMap.forEach((items, key) => {
+            if (items.length === 1 && key.startsWith('__ungrouped_')) {
+                // Standalone radio — keep as single-item group
+                radioGroups.push({
+                    name: items[0].label || key,
+                    group_key: key,
+                    current_value: items[0].checked ? items[0].label : '',
+                    options: [{ value: items[0].value, label: items[0].label, selector: items[0].selector, selected: items[0].checked }],
+                });
+            } else {
+                // Resolve group name: try fieldset>legend context
+                let groupName = key;
+                if (items[0].selector) {
+                    try {
+                        const firstEl = document.querySelector(items[0].selector);
+                        if (firstEl) {
+                            const fs = firstEl.closest('fieldset');
+                            if (fs) {
+                                const legend = fs.querySelector('legend');
+                                if (legend) groupName = (legend.textContent || '').trim().substring(0, 60);
+                            }
+                        }
+                    } catch(e) {}
+                }
+                const selected = items.find(i => i.checked);
+                radioGroups.push({
+                    name: groupName,
+                    group_key: key,
+                    current_value: selected ? selected.label : '',
+                    options: items.map(i => ({ value: i.value, label: i.label, selector: i.selector, selected: i.checked })),
+                });
+            }
+        });
+        hints.radios = radioGroups.slice(0, 10);
+    }
+
+    // === 4. SWITCHES ([role=switch] — toggle on/off) ===
+    const switches = [];
+    document.querySelectorAll('[role="switch"]').forEach(el => {
+        if (!isVisible(el)) return;
+        const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
+        switches.push({
+            selector: selector,
+            id: el.id || '',
+            label: resolveName(el) || (el.textContent || '').trim().substring(0, 50),
+            checked: el.getAttribute('aria-checked') === 'true',
+        });
+    });
+    if (switches.length) hints.switches = switches.slice(0, 15);
+
+    // === 5. SELECTS / DROPDOWNS (native <select> + ARIA combobox/listbox) ===
+    const selects = [];
+    const seenTriggers = new Set();
+    const MAX_OPTIONS = 20;
+    const MAX_SELECTS = 15;
+
+    function currentValue(el) {
+        if (el.tagName === 'SELECT') {
+            const opt = el.options && el.options[el.selectedIndex];
+            return opt ? (opt.textContent || '').trim().substring(0, 60) : '';
+        }
+        return (el.textContent || el.value || '').trim().substring(0, 60);
+    }
+
     function addTrigger(el, kind) {
         const sel = stampSelector(el);
         if (seenTriggers.has(sel)) return;
         seenTriggers.add(sel);
-        triggers.push({ el: el, selector: sel, kind: kind });
+        classified.add(sel);
+        return { el: el, selector: sel, kind: kind };
     }
 
-    // 1a. Native <select>
+    const triggers = [];
+
+    // 5a. Native <select>
     document.querySelectorAll('select').forEach(el => {
         if (!isVisible(el)) return;
-        addTrigger(el, 'native');
+        const t = addTrigger(el, 'native');
+        if (t) triggers.push(t);
     });
 
-    // 1b. [role="combobox"] — ARIA role = always detect, skip visibility check
+    // 5b. [role="combobox"] — always detect
     document.querySelectorAll('[role="combobox"]').forEach(el => {
-        addTrigger(el, 'custom');
+        const t = addTrigger(el, 'custom');
+        if (t) triggers.push(t);
     });
 
-    // 1c. [aria-haspopup="listbox"|"menu"|"true"] — same: trust ARIA
+    // 5c. [aria-haspopup="listbox"|"menu"|"true"]
     document.querySelectorAll('[aria-haspopup="listbox"], [aria-haspopup="menu"], [aria-haspopup="true"]').forEach(el => {
-        addTrigger(el, 'custom');
+        const t = addTrigger(el, 'custom');
+        if (t) triggers.push(t);
     });
 
-    // Pass 2: enumerate options for each trigger
+    // Enumerate options for each trigger
     for (const trigger of triggers) {
         if (selects.length >= MAX_SELECTS) break;
 
@@ -155,7 +371,6 @@ EXTRACT_HINTS_JS = """() => {
         let lazy = false;
 
         if (trigger.kind === 'native') {
-            // Native <select>: enumerate <option> children
             el.querySelectorAll('option').forEach(opt => {
                 if (options.length >= MAX_OPTIONS) return;
                 const label = (opt.textContent || '').trim().substring(0, 60);
@@ -167,22 +382,16 @@ EXTRACT_HINTS_JS = """() => {
                 });
             });
         } else {
-            // Custom: find linked popup via aria-controls / aria-owns
             const listId = el.getAttribute('aria-controls') || el.getAttribute('aria-owns');
             let popup = listId ? document.getElementById(listId) : null;
-
-            // Find options: try aria-controls popup first, then search container
             const OPT_SELECTOR = '[role="option"], [role="menuitem"]';
             let optEls = [];
             if (popup) {
                 optEls = Array.from(popup.querySelectorAll(OPT_SELECTOR));
             }
-            // If popup is empty (Google puts aria-controls on a hidden empty span),
-            // walk up to find a reasonable container (skip too-broad roots like body/#app)
             if (!optEls.length) {
                 let wrapper = el.parentElement;
                 const tooWide = new Set(['BODY', 'HTML']);
-                // Walk up max 6 levels to find a container with listbox/menu children
                 for (let i = 0; i < 6 && wrapper && !tooWide.has(wrapper.tagName); i++) {
                     const candidates = wrapper.querySelectorAll('[role="listbox"], [role="menu"], ul[role="group"]');
                     for (const cand of candidates) {
@@ -230,11 +439,13 @@ EXTRACT_HINTS_JS = """() => {
     }
     if (selects.length) hints.selects = selects;
 
-    // --- Buttons ---
+    // === 6. BUTTONS (button, [role=button], input[submit/button]) ===
     const buttons = [];
-    document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"]').forEach(el => {
+    document.querySelectorAll('button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"]').forEach(el => {
         if (!isVisible(el)) return;
         const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
         const text = (el.textContent || el.value || '').trim().substring(0, 50);
         const entry = { selector: selector, id: el.id || '' };
         if (text) entry.text = text;
@@ -243,13 +454,15 @@ EXTRACT_HINTS_JS = """() => {
     });
     if (buttons.length) hints.buttons = buttons.slice(0, 15);
 
-    // --- Links (top 20 visible with text) ---
+    // === 7. LINKS (a[href]) ===
     const links = [];
     document.querySelectorAll('a[href]').forEach(el => {
         if (links.length >= 20) return;
         const text = (el.textContent || '').trim().substring(0, 60);
         if (!text) return;
         const selector = stampSelector(el);
+        if (classified.has(selector)) return;
+        classified.add(selector);
         links.push({ text: text, href: (el.href || '').substring(0, 120), selector: selector, id: el.id || '' });
     });
     if (links.length) hints.links = links;
@@ -259,7 +472,7 @@ EXTRACT_HINTS_JS = """() => {
 
 
 async def extract_element_hints(page) -> dict:
-    """Extract interactive elements from page. Returns dict with text/inputs/buttons/links/selects."""
+    """Extract interactive elements from page. Returns dict with text/inputs/checkboxes/radios/switches/selects/buttons/links."""
     try:
         return await page.evaluate(EXTRACT_HINTS_JS)
     except Exception:

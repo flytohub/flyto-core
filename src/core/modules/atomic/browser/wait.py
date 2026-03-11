@@ -128,7 +128,7 @@ class BrowserWaitModule(BaseModule):
         # so they're the first node to see the NEW page's elements.
         if browser:
             hints = await browser.get_hints(force=True)
-            for key in ('buttons', 'inputs', 'links', 'selects'):
+            for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
                 if hints.get(key):
                     result[key] = hints[key]
 
