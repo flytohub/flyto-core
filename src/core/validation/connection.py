@@ -225,17 +225,23 @@ def _validate_port_compatibility(
     from_ports = from_meta.get('output_ports') or []
     to_ports = to_meta.get('input_ports') or []
 
-    from_port_meta = _find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
-    to_port_meta = _find_port(to_ports, to_port, INPUT_PORT_ALIASES)
+    # When port is None (handle not specified), default to first available port
+    if not from_port and from_ports:
+        from_port = from_ports[0].get('id', 'success')
+    if not to_port and to_ports:
+        to_port = to_ports[0].get('id', 'input')
 
-    if from_ports and not from_port_meta:
+    from_port_meta = _find_port(from_ports, from_port, OUTPUT_PORT_ALIASES) if from_port else None
+    to_port_meta = _find_port(to_ports, to_port, INPUT_PORT_ALIASES) if to_port else None
+
+    if from_ports and from_port and not from_port_meta:
         return ConnectionResult(
             valid=False,
             error_code=ErrorCode.PORT_NOT_FOUND,
             error_message=f'Port not found: {from_port}',
             meta={'from_module': from_module_id, 'from_port': from_port}
         )
-    if to_ports and not to_port_meta:
+    if to_ports and to_port and not to_port_meta:
         return ConnectionResult(
             valid=False,
             error_code=ErrorCode.PORT_NOT_FOUND,
@@ -308,8 +314,8 @@ def _validate_port_compatibility(
 def validate_connection(
     from_module_id: str,
     to_module_id: str,
-    from_port: str = 'output',
-    to_port: str = 'input',
+    from_port: str = None,
+    to_port: str = None,
 ) -> ConnectionResult:
     """
     Validate if two modules can be connected.

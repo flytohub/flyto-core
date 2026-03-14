@@ -287,8 +287,8 @@ def validate_workflow(
             result = validate_connection(
                 source_module,
                 target_module,
-                from_port=source_handle or 'output',
-                to_port=target_handle or 'input',
+                from_port=source_handle or None,
+                to_port=target_handle or None,
             )
             if not result.valid:
                 errors.append(WorkflowError(
