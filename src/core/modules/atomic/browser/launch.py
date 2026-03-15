@@ -162,6 +162,15 @@ class BrowserLaunchModule(BaseModule):
     async def execute(self) -> Any:
         from core.browser.driver import BrowserDriver
 
+        # Close existing browser before launching a new one
+        existing = self.context.get('browser')
+        if existing:
+            try:
+                await existing.close()
+            except Exception:
+                pass
+            self.context.pop('browser', None)
+
         driver = BrowserDriver(
             headless=self.headless,
             viewport=self.viewport,
