@@ -171,6 +171,110 @@ class WorkflowRouter:
         if log_parts:
             logger.debug(f"Built edge index: {', '.join(log_parts)}")
 
+    # -----------------------------------------------------------------
+    # Error edge validation
+    # -----------------------------------------------------------------
+
+    def validate_error_edges(self) -> List[Dict[str, Any]]:
+        """
+        Validate all error edges in the edge index.
+
+        Checks:
+        - Error edge should not connect back to the same node (self-loop)
+        - Error edge should not create a cycle (target is ancestor of source)
+        - Warn if error edge targets a flow control node (loop, branch, switch)
+
+        Returns:
+            List of warning dicts: [{"level": "warning", "message": "..."}]
+        """
+        # Import here to avoid circular imports
+        from ..flow_control import FLOW_CONTROL_MODULES
+
+        warnings: List[Dict[str, Any]] = []
+
+        for source_id, edges in self._edge_index.items():
+            for edge in edges:
+                source_handle = edge.get('sourceHandle', '')
+                if source_handle != 'source-error':
+                    continue
+
+                target_id = edge.get('target', '')
+                if not target_id:
+                    continue
+
+                # Check 1: self-loop (error edge back to the same node)
+                if target_id == source_id:
+                    warnings.append({
+                        'level': 'warning',
+                        'message': (
+                            f"Error edge from '{source_id}' connects back to itself. "
+                            f"This will cause an infinite retry loop if the step keeps failing."
+                        ),
+                    })
+                    continue
+
+                # Check 2: cycle detection (target is ancestor of source)
+                if self._is_ancestor(target_id, source_id):
+                    warnings.append({
+                        'level': 'warning',
+                        'message': (
+                            f"Error edge from '{source_id}' to '{target_id}' creates a cycle. "
+                            f"If the step keeps failing, this may cause an infinite loop."
+                        ),
+                    })
+
+                # Check 3: error edge targets a flow control node
+                target_step = self._step_map.get(target_id)
+                if target_step:
+                    target_module = target_step.get('module', '')
+                    if target_module in FLOW_CONTROL_MODULES:
+                        warnings.append({
+                            'level': 'warning',
+                            'message': (
+                                f"Error edge from '{source_id}' connects to flow control "
+                                f"node '{target_id}' (module: {target_module}). "
+                                f"Error handling via flow control nodes may produce "
+                                f"unexpected routing behavior."
+                            ),
+                        })
+
+        return warnings
+
+    def _is_ancestor(self, candidate_id: str, node_id: str) -> bool:
+        """
+        Check if candidate_id is an ancestor of node_id by walking
+        incoming edges (reverse direction). Uses BFS with visited set
+        to avoid infinite loops in cyclic graphs.
+
+        Args:
+            candidate_id: The potential ancestor node
+            node_id: The node to check ancestors of
+
+        Returns:
+            True if candidate_id can reach node_id via forward edges
+            (i.e. candidate_id is upstream of node_id)
+        """
+        visited: Set[str] = set()
+        queue: List[str] = [node_id]
+
+        while queue:
+            current = queue.pop(0)
+            if current in visited:
+                continue
+            visited.add(current)
+
+            incoming = self._incoming_edges.get(current, [])
+            for edge in incoming:
+                source = edge.get('source', '')
+                if not source:
+                    continue
+                if source == candidate_id:
+                    return True
+                if source not in visited:
+                    queue.append(source)
+
+        return False
+
     def get_next_step_index(
         self,
         step_id: str,

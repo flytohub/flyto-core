@@ -222,6 +222,12 @@ class WorkflowEngine:
 
             self._router.build_step_index(steps)
             self._router.build_edge_index(self._edges, steps)
+
+            # Validate error edges (non-blocking — log warnings only)
+            error_edge_warnings = self._router.validate_error_edges()
+            for w in error_edge_warnings:
+                logger.warning(f"Error edge validation: {w['message']}")
+
             await self._execute_steps(steps)
 
             self.status = WorkflowStatus.COMPLETED
