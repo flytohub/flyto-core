@@ -7,6 +7,8 @@
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
 > **A debuggable automation engine. Trace every step. Replay from any point.**
+>
+> **[flyto2.com](https://flyto2.com)** · [Desktop App](https://flyto2.com/app.html) · [Documentation](https://docs.flyto2.com) · [YouTube](https://www.youtube.com/@Flyto2)
 
 ### Try in 30 seconds
 
@@ -471,4 +473,4 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ---
 
-Desktop GUI available at [flyto2.com](https://flyto2.com)
+**[Desktop App](https://flyto2.com/app.html)** · **[Pricing](https://flyto2.com/pricing.html)** · **[flyto2.com](https://flyto2.com)**
