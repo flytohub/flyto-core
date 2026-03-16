@@ -331,8 +331,19 @@ class WorkflowEngine:
             except Exception as e:
                 step_status = 'failed'
                 step_error = e
-                next_idx = current_idx + 1
-                raise
+
+                # Check for error edge route before propagating
+                error_result = {'__event__': 'error', 'ok': False, 'error': str(e)}
+                error_next = self._router.get_next_step_index(step_id, error_result, current_idx)
+                if error_next != current_idx + 1 or f"{step_id}:error" in self._router.event_routes:
+                    # Error edge exists — route to error handler instead of failing
+                    self.context[step_id] = error_result
+                    next_idx = error_next
+                    logger.info(f"Step '{step_id}' failed, routing to error handler (idx {error_next})")
+                else:
+                    # No error edge — propagate as before
+                    next_idx = current_idx + 1
+                    raise
             finally:
                 await self._save_checkpoint(current_idx, step_id, step_status, step_error)
 
