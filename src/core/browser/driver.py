@@ -92,6 +92,7 @@ class BrowserDriver:
         slow_mo: int = 0,
         record_video_dir: Optional[str] = None,
         record_video_size: Optional[Dict[str, int]] = None,
+        channel: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Launch browser instance
@@ -174,13 +175,13 @@ class BrowserDriver:
             if self.browser_type == 'chromium':
                 launched = await self._launch_persistent(
                     browser_launcher, launch_args, context_kwargs,
-                    slow_mo=slow_mo, proxy=proxy,
+                    slow_mo=slow_mo, proxy=proxy, channel=channel,
                 )
                 if not launched:
                     # Persistent context failed; fall back to regular launch
                     launched = await self._launch_regular(
                         browser_launcher, launch_args, context_kwargs,
-                        slow_mo=slow_mo, proxy=proxy,
+                        slow_mo=slow_mo, proxy=proxy, channel=channel,
                     )
                 if not launched:
                     raise RuntimeError(
@@ -278,7 +279,7 @@ class BrowserDriver:
             logger.error(f"Failed to launch browser: {str(e)}")
             raise RuntimeError(f"Browser launch failed: {str(e)}") from e
 
-    async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None):
+    async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
         user_data_dir = Path.home() / '.flyto' / 'chrome-profile'
         user_data_dir.mkdir(parents=True, exist_ok=True)
@@ -298,13 +299,15 @@ class BrowserDriver:
             'args': args,
             'ignore_default_args': ['--enable-automation'],
         }
+        if channel:
+            persistent_kwargs['channel'] = channel
         if slow_mo > 0:
             persistent_kwargs['slow_mo'] = slow_mo
         if proxy:
             persistent_kwargs['proxy'] = {'server': proxy}
 
         try:
-            logger.info("Launching persistent context (playwright-chromium)...")
+            logger.info("Launching persistent context (%s)...", channel or 'playwright-chromium')
             self._context = await launcher.launch_persistent_context(
                 str(user_data_dir), **persistent_kwargs
             )
@@ -316,13 +319,15 @@ class BrowserDriver:
             logger.warning(f"Persistent context (chromium) failed: {e}")
         return False
 
-    async def _launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None):
+    async def _launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Fallback: regular launch + new_context (no cookie persistence)."""
         launch_kwargs: Dict[str, Any] = {
             'headless': self.headless,
             'args': args,
             'ignore_default_args': ['--enable-automation'],
         }
+        if channel:
+            launch_kwargs['channel'] = channel
         if slow_mo > 0:
             launch_kwargs['slow_mo'] = slow_mo
         if proxy:

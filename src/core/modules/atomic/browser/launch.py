@@ -60,6 +60,21 @@ from ...schema.constants import FieldGroup, Visibility
             group=FieldGroup.OPTIONS,
         ),
         field(
+            'channel',
+            type='select',
+            label='Browser Channel',
+            description='Use system Chrome instead of bundled Chromium for better anti-detection bypass',
+            default='',
+            options=[
+                {'value': '', 'label': 'Default (Playwright Chromium)'},
+                {'value': 'chrome', 'label': 'System Chrome'},
+                {'value': 'msedge', 'label': 'Microsoft Edge'},
+            ],
+            required=False,
+            group=FieldGroup.ADVANCED,
+            visibility=Visibility.EXPERT,
+        ),
+        field(
             'proxy',
             type='string',
             label='Proxy',
@@ -149,6 +164,7 @@ class BrowserLaunchModule(BaseModule):
     def validate_params(self) -> None:
         self.headless = self.params.get('headless', False)
         self.browser_type = self.params.get('browser_type', 'chromium')
+        self.channel = self.params.get('channel', '')
         self.proxy = self.params.get('proxy')
         self.user_agent = self.params.get('user_agent')
         self.locale = self.params.get('locale', 'en-US')
@@ -182,6 +198,7 @@ class BrowserLaunchModule(BaseModule):
             locale=self.locale,
             slow_mo=self.slow_mo,
             record_video_dir=self.record_video_dir,
+            channel=self.channel or None,
         )
 
         # Store in context for later use
