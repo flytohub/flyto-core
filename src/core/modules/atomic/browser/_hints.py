@@ -11,7 +11,8 @@ Supports: Shadow DOM (open), ARIA widgets, native HTML forms,
 """
 
 # JS that extracts interactive elements from the current page.
-# Returns: { text, inputs[], checkboxes[], radios[], switches[], selects[], buttons[], links[] }
+# Returns: { text, inputs[], checkboxes[], radios[], switches[], selects[], buttons[], links[], elements[] }
+# elements[] = unified list of ALL interactive elements sorted by page position (top→left)
 EXTRACT_HINTS_JS = """() => {
     const hints = {};
     const body = document.body;
@@ -195,6 +196,12 @@ EXTRACT_HINTS_JS = """() => {
         return baseName;
     }
 
+    // --- Helper: get element position for layout ordering ---
+    function getRect(el) {
+        var r = el.getBoundingClientRect();
+        return { top: Math.round(r.top), left: Math.round(r.left) };
+    }
+
     function isVisible(el) {
         // aria-hidden="true" — hidden from assistive tech and typically from UI
         if (el.getAttribute('aria-hidden') === 'true') return false;
@@ -240,6 +247,7 @@ EXTRACT_HINTS_JS = """() => {
                 type: type,
                 placeholder: (el.placeholder || '').substring(0, 50),
                 value: (el.value || '').substring(0, 50),
+                rect: getRect(el),
             });
         }
     });
@@ -257,6 +265,7 @@ EXTRACT_HINTS_JS = """() => {
             type: 'textbox',
             placeholder: el.getAttribute('aria-placeholder') || '',
             value: (el.textContent || '').substring(0, 50),
+            rect: getRect(el),
         });
     });
     // contenteditable elements (rich text editors: Tiptap, ProseMirror, Slate.js)
@@ -273,6 +282,7 @@ EXTRACT_HINTS_JS = """() => {
             type: 'contenteditable',
             placeholder: el.getAttribute('aria-placeholder') || el.getAttribute('data-placeholder') || '',
             value: (el.textContent || '').substring(0, 50),
+            rect: getRect(el),
         });
     });
     if (inputs.length) hints.inputs = inputs.slice(0, 15);
@@ -286,6 +296,7 @@ EXTRACT_HINTS_JS = """() => {
         file_inputs.push({
             selector: selector,
             label: resolveName(el) || el.name || '',
+            rect: getRect(el),
         });
     });
     if (file_inputs.length) hints.file_inputs = file_inputs.slice(0, 15);
@@ -302,6 +313,7 @@ EXTRACT_HINTS_JS = """() => {
             name: el.name || '',
             label: resolveName(el),
             checked: el.checked,
+            rect: getRect(el),
         });
     });
     deepQSA('[role="checkbox"]').forEach(el => {
@@ -315,6 +327,7 @@ EXTRACT_HINTS_JS = """() => {
             name: '',
             label: resolveName(el) || (el.textContent || '').trim().substring(0, 50),
             checked: el.getAttribute('aria-checked') === 'true',
+            rect: getRect(el),
         });
     });
     if (checkboxes.length) hints.checkboxes = checkboxes.slice(0, 15);
@@ -407,6 +420,7 @@ EXTRACT_HINTS_JS = """() => {
             id: el.id || '',
             label: resolveName(el) || (el.textContent || '').trim().substring(0, 50),
             checked: el.getAttribute('aria-checked') === 'true',
+            rect: getRect(el),
         });
     });
     if (switches.length) hints.switches = switches.slice(0, 15);
@@ -572,6 +586,7 @@ EXTRACT_HINTS_JS = """() => {
             name: name,
             current_value: cv,
             options: options,
+            rect: getRect(el),
         };
         if (lazy) entry.lazy = true;
         selects.push(entry);
@@ -586,7 +601,7 @@ EXTRACT_HINTS_JS = """() => {
         if (classified.has(selector)) return;
         classified.add(selector);
         const text = (el.textContent || el.value || '').trim().substring(0, 50);
-        const entry = { selector: selector, id: el.id || '' };
+        const entry = { selector: selector, id: el.id || '', rect: getRect(el) };
         if (text) entry.text = text;
         if (el.type && el.type !== 'submit') entry.type = el.type;
         buttons.push(entry);
@@ -602,16 +617,65 @@ EXTRACT_HINTS_JS = """() => {
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
         classified.add(selector);
-        links.push({ text: text, href: (el.href || '').substring(0, 120), selector: selector, id: el.id || '' });
+        links.push({ text: text, href: (el.href || '').substring(0, 120), selector: selector, id: el.id || '', rect: getRect(el) });
     });
     if (links.length) hints.links = links;
+
+    // === 8. UNIFIED ELEMENTS (all types, sorted by page position) ===
+    // For browser.interact dialog: mixed layout mirroring the actual page.
+    var _all = [];
+    (hints.inputs || []).forEach(function(e) {
+        _all.push({ _type: 'input', selector: e.selector, rect: e.rect,
+            label: e.label || e.placeholder || e.name || '', input_type: e.type,
+            placeholder: e.placeholder || '', value: e.value || '' });
+    });
+    (hints.file_inputs || []).forEach(function(e) {
+        _all.push({ _type: 'file_input', selector: e.selector, rect: e.rect,
+            label: e.label || '' });
+    });
+    (hints.checkboxes || []).forEach(function(e) {
+        _all.push({ _type: 'checkbox', selector: e.selector, rect: e.rect,
+            label: e.label || '', checked: e.checked });
+    });
+    (hints.radios || []).forEach(function(g) {
+        var r = g.options && g.options[0] ? (function() {
+            try { var el = document.querySelector(g.options[0].selector);
+                  return el ? getRect(el) : { top: 0, left: 0 }; } catch(e) { return { top: 0, left: 0 }; }
+        })() : { top: 0, left: 0 };
+        _all.push({ _type: 'radio', selector: g.options && g.options[0] ? g.options[0].selector : '', rect: r,
+            label: g.name || '', current_value: g.current_value || '', options: g.options || [] });
+    });
+    (hints.switches || []).forEach(function(e) {
+        _all.push({ _type: 'switch', selector: e.selector, rect: e.rect,
+            label: e.label || '', checked: e.checked });
+    });
+    (hints.selects || []).forEach(function(e) {
+        _all.push({ _type: 'select', selector: e.selector, rect: e.rect,
+            label: e.name || '', kind: e.kind, current_value: e.current_value || '',
+            options: e.options || [], lazy: !!e.lazy });
+    });
+    (hints.buttons || []).forEach(function(e) {
+        _all.push({ _type: 'button', selector: e.selector, rect: e.rect,
+            label: e.text || '' });
+    });
+    (hints.links || []).forEach(function(e) {
+        _all.push({ _type: 'link', selector: e.selector, rect: e.rect,
+            label: e.text || '', href: e.href || '' });
+    });
+    // Sort by vertical position (top), then horizontal (left)
+    _all.sort(function(a, b) {
+        var dt = (a.rect ? a.rect.top : 0) - (b.rect ? b.rect.top : 0);
+        if (dt !== 0) return dt;
+        return (a.rect ? a.rect.left : 0) - (b.rect ? b.rect.left : 0);
+    });
+    if (_all.length) hints.elements = _all.slice(0, 80);
 
     return hints;
 }"""
 
 
 async def extract_element_hints(page) -> dict:
-    """Extract interactive elements from page. Returns dict with text/inputs/checkboxes/radios/switches/selects/buttons/links."""
+    """Extract interactive elements from page. Returns dict with text/inputs/checkboxes/radios/switches/selects/buttons/links/elements."""
     try:
         return await page.evaluate(EXTRACT_HINTS_JS)
     except Exception as e:

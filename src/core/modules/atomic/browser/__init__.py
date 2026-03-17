@@ -44,6 +44,7 @@ from .record import *
 # Higher-level browser operations (v2)
 from .form import *
 from .pagination import *
+from .interact import *
 
 # Performance & Debug modules (Chrome DevTools MCP compatible)
 from .trace import *
