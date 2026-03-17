@@ -140,26 +140,30 @@ class BrowserSelectModule(BaseModule):
             self.target = target
 
     async def _select_native(self, page) -> List[str]:
-        """Select from a native <select> element using Playwright select_option()."""
-        if self.method == 'value':
-            selected = await page.select_option(
-                self.selector,
-                value=self.target,
-                timeout=self.timeout
+        """Select from a native <select> element using Playwright select_option().
+
+        Auto-fallback: if the configured method (value/label) fails,
+        try the other method. This handles the common case where a UI Input
+        select passes a value but the node is configured for label, or vice versa.
+        """
+        if self.method == 'index':
+            return await page.select_option(
+                self.selector, index=self.target, timeout=self.timeout
             )
-        elif self.method == 'label':
-            selected = await page.select_option(
-                self.selector,
-                label=self.target,
-                timeout=self.timeout
+
+        # Try configured method first, fallback to the other
+        primary = self.method  # 'value' or 'label'
+        fallback = 'label' if primary == 'value' else 'value'
+
+        try:
+            return await page.select_option(
+                self.selector, **{primary: self.target}, timeout=self.timeout
             )
-        elif self.method == 'index':
-            selected = await page.select_option(
-                self.selector,
-                index=self.target,
-                timeout=self.timeout
+        except Exception:
+            # Fallback: try the other method
+            return await page.select_option(
+                self.selector, **{fallback: self.target}, timeout=self.timeout
             )
-        return selected
 
     async def _select_custom(self, page, browser) -> List[str]:
         """Select from a custom (non-native) dropdown via click-based interaction."""
@@ -188,30 +192,37 @@ class BrowserSelectModule(BaseModule):
         # Use Playwright's built-in escaping via get_by_text/get_by_role to avoid CSS injection
         option = None
 
+        async def _find_by_label(target):
+            """Find option by label text."""
+            loc = page.get_by_role('option', name=target)
+            if await loc.count() > 0: return loc
+            loc = page.get_by_role('menuitem', name=target)
+            if await loc.count() > 0: return loc
+            loc = page.locator('[role="option"], [role="menuitem"]').filter(has_text=target)
+            if await loc.count() > 0: return loc
+            loc = page.locator('[role="listbox"] li, [role="menu"] li').filter(has_text=target)
+            if await loc.count() > 0: return loc
+            return None
+
+        async def _find_by_value(target):
+            """Find option by value attribute."""
+            escaped = target.replace('\\', '\\\\').replace('"', '\\"')
+            loc = page.locator('[role="option"][data-value="{v}"], [role="menuitem"][data-value="{v}"]'.format(v=escaped))
+            if await loc.count() > 0: return loc
+            loc = page.locator('[role="option"][value="{v}"], [role="menuitem"][value="{v}"]'.format(v=escaped))
+            if await loc.count() > 0: return loc
+            loc = page.locator('[role="option"], [role="menuitem"]').filter(has_text=target)
+            if await loc.count() > 0: return loc
+            return None
+
         if self.method == 'label':
-            # Try get_by_role first (handles text escaping safely)
-            option = page.get_by_role('option', name=self.target)
-            if await option.count() == 0:
-                option = page.get_by_role('menuitem', name=self.target)
-            if await option.count() == 0:
-                # Broader: any element with role in a listbox/menu, matched by text
-                option = page.locator('[role="option"], [role="menuitem"]').filter(has_text=self.target)
-            if await option.count() == 0:
-                # Last resort: li inside a role="listbox" or role="menu" container
-                option = page.locator('[role="listbox"] li, [role="menu"] li').filter(has_text=self.target)
-
+            option = await _find_by_label(self.target)
+            if option is None:
+                option = await _find_by_value(self.target)
         elif self.method == 'value':
-            # Escape quotes in value for safe CSS attribute selector
-            escaped = self.target.replace('\\', '\\\\').replace('"', '\\"')
-            # Try data-value attribute on option elements
-            option = page.locator('[role="option"][data-value="{v}"], [role="menuitem"][data-value="{v}"]'.format(v=escaped))
-            if await option.count() == 0:
-                # Try value attribute
-                option = page.locator('[role="option"][value="{v}"], [role="menuitem"][value="{v}"]'.format(v=escaped))
-            if await option.count() == 0:
-                # Fall back: match by text on role="option" or role="menuitem"
-                option = page.locator('[role="option"], [role="menuitem"]').filter(has_text=self.target)
-
+            option = await _find_by_value(self.target)
+            if option is None:
+                option = await _find_by_label(self.target)
         elif self.method == 'index':
             option = page.locator('[role="option"]')
             if await option.count() == 0:
