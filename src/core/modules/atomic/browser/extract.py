@@ -112,6 +112,32 @@ class BrowserExtractModule(BaseModule):
                     results.append(None)
             return {"status": "success", "data": results, "count": len(results)}
 
+        # Default mode: no fields, no attribute → extract text content
+        if not self.fields:
+            extract_type = self.params.get('extract_type', 'text')
+            results = []
+            for element in elements:
+                try:
+                    if extract_type == 'html' or extract_type == 'innerHTML':
+                        value = await element.inner_html()
+                    elif extract_type == 'href':
+                        value = await element.get_attribute('href')
+                    else:  # default: text
+                        value = await element.inner_text()
+                    if value and value.strip():
+                        results.append(value.strip())
+                except Exception:
+                    pass
+            if results:
+                return {"status": "success", "data": results, "count": len(results)}
+            # If still empty, return with a hint
+            return {
+                "status": "success",
+                "data": [],
+                "count": 0,
+                "hint": "No text content found for selector '{}'. Try browser.evaluate with JavaScript instead.".format(self.selector),
+            }
+
         # Complex mode: extract multiple fields per element
         results = []
         for element in elements:

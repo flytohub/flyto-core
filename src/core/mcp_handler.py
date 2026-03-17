@@ -206,23 +206,140 @@ async def execute_module(
 
 
 def validate_params(module_id: str, params: Dict[str, Any]) -> dict:
+    """Validate params and suggest corrections for common mistakes.
+
+    Two-level validation:
+    1. Schema-level: check required fields against params_schema
+    2. Module-level: call module's own validate_params (if class-based)
+
+    Returns:
+        {"valid": True, "module_id": ...} on success.
+        {"valid": False, "errors": [...], "suggestions": {...}} on failure.
+        suggestions may include auto-corrected params the caller can use directly.
+    """
     try:
         from core.modules.registry import ModuleRegistry
 
+        # Check module exists
+        meta = ModuleRegistry.get_metadata(module_id)
+        if not meta:
+            from core.catalog.module import search_modules
+            alternatives = search_modules(module_id.replace('.', ' '), limit=5)
+            alt_ids = [a['module_id'] for a in alternatives]
+            # Sort alternatives by similarity to original module_id
+            # Prefer exact partial matches (functions.file.write → file.write)
+            parts = module_id.lower().split('.')
+            def _sim(mid):
+                score = 0
+                for part in parts:
+                    if part in mid.lower():
+                        score += 1
+                return -score  # negative for ascending sort
+            alt_ids.sort(key=_sim)
+            return {
+                "valid": False,
+                "errors": ["Module not found: {}".format(module_id)],
+                "suggestions": {"alternatives": alt_ids[:3]} if alt_ids else {},
+            }
+
+        schema = meta.get('params_schema', {})
+
+        # Level 1: Schema-based validation (always runs)
+        if schema:
+            missing = []
+            for field_name, field_meta in schema.items():
+                if field_meta.get('required', False) and field_name not in params:
+                    missing.append(field_name)
+
+            if missing:
+                errors = ["Missing required parameter: {}".format(f) for f in missing]
+                suggestions = _suggest_param_fixes(params, schema, "; ".join(errors))
+                result = {"valid": False, "errors": errors}
+                if suggestions:
+                    result["suggestions"] = suggestions
+                return result
+
+        # Level 2: Module-level validation (class-based modules)
         module_class = ModuleRegistry.get(module_id)
-        if not module_class:
-            return {"valid": False, "errors": [f"Module not found: {module_id}"]}
+        if module_class:
+            try:
+                module_instance = module_class(params, {})
+                module_instance.validate_params()
+            except Exception as e:
+                error_msg = str(e)
+                suggestions = _suggest_param_fixes(params, schema, error_msg)
+                result = {"valid": False, "errors": [error_msg]}
+                if suggestions:
+                    result["suggestions"] = suggestions
+                return result
 
-        module_instance = module_class(params, {})
-
-        try:
-            module_instance.validate_params()
-            return {"valid": True, "module_id": module_id}
-        except Exception as e:
-            return {"valid": False, "errors": [str(e)]}
+        return {"valid": True, "module_id": module_id}
 
     except Exception as e:
         return {"valid": False, "errors": [str(e)]}
+
+
+# Field name aliases for auto-correction
+_PARAM_ALIASES = {
+    "text": ["input", "content", "value", "data", "string", "message", "body", "source"],
+    "path": ["file", "file_path", "filepath", "output", "filename", "output_path"],
+    "search": ["find", "pattern", "query", "old", "from_text"],
+    "replace": ["replacement", "new", "to", "with_text"],
+    "url": ["endpoint", "link", "href", "address", "uri"],
+    "selector": ["css", "element", "target", "query_selector"],
+    "content": ["text", "body", "data", "value", "message"],
+}
+
+
+def _suggest_param_fixes(
+    params: Dict[str, Any],
+    schema: Dict[str, Any],
+    error_msg: str,
+) -> Dict[str, Any]:
+    """Generate correction suggestions for invalid params.
+
+    Returns a dict with:
+    - corrected_params: auto-fixed version the caller can use directly
+    - hints: human-readable fix instructions
+    """
+    if not schema:
+        return {}
+
+    required = {k: v for k, v in schema.items() if v.get('required', False)}
+    corrected = dict(params)
+    hints = []
+    was_corrected = False
+
+    for field_name, field_meta in required.items():
+        if field_name in params:
+            continue  # Already present
+
+        # Try alias mapping
+        if field_name in _PARAM_ALIASES:
+            for alias in _PARAM_ALIASES[field_name]:
+                if alias in params:
+                    corrected[field_name] = params[alias]
+                    hints.append(f"'{alias}' → '{field_name}' (auto-corrected)")
+                    was_corrected = True
+                    break
+
+        # Fill defaults from schema
+        if field_name not in corrected and 'default' in field_meta:
+            corrected[field_name] = field_meta['default']
+            was_corrected = True
+
+    if not was_corrected:
+        # Just show what's needed
+        missing = [f"{k} ({v.get('type','?')})" for k, v in required.items() if k not in params]
+        if missing:
+            hints.append(f"Missing required: {', '.join(missing)}")
+
+    result = {}
+    if was_corrected:
+        result["corrected_params"] = corrected
+    if hints:
+        result["hints"] = hints
+    return result
 
 
 def get_module_examples(module_id: str) -> dict:

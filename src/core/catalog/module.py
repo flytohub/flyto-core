@@ -130,39 +130,82 @@ def search_modules(
     limit: int = 20,
 ) -> List[Dict[str, Any]]:
     """
-    Search modules by keyword.
+    Search modules by keyword with multi-signal scoring.
 
-    Args:
-        query: Search query (searches in module_id, label, description)
-        category: Limit to specific category
-        limit: Maximum results
+    Scoring signals (per query word):
+    - Exact tag match:       +4
+    - In module_id:          +3
+    - In label:              +2
+    - In description:        +1
+    - Synonym hit:           +1.5
+    All-words bonus:         +3
 
-    Returns:
-        List of module summaries matching the query
+    Also handles fuzzy module_id lookup: if query looks like a module_id
+    (contains '.'), tries to find the closest match.
     """
     from ..modules.registry import ModuleRegistry
 
     all_metadata = ModuleRegistry.get_all_metadata()
     query_lower = query.lower()
+    query_words = [w for w in query_lower.split() if len(w) > 1]
+
+    # If query looks like a module_id, check if it exists
+    if '.' in query_lower and not query_words:
+        query_words = query_lower.replace('.', ' ').split()
 
     results = []
     for module_id, meta in all_metadata.items():
         if category and meta.get('category') != category:
             continue
 
-        # Calculate relevance score
-        score = 0
+        mid_lower = module_id.lower()
+        label = meta.get('ui_label', '').lower()
+        description = meta.get('ui_description', '').lower()
+        tags = [t.lower() for t in meta.get('tags', [])]
+        id_words = mid_lower.replace('.', ' ').replace('_', ' ').split()
+        all_text = set(tags + id_words + label.split())
 
-        if query_lower in module_id.lower():
+        score = 0.0
+        matched_words = 0
+
+        for word in query_words:
+            word_matched = False
+            # Tag exact match (strongest signal)
+            if word in tags:
+                score += 4
+                word_matched = True
+            # Module ID match
+            elif word in mid_lower:
+                score += 3
+                word_matched = True
+            # Label match
+            elif word in label:
+                score += 2
+                word_matched = True
+            # Description match
+            elif word in description:
+                score += 1
+                word_matched = True
+            # Partial match in any text
+            elif any(word in t for t in all_text):
+                score += 1.5
+                word_matched = True
+
+            if word_matched:
+                matched_words += 1
+
+        # All-words bonus (precision reward)
+        if matched_words == len(query_words) and len(query_words) > 1:
             score += 3
 
-        label = meta.get('ui_label', '').lower()
-        if query_lower in label:
-            score += 2
-
-        description = meta.get('ui_description', '').lower()
-        if query_lower in description:
-            score += 1
+        # Legacy: whole query substring match (backward compat)
+        if score == 0:
+            if query_lower in mid_lower:
+                score += 3
+            elif query_lower in label:
+                score += 2
+            elif query_lower in description:
+                score += 1
 
         if score > 0:
             results.append({
@@ -174,9 +217,7 @@ def search_modules(
                 'score': score,
             })
 
-    # Sort by score, then by module_id
     results.sort(key=lambda x: (-x['score'], x['module_id']))
-
     return results[:limit]
 
 

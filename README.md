@@ -207,6 +207,13 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ---
 
+## What's New in v2.19.0
+
+- **Smart validate_params** — auto-corrects wrong field names via alias mapping (e.g., `site` to `url`) and suggests alternatives when a non-existent module is requested
+- **Enhanced search_modules** — word-level and tag matching scoring replaces the old substring-only search, producing more relevant results for natural language queries
+- **browser.extract default text mode** — when no `fields` are specified, `browser.extract` now returns the text content of matched elements by default (previously returned empty objects)
+- **Browser channel support** — pass `channel: 'chrome'` to `browser.launch` to use the system-installed Chrome instead of bundled Chromium, useful for bypassing anti-bot detection on sites that fingerprint headless browsers
+
 ## Engine Features
 
 - **Execution Trace** — structured record of every step: input, output, timing, status
