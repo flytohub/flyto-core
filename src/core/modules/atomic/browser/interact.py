@@ -134,7 +134,7 @@ logger = logging.getLogger(__name__)
     ],
     author='Flyto Team',
     license='MIT',
-    timeout_ms=5000,
+    timeout_ms=0,  # No module-level timeout — waits indefinitely for user interaction
 )
 class BrowserInteractModule(BaseModule):
     """
