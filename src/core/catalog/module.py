@@ -124,6 +124,69 @@ def get_modules_batch(module_ids: List[str]) -> Dict[str, Dict[str, Any]]:
     return result
 
 
+def _score_module(
+    query_words: List[str],
+    query_lower: str,
+    module_id: str,
+    meta: Dict[str, Any],
+) -> float:
+    """Score a single module against query words.
+
+    Scoring signals (per query word):
+    - Exact tag match:       +4
+    - In module_id:          +3
+    - In label:              +2
+    - In description:        +1
+    - Partial text match:    +1.5
+    All-words bonus:         +3
+    """
+    mid_lower = module_id.lower()
+    label = meta.get('ui_label', '').lower()
+    description = meta.get('ui_description', '').lower()
+    tags = [t.lower() for t in meta.get('tags', [])]
+    id_words = mid_lower.replace('.', ' ').replace('_', ' ').split()
+    all_text = set(tags + id_words + label.split())
+
+    score = 0.0
+    matched_words = 0
+
+    for word in query_words:
+        word_matched = False
+        if word in tags:
+            score += 4
+            word_matched = True
+        elif word in mid_lower:
+            score += 3
+            word_matched = True
+        elif word in label:
+            score += 2
+            word_matched = True
+        elif word in description:
+            score += 1
+            word_matched = True
+        elif any(word in t for t in all_text):
+            score += 1.5
+            word_matched = True
+
+        if word_matched:
+            matched_words += 1
+
+    # All-words bonus (precision reward)
+    if matched_words == len(query_words) and len(query_words) > 1:
+        score += 3
+
+    # Legacy: whole query substring match (backward compat)
+    if score == 0:
+        if query_lower in mid_lower:
+            score += 3
+        elif query_lower in label:
+            score += 2
+        elif query_lower in description:
+            score += 1
+
+    return score
+
+
 def search_modules(
     query: str,
     category: Optional[str] = None,
@@ -131,14 +194,6 @@ def search_modules(
 ) -> List[Dict[str, Any]]:
     """
     Search modules by keyword with multi-signal scoring.
-
-    Scoring signals (per query word):
-    - Exact tag match:       +4
-    - In module_id:          +3
-    - In label:              +2
-    - In description:        +1
-    - Synonym hit:           +1.5
-    All-words bonus:         +3
 
     Also handles fuzzy module_id lookup: if query looks like a module_id
     (contains '.'), tries to find the closest match.
@@ -149,7 +204,7 @@ def search_modules(
     query_lower = query.lower()
     query_words = [w for w in query_lower.split() if len(w) > 1]
 
-    # If query looks like a module_id, check if it exists
+    # If query looks like a module_id, split on dots for word matching
     if '.' in query_lower and not query_words:
         query_words = query_lower.replace('.', ' ').split()
 
@@ -158,55 +213,7 @@ def search_modules(
         if category and meta.get('category') != category:
             continue
 
-        mid_lower = module_id.lower()
-        label = meta.get('ui_label', '').lower()
-        description = meta.get('ui_description', '').lower()
-        tags = [t.lower() for t in meta.get('tags', [])]
-        id_words = mid_lower.replace('.', ' ').replace('_', ' ').split()
-        all_text = set(tags + id_words + label.split())
-
-        score = 0.0
-        matched_words = 0
-
-        for word in query_words:
-            word_matched = False
-            # Tag exact match (strongest signal)
-            if word in tags:
-                score += 4
-                word_matched = True
-            # Module ID match
-            elif word in mid_lower:
-                score += 3
-                word_matched = True
-            # Label match
-            elif word in label:
-                score += 2
-                word_matched = True
-            # Description match
-            elif word in description:
-                score += 1
-                word_matched = True
-            # Partial match in any text
-            elif any(word in t for t in all_text):
-                score += 1.5
-                word_matched = True
-
-            if word_matched:
-                matched_words += 1
-
-        # All-words bonus (precision reward)
-        if matched_words == len(query_words) and len(query_words) > 1:
-            score += 3
-
-        # Legacy: whole query substring match (backward compat)
-        if score == 0:
-            if query_lower in mid_lower:
-                score += 3
-            elif query_lower in label:
-                score += 2
-            elif query_lower in description:
-                score += 1
-
+        score = _score_module(query_words, query_lower, module_id, meta)
         if score > 0:
             results.append({
                 'module_id': module_id,

@@ -94,8 +94,9 @@ class BrowserExtractModule(BaseModule):
         if self.limit:
             elements = elements[:self.limit]
 
-        # Simple mode: if 'attribute' param is provided without 'fields', extract directly
-        # This supports composite modules that pass {'selector': 'a', 'attribute': 'href'}
+        # --- Mode 1: Simple attribute extraction ---
+        # When 'attribute' is set without 'fields', extract a single attribute
+        # per element. Used by composite modules (e.g. {'selector': 'a', 'attribute': 'href'}).
         simple_attribute = self.params.get('attribute')
         if simple_attribute and not self.fields:
             results = []
@@ -112,7 +113,9 @@ class BrowserExtractModule(BaseModule):
                     results.append(None)
             return {"status": "success", "data": results, "count": len(results)}
 
-        # Default mode: no fields, no attribute → extract text content
+        # --- Mode 2: Default text extraction ---
+        # No fields, no attribute → extract text (or html/href via extract_type).
+        # Returns empty list with a hint if no content is found.
         if not self.fields:
             extract_type = self.params.get('extract_type', 'text')
             results = []
@@ -138,7 +141,9 @@ class BrowserExtractModule(BaseModule):
                 "hint": "No text content found for selector '{}'. Try browser.evaluate with JavaScript instead.".format(self.selector),
             }
 
-        # Complex mode: extract multiple fields per element
+        # --- Mode 3: Multi-field structured extraction ---
+        # Extract multiple named fields per element using sub-selectors.
+        # Supports comma-separated selectors as fallback chain.
         results = []
         for element in elements:
             item = {}

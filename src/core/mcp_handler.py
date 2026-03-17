@@ -291,6 +291,23 @@ _PARAM_ALIASES = {
 }
 
 
+def _try_alias_fix(
+    field_name: str,
+    params: Dict[str, Any],
+) -> Optional[tuple]:
+    """Try to resolve a missing field via alias mapping.
+
+    Returns (alias_used, value) if a match is found, else None.
+    """
+    aliases = _PARAM_ALIASES.get(field_name)
+    if not aliases:
+        return None
+    for alias in aliases:
+        if alias in params:
+            return (alias, params[alias])
+    return None
+
+
 def _suggest_param_fixes(
     params: Dict[str, Any],
     schema: Dict[str, Any],
@@ -312,24 +329,23 @@ def _suggest_param_fixes(
 
     for field_name, field_meta in required.items():
         if field_name in params:
-            continue  # Already present
+            continue
 
         # Try alias mapping
-        if field_name in _PARAM_ALIASES:
-            for alias in _PARAM_ALIASES[field_name]:
-                if alias in params:
-                    corrected[field_name] = params[alias]
-                    hints.append(f"'{alias}' → '{field_name}' (auto-corrected)")
-                    was_corrected = True
-                    break
+        alias_match = _try_alias_fix(field_name, params)
+        if alias_match:
+            alias, value = alias_match
+            corrected[field_name] = value
+            hints.append(f"'{alias}' → '{field_name}' (auto-corrected)")
+            was_corrected = True
+            continue
 
         # Fill defaults from schema
-        if field_name not in corrected and 'default' in field_meta:
+        if 'default' in field_meta:
             corrected[field_name] = field_meta['default']
             was_corrected = True
 
     if not was_corrected:
-        # Just show what's needed
         missing = [f"{k} ({v.get('type','?')})" for k, v in required.items() if k not in params]
         if missing:
             hints.append(f"Missing required: {', '.join(missing)}")
