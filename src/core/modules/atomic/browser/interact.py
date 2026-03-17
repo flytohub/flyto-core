@@ -195,7 +195,7 @@ class BrowserInteractModule(BaseModule):
         }
 
         # 4. Create breakpoint and wait for user response
-        from ....engine.breakpoint import (
+        from ....engine.breakpoints import (
             get_breakpoint_manager,
             ApprovalMode,
         )
