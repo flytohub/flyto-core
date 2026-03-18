@@ -14,8 +14,7 @@ from typing import Any, Dict
 
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, field, presets
-from ...schema.constants import FieldGroup
+from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 logger = logging.getLogger(__name__)
@@ -91,11 +90,6 @@ logger = logging.getLogger(__name__)
         presets.TIMEOUT_SECONDS(default=0),
     ),
     output_schema={
-        '__event__': {
-            'type': 'string',
-            'description': 'Event for routing (approved/rejected/timeout)',
-            'description_key': 'modules.browser.interact.output.__event__.description',
-        },
         'status': {
             'type': 'string',
             'description': 'Operation status',
@@ -238,7 +232,7 @@ class BrowserInteractModule(BaseModule):
         wait_ms = int((end_time - start_time).total_seconds() * 1000)
 
         # 5. Handle resolution
-        from ....engine.breakpoint import BreakpointStatus
+        from ....engine.breakpoints import BreakpointStatus
 
         if result.status == BreakpointStatus.APPROVED:
             # Execute the user's chosen action
@@ -249,7 +243,11 @@ class BrowserInteractModule(BaseModule):
             if not selector:
                 raise RuntimeError("No selector provided in interact response")
 
-            action_result = await self._execute_action(page, browser, action, selector, value)
+            try:
+                action_result = await self._execute_action(page, browser, action, selector, value)
+            except Exception as e:
+                logger.warning("browser.interact action failed: %s %s → %s", action, selector, e)
+                action_result = {'action_status': 'error', 'error': str(e)}
 
             output_data = {
                 'status': 'success',
