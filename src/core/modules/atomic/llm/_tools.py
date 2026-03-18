@@ -42,7 +42,7 @@ async def build_tool_definitions(tool_ids: List[str]) -> List[Dict]:
                 params_list = raw_schema
 
             function_def = {
-                "name": tool_id.replace('.', '_'),
+                "name": tool_id.replace('.', '--'),
                 "description": metadata.get('ui_description') or metadata.get('description', f'Execute {tool_id}'),
                 "parameters": _schema_to_json_schema(params_list)
             }
@@ -106,7 +106,7 @@ def _map_type(flyto_type: str) -> str:
 
 async def execute_tool(tool_name: str, arguments: Dict, parent_context: Dict) -> Dict:
     """Execute a tool (module) and return results."""
-    module_id = tool_name.replace('_', '.')
+    module_id = tool_name.replace('--', '.')
 
     registry = get_registry()
 

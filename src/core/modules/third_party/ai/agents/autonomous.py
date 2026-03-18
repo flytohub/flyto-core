@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
     max_retries=2,
     concurrent_safe=True,
     requires_credentials=True,
-    credential_keys=['OPENAI_API_KEY', 'ANTHROPIC_API_KEY'],
+    credential_keys=['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'GOOGLE_AI_API_KEY'],
     handles_sensitive_data=True,
     required_permissions=['ai.api'],
     params_schema={
@@ -83,7 +83,9 @@ logger = logging.getLogger(__name__)
             'description_key': 'modules.agent.autonomous.params.llm_provider.description',
             'options': [
                 {'label': 'OpenAI (Cloud)', 'value': 'openai'},
-                {'label': 'Ollama (Local)', 'value': 'ollama'}
+                {'label': 'Anthropic (Cloud)', 'value': 'anthropic'},
+                {'label': 'Google Gemini (Cloud)', 'value': 'gemini'},
+                {'label': 'Ollama (Local)', 'value': 'ollama'},
             ],
             'default': 'openai',
             'required': False

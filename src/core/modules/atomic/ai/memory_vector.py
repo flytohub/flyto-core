@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from ...registry import register_module
 from ...schema import compose, field
 from ...types import NodeType, EdgeType, DataType
+from ..vector.embeddings import EmbeddingGenerator
 
 
 @register_module(
@@ -161,11 +162,15 @@ async def ai_memory_vector(context: Dict[str, Any]) -> Dict[str, Any]:
     session_id = params.get('session_id') or str(uuid.uuid4())
     include_metadata = params.get('include_metadata', True)
 
-    # Initialize vector store (in-memory for now)
+    # Initialize embedding generator
+    provider = 'openai' if embedding_model.startswith('text-embedding') else 'local'
+    embedder = EmbeddingGenerator(provider=provider, model=embedding_model)
+
+    # Initialize vector store (in-memory)
     vector_store = context.get('_vector_store', {
         'embeddings': [],
         'messages': [],
-        'metadata': []
+        'metadata': [],
     })
 
     config = {
@@ -184,41 +189,51 @@ async def ai_memory_vector(context: Dict[str, Any]) -> Dict[str, Any]:
         'session_id': session_id,
         'embedding_model': embedding_model,
         'vector_store': vector_store,
+        'embedder': embedder,
         'config': config,
         '__methods__': {
             'add_message': '_vector_add_message',
             'search': '_vector_search',
             'get_relevant': '_vector_get_relevant',
-            'clear': '_vector_clear'
-        }
+            'clear': '_vector_clear',
+        },
     }
 
 
 async def _vector_add_message(memory_state: Dict, role: str, content: str, embedding: List[float] = None) -> None:
-    """Add a message with its embedding to vector memory"""
+    """Add a message with its embedding to vector memory."""
     import time
 
     store = memory_state['vector_store']
 
     message = {
         'role': role,
-        'content': content
+        'content': content,
     }
 
     metadata = {
         'timestamp': time.time(),
-        'index': len(store['messages'])
+        'index': len(store['messages']),
     }
 
     store['messages'].append(message)
     store['metadata'].append(metadata)
 
-    # Store embedding if provided
+    # Generate real embedding if not provided
     if embedding:
         store['embeddings'].append(embedding)
     else:
-        # Placeholder - actual embedding would be generated
-        store['embeddings'].append([0.0] * 1536)
+        embedder = memory_state.get('embedder')
+        if embedder:
+            try:
+                embedding = embedder.generate(content)
+                store['embeddings'].append(embedding)
+            except Exception:
+                # Fallback to zero vector if embedding fails
+                dim = embedder.get_dimension()
+                store['embeddings'].append([0.0] * dim)
+        else:
+            store['embeddings'].append([0.0] * 1536)
 
 
 def _vector_search(memory_state: Dict, query_embedding: List[float], top_k: int = None) -> List[Dict]:
@@ -257,10 +272,21 @@ def _vector_search(memory_state: Dict, query_embedding: List[float], top_k: int 
 
 
 def _vector_get_relevant(memory_state: Dict, query: str) -> List[Dict]:
-    """Get relevant messages for a query (placeholder for embedding generation)"""
-    # In production, this would generate embedding for query
-    # and call _vector_search
-    return memory_state['vector_store']['messages'][-5:]
+    """Get relevant messages for a query using semantic search."""
+    embedder = memory_state.get('embedder')
+    if embedder:
+        try:
+            query_embedding = embedder.generate(query)
+            return _vector_search(memory_state, query_embedding)
+        except Exception:
+            pass
+    # Fallback: return recent messages
+    config = memory_state.get('config', {})
+    top_k = config.get('top_k', 5)
+    return [
+        {'message': m, 'metadata': {}, 'similarity': 1.0}
+        for m in memory_state['vector_store']['messages'][-top_k:]
+    ]
 
 
 def _vector_clear(memory_state: Dict) -> None:

@@ -67,9 +67,14 @@ logger = logging.getLogger(__name__)
             'description': 'OpenAI model to use',
             'description_key': 'modules.api.openai.chat.params.model.description',
             'options': [
+                {'label': 'GPT-4o', 'value': 'gpt-4o'},
+                {'label': 'GPT-4o Mini', 'value': 'gpt-4o-mini'},
+                {'label': 'GPT-4.1', 'value': 'gpt-4.1'},
+                {'label': 'GPT-4.1 Mini', 'value': 'gpt-4.1-mini'},
+                {'label': 'o3', 'value': 'o3'},
+                {'label': 'o3 Mini', 'value': 'o3-mini'},
+                {'label': 'o4 Mini', 'value': 'o4-mini'},
                 {'label': 'GPT-4 Turbo', 'value': 'gpt-4-turbo-preview'},
-                {'label': 'GPT-4', 'value': 'gpt-4'},
-                {'label': 'GPT-3.5 Turbo', 'value': 'gpt-3.5-turbo'}
             ],
             'default': APIEndpoints.DEFAULT_OPENAI_MODEL,
             'required': False
@@ -166,7 +171,6 @@ class OpenAIChatModule(BaseModule):
 
     async def execute(self) -> Any:
         try:
-            # Import OpenAI
             try:
                 import openai
             except ImportError:
@@ -174,9 +178,6 @@ class OpenAIChatModule(BaseModule):
                     "OpenAI library not installed. "
                     "Install with: pip install openai"
                 )
-
-            # Set API key
-            openai.api_key = self.api_key
 
             # Build messages
             messages = []
@@ -190,12 +191,16 @@ class OpenAIChatModule(BaseModule):
                 "content": self.prompt
             })
 
-            # Make API call
-            response = await openai.ChatCompletion.acreate(
+            # Use new OpenAI client (>= 1.0)
+            client = openai.AsyncOpenAI(
+                api_key=self.api_key,
+                timeout=120.0,
+            )
+            response = await client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=self.temperature,
-                max_tokens=self.max_tokens
+                max_tokens=self.max_tokens,
             )
 
             return {

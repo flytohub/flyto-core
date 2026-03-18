@@ -234,10 +234,10 @@ class APIEndpoints:
     ANTHROPIC_BASE_URL: str = "https://api.anthropic.com/v1"
     ANTHROPIC_MESSAGES_URL: str = f"{ANTHROPIC_BASE_URL}/messages"
     ANTHROPIC_API_VERSION: str = "2023-06-01"
-    DEFAULT_ANTHROPIC_MODEL: str = "claude-3-5-sonnet-20241022"
+    DEFAULT_ANTHROPIC_MODEL: str = "claude-sonnet-4-6"
 
     # Google Gemini
-    DEFAULT_GEMINI_MODEL: str = "gemini-1.5-pro"
+    DEFAULT_GEMINI_MODEL: str = "gemini-2.5-pro"
 
     # Twilio
     TWILIO_BASE_URL: str = "https://api.twilio.com/2010-04-01"
@@ -254,7 +254,7 @@ class APIEndpoints:
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_CHAT_COMPLETIONS: str = f"{OPENAI_BASE_URL}/chat/completions"
     OPENAI_EMBEDDINGS: str = f"{OPENAI_BASE_URL}/embeddings"
-    DEFAULT_OPENAI_MODEL: str = "gpt-4-turbo-preview"
+    DEFAULT_OPENAI_MODEL: str = "gpt-4o"
 
     # Database Defaults
     MYSQL_DEFAULT_PORT: int = 3306

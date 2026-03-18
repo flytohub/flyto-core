@@ -66,9 +66,11 @@ logger = logging.getLogger(__name__)
             'default': APIEndpoints.DEFAULT_ANTHROPIC_MODEL,
             'required': False,
             'options': [
+                {'value': 'claude-sonnet-4-6', 'label': 'Claude Sonnet 4.6'},
+                {'value': 'claude-opus-4-6', 'label': 'Claude Opus 4.6'},
+                {'value': 'claude-haiku-4-5-20251001', 'label': 'Claude Haiku 4.5'},
                 {'value': 'claude-3-5-sonnet-20241022', 'label': 'Claude 3.5 Sonnet'},
                 {'value': 'claude-3-opus-20240229', 'label': 'Claude 3 Opus'},
-                {'value': 'claude-3-haiku-20240307', 'label': 'Claude 3 Haiku'}
             ]
         },
         'messages': {
@@ -96,7 +98,7 @@ logger = logging.getLogger(__name__)
             'default': 1024,
             'required': False,
             'min': 1,
-            'max': 4096
+            'max': 16384
         },
         'temperature': {
             'type': 'number',
@@ -278,9 +280,11 @@ async def anthropic_chat(context):
             'default': APIEndpoints.DEFAULT_GEMINI_MODEL,
             'required': False,
             'options': [
+                {'value': 'gemini-2.5-pro', 'label': 'Gemini 2.5 Pro'},
+                {'value': 'gemini-2.5-flash', 'label': 'Gemini 2.5 Flash'},
+                {'value': 'gemini-2.0-flash', 'label': 'Gemini 2.0 Flash'},
                 {'value': 'gemini-1.5-pro', 'label': 'Gemini 1.5 Pro'},
                 {'value': 'gemini-1.5-flash', 'label': 'Gemini 1.5 Flash'},
-                {'value': 'gemini-pro', 'label': 'Gemini Pro'}
             ]
         },
         'prompt': {

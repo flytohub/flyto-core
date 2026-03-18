@@ -15,6 +15,7 @@ from typing import Any, Dict, List
 
 import aiohttp
 
+from ....atomic.llm._tools import execute_tool, build_tool_definitions
 from ....registry import register_module
 from ....schema import compose, field
 from ....errors import ValidationError, ModuleError
@@ -230,11 +231,11 @@ async def agent_tool_use(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         if provider == 'openai':
             return await _run_openai_agent(
-                api_key, model, prompt, tools, max_iterations, system_prompt,
+                api_key, model, prompt, tools, max_iterations, system_prompt, context,
             )
         elif provider == 'anthropic':
             return await _run_anthropic_agent(
-                api_key, model, prompt, tools, max_iterations, system_prompt,
+                api_key, model, prompt, tools, max_iterations, system_prompt, context,
             )
         else:
             raise ValidationError(
@@ -279,6 +280,7 @@ async def _run_openai_agent(
     tools: List[Dict[str, Any]],
     max_iterations: int,
     system_prompt: str,
+    context: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """Run the tool-use loop with OpenAI."""
     openai_tools = _format_openai_tools(tools)
@@ -358,12 +360,17 @@ async def _run_openai_agent(
                 }
                 all_tool_calls.append(tool_call_record)
 
-                # Return tool result as placeholder
-                # Actual execution is delegated to the workflow engine via __tool_calls__
-                tool_result = json.dumps({
-                    "status": "delegated",
-                    "message": f"Tool '{tool_name}' call delegated to workflow engine",
-                })
+                # Execute the tool (module) directly
+                try:
+                    tool_exec_result = await execute_tool(
+                        tool_name, tool_args, context or {},
+                    )
+                    tool_result = json.dumps(tool_exec_result, default=str)
+                except Exception as e:
+                    logger.error(f"Tool execution error for {tool_name}: {e}")
+                    tool_result = json.dumps({"error": str(e)})
+
+                tool_call_record['result'] = tool_result
 
                 messages.append({
                     "role": "tool",
@@ -397,6 +404,7 @@ async def _run_anthropic_agent(
     tools: List[Dict[str, Any]],
     max_iterations: int,
     system_prompt: str,
+    context: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """Run the tool-use loop with Anthropic."""
     anthropic_tools = _format_anthropic_tools(tools)
@@ -480,13 +488,22 @@ async def _run_anthropic_agent(
                 }
                 all_tool_calls.append(tool_call_record)
 
+                # Execute the tool (module) directly
+                try:
+                    tool_exec_result = await execute_tool(
+                        tool_name, tool_input, context or {},
+                    )
+                    tool_content = json.dumps(tool_exec_result, default=str)
+                except Exception as e:
+                    logger.error(f"Tool execution error for {tool_name}: {e}")
+                    tool_content = json.dumps({"error": str(e)})
+
+                tool_call_record['result'] = tool_content
+
                 tool_results.append({
                     "type": "tool_result",
                     "tool_use_id": tool_use_id,
-                    "content": json.dumps({
-                        "status": "delegated",
-                        "message": f"Tool '{tool_name}' call delegated to workflow engine",
-                    }),
+                    "content": tool_content,
                 })
 
             messages.append({"role": "user", "content": tool_results})
