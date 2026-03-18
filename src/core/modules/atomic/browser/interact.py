@@ -165,11 +165,27 @@ class BrowserInteractModule(BaseModule):
 
         # 2. Take screenshot (JPEG for smaller size)
         screenshot_b64 = ''
+        screenshot_url = ''
+        screenshot_raw = b''
         try:
-            raw = await page.screenshot(type='jpeg', quality=60)
-            screenshot_b64 = base64.b64encode(raw).decode('ascii')
+            screenshot_raw = await page.screenshot(type='jpeg', quality=60)
+            screenshot_b64 = base64.b64encode(screenshot_raw).decode('ascii')
         except Exception as e:
             logger.debug("Failed to take screenshot for interact: %s", e)
+
+        # 2b. Upload screenshot if uploader is configured (cloud mode)
+        if screenshot_raw:
+            try:
+                from ....engine.breakpoints.screenshot import get_screenshot_uploader
+                uploader = get_screenshot_uploader()
+                if uploader:
+                    bp_id = f"interact_{self.context.get('execution_id', 'unknown')}_{self.context.get('step_id', 'unknown')}"
+                    screenshot_url = await uploader.upload(screenshot_raw, bp_id)
+                    if screenshot_url:
+                        # Clear base64 to save bandwidth in cloud mode
+                        screenshot_b64 = ''
+            except Exception as e:
+                logger.debug("Screenshot upload failed, using base64: %s", e)
 
         # 3. Build context snapshot for the interact dialog
         page_url = page.url
@@ -177,6 +193,7 @@ class BrowserInteractModule(BaseModule):
             '_interact': True,
             'url': page_url,
             'screenshot_base64': screenshot_b64,
+            'screenshot_url': screenshot_url,
             'screenshot_media_type': 'image/jpeg',
             'elements': hints.get('elements', []),
             'inputs': hints.get('inputs', []),

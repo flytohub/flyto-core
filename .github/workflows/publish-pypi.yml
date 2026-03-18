@@ -127,3 +127,22 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Trigger downstream rebuilds
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const repos = ['flyto-cloud'];
+            for (const repo of repos) {
+              try {
+                await github.rest.repos.createDispatchEvent({
+                  owner: 'flytohub',
+                  repo: repo,
+                  event_type: 'flyto-core-published',
+                });
+                console.log(`Triggered rebuild for ${repo}`);
+              } catch (e) {
+                console.warn(`Failed to trigger ${repo}: ${e.message}`);
+              }
+            }

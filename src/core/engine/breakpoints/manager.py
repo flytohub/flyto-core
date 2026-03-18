@@ -33,6 +33,11 @@ class BreakpointManager:
     """
     Manages breakpoint lifecycle.
 
+    Supports three deployment modes:
+    - Local (default): InMemoryBreakpointStore + asyncio.Event for same-process
+    - Cloud control plane: RedisBreakpointStore + Redis Pub/Sub
+    - Cloud worker: HttpBreakpointStore + HTTP polling to control plane
+
     Usage:
         manager = BreakpointManager(store, notifier)
 
@@ -262,9 +267,17 @@ class BreakpointManager:
         await self.store.update_status(breakpoint_id, status)
         self._results[breakpoint_id] = result
 
+        # In-process signal (local mode)
         event = self._resolution_events.get(breakpoint_id)
         if event:
             event.set()
+
+        # Cross-process signal (Redis Pub/Sub for cloud mode)
+        if hasattr(self.store, 'publish_resolution'):
+            try:
+                await self.store.publish_resolution(breakpoint_id, result)
+            except Exception as e:
+                logger.debug("Redis publish_resolution failed: %s", e)
 
         await self.notifier.notify_resolved(result)
 
@@ -277,11 +290,44 @@ class BreakpointManager:
         breakpoint_id: str,
         check_timeout: bool = True,
     ) -> BreakpointResult:
-        """Wait for breakpoint resolution."""
+        """
+        Wait for breakpoint resolution.
+
+        Automatically selects the best waiting strategy:
+        - HttpBreakpointStore: HTTP polling to control plane
+        - RedisBreakpointStore: Redis Pub/Sub subscription
+        - InMemoryBreakpointStore: asyncio.Event (same process)
+        """
         request = await self.store.load(breakpoint_id)
         if not request:
             raise ValueError(f"Breakpoint not found: {breakpoint_id}")
 
+        # Strategy 1: HTTP store — delegate to its poll-based wait
+        if hasattr(self.store, 'wait_for_resolution'):
+            timeout = 0
+            if request.timeout_seconds and request.timeout_seconds > 0:
+                timeout = request.timeout_seconds
+            result = await self.store.wait_for_resolution(breakpoint_id, timeout=timeout)
+            if result:
+                self._results[breakpoint_id] = result
+                return result
+            return await self._resolve(breakpoint_id, BreakpointStatus.TIMEOUT)
+
+        # Strategy 2: Redis store — subscribe for cross-process notification
+        if hasattr(self.store, 'subscribe_resolution'):
+            timeout = 0
+            if request.timeout_seconds and request.timeout_seconds > 0:
+                timeout = request.timeout_seconds
+            result = await self.store.subscribe_resolution(breakpoint_id, timeout=timeout)
+            if result:
+                self._results[breakpoint_id] = result
+                return result
+            # Check if resolved while subscribing
+            if breakpoint_id in self._results:
+                return self._results[breakpoint_id]
+            return await self._resolve(breakpoint_id, BreakpointStatus.TIMEOUT)
+
+        # Strategy 3: In-memory — asyncio.Event (original behavior)
         event = self._resolution_events.get(breakpoint_id)
         if not event:
             event = asyncio.Event()
@@ -382,3 +428,95 @@ def set_global_breakpoint_manager(manager: BreakpointManager) -> None:
     """Set the global breakpoint manager instance"""
     global _breakpoint_manager
     _breakpoint_manager = manager
+
+
+def create_cloud_worker_manager(
+    control_plane_url: str,
+    auth_token: str = "",
+    poll_interval: float = 1.0,
+) -> BreakpointManager:
+    """
+    Create a breakpoint manager for cloud workers.
+
+    Uses HttpBreakpointStore to communicate with the control plane API.
+    The worker creates breakpoints on the control plane and polls
+    for user responses.
+
+    Args:
+        control_plane_url: Control plane API URL (e.g., "https://api.flyto.app")
+        auth_token: Bearer token for worker authentication
+        poll_interval: Seconds between status polls
+
+    Returns:
+        BreakpointManager configured for cloud worker mode
+    """
+    from .store_http import HttpBreakpointStore
+
+    store = HttpBreakpointStore(
+        base_url=control_plane_url,
+        auth_token=auth_token,
+        poll_interval=poll_interval,
+    )
+
+    return BreakpointManager(
+        store=store,
+        notifier=NullNotifier(),
+        poll_interval=poll_interval,
+    )
+
+
+def auto_configure_breakpoint_manager() -> BreakpointManager:
+    """
+    Auto-detect deployment mode and configure the breakpoint manager.
+
+    Environment variables:
+    - DEPLOYMENT_MODE: "local" (default), "cloud", "worker"
+    - CONTROL_PLANE_URL: required for "worker" mode
+    - WORKER_AUTH_TOKEN: auth token for worker mode
+    - REDIS_URL: if set in "cloud" mode, uses Redis store
+
+    Returns:
+        Configured BreakpointManager (also set as global)
+    """
+    import os
+
+    mode = os.environ.get("DEPLOYMENT_MODE", "local")
+    manager = None
+
+    if mode == "worker":
+        control_plane_url = os.environ.get("CONTROL_PLANE_URL", "")
+        if not control_plane_url:
+            logger.warning("CONTROL_PLANE_URL not set for worker mode, using in-memory")
+            manager = BreakpointManager()
+        else:
+            auth_token = os.environ.get("WORKER_AUTH_TOKEN", "")
+            manager = create_cloud_worker_manager(
+                control_plane_url=control_plane_url,
+                auth_token=auth_token,
+            )
+            logger.info("Breakpoint manager: cloud worker → %s", control_plane_url)
+
+    elif mode == "cloud":
+        redis_url = os.environ.get("REDIS_URL", "")
+        if redis_url:
+            try:
+                import redis.asyncio as aioredis
+                from .store_redis import RedisBreakpointStore
+
+                redis_client = aioredis.from_url(redis_url, decode_responses=False)
+                store = RedisBreakpointStore(redis_client)
+                manager = BreakpointManager(store=store)
+                logger.info("Breakpoint manager: Redis store (%s)", redis_url[:30])
+            except ImportError:
+                logger.warning("redis package not available, using in-memory")
+                manager = BreakpointManager()
+        else:
+            manager = BreakpointManager()
+            logger.info("Breakpoint manager: in-memory (cloud, no Redis)")
+
+    else:
+        manager = BreakpointManager()
+        logger.info("Breakpoint manager: in-memory (local mode)")
+
+    set_global_breakpoint_manager(manager)
+    return manager
