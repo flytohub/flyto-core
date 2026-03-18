@@ -119,6 +119,15 @@ from ...schema.constants import FieldGroup, Visibility
             visibility=Visibility.EXPERT,
         ),
         field(
+            'stealth',
+            type='boolean',
+            label='Stealth Mode',
+            description='Anti-detection patches: WebGL fingerprint, canvas noise, navigator fixes. Always recommended.',
+            default=True,
+            required=False,
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
             'record_video_dir',
             type='string',
             label='Record Video Directory',
@@ -165,6 +174,7 @@ class BrowserLaunchModule(BaseModule):
         self.headless = self.params.get('headless', False)
         self.browser_type = self.params.get('browser_type', 'chromium')
         self.channel = self.params.get('channel', '')
+        self.stealth = self.params.get('stealth', True)
         self.proxy = self.params.get('proxy')
         self.user_agent = self.params.get('user_agent')
         self.locale = self.params.get('locale', 'en-US')
@@ -199,6 +209,7 @@ class BrowserLaunchModule(BaseModule):
             slow_mo=self.slow_mo,
             record_video_dir=self.record_video_dir,
             channel=self.channel or None,
+            stealth=self.stealth,
         )
 
         # Store in context for later use

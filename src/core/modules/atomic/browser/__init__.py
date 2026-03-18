@@ -45,6 +45,20 @@ from .record import *
 from .form import *
 from .pagination import *
 from .interact import *
+from .readability import *
+from .detect_list import *
+from .challenge import *
+from .response import *
+from .table import *
+from .extract_nested import *
+from .cookies_file import *
+from .pool import *
+from .robots import *
+from .sitemap import *
+from .throttle import *
+from .proxy_rotate import *
+from .login import *
+from .connect import *
 
 # Performance & Debug modules (Chrome DevTools MCP compatible)
 from .trace import *

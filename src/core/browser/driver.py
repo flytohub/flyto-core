@@ -93,6 +93,7 @@ class BrowserDriver:
         record_video_dir: Optional[str] = None,
         record_video_size: Optional[Dict[str, int]] = None,
         channel: Optional[str] = None,
+        stealth: bool = True,
     ) -> Dict[str, Any]:
         """
         Launch browser instance
@@ -200,72 +201,242 @@ class BrowserDriver:
                 self._context = await self._browser.new_context(**context_kwargs)
                 self._page = await self._context.new_page()
 
-            # Stealth: hide automation signals
+            # Stealth: comprehensive anti-detection patches
+            # Applied via add_init_script() so they run BEFORE any page JS.
+            # Disable with stealth=False if patches interfere with testing.
             languages_js = str(languages)
-            await self._context.add_init_script(f"""
-                // Hide navigator.webdriver
+            if stealth:
+                await self._context.add_init_script(f"""
+                // ═══════════════════════════════════════════════════════════
+                // 1. Core automation signals
+                // ═══════════════════════════════════════════════════════════
+
+                // Hide navigator.webdriver (primary bot signal)
                 Object.defineProperty(navigator, 'webdriver', {{ get: () => undefined }});
 
-                // Fix chrome runtime
-                window.chrome = {{ runtime: {{}}, loadTimes: () => {{}}, csi: () => {{}} }};
+                // Remove automation-related window properties
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+                delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
 
-                // Fix permissions query
+                // ═══════════════════════════════════════════════════════════
+                // 2. window.chrome — must look like real Chrome
+                // ═══════════════════════════════════════════════════════════
+
+                if (!window.chrome) window.chrome = {{}};
+                window.chrome.app = {{
+                    isInstalled: false,
+                    InstallState: {{ DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' }},
+                    RunningState: {{ CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' }},
+                    getDetails: () => null,
+                    getIsInstalled: () => false,
+                }};
+                window.chrome.runtime = {{
+                    OnInstalledReason: {{ CHROME_UPDATE: 'chrome_update', INSTALL: 'install', SHARED_MODULE_UPDATE: 'shared_module_update', UPDATE: 'update' }},
+                    OnRestartRequiredReason: {{ APP_UPDATE: 'app_update', OS_UPDATE: 'os_update', PERIODIC: 'periodic' }},
+                    PlatformArch: {{ ARM: 'arm', ARM64: 'arm64', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' }},
+                    PlatformNaclArch: {{ ARM: 'arm', MIPS: 'mips', MIPS64: 'mips64', X86_32: 'x86-32', X86_64: 'x86-64' }},
+                    PlatformOs: {{ ANDROID: 'android', CROS: 'cros', LINUX: 'linux', MAC: 'mac', OPENBSD: 'openbsd', WIN: 'win' }},
+                    RequestUpdateCheckStatus: {{ NO_UPDATE: 'no_update', THROTTLED: 'throttled', UPDATE_AVAILABLE: 'update_available' }},
+                    connect: () => {{ throw new TypeError("Cannot read properties of undefined (reading 'connect')"); }},
+                    sendMessage: () => {{ throw new TypeError("Cannot read properties of undefined (reading 'sendMessage')"); }},
+                    id: undefined,
+                }};
+                window.chrome.csi = () => ({{ onloadT: Date.now(), pageT: Math.random() * 1000 + 500, startE: Date.now(), tran: 15 }});
+                window.chrome.loadTimes = () => ({{
+                    commitLoadTime: Date.now() / 1000,
+                    connectionInfo: 'h2',
+                    finishDocumentLoadTime: Date.now() / 1000 + Math.random() * 0.5,
+                    finishLoadTime: Date.now() / 1000 + Math.random(),
+                    firstPaintAfterLoadTime: 0,
+                    firstPaintTime: Date.now() / 1000 + 0.1,
+                    navigationType: 'Other',
+                    npnNegotiatedProtocol: 'h2',
+                    requestTime: Date.now() / 1000 - 0.5,
+                    startLoadTime: Date.now() / 1000 - 0.3,
+                    wasAlternateProtocolAvailable: false,
+                    wasFetchedViaSpdy: true,
+                    wasNpnNegotiated: true,
+                }});
+
+                // ═══════════════════════════════════════════════════════════
+                // 3. navigator properties
+                // ═══════════════════════════════════════════════════════════
+
+                // Permissions query (Cloudflare checks notification permission)
                 const origQuery = window.navigator.permissions.query;
                 window.navigator.permissions.query = (params) =>
                     params.name === 'notifications'
                         ? Promise.resolve({{ state: Notification.permission }})
                         : origQuery(params);
 
-                // Realistic plugins (headless returns empty array)
+                // Realistic plugins (headless returns empty)
                 Object.defineProperty(navigator, 'plugins', {{
                     get: () => {{
-                        const arr = [
-                            {{ name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' }},
-                            {{ name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' }},
-                            {{ name: 'Native Client', filename: 'internal-nacl-plugin', description: '' }},
+                        const plugins = [
+                            {{ name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format', length: 1 }},
+                            {{ name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '', length: 1 }},
+                            {{ name: 'Native Client', filename: 'internal-nacl-plugin', description: '', length: 2 }},
                         ];
-                        arr.refresh = () => {{}};
-                        return arr;
+                        plugins.refresh = () => {{}};
+                        Object.setPrototypeOf(plugins, PluginArray.prototype);
+                        return plugins;
+                    }},
+                }});
+                Object.defineProperty(navigator, 'mimeTypes', {{
+                    get: () => {{
+                        const mt = [
+                            {{ type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format' }},
+                            {{ type: 'application/x-google-chrome-pdf', suffixes: 'pdf', description: 'Portable Document Format' }},
+                        ];
+                        mt.refresh = () => {{}};
+                        return mt;
                     }},
                 }});
 
-                // Match system languages
-                Object.defineProperty(navigator, 'languages', {{
-                    get: () => {languages_js},
-                }});
+                // Languages
+                Object.defineProperty(navigator, 'languages', {{ get: () => {languages_js} }});
+                Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => 8 }});
+                Object.defineProperty(navigator, 'deviceMemory', {{ get: () => 8 }});
+                Object.defineProperty(navigator, 'maxTouchPoints', {{ get: () => 0 }});
 
-                // Realistic hardware concurrency
-                Object.defineProperty(navigator, 'hardwareConcurrency', {{
-                    get: () => 8,
-                }});
+                // Network info (missing in some headless configs)
+                if (!navigator.connection) {{
+                    Object.defineProperty(navigator, 'connection', {{
+                        get: () => ({{
+                            effectiveType: '4g', rtt: 50, downlink: 10, saveData: false,
+                            addEventListener: () => {{}}, removeEventListener: () => {{}},
+                        }}),
+                    }});
+                }}
 
-                // Realistic device memory
-                Object.defineProperty(navigator, 'deviceMemory', {{
-                    get: () => 8,
-                }});
+                // Battery API (some bots miss this)
+                if (!navigator.getBattery) {{
+                    navigator.getBattery = () => Promise.resolve({{
+                        charging: true, chargingTime: 0, dischargingTime: Infinity, level: 1,
+                        addEventListener: () => {{}}, removeEventListener: () => {{}},
+                    }});
+                }}
 
-                // Hide automation-related properties
-                Object.defineProperty(navigator, 'maxTouchPoints', {{
-                    get: () => 0,
-                }});
+                // ═══════════════════════════════════════════════════════════
+                // 4. WebGL fingerprint (CRITICAL — #1 Cloudflare signal)
+                // ═══════════════════════════════════════════════════════════
+                // Headless Chrome returns "Google SwiftShader" which is an
+                // instant bot flag. Spoof to look like a real GPU.
 
-                // Fix iframe contentWindow access (headless detection vector)
-                const originalAttachShadow = Element.prototype.attachShadow;
-                Element.prototype.attachShadow = function(init) {{
-                    return originalAttachShadow.call(this, {{ ...init, mode: 'open' }});
+                // Pick WebGL profile based on platform (must match navigator.platform)
+                const plat = navigator.platform || '';
+                let glVendor, glRenderer;
+                if (plat.includes('Mac')) {{
+                    glVendor = 'Google Inc. (Apple)';
+                    glRenderer = 'ANGLE (Apple, Apple M1 Pro, OpenGL 4.1)';
+                }} else if (plat.includes('Win')) {{
+                    glVendor = 'Google Inc. (Intel)';
+                    glRenderer = 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)';
+                }} else {{
+                    // Linux / ChromeOS
+                    glVendor = 'Google Inc. (NVIDIA)';
+                    glRenderer = 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti/PCIe/SSE2, OpenGL 4.5)';
+                }}
+
+                const getParameterOrig = WebGLRenderingContext.prototype.getParameter;
+                WebGLRenderingContext.prototype.getParameter = function(param) {{
+                    if (param === 0x9245) return glVendor;
+                    if (param === 0x9246) return glRenderer;
+                    return getParameterOrig.call(this, param);
                 }};
+                if (typeof WebGL2RenderingContext !== 'undefined') {{
+                    const getParameter2Orig = WebGL2RenderingContext.prototype.getParameter;
+                    WebGL2RenderingContext.prototype.getParameter = function(param) {{
+                        if (param === 0x9245) return glVendor;
+                        if (param === 0x9246) return glRenderer;
+                        return getParameter2Orig.call(this, param);
+                    }};
+                }}
+
+                // ═══════════════════════════════════════════════════════════
+                // 5. Canvas fingerprint noise (prevents consistent hash)
+                // ═══════════════════════════════════════════════════════════
+
+                const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+                HTMLCanvasElement.prototype.toDataURL = function(type) {{
+                    if (this.width === 0 && this.height === 0) return origToDataURL.call(this, type);
+                    const ctx = this.getContext('2d');
+                    if (ctx) {{
+                        // Add invisible noise to 1 random pixel
+                        const x = Math.floor(Math.random() * Math.max(this.width, 1));
+                        const y = Math.floor(Math.random() * Math.max(this.height, 1));
+                        const pixel = ctx.getImageData(x, y, 1, 1);
+                        pixel.data[3] = pixel.data[3] ^ 1;  // flip 1 bit in alpha
+                        ctx.putImageData(pixel, x, y);
+                    }}
+                    return origToDataURL.call(this, type);
+                }};
+
+                const origToBlob = HTMLCanvasElement.prototype.toBlob;
+                HTMLCanvasElement.prototype.toBlob = function(cb, type, quality) {{
+                    const ctx = this.getContext('2d');
+                    if (ctx && this.width > 0 && this.height > 0) {{
+                        const x = Math.floor(Math.random() * this.width);
+                        const y = Math.floor(Math.random() * this.height);
+                        const pixel = ctx.getImageData(x, y, 1, 1);
+                        pixel.data[3] = pixel.data[3] ^ 1;
+                        ctx.putImageData(pixel, x, y);
+                    }}
+                    return origToBlob.call(this, cb, type, quality);
+                }};
+
+                // ═══════════════════════════════════════════════════════════
+                // 6. Misc detection vectors
+                // ═══════════════════════════════════════════════════════════
+
+                // Fix iframe contentWindow access (headless detection)
+                const origAttachShadow = Element.prototype.attachShadow;
+                Element.prototype.attachShadow = function(init) {{
+                    return origAttachShadow.call(this, {{ ...init, mode: 'open' }});
+                }};
+
+                // Notification.permission should return 'default' not 'denied'
+                try {{
+                    Object.defineProperty(Notification, 'permission', {{ get: () => 'default' }});
+                }} catch(e) {{}}
+
+                // Media devices (headless returns empty)
+                if (navigator.mediaDevices) {{
+                    const origEnum = navigator.mediaDevices.enumerateDevices;
+                    navigator.mediaDevices.enumerateDevices = async function() {{
+                        const devices = await origEnum.call(this);
+                        if (devices.length === 0) {{
+                            return [
+                                {{ deviceId: 'default', kind: 'audioinput', label: '', groupId: 'default' }},
+                                {{ deviceId: 'default', kind: 'audiooutput', label: '', groupId: 'default' }},
+                                {{ deviceId: 'default', kind: 'videoinput', label: '', groupId: 'default' }},
+                            ];
+                        }}
+                        return devices;
+                    }};
+                }}
+
+                // Codec support (headless may differ)
+                if (typeof MediaSource !== 'undefined' && MediaSource.isTypeSupported) {{
+                    const origIsType = MediaSource.isTypeSupported;
+                    MediaSource.isTypeSupported = function(type) {{
+                        if (type.includes('avc1') || type.includes('mp4a') || type.includes('vp9') || type.includes('opus')) return true;
+                        return origIsType.call(this, type);
+                    }};
+                }}
             """)
 
-            # Create a fresh page so init_script applies (persistent context's
-            # initial page was created before add_init_script).
-            new_page = await self._context.new_page()
-            old_page = self._page
-            self._page = new_page
-            if old_page and old_page != new_page and hasattr(old_page, 'close'):
-                try:
-                    await old_page.close()
-                except Exception:
-                    pass
+                # Create a fresh page so init_script applies (persistent context's
+                # initial page was created before add_init_script).
+                new_page = await self._context.new_page()
+                old_page = self._page
+                self._page = new_page
+                if old_page and old_page != new_page and hasattr(old_page, 'close'):
+                    try:
+                        await old_page.close()
+                    except Exception:
+                        pass
 
             logger.info("Browser launched successfully")
 

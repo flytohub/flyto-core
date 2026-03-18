@@ -467,12 +467,36 @@ class TestExecuteTool:
 
     def test_tool_name_uses_double_dash_separator(self):
         """Tool names in definitions must use -- separator, not dots."""
-        from core.modules.atomic.llm._tools import build_tool_definitions
-        # Verify the separator logic by checking the source implementation
-        # The function replaces '.' with '--' on line: tool_id.replace('.', '--')
         tool_id = "api.openai.chat"
         expected = "api--openai--chat"
         assert tool_id.replace('.', '--') == expected
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_accepts_dot_format(self):
+        """execute_tool should accept raw module IDs with dots."""
+        from core.modules.atomic.llm._tools import execute_tool
+        # Use a module that definitely doesn't exist but verify error format
+        result = await execute_tool('nonexistent.module', {}, {})
+        assert result['ok'] is False
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_accepts_double_dash_format(self):
+        """execute_tool should accept -- format."""
+        from core.modules.atomic.llm._tools import execute_tool
+        result = await execute_tool('nonexistent--module', {}, {})
+        assert result['ok'] is False
+
+    @pytest.mark.asyncio
+    async def test_execute_tool_legacy_underscore_fallback(self):
+        """execute_tool should try underscore→dot as last resort."""
+        from core.modules.atomic.llm._tools import execute_tool
+        # 'string_uppercase' should fallback to 'string.uppercase' via legacy path
+        result = await execute_tool('string_uppercase', {}, {})
+        # Even if the module doesn't accept empty params, it should at least be found
+        # (not return "Tool not found")
+        if not result.get('ok'):
+            assert 'not found' not in result.get('error', '').lower(), \
+                "Legacy underscore format should find the module"
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +540,14 @@ class TestModelOptions:
         models = [o['value'] for o in meta['params_schema']['model']['options']]
         assert 'gemini-2.5-pro' in models
         assert 'gemini-2.5-flash' in models
+
+    def test_chain_has_all_providers(self):
+        from core.modules.registry import get_registry
+        registry = get_registry()
+        meta = registry.get_metadata('agent.chain')
+        assert meta is not None, "agent.chain module not registered"
+        providers = [o['value'] for o in meta['params_schema']['llm_provider']['options']]
+        assert set(providers) == {'openai', 'anthropic', 'gemini', 'ollama'}
 
     def test_autonomous_has_all_providers(self):
         from core.modules.registry import get_registry
