@@ -3,29 +3,31 @@
 """
 Browser Pagination Module - Auto-paginate and extract data
 
-Automatically handles pagination patterns including:
-- Next button clicking
-- Infinite scroll
-- Page number navigation
-- Load more buttons
-
-Extracts data from each page and combines results.
+Single responsibility: navigate pages + extract items.
+For rate limiting → browser.throttle (place before this node in workflow)
+For proxy rotation → browser.proxy_rotate
+For concurrent scraping → browser.pool + flow.loop
 """
-from typing import Any, Dict, List, Optional
+import asyncio
+import logging
+from typing import Any, Dict, List
 
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+from ...schema.constants import FieldGroup
+
+logger = logging.getLogger(__name__)
 
 
 @register_module(
     module_id='browser.pagination',
-    version='1.0.0',
+    version='2.0.0',
     category='browser',
     tags=['browser', 'pagination', 'scrape', 'extract', 'automation', 'ssrf_protected'],
     label='Paginate & Extract',
     label_key='modules.browser.pagination.label',
-    description='Auto-paginate through pages and extract data',
+    description='Auto-paginate through pages and extract data. Supports retry and checkpoint resume.',
     description_key='modules.browser.pagination.description',
     icon='ChevronRight',
     color='#F59E0B',
@@ -37,6 +39,7 @@ from ...schema import compose, field
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*'],
 
     params_schema=compose(
+        # ── Basic ────────────────────────────────────────────────
         field(
             'mode',
             type='select',
@@ -50,6 +53,7 @@ from ...schema import compose, field
                 {'value': 'page_numbers', 'label': 'Page Numbers (numbered links)'},
                 {'value': 'load_more', 'label': 'Load More (click button to append)'},
             ],
+            group=FieldGroup.BASIC,
         ),
         field(
             'item_selector',
@@ -59,14 +63,7 @@ from ...schema import compose, field
             description='CSS selector for items to extract on each page',
             placeholder='.product-card, .list-item, tr.data-row',
             required=True,
-        ),
-        field(
-            'fields',
-            type='object',
-            label='Fields to Extract',
-            label_key='modules.browser.pagination.params.fields.label',
-            description='Field definitions {name: {selector, attribute?}}',
-            required=False,
+            group=FieldGroup.BASIC,
         ),
         field(
             'next_selector',
@@ -77,6 +74,7 @@ from ...schema import compose, field
             placeholder='.next, a[rel="next"], .pagination-next',
             required=False,
             showIf={"mode": {"$in": ["next_button", "page_numbers"]}},
+            group=FieldGroup.BASIC,
         ),
         field(
             'load_more_selector',
@@ -87,6 +85,16 @@ from ...schema import compose, field
             placeholder='.load-more, button.show-more',
             required=False,
             showIf={"mode": {"$in": ["load_more"]}},
+            group=FieldGroup.BASIC,
+        ),
+        field(
+            'fields',
+            type='object',
+            label='Fields to Extract',
+            label_key='modules.browser.pagination.params.fields.label',
+            description='Field definitions {name: {selector, attribute?}}',
+            required=False,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'max_pages',
@@ -97,6 +105,7 @@ from ...schema import compose, field
             default=10,
             min=0,
             max=1000,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'max_items',
@@ -106,17 +115,56 @@ from ...schema import compose, field
             description='Stop after collecting this many items (0 = unlimited)',
             default=0,
             min=0,
+            max=10000,
+            step=1,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'wait_between_pages_ms',
             type='number',
             label='Wait Between Pages (ms)',
             label_key='modules.browser.pagination.params.wait_between_pages_ms.label',
-            description='Wait time between page navigations',
+            description='Fixed wait time between page navigations. For adaptive/human-like delays, use browser.throttle before this node.',
             default=1000,
             min=0,
-            max=10000,
+            max=30000,
+            group=FieldGroup.OPTIONS,
         ),
+
+        # ── Retry ────────────────────────────────────────────────
+        field(
+            'retry_on_error',
+            type='boolean',
+            label='Retry on Error',
+            description='Retry failed page extractions before giving up',
+            default=True,
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
+            'max_retries',
+            type='number',
+            label='Max Retries Per Page',
+            description='Maximum retry attempts per failed page',
+            default=3,
+            min=1,
+            max=10,
+            showIf={"retry_on_error": {"$in": [True]}},
+            group=FieldGroup.ADVANCED,
+        ),
+
+        # ── Checkpoint ───────────────────────────────────────────
+        field(
+            'checkpoint_path',
+            type='string',
+            label='Checkpoint File',
+            description='Save progress to disk. Resumes from checkpoint on restart. Cleared on successful completion.',
+            placeholder='/tmp/flyto_scrape_checkpoint.json',
+            format='path',
+            required=False,
+            group=FieldGroup.ADVANCED,
+        ),
+
+        # ── Other ────────────────────────────────────────────────
         field(
             'wait_for_selector',
             type='string',
@@ -125,6 +173,7 @@ from ...schema import compose, field
             description='Wait for this element after page change',
             required=False,
             placeholder='#element or .class',
+            group=FieldGroup.ADVANCED,
         ),
         field(
             'scroll_amount',
@@ -136,6 +185,7 @@ from ...schema import compose, field
             min=100,
             max=5000,
             showIf={"mode": {"$in": ["infinite_scroll"]}},
+            group=FieldGroup.ADVANCED,
         ),
         field(
             'no_more_indicator',
@@ -145,6 +195,7 @@ from ...schema import compose, field
             description='Selector that appears when no more pages (stops pagination)',
             placeholder='.no-more-results, .end-of-list',
             required=False,
+            group=FieldGroup.ADVANCED,
         ),
     ),
     output_schema={
@@ -167,7 +218,15 @@ from ...schema import compose, field
             'type': 'string',
             'description': 'Why pagination stopped (max_pages, max_items, no_more, error)',
             'description_key': 'modules.browser.pagination.output.stopped_reason.description'
-        }
+        },
+        'retries_used': {
+            'type': 'integer',
+            'description': 'Total number of retries across all pages',
+        },
+        'resumed': {
+            'type': 'boolean',
+            'description': 'Whether execution resumed from a checkpoint',
+        },
     },
     examples=[
         {
@@ -185,39 +244,28 @@ from ...schema import compose, field
             }
         },
         {
-            'name': 'Infinite scroll feed',
+            'name': 'Infinite scroll with checkpoint',
             'params': {
                 'mode': 'infinite_scroll',
                 'item_selector': '.feed-item',
-                'fields': {
-                    'content': {'selector': '.content'},
-                    'author': {'selector': '.author'}
-                },
                 'max_items': 100,
-                'no_more_indicator': '.end-of-feed'
+                'no_more_indicator': '.end-of-feed',
+                'checkpoint_path': '/tmp/feed_checkpoint.json',
             }
         },
-        {
-            'name': 'Load more button',
-            'params': {
-                'mode': 'load_more',
-                'item_selector': '.list-item',
-                'load_more_selector': 'button.load-more',
-                'max_pages': 10
-            }
-        }
     ],
     author='Flyto Team',
     license='MIT',
-    timeout_ms=300000,  # 5 minutes for multi-page operations
+    timeout_ms=600000,  # 10 minutes for large multi-page operations
     required_permissions=['browser.automation'],
 )
 class BrowserPaginationModule(BaseModule):
     """
     Auto-pagination and data extraction module.
 
-    Handles various pagination patterns and extracts data
-    from each page, combining all results.
+    Single responsibility: navigate pages + extract items.
+    Includes retry (tightly coupled with extraction loop)
+    and checkpoint (tightly coupled with pagination state).
     """
 
     module_name = "Paginate & Extract"
@@ -246,6 +294,9 @@ class BrowserPaginationModule(BaseModule):
         self.wait_for_selector = self.params.get('wait_for_selector')
         self.scroll_amount = self.params.get('scroll_amount', 1000)
         self.no_more_indicator = self.params.get('no_more_indicator')
+        self.retry_on_error = self.params.get('retry_on_error', True)
+        self.max_retries = self.params.get('max_retries', 3)
+        self.checkpoint_path = self.params.get('checkpoint_path')
 
         if not self.item_selector:
             raise ValueError("item_selector is required")
@@ -255,14 +306,53 @@ class BrowserPaginationModule(BaseModule):
             raise ValueError(f"mode must be one of: {valid_modes}")
 
     async def execute(self) -> Dict[str, Any]:
-        import asyncio
-
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        # ── Load checkpoint if available ─────────────────────────
+        checkpoint = None
         all_items = []
         pages_processed = 0
+        total_retries = 0
+        resumed = False
+
+        if self.checkpoint_path:
+            from core.browser.checkpoint import PaginationCheckpoint
+            checkpoint = PaginationCheckpoint(
+                self.checkpoint_path, self.item_selector, self.mode,
+            )
+            if checkpoint.exists():
+                state = checkpoint.load()
+                all_items = checkpoint.load_items()
+                pages_processed = state.get('pages_processed', 0)
+                total_retries = state.get('retries_used', 0)
+                resumed = True
+                logger.info(
+                    f"Resuming from checkpoint: page {pages_processed}, "
+                    f"{len(all_items)} items"
+                )
+                # Resume: goto saved URL directly (avoids re-navigating N pages)
+                last_url = state.get('last_url')
+                if last_url and last_url != 'about:blank':
+                    try:
+                        await browser.goto(last_url)
+                        if self.wait_for_selector:
+                            try:
+                                await browser.wait(self.wait_for_selector, timeout_ms=10000)
+                            except Exception:
+                                pass
+                        logger.info(f"Resumed directly to: {last_url}")
+                    except Exception as e:
+                        logger.warning(f"Direct resume failed, falling back to sequential: {e}")
+                        # Fallback: navigate page by page (for sites without stable URLs)
+                        for _ in range(pages_processed):
+                            has_next = await self._navigate_next(browser)
+                            if not has_next:
+                                break
+                            if self.wait_between_pages_ms > 0:
+                                await asyncio.sleep(self.wait_between_pages_ms / 1000)
+
         stopped_reason = 'completed'
 
         try:
@@ -272,10 +362,32 @@ class BrowserPaginationModule(BaseModule):
                     stopped_reason = 'max_pages'
                     break
 
-                # Extract items from current page
-                items = await self._extract_items(browser)
-                all_items.extend(items)
-                pages_processed += 1
+                # Extract items with retry
+                items, retries = await self._extract_with_retry(browser)
+                total_retries += retries
+
+                if items is not None:
+                    all_items.extend(items)
+                    pages_processed += 1
+
+                    # Save checkpoint after each page
+                    if checkpoint:
+                        checkpoint.save(
+                            items=all_items,
+                            pages_processed=pages_processed,
+                            last_url=browser.page.url if hasattr(browser, 'page') else None,
+                            retries_used=total_retries,
+                        )
+                else:
+                    stopped_reason = 'error: extraction failed after retries'
+                    if checkpoint:
+                        checkpoint.save(
+                            items=all_items,
+                            pages_processed=pages_processed,
+                            stopped_reason=stopped_reason,
+                            retries_used=total_retries,
+                        )
+                    break
 
                 # Check max items
                 if self.max_items > 0 and len(all_items) >= self.max_items:
@@ -287,13 +399,13 @@ class BrowserPaginationModule(BaseModule):
                 if self.no_more_indicator:
                     end_reached = await browser.evaluate(
                         '(selector) => document.querySelector(selector) !== null',
-                        self.no_more_indicator
+                        self.no_more_indicator,
                     )
                     if end_reached:
                         stopped_reason = 'no_more'
                         break
 
-                # Navigate to next page based on mode
+                # Navigate to next page
                 has_next = await self._navigate_next(browser)
                 if not has_next:
                     stopped_reason = 'no_more'
@@ -312,26 +424,65 @@ class BrowserPaginationModule(BaseModule):
 
         except Exception as e:
             stopped_reason = f'error: {str(e)}'
+            if checkpoint:
+                checkpoint.save(
+                    items=all_items,
+                    pages_processed=pages_processed,
+                    stopped_reason=stopped_reason,
+                    retries_used=total_retries,
+                )
 
+        # Clear checkpoint on successful completion
+        if checkpoint and not stopped_reason.startswith('error:'):
+            checkpoint.clear()
+
+        is_error = stopped_reason.startswith('error:')
         return {
-            'status': 'success',
+            'status': 'error' if is_error and pages_processed == 0 else 'success',
             'items': all_items,
             'total_items': len(all_items),
             'pages_processed': pages_processed,
             'stopped_reason': stopped_reason,
+            'retries_used': total_retries,
+            'resumed': resumed,
         }
 
+    # ── Extraction with Retry ────────────────────────────────────
+
+    async def _extract_with_retry(self, browser):
+        """Extract items with retry on failure.
+
+        Returns:
+            (items, retries_used) or (None, retries_used) if all retries failed.
+        """
+        last_error = None
+        for attempt in range(1 + (self.max_retries if self.retry_on_error else 0)):
+            try:
+                items = await self._extract_items(browser)
+                return items, attempt
+            except Exception as e:
+                last_error = e
+                logger.warning(f"Extraction attempt {attempt + 1} failed: {e}")
+
+                if not self.retry_on_error:
+                    break
+
+                # Brief delay before retry (exponential backoff, capped at 10s)
+                if attempt < self.max_retries:
+                    await asyncio.sleep(min(2 ** attempt, 10))
+
+        logger.error(f"All extraction retries exhausted: {last_error}")
+        return None, self.max_retries if self.retry_on_error else 0
+
+    # ── Item Extraction ──────────────────────────────────────────
+
     async def _extract_items(self, browser) -> List[Dict[str, Any]]:
-        """Extract items from current page."""
         if self.fields:
-            # Extract with field definitions
             return await self._extract_with_fields(browser)
         else:
-            # Extract raw elements
             return await self._extract_raw(browser)
 
     async def _extract_with_fields(self, browser) -> List[Dict[str, Any]]:
-        """Extract items using field definitions."""
         field_configs = []
         for name, config in self.fields.items():
             if isinstance(config, str):
@@ -347,17 +498,14 @@ class BrowserPaginationModule(BaseModule):
             ([itemSelector, fields]) => {
                 const items = document.querySelectorAll(itemSelector);
                 const results = [];
-
                 items.forEach((item, idx) => {
                     const data = {};
                     fields.forEach(field => {
                         const el = item.querySelector(field.selector);
                         if (el) {
-                            if (field.attribute) {
-                                data[field.name] = el.getAttribute(field.attribute);
-                            } else {
-                                data[field.name] = el.textContent.trim();
-                            }
+                            data[field.name] = field.attribute
+                                ? el.getAttribute(field.attribute)
+                                : el.textContent.trim();
                         } else {
                             data[field.name] = null;
                         }
@@ -365,15 +513,12 @@ class BrowserPaginationModule(BaseModule):
                     data.__index = idx;
                     results.push(data);
                 });
-
                 return results;
             }
         '''
-
         return await browser.evaluate(script, [self.item_selector, field_configs])
 
     async def _extract_raw(self, browser) -> List[Dict[str, Any]]:
-        """Extract raw text content from items."""
         script = '''
             (itemSelector) => {
                 const items = document.querySelectorAll(itemSelector);
@@ -386,8 +531,9 @@ class BrowserPaginationModule(BaseModule):
         '''
         return await browser.evaluate(script, self.item_selector)
 
+    # ── Navigation ───────────────────────────────────────────────
+
     async def _navigate_next(self, browser) -> bool:
-        """Navigate to next page based on mode."""
         if self.mode == 'next_button':
             return await self._click_next_button(browser)
         elif self.mode == 'infinite_scroll':
@@ -399,7 +545,6 @@ class BrowserPaginationModule(BaseModule):
         return False
 
     async def _click_next_button(self, browser) -> bool:
-        """Click next page button."""
         selectors = [self.next_selector] if self.next_selector else []
         selectors.extend(self.NEXT_BUTTON_SELECTORS)
 
@@ -407,7 +552,6 @@ class BrowserPaginationModule(BaseModule):
             if not selector:
                 continue
             try:
-                # Check if button exists and is not disabled
                 can_click = await browser.evaluate('''
                     (selector) => {
                         const el = document.querySelector(selector);
@@ -423,30 +567,17 @@ class BrowserPaginationModule(BaseModule):
                     return True
             except Exception:
                 continue
-
         return False
 
     async def _infinite_scroll(self, browser) -> bool:
-        """Scroll down for infinite scroll pagination."""
-        # Get current scroll position and document height
         before_height = await browser.evaluate('document.body.scrollHeight')
-
-        # Scroll down
         await browser.evaluate('(amount) => window.scrollBy(0, amount)', self.scroll_amount)
-
-        # Wait a bit for content to load
-        import asyncio
         await asyncio.sleep(1)
-
-        # Check if new content loaded
         after_height = await browser.evaluate('document.body.scrollHeight')
-
         return after_height > before_height
 
     async def _click_load_more(self, browser) -> bool:
-        """Click load more button."""
         selector = self.load_more_selector or 'button.load-more, .load-more-btn, [data-action="load-more"]'
-
         try:
             exists = await browser.evaluate('''
                 (selector) => {
@@ -459,28 +590,19 @@ class BrowserPaginationModule(BaseModule):
                 return True
         except Exception:
             pass
-
         return False
 
     async def _click_next_page_number(self, browser) -> bool:
-        """Click next page number in pagination."""
-        # Find current page and click next number
         script = '''
             (() => {
                 const current = document.querySelector('.pagination .active, .pagination .current');
                 if (!current) return null;
-
                 const next = current.nextElementSibling;
-                if (next && (next.tagName === 'A' || next.tagName === 'BUTTON')) {
-                    return next;
-                }
-
-                const nextLink = next?.querySelector('a, button');
-                return nextLink;
+                if (next && (next.tagName === 'A' || next.tagName === 'BUTTON')) return next;
+                return next?.querySelector('a, button');
             })()
         '''
         next_el = await browser.evaluate(script)
-
         if next_el:
             try:
                 await browser.evaluate('''
@@ -494,5 +616,4 @@ class BrowserPaginationModule(BaseModule):
                 return True
             except Exception:
                 pass
-
         return False

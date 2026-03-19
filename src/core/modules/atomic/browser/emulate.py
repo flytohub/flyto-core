@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup
 
 
 # Device presets based on Playwright's device descriptors
@@ -194,6 +195,7 @@ DEVICE_PRESETS = {
                 {'value': 'macbook_pro', 'label': 'MacBook Pro'},
                 {'value': 'custom', 'label': 'Custom'},
             ],
+            group=FieldGroup.BASIC,
         ),
         field(
             'width',
@@ -205,6 +207,7 @@ DEVICE_PRESETS = {
             min=320,
             max=3840,
             showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'height',
@@ -216,6 +219,7 @@ DEVICE_PRESETS = {
             min=240,
             max=2160,
             showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'user_agent',
@@ -226,26 +230,7 @@ DEVICE_PRESETS = {
             required=False,
             placeholder='Mozilla/5.0...',
             showIf={"device": {"$in": ["custom"]}},
-        ),
-        field(
-            'is_mobile',
-            type='boolean',
-            label='Mobile Mode',
-            label_key='modules.browser.emulate.params.is_mobile.label',
-            description='Enable mobile browser behavior',
-            required=False,
-            default=None,
-            showIf={"device": {"$in": ["custom"]}},
-        ),
-        field(
-            'has_touch',
-            type='boolean',
-            label='Touch Support',
-            label_key='modules.browser.emulate.params.has_touch.label',
-            description='Enable touch event support',
-            required=False,
-            default=None,
-            showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'device_scale_factor',
@@ -257,6 +242,29 @@ DEVICE_PRESETS = {
             min=1,
             max=3,
             showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
+            'is_mobile',
+            type='boolean',
+            label='Mobile Mode',
+            label_key='modules.browser.emulate.params.is_mobile.label',
+            description='Enable mobile browser behavior',
+            required=False,
+            default=None,
+            showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.ADVANCED,
+        ),
+        field(
+            'has_touch',
+            type='boolean',
+            label='Touch Support',
+            label_key='modules.browser.emulate.params.has_touch.label',
+            description='Enable touch event support',
+            required=False,
+            default=None,
+            showIf={"device": {"$in": ["custom"]}},
+            group=FieldGroup.ADVANCED,
         ),
     ),
     output_schema={
@@ -374,13 +382,17 @@ class BrowserEmulateModule(BaseModule):
                 'has_touch': self.has_touch if self.has_touch is not None else False,
             }
 
-        # Close current page and context
         old_page = browser._page
         old_context = browser._context
         current_url = old_page.url if old_page else None
 
+        if browser._browser is None:
+            # Persistent context mode — can't create new context,
+            # use CDP to apply device emulation on the existing page.
+            return await self._emulate_via_cdp(browser, settings, current_url)
+
         try:
-            # Create new context with device emulation
+            # Regular mode — create new context with device emulation
             new_context = await browser._browser.new_context(
                 viewport=settings['viewport'],
                 user_agent=settings['user_agent'],
@@ -419,3 +431,43 @@ class BrowserEmulateModule(BaseModule):
             browser._context = old_context
             browser._page = old_page
             raise RuntimeError(f"Failed to apply device emulation: {str(e)}") from e
+
+    async def _emulate_via_cdp(self, browser, settings, current_url):
+        """Apply device emulation via CDP for persistent context mode."""
+        page = browser._page
+
+        # Set viewport size (Playwright API)
+        await page.set_viewport_size(settings['viewport'])
+
+        # Use CDP session for user agent, touch, and device metrics
+        cdp = await page.context.new_cdp_session(page)
+        try:
+            await cdp.send('Emulation.setUserAgentOverride', {
+                'userAgent': settings['user_agent'],
+            })
+            await cdp.send('Emulation.setTouchEmulationEnabled', {
+                'enabled': settings['has_touch'],
+            })
+            await cdp.send('Emulation.setDeviceMetricsOverride', {
+                'width': settings['viewport']['width'],
+                'height': settings['viewport']['height'],
+                'deviceScaleFactor': settings['device_scale_factor'],
+                'mobile': settings['is_mobile'],
+            })
+        finally:
+            await cdp.detach()
+
+        # Reload to apply user agent change
+        if current_url and current_url != 'about:blank':
+            await page.reload()
+
+        return {
+            "status": "success",
+            "device": self.device,
+            "viewport": settings['viewport'],
+            "user_agent": settings['user_agent'],
+            "is_mobile": settings['is_mobile'],
+            "has_touch": settings['has_touch'],
+            "device_scale_factor": settings['device_scale_factor'],
+            "url": page.url,
+        }

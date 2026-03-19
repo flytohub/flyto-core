@@ -21,9 +21,6 @@ from ...schema import compose, field
 
 logger = logging.getLogger(__name__)
 
-# Module-level domain timing tracker (shared across execution)
-_domain_last_request: Dict[str, float] = {}
-
 
 @register_module(
     module_id='browser.throttle',
@@ -41,27 +38,50 @@ _domain_last_request: Dict[str, float] = {}
     can_receive_from=['browser.*', 'flow.*'],
     can_connect_to=['browser.*', 'flow.*'],
     params_schema=compose(
-        field('min_interval_ms', type='number', label='Min interval (ms)',
-              description='Minimum milliseconds between requests to the same domain.',
+        field('strategy', type='select', label='Strategy',
+              description='Delay strategy: fixed, adaptive (auto-backoff on errors), human_like (random delays with reading pauses).',
+              default='fixed',
+              options=[
+                  {'value': 'fixed', 'label': 'Fixed (constant delay)'},
+                  {'value': 'adaptive', 'label': 'Adaptive (backoff on errors, recover on success)'},
+                  {'value': 'human_like', 'label': 'Human-like (gaussian jitter + reading pauses)'},
+              ],
+              group='basic'),
+        field('min_interval_ms', type='number', label='Base / Min interval (ms)',
+              description='Base delay (fixed) or minimum delay (adaptive/human_like).',
               default=2000, min=0, max=60000, step=500,
+              group='basic'),
+        field('max_interval_ms', type='number', label='Max interval (ms)',
+              description='Maximum delay for adaptive/human_like strategies.',
+              default=15000, min=1000, max=120000, step=1000,
+              showIf={"strategy": {"$in": ["adaptive", "human_like"]}},
               group='basic'),
         field('url', type='string', label='URL (optional)',
               description='URL to throttle for. Empty = use current page URL.',
               required=False, default='',
               group='basic'),
-        field('randomize', type='boolean', label='Randomize delay',
-              description='Add ±30% random jitter to the interval (looks more human).',
-              default=True,
-              group='basic'),
+        field('signal', type='select', label='Signal',
+              description='Report success or error to update adaptive delay.',
+              default='none',
+              options=[
+                  {'value': 'none', 'label': 'Just wait (no signal)'},
+                  {'value': 'success', 'label': 'Report success (decrease delay)'},
+                  {'value': 'error', 'label': 'Report error (increase delay)'},
+                  {'value': 'rate_limit', 'label': 'Report rate limit / 429 (aggressive backoff)'},
+              ],
+              showIf={"strategy": {"$in": ["adaptive", "human_like"]}},
+              group='advanced'),
     ),
     output_schema={
-        'domain':     {'type': 'string', 'description': 'Domain that was throttled'},
-        'waited_ms':  {'type': 'number', 'description': 'Actual milliseconds waited (0 if no wait needed)'},
-        'interval_ms': {'type': 'number', 'description': 'Configured interval'},
+        'domain':      {'type': 'string', 'description': 'Domain that was throttled'},
+        'waited_ms':   {'type': 'number', 'description': 'Actual milliseconds waited (0 if no wait needed)'},
+        'interval_ms': {'type': 'number', 'description': 'Current effective interval'},
+        'strategy':    {'type': 'string', 'description': 'Active strategy'},
     },
     examples=[
-        {'name': 'Wait 2s between same-domain requests', 'params': {'min_interval_ms': 2000}},
-        {'name': 'Polite crawling (5s)', 'params': {'min_interval_ms': 5000, 'randomize': True}},
+        {'name': 'Fixed 2s delay', 'params': {'min_interval_ms': 2000}},
+        {'name': 'Adaptive with backoff', 'params': {'strategy': 'adaptive', 'min_interval_ms': 1000, 'max_interval_ms': 15000}},
+        {'name': 'Human-like delays', 'params': {'strategy': 'human_like', 'min_interval_ms': 1500, 'max_interval_ms': 8000}},
     ],
     author='Flyto Team', license='MIT', timeout_ms=65000,
     required_permissions=["browser.read"],
@@ -71,13 +91,13 @@ class BrowserThrottleModule(BaseModule):
     required_permission = "browser.read"
 
     def validate_params(self) -> None:
+        self.strategy = self.params.get('strategy', 'fixed')
         self.min_interval_ms = self.params.get('min_interval_ms', 2000)
+        self.max_interval_ms = self.params.get('max_interval_ms', 15000)
         self.url = self.params.get('url', '')
-        self.randomize = self.params.get('randomize', True)
+        self.signal = self.params.get('signal', 'none')
 
     async def execute(self) -> Any:
-        global _domain_last_request
-
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
@@ -90,32 +110,40 @@ class BrowserThrottleModule(BaseModule):
         parsed = urlparse(url)
         domain = parsed.netloc or parsed.hostname or url
 
-        # Check timing
-        now = time.monotonic() * 1000  # ms
-        last = _domain_last_request.get(domain, 0)
-        elapsed = now - last
+        # Get or create per-domain RateLimiter
+        from core.browser.rate_limiter import RateLimiter
 
-        waited_ms = 0
-        if elapsed < self.min_interval_ms:
-            wait_needed = self.min_interval_ms - elapsed
+        limiter_key = f'_throttle_{domain}'
+        limiter = self.context.get(limiter_key)
+        if not limiter or not isinstance(limiter, RateLimiter):
+            limiter = RateLimiter(
+                strategy=self.strategy,
+                min_delay_ms=self.min_interval_ms,
+                max_delay_ms=self.max_interval_ms,
+                base_delay_ms=self.min_interval_ms,
+            )
+            self.context[limiter_key] = limiter
 
-            # Add jitter
-            if self.randomize:
-                import random
-                jitter = wait_needed * 0.3 * (random.random() * 2 - 1)  # ±30%
-                wait_needed = max(0, wait_needed + jitter)
+        # Process signal (from previous step in workflow)
+        if self.signal == 'success':
+            limiter.on_success()
+        elif self.signal == 'error':
+            limiter.on_error(is_rate_limit=False)
+        elif self.signal == 'rate_limit':
+            limiter.on_error(is_rate_limit=True)
 
-            if wait_needed > 0:
-                logger.debug("Throttling %s: waiting %.0fms", domain, wait_needed)
-                await asyncio.sleep(wait_needed / 1000)
-                waited_ms = round(wait_needed)
+        # Wait according to strategy
+        t0 = time.monotonic()
+        await limiter.wait()
+        waited_ms = round((time.monotonic() - t0) * 1000)
 
-        # Update last request time
-        _domain_last_request[domain] = time.monotonic() * 1000
+        if waited_ms > 0:
+            logger.debug("Throttled %s: waited %dms (strategy=%s)", domain, waited_ms, self.strategy)
 
         return {
             "status": "success",
             "domain": domain,
             "waited_ms": waited_ms,
-            "interval_ms": self.min_interval_ms,
+            "interval_ms": limiter.current_delay_ms,
+            "strategy": self.strategy,
         }

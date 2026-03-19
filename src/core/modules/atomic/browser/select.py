@@ -66,7 +66,7 @@ from ...schema.constants import FieldGroup
               label_key="schema.field.select_index",
               description="Option index to select (0-based)",
               placeholder="0",
-              min=0,
+              min=0, max=1000, step=1,
               showIf={"select_method": {"$in": ["index"]}},
               group=FieldGroup.BASIC),
         presets.TIMEOUT_MS(default=30000),

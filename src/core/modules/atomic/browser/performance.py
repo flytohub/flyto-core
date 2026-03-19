@@ -13,6 +13,7 @@ import asyncio
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
+from ...schema.constants import FieldGroup
 
 
 # JavaScript to collect performance metrics
@@ -213,6 +214,8 @@ GET_OBSERVER_METRICS_SCRIPT = """
             description='Which metrics to collect (default: all)',
             required=False,
             default=['all'],
+            items={"type": "string"},
+            group=FieldGroup.BASIC,
         ),
         field(
             'timeout_ms',
@@ -224,6 +227,7 @@ GET_OBSERVER_METRICS_SCRIPT = """
             default=3000,
             min=0,
             max=30000,
+            group=FieldGroup.ADVANCED,
         ),
         field(
             'setup_observers',
@@ -233,6 +237,7 @@ GET_OBSERVER_METRICS_SCRIPT = """
             description='Install PerformanceObservers for better metric tracking',
             required=False,
             default=True,
+            group=FieldGroup.ADVANCED,
         ),
     ),
     output_schema={

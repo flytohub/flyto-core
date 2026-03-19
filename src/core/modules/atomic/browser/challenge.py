@@ -107,12 +107,32 @@ _CHECK_RESOLVED_JS = r"""
     params_schema=compose(
         field('auto_wait_seconds', type='number',
               label='Auto-wait timeout (seconds)',
-              description='How long to wait for the challenge to auto-resolve before asking for human help. 0 = skip auto-wait.',
+              description='How long to wait for the challenge to auto-resolve before trying API solver or human help. 0 = skip auto-wait.',
               default=15, min=0, max=120, step=5,
               group='basic'),
+
+        # ── API Captcha Solving ──────────────────────────────────
+        field('captcha_provider', type='select',
+              label='Captcha Solver',
+              description='Third-party API for automatic captcha solving. Leave empty to skip API solving.',
+              default='',
+              options=[
+                  {'value': '', 'label': 'None (auto-wait + human only)'},
+                  {'value': '2captcha', 'label': '2Captcha'},
+                  {'value': 'capsolver', 'label': 'CapSolver'},
+              ],
+              group='basic'),
+        field('captcha_api_key', type='string',
+              label='Captcha API Key',
+              description='API key for the captcha solving service',
+              format='password',
+              required=False,
+              showIf={"captcha_provider": {"$in": ["2captcha", "capsolver"]}},
+              group='basic'),
+
         field('human_fallback', type='boolean',
               label='Human fallback',
-              description='If auto-wait fails, create a breakpoint for the user to solve the challenge manually.',
+              description='If auto-wait and API solver both fail, create a breakpoint for the user to solve manually.',
               default=True,
               group='basic'),
         field('human_timeout_seconds', type='number',
@@ -146,8 +166,13 @@ class BrowserChallengeModule(BaseModule):
 
     def validate_params(self) -> None:
         self.auto_wait = self.params.get('auto_wait_seconds', 15)
+        self.captcha_provider = self.params.get('captcha_provider', '')
+        self.captcha_api_key = self.params.get('captcha_api_key', '')
         self.human_fallback = self.params.get('human_fallback', True)
         self.human_timeout = self.params.get('human_timeout_seconds', 120)
+
+        if self.captcha_provider and not self.captcha_api_key:
+            raise ValueError(f"captcha_api_key is required when using {self.captcha_provider}")
 
     async def execute(self) -> Any:
         import asyncio
@@ -195,7 +220,38 @@ class BrowserChallengeModule(BaseModule):
                 "required_human": False,
             }
 
-        # Step 3: Human fallback via breakpoint
+        # Step 3: API-based captcha solving
+        if self.captcha_provider and self.captcha_api_key:
+            logger.info("Attempting API-based solve via %s...", self.captcha_provider)
+            try:
+                from core.browser.captcha import CaptchaSolver
+                solver = CaptchaSolver(self.captcha_provider, self.captcha_api_key)
+                solve_result = await solver.solve(page)
+
+                if solve_result['status'] == 'solved':
+                    # Verify page changed after solving
+                    await asyncio.sleep(2)
+                    resolved = await page.evaluate(_CHECK_RESOLVED_JS)
+                    elapsed = round(time.monotonic() - t0, 1)
+
+                    if resolved:
+                        logger.info("Challenge solved by %s in %ss", self.captcha_provider, elapsed)
+                        return {
+                            "status": "api_solved",
+                            "challenge_type": challenge_type,
+                            "wait_seconds": elapsed,
+                            "required_human": False,
+                            "solver_provider": self.captcha_provider,
+                            "solver_time": solve_result.get('solve_time', 0),
+                        }
+                    else:
+                        logger.warning("API solved but page didn't change, falling through...")
+                else:
+                    logger.warning("API solve failed: %s", solve_result.get('error', 'unknown'))
+            except Exception as e:
+                logger.error("API captcha solve error: %s", e)
+
+        # Step 4: Human fallback via breakpoint
         if not self.human_fallback:
             elapsed = round(time.monotonic() - t0, 1)
             return {

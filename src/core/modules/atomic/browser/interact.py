@@ -252,13 +252,22 @@ class BrowserInteractModule(BaseModule):
         from ....engine.breakpoints import BreakpointStatus
 
         if result.status == BreakpointStatus.APPROVED:
-            # Execute the user's chosen action
+            # Execute the user's chosen action (validated)
             action = result.final_inputs.get('action', 'click')
             selector = result.final_inputs.get('selector', '')
-            value = result.final_inputs.get('value', '')
+            value = str(result.final_inputs.get('value', ''))[:5000]  # cap length
 
-            if not selector:
-                raise RuntimeError("No selector provided in interact response")
+            _ALLOWED_ACTIONS = {'click', 'type', 'select', 'toggle'}
+            if action not in _ALLOWED_ACTIONS:
+                raise RuntimeError(f"Invalid action '{action}'. Allowed: {_ALLOWED_ACTIONS}")
+
+            if not selector or len(selector) > 500:
+                raise RuntimeError("Invalid selector (empty or too long)")
+
+            # Reject selectors with suspicious patterns (JS injection attempts)
+            import re
+            if re.search(r'[{}<>]|javascript:|eval\(|Function\(', selector):
+                raise RuntimeError("Selector contains disallowed characters")
 
             try:
                 action_result = await self._execute_action(page, browser, action, selector, value)

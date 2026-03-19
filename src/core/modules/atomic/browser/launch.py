@@ -1,7 +1,12 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Browser Launch Module - Launch a new browser instance with Playwright
+Browser Launch Module - Launch a single browser instance
+
+Single responsibility: launch ONE browser with its configuration.
+For proxy rotation → browser.proxy_rotate
+For multiple browsers → browser.pool
+For rate limiting → browser.throttle
 """
 from typing import Any, Dict
 from ...base import BaseModule
@@ -12,7 +17,7 @@ from ...schema.constants import FieldGroup, Visibility
 
 @register_module(
     module_id='browser.launch',
-    version='1.0.0',
+    version='2.0.0',
     category='browser',
     tags=['browser', 'automation', 'setup', 'ssrf_protected'],
     label='Launch Browser',
@@ -22,26 +27,21 @@ from ...schema.constants import FieldGroup, Visibility
     icon='Monitor',
     color='#4A90E2',
 
-    # Connection types
     input_types=[],
-    output_types=['browser', 'page'],  # Browser launch also creates a default page
+    output_types=['browser', 'page'],
 
-    # Connection rules
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],  # Can connect to browser and flow modules
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
     can_receive_from=['start', 'flow.*'],
 
-    # Execution settings
     timeout_ms=30000,
     retryable=True,
     max_retries=2,
     concurrent_safe=False,
 
-    # Security settings
     requires_credentials=False,
     handles_sensitive_data=False,
     required_permissions=['browser.read', 'browser.write'],
 
-    # Schema-driven params
     params_schema=compose(
         presets.BROWSER_HEADLESS(default=False),
         presets.VIEWPORT(),
@@ -75,12 +75,35 @@ from ...schema.constants import FieldGroup, Visibility
             visibility=Visibility.EXPERT,
         ),
         field(
+            'behavior',
+            type='select',
+            label='Behavior Profile',
+            description='How the browser interacts: fast (no delays), normal, careful (mouse movement), human_like (full simulation)',
+            default='fast',
+            options=[
+                {'value': 'fast', 'label': 'Fast (no delays)'},
+                {'value': 'normal', 'label': 'Normal (small delays)'},
+                {'value': 'careful', 'label': 'Careful (mouse movement, random scrolls)'},
+                {'value': 'human_like', 'label': 'Human-like (full simulation)'},
+            ],
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
+            'stealth',
+            type='boolean',
+            label='Stealth Mode',
+            description='Anti-detection patches: WebGL fingerprint, canvas noise, navigator fixes. Always recommended.',
+            default=True,
+            required=False,
+            group=FieldGroup.OPTIONS,
+        ),
+        field(
             'proxy',
             type='string',
             label='Proxy',
             label_key='modules.browser.launch.params.proxy.label',
-            description='HTTP/SOCKS proxy server URL',
-            placeholder='http://proxy:8080',
+            description='HTTP/SOCKS proxy server URL. For rotation use browser.proxy_rotate.',
+            placeholder='http://proxy:8080 or socks5://proxy:1080',
             required=False,
             group=FieldGroup.ADVANCED,
             visibility=Visibility.EXPERT,
@@ -111,21 +134,12 @@ from ...schema.constants import FieldGroup, Visibility
             type='number',
             label='Slow Motion (ms)',
             label_key='modules.browser.launch.params.slow_mo.label',
-            description='Delay between actions in ms',
+            description='Delay between Playwright actions in ms (low-level, prefer Behavior Profile)',
             default=0,
             min=0,
             max=5000,
             group=FieldGroup.ADVANCED,
             visibility=Visibility.EXPERT,
-        ),
-        field(
-            'stealth',
-            type='boolean',
-            label='Stealth Mode',
-            description='Anti-detection patches: WebGL fingerprint, canvas noise, navigator fixes. Always recommended.',
-            default=True,
-            required=False,
-            group=FieldGroup.OPTIONS,
         ),
         field(
             'record_video_dir',
@@ -149,22 +163,19 @@ from ...schema.constants import FieldGroup, Visibility
                 'description_key': 'modules.browser.launch.output.headless.description'},
         'viewport': {'type': 'object', 'description': 'Browser viewport dimensions',
                 'description_key': 'modules.browser.launch.output.viewport.description'},
+        'behavior': {'type': 'string', 'description': 'Active behavior profile',
+                'description_key': 'modules.browser.launch.output.behavior.description'},
     },
     examples=[
-        {
-            'name': 'Launch headless browser',
-            'params': {'headless': True}
-        },
-        {
-            'name': 'Launch visible browser',
-            'params': {'headless': False}
-        }
+        {'name': 'Launch headless browser', 'params': {'headless': True}},
+        {'name': 'Launch visible browser', 'params': {'headless': False}},
+        {'name': 'Human-like with stealth', 'params': {'headless': True, 'behavior': 'human_like', 'stealth': True}},
     ],
     author='Flyto Team',
     license='MIT'
 )
 class BrowserLaunchModule(BaseModule):
-    """Launch Browser Module"""
+    """Launch Browser Module — single browser, single responsibility."""
 
     module_name = "Launch Browser"
     module_description = "Launch a new browser instance"
@@ -175,6 +186,7 @@ class BrowserLaunchModule(BaseModule):
         self.browser_type = self.params.get('browser_type', 'chromium')
         self.channel = self.params.get('channel', '')
         self.stealth = self.params.get('stealth', True)
+        self.behavior = self.params.get('behavior', 'fast')
         self.proxy = self.params.get('proxy')
         self.user_agent = self.params.get('user_agent')
         self.locale = self.params.get('locale', 'en-US')
@@ -185,8 +197,13 @@ class BrowserLaunchModule(BaseModule):
             'height': self.params.get('height', 720),
         }
 
+        valid_behaviors = ['fast', 'normal', 'careful', 'human_like']
+        if self.behavior not in valid_behaviors:
+            raise ValueError(f"behavior must be one of: {valid_behaviors}")
+
     async def execute(self) -> Any:
         from core.browser.driver import BrowserDriver
+        from core.browser.humanize import HumanBehavior
 
         # Close existing browser before launching a new one
         existing = self.context.get('browser')
@@ -212,7 +229,10 @@ class BrowserLaunchModule(BaseModule):
             stealth=self.stealth,
         )
 
-        # Store in context for later use
+        # Set behavior profile
+        if self.behavior != 'fast':
+            driver._human = HumanBehavior(self.behavior)
+
         self.context['browser'] = driver
         self.context['browser_headless'] = self.headless
 
@@ -222,6 +242,5 @@ class BrowserLaunchModule(BaseModule):
             "browser_type": self.browser_type,
             "headless": self.headless,
             "viewport": self.viewport,
+            "behavior": self.behavior,
         }
-
-

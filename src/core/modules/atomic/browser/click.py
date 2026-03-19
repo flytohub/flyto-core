@@ -100,6 +100,7 @@ from ...schema import presets
               label_key="modules.browser.click.param.modifiers.label",
               description="Modifier keys to hold during click",
               required=False,
+              items={"type": "string", "enum": ["Alt", "Control", "Meta", "Shift"]},
               group=FieldGroup.ADVANCED),
         presets.TIMEOUT_MS(default=30000),
     ),

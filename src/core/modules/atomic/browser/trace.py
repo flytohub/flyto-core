@@ -55,6 +55,7 @@ from ...schema import compose, field, presets
             description='CDP trace categories (default: devtools.timeline)',
             required=False,
             default=['devtools.timeline'],
+            items={"type": "string"},
         ),
         field(
             'screenshots',

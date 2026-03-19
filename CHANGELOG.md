@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.23.0] - 2026-03-19
+
+### Added
+- **Browser: Resource filtering** — `BrowserDriver.block_resources(['image', 'stylesheet', 'font'])` blocks specified resource types via `page.route()` to speed up scraping (50-70% bandwidth savings). `unblock_resources()` removes all blocking rules.
+- **Browser: Deterministic fingerprint seeding** — GPU/hardware profile randomization now uses a seeded LCG (`_fpRand()`) instead of `Math.random()`, ensuring consistent fingerprints within a persistent context session. Prevents cookie + GPU mismatch detection.
+- **Browser Pool: Health check & auto-relaunch** — `BrowserPool.acquire()` runs `page.evaluate('1')` with 3s timeout. Dead drivers are automatically relaunched with original parameters.
+- **Browser Pool: PoolTaskError** — `pool.map()` returns structured `PoolTaskError(error, retryable)` instead of plain dicts, enabling callers to distinguish retryable failures from permanent ones.
+- **Login: MFA/2FA auto-detection** — After form submission, scans for OTP inputs (`autocomplete="one-time-code"`, `inputmode="numeric" maxlength="6"`) and MFA text patterns. On detection, creates a breakpoint so users can complete verification in the browser, then workflow resumes. Excludes password reset flows to avoid false positives.
+- **Dedup: Context storage mode** — `data.dedup` now supports `storage='context'` to persist hashes in the execution context (for cloud/stateless workers) instead of local disk.
+- **Checkpoint: JSONL streaming** — `PaginationCheckpoint` stores items in a separate `.jsonl` file (append-only) instead of embedding all items in the metadata JSON. Metadata stays small regardless of item count. `load_items()` reads the JSONL file. `VERSION=2` (old checkpoints safely ignored).
+- **Pagination: Direct URL resume** — Checkpoint resume now uses `goto(last_url)` directly instead of re-navigating through all previously processed pages. Falls back to sequential navigation if direct goto fails.
+- **Interact: Input validation** — Action whitelist (`click`/`type`/`select`/`toggle`), selector length cap (500 chars), and injection pattern rejection (`javascript:`, `eval(`, `{}<>`).
+
+### Changed
+- **Captcha: API key no longer in URL** — 2Captcha submit and poll now use POST body instead of URL query string. `_http_post()` auto-detects form-encoded (2Captcha) vs JSON (CapSolver).
+- **Captcha: Detection priority** — hCaptcha (`.h-captcha` class) is now checked before reCAPTCHA v2 (`.g-recaptcha`) to prevent ambiguous `[data-sitekey]` matches. reCAPTCHA v2 selector narrowed to `.g-recaptcha` only.
+- **Dedup: Ordered eviction** — Hash storage changed from `set` to `dict` (Python 3.7+ insertion order), ensuring `max_hashes` eviction correctly removes oldest entries first.
+- **Humanize: before_type delay** — Fixed `before_type()` to use `type_delay * 0.3-0.6` instead of `click_delay` for focus delay timing.
+- **Proxy rotate: Persistent context honesty** — `rotate_proxy()` no longer pretends to succeed in persistent context mode. Returns `None` without updating `_current_proxy`, so callers know rotation didn't happen.
+- **Stealth: chrome.loadTimes() jitter** — Replaced fixed time offsets with randomized 20-100ms jitter to prevent timing pattern detection.
+
+### Fixed
+- **Proxy rotate: Global state isolation** — Removed module-level `_proxy_pool`, `_proxy_index`, `_dead_proxies` globals. State is now stored in `self.context['_proxy_pool']` per execution, preventing cross-workflow contamination.
+- **Throttle: Global state isolation** — Removed module-level `_domain_last_request` global and `global` keyword. Per-domain `RateLimiter` instances are stored in execution context.
+- **ProxyPool: Thread-safety documentation** — Added docstring explaining why `threading.Lock` is correct (microsecond CPU-only critical sections, safe for both sync and async callers).
+
 ## [2.18.6] - 2026-03-12
 
 ### Changed

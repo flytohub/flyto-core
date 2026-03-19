@@ -6,6 +6,7 @@ Browser Driver - Playwright wrapper for browser automation
 import asyncio
 import logging
 import os
+import random
 import shutil
 import sys
 from typing import Any, Dict, List, Optional
@@ -83,6 +84,14 @@ class BrowserDriver:
         # Invalidated automatically when the page URL changes.
         self._cached_hints: Dict[str, Any] = {}
         self._hints_url: Optional[str] = None
+
+        # Human-like behavior simulation (set via launch params)
+        self._human = None  # HumanBehavior instance
+        # Proxy tracking for rotation
+        self._current_proxy: Optional[str] = None
+        self._proxy_pool = None  # ProxyPool instance
+        # Resource filter: set of resource types to block (e.g., {'image', 'stylesheet', 'font'})
+        self._blocked_resources: set = set()
 
     async def launch(
         self,
@@ -205,8 +214,16 @@ class BrowserDriver:
             # Applied via add_init_script() so they run BEFORE any page JS.
             # Disable with stealth=False if patches interfere with testing.
             languages_js = str(languages)
+            # Deterministic seed for fingerprint randomization — same seed
+            # produces same GPU/hardware profile within one driver instance,
+            # preventing inconsistency with persistent cookies.
+            _fingerprint_seed = random.randint(0, 2**32 - 1)
             if stealth:
                 await self._context.add_init_script(f"""
+                // Seeded PRNG for stable fingerprint within a session
+                let _fpS = {_fingerprint_seed};
+                function _fpRand() {{ _fpS = (_fpS * 1664525 + 1013904223) & 0xFFFFFFFF; return (_fpS >>> 0) / 0xFFFFFFFF; }}
+
                 // ═══════════════════════════════════════════════════════════
                 // 1. Core automation signals
                 // ═══════════════════════════════════════════════════════════
@@ -243,21 +260,25 @@ class BrowserDriver:
                     id: undefined,
                 }};
                 window.chrome.csi = () => ({{ onloadT: Date.now(), pageT: Math.random() * 1000 + 500, startE: Date.now(), tran: 15 }});
-                window.chrome.loadTimes = () => ({{
-                    commitLoadTime: Date.now() / 1000,
+                window.chrome.loadTimes = () => {{
+                    const now = Date.now() / 1000;
+                    const jitter = () => Math.random() * 0.08 + 0.02;  // 20-100ms jitter
+                    return {{
+                    commitLoadTime: now - 0.3 - jitter(),
                     connectionInfo: 'h2',
-                    finishDocumentLoadTime: Date.now() / 1000 + Math.random() * 0.5,
-                    finishLoadTime: Date.now() / 1000 + Math.random(),
+                    finishDocumentLoadTime: now - jitter(),
+                    finishLoadTime: now + jitter(),
                     firstPaintAfterLoadTime: 0,
-                    firstPaintTime: Date.now() / 1000 + 0.1,
+                    firstPaintTime: now - 0.2 + jitter(),
                     navigationType: 'Other',
                     npnNegotiatedProtocol: 'h2',
-                    requestTime: Date.now() / 1000 - 0.5,
-                    startLoadTime: Date.now() / 1000 - 0.3,
+                    requestTime: now - 0.5 - jitter(),
+                    startLoadTime: now - 0.4 - jitter(),
                     wasAlternateProtocolAvailable: false,
                     wasFetchedViaSpdy: true,
                     wasNpnNegotiated: true,
-                }});
+                    }};
+                }};
 
                 // ═══════════════════════════════════════════════════════════
                 // 3. navigator properties
@@ -296,8 +317,11 @@ class BrowserDriver:
 
                 // Languages
                 Object.defineProperty(navigator, 'languages', {{ get: () => {languages_js} }});
-                Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => 8 }});
-                Object.defineProperty(navigator, 'deviceMemory', {{ get: () => 8 }});
+                // Deterministic hardware profile per session (seeded)
+                const cores = [4, 6, 8, 10, 12, 16][Math.floor(_fpRand() * 6)];
+                const mem = [4, 8, 8, 16, 16, 32][Math.floor(_fpRand() * 6)];
+                Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => cores }});
+                Object.defineProperty(navigator, 'deviceMemory', {{ get: () => mem }});
                 Object.defineProperty(navigator, 'maxTouchPoints', {{ get: () => 0 }});
 
                 // Network info (missing in some headless configs)
@@ -324,20 +348,36 @@ class BrowserDriver:
                 // Headless Chrome returns "Google SwiftShader" which is an
                 // instant bot flag. Spoof to look like a real GPU.
 
-                // Pick WebGL profile based on platform (must match navigator.platform)
+                // Pick WebGL profile based on platform, RANDOMIZED per session
+                // so cross-session fingerprint correlation fails.
                 const plat = navigator.platform || '';
-                let glVendor, glRenderer;
-                if (plat.includes('Mac')) {{
-                    glVendor = 'Google Inc. (Apple)';
-                    glRenderer = 'ANGLE (Apple, Apple M1 Pro, OpenGL 4.1)';
-                }} else if (plat.includes('Win')) {{
-                    glVendor = 'Google Inc. (Intel)';
-                    glRenderer = 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)';
-                }} else {{
-                    // Linux / ChromeOS
-                    glVendor = 'Google Inc. (NVIDIA)';
-                    glRenderer = 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti/PCIe/SSE2, OpenGL 4.5)';
-                }}
+                const macGPUs = [
+                    ['Google Inc. (Apple)', 'ANGLE (Apple, Apple M1 Pro, OpenGL 4.1)'],
+                    ['Google Inc. (Apple)', 'ANGLE (Apple, Apple M2, OpenGL 4.1)'],
+                    ['Google Inc. (Apple)', 'ANGLE (Apple, Apple M1 Max, OpenGL 4.1)'],
+                    ['Google Inc. (Apple)', 'ANGLE (Apple, Apple M3 Pro, OpenGL 4.1)'],
+                    ['Google Inc. (AMD)', 'ANGLE (AMD, AMD Radeon Pro 5500M OpenGL Engine, OpenGL 4.1)'],
+                ];
+                const winGPUs = [
+                    ['Google Inc. (Intel)', 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                    ['Google Inc. (Intel)', 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                    ['Google Inc. (NVIDIA)', 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                    ['Google Inc. (NVIDIA)', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                    ['Google Inc. (AMD)', 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                ];
+                const linuxGPUs = [
+                    ['Google Inc. (NVIDIA)', 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 Ti/PCIe/SSE2, OpenGL 4.5)'],
+                    ['Google Inc. (NVIDIA)', 'ANGLE (NVIDIA, NVIDIA GeForce RTX 2080/PCIe/SSE2, OpenGL 4.5)'],
+                    ['Google Inc. (AMD)', 'ANGLE (AMD, AMD Radeon RX 570/PCIe/SSE2, OpenGL 4.5)'],
+                    ['Google Inc. (Intel)', 'ANGLE (Intel, Mesa Intel(R) UHD Graphics 630, OpenGL 4.6)'],
+                ];
+                let gpuPool;
+                if (plat.includes('Mac')) gpuPool = macGPUs;
+                else if (plat.includes('Win')) gpuPool = winGPUs;
+                else gpuPool = linuxGPUs;
+                const picked = gpuPool[Math.floor(_fpRand() * gpuPool.length)];
+                const glVendor = picked[0];
+                const glRenderer = picked[1];
 
                 const getParameterOrig = WebGLRenderingContext.prototype.getParameter;
                 WebGLRenderingContext.prototype.getParameter = function(param) {{
@@ -575,6 +615,10 @@ class BrowserDriver:
             self._snapshot_since_nav = False
             await self.invalidate_hints(clear_stamps=True)
 
+            # Human-like reading/thinking time after navigation
+            if self._human:
+                await self._human.after_navigation(self._page)
+
             return {
                 'status': 'success',
                 'url': final_url,
@@ -634,6 +678,10 @@ class BrowserDriver:
         try:
             logger.info(f"Clicking element: {selector}")
 
+            # Human-like pre-click behavior (mouse movement, delay)
+            if self._human:
+                await self._human.before_click(self._page, selector)
+
             await self._page.click(
                 selector,
                 timeout=timeout_ms,
@@ -673,10 +721,16 @@ class BrowserDriver:
         try:
             logger.info(f"Typing into element: {selector}")
 
+            # Human-like typing: use per-character delay from behavior profile
+            effective_delay = delay_ms
+            if self._human and effective_delay == 0:
+                effective_delay = self._human.get_type_delay()
+                await self._human.before_type(self._page)
+
             await self._page.type(
                 selector,
                 text,
-                delay=delay_ms,
+                delay=effective_delay,
                 timeout=timeout_ms
             )
 
@@ -898,12 +952,13 @@ class BrowserDriver:
             logger.error(f"Screenshot failed: {str(e)}")
             raise RuntimeError(f"Failed to take screenshot: {str(e)}") from e
 
-    async def evaluate(self, script: str) -> Any:
+    async def evaluate(self, script: str, arg=None) -> Any:
         """
         Execute JavaScript in page context
 
         Args:
             script: JavaScript code to execute
+            arg: Optional argument to pass to the script function
 
         Returns:
             Script return value
@@ -912,7 +967,10 @@ class BrowserDriver:
 
         try:
             logger.info("Executing JavaScript")
-            result = await self._page.evaluate(script)
+            if arg is not None:
+                result = await self._page.evaluate(script, arg)
+            else:
+                result = await self._page.evaluate(script)
             return result
 
         except Exception as e:
@@ -1024,6 +1082,84 @@ class BrowserDriver:
                 }""")
             except Exception:
                 pass
+
+    async def block_resources(self, resource_types: list):
+        """Block specified resource types to speed up page loads.
+
+        Args:
+            resource_types: List of types to block. Valid types:
+                'image', 'stylesheet', 'font', 'media', 'script',
+                'texttrack', 'xhr', 'fetch', 'eventsource', 'websocket',
+                'manifest', 'other'
+        """
+        self._ensure_page()
+        self._blocked_resources = set(resource_types)
+        if self._blocked_resources:
+            blocked = self._blocked_resources
+
+            async def _abort_blocked(route):
+                if route.request.resource_type in blocked:
+                    await route.abort()
+                else:
+                    await route.continue_()
+
+            await self._page.route('**/*', _abort_blocked)
+            logger.info(f"Blocking resources: {resource_types}")
+
+    async def unblock_resources(self):
+        """Remove all resource blocking rules."""
+        self._ensure_page()
+        self._blocked_resources.clear()
+        await self._page.unroute('**/*')
+        logger.info("Resource blocking removed")
+
+    @property
+    def human(self):
+        """Get HumanBehavior instance (or None if fast mode)."""
+        return self._human
+
+    async def rotate_proxy(self) -> Optional[str]:
+        """Rotate to next proxy from pool. Returns new proxy or None.
+
+        Creates a new browser context with the new proxy while
+        preserving the current page URL.
+        """
+        if not self._proxy_pool:
+            return None
+
+        new_proxy = self._proxy_pool.next()
+        if not new_proxy or new_proxy == self._current_proxy:
+            return None
+
+        current_url = self._page.url if self._page else None
+        logger.info(f"Rotating proxy: {self._current_proxy} → {new_proxy}")
+
+        if self._browser:
+            # Regular mode: create new context with new proxy
+            old_context = self._context
+            try:
+                self._context = await self._browser.new_context(
+                    viewport=self.viewport,
+                    proxy={'server': new_proxy},
+                )
+                self._page = await self._context.new_page()
+                if current_url and current_url != 'about:blank':
+                    await self._page.goto(current_url, wait_until='domcontentloaded')
+                await old_context.close()
+                self._current_proxy = new_proxy
+                return new_proxy
+            except Exception as e:
+                logger.error(f"Proxy rotation failed: {e}")
+                self._proxy_pool.mark_failed(new_proxy)
+                return None
+        else:
+            # Persistent context: cannot swap proxy without full relaunch.
+            # Do NOT update _current_proxy — caller must know rotation failed.
+            logger.warning(
+                "Proxy rotation skipped: persistent context does not support "
+                "dynamic proxy change. Use regular launch mode for proxy rotation."
+            )
+            return None
 
     def _ensure_page(self):
         """Ensure page is available"""

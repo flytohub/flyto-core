@@ -107,7 +107,7 @@ from ...schema.constants import FieldGroup
               label_key='modules.browser.type.param.delay.label',
               description='Delay between keystrokes in milliseconds',
               description_key='modules.browser.type.param.delay.description',
-              default=0, min=0,
+              default=0, min=0, max=5000, step=10,
               group=FieldGroup.OPTIONS),
         field('clear', type='boolean', label='Clear Field First',
               label_key='modules.browser.type.param.clear.label',

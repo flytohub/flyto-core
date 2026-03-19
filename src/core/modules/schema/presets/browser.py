@@ -272,6 +272,9 @@ def SCROLL_AMOUNT(
         label_key=label_key,
         default=default,
         required=False,
+        min=0,
+        max=10000,
+        step=50,
         description='Pixels to scroll (ignored if selector is provided)',
         group=FieldGroup.OPTIONS,
     )
@@ -359,6 +362,9 @@ def SELECT_INDEX(
         label=label,
         label_key=label_key,
         required=required,
+        min=0,
+        max=1000,
+        step=1,
         description='Option index to select (0-based)',
         group=FieldGroup.BASIC,
     )
@@ -529,6 +535,7 @@ def COOKIE_EXPIRES(
         label=label,
         label_key=label_key,
         required=required,
+        min=0,
         description='Cookie expiration time (Unix timestamp)',
         group=FieldGroup.OPTIONS,
     )
@@ -787,6 +794,9 @@ def EXTRACT_LIMIT(
         label_key=label_key,
         placeholder=placeholder,
         required=required,
+        min=0,
+        max=10000,
+        step=1,
         description='Maximum number of items to extract',
         group=FieldGroup.OPTIONS,
     )

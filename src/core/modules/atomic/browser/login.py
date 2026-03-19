@@ -214,10 +214,87 @@ class BrowserLoginModule(BaseModule):
         except Exception:
             await page.wait_for_timeout(min(self.wait_ms, 3000))
 
-        # Step 5: Verify login
+        # Step 5: Detect MFA / 2FA prompt
         url_after = page.url
         url_changed = url_after != url_before
-        logged_in = url_changed  # Basic heuristic
+
+        mfa_detected = await page.evaluate(r"""() => {
+            const text = document.body?.innerText?.toLowerCase() || '';
+
+            // Exclude password reset / email verification contexts
+            const isResetFlow = /(?:reset.*password|forgot.*password|password.*reset|create.*password|new.*password)/i.test(text);
+            if (isResetFlow) return false;
+
+            // MFA-specific input fields (strict: otp, 2fa, mfa, totp, one-time-code)
+            const mfaInputs = document.querySelectorAll(
+                'input[name*="otp" i], input[name*="2fa" i], input[name*="mfa" i], '
+                + 'input[name*="totp" i], input[autocomplete="one-time-code"], '
+                + 'input[inputmode="numeric"][maxlength="6"], input[inputmode="numeric"][maxlength="4"]'
+            );
+            if (mfaInputs.length > 0) return true;
+
+            // Text-based detection (strict patterns only)
+            const hasMfaText = /(?:two.?factor|2.?step|authenticator app|security key|one.?time.*(?:password|code|token)|enter.*(?:verification|otp|2fa|mfa).*code)/i.test(text);
+            return hasMfaText;
+        }""")
+
+        if mfa_detected:
+            logger.info("MFA/2FA prompt detected, requesting user interaction")
+            # Fall back to breakpoint so user can complete MFA manually
+            try:
+                from ....engine.breakpoints import get_breakpoint_manager, ApprovalMode
+                manager = get_breakpoint_manager()
+
+                screenshot_b64 = ''
+                try:
+                    import base64
+                    raw = await page.screenshot(type='jpeg', quality=60)
+                    screenshot_b64 = base64.b64encode(raw).decode('ascii')
+                except Exception:
+                    pass
+
+                request = await manager.create_breakpoint(
+                    execution_id=self.context.get('execution_id', 'unknown'),
+                    step_id=self.context.get('step_id', 'unknown'),
+                    workflow_id=self.context.get('workflow_id'),
+                    title='MFA / 2FA Required',
+                    description='Please complete the verification in the browser, then click Approve.',
+                    required_approvers=[],
+                    approval_mode=ApprovalMode.FIRST,
+                    timeout_seconds=300,  # 5 minutes for user to complete MFA
+                    context_snapshot={
+                        'url': url_after,
+                        'screenshot_base64': screenshot_b64,
+                        'screenshot_media_type': 'image/jpeg',
+                        'mfa_detected': True,
+                    },
+                    custom_fields=[],
+                    metadata={'step_name': self.context.get('step_name'), 'mfa': True},
+                )
+                result = await manager.wait_for_resolution(request.breakpoint_id, check_timeout=True)
+
+                from ....engine.breakpoints import BreakpointStatus
+                if result.status != BreakpointStatus.APPROVED:
+                    return {
+                        "status": "mfa_timeout",
+                        "logged_in": False,
+                        "url_after": page.url,
+                        "url_changed": url_changed,
+                        "mfa_detected": True,
+                        "fields_found": detection,
+                    }
+
+                # After user completed MFA, wait for navigation
+                try:
+                    await page.wait_for_load_state('networkidle', timeout=5000)
+                except Exception:
+                    pass
+                url_after = page.url
+            except ImportError:
+                logger.warning("Breakpoint manager unavailable, MFA cannot be completed automatically")
+
+        # Step 6: Verify login
+        logged_in = url_after != url_before  # Basic heuristic
 
         if self.success_indicator:
             if self.success_indicator.startswith('/') or self.success_indicator.startswith('http'):
@@ -234,5 +311,6 @@ class BrowserLoginModule(BaseModule):
             "logged_in": logged_in,
             "url_after": url_after,
             "url_changed": url_changed,
+            "mfa_detected": mfa_detected,
             "fields_found": detection,
         }

@@ -18,6 +18,8 @@ from . import xml_parse
 from . import xml_generate
 from . import yaml_parse
 from . import yaml_generate
+from . import dedup
+from . import validate_records
 
 __all__ = [
     'DataPipelineModule',

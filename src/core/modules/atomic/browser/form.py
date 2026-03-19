@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+from ...schema.constants import FieldGroup
 
 
 @register_module(
@@ -46,6 +47,7 @@ from ...schema import compose, field
             description='CSS selector for the form element (optional)',
             placeholder='form, #login-form',
             required=False,
+            group=FieldGroup.BASIC,
         ),
         field(
             'data',
@@ -54,6 +56,7 @@ from ...schema import compose, field
             label_key='modules.browser.form.params.data.label',
             description='Key-value pairs to fill (key = field name/id, value = content)',
             required=True,
+            group=FieldGroup.BASIC,
         ),
         field(
             'field_mapping',
@@ -62,6 +65,7 @@ from ...schema import compose, field
             label_key='modules.browser.form.params.field_mapping.label',
             description='Custom selector mapping {fieldName: selector}',
             required=False,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'clear_before_fill',
@@ -70,6 +74,7 @@ from ...schema import compose, field
             label_key='modules.browser.form.params.clear_before_fill.label',
             description='Clear existing field values before filling',
             default=True,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'submit',
@@ -78,6 +83,7 @@ from ...schema import compose, field
             label_key='modules.browser.form.params.submit.label',
             description='Submit form after filling',
             default=False,
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'submit_selector',
@@ -88,6 +94,7 @@ from ...schema import compose, field
             placeholder='button[type="submit"], input[type="submit"]',
             required=False,
             showIf={"submit": {"$in": [True]}},
+            group=FieldGroup.OPTIONS,
         ),
         field(
             'delay_between_fields_ms',
@@ -98,6 +105,7 @@ from ...schema import compose, field
             default=100,
             min=0,
             max=5000,
+            group=FieldGroup.ADVANCED,
         ),
     ),
     output_schema={

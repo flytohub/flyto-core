@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+from ...schema.constants import FieldGroup
 
 
 @register_module(
@@ -40,6 +41,7 @@ from ...schema import compose, presets, field
             required=True,
             min=-90,
             max=90,
+            group=FieldGroup.BASIC,
         ),
         field(
             'longitude',
@@ -51,6 +53,7 @@ from ...schema import compose, presets, field
             required=True,
             min=-180,
             max=180,
+            group=FieldGroup.BASIC,
         ),
         field(
             'accuracy',
@@ -60,6 +63,9 @@ from ...schema import compose, presets, field
             description='Position accuracy in meters',
             default=100,
             min=0,
+            max=100000,
+            step=10,
+            group=FieldGroup.ADVANCED,
         ),
     ),
     output_schema={
