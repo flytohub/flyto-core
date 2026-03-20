@@ -430,10 +430,6 @@ class StepExecutor:
         - "all": Process all items at once
         """
         from ...modules.registry import ModuleRegistry
-        from ...modules.items import (
-            Item, ItemContext, NodeExecutionResult, ExecutionStatus,
-            ItemError, ExecutionMeta, wrap_legacy_result, items_to_legacy_context
-        )
 
         # Handle template.invoke:xxx format - strip suffix for registry lookup
         # but preserve full ID for the module to know which template to invoke
@@ -456,96 +452,134 @@ class StepExecutor:
         execution_mode = getattr(module_instance, 'execution_mode', 'single')
 
         try:
-            if execution_mode == 'single':
-                # Traditional mode: ignore input_items, use params
-                result = await module_instance.run()
-                # Wrap legacy result for consistent handling
-                if isinstance(result, dict) and 'ok' in result:
-                    node_result = wrap_legacy_result(result)
-                    # Return legacy format for backward compatibility
-                    return items_to_legacy_context(node_result)
-                return result
-
-            elif execution_mode == 'items':
-                # Process each item independently
-                items = input_items if input_items is not None else [Item(json={})]
-                output_items = []
-                errors = []
-                on_error = params.get('$on_error', 'stop')
-
-                for i, item in enumerate(items):
-                    item_trace = None
-                    if step_trace:
-                        from ..trace import ItemTrace
-                        item_trace = ItemTrace(index=i, input=item.json).start()
-                    try:
-                        item_ctx = ItemContext(items=items, totalItems=len(items))
-                        result_item = await module_instance.execute_item(item, i, item_ctx)
-                        if isinstance(result_item, list):
-                            output_items.extend(result_item)
-                            if item_trace:
-                                item_trace.complete({
-                                    "items": [
-                                        (ri.json if isinstance(ri, Item) else Item.from_value(ri).json)
-                                        for ri in result_item
-                                    ]
-                                })
-                        else:
-                            output_items.append(result_item)
-                            if item_trace:
-                                if isinstance(result_item, Item):
-                                    item_trace.complete(result_item.json)
-                                elif isinstance(result_item, dict):
-                                    item_trace.complete(result_item)
-                                else:
-                                    item_trace.complete({"value": result_item})
-                    except Exception as e:
-                        if on_error == 'continue':
-                            error_item = Item(
-                                json={},
-                                error=ItemError(message=str(e), itemIndex=i)
-                            )
-                            output_items.append(error_item)
-                            errors.append(e)
-                            if item_trace:
-                                item_trace.fail(str(e))
-                        else:
-                            raise
-                    finally:
-                        if item_trace and step_trace:
-                            step_trace.add_item_trace(item_trace)
-
-                status = ExecutionStatus.PARTIAL if errors else ExecutionStatus.SUCCESS
-                node_result = NodeExecutionResult(
-                    data=[output_items],
-                    status=status,
-                    meta=ExecutionMeta(
-                        itemsProcessed=len(items),
-                        itemsFailed=len(errors)
-                    )
+            if execution_mode == 'items':
+                return await self._execute_items_mode(
+                    step_id, module_instance, params, input_items, step_trace
                 )
-                return items_to_legacy_context(node_result)
-
             elif execution_mode == 'all':
-                # Process all items at once
-                items = input_items or []
-                item_ctx = ItemContext(items=items, totalItems=len(items))
-                output_items = await module_instance.execute_all(items, item_ctx)
-
-                node_result = NodeExecutionResult(
-                    data=[output_items],
-                    status=ExecutionStatus.SUCCESS,
-                    meta=ExecutionMeta(itemsProcessed=len(items))
+                return await self._execute_all_mode(
+                    step_id, module_instance, input_items
                 )
-                return items_to_legacy_context(node_result)
-
             else:
-                # Unknown mode, fall back to single
-                logger.warning(f"Unknown execution_mode '{execution_mode}', using single")
-                return await module_instance.run()
+                if execution_mode != 'single':
+                    logger.warning(f"Unknown execution_mode '{execution_mode}', using single")
+                return await self._execute_single_mode(
+                    step_id, module_instance
+                )
 
         except Exception as e:
             raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
+
+    async def _execute_single_mode(
+        self,
+        step_id: str,
+        module_instance: Any,
+    ) -> Any:
+        """Traditional single execution mode: ignore input_items, use params."""
+        from ...modules.items import wrap_legacy_result, items_to_legacy_context
+
+        result = await module_instance.run()
+        # Wrap legacy result for consistent handling
+        if isinstance(result, dict) and 'ok' in result:
+            node_result = wrap_legacy_result(result)
+            # Return legacy format for backward compatibility
+            return items_to_legacy_context(node_result)
+        return result
+
+    async def _execute_items_mode(
+        self,
+        step_id: str,
+        module_instance: Any,
+        params: Dict[str, Any],
+        input_items: Optional[List["Item"]],
+        step_trace: Optional["StepTrace"],
+    ) -> Any:
+        """Process each input item independently."""
+        from ...modules.items import (
+            Item, ItemContext, NodeExecutionResult, ExecutionStatus,
+            ItemError, ExecutionMeta, items_to_legacy_context
+        )
+
+        items = input_items if input_items is not None else [Item(json={})]
+        output_items = []
+        errors = []
+        on_error = params.get('$on_error', 'stop')
+
+        for i, item in enumerate(items):
+            item_trace = None
+            if step_trace:
+                from ..trace import ItemTrace
+                item_trace = ItemTrace(index=i, input=item.json).start()
+            try:
+                item_ctx = ItemContext(items=items, totalItems=len(items))
+                result_item = await module_instance.execute_item(item, i, item_ctx)
+                if isinstance(result_item, list):
+                    output_items.extend(result_item)
+                    if item_trace:
+                        item_trace.complete({
+                            "items": [
+                                (ri.json if isinstance(ri, Item) else Item.from_value(ri).json)
+                                for ri in result_item
+                            ]
+                        })
+                else:
+                    output_items.append(result_item)
+                    if item_trace:
+                        if isinstance(result_item, Item):
+                            item_trace.complete(result_item.json)
+                        elif isinstance(result_item, dict):
+                            item_trace.complete(result_item)
+                        else:
+                            item_trace.complete({"value": result_item})
+            except Exception as e:
+                if on_error == 'continue':
+                    error_item = Item(
+                        json={},
+                        error=ItemError(message=str(e), itemIndex=i)
+                    )
+                    output_items.append(error_item)
+                    errors.append(e)
+                    if item_trace:
+                        item_trace.fail(str(e))
+                else:
+                    raise
+            finally:
+                if item_trace and step_trace:
+                    step_trace.add_item_trace(item_trace)
+
+        status = ExecutionStatus.PARTIAL if errors else ExecutionStatus.SUCCESS
+        node_result = NodeExecutionResult(
+            data=[output_items],
+            status=status,
+            meta=ExecutionMeta(
+                itemsProcessed=len(items),
+                itemsFailed=len(errors)
+            )
+        )
+        return items_to_legacy_context(node_result)
+
+    async def _execute_all_mode(
+        self,
+        step_id: str,
+        module_instance: Any,
+        input_items: Optional[List["Item"]],
+    ) -> Any:
+        """Process all items at once."""
+        from ...modules.items import (
+            ItemContext, NodeExecutionResult, ExecutionStatus,
+            ExecutionMeta, items_to_legacy_context
+        )
+
+        items = input_items or []
+        item_ctx = ItemContext(items=items, totalItems=len(items))
+        output_items = await module_instance.execute_all(items, item_ctx)
+
+        node_result = NodeExecutionResult(
+            data=[output_items],
+            status=ExecutionStatus.SUCCESS,
+            meta=ExecutionMeta(itemsProcessed=len(items))
+        )
+        return items_to_legacy_context(node_result)
 
     def _get_input_items_from_context(
         self,

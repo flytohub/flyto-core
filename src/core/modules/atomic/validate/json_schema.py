@@ -11,6 +11,35 @@ from ...registry import register_module
 from ...errors import ValidationError
 
 
+def _check_bool_excluded(value, types):
+    """Check isinstance but exclude bool (bool is a subclass of int)."""
+    return isinstance(value, types) and not isinstance(value, bool)
+
+
+# Dispatch table: type name → (checker_fn, allowed_types_for_error_msg)
+# checker_fn(value) → bool
+_TYPE_CHECKERS = {
+    "string":  lambda v: isinstance(v, str),
+    "number":  lambda v: _check_bool_excluded(v, (int, float)),
+    "integer": lambda v: _check_bool_excluded(v, int),
+    "boolean": lambda v: isinstance(v, bool),
+    "array":   lambda v: isinstance(v, list),
+    "object":  lambda v: isinstance(v, dict),
+    "null":    lambda v: v is None,
+}
+
+
+def _validate_type(value, expected_type, path=""):
+    """Validate a value matches the expected JSON Schema type.
+    Returns (ok, error_message_or_none)."""
+    checker = _TYPE_CHECKERS.get(expected_type)
+    if checker is None:
+        return True, None
+    if checker(value):
+        return True, None
+    return False, f"{path}: expected {expected_type}, got {type(value).__name__}"
+
+
 def validate_against_schema(data: Any, schema: Dict) -> tuple:
     """
     Simple JSON Schema validation without external dependencies.
@@ -19,35 +48,10 @@ def validate_against_schema(data: Any, schema: Dict) -> tuple:
     errors = []
 
     def validate_type(value, expected_type, path=""):
-        if expected_type == "string":
-            if not isinstance(value, str):
-                errors.append(f"{path}: expected string, got {type(value).__name__}")
-                return False
-        elif expected_type == "number":
-            if not isinstance(value, (int, float)) or isinstance(value, bool):
-                errors.append(f"{path}: expected number, got {type(value).__name__}")
-                return False
-        elif expected_type == "integer":
-            if not isinstance(value, int) or isinstance(value, bool):
-                errors.append(f"{path}: expected integer, got {type(value).__name__}")
-                return False
-        elif expected_type == "boolean":
-            if not isinstance(value, bool):
-                errors.append(f"{path}: expected boolean, got {type(value).__name__}")
-                return False
-        elif expected_type == "array":
-            if not isinstance(value, list):
-                errors.append(f"{path}: expected array, got {type(value).__name__}")
-                return False
-        elif expected_type == "object":
-            if not isinstance(value, dict):
-                errors.append(f"{path}: expected object, got {type(value).__name__}")
-                return False
-        elif expected_type == "null":
-            if value is not None:
-                errors.append(f"{path}: expected null, got {type(value).__name__}")
-                return False
-        return True
+        ok, error = _validate_type(value, expected_type, path)
+        if not ok:
+            errors.append(error)
+        return ok
 
     def validate_value(value, schema_part, path="root"):
         if not schema_part:

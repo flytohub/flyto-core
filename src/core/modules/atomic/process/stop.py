@@ -9,8 +9,7 @@ import asyncio
 import logging
 import os
 import signal
-import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ...registry import register_module
 from ...schema import compose, presets
@@ -18,6 +17,144 @@ from .start import get_process_registry
 
 
 logger = logging.getLogger(__name__)
+
+
+def _find_processes_to_stop(
+    registry: Dict[str, Any],
+    process_id: Optional[str],
+    name: Optional[str],
+    pid: Optional[int],
+    stop_all: bool,
+) -> Tuple[List[str], Optional[Dict[str, Any]]]:
+    """Return (processes_to_stop, early_return_result).
+
+    early_return_result is a dict to return immediately (e.g. NOT_FOUND)
+    or None if processing should continue.
+    """
+    if stop_all:
+        return list(registry.keys()), None
+
+    if process_id:
+        if process_id in registry:
+            return [process_id], None
+        return [], {
+            'ok': False,
+            'error': f'Process not found: {process_id}',
+            'error_code': 'NOT_FOUND',
+        }
+
+    if name:
+        return [
+            pid_key for pid_key, info in registry.items()
+            if info.get('name') == name
+        ], None
+
+    if pid:
+        found = [
+            proc_id for proc_id, info in registry.items()
+            if info.get('pid') == pid
+        ]
+        return found, None
+
+    return [], None
+
+
+async def _kill_pid_directly(
+    pid: int,
+    sig_num: int,
+    sig: str,
+    timeout_seconds: float,
+) -> Dict[str, Any]:
+    """Kill a process by system PID that is not in the registry."""
+    try:
+        os.kill(pid, sig_num)
+        if sig_num != signal.SIGKILL:
+            await asyncio.sleep(timeout_seconds)
+            try:
+                os.kill(pid, 0)
+                os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+        return {
+            'ok': True,
+            'stopped': [{'pid': pid, 'signal': sig}],
+            'failed': [],
+            'count': 1,
+        }
+    except ProcessLookupError:
+        return {
+            'ok': False,
+            'error': f'Process with PID {pid} not found',
+            'error_code': 'NOT_FOUND',
+        }
+    except Exception as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'KILL_FAILED',
+        }
+
+
+async def _stop_registered_process(
+    proc_id: str,
+    info: Dict[str, Any],
+    sig_num: int,
+    sig: str,
+    timeout_seconds: float,
+    registry: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Stop a single registered process. Returns a stopped-info or failed-info dict."""
+    process = info.get('process')
+
+    if not process:
+        return {'failed': {'process_id': proc_id, 'error': 'Process object not found'}}
+
+    try:
+        proc_pid = process.pid
+
+        if sig_num == signal.SIGKILL:
+            process.kill()
+        else:
+            process.terminate()
+
+        try:
+            await asyncio.wait_for(process.wait(), timeout=timeout_seconds)
+        except asyncio.TimeoutError:
+            logger.warning(f"Process {proc_id} didn't exit, force killing")
+            process.kill()
+            await process.wait()
+
+        log_handle = info.get('log_handle')
+        if log_handle:
+            try:
+                log_handle.close()
+            except Exception:
+                pass
+
+        if proc_id in registry:
+            del registry[proc_id]
+
+        logger.info(f"Stopped process: {info.get('name')} (PID: {proc_pid})")
+        return {
+            'stopped': {
+                'process_id': proc_id,
+                'pid': proc_pid,
+                'name': info.get('name'),
+                'signal': sig,
+                'exit_code': process.returncode,
+            }
+        }
+    except Exception as e:
+        logger.error(f"Failed to stop process {proc_id}: {e}")
+        return {
+            'failed': {
+                'process_id': proc_id,
+                'pid': info.get('pid'),
+                'name': info.get('name'),
+                'error': str(e),
+            }
+        }
 
 
 @register_module(
@@ -138,70 +275,17 @@ async def process_stop(context: Dict[str, Any]) -> Dict[str, Any]:
         sig_num = signal.SIGKILL
 
     registry = get_process_registry()
-    stopped: List[Dict[str, Any]] = []
-    failed: List[Dict[str, Any]] = []
 
     # Find processes to stop
-    processes_to_stop: List[str] = []
+    processes_to_stop, early_return = _find_processes_to_stop(
+        registry, process_id, name, pid, stop_all,
+    )
+    if early_return is not None:
+        return early_return
 
-    if stop_all:
-        processes_to_stop = list(registry.keys())
-    elif process_id:
-        if process_id in registry:
-            processes_to_stop = [process_id]
-        else:
-            return {
-                'ok': False,
-                'error': f'Process not found: {process_id}',
-                'error_code': 'NOT_FOUND'
-            }
-    elif name:
-        processes_to_stop = [
-            pid for pid, info in registry.items()
-            if info.get('name') == name
-        ]
-    elif pid:
-        # Find by system PID
-        processes_to_stop = [
-            proc_id for proc_id, info in registry.items()
-            if info.get('pid') == pid
-        ]
-
-        # Also try to kill directly if not in registry
-        if not processes_to_stop:
-            try:
-                os.kill(pid, sig_num)
-                if sig_num != signal.SIGKILL:
-                    # Wait for graceful shutdown
-                    await asyncio.sleep(timeout_seconds)
-                    try:
-                        os.kill(pid, 0)  # Check if still alive
-                        os.kill(pid, signal.SIGKILL)  # Force kill
-                    except ProcessLookupError:
-                        pass  # Already dead
-
-                stopped.append({
-                    'pid': pid,
-                    'signal': sig
-                })
-                return {
-                    'ok': True,
-                    'stopped': stopped,
-                    'failed': failed,
-                    'count': 1
-                }
-            except ProcessLookupError:
-                return {
-                    'ok': False,
-                    'error': f'Process with PID {pid} not found',
-                    'error_code': 'NOT_FOUND'
-                }
-            except Exception as e:
-                return {
-                    'ok': False,
-                    'error': str(e),
-                    'error_code': 'KILL_FAILED'
-                }
+    # Direct PID kill for unregistered processes
+    if pid and not processes_to_stop:
+        return await _kill_pid_directly(pid, sig_num, sig, timeout_seconds)
 
     if not processes_to_stop and not stop_all:
         return {
@@ -211,65 +295,18 @@ async def process_stop(context: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     # Stop each process
+    stopped: List[Dict[str, Any]] = []
+    failed: List[Dict[str, Any]] = []
+
     for proc_id in processes_to_stop:
         info = registry.get(proc_id, {})
-        process = info.get('process')
-
-        if not process:
-            failed.append({
-                'process_id': proc_id,
-                'error': 'Process object not found'
-            })
-            continue
-
-        try:
-            proc_pid = process.pid
-
-            # Send signal
-            if sig_num == signal.SIGKILL:
-                process.kill()
-            else:
-                process.terminate()
-
-            # Wait for process to exit
-            try:
-                await asyncio.wait_for(process.wait(), timeout=timeout_seconds)
-            except asyncio.TimeoutError:
-                # Force kill if graceful shutdown timed out
-                logger.warning(f"Process {proc_id} didn't exit, force killing")
-                process.kill()
-                await process.wait()
-
-            # Close log handle if exists
-            log_handle = info.get('log_handle')
-            if log_handle:
-                try:
-                    log_handle.close()
-                except Exception:
-                    pass
-
-            # Remove from registry
-            if proc_id in registry:
-                del registry[proc_id]
-
-            stopped.append({
-                'process_id': proc_id,
-                'pid': proc_pid,
-                'name': info.get('name'),
-                'signal': sig,
-                'exit_code': process.returncode
-            })
-
-            logger.info(f"Stopped process: {info.get('name')} (PID: {proc_pid})")
-
-        except Exception as e:
-            failed.append({
-                'process_id': proc_id,
-                'pid': info.get('pid'),
-                'name': info.get('name'),
-                'error': str(e)
-            })
-            logger.error(f"Failed to stop process {proc_id}: {e}")
+        result = await _stop_registered_process(
+            proc_id, info, sig_num, sig, timeout_seconds, registry,
+        )
+        if 'stopped' in result:
+            stopped.append(result['stopped'])
+        else:
+            failed.append(result['failed'])
 
     return {
         'ok': len(failed) == 0,

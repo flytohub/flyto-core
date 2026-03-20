@@ -63,6 +63,155 @@ def _parse_link_header(link_header: str) -> Optional[str]:
     return None
 
 
+def _extract_items(data: Any, data_path: str) -> List[Any]:
+    """Extract items list from response data."""
+    items = _extract_by_path(data, data_path) if data_path else data
+    if not isinstance(items, list):
+        items = [items] if items is not None else []
+    return items
+
+
+async def _paginate_offset(
+    session, method: str, base_url: str, headers: dict, verify_ssl: bool,
+    data_path: str, page_size: int, max_pages: int, delay_ms: int,
+    params: dict, all_items: List[Any], pages_fetched: int,
+) -> tuple:
+    """Offset + limit pagination strategy."""
+    offset_param = params.get('offset_param', 'offset')
+    limit_param = params.get('limit_param', 'limit')
+    offset = 0
+
+    for _ in range(max_pages):
+        url = _merge_query(base_url, {offset_param: offset, limit_param: page_size})
+        async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
+            data = await resp.json()
+            items = _extract_items(data, data_path)
+
+            all_items.extend(items)
+            pages_fetched += 1
+            logger.info(f"Page {pages_fetched}: {len(items)} items (offset={offset})")
+
+            if len(items) < page_size:
+                break
+            offset += page_size
+
+        if delay_ms > 0:
+            await asyncio.sleep(delay_ms / 1000)
+
+    return all_items, pages_fetched
+
+
+async def _paginate_page(
+    session, method: str, base_url: str, headers: dict, verify_ssl: bool,
+    data_path: str, page_size: int, max_pages: int, delay_ms: int,
+    params: dict, all_items: List[Any], pages_fetched: int,
+) -> tuple:
+    """Page number pagination strategy."""
+    page_param = params.get('page_param', 'page')
+    limit_param = params.get('limit_param', 'limit')
+    current_page = params.get('start_page', 1)
+
+    for _ in range(max_pages):
+        query = {page_param: current_page}
+        if page_size:
+            query[limit_param] = page_size
+        url = _merge_query(base_url, query)
+
+        async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
+            data = await resp.json()
+            items = _extract_items(data, data_path)
+
+            all_items.extend(items)
+            pages_fetched += 1
+            logger.info(f"Page {pages_fetched} (page={current_page}): {len(items)} items")
+
+            if len(items) == 0:
+                break
+            current_page += 1
+
+        if delay_ms > 0:
+            await asyncio.sleep(delay_ms / 1000)
+
+    return all_items, pages_fetched
+
+
+async def _paginate_cursor(
+    session, method: str, base_url: str, headers: dict, verify_ssl: bool,
+    data_path: str, page_size: int, max_pages: int, delay_ms: int,
+    params: dict, all_items: List[Any], pages_fetched: int,
+) -> tuple:
+    """Cursor / next-token pagination strategy."""
+    cursor_param = params.get('cursor_param', 'cursor')
+    cursor_path = params.get('cursor_path', '')
+    cursor_value = None
+
+    for _ in range(max_pages):
+        query = {}
+        if cursor_value:
+            query[cursor_param] = cursor_value
+        if page_size:
+            query['limit'] = page_size
+        url = _merge_query(base_url, query) if query else base_url
+
+        async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
+            data = await resp.json()
+            items = _extract_items(data, data_path)
+
+            all_items.extend(items)
+            pages_fetched += 1
+
+            next_cursor = _extract_by_path(data, cursor_path) if cursor_path else None
+            logger.info(f"Page {pages_fetched}: {len(items)} items (cursor={'...' if next_cursor else 'none'})")
+
+            if not next_cursor or len(items) == 0:
+                break
+            cursor_value = next_cursor
+
+        if delay_ms > 0:
+            await asyncio.sleep(delay_ms / 1000)
+
+    return all_items, pages_fetched
+
+
+async def _paginate_link_header(
+    session, method: str, base_url: str, headers: dict, verify_ssl: bool,
+    data_path: str, page_size: int, max_pages: int, delay_ms: int,
+    params: dict, all_items: List[Any], pages_fetched: int,
+) -> tuple:
+    """Link header (RFC 5988) pagination strategy."""
+    url = base_url
+    if page_size:
+        url = _merge_query(url, {'per_page': page_size})
+
+    for _ in range(max_pages):
+        async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
+            data = await resp.json()
+            items = _extract_items(data, data_path)
+
+            all_items.extend(items)
+            pages_fetched += 1
+
+            next_url = _parse_link_header(resp.headers.get('Link', ''))
+            logger.info(f"Page {pages_fetched}: {len(items)} items (next={'yes' if next_url else 'none'})")
+
+            if not next_url or len(items) == 0:
+                break
+            url = next_url
+
+        if delay_ms > 0:
+            await asyncio.sleep(delay_ms / 1000)
+
+    return all_items, pages_fetched
+
+
+_STRATEGY_DISPATCH = {
+    'offset': _paginate_offset,
+    'page': _paginate_page,
+    'cursor': _paginate_cursor,
+    'link_header': _paginate_link_header,
+}
+
+
 @register_module(
     module_id='http.paginate',
     version='1.0.0',
@@ -350,116 +499,24 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
 
     try:
+        strategy_fn = _STRATEGY_DISPATCH.get(strategy)
+        if not strategy_fn:
+            return {
+                'ok': False,
+                'error': f'Unknown pagination strategy: {strategy}',
+                'error_code': 'INVALID_STRATEGY',
+                'items': [],
+                'total_items': 0,
+                'pages_fetched': 0,
+                'duration_ms': int((time.time() - start_time) * 1000),
+            }
+
         async with aiohttp.ClientSession(timeout=timeout) as session:
-
-            if strategy == 'offset':
-                offset_param = params.get('offset_param', 'offset')
-                limit_param = params.get('limit_param', 'limit')
-                offset = 0
-
-                for _ in range(max_pages):
-                    url = _merge_query(base_url, {offset_param: offset, limit_param: page_size})
-                    async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
-                        data = await resp.json()
-                        items = _extract_by_path(data, data_path) if data_path else data
-                        if not isinstance(items, list):
-                            items = [items] if items is not None else []
-
-                        all_items.extend(items)
-                        pages_fetched += 1
-                        logger.info(f"Page {pages_fetched}: {len(items)} items (offset={offset})")
-
-                        if len(items) < page_size:
-                            break
-                        offset += page_size
-
-                    if delay_ms > 0:
-                        await asyncio.sleep(delay_ms / 1000)
-
-            elif strategy == 'page':
-                page_param = params.get('page_param', 'page')
-                limit_param = params.get('limit_param', 'limit')
-                current_page = params.get('start_page', 1)
-
-                for _ in range(max_pages):
-                    query = {page_param: current_page}
-                    if page_size:
-                        query[limit_param] = page_size
-                    url = _merge_query(base_url, query)
-
-                    async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
-                        data = await resp.json()
-                        items = _extract_by_path(data, data_path) if data_path else data
-                        if not isinstance(items, list):
-                            items = [items] if items is not None else []
-
-                        all_items.extend(items)
-                        pages_fetched += 1
-                        logger.info(f"Page {pages_fetched} (page={current_page}): {len(items)} items")
-
-                        if len(items) == 0:
-                            break
-                        current_page += 1
-
-                    if delay_ms > 0:
-                        await asyncio.sleep(delay_ms / 1000)
-
-            elif strategy == 'cursor':
-                cursor_param = params.get('cursor_param', 'cursor')
-                cursor_path = params.get('cursor_path', '')
-                cursor_value = None
-
-                for _ in range(max_pages):
-                    query = {}
-                    if cursor_value:
-                        query[cursor_param] = cursor_value
-                    if page_size:
-                        query['limit'] = page_size
-                    url = _merge_query(base_url, query) if query else base_url
-
-                    async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
-                        data = await resp.json()
-                        items = _extract_by_path(data, data_path) if data_path else data
-                        if not isinstance(items, list):
-                            items = [items] if items is not None else []
-
-                        all_items.extend(items)
-                        pages_fetched += 1
-
-                        next_cursor = _extract_by_path(data, cursor_path) if cursor_path else None
-                        logger.info(f"Page {pages_fetched}: {len(items)} items (cursor={'...' if next_cursor else 'none'})")
-
-                        if not next_cursor or len(items) == 0:
-                            break
-                        cursor_value = next_cursor
-
-                    if delay_ms > 0:
-                        await asyncio.sleep(delay_ms / 1000)
-
-            elif strategy == 'link_header':
-                url = base_url
-                if page_size:
-                    url = _merge_query(url, {'per_page': page_size})
-
-                for _ in range(max_pages):
-                    async with session.request(method, url, headers=headers, ssl=verify_ssl if verify_ssl else False) as resp:
-                        data = await resp.json()
-                        items = _extract_by_path(data, data_path) if data_path else data
-                        if not isinstance(items, list):
-                            items = [items] if items is not None else []
-
-                        all_items.extend(items)
-                        pages_fetched += 1
-
-                        next_url = _parse_link_header(resp.headers.get('Link', ''))
-                        logger.info(f"Page {pages_fetched}: {len(items)} items (next={'yes' if next_url else 'none'})")
-
-                        if not next_url or len(items) == 0:
-                            break
-                        url = next_url
-
-                    if delay_ms > 0:
-                        await asyncio.sleep(delay_ms / 1000)
+            all_items, pages_fetched = await strategy_fn(
+                session, method, base_url, headers, verify_ssl,
+                data_path, page_size, max_pages, delay_ms,
+                params, all_items, pages_fetched,
+            )
 
     except asyncio.TimeoutError:
         duration_ms = int((time.time() - start_time) * 1000)
