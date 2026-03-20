@@ -201,17 +201,37 @@ class BrowserClickModule(BaseModule):
         result = {"status": "success", "selector": self.selector, "method": self.method}
 
         # Wait for page to settle after click.
-        # Strategy: try domcontentloaded first (real navigation),
-        # then wait for URL change or DOM mutation (SPA navigation).
+        # Strategy: detect real navigation vs SPA, then wait for interactive
+        # elements to appear before extracting hints.
         pre_url = page.url
         try:
             await page.wait_for_load_state('domcontentloaded', timeout=2000)
         except Exception:
             pass
-        # If URL didn't change, this might be an SPA — wait for DOM to stabilize
-        if page.url == pre_url:
+
+        if page.url != pre_url:
+            # Real navigation: page URL changed.
+            # domcontentloaded fires before JS frameworks render form elements
+            # (e.g. Google Signup, React apps). Wait for interactive elements.
             try:
-                # Wait for any new interactive element to appear (SPA rendered new content)
+                await page.wait_for_function(
+                    '''() => {
+                        const els = document.querySelectorAll(
+                            'input:not([type=hidden]), textarea, select, '
+                            + '[role="combobox"], [role="listbox"], '
+                            + '[contenteditable="true"]'
+                        );
+                        return els.length > 0;
+                    }''',
+                    timeout=5000,
+                )
+            except Exception:
+                pass
+            # Brief extra wait for late-rendering elements (animations, lazy fields)
+            await page.wait_for_timeout(300)
+        else:
+            # SPA navigation: URL didn't change, wait for DOM to stabilize
+            try:
                 await page.wait_for_function(
                     '''() => {
                         const els = document.querySelectorAll(
@@ -227,8 +247,13 @@ class BrowserClickModule(BaseModule):
             await page.wait_for_timeout(500)
 
         # Post-click: refresh hints on the (potentially new) page
+        import logging as _logging
+        _click_log = _logging.getLogger(__name__)
+        nav_happened = page.url != pre_url
+        _click_log.info("[CLICK] post-action: nav=%s, pre=%s, now=%s", nav_happened, pre_url[:80], page.url[:80])
         await browser.invalidate_hints()
         hints = await browser.get_hints(force=True)
+        _click_log.info("[CLICK] post-hints: inputs=%d, buttons=%d", len(hints.get('inputs', [])), len(hints.get('buttons', [])))
         browser._snapshot_since_nav = True
         if hints.get('text'):
             result["_page_hint"] = hints["text"][:800]

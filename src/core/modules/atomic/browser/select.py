@@ -263,8 +263,8 @@ class BrowserSelectModule(BaseModule):
 
         page = browser.page
 
-        # Pre-action: refresh element hints to ensure we have current page state
-        await browser.get_hints()
+        # Pre-action: refresh element hints after page is confirmed ready
+        await browser.get_hints(force=True)
 
         # Auto-detect native <select> vs custom dropdown
         # Use Playwright's own locator to resolve the element (handles CSS, XPath, text= etc.)

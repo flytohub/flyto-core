@@ -214,8 +214,9 @@ EXTRACT_HINTS_JS = """() => {
         if (!style) return false;
         if (style.display === 'none') return false;
         if (style.visibility === 'hidden' || style.visibility === 'collapse') return false;
-        // opacity:0 — transparent, not interactable by user
-        if (parseFloat(style.opacity) === 0) return false;
+        // NOTE: opacity:0 is NOT filtered — many sites (Google, Material UI)
+        // render form inputs with opacity:0 and fade them in via CSS transition.
+        // Filtering them would cause hints to be empty during page transitions.
         // clip-path: inset(100%) — common screen-reader-only pattern
         if (style.clipPath === 'inset(100%)') return false;
         // Zero-size with overflow hidden — collapsed accordion, hidden panel
@@ -676,9 +677,21 @@ EXTRACT_HINTS_JS = """() => {
 
 async def extract_element_hints(page) -> dict:
     """Extract interactive elements from page. Returns dict with text/inputs/checkboxes/radios/switches/selects/buttons/links/elements."""
+    import logging
+    _log = logging.getLogger(__name__)
     try:
-        return await page.evaluate(EXTRACT_HINTS_JS)
+        hints = await page.evaluate(EXTRACT_HINTS_JS)
+        n_inputs = len(hints.get("inputs", []))
+        n_buttons = len(hints.get("buttons", []))
+        n_selects = len(hints.get("selects", []))
+        n_links = len(hints.get("links", []))
+        n_all = len(hints.get("elements", []))
+        _log.info(
+            "[HINTS] extracted: %d inputs, %d buttons, %d selects, %d links, %d total | url=%s",
+            n_inputs, n_buttons, n_selects, n_links, n_all,
+            page.url[:120] if hasattr(page, 'url') else '?',
+        )
+        return hints
     except Exception as e:
-        import logging
-        logging.getLogger(__name__).debug("Failed to extract element hints: %s", e)
+        _log.info("[HINTS] FAILED on %s: %s", page.url[:120] if hasattr(page, 'url') else '?', e)
         return {}

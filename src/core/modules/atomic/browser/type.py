@@ -203,11 +203,11 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Pre-action: refresh element hints to ensure we have current page state
-        await browser.get_hints()
-
         # Wait for element to be visible before interacting
         await browser.wait(self.selector, state='visible', timeout_ms=10000)
+
+        # Pre-action: refresh element hints after element is confirmed visible
+        await browser.get_hints(force=True)
 
         # Clear field first if requested
         if self.clear:
