@@ -1,0 +1,71 @@
+name: Form Auto-Fill with Review
+description: "Log into a website, auto-fill a form with your data, then pause for you to review before submitting. Handles MFA/2FA automatically. Perfect for recurring data entry on sites without APIs."
+
+args:
+  login_url:
+    type: string
+    required: true
+    description: Login page URL
+    placeholder: "https://portal.example.com/login"
+  username:
+    type: string
+    required: true
+    description: Login username or email
+  password:
+    type: string
+    required: true
+    description: Login password
+  form_url:
+    type: string
+    required: true
+    description: Page URL containing the form to fill
+    placeholder: "https://portal.example.com/submit-report"
+  form_data:
+    type: string
+    required: true
+    description: "JSON object of field:value pairs to fill"
+    placeholder: '{"name":"John","email":"john@example.com","notes":"Monthly report"}'
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: false
+      stealth: true
+
+  - id: go_login
+    module: browser.goto
+    params:
+      url: "{{login_url}}"
+
+  - id: login
+    module: browser.login
+    params:
+      username: "{{username}}"
+      password: "{{password}}"
+
+  - id: go_form
+    module: browser.goto
+    params:
+      url: "{{form_url}}"
+
+  - id: fill
+    module: browser.form
+    params:
+      data: "{{form_data}}"
+      submit: false
+
+  - id: review
+    module: browser.interact
+    params:
+      title: "Review form before submit"
+      description: "Check the filled form. Click the submit button if everything looks correct, or click Skip to cancel."
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: form-submitted.png
+      full_page: true
+
+  - id: close
+    module: browser.close

@@ -1,0 +1,48 @@
+name: Social Media Monitor
+description: "Take a full-page screenshot of any public social media profile and auto-detect recent posts. No login required. Works on Twitter/X, Facebook, Instagram, LinkedIn public pages."
+
+args:
+  url:
+    type: string
+    required: true
+    description: Public profile or page URL
+    placeholder: "https://twitter.com/elonmusk"
+  output:
+    type: string
+    default: social-capture.png
+    description: Screenshot output path
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      stealth: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+      wait_until: networkidle
+
+  - id: scroll
+    module: browser.scroll
+    params:
+      amount: 2000
+      delay_ms: 500
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: "{{output}}"
+      full_page: true
+
+  - id: detect_posts
+    module: browser.detect_list
+    params:
+      min_items: 2
+      max_items: 20
+      include_text: true
+
+  - id: close
+    module: browser.close

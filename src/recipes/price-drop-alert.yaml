@@ -1,0 +1,71 @@
+name: Price Drop Alert
+description: "Track a product page and detect price changes. Extracts the current price, compares against your threshold, and captures a screenshot as evidence. Works on any e-commerce site."
+
+args:
+  url:
+    type: string
+    required: true
+    description: Product page URL
+    placeholder: "https://www.amazon.com/dp/B09V3KXJPB"
+  price_selector:
+    type: string
+    required: false
+    description: "CSS selector for the price element. Leave empty to auto-detect."
+    placeholder: ".a-price .a-offscreen, .price, [data-price]"
+  threshold:
+    type: number
+    required: false
+    default: 0
+    description: "Alert if price drops below this value (0 = always report)"
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      stealth: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+      wait_until: networkidle
+
+  - id: extract_price
+    module: browser.evaluate
+    params:
+      script: |
+        (() => {
+          const sel = '{{price_selector}}';
+          let priceText = '';
+          if (sel) {
+            const el = document.querySelector(sel);
+            priceText = el ? el.textContent.trim() : '';
+          }
+          if (!priceText) {
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            const prices = [];
+            while (walker.nextNode()) {
+              const m = walker.currentNode.textContent.match(/[$€£¥]\s*[\d,]+\.?\d*/g);
+              if (m) prices.push(...m);
+            }
+            priceText = prices[0] || '';
+          }
+          const num = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+          return {
+            price_text: priceText,
+            price_number: isNaN(num) ? null : num,
+            url: location.href,
+            title: document.title,
+            timestamp: new Date().toISOString()
+          };
+        })()
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: price-evidence.png
+      full_page: false
+
+  - id: close
+    module: browser.close

@@ -1,0 +1,46 @@
+name: New Posting Alert
+description: "Monitor any page for new listings (jobs, tenders, announcements). Auto-detects list items, deduplicates across runs, and reports only new entries. Works on government sites, job boards, forums — no API needed."
+
+args:
+  url:
+    type: string
+    required: true
+    description: Page URL to monitor (e.g. government tender page, job board)
+    placeholder: "https://example.gov/announcements"
+  min_items:
+    type: number
+    default: 3
+    description: Minimum items to consider a valid list
+  dedup_keys:
+    type: string
+    default: url
+    description: "Comma-separated fields for dedup (e.g. url,title)"
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      stealth: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+      wait_until: networkidle
+
+  - id: detect
+    module: browser.detect_list
+    params:
+      min_items: "{{min_items}}"
+      include_text: true
+
+  - id: dedup
+    module: data.dedup
+    params:
+      items: "${detect.items}"
+      keys: ["url"]
+      storage: context
+
+  - id: close
+    module: browser.close

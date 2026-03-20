@@ -1,0 +1,45 @@
+name: Website Change Detector
+description: "Detect content changes on any webpage. Captures a text snapshot and compares against previous runs using content hashing. Perfect for monitoring competitor pricing pages, legal terms, or government notices."
+
+args:
+  url:
+    type: string
+    required: true
+    description: Page URL to monitor for changes
+    placeholder: "https://competitor.com/pricing"
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      stealth: true
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{url}}"
+      wait_until: networkidle
+
+  - id: snapshot
+    module: browser.snapshot
+    params:
+      format: text
+
+  - id: screenshot
+    module: browser.screenshot
+    params:
+      path: change-evidence.png
+      full_page: true
+
+  - id: dedup
+    module: data.dedup
+    params:
+      items:
+        - url: "{{url}}"
+          content: "${snapshot.text}"
+      keys: ["content"]
+      storage: context
+
+  - id: close
+    module: browser.close
