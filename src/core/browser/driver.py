@@ -182,13 +182,19 @@ class BrowserDriver:
                 logger.info(f"Video recording enabled: {record_video_dir}")
 
             # --- Try persistent context (preserves cookies across sessions) ---
+            # Cloud workers skip persistent context — the user_data_dir causes
+            # lock file and permission issues in containerized environments.
+            # Persistent context is for desktop cookie persistence (Cloudflare etc.)
+            _skip_persistent = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web")
+
             if self.browser_type == 'chromium':
-                launched = await self._launch_persistent(
-                    browser_launcher, launch_args, context_kwargs,
-                    slow_mo=slow_mo, proxy=proxy, channel=channel,
-                )
+                launched = False
+                if not _skip_persistent:
+                    launched = await self._launch_persistent(
+                        browser_launcher, launch_args, context_kwargs,
+                        slow_mo=slow_mo, proxy=proxy, channel=channel,
+                    )
                 if not launched:
-                    # Persistent context failed; fall back to regular launch
                     launched = await self._launch_regular(
                         browser_launcher, launch_args, context_kwargs,
                         slow_mo=slow_mo, proxy=proxy, channel=channel,
