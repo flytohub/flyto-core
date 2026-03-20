@@ -63,6 +63,7 @@ logger = logging.getLogger(__name__)
             description='CSS selector for items to extract on each page',
             placeholder='.product-card, .list-item, tr.data-row',
             required=True,
+            ui={"widget": "element_picker", "element_types": ["button", "link", "input"], "value_key": "selector"},
             group=FieldGroup.BASIC,
         ),
         field(
@@ -74,6 +75,7 @@ logger = logging.getLogger(__name__)
             placeholder='.next, a[rel="next"], .pagination-next',
             required=False,
             showIf={"mode": {"$in": ["next_button", "page_numbers"]}},
+            ui={"widget": "element_picker", "element_types": ["button", "link"], "value_key": "selector"},
             group=FieldGroup.BASIC,
         ),
         field(
@@ -85,6 +87,7 @@ logger = logging.getLogger(__name__)
             placeholder='.load-more, button.show-more',
             required=False,
             showIf={"mode": {"$in": ["load_more"]}},
+            ui={"widget": "element_picker", "element_types": ["button", "link"], "value_key": "selector"},
             group=FieldGroup.BASIC,
         ),
         field(

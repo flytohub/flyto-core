@@ -1,2773 +1,1649 @@
 {
-  "version": "1.0.0",
-  "environment": "production",
-  "generated_at": "2026-03-18T21:31:40.983672",
-  "total": 395,
+  "total": 411,
   "modules": [
     {
       "id": "agent.autonomous",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "agent.autonomous"
+      "version": "1.0.0"
     },
     {
       "id": "agent.chain",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "agent.chain"
+      "version": "1.0.0"
     },
     {
       "id": "ai.local_ollama.chat",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "ai.local_ollama.chat"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.analyze_readability",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.analyze_readability"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.extract_forms",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.extract_forms"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.extract_metadata",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.extract_metadata"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.extract_tables",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.extract_tables"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.find_patterns",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.find_patterns"
+      "version": "1.0.0"
     },
     {
       "id": "analysis.html.structure",
-      "version": "1.0.0",
-      "category": "analysis",
-      "stability": "stable",
-      "label": "analysis.html.structure"
+      "version": "1.0.0"
     },
     {
       "id": "api.anthropic.chat",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "api.anthropic.chat"
+      "version": "1.0.0"
     },
     {
       "id": "api.github.create_issue",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "api.github.create_issue"
+      "version": "1.0.0"
     },
     {
       "id": "api.github.create_pr",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "api.github.create_pr"
+      "version": "1.0.0"
     },
     {
       "id": "api.github.get_repo",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "api.github.get_repo"
+      "version": "1.0.0"
     },
     {
       "id": "api.github.list_issues",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "api.github.list_issues"
+      "version": "1.0.0"
     },
     {
       "id": "api.github.list_repos",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "api.github.list_repos"
+      "version": "1.0.0"
     },
     {
       "id": "api.google_gemini.chat",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "api.google_gemini.chat"
+      "version": "1.0.0"
     },
     {
       "id": "api.google_sheets.read",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "api.google_sheets.read"
+      "version": "1.0.0"
     },
     {
       "id": "api.google_sheets.write",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "api.google_sheets.write"
+      "version": "1.0.0"
     },
     {
       "id": "api.notion.create_page",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "api.notion.create_page"
+      "version": "1.0.0"
     },
     {
       "id": "api.notion.query_database",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "api.notion.query_database"
+      "version": "1.0.0"
     },
     {
       "id": "api.openai.chat",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "api.openai.chat"
+      "version": "1.0.0"
     },
     {
       "id": "api.openai.image",
-      "version": "1.0.0",
-      "category": "ai",
-      "stability": "stable",
-      "label": "api.openai.image"
+      "version": "1.0.0"
     },
     {
       "id": "archive.gunzip",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.gunzip"
+      "version": "1.0.0"
     },
     {
       "id": "archive.gzip",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.gzip"
+      "version": "1.0.0"
     },
     {
       "id": "archive.tar_create",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.tar_create"
+      "version": "1.0.0"
     },
     {
       "id": "archive.tar_extract",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.tar_extract"
+      "version": "1.0.0"
     },
     {
       "id": "archive.zip_create",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.zip_create"
+      "version": "1.0.0"
     },
     {
       "id": "archive.zip_extract",
-      "version": "1.0.0",
-      "category": "archive",
-      "stability": "stable",
-      "label": "archive.zip_extract"
+      "version": "1.0.0"
     },
     {
       "id": "array.chunk",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.chunk"
+      "version": "1.0.0"
     },
     {
       "id": "array.compact",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.compact"
+      "version": "1.0.0"
     },
     {
       "id": "array.difference",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.difference"
+      "version": "1.0.0"
     },
     {
       "id": "array.drop",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.drop"
+      "version": "1.0.0"
     },
     {
       "id": "array.filter",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "array.filter"
+      "version": "1.0.0"
     },
     {
       "id": "array.flatten",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.flatten"
+      "version": "1.0.0"
     },
     {
       "id": "array.group_by",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.group_by"
+      "version": "1.0.0"
     },
     {
       "id": "array.intersection",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.intersection"
+      "version": "1.0.0"
     },
     {
       "id": "array.join",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.join"
+      "version": "1.0.0"
     },
     {
       "id": "array.map",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.map"
+      "version": "1.0.0"
     },
     {
       "id": "array.reduce",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.reduce"
+      "version": "1.0.0"
     },
     {
       "id": "array.sort",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "array.sort"
+      "version": "1.0.0"
     },
     {
       "id": "array.take",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.take"
+      "version": "1.0.0"
     },
     {
       "id": "array.unique",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "array.unique"
+      "version": "1.0.0"
     },
     {
       "id": "array.zip",
-      "version": "1.0.0",
-      "category": "array",
-      "stability": "stable",
-      "label": "array.zip"
+      "version": "1.0.0"
     },
     {
       "id": "auth.oauth2",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "auth.oauth2"
+      "version": "1.0.0"
     },
     {
       "id": "aws.s3.delete",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "aws.s3.delete"
+      "version": "1.0.0"
     },
     {
       "id": "aws.s3.download",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "aws.s3.download"
+      "version": "1.0.0"
     },
     {
       "id": "aws.s3.list",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "aws.s3.list"
+      "version": "1.0.0"
     },
     {
       "id": "aws.s3.upload",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "aws.s3.upload"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.challenge",
+      "version": "1.0.0"
     },
     {
       "id": "browser.click",
-      "version": "1.1.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.click"
+      "version": "1.1.0"
     },
     {
       "id": "browser.close",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.close"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.connect",
+      "version": "1.0.0"
     },
     {
       "id": "browser.console",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.console"
+      "version": "1.0.0"
     },
     {
       "id": "browser.cookies",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.cookies"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.cookies_file",
+      "version": "1.0.0"
     },
     {
       "id": "browser.detect",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.detect"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.detect_list",
+      "version": "1.0.0"
     },
     {
       "id": "browser.dialog",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.dialog"
+      "version": "1.0.0"
     },
     {
       "id": "browser.download",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.download"
+      "version": "1.0.0"
     },
     {
       "id": "browser.drag",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.drag"
+      "version": "1.0.0"
     },
     {
       "id": "browser.emulate",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.emulate"
+      "version": "1.0.0"
     },
     {
       "id": "browser.ensure",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.ensure"
+      "version": "1.0.0"
     },
     {
       "id": "browser.evaluate",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.evaluate"
+      "version": "1.0.0"
     },
     {
       "id": "browser.extract",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.extract"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.extract_nested",
+      "version": "1.0.0"
     },
     {
       "id": "browser.find",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.find"
+      "version": "1.0.0"
     },
     {
       "id": "browser.form",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.form"
+      "version": "1.0.0"
     },
     {
       "id": "browser.frame",
-      "version": "1.1.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.frame"
+      "version": "1.1.0"
     },
     {
       "id": "browser.geolocation",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.geolocation"
+      "version": "1.0.0"
     },
     {
       "id": "browser.goto",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.goto"
+      "version": "1.0.0"
     },
     {
       "id": "browser.hover",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.hover"
+      "version": "1.0.0"
     },
     {
       "id": "browser.interact",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.interact"
+      "version": "1.0.0"
     },
     {
       "id": "browser.launch",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.launch"
+      "version": "2.0.0"
+    },
+    {
+      "id": "browser.login",
+      "version": "1.0.0"
     },
     {
       "id": "browser.navigation",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.navigation"
+      "version": "1.0.0"
     },
     {
       "id": "browser.network",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.network"
+      "version": "1.0.0"
     },
     {
       "id": "browser.pages",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.pages"
+      "version": "1.0.0"
     },
     {
       "id": "browser.pagination",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.pagination"
+      "version": "2.0.0"
     },
     {
       "id": "browser.pdf",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.pdf"
+      "version": "1.0.0"
     },
     {
       "id": "browser.performance",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.performance"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.pool",
+      "version": "1.0.0"
     },
     {
       "id": "browser.press",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.press"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.proxy_rotate",
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.readability",
+      "version": "1.0.0"
     },
     {
       "id": "browser.record",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.record"
+      "version": "1.0.0"
     },
     {
       "id": "browser.release",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.release"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.response",
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.robots",
+      "version": "1.0.0"
     },
     {
       "id": "browser.screenshot",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.screenshot"
+      "version": "1.0.0"
     },
     {
       "id": "browser.scroll",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.scroll"
+      "version": "1.0.0"
     },
     {
       "id": "browser.select",
-      "version": "1.1.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.select"
+      "version": "1.1.0"
+    },
+    {
+      "id": "browser.sitemap",
+      "version": "1.0.0"
     },
     {
       "id": "browser.snapshot",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.snapshot"
+      "version": "1.0.0"
     },
     {
       "id": "browser.storage",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.storage"
+      "version": "1.0.0"
     },
     {
       "id": "browser.tab",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.tab"
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.table",
+      "version": "1.0.0"
+    },
+    {
+      "id": "browser.throttle",
+      "version": "1.0.0"
     },
     {
       "id": "browser.trace",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.trace"
+      "version": "1.0.0"
     },
     {
       "id": "browser.type",
-      "version": "1.1.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.type"
+      "version": "1.1.0"
     },
     {
       "id": "browser.upload",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.upload"
+      "version": "1.0.0"
     },
     {
       "id": "browser.viewport",
-      "version": "1.0.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.viewport"
+      "version": "1.0.0"
     },
     {
       "id": "browser.wait",
-      "version": "1.1.0",
-      "category": "browser",
-      "stability": "stable",
-      "label": "browser.wait"
+      "version": "1.1.0"
     },
     {
       "id": "cache.clear",
-      "version": "1.0.0",
-      "category": "cache",
-      "stability": "stable",
-      "label": "cache.clear"
+      "version": "1.0.0"
     },
     {
       "id": "cache.delete",
-      "version": "1.0.0",
-      "category": "cache",
-      "stability": "stable",
-      "label": "cache.delete"
+      "version": "1.0.0"
     },
     {
       "id": "cache.get",
-      "version": "1.0.0",
-      "category": "cache",
-      "stability": "stable",
-      "label": "cache.get"
+      "version": "1.0.0"
     },
     {
       "id": "cache.set",
-      "version": "1.0.0",
-      "category": "cache",
-      "stability": "stable",
-      "label": "cache.set"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_array",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_array"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_empty",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_empty"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_null",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_null"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_number",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_number"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_object",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_object"
+      "version": "1.0.0"
     },
     {
       "id": "check.is_string",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.is_string"
+      "version": "1.0.0"
     },
     {
       "id": "check.type_of",
-      "version": "1.0.0",
-      "category": "check",
-      "stability": "stable",
-      "label": "check.type_of"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.aws_s3.download",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.aws_s3.download"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.aws_s3.upload",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.aws_s3.upload"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.azure.download",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.azure.download"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.azure.upload",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.azure.upload"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.gcs.download",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.gcs.download"
+      "version": "1.0.0"
     },
     {
       "id": "cloud.gcs.upload",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "cloud.gcs.upload"
+      "version": "1.0.0"
     },
     {
       "id": "communication.twilio.make_call",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "communication.twilio.make_call"
+      "version": "1.0.0"
     },
     {
       "id": "communication.twilio.send_sms",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "communication.twilio.send_sms"
+      "version": "1.0.0"
     },
     {
       "id": "compare.change",
-      "version": "1.0.0",
-      "category": "compare",
-      "stability": "stable",
-      "label": "compare.change"
+      "version": "1.0.0"
     },
     {
       "id": "convert.to_array",
-      "version": "1.0.0",
-      "category": "convert",
-      "stability": "stable",
-      "label": "convert.to_array"
+      "version": "1.0.0"
     },
     {
       "id": "convert.to_boolean",
-      "version": "1.0.0",
-      "category": "convert",
-      "stability": "stable",
-      "label": "convert.to_boolean"
+      "version": "1.0.0"
     },
     {
       "id": "convert.to_number",
-      "version": "1.0.0",
-      "category": "convert",
-      "stability": "stable",
-      "label": "convert.to_number"
+      "version": "1.0.0"
     },
     {
       "id": "convert.to_object",
-      "version": "1.0.0",
-      "category": "convert",
-      "stability": "stable",
-      "label": "convert.to_object"
+      "version": "1.0.0"
     },
     {
       "id": "convert.to_string",
-      "version": "1.0.0",
-      "category": "convert",
-      "stability": "stable",
-      "label": "convert.to_string"
+      "version": "1.0.0"
     },
     {
       "id": "core.api.google_search",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "core.api.google_search"
+      "version": "1.0.0"
     },
     {
       "id": "core.api.http_get",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "core.api.http_get"
+      "version": "1.0.0"
     },
     {
       "id": "core.api.http_post",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "core.api.http_post"
+      "version": "1.0.0"
     },
     {
       "id": "core.api.serpapi_search",
-      "version": "1.0.0",
-      "category": "api",
-      "stability": "stable",
-      "label": "core.api.serpapi_search"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.decrypt",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.decrypt"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.encrypt",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.encrypt"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.hmac",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.hmac"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.jwt_create",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.jwt_create"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.jwt_verify",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.jwt_verify"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.random_bytes",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.random_bytes"
+      "version": "1.0.0"
     },
     {
       "id": "crypto.random_string",
-      "version": "1.0.0",
-      "category": "crypto",
-      "stability": "stable",
-      "label": "crypto.random_string"
+      "version": "1.0.0"
     },
     {
       "id": "data.csv.read",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.csv.read"
+      "version": "1.0.0"
     },
     {
       "id": "data.csv.write",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.csv.write"
+      "version": "1.0.0"
+    },
+    {
+      "id": "data.dedup",
+      "version": "1.0.0"
     },
     {
       "id": "data.json.parse",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.json.parse"
+      "version": "1.0.0"
     },
     {
       "id": "data.json.stringify",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.json.stringify"
+      "version": "1.0.0"
     },
     {
       "id": "data.json_to_csv",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.json_to_csv"
+      "version": "1.0.0"
     },
     {
       "id": "data.pipeline",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.pipeline"
+      "version": "1.0.0"
     },
     {
       "id": "data.text.template",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.text.template"
+      "version": "1.0.0"
+    },
+    {
+      "id": "data.validate_records",
+      "version": "1.0.0"
     },
     {
       "id": "data.xml.generate",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.xml.generate"
+      "version": "1.0.0"
     },
     {
       "id": "data.xml.parse",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.xml.parse"
+      "version": "1.0.0"
     },
     {
       "id": "data.yaml.generate",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.yaml.generate"
+      "version": "1.0.0"
     },
     {
       "id": "data.yaml.parse",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "data.yaml.parse"
+      "version": "1.0.0"
     },
     {
       "id": "datetime.add",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "datetime.add"
+      "version": "1.0.0"
     },
     {
       "id": "datetime.format",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "datetime.format"
+      "version": "1.0.0"
     },
     {
       "id": "datetime.parse",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "datetime.parse"
+      "version": "1.0.0"
     },
     {
       "id": "datetime.subtract",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "datetime.subtract"
+      "version": "1.0.0"
     },
     {
       "id": "db.mongodb.find",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.mongodb.find"
+      "version": "1.0.0"
     },
     {
       "id": "db.mongodb.insert",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.mongodb.insert"
+      "version": "1.0.0"
     },
     {
       "id": "db.mysql.query",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.mysql.query"
+      "version": "1.0.0"
     },
     {
       "id": "db.postgresql.query",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.postgresql.query"
+      "version": "1.0.0"
     },
     {
       "id": "db.redis.get",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.redis.get"
+      "version": "1.0.0"
     },
     {
       "id": "db.redis.set",
-      "version": "1.0.0",
-      "category": "database",
-      "stability": "stable",
-      "label": "db.redis.set"
+      "version": "1.0.0"
     },
     {
       "id": "decode.base64",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "decode.base64"
+      "version": "1.0.0"
     },
     {
       "id": "decode.hex",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "decode.hex"
+      "version": "1.0.0"
     },
     {
       "id": "decode.url",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "decode.url"
+      "version": "1.0.0"
     },
     {
       "id": "dns.lookup",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "dns.lookup"
+      "version": "1.0.0"
     },
     {
       "id": "docker.build",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.build"
+      "version": "1.0.0"
     },
     {
       "id": "docker.inspect_container",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.inspect_container"
+      "version": "1.0.0"
     },
     {
       "id": "docker.logs",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.logs"
+      "version": "1.0.0"
     },
     {
       "id": "docker.ps",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.ps"
+      "version": "1.0.0"
     },
     {
       "id": "docker.run",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.run"
+      "version": "1.0.0"
     },
     {
       "id": "docker.stop",
-      "version": "1.0.0",
-      "category": "docker",
-      "stability": "stable",
-      "label": "docker.stop"
+      "version": "1.0.0"
     },
     {
       "id": "element.attribute",
-      "version": "1.0.0",
-      "category": "element",
-      "stability": "stable",
-      "label": "element.attribute"
+      "version": "1.0.0"
     },
     {
       "id": "element.query",
-      "version": "1.0.0",
-      "category": "element",
-      "stability": "stable",
-      "label": "element.query"
+      "version": "1.0.0"
     },
     {
       "id": "element.text",
-      "version": "1.0.0",
-      "category": "element",
-      "stability": "stable",
-      "label": "element.text"
+      "version": "1.0.0"
     },
     {
       "id": "encode.base64",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "encode.base64"
+      "version": "1.0.0"
     },
     {
       "id": "encode.hex",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "encode.hex"
+      "version": "1.0.0"
     },
     {
       "id": "encode.html",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "encode.html"
+      "version": "1.0.0"
     },
     {
       "id": "encode.url",
-      "version": "1.0.0",
-      "category": "encode",
-      "stability": "stable",
-      "label": "encode.url"
+      "version": "1.0.0"
     },
     {
       "id": "env.get",
-      "version": "1.0.0",
-      "category": "env",
-      "stability": "stable",
-      "label": "env.get"
+      "version": "1.0.0"
     },
     {
       "id": "env.load_dotenv",
-      "version": "1.0.0",
-      "category": "env",
-      "stability": "stable",
-      "label": "env.load_dotenv"
+      "version": "1.0.0"
     },
     {
       "id": "env.set",
-      "version": "1.0.0",
-      "category": "env",
-      "stability": "stable",
-      "label": "env.set"
+      "version": "1.0.0"
     },
     {
       "id": "error.circuit_breaker",
-      "version": "1.0.0",
-      "category": "error",
-      "stability": "stable",
-      "label": "error.circuit_breaker"
+      "version": "1.0.0"
     },
     {
       "id": "error.fallback",
-      "version": "1.0.0",
-      "category": "error",
-      "stability": "stable",
-      "label": "error.fallback"
+      "version": "1.0.0"
     },
     {
       "id": "error.retry",
-      "version": "1.0.0",
-      "category": "error",
-      "stability": "stable",
-      "label": "error.retry"
+      "version": "1.0.0"
     },
     {
       "id": "excel.read",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "excel.read"
+      "version": "1.0.0"
     },
     {
       "id": "excel.write",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "excel.write"
+      "version": "1.0.0"
     },
     {
       "id": "file.copy",
-      "version": "1.0.0",
-      "category": "file",
-      "stability": "stable",
-      "label": "file.copy"
+      "version": "1.0.0"
     },
     {
       "id": "file.delete",
-      "version": "1.0.0",
-      "category": "file",
-      "stability": "stable",
-      "label": "file.delete"
+      "version": "1.0.0"
     },
     {
       "id": "file.diff",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "file.diff"
+      "version": "1.0.0"
     },
     {
       "id": "file.edit",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "file.edit"
+      "version": "1.0.0"
     },
     {
       "id": "file.exists",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "file.exists"
+      "version": "1.0.0"
     },
     {
       "id": "file.move",
-      "version": "1.0.0",
-      "category": "file",
-      "stability": "stable",
-      "label": "file.move"
+      "version": "1.0.0"
     },
     {
       "id": "file.read",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "file.read"
+      "version": "1.0.0"
     },
     {
       "id": "file.write",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "file.write"
+      "version": "1.0.0"
     },
     {
       "id": "flow.batch",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.batch"
+      "version": "1.0.0"
     },
     {
       "id": "flow.branch",
-      "version": "2.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.branch"
+      "version": "2.0.0"
     },
     {
       "id": "flow.circuit_breaker",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.circuit_breaker"
+      "version": "1.0.0"
     },
     {
       "id": "flow.container",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.container"
+      "version": "1.0.0"
     },
     {
       "id": "flow.debounce",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.debounce"
+      "version": "1.0.0"
     },
     {
       "id": "flow.end",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.end"
+      "version": "1.0.0"
     },
     {
       "id": "flow.error_handle",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.error_handle"
+      "version": "1.0.0"
     },
     {
       "id": "flow.error_workflow_trigger",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.error_workflow_trigger"
+      "version": "1.0.0"
     },
     {
       "id": "flow.foreach",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.foreach"
+      "version": "1.0.0"
     },
     {
       "id": "flow.fork",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.fork"
+      "version": "1.0.0"
     },
     {
       "id": "flow.goto",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.goto"
+      "version": "1.0.0"
     },
     {
       "id": "flow.invoke",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.invoke"
+      "version": "1.0.0"
     },
     {
       "id": "flow.join",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.join"
+      "version": "1.0.0"
     },
     {
       "id": "flow.loop",
-      "version": "2.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.loop"
+      "version": "2.0.0"
     },
     {
       "id": "flow.merge",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.merge"
+      "version": "1.0.0"
     },
     {
       "id": "flow.parallel",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.parallel"
+      "version": "1.0.0"
     },
     {
       "id": "flow.rate_limit",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.rate_limit"
+      "version": "1.0.0"
     },
     {
       "id": "flow.retry",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.retry"
+      "version": "1.0.0"
     },
     {
       "id": "flow.start",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.start"
+      "version": "1.0.0"
     },
     {
       "id": "flow.subflow",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.subflow"
+      "version": "1.0.0"
     },
     {
       "id": "flow.switch",
-      "version": "2.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.switch"
+      "version": "2.0.0"
     },
     {
       "id": "flow.throttle",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.throttle"
+      "version": "1.0.0"
     },
     {
       "id": "flow.trigger",
-      "version": "1.0.0",
-      "category": "flow",
-      "stability": "stable",
-      "label": "flow.trigger"
+      "version": "1.0.0"
     },
     {
       "id": "format.currency",
-      "version": "1.0.0",
-      "category": "format",
-      "stability": "stable",
-      "label": "format.currency"
+      "version": "1.0.0"
     },
     {
       "id": "format.duration",
-      "version": "1.0.0",
-      "category": "format",
-      "stability": "stable",
-      "label": "format.duration"
+      "version": "1.0.0"
     },
     {
       "id": "format.filesize",
-      "version": "1.0.0",
-      "category": "format",
-      "stability": "stable",
-      "label": "format.filesize"
+      "version": "1.0.0"
     },
     {
       "id": "format.number",
-      "version": "1.0.0",
-      "category": "format",
-      "stability": "stable",
-      "label": "format.number"
+      "version": "1.0.0"
     },
     {
       "id": "format.percentage",
-      "version": "1.0.0",
-      "category": "format",
-      "stability": "stable",
-      "label": "format.percentage"
+      "version": "1.0.0"
     },
     {
       "id": "git.clone",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "git.clone"
+      "version": "1.0.0"
     },
     {
       "id": "git.commit",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "git.commit"
+      "version": "1.0.0"
     },
     {
       "id": "git.diff",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "git.diff"
+      "version": "1.0.0"
     },
     {
       "id": "google.calendar.create_event",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "google.calendar.create_event"
+      "version": "1.0.0"
     },
     {
       "id": "google.calendar.list_events",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "google.calendar.list_events"
+      "version": "1.0.0"
     },
     {
       "id": "google.gmail.search",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "google.gmail.search"
+      "version": "1.0.0"
     },
     {
       "id": "google.gmail.send",
-      "version": "1.0.0",
-      "category": "cloud",
-      "stability": "stable",
-      "label": "google.gmail.send"
+      "version": "1.0.0"
     },
     {
       "id": "graphql.mutation",
-      "version": "1.0.0",
-      "category": "graphql",
-      "stability": "stable",
-      "label": "graphql.mutation"
+      "version": "1.0.0"
     },
     {
       "id": "graphql.query",
-      "version": "1.0.0",
-      "category": "graphql",
-      "stability": "stable",
-      "label": "graphql.query"
+      "version": "1.0.0"
     },
     {
       "id": "hash.sha256",
-      "version": "1.0.0",
-      "category": "hash",
-      "stability": "stable",
-      "label": "hash.sha256"
+      "version": "1.0.0"
     },
     {
       "id": "hash.sha512",
-      "version": "1.0.0",
-      "category": "hash",
-      "stability": "stable",
-      "label": "hash.sha512"
+      "version": "1.0.0"
     },
     {
       "id": "http.get",
-      "version": "1.0.0",
-      "category": "http",
-      "stability": "stable",
-      "label": "http.get"
+      "version": "1.0.0"
     },
     {
       "id": "http.paginate",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "http.paginate"
+      "version": "1.0.0"
     },
     {
       "id": "http.request",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "http.request"
+      "version": "1.0.0"
     },
     {
       "id": "http.response_assert",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "http.response_assert"
+      "version": "1.0.0"
     },
     {
       "id": "http.session",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "http.session"
+      "version": "1.0.0"
     },
     {
       "id": "http.webhook_wait",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "http.webhook_wait"
+      "version": "1.0.0"
     },
     {
       "id": "image.compress",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.compress"
+      "version": "1.0.0"
     },
     {
       "id": "image.convert",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.convert"
+      "version": "1.0.0"
     },
     {
       "id": "image.crop",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.crop"
+      "version": "1.0.0"
     },
     {
       "id": "image.download",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.download"
+      "version": "1.0.0"
     },
     {
       "id": "image.ocr",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.ocr"
+      "version": "1.0.0"
     },
     {
       "id": "image.qrcode_generate",
-      "version": "1.1.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.qrcode_generate"
+      "version": "1.1.0"
     },
     {
       "id": "image.resize",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.resize"
+      "version": "1.0.0"
     },
     {
       "id": "image.rotate",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.rotate"
+      "version": "1.0.0"
     },
     {
       "id": "image.watermark",
-      "version": "1.0.0",
-      "category": "image",
-      "stability": "stable",
-      "label": "image.watermark"
+      "version": "1.0.0"
     },
     {
       "id": "k8s.apply",
-      "version": "1.0.0",
-      "category": "k8s",
-      "stability": "stable",
-      "label": "k8s.apply"
+      "version": "1.0.0"
     },
     {
       "id": "k8s.describe",
-      "version": "1.0.0",
-      "category": "k8s",
-      "stability": "stable",
-      "label": "k8s.describe"
+      "version": "1.0.0"
     },
     {
       "id": "k8s.get_pods",
-      "version": "1.0.0",
-      "category": "k8s",
-      "stability": "stable",
-      "label": "k8s.get_pods"
+      "version": "1.0.0"
     },
     {
       "id": "k8s.logs",
-      "version": "1.0.0",
-      "category": "k8s",
-      "stability": "stable",
-      "label": "k8s.logs"
+      "version": "1.0.0"
     },
     {
       "id": "k8s.scale",
-      "version": "1.0.0",
-      "category": "k8s",
-      "stability": "stable",
-      "label": "k8s.scale"
+      "version": "1.0.0"
     },
     {
       "id": "logic.and",
-      "version": "1.0.0",
-      "category": "logic",
-      "stability": "stable",
-      "label": "logic.and"
+      "version": "1.0.0"
     },
     {
       "id": "logic.contains",
-      "version": "1.0.0",
-      "category": "logic",
-      "stability": "stable",
-      "label": "logic.contains"
+      "version": "1.0.0"
     },
     {
       "id": "logic.equals",
-      "version": "1.0.0",
-      "category": "logic",
-      "stability": "stable",
-      "label": "logic.equals"
+      "version": "1.0.0"
     },
     {
       "id": "logic.not",
-      "version": "1.0.0",
-      "category": "logic",
-      "stability": "stable",
-      "label": "logic.not"
+      "version": "1.0.0"
     },
     {
       "id": "logic.or",
-      "version": "1.0.0",
-      "category": "logic",
-      "stability": "stable",
-      "label": "logic.or"
+      "version": "1.0.0"
     },
     {
       "id": "markdown.parse_frontmatter",
-      "version": "1.0.0",
-      "category": "markdown",
-      "stability": "stable",
-      "label": "markdown.parse_frontmatter"
+      "version": "1.0.0"
     },
     {
       "id": "markdown.to_html",
-      "version": "1.0.0",
-      "category": "markdown",
-      "stability": "stable",
-      "label": "markdown.to_html"
+      "version": "1.0.0"
     },
     {
       "id": "markdown.toc",
-      "version": "1.0.0",
-      "category": "markdown",
-      "stability": "stable",
-      "label": "markdown.toc"
+      "version": "1.0.0"
     },
     {
       "id": "math.abs",
-      "version": "1.0.0",
-      "category": "math",
-      "stability": "stable",
-      "label": "math.abs"
+      "version": "1.0.0"
     },
     {
       "id": "math.calculate",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "math.calculate"
+      "version": "1.0.0"
     },
     {
       "id": "math.ceil",
-      "version": "1.0.0",
-      "category": "math",
-      "stability": "stable",
-      "label": "math.ceil"
+      "version": "1.0.0"
     },
     {
       "id": "math.floor",
-      "version": "1.0.0",
-      "category": "math",
-      "stability": "stable",
-      "label": "math.floor"
+      "version": "1.0.0"
     },
     {
       "id": "math.power",
-      "version": "1.0.0",
-      "category": "math",
-      "stability": "stable",
-      "label": "math.power"
+      "version": "1.0.0"
     },
     {
       "id": "math.round",
-      "version": "1.0.0",
-      "category": "math",
-      "stability": "stable",
-      "label": "math.round"
+      "version": "1.0.0"
     },
     {
       "id": "meta.modules.generate",
-      "version": "1.0.0",
-      "category": "meta",
-      "stability": "stable",
-      "label": "meta.modules.generate"
+      "version": "1.0.0"
     },
     {
       "id": "meta.modules.list",
-      "version": "1.0.0",
-      "category": "meta",
-      "stability": "stable",
-      "label": "meta.modules.list"
+      "version": "1.0.0"
     },
     {
       "id": "meta.modules.test_generator",
-      "version": "1.0.0",
-      "category": "meta",
-      "stability": "stable",
-      "label": "meta.modules.test_generator"
+      "version": "1.0.0"
     },
     {
       "id": "meta.modules.update_docs",
-      "version": "1.0.0",
-      "category": "meta",
-      "stability": "stable",
-      "label": "meta.modules.update_docs"
+      "version": "1.0.0"
     },
     {
       "id": "monitor.http_check",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "monitor.http_check"
+      "version": "1.0.0"
     },
     {
       "id": "network.ping",
-      "version": "1.0.0",
-      "category": "network",
-      "stability": "stable",
-      "label": "network.ping"
+      "version": "1.0.0"
     },
     {
       "id": "network.port_scan",
-      "version": "1.0.0",
-      "category": "network",
-      "stability": "stable",
-      "label": "network.port_scan"
+      "version": "1.0.0"
     },
     {
       "id": "network.traceroute",
-      "version": "1.0.0",
-      "category": "network",
-      "stability": "stable",
-      "label": "network.traceroute"
+      "version": "1.0.0"
     },
     {
       "id": "network.whois",
-      "version": "1.0.0",
-      "category": "network",
-      "stability": "stable",
-      "label": "network.whois"
+      "version": "1.0.0"
     },
     {
       "id": "notification.discord.send_message",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.discord.send_message"
+      "version": "1.0.0"
     },
     {
       "id": "notification.email.send",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.email.send"
+      "version": "1.0.0"
     },
     {
       "id": "notification.slack.send_message",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.slack.send_message"
+      "version": "1.0.0"
     },
     {
       "id": "notification.teams.send_message",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.teams.send_message"
+      "version": "1.0.0"
     },
     {
       "id": "notification.telegram.send_message",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.telegram.send_message"
+      "version": "1.0.0"
     },
     {
       "id": "notification.whatsapp.send_message",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notification.whatsapp.send_message"
+      "version": "1.0.0"
     },
     {
       "id": "notify.send",
-      "version": "1.0.0",
-      "category": "notification",
-      "stability": "stable",
-      "label": "notify.send"
+      "version": "1.0.0"
     },
     {
       "id": "object.deep_merge",
-      "version": "1.0.0",
-      "category": "object",
-      "stability": "stable",
-      "label": "object.deep_merge"
+      "version": "1.0.0"
     },
     {
       "id": "object.flatten",
-      "version": "1.0.0",
-      "category": "object",
-      "stability": "stable",
-      "label": "object.flatten"
+      "version": "1.0.0"
     },
     {
       "id": "object.get",
-      "version": "1.0.0",
-      "category": "object",
-      "stability": "stable",
-      "label": "object.get"
+      "version": "1.0.0"
     },
     {
       "id": "object.keys",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "object.keys"
+      "version": "1.0.0"
     },
     {
       "id": "object.merge",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "object.merge"
+      "version": "1.0.0"
     },
     {
       "id": "object.omit",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "object.omit"
+      "version": "1.0.0"
     },
     {
       "id": "object.pick",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "object.pick"
+      "version": "1.0.0"
     },
     {
       "id": "object.set",
-      "version": "1.0.0",
-      "category": "object",
-      "stability": "stable",
-      "label": "object.set"
+      "version": "1.0.0"
     },
     {
       "id": "object.unflatten",
-      "version": "1.0.0",
-      "category": "object",
-      "stability": "stable",
-      "label": "object.unflatten"
+      "version": "1.0.0"
     },
     {
       "id": "object.values",
-      "version": "1.0.0",
-      "category": "data",
-      "stability": "stable",
-      "label": "object.values"
+      "version": "1.0.0"
     },
     {
       "id": "output.display",
-      "version": "2.0.0",
-      "category": "output",
-      "stability": "stable",
-      "label": "output.display"
+      "version": "2.0.0"
     },
     {
       "id": "path.basename",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.basename"
+      "version": "1.0.0"
     },
     {
       "id": "path.dirname",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.dirname"
+      "version": "1.0.0"
     },
     {
       "id": "path.extension",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.extension"
+      "version": "1.0.0"
     },
     {
       "id": "path.is_absolute",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.is_absolute"
+      "version": "1.0.0"
     },
     {
       "id": "path.join",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.join"
+      "version": "1.0.0"
     },
     {
       "id": "path.normalize",
-      "version": "1.0.0",
-      "category": "path",
-      "stability": "stable",
-      "label": "path.normalize"
+      "version": "1.0.0"
     },
     {
       "id": "payment.stripe.create_payment",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "payment.stripe.create_payment"
+      "version": "1.0.0"
     },
     {
       "id": "payment.stripe.get_customer",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "payment.stripe.get_customer"
+      "version": "1.0.0"
     },
     {
       "id": "payment.stripe.list_charges",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "payment.stripe.list_charges"
+      "version": "1.0.0"
     },
     {
       "id": "pdf.fill_form",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "pdf.fill_form"
+      "version": "1.0.0"
     },
     {
       "id": "pdf.generate",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "pdf.generate"
+      "version": "1.0.0"
     },
     {
       "id": "pdf.parse",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "pdf.parse"
+      "version": "1.0.0"
     },
     {
       "id": "pdf.to_word",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "pdf.to_word"
+      "version": "1.0.0"
     },
     {
       "id": "port.check",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "port.check"
+      "version": "1.0.0"
     },
     {
       "id": "port.wait",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "port.wait"
+      "version": "1.0.0"
     },
     {
       "id": "process.list",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "process.list"
+      "version": "1.0.0"
     },
     {
       "id": "process.start",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "process.start"
+      "version": "1.0.0"
     },
     {
       "id": "process.stop",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "process.stop"
+      "version": "1.0.0"
     },
     {
       "id": "productivity.airtable.create",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "productivity.airtable.create"
+      "version": "1.0.0"
     },
     {
       "id": "productivity.airtable.read",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "productivity.airtable.read"
+      "version": "1.0.0"
     },
     {
       "id": "productivity.airtable.update",
-      "version": "1.0.0",
-      "category": "productivity",
-      "stability": "stable",
-      "label": "productivity.airtable.update"
+      "version": "1.0.0"
     },
     {
       "id": "queue.dequeue",
-      "version": "1.0.0",
-      "category": "queue",
-      "stability": "stable",
-      "label": "queue.dequeue"
+      "version": "1.0.0"
     },
     {
       "id": "queue.enqueue",
-      "version": "1.0.0",
-      "category": "queue",
-      "stability": "stable",
-      "label": "queue.enqueue"
+      "version": "1.0.0"
     },
     {
       "id": "queue.size",
-      "version": "1.0.0",
-      "category": "queue",
-      "stability": "stable",
-      "label": "queue.size"
+      "version": "1.0.0"
     },
     {
       "id": "random.choice",
-      "version": "1.0.0",
-      "category": "random",
-      "stability": "stable",
-      "label": "random.choice"
+      "version": "1.0.0"
     },
     {
       "id": "random.number",
-      "version": "1.0.0",
-      "category": "random",
-      "stability": "stable",
-      "label": "random.number"
+      "version": "1.0.0"
     },
     {
       "id": "random.shuffle",
-      "version": "1.0.0",
-      "category": "random",
-      "stability": "stable",
-      "label": "random.shuffle"
+      "version": "1.0.0"
     },
     {
       "id": "random.uuid",
-      "version": "1.0.0",
-      "category": "random",
-      "stability": "stable",
-      "label": "random.uuid"
+      "version": "1.0.0"
     },
     {
       "id": "regex.extract",
-      "version": "1.0.0",
-      "category": "regex",
-      "stability": "stable",
-      "label": "regex.extract"
+      "version": "1.0.0"
     },
     {
       "id": "regex.match",
-      "version": "1.0.0",
-      "category": "regex",
-      "stability": "stable",
-      "label": "regex.match"
+      "version": "1.0.0"
     },
     {
       "id": "regex.replace",
-      "version": "1.0.0",
-      "category": "regex",
-      "stability": "stable",
-      "label": "regex.replace"
+      "version": "1.0.0"
     },
     {
       "id": "regex.split",
-      "version": "1.0.0",
-      "category": "regex",
-      "stability": "stable",
-      "label": "regex.split"
+      "version": "1.0.0"
     },
     {
       "id": "regex.test",
-      "version": "1.0.0",
-      "category": "regex",
-      "stability": "stable",
-      "label": "regex.test"
+      "version": "1.0.0"
     },
     {
       "id": "sandbox.execute_js",
-      "version": "1.0.0",
-      "category": "sandbox",
-      "stability": "stable",
-      "label": "sandbox.execute_js"
+      "version": "1.0.0"
     },
     {
       "id": "sandbox.execute_python",
-      "version": "1.0.0",
-      "category": "sandbox",
-      "stability": "stable",
-      "label": "sandbox.execute_python"
+      "version": "1.0.0"
     },
     {
       "id": "sandbox.execute_shell",
-      "version": "1.0.0",
-      "category": "sandbox",
-      "stability": "stable",
-      "label": "sandbox.execute_shell"
+      "version": "1.0.0"
     },
     {
       "id": "scheduler.cron_parse",
-      "version": "1.0.0",
-      "category": "scheduler",
-      "stability": "stable",
-      "label": "scheduler.cron_parse"
+      "version": "1.0.0"
     },
     {
       "id": "scheduler.delay",
-      "version": "1.0.0",
-      "category": "scheduler",
-      "stability": "stable",
-      "label": "scheduler.delay"
+      "version": "1.0.0"
     },
     {
       "id": "scheduler.interval",
-      "version": "1.0.0",
-      "category": "scheduler",
-      "stability": "stable",
-      "label": "scheduler.interval"
+      "version": "1.0.0"
     },
     {
       "id": "set.difference",
-      "version": "1.0.0",
-      "category": "set",
-      "stability": "stable",
-      "label": "set.difference"
+      "version": "1.0.0"
     },
     {
       "id": "set.intersection",
-      "version": "1.0.0",
-      "category": "set",
-      "stability": "stable",
-      "label": "set.intersection"
+      "version": "1.0.0"
     },
     {
       "id": "set.union",
-      "version": "1.0.0",
-      "category": "set",
-      "stability": "stable",
-      "label": "set.union"
+      "version": "1.0.0"
     },
     {
       "id": "set.unique",
-      "version": "1.0.0",
-      "category": "set",
-      "stability": "stable",
-      "label": "set.unique"
+      "version": "1.0.0"
     },
     {
       "id": "shell.exec",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "shell.exec"
+      "version": "1.0.0"
     },
     {
       "id": "ssh.exec",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "ssh.exec"
+      "version": "1.0.0"
     },
     {
       "id": "ssh.sftp_download",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "ssh.sftp_download"
+      "version": "1.0.0"
     },
     {
       "id": "ssh.sftp_upload",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "ssh.sftp_upload"
+      "version": "1.0.0"
     },
     {
       "id": "stats.mean",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.mean"
+      "version": "1.0.0"
     },
     {
       "id": "stats.median",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.median"
+      "version": "1.0.0"
     },
     {
       "id": "stats.min_max",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.min_max"
+      "version": "1.0.0"
     },
     {
       "id": "stats.mode",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.mode"
+      "version": "1.0.0"
     },
     {
       "id": "stats.percentile",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.percentile"
+      "version": "1.0.0"
     },
     {
       "id": "stats.std_dev",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.std_dev"
+      "version": "1.0.0"
     },
     {
       "id": "stats.sum",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.sum"
+      "version": "1.0.0"
     },
     {
       "id": "stats.variance",
-      "version": "1.0.0",
-      "category": "stats",
-      "stability": "stable",
-      "label": "stats.variance"
+      "version": "1.0.0"
     },
     {
       "id": "stealth.fingerprint",
-      "version": "1.0.0",
-      "category": "stealth",
-      "stability": "stable",
-      "label": "stealth.fingerprint"
+      "version": "1.0.0"
     },
     {
       "id": "stealth.launch",
-      "version": "1.0.0",
-      "category": "stealth",
-      "stability": "stable",
-      "label": "stealth.launch"
+      "version": "1.0.0"
     },
     {
       "id": "storage.delete",
-      "version": "1.0.0",
-      "category": "storage",
-      "stability": "stable",
-      "label": "storage.delete"
+      "version": "1.0.0"
     },
     {
       "id": "storage.get",
-      "version": "1.0.0",
-      "category": "storage",
-      "stability": "stable",
-      "label": "storage.get"
+      "version": "1.0.0"
     },
     {
       "id": "storage.set",
-      "version": "1.0.0",
-      "category": "storage",
-      "stability": "stable",
-      "label": "storage.set"
+      "version": "1.0.0"
     },
     {
       "id": "string.lowercase",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.lowercase"
+      "version": "1.0.0"
     },
     {
       "id": "string.pad",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.pad"
+      "version": "1.0.0"
     },
     {
       "id": "string.replace",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.replace"
+      "version": "1.0.0"
     },
     {
       "id": "string.reverse",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.reverse"
+      "version": "1.0.0"
     },
     {
       "id": "string.slugify",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.slugify"
+      "version": "1.0.0"
     },
     {
       "id": "string.split",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.split"
+      "version": "1.0.0"
     },
     {
       "id": "string.template",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.template"
+      "version": "1.0.0"
     },
     {
       "id": "string.titlecase",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.titlecase"
+      "version": "1.0.0"
     },
     {
       "id": "string.trim",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.trim"
+      "version": "1.0.0"
     },
     {
       "id": "string.truncate",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.truncate"
+      "version": "1.0.0"
     },
     {
       "id": "string.uppercase",
-      "version": "1.0.0",
-      "category": "string",
-      "stability": "stable",
-      "label": "string.uppercase"
+      "version": "1.0.0"
     },
     {
       "id": "template.invoke",
-      "version": "1.0.0",
-      "category": "template",
-      "stability": "stable",
-      "label": "template.invoke"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_contains",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_contains"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_equal",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_equal"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_greater_than",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_greater_than"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_length",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_length"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_not_null",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_not_null"
+      "version": "1.0.0"
     },
     {
       "id": "test.assert_true",
-      "version": "1.0.0",
-      "category": "testing",
-      "stability": "stable",
-      "label": "test.assert_true"
+      "version": "1.0.0"
     },
     {
       "id": "testing.e2e.run_steps",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.e2e.run_steps"
+      "version": "1.0.0"
     },
     {
       "id": "testing.gate.evaluate",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.gate.evaluate"
+      "version": "1.0.0"
     },
     {
       "id": "testing.http.run_suite",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.http.run_suite"
+      "version": "1.0.0"
     },
     {
       "id": "testing.lint.run",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.lint.run"
+      "version": "1.0.0"
     },
     {
       "id": "testing.report.generate",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.report.generate"
+      "version": "1.0.0"
     },
     {
       "id": "testing.scenario.run",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.scenario.run"
+      "version": "1.0.0"
     },
     {
       "id": "testing.security.scan",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.security.scan"
+      "version": "1.0.0"
     },
     {
       "id": "testing.suite.run",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.suite.run"
+      "version": "1.0.0"
     },
     {
       "id": "testing.unit.run",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.unit.run"
+      "version": "1.0.0"
     },
     {
       "id": "testing.visual.compare",
-      "version": "1.0.0",
-      "category": "atomic",
-      "stability": "stable",
-      "label": "testing.visual.compare"
+      "version": "1.0.0"
     },
     {
       "id": "text.char_count",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.char_count"
+      "version": "1.0.0"
     },
     {
       "id": "text.detect_encoding",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.detect_encoding"
+      "version": "1.0.0"
     },
     {
       "id": "text.extract_emails",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.extract_emails"
+      "version": "1.0.0"
     },
     {
       "id": "text.extract_numbers",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.extract_numbers"
+      "version": "1.0.0"
     },
     {
       "id": "text.extract_urls",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.extract_urls"
+      "version": "1.0.0"
     },
     {
       "id": "text.word_count",
-      "version": "1.0.0",
-      "category": "text",
-      "stability": "stable",
-      "label": "text.word_count"
+      "version": "1.0.0"
     },
     {
       "id": "utility.datetime.now",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "utility.datetime.now"
+      "version": "1.0.0"
     },
     {
       "id": "utility.delay",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "utility.delay"
+      "version": "1.0.0"
     },
     {
       "id": "utility.hash.md5",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "utility.hash.md5"
+      "version": "1.0.0"
     },
     {
       "id": "utility.random.number",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "utility.random.number"
+      "version": "1.0.0"
     },
     {
       "id": "utility.random.string",
-      "version": "1.0.0",
-      "category": "utility",
-      "stability": "stable",
-      "label": "utility.random.string"
+      "version": "1.0.0"
     },
     {
       "id": "validate.credit_card",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.credit_card"
+      "version": "1.0.0"
     },
     {
       "id": "validate.email",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.email"
+      "version": "1.0.0"
     },
     {
       "id": "validate.ip",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.ip"
+      "version": "1.0.0"
     },
     {
       "id": "validate.json_schema",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.json_schema"
+      "version": "1.0.0"
     },
     {
       "id": "validate.phone",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.phone"
+      "version": "1.0.0"
     },
     {
       "id": "validate.url",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.url"
+      "version": "1.0.0"
     },
     {
       "id": "validate.uuid",
-      "version": "1.0.0",
-      "category": "validate",
-      "stability": "stable",
-      "label": "validate.uuid"
+      "version": "1.0.0"
     },
     {
       "id": "verify.annotate",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.annotate"
+      "version": "1.0.0"
     },
     {
       "id": "verify.capture",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.capture"
+      "version": "1.0.0"
     },
     {
       "id": "verify.compare",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.compare"
+      "version": "1.0.0"
     },
     {
       "id": "verify.figma",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.figma"
+      "version": "1.0.0"
     },
     {
       "id": "verify.report",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.report"
+      "version": "1.0.0"
     },
     {
       "id": "verify.ruleset",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.ruleset"
+      "version": "1.0.0"
     },
     {
       "id": "verify.run",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.run"
+      "version": "1.0.0"
     },
     {
       "id": "verify.spec",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.spec"
+      "version": "1.0.0"
     },
     {
       "id": "verify.visual_diff",
-      "version": "1.0.0",
-      "category": "verify",
-      "stability": "stable",
-      "label": "verify.visual_diff"
+      "version": "1.0.0"
     },
     {
       "id": "word.parse",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "word.parse"
+      "version": "1.0.0"
     },
     {
       "id": "word.to_pdf",
-      "version": "1.0.0",
-      "category": "document",
-      "stability": "stable",
-      "label": "word.to_pdf"
+      "version": "1.0.0"
     }
   ]
 }

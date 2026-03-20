@@ -306,7 +306,8 @@ class BrowserLoginModule(BaseModule):
                 except Exception:
                     pass
 
-        return {
+        # Post-login: refresh hints for Element Picker (page likely changed)
+        result = {
             "status": "success",
             "logged_in": logged_in,
             "url_after": url_after,
@@ -314,3 +315,9 @@ class BrowserLoginModule(BaseModule):
             "mfa_detected": mfa_detected,
             "fields_found": detection,
         }
+        browser._snapshot_since_nav = True
+        hints = await browser.get_hints(force=True)
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
+        return result

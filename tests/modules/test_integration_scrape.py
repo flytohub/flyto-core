@@ -239,7 +239,8 @@ class TestFullPipelineIntegration:
         articles = []
         for item in detect_result["items"][:5]:
             url = item.get("url", "")
-            if not url.startswith("http") or "ycombinator.com" in url:
+            from urllib.parse import urlparse
+            if not url.startswith("http") or urlparse(url).hostname and urlparse(url).hostname.endswith("ycombinator.com"):
                 continue
             if len(articles) >= 2:
                 break

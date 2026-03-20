@@ -60,7 +60,7 @@ class TestDataDedup:
         assert r["duplicates"] == 0
 
     async def test_cross_run_persistence(self):
-        hash_file = tempfile.mktemp(suffix=".json")
+        hash_file = tempfile.mkstemp(suffix=".json")[1]
         try:
             items1 = [{"url": "https://a.com"}, {"url": "https://b.com"}]
             r1 = await run("data.dedup", {

@@ -47,6 +47,7 @@ from ...schema.constants import FieldGroup
             description='CSS selector for the form element (optional)',
             placeholder='form, #login-form',
             required=False,
+            ui={"widget": "element_picker", "element_types": ["input"], "value_key": "selector"},
             group=FieldGroup.BASIC,
         ),
         field(
@@ -241,7 +242,8 @@ class BrowserFormModule(BaseModule):
                     'error': str(e)
                 })
 
-        return {
+        # Post-form: refresh hints (form submission may navigate or change DOM)
+        result = {
             'status': 'success',
             'filled_fields': filled_fields,
             'failed_fields': failed_fields,
@@ -250,6 +252,12 @@ class BrowserFormModule(BaseModule):
             'success_count': len(filled_fields),
             'fail_count': len(failed_fields),
         }
+        browser._snapshot_since_nav = True
+        hints = await browser.get_hints(force=True)
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
+        return result
 
     def _get_field_selector(self, field_name: str) -> str:
         """Get CSS selector for a field."""

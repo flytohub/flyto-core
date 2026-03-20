@@ -286,6 +286,7 @@ class BrowserInteractModule(BaseModule):
             }
 
             # Refresh hints after action (page may have changed)
+            browser._snapshot_since_nav = True
             new_hints = await browser.get_hints(force=True) or {}
             for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'elements'):
                 if new_hints.get(key):

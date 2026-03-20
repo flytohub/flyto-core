@@ -163,7 +163,7 @@ class TestAdvancedBrowserFeatures:
 
     async def test_pagination_checkpoint_save_and_clear(self, ctx, local_server):
         """Checkpoint is saved during pagination and cleared on success."""
-        checkpoint_path = tempfile.mktemp(suffix=".json")
+        checkpoint_path = tempfile.mkstemp(suffix=".json")[1]
         try:
             await ctx["browser"].goto(f"{local_server}/?page=1")
 
@@ -189,7 +189,7 @@ class TestAdvancedBrowserFeatures:
         """Simulate checkpoint resume: pre-seed a checkpoint file."""
         from core.browser.checkpoint import PaginationCheckpoint
 
-        checkpoint_path = tempfile.mktemp(suffix=".json")
+        checkpoint_path = tempfile.mkstemp(suffix=".json")[1]
         try:
             # Pre-seed checkpoint as if we already scraped 2 pages
             cp = PaginationCheckpoint(checkpoint_path, '.item', 'next_button')
