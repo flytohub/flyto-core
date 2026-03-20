@@ -182,7 +182,10 @@ class BrowserLaunchModule(BaseModule):
     required_permission = "browser.automation"
 
     def validate_params(self) -> None:
-        self.headless = self.params.get('headless', False)
+        # HEADLESS env var forces headless mode (set by cloud workers)
+        import os
+        env_headless = os.environ.get('HEADLESS', '').lower() in ('true', '1', 'yes')
+        self.headless = env_headless or self.params.get('headless', False)
         self.browser_type = self.params.get('browser_type', 'chromium')
         self.channel = self.params.get('channel', '')
         self.stealth = self.params.get('stealth', True)
