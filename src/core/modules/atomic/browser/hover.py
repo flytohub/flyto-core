@@ -84,7 +84,11 @@ class BrowserHoverModule(BaseModule):
 
         await page.hover(self.selector, **hover_options)
 
-        return {
-            "status": "success",
-            "selector": self.selector
-        }
+        # Post-hover: refresh hints — hover may trigger dropdown menus,
+        # tooltips, or popover content that reveals new interactive elements.
+        result = {"status": "success", "selector": self.selector}
+        hints = await browser.get_hints(force=True)
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
+        return result

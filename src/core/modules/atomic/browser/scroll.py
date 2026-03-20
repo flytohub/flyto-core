@@ -99,7 +99,7 @@ class BrowserScrollModule(BaseModule):
                     return { x: 0, y: 0 };
                 }
             ''', self.selector)
-            return {
+            result = {
                 "status": "success",
                 "scrolled_to": position,
                 "selector": self.selector
@@ -135,9 +135,17 @@ class BrowserScrollModule(BaseModule):
                 () => ({ x: window.scrollX, y: window.scrollY })
             ''')
 
-            return {
+            result = {
                 "status": "success",
                 "scrolled_to": position,
                 "direction": self.direction,
                 "amount": self.amount
             }
+
+        # Post-scroll: refresh hints — scrolling may reveal new elements
+        # (infinite scroll, lazy-loaded content, viewport-dependent visibility)
+        hints = await browser.get_hints(force=True)
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
+        return result

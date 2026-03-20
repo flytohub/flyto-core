@@ -108,8 +108,13 @@ class BrowserNavigationModule(BaseModule):
             await page.reload(wait_until=self.wait_until, timeout=self.timeout_ms)
 
         current_url = page.url
-        return {
-            "status": "success",
-            "action": self.action,
-            "url": current_url,
-        }
+
+        # Post-navigation: invalidate and refresh hints — page content changed
+        await browser.invalidate_hints(clear_stamps=True)
+        result = {"status": "success", "action": self.action, "url": current_url}
+        hints = await browser.get_hints(force=True)
+        browser._snapshot_since_nav = True
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+            if hints.get(key):
+                result[key] = hints[key]
+        return result

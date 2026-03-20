@@ -613,7 +613,24 @@ class BrowserDriver:
             final_url = self._page.url  # may have changed after JS redirect
             logger.info(f"Navigation completed: {final_url} (status: {status_code})")
             self._snapshot_since_nav = False
-            await self.invalidate_hints(clear_stamps=True)
+            # Clear hints cache AND reset _hints_url so next get_hints() always
+            # re-fetches from the final URL (not a stale redirect intermediate).
+            self._cached_hints = {}
+            self._hints_url = None
+            if self._page:
+                try:
+                    await self._page.evaluate("""() => {
+                        function clearAll(root, depth) {
+                            if (depth > 20) return;
+                            root.querySelectorAll('*').forEach(function(el) {
+                                if (el.hasAttribute('data-flyto-hint')) el.removeAttribute('data-flyto-hint');
+                                if (el.shadowRoot) clearAll(el.shadowRoot, depth + 1);
+                            });
+                        }
+                        clearAll(document, 0);
+                    }""")
+                except Exception:
+                    pass
 
             # Human-like reading/thinking time after navigation
             if self._human:
@@ -1072,13 +1089,14 @@ class BrowserDriver:
         if clear_stamps and self._page:
             try:
                 await self._page.evaluate("""() => {
-                    function clearAll(root) {
+                    function clearAll(root, depth) {
+                        if (depth > 20) return;
                         root.querySelectorAll('*').forEach(function(el) {
                             if (el.hasAttribute('data-flyto-hint')) el.removeAttribute('data-flyto-hint');
-                            if (el.shadowRoot) clearAll(el.shadowRoot);
+                            if (el.shadowRoot) clearAll(el.shadowRoot, depth + 1);
                         });
                     }
-                    clearAll(document);
+                    clearAll(document, 0);
                 }""")
             except Exception:
                 pass

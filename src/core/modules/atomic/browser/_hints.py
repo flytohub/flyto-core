@@ -218,7 +218,8 @@ EXTRACT_HINTS_JS = """() => {
         // render form inputs with opacity:0 and fade them in via CSS transition.
         // Filtering them would cause hints to be empty during page transitions.
         // clip-path: inset(100%) — common screen-reader-only pattern
-        if (style.clipPath === 'inset(100%)') return false;
+        // Use startsWith because browsers may return inset(100% 100% 100% 100%)
+        if (style.clipPath && style.clipPath.startsWith('inset(100%')) return false;
         // Zero-size with overflow hidden — collapsed accordion, hidden panel
         var rect = el.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0 && style.overflow === 'hidden') return false;
@@ -538,7 +539,7 @@ EXTRACT_HINTS_JS = """() => {
                 }
                 // 2. aria-label matching — only if exactly one candidate matches
                 if (!optEls.length) {
-                    const triggerLabel = el.getAttribute('aria-label') || name;
+                    const triggerLabel = el.getAttribute('aria-label') || resolveName(el);
                     if (triggerLabel) {
                         const matches = [];
                         for (const cand of allListboxes) {

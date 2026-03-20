@@ -142,6 +142,7 @@ class BrowserGotoModule(BaseModule):
 
             out = {"status": "success", "url": result.get('url', self.url)}
             # Capture interactive elements for Element Picker UI
+            browser._snapshot_since_nav = True
             hints = await browser.get_hints(force=True)
             for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
                 if hints.get(key):

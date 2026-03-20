@@ -127,6 +127,7 @@ class BrowserWaitModule(BaseModule):
         # This is critical — wait nodes often follow navigation (click "下一步"),
         # so they're the first node to see the NEW page's elements.
         if browser:
+            browser._snapshot_since_nav = True
             hints = await browser.get_hints(force=True)
             for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
                 if hints.get(key):
