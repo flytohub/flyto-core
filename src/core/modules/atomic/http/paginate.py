@@ -10,18 +10,44 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional
-from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
+from ....utils import SSRFError, validate_url_with_env_config
 from ...registry import register_module
 from ...schema import compose, field
-from ...schema.constants import Visibility, FieldGroup
+from ...schema.constants import FieldGroup
 from ...schema.presets import (
-    URL, HTTP_METHOD, HEADERS, HTTP_AUTH, TIMEOUT_S, VERIFY_SSL,
+    HEADERS,
+    HTTP_AUTH,
+    HTTP_METHOD,
+    TIMEOUT_S,
+    URL,
+    VERIFY_SSL,
 )
-from ....utils import validate_url_with_env_config, SSRFError
-
 
 logger = logging.getLogger(__name__)
+
+
+def _make_result(
+    ok: bool,
+    all_items: List[Any],
+    pages_fetched: int,
+    start_time: float,
+    error: str = '',
+    error_code: str = '',
+) -> Dict[str, Any]:
+    """Build a standardised paginate result dict."""
+    result: Dict[str, Any] = {
+        'ok': ok,
+        'items': all_items,
+        'total_items': len(all_items),
+        'pages_fetched': pages_fetched,
+        'duration_ms': int((time.time() - start_time) * 1000),
+    }
+    if not ok:
+        result['error'] = error
+        result['error_code'] = error_code
+    return result
 
 
 def _merge_query(url: str, params: dict) -> str:
@@ -459,8 +485,8 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
     """Iterate through paginated API and collect all results."""
     try:
         import aiohttp
-    except ImportError:
-        raise ImportError("aiohttp is required for http.paginate. Install with: pip install aiohttp")
+    except ImportError as exc:
+        raise ImportError("aiohttp is required for http.paginate. Install with: pip install aiohttp") from exc
 
     import base64
 
@@ -477,10 +503,14 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout_seconds = params.get('timeout', 30)
     verify_ssl = params.get('verify_ssl', True)
 
+    start_time = time.time()
+    all_items: List[Any] = []
+    pages_fetched = 0
+
     try:
         validate_url_with_env_config(base_url)
     except SSRFError as e:
-        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED', 'items': [], 'total_items': 0, 'pages_fetched': 0, 'duration_ms': 0}
+        return _make_result(False, [], 0, start_time, str(e), 'SSRF_BLOCKED')
 
     # Apply auth
     if auth:
@@ -493,75 +523,30 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
         elif auth_type == 'api_key':
             headers[auth.get('header_name', 'X-API-Key')] = auth.get('api_key', '')
 
-    all_items: List[Any] = []
-    pages_fetched = 0
-    start_time = time.time()
+    strategy_fn = _STRATEGY_DISPATCH.get(strategy)
+    if not strategy_fn:
+        return _make_result(False, [], 0, start_time,
+                            f'Unknown pagination strategy: {strategy}', 'INVALID_STRATEGY')
+
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
 
     try:
-        strategy_fn = _STRATEGY_DISPATCH.get(strategy)
-        if not strategy_fn:
-            return {
-                'ok': False,
-                'error': f'Unknown pagination strategy: {strategy}',
-                'error_code': 'INVALID_STRATEGY',
-                'items': [],
-                'total_items': 0,
-                'pages_fetched': 0,
-                'duration_ms': int((time.time() - start_time) * 1000),
-            }
-
         async with aiohttp.ClientSession(timeout=timeout) as session:
             all_items, pages_fetched = await strategy_fn(
                 session, method, base_url, headers, verify_ssl,
                 data_path, page_size, max_pages, delay_ms,
                 params, all_items, pages_fetched,
             )
-
     except asyncio.TimeoutError:
-        duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"Pagination timeout after {pages_fetched} pages")
-        return {
-            'ok': False,
-            'error': f'Pagination timed out after {pages_fetched} pages',
-            'error_code': 'TIMEOUT',
-            'items': all_items,
-            'total_items': len(all_items),
-            'pages_fetched': pages_fetched,
-            'duration_ms': duration_ms,
-        }
+        return _make_result(False, all_items, pages_fetched, start_time,
+                            f'Pagination timed out after {pages_fetched} pages', 'TIMEOUT')
     except aiohttp.ClientError as e:
-        duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"Pagination client error on page {pages_fetched + 1}: {e}")
-        return {
-            'ok': False,
-            'error': str(e),
-            'error_code': 'CLIENT_ERROR',
-            'items': all_items,
-            'total_items': len(all_items),
-            'pages_fetched': pages_fetched,
-            'duration_ms': duration_ms,
-        }
+        return _make_result(False, all_items, pages_fetched, start_time, str(e), 'CLIENT_ERROR')
     except Exception as e:
-        duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"Pagination failed: {e}")
-        return {
-            'ok': False,
-            'error': str(e),
-            'error_code': 'PAGINATE_ERROR',
-            'items': all_items,
-            'total_items': len(all_items),
-            'pages_fetched': pages_fetched,
-            'duration_ms': duration_ms,
-        }
+        return _make_result(False, all_items, pages_fetched, start_time, str(e), 'PAGINATE_ERROR')
 
-    duration_ms = int((time.time() - start_time) * 1000)
-    logger.info(f"Pagination complete: {len(all_items)} items across {pages_fetched} pages ({duration_ms}ms)")
-
-    return {
-        'ok': True,
-        'items': all_items,
-        'total_items': len(all_items),
-        'pages_fetched': pages_fetched,
-        'duration_ms': duration_ms,
-    }
+    logger.info(f"Pagination complete: {len(all_items)} items across {pages_fetched} pages")
+    return _make_result(True, all_items, pages_fetched, start_time)

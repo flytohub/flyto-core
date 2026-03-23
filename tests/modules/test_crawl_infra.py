@@ -148,10 +148,7 @@ class TestThrottleE2E:
     @pytest.mark.asyncio
     async def test_different_domains_no_wait(self, ctx):
         """Different domains should NOT throttle each other."""
-        # Reset throttle state
-        from core.modules.atomic.browser.throttle import _domain_last_request
-        _domain_last_request.clear()
-
+        # RateLimiter state is per-domain in context, no global reset needed
         Throttle = get_module("browser.throttle")
 
         mod1 = Throttle({"min_interval_ms": 5000, "url": "https://a.example.com/page"}, ctx)
@@ -190,14 +187,19 @@ class TestProxyRotate:
     @pytest.mark.asyncio
     async def test_mark_dead(self):
         Proxy = get_module("browser.proxy_rotate")
-        ctx = {}
+
+        # Lightweight stand-in so mark_dead can read _current_proxy
+        class _FakeBrowser:
+            _current_proxy = "http://p1:8080"
+
+        ctx = {"browser": _FakeBrowser()}
 
         # Init
         mod = Proxy({"action": "init", "proxies": ["http://p1:8080", "http://p2:8080"]}, ctx)
         mod.validate_params()
         await mod.execute()
 
-        # Mark dead
+        # Mark dead — expects browser._current_proxy to identify which proxy failed
         mod2 = Proxy({"action": "mark_dead"}, ctx)
         mod2.validate_params()
         result = await mod2.execute()
@@ -208,10 +210,7 @@ class TestProxyRotate:
     @pytest.mark.asyncio
     async def test_rotate_without_init_raises(self):
         Proxy = get_module("browser.proxy_rotate")
-        # Reset global state
-        from core.modules.atomic.browser.proxy_rotate import _proxy_pool
-        _proxy_pool.clear()
-
+        # Pool state lives in context, so an empty context has no pool
         ctx = {}
         mod = Proxy({"action": "rotate"}, ctx)
         mod.validate_params()

@@ -11,11 +11,10 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
+from ....utils import SSRFError, validate_url_with_env_config
 from ...registry import register_module
 from ...schema import compose, field
-from ...schema.constants import Visibility, FieldGroup
-from ....utils import validate_url_with_env_config, SSRFError
-
+from ...schema.constants import FieldGroup, Visibility
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +45,61 @@ async def _read_body(response, response_type: str) -> Any:
         except Exception:
             return await response.text()
     return await response.text()
+
+
+async def _execute_request(
+    session,
+    req: Dict[str, Any],
+    index: int,
+    auth: Optional[Dict[str, Any]],
+    verify_ssl: bool,
+) -> Dict[str, Any]:
+    """Execute a single request within a session. Returns a result dict."""
+    req_url = req.get('url', '')
+    req_method = req.get('method', 'GET').upper()
+    req_headers = dict(req.get('headers', {}))
+    req_body = req.get('body')
+    req_label = req.get('label', f'Request {index + 1}')
+
+    try:
+        validate_url_with_env_config(req_url)
+    except SSRFError as e:
+        return {'label': req_label, 'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
+
+    if auth:
+        _apply_auth(req_headers, auth)
+
+    kwargs: Dict[str, Any] = {
+        'headers': req_headers,
+        'ssl': verify_ssl if verify_ssl else False,
+    }
+    if req_body is not None and req_method in ('POST', 'PUT', 'PATCH'):
+        if 'Content-Type' not in req_headers:
+            req_headers['Content-Type'] = 'application/json'
+        kwargs['json'] = req_body
+
+    req_start = time.time()
+
+    try:
+        async with session.request(req_method, req_url, **kwargs) as response:
+            req_duration = int((time.time() - req_start) * 1000)
+            body_content = await _read_body(response, 'auto')
+            ok = 200 <= response.status < 300
+            logger.info(f"Session [{req_label}] {req_method} {req_url} -> {response.status} ({req_duration}ms)")
+            return {
+                'label': req_label, 'ok': ok,
+                'status': response.status,
+                'headers': dict(response.headers),
+                'body': body_content,
+                'url': str(response.url),
+                'duration_ms': req_duration,
+            }
+    except asyncio.TimeoutError:
+        req_duration = int((time.time() - req_start) * 1000)
+        return {'label': req_label, 'ok': False, 'error': 'Timeout', 'error_code': 'TIMEOUT', 'duration_ms': req_duration}
+    except Exception as e:
+        req_duration = int((time.time() - req_start) * 1000)
+        return {'label': req_label, 'ok': False, 'error': str(e), 'error_code': 'CLIENT_ERROR', 'duration_ms': req_duration}
 
 
 @register_module(
@@ -245,18 +299,19 @@ async def http_session(context: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a sequence of HTTP requests with persistent cookies."""
     try:
         import aiohttp
-    except ImportError:
-        raise ImportError("aiohttp is required for http.session. Install with: pip install aiohttp")
+    except ImportError as exc:
+        raise ImportError("aiohttp is required for http.session. Install with: pip install aiohttp") from exc
 
     params = context['params']
-    requests = params.get('requests', [])
+    requests_list = params.get('requests', [])
     auth = params.get('auth')
     stop_on_error = params.get('stop_on_error', True)
     timeout_seconds = params.get('timeout', 30)
     verify_ssl = params.get('verify_ssl', True)
 
-    if not requests:
-        return {'ok': False, 'error': 'No requests provided', 'error_code': 'NO_REQUESTS', 'results': [], 'cookies': {}, 'duration_ms': 0}
+    if not requests_list:
+        return {'ok': False, 'error': 'No requests provided', 'error_code': 'NO_REQUESTS',
+                'results': [], 'cookies': {}, 'duration_ms': 0}
 
     results: List[Dict[str, Any]] = []
     start_time = time.time()
@@ -267,89 +322,22 @@ async def http_session(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         async with aiohttp.ClientSession(timeout=timeout, cookie_jar=cookie_jar) as session:
-            for i, req in enumerate(requests):
-                req_url = req.get('url', '')
-                req_method = req.get('method', 'GET').upper()
-                req_headers = dict(req.get('headers', {}))
-                req_body = req.get('body')
-                req_label = req.get('label', f'Request {i + 1}')
-
-                try:
-                    validate_url_with_env_config(req_url)
-                except SSRFError as e:
-                    result = {'label': req_label, 'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
-                    results.append(result)
-                    all_ok = False
-                    if stop_on_error:
-                        break
-                    continue
-
-                if auth:
-                    _apply_auth(req_headers, auth)
-
-                kwargs: Dict[str, Any] = {
-                    'headers': req_headers,
-                    'ssl': verify_ssl if verify_ssl else False,
-                }
-                if req_body is not None and req_method in ('POST', 'PUT', 'PATCH'):
-                    if 'Content-Type' not in req_headers:
-                        req_headers['Content-Type'] = 'application/json'
-                    kwargs['json'] = req_body
-
-                req_start = time.time()
-                try:
-                    async with session.request(req_method, req_url, **kwargs) as response:
-                        req_duration = int((time.time() - req_start) * 1000)
-                        body_content = await _read_body(response, 'auto')
-                        ok = 200 <= response.status < 300
-
-                        result = {
-                            'label': req_label,
-                            'ok': ok,
-                            'status': response.status,
-                            'headers': dict(response.headers),
-                            'body': body_content,
-                            'url': str(response.url),
-                            'duration_ms': req_duration,
-                        }
-                        results.append(result)
-                        logger.info(f"Session [{req_label}] {req_method} {req_url} -> {response.status} ({req_duration}ms)")
-
-                        if not ok:
-                            all_ok = False
-                            if stop_on_error:
-                                break
-
-                except asyncio.TimeoutError:
-                    req_duration = int((time.time() - req_start) * 1000)
-                    results.append({'label': req_label, 'ok': False, 'error': 'Timeout', 'error_code': 'TIMEOUT', 'duration_ms': req_duration})
+            for i, req in enumerate(requests_list):
+                result = await _execute_request(session, req, i, auth, verify_ssl)
+                results.append(result)
+                if not result['ok']:
                     all_ok = False
                     if stop_on_error:
                         break
 
-                except aiohttp.ClientError as e:
-                    req_duration = int((time.time() - req_start) * 1000)
-                    results.append({'label': req_label, 'ok': False, 'error': str(e), 'error_code': 'CLIENT_ERROR', 'duration_ms': req_duration})
-                    all_ok = False
-                    if stop_on_error:
-                        break
-
-            # Extract final cookies
-            cookies = {}
-            for cookie in cookie_jar:
-                cookies[cookie.key] = cookie.value
+            cookies = {cookie.key: cookie.value for cookie in cookie_jar}
 
     except Exception as e:
         duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"Session error: {e}")
-        return {'ok': False, 'error': str(e), 'error_code': 'SESSION_ERROR', 'results': results, 'cookies': {}, 'duration_ms': duration_ms}
+        return {'ok': False, 'error': str(e), 'error_code': 'SESSION_ERROR',
+                'results': results, 'cookies': {}, 'duration_ms': duration_ms}
 
     duration_ms = int((time.time() - start_time) * 1000)
     logger.info(f"Session complete: {len(results)} requests, all_ok={all_ok} ({duration_ms}ms)")
-
-    return {
-        'ok': all_ok,
-        'results': results,
-        'cookies': cookies,
-        'duration_ms': duration_ms,
-    }
+    return {'ok': all_ok, 'results': results, 'cookies': cookies, 'duration_ms': duration_ms}

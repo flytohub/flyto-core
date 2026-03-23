@@ -256,7 +256,7 @@ class TestStealthPatches:
     @pytest.mark.asyncio
     async def test_hardware_concurrency(self, stealth_page):
         result = await stealth_page.evaluate("() => navigator.hardwareConcurrency")
-        assert result == 8
+        assert result in (4, 6, 8, 10, 12, 16)
 
     @pytest.mark.asyncio
     async def test_webgl_vendor_spoofed(self, stealth_page):

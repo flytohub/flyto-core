@@ -44,9 +44,11 @@ class TestCheckpoint:
         state = cp2.load()
         assert state['pages_processed'] == 3
         assert state['total_items'] == 10
-        assert len(state['items']) == 10
         assert state['retries_used'] == 2
         assert state['last_url'] == 'https://x.com/3'
+        # items are stored in JSONL, loaded separately
+        loaded_items = cp2.load_items()
+        assert len(loaded_items) == 10
 
     def test_incompatible_selector_not_found(self, tmp_checkpoint):
         cp = PaginationCheckpoint(tmp_checkpoint, '.item-a', 'next_button')
@@ -93,8 +95,8 @@ class TestCheckpoint:
         cp = PaginationCheckpoint(tmp_checkpoint, '.item', 'next_button')
         state = cp.load()
         assert state['pages_processed'] == 0
-        assert state['items'] == []
         assert state['total_items'] == 0
+        assert cp.load_items() == []
 
     def test_corrupted_file_exists_false(self, tmp_checkpoint):
         Path(tmp_checkpoint).write_text("not json at all!", encoding='utf-8')

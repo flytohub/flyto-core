@@ -14,7 +14,7 @@ from typing import Any, Dict
 
 import yaml
 
-from .config import CLI_LINE_WIDTH, Colors, DEFAULT_OUTPUT_DIR
+from .config import CLI_LINE_WIDTH, DEFAULT_OUTPUT_DIR, Colors
 from .i18n import I18n
 
 
@@ -80,6 +80,21 @@ def _handle_execution_error(
     sys.exit(1)
 
 
+def _print_step_progress(
+    step_index: int,
+    steps: list,
+    total_steps: int,
+    i18n: I18n,
+) -> None:
+    """Print progress line for a workflow step."""
+    if step_index > total_steps:
+        return
+    progress = i18n.t('cli.step_progress', current=step_index, total=total_steps)
+    step = steps[step_index - 1] if step_index <= len(steps) else {}
+    description = step.get('description', '') or step.get('module', 'unknown')
+    print(f"\n{Colors.OKCYAN}[{progress}]{Colors.ENDC} {description}")
+
+
 def run_workflow(
     workflow_path: Path,
     params: Dict[str, Any],
@@ -98,68 +113,40 @@ def run_workflow(
 
     steps = workflow.get('steps', [])
     total_steps = len(steps)
-
     start_time = time.time()
 
-    # Import execution engine
     try:
         from ..core.engine.workflow_engine import WorkflowEngine
-
-        # Create workflow engine
-        engine = WorkflowEngine(workflow, params)
-
-        # Track progress during execution
-        current_step = [0]
-
-        def show_step_progress():
-            current_step[0] += 1
-            if current_step[0] <= total_steps:
-                progress = i18n.t('cli.step_progress',
-                                  current=current_step[0],
-                                  total=total_steps)
-                step = steps[current_step[0] - 1] if current_step[0] <= len(steps) else {}
-                module_id = step.get('module', 'unknown')
-                description = step.get('description', '')
-                print(f"\n{Colors.OKCYAN}[{progress}]{Colors.ENDC} "
-                      f"{description or module_id}")
-
-        # Execute workflow
-        async def run_workflow_async():
-            # Show first step
-            show_step_progress()
-
-            # Execute and track completion
-            result = await engine.execute()
-            return result
-
-        # Run async workflow
-        try:
-            output = asyncio.run(run_workflow_async())
-
-            # Get execution log
-            execution_log = engine.execution_log
-
-            # Show success for each completed step
-            for log_entry in execution_log:
-                if log_entry['status'] == 'success':
-                    print(f"{Colors.OKGREEN}{Colors.ENDC} {i18n.t('status.success')}")
-                    if current_step[0] < total_steps:
-                        show_step_progress()
-
-        except Exception as exec_error:
-            _handle_execution_error(exec_error, engine, total_steps, i18n)
-
-        results = execution_log
-
-        # Calculate execution time
-        execution_time = time.time() - start_time
-
-        _show_completion(execution_time, i18n)
-        _save_results(workflow, workflow_path, params, results,
-                      execution_time, config, i18n)
-
     except Exception as e:
         print()
         print(Colors.FAIL + i18n.t('cli.workflow_failed') + Colors.ENDC)
         print(f"{i18n.t('cli.error_occurred')}: {str(e)}")
         sys.exit(1)
+
+    engine = WorkflowEngine(workflow, params)
+    current_step = [0]
+
+    async def run_workflow_async():
+        current_step[0] += 1
+        _print_step_progress(current_step[0], steps, total_steps, i18n)
+        return await engine.execute()
+
+    try:
+        asyncio.run(run_workflow_async())
+    except Exception as exec_error:
+        _handle_execution_error(exec_error, engine, total_steps, i18n)
+        return  # _handle_execution_error calls sys.exit, but be explicit
+
+    # Show success for each completed step
+    execution_log = engine.execution_log
+    for log_entry in execution_log:
+        if log_entry['status'] == 'success':
+            print(f"{Colors.OKGREEN}{Colors.ENDC} {i18n.t('status.success')}")
+            if current_step[0] < total_steps:
+                current_step[0] += 1
+                _print_step_progress(current_step[0], steps, total_steps, i18n)
+
+    execution_time = time.time() - start_time
+    _show_completion(execution_time, i18n)
+    _save_results(workflow, workflow_path, params, execution_log,
+                  execution_time, config, i18n)
