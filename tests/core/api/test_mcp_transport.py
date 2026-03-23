@@ -253,3 +253,99 @@ class TestParseError:
             },
         )
         assert resp.status_code == 400
+
+
+class TestMCPHelpers:
+    """Direct unit tests for MCP helper functions."""
+
+    def test_is_notification_true(self):
+        from core.api.routes.mcp import _is_notification
+        assert _is_notification({"jsonrpc": "2.0", "method": "notifications/initialized"}) is True
+
+    def test_is_notification_false(self):
+        from core.api.routes.mcp import _is_notification
+        assert _is_notification({"jsonrpc": "2.0", "id": 1, "method": "ping"}) is False
+
+    def test_is_initialize_true(self):
+        from core.api.routes.mcp import _is_initialize
+        assert _is_initialize({"method": "initialize"}) is True
+
+    def test_is_initialize_false(self):
+        from core.api.routes.mcp import _is_initialize
+        assert _is_initialize({"method": "tools/list"}) is False
+
+
+class TestMCPEdgeCases:
+    """Edge cases for MCP transport."""
+
+    def test_empty_batch_returns_400(self, client):
+        resp = client.post(
+            "/mcp",
+            json=[],
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 400
+        body = resp.json()
+        assert body["error"]["code"] == -32600
+
+    def test_wildcard_accept_header_passes(self, client):
+        resp = client.post(
+            "/mcp",
+            json={"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"Accept": "*/*"},
+        )
+        assert resp.status_code == 200
+
+    def test_batch_all_notifications(self, client):
+        resp = client.post(
+            "/mcp",
+            json=[
+                {"jsonrpc": "2.0", "method": "notifications/initialized"},
+                {"jsonrpc": "2.0", "method": "notifications/cancelled"},
+            ],
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 202
+
+    def test_tools_call_execute_module(self, client):
+        """Test calling execute_module tool which returns a result."""
+        resp = client.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 5,
+                "method": "tools/call",
+                "params": {
+                    "name": "execute_module",
+                    "arguments": {
+                        "module_id": "math.abs",
+                        "params": {"number": -99},
+                    },
+                },
+            },
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["id"] == 5
+        # Should have result with content
+        assert "result" in body
+
+    def test_tools_call_list_modules(self, client):
+        resp = client.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 6,
+                "method": "tools/call",
+                "params": {
+                    "name": "list_modules",
+                    "arguments": {},
+                },
+            },
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["id"] == 6
+        assert "result" in body
