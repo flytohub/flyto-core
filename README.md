@@ -481,3 +481,8 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 ---
 
 **[Desktop App](https://flyto2.com/app.html)** · **[Pricing](https://flyto2.com/pricing.html)** · **[flyto2.com](https://flyto2.com)**
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/flytohub-flyto-core).
+
