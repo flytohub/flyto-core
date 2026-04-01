@@ -181,7 +181,17 @@ class BrowserTypeModule(BaseModule):
         elif method == 'label':
             if not target:
                 raise ValueError("Label text is required")
-            self.selector = f'label:has-text("{target}") >> input, input[aria-label="{target}"]'
+            # Two strategies tried in order during execute():
+            # 1. label element containing text → find input inside/after it
+            # 2. input with aria-label attribute
+            self._label_selectors = [
+                f'label:has-text("{target}") >> input',
+                f'label:has-text("{target}") + input',
+                f'label:has-text("{target}") ~ input',
+                f'input[aria-label="{target}"]',
+                f'textarea[aria-label="{target}"]',
+            ]
+            self.selector = self._label_selectors[0]  # default, may be overridden in execute
         else:  # placeholder (default)
             if not target:
                 raise ValueError("Placeholder text is required")
@@ -202,6 +212,25 @@ class BrowserTypeModule(BaseModule):
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
+
+        # Label method: try multiple selector strategies (label>>input, label+input, aria-label)
+        if hasattr(self, '_label_selectors'):
+            page = browser.page
+            found = False
+            for sel in self._label_selectors:
+                try:
+                    count = await page.locator(sel).count()
+                    if count > 0:
+                        self.selector = sel
+                        found = True
+                        break
+                except Exception:
+                    continue
+            if not found:
+                raise RuntimeError(
+                    f"Could not find input field with label \"{self.params.get('target')}\". "
+                    f"Tried: label>>input, label+input, label~input, aria-label"
+                )
 
         # Wait for element to be visible before interacting
         await browser.wait(self.selector, state='visible', timeout_ms=10000)
