@@ -145,7 +145,7 @@ class BrowserScrollModule(BaseModule):
         # Post-scroll: refresh hints — scrolling may reveal new elements
         # (infinite scroll, lazy-loaded content, viewport-dependent visibility)
         hints = await browser.get_hints(force=True)
-        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
             if hints.get(key):
                 result[key] = hints[key]
         return result

@@ -225,7 +225,7 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ---
 
-## 412 Modules, 78 Categories
+## 467 Modules, 78 Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|

@@ -410,7 +410,7 @@ class BrowserDetectModule(BaseModule):
         # Post-action hints for Element Picker
         hints = await browser.get_hints(force=True)
         browser._snapshot_since_nav = True
-        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
             if hints.get(key):
                 result[key] = hints[key]
 

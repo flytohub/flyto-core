@@ -88,7 +88,7 @@ class BrowserHoverModule(BaseModule):
         # tooltips, or popover content that reveals new interactive elements.
         result = {"status": "success", "selector": self.selector}
         hints = await browser.get_hints(force=True)
-        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects'):
+        for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
             if hints.get(key):
                 result[key] = hints[key]
         return result

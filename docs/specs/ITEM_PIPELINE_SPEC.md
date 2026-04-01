@@ -1095,8 +1095,8 @@ class OCREngine:
         ),
         field("engine", type="select",
             options=[
-                {"value": "paddleocr", "label": "PaddleOCR (推薦, 離線)"},
-                {"value": "tesseract", "label": "Tesseract (離線)"},
+                {"value": "paddleocr", "label": "PaddleOCR (推薦, 本地)"},
+                {"value": "tesseract", "label": "Tesseract (本地)"},
                 {"value": "azure", "label": "Azure Computer Vision"},
                 {"value": "google", "label": "Google Cloud Vision"},
             ],
