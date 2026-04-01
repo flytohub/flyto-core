@@ -188,6 +188,7 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
             visibility=Visibility.EXPERT,
             group=FieldGroup.ADVANCED,
         ),
+        presets.SSRF_PROTECTION(),
     ),
     output_schema={
         'ok': {
@@ -307,11 +308,12 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
             f"Use ${{variable_name}} syntax and ensure the variable is defined.",
             'UNRESOLVED_VARIABLE', url, 0)
 
-    try:
-        validate_url_with_env_config(url)
-    except SSRFError as e:
-        logger.warning(f"SSRF protection blocked request to: {url}")
-        return _error_result(str(e), 'SSRF_BLOCKED', url, 0)
+    if params.get('ssrf_protection', True):
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            logger.warning(f"SSRF protection blocked request to: {url}")
+            return _error_result(str(e), 'SSRF_BLOCKED', url, 0)
 
     if query:
         url = _build_url_with_query(url, query)

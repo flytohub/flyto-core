@@ -51,6 +51,7 @@ from .common import (
     NUMBER,
     SELECT,
     DESCRIPTION,
+    SSRF_PROTECTION,
 )
 from .browser import (
     SELECTOR,

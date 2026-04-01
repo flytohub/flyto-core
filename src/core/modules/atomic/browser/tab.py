@@ -56,6 +56,7 @@ from ....utils import validate_url_with_env_config, SSRFError
             description='Tab index to switch to or close (0-based)',
             required=False,
         ),
+        presets.SSRF_PROTECTION(),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -146,16 +147,17 @@ class BrowserTabModule(BaseModule):
         elif self.action == 'new':
             new_page = await context.new_page()
             if self.url:
-                # SECURITY: Validate URL for SSRF before navigation
-                try:
-                    validate_url_with_env_config(self.url)
-                except SSRFError as e:
-                    await new_page.close()
-                    return {
-                        "status": "error",
-                        "error": str(e),
-                        "error_code": "SSRF_BLOCKED"
-                    }
+                # SECURITY: Validate URL for SSRF (toggleable per-node)
+                if self.params.get('ssrf_protection', True):
+                    try:
+                        validate_url_with_env_config(self.url)
+                    except SSRFError as e:
+                        await new_page.close()
+                        return {
+                            "status": "error",
+                            "error": str(e),
+                            "error_code": "SSRF_BLOCKED"
+                        }
                 await new_page.goto(self.url)
 
             # Update browser's current page reference

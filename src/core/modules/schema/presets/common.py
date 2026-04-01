@@ -280,4 +280,25 @@ def DESCRIPTION(
     )
 
 
+def SSRF_PROTECTION(
+    *,
+    key: str = "ssrf_protection",
+    default: bool = True,
+    label: str = "SSRF Protection",
+    label_key: str = "schema.field.ssrf_protection",
+    description: str = "Block requests to private/internal networks (localhost, 192.168.x.x, metadata endpoints). Disable only for trusted internal targets.",
+    description_key: str = "schema.field.ssrf_protection.description",
+) -> Dict[str, Dict[str, Any]]:
+    """SSRF protection toggle for network modules."""
+    return field(
+        key,
+        type="boolean",
+        label=label,
+        label_key=label_key,
+        description=description,
+        description_key=description_key,
+        default=default,
+        group=FieldGroup.ADVANCED,
+        visibility=Visibility.EXPERT,
+    )
 

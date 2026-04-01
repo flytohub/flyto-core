@@ -96,6 +96,16 @@ async def _parse_response_body(response) -> Any:
             'visibility': 'expert',
             'group': 'advanced',
         },
+        'ssrf_protection': {
+            'type': 'boolean',
+            'label': 'SSRF Protection',
+            'label_key': 'schema.field.ssrf_protection',
+            'default': True,
+            'description': 'Block requests to private/internal networks. Disable only for trusted internal targets.',
+            'description_key': 'schema.field.ssrf_protection.description',
+            'visibility': 'expert',
+            'group': 'advanced',
+        },
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
@@ -125,11 +135,12 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout_s = params.get('timeout', 30)
     verify_ssl = params.get('verify_ssl', True)
 
-    try:
-        validate_url_with_env_config(url)
-    except SSRFError as e:
-        logger.warning(f"SSRF protection blocked GET to: {url}")
-        raise NetworkError(str(e), url=url, status_code=0)
+    if params.get('ssrf_protection', True):
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            logger.warning(f"SSRF protection blocked GET to: {url}")
+            raise NetworkError(str(e), url=url, status_code=0)
 
     if query:
         url = _append_query_params(url, query)

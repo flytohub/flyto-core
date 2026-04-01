@@ -72,6 +72,7 @@ logger = logging.getLogger(__name__)
         presets.URL(required=True, placeholder='https://example.com'),
         presets.WAIT_CONDITION(default='domcontentloaded'),
         presets.TIMEOUT_MS(key='timeout_ms', default=30000),
+        presets.SSRF_PROTECTION(),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -103,11 +104,14 @@ class BrowserGotoModule(BaseModule):
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']
 
-        # SECURITY: Validate URL against SSRF attacks
-        try:
-            validate_url_with_env_config(self.url)
-        except SSRFError as e:
-            raise ValueError(f"SSRF protection: {e}")
+        # SECURITY: Validate URL against SSRF attacks (toggleable per-node)
+        if self.params.get('ssrf_protection', True):
+            try:
+                validate_url_with_env_config(self.url)
+            except SSRFError as e:
+                raise ValueError(f"SSRF protection: {e}")
+        else:
+            logger.warning("SSRF protection disabled by user for URL: %s", self.url[:80])
 
         # Default to 'domcontentloaded' for faster page loads (was 'networkidle' which hangs on many sites)
         self.wait_until = self.params.get('wait_until', 'domcontentloaded')
