@@ -166,6 +166,9 @@ class BrowserTypeModule(BaseModule):
 
         target = self.params.get('target', '').strip()
 
+        # Escape quotes in target for safe selector construction
+        escaped = target.replace('"', '\\"') if target else ''
+
         if method == 'selector':
             if not raw_selector:
                 raise ValueError("CSS/XPath selector is required in advanced mode")
@@ -177,7 +180,7 @@ class BrowserTypeModule(BaseModule):
         elif method == 'name':
             if not target:
                 raise ValueError("Input name is required")
-            self.selector = f'input[name="{target}"]'
+            self.selector = f'input[name="{escaped}"], textarea[name="{escaped}"]'
         elif method == 'label':
             if not target:
                 raise ValueError("Label text is required")
@@ -185,17 +188,17 @@ class BrowserTypeModule(BaseModule):
             # 1. label element containing text → find input inside/after it
             # 2. input with aria-label attribute
             self._label_selectors = [
-                f'label:has-text("{target}") >> input',
-                f'label:has-text("{target}") + input',
-                f'label:has-text("{target}") ~ input',
-                f'input[aria-label="{target}"]',
-                f'textarea[aria-label="{target}"]',
+                f'label:has-text("{escaped}") >> input',
+                f'label:has-text("{escaped}") + input',
+                f'label:has-text("{escaped}") ~ input',
+                f'input[aria-label="{escaped}"]',
+                f'textarea[aria-label="{escaped}"]',
             ]
             self.selector = self._label_selectors[0]  # default, may be overridden in execute
         else:  # placeholder (default)
             if not target:
                 raise ValueError("Placeholder text is required")
-            self.selector = f'input[placeholder="{target}"], textarea[placeholder="{target}"]'
+            self.selector = f'input[placeholder="{escaped}"], textarea[placeholder="{escaped}"]'
 
         self.input_type = self.params.get('input_type', 'text')
         # Merge text from the visible field (text or sensitive_text based on input_type)

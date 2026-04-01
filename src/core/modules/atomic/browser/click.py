@@ -159,11 +159,13 @@ class BrowserClickModule(BaseModule):
         elif method == 'button':
             if not target:
                 raise ValueError("Button or link text is required")
-            self.selector = f':is(button, a, [role="button"]):has-text("{target}")'
+            escaped = target.replace('"', '\\"')
+            self.selector = f':is(button, a, [role="button"]):has-text("{escaped}")'
         else:  # text (default)
             if not target:
                 raise ValueError("Text content is required")
-            self.selector = f'text={target}'
+            escaped = target.replace('"', '\\"')
+            self.selector = f'text="{escaped}"'
 
         self.method = method
         self.button = self.params.get('button', 'left')
