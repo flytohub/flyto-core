@@ -14,16 +14,8 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from ....utils import SSRFError, validate_url_with_env_config
 from ...registry import register_module
-from ...schema import compose, field
+from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ...schema.presets import (
-    HEADERS,
-    HTTP_AUTH,
-    HTTP_METHOD,
-    TIMEOUT_S,
-    URL,
-    VERIFY_SSL,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -267,10 +259,10 @@ _STRATEGY_DISPATCH = {
     required_permissions=['filesystem.read', 'filesystem.write'],
 
     params_schema=compose(
-        URL(required=True, placeholder='https://api.example.com/users'),
-        HTTP_METHOD(default='GET'),
-        HEADERS(),
-        HTTP_AUTH(),
+        presets.URL(required=True, placeholder='https://api.example.com/users'),
+        presets.HTTP_METHOD(default='GET'),
+        presets.HEADERS(),
+        presets.HTTP_AUTH(),
         field(
             'strategy',
             type='string',
@@ -401,8 +393,9 @@ _STRATEGY_DISPATCH = {
             ui={'unit': 'ms'},
             group=FieldGroup.OPTIONS,
         ),
-        TIMEOUT_S(default=30),
-        VERIFY_SSL(default=True),
+        presets.TIMEOUT_S(default=30),
+        presets.VERIFY_SSL(default=True),
+        presets.SSRF_PROTECTION(),
     ),
     output_schema={
         'ok': {

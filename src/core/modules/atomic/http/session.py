@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from ....utils import SSRFError, validate_url_with_env_config
 from ...registry import register_module
-from ...schema import compose, field
+from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
 
 logger = logging.getLogger(__name__)
@@ -173,28 +173,7 @@ async def _execute_request(
             },
             group=FieldGroup.BASIC,
         ),
-        field(
-            'auth',
-            type='object',
-            label='Authentication',
-            label_key='schema.field.http_auth',
-            description='Authentication applied to all requests in the session',
-            properties={
-                'type': {
-                    'type': 'string',
-                    'description': 'Authentication type',
-                    'enum': ['bearer', 'basic', 'api_key'],
-                    'default': 'bearer',
-                },
-                'token': {'type': 'string', 'description': 'Bearer token', 'format': 'password'},
-                'username': {'type': 'string', 'description': 'Basic auth username'},
-                'password': {'type': 'string', 'description': 'Basic auth password', 'format': 'password'},
-                'header_name': {'type': 'string', 'description': 'API key header name', 'default': 'X-API-Key'},
-                'api_key': {'type': 'string', 'description': 'API key value', 'format': 'password'},
-            },
-            ui={'widget': 'auth_config'},
-            group=FieldGroup.CONNECTION,
-        ),
+        presets.HTTP_AUTH(),
         field(
             'stop_on_error',
             type='boolean',
@@ -204,30 +183,9 @@ async def _execute_request(
             default=True,
             group=FieldGroup.OPTIONS,
         ),
-        field(
-            'timeout',
-            type='number',
-            label='Timeout per Request (seconds)',
-            label_key='schema.field.timeout_s',
-            description='Maximum time per individual request',
-            default=30,
-            min=1,
-            max=120,
-            step=1,
-            ui={'unit': 's'},
-            visibility=Visibility.EXPERT,
-            group=FieldGroup.ADVANCED,
-        ),
-        field(
-            'verify_ssl',
-            type='boolean',
-            label='Verify SSL',
-            label_key='schema.field.verify_ssl',
-            description='Verify SSL certificates',
-            default=True,
-            visibility=Visibility.EXPERT,
-            group=FieldGroup.ADVANCED,
-        ),
+        presets.TIMEOUT_S(default=30),
+        presets.VERIFY_SSL(default=True),
+        presets.SSRF_PROTECTION(),
     ),
     output_schema={
         'ok': {

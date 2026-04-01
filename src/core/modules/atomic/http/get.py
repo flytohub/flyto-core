@@ -11,6 +11,7 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...errors import ValidationError, NetworkError, ModuleError
+from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
 
 logger = logging.getLogger(__name__)
@@ -62,51 +63,14 @@ async def _parse_response_body(response) -> Any:
     requires_credentials=True,
     credential_keys=['API_KEY'],
 
-    params_schema={
-        'url': {
-            'type': 'string',
-            'label': 'URL',
-            'required': True,
-            'placeholder': 'https://api.example.com/data',
-            'description': 'Target URL',
-        },
-        'headers': {
-            'type': 'object',
-            'label': 'Headers',
-            'default': {},
-            'description': 'HTTP request headers',
-        },
-        'query': {
-            'type': 'object',
-            'label': 'Query Parameters',
-            'default': {},
-            'description': 'Query string',
-        },
-        'timeout': {
-            'type': 'number',
-            'label': 'Timeout (seconds)',
-            'default': 30,
-            'description': 'Maximum time to wait in seconds',
-        },
-        'verify_ssl': {
-            'type': 'boolean',
-            'label': 'Verify SSL',
-            'default': True,
-            'description': 'Verify SSL certificates',
-            'visibility': 'expert',
-            'group': 'advanced',
-        },
-        'ssrf_protection': {
-            'type': 'boolean',
-            'label': 'SSRF Protection',
-            'label_key': 'schema.field.ssrf_protection',
-            'default': True,
-            'description': 'Block requests to private/internal networks. Disable only for trusted internal targets.',
-            'description_key': 'schema.field.ssrf_protection.description',
-            'visibility': 'expert',
-            'group': 'advanced',
-        },
-    },
+    params_schema=compose(
+        presets.URL(required=True, placeholder='https://api.example.com/data', description='Target URL'),
+        presets.HEADERS(),
+        presets.QUERY_PARAMS(),
+        presets.TIMEOUT_S(default=30),
+        presets.VERIFY_SSL(default=True),
+        presets.SSRF_PROTECTION(),
+    ),
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded',
                'description_key': 'modules.http.get.output.ok.description'},
