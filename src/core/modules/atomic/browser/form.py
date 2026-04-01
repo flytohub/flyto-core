@@ -268,12 +268,13 @@ class BrowserFormModule(BaseModule):
         # Build form prefix if form_selector is specified
         prefix = f'{self.form_selector} ' if self.form_selector else ''
 
-        # Try common patterns
+        # Try common patterns (escape quotes in field name for safe CSS selectors)
+        escaped = field_name.replace('"', '\\"')
         selectors = [
-            f'{prefix}[name="{field_name}"]',
+            f'{prefix}[name="{escaped}"]',
             f'{prefix}#{field_name}',
-            f'{prefix}[id="{field_name}"]',
-            f'{prefix}[data-field="{field_name}"]',
+            f'{prefix}[id="{escaped}"]',
+            f'{prefix}[data-field="{escaped}"]',
         ]
 
         return selectors[0]  # Use first pattern by default
