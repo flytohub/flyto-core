@@ -272,13 +272,13 @@ class WorkflowEngine:
         """Clean up resources (browser sessions, etc.) after workflow execution.
 
         Only auto-closes headless browsers. Visible browsers (headless=False)
-        are left open so the user can see the results.
+        and browsers with keep_browser_alive=True are left open for user interaction.
         """
         browser = self.context.get('browser')
         if browser is not None:
-            # Check if browser was launched in headless mode
+            keep_alive = self.context.get('keep_browser_alive', False)
             is_headless = self.context.get('browser_headless', True)
-            if is_headless:
+            if is_headless and not keep_alive:
                 try:
                     await browser.close()
                     logger.debug("Auto-closed headless browser session")
@@ -287,7 +287,7 @@ class WorkflowEngine:
                 finally:
                     self.context.pop('browser', None)
             else:
-                logger.debug("Keeping visible browser open for user interaction")
+                logger.debug("Keeping browser open for user interaction")
 
     async def _execute_steps(self, steps: List[Dict[str, Any]]):
         """Execute workflow steps with flow control support."""
