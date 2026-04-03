@@ -65,9 +65,9 @@ DEFAULT_CONTEXT_PROVISIONS: Dict[str, List[ContextType]] = {
 # Context Incompatibility Rules
 # Modules from SOURCE category CANNOT directly connect to TARGET categories
 CONTEXT_INCOMPATIBLE_PAIRS: Dict[str, List[str]] = {
-    # AI/Agent modules don't provide browser context
-    "ai": ["browser", "browser_find", "browser_ops", "element", "page", "scraper"],
-    "agent": ["browser", "browser_find", "browser_ops", "element", "page", "scraper"],
+    # AI/Agent modules: no restrictions — they can appear anywhere in a workflow.
+    # Browser context is inherited from earlier steps (browser.launch/goto),
+    # not from the immediate predecessor.
 
     # Data modules don't provide browser context
     "data": ["browser_find", "browser_ops", "element"],
