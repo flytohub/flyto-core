@@ -139,7 +139,7 @@ _NESTED_JS = r"""
     input_types=['page'],
     output_types=['json', 'array'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('root_selector', type='string', label='Item selector',
               description='CSS selector for each item (e.g., ".comment", "li.thread").',

@@ -120,7 +120,7 @@ _TABLE_JS = r"""
     input_types=['page'],
     output_types=['array', 'json'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('selector', type='string', label='Table selector',
               description='CSS selector for the table. Default: first <table> on page.',

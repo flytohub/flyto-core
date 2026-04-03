@@ -39,7 +39,7 @@ _browser_pool: Dict[str, Any] = {}
     input_types=['page', 'browser'],
     output_types=['browser', 'page'],
     can_receive_from=['browser.*', 'flow.*', 'start'],
-    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('action', type='select', label='Action',
               required=True, default='create',

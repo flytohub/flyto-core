@@ -27,7 +27,7 @@ from ...schema import compose, presets
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],    # Schema-driven params
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],    # Schema-driven params
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='#element-id or .element-class'),
         presets.TIMEOUT_MS(key='timeout_ms', default=30000),

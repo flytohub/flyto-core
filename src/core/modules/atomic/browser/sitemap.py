@@ -129,7 +129,7 @@ async (options) => {
     input_types=['page'],
     output_types=['array', 'json'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'array.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'array.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('sitemap_url', type='string', label='Sitemap URL',
               description='Full URL to sitemap.xml. Leave empty to use current site\'s /sitemap.xml.',

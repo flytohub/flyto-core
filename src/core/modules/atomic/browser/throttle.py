@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
     input_types=['page'],
     output_types=['page'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('strategy', type='select', label='Strategy',
               description='Delay strategy: fixed, adaptive (auto-backoff on errors), human_like (random delays with reading pauses).',

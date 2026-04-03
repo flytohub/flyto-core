@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     input_types=[],
     output_types=['browser', 'page'],
     can_receive_from=['start', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('ws_endpoint', type='string', label='WebSocket endpoint',
               description='CDP WebSocket URL (e.g., wss://chrome.browserless.io?token=xxx).',

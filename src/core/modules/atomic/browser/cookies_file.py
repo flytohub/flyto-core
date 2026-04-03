@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
     input_types=['page'],
     output_types=['json'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'file.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field('action', type='select', label='Action',
               description='Export cookies to file or import from file.',

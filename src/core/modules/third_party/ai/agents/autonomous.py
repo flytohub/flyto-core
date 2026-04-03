@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 @register_module(
     module_id='agent.autonomous',
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*', 'start'],
+    can_receive_from=['*'],
     version='1.0.0',
     category='ai',
     subcategory='agent',

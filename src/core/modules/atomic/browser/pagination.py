@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
     output_types=['browser', 'page', 'array'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'array.*', 'string.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
 
     params_schema=compose(
         # ── Basic ────────────────────────────────────────────────

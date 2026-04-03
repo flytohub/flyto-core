@@ -30,7 +30,7 @@ from ...schema.constants import FieldGroup, Visibility
     input_types=[],
     output_types=['browser', 'page'],
 
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
     can_receive_from=['start', 'flow.*'],
 
     timeout_ms=30000,

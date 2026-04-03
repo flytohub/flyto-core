@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
     input_types=['text', 'json'],
     output_types=['text', 'json'],
     can_connect_to=['*'],
-    can_receive_from=['data.*', 'string.*', 'file.*', 'http.*', 'flow.*', 'start'],
+    can_receive_from=['*'],
 
     timeout_ms=180000,
     retryable=True,
