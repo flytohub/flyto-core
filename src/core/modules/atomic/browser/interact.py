@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
     output_types=['control'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'ai.*', 'llm.*'],
 
     node_type=NodeType.BREAKPOINT,
 

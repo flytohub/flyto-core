@@ -26,7 +26,7 @@ from ...schema import compose, presets, field
     output_types=['browser', 'page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
 
     # Schema-driven params
     params_schema=compose(

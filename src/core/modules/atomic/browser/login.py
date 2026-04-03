@@ -92,7 +92,7 @@ async (options) => {
     input_types=['page'],
     output_types=['page'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*'],
     params_schema=compose(
         field('username', type='string', label='Username / Email',
               description='Login username or email.',

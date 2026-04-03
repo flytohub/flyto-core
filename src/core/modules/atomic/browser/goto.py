@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 
     # Connection rules
     can_receive_from=['browser.launch', 'browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'data.*', 'flow.*', 'file.*', 'string.*', 'array.*', 'object.*'],
+    can_connect_to=['browser.*', 'element.*', 'data.*', 'flow.*', 'file.*', 'string.*', 'array.*', 'object.*', 'ai.*', 'llm.*'],
 
     # Execution settings
     timeout_ms=30000,

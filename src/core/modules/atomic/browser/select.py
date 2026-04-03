@@ -30,7 +30,7 @@ from ...schema.constants import FieldGroup
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
     params_schema=compose(
         presets.SELECTOR(required=True, placeholder='select#country', element_types=["select"]),
         field("select_method", type="select",

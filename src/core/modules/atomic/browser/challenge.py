@@ -102,7 +102,7 @@ _CHECK_RESOLVED_JS = r"""
     output_types=['page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'ai.*', 'llm.*'],
 
     params_schema=compose(
         field('auto_wait_seconds', type='number',

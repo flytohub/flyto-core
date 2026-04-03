@@ -34,7 +34,7 @@ from ...schema import compose, field, presets
     output_types=['string', 'file'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
 
     params_schema=compose(
         field(

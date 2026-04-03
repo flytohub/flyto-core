@@ -165,7 +165,7 @@ DEVICE_PRESETS = {
     output_types=['browser', 'page'],
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'element.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'element.*', 'ai.*', 'llm.*'],
 
     params_schema=compose(
         field(

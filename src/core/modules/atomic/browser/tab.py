@@ -32,7 +32,7 @@ from ....utils import validate_url_with_env_config, SSRFError
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    params_schema=compose(
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],    params_schema=compose(
         field(
             'action',
             type='string',

@@ -31,7 +31,7 @@ from ..element_registry import get_element_registry
 
 
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],    # Phase 2: Execution settings
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],    # Phase 2: Execution settings
     timeout_ms=10000,  # Finding elements should complete within 10s
     retryable=True,  # Can retry if elements not ready
     max_retries=2,

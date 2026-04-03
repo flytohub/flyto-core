@@ -38,7 +38,7 @@ from ...schema import compose, presets
     output_types=['browser', 'page'],
 
     # Connection rules - same as browser.launch
-    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
     can_receive_from=['start', 'flow.*', 'browser.*'],  # Can also follow other browser ops
 
     # Execution settings

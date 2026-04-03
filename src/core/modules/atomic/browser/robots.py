@@ -127,7 +127,7 @@ async (options) => {
     input_types=['page'],
     output_types=['json'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'ai.*', 'llm.*'],
     params_schema=compose(
         field('check_url', type='string', label='URL to check',
               description='Specific URL to check if allowed. Empty = just parse robots.txt.',

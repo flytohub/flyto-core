@@ -43,7 +43,7 @@ from ...schema import compose, presets
 
     # Connection rules - same as browser.close
     can_receive_from=['browser.*', 'element.*', 'flow.*'],
-    can_connect_to=['notify.*', 'data.*', 'file.*', 'flow.*', 'end'],
+    can_connect_to=['notify.*', 'data.*', 'file.*', 'flow.*', 'end', 'ai.*', 'llm.*'],
 
     # Execution settings
     timeout_ms=10000,

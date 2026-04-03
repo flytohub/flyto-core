@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
     input_types=['page'],
     output_types=['json', 'array'],
     can_receive_from=['browser.*', 'flow.*'],
-    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*'],
+    can_connect_to=['browser.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*'],
     params_schema=compose(
         field('url_pattern', type='string', label='URL Pattern',
               description='Regex pattern to match response URLs (e.g., "/api/data", "graphql").',

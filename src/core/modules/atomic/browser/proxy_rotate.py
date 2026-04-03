@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
     input_types=['page', 'browser'],
     output_types=['browser', 'page'],
     can_receive_from=['browser.*', 'flow.*', 'start'],
-    can_connect_to=['browser.*', 'flow.*'],
+    can_connect_to=['browser.*', 'flow.*', 'ai.*', 'llm.*'],
     params_schema=compose(
         field('action', type='select', label='Action',
               required=True, default='rotate',
