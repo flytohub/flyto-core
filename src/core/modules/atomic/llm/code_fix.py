@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
     color='#EF4444',
 
     # Connection types
-    input_types=['object', 'array'],
+    input_types=['any'],
     output_types=['object', 'array'],
     can_connect_to=['*'],  # Can connect to any module (file, shell, llm, etc.)
     can_receive_from=['*'],

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
     color='#10A37F',
 
     # Connection types
-    input_types=['string', 'object'],
+    input_types=['any'],
     output_types=['string', 'object'],
     can_connect_to=['*'],
     can_receive_from=['*'],

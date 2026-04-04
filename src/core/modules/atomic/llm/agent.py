@@ -36,7 +36,7 @@ MAX_ITERATIONS = 10
 
 @register_module(
     module_id='llm.agent',
-    stability="beta",
+    stability="stable",
     version='2.0.0',
     category='ai',
     subcategory='agent',
@@ -48,7 +48,7 @@ MAX_ITERATIONS = 10
     icon='Bot',
     color='#8B5CF6',
     node_type=NodeType.AI_AGENT,
-    input_types=['string', 'object', 'ai_model', 'ai_memory', 'ai_tool'],
+    input_types=['any'],
     output_types=['string', 'object'],
     can_connect_to=['*'],
     can_receive_from=['*', 'ai.model', 'ai.memory'],
