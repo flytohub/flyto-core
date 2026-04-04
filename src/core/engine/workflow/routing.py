@@ -88,12 +88,19 @@ class WorkflowRouter:
             source = edge.get('source', '')
             source_handle = edge.get('sourceHandle', 'success')
             target = edge.get('target', '')
-            edge_type = edge.get('type', edge.get('edge_type', 'data'))  # Default to 'data' for item propagation
+            # Check edge type: top-level 'type'/'edge_type' or nested 'data.edgeType'/'data.edge_type'
+            edge_data = edge.get('data') or {}
+            edge_type = (
+                edge.get('edge_type')
+                or edge_data.get('edgeType')
+                or edge_data.get('edge_type')
+                or edge.get('type', 'data')
+            )
 
             # Track resource edges separately (for AI Agent sub-nodes)
             if edge_type == 'resource':
                 if target and source:
-                    target_handle = edge.get('targetHandle', '')
+                    target_handle = edge.get('targetHandle') or edge.get('target_handle') or ''
                     # Normalize handle: "target-model" -> "model"
                     port_name = target_handle.replace('target-', '') if target_handle.startswith('target-') else (target_handle or 'input')
                     if target not in self._resource_edges:
