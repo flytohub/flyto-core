@@ -16,7 +16,7 @@ from ...types import NodeType, EdgeType, DataType
 
 @register_module(
     module_id='ai.tool',
-    stability="beta",
+    stability="stable",
     version='1.0.0',
     category='ai',
     subcategory='sub_node',
