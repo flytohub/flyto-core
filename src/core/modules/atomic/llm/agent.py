@@ -186,11 +186,8 @@ MAX_ITERATIONS = 10
               description='Maximum number of tool calls',
               description_key='modules.llm.agent.params.max_iterations.description',
               required=False, default=10, min=1, max=50),
-        presets.LLM_PROVIDER(default='openai'),
-        presets.LLM_MODEL(default='gpt-4o'),
-        presets.TEMPERATURE(default=0.3),
-        presets.LLM_API_KEY(),
-        presets.LLM_BASE_URL(),
+        # Model config is provided by connected ai.model sub-node.
+        # No provider/model/api_key params here.
     ),
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the agent completed successfully',
@@ -258,8 +255,15 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     if main_input is not None:
         user_context['input'] = stringify_value(main_input, max_input_size)
 
-    # Get model config from connected ai.model or params
+    # Get model config from connected ai.model sub-node (required)
     provider, model, temperature, api_key, base_url = _resolve_model_config(context, params)
+
+    if not provider:
+        return {
+            'ok': False,
+            'error': 'No AI Model connected. Please connect an ai.model sub-node to the Model port.',
+            'error_code': 'MISSING_MODEL'
+        }
 
     # Get memory from connected ai.memory
     conversation_history = _resolve_memory(context)
@@ -267,7 +271,7 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     # Get tools from connected tool nodes
     _collect_connected_tools(context, tool_ids)
 
-    # Get API key from environment if not provided
+    # Get API key from environment if not provided in ai.model
     if not api_key:
         env_vars = {'openai': 'OPENAI_API_KEY', 'anthropic': 'ANTHROPIC_API_KEY'}
         env_var = env_vars.get(provider)
@@ -275,7 +279,7 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
             api_key = os.getenv(env_var)
 
     if not api_key:
-        return {'ok': False, 'error': f'API key not provided for {provider}', 'error_code': 'MISSING_API_KEY'}
+        return {'ok': False, 'error': f'API key not provided. Set it in the ai.model node or as {env_vars.get(provider, "API_KEY")} environment variable.', 'error_code': 'MISSING_API_KEY'}
 
     # Build tool definitions
     tools = await build_tool_definitions(tool_ids)
@@ -351,7 +355,7 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _resolve_model_config(context: Dict, params: Dict):
-    """Extract model configuration from connected ai.model or params."""
+    """Extract model configuration from connected ai.model sub-node."""
     model_input = context.get('inputs', {}).get('model')
     if model_input and model_input.get('__data_type__') == 'ai_model':
         config = model_input.get('config', {})
@@ -360,10 +364,7 @@ def _resolve_model_config(context: Dict, params: Dict):
             config.get('provider', 'openai'), config.get('model', 'gpt-4o'),
             config.get('temperature', 0.3), config.get('api_key'), config.get('base_url')
         )
-    return (
-        params.get('provider', 'openai'), params.get('model', 'gpt-4o'),
-        params.get('temperature', 0.3), params.get('api_key'), params.get('base_url')
-    )
+    return None, None, None, None, None
 
 
 def _resolve_memory(context: Dict):
