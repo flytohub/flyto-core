@@ -340,17 +340,29 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
             steps.append({'type': 'final_answer', 'content': final_response, 'iteration': iteration + 1})
             logger.info(f"Agent completed in {iteration + 1} iterations, {tool_call_count} tool calls")
 
+            logger.info(f"Agent output: result_len={len(final_response)}, tool_calls={tool_call_count}")
             return {
-                'ok': True, 'result': final_response, 'steps': steps,
-                'tool_calls': tool_call_count, 'tokens_used': total_tokens,
-                'iterations': iteration + 1
+                'ok': True,
+                'data': {
+                    'result': final_response,
+                    'steps': steps,
+                    'tool_calls': tool_call_count,
+                    'tokens_used': total_tokens,
+                    'iterations': iteration + 1,
+                },
             }
 
     logger.warning(f"Agent reached max iterations ({max_iterations})")
     return {
-        'ok': True, 'result': 'Agent reached maximum iterations without completing the task.',
-        'steps': steps, 'tool_calls': tool_call_count, 'tokens_used': total_tokens,
-        'iterations': max_iterations, 'warning': 'max_iterations_reached'
+        'ok': True,
+        'data': {
+            'result': 'Agent reached maximum iterations without completing the task.',
+            'steps': steps,
+            'tool_calls': tool_call_count,
+            'tokens_used': total_tokens,
+            'iterations': max_iterations,
+            'warning': 'max_iterations_reached',
+        },
     }
 
 
