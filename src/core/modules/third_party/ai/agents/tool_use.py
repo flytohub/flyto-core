@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     icon='Wrench',
     color='#F59E0B',
 
-    input_types=['text', 'json'],
+    input_types=['any'],
     output_types=['text', 'json'],
     can_connect_to=['*'],
     can_receive_from=['*'],
