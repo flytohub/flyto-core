@@ -322,7 +322,9 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
                 tool_call_count += 1
 
                 tool_result = await execute_tool(tool_name, tool_args, context)
-                steps.append({'type': 'tool_result', 'tool': tool_name, 'result': tool_result, 'iteration': iteration + 1})
+                # Store summary in steps (full tool results can be huge, e.g. browser.snapshot HTML)
+                tool_result_summary = _summarize_tool_result(tool_result)
+                steps.append({'type': 'tool_result', 'tool': tool_name, 'result': tool_result_summary, 'iteration': iteration + 1})
 
                 # Rebuild tool_call in OpenAI's expected format
                 openai_tool_call = {
@@ -364,6 +366,27 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
             'warning': 'max_iterations_reached',
         },
     }
+
+
+def _summarize_tool_result(result: Any, max_len: int = 200) -> Any:
+    """Summarize tool result for steps log. Full results (e.g. browser.snapshot HTML) are too large."""
+    if isinstance(result, str):
+        return result[:max_len] + '...' if len(result) > max_len else result
+    if isinstance(result, dict):
+        summary = {'_summary': True}
+        for k, v in result.items():
+            if isinstance(v, str) and len(v) > max_len:
+                summary[k] = v[:max_len] + f'... [{len(v)} chars]'
+            elif isinstance(v, (list, dict)):
+                s = json.dumps(v, default=str)
+                if len(s) > max_len:
+                    summary[k] = f'[{type(v).__name__}, {len(s)} bytes]'
+                else:
+                    summary[k] = v
+            else:
+                summary[k] = v
+        return summary
+    return result
 
 
 def _resolve_model_config(context: Dict, params: Dict):
