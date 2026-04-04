@@ -73,6 +73,18 @@ def _schema_to_json_schema(params_schema: List[Dict]) -> Dict:
             "description": param.get('description', '')
         }
 
+        # Array type requires 'items' for OpenAI function calling schema
+        if prop['type'] == 'array':
+            items_schema = param.get('items')
+            if isinstance(items_schema, dict):
+                prop['items'] = items_schema
+            else:
+                prop['items'] = {"type": "string"}
+
+        # Object type: include properties if defined
+        if prop['type'] == 'object' and param.get('properties'):
+            prop['properties'] = param['properties']
+
         if 'enum' in param:
             prop['enum'] = param['enum']
         if 'default' in param:
