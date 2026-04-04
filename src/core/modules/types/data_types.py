@@ -31,6 +31,11 @@ DATA_TYPE_COMPATIBILITY: Dict[DataType, List[DataType]] = {
     DataType.XML: [DataType.ANY, DataType.XML, DataType.STRING],
     DataType.HTML: [DataType.ANY, DataType.HTML, DataType.STRING],
     DataType.CREDENTIAL: [DataType.ANY, DataType.CREDENTIAL],
+    # AI resource types
+    DataType.AI_MODEL: [DataType.ANY, DataType.AI_MODEL],
+    DataType.AI_MEMORY: [DataType.ANY, DataType.AI_MEMORY],
+    DataType.AI_TOOL: [DataType.ANY, DataType.AI_TOOL],
+    DataType.AI_OUTPUT_PARSER: [DataType.ANY, DataType.AI_OUTPUT_PARSER],
     # Flow control types
     DataType.CONTROL: [DataType.ANY, DataType.CONTROL],
     DataType.TRIGGER: [DataType.ANY, DataType.TRIGGER, DataType.CONTROL],

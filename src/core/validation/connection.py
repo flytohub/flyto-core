@@ -38,6 +38,9 @@ INPUT_PORT_ALIASES = {
     'input': 'input',
     'target': 'input',
     'in': 'input',  # LoopNode uses 'in' for input
+    'target-model': 'model',
+    'target-memory': 'memory',
+    'target-tools': 'tools',
 }
 
 
@@ -65,6 +68,15 @@ def _find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
         match = next((p for p in ports if p.get('id') == stripped), None)
         if match:
             return match
+    # Strip 'target-' prefix (e.g. 'target-model' -> 'model')
+    if port_id.startswith('target-'):
+        stripped = port_id[len('target-'):]
+        match = next((p for p in ports if p.get('id') == stripped), None)
+        if match:
+            return match
+    # Fallback: if only one port exists, use it (common for sub-nodes)
+    if len(ports) == 1:
+        return ports[0]
     return None
 
 
