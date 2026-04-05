@@ -240,7 +240,8 @@ class TestFullPipelineIntegration:
         for item in detect_result["items"][:5]:
             url = item.get("url", "")
             from urllib.parse import urlparse
-            if not url.startswith("http") or urlparse(url).hostname and urlparse(url).hostname.endswith("ycombinator.com"):
+            parsed = urlparse(url)
+            if parsed.scheme not in ("http", "https") or (parsed.hostname and parsed.hostname.endswith("ycombinator.com")):
                 continue
             if len(articles) >= 2:
                 break

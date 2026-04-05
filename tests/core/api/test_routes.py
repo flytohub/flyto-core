@@ -413,8 +413,7 @@ class TestSecurityExtended:
         monkeypatch.setenv("FLYTO_CORS_ORIGINS", "https://a.com, https://b.com")
         from core.api.security import get_cors_origins
         origins = get_cors_origins()
-        assert "https://a.com" in origins
-        assert "https://b.com" in origins
+        assert origins == ["https://a.com", "https://b.com"]
 
     def test_init_auth_with_env_token(self, monkeypatch):
         monkeypatch.setenv("FLYTO_API_TOKEN", "test-fixed-token")
