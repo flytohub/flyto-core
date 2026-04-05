@@ -1,0 +1,1823 @@
+id: browser-full-test-suite
+name: Browser Modules — Full Test Suite (98 steps)
+version: 1.0.0
+description: 'Comprehensive test of all 54 browser modules. Covers: launch, navigation, extraction, interaction, forms, cookies,
+  storage, viewport, emulation, tabs, PDF, SEO, frames, pagination, drag, upload, download, login, pool, network, dialog,
+  recording, geolocation, throttle.'
+steps:
+- id: launch
+  module: browser.launch
+  label: 1. Launch Browser
+  params:
+    headless: true
+    browser_type: chromium
+    stealth: true
+    locale: en-US
+    width: 1280
+    height: 720
+  positionX: 100
+  positionY: 100
+  orderIndex: 0
+- id: goto_example
+  module: browser.goto
+  label: 2. Navigate to example.com
+  params:
+    url: https://example.com
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 400
+  positionY: 100
+  orderIndex: 1
+- id: challenge_check
+  module: browser.challenge
+  label: Challenge detection
+  params: {}
+  positionX: 700
+  positionY: 100
+  orderIndex: 2
+- id: snapshot_html
+  module: browser.snapshot
+  label: 3. Snapshot (HTML)
+  params:
+    format: html
+  positionX: 1000
+  positionY: 100
+  orderIndex: 3
+- id: snapshot_text
+  module: browser.snapshot
+  label: 4. Snapshot (Text)
+  params:
+    format: text
+  positionX: 1300
+  positionY: 100
+  orderIndex: 4
+- id: screenshot_png
+  module: browser.screenshot
+  label: 5. Screenshot (PNG)
+  params:
+    path: /tmp/flyto_test_screenshot.png
+    full_page: true
+    format: png
+  positionX: 1600
+  positionY: 100
+  orderIndex: 5
+- id: extract_heading
+  module: browser.extract
+  label: 6. Extract h1
+  params:
+    selector: h1
+    extract_type: text
+  positionX: 100
+  positionY: 250
+  orderIndex: 6
+- id: extract_links
+  module: browser.extract
+  label: 7. Extract all links
+  params:
+    selector: a
+    attribute: href
+  positionX: 400
+  positionY: 250
+  orderIndex: 7
+- id: find_elements
+  module: browser.find
+  label: 8. Find elements
+  params:
+    selector: p
+  positionX: 700
+  positionY: 250
+  orderIndex: 8
+- id: readability
+  module: browser.readability
+  label: 9. Readability extract
+  params:
+    min_content_length: 10
+    include_images: true
+    include_links: true
+  positionX: 1000
+  positionY: 250
+  orderIndex: 9
+- id: scroll_down
+  module: browser.scroll
+  label: 10. Scroll down
+  params:
+    direction: down
+    amount: 300
+    behavior: smooth
+  positionX: 1300
+  positionY: 250
+  orderIndex: 10
+- id: scroll_up
+  module: browser.scroll
+  label: 11. Scroll up
+  params:
+    direction: up
+    amount: 300
+    behavior: instant
+  positionX: 1600
+  positionY: 250
+  orderIndex: 11
+- id: hover_link
+  module: browser.hover
+  label: 12. Hover on link
+  params:
+    selector: a
+    timeout_ms: 5000
+  positionX: 100
+  positionY: 400
+  orderIndex: 12
+- id: click_link
+  module: browser.click
+  label: 13. Click link
+  params:
+    click_method: selector
+    selector: a
+    timeout_ms: 5000
+  positionX: 400
+  positionY: 400
+  orderIndex: 13
+- id: wait_page
+  module: browser.wait
+  label: 14. Wait for page load
+  params:
+    duration_ms: 1000
+  positionX: 700
+  positionY: 400
+  orderIndex: 14
+- id: go_back
+  module: browser.navigation
+  label: 15. Navigate back
+  params:
+    action: back
+    wait_until: domcontentloaded
+    timeout_ms: 10000
+  positionX: 1000
+  positionY: 400
+  orderIndex: 15
+- id: press_tab
+  module: browser.press
+  label: 16. Press Tab key
+  params:
+    key: Tab
+  positionX: 1300
+  positionY: 400
+  orderIndex: 16
+- id: evaluate_js
+  module: browser.evaluate
+  label: 17. Execute JavaScript
+  params:
+    script: 'return { title: document.title, url: window.location.href, links: document.querySelectorAll(''a'').length }'
+  positionX: 1600
+  positionY: 400
+  orderIndex: 17
+- id: performance
+  module: browser.performance
+  label: 18. Performance metrics
+  params:
+    collect_resources: true
+    include_js_heap: true
+    timeout_ms: 5000
+  positionX: 100
+  positionY: 550
+  orderIndex: 18
+- id: console_logs
+  module: browser.console
+  label: 19. Console logs
+  params:
+    level: all
+    timeout_ms: 3000
+  positionX: 400
+  positionY: 550
+  orderIndex: 19
+- id: viewport_mobile
+  module: browser.viewport
+  label: 20. Resize to mobile
+  params:
+    width: 375
+    height: 812
+  positionX: 700
+  positionY: 550
+  orderIndex: 20
+- id: screenshot_mobile
+  module: browser.screenshot
+  label: 21. Mobile screenshot
+  params:
+    path: /tmp/flyto_test_mobile.png
+    full_page: false
+    format: png
+  positionX: 1000
+  positionY: 550
+  orderIndex: 21
+- id: viewport_desktop
+  module: browser.viewport
+  label: 22. Resize to desktop
+  params:
+    width: 1920
+    height: 1080
+  positionX: 1300
+  positionY: 550
+  orderIndex: 22
+- id: emulate_device
+  module: browser.emulate
+  label: 23. Emulate iPhone
+  params:
+    device: iphone_12
+  positionX: 1600
+  positionY: 550
+  orderIndex: 23
+- id: screenshot_emulated
+  module: browser.screenshot
+  label: 24. Emulated screenshot
+  params:
+    path: /tmp/flyto_test_emulated.png
+    format: png
+  positionX: 100
+  positionY: 700
+  orderIndex: 24
+- id: cookies_set
+  module: browser.cookies
+  label: 25. Set cookie
+  params:
+    action: set
+    name: flyto_test
+    value: hello_world
+    domain: example.com
+  positionX: 400
+  positionY: 700
+  orderIndex: 25
+- id: cookies_get
+  module: browser.cookies
+  label: 26. Get cookies
+  params:
+    action: get
+  positionX: 700
+  positionY: 700
+  orderIndex: 26
+- id: storage_set
+  module: browser.storage
+  label: 27. Set localStorage
+  params:
+    action: set
+    type: local
+    key: flyto_test_key
+    value: test_value_123
+  positionX: 1000
+  positionY: 700
+  orderIndex: 27
+- id: storage_get
+  module: browser.storage
+  label: 28. Get localStorage
+  params:
+    action: get
+    type: local
+    key: flyto_test_key
+  positionX: 1300
+  positionY: 700
+  orderIndex: 28
+- id: storage_keys
+  module: browser.storage
+  label: 29. List storage keys
+  params:
+    action: keys
+    type: local
+  positionX: 1600
+  positionY: 700
+  orderIndex: 29
+- id: cookies_delete
+  module: browser.cookies
+  label: 30. Delete cookie
+  params:
+    action: delete
+    name: flyto_test
+  positionX: 100
+  positionY: 850
+  orderIndex: 30
+- id: storage_remove
+  module: browser.storage
+  label: 31. Remove storage key
+  params:
+    action: remove
+    type: local
+    key: flyto_test_key
+  positionX: 400
+  positionY: 850
+  orderIndex: 31
+- id: goto_books
+  module: browser.goto
+  label: 32. Go to books.toscrape.com
+  params:
+    url: https://books.toscrape.com
+    wait_until: networkidle
+    timeout_ms: 15000
+  positionX: 700
+  positionY: 850
+  orderIndex: 32
+- id: detect_list_books
+  module: browser.detect_list
+  label: 33. Auto-detect book list
+  params:
+    min_items: 3
+    max_items: 30
+    include_text: true
+  positionX: 1000
+  positionY: 850
+  orderIndex: 33
+- id: extract_nested_books
+  module: browser.extract_nested
+  label: 34. Extract nested book data
+  params:
+    root_selector: article.product_pod
+    fields:
+      title:
+        selector: h3 a
+        attribute: title
+      price:
+        selector: .price_color
+        type: text
+      availability:
+        selector: .availability
+        type: text
+    max_depth: 1
+    limit: 10
+  positionX: 1300
+  positionY: 850
+  orderIndex: 34
+- id: table_extract
+  module: browser.table
+  label: 35. Extract table (if present)
+  params:
+    selector: table
+    max_rows: 20
+  positionX: 1600
+  positionY: 850
+  orderIndex: 35
+- id: detect_button
+  module: browser.detect
+  label: 36. Detect 'next' button
+  params:
+    text: next
+    role: button
+    match_mode: contains
+    action: none
+    timeout_ms: 5000
+  positionX: 100
+  positionY: 1000
+  orderIndex: 36
+- id: ensure_session
+  module: browser.ensure
+  label: 37. Ensure browser alive
+  params:
+    headless: true
+    width: 1280
+    height: 720
+  positionX: 400
+  positionY: 1000
+  orderIndex: 37
+- id: tab_new
+  module: browser.tab
+  label: 38. Open new tab
+  params:
+    action: new
+    url: https://example.com
+  positionX: 700
+  positionY: 1000
+  orderIndex: 38
+- id: tab_list
+  module: browser.tab
+  label: 39. List tabs
+  params:
+    action: list
+  positionX: 1000
+  positionY: 1000
+  orderIndex: 39
+- id: tab_switch
+  module: browser.tab
+  label: 40. Switch to first tab
+  params:
+    action: switch
+    index: 0
+  positionX: 1300
+  positionY: 1000
+  orderIndex: 40
+- id: tab_close
+  module: browser.tab
+  label: 41. Close extra tab
+  params:
+    action: close
+    index: 1
+  positionX: 1600
+  positionY: 1000
+  orderIndex: 41
+- id: pdf_export
+  module: browser.pdf
+  label: 42. Export to PDF
+  params:
+    path: /tmp/flyto_test_page.pdf
+    page_size: A4
+    orientation: portrait
+    print_background: true
+  positionX: 100
+  positionY: 1150
+  orderIndex: 42
+- id: robots_check
+  module: browser.robots
+  label: 43. Check robots.txt
+  params:
+    user_agent: '*'
+  positionX: 400
+  positionY: 1150
+  orderIndex: 43
+- id: sitemap_parse
+  module: browser.sitemap
+  label: 44. Parse sitemap
+  params:
+    max_urls: 20
+    follow_index: false
+  positionX: 700
+  positionY: 1150
+  orderIndex: 44
+- id: reload_page
+  module: browser.navigation
+  label: 45. Reload page
+  params:
+    action: reload
+    wait_until: domcontentloaded
+  positionX: 1000
+  positionY: 1150
+  orderIndex: 45
+- id: wait_for_element
+  module: browser.wait
+  label: 46. Wait for element
+  params:
+    selector: article
+    state: visible
+    timeout_ms: 5000
+  positionX: 1300
+  positionY: 1150
+  orderIndex: 46
+- id: scroll_to_element
+  module: browser.scroll
+  label: 47. Scroll to bottom
+  params:
+    direction: down
+    amount: 9999
+    behavior: smooth
+  positionX: 1600
+  positionY: 1150
+  orderIndex: 47
+- id: final_screenshot
+  module: browser.screenshot
+  label: 48. Final screenshot
+  params:
+    path: /tmp/flyto_test_final.png
+    full_page: true
+    format: png
+  positionX: 100
+  positionY: 1300
+  orderIndex: 48
+- id: close_browser
+  module: browser.close
+  label: 49. Close browser
+  positionX: 400
+  positionY: 1300
+  orderIndex: 49
+- id: launch
+  module: browser.launch
+  label: 1. Launch Browser
+  params:
+    headless: true
+    browser_type: chromium
+    stealth: true
+    locale: en-US
+    width: 1280
+    height: 720
+  positionX: 700
+  positionY: 1300
+  orderIndex: 50
+- id: geolocation_set
+  module: browser.geolocation
+  label: 2. Set geolocation (San Francisco)
+  params:
+    latitude: 37.7749
+    longitude: -122.4194
+    accuracy: 100
+  positionX: 1000
+  positionY: 1300
+  orderIndex: 51
+- id: throttle_set
+  module: browser.throttle
+  label: 3. Set throttle (fixed 500ms)
+  params:
+    strategy: fixed
+    min_interval_ms: 500
+  positionX: 1300
+  positionY: 1300
+  orderIndex: 52
+- id: goto_form_page
+  module: browser.goto
+  label: 4. Go to httpbin forms
+  params:
+    url: https://httpbin.org/forms/post
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 1600
+  positionY: 1300
+  orderIndex: 53
+- id: record_start
+  module: browser.record
+  label: 5. Start recording
+  params:
+    action: start
+  positionX: 100
+  positionY: 1450
+  orderIndex: 54
+- id: pages_list
+  module: browser.pages
+  label: 8. List open pages
+  params:
+    include_details: true
+    include_content_info: true
+  positionX: 400
+  positionY: 1450
+  orderIndex: 55
+- id: form_fill
+  module: browser.form
+  label: 9. Fill form
+  params:
+    data:
+      custname: Flyto Test User
+      custtel: '1234567890'
+      custemail: test@flyto.dev
+      comments: This is an automated browser test
+    clear_before_fill: true
+    submit: false
+    delay_between_fields_ms: 50
+  positionX: 700
+  positionY: 1450
+  orderIndex: 56
+- id: type_field
+  module: browser.type
+  label: 10. Type into comments field
+  params:
+    type_method: selector
+    selector: textarea[name='comments']
+    text: ' — appended by browser.type'
+    clear: false
+    delay: 10
+  positionX: 1000
+  positionY: 1450
+  orderIndex: 57
+- id: click_radio
+  module: browser.click
+  label: 11. Click radio button
+  params:
+    click_method: selector
+    selector: input[name='topping'][value='bacon']
+    timeout_ms: 5000
+  positionX: 1300
+  positionY: 1450
+  orderIndex: 58
+- id: response_capture
+  module: browser.response
+  label: 13. Capture response on submit
+  params:
+    url_pattern: httpbin
+    wait_ms: 8000
+    max_responses: 1
+    resource_types: document
+    include_headers: true
+  positionX: 1600
+  positionY: 1450
+  orderIndex: 59
+- id: submit_form
+  module: browser.click
+  label: 14. Submit form
+  params:
+    click_method: selector
+    selector: button
+    timeout_ms: 5000
+  positionX: 100
+  positionY: 1600
+  orderIndex: 60
+- id: wait_submit
+  module: browser.wait
+  label: 15. Wait for submit response
+  params:
+    duration_ms: 2000
+  positionX: 400
+  positionY: 1600
+  orderIndex: 61
+- id: record_stop
+  module: browser.record
+  label: 16. Stop recording
+  params:
+    action: stop
+    output_format: yaml
+  positionX: 700
+  positionY: 1600
+  orderIndex: 62
+- id: cookies_export
+  module: browser.cookies_file
+  label: 18. Export cookies to file
+  params:
+    action: export
+    file_path: /tmp/flyto_test_cookies.json
+  positionX: 1000
+  positionY: 1600
+  orderIndex: 63
+- id: cookies_import
+  module: browser.cookies_file
+  label: 19. Import cookies from file
+  params:
+    action: import
+    file_path: /tmp/flyto_test_cookies.json
+  positionX: 1300
+  positionY: 1600
+  orderIndex: 64
+- id: trigger_alert
+  module: browser.evaluate
+  label: Trigger delayed alert
+  params:
+    script: setTimeout(() => alert('Flyto test alert'), 1500); return 'alert scheduled';
+  positionX: 1600
+  positionY: 1600
+  orderIndex: 65
+- id: dialog_accept
+  module: browser.dialog
+  label: Accept dialog
+  params:
+    action: accept
+    timeout: 5000
+  positionX: 100
+  positionY: 1750
+  orderIndex: 66
+- id: close_for_frame
+  module: browser.close
+  label: Close browser (reset state)
+  positionX: 400
+  positionY: 1750
+  orderIndex: 67
+- id: relaunch_for_frame
+  module: browser.launch
+  label: Relaunch for frame test
+  params:
+    headless: true
+    browser_type: chromium
+  positionX: 700
+  positionY: 1750
+  orderIndex: 68
+- id: goto_frame_page
+  module: browser.goto
+  label: Go to iframe test page
+  params:
+    url: https://the-internet.herokuapp.com/nested_frames
+    wait_until: networkidle
+    timeout_ms: 15000
+  positionX: 1000
+  positionY: 1750
+  orderIndex: 69
+- id: frame_list
+  module: browser.frame
+  label: List all frames
+  params:
+    action: list
+  positionX: 1300
+  positionY: 1750
+  orderIndex: 70
+- id: frame_switch
+  module: browser.frame
+  label: Switch to frame
+  params:
+    name: frame-bottom
+    action: enter
+  positionX: 1600
+  positionY: 1750
+  orderIndex: 71
+- id: frame_back
+  module: browser.frame
+  label: Switch back to main
+  params:
+    action: exit
+  positionX: 100
+  positionY: 1900
+  orderIndex: 72
+- id: goto_books
+  module: browser.goto
+  label: 28. Go to books.toscrape.com
+  params:
+    url: https://books.toscrape.com
+    wait_until: networkidle
+    timeout_ms: 15000
+  positionX: 400
+  positionY: 1900
+  orderIndex: 73
+- id: pagination_test
+  module: browser.pagination
+  label: 29. Paginate through books
+  params:
+    mode: next_button
+    item_selector: article.product_pod
+    next_selector: li.next a
+    fields:
+      title:
+        selector: h3 a
+        attribute: title
+      price:
+        selector: .price_color
+    max_pages: 3
+    max_items: 30
+    wait_between_pages_ms: 500
+    retry_on_error: true
+    max_retries: 2
+  positionX: 700
+  positionY: 1900
+  orderIndex: 74
+- id: goto_dropdown
+  module: browser.goto
+  label: 'Select: Go to dropdown page'
+  params:
+    url: https://the-internet.herokuapp.com/dropdown
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 1000
+  positionY: 1900
+  orderIndex: 75
+- id: select_option
+  module: browser.select
+  label: 'Select: Choose Option 2'
+  params:
+    selector: select#dropdown
+    select_method: value
+    target: '2'
+  positionX: 1300
+  positionY: 1900
+  orderIndex: 76
+- id: goto_drag_page
+  module: browser.goto
+  label: 30. Go to drag-drop test page
+  params:
+    url: https://the-internet.herokuapp.com/drag_and_drop
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 1600
+  positionY: 1900
+  orderIndex: 77
+- id: drag_test
+  module: browser.drag
+  label: 31. Drag and drop
+  params:
+    source: '#column-a'
+    target: '#column-b'
+  positionX: 100
+  positionY: 2050
+  orderIndex: 78
+- id: goto_upload_page
+  module: browser.goto
+  label: 32. Go to upload test page
+  params:
+    url: https://the-internet.herokuapp.com/upload
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 400
+  positionY: 2050
+  orderIndex: 79
+- id: create_test_file
+  module: browser.evaluate
+  label: 33. Create test file for upload
+  params:
+    script: return 'test file ready';
+  positionX: 700
+  positionY: 2050
+  orderIndex: 80
+- id: upload_file
+  module: browser.upload
+  label: 34. Upload file
+  params:
+    selector: input#file-upload
+    file_path: /tmp/flyto_test_cookies.json
+  positionX: 1000
+  positionY: 2050
+  orderIndex: 81
+- id: goto_download_page
+  module: browser.goto
+  label: 35. Go to download test page
+  params:
+    url: https://the-internet.herokuapp.com/download
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 1300
+  positionY: 2050
+  orderIndex: 82
+- id: download_file
+  module: browser.download
+  label: 36. Download file
+  params:
+    selector: a[href*='.txt']
+    save_path: /tmp/flyto_test_download.txt
+    timeout_ms: 15000
+  positionX: 1600
+  positionY: 2050
+  orderIndex: 83
+- id: goto_login_page
+  module: browser.goto
+  label: 37. Go to login test page
+  params:
+    url: https://the-internet.herokuapp.com/login
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 100
+  positionY: 2200
+  orderIndex: 84
+- id: login_test
+  module: browser.login
+  label: 38. Login with test credentials
+  params:
+    username: tomsmith
+    password: SuperSecretPassword!
+    wait_ms: 3000
+  positionX: 400
+  positionY: 2200
+  orderIndex: 85
+- id: pool_create
+  module: browser.pool
+  label: 39. Create named browser
+  params:
+    action: create
+    name: scraper1
+    headless: true
+  positionX: 700
+  positionY: 2200
+  orderIndex: 86
+- id: pool_list
+  module: browser.pool
+  label: 40. List pool browsers
+  params:
+    action: list
+  positionX: 1000
+  positionY: 2200
+  orderIndex: 87
+- id: pool_switch
+  module: browser.pool
+  label: 41. Switch to scraper1
+  params:
+    action: switch
+    name: scraper1
+  positionX: 1300
+  positionY: 2200
+  orderIndex: 88
+- id: pool_goto
+  module: browser.goto
+  label: 42. Navigate in pool browser
+  params:
+    url: https://example.com
+    wait_until: domcontentloaded
+    timeout_ms: 10000
+  positionX: 1600
+  positionY: 2200
+  orderIndex: 89
+- id: pool_destroy
+  module: browser.pool
+  label: 43. Destroy pool browser
+  params:
+    action: close
+    name: scraper1
+  positionX: 100
+  positionY: 2350
+  orderIndex: 90
+- id: relaunch_for_network
+  module: browser.launch
+  label: Relaunch for network test
+  params:
+    headless: true
+    browser_type: chromium
+  positionX: 400
+  positionY: 2350
+  orderIndex: 91
+- id: goto_for_network
+  module: browser.goto
+  label: Navigate for network test
+  params:
+    url: https://example.com
+    wait_until: domcontentloaded
+    timeout_ms: 10000
+  positionX: 700
+  positionY: 2350
+  orderIndex: 92
+- id: network_block
+  module: browser.network
+  label: Block images (1s window)
+  params:
+    action: block
+    resource_type: image
+    timeout: 1000
+  positionX: 1000
+  positionY: 2350
+  orderIndex: 93
+- id: goto_after_block
+  module: browser.goto
+  label: Navigate with images blocked
+  params:
+    url: https://books.toscrape.com
+    wait_until: domcontentloaded
+    timeout_ms: 15000
+  positionX: 1300
+  positionY: 2350
+  orderIndex: 94
+- id: screenshot_blocked
+  module: browser.screenshot
+  label: Screenshot (images blocked)
+  params:
+    path: /tmp/flyto_test_no_images.png
+    full_page: false
+    format: png
+  positionX: 1600
+  positionY: 2350
+  orderIndex: 95
+- id: release_browser
+  module: browser.release
+  label: Release browser
+  params:
+    force: false
+  positionX: 100
+  positionY: 2500
+  orderIndex: 96
+- id: close_browser
+  module: browser.close
+  label: Close browser
+  positionX: 400
+  positionY: 2500
+  orderIndex: 97
+edges:
+- id: e_0
+  source: launch
+  target: goto_example
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_1
+  source: goto_example
+  target: challenge_check
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_2
+  source: challenge_check
+  target: snapshot_html
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_3
+  source: snapshot_html
+  target: snapshot_text
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_4
+  source: snapshot_text
+  target: screenshot_png
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_5
+  source: screenshot_png
+  target: extract_heading
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_6
+  source: extract_heading
+  target: extract_links
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_7
+  source: extract_links
+  target: find_elements
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_8
+  source: find_elements
+  target: readability
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_9
+  source: readability
+  target: scroll_down
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_10
+  source: scroll_down
+  target: scroll_up
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_11
+  source: scroll_up
+  target: hover_link
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_12
+  source: hover_link
+  target: click_link
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_13
+  source: click_link
+  target: wait_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_14
+  source: wait_page
+  target: go_back
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_15
+  source: go_back
+  target: press_tab
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_16
+  source: press_tab
+  target: evaluate_js
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_17
+  source: evaluate_js
+  target: performance
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_18
+  source: performance
+  target: console_logs
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_19
+  source: console_logs
+  target: viewport_mobile
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_20
+  source: viewport_mobile
+  target: screenshot_mobile
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_21
+  source: screenshot_mobile
+  target: viewport_desktop
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_22
+  source: viewport_desktop
+  target: emulate_device
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_23
+  source: emulate_device
+  target: screenshot_emulated
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_24
+  source: screenshot_emulated
+  target: cookies_set
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_25
+  source: cookies_set
+  target: cookies_get
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_26
+  source: cookies_get
+  target: storage_set
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_27
+  source: storage_set
+  target: storage_get
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_28
+  source: storage_get
+  target: storage_keys
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_29
+  source: storage_keys
+  target: cookies_delete
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_30
+  source: cookies_delete
+  target: storage_remove
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_31
+  source: storage_remove
+  target: goto_books
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_32
+  source: goto_books
+  target: detect_list_books
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_33
+  source: detect_list_books
+  target: extract_nested_books
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_34
+  source: extract_nested_books
+  target: table_extract
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_35
+  source: table_extract
+  target: detect_button
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_36
+  source: detect_button
+  target: ensure_session
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_37
+  source: ensure_session
+  target: tab_new
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_38
+  source: tab_new
+  target: tab_list
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_39
+  source: tab_list
+  target: tab_switch
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_40
+  source: tab_switch
+  target: tab_close
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_41
+  source: tab_close
+  target: pdf_export
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_42
+  source: pdf_export
+  target: robots_check
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_43
+  source: robots_check
+  target: sitemap_parse
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_44
+  source: sitemap_parse
+  target: reload_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_45
+  source: reload_page
+  target: wait_for_element
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_46
+  source: wait_for_element
+  target: scroll_to_element
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_47
+  source: scroll_to_element
+  target: final_screenshot
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_48
+  source: final_screenshot
+  target: close_browser
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_49
+  source: close_browser
+  target: launch
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_50
+  source: launch
+  target: geolocation_set
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_51
+  source: geolocation_set
+  target: throttle_set
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_52
+  source: throttle_set
+  target: goto_form_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_53
+  source: goto_form_page
+  target: record_start
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_54
+  source: record_start
+  target: pages_list
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_55
+  source: pages_list
+  target: form_fill
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_56
+  source: form_fill
+  target: type_field
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_57
+  source: type_field
+  target: click_radio
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_58
+  source: click_radio
+  target: response_capture
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_59
+  source: response_capture
+  target: submit_form
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_60
+  source: submit_form
+  target: wait_submit
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_61
+  source: wait_submit
+  target: record_stop
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_62
+  source: record_stop
+  target: cookies_export
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_63
+  source: cookies_export
+  target: cookies_import
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_64
+  source: cookies_import
+  target: trigger_alert
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_65
+  source: trigger_alert
+  target: dialog_accept
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_66
+  source: dialog_accept
+  target: close_for_frame
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_67
+  source: close_for_frame
+  target: relaunch_for_frame
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_68
+  source: relaunch_for_frame
+  target: goto_frame_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_69
+  source: goto_frame_page
+  target: frame_list
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_70
+  source: frame_list
+  target: frame_switch
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_71
+  source: frame_switch
+  target: frame_back
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_72
+  source: frame_back
+  target: goto_books
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_73
+  source: goto_books
+  target: pagination_test
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_74
+  source: pagination_test
+  target: goto_dropdown
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_75
+  source: goto_dropdown
+  target: select_option
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_76
+  source: select_option
+  target: goto_drag_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_77
+  source: goto_drag_page
+  target: drag_test
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_78
+  source: drag_test
+  target: goto_upload_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_79
+  source: goto_upload_page
+  target: create_test_file
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_80
+  source: create_test_file
+  target: upload_file
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_81
+  source: upload_file
+  target: goto_download_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_82
+  source: goto_download_page
+  target: download_file
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_83
+  source: download_file
+  target: goto_login_page
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_84
+  source: goto_login_page
+  target: login_test
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_85
+  source: login_test
+  target: pool_create
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_86
+  source: pool_create
+  target: pool_list
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_87
+  source: pool_list
+  target: pool_switch
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_88
+  source: pool_switch
+  target: pool_goto
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_89
+  source: pool_goto
+  target: pool_destroy
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_90
+  source: pool_destroy
+  target: relaunch_for_network
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_91
+  source: relaunch_for_network
+  target: goto_for_network
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_92
+  source: goto_for_network
+  target: network_block
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_93
+  source: network_block
+  target: goto_after_block
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_94
+  source: goto_after_block
+  target: screenshot_blocked
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_95
+  source: screenshot_blocked
+  target: release_browser
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier
+- id: e_96
+  source: release_browser
+  target: close_browser
+  sourceHandle: output
+  targetHandle: target
+  type: glow
+  data:
+    edgeType: sequential
+    pathType: bezier

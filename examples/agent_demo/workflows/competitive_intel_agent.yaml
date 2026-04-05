@@ -1,0 +1,399 @@
+id: competitive-intel-agent
+name: AI Competitive Intelligence Agent
+version: 1.0.0
+description: >
+  Give it any product URL — the AI agent autonomously figures out what the product does,
+  finds competitors, visits their sites, compares pricing & features,
+  and generates a strategic analysis report. No selectors, no hardcoding.
+
+steps:
+  # ── Stage 1: Reconnaissance ──────────────────────────────────
+  - id: launch
+    module: browser.launch
+    label: Launch Stealth Browser
+    params:
+      browser_type: chromium
+      headless: false
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+    positionX: 100
+    positionY: 300
+    orderIndex: 0
+
+  - id: visit_target
+    module: browser.goto
+    label: Visit Target Product
+    params:
+      url: https://linear.app
+      wait_until: networkidle
+      timeout_ms: 30000
+    positionX: 400
+    positionY: 300
+    orderIndex: 1
+
+  - id: understand_product
+    module: llm.agent
+    label: "🔍 Understand the Product"
+    params:
+      max_iterations: 8
+      tools:
+        - browser.snapshot
+        - browser.scroll
+        - browser.extract
+        - browser.screenshot
+      prompt_source: manual
+      task: |
+        You are on a product's website. Your job is to deeply understand what this product is.
+
+        1. Use browser.snapshot to read the page
+        2. Scroll down to see the full landing page
+        3. Look for: pricing page, features page, about page — navigate if needed
+        4. Take a screenshot of the homepage as evidence
+
+        Return a JSON object (NO markdown, raw JSON only):
+        {
+          "company_name": "...",
+          "product_name": "...",
+          "one_liner": "what the product does in one sentence",
+          "category": "e.g. Project Management, CRM, Analytics",
+          "key_features": ["feature1", "feature2", "feature3"],
+          "pricing": "free tier? starting price? enterprise?",
+          "target_audience": "who is this for?",
+          "unique_selling_point": "what makes it different?"
+        }
+      system_prompt: |
+        You are a competitive intelligence analyst. Be precise and factual.
+        Only report what you can actually see on the page. Return raw JSON only.
+    positionX: 700
+    positionY: 300
+    orderIndex: 2
+    resources:
+      model: model_primary
+      memory: memory_research
+
+  # ── Stage 2: Competitor Discovery ────────────────────────────
+  - id: search_competitors
+    module: browser.goto
+    label: Search for Competitors
+    params:
+      url: "https://www.google.com/search?q=${understand_product.data.result.product_name}+vs+competitors+alternatives+${understand_product.data.result.category}"
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+    positionX: 1000
+    positionY: 300
+    orderIndex: 3
+
+  - id: discover_competitors
+    module: llm.agent
+    label: "🕵️ Discover & Research Competitors"
+    params:
+      max_iterations: 20
+      tools:
+        - browser.snapshot
+        - browser.scroll
+        - browser.click
+        - browser.goto
+        - browser.extract
+        - browser.screenshot
+      prompt_source: manual
+      task: |
+        You are on a Google search results page about competitors/alternatives for: ${understand_product.data.result.product_name}
+        Category: ${understand_product.data.result.category}
+
+        YOUR MISSION (multi-step):
+
+        Phase 1 — Identify competitors from search results
+        - Read the search results page
+        - Identify the top 3 most relevant direct competitors (NOT the target product itself)
+
+        Phase 2 — Deep-dive each competitor (visit their actual websites)
+        For EACH of the 3 competitors:
+        1. Navigate to their website (browser.goto)
+        2. Read their homepage (browser.snapshot)
+        3. Find and visit their pricing page
+        4. Take a screenshot of their pricing page (browser.screenshot)
+        5. Extract structured data
+
+        Phase 3 — Return structured comparison
+        Return a JSON object (NO markdown, raw JSON only):
+        {
+          "competitors": [
+            {
+              "name": "...",
+              "url": "...",
+              "one_liner": "...",
+              "key_features": ["...", "...", "..."],
+              "pricing": {
+                "free_tier": true/false,
+                "starting_price": "$X/mo",
+                "enterprise": "contact sales / $X"
+              },
+              "strengths": ["...", "..."],
+              "weaknesses": ["...", "..."]
+            }
+          ]
+        }
+
+        IMPORTANT: You must actually VISIT each competitor's website.
+        Do not guess or fabricate any data. Only report what you see.
+      system_prompt: |
+        You are a senior competitive intelligence analyst performing primary research.
+        You must visit each website to gather real data. Never fabricate information.
+        If you can't find specific data, say "not found" rather than guessing.
+        Return raw JSON only, no markdown formatting.
+    positionX: 1300
+    positionY: 300
+    orderIndex: 4
+    resources:
+      model: model_primary
+      memory: memory_research
+
+  # ── Stage 3: Strategic Analysis ──────────────────────────────
+  - id: generate_report
+    module: llm.agent
+    label: "📊 Generate Strategic Report"
+    params:
+      max_iterations: 3
+      tools: []
+      prompt_source: manual
+      task: |
+        You are a strategy consultant. Based on the following research data,
+        generate a comprehensive competitive intelligence report.
+
+        TARGET PRODUCT:
+        ${understand_product.data.result}
+
+        COMPETITORS:
+        ${discover_competitors.data.result}
+
+        Generate the report in this EXACT format (raw JSON, no markdown):
+        {
+          "report_title": "Competitive Intelligence: [Product Name]",
+          "executive_summary": "2-3 sentence overview of the competitive landscape",
+          "target_analysis": {
+            "product": "...",
+            "market_position": "leader / challenger / niche",
+            "moat": "what's hard to copy"
+          },
+          "competitor_matrix": [
+            {
+              "name": "...",
+              "threat_level": "high/medium/low",
+              "overlap_percentage": "estimated feature overlap",
+              "price_comparison": "cheaper/similar/expensive vs target",
+              "key_differentiator": "..."
+            }
+          ],
+          "swot": {
+            "strengths": ["..."],
+            "weaknesses": ["..."],
+            "opportunities": ["..."],
+            "threats": ["..."]
+          },
+          "strategic_recommendations": [
+            "actionable recommendation 1",
+            "actionable recommendation 2",
+            "actionable recommendation 3"
+          ],
+          "verdict": "One paragraph final assessment"
+        }
+      system_prompt: |
+        You are a McKinsey-level strategy consultant. Be specific, actionable, and data-driven.
+        Base everything on the actual research data provided. Return raw JSON only.
+    positionX: 1600
+    positionY: 300
+    orderIndex: 5
+    resources:
+      model: model_primary
+      memory: memory_analysis
+
+  # ── Stage 4: Deliver ─────────────────────────────────────────
+  - id: format_output
+    module: string.template
+    label: Format Report
+    params:
+      template: |
+        ═══════════════════════════════════════════════
+        ${generate_report.data.result.report_title}
+        ═══════════════════════════════════════════════
+
+        📋 EXECUTIVE SUMMARY
+        ${generate_report.data.result.executive_summary}
+
+        🎯 TARGET: ${generate_report.data.result.target_analysis.product}
+        Position: ${generate_report.data.result.target_analysis.market_position}
+        Moat: ${generate_report.data.result.target_analysis.moat}
+
+        📊 SWOT ANALYSIS
+        Strengths: ${generate_report.data.result.swot.strengths}
+        Weaknesses: ${generate_report.data.result.swot.weaknesses}
+        Opportunities: ${generate_report.data.result.swot.opportunities}
+        Threats: ${generate_report.data.result.swot.threats}
+
+        💡 STRATEGIC RECOMMENDATIONS
+        ${generate_report.data.result.strategic_recommendations}
+
+        📝 VERDICT
+        ${generate_report.data.result.verdict}
+        ═══════════════════════════════════════════════
+    positionX: 1900
+    positionY: 300
+    orderIndex: 6
+
+  - id: display_report
+    module: output.display
+    label: Display Report
+    params:
+      content: "${format_output.data.text}"
+      format: text
+    positionX: 2200
+    positionY: 300
+    orderIndex: 7
+
+  - id: close_browser
+    module: browser.close
+    label: Close Browser
+    params: {}
+    positionX: 2500
+    positionY: 300
+    orderIndex: 8
+
+  # ── Resource Nodes ───────────────────────────────────────────
+  - id: model_primary
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 8192
+    positionX: 1000
+    positionY: 550
+    orderIndex: 9
+
+  - id: memory_research
+    module: ai.memory
+    label: Research Memory
+    params:
+      memory_type: buffer
+      window_size: 20
+      initial_messages: []
+    positionX: 1150
+    positionY: 550
+    orderIndex: 10
+
+  - id: memory_analysis
+    module: ai.memory
+    label: Analysis Memory
+    params:
+      memory_type: buffer
+      window_size: 10
+      initial_messages: []
+    positionX: 1450
+    positionY: 550
+    orderIndex: 11
+
+edges:
+  # Main pipeline
+  - id: e1
+    source: launch
+    target: visit_target
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: visit_target
+    target: understand_product
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e3
+    source: understand_product
+    target: search_competitors
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e4
+    source: search_competitors
+    target: discover_competitors
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e5
+    source: discover_competitors
+    target: generate_report
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e6
+    source: generate_report
+    target: format_output
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e7
+    source: format_output
+    target: display_report
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e8
+    source: display_report
+    target: close_browser
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+
+  # Resource connections
+  - id: r1
+    source: model_primary
+    target: understand_product
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_research
+    target: understand_product
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r3
+    source: model_primary
+    target: discover_competitors
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r4
+    source: memory_research
+    target: discover_competitors
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r5
+    source: model_primary
+    target: generate_report
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r6
+    source: memory_analysis
+    target: generate_report
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }

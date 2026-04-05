@@ -1,0 +1,418 @@
+name: "Browser Modules - Full Test Suite"
+description: "Comprehensive test of all browser modules against https://example.com and https://books.toscrape.com"
+
+steps:
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 1: Launch & Navigation
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: launch
+    module: browser.launch
+    label: "1. Launch Browser"
+    params:
+      headless: true
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+
+  - id: goto_example
+    module: browser.goto
+    label: "2. Navigate to example.com"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 2: Page Inspection & Extraction
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: snapshot_html
+    module: browser.snapshot
+    label: "3. Snapshot (HTML)"
+    params:
+      format: html
+
+  - id: snapshot_text
+    module: browser.snapshot
+    label: "4. Snapshot (Text)"
+    params:
+      format: text
+
+  - id: screenshot_png
+    module: browser.screenshot
+    label: "5. Screenshot (PNG)"
+    params:
+      path: /tmp/flyto_test_screenshot.png
+      full_page: true
+      format: png
+
+  - id: extract_heading
+    module: browser.extract
+    label: "6. Extract h1"
+    params:
+      selector: "h1"
+      extract_type: text
+
+  - id: extract_links
+    module: browser.extract
+    label: "7. Extract all links"
+    params:
+      selector: "a"
+      attribute: "href"
+
+  - id: find_elements
+    module: browser.find
+    label: "8. Find elements"
+    params:
+      selector: "p"
+
+  - id: readability
+    module: browser.readability
+    label: "9. Readability extract"
+    params:
+      min_content_length: 10
+      include_images: true
+      include_links: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 3: Interaction
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: scroll_down
+    module: browser.scroll
+    label: "10. Scroll down"
+    params:
+      direction: down
+      amount: 300
+      behavior: smooth
+
+  - id: scroll_up
+    module: browser.scroll
+    label: "11. Scroll up"
+    params:
+      direction: up
+      amount: 300
+      behavior: instant
+
+  - id: hover_link
+    module: browser.hover
+    label: "12. Hover on link"
+    params:
+      selector: "a"
+      timeout_ms: 5000
+
+  - id: click_link
+    module: browser.click
+    label: "13. Click link"
+    params:
+      click_method: selector
+      selector: "a"
+      timeout_ms: 5000
+
+  - id: wait_page
+    module: browser.wait
+    label: "14. Wait for page load"
+    params:
+      duration_ms: 1000
+
+  - id: go_back
+    module: browser.navigation
+    label: "15. Navigate back"
+    params:
+      action: back
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: press_tab
+    module: browser.press
+    label: "16. Press Tab key"
+    params:
+      key: Tab
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 4: JavaScript & Performance
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: evaluate_js
+    module: browser.evaluate
+    label: "17. Execute JavaScript"
+    params:
+      script: "return { title: document.title, url: window.location.href, links: document.querySelectorAll('a').length }"
+
+  - id: performance
+    module: browser.performance
+    label: "18. Performance metrics"
+    params:
+      collect_resources: true
+      include_js_heap: true
+      timeout_ms: 5000
+
+  - id: console_logs
+    module: browser.console
+    label: "19. Console logs"
+    params:
+      level: all
+      timeout_ms: 3000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 5: Viewport & Emulation
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: viewport_mobile
+    module: browser.viewport
+    label: "20. Resize to mobile"
+    params:
+      width: 375
+      height: 812
+
+  - id: screenshot_mobile
+    module: browser.screenshot
+    label: "21. Mobile screenshot"
+    params:
+      path: /tmp/flyto_test_mobile.png
+      full_page: false
+      format: png
+
+  - id: viewport_desktop
+    module: browser.viewport
+    label: "22. Resize to desktop"
+    params:
+      width: 1920
+      height: 1080
+
+  - id: emulate_device
+    module: browser.emulate
+    label: "23. Emulate iPhone"
+    params:
+      device: iphone_12
+
+  - id: screenshot_emulated
+    module: browser.screenshot
+    label: "24. Emulated screenshot"
+    params:
+      path: /tmp/flyto_test_emulated.png
+      format: png
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 6: Storage & Cookies
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: cookies_set
+    module: browser.cookies
+    label: "25. Set cookie"
+    params:
+      action: set
+      name: flyto_test
+      value: hello_world
+      domain: example.com
+
+  - id: cookies_get
+    module: browser.cookies
+    label: "26. Get cookies"
+    params:
+      action: get
+
+  - id: storage_set
+    module: browser.storage
+    label: "27. Set localStorage"
+    params:
+      action: set
+      type: local
+      key: flyto_test_key
+      value: "test_value_123"
+
+  - id: storage_get
+    module: browser.storage
+    label: "28. Get localStorage"
+    params:
+      action: get
+      type: local
+      key: flyto_test_key
+
+  - id: storage_keys
+    module: browser.storage
+    label: "29. List storage keys"
+    params:
+      action: keys
+      type: local
+
+  - id: cookies_delete
+    module: browser.cookies
+    label: "30. Delete cookie"
+    params:
+      action: delete
+      name: flyto_test
+
+  - id: storage_remove
+    module: browser.storage
+    label: "31. Remove storage key"
+    params:
+      action: remove
+      type: local
+      key: flyto_test_key
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 7: Multi-page (Books to Scrape)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_books
+    module: browser.goto
+    label: "32. Go to books.toscrape.com"
+    params:
+      url: https://books.toscrape.com
+      wait_until: networkidle
+      timeout_ms: 15000
+
+  - id: detect_list_books
+    module: browser.detect_list
+    label: "33. Auto-detect book list"
+    params:
+      min_items: 3
+      max_items: 30
+      include_text: true
+
+  - id: extract_nested_books
+    module: browser.extract_nested
+    label: "34. Extract nested book data"
+    params:
+      root_selector: "article.product_pod"
+      fields:
+        title:
+          selector: "h3 a"
+          attribute: "title"
+        price:
+          selector: ".price_color"
+          type: text
+        availability:
+          selector: ".availability"
+          type: text
+      max_depth: 1
+      limit: 10
+
+  - id: table_extract
+    module: browser.table
+    label: "35. Extract table (if present)"
+    params:
+      selector: "table"
+      max_rows: 20
+
+  - id: detect_button
+    module: browser.detect
+    label: "36. Detect 'next' button"
+    params:
+      text: "next"
+      role: button
+      match_mode: contains
+      action: none
+      timeout_ms: 5000
+
+  - id: ensure_session
+    module: browser.ensure
+    label: "37. Ensure browser alive"
+    params:
+      headless: true
+      width: 1280
+      height: 720
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 8: Tabs & PDF
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: tab_new
+    module: browser.tab
+    label: "38. Open new tab"
+    params:
+      action: new
+      url: https://example.com
+
+  - id: tab_list
+    module: browser.tab
+    label: "39. List tabs"
+    params:
+      action: list
+
+  - id: tab_switch
+    module: browser.tab
+    label: "40. Switch to first tab"
+    params:
+      action: switch
+      index: 0
+
+  - id: tab_close
+    module: browser.tab
+    label: "41. Close extra tab"
+    params:
+      action: close
+      index: 1
+
+  - id: pdf_export
+    module: browser.pdf
+    label: "42. Export to PDF"
+    params:
+      path: /tmp/flyto_test_page.pdf
+      page_size: A4
+      orientation: portrait
+      print_background: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 9: SEO & Robots
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: robots_check
+    module: browser.robots
+    label: "43. Check robots.txt"
+    params:
+      user_agent: "*"
+
+  - id: sitemap_parse
+    module: browser.sitemap
+    label: "44. Parse sitemap"
+    params:
+      max_urls: 20
+      follow_index: false
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 10: Network & Advanced
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: reload_page
+    module: browser.navigation
+    label: "45. Reload page"
+    params:
+      action: reload
+      wait_until: domcontentloaded
+
+  - id: wait_for_element
+    module: browser.wait
+    label: "46. Wait for element"
+    params:
+      selector: "article"
+      state: visible
+      timeout_ms: 5000
+
+  - id: scroll_to_element
+    module: browser.scroll
+    label: "47. Scroll to bottom"
+    params:
+      direction: down
+      amount: 9999
+      behavior: smooth
+
+  - id: final_screenshot
+    module: browser.screenshot
+    label: "48. Final screenshot"
+    params:
+      path: /tmp/flyto_test_final.png
+      full_page: true
+      format: png
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 11: Cleanup
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: close_browser
+    module: browser.close
+    label: "49. Close browser"

@@ -1,0 +1,465 @@
+name: "Browser Modules - Phase 2 Test Suite"
+description: "Tests remaining browser modules: form, type, select, dialog, frame, network, pagination, geolocation, pages, drag, cookies_file, throttle, record, trace, response, pool, release, download, upload, login"
+
+steps:
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 1: Launch & Setup
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: launch
+    module: browser.launch
+    label: "1. Launch Browser"
+    params:
+      headless: true
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 2: Geolocation
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: geolocation_set
+    module: browser.geolocation
+    label: "2. Set geolocation (San Francisco)"
+    params:
+      latitude: 37.7749
+      longitude: -122.4194
+      accuracy: 100
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 3: Throttle (no network needed)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: throttle_set
+    module: browser.throttle
+    label: "3. Set throttle (fixed 500ms)"
+    params:
+      strategy: fixed
+      min_interval_ms: 500
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 4: Navigate first (trace needs a page)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_form_page
+    module: browser.goto
+    label: "4. Go to httpbin forms"
+    params:
+      url: https://httpbin.org/forms/post
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 5: Record
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: record_start
+    module: browser.record
+    label: "5. Start recording"
+    params:
+      action: start
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 8: Pages listing
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: pages_list
+    module: browser.pages
+    label: "8. List open pages"
+    params:
+      include_details: true
+      include_content_info: true
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 9: Form filling
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: form_fill
+    module: browser.form
+    label: "9. Fill form"
+    params:
+      data:
+        custname: "Flyto Test User"
+        custtel: "1234567890"
+        custemail: "test@flyto.dev"
+        comments: "This is an automated browser test"
+      clear_before_fill: true
+      submit: false
+      delay_between_fields_ms: 50
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 10: Type into field
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: type_field
+    module: browser.type
+    label: "10. Type into comments field"
+    params:
+      type_method: selector
+      selector: "textarea[name='comments']"
+      text: " — appended by browser.type"
+      clear: false
+      delay: 10
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 11: Click radio/checkbox
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: click_radio
+    module: browser.click
+    label: "11. Click radio button"
+    params:
+      click_method: selector
+      selector: "input[name='topping'][value='bacon']"
+      timeout_ms: 5000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 13: Response capture (capture form submit)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: response_capture
+    module: browser.response
+    label: "13. Capture response on submit"
+    params:
+      url_pattern: "httpbin"
+      wait_ms: 8000
+      max_responses: 1
+      resource_types: "document"
+      include_headers: true
+
+  - id: submit_form
+    module: browser.click
+    label: "14. Submit form"
+    params:
+      click_method: selector
+      selector: "button"
+      timeout_ms: 5000
+
+  - id: wait_submit
+    module: browser.wait
+    label: "15. Wait for submit response"
+    params:
+      duration_ms: 2000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 14: Stop recording & tracing
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: record_stop
+    module: browser.record
+    label: "16. Stop recording"
+    params:
+      action: stop
+      output_format: yaml
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 15: Cookies file export/import
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: cookies_export
+    module: browser.cookies_file
+    label: "18. Export cookies to file"
+    params:
+      action: export
+      file_path: /tmp/flyto_test_cookies.json
+
+  - id: cookies_import
+    module: browser.cookies_file
+    label: "19. Import cookies from file"
+    params:
+      action: import
+      file_path: /tmp/flyto_test_cookies.json
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 16: Dialog handling
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: trigger_alert
+    module: browser.evaluate
+    label: "Trigger delayed alert"
+    params:
+      script: "setTimeout(() => alert('Flyto test alert'), 1500); return 'alert scheduled';"
+
+  - id: dialog_accept
+    module: browser.dialog
+    label: "Accept dialog"
+    params:
+      action: accept
+      timeout: 5000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 17: Frame handling
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: close_for_frame
+    module: browser.close
+    label: "Close browser (reset state)"
+
+  - id: relaunch_for_frame
+    module: browser.launch
+    label: "Relaunch for frame test"
+    params:
+      headless: true
+      browser_type: chromium
+
+  - id: goto_frame_page
+    module: browser.goto
+    label: "Go to iframe test page"
+    params:
+      url: https://the-internet.herokuapp.com/nested_frames
+      wait_until: networkidle
+      timeout_ms: 15000
+
+  - id: frame_list
+    module: browser.frame
+    label: "List all frames"
+    params:
+      action: list
+
+  - id: frame_switch
+    module: browser.frame
+    label: "Switch to frame"
+    params:
+      name: "frame-bottom"
+      action: enter
+
+  - id: frame_back
+    module: browser.frame
+    label: "Switch back to main"
+    params:
+      action: exit
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 18: Pagination (books.toscrape.com)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_books
+    module: browser.goto
+    label: "28. Go to books.toscrape.com"
+    params:
+      url: https://books.toscrape.com
+      wait_until: networkidle
+      timeout_ms: 15000
+
+  - id: pagination_test
+    module: browser.pagination
+    label: "29. Paginate through books"
+    params:
+      mode: next_button
+      item_selector: "article.product_pod"
+      next_selector: "li.next a"
+      fields:
+        title:
+          selector: "h3 a"
+          attribute: "title"
+        price:
+          selector: ".price_color"
+      max_pages: 3
+      max_items: 30
+      wait_between_pages_ms: 500
+      retry_on_error: true
+      max_retries: 2
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 19: Select dropdown (the-internet)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_dropdown
+    module: browser.goto
+    label: "Select: Go to dropdown page"
+    params:
+      url: https://the-internet.herokuapp.com/dropdown
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: select_option
+    module: browser.select
+    label: "Select: Choose Option 2"
+    params:
+      selector: "select#dropdown"
+      select_method: value
+      target: "2"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 20: Drag & Drop
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_drag_page
+    module: browser.goto
+    label: "30. Go to drag-drop test page"
+    params:
+      url: https://the-internet.herokuapp.com/drag_and_drop
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: drag_test
+    module: browser.drag
+    label: "31. Drag and drop"
+    params:
+      source: "#column-a"
+      target: "#column-b"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 20: Upload (file input)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_upload_page
+    module: browser.goto
+    label: "32. Go to upload test page"
+    params:
+      url: https://the-internet.herokuapp.com/upload
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: create_test_file
+    module: browser.evaluate
+    label: "33. Create test file for upload"
+    params:
+      script: "return 'test file ready';"
+
+  - id: upload_file
+    module: browser.upload
+    label: "34. Upload file"
+    params:
+      selector: "input#file-upload"
+      file_path: /tmp/flyto_test_cookies.json
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 21: Download
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_download_page
+    module: browser.goto
+    label: "35. Go to download test page"
+    params:
+      url: https://the-internet.herokuapp.com/download
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: download_file
+    module: browser.download
+    label: "36. Download file"
+    params:
+      selector: "a[href*='.txt']"
+      save_path: /tmp/flyto_test_download.txt
+      timeout_ms: 15000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 22: Login (test form detection, won't actually login)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: goto_login_page
+    module: browser.goto
+    label: "37. Go to login test page"
+    params:
+      url: https://the-internet.herokuapp.com/login
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: login_test
+    module: browser.login
+    label: "38. Login with test credentials"
+    params:
+      username: "tomsmith"
+      password: "SuperSecretPassword!"
+      wait_ms: 3000
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 23: Browser Pool
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: pool_create
+    module: browser.pool
+    label: "39. Create named browser"
+    params:
+      action: create
+      name: scraper1
+      headless: true
+
+  - id: pool_list
+    module: browser.pool
+    label: "40. List pool browsers"
+    params:
+      action: list
+
+  - id: pool_switch
+    module: browser.pool
+    label: "41. Switch to scraper1"
+    params:
+      action: switch
+      name: scraper1
+
+  - id: pool_goto
+    module: browser.goto
+    label: "42. Navigate in pool browser"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: pool_destroy
+    module: browser.pool
+    label: "43. Destroy pool browser"
+    params:
+      action: close
+      name: scraper1
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 24: Network blocking (need new browser after pool close)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: relaunch_for_network
+    module: browser.launch
+    label: "Relaunch for network test"
+    params:
+      headless: true
+      browser_type: chromium
+
+  - id: goto_for_network
+    module: browser.goto
+    label: "Navigate for network test"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: network_block
+    module: browser.network
+    label: "Block images (1s window)"
+    params:
+      action: block
+      resource_type: "image"
+      timeout: 1000
+
+  - id: goto_after_block
+    module: browser.goto
+    label: "Navigate with images blocked"
+    params:
+      url: https://books.toscrape.com
+      wait_until: domcontentloaded
+      timeout_ms: 15000
+
+  - id: screenshot_blocked
+    module: browser.screenshot
+    label: "Screenshot (images blocked)"
+    params:
+      path: /tmp/flyto_test_no_images.png
+      full_page: false
+      format: png
+
+  # ═══════════════════════════════════════════════════════════════
+  # Phase 25: Release & Close
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: release_browser
+    module: browser.release
+    label: "Release browser"
+    params:
+      force: false
+
+  - id: close_browser
+    module: browser.close
+    label: "Close browser"

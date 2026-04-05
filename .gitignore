@@ -103,3 +103,4 @@ intel-report.json
 audit-report.json
 github-profile.json
 audit-page.pdf
+.venv/

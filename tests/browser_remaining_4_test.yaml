@@ -1,0 +1,142 @@
+name: "Browser Modules — Remaining 4 Test"
+description: "Tests browser.trace, browser.connect, browser.proxy_rotate, browser.interact"
+
+steps:
+  # ═══════════════════════════════════════════════════════════════
+  # Test 1: browser.trace (fixed: now uses context.tracing API)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: launch
+    module: browser.launch
+    label: "Launch browser"
+    params:
+      headless: true
+      browser_type: chromium
+
+  - id: goto_for_trace
+    module: browser.goto
+    label: "Navigate (for trace)"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: trace_start
+    module: browser.trace
+    label: "Start tracing"
+    params:
+      action: start
+      screenshots: false
+
+  - id: goto_during_trace
+    module: browser.goto
+    label: "Navigate during trace"
+    params:
+      url: https://books.toscrape.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: trace_stop
+    module: browser.trace
+    label: "Stop tracing"
+    params:
+      action: stop
+      path: /tmp/flyto_test_trace.zip
+
+  - id: close_1
+    module: browser.close
+    label: "Close browser"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Test 2: browser.connect (connect to local CDP Chrome)
+  # ═══════════════════════════════════════════════════════════════
+  # Prerequisites: Chrome must be running with --remote-debugging-port=9333
+  # Run: "/path/to/chrome" --headless --remote-debugging-port=9333
+
+  - id: connect_cdp
+    module: browser.connect
+    label: "Connect to CDP Chrome"
+    params:
+      ws_endpoint: "ws://localhost:9333/devtools/browser/5f0d6a3b-4ca0-43da-92e1-78b3b98b4735"
+
+  - id: goto_connected
+    module: browser.goto
+    label: "Navigate in connected browser"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: extract_connected
+    module: browser.extract
+    label: "Extract from connected browser"
+    params:
+      selector: "h1"
+      extract_type: text
+
+  - id: close_2
+    module: browser.close
+    label: "Close connected browser"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Test 3: browser.proxy_rotate (init + status, no real proxy needed)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: launch_for_proxy
+    module: browser.launch
+    label: "Launch for proxy test"
+    params:
+      headless: true
+      browser_type: chromium
+
+  - id: proxy_init
+    module: browser.proxy_rotate
+    label: "Init proxy pool"
+    params:
+      action: init
+      proxies:
+        - "http://dummy-proxy-1:8080"
+        - "http://dummy-proxy-2:8080"
+        - "http://dummy-proxy-3:8080"
+      strategy: round_robin
+
+  - id: proxy_status
+    module: browser.proxy_rotate
+    label: "Check proxy status"
+    params:
+      action: status
+
+  - id: close_3
+    module: browser.close
+    label: "Close browser"
+
+  # ═══════════════════════════════════════════════════════════════
+  # Test 4: browser.interact (timeout after 2s, no human needed)
+  # ═══════════════════════════════════════════════════════════════
+
+  - id: launch_for_interact
+    module: browser.launch
+    label: "Launch for interact test"
+    params:
+      headless: true
+      browser_type: chromium
+
+  - id: goto_for_interact
+    module: browser.goto
+    label: "Navigate for interact"
+    params:
+      url: https://example.com
+      wait_until: domcontentloaded
+      timeout_ms: 10000
+
+  - id: interact_test
+    module: browser.interact
+    label: "Interact (2s timeout)"
+    params:
+      title: "Automated test"
+      description: "This will timeout after 2 seconds — no human needed"
+      timeout_seconds: 2
+
+  - id: close_4
+    module: browser.close
+    label: "Close browser"
