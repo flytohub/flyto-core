@@ -176,19 +176,13 @@ Examples:
     replay_parser.add_argument('--run-dir',
                                help='Path to run state directory (default: .flyto-runs/latest)')
 
-    # Also support legacy mode: flyto workflow.yaml (without 'run' subcommand)
-    parser.add_argument('workflow', nargs='?', help='Path to workflow YAML file (legacy mode)')
-    parser.add_argument('--lang', '-l', default='en', choices=['en', 'zh', 'ja'],
-                        help='Language (en, zh, ja)')
-    parser.add_argument('--params', '-p',
-                        help='Workflow parameters as JSON string')
-    parser.add_argument('--params-file',
-                        help='Path to JSON/YAML file containing parameters')
-    parser.add_argument('--env-file',
-                        help='Path to .env file for environment variables')
-    parser.add_argument('--param', action='append',
-                        help='Individual parameter (format: key=value), '
-                             'can be used multiple times')
+    # Legacy mode: rewrite `flyto workflow.yaml` → `flyto run workflow.yaml`
+    # so argparse routes it through the run subparser correctly.
+    if len(sys.argv) > 1 and sys.argv[1] not in (
+        'run', 'modules', 'plugin', 'serve', 'template',
+        'recipes', 'recipe', 'replay', '-h', '--help'
+    ) and (sys.argv[1].endswith('.yaml') or sys.argv[1].endswith('.yml')):
+        sys.argv.insert(1, 'run')
 
     args = parser.parse_args()
 
@@ -232,16 +226,11 @@ Examples:
             run_dir_path=getattr(args, 'run_dir', None),
         ))
 
-    # Handle 'run' command or legacy mode
+    # Handle 'run' command (legacy .yaml paths are rewritten to 'run' above)
     if args.command == 'run':
-        # Use run subcommand's workflow argument
         workflow_arg = args.workflow
-    elif args.command and args.command not in ('run', 'modules'):
-        # Legacy mode: argparse treated the .yaml path as the command name
-        workflow_arg = args.command
     else:
-        # No command, check top-level workflow positional
-        workflow_arg = getattr(args, 'workflow', None)
+        workflow_arg = None
 
     # Determine mode: interactive or non-interactive
     if workflow_arg:

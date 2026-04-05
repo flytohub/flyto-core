@@ -7,6 +7,7 @@ Abstract base class and null implementation for executor hooks.
 """
 
 from abc import ABC
+from typing import Optional, Callable, Any
 
 from .models import HookContext, HookResult
 
@@ -134,6 +135,22 @@ class ExecutorHooks(ABC):
             HookResult indicating whether to proceed with retry
         """
         return HookResult.continue_execution()
+
+    def create_step_notifier(self, step_id: str) -> Optional[Callable]:
+        """
+        Create a real-time notification callback for a step.
+
+        Used by agent modules to stream intermediate events (tool calls,
+        iterations) during execution. Override in subclasses to broadcast
+        events via WebSocket, SSE, or other transports.
+
+        Args:
+            step_id: The step ID requesting a notifier
+
+        Returns:
+            An async callable(event_type: str, data: dict) or None
+        """
+        return None
 
 
 class NullHooks(ExecutorHooks):

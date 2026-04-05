@@ -106,9 +106,13 @@ def LLM_PROVIDER(
         label_key=label_key,
         default=default,
         options=[
-            {"value": "openai", "label": "OpenAI (GPT-4, GPT-3.5)"},
-            {"value": "anthropic", "label": "Anthropic (Claude)"},
+            {"value": "openai", "label": "OpenAI"},
+            {"value": "anthropic", "label": "Anthropic"},
+            {"value": "google", "label": "Google (Gemini)"},
+            {"value": "groq", "label": "Groq"},
+            {"value": "deepseek", "label": "DeepSeek"},
             {"value": "ollama", "label": "Ollama (Local)"},
+            {"value": "custom", "label": "Custom (OpenAI Compatible)"},
         ],
         description='AI model provider',
         group=FieldGroup.CONNECTION,
@@ -131,9 +135,12 @@ def LLM_MODEL(
         default=default,
         description='Specific model to use',
         examples=[
-            'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo',
-            'claude-3-5-sonnet-20241022', 'claude-3-opus-20240229',
-            'llama2', 'codellama', 'mistral'
+            'gpt-4o', 'gpt-4o-mini',
+            'claude-sonnet-4-6', 'claude-haiku-4-5-20251001',
+            'gemini-2.5-pro', 'gemini-2.5-flash',
+            'deepseek-chat', 'deepseek-reasoner',
+            'llama-3.3-70b-versatile',
+            'llama3', 'mistral',
         ],
         group=FieldGroup.CONNECTION,
     
@@ -225,11 +232,11 @@ def LLM_API_KEY(
         label_key=label_key,
         required=False,
         format="password",
-        description='API key (defaults to provider env var)',
+        description='API key (leave empty to use environment variable)',
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
         hideIf={"provider": {"$in": ["ollama"]}},
-        placeholder='sk-...',
+        placeholder='Leave empty to use env variable',
     )
 
 
@@ -240,7 +247,7 @@ def LLM_BASE_URL(
     label_key: str = "schema.field.llm_base_url",
     placeholder: str = "http://localhost:11434/v1",
 ) -> Dict[str, Dict[str, Any]]:
-    """Custom API base URL (for Ollama or proxies)."""
+    """Custom API base URL (for Ollama, proxies, or custom providers)."""
     return field(
         key,
         type="string",
@@ -251,8 +258,8 @@ def LLM_BASE_URL(
         format="url",
         visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
-        description='Custom API base URL (for Ollama or proxies)',
-        showIf={"provider": {"$in": ["ollama"]}},
+        description='Custom API endpoint URL',
+        showIf={"provider": {"$in": ["ollama", "custom"]}},
     )
 
 

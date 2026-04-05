@@ -3,10 +3,10 @@
 """
 Tool building and execution helpers for LLM Agent module.
 
-Handles:
-- Building OpenAI-compatible tool definitions from module IDs
-- Schema conversion (flyto → JSON Schema)
-- Tool (module) execution
+DEPRECATED: build_tool_definitions() and execute_tool() are replaced by
+ModuleAgentTool in _agent_tool.py. Schema helpers (_schema_to_json_schema,
+_map_type) and prompt builders (build_agent_system_prompt, build_task_prompt)
+are still used and kept here.
 """
 
 import json
@@ -150,6 +150,7 @@ async def execute_tool(tool_name: str, arguments: Dict, parent_context: Dict) ->
             'variables': parent_context.get('variables', {}),
             'execution_id': parent_context.get('execution_id'),
             'step_id': f"agent_tool_{tool_name}",
+            '_agent_depth': parent_context.get('_agent_depth', 0),
         }
 
         # Pass through browser/page context if available

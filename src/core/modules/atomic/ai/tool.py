@@ -136,10 +136,19 @@ async def ai_tool(context: Dict[str, Any]) -> Dict[str, Any]:
             'error_code': 'MODULE_NOT_FOUND'
         }
 
+    # Build executable AgentTool instance (new protocol)
+    from ..llm._agent_tool import ModuleAgentTool
+    tool_obj = ModuleAgentTool(
+        module_id=module_id,
+        description=tool_description,
+        parent_context=context,
+    )
+
     result = {
         'ok': True,
         '__data_type__': 'ai_tool',
         'module_id': module_id,
+        'tool': tool_obj,
     }
 
     if tool_description:

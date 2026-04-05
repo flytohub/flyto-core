@@ -35,6 +35,18 @@ from .output import OutputCollector
 
 logger = logging.getLogger(__name__)
 
+# Keys in sub-node results that contain non-serializable Python objects
+# (e.g., ChatModel, AgentTool instances). These are used by the agent at runtime
+# but must be stripped before passing to hooks/logging that serialize to JSON.
+_TRANSIENT_KEYS = frozenset({"chat_model", "tool"})
+
+
+def _strip_transient_keys(result):
+    """Remove non-serializable objects from a sub-node result dict for hooks."""
+    if not isinstance(result, dict):
+        return result
+    return {k: v for k, v in result.items() if k not in _TRANSIENT_KEYS}
+
 
 class WorkflowEngine:
     """
@@ -528,6 +540,12 @@ class WorkflowEngine:
         # Execute resource sub-nodes (ai.model, ai.memory, ai.tool) and inject into context
         await self._execute_resource_sub_nodes(step_id)
 
+        # Inject real-time notify callback for agent modules (tool call streaming)
+        if module_id and 'agent' in module_id:
+            notifier = self._hooks.create_step_notifier(step_id)
+            if notifier:
+                self.context['_agent_notify'] = notifier
+
         should_execute = await self._should_execute_step(step_config)
         resolver = self._get_resolver()
 
@@ -558,6 +576,9 @@ class WorkflowEngine:
         Resource edges connect sub-nodes (e.g. ai.model -> llm.agent) without
         affecting control flow. This method executes them and injects their outputs
         into context['inputs'] so the main step can access them.
+
+        Critical sub-nodes (model) propagate errors; optional ones (memory, tools)
+        log warnings and continue.
         """
         resource_sources = self._router.get_resource_sources(step_id)
         if not resource_sources:
@@ -578,6 +599,15 @@ class WorkflowEngine:
                 if not sub_module_id:
                     continue
 
+                # Notify hooks that sub-node is starting (for execution state tracking)
+                sub_hook_ctx = HookContext(
+                    workflow_id=self.context.get('workflow_id', ''),
+                    step_id=source_id,
+                    module_id=sub_module_id,
+                    params=source_step.get('params', {}),
+                )
+                self._hooks.on_pre_execute(sub_hook_ctx)
+
                 try:
                     sub_params = source_step.get('params', {})
                     resolver = self._get_resolver()
@@ -589,7 +619,21 @@ class WorkflowEngine:
 
                     port_results.append(result)
                     logger.info(f"Resource sub-node '{source_id}' ({sub_module_id}) executed: {list(result.keys())}")
+
+                    # Notify hooks with serializable-only result (filter out Python objects
+                    # like ChatModel/AgentTool that can't be JSON-serialized by step tracking)
+                    sub_hook_ctx.result = _strip_transient_keys(result)
+                    self._hooks.on_post_execute(sub_hook_ctx)
                 except Exception as e:
+                    sub_hook_ctx.error = e
+                    sub_hook_ctx.error_type = type(e).__name__
+                    sub_hook_ctx.error_message = str(e)
+                    self._hooks.on_post_execute(sub_hook_ctx)
+
+                    if port_name == 'model':
+                        raise RuntimeError(
+                            f"AI Model sub-node '{source_id}' ({sub_module_id}) failed: {e}"
+                        ) from e
                     logger.error(f"Resource sub-node '{source_id}' failed: {e}")
 
             # Single result: inject directly; multiple: inject as list

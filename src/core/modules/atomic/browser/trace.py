@@ -166,12 +166,15 @@ class BrowserTraceModule(BaseModule):
             }
 
         try:
-            # Start tracing on the browser context
-            # Note: Playwright's start_tracing is on the browser, not context
-            await browser._browser.start_tracing(
-                page=browser.page,
+            # Use Playwright's context.tracing API which works with both
+            # regular and persistent browser contexts (browser._browser
+            # is None for persistent contexts).
+            context = browser._context
+            if not context:
+                raise RuntimeError("No browser context available for tracing")
+            await context.tracing.start(
                 screenshots=self.screenshots,
-                categories=self.categories if self.categories else None
+                snapshots=True,
             )
 
             # Mark tracing as active in context
@@ -208,30 +211,42 @@ class BrowserTraceModule(BaseModule):
             }
 
         try:
-            # Stop tracing - returns trace data as bytes
-            trace_data = await browser._browser.stop_tracing()
+            # Stop tracing via context.tracing API
+            context = browser._context
+            if not context:
+                raise RuntimeError("No browser context available for tracing")
 
             # Clear tracing state
             self.context['_tracing_active'] = False
 
-            result = {
-                "status": "success",
-                "tracing": False,
-                "size_bytes": len(trace_data) if trace_data else 0,
-            }
-
-            # Save to file if path provided
+            # Save to file if path provided, otherwise to temp file
             if self.output_path:
                 path = Path(self.output_path)
                 path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(trace_data)
-                result["path"] = str(path.absolute())
-                result["message"] = f"Trace saved to {result['path']}"
+                await context.tracing.stop(path=str(path))
+                trace_data = path.read_bytes()
+                result = {
+                    "status": "success",
+                    "tracing": False,
+                    "size_bytes": len(trace_data),
+                    "path": str(path.absolute()),
+                    "message": f"Trace saved to {path.absolute()}",
+                }
             else:
-                # Return base64 encoded if no path
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp:
+                    tmp_path = tmp.name
+                await context.tracing.stop(path=tmp_path)
+                trace_data = Path(tmp_path).read_bytes()
                 import base64
-                result["trace_base64"] = base64.b64encode(trace_data).decode('utf-8')
-                result["message"] = "Trace data returned as base64"
+                result = {
+                    "status": "success",
+                    "tracing": False,
+                    "size_bytes": len(trace_data),
+                    "trace_base64": base64.b64encode(trace_data).decode('utf-8'),
+                    "message": "Trace data returned as base64",
+                }
+                Path(tmp_path).unlink(missing_ok=True)
 
             return result
 

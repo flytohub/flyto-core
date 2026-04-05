@@ -116,7 +116,7 @@ def run_workflow(
     start_time = time.time()
 
     try:
-        from ..core.engine.workflow_engine import WorkflowEngine
+        from core.engine.workflow.engine import WorkflowEngine
     except Exception as e:
         print()
         print(Colors.FAIL + i18n.t('cli.workflow_failed') + Colors.ENDC)

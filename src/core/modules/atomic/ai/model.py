@@ -162,10 +162,18 @@ async def ai_model(context: Dict[str, Any]) -> Dict[str, Any]:
     if base_url:
         config['base_url'] = base_url
 
+    # Build executable ChatModel instance (new protocol)
+    from ..llm._chat_models import create_chat_model
+    chat_model = create_chat_model(
+        provider=provider, api_key=api_key, model=model,
+        temperature=temperature, base_url=base_url, max_tokens=max_tokens,
+    )
+
     return {
         'ok': True,
         '__data_type__': 'ai_model',
         'provider': provider,
         'model': model,
-        'config': config
+        'config': config,
+        'chat_model': chat_model,
     }

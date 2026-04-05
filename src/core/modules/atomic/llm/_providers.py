@@ -3,6 +3,10 @@
 """
 LLM provider API call implementations for Agent module.
 
+DEPRECATED: Use _chat_models.py (OpenAIChatModel, AnthropicChatModel) instead.
+These functions are kept for backward compatibility with external callers.
+New code should use the ChatModel protocol from _interfaces.py.
+
 Supports:
 - OpenAI (with httpx or aiohttp fallback)
 - Anthropic (with httpx or aiohttp fallback)

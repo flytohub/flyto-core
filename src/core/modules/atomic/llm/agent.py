@@ -25,13 +25,18 @@ from ...schema import compose, field, presets
 from ...schema.constants import Visibility
 from ...types import NodeType, EdgeType, DataType
 
+from typing import List, Optional
+
 from ._prompt import resolve_task_prompt, stringify_value
-from ._tools import build_tool_definitions, execute_tool, build_agent_system_prompt, build_task_prompt
-from ._providers import call_openai_with_tools, call_anthropic_with_tools
+from ._tools import build_agent_system_prompt, build_task_prompt
+from ._interfaces import ChatModel, AgentTool, ChatResponse, ToolCallRequest
+from ._chat_models import create_chat_model
+from ._agent_tool import ModuleAgentTool
 
 logger = logging.getLogger(__name__)
 
 MAX_ITERATIONS = 10
+MAX_AGENT_DEPTH = 3
 
 
 @register_module(
@@ -175,6 +180,7 @@ MAX_ITERATIONS = 10
               description='List of module IDs (alternative to connecting tool nodes)',
               description_key='modules.llm.agent.params.tools.description',
               required=False, default=[],
+              items={'type': 'string'},
               ui={'component': 'tool_selector'}),
         field('context', type='object', label='Context',
               label_key='modules.llm.agent.params.context',
@@ -186,8 +192,13 @@ MAX_ITERATIONS = 10
               description='Maximum number of tool calls',
               description_key='modules.llm.agent.params.max_iterations.description',
               required=False, default=10, min=1, max=50),
-        # Model config is provided by connected ai.model sub-node.
-        # No provider/model/api_key params here.
+        # Inline model config — used when no ai.model sub-node is connected.
+        # When ai.model IS connected, these fields are ignored (sub-node overrides).
+        presets.LLM_PROVIDER(default='openai'),
+        presets.LLM_MODEL(default='gpt-4o'),
+        presets.TEMPERATURE(default=0.7),
+        presets.LLM_API_KEY(),
+        presets.LLM_BASE_URL(),
     ),
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the agent completed successfully',
@@ -195,7 +206,11 @@ MAX_ITERATIONS = 10
         'result': {'type': 'string', 'description': 'The final result from the agent',
                    'description_key': 'modules.llm.agent.output.result.description'},
         'steps': {'type': 'array', 'description': 'List of steps the agent took',
-                  'description_key': 'modules.llm.agent.output.steps.description'},
+                  'description_key': 'modules.llm.agent.output.steps.description',
+                  'items': {'type': 'object', 'properties': {
+                      'type': {'type': 'string'}, 'tool': {'type': 'string'},
+                      'iteration': {'type': 'integer'}
+                  }}},
         'tool_calls': {'type': 'number', 'description': 'Number of tools called',
                        'description_key': 'modules.llm.agent.output.tool_calls.description'},
         'tokens_used': {'type': 'number', 'description': 'Total tokens consumed',
@@ -225,10 +240,28 @@ MAX_ITERATIONS = 10
     license='MIT'
 )
 async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
-    """Run an autonomous AI agent with tool use."""
+    """Run an autonomous AI agent with tool use.
+
+    Sub-nodes provide executable objects:
+    - ai.model → ChatModel instance (handles provider-specific API calls)
+    - ai.tool → AgentTool instance (handles schema + execution)
+    - ai.memory → conversation history messages
+
+    The agent loop only calls interfaces — no provider dispatch.
+    """
+    # Recursion guard
+    agent_depth = context.get('_agent_depth', 0)
+    if agent_depth >= MAX_AGENT_DEPTH:
+        return {
+            'ok': False,
+            'error': f'Agent recursion depth exceeded (max {MAX_AGENT_DEPTH} levels).',
+            'error_code': 'RECURSION_LIMIT'
+        }
+    context['_agent_depth'] = agent_depth + 1
+
+    notify = context.get('_agent_notify')
     params = context['params']
     system_prompt = params.get('system_prompt', 'You are a helpful AI agent.')
-    tool_ids = list(params.get('tools', []))
     user_context = params.get('context', {}) or {}
     max_iterations = min(params.get('max_iterations', MAX_ITERATIONS), MAX_ITERATIONS)
     max_input_size = params.get('max_input_size', 10000)
@@ -242,57 +275,36 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         join_separator=params.get('join_separator', '\n\n---\n\n'),
         max_input_size=max_input_size,
     )
-
     if not task:
-        return {
-            'ok': False,
-            'error': 'No task prompt provided. Either set prompt_source to "manual" and provide a task, or connect an input node.',
-            'error_code': 'MISSING_TASK'
-        }
+        return {'ok': False, 'error': 'No task prompt provided.', 'error_code': 'MISSING_TASK'}
 
-    # Store resolved input in context
     main_input = context.get('inputs', {}).get('input')
     if main_input is not None:
         user_context['input'] = stringify_value(main_input, max_input_size)
 
-    # Get model config from connected ai.model sub-node (required)
-    provider, model, temperature, api_key, base_url = _resolve_model_config(context, params)
+    # ── Resolve sub-node objects ────────────────────────────────
+    chat_model = _resolve_chat_model(context)
+    if not chat_model:
+        return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL'}
 
-    if not provider:
-        return {
-            'ok': False,
-            'error': 'No AI Model connected. Please connect an ai.model sub-node to the Model port.',
-            'error_code': 'MISSING_MODEL'
-        }
-
-    # Get memory from connected ai.memory
     conversation_history = _resolve_memory(context)
+    tools = _resolve_tools(context, list(params.get('tools', [])))
 
-    # Get tools from connected tool nodes
-    _collect_connected_tools(context, tool_ids)
+    # Build tool definitions and lookup map
+    tool_defs = [t.to_tool_call_request() for t in tools] if tools else []
+    tool_map = {t.name: t for t in tools}
 
-    # Get API key from environment if not provided in ai.model
-    if not api_key:
-        env_vars = {'openai': 'OPENAI_API_KEY', 'anthropic': 'ANTHROPIC_API_KEY'}
-        env_var = env_vars.get(provider)
-        if env_var:
-            api_key = os.getenv(env_var)
-
-    if not api_key:
-        return {'ok': False, 'error': f'API key not provided. Set it in the ai.model node or as {env_vars.get(provider, "API_KEY")} environment variable.', 'error_code': 'MISSING_API_KEY'}
-
-    # Build tool definitions
-    tools = await build_tool_definitions(tool_ids)
     if not tools:
         logger.warning("No tools available for agent, running in chat-only mode")
 
-    # Build messages
-    messages = [{"role": "system", "content": build_agent_system_prompt(system_prompt, tools)}]
+    # Build system prompt with tool descriptions
+    openai_tools = [{"type": "function", "function": {"name": td.name, "description": td.description, "parameters": td.parameters}} for td in tool_defs]
+    messages = [{"role": "system", "content": build_agent_system_prompt(system_prompt, openai_tools)}]
     if conversation_history:
         messages.extend(conversation_history)
     messages.append({"role": "user", "content": build_task_prompt(task, user_context)})
 
-    # Agent loop
+    # ── Agent loop ──────────────────────────────────────────────
     steps = []
     total_tokens = 0
     tool_call_count = 0
@@ -300,49 +312,44 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     for iteration in range(max_iterations):
         logger.info(f"Agent iteration {iteration + 1}/{max_iterations}")
 
-        if provider == 'openai':
-            result = await call_openai_with_tools(messages, tools, model, temperature, api_key, base_url)
-        elif provider == 'anthropic':
-            result = await call_anthropic_with_tools(messages, tools, model, temperature, api_key)
-        else:
-            return {'ok': False, 'error': f'Provider {provider} does not support tool use', 'error_code': 'UNSUPPORTED_PROVIDER'}
+        if notify:
+            await notify('agent:iteration', {'iteration': iteration + 1, 'max_iterations': max_iterations, 'tool_calls': tool_call_count})
 
-        if not result.get('ok'):
-            return result
+        try:
+            response = await chat_model.chat(messages, tools=tool_defs if tool_defs else None, tool_choice="auto" if tool_defs else None)
+        except Exception as e:
+            return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
 
-        total_tokens += result.get('tokens_used', 0)
+        total_tokens += response.tokens_used
 
-        if result.get('tool_calls'):
-            for tool_call in result['tool_calls']:
-                tool_name = tool_call['name']
-                tool_args = tool_call['arguments']
-
-                steps.append({'type': 'tool_call', 'tool': tool_name, 'arguments': tool_args, 'iteration': iteration + 1})
-                logger.info(f"Agent calling tool: {tool_name}")
+        if response.tool_calls:
+            for tc in response.tool_calls:
+                tool_args = json.loads(tc.arguments) if isinstance(tc.arguments, str) else tc.arguments
+                steps.append({'type': 'tool_call', 'tool': tc.name, 'arguments': tool_args, 'iteration': iteration + 1})
+                logger.info(f"Agent calling tool: {tc.name}")
                 tool_call_count += 1
 
-                tool_result = await execute_tool(tool_name, tool_args, context)
-                # Store summary in steps (full tool results can be huge, e.g. browser.snapshot HTML)
-                tool_result_summary = _summarize_tool_result(tool_result)
-                steps.append({'type': 'tool_result', 'tool': tool_name, 'result': tool_result_summary, 'iteration': iteration + 1})
+                if notify:
+                    await notify('agent:tool_call', {'tool': tc.name, 'arguments': tool_args, 'iteration': iteration + 1, 'tool_call_index': tool_call_count})
 
-                # Rebuild tool_call in OpenAI's expected format
-                openai_tool_call = {
-                    "id": tool_call.get('id', tool_name),
-                    "type": "function",
-                    "function": {
-                        "name": tool_call['name'],
-                        "arguments": json.dumps(tool_call['arguments'], ensure_ascii=False)
-                    }
-                }
-                messages.append({"role": "assistant", "content": None, "tool_calls": [openai_tool_call]})
-                messages.append({"role": "tool", "tool_call_id": tool_call.get('id', tool_name), "content": json.dumps(tool_result, ensure_ascii=False)})
+                tool = tool_map.get(tc.name)
+                if tool:
+                    tool_result = await tool.invoke(tool_args, agent_context=context)
+                else:
+                    tool_result = {'ok': False, 'error': f'Tool not found: {tc.name}'}
+
+                steps.append({'type': 'tool_result', 'tool': tc.name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
+
+                if notify:
+                    await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': isinstance(tool_result, dict) and tool_result.get('ok', True)})
+
+                # Append to messages in OpenAI format (ChatModel handles conversion internally)
+                messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc.id, "type": "function", "function": {"name": tc.name, "arguments": tc.arguments if isinstance(tc.arguments, str) else json.dumps(tc.arguments, ensure_ascii=False)}}]})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(tool_result, ensure_ascii=False)})
         else:
-            final_response = result.get('response', '')
+            final_response = response.content
             steps.append({'type': 'final_answer', 'content': final_response, 'iteration': iteration + 1})
             logger.info(f"Agent completed in {iteration + 1} iterations, {tool_call_count} tool calls")
-
-            logger.info(f"Agent output: result_len={len(final_response)}, tool_calls={tool_call_count}")
             return {
                 'ok': True,
                 'data': {
@@ -359,17 +366,118 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         'ok': True,
         'data': {
             'result': 'Agent reached maximum iterations without completing the task.',
-            'steps': steps,
-            'tool_calls': tool_call_count,
-            'tokens_used': total_tokens,
-            'iterations': max_iterations,
+            'steps': steps, 'tool_calls': tool_call_count,
+            'tokens_used': total_tokens, 'iterations': max_iterations,
             'warning': 'max_iterations_reached',
         },
     }
 
 
-def _summarize_tool_result(result: Any, max_len: int = 200) -> Any:
-    """Summarize tool result for steps log. Full results (e.g. browser.snapshot HTML) are too large."""
+# ── Sub-node resolution ──────────────────────────────────────────
+
+
+def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
+    """Get ChatModel from connected ai.model sub-node, or build from inline params.
+
+    Priority:
+    1. Sub-node ChatModel instance (context['inputs']['model']['chat_model'])
+    2. Sub-node config dict (backward compat)
+    3. Inline params (provider/model/api_key in agent's own params)
+    """
+    # 1. From connected ai.model sub-node
+    model_input = context.get('inputs', {}).get('model')
+    if model_input and model_input.get('__data_type__') == 'ai_model':
+        chat_model = model_input.get('chat_model')
+        if chat_model is not None:
+            logger.info(f"Using sub-node ChatModel: {chat_model.provider}/{chat_model.model_name}")
+            return chat_model
+        # Backward compat: build from config dict
+        config = model_input.get('config', {})
+        if config.get('api_key'):
+            logger.info(f"Using sub-node config: {config.get('provider')}/{config.get('model')}")
+            return create_chat_model(**config)
+
+    # 2. From inline params (no sub-node connected)
+    params = context.get('params', {})
+    provider = params.get('provider')
+    model = params.get('model')
+    api_key = params.get('api_key')
+    base_url = params.get('base_url')
+
+    if not api_key and provider:
+        env_vars = {
+            'openai': 'OPENAI_API_KEY', 'anthropic': 'ANTHROPIC_API_KEY',
+            'google': 'GOOGLE_API_KEY', 'groq': 'GROQ_API_KEY',
+            'deepseek': 'DEEPSEEK_API_KEY', 'custom': None,
+        }
+        env_var = env_vars.get(provider)
+        if env_var:
+            api_key = os.getenv(env_var)
+
+    # Ollama doesn't need a key
+    if provider == 'ollama':
+        api_key = api_key or 'ollama'
+        base_url = base_url or 'http://localhost:11434/v1'
+
+    if provider and api_key:
+        # Map known providers to their default base_url
+        if not base_url:
+            provider_urls = {
+                'groq': 'https://api.groq.com/openai/v1',
+                'deepseek': 'https://api.deepseek.com/v1',
+            }
+            base_url = provider_urls.get(provider)
+
+        logger.info(f"Using inline model config: {provider}/{model}")
+        return create_chat_model(
+            provider=provider, api_key=api_key, model=model or 'gpt-4o',
+            temperature=params.get('temperature', 0.7),
+            base_url=base_url,
+        )
+
+    return None
+
+
+def _resolve_memory(context: Dict) -> list:
+    """Get conversation history from connected ai.memory."""
+    memory_input = context.get('inputs', {}).get('memory')
+    if memory_input and memory_input.get('__data_type__') == 'ai_memory':
+        messages = memory_input.get('messages', [])
+        logger.info(f"Using ai.memory with {len(messages)} messages")
+        return messages
+    return []
+
+
+def _resolve_tools(context: Dict, param_tool_ids: list) -> List[AgentTool]:
+    """Get AgentTool instances from connected ai.tool sub-nodes + param tool IDs."""
+    tools: List[AgentTool] = []
+
+    tools_input = context.get('inputs', {}).get('tools')
+    if tools_input:
+        items = tools_input if isinstance(tools_input, list) else [tools_input]
+        for tool_data in items:
+            if not isinstance(tool_data, dict) or tool_data.get('__data_type__') != 'ai_tool':
+                continue
+            # New protocol: AgentTool instance
+            tool_obj = tool_data.get('tool')
+            if tool_obj is not None:
+                tools.append(tool_obj)
+            else:
+                # Backward compat: build from module_id
+                mid = tool_data.get('module_id')
+                if mid:
+                    tools.append(ModuleAgentTool(module_id=mid, description=tool_data.get('description', ''), parent_context=context))
+
+    # Also include tools from params (manual tool IDs)
+    for tid in param_tool_ids:
+        if tid and not any(t.module_id == tid for t in tools if hasattr(t, 'module_id')):
+            tools.append(ModuleAgentTool(module_id=tid, description='', parent_context=context))
+
+    return tools
+
+
+def _summarize_tool_result(result: Any, max_len: int = 500) -> Any:
+    """Summarize tool result for steps log."""
     if isinstance(result, str):
         return result[:max_len] + '...' if len(result) > max_len else result
     if isinstance(result, dict):
@@ -387,38 +495,3 @@ def _summarize_tool_result(result: Any, max_len: int = 200) -> Any:
                 summary[k] = v
         return summary
     return result
-
-
-def _resolve_model_config(context: Dict, params: Dict):
-    """Extract model configuration from connected ai.model sub-node."""
-    model_input = context.get('inputs', {}).get('model')
-    if model_input and model_input.get('__data_type__') == 'ai_model':
-        config = model_input.get('config', {})
-        logger.info(f"Using connected ai.model: {config.get('provider')}/{config.get('model')}")
-        return (
-            config.get('provider', 'openai'), config.get('model', 'gpt-4o'),
-            config.get('temperature', 0.3), config.get('api_key'), config.get('base_url')
-        )
-    return None, None, None, None, None
-
-
-def _resolve_memory(context: Dict):
-    """Extract conversation history from connected ai.memory."""
-    memory_input = context.get('inputs', {}).get('memory')
-    if memory_input and memory_input.get('__data_type__') == 'ai_memory':
-        messages = memory_input.get('messages', [])
-        logger.info(f"Using connected ai.memory with {len(messages)} messages")
-        return messages
-    return []
-
-
-def _collect_connected_tools(context: Dict, tool_ids: list):
-    """Collect tool IDs from connected tool nodes."""
-    tools_input = context.get('inputs', {}).get('tools')
-    if tools_input:
-        if isinstance(tools_input, list):
-            for tool_data in tools_input:
-                if tool_data.get('__data_type__') == 'ai_tool':
-                    tool_ids.append(tool_data.get('module_id'))
-        elif isinstance(tools_input, dict) and tools_input.get('__data_type__') == 'ai_tool':
-            tool_ids.append(tools_input.get('module_id'))
