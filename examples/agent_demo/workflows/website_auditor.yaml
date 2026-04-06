@@ -1,10 +1,10 @@
 id: website-auditor
-name: AI Website Auditor
-version: 1.0.0
+name: AI Website Auditor (PageSpeed)
+version: 2.0.0
 description: >
-  Give it any URL — the AI agent performs a complete website audit:
-  accessibility, performance, SEO, mobile responsiveness.
-  Watch it resize the browser, take screenshots, and generate a scored report.
+  Give it any URL — the AI agent runs it through Google PageSpeed Insights,
+  reads the real Lighthouse scores, screenshots the results,
+  then generates a professional audit report as a Markdown file.
 
 steps:
   - id: launch
@@ -16,7 +16,7 @@ steps:
       stealth: true
       locale: en-US
       width: 1280
-      height: 720
+      height: 900
       behavior: fast
     positionX: 80
     positionY: 200
@@ -24,7 +24,7 @@ steps:
 
   - id: auditor
     module: llm.agent
-    label: "🔍 Website Auditor"
+    label: "🔍 PageSpeed Auditor"
     params:
       max_iterations: 20
       max_input_size: 12000
@@ -36,114 +36,88 @@ steps:
         - browser.screenshot
         - browser.evaluate
         - browser.viewport
-        - browser.performance
-        - browser.readability
+        - browser.click
+        - browser.wait
       prompt_source: manual
       task: |
-        You are a professional website auditor. Audit this website: https://flyto2.com
+        You are a web performance auditor. Audit this website using Google PageSpeed Insights: https://flyto2.com
 
-        Follow these steps IN ORDER. Do ALL of them.
+        Follow these steps IN ORDER:
 
-        STEP 1 — First impression (Desktop)
-        - browser.goto the URL
-        - browser.screenshot: path="audit_desktop.png"
-        - browser.performance: collect web vitals (LCP, FCP, CLS, TTFB)
+        STEP 1 — Go to PageSpeed Insights
+        - browser.goto: https://pagespeed.web.dev/
+        - browser.snapshot: format=text (verify the page loaded)
+        - browser.screenshot: path="pagespeed_home.png"
 
-        STEP 2 — Content & SEO check
-        - browser.evaluate: run this script to get SEO data:
-          return {
-            title: document.title,
-            metaDescription: document.querySelector('meta[name="description"]')?.content || 'MISSING',
-            h1Count: document.querySelectorAll('h1').length,
-            h2Count: document.querySelectorAll('h2').length,
-            imgWithoutAlt: document.querySelectorAll('img:not([alt])').length,
-            totalImages: document.querySelectorAll('img').length,
-            totalLinks: document.querySelectorAll('a').length,
-            externalLinks: [...document.querySelectorAll('a[href^="http"]')].filter(a => !a.href.includes(location.hostname)).length,
-            hasCanonical: !!document.querySelector('link[rel="canonical"]'),
-            hasViewportMeta: !!document.querySelector('meta[name="viewport"]'),
-            hasFavicon: !!document.querySelector('link[rel="icon"]') || !!document.querySelector('link[rel="shortcut icon"]'),
-            hasOpenGraph: !!document.querySelector('meta[property="og:title"]'),
-            language: document.documentElement.lang || 'NOT SET'
-          }
+        STEP 2 — Enter the URL and analyze
+        - browser.evaluate: run this to fill the input and submit:
+          const input = document.querySelector('input[type="url"], input[name="url"], .url-input input, input');
+          if (input) { input.value = 'https://flyto2.com'; input.dispatchEvent(new Event('input', {bubbles:true})); }
+          return input ? 'filled' : 'no input found';
+        - browser.click: click the "Analyze" button (use text method with target "Analyze")
+        - browser.wait: duration_ms=15000 (wait for analysis to complete)
 
-        STEP 3 — Mobile responsiveness
-        - browser.viewport: width=375, height=812 (iPhone size)
-        - browser.screenshot: path="audit_mobile.png"
-        - browser.evaluate: check if content overflows horizontally:
-          return {
-            overflowsHorizontally: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-            bodyWidth: document.body.scrollWidth,
-            viewportWidth: document.documentElement.clientWidth
-          }
+        STEP 3 — Read the results
+        - browser.scroll: direction=down, amount=300
+        - browser.screenshot: path="pagespeed_scores.png"
+        - browser.snapshot: format=text (read all the scores and metrics)
+        - browser.scroll: direction=down, amount=800
+        - browser.snapshot: format=text (read more details: opportunities, diagnostics)
+        - browser.screenshot: path="pagespeed_details.png"
 
-        STEP 4 — Accessibility quick check
-        - browser.evaluate: run accessibility checks:
-          return {
-            formsWithoutLabels: document.querySelectorAll('input:not([aria-label]):not([id])').length,
-            buttonsWithoutText: [...document.querySelectorAll('button')].filter(b => !b.textContent.trim() && !b.getAttribute('aria-label')).length,
-            contrastIssues: 'manual check needed',
-            hasSkipLink: !!document.querySelector('a[href="#main"], a[href="#content"], .skip-link'),
-            hasLandmarks: document.querySelectorAll('main, nav, header, footer, aside').length,
-            tabIndex: document.querySelectorAll('[tabindex]').length
-          }
+        STEP 4 — Check mobile tab too (if available)
+        - Look for a "Mobile" tab or toggle and click it if present
+        - browser.snapshot: format=text (read mobile scores)
+        - browser.screenshot: path="pagespeed_mobile.png"
 
-        STEP 5 — Restore desktop and scroll check
-        - browser.viewport: width=1280, height=720
-        - browser.scroll: direction=down, amount=9999
-        - browser.screenshot: path="audit_footer.png"
+        Now write a COMPLETE Markdown audit report. Include ALL data you collected.
+        Return the report as plain text in Markdown format:
 
-        Now write your audit report. Use this EXACT plain text format:
+        # Website Audit Report: flyto2.com
+        **Generated by Flyto AI Auditor** | Date: [today]
 
-        ══════════════════════════════════════════
-        WEBSITE AUDIT REPORT
-        URL: [the URL you audited]
-        ══════════════════════════════════════════
+        ## Overall Scores
+        | Category | Score |
+        |----------|-------|
+        | Performance | [X/100] |
+        | Accessibility | [X/100] |
+        | Best Practices | [X/100] |
+        | SEO | [X/100] |
 
-        OVERALL SCORE: [X/100]
+        ## Performance Metrics
+        | Metric | Value | Rating |
+        |--------|-------|--------|
+        | First Contentful Paint | [Xs] | [good/needs work/poor] |
+        | Largest Contentful Paint | [Xs] | [good/needs work/poor] |
+        | Total Blocking Time | [Xms] | [good/needs work/poor] |
+        | Cumulative Layout Shift | [X] | [good/needs work/poor] |
+        | Speed Index | [Xs] | [good/needs work/poor] |
 
-        PERFORMANCE [X/25]
-        - LCP: [value] ([good/needs work/poor])
-        - FCP: [value] ([good/needs work/poor])
-        - TTFB: [value] ([good/needs work/poor])
-        - CLS: [value] ([good/needs work/poor])
+        ## Top Opportunities
+        [List the top opportunities PageSpeed suggests, with estimated savings]
 
-        SEO [X/25]
-        - Title: [present/missing] — "[actual title]"
-        - Meta description: [present/missing]
-        - H1 tags: [count] ([good if 1, warn if 0 or >1])
-        - Images without alt: [X of Y total]
-        - Canonical: [yes/no]
-        - Open Graph: [yes/no]
-        - Language: [value]
+        ## Diagnostics
+        [List key diagnostic items]
 
-        MOBILE [X/25]
-        - Viewport meta: [yes/no]
-        - Horizontal overflow: [yes/no]
-        - Visual check: [describe what you see in mobile screenshot]
+        ## Recommendations
+        1. [Most important fix with specific instructions]
+        2. [Second fix]
+        3. [Third fix]
 
-        ACCESSIBILITY [X/25]
-        - Landmark elements: [count]
-        - Skip link: [yes/no]
-        - Forms without labels: [count]
-        - Buttons without text: [count]
+        ## What's Done Well
+        - [Positive finding]
+        - [Another positive]
 
-        TOP 3 ISSUES TO FIX
-        1. [most critical issue and how to fix it]
-        2. [second issue and fix]
-        3. [third issue and fix]
-
-        WHAT'S DONE WELL
-        - [something positive about the site]
-        - [another positive thing]
+        ---
+        *Audited by Flyto AI Website Auditor using Google PageSpeed Insights*
       system_prompt: |
-        You are a professional web auditor with expertise in performance, SEO, accessibility, and UX.
+        You are a professional web performance consultant.
         RULES:
-        - Use browser tools to gather REAL data. Never guess.
-        - Score fairly based on actual data, not assumptions.
-        - Performance benchmarks: LCP < 2.5s = good, < 4s = needs work, > 4s = poor. FCP < 1.8s = good. CLS < 0.1 = good. TTFB < 0.8s = good.
-        - Be specific in recommendations — say exactly what to fix and how.
-        - Return plain text report, not JSON.
+        - Use the browser tools to interact with PageSpeed Insights and read REAL scores
+        - Never guess scores — only report what you see on the PageSpeed results page
+        - If PageSpeed hasn't finished loading, wait and check again
+        - Be specific in recommendations — reference actual metrics
+        - Return the report in clean Markdown format
     positionX: 420
     positionY: 200
     orderIndex: 1
