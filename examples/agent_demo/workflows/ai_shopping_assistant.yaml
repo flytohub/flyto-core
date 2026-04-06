@@ -1,0 +1,155 @@
+id: ai-shopping-assistant
+name: AI Shopping Assistant
+version: 1.0.0
+description: >
+  Tell it what you want to buy — the AI agent searches multiple stores,
+  compares prices, reads reviews, and recommends the best deal.
+  Watch it navigate the web like a human.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: false
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: smart_shopper
+    module: llm.agent
+    label: "🛒 Smart Shopping Agent"
+    params:
+      max_iterations: 25
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.click
+        - browser.extract
+        - browser.detect_list
+        - browser.screenshot
+        - browser.readability
+      prompt_source: manual
+      task: |
+        You are a personal shopping assistant. The user wants to buy:
+        "Sony WH-1000XM5 headphones"
+
+        YOUR MISSION — find the best deal across multiple stores:
+
+        STEP 1: Search Amazon
+        - Go to https://www.amazon.com/s?k=Sony+WH-1000XM5
+        - Find the product, extract: price, rating, number of reviews
+        - Take a screenshot
+
+        STEP 2: Search Best Buy
+        - Go to https://www.bestbuy.com/site/searchpage.jsp?st=Sony+WH-1000XM5
+        - Find the product, extract: price, any deals/discounts
+        - Take a screenshot
+
+        STEP 3: Search B&H Photo
+        - Go to https://www.google.com/search?q=Sony+WH-1000XM5+site:bhphotovideo.com+price
+        - Extract price info from search results
+
+        STEP 4: Check reviews
+        - Go to https://www.google.com/search?q=Sony+WH-1000XM5+review+rating
+        - Extract the overall consensus on the product
+
+        Return a JSON object (raw JSON, no markdown):
+        {
+          "product": "Sony WH-1000XM5",
+          "prices": [
+            {"store": "Amazon", "price": "$X", "rating": "X/5", "reviews": "X reviews", "in_stock": true},
+            {"store": "Best Buy", "price": "$X", "deal": "any current deal", "in_stock": true},
+            {"store": "B&H Photo", "price": "$X", "in_stock": true}
+          ],
+          "best_deal": {
+            "store": "the cheapest store",
+            "price": "$X",
+            "savings": "$X vs most expensive"
+          },
+          "review_summary": "2-3 sentence consensus from reviews",
+          "recommendation": "buy/wait/skip with reasoning",
+          "pro_tips": ["tip for getting the best deal"]
+        }
+      system_prompt: |
+        You are an expert bargain hunter and product reviewer.
+        Navigate real websites to find real prices. Never guess or fabricate.
+        If a site blocks you, note it and move to the next store.
+        Be thorough but efficient. Return raw JSON only.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_node
+      memory: memory_node
+
+  - id: display
+    module: output.display
+    label: "📊 Show Results"
+    params:
+      content: "${smart_shopper.data.result}"
+      format: json
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+
+  # ── Resources ──────────────────────────────────────
+  - id: model_node
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 8192
+    positionX: 340
+    positionY: 420
+    orderIndex: 3
+
+  - id: memory_node
+    module: ai.memory
+    label: Shopping Memory
+    params:
+      memory_type: buffer
+      window_size: 25
+      initial_messages: []
+    positionX: 540
+    positionY: 420
+    orderIndex: 4
+
+edges:
+  - id: e1
+    source: launch
+    target: smart_shopper
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: smart_shopper
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: r1
+    source: model_node
+    target: smart_shopper
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_node
+    target: smart_shopper
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }

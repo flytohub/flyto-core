@@ -1,0 +1,244 @@
+id: smart-job-hunter
+name: AI Job Hunter Agent
+version: 1.0.0
+description: >
+  Give it a job title — the AI agent autonomously searches multiple job sites,
+  compares salaries, required skills, and company ratings, then generates
+  a personalized application strategy. No selectors, no hardcoding.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: false
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: research_jobs
+    module: llm.agent
+    label: "🔍 Research Job Market"
+    params:
+      max_iterations: 15
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.click
+        - browser.extract
+        - browser.detect_list
+        - browser.screenshot
+      prompt_source: manual
+      task: |
+        You are a career research agent. Your mission: research the job market
+        for "Senior Frontend Engineer" positions.
+
+        PHASE 1 — Search Google for jobs
+        1. Navigate to Google: https://www.google.com/search?q=Senior+Frontend+Engineer+jobs+salary+2024
+        2. Snapshot the results page
+        3. Read and understand the salary ranges shown
+
+        PHASE 2 — Check LinkedIn Jobs
+        4. Navigate to: https://www.linkedin.com/jobs/search/?keywords=Senior%20Frontend%20Engineer
+        5. Snapshot the page
+        6. Scroll down to see more listings
+        7. Extract the first 5 job listings you can see (title, company, location)
+        8. Take a screenshot as evidence
+
+        PHASE 3 — Check Glassdoor for salary data
+        9. Navigate to: https://www.google.com/search?q=Senior+Frontend+Engineer+salary+glassdoor
+        10. Snapshot the results
+        11. Extract any salary data visible
+
+        Return a JSON object (raw JSON, no markdown):
+        {
+          "job_title": "Senior Frontend Engineer",
+          "salary_range": {"low": "$X", "high": "$Y", "median": "$Z"},
+          "top_companies_hiring": ["company1", "company2", ...],
+          "job_listings": [
+            {"title": "...", "company": "...", "location": "..."}
+          ],
+          "required_skills": ["skill1", "skill2", ...],
+          "market_demand": "high/medium/low with reasoning"
+        }
+      system_prompt: |
+        You are a senior career consultant with deep knowledge of the tech job market.
+        Use browser tools to gather REAL data from actual websites.
+        Never fabricate data — only report what you can see on the page.
+        If a site blocks you or shows CAPTCHA, skip it and move to the next source.
+        Return raw JSON only, no markdown.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_research
+      memory: memory_research
+
+  - id: generate_strategy
+    module: llm.agent
+    label: "📋 Generate Career Strategy"
+    params:
+      max_iterations: 3
+      tools: []
+      prompt_source: manual
+      task: |
+        Based on this job market research data:
+        ${research_jobs.data.result}
+
+        Generate a comprehensive career strategy report.
+
+        Return a JSON object (raw JSON, no markdown):
+        {
+          "report_title": "Career Strategy: Senior Frontend Engineer",
+          "market_summary": "2-3 sentence overview",
+          "salary_negotiation": {
+            "target_salary": "$X",
+            "justification": "why this number",
+            "negotiation_tips": ["tip1", "tip2"]
+          },
+          "skill_gap_analysis": {
+            "must_have": ["skills you must have"],
+            "nice_to_have": ["bonus skills"],
+            "trending": ["emerging skills to learn"]
+          },
+          "application_strategy": {
+            "target_companies": ["top 3 companies to apply to and why"],
+            "resume_keywords": ["keywords to include"],
+            "interview_prep": ["topics to study"]
+          },
+          "timeline": {
+            "week_1": "action items",
+            "week_2": "action items",
+            "week_3": "action items",
+            "week_4": "action items"
+          }
+        }
+      system_prompt: |
+        You are a McKinsey-level career strategist. Be specific, actionable, and data-driven.
+        Base everything on the research data provided. Return raw JSON only.
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+    resources:
+      model: model_strategy
+      memory: memory_strategy
+
+  - id: display
+    module: output.display
+    label: "📊 Display Report"
+    params:
+      content: "${generate_strategy.data.result}"
+      format: json
+    positionX: 1100
+    positionY: 200
+    orderIndex: 3
+
+  # ── Resource Nodes (each agent gets its own) ───────
+  - id: model_research
+    module: ai.model
+    label: GPT-4o (Research)
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 8192
+    positionX: 340
+    positionY: 420
+    orderIndex: 4
+
+  - id: memory_research
+    module: ai.memory
+    label: Research Memory
+    params:
+      memory_type: buffer
+      window_size: 20
+      initial_messages: []
+    positionX: 520
+    positionY: 420
+    orderIndex: 5
+
+  - id: model_strategy
+    module: ai.model
+    label: GPT-4o (Strategy)
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 8192
+    positionX: 680
+    positionY: 420
+    orderIndex: 6
+
+  - id: memory_strategy
+    module: ai.memory
+    label: Strategy Memory
+    params:
+      memory_type: buffer
+      window_size: 10
+      initial_messages: []
+    positionX: 860
+    positionY: 420
+    orderIndex: 7
+
+edges:
+  # Main pipeline
+  - id: e1
+    source: launch
+    target: research_jobs
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: research_jobs
+    target: generate_strategy
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e3
+    source: generate_strategy
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+
+  # Resources → research agent (dedicated)
+  - id: r1
+    source: model_research
+    target: research_jobs
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_research
+    target: research_jobs
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+
+  # Resources → strategy agent (dedicated)
+  - id: r3
+    source: model_strategy
+    target: generate_strategy
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r4
+    source: memory_strategy
+    target: generate_strategy
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }

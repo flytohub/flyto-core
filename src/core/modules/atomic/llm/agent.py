@@ -35,7 +35,7 @@ from ._agent_tool import ModuleAgentTool
 
 logger = logging.getLogger(__name__)
 
-MAX_ITERATIONS = 10
+MAX_ITERATIONS = 30
 MAX_AGENT_DEPTH = 3
 
 
@@ -168,6 +168,15 @@ MAX_AGENT_DEPTH = 3
               description_key='modules.llm.agent.params.max_input_size.description',
               required=False, default=10000, min=100, max=100000,
               visibility=Visibility.EXPERT),
+        field('agent_type', type='select', label='Agent Type',
+              label_key='modules.llm.agent.params.agent_type',
+              description='Reasoning strategy for the agent',
+              description_key='modules.llm.agent.params.agent_type.description',
+              options=[
+                  {'label': 'Tools Agent (Function Calling)', 'value': 'tools'},
+                  {'label': 'ReAct (Chain of Thought)', 'value': 'react'},
+              ],
+              default='tools', required=False),
         field('system_prompt', type='string', label='System Prompt',
               label_key='modules.llm.agent.params.system_prompt',
               description='Instructions for the agent behavior',
@@ -175,13 +184,23 @@ MAX_AGENT_DEPTH = 3
               required=False, format='multiline',
               default='You are a helpful AI agent. Use the available tools to complete the task. Think step by step.',
               placeholder='You are a helpful assistant.'),
-        field('tools', type='array', label='Available Tools',
-              label_key='modules.llm.agent.params.tools',
-              description='List of module IDs (alternative to connecting tool nodes)',
-              description_key='modules.llm.agent.params.tools.description',
-              required=False, default=[],
-              items={'type': 'string'},
-              ui={'component': 'tool_selector'}),
+        field('response_format', type='select', label='Output Format',
+              label_key='modules.llm.agent.params.response_format',
+              description='Expected format of the final answer',
+              description_key='modules.llm.agent.params.response_format.description',
+              options=[
+                  {'label': 'Plain Text', 'value': 'text'},
+                  {'label': 'JSON', 'value': 'json'},
+                  {'label': 'JSON Schema (strict)', 'value': 'json_schema'},
+              ],
+              default='text', required=False),
+        field('output_schema', type='object', label='Output JSON Schema',
+              label_key='modules.llm.agent.params.output_schema',
+              description='JSON Schema the final answer must match (for json_schema format)',
+              description_key='modules.llm.agent.params.output_schema.description',
+              required=False, default={},
+              showIf={'response_format': {'$in': ['json_schema']}},
+              ui={'component': 'json_editor'}),
         field('context', type='object', label='Context',
               label_key='modules.llm.agent.params.context',
               description='Additional context data for the agent',
@@ -196,8 +215,8 @@ MAX_AGENT_DEPTH = 3
         # When ai.model IS connected, these fields are ignored (sub-node overrides).
         presets.LLM_PROVIDER(default='openai'),
         presets.LLM_MODEL(default='gpt-4o'),
-        presets.TEMPERATURE(default=0.7),
         presets.LLM_API_KEY(),
+        presets.TEMPERATURE(default=0.7),
         presets.LLM_BASE_URL(),
     ),
     output_schema={
@@ -220,18 +239,20 @@ MAX_AGENT_DEPTH = 3
         {
             'title': 'Web Research Agent',
             'title_key': 'modules.llm.agent.examples.research.title',
+            'description': 'Connect http.request and data.json_parse as tools',
             'params': {
                 'task': 'Search for the latest news about AI and summarize the top 3 stories',
-                'tools': ['http.request', 'data.json_parse'],
+                'provider': 'openai',
                 'model': 'gpt-4o'
             }
         },
         {
             'title': 'Data Processing Agent',
             'title_key': 'modules.llm.agent.examples.data.title',
+            'description': 'Connect file.read, data.csv_parse, array.filter as tools',
             'params': {
                 'task': 'Read the CSV file, filter rows where status is "active", and count them',
-                'tools': ['file.read', 'data.csv_parse', 'array.filter'],
+                'provider': 'openai',
                 'model': 'gpt-4o'
             }
         }
@@ -261,9 +282,12 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
 
     notify = context.get('_agent_notify')
     params = context['params']
+    agent_type = params.get('agent_type', 'tools')
     system_prompt = params.get('system_prompt', 'You are a helpful AI agent.')
     user_context = params.get('context', {}) or {}
     max_iterations = min(params.get('max_iterations', MAX_ITERATIONS), MAX_ITERATIONS)
+    response_format = params.get('response_format', 'text')
+    output_schema = params.get('output_schema', {}) if response_format == 'json_schema' else None
     max_input_size = params.get('max_input_size', 10000)
 
     # Resolve task prompt
@@ -288,7 +312,19 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL'}
 
     conversation_history = _resolve_memory(context)
-    tools = _resolve_tools(context, list(params.get('tools', [])))
+    tools = _resolve_tools(context)
+
+    # Fallback: if no tools from sub-nodes, try params.tools (list of module IDs)
+    if not tools:
+        params_tools = params.get('tools', [])
+        if params_tools and isinstance(params_tools, list):
+            for module_id in params_tools:
+                if isinstance(module_id, str) and module_id.strip():
+                    tools.append(ModuleAgentTool(
+                        module_id=module_id.strip(),
+                        description='',
+                        parent_context=context,
+                    ))
 
     # Build tool definitions and lookup map
     tool_defs = [t.to_tool_call_request() for t in tools] if tools else []
@@ -297,17 +333,44 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     if not tools:
         logger.warning("No tools available for agent, running in chat-only mode")
 
-    # Build system prompt with tool descriptions
+    # Build system prompt with tool descriptions + output format instructions
     openai_tools = [{"type": "function", "function": {"name": td.name, "description": td.description, "parameters": td.parameters}} for td in tool_defs]
-    messages = [{"role": "system", "content": build_agent_system_prompt(system_prompt, openai_tools)}]
+    full_system = build_agent_system_prompt(system_prompt, openai_tools)
+    full_system += _build_output_format_instructions(response_format, output_schema)
+
+    if agent_type == 'react':
+        full_system += _build_react_instructions()
+
+    messages = [{"role": "system", "content": full_system}]
     if conversation_history:
         messages.extend(conversation_history)
     messages.append({"role": "user", "content": build_task_prompt(task, user_context)})
 
-    # ── Agent loop ──────────────────────────────────────────────
-    steps = []
+    # ── Dispatch to agent strategy ─────────────────────────────
+    if agent_type == 'react':
+        return await _run_react_loop(
+            chat_model, messages, tools, tool_defs, tool_map,
+            max_iterations, steps=[], notify=notify, context=context,
+            response_format=response_format, output_schema=output_schema,
+        )
+
+    return await _run_tools_loop(
+        chat_model, messages, tools, tool_defs, tool_map,
+        max_iterations, steps=[], notify=notify, context=context,
+        response_format=response_format, output_schema=output_schema,
+    )
+
+
+# ── Agent Loops ─────────────────────────────────────────────────
+
+
+async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
+                          max_iterations, steps, notify, context,
+                          response_format='text', output_schema=None):
+    """Standard Tools Agent loop (function calling)."""
     total_tokens = 0
     tool_call_count = 0
+    max_input_size = context.get('params', {}).get('max_input_size', 10000)
 
     for iteration in range(max_iterations):
         logger.info(f"Agent iteration {iteration + 1}/{max_iterations}")
@@ -343,11 +406,14 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
                 if notify:
                     await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': isinstance(tool_result, dict) and tool_result.get('ok', True)})
 
-                # Append to messages in OpenAI format (ChatModel handles conversion internally)
                 messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc.id, "type": "function", "function": {"name": tc.name, "arguments": tc.arguments if isinstance(tc.arguments, str) else json.dumps(tc.arguments, ensure_ascii=False)}}]})
-                messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(tool_result, ensure_ascii=False)})
+                # Truncate tool result to prevent context overflow
+                tool_content = json.dumps(tool_result, ensure_ascii=False, default=str)
+                if len(tool_content) > max_input_size:
+                    tool_content = tool_content[:max_input_size] + f'\n... [truncated, {len(tool_content)} chars total]'
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
         else:
-            final_response = response.content
+            final_response = _parse_output(response.content, response_format, output_schema)
             steps.append({'type': 'final_answer', 'content': final_response, 'iteration': iteration + 1})
             logger.info(f"Agent completed in {iteration + 1} iterations, {tool_call_count} tool calls")
             return {
@@ -371,6 +437,219 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
             'warning': 'max_iterations_reached',
         },
     }
+
+
+async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
+                          max_iterations, steps, notify, context,
+                          response_format='text', output_schema=None):
+    """ReAct Agent loop — Thought → Action → Observation chain.
+
+    Instead of function calling, the LLM outputs structured text:
+    Thought: reasoning about what to do
+    Action: tool_name({"arg": "value"})
+    or
+    Final Answer: the result
+
+    The loop parses the text, executes tools, and feeds observations back.
+    """
+    max_input_size = context.get('params', {}).get('max_input_size', 10000)
+    import re
+    total_tokens = 0
+    tool_call_count = 0
+
+    for iteration in range(max_iterations):
+        logger.info(f"ReAct iteration {iteration + 1}/{max_iterations}")
+
+        if notify:
+            await notify('agent:iteration', {'iteration': iteration + 1, 'max_iterations': max_iterations, 'tool_calls': tool_call_count})
+
+        try:
+            # ReAct doesn't use function calling — pure text generation
+            response = await chat_model.chat(messages)
+        except Exception as e:
+            return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
+
+        total_tokens += response.tokens_used
+        content = response.content.strip()
+
+        # Parse the response
+        thought, action, final_answer = _parse_react_response(content)
+
+        if thought:
+            steps.append({'type': 'thought', 'content': thought, 'iteration': iteration + 1})
+
+        if final_answer is not None:
+            parsed = _parse_output(final_answer, response_format, output_schema)
+            steps.append({'type': 'final_answer', 'content': parsed, 'iteration': iteration + 1})
+            logger.info(f"ReAct completed in {iteration + 1} iterations, {tool_call_count} tool calls")
+            return {
+                'ok': True,
+                'data': {
+                    'result': parsed,
+                    'steps': steps,
+                    'tool_calls': tool_call_count,
+                    'tokens_used': total_tokens,
+                    'iterations': iteration + 1,
+                },
+            }
+
+        if action:
+            tool_name, tool_args = action
+            steps.append({'type': 'tool_call', 'tool': tool_name, 'arguments': tool_args, 'iteration': iteration + 1})
+            tool_call_count += 1
+
+            if notify:
+                await notify('agent:tool_call', {'tool': tool_name, 'arguments': tool_args, 'iteration': iteration + 1, 'tool_call_index': tool_call_count})
+
+            tool = tool_map.get(tool_name)
+            if tool:
+                tool_result = await tool.invoke(tool_args, agent_context=context)
+            else:
+                tool_result = {'ok': False, 'error': f'Tool not found: {tool_name}'}
+
+            steps.append({'type': 'tool_result', 'tool': tool_name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
+
+            if notify:
+                await notify('agent:tool_result', {'tool': tool_name, 'iteration': iteration + 1, 'ok': isinstance(tool_result, dict) and tool_result.get('ok', True)})
+
+            observation = json.dumps(tool_result, ensure_ascii=False, default=str)
+            if len(observation) > max_input_size:
+                observation = observation[:max_input_size] + f'\n... [truncated, {len(observation)} chars total]'
+            messages.append({"role": "assistant", "content": content})
+            messages.append({"role": "user", "content": f"Observation: {observation}"})
+        else:
+            # No action and no final answer — treat content as final answer
+            parsed = _parse_output(content, response_format, output_schema)
+            steps.append({'type': 'final_answer', 'content': parsed, 'iteration': iteration + 1})
+            return {
+                'ok': True,
+                'data': {
+                    'result': parsed,
+                    'steps': steps,
+                    'tool_calls': tool_call_count,
+                    'tokens_used': total_tokens,
+                    'iterations': iteration + 1,
+                },
+            }
+
+    logger.warning(f"ReAct agent reached max iterations ({max_iterations})")
+    return {
+        'ok': True,
+        'data': {
+            'result': 'Agent reached maximum iterations without completing the task.',
+            'steps': steps, 'tool_calls': tool_call_count,
+            'tokens_used': total_tokens, 'iterations': max_iterations,
+            'warning': 'max_iterations_reached',
+        },
+    }
+
+
+# ── ReAct Parsing ───────────────────────────────────────────────
+
+
+def _parse_react_response(content: str):
+    """Parse ReAct-style response into (thought, action, final_answer).
+
+    Expected format:
+        Thought: ...reasoning...
+        Action: tool_name({"arg": "value"})
+    or:
+        Thought: ...reasoning...
+        Final Answer: ...result...
+    """
+    import re
+
+    thought = None
+    action = None
+    final_answer = None
+
+    # Extract Thought
+    thought_match = re.search(r'Thought:\s*(.+?)(?=\n(?:Action|Final Answer):|\Z)', content, re.DOTALL)
+    if thought_match:
+        thought = thought_match.group(1).strip()
+
+    # Check for Final Answer
+    fa_match = re.search(r'Final Answer:\s*(.+)', content, re.DOTALL)
+    if fa_match:
+        final_answer = fa_match.group(1).strip()
+        return thought, None, final_answer
+
+    # Check for Action
+    action_match = re.search(r'Action:\s*(\S+?)(?:\((.+)\))?$', content, re.MULTILINE)
+    if action_match:
+        tool_name = action_match.group(1).strip()
+        args_str = action_match.group(2) or '{}'
+        try:
+            tool_args = json.loads(args_str)
+        except (json.JSONDecodeError, TypeError):
+            tool_args = {"input": args_str}
+        action = (tool_name, tool_args)
+
+    return thought, action, final_answer
+
+
+def _build_react_instructions() -> str:
+    """Build ReAct-specific system prompt addition."""
+    return """
+
+## Reasoning Format (ReAct)
+
+You must respond using this exact format:
+
+Thought: <your reasoning about what to do next>
+Action: tool_name({"param": "value"})
+
+After receiving an Observation, continue with another Thought/Action cycle.
+When you have the final answer:
+
+Thought: <your reasoning about why you're done>
+Final Answer: <your final response>
+
+Always start with "Thought:" and always use the exact tool names provided."""
+
+
+# ── Output Format ───────────────────────────────────────────────
+
+
+def _build_output_format_instructions(response_format: str, output_schema: Optional[Dict]) -> str:
+    """Build output format instructions for the system prompt."""
+    if response_format == 'text':
+        return ''
+    if response_format == 'json':
+        return '\n\nIMPORTANT: Your final answer MUST be valid JSON. Do not wrap it in markdown code blocks.'
+    if response_format == 'json_schema' and output_schema:
+        schema_str = json.dumps(output_schema, indent=2, ensure_ascii=False)
+        return f'\n\nIMPORTANT: Your final answer MUST be valid JSON matching this exact schema:\n```json\n{schema_str}\n```\nDo not wrap the output in markdown code blocks. Output only the JSON object.'
+    return ''
+
+
+def _parse_output(content: str, response_format: str, output_schema: Optional[Dict]):
+    """Parse and validate the final output according to response_format."""
+    # Always strip markdown code blocks — LLMs frequently wrap JSON in ```
+    cleaned = content.strip()
+    if cleaned.startswith('```'):
+        lines = cleaned.split('\n')
+        lines = [l for l in lines if not l.strip().startswith('```')]
+        cleaned = '\n'.join(lines).strip()
+
+    # Try JSON parse regardless of format — if it's valid JSON, return parsed
+    if cleaned.startswith('{') or cleaned.startswith('['):
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+
+    if response_format == 'text':
+        return content
+
+    if response_format in ('json', 'json_schema'):
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse JSON output, returning as string")
+            return content
+
+    return content
 
 
 # ── Sub-node resolution ──────────────────────────────────────────
@@ -448,8 +727,8 @@ def _resolve_memory(context: Dict) -> list:
     return []
 
 
-def _resolve_tools(context: Dict, param_tool_ids: list) -> List[AgentTool]:
-    """Get AgentTool instances from connected ai.tool sub-nodes + param tool IDs."""
+def _resolve_tools(context: Dict) -> List[AgentTool]:
+    """Get AgentTool instances from connected ai.tool sub-nodes."""
     tools: List[AgentTool] = []
 
     tools_input = context.get('inputs', {}).get('tools')
@@ -467,11 +746,6 @@ def _resolve_tools(context: Dict, param_tool_ids: list) -> List[AgentTool]:
                 mid = tool_data.get('module_id')
                 if mid:
                     tools.append(ModuleAgentTool(module_id=mid, description=tool_data.get('description', ''), parent_context=context))
-
-    # Also include tools from params (manual tool IDs)
-    for tid in param_tool_ids:
-        if tid and not any(t.module_id == tid for t in tools if hasattr(t, 'module_id')):
-            tools.append(ModuleAgentTool(module_id=tid, description='', parent_context=context))
 
     return tools
 

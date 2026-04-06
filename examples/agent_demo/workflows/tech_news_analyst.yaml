@@ -1,0 +1,165 @@
+id: tech-news-analyst
+name: AI Tech News Analyst
+version: 1.0.0
+description: >
+  AI agent reads Hacker News and GitHub Trending, deep-dives the top story,
+  and generates a daily tech intelligence brief with real data.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: true
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: analyst
+    module: llm.agent
+    label: "📰 Tech News Analyst"
+    params:
+      max_iterations: 20
+      max_input_size: 12000
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.extract
+        - browser.readability
+        - browser.screenshot
+      prompt_source: manual
+      task: |
+        You are a tech intelligence analyst. Generate a daily briefing by following these steps IN ORDER.
+        Complete ALL steps before returning your final answer.
+
+        STEP 1 — Hacker News front page
+        - browser.goto: https://news.ycombinator.com/
+        - browser.extract: selector=".titleline > a", attribute="textContent", limit=10
+          This gives you the top 10 story titles.
+        - browser.extract: selector=".score", attribute="textContent", limit=10
+          This gives you the point scores.
+        - browser.screenshot: path="hn_front.png"
+
+        STEP 2 — Deep dive the #1 story
+        - browser.extract: selector=".titleline > a", attribute="href", limit=1
+          This gives you the URL of the top story.
+        - browser.goto: navigate to that URL
+        - browser.readability: extract the article content
+        - browser.screenshot: path="hn_top_story.png"
+
+        STEP 3 — GitHub Trending
+        - browser.goto: https://github.com/trending
+        - browser.extract: selector="article.Box-row h2 a", attribute="textContent", limit=10
+          This gives you trending repo names.
+        - browser.screenshot: path="github_trending.png"
+
+        After completing ALL 3 steps, return your analysis.
+        CRITICAL: Return ONLY a raw JSON object. No markdown, no ```json```, no code blocks.
+        Start with { and end with }.
+
+        {
+          "date": "YYYY-MM-DD",
+          "top_hn_stories": [
+            {"rank": 1, "title": "actual title from extract", "points": "actual points", "topic": "category"},
+            ... up to 5
+          ],
+          "deep_dive": {
+            "title": "the #1 story title",
+            "url": "the URL you visited",
+            "summary": "3-4 sentence summary of the article content",
+            "why_it_matters": "why this matters for the tech industry"
+          },
+          "github_trending": ["repo1", "repo2", "repo3", "repo4", "repo5"],
+          "trend_analysis": {
+            "dominant_theme": "based on what you actually read today",
+            "emerging_signal": "any interesting pattern across HN + GitHub",
+            "sentiment": "bullish/bearish/neutral on tech"
+          },
+          "action_items": [
+            "concrete thing to research based on today's news",
+            "concrete thing to watch this week"
+          ]
+        }
+      system_prompt: |
+        You are a senior tech analyst at a VC firm.
+        RULES:
+        - Always use browser.snapshot or browser.extract BEFORE trying to read any data
+        - NEVER guess page content — only report what tools return to you
+        - Execute ALL steps before generating the final answer
+        - Return ONLY raw JSON. No markdown, no code blocks, no explanation.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_node
+      memory: memory_node
+
+  - id: display
+    module: output.display
+    label: "📊 Intelligence Brief"
+    params:
+      content: "${analyst.data.result}"
+      format: json
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+
+  - id: model_node
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 4096
+    positionX: 340
+    positionY: 420
+    orderIndex: 3
+
+  - id: memory_node
+    module: ai.memory
+    label: Analyst Memory
+    params:
+      memory_type: buffer
+      window_size: 20
+      initial_messages: []
+    positionX: 540
+    positionY: 420
+    orderIndex: 4
+
+edges:
+  - id: e1
+    source: launch
+    target: analyst
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: analyst
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: r1
+    source: model_node
+    target: analyst
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_node
+    target: analyst
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }

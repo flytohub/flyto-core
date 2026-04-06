@@ -542,9 +542,11 @@ class WorkflowEngine:
 
         # Inject real-time notify callback for agent modules (tool call streaming)
         if module_id and 'agent' in module_id:
-            notifier = self._hooks.create_step_notifier(step_id)
-            if notifier:
-                self.context['_agent_notify'] = notifier
+            create_notifier = getattr(self._hooks, 'create_step_notifier', None)
+            if create_notifier:
+                notifier = create_notifier(step_id)
+                if notifier:
+                    self.context['_agent_notify'] = notifier
 
         should_execute = await self._should_execute_step(step_config)
         resolver = self._get_resolver()

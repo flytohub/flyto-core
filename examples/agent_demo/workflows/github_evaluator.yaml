@@ -1,0 +1,163 @@
+id: github-evaluator
+name: AI GitHub Project Evaluator
+version: 1.0.0
+description: >
+  Give it any GitHub repo URL — the AI agent reads the README, checks stars,
+  recent activity, open issues, and generates an adoption recommendation.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: true
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: evaluator
+    module: llm.agent
+    label: "🔬 GitHub Evaluator"
+    params:
+      max_iterations: 15
+      max_input_size: 15000
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.extract
+        - browser.readability
+        - browser.screenshot
+      prompt_source: manual
+      task: |
+        You are a senior developer evaluating open source projects.
+        Evaluate this repo: https://github.com/anthropics/anthropic-sdk-python
+
+        STEP 1 — Read the main repo page
+        1. Go to the repo URL
+        2. Use browser.snapshot format=text to read the page — look for star count, fork count, description
+        3. Use browser.extract with selector "#repo-stars-counter-star" to get stars count
+        4. Take a screenshot
+
+        STEP 2 — Read the README via API (more reliable than HTML)
+        5. Go to https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/main/README.md
+        6. Use browser.snapshot format=text to read the full README
+
+        STEP 3 — Check recent activity
+        7. Go to https://github.com/anthropics/anthropic-sdk-python/commits/main
+        8. Use browser.snapshot format=text to see recent commits
+        9. Note: how recent is the last commit? How many commits in the last week?
+
+        STEP 4 — Check issues
+        10. Go to https://github.com/anthropics/anthropic-sdk-python/issues
+        11. Use browser.snapshot format=text to see open issues
+        12. Count how many are open, note any critical labels
+
+        IMPORTANT: Return ONLY a raw JSON object. No markdown, no ```json```, no code blocks. Just the JSON object starting with { and ending with }.
+        {
+          "repo": "anthropics/anthropic-sdk-python",
+          "overview": {
+            "description": "what the project does",
+            "language": "primary language",
+            "license": "license type",
+            "stars": "actual number",
+            "forks": "actual number"
+          },
+          "health_metrics": {
+            "last_commit": "date of most recent commit",
+            "commit_frequency": "active/moderate/stale",
+            "open_issues": "number",
+            "issue_response": "fast/moderate/slow based on what you see"
+          },
+          "code_quality": {
+            "documentation": "excellent/good/poor - based on README quality",
+            "readme_completeness": "does it have: install, usage, API docs, examples?",
+            "test_coverage": "mentioned in repo? CI badges?"
+          },
+          "adoption_score": {
+            "score": "1-10",
+            "reasoning": "2-3 sentences explaining the score"
+          },
+          "recommendation": "adopt/evaluate/hold/avoid with reasoning",
+          "comparable_projects": ["similar projects worth comparing"]
+        }
+      system_prompt: |
+        You are a senior staff engineer doing OSS due diligence.
+        Be precise — extract real numbers, real dates, real data from the pages.
+        Never guess or fabricate. If you can't find something, say "not found".
+        CRITICAL: Return ONLY raw JSON. No markdown, no code blocks, no ```.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_node
+      memory: memory_node
+
+  - id: display
+    module: output.display
+    label: "📊 Evaluation Report"
+    params:
+      content: "${evaluator.data.result}"
+      format: json
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+
+  - id: model_node
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 4096
+    positionX: 340
+    positionY: 420
+    orderIndex: 3
+
+  - id: memory_node
+    module: ai.memory
+    label: Evaluator Memory
+    params:
+      memory_type: buffer
+      window_size: 20
+      initial_messages: []
+    positionX: 540
+    positionY: 420
+    orderIndex: 4
+
+edges:
+  - id: e1
+    source: launch
+    target: evaluator
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: evaluator
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: r1
+    source: model_node
+    target: evaluator
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_node
+    target: evaluator
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
