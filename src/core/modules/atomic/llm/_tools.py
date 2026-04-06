@@ -77,7 +77,14 @@ def _schema_to_json_schema(params_schema: List[Dict]) -> Dict:
         if prop['type'] == 'array':
             items_schema = param.get('items')
             if isinstance(items_schema, dict):
-                prop['items'] = items_schema
+                # Sanitize: only keep valid JSON Schema keys, fix invalid types
+                clean_items = {k: v for k, v in items_schema.items()
+                               if k in ("type", "description", "enum", "items", "properties", "default")}
+                if clean_items.get("type") in ("any", "file", "path", "text", "select"):
+                    clean_items["type"] = "string"
+                if "type" not in clean_items:
+                    clean_items["type"] = "string"
+                prop['items'] = clean_items
             else:
                 prop['items'] = {"type": "string"}
 

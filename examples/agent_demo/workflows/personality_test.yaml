@@ -1,0 +1,220 @@
+id: personality-test
+name: AI Takes a Personality Test
+version: 2.0.0
+description: >
+  Watch an AI agent take the 16Personalities MBTI test as a startup founder.
+  It navigates to the test, answers all 60 questions, and reads the result.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: false
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 900
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: test_taker
+    module: llm.agent
+    label: "🧠 MBTI Test Agent"
+    params:
+      max_iterations: 25
+      max_input_size: 10000
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.click
+        - browser.screenshot
+        - browser.evaluate
+        - browser.wait
+      prompt_source: manual
+      task: |
+        You are taking the 16Personalities MBTI test as a bold startup founder.
+        The test has 10 steps, each with 6 questions (60 total).
+        Each question has 7 radio buttons (class ".sp-radio") from Agree to Disagree.
+        There is a "Next" button to advance to the next step.
+
+        STEP 1 — Navigate to the test
+        - browser.goto: https://www.16personalities.com/free-personality-test
+        - browser.wait: duration_ms=3000
+
+        STEP 2 — Answer ALL 60 questions using this evaluate script.
+        Run this script ONCE — it handles all 10 steps automatically:
+
+        - browser.evaluate with this script:
+          (async function() {
+            const delay = ms => new Promise(r => setTimeout(r, ms));
+            let totalAnswered = 0;
+
+            for (let step = 0; step < 12; step++) {
+              await delay(500);
+              window.scrollTo(0, 0);
+              await delay(300);
+
+              const radios = document.querySelectorAll('.sp-radio:not(.is--active)');
+              if (radios.length === 0) {
+                const url = window.location.href;
+                if (url.includes('profile') || url.includes('result')) {
+                  return 'DONE! Results page. Total answered: ' + totalAnswered;
+                }
+              }
+
+              const radioGroups = document.querySelectorAll('.radios.len--7');
+              for (const group of radioGroups) {
+                const options = group.querySelectorAll('.sp-radio:not(.is--active)');
+                if (options.length === 0) continue;
+                const pick = Math.random() > 0.3 ? 1 : 0;
+                const target = options[Math.min(pick, options.length - 1)];
+                target.click();
+                totalAnswered++;
+                await delay(80);
+              }
+
+              await delay(300);
+
+              const nextBtn = [...document.querySelectorAll('button')]
+                .find(b => /^next$/i.test(b.textContent.trim()));
+              if (nextBtn && !nextBtn.disabled) {
+                nextBtn.click();
+                await delay(1000);
+              } else {
+                const completeBtn = [...document.querySelectorAll('button')]
+                  .find(b => /complete|submit|finish|see results/i.test(b.textContent.trim()));
+                if (completeBtn) {
+                  completeBtn.click();
+                  await delay(3000);
+                  return 'SUBMITTED! Total answered: ' + totalAnswered + '. URL: ' + window.location.href;
+                }
+              }
+            }
+
+            return 'Finished loop. Answered: ' + totalAnswered + '. URL: ' + window.location.href;
+          })()
+
+        IMPORTANT: The script above takes about 25 seconds for all 60 questions.
+        After running it, wait and then check the result.
+
+        - browser.wait: duration_ms=3000
+
+        STEP 3 — Check result
+        - browser.screenshot: path="mbti_progress.png"
+
+        If the evaluate returned "DONE" or "SUBMITTED", go to STEP 5.
+        If not complete, run the evaluate script again to answer remaining questions.
+
+        STEP 4 — Handle signup/email wall (if present)
+        If results page asks for email or signup:
+        - browser.snapshot: format=text
+        - Look for a "Skip" or "View results" link and click it
+        - If no skip option, note that results require signup
+
+        STEP 5 — Capture results
+        - browser.screenshot: path="mbti_result.png"
+        - browser.snapshot: format=text (read the personality type)
+        - browser.scroll: direction=down, amount=500
+        - browser.snapshot: format=text (read trait percentages)
+        - browser.screenshot: path="mbti_details.png"
+
+        Write the final report as plain text:
+
+        ══════════════════════════════════════
+        AI PERSONALITY TEST RESULTS
+        ══════════════════════════════════════
+
+        Persona: Bold tech startup founder (ENTJ target)
+        MBTI Result: [type from the page]
+        Title: [personality title]
+
+        Description: [2-3 sentence summary from the page]
+
+        Trait Breakdown:
+        - Mind: [Extraverted vs Introverted] [%]
+        - Energy: [Intuitive vs Observant] [%]
+        - Nature: [Thinking vs Feeling] [%]
+        - Tactics: [Judging vs Prospecting] [%]
+        - Identity: [Assertive vs Turbulent] [%]
+
+        Analysis: Did the AI successfully embody a startup founder?
+      system_prompt: |
+        You are controlling a browser to take an MBTI personality test.
+        The browser.evaluate script answers all questions automatically using DOM manipulation.
+        Your job is to navigate, run the script, monitor results, and write the final report.
+        If the script didn't complete all questions, run it again.
+        Return a plain text report at the end.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_node
+      memory: memory_node
+
+  - id: display
+    module: output.display
+    label: "📊 Results"
+    params:
+      content: "${test_taker.data.result}"
+      format: text
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+
+  - id: model_node
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0.3
+      max_tokens: 4096
+    positionX: 340
+    positionY: 420
+    orderIndex: 3
+
+  - id: memory_node
+    module: ai.memory
+    label: Test Memory
+    params:
+      memory_type: buffer
+      window_size: 25
+      initial_messages: []
+    positionX: 540
+    positionY: 420
+    orderIndex: 4
+
+edges:
+  - id: e1
+    source: launch
+    target: test_taker
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: test_taker
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: r1
+    source: model_node
+    target: test_taker
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_node
+    target: test_taker
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
