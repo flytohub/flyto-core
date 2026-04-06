@@ -60,40 +60,48 @@ steps:
           This gives you trending repo names.
         - browser.screenshot: path="github_trending.png"
 
-        After completing ALL 3 steps, return your analysis.
-        CRITICAL: Return ONLY a raw JSON object. No markdown, no ```json```, no code blocks.
-        Start with { and end with }.
+        After completing ALL 3 steps, write a formatted intelligence brief.
+        Use this EXACT format (plain text, not JSON, not markdown):
 
-        {
-          "date": "YYYY-MM-DD",
-          "top_hn_stories": [
-            {"rank": 1, "title": "actual title from extract", "points": "actual points", "topic": "category"},
-            ... up to 5
-          ],
-          "deep_dive": {
-            "title": "the #1 story title",
-            "url": "the URL you visited",
-            "summary": "3-4 sentence summary of the article content",
-            "why_it_matters": "why this matters for the tech industry"
-          },
-          "github_trending": ["repo1", "repo2", "repo3", "repo4", "repo5"],
-          "trend_analysis": {
-            "dominant_theme": "based on what you actually read today",
-            "emerging_signal": "any interesting pattern across HN + GitHub",
-            "sentiment": "bullish/bearish/neutral on tech"
-          },
-          "action_items": [
-            "concrete thing to research based on today's news",
-            "concrete thing to watch this week"
-          ]
-        }
+        ══════════════════════════════════════
+        DAILY TECH INTELLIGENCE BRIEF
+        Date: [today's date]
+        ══════════════════════════════════════
+
+        TOP 5 HACKER NEWS
+        1. [title] — [points] ([topic])
+        2. [title] — [points] ([topic])
+        3. [title] — [points] ([topic])
+        4. [title] — [points] ([topic])
+        5. [title] — [points] ([topic])
+
+        DEEP DIVE: [#1 story title]
+        URL: [url]
+        [3-4 sentence summary of the article]
+        Why it matters: [1-2 sentences]
+
+        GITHUB TRENDING
+        - [repo1]
+        - [repo2]
+        - [repo3]
+        - [repo4]
+        - [repo5]
+
+        TREND ANALYSIS
+        Theme: [dominant theme across HN + GitHub]
+        Signal: [emerging pattern worth watching]
+        Sentiment: [bullish/bearish/neutral]
+
+        ACTION ITEMS
+        → [concrete thing to research]
+        → [concrete thing to watch this week]
       system_prompt: |
         You are a senior tech analyst at a VC firm.
         RULES:
         - Always use browser.snapshot or browser.extract BEFORE trying to read any data
         - NEVER guess page content — only report what tools return to you
         - Execute ALL steps before generating the final answer
-        - Return ONLY raw JSON. No markdown, no code blocks, no explanation.
+        - Return a clean, readable plain text report. No JSON, no markdown code blocks.
     positionX: 420
     positionY: 200
     orderIndex: 1
@@ -106,7 +114,7 @@ steps:
     label: "📊 Intelligence Brief"
     params:
       content: "${analyst.data.result}"
-      format: json
+      format: text
     positionX: 760
     positionY: 200
     orderIndex: 2

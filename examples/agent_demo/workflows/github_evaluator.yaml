@@ -59,39 +59,43 @@ steps:
         11. Use browser.snapshot format=text to see open issues
         12. Count how many are open, note any critical labels
 
-        IMPORTANT: Return ONLY a raw JSON object. No markdown, no ```json```, no code blocks. Just the JSON object starting with { and ending with }.
-        {
-          "repo": "anthropics/anthropic-sdk-python",
-          "overview": {
-            "description": "what the project does",
-            "language": "primary language",
-            "license": "license type",
-            "stars": "actual number",
-            "forks": "actual number"
-          },
-          "health_metrics": {
-            "last_commit": "date of most recent commit",
-            "commit_frequency": "active/moderate/stale",
-            "open_issues": "number",
-            "issue_response": "fast/moderate/slow based on what you see"
-          },
-          "code_quality": {
-            "documentation": "excellent/good/poor - based on README quality",
-            "readme_completeness": "does it have: install, usage, API docs, examples?",
-            "test_coverage": "mentioned in repo? CI badges?"
-          },
-          "adoption_score": {
-            "score": "1-10",
-            "reasoning": "2-3 sentences explaining the score"
-          },
-          "recommendation": "adopt/evaluate/hold/avoid with reasoning",
-          "comparable_projects": ["similar projects worth comparing"]
-        }
+        After completing ALL steps, write a readable evaluation report.
+        Use this EXACT format (plain text, not JSON):
+
+        ══════════════════════════════════════
+        GITHUB PROJECT EVALUATION
+        ══════════════════════════════════════
+
+        Repository: anthropics/anthropic-sdk-python
+        Description: [what it does]
+        Language: [language] | License: [license]
+        Stars: [number] | Forks: [number]
+
+        HEALTH
+        Last commit: [date]
+        Activity: [active/moderate/stale]
+        Open issues: [number]
+        Response time: [fast/moderate/slow]
+
+        CODE QUALITY
+        Documentation: [excellent/good/poor]
+        README has: [install, usage, API docs, examples — list what's present]
+        Tests/CI: [what you found]
+
+        ADOPTION SCORE: [X/10]
+        [2-3 sentences explaining why]
+
+        RECOMMENDATION: [ADOPT / EVALUATE / HOLD / AVOID]
+        [1-2 sentences reasoning]
+
+        COMPARABLE PROJECTS
+        - [project 1]
+        - [project 2]
       system_prompt: |
         You are a senior staff engineer doing OSS due diligence.
         Be precise — extract real numbers, real dates, real data from the pages.
         Never guess or fabricate. If you can't find something, say "not found".
-        CRITICAL: Return ONLY raw JSON. No markdown, no code blocks, no ```.
+        Return a clean, readable plain text report. No JSON, no markdown code blocks.
     positionX: 420
     positionY: 200
     orderIndex: 1
@@ -104,7 +108,7 @@ steps:
     label: "📊 Evaluation Report"
     params:
       content: "${evaluator.data.result}"
-      format: json
+      format: text
     positionX: 760
     positionY: 200
     orderIndex: 2
