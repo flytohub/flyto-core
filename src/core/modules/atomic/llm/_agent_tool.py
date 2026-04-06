@@ -38,6 +38,7 @@ _TYPE_MAP = {
     "object": "object",
     "file": "string",
     "path": "string",
+    "any": "string",  # OpenAI doesn't support "any" — fallback to string
 }
 
 
@@ -79,6 +80,9 @@ def _params_to_json_schema(params_schema) -> Dict[str, Any]:
                 prop["items"] = {k: v for k, v in items_schema.items()
                                  if k in ("type", "description", "enum", "items", "properties", "default")}
                 if "type" not in prop["items"]:
+                    prop["items"]["type"] = "string"
+                # Fix invalid types (e.g., "any" → "string")
+                if prop["items"].get("type") in ("any",):
                     prop["items"]["type"] = "string"
             else:
                 prop["items"] = {"type": "string"}

@@ -1,0 +1,215 @@
+id: website-auditor
+name: AI Website Auditor
+version: 1.0.0
+description: >
+  Give it any URL — the AI agent performs a complete website audit:
+  accessibility, performance, SEO, mobile responsiveness.
+  Watch it resize the browser, take screenshots, and generate a scored report.
+
+steps:
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      headless: false
+      browser_type: chromium
+      stealth: true
+      locale: en-US
+      width: 1280
+      height: 720
+      behavior: fast
+    positionX: 80
+    positionY: 200
+    orderIndex: 0
+
+  - id: auditor
+    module: llm.agent
+    label: "🔍 Website Auditor"
+    params:
+      max_iterations: 20
+      max_input_size: 12000
+      tools:
+        - browser.goto
+        - browser.snapshot
+        - browser.scroll
+        - browser.extract
+        - browser.screenshot
+        - browser.evaluate
+        - browser.viewport
+        - browser.performance
+        - browser.readability
+      prompt_source: manual
+      task: |
+        You are a professional website auditor. Audit this website: https://flyto2.com
+
+        Follow these steps IN ORDER. Do ALL of them.
+
+        STEP 1 — First impression (Desktop)
+        - browser.goto the URL
+        - browser.screenshot: path="audit_desktop.png"
+        - browser.performance: collect web vitals (LCP, FCP, CLS, TTFB)
+
+        STEP 2 — Content & SEO check
+        - browser.evaluate: run this script to get SEO data:
+          return {
+            title: document.title,
+            metaDescription: document.querySelector('meta[name="description"]')?.content || 'MISSING',
+            h1Count: document.querySelectorAll('h1').length,
+            h2Count: document.querySelectorAll('h2').length,
+            imgWithoutAlt: document.querySelectorAll('img:not([alt])').length,
+            totalImages: document.querySelectorAll('img').length,
+            totalLinks: document.querySelectorAll('a').length,
+            externalLinks: [...document.querySelectorAll('a[href^="http"]')].filter(a => !a.href.includes(location.hostname)).length,
+            hasCanonical: !!document.querySelector('link[rel="canonical"]'),
+            hasViewportMeta: !!document.querySelector('meta[name="viewport"]'),
+            hasFavicon: !!document.querySelector('link[rel="icon"]') || !!document.querySelector('link[rel="shortcut icon"]'),
+            hasOpenGraph: !!document.querySelector('meta[property="og:title"]'),
+            language: document.documentElement.lang || 'NOT SET'
+          }
+
+        STEP 3 — Mobile responsiveness
+        - browser.viewport: width=375, height=812 (iPhone size)
+        - browser.screenshot: path="audit_mobile.png"
+        - browser.evaluate: check if content overflows horizontally:
+          return {
+            overflowsHorizontally: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+            bodyWidth: document.body.scrollWidth,
+            viewportWidth: document.documentElement.clientWidth
+          }
+
+        STEP 4 — Accessibility quick check
+        - browser.evaluate: run accessibility checks:
+          return {
+            formsWithoutLabels: document.querySelectorAll('input:not([aria-label]):not([id])').length,
+            buttonsWithoutText: [...document.querySelectorAll('button')].filter(b => !b.textContent.trim() && !b.getAttribute('aria-label')).length,
+            contrastIssues: 'manual check needed',
+            hasSkipLink: !!document.querySelector('a[href="#main"], a[href="#content"], .skip-link'),
+            hasLandmarks: document.querySelectorAll('main, nav, header, footer, aside').length,
+            tabIndex: document.querySelectorAll('[tabindex]').length
+          }
+
+        STEP 5 — Restore desktop and scroll check
+        - browser.viewport: width=1280, height=720
+        - browser.scroll: direction=down, amount=9999
+        - browser.screenshot: path="audit_footer.png"
+
+        Now write your audit report. Use this EXACT plain text format:
+
+        ══════════════════════════════════════════
+        WEBSITE AUDIT REPORT
+        URL: [the URL you audited]
+        ══════════════════════════════════════════
+
+        OVERALL SCORE: [X/100]
+
+        PERFORMANCE [X/25]
+        - LCP: [value] ([good/needs work/poor])
+        - FCP: [value] ([good/needs work/poor])
+        - TTFB: [value] ([good/needs work/poor])
+        - CLS: [value] ([good/needs work/poor])
+
+        SEO [X/25]
+        - Title: [present/missing] — "[actual title]"
+        - Meta description: [present/missing]
+        - H1 tags: [count] ([good if 1, warn if 0 or >1])
+        - Images without alt: [X of Y total]
+        - Canonical: [yes/no]
+        - Open Graph: [yes/no]
+        - Language: [value]
+
+        MOBILE [X/25]
+        - Viewport meta: [yes/no]
+        - Horizontal overflow: [yes/no]
+        - Visual check: [describe what you see in mobile screenshot]
+
+        ACCESSIBILITY [X/25]
+        - Landmark elements: [count]
+        - Skip link: [yes/no]
+        - Forms without labels: [count]
+        - Buttons without text: [count]
+
+        TOP 3 ISSUES TO FIX
+        1. [most critical issue and how to fix it]
+        2. [second issue and fix]
+        3. [third issue and fix]
+
+        WHAT'S DONE WELL
+        - [something positive about the site]
+        - [another positive thing]
+      system_prompt: |
+        You are a professional web auditor with expertise in performance, SEO, accessibility, and UX.
+        RULES:
+        - Use browser tools to gather REAL data. Never guess.
+        - Score fairly based on actual data, not assumptions.
+        - Performance benchmarks: LCP < 2.5s = good, < 4s = needs work, > 4s = poor. FCP < 1.8s = good. CLS < 0.1 = good. TTFB < 0.8s = good.
+        - Be specific in recommendations — say exactly what to fix and how.
+        - Return plain text report, not JSON.
+    positionX: 420
+    positionY: 200
+    orderIndex: 1
+    resources:
+      model: model_node
+      memory: memory_node
+
+  - id: display
+    module: output.display
+    label: "📊 Audit Report"
+    params:
+      content: "${auditor.data.result}"
+      format: text
+    positionX: 760
+    positionY: 200
+    orderIndex: 2
+
+  - id: model_node
+    module: ai.model
+    label: GPT-4o
+    params:
+      provider: openai
+      model: gpt-4o
+      temperature: 0
+      max_tokens: 4096
+    positionX: 340
+    positionY: 420
+    orderIndex: 3
+
+  - id: memory_node
+    module: ai.memory
+    label: Auditor Memory
+    params:
+      memory_type: buffer
+      window_size: 20
+      initial_messages: []
+    positionX: 540
+    positionY: 420
+    orderIndex: 4
+
+edges:
+  - id: e1
+    source: launch
+    target: auditor
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: e2
+    source: auditor
+    target: display
+    sourceHandle: output
+    targetHandle: target
+    type: glow
+    data: { edgeType: sequential, pathType: bezier }
+  - id: r1
+    source: model_node
+    target: auditor
+    sourceHandle: target
+    targetHandle: target-model
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
+  - id: r2
+    source: memory_node
+    target: auditor
+    sourceHandle: target
+    targetHandle: target-memory
+    type: glow
+    data: { edgeType: resource, pathType: bezier }
