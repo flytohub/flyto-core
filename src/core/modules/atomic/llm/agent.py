@@ -32,6 +32,11 @@ from ._tools import build_agent_system_prompt, build_task_prompt
 from ._interfaces import ChatModel, AgentTool, ChatResponse, ToolCallRequest
 from ._chat_models import create_chat_model
 from ._agent_tool import ModuleAgentTool
+from ._resilience import (
+    truncate_tool_result, SnapshotGuard, CircuitBreaker,
+    is_transient_error, is_session_dead,
+    scan_for_injection, BROWSER_POLICIES,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -338,6 +343,14 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     full_system = build_agent_system_prompt(system_prompt, openai_tools)
     full_system += _build_output_format_instructions(response_format, output_schema)
 
+    # Inject browser policies if any browser tools are connected
+    has_browser_tools = any(t.module_id.startswith("browser.") for t in tools if hasattr(t, 'module_id'))
+    if has_browser_tools:
+        full_system += "\n\n" + BROWSER_POLICIES
+        # Detect if browser is already running
+        if context.get('browser'):
+            full_system += "\n\nRUNTIME: Browser is ALREADY RUNNING. Do NOT call browser.launch — use browser.goto directly."
+
     if agent_type == 'react':
         full_system += _build_react_instructions()
 
@@ -367,10 +380,14 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
 async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                           max_iterations, steps, notify, context,
                           response_format='text', output_schema=None):
-    """Standard Tools Agent loop (function calling)."""
+    """Standard Tools Agent loop (function calling) with resilience protections."""
+    import asyncio
     total_tokens = 0
     tool_call_count = 0
-    max_input_size = context.get('params', {}).get('max_input_size', 10000)
+
+    # Resilience guards (ported from flyto-ai)
+    snapshot_guard = SnapshotGuard()
+    circuit = CircuitBreaker()
 
     for iteration in range(max_iterations):
         logger.info(f"Agent iteration {iteration + 1}/{max_iterations}")
@@ -378,16 +395,36 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
         if notify:
             await notify('agent:iteration', {'iteration': iteration + 1, 'max_iterations': max_iterations, 'tool_calls': tool_call_count})
 
+        # LLM call with timeout (prevent infinite hang)
         try:
-            response = await chat_model.chat(messages, tools=tool_defs if tool_defs else None, tool_choice="auto" if tool_defs else None)
+            response = await asyncio.wait_for(
+                chat_model.chat(messages, tools=tool_defs if tool_defs else None, tool_choice="auto" if tool_defs else None),
+                timeout=120,
+            )
+        except asyncio.TimeoutError:
+            return {'ok': False, 'error': 'LLM call timed out after 120s', 'error_code': 'LLM_TIMEOUT'}
         except Exception as e:
-            return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
+            error_msg = str(e)
+            # Retry once on transient LLM errors (rate limit, network)
+            if is_transient_error(error_msg):
+                logger.warning(f"Transient LLM error, retrying: {error_msg[:100]}")
+                try:
+                    await asyncio.sleep(2)
+                    response = await asyncio.wait_for(
+                        chat_model.chat(messages, tools=tool_defs if tool_defs else None, tool_choice="auto" if tool_defs else None),
+                        timeout=120,
+                    )
+                except Exception as e2:
+                    return {'ok': False, 'error': f'LLM call failed after retry: {e2}', 'error_code': 'LLM_ERROR'}
+            else:
+                return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
 
         total_tokens += response.tokens_used
 
         if response.tool_calls:
             for tc in response.tool_calls:
                 tool_args = json.loads(tc.arguments) if isinstance(tc.arguments, str) else tc.arguments
+                tool_module_id = tc.name.replace("--", ".")
                 steps.append({'type': 'tool_call', 'tool': tc.name, 'arguments': tool_args, 'iteration': iteration + 1})
                 logger.info(f"Agent calling tool: {tc.name}")
                 tool_call_count += 1
@@ -395,22 +432,73 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                 if notify:
                     await notify('agent:tool_call', {'tool': tc.name, 'arguments': tool_args, 'iteration': iteration + 1, 'tool_call_index': tool_call_count})
 
-                tool = tool_map.get(tc.name)
-                if tool:
-                    tool_result = await tool.invoke(tool_args, agent_context=context)
+                # Circuit breaker check
+                blocked = circuit.check(tool_module_id)
+                if blocked:
+                    tool_result = {'ok': False, 'error': blocked}
                 else:
-                    tool_result = {'ok': False, 'error': f'Tool not found: {tc.name}'}
+                    # SnapshotGuard: auto-inject snapshot if needed
+                    if snapshot_guard.needs_snapshot(tool_module_id):
+                        snapshot_tool = tool_map.get("browser--snapshot")
+                        if snapshot_tool:
+                            logger.info("SnapshotGuard: auto-injecting browser.snapshot before %s", tool_module_id)
+                            try:
+                                snap_result = await asyncio.wait_for(
+                                    snapshot_tool.invoke({"format": "text"}, agent_context=context),
+                                    timeout=30,
+                                )
+                                snapshot_guard.on_tool_call("browser.snapshot")
+                                # Inject snapshot result as context for the LLM
+                                snap_content = truncate_tool_result(snap_result)
+                                messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": f"auto_snap_{iteration}", "type": "function", "function": {"name": "browser--snapshot", "arguments": "{\"format\":\"text\"}"}}]})
+                                messages.append({"role": "tool", "tool_call_id": f"auto_snap_{iteration}", "content": snap_content})
+                            except Exception as snap_err:
+                                logger.warning(f"SnapshotGuard auto-snapshot failed: {snap_err}")
+
+                    # Execute tool with timeout
+                    tool = tool_map.get(tc.name)
+                    if tool:
+                        try:
+                            tool_result = await asyncio.wait_for(
+                                tool.invoke(tool_args, agent_context=context),
+                                timeout=60,
+                            )
+                        except asyncio.TimeoutError:
+                            tool_result = {'ok': False, 'error': f'Tool {tc.name} timed out after 60s'}
+                        except Exception as e:
+                            error_msg = str(e)
+                            # Retry once on transient tool errors
+                            if is_transient_error(error_msg):
+                                logger.warning(f"Transient tool error on {tc.name}, retrying: {error_msg[:100]}")
+                                try:
+                                    tool_result = await asyncio.wait_for(
+                                        tool.invoke(tool_args, agent_context=context),
+                                        timeout=60,
+                                    )
+                                except Exception as e2:
+                                    tool_result = {'ok': False, 'error': str(e2)}
+                            else:
+                                tool_result = {'ok': False, 'error': error_msg}
+                    else:
+                        tool_result = {'ok': False, 'error': f'Tool not found: {tc.name}'}
+
+                # Update guards
+                tool_ok = isinstance(tool_result, dict) and tool_result.get('ok', True) and 'error' not in tool_result
+                snapshot_guard.on_tool_call(tool_module_id)
+                circuit.record_result(tool_module_id, tool_ok, str(tool_result.get('error', '')) if isinstance(tool_result, dict) else '')
 
                 steps.append({'type': 'tool_result', 'tool': tc.name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
 
                 if notify:
-                    await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': isinstance(tool_result, dict) and tool_result.get('ok', True)})
+                    await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': tool_ok})
+
+                # Truncate + injection scan before adding to messages
+                tool_content = truncate_tool_result(tool_result)
+                injection_warning = scan_for_injection(tool_content)
+                if injection_warning:
+                    tool_content = injection_warning + "\n\n" + tool_content
 
                 messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc.id, "type": "function", "function": {"name": tc.name, "arguments": tc.arguments if isinstance(tc.arguments, str) else json.dumps(tc.arguments, ensure_ascii=False)}}]})
-                # Truncate tool result to prevent context overflow
-                tool_content = json.dumps(tool_result, ensure_ascii=False, default=str)
-                if len(tool_content) > max_input_size:
-                    tool_content = tool_content[:max_input_size] + f'\n... [truncated, {len(tool_content)} chars total]'
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": tool_content})
         else:
             final_response = _parse_output(response.content, response_format, output_schema)
@@ -452,10 +540,11 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
 
     The loop parses the text, executes tools, and feeds observations back.
     """
-    max_input_size = context.get('params', {}).get('max_input_size', 10000)
-    import re
+    import re, asyncio
     total_tokens = 0
     tool_call_count = 0
+    snapshot_guard = SnapshotGuard()
+    circuit = CircuitBreaker()
 
     for iteration in range(max_iterations):
         logger.info(f"ReAct iteration {iteration + 1}/{max_iterations}")
@@ -464,15 +553,15 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             await notify('agent:iteration', {'iteration': iteration + 1, 'max_iterations': max_iterations, 'tool_calls': tool_call_count})
 
         try:
-            # ReAct doesn't use function calling — pure text generation
-            response = await chat_model.chat(messages)
+            response = await asyncio.wait_for(chat_model.chat(messages), timeout=120)
+        except asyncio.TimeoutError:
+            return {'ok': False, 'error': 'LLM call timed out after 120s', 'error_code': 'LLM_TIMEOUT'}
         except Exception as e:
             return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
 
         total_tokens += response.tokens_used
         content = response.content.strip()
 
-        # Parse the response
         thought, action, final_answer = _parse_react_response(content)
 
         if thought:
@@ -485,36 +574,47 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             return {
                 'ok': True,
                 'data': {
-                    'result': parsed,
-                    'steps': steps,
-                    'tool_calls': tool_call_count,
-                    'tokens_used': total_tokens,
+                    'result': parsed, 'steps': steps,
+                    'tool_calls': tool_call_count, 'tokens_used': total_tokens,
                     'iterations': iteration + 1,
                 },
             }
 
         if action:
             tool_name, tool_args = action
+            tool_module_id = tool_name.replace("--", ".")
             steps.append({'type': 'tool_call', 'tool': tool_name, 'arguments': tool_args, 'iteration': iteration + 1})
             tool_call_count += 1
 
             if notify:
                 await notify('agent:tool_call', {'tool': tool_name, 'arguments': tool_args, 'iteration': iteration + 1, 'tool_call_index': tool_call_count})
 
-            tool = tool_map.get(tool_name)
-            if tool:
-                tool_result = await tool.invoke(tool_args, agent_context=context)
+            blocked = circuit.check(tool_module_id)
+            if blocked:
+                tool_result = {'ok': False, 'error': blocked}
             else:
-                tool_result = {'ok': False, 'error': f'Tool not found: {tool_name}'}
+                tool = tool_map.get(tool_name)
+                if tool:
+                    try:
+                        tool_result = await asyncio.wait_for(
+                            tool.invoke(tool_args, agent_context=context), timeout=60)
+                    except asyncio.TimeoutError:
+                        tool_result = {'ok': False, 'error': f'Tool {tool_name} timed out after 60s'}
+                    except Exception as e:
+                        tool_result = {'ok': False, 'error': str(e)}
+                else:
+                    tool_result = {'ok': False, 'error': f'Tool not found: {tool_name}'}
+
+            tool_ok = isinstance(tool_result, dict) and tool_result.get('ok', True) and 'error' not in tool_result
+            snapshot_guard.on_tool_call(tool_module_id)
+            circuit.record_result(tool_module_id, tool_ok, str(tool_result.get('error', '')) if isinstance(tool_result, dict) else '')
 
             steps.append({'type': 'tool_result', 'tool': tool_name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
 
             if notify:
-                await notify('agent:tool_result', {'tool': tool_name, 'iteration': iteration + 1, 'ok': isinstance(tool_result, dict) and tool_result.get('ok', True)})
+                await notify('agent:tool_result', {'tool': tool_name, 'iteration': iteration + 1, 'ok': tool_ok})
 
-            observation = json.dumps(tool_result, ensure_ascii=False, default=str)
-            if len(observation) > max_input_size:
-                observation = observation[:max_input_size] + f'\n... [truncated, {len(observation)} chars total]'
+            observation = truncate_tool_result(tool_result)
             messages.append({"role": "assistant", "content": content})
             messages.append({"role": "user", "content": f"Observation: {observation}"})
         else:

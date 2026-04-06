@@ -95,18 +95,23 @@ def _messages_to_anthropic(messages: List[Dict]) -> tuple:
 
 
 async def _http_post(url: str, headers: Dict, payload: Dict) -> Dict:
-    """HTTP POST with httpx, aiohttp fallback."""
+    """HTTP POST with httpx, aiohttp fallback. Validates response status."""
     try:
         import httpx
 
         async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(url, headers=headers, json=payload)
+            if response.status_code >= 500:
+                raise RuntimeError(f"Server error (HTTP {response.status_code}): {response.text[:200]}")
             return response.json()
     except ImportError:
         import aiohttp
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, headers=headers, json=payload) as response:
+                if response.status >= 500:
+                    text = await response.text()
+                    raise RuntimeError(f"Server error (HTTP {response.status}): {text[:200]}")
                 return await response.json()
 
 
@@ -168,8 +173,11 @@ class OpenAIChatModel:
         if "error" in result:
             raise RuntimeError(f"OpenAI API error: {result['error'].get('message', result['error'])}")
 
-        choice = result["choices"][0]
-        message = choice["message"]
+        choices = result.get("choices")
+        if not choices:
+            raise RuntimeError(f"OpenAI API returned empty choices: {json.dumps(result)[:300]}")
+        choice = choices[0]
+        message = choice.get("message", {})
         tokens = result.get("usage", {}).get("total_tokens", 0)
 
         tool_calls = []
