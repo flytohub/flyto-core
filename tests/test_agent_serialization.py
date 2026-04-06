@@ -166,7 +166,7 @@ class TestBackwardCompatibility:
             {"__data_type__": "ai_tool", "module_id": "http.request"},
             {"__data_type__": "ai_tool", "module_id": "data.json_parse"},
         ]}}
-        tools = _resolve_tools(context, [])
+        tools = _resolve_tools(context)
         assert len(tools) == 2
         assert tools[0].module_id == "http.request"
         assert tools[1].module_id == "data.json_parse"

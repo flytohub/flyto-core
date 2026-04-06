@@ -75,13 +75,25 @@ def _params_to_json_schema(params_schema) -> Dict[str, Any]:
         if json_type == "array":
             items_schema = param.get("items")
             if isinstance(items_schema, dict):
-                prop["items"] = items_schema
+                # Strip non-standard JSON Schema fields (placeholder, label, etc.)
+                prop["items"] = {k: v for k, v in items_schema.items()
+                                 if k in ("type", "description", "enum", "items", "properties", "default")}
+                if "type" not in prop["items"]:
+                    prop["items"]["type"] = "string"
             else:
                 prop["items"] = {"type": "string"}
 
         # Object: include properties if defined
-        if json_type == "object" and param.get("properties"):
-            prop["properties"] = param["properties"]
+        if json_type == "object":
+            raw_props = param.get("properties")
+            if isinstance(raw_props, dict):
+                # Recursively clean non-standard fields
+                prop["properties"] = {
+                    k: {sk: sv for sk, sv in v.items()
+                         if sk in ("type", "description", "enum", "items", "properties", "default")}
+                    if isinstance(v, dict) else v
+                    for k, v in raw_props.items()
+                }
 
         # Select → enum
         if flyto_type == "select" and param.get("options"):

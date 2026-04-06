@@ -233,7 +233,6 @@ def LLM_API_KEY(
         required=False,
         format="password",
         description='API key (leave empty to use environment variable)',
-        visibility=Visibility.EXPERT,
         group=FieldGroup.CONNECTION,
         hideIf={"provider": {"$in": ["ollama"]}},
         placeholder='Leave empty to use env variable',

@@ -162,7 +162,7 @@ class TestResolveTools:
         context = {"inputs": {"tools": [
             {"__data_type__": "ai_tool", "tool": mock_tool, "module_id": "http.request"},
         ]}}
-        result = _resolve_tools(context, [])
+        result = _resolve_tools(context)
         assert len(result) == 1
         assert result[0] is mock_tool
 
@@ -171,32 +171,21 @@ class TestResolveTools:
         context = {"inputs": {"tools": [
             {"__data_type__": "ai_tool", "module_id": "http.request"},
         ]}}
-        result = _resolve_tools(context, [])
+        result = _resolve_tools(context)
         assert len(result) == 1
         assert result[0].module_id == "http.request"
 
-    def test_param_tool_ids(self):
-        """Tools from params (manual configuration)."""
-        result = _resolve_tools({"inputs": {}}, ["data.json_parse", "string.uppercase"])
-        assert len(result) == 2
-        assert result[0].module_id == "data.json_parse"
-
-    def test_no_duplicate_param_tools(self):
-        """Param tool IDs don't duplicate connected tools."""
-        mock_tool = MagicMock()
-        mock_tool.module_id = "http.request"
-        context = {"inputs": {"tools": [
-            {"__data_type__": "ai_tool", "tool": mock_tool, "module_id": "http.request"},
-        ]}}
-        result = _resolve_tools(context, ["http.request"])
-        assert len(result) == 1  # no duplicate
+    def test_empty_tools(self):
+        """No tools connected returns empty list."""
+        result = _resolve_tools({"inputs": {}})
+        assert len(result) == 0
 
     def test_single_tool_not_list(self):
         """Single tool input (not wrapped in list)."""
         mock_tool = MagicMock()
         mock_tool.module_id = "test"
         context = {"inputs": {"tools": {"__data_type__": "ai_tool", "tool": mock_tool}}}
-        result = _resolve_tools(context, [])
+        result = _resolve_tools(context)
         assert len(result) == 1
 
 
