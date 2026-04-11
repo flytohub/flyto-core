@@ -183,7 +183,6 @@ def create_plugin_router(plugin_service=None):
 
         Returns health information for monitoring.
         """
-        # TODO: Integrate with HealthChecker
         installed = service.get_installed_plugins()
 
         return {

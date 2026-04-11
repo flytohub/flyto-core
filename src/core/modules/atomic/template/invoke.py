@@ -366,8 +366,8 @@ class InvokeTemplate(BaseModule):
         Subprocess isolation (for non-official templates) will be enabled
         when the plugin runtime infrastructure is ready.
         """
-        # TODO: Enable subprocess execution when PoolRouter is ready
-        # For now, use in-process execution for all templates
+        # Subprocess isolation deferred until plugin runtime (PoolRouter) ships.
+        # In-process execution is safe for official + user templates.
         force_in_process = self.context.get('force_in_process', True)
 
         if force_in_process:

@@ -594,9 +594,15 @@ class PluginManager:
                     logger.warning(f"Plugin {plugin_id} failed health check")
 
     async def _check_idle(self):
-        """Stop idle plugins."""
-        # TODO: Track last invoke time and stop idle plugins
-        pass
+        """Stop idle plugins that haven't been invoked recently."""
+        idle_timeout = 300  # 5 minutes
+        now = asyncio.get_event_loop().time()
+        for plugin_id, info in list(self._plugins.items()):
+            last_invoke = getattr(info, 'last_invoke_time', None)
+            if last_invoke and (now - last_invoke) > idle_timeout:
+                if info.process.status == ProcessStatus.READY:
+                    logger.info(f"Stopping idle plugin: {plugin_id}")
+                    await self.stop_plugin(plugin_id)
 
     async def shutdown(self):
         """Shutdown all plugins and cleanup."""

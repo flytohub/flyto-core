@@ -207,6 +207,7 @@ class EngineSDK(EngineSDKInterface):
         self._executions[execution_id] = {
             "status": ExecutionStatus.RUNNING,
             "started_at": datetime.now(),
+            "engine": None,
         }
 
         try:
@@ -219,6 +220,7 @@ class EngineSDK(EngineSDKInterface):
                 step_mode=options.step_mode,
                 breakpoints=set(options.breakpoints) if options.breakpoints else None,
             )
+            self._executions[execution_id]["engine"] = engine
 
             result = await engine.execute()
 
@@ -381,7 +383,9 @@ class EngineSDK(EngineSDKInterface):
             return False
 
         self._executions[execution_id]["status"] = ExecutionStatus.CANCELLED
-        # TODO: Implement actual cancellation via engine reference
+        engine = self._executions[execution_id].get("engine")
+        if engine and hasattr(engine, "cancel"):
+            engine.cancel()
         return True
 
     def pause(self, execution_id: str) -> bool:
@@ -390,7 +394,9 @@ class EngineSDK(EngineSDKInterface):
             return False
 
         self._executions[execution_id]["status"] = ExecutionStatus.PAUSED
-        # TODO: Implement actual pause via engine reference
+        engine = self._executions[execution_id].get("engine")
+        if engine and hasattr(engine, "pause"):
+            engine.pause()
         return True
 
     def resume(self, execution_id: str) -> bool:
@@ -402,7 +408,9 @@ class EngineSDK(EngineSDKInterface):
             return False
 
         self._executions[execution_id]["status"] = ExecutionStatus.RUNNING
-        # TODO: Implement actual resume via engine reference
+        engine = self._executions[execution_id].get("engine")
+        if engine and hasattr(engine, "resume"):
+            engine.resume()
         return True
 
     def parse_expression(self, expression: str) -> ParsedExpression:
