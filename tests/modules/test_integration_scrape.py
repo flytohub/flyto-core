@@ -241,7 +241,8 @@ class TestFullPipelineIntegration:
             url = item.get("url", "")
             from urllib.parse import urlparse
             parsed = urlparse(url)
-            if parsed.scheme not in ("http", "https") or (parsed.hostname and parsed.hostname.endswith("ycombinator.com")):
+            host = parsed.hostname or ""
+            if parsed.scheme not in ("http", "https") or host == "ycombinator.com" or host.endswith(".ycombinator.com"):
                 continue
             if len(articles) >= 2:
                 break
