@@ -97,6 +97,8 @@ class StepExecutor:
         workflow_id: str = "unknown",
         workflow_name: str = "Unnamed Workflow",
         total_steps: int = 0,
+        evolution: Optional["StepHealer"] = None,
+        recipe_id: Optional[str] = None,
     ):
         """
         Initialize step executor.
@@ -106,12 +108,16 @@ class StepExecutor:
             workflow_id: ID of the parent workflow (for logging/hooks)
             workflow_name: Name of the parent workflow (for hooks)
             total_steps: Total number of steps in workflow (for hooks)
+            evolution: Optional StepHealer for self-healing workflows
+            recipe_id: Recipe ID for evolution memory tracking
         """
         from ..hooks import NullHooks
         self._hooks = hooks or NullHooks()
         self._workflow_id = workflow_id
         self._workflow_name = workflow_name
         self._total_steps = total_steps
+        self._evolution = evolution
+        self._recipe_id = recipe_id
 
     def _create_step_context(
         self,
@@ -235,6 +241,10 @@ class StepExecutor:
                 step_id, f"Step aborted by hook: {pre_result.abort_reason}"
             )
 
+        # Evolution: apply known patches before execution
+        if self._evolution and self._recipe_id:
+            step_config = self._evolution.apply_known_patches(self._recipe_id, step_config)
+
         log_message = f"Executing step '{step_id}': {module_id}"
         if description:
             log_message += f" - {description}"
@@ -278,6 +288,25 @@ class StepExecutor:
                     step_trace.complete()
 
         except Exception as e:
+            # Evolution: attempt self-heal on browser step failures
+            healed = await self._try_heal(step_config, e, context)
+            if healed:
+                # Retry with patched config
+                try:
+                    result = await self._execute_single_step(
+                        healed, resolver, context, timeout, step_index, step_trace
+                    )
+                    context[step_id] = result
+                    output_var = step_config.get('output')
+                    if output_var:
+                        context[output_var] = result
+                    logger.info(f"Step '{step_id}' healed and completed successfully")
+                    if step_trace and step_trace.status in ("running", "pending", "failed"):
+                        step_trace.complete()
+                    return result
+                except Exception:
+                    pass  # Heal retry also failed, fall through to original error
+
             error = e
             # Record failed step trace
             if step_trace:
@@ -376,6 +405,54 @@ class StepExecutor:
             return self._handle_step_error(step_id, e, on_error)
         except StepExecutionError as e:
             return self._handle_step_error(step_id, e, on_error)
+
+    async def _try_heal(
+        self,
+        step_config: Dict[str, Any],
+        error: Exception,
+        context: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """Attempt to self-heal a failed step using Evolution Engine.
+
+        Returns patched step_config if healing succeeded, None otherwise.
+        """
+        if not self._evolution or not self._recipe_id:
+            return None
+
+        module_id = step_config.get("module", "")
+        from ..evolution.healer import is_healable
+        if not is_healable(module_id, error):
+            return None
+
+        # Get page context for AI analysis (if browser is available)
+        page_context = None
+        page = context.get("page")
+        if page:
+            try:
+                page_context = await page.content()
+                if len(page_context) > 3000:
+                    page_context = page_context[:3000]
+            except Exception:
+                pass
+
+        patch = await self._evolution.heal(step_config, error, page_context)
+        if not patch:
+            return None
+
+        # Apply patch to step config
+        patched = dict(step_config)
+        params = dict(patched.get("params", {}))
+        if patch["fix_type"] == "replace_param":
+            params[patch["param_key"]] = patch["new_value"]
+        elif patch["fix_type"] == "add_param":
+            params[patch["param_key"]] = patch["new_value"]
+        patched["params"] = params
+
+        # Save patch to memory for future runs
+        self._evolution._memory.add_patch(self._recipe_id, patch)
+
+        logger.info(f"Evolution: healed step '{step_config.get('id')}' — {patch.get('reason', 'auto-fixed')}")
+        return patched
 
     def _handle_step_error(
         self,

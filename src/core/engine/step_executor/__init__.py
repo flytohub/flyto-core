@@ -20,6 +20,8 @@ def create_step_executor(
     workflow_id: str = "unknown",
     workflow_name: str = "Unnamed Workflow",
     total_steps: int = 0,
+    evolution=None,
+    recipe_id: Optional[str] = None,
 ) -> StepExecutor:
     """
     Create a step executor instance.
@@ -29,6 +31,8 @@ def create_step_executor(
         workflow_id: Parent workflow ID
         workflow_name: Parent workflow name
         total_steps: Total steps in workflow
+        evolution: Optional StepHealer for self-healing workflows
+        recipe_id: Recipe ID for evolution memory tracking
 
     Returns:
         Configured StepExecutor instance
@@ -38,6 +42,8 @@ def create_step_executor(
         workflow_id=workflow_id,
         workflow_name=workflow_name,
         total_steps=total_steps,
+        evolution=evolution,
+        recipe_id=recipe_id,
     )
 
 

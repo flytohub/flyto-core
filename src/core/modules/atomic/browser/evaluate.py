@@ -62,7 +62,7 @@ from ...schema import compose, presets
     ],
     author='Flyto Team',
     license='MIT',
-    timeout_ms=30000,
+    timeout_ms=120000,
     required_permissions=["browser.automation"],
 )
 class BrowserEvaluateModule(BaseModule):

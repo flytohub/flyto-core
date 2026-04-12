@@ -359,19 +359,44 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         messages.extend(conversation_history)
     messages.append({"role": "user", "content": build_task_prompt(task, user_context)})
 
+    # ── Action recording (for Self-Grow compilation) ─────────
+    recorder = None
+    if context.get('_record_actions') or has_browser_tools:
+        from core.engine.evolution.compiler import ActionRecorder
+        recorder = ActionRecorder()
+
     # ── Dispatch to agent strategy ─────────────────────────────
     if agent_type == 'react':
-        return await _run_react_loop(
+        result = await _run_react_loop(
             chat_model, messages, tools, tool_defs, tool_map,
             max_iterations, steps=[], notify=notify, context=context,
             response_format=response_format, output_schema=output_schema,
+            recorder=recorder,
+        )
+    else:
+        result = await _run_tools_loop(
+            chat_model, messages, tools, tool_defs, tool_map,
+            max_iterations, steps=[], notify=notify, context=context,
+            response_format=response_format, output_schema=output_schema,
+            recorder=recorder,
         )
 
-    return await _run_tools_loop(
-        chat_model, messages, tools, tool_defs, tool_map,
-        max_iterations, steps=[], notify=notify, context=context,
-        response_format=response_format, output_schema=output_schema,
-    )
+    # Attach recorder to result for compilation
+    if recorder and recorder.actions and result.get('ok'):
+        result['_recorder'] = recorder
+        # Auto-compile if requested
+        if context.get('_compile_workflow'):
+            from ...engine.evolution.compiler import WorkflowCompiler
+            compiler = WorkflowCompiler()
+            yaml_str = compiler.compile_from_steps(
+                result.get('data', {}).get('steps', []),
+                name=context.get('_compile_name', 'generated-recipe'),
+                variables=context.get('_compile_variables'),
+            )
+            if yaml_str:
+                result['compiled_workflow'] = yaml_str
+
+    return result
 
 
 # ── Agent Loops ─────────────────────────────────────────────────
@@ -379,7 +404,8 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
 
 async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                           max_iterations, steps, notify, context,
-                          response_format='text', output_schema=None):
+                          response_format='text', output_schema=None,
+                          recorder=None):
     """Standard Tools Agent loop (function calling) with resilience protections."""
     import asyncio
     total_tokens = 0
@@ -489,6 +515,10 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
 
                 steps.append({'type': 'tool_result', 'tool': tc.name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
 
+                # Evolution: record browser actions for compilation
+                if recorder and tool_module_id.startswith('browser.'):
+                    recorder.record(tool_module_id, tool_args, tool_result)
+
                 if notify:
                     await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': tool_ok})
 
@@ -529,7 +559,8 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
 
 async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                           max_iterations, steps, notify, context,
-                          response_format='text', output_schema=None):
+                          response_format='text', output_schema=None,
+                          recorder=None):
     """ReAct Agent loop — Thought → Action → Observation chain.
 
     Instead of function calling, the LLM outputs structured text:
@@ -610,6 +641,10 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             circuit.record_result(tool_module_id, tool_ok, str(tool_result.get('error', '')) if isinstance(tool_result, dict) else '')
 
             steps.append({'type': 'tool_result', 'tool': tool_name, 'result': _summarize_tool_result(tool_result), 'iteration': iteration + 1})
+
+            # Evolution: record browser actions
+            if recorder and tool_module_id.startswith('browser.'):
+                recorder.record(tool_module_id, tool_args, tool_result)
 
             if notify:
                 await notify('agent:tool_result', {'tool': tool_name, 'iteration': iteration + 1, 'ok': tool_ok})

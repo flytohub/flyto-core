@@ -142,6 +142,19 @@ class WorkflowEngine:
         self._trace_collector: Optional[TraceCollector] = None
         self._execution_trace: Optional[ExecutionTrace] = None
 
+        # Evolution: self-healing workflows
+        self._evolution_healer = None
+        self._evolution_memory = None
+        self._recipe_id = workflow.get('recipe_id') or workflow.get('id', 'unknown')
+        if workflow.get('evolution', True):  # Enabled by default
+            try:
+                from ..evolution import StepHealer
+                from ..evolution.memory import EvolutionMemory
+                self._evolution_memory = EvolutionMemory()
+                self._evolution_healer = StepHealer(memory=self._evolution_memory)
+            except Exception:
+                pass  # Evolution is optional, don't break execution
+
     def _parse_params(
         self,
         param_schema: List[Dict[str, Any]],
@@ -210,6 +223,8 @@ class WorkflowEngine:
             workflow_id=self.workflow_id,
             workflow_name=self.workflow_name,
             total_steps=self._total_steps,
+            evolution=self._evolution_healer,
+            recipe_id=self._recipe_id,
         )
 
         # Initialize trace collector if tracing enabled
@@ -245,6 +260,10 @@ class WorkflowEngine:
             self.status = WorkflowStatus.COMPLETED
             self.end_time = time.time()
 
+            # Evolution: record successful run
+            if self._evolution_memory:
+                self._evolution_memory.record_run(self._recipe_id, success=True)
+
             logger.info(
                 f"Workflow completed successfully in {self.end_time - self.start_time:.2f}s"
             )
@@ -263,6 +282,10 @@ class WorkflowEngine:
         except Exception as e:
             self.status = WorkflowStatus.FAILURE
             self.end_time = time.time()
+
+            # Evolution: record failed run
+            if self._evolution_memory:
+                self._evolution_memory.record_run(self._recipe_id, success=False)
 
             logger.error(f"Workflow failed: {str(e)}")
 

@@ -176,11 +176,26 @@ Examples:
     replay_parser.add_argument('--run-dir',
                                help='Path to run state directory (default: .flyto-runs/latest)')
 
+    # Learn command — AI explores, then compiles to YAML recipe
+    learn_parser = subparsers.add_parser(
+        "learn",
+        help="AI explores a task, then compiles to a reusable recipe",
+        description="Describe a task in natural language. AI will explore using browser tools, "
+                    "then compile the successful path into a deterministic YAML workflow."
+    )
+    learn_parser.add_argument('task', help='Task description in natural language')
+    learn_parser.add_argument('--save', '-s', required=True, help='Recipe name to save as')
+    learn_parser.add_argument('--provider', default='openai', help='LLM provider (default: openai)')
+    learn_parser.add_argument('--model', default='gpt-4o', help='LLM model (default: gpt-4o)')
+    learn_parser.add_argument('--api-key', help='API key (default: from env)')
+    learn_parser.add_argument('--max-iterations', type=int, default=20, help='Max agent iterations')
+    learn_parser.add_argument('--variables', '-v', nargs='*', help='Template variables (key=value)')
+
     # Legacy mode: rewrite `flyto workflow.yaml` → `flyto run workflow.yaml`
     # so argparse routes it through the run subparser correctly.
     if len(sys.argv) > 1 and sys.argv[1] not in (
         'run', 'modules', 'plugin', 'serve', 'template',
-        'recipes', 'recipe', 'replay', '-h', '--help'
+        'recipes', 'recipe', 'replay', 'learn', '-h', '--help'
     ) and (sys.argv[1].endswith('.yaml') or sys.argv[1].endswith('.yml')):
         sys.argv.insert(1, 'run')
 
@@ -224,6 +239,25 @@ Examples:
         sys.exit(run_replay(
             from_step=args.from_step,
             run_dir_path=getattr(args, 'run_dir', None),
+        ))
+
+    # Handle 'learn' command
+    if args.command == 'learn':
+        from .learn import run_learn
+        variables = {}
+        if args.variables:
+            for v in args.variables:
+                if '=' in v:
+                    k, val = v.split('=', 1)
+                    variables[k] = val
+        sys.exit(run_learn(
+            task=args.task,
+            save_as=args.save,
+            provider=args.provider,
+            model=args.model,
+            api_key=args.api_key,
+            max_iterations=args.max_iterations,
+            variables=variables,
         ))
 
     # Handle 'run' command (legacy .yaml paths are rewritten to 'run' above)
