@@ -73,10 +73,22 @@ async def execute_with_retry(
 
             if attempt < max_retries:
                 wait_time = _calculate_wait_time(delay_ms, attempt, backoff)
+                backoff_ms = int(wait_time * 1000)
+                error_type = type(e).__name__
 
                 logger.warning(
                     f"Step '{step_id}' failed (attempt {attempt + 1}/{max_retries + 1}). "
-                    f"Retrying in {wait_time:.1f}s..."
+                    f"Retrying in {wait_time:.1f}s...",
+                    extra={
+                        "step_id": step_id,
+                        "retry_count": attempt + 1,
+                        "max_retries": max_retries + 1,
+                        "backoff_ms": backoff_ms,
+                        "backoff_strategy": backoff,
+                        "error_type": error_type,
+                        "error_message": str(e),
+                        "workflow_id": workflow_id,
+                    },
                 )
 
                 # Call retry hook
@@ -102,7 +114,16 @@ async def execute_with_retry(
 
                 await asyncio.sleep(wait_time)
             else:
-                logger.error(f"Step '{step_id}' failed after {max_retries + 1} attempts")
+                logger.error(
+                    f"Step '{step_id}' failed after {max_retries + 1} attempts",
+                    extra={
+                        "step_id": step_id,
+                        "total_attempts": max_retries + 1,
+                        "final_error_type": type(e).__name__,
+                        "final_error_message": str(e),
+                        "workflow_id": workflow_id,
+                    },
+                )
 
     raise StepExecutionError(
         step_id,

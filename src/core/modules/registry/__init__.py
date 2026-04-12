@@ -14,6 +14,14 @@ from .core import (
     REGISTRY_VERSION,
 )
 from .decorators import register_module
+from .resolve import (
+    resolve_tier,
+    resolve_can_be_start,
+    resolve_timeout_ms,
+    resolve_module_config,
+    enrich_port_handle_metadata,
+)
+from .metadata import build_module_metadata
 from ..express import module, mod, ParamHelper, create_simple_module
 from .ports import generate_dynamic_ports, slugify
 from .catalog import ModuleCatalogManager, get_catalog_manager
@@ -100,4 +108,14 @@ __all__ = [
     'QualityReport',
     'Severity',
     'validate_module_quality',
+
+    # Resolve (extracted from decorators.py)
+    'resolve_tier',
+    'resolve_can_be_start',
+    'resolve_timeout_ms',
+    'resolve_module_config',
+    'enrich_port_handle_metadata',
+
+    # Metadata (extracted from decorators.py)
+    'build_module_metadata',
 ]

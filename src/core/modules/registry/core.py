@@ -426,6 +426,76 @@ class ModuleRegistry:
         return cls._plugins
 
     @classmethod
+    def validate_connection_graph(cls) -> Dict[str, List[str]]:
+        """
+        Validate that all connection rules reference patterns that resolve
+        to at least one registered module.
+
+        Checks can_receive_from and can_connect_to for each module.
+        Wildcard patterns (e.g., "browser.*") are checked against category prefixes.
+        Special patterns ("*", "start", "end") are always valid.
+
+        Returns:
+            Dict with keys 'orphaned_receive' and 'orphaned_connect', each
+            containing a list of "module_id: pattern" strings for patterns
+            that don't match any registered module.
+        """
+        from ..connection_rules import matches_pattern
+
+        all_module_ids = list(cls._modules.keys())
+        # Pre-compute categories for wildcard matching
+        categories = {mid.split('.')[0] for mid in all_module_ids}
+        special_patterns = {'*', 'start', 'end', 'start.*'}
+
+        orphaned_receive: List[str] = []
+        orphaned_connect: List[str] = []
+
+        for module_id, metadata in cls._metadata.items():
+            for pattern in metadata.get('can_receive_from', []):
+                if pattern in special_patterns:
+                    continue
+                # Wildcard: check if category exists
+                if pattern.endswith('.*'):
+                    prefix = pattern[:-2]
+                    if prefix not in categories:
+                        orphaned_receive.append(f"{module_id}: {pattern}")
+                    continue
+                # Exact match: check if module exists
+                if not any(matches_pattern(mid, pattern) for mid in all_module_ids):
+                    orphaned_receive.append(f"{module_id}: {pattern}")
+
+            for pattern in metadata.get('can_connect_to', []):
+                if pattern in special_patterns:
+                    continue
+                if pattern.endswith('.*'):
+                    prefix = pattern[:-2]
+                    if prefix not in categories:
+                        orphaned_connect.append(f"{module_id}: {pattern}")
+                    continue
+                if not any(matches_pattern(mid, pattern) for mid in all_module_ids):
+                    orphaned_connect.append(f"{module_id}: {pattern}")
+
+        result = {
+            'orphaned_receive': orphaned_receive,
+            'orphaned_connect': orphaned_connect,
+        }
+
+        total = len(orphaned_receive) + len(orphaned_connect)
+        if total > 0:
+            logger.warning(
+                f"Connection graph validation: {total} orphaned pattern(s) found. "
+                f"receive={len(orphaned_receive)}, connect={len(orphaned_connect)}"
+            )
+            for entry in orphaned_receive[:10]:
+                logger.warning(f"  orphaned can_receive_from: {entry}")
+            for entry in orphaned_connect[:10]:
+                logger.warning(f"  orphaned can_connect_to: {entry}")
+        else:
+            logger.info("Connection graph validation: all patterns resolve OK")
+
+        return result
+
+    @classmethod
     def refresh(cls) -> Dict[str, PluginInfo]:
         """
         Refresh the registry by re-discovering all plugins.
