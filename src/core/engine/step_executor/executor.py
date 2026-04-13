@@ -344,6 +344,8 @@ class StepExecutor:
         step_params = step_config.get('params', {})
         resolved_params = resolver.resolve(step_params)
         resolved_params = self._substitute_local_vars(resolved_params)
+        from ..variable_resolver import VariableResolver
+        resolved_params = VariableResolver.resolve_tvars(resolved_params)
         on_error = step_config.get('on_error', 'stop')
 
         retry_config = step_config.get('retry', {})

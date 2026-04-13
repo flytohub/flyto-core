@@ -2,788 +2,1075 @@ id: security_audit_v3
 name: Domain Security Audit
 version: 3.0.0
 steps:
-  - id: start
-    module: flow.start
-    label: Start
-    params: {}
-    positionX: 60
-    positionY: 250
-    orderIndex: 0
+- id: start
+  module: flow.start
+  label: Start
+  params: {}
+  positionX: 100
+  positionY: 150
+  orderIndex: 0
+- id: launch
+  module: browser.launch
+  label: Launch Browser
+  params:
+    stealth: true
+    browser_type: chromium
+    behavior: fast
+    width: 1280
+    headless: false
+    height: 900
+    locale: en-US
+  positionX: 380
+  positionY: 150
+  orderIndex: 1
+- id: api_scan
+  module: browser.evaluate
+  label: API Data Collection
+  params:
+    script: "(async function() {\n  const domain = '[[domain]]';\n  const depth = '[[scan_depth]]';\n  const r = {};\n  r.scan_date = new Date().toISOString().split('T')[0];\n  r.scan_timestamp = new Date().toISOString();\n\
+      \  try { const d = await fetch('https://dns.google/resolve?name='+domain+'&type=A',{headers:{'Accept':'application/dns-json'}}); r.dns = await d.json(); } catch(e) { r.dns = {error: e.message}; }\n\
+      \  try { const ip = r.dns.Answer?.[0]?.data; if(ip){const s=await fetch('https://internetdb.shodan.io/'+ip); r.shodan=await s.json(); r.ip=ip;} } catch(e) { r.shodan = {error: e.message}; }\n  try\
+      \ { const c=await fetch('https://crt.sh/?q=%25.'+domain+'&output=json'); const cd=await c.json(); const u=[...new Set(cd.map(e=>e.common_name||e.name_value).filter(Boolean))].sort(); r.subdomains={total:cd.length,unique:u.length,list:u.slice(0,50),notable:u.filter(s=>/^(api|admin|staging|dev|test|internal|vpn|mail|ftp|db|ssh|jenkins|gitlab|grafana|monitor|backup|proxy|cdn)/i.test(s.split('.')[0]))};\
+      \ } catch(e) { r.subdomains = {error: e.message}; }\n  try { const resp=await fetch('https://'+domain,{method:'GET',redirect:'follow'}); const h={}; resp.headers.forEach((v,k)=>{h[k]=v;}); r.http={status:resp.status,redirected:resp.redirected,final_url:resp.url,headers:h};\
+      \ } catch(e) { r.http = {error: e.message}; }\n  for(const[key,type,name]of[['mx','MX',domain],['txt','TXT',domain],['dmarc','TXT','_dmarc.'+domain],['ns','NS',domain]]){try{const d=await fetch('https://dns.google/resolve?name='+name+'&type='+type,{headers:{'Accept':'application/dns-json'}});r[key]=await\
+      \ d.json();}catch(e){r[key]={error:e.message};}}\n  try{const tld=domain.split('.').pop();const url=tld==='com'||tld==='net'?'https://rdap.verisign.com/'+tld+'/v1/domain/'+domain:'https://rdap.org/domain/'+domain;const\
+      \ w=await fetch(url);if(w.ok){const wd=await w.json();const ev={};(wd.events||[]).forEach(e=>{ev[e.eventAction]=e.eventDate;});r.whois={registration:ev.registration||null,expiration:ev.expiration||null};}}catch(e){r.whois={error:e.message};}\n\
+      \  try{const ds=await fetch('https://dns.google/resolve?name='+domain+'&type=A&do=true',{headers:{'Accept':'application/dns-json'}});r.dnssec={authenticated:(await ds.json()).AD===true};}catch(e){r.dnssec={error:e.message};}\n\
+      \  if(depth==='deep'){\n    for(const[key,type]of[['caa','CAA'],['aaaa','AAAA']]){try{const d=await fetch('https://dns.google/resolve?name='+domain+'&type='+type,{headers:{'Accept':'application/dns-json'}});r[key]=await\
+      \ d.json();}catch(e){r[key]={error:e.message};}}\n    const paths=['/robots.txt','/.env','/.git/config','/.git/HEAD','/wp-login.php','/admin','/api','/.well-known/security.txt','/sitemap.xml','/swagger','/graphql','/actuator','/server-status','/phpinfo.php','/.DS_Store'];\n\
+      \    r.paths={};for(const p of paths){try{const x=await fetch('https://'+domain+p,{method:'HEAD',redirect:'manual'});r.paths[p]={status:x.status,exists:x.status<400};}catch(e){r.paths[p]={status:0,exists:false};}}\n\
+      \  }\n  return JSON.stringify(r, null, 2);\n})()\n"
+    _tvars:
+      domain: '{{domain}}'
+      scan_depth: '{{scan_depth}}'
+  positionX: 660
+  positionY: 150
+  orderIndex: 2
+- id: goto_site
+  module: browser.goto
+  label: Visit Target Site
+  params:
+    url: https://{{domain}}
+    wait_until: domcontentloaded
+    timeout: 15000
+  positionX: 940
+  positionY: 150
+  orderIndex: 3
+  on_error: continue
+- id: client_scan
+  module: browser.evaluate
+  label: Client-Side Scan
+  params:
+    script: "(function() {\n  const r = {meta_tags:{}, cookies:{}, third_party:{}, js_libs:{}, forms:{}, mixed_content:{}, info_disclosure:{}, js_patterns:{}, clickjacking:{}};\n  document.querySelectorAll('meta[http-equiv]').forEach(m=>{r.meta_tags[m.getAttribute('http-equiv').toLowerCase()]=m.getAttribute('content');});\n\
+      \  const ref=document.querySelector('meta[name=\"referrer\"]');if(ref)r.meta_tags['referrer-policy']=ref.getAttribute('content');\n  const csp=r.meta_tags['content-security-policy']||'';r.meta_tags['has-frame-ancestors']=csp.includes('frame-ancestors');\n\
+      \  const gen=document.querySelector('meta[name=\"generator\"]');if(gen)r.meta_tags['generator']=gen.getAttribute('content');\n  const cookies=document.cookie.split(';').filter(c=>c.trim());r.cookies={count:cookies.length,names:cookies.map(c=>c.trim().split('=')[0])};\n\
+      \  const host=location.hostname;const isExt=h=>h&&h!==host&&!h.endsWith('.'+host);\n  r.third_party.scripts=[...document.querySelectorAll('script[src]')].map(s=>{try{return new URL(s.src).hostname;}catch(e){return\
+      \ null;}}).filter(isExt);\n  r.third_party.unique_domains=[...new Set(r.third_party.scripts)];\n  r.third_party.iframes=[...document.querySelectorAll('iframe[src]')].map(f=>{try{return new URL(f.src).hostname;}catch(e){return\
+      \ null;}}).filter(Boolean);\n  r.js_libs.jquery=typeof jQuery!=='undefined'?jQuery.fn.jquery:null;\n  r.js_libs.vue=typeof Vue!=='undefined'?(Vue.version||true):null;\n  r.js_libs.react=typeof React!=='undefined'?(React.version||true):null;\n\
+      \  r.js_libs.angular=(function(){try{return document.querySelector('[ng-version]')?.getAttribute('ng-version')||null;}catch(e){return null;}})();\n  r.js_libs.lodash=typeof _!=='undefined'&&_.VERSION?_.VERSION:null;\n\
+      \  r.js_libs.bootstrap=(function(){try{return bootstrap?.Alert?.VERSION||null;}catch(e){return null;}})();\n  r.js_libs.moment=typeof moment!=='undefined'?moment.version:null;\n  const forms=[...document.querySelectorAll('form')];r.forms={count:forms.length,insecure_actions:forms.filter(f=>f.action&&f.action.startsWith('http://')).length,has_password:forms.some(f=>f.querySelector('input[type=\"\
+      password\"]'))};\n  r.mixed_content={http_images:document.querySelectorAll('img[src^=\"http://\"]').length,http_scripts:document.querySelectorAll('script[src^=\"http://\"]').length};r.mixed_content.has_mixed=r.mixed_content.http_images>0||r.mixed_content.http_scripts>0;\n\
+      \  const scripts=[...document.querySelectorAll('script:not([src])')];\n  r.info_disclosure={html_comments:(document.documentElement.innerHTML.match(/<!--[\\s\\S]*?-->/g)||[]).length,hidden_inputs:[...document.querySelectorAll('input[type=\"\
+      hidden\"]')].map(i=>i.name).filter(Boolean),inline_script_count:scripts.length};\n  r.js_patterns={findings:[],total_inline:scripts.length};\n  var checks=[{name:'eval()',test:function(c){return c.includes('eval(')},risk:'HIGH'},{name:'innerHTML=',test:function(c){return\
+      \ c.includes('.innerHTML=') || c.includes('.innerHTML =')},risk:'HIGH'},{name:'document.write',test:function(c){return c.includes('document.write(')},risk:'HIGH'},{name:'postMessage listener',test:function(c){return\
+      \ c.includes(\"addEventListener('message\") || c.includes('addEventListener(\"message')},risk:'MED'},{name:'localStorage sensitive',test:function(c){return c.includes('localStorage') && ['token','password','secret','api_key','auth'].some(function(k){return\
+      \ c.toLowerCase().includes(k)})},risk:'HIGH'}];\n  for(var i=0;i<scripts.length;i++){var code=scripts[i].textContent||'';if(code.length<10)continue;for(var j=0;j<checks.length;j++){if(checks[j].test(code))r.js_patterns.findings.push({pattern:checks[j].name,risk:checks[j].risk});}}\n\
+      \  if(r.meta_tags['x-frame-options'])r.clickjacking={frameable:false,protection:'X-Frame-Options (meta)'};\n  else if(r.meta_tags['has-frame-ancestors'])r.clickjacking={frameable:false,protection:'CSP\
+      \ frame-ancestors'};\n  else r.clickjacking={frameable:true,protection:'none'};\n  return JSON.stringify(r, null, 2);\n})()\n"
+  positionX: 1220
+  positionY: 150
+  orderIndex: 4
+- id: security_scan
+  module: browser.evaluate
+  label: Security Tests
+  params:
+    script: "(async function() {\n  const domain = '[[domain]]';\n  const r = {};\n  try{const resp=await fetch('https://'+domain,{headers:{'Origin':'https://evil.com'}});r.cors={acao:resp.headers.get('access-control-allow-origin'),acac:resp.headers.get('access-control-allow-credentials')};r.cors.reflects_origin=r.cors.acao==='https://evil.com';r.cors.wildcard=r.cors.acao==='*';r.cors.vulnerable=r.cors.reflects_origin||(r.cors.wildcard&&r.cors.acac==='true');}catch(e){r.cors={error:e.message};}\n\
+      \  try{const resp2=await fetch('https://'+domain,{headers:{'Origin':'null'}});r.cors.null_origin=resp2.headers.get('access-control-allow-origin');r.cors.allows_null=r.cors.null_origin==='null';}catch(e){}\n\
+      \  r.methods={allowed:[],dangerous:[]};\n  try{const opt=await fetch('https://'+domain,{method:'OPTIONS'});r.methods.allow_header=opt.headers.get('allow')||opt.headers.get('Access-Control-Allow-Methods')||'';}catch(e){}\n\
+      \  for(var m of['PUT','DELETE','TRACE']){try{const resp=await fetch('https://'+domain,{method:m});if(resp.status<405&&resp.status!==0)r.methods.dangerous.push({method:m,status:resp.status});}catch(e){}}\n\
+      \  try{const resp=await fetch('https://'+domain,{method:'HEAD'});r.server={server:resp.headers.get('server'),x_powered_by:resp.headers.get('x-powered-by'),via:resp.headers.get('via')};}catch(e){r.server={error:e.message};}\n\
+      \  try{const waf=await fetch('https://'+domain+'/?test=<script>alert(1)</script>',{redirect:'manual'});r.waf={status:waf.status,detected:waf.status===403||waf.status===406};}catch(e){r.waf={error:e.message};}\n\
+      \  r.source_maps=[];\n  var scripts=[...document.querySelectorAll('script[src]')].slice(0,8);\n  for(var s of scripts){try{const resp=await fetch(s.src);const text=await resp.text();const match=text.match(/\\\
+      /\\/[#@]\\s*sourceMappingURL=(.+)/);if(match){const mapUrl=new URL(match[1],s.src).href;const mr=await fetch(mapUrl,{method:'HEAD'});r.source_maps.push({script:s.src.split('/').pop(),map:match[1],accessible:mr.ok});}}catch(e){}}\n\
+      \  r.redirect={tested:0,vulnerable:[]};\n  for(var p of['?redirect=https://evil.com','?next=https://evil.com','?url=https://evil.com','?return=https://evil.com','?goto=https://evil.com','?callback=https://evil.com','?dest=https://evil.com','?returnTo=https://evil.com']){try{r.redirect.tested++;const\
+      \ resp=await fetch('https://'+domain+'/'+p,{redirect:'manual'});const loc=resp.headers.get('location')||'';if(loc.includes('evil.com'))r.redirect.vulnerable.push({payload:p,location:loc});}catch(e){}}\n\
+      \  r.xss={tested:[],reflected:[],xss_risk:[]};\n  var probe='flyto8x2test';\n  for(var param of['q','search','query','keyword','name','input','value','text','msg','error','page','id']){try{r.xss.tested.push(param);const\
+      \ resp=await fetch('https://'+domain+'/?'+param+'='+probe);const html=await resp.text();if(html.includes(probe)){r.xss.reflected.push(param);const resp2=await fetch('https://'+domain+'/?'+param+'='+encodeURIComponent('<img\
+      \ src=x onerror='+probe+'>'));const html2=await resp2.text();if(html2.includes('onerror='+probe))r.xss.xss_risk.push(param);}}catch(e){}}\n  r.rate_limit={requests:0,blocked_at:null,statuses:[]};\n\
+      \  for(var i=0;i<20;i++){try{const resp=await fetch('https://'+domain+'/?_bust='+i+Date.now(),{cache:'no-store'});r.rate_limit.statuses.push(resp.status);r.rate_limit.requests++;if(resp.status===429||resp.status===503){r.rate_limit.blocked_at=i+1;break;}}catch(e){r.rate_limit.blocked_at=i+1;break;}}\n\
+      \  r.login={found:false};\n  for(var path of['/login','/signin','/auth','/admin','/dashboard','/account']){try{const resp=await fetch('https://'+domain+path,{redirect:'follow'});if(resp.ok){const\
+      \ html=await resp.text();if(html.includes('type=\"password\"')||html.includes(\"type='password'\")){r.login={found:true,url:'https://'+domain+path,https:resp.url.startsWith('https'),csrf:html.includes('csrf')||html.includes('_token'),captcha:html.includes('captcha')||html.includes('recaptcha')||html.includes('hcaptcha'),autocomplete_off:html.includes('autocomplete=\"\
+      off\"')};break;}}}catch(e){}}\n  return JSON.stringify(r, null, 2);\n})()\n"
+    _tvars:
+      domain: '{{domain}}'
+  positionX: 1500
+  positionY: 150
+  orderIndex: 5
+- id: deep_scan
+  module: browser.evaluate
+  label: Deep Security Tests
+  params:
+    script: "(async function() {\n  const domain = '[[domain]]';\n  const r = {};\n  r.subdomain_takeover={tested:[],risks:[]};\n  var indicators=[\"There isn't a GitHub Pages site here\",\"NoSuchBucket\"\
+      ,\"NoSuchKey\",\"Heroku | No such app\",\"404 Blog is not found\",\"Do you want to register\",\"Fastly error: unknown domain\",\"Repository not found\",\"Project not found\"];\n  var checkSubs=['api.'+domain,'blog.'+domain,'cloud.'+domain,'docs.'+domain,'dev.'+domain,'staging.'+domain,'admin.'+domain,'mail.'+domain];\n\
+      \  for(var sub of checkSubs.slice(0,8)){if(sub===location.hostname)continue;r.subdomain_takeover.tested.push(sub);try{const resp=await fetch('https://'+sub,{redirect:'follow',signal:AbortSignal.timeout(3000)});const\
+      \ text=await resp.text();for(var ind of indicators){if(text.includes(ind)){r.subdomain_takeover.risks.push({subdomain:sub,indicator:ind});break;}}}catch(e){r.subdomain_takeover.tested[r.subdomain_takeover.tested.length-1]+='\
+      \ (unreachable)';}}\n  r.js_cves={detected:{},vulns:[]};\n  var libs={jquery:typeof jQuery!=='undefined'?jQuery.fn.jquery:null,vue:typeof Vue!=='undefined'?(Vue.version||null):null,react:typeof React!=='undefined'?(React.version||null):null,lodash:typeof\
+      \ _!=='undefined'&&_.VERSION?_.VERSION:null,moment:typeof moment!=='undefined'?moment.version:null};\n  for(var[name,ver]of Object.entries(libs)){if(!ver)continue;r.js_cves.detected[name]=ver;try{const\
+      \ resp=await fetch('https://api.osv.dev/v1/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:{name:name,ecosystem:'npm'},version:ver})});const data=await\
+      \ resp.json();if(data.vulns?.length>0)for(var v of data.vulns.slice(0,3))r.js_cves.vulns.push({lib:name,ver:ver,id:v.id,summary:(v.summary||'').slice(0,150),aliases:(v.aliases||[]).slice(0,2)});}catch(e){}}\n\
+      \  return JSON.stringify(r, null, 2);\n})()\n"
+    _tvars:
+      domain: '{{domain}}'
+  positionX: 1780
+  positionY: 150
+  orderIndex: 5.5
+  on_error: continue
+- id: goto_error
+  module: browser.goto
+  label: Visit 404 Page
+  params:
+    url: https://{{domain}}/flyto-pentest-404-xYz9
+    wait_until: domcontentloaded
+    timeout: 10000
+  positionX: 2060
+  positionY: 150
+  orderIndex: 6
+  on_error: continue
+- id: error_scan
+  module: browser.evaluate
+  label: Error Page Scan
+  params:
+    script: "(function() {\n  var text = (document.body && document.body.innerText) || '';\n  var lc = text.toLowerCase();\n  var servers = ['nginx','apache','iis','express','django','flask','laravel','tomcat','node.js'];\n\
+      \  var traces = ['stack trace','traceback','exception','syntaxerror','typeerror','referenceerror'];\n  var paths = ['/var/','/usr/','/home/','/opt/'];\n  return JSON.stringify({\n    status: document.title\
+      \ || '',\n    has_stack_trace: traces.some(function(t){ return lc.indexOf(t) !== -1; }),\n    leaks_server: servers.some(function(s){ return lc.indexOf(s) !== -1; }),\n    leaks_path: paths.some(function(p){\
+      \ return text.indexOf(p) !== -1; }),\n    is_custom: text.length > 50,\n    page_length: text.length\n  }, null, 2);\n})()\n"
+  positionX: 2340
+  positionY: 150
+  orderIndex: 7
+- id: reporter
+  module: llm.agent
+  label: Report Generator
+  params:
+    prompt_source: manual
+    prompt_path: '{{input}}'
+    join_strategy: first
+    max_input_size: 60000
+    agent_type: tools
+    system_prompt: "You are a professional security report writer. All scan data has been collected by deterministic steps.\nYour ONLY job is to analyze the data and produce the report. Do NOT run any tools.\n\
+      \nLANGUAGE: Write the ENTIRE report in the language specified.\nSupported: en, zh-TW, zh-CN, ja, ko, de, fr, es, pt-BR, it, pl, tr, vi, th, hi, id.\nTechnical terms (CSP, HSTS, CVE, TLS, etc.) keep\
+      \ their abbreviation.\n\nSITE CLASSIFICATION — determine this from the scan data:\n- If no login page found AND no password forms AND hosting on GitHub Pages/Netlify/Vercel → STATIC\n- If login page\
+      \ found OR API endpoints OR database indicators → DYNAMIC\n- If only API responses, no HTML → API\n- If payment forms or Stripe/PayPal detected → E-COMMERCE\nSTATIC sites get LOWER severity for: rate\
+      \ limiting, WAF, CORS wildcard, clickjacking, open redirect.\n\nACCURACY:\n- Use ONLY the provided scan data. NEVER fabricate or guess.\n- If a field is null/error/missing → write \"Not available\"\
+      \ with explanation.\n- For security headers: check BOTH api_data.http.headers AND client_data.meta_tags.\n  A header is ✅ if found in EITHER source. Show \"HTTP\" or \"Meta\" in Source column.\n-\
+      \ HSTS, COOP, CORP can only work via HTTP headers, not meta tags — note this.\n- Include the ACTUAL scan date from api_data.scan_date.\n\
+      \nRISK SCORING — calculate the Overall Risk score (0-100) transparently:\n  Start at 0. Add points for each finding:\n  +25 per CRITICAL (RCE, SQLi, auth bypass, subdomain takeover)\n  +15 per HIGH (reflected XSS, open redirect with exploit, exposed secrets)\n  +8 per MEDIUM (missing HSTS, no SPF, clickjacking on dynamic site, CORS reflects origin)\n  +3 per LOW (missing optional headers, no WAF on static, no rate limit on static)\n  +0 for platform-limited items that CANNOT be fixed\n  Cap at 100. Show the breakdown in the Risk Score section so the reader understands WHY.\n  For STATIC sites: clickjacking, rate limiting, WAF absence score as LOW (+3), not MEDIUM.\n\
+      \nRECOMMENDATIONS — every recommendation MUST include:\n  1. What: one-line description\n  2. Why: concrete impact (not generic \"improves security\")\n  3. Fix: exact command, config snippet, or step-by-step instructions that can be copy-pasted\n  4. Where: which system to apply it (DNS provider, server config, HTML, CI/CD)\n  5. Effort: Low (5 min) / Medium (30 min) / High (hours)\n  6. If platform-limited: say so AND suggest the workaround or alternative platform\n  Separate ACTIONABLE fixes from PLATFORM-LIMITED items. Actionable fixes come first.\n  Examples of good fixes:\n  - SPF: \"Add TXT record to DNS: v=spf1 include:_spf.google.com -all\" (or v=spf1 -all if no email)\n  - DNSSEC: \"Enable in GoDaddy → Domain Settings → DNS Security → Enable\"\n  - CSP frame-ancestors: \"Add to existing CSP meta tag: frame-ancestors 'self'\"\n  - security.txt: \"Create .well-known/security.txt with Contact, Expires, Policy fields\"\n\
+      \nEXECUTIVE SUMMARY — add a 3-5 sentence non-technical summary right after the risk score box.\n  Written for a CTO or compliance officer who will not read the full report.\n  State: what was scanned, the overall posture, the #1 risk, and the single most impactful fix.\n"
+    response_format: text
+    output_schema: {}
+    context:
+      target_domain: '{{domain}}'
+      report_language: '{{language}}'
+      scan_depth: '{{scan_depth}}'
+      api_data: '{{api_scan.result}}'
+      client_data: '{{client_scan.result}}'
+      security_data: '{{security_scan.result}}'
+      deep_scan_data: '{{deep_scan.result}}'
+      error_page_data: '{{error_scan.result}}'
+    max_iterations: 5
+    provider: openai
+    model: gpt-4o
+    temperature: 0.1
+    tools: []
+    task: 'Generate a security audit report for [[domain]] in {{language}}.
 
-  - id: launch
-    module: browser.launch
-    label: Launch Browser
-    params:
-      stealth: true
-      browser_type: chromium
-      behavior: fast
-      width: 1280
-      headless: false
-      height: 900
-      locale: en-US
-    positionX: 180
-    positionY: 250
-    orderIndex: 1
+      ALL scan data is below. Do NOT run any tools. Just analyze and write the report.
 
-  - id: api_scan
-    module: browser.evaluate
-    label: API Data Collection
-    params:
-      script: |
-        (async function() {
-          const domain = '[[domain]]';
-          const depth = '[[scan_depth]]';
-          const r = {};
-          r.scan_date = new Date().toISOString().split('T')[0];
-          r.scan_timestamp = new Date().toISOString();
-          try { const d = await fetch('https://dns.google/resolve?name='+domain+'&type=A',{headers:{'Accept':'application/dns-json'}}); r.dns = await d.json(); } catch(e) { r.dns = {error: e.message}; }
-          try { const ip = r.dns.Answer?.[0]?.data; if(ip){const s=await fetch('https://internetdb.shodan.io/'+ip); r.shodan=await s.json(); r.ip=ip;} } catch(e) { r.shodan = {error: e.message}; }
-          try { const c=await fetch('https://crt.sh/?q=%25.'+domain+'&output=json'); const cd=await c.json(); const u=[...new Set(cd.map(e=>e.common_name||e.name_value).filter(Boolean))].sort(); r.subdomains={total:cd.length,unique:u.length,list:u.slice(0,50),notable:u.filter(s=>/^(api|admin|staging|dev|test|internal|vpn|mail|ftp|db|ssh|jenkins|gitlab|grafana|monitor|backup|proxy|cdn)/i.test(s.split('.')[0]))}; } catch(e) { r.subdomains = {error: e.message}; }
-          try { const resp=await fetch('https://'+domain,{method:'GET',redirect:'follow'}); const h={}; resp.headers.forEach((v,k)=>{h[k]=v;}); r.http={status:resp.status,redirected:resp.redirected,final_url:resp.url,headers:h}; } catch(e) { r.http = {error: e.message}; }
-          for(const[key,type,name]of[['mx','MX',domain],['txt','TXT',domain],['dmarc','TXT','_dmarc.'+domain],['ns','NS',domain]]){try{const d=await fetch('https://dns.google/resolve?name='+name+'&type='+type,{headers:{'Accept':'application/dns-json'}});r[key]=await d.json();}catch(e){r[key]={error:e.message};}}
-          try{const tld=domain.split('.').pop();const url=tld==='com'||tld==='net'?'https://rdap.verisign.com/'+tld+'/v1/domain/'+domain:'https://rdap.org/domain/'+domain;const w=await fetch(url);if(w.ok){const wd=await w.json();const ev={};(wd.events||[]).forEach(e=>{ev[e.eventAction]=e.eventDate;});r.whois={registration:ev.registration||null,expiration:ev.expiration||null};}}catch(e){r.whois={error:e.message};}
-          try{const ds=await fetch('https://dns.google/resolve?name='+domain+'&type=A&do=true',{headers:{'Accept':'application/dns-json'}});r.dnssec={authenticated:(await ds.json()).AD===true};}catch(e){r.dnssec={error:e.message};}
-          if(depth==='deep'){
-            for(const[key,type]of[['caa','CAA'],['aaaa','AAAA']]){try{const d=await fetch('https://dns.google/resolve?name='+domain+'&type='+type,{headers:{'Accept':'application/dns-json'}});r[key]=await d.json();}catch(e){r[key]={error:e.message};}}
-            const paths=['/robots.txt','/.env','/.git/config','/.git/HEAD','/wp-login.php','/admin','/api','/.well-known/security.txt','/sitemap.xml','/swagger','/graphql','/actuator','/server-status','/phpinfo.php','/.DS_Store'];
-            r.paths={};for(const p of paths){try{const x=await fetch('https://'+domain+p,{method:'HEAD',redirect:'manual'});r.paths[p]={status:x.status,exists:x.status<400};}catch(e){r.paths[p]={status:0,exists:false};}}
-          }
-          return JSON.stringify(r, null, 2);
-        })()
-      _tvars:
-        domain: '{{domain}}'
-        scan_depth: '{{scan_depth}}'
-    positionX: 310
-    positionY: 150
-    orderIndex: 2
 
-  - id: goto_site
-    module: browser.goto
-    label: Visit Target Site
-    params:
-      url: 'https://{{domain}}'
-      wait_until: domcontentloaded
-      timeout: 15000
-    positionX: 440
-    positionY: 150
-    orderIndex: 3
-    on_error: continue
+      === API SCAN DATA ===
 
-  - id: client_scan
-    module: browser.evaluate
-    label: Client-Side Scan
-    params:
-      script: |
-        (function() {
-          const r = {meta_tags:{}, cookies:{}, third_party:{}, js_libs:{}, forms:{}, mixed_content:{}, info_disclosure:{}, js_patterns:{}, clickjacking:{}};
-          document.querySelectorAll('meta[http-equiv]').forEach(m=>{r.meta_tags[m.getAttribute('http-equiv').toLowerCase()]=m.getAttribute('content');});
-          const ref=document.querySelector('meta[name="referrer"]');if(ref)r.meta_tags['referrer-policy']=ref.getAttribute('content');
-          const csp=r.meta_tags['content-security-policy']||'';r.meta_tags['has-frame-ancestors']=csp.includes('frame-ancestors');
-          const gen=document.querySelector('meta[name="generator"]');if(gen)r.meta_tags['generator']=gen.getAttribute('content');
-          const cookies=document.cookie.split(';').filter(c=>c.trim());r.cookies={count:cookies.length,names:cookies.map(c=>c.trim().split('=')[0])};
-          const host=location.hostname;const isExt=h=>h&&h!==host&&!h.endsWith('.'+host);
-          r.third_party.scripts=[...document.querySelectorAll('script[src]')].map(s=>{try{return new URL(s.src).hostname;}catch(e){return null;}}).filter(isExt);
-          r.third_party.unique_domains=[...new Set(r.third_party.scripts)];
-          r.third_party.iframes=[...document.querySelectorAll('iframe[src]')].map(f=>{try{return new URL(f.src).hostname;}catch(e){return null;}}).filter(Boolean);
-          r.js_libs.jquery=typeof jQuery!=='undefined'?jQuery.fn.jquery:null;
-          r.js_libs.vue=typeof Vue!=='undefined'?(Vue.version||true):null;
-          r.js_libs.react=typeof React!=='undefined'?(React.version||true):null;
-          r.js_libs.angular=(function(){try{return document.querySelector('[ng-version]')?.getAttribute('ng-version')||null;}catch(e){return null;}})();
-          r.js_libs.lodash=typeof _!=='undefined'&&_.VERSION?_.VERSION:null;
-          r.js_libs.bootstrap=(function(){try{return bootstrap?.Alert?.VERSION||null;}catch(e){return null;}})();
-          r.js_libs.moment=typeof moment!=='undefined'?moment.version:null;
-          const forms=[...document.querySelectorAll('form')];r.forms={count:forms.length,insecure_actions:forms.filter(f=>f.action&&f.action.startsWith('http://')).length,has_password:forms.some(f=>f.querySelector('input[type="password"]'))};
-          r.mixed_content={http_images:document.querySelectorAll('img[src^="http://"]').length,http_scripts:document.querySelectorAll('script[src^="http://"]').length};r.mixed_content.has_mixed=r.mixed_content.http_images>0||r.mixed_content.http_scripts>0;
-          const scripts=[...document.querySelectorAll('script:not([src])')];
-          r.info_disclosure={html_comments:(document.documentElement.innerHTML.match(/<!--[\s\S]*?-->/g)||[]).length,hidden_inputs:[...document.querySelectorAll('input[type="hidden"]')].map(i=>i.name).filter(Boolean),inline_script_count:scripts.length};
-          r.js_patterns={findings:[],total_inline:scripts.length};
-          var checks=[{name:'eval()',test:function(c){return c.includes('eval(')},risk:'HIGH'},{name:'innerHTML=',test:function(c){return c.includes('.innerHTML=') || c.includes('.innerHTML =')},risk:'HIGH'},{name:'document.write',test:function(c){return c.includes('document.write(')},risk:'HIGH'},{name:'postMessage listener',test:function(c){return c.includes("addEventListener('message") || c.includes('addEventListener("message')},risk:'MED'},{name:'localStorage sensitive',test:function(c){return c.includes('localStorage') && ['token','password','secret','api_key','auth'].some(function(k){return c.toLowerCase().includes(k)})},risk:'HIGH'}];
-          for(var i=0;i<scripts.length;i++){var code=scripts[i].textContent||'';if(code.length<10)continue;for(var j=0;j<checks.length;j++){if(checks[j].test(code))r.js_patterns.findings.push({pattern:checks[j].name,risk:checks[j].risk});}}
-          if(r.meta_tags['x-frame-options'])r.clickjacking={frameable:false,protection:'X-Frame-Options (meta)'};
-          else if(r.meta_tags['has-frame-ancestors'])r.clickjacking={frameable:false,protection:'CSP frame-ancestors'};
-          else r.clickjacking={frameable:true,protection:'none'};
-          return JSON.stringify(r, null, 2);
-        })()
-    positionX: 570
-    positionY: 150
-    orderIndex: 4
+      {{api_scan.result}}
 
-  - id: security_scan
-    module: browser.evaluate
-    label: Security Tests
-    params:
-      script: |
-        (async function() {
-          const domain = '[[domain]]';
-          const r = {};
-          try{const resp=await fetch('https://'+domain,{headers:{'Origin':'https://evil.com'}});r.cors={acao:resp.headers.get('access-control-allow-origin'),acac:resp.headers.get('access-control-allow-credentials')};r.cors.reflects_origin=r.cors.acao==='https://evil.com';r.cors.wildcard=r.cors.acao==='*';r.cors.vulnerable=r.cors.reflects_origin||(r.cors.wildcard&&r.cors.acac==='true');}catch(e){r.cors={error:e.message};}
-          try{const resp2=await fetch('https://'+domain,{headers:{'Origin':'null'}});r.cors.null_origin=resp2.headers.get('access-control-allow-origin');r.cors.allows_null=r.cors.null_origin==='null';}catch(e){}
-          r.methods={allowed:[],dangerous:[]};
-          try{const opt=await fetch('https://'+domain,{method:'OPTIONS'});r.methods.allow_header=opt.headers.get('allow')||opt.headers.get('Access-Control-Allow-Methods')||'';}catch(e){}
-          for(var m of['PUT','DELETE','TRACE']){try{const resp=await fetch('https://'+domain,{method:m});if(resp.status<405&&resp.status!==0)r.methods.dangerous.push({method:m,status:resp.status});}catch(e){}}
-          try{const resp=await fetch('https://'+domain,{method:'HEAD'});r.server={server:resp.headers.get('server'),x_powered_by:resp.headers.get('x-powered-by'),via:resp.headers.get('via')};}catch(e){r.server={error:e.message};}
-          try{const waf=await fetch('https://'+domain+'/?test=<script>alert(1)</script>',{redirect:'manual'});r.waf={status:waf.status,detected:waf.status===403||waf.status===406};}catch(e){r.waf={error:e.message};}
-          r.source_maps=[];
-          var scripts=[...document.querySelectorAll('script[src]')].slice(0,8);
-          for(var s of scripts){try{const resp=await fetch(s.src);const text=await resp.text();const match=text.match(/\/\/[#@]\s*sourceMappingURL=(.+)/);if(match){const mapUrl=new URL(match[1],s.src).href;const mr=await fetch(mapUrl,{method:'HEAD'});r.source_maps.push({script:s.src.split('/').pop(),map:match[1],accessible:mr.ok});}}catch(e){}}
-          r.redirect={tested:0,vulnerable:[]};
-          for(var p of['?redirect=https://evil.com','?next=https://evil.com','?url=https://evil.com','?return=https://evil.com','?goto=https://evil.com','?callback=https://evil.com','?dest=https://evil.com','?returnTo=https://evil.com']){try{r.redirect.tested++;const resp=await fetch('https://'+domain+'/'+p,{redirect:'manual'});const loc=resp.headers.get('location')||'';if(loc.includes('evil.com'))r.redirect.vulnerable.push({payload:p,location:loc});}catch(e){}}
-          r.xss={tested:[],reflected:[],xss_risk:[]};
-          var probe='flyto8x2test';
-          for(var param of['q','search','query','keyword','name','input','value','text','msg','error','page','id']){try{r.xss.tested.push(param);const resp=await fetch('https://'+domain+'/?'+param+'='+probe);const html=await resp.text();if(html.includes(probe)){r.xss.reflected.push(param);const resp2=await fetch('https://'+domain+'/?'+param+'='+encodeURIComponent('<img src=x onerror='+probe+'>'));const html2=await resp2.text();if(html2.includes('onerror='+probe))r.xss.xss_risk.push(param);}}catch(e){}}
-          r.rate_limit={requests:0,blocked_at:null,statuses:[]};
-          for(var i=0;i<20;i++){try{const resp=await fetch('https://'+domain+'/?_bust='+i+Date.now(),{cache:'no-store'});r.rate_limit.statuses.push(resp.status);r.rate_limit.requests++;if(resp.status===429||resp.status===503){r.rate_limit.blocked_at=i+1;break;}}catch(e){r.rate_limit.blocked_at=i+1;break;}}
-          r.login={found:false};
-          for(var path of['/login','/signin','/auth','/admin','/dashboard','/account']){try{const resp=await fetch('https://'+domain+path,{redirect:'follow'});if(resp.ok){const html=await resp.text();if(html.includes('type="password"')||html.includes("type='password'")){r.login={found:true,url:'https://'+domain+path,https:resp.url.startsWith('https'),csrf:html.includes('csrf')||html.includes('_token'),captcha:html.includes('captcha')||html.includes('recaptcha')||html.includes('hcaptcha'),autocomplete_off:html.includes('autocomplete="off"')};break;}}}catch(e){}}
-          return JSON.stringify(r, null, 2);
-        })()
-      _tvars:
-        domain: '{{domain}}'
-    positionX: 700
-    positionY: 150
-    orderIndex: 5
 
-  - id: deep_scan
-    module: browser.evaluate
-    label: Deep Security Tests
-    params:
-      script: |
-        (async function() {
-          const domain = '[[domain]]';
-          const r = {};
-          r.subdomain_takeover={tested:[],risks:[]};
-          var indicators=["There isn't a GitHub Pages site here","NoSuchBucket","NoSuchKey","Heroku | No such app","404 Blog is not found","Do you want to register","Fastly error: unknown domain","Repository not found","Project not found"];
-          var checkSubs=['api.'+domain,'blog.'+domain,'cloud.'+domain,'docs.'+domain,'dev.'+domain,'staging.'+domain,'admin.'+domain,'mail.'+domain];
-          for(var sub of checkSubs.slice(0,8)){if(sub===location.hostname)continue;r.subdomain_takeover.tested.push(sub);try{const resp=await fetch('https://'+sub,{redirect:'follow',signal:AbortSignal.timeout(3000)});const text=await resp.text();for(var ind of indicators){if(text.includes(ind)){r.subdomain_takeover.risks.push({subdomain:sub,indicator:ind});break;}}}catch(e){r.subdomain_takeover.tested[r.subdomain_takeover.tested.length-1]+=' (unreachable)';}}
-          r.js_cves={detected:{},vulns:[]};
-          var libs={jquery:typeof jQuery!=='undefined'?jQuery.fn.jquery:null,vue:typeof Vue!=='undefined'?(Vue.version||null):null,react:typeof React!=='undefined'?(React.version||null):null,lodash:typeof _!=='undefined'&&_.VERSION?_.VERSION:null,moment:typeof moment!=='undefined'?moment.version:null};
-          for(var[name,ver]of Object.entries(libs)){if(!ver)continue;r.js_cves.detected[name]=ver;try{const resp=await fetch('https://api.osv.dev/v1/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({package:{name:name,ecosystem:'npm'},version:ver})});const data=await resp.json();if(data.vulns?.length>0)for(var v of data.vulns.slice(0,3))r.js_cves.vulns.push({lib:name,ver:ver,id:v.id,summary:(v.summary||'').slice(0,150),aliases:(v.aliases||[]).slice(0,2)});}catch(e){}}
-          return JSON.stringify(r, null, 2);
-        })()
-      _tvars:
-        domain: '{{domain}}'
-    positionX: 770
-    positionY: 300
-    orderIndex: 5.5
-    on_error: continue
+      === CLIENT-SIDE SCAN DATA ===
 
-  - id: goto_error
-    module: browser.goto
-    label: Visit 404 Page
-    params:
-      url: 'https://{{domain}}/flyto-pentest-404-xYz9'
-      wait_until: domcontentloaded
-      timeout: 10000
-    positionX: 830
-    positionY: 150
-    orderIndex: 6
-    on_error: continue
+      {{client_scan.result}}
 
-  - id: error_scan
-    module: browser.evaluate
-    label: Error Page Scan
-    params:
-      script: |
-        (function() {
-          var text = (document.body && document.body.innerText) || '';
-          var lc = text.toLowerCase();
-          var servers = ['nginx','apache','iis','express','django','flask','laravel','tomcat','node.js'];
-          var traces = ['stack trace','traceback','exception','syntaxerror','typeerror','referenceerror'];
-          var paths = ['/var/','/usr/','/home/','/opt/'];
-          return JSON.stringify({
-            status: document.title || '',
-            has_stack_trace: traces.some(function(t){ return lc.indexOf(t) !== -1; }),
-            leaks_server: servers.some(function(s){ return lc.indexOf(s) !== -1; }),
-            leaks_path: paths.some(function(p){ return text.indexOf(p) !== -1; }),
-            is_custom: text.length > 50,
-            page_length: text.length
-          }, null, 2);
-        })()
-    positionX: 960
-    positionY: 150
-    orderIndex: 7
 
-  - id: reporter
-    module: llm.agent
-    label: Report Generator
-    params:
-      prompt_source: manual
-      prompt_path: '{{input}}'
-      join_strategy: first
-      max_input_size: 60000
-      agent_type: tools
-      system_prompt: |
-        You are a professional security report writer. All scan data has been collected by deterministic steps.
-        Your ONLY job is to analyze the data and produce the report. Do NOT run any tools.
+      === SECURITY TEST DATA ===
 
-        LANGUAGE: Write the ENTIRE report in the language specified.
-        Supported: en, zh-TW, zh-CN, ja, ko, de, fr, es, pt-BR, it, pl, tr, vi, th, hi, id.
-        Technical terms (CSP, HSTS, CVE, TLS, etc.) keep their abbreviation.
+      {{security_scan.result}}
 
-        SITE CLASSIFICATION — determine this from the scan data:
-        - If no login page found AND no password forms AND hosting on GitHub Pages/Netlify/Vercel → STATIC
-        - If login page found OR API endpoints OR database indicators → DYNAMIC
-        - If only API responses, no HTML → API
-        - If payment forms or Stripe/PayPal detected → E-COMMERCE
-        STATIC sites get LOWER severity for: rate limiting, WAF, CORS wildcard, clickjacking, open redirect.
 
-        ACCURACY:
-        - Use ONLY the provided scan data. NEVER fabricate or guess.
-        - If a field is null/error/missing → write "Not available" with explanation.
-        - For security headers: check BOTH api_data.http.headers AND client_data.meta_tags.
-          A header is ✅ if found in EITHER source. Show "HTTP" or "Meta" in Source column.
-        - HSTS, COOP, CORP can only work via HTTP headers, not meta tags — note this.
-        - Include the ACTUAL scan date from api_data.scan_date.
-      response_format: text
-      output_schema: {}
-      context:
-        target_domain: '{{domain}}'
-        report_language: '{{language}}'
-        scan_depth: '{{scan_depth}}'
-        api_data: '{{api_scan.result}}'
-        client_data: '{{client_scan.result}}'
-        security_data: '{{security_scan.result}}'
-        deep_scan_data: '{{deep_scan.result}}'
-        error_page_data: '{{error_scan.result}}'
-      max_iterations: 5
-      provider: openai
-      model: gpt-4o
-      temperature: 0.1
-      tools: []
-      task: |
-        Generate a security audit report for [[domain]] in {{language}}.
-        ALL scan data is below. Do NOT run any tools. Just analyze and write the report.
+      === DEEP SCAN DATA (Subdomain Takeover + JS CVEs) ===
 
-        === API SCAN DATA ===
-        {{api_scan.result}}
+      {{deep_scan.result}}
 
-        === CLIENT-SIDE SCAN DATA ===
-        {{client_scan.result}}
 
-        === SECURITY TEST DATA ===
-        {{security_scan.result}}
+      === ERROR PAGE SCAN DATA ===
 
-        === DEEP SCAN DATA (Subdomain Takeover + JS CVEs) ===
-        {{deep_scan.result}}
+      {{error_scan.result}}
 
-        === ERROR PAGE SCAN DATA ===
-        {{error_scan.result}}
 
-        ═══════════════════════════════════════════
-        REPORT FORMAT — follow this EXACTLY
-        ═══════════════════════════════════════════
+      ═══════════════════════════════════════════
 
-        ══════════════════════════════════════════════════
-        🛡️  Domain Security Audit Report
-        ══════════════════════════════════════════════════
-        Target: [[domain]]
-        Date: [api_data.scan_date]
-        Engine: Flyto Security Audit Engine v3.0
-        Scan Depth: {{scan_depth}}
+      REPORT FORMAT — follow this EXACTLY
 
-        ┌──────────────────────────────────────────┐
-        │  Overall Risk: [CRITICAL/HIGH/MEDIUM/LOW]  [X]/100  │
-        └──────────────────────────────────────────┘
+      ═══════════════════════════════════════════
 
-        Site Classification: [STATIC/DYNAMIC/API/E-COMMERCE]
-        [Explain why this classification was chosen and how it affects severity ratings]
 
-        ══════════════════════════════════════════════════
-        1. Domain Information
-        ══════════════════════════════════════════════════
-        IP Address: [api_data.ip]
-        Hosting: [api_data.shodan.hostnames]
-        Nameservers: [api_data.ns]
-        HTTP Status: [api_data.http.status] | Redirect: [api_data.http.redirected]
-        Domain Registered: [api_data.whois.registration]
-        Domain Expires: [api_data.whois.expiration] ← flag if within 90 days
-        DNSSEC: [api_data.dnssec.authenticated — ✅/❌]
+      ══════════════════════════════════════════════════
 
-        ══════════════════════════════════════════════════
-        2. External Attack Surface (Shodan InternetDB)
-        ══════════════════════════════════════════════════
-        Open Ports: [api_data.shodan.ports with service names]
-        Known CVEs: [api_data.shodan.vulns or "None detected"]
-        Assessment: [analysis]
+      🛡️  Domain Security Audit Report
 
-        ══════════════════════════════════════════════════
-        3. Subdomain Discovery (Certificate Transparency)
-        ══════════════════════════════════════════════════
-        Total Unique: [api_data.subdomains.unique]
-        High-Risk: [api_data.subdomains.notable]
-        Full List: [api_data.subdomains.list]
-        Assessment: [analysis]
+      ══════════════════════════════════════════════════
 
-        ══════════════════════════════════════════════════
-        4. SSL/TLS Security
-        ══════════════════════════════════════════════════
-        Note: External SSL Labs scan not included in this automated run.
-        HTTPS Active: [Yes if api_data.http.final_url starts with https]
-        Assessment: [based on available data]
+      Target: [[domain]]
 
-        ══════════════════════════════════════════════════
-        5. Security Headers (HTTP Response + HTML Meta Tags)
-        ══════════════════════════════════════════════════
-        ⚠️ Platform Limitation: [note if GitHub Pages or similar]
+      Date: [api_data.scan_date]
 
-        Cross-reference api_data.http.headers with client_data.meta_tags.
-        ✅ if present in EITHER source. ❌ only if absent from ALL sources.
+      Engine: Flyto Security Audit Engine v3.0
 
-        | Header                       | Status | Source | Risk | Details                |
-        |------------------------------|--------|--------|------|------------------------|
-        | Content-Security-Policy      | ✅/❌  | HTTP/Meta/None | High | [value summary] |
-        | Strict-Transport-Security    | ✅/❌  | HTTP/None | High | Meta tag invalid    |
-        | X-Content-Type-Options       | ✅/❌  | HTTP/Meta/None | Med  | [value]         |
-        | X-Frame-Options              | ✅/❌  | HTTP/Meta/None | Med  | [or CSP frame-ancestors] |
-        | Referrer-Policy              | ✅/❌  | HTTP/Meta/None | Med  | [check meta name=referrer] |
-        | Permissions-Policy           | ✅/❌  | HTTP/Meta/None | Med  | [value]         |
-        | X-XSS-Protection            | ✅/❌  | HTTP/Meta/None | Low  | Deprecated      |
-        | Cross-Origin-Opener-Policy   | ✅/❌  | HTTP/None | Low  | Meta tag invalid    |
-        | Cross-Origin-Resource-Policy | ✅/❌  | HTTP/None | Low  | Meta tag invalid    |
+      Scan Depth: {{scan_depth}}
 
-        Coverage: [X]/9
-        Legend: HTTP = HTTP header (strongest), Meta = <meta> tag (weaker but valid for static hosting)
 
-        ══════════════════════════════════════════════════
-        6. Email Security (DNS)
-        ══════════════════════════════════════════════════
-        MX: [api_data.mx — list records or "Not configured"]
-        SPF: [from api_data.txt — find v=spf1 record, or "Not configured"]
-        DMARC: [api_data.dmarc or "Not configured"]
-        Assessment: [spoofing risk]
+      ┌──────────────────────────────────────────┐
 
-        ══════════════════════════════════════════════════
-        7. Technology & Platform
-        ══════════════════════════════════════════════════
-        Hosting: [from shodan hostnames]
-        JS Libraries: [client_data.js_libs — list with versions]
-        Generator: [client_data.meta_tags.generator]
-        Platform Limitations: [what can/cannot be configured]
+      │  Overall Risk: [CRITICAL/HIGH/MEDIUM/LOW]  [X]/100  │
 
-        ══════════════════════════════════════════════════
-        8. Cookie Security
-        ══════════════════════════════════════════════════
-        JS-Accessible Cookies: [client_data.cookies.count] [names]
-        Assessment: [0 = good. If found, note if they should be HttpOnly]
+      └──────────────────────────────────────────┘
 
-        ══════════════════════════════════════════════════
-        9. Third-Party Dependencies
-        ══════════════════════════════════════════════════
-        External Scripts: [client_data.third_party.unique_domains]
-        External Iframes: [client_data.third_party.iframes]
-        Assessment: [supply chain risk]
 
-        ══════════════════════════════════════════════════
-        10. Mixed Content & Info Disclosure
-        ══════════════════════════════════════════════════
-        HTTP Images: [client_data.mixed_content.http_images]
-        HTTP Scripts: [client_data.mixed_content.http_scripts]
-        HTML Comments: [client_data.info_disclosure.html_comments]
-        Inline Scripts: [client_data.info_disclosure.inline_script_count]
-        Hidden Inputs: [client_data.info_disclosure.hidden_inputs]
+      Site Classification: [STATIC/DYNAMIC/API/E-COMMERCE]
 
-        ══════════════════════════════════════════════════
-        11. Sensitive Path Exposure (Deep Scan Only)
-        ══════════════════════════════════════════════════
-        [If api_data.paths exists: show table with path, status, risk]
-        [If not: "Standard scan — select Deep Scan for this check"]
+      [Explain why this classification was chosen and how it affects severity ratings]
 
-        ══════════════════════════════════════════════════
-        12. Server Fingerprint & WAF
-        ══════════════════════════════════════════════════
-        Server: [security_data.server.server]
-        X-Powered-By: [security_data.server.x_powered_by or "Not exposed"]
-        Via: [security_data.server.via or "None"]
-        WAF Detected: [security_data.waf.detected — Yes/No]
 
-        ══════════════════════════════════════════════════
-        13. Error Page Analysis
-        ══════════════════════════════════════════════════
-        404 Page: [error_page_data.is_custom — Custom/Default]
-        Stack Trace: [error_page_data.has_stack_trace — Yes/No]
-        Server Info Leaked: [error_page_data.leaks_server — Yes/No]
-        Path Leaked: [error_page_data.leaks_path — Yes/No]
+      ── Executive Summary ──
 
-        ══════════════════════════════════════════════════
-        14. CORS Configuration
-        ══════════════════════════════════════════════════
-        ACAO: [security_data.cors.acao]
-        Reflects Origin: [security_data.cors.reflects_origin]
-        Wildcard: [security_data.cors.wildcard]
-        Allows Credentials: [security_data.cors.acac]
-        Allows Null Origin: [security_data.cors.allows_null]
-        Vulnerable: [security_data.cors.vulnerable]
-        Assessment: [analysis]
+      [3-5 sentences for CTO/compliance. What was scanned, overall posture, #1 risk, most impactful fix.]
 
-        ══════════════════════════════════════════════════
-        15. Source Map Exposure
-        ══════════════════════════════════════════════════
-        Source Maps Found: [security_data.source_maps count]
-        Accessible: [list any with accessible=true]
-        Assessment: [accessible maps expose source code]
 
-        ══════════════════════════════════════════════════
-        16. Subdomain Takeover Risk
-        ══════════════════════════════════════════════════
-        Tested: [deep_scan_data.subdomain_takeover.tested — list ALL]
-        Risks Found: [deep_scan_data.subdomain_takeover.risks]
-        Assessment: [CRITICAL if any risks found]
+      ── Risk Score Breakdown ──
 
-        ══════════════════════════════════════════════════
-        17. Login Page Security
-        ══════════════════════════════════════════════════
-        Found: [security_data.login.found]
-        [If found: URL, HTTPS, CSRF, CAPTCHA, Autocomplete]
-        [If not: "No login page detected"]
+      | Finding | Severity | Points |
 
-        ══════════════════════════════════════════════════
-        18. Open Redirect
-        ══════════════════════════════════════════════════
-        Tested: [security_data.redirect.tested] payloads
-        Vulnerable: [security_data.redirect.vulnerable — list or "None"]
+      |---------|----------|--------|
 
-        ══════════════════════════════════════════════════
-        19. JS Library Vulnerabilities (CVE)
-        ══════════════════════════════════════════════════
-        Detected: [deep_scan_data.js_cves.detected — lib: version]
-        [If vulns found: table with Library, Version, CVE ID, Severity, Summary]
-        [If none: "No known vulnerabilities in detected libraries"]
+      | [each scored finding] | [CRITICAL/HIGH/MED/LOW] | [+N] |
 
-        ══════════════════════════════════════════════════
-        20. JavaScript Security Analysis
-        ══════════════════════════════════════════════════
-        Total Inline Scripts: [client_data.js_patterns.total_inline]
-        Dangerous Patterns: [client_data.js_patterns.findings — list or "None"]
+      | **Total** | | **[X]/100** |
 
-        ══════════════════════════════════════════════════
-        21. HTTP Method Testing
-        ══════════════════════════════════════════════════
-        Allow Header: [security_data.methods.allow_header]
-        Dangerous Methods: [security_data.methods.dangerous — list or "None"]
+      [Explain: items that are platform-limited and cannot be fixed score 0 points.]
 
-        ══════════════════════════════════════════════════
-        22. Clickjacking Test
-        ══════════════════════════════════════════════════
-        Frameable: [client_data.clickjacking.frameable]
-        Protection: [client_data.clickjacking.protection]
-        Assessment: [if frameable + no protection → risk]
 
-        ══════════════════════════════════════════════════
-        23. Parameter Reflection / XSS Probe
-        ══════════════════════════════════════════════════
-        Parameters Tested: [security_data.xss.tested count]
-        Reflected: [security_data.xss.reflected — list or "None"]
-        XSS Risk: [security_data.xss.xss_risk — list or "None"]
+      ══════════════════════════════════════════════════
 
-        ══════════════════════════════════════════════════
-        24. Rate Limiting
-        ══════════════════════════════════════════════════
-        Requests Sent: [security_data.rate_limit.requests]
-        Blocked At: [security_data.rate_limit.blocked_at or "Not blocked"]
-        Assessment: [adjust severity based on site classification]
+      1. Domain Information
 
-        ══════════════════════════════════════════════════
-        25. Compliance Framework Mapping
-        ══════════════════════════════════════════════════
+      ══════════════════════════════════════════════════
 
-        OWASP Top 10 (2021):
-        | Rank | Category                    | Status | Findings              |
-        |------|-----------------------------|--------|-----------------------|
-        | A01  | Broken Access Control        | ✅/⚠️/❌ | [CORS, methods, paths] |
-        | A02  | Cryptographic Failures       | ✅/⚠️/❌ | [TLS, HSTS]           |
-        | A03  | Injection                    | ✅/⚠️/❌ | [XSS probe, JS]       |
-        | A04  | Insecure Design              | ✅/⚠️/❌ | [rate limit, login]    |
-        | A05  | Security Misconfiguration    | ✅/⚠️/❌ | [headers, server, CORS]|
-        | A06  | Vulnerable Components        | ✅/⚠️/❌ | [JS lib CVEs]         |
-        | A07  | Auth Failures                | ✅/⚠️/❌ | [login page]          |
-        | A08  | Data Integrity Failures      | ✅/⚠️/❌ | [CSP, CORS]           |
-        | A09  | Logging & Monitoring         | ✅/⚠️/❌ | [security.txt, WAF]   |
-        | A10  | SSRF                         | ✅/⚠️/❌ | [open redirect]       |
+      IP Address: [api_data.ip]
 
-        ISO 27001:2022 (Annex A):
-        | Control | Description              | Status | Evidence              |
-        |---------|--------------------------|--------|-----------------------|
-        | A.8.9   | Configuration Mgmt       | ✅/❌  | [headers, config]     |
-        | A.8.20  | Network Security         | ✅/❌  | [TLS, ports, WAF]     |
-        | A.8.24  | Cryptography             | ✅/❌  | [SSL, HSTS]           |
-        | A.8.25  | Secure Development       | ✅/❌  | [JS patterns, CSP]    |
-        | A.8.26  | Application Security     | ✅/❌  | [XSS, CORS, clickjack]|
-        | A.8.28  | Secure Coding            | ✅/❌  | [source maps, JS]     |
-        | A.5.23  | Cloud Security           | ✅/❌  | [platform limits]     |
+      Hosting: [api_data.shodan.hostnames]
 
-        NIST CSF 2.0:
-        | Function  | Category              | Status | Evidence              |
-        |-----------|-----------------------|--------|-----------------------|
-        | IDENTIFY  | Asset Management      | ✅/❌  | [domains, WHOIS]      |
-        | PROTECT   | Access Control        | ✅/❌  | [CORS, auth, headers] |
-        | PROTECT   | Data Security         | ✅/❌  | [TLS, CSP, cookies]   |
-        | PROTECT   | Platform Security     | ✅/❌  | [WAF, rate limit]     |
-        | DETECT    | Monitoring            | ✅/❌  | [security.txt, WAF]   |
-        | RESPOND   | Incident Mgmt         | ✅/❌  | [security.txt]        |
-        | RECOVER   | Recovery              | ⚠️    | [not testable externally] |
+      Nameservers: [api_data.ns]
 
-        ══════════════════════════════════════════════════
-        26. Recommendations (Priority Order)
-        ══════════════════════════════════════════════════
-        For each: Issue → Impact → Fix → Platform limitation note
+      HTTP Status: [api_data.http.status] | Redirect: [api_data.http.redirected]
 
-        🔴 Critical: [only truly critical items]
-        🟠 High: [real security impact]
-        🟡 Medium: [should fix]
-        🟢 Low / Info: [nice-to-have, platform limitations]
+      Domain Registered: [api_data.whois.registration]
 
-        ══════════════════════════════════════════════════
-        📋 Compliance & Security Checklist
-        ══════════════════════════════════════════════════
-        | Check Item                   | Status | Notes       |
-        |------------------------------|--------|-------------|
-        | HTTPS Enforced               | ✅/❌  |             |
-        | Security Headers ≥ 6/9       | ✅/❌  | [X/9]       |
-        | SPF Configured               | ✅/❌  |             |
-        | DMARC Configured             | ✅/❌  |             |
-        | DNSSEC Enabled               | ✅/❌  |             |
-        | No Known CVEs                | ✅/❌  |             |
-        | Domain Valid > 90 Days       | ✅/❌  | [date]      |
-        | No Mixed Content             | ✅/❌  |             |
-        | Subdomains Managed           | ✅/❌  |             |
-        | No Subdomain Takeover        | ✅/❌  |             |
-        | CAA Record Set               | ✅/❌  |             |
-        | security.txt Present         | ✅/❌  |             |
-        | CORS Properly Configured     | ✅/❌  |             |
-        | No Source Map Exposure       | ✅/❌  |             |
-        | No Server Info Leaked        | ✅/❌  |             |
-        | No Open Redirect             | ✅/❌  |             |
-        | Login Page Secured           | ✅/❌/N/A |          |
-        | WAF Detected                 | ✅/❌  |             |
-        | No Vulnerable JS Libraries   | ✅/❌  |             |
-        | No Dangerous JS Patterns     | ✅/❌  |             |
-        | No Dangerous HTTP Methods    | ✅/❌  |             |
-        | Clickjacking Protected       | ✅/❌  |             |
-        | No Parameter Reflection      | ✅/❌  |             |
-        | Rate Limiting Active         | ✅/❌  |             |
+      Domain Expires: [api_data.whois.expiration] ← flag if within 90 days
 
-        ══════════════════════════════════════════════════
-        Flyto Security Audit Engine v3.0
-        Scan completed: [api_data.scan_timestamp]
-        ══════════════════════════════════════════════════
-      api_key: '{{password_1}}'
-      _tvars:
-        domain: '{{domain}}'
-    positionX: 1090
-    positionY: 250
-    orderIndex: 8
-    resources:
-      model: model_node
-      memory: memory_node
+      DNSSEC: [api_data.dnssec.authenticated — ✅/❌]
 
-  - id: save_report
-    module: file.write
-    label: Save Report
-    params:
-      path: 'output/security_audit_{{domain}}.txt'
-      content: '{{reporter.data.result}}'
-    positionX: 1280
-    positionY: 150
-    orderIndex: 9
-    on_error: continue
 
-  - id: display
-    module: output.display
-    label: Audit Report
-    params:
-      format: text
-      content: '{{reporter.data.result}}'
-    positionX: 1280
-    positionY: 350
-    orderIndex: 10
+      ══════════════════════════════════════════════════
 
-  - id: model_node
-    module: ai.model
-    label: GPT-4o
-    params:
-      model: gpt-4o
-      max_tokens: 16384
-      api_key: '{{password_1}}'
-      temperature: 0.1
-      provider: openai
-    positionX: 1000
-    positionY: 450
-    orderIndex: 11
+      2. External Attack Surface (Shodan InternetDB)
 
-  - id: memory_node
-    module: ai.memory
-    label: Report Memory
-    params:
-      window_size: 5
-      memory_type: buffer
-      initial_messages: []
-    positionX: 1180
-    positionY: 450
-    orderIndex: 12
+      ══════════════════════════════════════════════════
 
+      Open Ports: [api_data.shodan.ports with service names]
+
+      Known CVEs: [api_data.shodan.vulns or "None detected"]
+
+      Assessment: [analysis]
+
+
+      ══════════════════════════════════════════════════
+
+      3. Subdomain Discovery (Certificate Transparency)
+
+      ══════════════════════════════════════════════════
+
+      Total Unique: [api_data.subdomains.unique]
+
+      High-Risk: [api_data.subdomains.notable]
+
+      Full List: [api_data.subdomains.list]
+
+      Assessment: [analysis]
+
+
+      ══════════════════════════════════════════════════
+
+      4. SSL/TLS Security
+
+      ══════════════════════════════════════════════════
+
+      Note: External SSL Labs scan not included in this automated run.
+
+      HTTPS Active: [Yes if api_data.http.final_url starts with https]
+
+      Assessment: [based on available data]
+
+
+      ══════════════════════════════════════════════════
+
+      5. Security Headers (HTTP Response + HTML Meta Tags)
+
+      ══════════════════════════════════════════════════
+
+      ⚠️ Platform Limitation: [note if GitHub Pages or similar]
+
+
+      Cross-reference api_data.http.headers with client_data.meta_tags.
+
+      ✅ if present in EITHER source. ❌ only if absent from ALL sources.
+
+
+      | Header                       | Status | Source | Risk | Details                |
+
+      |------------------------------|--------|--------|------|------------------------|
+
+      | Content-Security-Policy      | ✅/❌  | HTTP/Meta/None | High | [value summary] |
+
+      | Strict-Transport-Security    | ✅/❌  | HTTP/None | High | Meta tag invalid    |
+
+      | X-Content-Type-Options       | ✅/❌  | HTTP/Meta/None | Med  | [value]         |
+
+      | X-Frame-Options              | ✅/❌  | HTTP/Meta/None | Med  | [or CSP frame-ancestors] |
+
+      | Referrer-Policy              | ✅/❌  | HTTP/Meta/None | Med  | [check meta name=referrer] |
+
+      | Permissions-Policy           | ✅/❌  | HTTP/Meta/None | Med  | [value]         |
+
+      | X-XSS-Protection            | ✅/❌  | HTTP/Meta/None | Low  | Deprecated      |
+
+      | Cross-Origin-Opener-Policy   | ✅/❌  | HTTP/None | Low  | Meta tag invalid    |
+
+      | Cross-Origin-Resource-Policy | ✅/❌  | HTTP/None | Low  | Meta tag invalid    |
+
+
+      Coverage: [X]/9
+
+      Legend: HTTP = HTTP header (strongest), Meta = <meta> tag (weaker but valid for static hosting)
+
+
+      ══════════════════════════════════════════════════
+
+      6. Email Security (DNS)
+
+      ══════════════════════════════════════════════════
+
+      MX: [api_data.mx — list records or "Not configured"]
+
+      SPF: [from api_data.txt — find v=spf1 record, or "Not configured"]
+
+      DMARC: [api_data.dmarc or "Not configured"]
+
+      Assessment: [spoofing risk]
+
+
+      ══════════════════════════════════════════════════
+
+      7. Technology & Platform
+
+      ══════════════════════════════════════════════════
+
+      Hosting: [from shodan hostnames]
+
+      JS Libraries: [client_data.js_libs — list with versions]
+
+      Generator: [client_data.meta_tags.generator]
+
+      Platform Limitations: [what can/cannot be configured]
+
+
+      ══════════════════════════════════════════════════
+
+      8. Cookie Security
+
+      ══════════════════════════════════════════════════
+
+      JS-Accessible Cookies: [client_data.cookies.count] [names]
+
+      Assessment: [0 = good. If found, note if they should be HttpOnly]
+
+
+      ══════════════════════════════════════════════════
+
+      9. Third-Party Dependencies
+
+      ══════════════════════════════════════════════════
+
+      External Scripts: [client_data.third_party.unique_domains]
+
+      External Iframes: [client_data.third_party.iframes]
+
+      Assessment: [supply chain risk]
+
+
+      ══════════════════════════════════════════════════
+
+      10. Mixed Content & Info Disclosure
+
+      ══════════════════════════════════════════════════
+
+      HTTP Images: [client_data.mixed_content.http_images]
+
+      HTTP Scripts: [client_data.mixed_content.http_scripts]
+
+      HTML Comments: [client_data.info_disclosure.html_comments]
+
+      Inline Scripts: [client_data.info_disclosure.inline_script_count]
+
+      Hidden Inputs: [client_data.info_disclosure.hidden_inputs]
+
+
+      ══════════════════════════════════════════════════
+
+      11. Sensitive Path Exposure (Deep Scan Only)
+
+      ══════════════════════════════════════════════════
+
+      [If api_data.paths exists: show table with path, status, risk]
+
+      [If not: "Standard scan — select Deep Scan for this check"]
+
+
+      ══════════════════════════════════════════════════
+
+      12. Server Fingerprint & WAF
+
+      ══════════════════════════════════════════════════
+
+      Server: [security_data.server.server]
+
+      X-Powered-By: [security_data.server.x_powered_by or "Not exposed"]
+
+      Via: [security_data.server.via or "None"]
+
+      WAF Detected: [security_data.waf.detected — Yes/No]
+
+
+      ══════════════════════════════════════════════════
+
+      13. Error Page Analysis
+
+      ══════════════════════════════════════════════════
+
+      404 Page: [error_page_data.is_custom — Custom/Default]
+
+      Stack Trace: [error_page_data.has_stack_trace — Yes/No]
+
+      Server Info Leaked: [error_page_data.leaks_server — Yes/No]
+
+      Path Leaked: [error_page_data.leaks_path — Yes/No]
+
+
+      ══════════════════════════════════════════════════
+
+      14. CORS Configuration
+
+      ══════════════════════════════════════════════════
+
+      ACAO: [security_data.cors.acao]
+
+      Reflects Origin: [security_data.cors.reflects_origin]
+
+      Wildcard: [security_data.cors.wildcard]
+
+      Allows Credentials: [security_data.cors.acac]
+
+      Allows Null Origin: [security_data.cors.allows_null]
+
+      Vulnerable: [security_data.cors.vulnerable]
+
+      Assessment: [analysis]
+
+
+      ══════════════════════════════════════════════════
+
+      15. Source Map Exposure
+
+      ══════════════════════════════════════════════════
+
+      Source Maps Found: [security_data.source_maps count]
+
+      Accessible: [list any with accessible=true]
+
+      Assessment: [accessible maps expose source code]
+
+
+      ══════════════════════════════════════════════════
+
+      16. Subdomain Takeover Risk
+
+      ══════════════════════════════════════════════════
+
+      Tested: [deep_scan_data.subdomain_takeover.tested — list ALL]
+
+      Risks Found: [deep_scan_data.subdomain_takeover.risks]
+
+      Assessment: [CRITICAL if any risks found]
+
+
+      ══════════════════════════════════════════════════
+
+      17. Login Page Security
+
+      ══════════════════════════════════════════════════
+
+      Found: [security_data.login.found]
+
+      [If found: URL, HTTPS, CSRF, CAPTCHA, Autocomplete]
+
+      [If not: "No login page detected"]
+
+
+      ══════════════════════════════════════════════════
+
+      18. Open Redirect
+
+      ══════════════════════════════════════════════════
+
+      Tested: [security_data.redirect.tested] payloads
+
+      Vulnerable: [security_data.redirect.vulnerable — list or "None"]
+
+
+      ══════════════════════════════════════════════════
+
+      19. JS Library Vulnerabilities (CVE)
+
+      ══════════════════════════════════════════════════
+
+      Detected: [deep_scan_data.js_cves.detected — lib: version]
+
+      [If vulns found: table with Library, Version, CVE ID, Severity, Summary]
+
+      [If none: "No known vulnerabilities in detected libraries"]
+
+
+      ══════════════════════════════════════════════════
+
+      20. JavaScript Security Analysis
+
+      ══════════════════════════════════════════════════
+
+      Total Inline Scripts: [client_data.js_patterns.total_inline]
+
+      Dangerous Patterns: [client_data.js_patterns.findings — list or "None"]
+
+
+      ══════════════════════════════════════════════════
+
+      21. HTTP Method Testing
+
+      ══════════════════════════════════════════════════
+
+      Allow Header: [security_data.methods.allow_header]
+
+      Dangerous Methods: [security_data.methods.dangerous — list or "None"]
+
+
+      ══════════════════════════════════════════════════
+
+      22. Clickjacking Test
+
+      ══════════════════════════════════════════════════
+
+      Frameable: [client_data.clickjacking.frameable]
+
+      Protection: [client_data.clickjacking.protection]
+
+      Assessment: [if frameable + no protection → risk]
+
+
+      ══════════════════════════════════════════════════
+
+      23. Parameter Reflection / XSS Probe
+
+      ══════════════════════════════════════════════════
+
+      Parameters Tested: [security_data.xss.tested count]
+
+      Reflected: [security_data.xss.reflected — list or "None"]
+
+      XSS Risk: [security_data.xss.xss_risk — list or "None"]
+
+
+      ══════════════════════════════════════════════════
+
+      24. Rate Limiting
+
+      ══════════════════════════════════════════════════
+
+      Requests Sent: [security_data.rate_limit.requests]
+
+      Blocked At: [security_data.rate_limit.blocked_at or "Not blocked"]
+
+      Assessment: [adjust severity based on site classification]
+
+
+      ══════════════════════════════════════════════════
+
+      25. Compliance Framework Mapping
+
+      ══════════════════════════════════════════════════
+
+
+      OWASP Top 10 (2021):
+
+      | Rank | Category                    | Status | Findings              |
+
+      |------|-----------------------------|--------|-----------------------|
+
+      | A01  | Broken Access Control        | ✅/⚠️/❌ | [CORS, methods, paths] |
+
+      | A02  | Cryptographic Failures       | ✅/⚠️/❌ | [TLS, HSTS]           |
+
+      | A03  | Injection                    | ✅/⚠️/❌ | [XSS probe, JS]       |
+
+      | A04  | Insecure Design              | ✅/⚠️/❌ | [rate limit, login]    |
+
+      | A05  | Security Misconfiguration    | ✅/⚠️/❌ | [headers, server, CORS]|
+
+      | A06  | Vulnerable Components        | ✅/⚠️/❌ | [JS lib CVEs]         |
+
+      | A07  | Auth Failures                | ✅/⚠️/❌ | [login page]          |
+
+      | A08  | Data Integrity Failures      | ✅/⚠️/❌ | [CSP, CORS]           |
+
+      | A09  | Logging & Monitoring         | ✅/⚠️/❌ | [security.txt, WAF]   |
+
+      | A10  | SSRF                         | ✅/⚠️/❌ | [open redirect]       |
+
+
+      ISO 27001:2022 (Annex A):
+
+      | Control | Description              | Status | Evidence              |
+
+      |---------|--------------------------|--------|-----------------------|
+
+      | A.8.9   | Configuration Mgmt       | ✅/❌  | [headers, config]     |
+
+      | A.8.20  | Network Security         | ✅/❌  | [TLS, ports, WAF]     |
+
+      | A.8.24  | Cryptography             | ✅/❌  | [SSL, HSTS]           |
+
+      | A.8.25  | Secure Development       | ✅/❌  | [JS patterns, CSP]    |
+
+      | A.8.26  | Application Security     | ✅/❌  | [XSS, CORS, clickjack]|
+
+      | A.8.28  | Secure Coding            | ✅/❌  | [source maps, JS]     |
+
+      | A.5.23  | Cloud Security           | ✅/❌  | [platform limits]     |
+
+
+      NIST CSF 2.0:
+
+      | Function  | Category              | Status | Evidence              |
+
+      |-----------|-----------------------|--------|-----------------------|
+
+      | IDENTIFY  | Asset Management      | ✅/❌  | [domains, WHOIS]      |
+
+      | PROTECT   | Access Control        | ✅/❌  | [CORS, auth, headers] |
+
+      | PROTECT   | Data Security         | ✅/❌  | [TLS, CSP, cookies]   |
+
+      | PROTECT   | Platform Security     | ✅/❌  | [WAF, rate limit]     |
+
+      | DETECT    | Monitoring            | ✅/❌  | [security.txt, WAF]   |
+
+      | RESPOND   | Incident Mgmt         | ✅/❌  | [security.txt]        |
+
+      | RECOVER   | Recovery              | ⚠️    | [not testable externally] |
+
+
+      ══════════════════════════════════════════════════
+
+      26. Recommendations
+
+      ══════════════════════════════════════════════════
+
+
+      ── Actionable Fixes (you can do these now) ──
+
+
+      For each item use this format:
+
+      [🔴/🟠/🟡/🟢] **Issue title**
+
+      Why: [concrete impact, not generic]
+
+      Fix: [exact command / config / steps — copy-pasteable]
+
+      Where: [DNS provider / server config / HTML source / CI/CD]
+
+      Effort: [Low ~5min / Medium ~30min / High ~hours]
+
+
+      List actionable fixes first, ordered by severity, then effort (easiest first within same severity).
+
+      Examples of GOOD fixes:
+
+      - SPF: Add DNS TXT record: `v=spf1 -all`
+
+      - DNSSEC: GoDaddy → Domain Settings → DNS Security → Enable
+
+      - security.txt: Create `.well-known/security.txt` with Contact + Expires
+
+      - CSP frame-ancestors: Add frame-ancestors ''self'' to existing CSP meta tag
+
+
+      ── Platform-Limited (cannot fix on current hosting) ──
+
+
+      [List items that require server-side header control, with the workaround or alternative noted]
+
+
+      ══════════════════════════════════════════════════
+
+      📋 Compliance & Security Checklist
+
+      ══════════════════════════════════════════════════
+
+      | Check Item                   | Status | Notes       |
+
+      |------------------------------|--------|-------------|
+
+      | HTTPS Enforced               | ✅/❌  |             |
+
+      | Security Headers ≥ 6/9       | ✅/❌  | [X/9]       |
+
+      | SPF Configured               | ✅/❌  |             |
+
+      | DMARC Configured             | ✅/❌  |             |
+
+      | DNSSEC Enabled               | ✅/❌  |             |
+
+      | No Known CVEs                | ✅/❌  |             |
+
+      | Domain Valid > 90 Days       | ✅/❌  | [date]      |
+
+      | No Mixed Content             | ✅/❌  |             |
+
+      | Subdomains Managed           | ✅/❌  |             |
+
+      | No Subdomain Takeover        | ✅/❌  |             |
+
+      | CAA Record Set               | ✅/❌  |             |
+
+      | security.txt Present         | ✅/❌  |             |
+
+      | CORS Properly Configured     | ✅/❌  |             |
+
+      | No Source Map Exposure       | ✅/❌  |             |
+
+      | No Server Info Leaked        | ✅/❌  |             |
+
+      | No Open Redirect             | ✅/❌  |             |
+
+      | Login Page Secured           | ✅/❌/N/A |          |
+
+      | WAF Detected                 | ✅/❌  |             |
+
+      | No Vulnerable JS Libraries   | ✅/❌  |             |
+
+      | No Dangerous JS Patterns     | ✅/❌  |             |
+
+      | No Dangerous HTTP Methods    | ✅/❌  |             |
+
+      | Clickjacking Protected       | ✅/❌  |             |
+
+      | No Parameter Reflection      | ✅/❌  |             |
+
+      | Rate Limiting Active         | ✅/❌  |             |
+
+
+      ══════════════════════════════════════════════════
+
+      Flyto Security Audit Engine v3.0
+
+      Scan completed: [api_data.scan_timestamp]
+
+      ══════════════════════════════════════════════════
+
+      '
+    api_key: '{{password_1}}'
+  positionX: 1500
+  positionY: 450
+  orderIndex: 8
+  resources:
+    model: model_node
+    memory: memory_node
+- id: save_report
+  module: file.write
+  label: Save Report
+  params:
+    path: output/security_audit_{{domain}}.txt
+    content: '{{reporter.data.result}}'
+  positionX: 1900
+  positionY: 450
+  orderIndex: 9
+  on_error: continue
+- id: display
+  module: output.display
+  label: Audit Report
+  params:
+    format: text
+    content: '{{reporter.data.result}}'
+  positionX: 2300
+  positionY: 450
+  orderIndex: 10
+- id: model_node
+  module: ai.model
+  label: GPT-4o
+  params:
+    model: gpt-4o
+    max_tokens: 16384
+    api_key: '{{password_1}}'
+    temperature: 0.1
+    provider: openai
+  positionX: 1350
+  positionY: 700
+  orderIndex: 11
+- id: memory_node
+  module: ai.memory
+  label: Report Memory
+  params:
+    window_size: 5
+    memory_type: buffer
+    initial_messages: []
+  positionX: 1650
+  positionY: 700
+  orderIndex: 12
 edges:
-  - id: e1
-    source: start
-    target: launch
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e2
-    source: launch
-    target: api_scan
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e3
-    source: api_scan
-    target: goto_site
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e4
-    source: goto_site
-    target: client_scan
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e5
-    source: client_scan
-    target: security_scan
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e5b
-    source: security_scan
-    target: deep_scan
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e6
-    source: deep_scan
-    target: goto_error
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e7
-    source: goto_error
-    target: error_scan
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e8
-    source: error_scan
-    target: reporter
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e9
-    source: reporter
-    target: save_report
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: e10
-    source: reporter
-    target: display
-    sourceHandle: output
-    targetHandle: target
-    type: default
-    data: {edgeType: sequential, pathType: bezier}
-    label: ''
-  - id: r1
-    source: model_node
-    target: reporter
-    sourceHandle: target
-    targetHandle: target-model
-    type: default
-    data: {edgeType: resource, pathType: bezier}
-    label: ''
-  - id: r2
-    source: memory_node
-    target: reporter
-    sourceHandle: target
-    targetHandle: target-memory
-    type: default
-    data: {edgeType: resource, pathType: bezier}
-    label: ''
-
+- id: e1
+  source: start
+  target: launch
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e2
+  source: launch
+  target: api_scan
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e3
+  source: api_scan
+  target: goto_site
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e4
+  source: goto_site
+  target: client_scan
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e5
+  source: client_scan
+  target: security_scan
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e5b
+  source: security_scan
+  target: deep_scan
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e6
+  source: deep_scan
+  target: goto_error
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e7
+  source: goto_error
+  target: error_scan
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e8
+  source: error_scan
+  target: reporter
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e9
+  source: reporter
+  target: save_report
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: e10
+  source: reporter
+  target: display
+  sourceHandle: output
+  targetHandle: target
+  type: default
+  data:
+    edgeType: sequential
+    pathType: bezier
+  label: ''
+- id: r1
+  source: model_node
+  target: reporter
+  sourceHandle: target
+  targetHandle: target-model
+  type: default
+  data:
+    edgeType: resource
+    pathType: bezier
+  label: ''
+- id: r2
+  source: memory_node
+  target: reporter
+  sourceHandle: target
+  targetHandle: target-memory
+  type: default
+  data:
+    edgeType: resource
+    pathType: bezier
+  label: ''
 _ui:
   builder:
     sections:
-      - id: section_main
-        columns: 2
-        grid: [6, 6]
-        gap: 16px
-        columnsData:
-          - columnIndex: 0
-            components:
-              - type: input
-                id: domain_input
-                label: Target Domain
-                module: form.input
-                inputType: text
-                params: {variable_name: domain}
-                default: flyto2.com
-                placeholder: 'e.g. company.com'
-              - type: select
-                id: language_select
-                label: Report Language
-                module: form.select
-                params: {variableName: language}
-                options:
-                  - {value: en, label: English}
-                  - {value: zh-TW, label: 繁體中文}
-                  - {value: zh-CN, label: 简体中文}
-                  - {value: ja, label: 日本語}
-                  - {value: ko, label: 한국어}
-                  - {value: de, label: Deutsch}
-                  - {value: fr, label: Français}
-                  - {value: es, label: Español}
-                  - {value: pt-BR, label: 'Português (BR)'}
-                  - {value: it, label: Italiano}
-                  - {value: pl, label: Polski}
-                  - {value: tr, label: Türkçe}
-                  - {value: vi, label: Tiếng Việt}
-                  - {value: th, label: ไทย}
-                  - {value: hi, label: हिन्दी}
-                  - {value: id, label: Bahasa Indonesia}
-                default: en
-          - columnIndex: 1
-            components:
-              - type: password
-                id: api_key_input
-                label: OpenAI API Key
-                module: form.password
-                inputType: password
-                params: {variable_name: password_1}
-                default: ''
-                placeholder: 'sk-...'
-              - type: select
-                id: depth_select
-                label: Scan Depth
-                module: form.select
-                params: {variableName: scan_depth}
-                options:
-                  - {value: standard, label: 'Standard (~30s)'}
-                  - {value: deep, label: 'Deep Scan (~60s)'}
-                default: standard
+    - id: section_main
+      columns: 2
+      grid:
+      - 6
+      - 6
+      gap: 16px
+      columnsData:
+      - columnIndex: 0
+        components:
+        - type: input
+          id: domain_input
+          label: Target Domain
+          module: form.input
+          inputType: text
+          params:
+            variable_name: domain
+          default: flyto2.com
+          placeholder: e.g. company.com
+        - type: select
+          id: language_select
+          label: Report Language
+          module: form.select
+          params:
+            variableName: language
+          options:
+          - value: en
+            label: English
+          - value: zh-TW
+            label: 繁體中文
+          - value: zh-CN
+            label: 简体中文
+          - value: ja
+            label: 日本語
+          - value: ko
+            label: 한국어
+          - value: de
+            label: Deutsch
+          - value: fr
+            label: Français
+          - value: es
+            label: Español
+          - value: pt-BR
+            label: Português (BR)
+          - value: it
+            label: Italiano
+          - value: pl
+            label: Polski
+          - value: tr
+            label: Türkçe
+          - value: vi
+            label: Tiếng Việt
+          - value: th
+            label: ไทย
+          - value: hi
+            label: हिन्दी
+          - value: id
+            label: Bahasa Indonesia
+          default: en
+      - columnIndex: 1
+        components:
+        - type: password
+          id: api_key_input
+          label: OpenAI API Key
+          module: form.password
+          inputType: password
+          params:
+            variable_name: password_1
+          default: ''
+          placeholder: sk-...
+        - type: select
+          id: depth_select
+          label: Scan Depth
+          module: form.select
+          params:
+            variableName: scan_depth
+          options:
+          - value: standard
+            label: Standard (~30s)
+          - value: deep
+            label: Deep Scan (~60s)
+          default: standard

@@ -28,10 +28,14 @@ class VariableResolver:
     - ${env.VAR} - Environment variables
     - ${timestamp} - Built-in timestamp
     - ${workflow.id} - Workflow metadata
+    - [[var]] via _tvars - Template variable substitution (shared with frontend)
     """
 
     # Pattern to match ${...} expressions
     VAR_PATTERN = re.compile(r'\$\{([^}]+)\}')
+
+    # Pattern to match [[...]] expressions (_tvars template variables)
+    TVARS_PATTERN = re.compile(r'\[\[(\w+)\]\]')
 
     # Pattern to match {{...}} expressions (mustache/handlebars compat)
     MUSTACHE_PATTERN = re.compile(r'\{\{([^}]+)\}\}')
@@ -109,6 +113,46 @@ class VariableResolver:
     def _resolve_list(self, lst: list) -> list:
         """Resolve variables in a list"""
         return [self.resolve(item) for item in lst]
+
+    @staticmethod
+    def resolve_tvars(params: Dict[str, Any], fallback: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Apply _tvars substitution: replace [[key]] in params with resolved values.
+
+        Shared logic for both frontend (flyto-cloud) and backend (flyto-core).
+        _tvars values should already be resolved (e.g., {{domain}} → 'flyto2.com')
+        before calling this method.
+
+        Args:
+            params: Step params dict (will pop _tvars from it)
+            fallback: Optional fallback dict for [[var]] not found in _tvars
+                      (e.g., ui_values for backward compat in flyto-cloud)
+
+        Returns:
+            Params with [[key]] replaced and _tvars removed
+        """
+        tvars = params.pop('_tvars', None)
+        if not tvars and not fallback:
+            return params
+        tvars = tvars or {}
+
+        def _substitute(value: Any) -> Any:
+            if isinstance(value, str) and '[[' in value:
+                def _sub(m):
+                    name = m.group(1)
+                    if name in tvars:
+                        return str(tvars[name])
+                    if fallback and name in fallback:
+                        return str(fallback[name])
+                    return m.group(0)
+                return VariableResolver.TVARS_PATTERN.sub(_sub, value)
+            if isinstance(value, dict):
+                return {k: _substitute(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [_substitute(v) for v in value]
+            return value
+
+        return _substitute(params)
 
     def _get_variable_value(self, var_path: str) -> Any:
         """
