@@ -1,0 +1,32 @@
+# .flyto-rules.yaml — flyto-core
+# Enforced by flyto-indexer audit
+
+architecture:
+  - rule: "Do not use __import__() for dynamic module loading"
+    grep_deny:
+      - pattern: '__import__\('
+        glob: "src/**/*.py"
+    source: "security audit 2026-04-13"
+
+  - rule: "docker must not be in shell exec allowlist"
+    grep_deny:
+      - pattern: "'docker'"
+        glob: "src/core/modules/atomic/shell/exec.py"
+    source: "security audit 2026-04-13"
+
+  - rule: "Plugin install/uninstall must validate package names before subprocess"
+    source: "security audit 2026-04-13"
+
+style:
+  - rule: "Use specific exception types instead of bare 'except Exception' in module code"
+    grep_deny:
+      - pattern: 'except Exception:'
+        glob: "src/core/modules/**/*.py"
+      - pattern: 'except Exception:'
+        glob: "src/core/enterprise/**/*.py"
+    example: "except (OSError, ValueError) as e:"
+
+conventions:
+  - rule: "pyproject.toml dependencies must have upper bound (e.g. pydantic>=2.0.0,<3)"
+  - rule: "mypy python_version must be a valid Python version like '3.9', not a mypy version"
+  - rule: "pytest cov-fail-under should be at least 60%"
