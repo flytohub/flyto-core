@@ -160,18 +160,12 @@ class CompositeModule(ABC):
 
         return resolve_value(params)
 
-    def _get_nested(self, data: Dict[str, Any], path: str, default: Any = None) -> Any:
+    @staticmethod
+    def _get_nested(data: Dict[str, Any], path: str, default: Any = None) -> Any:
         """Get nested value from dict using dot notation"""
-        keys = path.split('.')
-        result = data
-
-        for key in keys:
-            if isinstance(result, dict) and key in result:
-                result = result[key]
-            else:
-                return default
-
-        return result
+        from core.engine.variable_resolver import VariableResolver
+        result = VariableResolver.get_nested_value(data, path)
+        return result if result is not None else default
 
     def _build_output(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Build composite output based on output_schema"""

@@ -187,7 +187,7 @@ class VariableResolver:
             if len(parts) == 1:
                 return self.builtins['workflow']
             else:
-                return self._get_nested_value(self.builtins['workflow'], parts[1:])
+                return self.get_nested_value(self.builtins['workflow'], parts[1:])
 
         # Environment variables
         if var_type == 'env':
@@ -204,7 +204,7 @@ class VariableResolver:
             value = self.params.get(param_name)
 
             if len(parts) > 2:
-                nested_value = self._get_nested_value(value, parts[2:])
+                nested_value = self.get_nested_value(value, parts[2:])
                 # Fallback: ${params.ui.xxx} -> ${params.xxx}
                 # Templates use ${params.ui.input_1} for form inputs,
                 # but template.invoke passes params directly without 'ui' nesting
@@ -212,7 +212,7 @@ class VariableResolver:
                     fallback_key = parts[2]
                     fallback_value = self.params.get(fallback_key)
                     if len(parts) > 3:
-                        return self._get_nested_value(fallback_value, parts[3:])
+                        return self.get_nested_value(fallback_value, parts[3:])
                     return fallback_value
                 return nested_value
             return value
@@ -223,7 +223,7 @@ class VariableResolver:
             current_item = self.params.get('$item', {})
             if len(parts) == 1:
                 return current_item
-            return self._get_nested_value(current_item, parts[1:])
+            return self.get_nested_value(current_item, parts[1:])
 
         # ${$index} - Current item index
         if var_type == '$index':
@@ -250,7 +250,7 @@ class VariableResolver:
         if var_type in self.params:
             value = self.params[var_type]
             if len(parts) > 1:
-                return self._get_nested_value(value, parts[1:])
+                return self.get_nested_value(value, parts[1:])
             return value
 
         # Fallback to params.ui: frontend wraps UI form values under { ui: { base: "..." } }
@@ -259,7 +259,7 @@ class VariableResolver:
         if isinstance(ui_params, dict) and var_type in ui_params:
             value = ui_params[var_type]
             if len(parts) > 1:
-                return self._get_nested_value(value, parts[1:])
+                return self.get_nested_value(value, parts[1:])
             return value
 
         return None
@@ -299,7 +299,7 @@ class VariableResolver:
                 if 0 <= idx < len(items):
                     item = items[idx]
                     if len(path) > 2:
-                        return self._get_nested_value(item, path[2:])
+                        return self.get_nested_value(item, path[2:])
                     return item
                 return None
 
@@ -309,7 +309,7 @@ class VariableResolver:
                 if 0 <= idx < len(items):
                     item = items[idx]
                     if len(path) > 2:
-                        return self._get_nested_value(item, path[2:])
+                        return self.get_nested_value(item, path[2:])
                     return item
                 return None
 
@@ -326,12 +326,12 @@ class VariableResolver:
                 if 0 <= idx < len(items):
                     item = items[idx]
                     if len(path) > 1:
-                        return self._get_nested_value(item, path[1:])
+                        return self.get_nested_value(item, path[1:])
                     return item
                 return None
 
         # Backward compat: data.field or direct field access
-        value = self._get_nested_value(step_output, path)
+        value = self.get_nested_value(step_output, path)
         if value is not None:
             return value
 
@@ -339,7 +339,7 @@ class VariableResolver:
         # Modules return {'ok': True, 'data': {'result': ...}}
         # so ${step.result} should resolve to step.data.result
         if isinstance(step_output, dict) and 'data' in step_output:
-            return self._get_nested_value(step_output['data'], path)
+            return self.get_nested_value(step_output['data'], path)
 
         return None
 
@@ -367,17 +367,20 @@ class VariableResolver:
         # Just the output itself as single item
         return [step_output]
 
-    def _get_nested_value(self, obj: Any, path: list) -> Any:
+    @staticmethod
+    def get_nested_value(obj: Any, path) -> Any:
         """
-        Get nested value from object using path
+        Get nested value from object using dot-notation string or list of keys.
 
         Args:
             obj: Object to traverse
-            path: List of keys/indices
+            path: Dot-notation string (e.g. 'a.b.c') or list of keys
 
         Returns:
             Nested value or None
         """
+        if isinstance(path, str):
+            path = path.split('.')
         current = obj
 
         for key in path:

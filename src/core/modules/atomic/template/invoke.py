@@ -339,20 +339,8 @@ class InvokeTemplate(BaseModule):
 
     def _get_context_value(self, path: str) -> Any:
         """Get value from context using dot notation."""
-        parts = path.split('.')
-        current = self.context
-
-        for part in parts:
-            if current is None:
-                return None
-            if isinstance(current, dict):
-                current = current.get(part)
-            elif hasattr(current, part):
-                current = getattr(current, part)
-            else:
-                return None
-
-        return current
+        from core.engine.variable_resolver import VariableResolver
+        return VariableResolver.get_nested_value(self.context, path)
 
     async def _execute_template(
         self,
@@ -589,25 +577,11 @@ class InvokeTemplate(BaseModule):
 
         return mapped
 
-    def _get_nested_value(self, obj: Any, path: str) -> Any:
+    @staticmethod
+    def _get_nested_value(obj: Any, path: str) -> Any:
         """Get nested value using dot notation."""
-        parts = path.split('.')
-        current = obj
-
-        for part in parts:
-            if current is None:
-                return None
-            if isinstance(current, dict):
-                current = current.get(part)
-            elif isinstance(current, list) and part.isdigit():
-                idx = int(part)
-                current = current[idx] if 0 <= idx < len(current) else None
-            elif hasattr(current, part):
-                current = getattr(current, part)
-            else:
-                return None
-
-        return current
+        from core.engine.variable_resolver import VariableResolver
+        return VariableResolver.get_nested_value(obj, path)
 
     def _error_result(self, code: str, message: str) -> Dict[str, Any]:
         """Create standardized error result."""

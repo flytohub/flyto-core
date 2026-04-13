@@ -286,17 +286,5 @@ class SwitchModule(BaseModule):
         """
         Get value from context using dot notation path
         """
-        parts = var_path.split('.')
-        current = self.context
-
-        for part in parts:
-            if current is None:
-                return None
-            if isinstance(current, dict):
-                current = current.get(part)
-            elif hasattr(current, part):
-                current = getattr(current, part)
-            else:
-                return None
-
-        return current
+        from core.engine.variable_resolver import VariableResolver
+        return VariableResolver.get_nested_value(self.context, var_path)

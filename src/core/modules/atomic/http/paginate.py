@@ -55,17 +55,8 @@ def _extract_by_path(data: Any, path: str) -> Any:
     """Extract value from nested dict using dot notation. e.g. 'meta.next_cursor'"""
     if not path or data is None:
         return None
-    parts = path.split('.')
-    current = data
-    for part in parts:
-        if isinstance(current, dict):
-            current = current.get(part)
-        elif isinstance(current, list) and part.isdigit():
-            idx = int(part)
-            current = current[idx] if idx < len(current) else None
-        else:
-            return None
-    return current
+    from core.engine.variable_resolver import VariableResolver
+    return VariableResolver.get_nested_value(data, path)
 
 
 def _parse_link_header(link_header: str) -> Optional[str]:

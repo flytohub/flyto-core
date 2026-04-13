@@ -17,37 +17,11 @@ logger = logging.getLogger(__name__)
 
 
 def _get_nested_value(obj: Any, path: str) -> Any:
-    """Get value from nested object using dot notation path"""
+    """Get value from nested object using dot notation path."""
+    from core.engine.variable_resolver import VariableResolver
     if not path:
         return obj
-
-    parts = path.split('.')
-    current = obj
-
-    for part in parts:
-        # Handle array index notation: items[0]
-        match = re.match(r'(\w+)\[(\d+)\]', part)
-        if match:
-            key, index = match.groups()
-            if isinstance(current, dict) and key in current:
-                current = current[key]
-                if isinstance(current, list) and int(index) < len(current):
-                    current = current[int(index)]
-                else:
-                    return None
-            else:
-                return None
-        elif isinstance(current, dict) and part in current:
-            current = current[part]
-        elif isinstance(current, list):
-            try:
-                current = current[int(part)]
-            except (ValueError, IndexError):
-                return None
-        else:
-            return None
-
-    return current
+    return VariableResolver.get_nested_value(obj, path)
 
 
 def _add_assertion(

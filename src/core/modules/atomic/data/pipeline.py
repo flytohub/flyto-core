@@ -81,24 +81,10 @@ def _evaluate_condition(item: Any, condition: str, value: Any) -> bool:
 
 def _get_nested_value(obj: Any, path: str) -> Any:
     """Get a nested value from an object using dot notation."""
+    from core.engine.variable_resolver import VariableResolver
     if not path:
         return obj
-
-    parts = path.split('.')
-    current = obj
-
-    for part in parts:
-        if isinstance(current, dict):
-            current = current.get(part)
-        elif isinstance(current, list) and part.isdigit():
-            idx = int(part)
-            current = current[idx] if 0 <= idx < len(current) else None
-        elif hasattr(current, part):
-            current = getattr(current, part)
-        else:
-            return None
-
-    return current
+    return VariableResolver.get_nested_value(obj, path)
 
 
 @register_module(
