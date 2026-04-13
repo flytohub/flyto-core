@@ -161,7 +161,7 @@ async def archive_zip_extract(context: Dict[str, Any]) -> Dict[str, Any]:
     except RuntimeError as e:
         # zipfile raises RuntimeError for password-related issues
         raise ModuleError("Failed to extract ZIP: {}".format(str(e)))
-    except Exception as e:
+    except (OSError, PermissionError) as e:
         raise ModuleError("Failed to extract ZIP archive: {}".format(str(e)))
 
     return {

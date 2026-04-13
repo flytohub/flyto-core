@@ -639,7 +639,8 @@ class DesktopAutomationImpl(DesktopAutomation):
                 duration_ms=duration,
             )
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
+            logger.error(f"Screenshot failed: {e}")
             return DesktopActionResult(
                 success=False,
                 action=DesktopAction.SCREENSHOT,

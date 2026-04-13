@@ -16,8 +16,10 @@ Usage:
     loader.uninstall_plugin("flyto-plugin-slack")
 """
 
+import importlib
 import json
 import logging
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -62,6 +64,7 @@ class PluginLoader:
 
     PLUGIN_PREFIX = "flyto-plugin-"
     ENTRY_POINT_GROUP = "flyto.plugins"
+    _VALID_PACKAGE_NAME = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
 
     def __init__(self, plugins_dir: Optional[Path] = None):
         """
@@ -156,7 +159,7 @@ class PluginLoader:
         # Try to import manifest from package
         try:
             package_name = dist.metadata.get("Name", "").replace("-", "_")
-            module = __import__(f"{package_name}.manifest", fromlist=["MANIFEST"])
+            module = importlib.import_module(f"{package_name}.manifest")
             if hasattr(module, "MANIFEST"):
                 return PluginManifest.from_dict(module.MANIFEST)
         except ImportError:
@@ -272,6 +275,10 @@ class PluginLoader:
         if not name.startswith(self.PLUGIN_PREFIX):
             name = f"{self.PLUGIN_PREFIX}{name}"
 
+        if not self._VALID_PACKAGE_NAME.match(name):
+            logger.error(f"Invalid package name: {name}")
+            return False
+
         package_spec = name
         if version:
             package_spec = f"{name}=={version}"
@@ -316,6 +323,10 @@ class PluginLoader:
         """
         if not name.startswith(self.PLUGIN_PREFIX):
             name = f"{self.PLUGIN_PREFIX}{name}"
+
+        if not self._VALID_PACKAGE_NAME.match(name):
+            logger.error(f"Invalid package name: {name}")
+            return False
 
         # First unload the plugin
         if name in self._plugins:

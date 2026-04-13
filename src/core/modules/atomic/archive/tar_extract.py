@@ -152,7 +152,7 @@ async def archive_tar_extract(context: Dict[str, Any]) -> Dict[str, Any]:
         raise
     except tarfile.TarError as e:
         raise ModuleError("Invalid or corrupted TAR file: {}".format(str(e)))
-    except Exception as e:
+    except (OSError, PermissionError) as e:
         raise ModuleError("Failed to extract TAR archive: {}".format(str(e)))
 
     return {

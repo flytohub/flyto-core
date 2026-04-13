@@ -23,7 +23,7 @@ _ALLOWED_COMMANDS = frozenset({
     'git', 'python', 'python3', 'pip', 'pip3', 'pytest',
     'cat', 'ls', 'find', 'grep', 'head', 'tail', 'wc', 'echo', 'pwd', 'which',
     'tsc', 'eslint', 'prettier', 'jest', 'vitest',
-    'cargo', 'go', 'make', 'docker', 'env',
+    'cargo', 'go', 'make', 'env',
     'mkdir', 'cp', 'mv', 'touch', 'sort', 'uniq', 'diff', 'tree',
 })
 
