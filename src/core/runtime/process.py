@@ -7,6 +7,7 @@ Handles subprocess lifecycle for plugin execution.
 """
 
 import asyncio
+import json
 import logging
 import os
 import signal
@@ -502,6 +503,18 @@ class PluginProcess:
                 try:
                     data = line.decode("utf-8").strip()
                     if not data:
+                        continue
+
+                    raw = json.loads(data)
+
+                    # Notification: has "method" but no "id" (or id is null)
+                    # e.g., ui.open / ui.close from plugin UI steps
+                    if "method" in raw and raw.get("id") is None:
+                        if self._on_message:
+                            try:
+                                self._on_message(raw["method"], raw.get("params", {}))
+                            except Exception as cb_err:
+                                logger.debug(f"Notification callback error: {cb_err}")
                         continue
 
                     response = ProtocolDecoder.decode_response(data)
