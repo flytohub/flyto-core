@@ -173,6 +173,8 @@ async def yaml_parse(context: Dict[str, Any]) -> Dict[str, Any]:
                 raise FileNotFoundError(
                     f"File not found: {file_path}", path=file_path
                 )
+            if '..' in file_path:
+                raise Exception('Invalid file path')
             with open(file_path, 'r', encoding='utf-8') as f:
                 raw = f.read()
 

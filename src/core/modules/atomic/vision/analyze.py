@@ -278,6 +278,8 @@ async def _prepare_image(image_input: str, detail: str) -> Dict[str, Any]:
 
     # Read and encode file
     try:
+        if '..' in str(file_path):
+            raise Exception('Invalid file path')
         with open(file_path, 'rb') as f:
             image_data = base64.b64encode(f.read()).decode('utf-8')
 

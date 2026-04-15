@@ -106,6 +106,9 @@ async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}", path=file_path)
 
+    if '..' in file_path:
+        raise Exception('Invalid file path')
+
     try:
         with open(file_path, 'r', encoding=encoding) as csvfile:
             reader = csv.DictReader(csvfile, delimiter=delimiter)

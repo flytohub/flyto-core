@@ -111,6 +111,8 @@ async def pdf_to_word(context: Dict[str, Any]) -> Dict[str, Any]:
         raise FileNotFoundError(f"PDF file not found: {input_path}")
     _ensure_output_dir(output_path)
 
+    if ".." in input_path:
+        raise Exception("Invalid file path")
     with open(input_path, 'rb') as f:
         reader = pypdf.PdfReader(f)
         total_pages = len(reader.pages)

@@ -286,6 +286,9 @@ async def _load_image(image_path: str) -> Dict[str, Any]:
     if not path.exists():
         return {'error': f'File not found: {image_path}'}
 
+    if '..' in image_path:
+        return {'error': 'Invalid file path'}
+
     try:
         with open(path, 'rb') as f:
             data = base64.b64encode(f.read()).decode('utf-8')

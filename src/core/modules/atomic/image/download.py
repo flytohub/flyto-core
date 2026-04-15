@@ -136,6 +136,12 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
         url, parsed, output_path, output_dir, headers
     )
 
+    # Validate output_path to prevent path traversal
+    base_real = os.path.realpath(output_dir)
+    target_real = os.path.realpath(output_path)
+    if os.path.commonpath([base_real, target_real]) != base_real:
+        raise Exception('Invalid file path')
+
     async with aiohttp.ClientSession() as session:
         async with session.get(
             url,
@@ -145,16 +151,16 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
             response.raise_for_status()
             content_type = response.headers.get('Content-Type', 'image/jpeg')
             content = await response.read()
-            with open(output_path, 'wb') as f:
+            with open(target_real, 'wb') as f:
                 f.write(content)
 
-    file_size = os.path.getsize(output_path)
-    filename = os.path.basename(output_path)
-    logger.info(f"Downloaded image: {url} -> {output_path} ({file_size} bytes)")
+    file_size = os.path.getsize(target_real)
+    filename = os.path.basename(target_real)
+    logger.info(f"Downloaded image: {url} -> {target_real} ({file_size} bytes)")
 
     return {
         'ok': True,
-        'path': output_path,
+        'path': target_real,
         'size': file_size,
         'content_type': content_type,
         'filename': filename

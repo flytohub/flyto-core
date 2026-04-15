@@ -92,6 +92,9 @@ async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:
     if not file_path:
         raise ValidationError("Missing required parameter: file_path", field="file_path")
 
+    if '..' in file_path:
+        raise Exception('Invalid file path')
+
     if not isinstance(data, list):
         raise InvalidTypeError(
             "data must be an array",

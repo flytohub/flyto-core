@@ -182,6 +182,8 @@ async def process_start(context: Dict[str, Any]) -> Dict[str, Any]:
     # Open log file if specified
     log_handle = None
     if log_file:
+        if '..' in log_file:
+            raise Exception('Invalid file path')
         log_handle = open(log_file, 'a', encoding='utf-8')
 
     try:
