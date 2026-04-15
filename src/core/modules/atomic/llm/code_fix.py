@@ -217,6 +217,9 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
 
             if fix_mode == 'apply':
                 path = Path(file_path).expanduser()
+                
+                if '..' in file_path:
+                    raise Exception('Invalid file path')
 
                 # Create backup
                 if backup:

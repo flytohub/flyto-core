@@ -189,6 +189,8 @@ async def pdf_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         import pypdf
+        if '..' in output_path:
+            raise Exception('Invalid file path')
         with open(output_path, 'rb') as f:
             reader = pypdf.PdfReader(f)
             page_count = len(reader.pages)

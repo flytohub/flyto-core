@@ -124,6 +124,8 @@ def load_ruleset(path: Union[str, Path]) -> Ruleset:
     if not path.exists():
         raise FileNotFoundError(f"Ruleset file not found: {path}")
 
+    if '..' in str(path):
+        raise ValueError('Invalid file path')
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
 
@@ -137,6 +139,8 @@ def save_ruleset(ruleset: Ruleset, path: Union[str, Path]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    if '..' in str(path):
+        raise ValueError('Invalid file path')
     with open(path, 'w', encoding='utf-8') as f:
         yaml.dump(ruleset.to_dict(), f, default_flow_style=False, allow_unicode=True)
 

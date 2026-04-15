@@ -301,6 +301,8 @@ def load_spec_ruleset(path: Union[str, Path]) -> Dict[str, Any]:
     import yaml
 
     path = Path(path)
+    if ".." in str(path):
+        raise Exception("Invalid file path")
     if not path.exists():
         raise FileNotFoundError(f"Ruleset not found: {path}")
 

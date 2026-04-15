@@ -192,9 +192,13 @@ def _extract_images(doc, images_output_dir: str) -> List[str]:
                 ext = 'gif'
 
             image_path = os.path.join(images_output_dir, f"image_{image_count}.{ext}")
-            with open(image_path, 'wb') as f:
+            base_real = os.path.realpath(images_output_dir)
+            target_real = os.path.realpath(image_path)
+            if os.path.commonpath([base_real, target_real]) != base_real:
+                raise ValueError('Invalid file path')
+            with open(target_real, 'wb') as f:
                 f.write(rel.target_part.blob)
-            images.append(image_path)
+            images.append(target_real)
 
     return images
 

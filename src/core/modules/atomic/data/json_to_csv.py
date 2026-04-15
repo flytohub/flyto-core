@@ -118,6 +118,8 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
     # Load data if it's a file path
     if isinstance(input_data, str):
         if os.path.exists(input_data):
+            if '..' in input_data:
+                raise Exception('Invalid file path')
             with open(input_data, 'r', encoding='utf-8') as f:
                 input_data = json.load(f)
         else:
@@ -161,6 +163,8 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
         os.makedirs(output_dir)
 
     # Write CSV
+    if '..' in output_path:
+        raise Exception('Invalid file path')
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f, delimiter=delimiter)
 

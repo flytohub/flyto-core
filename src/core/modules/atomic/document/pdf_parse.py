@@ -104,6 +104,10 @@ async def pdf_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     if not os.path.exists(path):
         raise FileNotFoundError(f"PDF file not found: {path}")
 
+    # Validate path to prevent traversal
+    if ".." in path:
+        raise Exception("Invalid file path")
+
     # Open and parse PDF
     with open(path, 'rb') as f:
         reader = pypdf.PdfReader(f)
