@@ -1,0 +1,166 @@
+{
+  "title": "Notion 發展方向分析",
+  "url": "https://chatgpt.com/share/69dee485-fc04-83a2-9ce3-08194a81f9cb",
+  "turns": [
+    {
+      "index": 0,
+      "role": "user",
+      "text": "你說：\nnotion 你覺得類似這種東西 做甚麼會很炸裂"
+    },
+    {
+      "index": 2,
+      "role": "user",
+      "text": "你說：\n你說說"
+    },
+    {
+      "index": 4,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案\n我可以直接講產品定位、首頁文案、核心功能、第一批用戶。                                                                                                                            \r\n   其實我覺得要不要重構 你可以看一下flyto-indexer 就是可以上傳 然後要把每個檔案 資料夾 等等都設定上hash碼 再做一個結構圖 所有檔案都由這結構圖去擺放 你要先做到分層 project 資料夾   \r\n  等等 你分 可以分多層 然後對應 學習模式 懂我意思嗎? 先分析"
+    },
+    {
+      "index": 6,
+      "role": "user",
+      "text": "你說：\n目前有人做這個媽"
+    },
+    {
+      "index": 8,
+      "role": "user",
+      "text": "你說：\n我如果用fIrebase做 會不會不太好"
+    },
+    {
+      "index": 10,
+      "role": "user",
+      "text": "你說：\n那用go 呢?"
+    },
+    {
+      "index": 12,
+      "role": "user",
+      "text": "你說：\n這樣要再打一個應用程式嗎?"
+    },
+    {
+      "index": 14,
+      "role": "user",
+      "text": "你說：\n我能不能一個應用程式 去切換兩個產品?"
+    },
+    {
+      "index": 16,
+      "role": "user",
+      "text": "你說：\n那你建議統一嗎?"
+    },
+    {
+      "index": 18,
+      "role": "user",
+      "text": "你說：\n我這要申請專利嗎"
+    },
+    {
+      "index": 20,
+      "role": "user",
+      "text": "你說：\n我這種要設定 代理嗎 比如說給別的國家代理?"
+    },
+    {
+      "index": 22,
+      "role": "user",
+      "text": "你說：\n跟專案沒關係 我是說 我產品給別人代理"
+    },
+    {
+      "index": 24,
+      "role": "user",
+      "text": "你說：\n我應用程式哪裡可以獲得安全認證?"
+    },
+    {
+      "index": 26,
+      "role": "user",
+      "text": "你說：\n桌面應用程式 我怕是我應用程式沒認證 大家不想用"
+    },
+    {
+      "index": 28,
+      "role": "user",
+      "text": "你說：\nPostgreSQL gc有嗎 可以冷啟動嗎？"
+    },
+    {
+      "index": 30,
+      "role": "user",
+      "text": "你說：\n一個月要多少台幣"
+    },
+    {
+      "index": 32,
+      "role": "user",
+      "text": "你說：\n那你覺得我這專案如何？"
+    },
+    {
+      "index": 34,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案"
+    },
+    {
+      "index": 36,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案"
+    },
+    {
+      "index": 38,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案"
+    },
+    {
+      "index": 40,
+      "role": "user",
+      "text": "你說：\nflyto-engine 最新版正確 CLAUDE.md 架構草稿"
+    },
+    {
+      "index": 42,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案"
+    },
+    {
+      "index": 44,
+      "role": "user",
+      "text": "你說：\n已上傳一個檔案\n現在有一個技術上疑問 就是這些 我不可能再使用者 nas 直接大改它們存放資料結構 可能有些已經歷史悠久 等等之類問題 我這邊是可以做映射 排序 好找一個工具 但不可能真正改 除非 有一個授權鍵 等等 有一點問題 思考一下"
+    },
+    {
+      "index": 46,
+      "role": "user",
+      "text": "你說：\n那這樣預覽 那些呢 用插件嗎？ 不用自己做？"
+    },
+    {
+      "index": 48,
+      "role": "user",
+      "text": "你說：\n那如果使用者在nas上改動呢？"
+    },
+    {
+      "index": 50,
+      "role": "user",
+      "text": "你說：\n這種東西 我有雲端跟本地 做得到嗎"
+    },
+    {
+      "index": 52,
+      "role": "user",
+      "text": "你說：\n不 我意思是 使用者可能安裝本地版本 也可能使用雲端版本"
+    },
+    {
+      "index": 54,
+      "role": "user",
+      "text": "你說：\n這種其實可以單純 Notion 或是檔案管理對吧？ 不一定都要一開始開project"
+    },
+    {
+      "index": 56,
+      "role": "user",
+      "text": "你說：\n首頁入口資訊架構：Notion-like 輕入口 + Project 升格流程。 畫一版ui給我看看 大概規劃一下 流程 未來 等等"
+    },
+    {
+      "index": 58,
+      "role": "user",
+      "text": "你說：\n這樣產品還會有人想用嗎？ 我還是比較喜歡 Notion 或是 hackmd 風格"
+    },
+    {
+      "index": 60,
+      "role": "user",
+      "text": "你說：\n我是說這樣功能欸"
+    },
+    {
+      "index": 61,
+      "role": "assistant",
+      "text": "ChatGPT 說：\nThought for a second\n\n懂，你是說功能上這樣會不會太弱，大家還會不會想用，不是只講 UI。\n\n我的看法是：\n\n不會太弱，前提是你要分兩層\n\n表面功能要輕，底下能力要重。\n\n也就是：\n\n使用者一開始看到的功能\n\n可以很像 Notion / HackMD：\n\n新建文檔\n\n上傳檔案\n\n連接來源\n\n搜尋\n\n資料夾 / 筆記列表\n\n這些很輕，沒有問題。\n\n但真正讓人留下來的功能\n\n不是這些基本功能本身，\n而是你在這些動作後面多做了什麼。\n\n例如：\n\n1. 上傳不是只是上傳\n\n而是會：\n\n自動抽文字\n\n自動分類\n\n自動建立關聯\n\n自動生成摘要\n\n自動判斷可不可以形成一個主題群\n\n2. 筆記不是只是筆記\n\n而是筆記可以：\n\n關聯到檔案\n\n關聯到來源\n\n關聯到某個主題 / 專案\n\n變成某個結構的一部分\n\n3. 檔案管理不是只是檔案管理\n\n而是：\n\n不動原始 NAS 結構\n\n但幫你建立虛擬分類與搜尋層\n\n能知道這些東西彼此有什麼關係\n\n4. 搜尋不是只有全文搜尋\n\n而是：\n\n找 related files\n\n找同主題內容\n\n找某次會議相關文件\n\n找某個客戶 / 某個專案全部上下文\n\n真正的差別在這裡\n\n如果你的功能只是：\n\n新建文檔\n\n上傳檔案\n\n資料夾整理\n\n搜尋\n\n那當然不夠，因為大家直接用：\n\nNotion\n\nHackMD\n\nGoogle Drive\n\nDropbox\n\nObsidian\n\n就好了。\n\n你要贏的不是「我也有文檔、上傳、資料夾」\n\n你要贏的是：\n\n我把這些普通入口，變成有結構、有理解能力、有收斂能力的 workspace。\n\n所以功能上我會這樣切\n第一層：人人都懂的入口功能\n\nNew doc\n\nUpload\n\nConnect source\n\nSearch\n\nInbox\n\n這層要輕。\n\n第二層：真正差異化能力\n\nAI 自動分群\n\n自動建立虛擬結構\n\nsource mapping\n\ncanonical resource\n\nrelationship graph\n\nsync / reconcile\n\npreview pipeline\n\nproject suggestion / project upgrade\n\nimpact / related context\n\n這層才是你的核心。\n\n這樣反而比較強\n\n因為如果你一開始就把核心能力直接變成很多顯性功能，會變成：\n\n很複雜\n\n很重\n\n很像企業系統\n\n新手不想碰\n\n但如果你把它藏在後面，前面像 Notion / HackMD，\n使用者會覺得：\n\n這東西很好上手，但怎麼越用越聰明。\n\n這個感覺才對。\n\n我直接幫你判斷\n只做 Notion / HackMD 那層功能\n\n不夠。\n\n做 Notion / HackMD 的入口 + 你後面的 engine 能力\n\n就有機會。\n\n也就是說：\n\n外表不能太重\n\n功能本質不能太薄\n\n你真正該主打的功能，不是 page editor\n\n我覺得你最該主打的是這幾個：\n\n1. Connect and understand\n\n不是只是導入，而是導入後會理解。\n\n2. Keep source untouched\n\n不動原始 NAS / Drive，但幫你變好找。\n\n3. Turn loose content into structure\n\n把零散文檔和檔案慢慢長成可用結構。\n\n4. Suggest projects, don’t force projects\n\n不是逼你先開 project，而是系統在適當時機建議你收斂。\n\n這四個比「我們有很強的 page editor」更有差異化。\n\n一句話結論\n\n功能上可以走 Notion / HackMD 入口，但不能只有 Notion / HackMD 那些基本功能。\n\n正確做法是：\n\n入口像筆記工具，核心像結構引擎。\n\n這樣才比較有人想用，也比較有差異。\n\n你要的話，我可以直接幫你列一版：\n這產品的「基本功能」vs「真正差異化功能」對照表。"
+    }
+  ]
+}

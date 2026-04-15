@@ -486,3 +486,7 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/flytohub-flyto-core).
 
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=flytohub/flyto-core&type=Date)](https://star-history.com/#flytohub/flyto-core&Date)

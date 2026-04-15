@@ -1,0 +1,129 @@
+id: scrape_chatgpt_share_v1
+name: Scrape ChatGPT Share Conversation
+version: 1.0.0
+description: >
+  ChatGPT share pages render conversation content via JS behind Cloudflare, so
+  plain curl/WebFetch gets only the shell. This workflow uses flyto-core's
+  stealth browser to load the page, wait for the conversation to render, and
+  dump the visible transcript as both markdown and JSON.
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: launch
+    module: browser.launch
+    label: Launch stealth Chromium
+    params:
+      stealth: true
+      browser_type: chromium
+      behavior: human
+      width: 1280
+      height: 900
+      headless: true
+      locale: zh-TW
+    orderIndex: 1
+
+  - id: goto
+    module: browser.goto
+    label: Open share URL
+    params:
+      url: "{{share_url}}"
+      wait_until: networkidle
+      timeout: 30000
+    orderIndex: 2
+
+  - id: wait_for_messages
+    module: browser.wait_for_selector
+    label: Wait for conversation to render
+    params:
+      selector: "[data-message-author-role], article [data-testid^='conversation-turn']"
+      timeout: 20000
+    orderIndex: 3
+    on_error: continue
+
+  - id: extract
+    module: browser.evaluate
+    label: Extract conversation turns
+    params:
+      script: |
+        (function () {
+          const turns = [];
+          const nodes = document.querySelectorAll(
+            "[data-message-author-role], article [data-testid^='conversation-turn']"
+          );
+          nodes.forEach((el, i) => {
+            const role =
+              el.getAttribute("data-message-author-role") ||
+              (el.querySelector("[data-message-author-role]")?.getAttribute(
+                "data-message-author-role"
+              )) ||
+              (i % 2 === 0 ? "user" : "assistant");
+            const text = (el.innerText || "").trim();
+            if (text) turns.push({ index: i, role, text });
+          });
+          return JSON.stringify(
+            {
+              title: document.title,
+              url: location.href,
+              turn_count: turns.length,
+              turns,
+            },
+            null,
+            2
+          );
+        })()
+    orderIndex: 4
+
+  - id: save_json
+    module: file.write
+    label: Save raw JSON
+    params:
+      path: "./out/chatgpt_share_{{share_id}}.json"
+      content: "{{extract.result}}"
+    orderIndex: 5
+
+  - id: to_markdown
+    module: text.transform
+    label: Build readable markdown
+    params:
+      template: |
+        # {{extract.result.title}}
+
+        Source: {{share_url}}
+
+        {% for t in extract.result.turns %}
+        ## {{ t.role | upper }}
+
+        {{ t.text }}
+
+        ---
+        {% endfor %}
+      output: markdown
+    orderIndex: 6
+
+  - id: save_md
+    module: file.write
+    label: Save markdown transcript
+    params:
+      path: "./out/chatgpt_share_{{share_id}}.md"
+      content: "{{to_markdown.result}}"
+    orderIndex: 7
+
+  - id: close
+    module: browser.close
+    label: Close browser
+    params: {}
+    orderIndex: 8
+
+inputs:
+  share_url:
+    type: string
+    required: true
+    description: Full ChatGPT share URL (https://chatgpt.com/share/<id>)
+  share_id:
+    type: string
+    required: true
+    description: Just the share id — used for output filenames
