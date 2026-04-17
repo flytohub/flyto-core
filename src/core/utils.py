@@ -413,6 +413,14 @@ def validate_url_ssrf(
     if parsed.scheme not in ('http', 'https'):
         raise SSRFError(f"URL scheme not allowed: {parsed.scheme}")
 
+    # Port whitelist — block non-web ports (SMTP 25, SSH 22, FTP 21, etc.)
+    _ALLOWED_PORTS = {80, 443, 8080, 8443}
+    if parsed.port and parsed.port not in _ALLOWED_PORTS:
+        raise SSRFError(
+            f"Port {parsed.port} not allowed. "
+            f"Allowed ports: {sorted(_ALLOWED_PORTS)}"
+        )
+
     hostname = parsed.hostname
     if not hostname:
         raise ValueError("URL missing hostname")

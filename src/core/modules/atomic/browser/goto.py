@@ -27,6 +27,7 @@ Example of schema presets usage - compare before/after:
         )
 """
 import logging
+import os
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
@@ -104,8 +105,11 @@ class BrowserGotoModule(BaseModule):
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']
 
-        # SECURITY: Validate URL against SSRF attacks (toggleable per-node)
-        if self.params.get('ssrf_protection', True):
+        # SECURITY: Validate URL against SSRF attacks.
+        # Cloud/worker modes ALWAYS enforce SSRF protection — user cannot disable it.
+        # Desktop mode allows opt-out for local development / self-hosted targets.
+        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
+        if _is_cloud or self.params.get('ssrf_protection', True):
             try:
                 validate_url_with_env_config(self.url)
             except SSRFError as e:

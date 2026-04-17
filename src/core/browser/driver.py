@@ -92,6 +92,9 @@ class BrowserDriver:
         self._proxy_pool = None  # ProxyPool instance
         # Resource filter: set of resource types to block (e.g., {'image', 'stylesheet', 'font'})
         self._blocked_resources: set = set()
+        # Callback for egress guard violations: fn(url: str) -> None
+        # Set by cloud worker to record SSRF/abuse attempts.
+        self.on_egress_blocked = None
 
     async def launch(
         self,
@@ -484,6 +487,12 @@ class BrowserDriver:
                     except Exception:
                         pass
 
+            # SECURITY: In cloud/worker mode, intercept ALL outbound requests
+            # at the browser network layer to enforce SSRF rules.
+            # This catches fetch(), WebSocket, XHR, <img src=...>, etc. that
+            # bypass the goto() URL validation. Also prevents DNS rebinding.
+            await self._install_egress_guard()
+
             logger.info("Browser launched successfully")
 
             return {
@@ -495,6 +504,56 @@ class BrowserDriver:
         except Exception as e:
             logger.error(f"Failed to launch browser: {str(e)}")
             raise RuntimeError(f"Browser launch failed: {str(e)}") from e
+
+    async def _install_egress_guard(self):
+        """Install network-level egress guard on the browser context.
+
+        In cloud/worker mode, intercepts every outbound request from the
+        browser (fetch, XHR, WebSocket, images, scripts, etc.) and validates
+        the target URL against SSRF rules. This is a defense-in-depth layer
+        that catches bypasses through JavaScript (e.g. fetch('http://169.254.169.254/...'))
+        and also mitigates DNS rebinding (the resolved IP is checked at request time).
+
+        Desktop mode skips this to avoid interfering with local dev targets.
+        """
+        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
+        if not _is_cloud:
+            return
+        if not self._context or not self._page:
+            return
+
+        from ..utils import validate_url_with_env_config, SSRFError
+
+        _on_blocked = self.on_egress_blocked
+
+        async def _egress_handler(route):
+            url = route.request.url
+            try:
+                validate_url_with_env_config(url)
+                await route.continue_()
+            except SSRFError:
+                logger.warning("Egress guard blocked request: %s", url[:200])
+                if _on_blocked:
+                    try:
+                        _on_blocked(url)
+                    except Exception:
+                        pass
+                await route.abort('blockedbyclient')
+            except Exception:
+                # Validation error (malformed URL etc.) — block to be safe
+                logger.warning("Egress guard blocked malformed request: %s", url[:200])
+                if _on_blocked:
+                    try:
+                        _on_blocked(url)
+                    except Exception:
+                        pass
+                await route.abort('blockedbyclient')
+
+        try:
+            await self._context.route('**/*', _egress_handler)
+            logger.info("Egress guard installed (cloud mode)")
+        except Exception as e:
+            logger.error("Failed to install egress guard: %s", e)
 
     async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
