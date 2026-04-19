@@ -1,0 +1,120 @@
+# Pentest: Hardening
+# OWASP A05:2021 — Security Misconfiguration
+id: pentest_hardening
+name: Hardening Test
+version: "1.0.0"
+description: CORS, GraphQL, TLS, HTTP security headers, defense controls
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: cors_check
+    module: http.batch
+    label: CORS Misconfiguration
+    params:
+      requests:
+        - method: OPTIONS
+          url: "{{target_url}}/api/"
+          headers:
+            Origin: "https://evil.com"
+            Access-Control-Request-Method: "GET"
+        - method: GET
+          url: "{{target_url}}/api/"
+          headers:
+            Origin: "https://evil.com"
+        - method: GET
+          url: "{{target_url}}/api/"
+          headers:
+            Origin: "null"
+        - method: GET
+          url: "{{target_url}}/api/"
+          headers:
+            Origin: "https://{{target_url}}.evil.com"
+      check_headers:
+        - "Access-Control-Allow-Origin"
+        - "Access-Control-Allow-Credentials"
+        - "Access-Control-Allow-Methods"
+    orderIndex: 1
+
+  - id: security_headers
+    module: http.batch
+    label: Security Headers Audit
+    params:
+      requests:
+        - method: GET
+          url: "{{target_url}}/"
+      required_headers:
+        - { name: "Strict-Transport-Security", min_value: "max-age=31536000" }
+        - { name: "X-Content-Type-Options", value: "nosniff" }
+        - { name: "X-Frame-Options", values: ["DENY", "SAMEORIGIN"] }
+        - { name: "Content-Security-Policy" }
+        - { name: "Referrer-Policy" }
+        - { name: "Permissions-Policy" }
+        - { name: "X-XSS-Protection", value: "0" }
+      forbidden_headers:
+        - { name: "Server" }
+        - { name: "X-Powered-By" }
+        - { name: "X-AspNet-Version" }
+    orderIndex: 2
+
+  - id: graphql_check
+    module: http.batch
+    label: GraphQL Hardening
+    params:
+      requests:
+        # Introspection (should be disabled in production)
+        - method: POST
+          url: "{{target_url}}/graphql"
+          headers: { "Content-Type": "application/json" }
+          body: '{"query": "{__schema{types{name}}}"}'
+        # Depth attack
+        - method: POST
+          url: "{{target_url}}/graphql"
+          headers: { "Content-Type": "application/json" }
+          body: '{"query": "{user{friends{friends{friends{friends{friends{name}}}}}}}"}'
+        # Batch attack
+        - method: POST
+          url: "{{target_url}}/graphql"
+          headers: { "Content-Type": "application/json" }
+          body: '[{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"},{"query":"{user{name}}"}]'
+      detect_patterns: ["__schema", "__type"]
+    orderIndex: 3
+
+  - id: tls_version
+    module: http.batch
+    label: TLS Configuration
+    params:
+      requests:
+        - method: GET
+          url: "{{target_url}}/"
+      check_tls:
+        min_version: "TLS 1.2"
+        reject: ["TLS 1.0", "TLS 1.1", "SSL 3.0"]
+    orderIndex: 4
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze hardening test results.
+        CORS: ${cors_check.data}
+        Security headers: ${security_headers.data}
+        GraphQL: ${graphql_check.data}
+        TLS: ${tls_version.data}
+
+        Grade each area: PASS / WARN / FAIL
+        Output JSON: { "findings": [...], "severity": "...", "grades": {...}, "summary": "..." }
+    orderIndex: 5
+
+edges:
+  - { source: start, target: cors_check }
+  - { source: cors_check, target: security_headers }
+  - { source: security_headers, target: graphql_check }
+  - { source: graphql_check, target: tls_version }
+  - { source: tls_version, target: analyze }

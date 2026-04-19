@@ -1,0 +1,106 @@
+# Flyto Pentest Registry
+# 12 categories matching OWASP + modern attack surface
+# Each entry maps to a workflow YAML in this directory
+#
+# Execution: flyto-core worker loads these as workflow templates.
+# The cloud API triggers them per-domain or per-repo via Cloud Tasks.
+
+id: pentest_registry
+version: "1.0.0"
+
+categories:
+  - id: access_control
+    name: Access Control (BOLA/IDOR)
+    description: Identify unauthorized data access. Check cross-tenant data leakage, authorization bypass, IDOR (data exposure risk), and improper access control.
+    owasp: ["A01:2021"]
+    severity: critical
+    workflow: access_control.yaml
+    requires: [target_url, auth_token]
+
+  - id: business_logic
+    name: Business Logic & Validation
+    description: AI-driven logic testing. Detect complex input validation errors and general logic flaws that static scanners cannot identify.
+    owasp: ["A04:2021"]
+    severity: high
+    workflow: business_logic.yaml
+    requires: [target_url]
+
+  - id: code_injection
+    name: Code & Command Injection
+    description: Detect if untrusted data executes system commands. Focus on Remote Code Execution (RCE) and OS command injection.
+    owasp: ["A03:2021"]
+    severity: critical
+    workflow: code_injection.yaml
+    requires: [target_url]
+
+  - id: sql_injection
+    name: SQL & Database Injection
+    description: Identify injection vulnerabilities in database queries. Covers SQL injection, NoSQL injection, XPath injection, and LDAP injection.
+    owasp: ["A03:2021"]
+    severity: critical
+    workflow: sql_injection.yaml
+    requires: [target_url]
+
+  - id: llm_injection
+    name: LLM & Prompt Injection
+    description: Ensure AI integrations are tamper-proof. Detect prompt injection, jailbreak, and system context leakage attempts.
+    owasp: ["LLM01:2025"]
+    severity: high
+    workflow: llm_injection.yaml
+    requires: [target_url, ai_endpoint]
+
+  - id: ssrf
+    name: Server-Side Request Forgery (SSRF)
+    description: Test if your server can be tricked into making requests to internal infrastructure or external systems.
+    owasp: ["A10:2021"]
+    severity: high
+    workflow: ssrf.yaml
+    requires: [target_url]
+
+  - id: auth_session
+    name: Authentication & Session Management
+    description: Verify login security. Check for brute force vulnerabilities, missing/improper authentication, and cookie integrity issues.
+    owasp: ["A07:2021"]
+    severity: critical
+    workflow: auth_session.yaml
+    requires: [target_url, login_url]
+
+  - id: client_side
+    name: Client-Side Attacks
+    description: Protect browser security. Scan for XSS, CSRF, open redirects, and web cache poisoning attacks.
+    owasp: ["A03:2021", "A07:2021"]
+    severity: high
+    workflow: client_side.yaml
+    requires: [target_url]
+
+  - id: deserialization
+    name: Insecure Deserialization & SSTI
+    description: Probe unsafe object handling. Target insecure deserialization and server-side template injection.
+    owasp: ["A08:2021"]
+    severity: critical
+    workflow: deserialization.yaml
+    requires: [target_url]
+
+  - id: file_misconfig
+    name: Files & Misconfiguration
+    description: Scan filesystem risks including Local File Inclusion (LFI), unrestricted file upload, directory listing, path control, and error leakage.
+    owasp: ["A05:2021"]
+    severity: high
+    workflow: file_misconfig.yaml
+    requires: [target_url]
+
+  - id: secrets_crypto
+    name: Secrets & Cryptography
+    description: Discover hardcoded credentials/passwords, weak encryption, JWT validation bypass, and sensitive data exposure.
+    owasp: ["A02:2021"]
+    severity: critical
+    workflow: secrets_crypto.yaml
+    requires: [target_url]
+
+  - id: hardening
+    name: Hardening
+    description: Identify missing or misconfigured defense controls including GraphQL hardening, CORS misconfiguration, TLS configuration issues, and incorrect HTTP security headers.
+    owasp: ["A05:2021"]
+    severity: moderate
+    workflow: hardening.yaml
+    requires: [target_url]

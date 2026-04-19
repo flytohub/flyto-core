@@ -1,0 +1,110 @@
+# Pentest: Business Logic & Validation
+# OWASP A04:2021 — Insecure Design
+id: pentest_business_logic
+name: Business Logic & Validation Test
+version: "1.0.0"
+description: Input validation errors, logic flaws, race conditions
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: input_validation
+    module: http.batch
+    label: Input Validation Probes
+    params:
+      requests:
+        # Negative values
+        - method: POST
+          url: "{{target_url}}/api/order"
+          headers: { "Content-Type": "application/json" }
+          body: '{"quantity": -1, "price": 100}'
+        - method: POST
+          url: "{{target_url}}/api/transfer"
+          headers: { "Content-Type": "application/json" }
+          body: '{"amount": -999999}'
+        # Overflow
+        - method: POST
+          url: "{{target_url}}/api/order"
+          headers: { "Content-Type": "application/json" }
+          body: '{"quantity": 99999999999}'
+        # Type confusion
+        - method: POST
+          url: "{{target_url}}/api/order"
+          headers: { "Content-Type": "application/json" }
+          body: '{"quantity": "abc", "price": "xyz"}'
+        - method: POST
+          url: "{{target_url}}/api/order"
+          headers: { "Content-Type": "application/json" }
+          body: '{"quantity": null, "price": null}'
+        - method: POST
+          url: "{{target_url}}/api/order"
+          headers: { "Content-Type": "application/json" }
+          body: '{"quantity": [], "price": {}}'
+        # Price tampering
+        - method: POST
+          url: "{{target_url}}/api/checkout"
+          headers: { "Content-Type": "application/json" }
+          body: '{"item_id": "1", "price": 0.01}'
+        # Boundary values
+        - method: POST
+          url: "{{target_url}}/api/coupon"
+          headers: { "Content-Type": "application/json" }
+          body: '{"code": "", "discount": 101}'
+    orderIndex: 1
+
+  - id: race_condition
+    module: http.batch
+    label: Race Condition Check
+    params:
+      description: Send parallel requests to detect TOCTOU bugs
+      parallel: true
+      requests:
+        - { method: POST, url: "{{target_url}}/api/coupon/apply", headers: { "Content-Type": "application/json" }, body: '{"code": "DISCOUNT50"}' }
+        - { method: POST, url: "{{target_url}}/api/coupon/apply", headers: { "Content-Type": "application/json" }, body: '{"code": "DISCOUNT50"}' }
+        - { method: POST, url: "{{target_url}}/api/coupon/apply", headers: { "Content-Type": "application/json" }, body: '{"code": "DISCOUNT50"}' }
+        - { method: POST, url: "{{target_url}}/api/coupon/apply", headers: { "Content-Type": "application/json" }, body: '{"code": "DISCOUNT50"}' }
+        - { method: POST, url: "{{target_url}}/api/coupon/apply", headers: { "Content-Type": "application/json" }, body: '{"code": "DISCOUNT50"}' }
+    orderIndex: 2
+
+  - id: workflow_bypass
+    module: http.batch
+    label: Workflow Bypass
+    params:
+      description: Skip steps in multi-step workflows
+      requests:
+        # Skip payment step
+        - method: POST
+          url: "{{target_url}}/api/order/confirm"
+          headers: { "Content-Type": "application/json" }
+          body: '{"order_id": "test-123"}'
+        # Skip verification
+        - method: POST
+          url: "{{target_url}}/api/account/verify"
+          headers: { "Content-Type": "application/json" }
+          body: '{"verified": true}'
+    orderIndex: 3
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        Analyze business logic test results.
+
+        Input validation: ${input_validation.data}
+        Race conditions: ${race_condition.data}
+        Workflow bypass: ${workflow_bypass.data}
+
+        Output JSON: { "findings": [...], "severity": "...", "summary": "..." }
+    orderIndex: 4
+
+edges:
+  - { source: start, target: input_validation }
+  - { source: input_validation, target: race_condition }
+  - { source: race_condition, target: workflow_bypass }
+  - { source: workflow_bypass, target: analyze }

@@ -1,0 +1,175 @@
+# Pentest: Access Control (BOLA/IDOR)
+# OWASP A01:2021 — Broken Access Control
+id: pentest_access_control
+name: Access Control Test
+version: "1.0.0"
+description: Test for BOLA, IDOR, cross-tenant leakage, privilege escalation
+
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: launch
+    module: browser.launch
+    label: Launch Browser
+    params:
+      stealth: true
+      headless: true
+      browser_type: chromium
+    orderIndex: 1
+
+  - id: discover_endpoints
+    module: browser.evaluate
+    label: Discover API Endpoints
+    params:
+      script: |
+        (async function() {
+          const target = '{{target_url}}';
+          const results = { endpoints: [], idor_candidates: [] };
+
+          // Intercept XHR/fetch to discover API endpoints
+          const urls = new Set();
+          const origFetch = window.fetch;
+          window.fetch = function(...args) {
+            urls.add(args[0]?.toString?.() || args[0]);
+            return origFetch.apply(this, args);
+          };
+
+          // Navigate and collect
+          await new Promise(r => setTimeout(r, 3000));
+
+          // Look for patterns with numeric/uuid IDs (IDOR candidates)
+          const idPatterns = /\/([\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}|\d{1,10})\/?/gi;
+          for (const url of urls) {
+            results.endpoints.push(url);
+            if (idPatterns.test(url)) {
+              results.idor_candidates.push({
+                url: url,
+                id_type: url.match(/[\da-f]{8}-/) ? 'uuid' : 'numeric'
+              });
+            }
+          }
+
+          return JSON.stringify(results, null, 2);
+        })()
+    orderIndex: 2
+
+  - id: test_idor
+    module: http.batch
+    label: IDOR Probe
+    params:
+      description: Test discovered endpoints with modified IDs
+      requests:
+        - method: GET
+          url: "{{target_url}}/api/users/1"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+        - method: GET
+          url: "{{target_url}}/api/users/2"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+        - method: GET
+          url: "{{target_url}}/api/users/999999"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+      compare_responses: true
+    orderIndex: 3
+
+  - id: test_horizontal
+    module: http.batch
+    label: Horizontal Privilege Test
+    params:
+      description: Access other tenant resources with current auth
+      requests:
+        - method: GET
+          url: "{{target_url}}/api/organizations/{{org_id}}"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+        - method: GET
+          url: "{{target_url}}/api/organizations/other-org-id"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+      compare_responses: true
+    orderIndex: 4
+
+  - id: test_vertical
+    module: http.batch
+    label: Vertical Privilege Escalation
+    params:
+      description: Access admin endpoints with regular user token
+      requests:
+        - method: GET
+          url: "{{target_url}}/api/admin/users"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+        - method: POST
+          url: "{{target_url}}/api/admin/settings"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+          body: '{"role": "admin"}'
+        - method: DELETE
+          url: "{{target_url}}/api/users/1"
+          headers:
+            Authorization: "Bearer {{auth_token}}"
+      expect_status: [401, 403]
+    orderIndex: 5
+
+  - id: test_no_auth
+    module: http.batch
+    label: Missing Auth Check
+    params:
+      description: Access endpoints without any authentication
+      requests:
+        - method: GET
+          url: "{{target_url}}/api/users"
+        - method: GET
+          url: "{{target_url}}/api/organizations"
+        - method: GET
+          url: "{{target_url}}/api/settings"
+        - method: GET
+          url: "{{target_url}}/api/admin"
+      expect_status: [401, 403]
+    orderIndex: 6
+
+  - id: analyze
+    module: llm.agent
+    label: Analyze Results
+    params:
+      model: gpt-4o
+      prompt: |
+        You are a penetration tester analyzing access control test results.
+
+        IDOR probe results: ${test_idor.data}
+        Horizontal privilege results: ${test_horizontal.data}
+        Vertical privilege results: ${test_vertical.data}
+        No-auth results: ${test_no_auth.data}
+
+        Classify each finding:
+        - CRITICAL: Data from other users/tenants accessible
+        - HIGH: Admin endpoints accessible by regular users
+        - MODERATE: Endpoints accessible without auth but no sensitive data
+        - LOW: Minor access control inconsistencies
+
+        Output JSON: { "findings": [...], "severity": "CRITICAL|HIGH|MODERATE|LOW", "summary": "..." }
+    orderIndex: 7
+
+  - id: report
+    module: output.display
+    label: Report
+    params:
+      format: json
+      data: "${analyze.data}"
+    orderIndex: 8
+
+edges:
+  - { source: start, target: launch }
+  - { source: launch, target: discover_endpoints }
+  - { source: discover_endpoints, target: test_idor }
+  - { source: test_idor, target: test_horizontal }
+  - { source: test_horizontal, target: test_vertical }
+  - { source: test_vertical, target: test_no_auth }
+  - { source: test_no_auth, target: analyze }
+  - { source: analyze, target: report }
