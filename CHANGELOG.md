@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.0] - 2026-04-20
+
+### Added
+- **Pentest workflow library** — 12 ready-to-run YAML workflows in `workflows/pentests/`, one per OWASP category: `access_control`, `sql_injection`, `code_injection`, `client_side`, `auth_session`, `ssrf`, `llm_injection`, `business_logic`, `deserialization`, `file_misconfig`, `secrets_crypto`, `hardening`.
+- **Pentest registry** — central index with OWASP category mapping and per-workflow requirements so orchestrators can select tests by coverage area instead of by filename.
+
 ## [2.23.0] - 2026-03-19
 
 ### Added
