@@ -27,7 +27,7 @@ sentence-transformers>=2.2.0  # For local embeddings
 # Telegram Bot Dependencies
 # ============================================
 python-telegram-bot>=20.0
-openai>=1.0.0          # For /gpt commands
+openai>=1.109.1          # For /gpt commands
 
 # ============================================
 # Optional Third-party Integrations
