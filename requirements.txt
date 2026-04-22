@@ -13,7 +13,7 @@ uvicorn>=0.24.0
 pydantic>=2.0.0
 
 # Firebase (if using)
-firebase-admin>=6.2.0
+firebase-admin>=6.9.0
 
 # Other dependencies
 python-dotenv>=1.0.0
