@@ -11,6 +11,7 @@ from .response_assert import http_response_assert
 from .paginate import http_paginate
 from .session import http_session
 from .webhook_wait import http_webhook_wait
+from .batch import http_batch
 
 __all__ = [
     'http_get',
@@ -19,4 +20,5 @@ __all__ = [
     'http_paginate',
     'http_session',
     'http_webhook_wait',
+    'http_batch',
 ]

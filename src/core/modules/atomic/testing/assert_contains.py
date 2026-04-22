@@ -84,18 +84,35 @@ from ...registry import register_module
     timeout_ms=5000,
 )
 class AssertContainsModule(BaseModule):
-    """Assert that a collection contains a value."""
+    """Assert that a collection contains a value.
+
+    Two modes:
+      1. Legacy single-value check: `collection` + `value` — passes/fails on
+         a single `in` test.
+      2. Pentest verdict mode: `source` (list-of-batch-results or wrapper
+         dict with `data`) + `patterns` + `match_mode` ('any'|'all') +
+         `on_match` + `on_no_match`. Returns a verdict string for the
+         closed-loop aggregator.
+    """
 
     module_name = "Assert Contains"
     module_description = "Assert that a collection contains a value"
 
     def validate_params(self) -> None:
-        if 'collection' not in self.params:
-            raise ValueError("Parameter 'collection' is required")
-        if 'value' not in self.params:
-            raise ValueError("Parameter 'value' is required")
+        has_verdict_mode = 'source' in self.params and 'patterns' in self.params
+        has_legacy = 'collection' in self.params and 'value' in self.params
+        if not has_verdict_mode and not has_legacy:
+            raise ValueError(
+                "Parameter 'collection' + 'value' (legacy mode) "
+                "or 'source' + 'patterns' (verdict mode) is required"
+            )
 
     async def execute(self) -> Any:
+        if 'source' in self.params and 'patterns' in self.params:
+            return await self._execute_verdict_mode()
+        return await self._execute_legacy_mode()
+
+    async def _execute_legacy_mode(self) -> Any:
         collection = self.params.get('collection')
         value = self.params.get('value')
         custom_message = self.params.get('message')
@@ -118,3 +135,47 @@ class AssertContainsModule(BaseModule):
             raise AssertionError(message)
 
         return result
+
+    async def _execute_verdict_mode(self) -> Any:
+        """Pattern-match over http.batch output, return a verdict."""
+        source = self.params.get('source')
+        if isinstance(source, dict) and 'data' in source:
+            source = source['data']
+
+        patterns = list(self.params.get('patterns') or [])
+        match_mode = self.params.get('match_mode', 'any')
+        on_match = self.params.get('on_match', 'exploitable')
+        on_no_match = self.params.get('on_no_match', 'sanitized')
+
+        # Collect every string body to scan. Accepts a list-of-results, a
+        # single result dict, or a bare string (for completeness).
+        haystack_parts = []
+        if isinstance(source, list):
+            for entry in source:
+                if isinstance(entry, dict):
+                    body = entry.get('body', '')
+                    if body:
+                        haystack_parts.append(str(body))
+                elif isinstance(entry, str):
+                    haystack_parts.append(entry)
+        elif isinstance(source, dict):
+            haystack_parts.append(str(source.get('body', '')))
+        elif isinstance(source, str):
+            haystack_parts.append(source)
+
+        haystack = "\n".join(haystack_parts).lower()
+
+        matches = [p for p in patterns if p.lower() in haystack]
+        if match_mode == 'all':
+            found = len(matches) == len(patterns) and len(patterns) > 0
+        else:  # 'any'
+            found = len(matches) > 0
+
+        verdict = on_match if found else on_no_match
+        return {
+            'passed': not found if on_match in ('exploitable', 'vulnerable') else found,
+            'verdict': verdict,
+            'matched_patterns': matches,
+            'total_patterns': len(patterns),
+            'source_length': len(haystack),
+        }

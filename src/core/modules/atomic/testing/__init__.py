@@ -13,6 +13,8 @@ from .assert_contains import AssertContainsModule
 from .assert_greater_than import AssertGreaterThanModule
 from .assert_length import AssertLengthModule
 from .assert_not_null import AssertNotNullModule
+from .assert_status import AssertStatusModule
+from .assert_timing import AssertTimingModule
 
 # Test runner modules
 from .e2e import testing_e2e_run_steps
@@ -34,6 +36,8 @@ __all__ = [
     'AssertGreaterThanModule',
     'AssertLengthModule',
     'AssertNotNullModule',
+    'AssertStatusModule',
+    'AssertTimingModule',
     # Runners
     'testing_e2e_run_steps',
     'testing_gate_evaluate',
