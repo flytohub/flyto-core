@@ -17,7 +17,7 @@ firebase-admin>=6.2.0
 
 # Other dependencies
 python-dotenv>=1.0.0
-requests>=2.31.0
+requests>=2.32.5
 
 # Vector Database (for long-term memory)
 qdrant-client>=1.7.0
