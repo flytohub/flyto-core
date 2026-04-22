@@ -4,7 +4,7 @@
 # ============================================
 # AI Integrations
 # ============================================
-openai>=1.0.0              # OpenAI (GPT-4, GPT-3.5)
+openai>=1.109.1              # OpenAI (GPT-4, GPT-3.5)
 # anthropic>=0.7.0         # Anthropic Claude (coming soon)
 # google-generativeai      # Google Gemini (coming soon)
 
