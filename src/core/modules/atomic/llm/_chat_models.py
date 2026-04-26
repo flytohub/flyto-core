@@ -178,7 +178,13 @@ class OpenAIChatModel:
             raise RuntimeError(f"OpenAI API returned empty choices: {json.dumps(result)[:300]}")
         choice = choices[0]
         message = choice.get("message", {})
-        tokens = result.get("usage", {}).get("total_tokens", 0)
+        usage = result.get("usage", {}) or {}
+        # OpenAI returns prompt_tokens + completion_tokens + total_tokens;
+        # newer gpt-4o responses also include prompt_tokens_details.cached_tokens.
+        input_tok = int(usage.get("prompt_tokens", 0) or 0)
+        output_tok = int(usage.get("completion_tokens", 0) or 0)
+        cached_in = int((usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0) or 0)
+        total_tok = int(usage.get("total_tokens", input_tok + output_tok) or 0)
 
         tool_calls = []
         if message.get("tool_calls"):
@@ -194,7 +200,10 @@ class OpenAIChatModel:
         return ChatResponse(
             content=message.get("content", "") or "",
             model=self._model,
-            tokens_used=tokens,
+            tokens_used=total_tok,
+            input_tokens=input_tok,
+            output_tokens=output_tok,
+            cached_input_tokens=cached_in,
             finish_reason=choice.get("finish_reason", "stop"),
             tool_calls=tool_calls,
         )
@@ -275,13 +284,20 @@ class AnthropicChatModel:
             elif block["type"] == "text":
                 text_content += block["text"]
 
-        usage = result.get("usage", {})
-        tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+        usage = result.get("usage", {}) or {}
+        input_tok = int(usage.get("input_tokens", 0) or 0)
+        output_tok = int(usage.get("output_tokens", 0) or 0)
+        # Anthropic names prompt-cache read tokens `cache_read_input_tokens`.
+        cached_in = int(usage.get("cache_read_input_tokens", 0) or 0)
+        total_tok = input_tok + output_tok
 
         return ChatResponse(
             content=text_content,
             model=self._model,
-            tokens_used=tokens,
+            tokens_used=total_tok,
+            input_tokens=input_tok,
+            output_tokens=output_tok,
+            cached_input_tokens=cached_in,
             finish_reason=result.get("stop_reason", "end_turn"),
             tool_calls=tool_calls,
         )

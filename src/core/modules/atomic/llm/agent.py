@@ -409,6 +409,9 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
     """Standard Tools Agent loop (function calling) with resilience protections."""
     import asyncio
     total_tokens = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_cached_input_tokens = 0
     tool_call_count = 0
 
     # Resilience guards (ported from flyto-ai)
@@ -446,6 +449,9 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                 return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
 
         total_tokens += response.tokens_used
+        total_input_tokens += response.input_tokens
+        total_output_tokens += response.output_tokens
+        total_cached_input_tokens += response.cached_input_tokens
 
         if response.tool_calls:
             for tc in response.tool_calls:
@@ -542,6 +548,19 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'tool_calls': tool_call_count,
                     'tokens_used': total_tokens,
                     'iterations': iteration + 1,
+                    # Split for accurate per-direction cost accounting.
+                    # Runner's cost_reporter reads `usage.prompt_tokens`
+                    # / `completion_tokens` (OpenAI-style) so we emit
+                    # under both names — legacy + standard.
+                    'usage': {
+                        'prompt_tokens': total_input_tokens,
+                        'completion_tokens': total_output_tokens,
+                        'total_tokens': total_tokens,
+                        'cached_input_tokens': total_cached_input_tokens,
+                    },
+                    'input_tokens': total_input_tokens,
+                    'output_tokens': total_output_tokens,
+                    'cached_input_tokens': total_cached_input_tokens,
                 },
             }
 
@@ -553,6 +572,15 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
             'steps': steps, 'tool_calls': tool_call_count,
             'tokens_used': total_tokens, 'iterations': max_iterations,
             'warning': 'max_iterations_reached',
+            'usage': {
+                'prompt_tokens': total_input_tokens,
+                'completion_tokens': total_output_tokens,
+                'total_tokens': total_tokens,
+                'cached_input_tokens': total_cached_input_tokens,
+            },
+            'input_tokens': total_input_tokens,
+            'output_tokens': total_output_tokens,
+            'cached_input_tokens': total_cached_input_tokens,
         },
     }
 
@@ -573,6 +601,9 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
     """
     import re, asyncio
     total_tokens = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_cached_input_tokens = 0
     tool_call_count = 0
     snapshot_guard = SnapshotGuard()
     circuit = CircuitBreaker()
@@ -591,6 +622,9 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
 
         total_tokens += response.tokens_used
+        total_input_tokens += response.input_tokens
+        total_output_tokens += response.output_tokens
+        total_cached_input_tokens += response.cached_input_tokens
         content = response.content.strip()
 
         thought, action, final_answer = _parse_react_response(content)
@@ -608,6 +642,15 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'result': parsed, 'steps': steps,
                     'tool_calls': tool_call_count, 'tokens_used': total_tokens,
                     'iterations': iteration + 1,
+                    'usage': {
+                        'prompt_tokens': total_input_tokens,
+                        'completion_tokens': total_output_tokens,
+                        'total_tokens': total_tokens,
+                        'cached_input_tokens': total_cached_input_tokens,
+                    },
+                    'input_tokens': total_input_tokens,
+                    'output_tokens': total_output_tokens,
+                    'cached_input_tokens': total_cached_input_tokens,
                 },
             }
 
@@ -664,6 +707,15 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'tool_calls': tool_call_count,
                     'tokens_used': total_tokens,
                     'iterations': iteration + 1,
+                    'usage': {
+                        'prompt_tokens': total_input_tokens,
+                        'completion_tokens': total_output_tokens,
+                        'total_tokens': total_tokens,
+                        'cached_input_tokens': total_cached_input_tokens,
+                    },
+                    'input_tokens': total_input_tokens,
+                    'output_tokens': total_output_tokens,
+                    'cached_input_tokens': total_cached_input_tokens,
                 },
             }
 
@@ -675,6 +727,15 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             'steps': steps, 'tool_calls': tool_call_count,
             'tokens_used': total_tokens, 'iterations': max_iterations,
             'warning': 'max_iterations_reached',
+            'usage': {
+                'prompt_tokens': total_input_tokens,
+                'completion_tokens': total_output_tokens,
+                'total_tokens': total_tokens,
+                'cached_input_tokens': total_cached_input_tokens,
+            },
+            'input_tokens': total_input_tokens,
+            'output_tokens': total_output_tokens,
+            'cached_input_tokens': total_cached_input_tokens,
         },
     }
 

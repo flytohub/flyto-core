@@ -44,11 +44,22 @@ class ToolCall:
 
 @dataclass
 class ChatResponse:
-    """Standardized LLM chat response."""
+    """Standardized LLM chat response.
+
+    Token accounting exposes BOTH the provider-reported split
+    (input_tokens + output_tokens + cached_input_tokens) and the
+    legacy `tokens_used` rollup. Callers that cost per-direction
+    (output tokens are typically priced 2-3× higher than input)
+    should read the split; older callers reading `tokens_used`
+    keep working unchanged — the rollup is the sum.
+    """
 
     content: str = ""
     model: str = ""
-    tokens_used: int = 0
+    tokens_used: int = 0          # sum = input + output (legacy / display)
+    input_tokens: int = 0         # prompt / request tokens
+    output_tokens: int = 0        # completion / response tokens
+    cached_input_tokens: int = 0  # providers that expose prompt-cache reuse
     finish_reason: str = "stop"
     tool_calls: List[ToolCall] = field(default_factory=list)
 
