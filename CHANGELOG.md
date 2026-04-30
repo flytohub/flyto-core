@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.27.0] - 2026-04-30
+
+### Added
+- **HTTP Batch module** (`http.batch`) — execute N HTTP requests in sequence or parallel, capturing per-request status, body, headers, duration, and label. Designed for pentest blueprints that need baseline vs. payload comparison (SQL injection, XSS reflected, auth bypass).
+- **Assert Status module** (`testing.assert_status`) — compare HTTP probe results against a baseline and produce a verdict string (`exploitable` / `sanitized` / `unreachable`). Powers closed-loop pentest verdicts.
+- **Assert Timing module** (`testing.assert_timing`) — detect timing-based side channels by comparing response durations across baseline and payload probes.
+- **Assert Contains enhancement** (`testing.assert_contains`) — extended to support multi-pattern matching and negation for pentest output validation.
+- **LLM Agent: per-direction token accounting** — `_run_tools_loop` now tracks `input_tokens`, `output_tokens`, and `cached_input_tokens` separately. Result includes OpenAI-compatible `usage` dict for cost reporting by runner.
+
+### Changed
+- **LLM chat models** — `_interfaces.py` and `_chat_models.py` updated to surface `input_tokens`, `output_tokens`, `cached_input_tokens` on response objects.
+
+### Tests
+- **E2E closed-loop roundtrip** (`test_closed_loop_roundtrip.py`) — full scan → verify → verdict pipeline test.
+- **Engine YAML integration** (`test_engine_yaml_integration.py`) — 605-line E2E covering YAML workflow execution against the engine.
+- **Real Juice Shop** (`test_real_juice_shop.py`) — live OWASP Juice Shop integration test for pentest workflows.
+- **Closed-loop module unit tests** (`test_closed_loop_modules.py`) — 428 lines covering batch, assert_status, assert_timing, assert_contains.
+
 ## [2.26.0] - 2026-04-20
 
 ### Added
