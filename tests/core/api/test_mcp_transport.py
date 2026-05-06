@@ -69,6 +69,81 @@ class TestInitializeHandshake:
         assert session_id in _mcp_sessions
 
 
+class TestProtocolVersionNegotiation:
+    """MCP servers must echo the client's requested protocol version when supported,
+    so older clients (e.g. LM Studio) don't see an unrecognized version and disconnect.
+    Regression: github.com/flytohub/flyto-core/issues/16
+    """
+
+    @pytest.mark.parametrize(
+        "client_version",
+        ["2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"],
+    )
+    def test_supported_version_is_echoed(self, client, client_version):
+        resp = client.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": client_version,
+                    "capabilities": {},
+                    "clientInfo": {"name": "test", "version": "1.0"},
+                },
+            },
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["result"]["protocolVersion"] == client_version
+
+    def test_unsupported_version_falls_back_to_server_preferred(self, client):
+        from core.mcp_handler import SUPPORTED_PROTOCOL_VERSIONS
+
+        resp = client.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "1999-01-01",
+                    "capabilities": {},
+                    "clientInfo": {"name": "test", "version": "1.0"},
+                },
+            },
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["result"]["protocolVersion"] == SUPPORTED_PROTOCOL_VERSIONS[0]
+
+    def test_missing_version_falls_back_to_server_preferred(self, client):
+        from core.mcp_handler import SUPPORTED_PROTOCOL_VERSIONS
+
+        resp = client.post(
+            "/mcp",
+            json={
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {"capabilities": {}, "clientInfo": {"name": "t", "version": "1"}},
+            },
+            headers={"Accept": "application/json"},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["result"]["protocolVersion"] == SUPPORTED_PROTOCOL_VERSIONS[0]
+
+    def test_negotiate_helper_directly(self):
+        from core.mcp_handler import negotiate_protocol_version, SUPPORTED_PROTOCOL_VERSIONS
+
+        assert negotiate_protocol_version("2024-11-05") == "2024-11-05"
+        assert negotiate_protocol_version("2025-06-18") == "2025-06-18"
+        assert negotiate_protocol_version("2025-11-25") == "2025-11-25"
+        assert negotiate_protocol_version("bogus") == SUPPORTED_PROTOCOL_VERSIONS[0]
+        assert negotiate_protocol_version(None) == SUPPORTED_PROTOCOL_VERSIONS[0]
+        assert negotiate_protocol_version("") == SUPPORTED_PROTOCOL_VERSIONS[0]
+
+
 class TestToolsList:
 
     def _init_session(self, client) -> str:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.26.0"
+version = "2.26.1"
 description = "A workflow engine with 412 built-in modules. Trace every step. Replay from any point."
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -50,7 +50,7 @@ dependencies = [
     "pyyaml>=6.0,<7",
     "aiohttp>=3.9.0,<4",
     "beautifulsoup4>=4.12.0,<5",
-    "lxml>=4.9.0,<6",
+    "lxml>=6.1.0,<7",
     "pydantic>=2.4.0,<3",
     "python-dotenv>=1.0.0,<2",
     "aiofiles>=23.0.0,<25",

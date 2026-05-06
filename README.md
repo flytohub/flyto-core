@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
+
 # flyto-core
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
@@ -485,8 +487,3 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 ## Hosted deployment
 
 A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/flytohub-flyto-core).
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=flytohub/flyto-core&type=Date)](https://star-history.com/#flytohub/flyto-core&Date)

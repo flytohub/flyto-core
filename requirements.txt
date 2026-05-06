@@ -4,7 +4,8 @@ playwright>=1.40.0
 # CVE-2024-30251: body iteration race fixed in 3.11.0
 aiohttp>=3.11.0
 beautifulsoup4>=4.12.0
-lxml>=5.3.0
+# CVE-2026-41066: iterparse/ETCompatXMLParser XXE fixed in 6.1.0
+lxml>=6.1.0
 
 # API dependencies (for web UI)
 # CVE-2024-24762: multipart DoS fixed in 0.115.0
@@ -13,11 +14,11 @@ uvicorn>=0.24.0
 pydantic>=2.0.0
 
 # Firebase (if using)
-firebase-admin>=6.2.0
+firebase-admin>=6.9.0
 
 # Other dependencies
 python-dotenv>=1.0.0
-requests>=2.31.0
+requests>=2.32.5
 
 # Vector Database (for long-term memory)
 qdrant-client>=1.7.0
@@ -27,7 +28,7 @@ sentence-transformers>=2.2.0  # For local embeddings
 # Telegram Bot Dependencies
 # ============================================
 python-telegram-bot>=20.0
-openai>=1.0.0          # For /gpt commands
+openai>=1.109.1          # For /gpt commands
 
 # ============================================
 # Optional Third-party Integrations
