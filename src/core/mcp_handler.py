@@ -30,8 +30,18 @@ def _get_version() -> str:
 
 SERVER_VERSION = _get_version()
 
-SERVER_INFO = {
-    "protocolVersion": "2025-11-25",
+# MCP protocol versions we support, newest first.
+# Server echoes the client's requested version if it appears here;
+# otherwise it returns SUPPORTED_PROTOCOL_VERSIONS[0] and lets the client decide.
+# Reference: https://modelcontextprotocol.io/specification/versioning
+SUPPORTED_PROTOCOL_VERSIONS = (
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05",
+)
+
+SERVER_CAPABILITIES = {
     "capabilities": {
         "tools": {"listChanged": False},
     },
@@ -41,6 +51,25 @@ SERVER_INFO = {
         "version": SERVER_VERSION,
     },
 }
+
+
+def negotiate_protocol_version(client_version: Optional[str]) -> str:
+    """Pick the protocol version to advertise to a client.
+
+    Echoes the client's request when supported; otherwise returns the server's
+    preferred (newest) version, leaving the client free to disconnect.
+    """
+    if client_version and client_version in SUPPORTED_PROTOCOL_VERSIONS:
+        return client_version
+    return SUPPORTED_PROTOCOL_VERSIONS[0]
+
+
+def build_initialize_response(client_version: Optional[str]) -> dict:
+    """Build the `result` payload for an MCP initialize response."""
+    return {
+        "protocolVersion": negotiate_protocol_version(client_version),
+        **SERVER_CAPABILITIES,
+    }
 
 
 # ============================================================
@@ -771,7 +800,12 @@ async def handle_jsonrpc_request(
     params = request.get("params", {})
 
     if method == "initialize":
-        return {"jsonrpc": "2.0", "id": req_id, "result": SERVER_INFO}
+        client_version = params.get("protocolVersion") if isinstance(params, dict) else None
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": build_initialize_response(client_version),
+        }
 
     elif method == "tools/list":
         return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}}
