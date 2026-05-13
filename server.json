@@ -7,13 +7,13 @@
     "url": "https://github.com/flytohub/flyto-core",
     "source": "github"
   },
-  "version": "2.12.6",
+  "version": "2.26.2",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "flyto-core",
-      "version": "2.12.6",
+      "version": "2.26.2",
       "runtimeHint": "pip",
       "transport": {
         "type": "stdio"
