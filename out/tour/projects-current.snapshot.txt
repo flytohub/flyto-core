@@ -1,0 +1,8 @@
+{
+  "status": "success",
+  "format": "text",
+  "url": "http://localhost:5181/projects",
+  "text": "\n    You need to enable JavaScript to run this app.\n    \n    \n    \n\n",
+  "size_bytes": 0,
+  "content": ""
+}

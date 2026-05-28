@@ -152,20 +152,19 @@ class GuardEvaluator:
         if not expression:
             return True
 
+        # NOTE: eval()-based sandboxes are not safe. The classic break-out
+        # `().__class__.__mro__[-1].__subclasses__()` reaches subprocess
+        # via attribute access without touching __builtins__. We use the
+        # AST-walker in core.safe_eval which refuses Attribute, Lambda,
+        # comprehensions, and any call whose callee isn't a whitelisted
+        # builtin Name. See core/safe_eval.py + tests/test_safe_eval.py.
+        from core.safe_eval import safe_eval, SafeEvalError
+
         try:
-            # Create safe evaluation context
-            safe_context = {
-                "__builtins__": {},
-                "True": True,
-                "False": False,
-                "None": None,
-            }
-            safe_context.update(context)
-
-            # Simple expression evaluation
-            result = eval(expression, safe_context)
-            return bool(result)
-
+            return bool(safe_eval(expression, context))
+        except SafeEvalError as e:
+            logger.warning(f"Guard evaluation refused: {expression} - {e}")
+            return False
         except Exception as e:
             logger.warning(f"Guard evaluation failed: {expression} - {e}")
             return False

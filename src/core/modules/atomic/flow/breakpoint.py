@@ -292,29 +292,18 @@ class BreakpointModule(BaseModule):
         # Simple expression evaluation against context
         # For security, only allow basic comparisons
         try:
-            # Create safe evaluation context
+            # The original `eval(condition, {"__builtins__": safe_builtins})`
+            # pattern is escapable via `().__class__.__mro__[-1]` and friends
+            # — attribute access walks the type graph to subprocess.Popen.
+            # core.safe_eval refuses Attribute nodes outright, so the
+            # auto-approve DSL stays a DSL.
+            from core.safe_eval import safe_eval
+
             eval_context = {
                 'context': self.context,
                 'params': self.params,
-                'True': True,
-                'False': False,
-                'None': None,
             }
-
-            # Add safe builtins
-            safe_builtins = {
-                'len': len,
-                'str': str,
-                'int': int,
-                'float': float,
-                'bool': bool,
-                'abs': abs,
-                'min': min,
-                'max': max,
-            }
-
-            result = eval(condition, {"__builtins__": safe_builtins}, eval_context)
-            return bool(result)
+            return bool(safe_eval(condition, eval_context))
         except Exception:
             return False
 

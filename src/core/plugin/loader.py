@@ -64,7 +64,28 @@ class PluginLoader:
 
     PLUGIN_PREFIX = "flyto-plugin-"
     ENTRY_POINT_GROUP = "flyto.plugins"
+    # PEP 503 normalised package name: starts and ends with alnum, can
+    # contain ._- in between. Mirrors what pip itself accepts so we don't
+    # build a spec string that fails validation later.
     _VALID_PACKAGE_NAME = re.compile(r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$")
+    # PEP 440 version core — refuses junk like "1.0; rm -rf /" or
+    # "1.0 --extra-index-url=http://evil" even though subprocess list-form
+    # would treat the whole thing as one positional arg. Defensive: keeps
+    # pip from seeing anything pip wasn't built to handle.
+    _VALID_VERSION = re.compile(r"^[a-zA-Z0-9_.+!*-]{1,64}$")
+
+    # IMPORTANT — supply-chain risk:
+    # install_plugin shells out to `pip install <name>`. pip resolves
+    # the package from PyPI and executes its setup.py / pyproject build
+    # backend, which is arbitrary code. The PLUGIN_PREFIX gate limits
+    # what attacker-supplied `name` values reach pip, but does NOT defend
+    # against a hostile publisher of an otherwise-legitimate
+    # `flyto-plugin-foo` name. Operators should:
+    #   - run flyto-core under an unprivileged user
+    #   - mount only what plugins legitimately need
+    #   - consider an index allowlist (--index-url to a private mirror)
+    #   - never expose install_plugin via MCP / network without an
+    #     explicit operator-approval gate
 
     def __init__(self, plugins_dir: Optional[Path] = None):
         """
@@ -281,6 +302,9 @@ class PluginLoader:
 
         package_spec = name
         if version:
+            if not self._VALID_VERSION.match(version):
+                logger.error(f"Invalid version string for {name}: {version!r}")
+                return False
             package_spec = f"{name}=={version}"
 
         cmd = [sys.executable, "-m", "pip", "install", package_spec]

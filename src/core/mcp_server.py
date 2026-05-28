@@ -36,9 +36,24 @@ from core.mcp_handler import (
 _browser_sessions: Dict[str, Any] = {}
 
 # ============================================================
-# Local Development: Allow localhost for browser testing
+# Host allowlist — caller MUST opt in
 # ============================================================
-os.environ.setdefault('FLYTO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
+# Earlier versions defaulted FLYTO_ALLOWED_HOSTS to
+# "localhost,127.0.0.1" so the dev experience was friction-free. That
+# turned MCP into a confused-deputy SSRF: an LLM client (Claude
+# Desktop, Claude Code, anything else over STDIO) could ask the
+# server to navigate to the host machine's own services without the
+# operator ever opting in.
+#
+# Now we leave FLYTO_ALLOWED_HOSTS unset unless the caller sets it
+# explicitly via the MCP client config:
+#
+#   "env": { "FLYTO_ALLOWED_HOSTS": "yourdomain.com" }
+#
+# Local-dev convenience is preserved by setting
+# FLYTO_MCP_ALLOW_LOCALHOST=1 on your shell — opt-in, not implicit.
+if os.environ.get('FLYTO_MCP_ALLOW_LOCALHOST') == '1':
+    os.environ.setdefault('FLYTO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
 async def execute_module(module_id, params, context=None):
