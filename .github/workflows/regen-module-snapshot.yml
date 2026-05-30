@@ -68,5 +68,5 @@ jobs:
           drift. No source change.
 
           Co-Authored-By: Paperclip <noreply@paperclip.ing>"
-            git push origin HEAD:${GITHUB_REF_NAME}
+            git push -f origin HEAD:bot/regen-module-snapshot
           fi
