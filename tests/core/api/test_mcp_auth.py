@@ -179,3 +179,60 @@ class TestBindPolicy:
 
         sec._active_token = "an-active-token"
         enforce_bind_policy("0.0.0.0")
+
+    # FLYA-32 hardening: an empty/wildcard host means "all interfaces"
+    # (INADDR_ANY / in6addr_any), not loopback. Previously "" lived in
+    # _LOOPBACK_HOSTS, so enforce_bind_policy("") returned early and skipped
+    # the auth check — a fail-open in the bind guard. These pin the fix.
+    @pytest.mark.parametrize("host", ["", " ", "0.0.0.0", "::", "*"])
+    def test_wildcard_host_without_auth_is_refused(self, host):
+        from core.api.security import enforce_bind_policy
+
+        sec._active_token = None
+        with pytest.raises(RuntimeError):
+            enforce_bind_policy(host)
+
+    @pytest.mark.parametrize("host", ["", "0.0.0.0", "::", "*"])
+    def test_wildcard_host_with_active_auth_is_allowed(self, host):
+        from core.api.security import enforce_bind_policy
+
+        sec._active_token = "an-active-token"
+        # With auth active a wildcard bind is the operator's explicit choice.
+        enforce_bind_policy(host)
+
+
+class TestMcpFailsClosedWhenAuthUninitialized:
+    """FLYA-32 hardening: the MCP exec surface must fail closed even when auth
+    was never initialized (`_active_token is None`). Previously `require_auth`
+    returned early ("pass through") in that state — a latent fail-open on the
+    shared dependency that would have left module execution wide open.
+    """
+
+    def setup_method(self):
+        self._saved = sec._active_token
+
+    def teardown_method(self):
+        sec._active_token = self._saved
+
+    def test_execute_module_with_uninitialized_auth_is_denied(self, app):
+        # create_app() ran init_auth(); simulate the uninitialized/misconfigured
+        # state by clearing the active token after construction.
+        sec._active_token = None
+        with TestClient(app) as client:
+            with patch(
+                "core.api.routes.mcp.handle_jsonrpc_request", new_callable=AsyncMock
+            ) as dispatch:
+                resp = client.post(
+                    "/mcp",
+                    json=EXECUTE_MODULE_CALL,
+                    headers={
+                        "Accept": "application/json",
+                        # Even a "matching" bearer must not succeed: there is no
+                        # active token to match against, so deny outright.
+                        "Authorization": "Bearer anything",
+                    },
+                )
+        # Fail closed: refused (not 2xx) and the dispatcher never runs.
+        assert resp.status_code >= 400, resp.text
+        assert resp.status_code not in (200,), resp.text
+        dispatch.assert_not_called()
