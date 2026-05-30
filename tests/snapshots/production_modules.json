@@ -1,5 +1,5 @@
 {
-  "total": 411,
+  "total": 416,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -11,6 +11,18 @@
     },
     {
       "id": "ai.local_ollama.chat",
+      "version": "1.0.0"
+    },
+    {
+      "id": "ai.memory",
+      "version": "1.0.0"
+    },
+    {
+      "id": "ai.model",
+      "version": "1.0.0"
+    },
+    {
+      "id": "ai.tool",
       "version": "1.0.0"
     },
     {
@@ -934,6 +946,10 @@
       "version": "1.0.0"
     },
     {
+      "id": "http.batch",
+      "version": "1.0.0"
+    },
+    {
       "id": "http.get",
       "version": "1.0.0"
     },
@@ -1012,6 +1028,10 @@
     {
       "id": "k8s.scale",
       "version": "1.0.0"
+    },
+    {
+      "id": "llm.agent",
+      "version": "2.0.0"
     },
     {
       "id": "logic.and",
@@ -1398,14 +1418,6 @@
       "version": "1.0.0"
     },
     {
-      "id": "stealth.fingerprint",
-      "version": "1.0.0"
-    },
-    {
-      "id": "stealth.launch",
-      "version": "1.0.0"
-    },
-    {
       "id": "storage.delete",
       "version": "1.0.0"
     },
@@ -1483,6 +1495,14 @@
     },
     {
       "id": "test.assert_not_null",
+      "version": "1.0.0"
+    },
+    {
+      "id": "test.assert_status",
+      "version": "1.0.0"
+    },
+    {
+      "id": "test.assert_timing",
       "version": "1.0.0"
     },
     {
