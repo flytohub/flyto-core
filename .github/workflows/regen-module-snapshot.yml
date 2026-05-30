@@ -1,0 +1,72 @@
+name: Regenerate production module snapshot
+
+# Maintenance helper: rebuilds tests/snapshots/production_modules.json from the
+# live ModuleRegistry so the production-module guard tests reflect reality.
+# Run manually after intentionally adding/removing/renaming production modules.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Regenerate snapshot
+        run: |
+          PYTHONPATH=src FLYTO_ENV=production python - <<'PY'
+          import os, json
+          os.environ["FLYTO_ENV"] = "production"
+          from core.modules.registry import ModuleRegistry
+          from core.modules import atomic  # trigger registration
+
+          modules = ModuleRegistry.get_all_metadata(filter_by_stability=True, env="production")
+          prod = {
+              k: v for k, v in modules.items()
+              if (not k.startswith("test.") or k.startswith("test.assert"))
+              and ".express_" not in k
+          }
+
+          def version_of(meta):
+              if isinstance(meta, dict):
+                  return meta.get("version", "1.0.0")
+              return getattr(meta, "version", "1.0.0")
+
+          ids = sorted(prod.keys())
+          out = {"total": len(ids), "modules": [{"id": k, "version": version_of(prod[k])} for k in ids]}
+          with open("tests/snapshots/production_modules.json", "w", encoding="utf-8") as f:
+              json.dump(out, f, indent=2)
+              f.write("\n")
+          print("Regenerated snapshot with", len(ids), "production modules")
+          PY
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- tests/snapshots/production_modules.json; then
+            echo "Snapshot already up to date."
+          else
+            git add tests/snapshots/production_modules.json
+            git commit -m "test(snapshot): regenerate production module snapshot
+
+          Catch-up regeneration from the live ModuleRegistry after module set
+          drift. No source change.
+
+          Co-Authored-By: Paperclip <noreply@paperclip.ing>"
+            git push origin HEAD:${GITHUB_REF_NAME}
+          fi
