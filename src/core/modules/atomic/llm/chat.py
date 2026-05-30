@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 
 logger = logging.getLogger(__name__)
@@ -328,7 +329,7 @@ async def _call_openai_aiohttp(
 
     # SECURITY: Set timeout to prevent hanging API calls
     timeout = aiohttp.ClientTimeout(total=120, connect=30)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    async with create_ssrf_safe_session(timeout=timeout) as session:
         async with session.post(url, headers=headers, json=payload) as response:
             result = await response.json()
 
@@ -396,7 +397,7 @@ async def _call_anthropic(
     else:
         # SECURITY: Set timeout to prevent hanging API calls
         timeout = aiohttp.ClientTimeout(total=120, connect=30)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with create_ssrf_safe_session(timeout=timeout) as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
 
@@ -447,7 +448,7 @@ async def _call_ollama(
         else:
             # SECURITY: Set timeout to prevent hanging API calls
             timeout = aiohttp.ClientTimeout(total=120, connect=30)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with create_ssrf_safe_session(timeout=timeout) as session:
                 async with session.post(url, json=payload) as response:
                     result = await response.json()
 

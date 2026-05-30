@@ -15,6 +15,7 @@ from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import Visibility, FieldGroup
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 from ...errors import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -363,7 +364,7 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
     start_time = time.time()
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with create_ssrf_safe_session(timeout=timeout) as session:
             async with session.post(
                 token_url,
                 data=body,

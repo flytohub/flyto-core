@@ -14,6 +14,7 @@ from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
 from .....utils import validate_url_with_env_config, SSRFError
+from .....safe_http import create_ssrf_safe_session
 
 
 @register_module(
@@ -87,12 +88,11 @@ class HTTPGetModule(BaseModule):
             raise ValueError(str(e))
 
         ssl_param = None if verify_ssl else False
-        async with aiohttp.ClientSession() as session:
+        async with create_ssrf_safe_session(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
             async with session.get(
                 url,
                 headers=headers,
                 params=params,
-                timeout=aiohttp.ClientTimeout(total=timeout),
                 ssl=ssl_param,
             ) as response:
                 status_code = response.status
@@ -186,7 +186,6 @@ class HTTPPostModule(BaseModule):
         ssl_param = None if verify_ssl else False
         kwargs = {
             'headers': headers,
-            'timeout': aiohttp.ClientTimeout(total=timeout),
             'ssl': ssl_param,
         }
 
@@ -195,7 +194,7 @@ class HTTPPostModule(BaseModule):
         elif body:
             kwargs['data'] = body
 
-        async with aiohttp.ClientSession() as session:
+        async with create_ssrf_safe_session(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
             async with session.post(url, **kwargs) as response:
                 status_code = response.status
                 response_headers = dict(response.headers)

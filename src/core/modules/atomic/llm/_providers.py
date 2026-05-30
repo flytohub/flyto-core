@@ -16,6 +16,8 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
+from ....safe_http import create_ssrf_safe_session
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,7 +91,7 @@ async def _call_openai_aiohttp(
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
-    async with aiohttp.ClientSession() as session:
+    async with create_ssrf_safe_session() as session:
         async with session.post(url, headers=headers, json=payload) as response:
             result = await response.json()
 
@@ -204,7 +206,7 @@ async def call_anthropic_with_tools(
             response = await client.post(url, headers=headers, json=payload)
             result = response.json()
     else:
-        async with aiohttp.ClientSession() as session:
+        async with create_ssrf_safe_session() as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
 

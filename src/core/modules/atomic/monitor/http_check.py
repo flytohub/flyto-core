@@ -17,6 +17,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 
 logger = logging.getLogger(__name__)
@@ -172,7 +173,7 @@ async def monitor_http_check(context: Dict[str, Any]) -> Dict[str, Any]:
     start_time = time.time()
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout_config) as session:
+        async with create_ssrf_safe_session(timeout=timeout_config) as session:
             async with session.request(method, url, **request_kwargs) as response:
                 response_time_ms = round((time.time() - start_time) * 1000, 2)
                 status_code = response.status

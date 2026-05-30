@@ -15,6 +15,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from ._interfaces import ChatResponse, ToolCall, ToolCallRequest
+from ....safe_http import create_ssrf_safe_session
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +106,7 @@ async def _http_post(url: str, headers: Dict, payload: Dict) -> Dict:
                 raise RuntimeError(f"Server error (HTTP {response.status_code}): {response.text[:200]}")
             return response.json()
     except ImportError:
-        import aiohttp
-
-        async with aiohttp.ClientSession() as session:
+        async with create_ssrf_safe_session() as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 if response.status >= 500:
                     text = await response.text()
