@@ -8,16 +8,22 @@ GET  /mcp  — 405 (server-initiated SSE not supported yet)
 DELETE /mcp — Session termination
 
 Implements MCP Streamable HTTP transport (2025-03-26 spec).
-No Bearer token required — MCP clients don't send auth headers.
+
+Auth: this transport exposes module execution (`tools/call` -> `execute_module`)
+and is therefore protected by the same Execution-API bearer token as the rest
+of the API (deny-by-default). MCP clients connecting over HTTP must send
+`Authorization: Bearer <token>`; the token is minted by `init_auth` at startup.
+See GHSA-h9f9-h6gm-wc85.
 """
 
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, Response
 
 from core.mcp_handler import handle_jsonrpc_request
+from ..security import require_auth
 
 router = APIRouter(tags=["mcp"])
 
@@ -62,7 +68,7 @@ def _is_initialize(item: dict) -> bool:
     return item.get("method") == "initialize"
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(require_auth)])
 async def mcp_post(request: Request):
     # Validate Accept header
     err = _validate_accept(request)
@@ -134,7 +140,7 @@ async def mcp_get():
     )
 
 
-@router.delete("")
+@router.delete("", dependencies=[Depends(require_auth)])
 async def mcp_delete(request: Request):
     session_id = request.headers.get("mcp-session-id")
     if not session_id or session_id not in _mcp_sessions:

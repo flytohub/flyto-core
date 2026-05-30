@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .state import ServerState
 from .routes import modules_router, workflows_router, replay_router, mcp_router
-from .security import get_cors_origins, init_auth
+from .security import get_cors_origins, init_auth, enforce_bind_policy
 
 logger = logging.getLogger(__name__)
 
@@ -128,5 +128,8 @@ def main(host: str = "127.0.0.1", port: int = 8333):
     )
     logger.info("Starting flyto-core Execution API v%s on %s:%d", SERVER_VERSION, host, port)
 
+    # create_app() runs init_auth(); enforce the bind posture before we expose
+    # the socket — a non-loopback bind without active auth is refused, not warned.
     app = create_app(port=port)
+    enforce_bind_policy(host)
     uvicorn.run(app, host=host, port=port)

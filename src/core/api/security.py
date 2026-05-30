@@ -120,6 +120,41 @@ async def require_auth(
 
 
 # ---------------------------------------------------------------------------
+# Bind Posture
+# ---------------------------------------------------------------------------
+
+# Hosts that only accept connections from the local machine.
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", ""})
+
+
+def is_auth_active() -> bool:
+    """True once init_auth() has established a bearer token."""
+    return _active_token is not None
+
+
+def _is_loopback_host(host: str) -> bool:
+    return (host or "").strip().lower() in _LOOPBACK_HOSTS
+
+
+def enforce_bind_policy(host: str) -> None:
+    """Fail-closed bind guard, called at startup before binding the socket.
+
+    Binding to a non-loopback interface exposes the Execution API (including
+    the MCP module-execution surface) to the network. That is only safe when
+    authentication is active. If auth is not active, refuse the bind outright
+    rather than warning — see GHSA-h9f9-h6gm-wc85.
+    """
+    if _is_loopback_host(host):
+        return
+    if not is_auth_active():
+        raise RuntimeError(
+            f"Refusing to bind to non-loopback host {host!r} without active "
+            "authentication. Set FLYTO_API_TOKEN (or use the auto-generated "
+            "token) before exposing the server, or bind to 127.0.0.1."
+        )
+
+
+# ---------------------------------------------------------------------------
 # Module Filter (Denylist / Allowlist)
 # ---------------------------------------------------------------------------
 

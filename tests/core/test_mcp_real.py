@@ -145,9 +145,14 @@ class TestHTTPTransport:
     def client(self):
         from fastapi.testclient import TestClient
         from core.api.server import create_app
+        from core.api import security as sec
 
         app = create_app()
-        return TestClient(app)
+        # /mcp is auth-protected (GHSA-h9f9-h6gm-wc85); send the active token
+        # so these legitimate-client tests reach the dispatcher.
+        return TestClient(
+            app, headers={"Authorization": f"Bearer {sec._active_token}"}
+        )
 
     def _mcp_call(self, client, tool_name: str, arguments: dict, req_id: int = 1) -> dict:
         """Send tools/call via POST /mcp and return structuredContent."""

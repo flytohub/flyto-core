@@ -14,8 +14,15 @@ from core.api.routes.mcp import _mcp_sessions
 
 @pytest.fixture
 def client():
+    # The /mcp transport is auth-protected (GHSA-h9f9-h6gm-wc85). These tests
+    # exercise legitimate-client behaviour, so the client sends the active
+    # bearer token by default. Deny-by-default is covered in test_mcp_auth.py.
+    from core.api import security as sec
+
     app = create_app()
-    with TestClient(app) as c:
+    with TestClient(
+        app, headers={"Authorization": f"Bearer {sec._active_token}"}
+    ) as c:
         yield c
 
 
