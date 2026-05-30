@@ -111,9 +111,23 @@ async def require_auth(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
 ):
-    """FastAPI dependency — validates Bearer token on protected endpoints."""
+    """FastAPI dependency — validates Bearer token on protected endpoints.
+
+    Fails closed (Secure Defaults / Fail Securely): if auth was never
+    initialized (``_active_token is None``) the request is refused rather than
+    passed through. ``init_auth`` always mints a token during normal startup
+    (``create_app`` calls it unconditionally), so a ``None`` token means the
+    server is misconfigured/uninitialized — in which case denying every
+    protected surface, including MCP module execution, is the safe default.
+    """
     if _active_token is None:
-        return  # Auth not initialized — pass through
+        # Latent fail-open removed: never serve a protected endpoint without
+        # active authentication. 503 distinguishes "auth not initialized"
+        # (server-side misconfiguration) from "bad/missing credentials" (401).
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication is not initialized; refusing request",
+        )
 
     if not credentials or credentials.credentials != _active_token:
         raise HTTPException(status_code=401, detail="Invalid or missing auth token")
@@ -123,8 +137,18 @@ async def require_auth(
 # Bind Posture
 # ---------------------------------------------------------------------------
 
-# Hosts that only accept connections from the local machine.
-_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", ""})
+# Hosts that only accept connections from the local machine. An empty/unset
+# host, "0.0.0.0", "::", and "*" all resolve to "all interfaces" (INADDR_ANY /
+# in6addr_any) and are therefore NOT loopback — binding to them exposes the
+# server to the network. They must fall through to enforce_bind_policy's auth
+# check rather than being treated as a safe local bind (fail-open removed).
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
+
+# Hosts that explicitly request all interfaces (INADDR_ANY / in6addr_any).
+# Treated as non-loopback unconditionally so a wildcard bind can never be
+# misclassified as a safe local bind — even if a future edit re-adds one of
+# these to _LOOPBACK_HOSTS (defense in depth around the fail-open we removed).
+_WILDCARD_HOSTS = frozenset({"", "0.0.0.0", "::", "*"})
 
 
 def is_auth_active() -> bool:
@@ -133,7 +157,10 @@ def is_auth_active() -> bool:
 
 
 def _is_loopback_host(host: str) -> bool:
-    return (host or "").strip().lower() in _LOOPBACK_HOSTS
+    normalized = (host or "").strip().lower()
+    if normalized in _WILDCARD_HOSTS:
+        return False  # all-interfaces bind is never loopback — refuse the shortcut
+    return normalized in _LOOPBACK_HOSTS
 
 
 def enforce_bind_policy(host: str) -> None:
