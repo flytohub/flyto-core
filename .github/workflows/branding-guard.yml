@@ -1,0 +1,58 @@
+name: Branding guard
+
+# Fails the PR when a non-canonical brand domain appears in source.
+# Canonical brand domain is flyto.io (FLYA-10 / FLYA-38). The npm scope
+# @flyto2/... is intentionally allowlisted until the package-rename
+# sub-decision lands.
+#
+# A per-repo .github/branding-allowlist.txt parks legitimate occurrences:
+#   - domain-as-data (recon test fixtures, domain-canonicalization logic,
+#     scanner doc examples) that are NOT branding and must never be migrated;
+#   - branding refs not yet canonicalized, tracked in FLYA-38.
+# Each line is a fixed-string path/substring; lines starting with # are
+# comments. Remove a branding entry once FLYA-38 migrates it so the guard
+# becomes fully active for that surface.
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for non-canonical brand domain
+        run: |
+          # Build the banned domain from parts so this workflow never matches
+          # itself. Drop the allowlisted npm scope @flyto2/... first.
+          banned="flyto2${DOT}com"
+          allow=.github/branding-allowlist.txt
+          hits=$(grep -rnI "$banned" . \
+            --exclude-dir=.git \
+            --exclude-dir=node_modules \
+            --exclude=branding-allowlist.txt \
+            --exclude=branding-guard.yml \
+            | grep -v "@flyto2/" || true)
+          if [ -n "$hits" ] && [ -f "$allow" ]; then
+            pats=$(grep -vE '^[[:space:]]*(#|$)' "$allow" || true)
+            if [ -n "$pats" ]; then
+              hits=$(printf '%s\n' "$hits" | grep -vF -f <(printf '%s\n' "$pats") || true)
+            fi
+          fi
+          hits=$(printf '%s' "$hits" | sed '/^[[:space:]]*$/d')
+          if [ -n "$hits" ]; then
+            echo "::error::Non-canonical brand domain found ($banned). Canonical is flyto.io (FLYA-10):"
+            echo "$hits"
+            echo "If a hit is legitimate domain-as-data (not branding), add its path to $allow with a tracking comment."
+            exit 1
+          fi
+          echo "no non-canonical brand domain references"
+        env:
+          DOT: "."
