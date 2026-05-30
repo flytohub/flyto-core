@@ -82,7 +82,7 @@ def read_token_file(port: int) -> Optional[str]:
     return None
 
 
-def init_auth(port: int) -> Optional[str]:
+def init_auth(port: int) -> str:
     """
     Initialize auth token. Called once at startup.
 
@@ -90,7 +90,19 @@ def init_auth(port: int) -> Optional[str]:
     1. FLYTO_API_TOKEN env var — use as-is
     2. Auto-generate + write to file
 
-    Returns the active token, or None if auth is disabled.
+    Always mints and returns a non-empty bearer token: there is intentionally
+    **no auth-disabled mode**. Both paths set ``_active_token`` and return it, so
+    the return value is never None (the ``Optional`` was historical).
+
+    Design decision (FLYA-41): auth is on by default and fails closed. The
+    uninitialized ``_active_token is None`` state is reserved exclusively for
+    "auth not initialized / server misconfigured" and is rejected with 503 by
+    ``require_auth`` (see GHSA-h9f9-h6gm-wc85, FLYA-32) — it must never be
+    overloaded to mean "auth deliberately off". If an explicit auth-disabled
+    mode is ever genuinely needed, it MUST be gated behind a dedicated, loud env
+    flag (e.g. ``FLYTO_AUTH_DISABLED=1``) handled here so the intent is explicit
+    in logs and code — never inferred from a None token. No such flag exists
+    today, and any unrecognized one is ignored: this function still mints a token.
     """
     global _active_token
 
