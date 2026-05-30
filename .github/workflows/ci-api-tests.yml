@@ -1,0 +1,42 @@
+name: API / security tests
+
+# Runs the full tests/core/api/ suite on every PR to main.
+# Gates security-critical auth invariants (test_init_auth_never_disabled and
+# all tests/core/api/ coverage) that previously had no CI check.
+# Required status check on main — FLYA-48.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api-tests:
+    name: API & security tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[api,dev]"
+          pip install httpx
+
+      - name: Run API / security tests
+        # -o addopts="" overrides the repo-wide --cov-fail-under=60 gate so
+        # this job validates correctness without requiring coverage measurement
+        # on every PR (coverage is measured separately in the publish flow).
+        run: |
+          PYTHONPATH=src pytest tests/core/api/ -v -o addopts=""
