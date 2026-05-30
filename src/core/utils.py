@@ -334,9 +334,39 @@ class SSRFError(ValueError):
     pass
 
 
+def _extract_embedded_ipv4(ip):
+    """Return the IPv4 address embedded in an IPv6 transition address, else None.
+
+    Covers IPv4-mapped (``::ffff:a.b.c.d``), IPv4-compatible (``::a.b.c.d``),
+    6to4 (``2002::/16``) and NAT64 (well-known ``64:ff9b::/96`` and local-use
+    ``64:ff9b:1::/48``). These all carry an IPv4 endpoint that a 6to4/NAT64-enabled
+    kernel routes to, so the embedded IPv4 must be range-checked too — not only the
+    outer IPv6 form, which is not a member of any RFC 1918 / loopback range.
+    """
+    if ip.version != 6:
+        return None
+    if ip.ipv4_mapped is not None:
+        return ip.ipv4_mapped
+    if ip.sixtofour is not None:                 # 2002::/16
+        return ip.sixtofour
+    raw = int(ip).to_bytes(16, 'big')
+    # NAT64 well-known prefix 64:ff9b::/96 and local-use 64:ff9b:1::/48
+    if raw[:2] == b'\x00\x64' and (raw[2:4] == b'\xff\x9b' or raw[2:6] == b'\xff\x9b\x00\x01'):
+        return ipaddress.IPv4Address(raw[-4:])
+    # IPv4-compatible ::a.b.c.d (deprecated), excluding :: and ::1
+    if raw[:12] == bytes(12) and raw[12:] not in (bytes(4), b'\x00\x00\x00\x01'):
+        return ipaddress.IPv4Address(raw[-4:])
+    return None
+
+
 def is_private_ip(ip_str: str) -> bool:
     """
     Check if an IP address is in a private/internal range.
+
+    Also unwraps IPv6 transition forms (IPv4-mapped, IPv4-compatible, 6to4,
+    NAT64) and range-checks the embedded IPv4, so e.g. ``::ffff:127.0.0.1`` or
+    ``64:ff9b::a9fe:a9fe`` (NAT64 encoding of 169.254.169.254) are treated as
+    private/internal.
 
     Args:
         ip_str: IP address string
@@ -346,13 +376,18 @@ def is_private_ip(ip_str: str) -> bool:
     """
     try:
         ip = ipaddress.ip_address(ip_str)
-        for network in PRIVATE_IP_RANGES:
-            if ip in network:
-                return True
-        return False
     except ValueError:
         # Invalid IP, treat as potentially unsafe
         return True
+    candidates = [ip]
+    embedded = _extract_embedded_ipv4(ip)
+    if embedded is not None:
+        candidates.append(embedded)
+    for candidate in candidates:
+        for network in PRIVATE_IP_RANGES:
+            if candidate.version == network.version and candidate in network:
+                return True
+    return False
 
 
 def validate_url_ssrf(
