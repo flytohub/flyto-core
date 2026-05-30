@@ -434,6 +434,27 @@ class TestSecurityExtended:
         import core.api.security as sec
         sec._active_token = None
 
+    def test_init_auth_never_disabled(self, monkeypatch, tmp_path):
+        """Regression (FLYA-41): there is no auth-disabled mode.
+
+        init_auth always mints a non-empty token and never returns None, and an
+        unsupported FLYTO_AUTH_DISABLED env flag is ignored rather than silently
+        turning auth off. The None token state is reserved for "uninitialized"
+        (require_auth -> 503), never "deliberately disabled".
+        """
+        import core.api.security as sec
+        monkeypatch.setattr("core.api.security._TOKEN_DIR", tmp_path)
+        monkeypatch.delenv("FLYTO_API_TOKEN", raising=False)
+        monkeypatch.setenv("FLYTO_AUTH_DISABLED", "1")
+        from core.api.security import init_auth
+        token = init_auth(9997)
+        # Auth is NOT disabled by the unsupported flag — a real token is minted.
+        assert token is not None
+        assert token != ""
+        assert sec._active_token == token
+        # Clean up
+        sec._active_token = None
+
     def test_write_and_read_token_file(self, tmp_path, monkeypatch):
         monkeypatch.setattr("core.api.security._TOKEN_DIR", tmp_path)
         from core.api.security import write_token_file, read_token_file
