@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.3] - 2026-05-30
+
+### Security
+- **SSRF guard bypass via IPv6 transition addresses** (GHSA-794r-5rp2-fpg8). `is_private_ip()` only range-checked the literal address, so IPv6 transition forms embedding a private/loopback IPv4 — IPv4-mapped (`::ffff:127.0.0.1`), IPv4-compatible (`::a.b.c.d`), 6to4 (`2002::/16`), and NAT64 (`64:ff9b::a9fe:a9fe`, encoding the `169.254.169.254` cloud-metadata endpoint) — were classified non-private and bypassed the SSRF allow/deny guard on 6to4/NAT64-enabled hosts. `is_private_ip()` now unwraps these transition forms via `_extract_embedded_ipv4()` and range-checks the embedded IPv4 in addition to the outer address. Public IPv4 embedded in a transition form stays allowed. Regression tests added in `tests/core/test_ssrf_ipv6_transition.py`.
+
 ## [2.27.0] - 2026-04-30
 
 ### Added
