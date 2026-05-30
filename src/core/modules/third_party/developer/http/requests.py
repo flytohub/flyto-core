@@ -13,6 +13,7 @@ import aiohttp
 from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
+from .....utils import validate_url_with_env_config, SSRFError
 
 
 @register_module(
@@ -79,6 +80,11 @@ class HTTPGetModule(BaseModule):
 
         if not url:
             raise ValueError("URL is required")
+
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            raise ValueError(str(e))
 
         ssl_param = None if verify_ssl else False
         async with aiohttp.ClientSession() as session:
@@ -171,6 +177,11 @@ class HTTPPostModule(BaseModule):
 
         if not url:
             raise ValueError("URL is required")
+
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            raise ValueError(str(e))
 
         ssl_param = None if verify_ssl else False
         kwargs = {

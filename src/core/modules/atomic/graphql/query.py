@@ -12,6 +12,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from ....utils import validate_url_with_env_config, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,12 @@ def _prepare_graphql_request(params: Dict[str, Any], operation_key: str = 'query
 
     if not url:
         raise ValidationError("Missing required parameter: url", field="url")
+
+    try:
+        validate_url_with_env_config(url)
+    except SSRFError as e:
+        raise ValidationError(str(e), field="url")
+
     if not operation:
         raise ValidationError("Missing required parameter: {}".format(operation_key), field=operation_key)
 

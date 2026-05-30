@@ -14,6 +14,8 @@ from typing import Any, Dict, Optional
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import Visibility, FieldGroup
+from ....utils import validate_url_with_env_config, SSRFError
+from ...errors import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -336,6 +338,12 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
 
     params = context['params']
     token_url = params['token_url']
+
+    try:
+        validate_url_with_env_config(token_url)
+    except SSRFError as e:
+        raise ValidationError(str(e), field="token_url")
+
     grant_type = params.get('grant_type', 'authorization_code')
     timeout_seconds = params.get('timeout', 15)
 
