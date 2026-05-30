@@ -11,3 +11,15 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+
+  # Keep SHA-pinned GitHub Actions current — Dependabot bumps the pin and
+  # updates the trailing version comment, so pinning does not mean rotting.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+      - "ci"

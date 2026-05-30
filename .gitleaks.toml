@@ -1,0 +1,38 @@
+# gitleaks configuration — FLYA-17 supply-chain baseline.
+#
+# Posture: inherit the full default rule set (fail closed on real secrets) and
+# add only NARROW, justified allowlists for fixtures that were triaged as
+# benign. We deliberately do NOT blanket-ignore tests/ — a real secret in a
+# test file must still fail the gate. Each allowlist below names why it is safe.
+#
+# Triage record (2026-05-30, SecurityEngineer, FLYA-17):
+#   - workflows/pentests/*  : deliberate attack vectors (alg:none / forged-admin
+#                             JWTs) shipped as test data for the appsec product's
+#                             own crypto-pentest modules. Not live credentials.
+#   - jwt_verify.py example : truncated docstring placeholder "eyJ...HUzI1NiIs..."
+#   - test_security.py      : obvious placeholder key "sk-test123456789".
+# No live/production secret was found in source or history.
+
+title = "flyto-core gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Appsec product pentest fixtures: deliberate JWT/crypto attack vectors are test data, not live secrets. Residual risk: a real secret committed under this path would be missed — acceptable for a fixture-only directory; revisit if non-fixture files land here."
+paths = [
+  '''workflows/pentests/.*''',
+]
+
+[[allowlists]]
+description = "Build artifacts are gitignored and absent from CI checkout; allowlisting only keeps local `gitleaks dir` scans noise-free."
+paths = [
+  '''build/.*''',
+]
+
+[[allowlists]]
+description = "Documented placeholder/example tokens (truncated docstring example + obviously-fake test key). Matched by exact pattern, not by path, so a real key elsewhere is not masked."
+regexes = [
+  '''eyJhbGciOiJIUzI1NiIs\.\.\.''',
+  '''sk-test[0-9]+''',
+]
