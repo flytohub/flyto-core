@@ -13,6 +13,7 @@ from ...registry import register_module
 from ...errors import ValidationError, NetworkError, ModuleError
 from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +113,7 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         ssl_param = None if verify_ssl else False
         timeout = aiohttp.ClientTimeout(total=timeout_s)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with create_ssrf_safe_session(timeout=timeout) as session:
             async with session.get(url, headers=headers, ssl=ssl_param) as response:
                 body = await _parse_response_body(response)
                 if 200 <= response.status < 300:

@@ -12,6 +12,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ....utils import SSRFError, validate_url_with_env_config
+from ....safe_http import create_ssrf_safe_session
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
@@ -279,7 +280,7 @@ async def http_session(context: Dict[str, Any]) -> Dict[str, Any]:
     cookie_jar = aiohttp.CookieJar()
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout, cookie_jar=cookie_jar) as session:
+        async with create_ssrf_safe_session(timeout=timeout, cookie_jar=cookie_jar) as session:
             for i, req in enumerate(requests_list):
                 result = await _execute_request(session, req, i, auth, verify_ssl)
                 results.append(result)

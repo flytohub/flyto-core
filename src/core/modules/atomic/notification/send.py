@@ -12,6 +12,7 @@ from typing import Any, Dict
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 
 logger = logging.getLogger(__name__)
@@ -265,7 +266,7 @@ async def notify_send(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout = aiohttp.ClientTimeout(total=30)
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with create_ssrf_safe_session(timeout=timeout) as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 status_code = response.status
 

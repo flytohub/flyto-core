@@ -334,6 +334,34 @@ class SSRFError(ValueError):
     pass
 
 
+# RFC 6052 §2.2 — byte offsets (into the 16-byte IPv6 address) of the four
+# embedded-IPv4 octets, keyed by NAT64 prefix length. For prefix lengths < /96
+# the IPv4 is NOT contiguous in the low 32 bits: bits 64–71 are the reserved
+# "u" octet (byte index 8) and the IPv4 straddles it. Reading raw[-4:] is only
+# correct for the /96 case.
+_NAT64_IPV4_OCTETS = {
+    32: (4, 5, 6, 7),
+    40: (5, 6, 7, 9),
+    48: (6, 7, 9, 10),
+    56: (7, 9, 10, 11),
+    64: (9, 10, 11, 12),
+    96: (12, 13, 14, 15),
+}
+
+
+def _nat64_embedded_ipv4(raw: bytes, prefix_len: int):
+    """Extract the embedded IPv4 from a NAT64 address per RFC 6052 §2.2.
+
+    ``raw`` is the 16-byte big-endian IPv6 address; ``prefix_len`` is the NAT64
+    prefix length (one of 32/40/48/56/64/96). Returns an ``IPv4Address`` or
+    ``None`` if the prefix length is unsupported.
+    """
+    octets = _NAT64_IPV4_OCTETS.get(prefix_len)
+    if octets is None:
+        return None
+    return ipaddress.IPv4Address(bytes(raw[i] for i in octets))
+
+
 def _extract_embedded_ipv4(ip):
     """Return the IPv4 address embedded in an IPv6 transition address, else None.
 
@@ -342,6 +370,13 @@ def _extract_embedded_ipv4(ip):
     ``64:ff9b:1::/48``). These all carry an IPv4 endpoint that a 6to4/NAT64-enabled
     kernel routes to, so the embedded IPv4 must be range-checked too — not only the
     outer IPv6 form, which is not a member of any RFC 1918 / loopback range.
+
+    NAT64 extraction is position-aware (RFC 6052 §2.2): the well-known /96 prefix
+    carries the IPv4 in the low 32 bits, but the local-use ``64:ff9b:1::/48``
+    prefix carries it across bits 48–63 and 72–87 (skipping the reserved "u"
+    octet), so its octets are read from the correct, non-contiguous positions.
+    Reading the low 32 bits for the /48 form would extract the wrong octets and
+    could miss a private IPv4 (or be fooled by a public suffix).
     """
     if ip.version != 6:
         return None
@@ -350,9 +385,13 @@ def _extract_embedded_ipv4(ip):
     if ip.sixtofour is not None:                 # 2002::/16
         return ip.sixtofour
     raw = int(ip).to_bytes(16, 'big')
-    # NAT64 well-known prefix 64:ff9b::/96 and local-use 64:ff9b:1::/48
-    if raw[:2] == b'\x00\x64' and (raw[2:4] == b'\xff\x9b' or raw[2:6] == b'\xff\x9b\x00\x01'):
-        return ipaddress.IPv4Address(raw[-4:])
+    # NAT64 local-use prefix 64:ff9b:1::/48 (RFC 6052 §2.2) — check first: it is
+    # more specific than the well-known prefix on bytes 4–5 (00 01 vs 00 00).
+    if raw[:6] == b'\x00\x64\xff\x9b\x00\x01':
+        return _nat64_embedded_ipv4(raw, 48)
+    # NAT64 well-known prefix 64:ff9b::/96 (IPv4 in the low 32 bits).
+    if raw[:12] == b'\x00\x64\xff\x9b' + bytes(8):
+        return _nat64_embedded_ipv4(raw, 96)
     # IPv4-compatible ::a.b.c.d (deprecated), excluding :: and ::1
     if raw[:12] == bytes(12) and raw[12:] not in (bytes(4), b'\x00\x00\x00\x01'):
         return ipaddress.IPv4Address(raw[-4:])

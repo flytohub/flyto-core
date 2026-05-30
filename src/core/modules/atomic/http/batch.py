@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 
 logger = logging.getLogger(__name__)
@@ -241,7 +242,7 @@ async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout = aiohttp.ClientTimeout(total=timeout_s)
     batch_start = time.time()
 
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    async with create_ssrf_safe_session(timeout=timeout) as session:
         if measure_time:
             results = []
             for req in requests:

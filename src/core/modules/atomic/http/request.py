@@ -14,6 +14,7 @@ from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility, FieldGroup
 from ....utils import validate_url_with_env_config, SSRFError
+from ....safe_http import create_ssrf_safe_session
 
 
 logger = logging.getLogger(__name__)
@@ -333,7 +334,7 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
 
     for attempt in range(max_attempts):
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with create_ssrf_safe_session(timeout=timeout) as session:
                 async with session.request(method, url, **request_kwargs) as response:
                     duration_ms = int((time.time() - start_time) * 1000)
                     body_content = await _read_response_body(response, response_type)
