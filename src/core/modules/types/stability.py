@@ -6,6 +6,8 @@ Module Stability Helpers
 Functions for filtering modules by stability level based on runtime environment.
 """
 
+from __future__ import annotations
+
 import os
 from typing import Set
 

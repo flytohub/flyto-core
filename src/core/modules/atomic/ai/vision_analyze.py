@@ -5,6 +5,8 @@ AI Vision Analyze Module
 Analyze images using LLM vision capabilities (OpenAI GPT-4V or Anthropic Claude).
 """
 
+from __future__ import annotations
+
 import base64
 import logging
 import mimetypes
