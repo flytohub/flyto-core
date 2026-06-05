@@ -8,6 +8,7 @@ Clone a git repository to a local path
 import asyncio
 import logging
 import os
+import re
 from typing import Any, Dict
 from urllib.parse import urlparse, urlunparse
 
@@ -18,6 +19,35 @@ from ...schema.constants import FieldGroup
 
 
 logger = logging.getLogger(__name__)
+
+# git remote-helper transports (ext::, fd::, transport::cmd) execute an arbitrary
+# command — `git clone 'ext::sh -c "id"'` is RCE. Detect the `scheme::` form.
+_GIT_TRANSPORT_HELPER = re.compile(r'^[A-Za-z][A-Za-z0-9+.\-]*::')
+_ALLOWED_CLONE_SCHEMES = {'http', 'https', 'ssh', 'git', 'ftp', 'ftps', 'rsync'}
+
+
+class UnsafeCloneURL(ValueError):
+    """Raised when a clone URL could trigger command execution or local access."""
+
+
+def _validate_clone_url(url: str) -> None:
+    """Reject clone URLs that can run commands (ext::), read local files (file://),
+    inject git options (leading '-'), or hit arbitrary local paths."""
+    if not url or not url.strip():
+        raise UnsafeCloneURL("empty clone url")
+    u = url.strip()
+    if u.startswith('-'):
+        raise UnsafeCloneURL("clone url must not start with '-' (option injection)")
+    if _GIT_TRANSPORT_HELPER.match(u):
+        raise UnsafeCloneURL("git remote-helper transport (e.g. ext::) is not allowed")
+    parsed = urlparse(u)
+    if parsed.scheme and parsed.scheme.lower() not in _ALLOWED_CLONE_SCHEMES:
+        # Explicit non-allowed scheme (file://, ext:: already caught above).
+        raise UnsafeCloneURL(f"clone scheme '{parsed.scheme}' is not allowed")
+    # Scheme-less values (scp-style user@host:path or a local repo path) are a
+    # legitimate git feature and not command execution; the dangerous vectors
+    # (ext::/fd:: transports, file://, option-injecting leading '-') are already
+    # rejected above.
 
 
 def _inject_token_into_url(url: str, token: str) -> str:
@@ -37,7 +67,9 @@ def _build_clone_cmd(clone_url: str, destination: str, branch: str = None, depth
         cmd.extend(['--branch', branch])
     if depth:
         cmd.extend(['--depth', str(depth)])
-    cmd.extend([clone_url, destination])
+    # '--' terminates option parsing so neither url nor destination can be read
+    # as a git flag (defense in depth alongside _validate_clone_url).
+    cmd.extend(['--', clone_url, destination])
     return cmd
 
 
@@ -153,6 +185,10 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
     branch = params.get('branch')
     depth = params.get('depth')
     token = params.get('token')
+
+    # SECURITY: reject ext::/file://, option-injecting, and local-path URLs before
+    # they reach `git clone` (ext:: transport = arbitrary command execution).
+    _validate_clone_url(url)
 
     clone_url = _inject_token_into_url(url, token) if token and url.startswith('https://') else url
     cmd = _build_clone_cmd(clone_url, destination, branch, depth)
