@@ -19,6 +19,7 @@ Usage:
 import importlib
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
@@ -27,6 +28,12 @@ from datetime import datetime
 from importlib.metadata import distributions, entry_points
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+_TRUTHY = {"1", "true", "yes", "on"}
+
+
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in _TRUTHY
 
 from .manifest import PluginManifest, PluginModule, PluginStatus
 
@@ -307,7 +314,25 @@ class PluginLoader:
                 return False
             package_spec = f"{name}=={version}"
 
+        # SECURITY (supply chain): `pip install` runs the package's build backend
+        # — arbitrary code. The PLUGIN_PREFIX gate limits the *name*, not a hostile
+        # publisher of a legit-looking flyto-plugin-*. Two opt-in protections:
+        #   FLYTO_PLUGIN_INDEX_URL — install only from this (private/curated) index.
+        #   FLYTO_PLUGIN_REQUIRE_TRUSTED_INDEX=1 — refuse to install at all unless a
+        #     trusted index is configured (fail closed for hardened deployments).
+        index_url = os.environ.get("FLYTO_PLUGIN_INDEX_URL", "").strip()
+        if _env_truthy("FLYTO_PLUGIN_REQUIRE_TRUSTED_INDEX") and not index_url:
+            logger.error(
+                "Refusing to install %s: FLYTO_PLUGIN_REQUIRE_TRUSTED_INDEX is set "
+                "but no FLYTO_PLUGIN_INDEX_URL is configured (won't pull from public PyPI).",
+                name,
+            )
+            return False
+
         cmd = [sys.executable, "-m", "pip", "install", package_spec]
+        if index_url:
+            # Pin to the trusted index and do not fall back to PyPI.
+            cmd += ["--index-url", index_url]
         if upgrade:
             cmd.append("--upgrade")
 
