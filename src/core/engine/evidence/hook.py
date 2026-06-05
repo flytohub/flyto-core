@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 
 from .models import BrowserContextProtocol, StepEvidence
 from .store import EvidenceStore
+from ..redaction import redact_for_persistence, redact_text
 
 logger = logging.getLogger(__name__)
 
@@ -116,11 +117,15 @@ class StepEvidenceHook:
                 execution_id=self.execution_id,
                 timestamp=self._start_time or datetime.now(),
                 duration_ms=duration_ms,
-                context_before=self._context_before,
-                context_after=dict(variables) if variables else {},
+                # SECURITY: redact credentials before they are persisted to
+                # evidence.jsonl — a recipe run against a target with creds would
+                # otherwise leave login tokens / DB passwords in plaintext on disk
+                # and in replay artifacts.
+                context_before=redact_for_persistence(self._context_before),
+                context_after=redact_for_persistence(dict(variables) if variables else {}),
                 status='error' if error else 'success',
-                error_message=str(error) if error else None,
-                output=dict(result) if isinstance(result, dict) else {},
+                error_message=redact_text(str(error)) if error else None,
+                output=redact_for_persistence(dict(result) if isinstance(result, dict) else {}),
                 module_id=module_id,
                 step_index=step_index,
                 attempt=getattr(ctx, 'attempt', 1),
