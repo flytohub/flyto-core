@@ -88,3 +88,38 @@ class ModuleFilter:
 
 # Singleton — initialized on import, reads env vars once
 module_filter = ModuleFilter()
+
+
+# ---------------------------------------------------------------------------
+# Per-module capability permissions (a second lock beyond the module allowlist)
+# ---------------------------------------------------------------------------
+#
+# Modules declare required_permissions in their metadata. Most (browser.*, file,
+# network, ai, cloud) are needed by ordinary recipes and are always allowed. A
+# small set grants host code execution or money movement and must be explicitly
+# granted via FLYTO_GRANTED_PERMISSIONS — otherwise the module is refused even if
+# its module-id passed the allowlist. This makes required_permissions enforced
+# rather than decorative.
+_DANGEROUS_PERMISSIONS = frozenset({
+    "shell.execute",
+    "subprocess.execute",
+    "payment.process",
+})
+
+
+def granted_permissions() -> set:
+    raw = os.environ.get("FLYTO_GRANTED_PERMISSIONS", "")
+    return {p.strip() for p in raw.split(",") if p.strip()}
+
+
+def missing_permissions(required) -> list:
+    """Return the dangerous permissions in `required` that have NOT been granted.
+
+    An empty list means the module is permitted. Non-dangerous permissions are
+    always allowed (returned never lists them).
+    """
+    granted = granted_permissions()
+    return [
+        p for p in (required or [])
+        if p in _DANGEROUS_PERMISSIONS and p not in granted
+    ]

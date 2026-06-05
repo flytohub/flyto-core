@@ -180,6 +180,30 @@ def _denied_module_response(module_id: str) -> dict:
     }
 
 
+def _module_missing_permissions(module_id: str) -> list:
+    """Dangerous required_permissions a module declares that aren't granted."""
+    from core.module_policy import missing_permissions
+    try:
+        from core.modules.registry import ModuleRegistry
+        meta = ModuleRegistry.get_metadata(module_id) or {}
+    except Exception:
+        meta = {}
+    return missing_permissions(meta.get("required_permissions"))
+
+
+def _denied_permissions_response(module_id: str, missing: list) -> dict:
+    return {
+        "ok": False,
+        "error": (
+            f"Module '{module_id}' requires permission(s) {missing} that have not "
+            "been granted. These grant host code execution or money movement and "
+            "must be enabled explicitly via FLYTO_GRANTED_PERMISSIONS."
+        ),
+        "blocked_by": "required_permissions",
+        "missing_permissions": missing,
+    }
+
+
 def _collect_module_ids(obj: Any) -> set:
     """Recursively collect every `module:` id declared anywhere in a workflow dict."""
     found: set = set()
@@ -216,6 +240,11 @@ async def execute_module(
     # Capability gate — fail closed before any module is resolved/instantiated.
     if not _module_is_allowed(module_id):
         return _denied_module_response(module_id)
+
+    # Second lock: per-module dangerous permissions must be explicitly granted.
+    _missing = _module_missing_permissions(module_id)
+    if _missing:
+        return _denied_permissions_response(module_id, _missing)
 
     try:
         from core.modules.registry import ModuleRegistry
@@ -501,6 +530,24 @@ async def run_recipe(
                 ),
                 "blocked_by": "module_filter",
                 "blocked_modules": denied,
+            }
+
+        # Second lock: reject if any step needs an ungranted dangerous permission.
+        perm_blocked = {}
+        for m in sorted(_collect_module_ids(workflow)):
+            miss = _module_missing_permissions(m)
+            if miss:
+                perm_blocked[m] = miss
+        if perm_blocked:
+            return {
+                "ok": False,
+                "error": (
+                    f"Recipe '{recipe_name}' is blocked: step modules need permissions "
+                    "that have not been granted (FLYTO_GRANTED_PERMISSIONS): "
+                    + ", ".join(f"{m}={miss}" for m, miss in perm_blocked.items())
+                ),
+                "blocked_by": "required_permissions",
+                "blocked_modules": sorted(perm_blocked),
             }
 
         engine = WorkflowEngine(
