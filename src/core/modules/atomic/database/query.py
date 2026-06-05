@@ -101,7 +101,17 @@ async def database_query(context: Dict[str, Any]) -> Dict[str, Any]:
     query = params['query']
     query_params = params.get('params', [])
     db_type = params.get('database_type', 'postgresql')
-    connection_string = params.get('connection_string') or os.getenv('DATABASE_URL')
+    # SECURITY: a caller-supplied connection_string lets an untrusted client point
+    # the query at ANY host (e.g. postgres://internal-rds:5432) — SSRF-to-DB plus
+    # arbitrary SQL/DDL. Forbid client DSNs by default; require a server-configured
+    # DATABASE_URL. Set FLYTO_ALLOW_CLIENT_DB_DSN=1 to opt back in for trusted use.
+    client_dsn = params.get('connection_string')
+    if client_dsn and os.environ.get('FLYTO_ALLOW_CLIENT_DB_DSN', '').strip().lower() not in ('1', 'true', 'yes', 'on'):
+        raise ValueError(
+            "client-supplied connection_string is disabled; configure DATABASE_URL "
+            "server-side (set FLYTO_ALLOW_CLIENT_DB_DSN=1 to override)"
+        )
+    connection_string = client_dsn or os.getenv('DATABASE_URL')
     fetch_mode = params.get('fetch', 'all')
 
     # Validate query (basic security check)

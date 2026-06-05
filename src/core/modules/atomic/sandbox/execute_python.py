@@ -17,6 +17,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from .safe_env import build_sandbox_env
 
 logger = logging.getLogger(__name__)
 
@@ -151,10 +152,13 @@ async def sandbox_execute_python(context: Dict[str, Any]) -> Dict[str, Any]:
 
         start_time = time.monotonic()
 
+        # Run with a scrubbed environment so attacker code cannot read host
+        # secrets from os.environ. Set FLYTO_SANDBOX_INHERIT_ENV=1 to override.
         proc = await asyncio.create_subprocess_exec(
             sys.executable, tmp_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            env=build_sandbox_env(params.get('env')),
         )
 
         try:

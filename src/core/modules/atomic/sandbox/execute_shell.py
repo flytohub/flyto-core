@@ -15,6 +15,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from .safe_env import build_sandbox_env
 
 logger = logging.getLogger(__name__)
 
@@ -150,12 +151,11 @@ async def sandbox_execute_shell(context: Dict[str, Any]) -> Dict[str, Any]:
             field="working_dir",
         )
 
-    # Build environment: inherit current env + merge extra vars
-    env = None
-    if extra_env:
-        env = dict(os.environ)
-        for k, v in extra_env.items():
-            env[str(k)] = str(v)
+    # Build environment from a scrubbed allowlist (PATH/HOME/locale/...) plus any
+    # caller-supplied vars — NOT the full parent env, so a sandboxed command
+    # cannot read host secrets (API keys, tokens, DATABASE_URL) out of os.environ.
+    # Set FLYTO_SANDBOX_INHERIT_ENV=1 to restore full inheritance.
+    env = build_sandbox_env(extra_env)
 
     start_time = time.monotonic()
 

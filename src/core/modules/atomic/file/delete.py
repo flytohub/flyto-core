@@ -11,6 +11,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 @register_module(
@@ -82,9 +83,16 @@ class FileDeleteModule(BaseModule):
             raise ValueError("file_path is required")
 
     async def execute(self) -> Any:
+        # SECURITY: confine deletion to the configured workspace, matching
+        # file.read/write/edit. Without this, file.delete accepted any absolute
+        # path (e.g. /etc/passwd) — arbitrary host file deletion.
         try:
-            if os.path.exists(self.file_path):
-                os.remove(self.file_path)
+            safe_path = validate_path_with_env_config(self.file_path)
+        except PathTraversalError as e:
+            raise RuntimeError(f"Refusing to delete outside the allowed path: {e}")
+        try:
+            if os.path.exists(safe_path):
+                os.remove(safe_path)
                 return {
                     "deleted": True,
                     "file_path": self.file_path
