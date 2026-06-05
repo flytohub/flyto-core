@@ -7,12 +7,20 @@ Environment variables:
   FLYTO_CORS_ORIGINS    — Comma-separated allowed origins (default: localhost only).
                           Set to "*" to allow all origins.
   FLYTO_API_TOKEN       — Fixed bearer token. If unset, auto-generated on startup.
-  FLYTO_MODULE_DENYLIST — Comma-separated glob patterns to deny (default: "shell.*,process.*").
-                          Set to empty string to clear.
+  FLYTO_MODULE_DENYLIST — Comma-separated glob patterns to deny. Defaults to the
+                          dangerous-by-default set below (host RCE / SSRF-to-DB /
+                          unconfined filesystem sinks). Set to empty string to clear
+                          (NOT recommended when exposing the server to any client),
+                          or override with your own list.
   FLYTO_MODULE_ALLOWLIST — If set, ONLY these modules are allowed (overrides denylist).
+                          Use this for strict deny-by-default when serving untrusted
+                          or red-team MCP clients.
+
+The same ModuleFilter singleton gates BOTH the REST route and BOTH MCP transports
+(STDIO + HTTP) — see mcp_handler.execute_module / run_recipe. There is no transport
+that bypasses it.
 """
 
-import fnmatch
 import logging
 import os
 import secrets
@@ -196,46 +204,10 @@ def enforce_bind_policy(host: str) -> None:
 # ---------------------------------------------------------------------------
 # Module Filter (Denylist / Allowlist)
 # ---------------------------------------------------------------------------
-
-_DEFAULT_DENYLIST = ["shell.*", "process.*"]
-
-
-class ModuleFilter:
-    """Filter modules by glob-pattern denylist/allowlist."""
-
-    def __init__(self):
-        self.denylist: List[str] = []
-        self.allowlist: List[str] = []
-        self._load_from_env()
-
-    def _load_from_env(self):
-        # Allowlist takes priority if set
-        raw_allow = os.environ.get("FLYTO_MODULE_ALLOWLIST", "").strip()
-        if raw_allow:
-            self.allowlist = [p.strip() for p in raw_allow.split(",") if p.strip()]
-            logger.info("Module allowlist: %s", self.allowlist)
-            return
-
-        # Denylist
-        raw_deny = os.environ.get("FLYTO_MODULE_DENYLIST")
-        if raw_deny is not None:
-            # Explicit env var — could be empty to clear defaults
-            raw_deny = raw_deny.strip()
-            self.denylist = [p.strip() for p in raw_deny.split(",") if p.strip()] if raw_deny else []
-        else:
-            self.denylist = list(_DEFAULT_DENYLIST)
-
-        if self.denylist:
-            logger.info("Module denylist: %s", self.denylist)
-
-    def is_allowed(self, module_id: str) -> bool:
-        """Check if a module is allowed to execute."""
-        if self.allowlist:
-            return any(fnmatch.fnmatch(module_id, pat) for pat in self.allowlist)
-        if self.denylist:
-            return not any(fnmatch.fnmatch(module_id, pat) for pat in self.denylist)
-        return True
-
-
-# Singleton — initialized on import, reads env vars once
-module_filter = ModuleFilter()
+#
+# The ModuleFilter lives in core.module_policy (dependency-free) so the SAME
+# singleton can gate the module-execution hot path on every transport — the REST
+# route here AND both MCP transports (mcp_handler.execute_module / run_recipe) —
+# without importing FastAPI. Re-exported here for backward compatibility with
+# existing `from ..security import module_filter` call sites.
+from core.module_policy import ModuleFilter, module_filter, _DEFAULT_DENYLIST  # noqa: E402,F401

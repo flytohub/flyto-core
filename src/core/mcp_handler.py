@@ -156,6 +156,45 @@ def get_module_info(module_id: str) -> dict:
         return {"error": str(e)}
 
 
+# ---------------------------------------------------------------------------
+# Capability policy — the SAME ModuleFilter that guards the REST route, applied
+# here so both MCP transports (STDIO + HTTP) are gated. Imported lazily to keep
+# the STDIO path free of an import-time FastAPI dependency.
+# ---------------------------------------------------------------------------
+
+def _module_is_allowed(module_id: str) -> bool:
+    from core.module_policy import module_filter
+    return module_filter.is_allowed(module_id)
+
+
+def _denied_module_response(module_id: str) -> dict:
+    return {
+        "ok": False,
+        "error": (
+            f"Module '{module_id}' is blocked by the server capability policy "
+            "(FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST). This category can grant "
+            "host code execution, SSRF, or unconfined filesystem access and is denied "
+            "by default. An operator must explicitly allow it before it can run."
+        ),
+        "blocked_by": "module_filter",
+    }
+
+
+def _collect_module_ids(obj: Any) -> set:
+    """Recursively collect every `module:` id declared anywhere in a workflow dict."""
+    found: set = set()
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if key == "module" and isinstance(value, str) and value:
+                found.add(value)
+            else:
+                found |= _collect_module_ids(value)
+    elif isinstance(obj, list):
+        for item in obj:
+            found |= _collect_module_ids(item)
+    return found
+
+
 async def execute_module(
     module_id: str,
     params: Dict[str, Any],
@@ -173,6 +212,10 @@ async def execute_module(
     """
     if browser_sessions is None:
         browser_sessions = {}
+
+    # Capability gate — fail closed before any module is resolved/instantiated.
+    if not _module_is_allowed(module_id):
+        return _denied_module_response(module_id)
 
     try:
         from core.modules.registry import ModuleRegistry
@@ -443,6 +486,22 @@ async def run_recipe(
             return {"ok": False, "error": f"Recipe not found: {recipe_name}"}
 
         workflow = substitute_args(recipe, args)
+
+        # Capability gate — reject the whole recipe if ANY declared step uses a
+        # module denied by the policy, before the engine executes a single step.
+        denied = sorted(m for m in _collect_module_ids(workflow) if not _module_is_allowed(m))
+        if denied:
+            return {
+                "ok": False,
+                "error": (
+                    f"Recipe '{recipe_name}' is blocked: it uses modules denied by the "
+                    f"server capability policy: {', '.join(denied)}. An operator must "
+                    "explicitly allow these (FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST) "
+                    "before the recipe can run."
+                ),
+                "blocked_by": "module_filter",
+                "blocked_modules": denied,
+            }
 
         engine = WorkflowEngine(
             workflow=workflow,
