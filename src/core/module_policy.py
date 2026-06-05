@@ -46,6 +46,8 @@ _DEFAULT_DENYLIST = [
     "docker.run",       # container host control (docker.ps stays allowed)
     "docker.exec",
     "file.delete",      # path not validated — arbitrary host file deletion
+    "env.get",          # reads ANY host env var (API keys/DSNs) = secret exfil
+    "env.load_dotenv",  # loads a .env file from disk into workflow variables
 ]
 
 
@@ -123,3 +125,33 @@ def missing_permissions(required) -> list:
         p for p in (required or [])
         if p in _DANGEROUS_PERMISSIONS and p not in granted
     ]
+
+
+class ModulePolicyError(PermissionError):
+    """Raised at the execution chokepoint when a module is blocked by policy."""
+
+
+def enforce_module_policy(module_id, required_permissions=None) -> None:
+    """Fail-closed gate, called at the single execution chokepoint (BaseModule.run).
+
+    Raises ModulePolicyError if the module id is denied by the capability filter
+    or declares an ungranted dangerous permission. Because EVERY module — direct,
+    recipe step, foreach item, composite sub-node, and any child reached via
+    flow.invoke / template.invoke / agent tools — is executed through this gate,
+    a denied module cannot run no matter how it was invoked. The MCP-boundary
+    checks remain as a first line; this is the backstop the nested-execution
+    gadgets were bypassing.
+    """
+    if not module_id:
+        return
+    if not module_filter.is_allowed(module_id):
+        raise ModulePolicyError(
+            f"Module '{module_id}' is blocked by the capability policy "
+            "(FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST)."
+        )
+    missing = missing_permissions(required_permissions)
+    if missing:
+        raise ModulePolicyError(
+            f"Module '{module_id}' requires ungranted permission(s) {missing} "
+            "(grant via FLYTO_GRANTED_PERMISSIONS)."
+        )

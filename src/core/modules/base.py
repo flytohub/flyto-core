@@ -231,6 +231,15 @@ class BaseModule(ABC):
         # Get module metadata for Phase 2 settings
         metadata = ModuleRegistry.get_metadata(self.module_id) or {}
 
+        # SECURITY: single execution chokepoint. Every module — including those
+        # reached via flow.invoke / template.invoke / foreach / composite
+        # sub-nodes / agent-chosen tools — runs through here, so a denied or
+        # insufficiently-permitted module fails closed regardless of how it was
+        # invoked. This is the backstop the nested-execution gadgets used to
+        # bypass the MCP-boundary capability checks.
+        from ..module_policy import enforce_module_policy
+        enforce_module_policy(self.module_id, metadata.get('required_permissions'))
+
         timeout_ms = metadata.get('timeout_ms')
         timeout = timeout_ms / 1000.0 if timeout_ms else None
         retryable = metadata.get('retryable', False)
