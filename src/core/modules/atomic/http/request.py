@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility, FieldGroup
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
 
 
 logger = logging.getLogger(__name__)
@@ -308,7 +308,7 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
             f"Use ${{variable_name}} syntax and ensure the variable is defined.",
             'UNRESOLVED_VARIABLE', url, 0)
 
-    if params.get('ssrf_protection', True):
+    if ssrf_protection_enabled():
         try:
             validate_url_with_env_config(url)
         except SSRFError as e:

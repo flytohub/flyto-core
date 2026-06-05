@@ -12,7 +12,7 @@ from typing import Any, Dict
 from ...registry import register_module
 from ...errors import ValidationError, NetworkError, ModuleError
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout_s = params.get('timeout', 30)
     verify_ssl = params.get('verify_ssl', True)
 
-    if params.get('ssrf_protection', True):
+    if ssrf_protection_enabled():
         try:
             validate_url_with_env_config(url)
         except SSRFError as e:

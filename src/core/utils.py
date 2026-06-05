@@ -528,6 +528,21 @@ def get_ssrf_config() -> dict:
     }
 
 
+def ssrf_protection_enabled() -> bool:
+    """Whether outbound HTTP modules must run the SSRF guard.
+
+    SSRF protection is OPERATOR-controlled, never disableable by a recipe/client
+    `ssrf_protection` param (an untrusted MCP client could otherwise just pass
+    ssrf_protection=false and reach 169.254.169.254 / internal services).
+    Default ON; an operator may opt out for trusted/local use via
+    FLYTO_HTTP_DISABLE_SSRF_GUARD=1. Legitimate internal access should instead be
+    granted narrowly with FLYTO_ALLOW_PRIVATE_NETWORK / FLYTO_ALLOWED_HOSTS.
+    """
+    return os.environ.get("FLYTO_HTTP_DISABLE_SSRF_GUARD", "").strip().lower() not in (
+        "1", "true", "yes", "on"
+    )
+
+
 def validate_url_with_env_config(url: str) -> str:
     """
     Validate URL using environment-based SSRF configuration.

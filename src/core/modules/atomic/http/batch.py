@@ -15,7 +15,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
 
 
 logger = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:
     measure_time = bool(params.get('measure_time', False))
     timeout_s = int(params.get('timeout', 30))
     verify_ssl = bool(params.get('verify_ssl', True))
-    ssrf_on = bool(params.get('ssrf_protection', True))
+    ssrf_on = ssrf_protection_enabled()  # operator-controlled, not client param
     patterns: List[str] = list(params.get('detect_patterns') or [])
 
     # SSRF gate — refuse any target that fails the project's URL validator
