@@ -6,12 +6,15 @@ Recipes are YAML workflow templates with named arguments.
 """
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+from core.engine.redaction import redact_for_persistence
 
 from .config import Colors
 
@@ -308,11 +311,16 @@ def run_recipe(recipe_name: str, raw_args: List[str]) -> int:
             'hint': _step_hint(s),
         }
 
-    # Prepare run state directory for replay support
+    # Prepare run state directory for replay support. Lock it to the owner —
+    # run artifacts carry resolved params/context that may include credentials.
     run_dir = RUNS_DIR / 'latest'
     run_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(run_dir, 0o700)
+    except OSError:
+        pass
     _save_json(run_dir / 'workflow.json', workflow)
-    _save_json(run_dir / 'params.json', params)
+    _save_json(run_dir / 'params.json', redact_for_persistence(params))
 
     # Real-time checkpoint callback: prints each step + saves context snapshot
     completed_count = 0
@@ -425,10 +433,15 @@ def _print_output_files(args: Dict[str, str], engine) -> None:
 # ── Replay support helpers ─────────────────────────────────────────
 
 def _save_json(path: Path, data: Any) -> None:
-    """Save JSON, silently skip non-serializable data."""
+    """Save JSON, silently skip non-serializable data. Files are owner-only (0600)
+    since run artifacts may contain resolved credentials."""
     try:
         with open(path, 'w') as f:
             json.dump(data, f, indent=2, default=str)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
     except Exception:
         pass
 
@@ -452,8 +465,9 @@ def _save_checkpoint_snapshot(
         'step_index': step_index,
         'step_id': step_id,
         'status': status,
-        'context': clean_ctx,
-        'params': checkpoint_data.get('params', {}),
+        # SECURITY: redact credentials before they land in checkpoint_*.json.
+        'context': redact_for_persistence(clean_ctx),
+        'params': redact_for_persistence(checkpoint_data.get('params', {})),
     }
     _save_json(run_dir / f'checkpoint_{step_index:03d}_{step_id}.json', snapshot)
     # Also keep a "latest successful" pointer for easy replay

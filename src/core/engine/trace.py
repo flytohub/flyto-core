@@ -118,13 +118,19 @@ class StepInput:
     itemCount: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to dictionary.
+
+        SECURITY: redact credentials from params before the trace is serialized —
+        get_execution_trace() is returned to MCP/API clients and persisted, so a
+        recipe that carries a token/DSN must not echo it back in plaintext.
+        """
+        from .redaction import redact_for_persistence
         result = {
-            "params": self.params,
-            "paramsRaw": self.paramsRaw,
+            "params": redact_for_persistence(self.params),
+            "paramsRaw": redact_for_persistence(self.paramsRaw),
         }
         if self.items is not None:
-            result["items"] = self.items
+            result["items"] = redact_for_persistence(self.items)
             result["itemCount"] = self.itemCount
         return result
 
