@@ -156,6 +156,72 @@ def get_module_info(module_id: str) -> dict:
         return {"error": str(e)}
 
 
+# ---------------------------------------------------------------------------
+# Capability policy — the SAME ModuleFilter that guards the REST route, applied
+# here so both MCP transports (STDIO + HTTP) are gated. Imported lazily to keep
+# the STDIO path free of an import-time FastAPI dependency. The real backstop is
+# enforce_module_policy at the engine chokepoint (modules/base.py); these
+# boundary checks are the first line and give a clean error before instantiation.
+# ---------------------------------------------------------------------------
+
+def _module_is_allowed(module_id: str) -> bool:
+    from core.module_policy import module_filter
+    return module_filter.is_allowed(module_id)
+
+
+def _denied_module_response(module_id: str) -> dict:
+    return {
+        "ok": False,
+        "error": (
+            f"Module '{module_id}' is blocked by the server capability policy "
+            "(FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST). This category can grant "
+            "host code execution, SSRF, or unconfined filesystem access and is denied "
+            "by default. An operator must explicitly allow it before it can run."
+        ),
+        "blocked_by": "module_filter",
+    }
+
+
+def _module_missing_permissions(module_id: str) -> list:
+    """Dangerous required_permissions a module declares that aren't granted."""
+    from core.module_policy import missing_permissions
+    try:
+        from core.modules.registry import ModuleRegistry
+        meta = ModuleRegistry.get_metadata(module_id) or {}
+    except Exception:
+        meta = {}
+    return missing_permissions(meta.get("required_permissions"))
+
+
+def _denied_permissions_response(module_id: str, missing: list) -> dict:
+    return {
+        "ok": False,
+        "error": (
+            f"Module '{module_id}' requires permission(s) {missing} that have not "
+            "been granted. These grant host code execution or money movement and "
+            "must be enabled explicitly via FLYTO_GRANTED_PERMISSIONS."
+        ),
+        "blocked_by": "required_permissions",
+        "missing_permissions": missing,
+    }
+
+
+def _collect_module_ids(obj: Any) -> set:
+    """Collect every module id declared in a workflow, including ids smuggled
+    inside inline workflow_source/template string payloads (flow.invoke vector).
+
+    Delegates to core.module_policy._collect_module_ids (which recurses into
+    inline workflow_source/template payloads). Kept here under the historical
+    name for the REST/MCP call sites and tests that import it from mcp_handler.
+    """
+    from core.module_policy import _collect_module_ids as _collect
+    return _collect(obj)
+
+
+# Backward-compatible alias used by run_recipe / execute_module pre-flight.
+_collect_workflow_module_ids = _collect_module_ids
+
+
 async def execute_module(
     module_id: str,
     params: Dict[str, Any],
@@ -173,6 +239,38 @@ async def execute_module(
     """
     if browser_sessions is None:
         browser_sessions = {}
+
+    # Capability gate — fail closed before any module is resolved/instantiated.
+    if not _module_is_allowed(module_id):
+        return _denied_module_response(module_id)
+
+    # Second lock: per-module dangerous permissions must be explicitly granted.
+    _missing = _module_missing_permissions(module_id)
+    if _missing:
+        return _denied_permissions_response(module_id, _missing)
+
+    # Inline-payload pre-flight: a nested-execution gadget (flow.invoke /
+    # template.invoke / flow.subflow) can carry a denied module inside an opaque
+    # workflow_source/template string. Reject if any smuggled module is denied.
+    # (The gadget ids themselves are denied by default too, but this also covers
+    # operators who deliberately allow the gadget yet not the smuggled module.)
+    try:
+        smuggled = sorted(
+            m for m in _collect_workflow_module_ids(params)
+            if m != module_id and not _module_is_allowed(m)
+        )
+    except Exception:
+        smuggled = []
+    if smuggled:
+        return {
+            "ok": False,
+            "error": (
+                f"Module '{module_id}' carries an inline sub-workflow that uses "
+                f"modules denied by the server capability policy: {', '.join(smuggled)}."
+            ),
+            "blocked_by": "module_filter",
+            "blocked_modules": smuggled,
+        }
 
     try:
         from core.modules.registry import ModuleRegistry
@@ -443,6 +541,42 @@ async def run_recipe(
             return {"ok": False, "error": f"Recipe not found: {recipe_name}"}
 
         workflow = substitute_args(recipe, args)
+
+        # Capability gate — reject the whole recipe if ANY declared step uses a
+        # module denied by the policy (including modules smuggled inside inline
+        # workflow_source/template payloads), before the engine runs a step.
+        all_ids = _collect_workflow_module_ids(workflow)
+        denied = sorted(m for m in all_ids if not _module_is_allowed(m))
+        if denied:
+            return {
+                "ok": False,
+                "error": (
+                    f"Recipe '{recipe_name}' is blocked: it uses modules denied by the "
+                    f"server capability policy: {', '.join(denied)}. An operator must "
+                    "explicitly allow these (FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST) "
+                    "before the recipe can run."
+                ),
+                "blocked_by": "module_filter",
+                "blocked_modules": denied,
+            }
+
+        # Second lock: reject if any step needs an ungranted dangerous permission.
+        perm_blocked = {}
+        for m in sorted(all_ids):
+            miss = _module_missing_permissions(m)
+            if miss:
+                perm_blocked[m] = miss
+        if perm_blocked:
+            return {
+                "ok": False,
+                "error": (
+                    f"Recipe '{recipe_name}' is blocked: step modules need permissions "
+                    "that have not been granted (FLYTO_GRANTED_PERMISSIONS): "
+                    + ", ".join(f"{m}={miss}" for m, miss in perm_blocked.items())
+                ),
+                "blocked_by": "required_permissions",
+                "blocked_modules": sorted(perm_blocked),
+            }
 
         engine = WorkflowEngine(
             workflow=workflow,

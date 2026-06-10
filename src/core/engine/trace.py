@@ -93,7 +93,12 @@ class ItemTrace:
         return self
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to dictionary.
+
+        SECURITY: redact credentials — this trace is returned to MCP/API clients
+        and persisted, so an item carrying a token/DSN must not echo it back.
+        """
+        from .redaction import redact_for_persistence
         result = {
             "index": self.index,
             "status": self.status,
@@ -101,11 +106,11 @@ class ItemTrace:
             "durationMs": self.durationMs,
         }
         if self.input is not None:
-            result["input"] = self.input
+            result["input"] = redact_for_persistence(self.input)
         if self.output is not None:
-            result["output"] = self.output
+            result["output"] = redact_for_persistence(self.output)
         if self.error:
-            result["error"] = self.error
+            result["error"] = redact_for_persistence(self.error)
         return result
 
 
@@ -118,13 +123,19 @@ class StepInput:
     itemCount: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to dictionary.
+
+        SECURITY: redact credentials from params before the trace is serialized —
+        get_execution_trace() is returned to MCP/API clients and persisted, so a
+        recipe that carries a token/DSN must not echo it back in plaintext.
+        """
+        from .redaction import redact_for_persistence
         result = {
-            "params": self.params,
-            "paramsRaw": self.paramsRaw,
+            "params": redact_for_persistence(self.params),
+            "paramsRaw": redact_for_persistence(self.paramsRaw),
         }
         if self.items is not None:
-            result["items"] = self.items
+            result["items"] = redact_for_persistence(self.items)
             result["itemCount"] = self.itemCount
         return result
 
@@ -137,13 +148,18 @@ class StepOutput:
     error: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to dictionary.
+
+        SECURITY: redact credentials from output items + error before the trace
+        is returned to clients / persisted.
+        """
+        from .redaction import redact_for_persistence
         result = {
-            "items": self.items,
+            "items": redact_for_persistence(self.items),
             "itemCount": self.itemCount,
         }
         if self.error:
-            result["error"] = self.error
+            result["error"] = redact_for_persistence(self.error)
         return result
 
 
@@ -272,8 +288,9 @@ class StepTrace:
         if self.itemTraces:
             result["itemTraces"] = [t.to_dict() for t in self.itemTraces]
         if self.error:
+            from .redaction import redact_text
             result["error"] = {
-                "message": self.error.message,
+                "message": redact_text(self.error.message),
                 "code": self.error.code,
                 "type": self.error.type,
             }
@@ -402,7 +419,15 @@ class ExecutionTrace:
         return sum(1 for s in self.steps if s.status == "error")
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for API response."""
+        """Convert to dictionary for API response.
+
+        SECURITY: inputParams (resolved workflow params) and output are returned
+        to MCP/API clients (workflows.py / mcp_handler) and persisted. A
+        credential passed as a recipe param would otherwise be echoed back in
+        plaintext, so redact the whole boundary. Per-step/per-item to_dict()
+        also redact, so no sub-node is forgotten.
+        """
+        from .redaction import redact_for_persistence, redact_text
         result = {
             "executionId": self.executionId,
             "workflowId": self.workflowId,
@@ -410,7 +435,7 @@ class ExecutionTrace:
             "status": self.status,
             "statusLegacy": _to_legacy_status(self.status),
             "durationMs": self.durationMs,
-            "inputParams": self.inputParams,
+            "inputParams": redact_for_persistence(self.inputParams),
             "steps": [s.to_dict() for s in self.steps],
             "stepCount": self.step_count,
             "completedSteps": self.completed_step_count,
@@ -421,10 +446,10 @@ class ExecutionTrace:
         if self.endedAt:
             result["endedAt"] = self.endedAt.isoformat()
         if self.output is not None:
-            result["output"] = self.output
+            result["output"] = redact_for_persistence(self.output)
         if self.error:
             result["error"] = {
-                "message": self.error.message,
+                "message": redact_text(self.error.message),
                 "code": self.error.code,
                 "type": self.error.type,
             }

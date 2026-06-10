@@ -1384,6 +1384,17 @@ class TestSubstituteLocalVars:
 # ---------------------------------------------------------------------------
 
 class TestTemplateInvokeHandling:
+    @pytest.fixture(autouse=True)
+    def _allow_template_invoke(self, monkeypatch):
+        # template.invoke is denied by default (nested-execution gadget). These
+        # tests exercise the executor's suffix-stripping PLUMBING, not the policy,
+        # so allowlist it the way an operator deliberately opting in would.
+        import core.module_policy as module_policy
+        from core.module_policy import ModuleFilter
+        monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
+        monkeypatch.setenv("FLYTO_MODULE_ALLOWLIST", "template.*,string.*,math.*")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+
     async def test_template_invoke_strips_suffix_for_registry_lookup(self):
         """template.invoke:some-id is handled: template_id injected into params."""
         from core.modules.registry import ModuleRegistry, register_module
@@ -2419,6 +2430,17 @@ import core.engine.step_executor.executor as _executor_mod
 
 class TestRuntimeInvokerFallback:
     """Test fallback paths when _RUNTIME_INVOKER_AVAILABLE is False."""
+
+    @pytest.fixture(autouse=True)
+    def _allow_template_invoke(self, monkeypatch):
+        # template.invoke is denied by default; the fallback test below exercises
+        # the runtime-invoke PLUMBING (template_id/library_id injection), not the
+        # policy, so allowlist it as an opted-in operator would.
+        import core.module_policy as module_policy
+        from core.module_policy import ModuleFilter
+        monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
+        monkeypatch.setenv("FLYTO_MODULE_ALLOWLIST", "template.*,database.*,string.*")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
 
     async def test_parse_module_id_fallback_two_parts(self):
         """Lines 727-731: fallback splits 'category.action' into plugin_id and step_id."""

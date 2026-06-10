@@ -8,6 +8,7 @@ Clone a git repository to a local path
 import asyncio
 import logging
 import os
+import re
 from typing import Any, Dict
 from urllib.parse import urlparse, urlunparse
 
@@ -18,6 +19,56 @@ from ...schema.constants import FieldGroup
 
 
 logger = logging.getLogger(__name__)
+
+# git remote-helper transports (ext::, fd::, transport::cmd) execute an arbitrary
+# command — `git clone 'ext::sh -c "id"'` is RCE. Detect the `scheme::` form.
+_GIT_TRANSPORT_HELPER = re.compile(r'^[A-Za-z][A-Za-z0-9+.\-]*::')
+_ALLOWED_CLONE_SCHEMES = {'http', 'https', 'ssh', 'git', 'ftp', 'ftps', 'rsync'}
+
+# Protocols git itself is permitted to use, injected via GIT_ALLOW_PROTOCOL so
+# the dangerous remote-helper transports (ext, fd, …) are refused by git even if
+# a validation gap ever let one through. Defense in depth alongside
+# _validate_clone_url.
+_GIT_ALLOWED_PROTOCOLS = "http:https:ssh:git:ftp:ftps:rsync:file"
+
+
+class UnsafeCloneURL(ValueError):
+    """Raised when a clone URL could trigger command execution or local access."""
+
+
+def _validate_clone_url(url: str) -> None:
+    """Reject clone URLs that can run commands (ext::), read local files (file://),
+    inject git options (leading '-'), or hit arbitrary local paths."""
+    if not url or not url.strip():
+        raise UnsafeCloneURL("empty clone url")
+    u = url.strip()
+    if u.startswith('-'):
+        raise UnsafeCloneURL("clone url must not start with '-' (option injection)")
+    if _GIT_TRANSPORT_HELPER.match(u):
+        raise UnsafeCloneURL("git remote-helper transport (e.g. ext::) is not allowed")
+    parsed = urlparse(u)
+    if parsed.scheme and parsed.scheme.lower() not in _ALLOWED_CLONE_SCHEMES:
+        # Explicit non-allowed scheme (file://, ext:: already caught above).
+        raise UnsafeCloneURL(f"clone scheme '{parsed.scheme}' is not allowed")
+    # Scheme-less values (scp-style user@host:path or a local repo path) are a
+    # legitimate git feature and not command execution; the dangerous vectors
+    # (ext::/fd:: transports, file://, option-injecting leading '-') are already
+    # rejected above.
+
+
+def _build_clone_env() -> Dict[str, str]:
+    """Scrubbed environment for the git subprocess.
+
+    git inherits PATH/HOME/SSL certs but NOT host secrets, and GIT_ALLOW_PROTOCOL
+    restricts git to safe transports (no ext/fd remote-helpers) regardless of the
+    URL — defense in depth on top of _validate_clone_url. Set
+    FLYTO_SANDBOX_INHERIT_ENV=1 to restore full inheritance.
+    """
+    from core.safe_env import build_sandbox_env
+    return build_sandbox_env({
+        "GIT_ALLOW_PROTOCOL": _GIT_ALLOWED_PROTOCOLS,
+        "GIT_TERMINAL_PROMPT": "0",  # never block on an interactive cred prompt
+    })
 
 
 def _inject_token_into_url(url: str, token: str) -> str:
@@ -37,22 +88,25 @@ def _build_clone_cmd(clone_url: str, destination: str, branch: str = None, depth
         cmd.extend(['--branch', branch])
     if depth:
         cmd.extend(['--depth', str(depth)])
-    cmd.extend([clone_url, destination])
+    # '--' terminates option parsing so neither url nor destination can be read
+    # as a git flag (defense in depth alongside _validate_clone_url).
+    cmd.extend(['--', clone_url, destination])
     return cmd
 
 
 async def _get_repo_info(destination: str) -> tuple:
     """Get current branch and HEAD commit hash from cloned repo."""
+    env = _build_clone_env()
     branch_proc = await asyncio.create_subprocess_exec(
         'git', '-C', destination, 'rev-parse', '--abbrev-ref', 'HEAD',
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env,
     )
     branch_out, _ = await branch_proc.communicate()
     current_branch = branch_out.decode('utf-8').strip() if branch_proc.returncode == 0 else 'unknown'
 
     commit_proc = await asyncio.create_subprocess_exec(
         'git', '-C', destination, 'rev-parse', 'HEAD',
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env,
     )
     commit_out, _ = await commit_proc.communicate()
     commit_hash = commit_out.decode('utf-8').strip() if commit_proc.returncode == 0 else 'unknown'
@@ -92,7 +146,12 @@ def _sanitize_error(error_msg: str, token: str = None) -> str:
 
     requires_credentials=False,
     handles_sensitive_data=True,
-    required_permissions=['filesystem.write', 'network.connect'],
+    # git.clone spawns the host `git` binary, whose ext:: transport is a host RCE
+    # primitive. Declare subprocess.execute so the capability gate
+    # (core.module_policy) treats it as a dangerous host-exec module: it must be
+    # explicitly granted (FLYTO_GRANTED_PERMISSIONS) AND is denied by the default
+    # denylist (git.*) — it cannot run silently with a safe-looking permission set.
+    required_permissions=['filesystem.write', 'network.connect', 'subprocess.execute'],
 
     params_schema=compose(
         field('url', type='string', label='Repository URL', label_key='modules.git.clone.params.url.label',
@@ -154,12 +213,21 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
     depth = params.get('depth')
     token = params.get('token')
 
+    # SECURITY: reject ext::/file://, option-injecting, and disallowed-scheme URLs
+    # before they reach `git clone` (ext:: transport = arbitrary command execution).
+    try:
+        _validate_clone_url(url)
+    except UnsafeCloneURL as e:
+        logger.error(f"Git clone refused unsafe url: {e}")
+        return {'ok': False, 'error': f'Unsafe clone url: {e}', 'error_code': 'UNSAFE_URL'}
+
     clone_url = _inject_token_into_url(url, token) if token and url.startswith('https://') else url
     cmd = _build_clone_cmd(clone_url, destination, branch, depth)
 
     try:
         process = await asyncio.create_subprocess_exec(
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            env=_build_clone_env(),
         )
         stdout, stderr = await process.communicate()
 

@@ -208,9 +208,13 @@ async def shell_exec(context: Dict[str, Any]) -> Dict[str, Any]:
     else:
         cwd = os.getcwd()
 
-    # Prepare environment
-    env = os.environ.copy()
-    env.update(env_vars)
+    # Prepare environment from a scrubbed allowlist (PATH/HOME/locale/...) plus
+    # caller-supplied vars — NOT the full parent env. shell.exec returns the
+    # child's stdout to the caller, so inheriting os.environ would let `env`,
+    # `cat /proc/self/environ`, or `python -c 'print(os.environ)'` exfiltrate
+    # every host secret. Set FLYTO_SANDBOX_INHERIT_ENV=1 to restore inheritance.
+    from core.safe_env import build_sandbox_env
+    env = build_sandbox_env(env_vars)
 
     # Prepare stderr handling
     stderr_pipe = asyncio.subprocess.PIPE if capture_stderr else asyncio.subprocess.STDOUT

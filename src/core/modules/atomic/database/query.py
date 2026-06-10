@@ -98,6 +98,13 @@ async def database_query(context: Dict[str, Any]) -> Dict[str, Any]:
     """Execute SQL query on database"""
     params = context['params']
 
+    # SECURITY: reject client-supplied connection targets (connection_string OR
+    # host/port/credentials) unless FLYTO_ALLOW_CLIENT_DB_DSN is set, and when
+    # allowed, refuse SSRF-sensitive hosts (RFC1918/loopback/metadata). Closes
+    # both the connection_string vector AND the host/port bypass below.
+    from ._dsn_guard import guard_client_dsn
+    guard_client_dsn(params)
+
     query = params['query']
     query_params = params.get('params', [])
     db_type = params.get('database_type', 'postgresql')

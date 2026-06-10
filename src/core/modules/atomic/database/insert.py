@@ -90,6 +90,12 @@ async def database_insert(context: Dict[str, Any]) -> Dict[str, Any]:
     """Insert data into database"""
     params = context['params']
 
+    # SECURITY: reject client-supplied connection targets (connection_string OR
+    # host/port/credentials) unless FLYTO_ALLOW_CLIENT_DB_DSN is set; refuse
+    # SSRF-sensitive hosts when allowed. See database/_dsn_guard.py.
+    from ._dsn_guard import guard_client_dsn
+    guard_client_dsn(params)
+
     table = params['table']
     data = params['data']
     db_type = params.get('database_type', 'postgresql')

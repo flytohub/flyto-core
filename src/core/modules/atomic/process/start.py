@@ -172,9 +172,13 @@ async def process_start(context: Dict[str, Any]) -> Dict[str, Any]:
     else:
         cwd = os.getcwd()
 
-    # Prepare environment
-    env = os.environ.copy()
-    env.update(env_vars)
+    # Prepare environment from a scrubbed allowlist (PATH/HOME/locale/...) plus
+    # caller-supplied vars — NOT the full parent env. process.start spawns an
+    # arbitrary detached shell whose stdout is captured, so inheriting os.environ
+    # would hand every host secret to attacker-controlled code. Set
+    # FLYTO_SANDBOX_INHERIT_ENV=1 to restore full inheritance.
+    from core.safe_env import build_sandbox_env
+    env = build_sandbox_env(env_vars)
 
     # Generate unique process ID
     process_id = f'{name}-{uuid.uuid4().hex[:8]}'

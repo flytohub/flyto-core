@@ -276,6 +276,31 @@ class PluginLoader:
             logger.error(f"Failed to unload plugin {name}: {e}")
             return False
 
+    @staticmethod
+    def _pip_env() -> Dict[str, str]:
+        """Scrubbed environment for pip subprocesses.
+
+        Starts from the shared sandbox allowlist (PATH/HOME/locale/SSL certs) and
+        re-injects only the pip/proxy variables pip legitimately needs, so a
+        malicious package's build hooks cannot harvest host secrets from
+        os.environ. FLYTO_SANDBOX_INHERIT_ENV=1 restores full inheritance.
+        """
+        import os as _os
+        from core.safe_env import build_sandbox_env
+
+        passthrough = {}
+        for key, value in _os.environ.items():
+            upper = key.upper()
+            if (
+                upper.startswith("PIP_")
+                or upper.startswith("PYTHON")
+                or upper in ("HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY",
+                             "REQUESTS_CA_BUNDLE", "CURL_CA_BUNDLE",
+                             "VIRTUAL_ENV")
+            ):
+                passthrough[key] = value
+        return build_sandbox_env(passthrough)
+
     def install_plugin(
         self,
         name: str,
@@ -312,11 +337,18 @@ class PluginLoader:
             cmd.append("--upgrade")
 
         try:
+            # SECURITY: install runs the package's build hooks (setup.py / PEP517
+            # backend) as host code. Scrub the environment so a malicious package
+            # cannot read host secrets (API keys, tokens, DATABASE_URL) out of
+            # os.environ. PATH/SSL certs are preserved; pip-relevant + proxy vars
+            # are re-injected so pip still resolves/downloads. Set
+            # FLYTO_SANDBOX_INHERIT_ENV=1 to restore full inheritance.
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=self._pip_env(),
             )
 
             if result.returncode == 0:

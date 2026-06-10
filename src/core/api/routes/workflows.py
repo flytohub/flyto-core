@@ -199,9 +199,17 @@ async def get_execution_evidence(execution_id: str, request: Request):
 def _save_workflow_definition(state, execution_id: str, workflow: dict):
     """Persist workflow.json for replay."""
     try:
+        import os as _os
+        from core.engine.redaction import redact_for_persistence
         exec_dir = state.evidence_store.get_execution_dir(execution_id)
         path = exec_dir / "workflow.json"
+        # SECURITY: redact inline credentials (DSNs/tokens in step headers/params)
+        # before the definition lands on disk, and lock the file to the owner.
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(workflow, f, ensure_ascii=False, indent=2)
+            json.dump(redact_for_persistence(workflow), f, ensure_ascii=False, indent=2)
+        try:
+            _os.chmod(path, 0o600)
+        except OSError:
+            pass
     except Exception as e:
         logger.warning("Failed to save workflow definition: %s", e)
