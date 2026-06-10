@@ -15,10 +15,10 @@
 # Core dependencies (from pyproject.toml)
 # ============================================
 pyyaml==6.0
-aiohttp==3.11.0
+aiohttp==3.13.5  # bumped from 3.11.0 — fixes multiple CVEs (zip bomb, smuggling, DoS); 3.13.x is the last line supporting Python 3.9 (3.14.0 requires >=3.10)
 beautifulsoup4==4.12.0
 lxml==6.1.0  # bumped from 4.9.0 — was vulnerable to XXE/iterparse CVE-2026-41066
-pydantic==2.0.0
+pydantic==2.4.0  # bumped from 2.0.0 — GHSA-mr82-8j83-vxmv ReDoS fixed in 2.4.0
 python-dotenv==1.0.0
 aiofiles==23.0.0
 
@@ -39,7 +39,7 @@ uvicorn==0.24.0
 # Optional: Vector database / embeddings
 # ============================================
 # pip install flyto-core[vector]
-qdrant-client==1.7.0
+qdrant-client==1.9.0  # bumped from 1.7.0 — GHSA-7m75-x27w-r52r input validation failure fixed in 1.9.0
 sentence-transformers==2.2.0
 
 # ============================================
