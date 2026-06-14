@@ -9,13 +9,13 @@ import base64
 import logging
 import mimetypes
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import aiohttp
 
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose, field
-from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +264,7 @@ async def ai_vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
                     field="provider",
                 )
     except aiohttp.ClientError as e:
-        raise ModuleError(f"API request failed: {e}")
+        raise ModuleError(f"API request failed: {e}") from e
 
 
 async def _call_openai_vision(
@@ -274,7 +274,7 @@ async def _call_openai_vision(
     prompt: str,
     max_tokens: int,
     detail: str,
-    image_b64: str | None,
+    image_b64: Optional[str],
     image_url: str,
     media_type: str,
 ) -> Dict[str, Any]:
@@ -347,7 +347,7 @@ async def _call_anthropic_vision(
     model: str,
     prompt: str,
     max_tokens: int,
-    image_b64: str | None,
+    image_b64: Optional[str],
     image_url: str,
     media_type: str,
 ) -> Dict[str, Any]:

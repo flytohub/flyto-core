@@ -16,7 +16,7 @@ class WebhookHandler:
     Webhook signature verification and handling.
 
     Usage:
-        handler = WebhookHandler(secret="webhook_secret")
+        handler = WebhookHandler(secret=os.environ["WEBHOOK_SIGNING_KEY"])
         if handler.verify_signature(payload, signature):
             data = handler.parse(payload)
     """

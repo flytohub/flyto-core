@@ -7,13 +7,13 @@ Generate embeddings from text using OpenAI or local models.
 
 import logging
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose, field
-from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
 
@@ -201,14 +201,14 @@ async def ai_embed(context: Dict[str, Any]) -> Dict[str, Any]:
                 field="provider",
             )
     except aiohttp.ClientError as e:
-        raise ModuleError(f"API request failed: {e}")
+        raise ModuleError(f"API request failed: {e}") from e
 
 
 async def _call_openai_embed(
     api_key: str,
     model: str,
     texts: List[str],
-    dimensions: int | None,
+    dimensions: Optional[int],
 ) -> Dict[str, Any]:
     """Call OpenAI Embeddings API."""
     payload: Dict[str, Any] = {
@@ -224,35 +224,34 @@ async def _call_openai_embed(
         "Content-Type": "application/json",
     }
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            "https://api.openai.com/v1/embeddings",
-            json=payload,
-            headers=headers,
-        ) as resp:
-            data = await resp.json()
+    async with aiohttp.ClientSession() as session, session.post(
+        "https://api.openai.com/v1/embeddings",
+        json=payload,
+        headers=headers,
+    ) as resp:
+        data = await resp.json()
 
-            if resp.status != 200:
-                error_msg = data.get('error', {}).get('message', str(data))
-                raise ModuleError(f"OpenAI API error: {error_msg}")
+        if resp.status != 200:
+            error_msg = data.get('error', {}).get('message', str(data))
+            raise ModuleError(f"OpenAI API error: {error_msg}")
 
-            # Extract embeddings, sorted by index
-            embedding_data = sorted(data.get('data', []), key=lambda x: x['index'])
-            embeddings = [item['embedding'] for item in embedding_data]
+        # Extract embeddings, sorted by index
+        embedding_data = sorted(data.get('data', []), key=lambda x: x['index'])
+        embeddings = [item['embedding'] for item in embedding_data]
 
-            # Determine actual dimensions
-            actual_dimensions = len(embeddings[0]) if embeddings else 0
+        # Determine actual dimensions
+        actual_dimensions = len(embeddings[0]) if embeddings else 0
 
-            # Get token usage
-            usage = data.get('usage', {})
-            token_count = usage.get('total_tokens', 0)
+        # Get token usage
+        usage = data.get('usage', {})
+        token_count = usage.get('total_tokens', 0)
 
-            return {
-                'ok': True,
-                'data': {
-                    'embeddings': embeddings,
-                    'model': data.get('model', model),
-                    'dimensions': actual_dimensions,
-                    'token_count': token_count,
-                },
-            }
+        return {
+            'ok': True,
+            'data': {
+                'embeddings': embeddings,
+                'model': data.get('model', model),
+                'dimensions': actual_dimensions,
+                'token_count': token_count,
+            },
+        }

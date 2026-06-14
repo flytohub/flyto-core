@@ -1,5 +1,5 @@
 name: Form Auto-Fill with Review
-description: "Log into a website, auto-fill a form with your data, then pause for you to review before submitting. Handles MFA/2FA automatically. Perfect for recurring data entry on sites without APIs."
+description: "Log into a website with runtime credentials, auto-fill a form with your data, then pause for review before submitting. Handles MFA/2FA automatically. Perfect for recurring data entry on sites without APIs."
 
 args:
   login_url:
@@ -14,7 +14,7 @@ args:
   password:
     type: string
     required: true
-    description: Login password
+    description: Login password. Supply at runtime only; do not store it in recipe files.
   form_url:
     type: string
     required: true

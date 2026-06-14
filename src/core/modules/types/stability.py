@@ -7,10 +7,9 @@ Functions for filtering modules by stability level based on runtime environment.
 """
 
 import os
-from typing import Set
+from typing import Optional, Set
 
 from .enums import StabilityLevel
-
 
 # Environment variable to control stability filtering
 # Values: "production", "staging", "development", "local"
@@ -39,7 +38,7 @@ def get_current_env() -> str:
     return os.environ.get(FLYTO_ENV_VAR, DEFAULT_ENV).lower()
 
 
-def get_allowed_stability_levels(env: str | None = None) -> Set[StabilityLevel]:
+def get_allowed_stability_levels(env: Optional[str] = None) -> Set[StabilityLevel]:
     """
     Get stability levels allowed for a given environment.
 
@@ -55,7 +54,7 @@ def get_allowed_stability_levels(env: str | None = None) -> Set[StabilityLevel]:
     return STABILITY_BY_ENV.get(env, STABILITY_BY_ENV["production"])
 
 
-def is_module_visible(stability: StabilityLevel, env: str | None = None) -> bool:
+def is_module_visible(stability: StabilityLevel, env: Optional[str] = None) -> bool:
     """
     Check if a module with given stability should be visible.
 
