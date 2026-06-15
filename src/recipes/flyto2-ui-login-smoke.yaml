@@ -1,0 +1,230 @@
+name: Flyto2 UI Login Smoke
+description: Reusable Flyto2 UI smoke with runtime login credentials. Credentials are parameters only; do not store them in files.
+
+args:
+  login_url:
+    type: string
+    required: true
+    description: Flyto2 login URL.
+  page_url:
+    type: string
+    required: true
+    description: Flyto2 page URL to smoke after login.
+  username:
+    type: string
+    required: true
+    description: Login username or email. Supply at runtime only.
+  password:
+    type: string
+    required: true
+    description: Login password. Supply at runtime only.
+  success_indicator:
+    type: string
+    default: /projects
+    description: CSS selector or URL fragment proving login succeeded.
+  output:
+    type: string
+    default: flyto2-ui-login-smoke.json
+    description: JSON audit output path.
+  output_prefix:
+    type: string
+    default: flyto2-ui-login-smoke
+    description: Prefix for screenshot artifacts.
+  required_text:
+    type: string
+    default: "[]"
+    description: JSON array of visible text labels that must appear on the page.
+  api_url_pattern:
+    type: string
+    default: /api/
+    description: Regex pattern for safe network status sampling.
+  network_timeout_ms:
+    type: number
+    default: 1500
+    description: How long to sample late XHR/fetch/API network activity.
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      browser_type: chromium
+      width: 1440
+      height: 900
+
+  - id: goto_login
+    module: browser.goto
+    params:
+      url: "{{login_url}}"
+      wait_until: domcontentloaded
+      timeout_ms: 30000
+
+  - id: login
+    module: browser.login
+    params:
+      username: "{{username}}"
+      password: "{{password}}"
+      success_indicator: "{{success_indicator}}"
+      wait_ms: 5000
+
+  - id: navigate
+    module: browser.goto
+    params:
+      url: "{{page_url}}"
+      wait_until: domcontentloaded
+      timeout_ms: 30000
+
+  - id: settle
+    module: browser.wait
+    params:
+      duration_ms: 2500
+
+  - id: audit
+    module: browser.evaluate
+    params:
+      script: |
+        (requiredTextJson) => {
+          const text = document.body?.innerText || '';
+          const root = document.documentElement;
+          let requiredText = [];
+          try {
+            const parsed = JSON.parse(requiredTextJson || '[]');
+            requiredText = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            requiredText = [];
+          }
+          const controls = Array.from(document.querySelectorAll('button, a, [role="button"], [role="tab"], [aria-haspopup="menu"]'))
+            .map((el) => ({
+              tag: el.tagName.toLowerCase(),
+              text: (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 80),
+              disabled: Boolean(el.disabled || el.getAttribute('aria-disabled') === 'true'),
+              href: el.getAttribute('href') || null,
+            }))
+            .filter((item) => item.text || item.href)
+            .slice(0, 120);
+          const badTokens = [
+            /\bundefined\b/i.test(text) ? 'undefined' : null,
+            /\bNaN\b/.test(text) ? 'NaN' : null,
+            /(^|\s)null(\s|$)/i.test(text) ? 'null' : null,
+          ].filter(Boolean);
+          const missingRequiredText = requiredText.filter((label) => !text.includes(label));
+          return {
+            url: location.href,
+            title: document.title,
+            timestamp: new Date().toISOString(),
+            viewport: { width: innerWidth, height: innerHeight },
+            body_chars: text.length,
+            horizontal_overflow: root.scrollWidth > innerWidth + 2,
+            document_width: root.scrollWidth,
+            viewport_width: innerWidth,
+            bad_tokens: badTokens,
+            required_text: requiredText,
+            missing_required_text: missingRequiredText,
+            pass_dom_integrity: badTokens.length === 0 && missingRequiredText.length === 0 && !(root.scrollWidth > innerWidth + 2),
+            visible_control_count: controls.length,
+            visible_controls_sample: controls,
+          };
+        }
+      args:
+        - "{{required_text}}"
+
+  - id: console_errors
+    module: browser.console
+    params:
+      level: error
+      timeout: 1000
+
+  - id: network_sample
+    module: browser.network
+    params:
+      action: monitor
+      url_pattern: "{{api_url_pattern}}"
+      timeout: "{{network_timeout_ms}}"
+      include_headers: false
+      strip_query: true
+
+  - id: desktop_screenshot
+    module: browser.screenshot
+    params:
+      path: "{{output_prefix}}-desktop.png"
+      full_page: true
+
+  - id: mobile_viewport
+    module: browser.viewport
+    params:
+      width: 390
+      height: 844
+
+  - id: mobile_settle
+    module: browser.wait
+    params:
+      duration_ms: 1000
+
+  - id: mobile_audit
+    module: browser.evaluate
+    params:
+      script: |
+        (requiredTextJson) => {
+          const root = document.documentElement;
+          const text = document.body?.innerText || '';
+          let requiredText = [];
+          try {
+            const parsed = JSON.parse(requiredTextJson || '[]');
+            requiredText = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            requiredText = [];
+          }
+          const badTokens = [
+            /\bundefined\b/i.test(text) ? 'undefined' : null,
+            /\bNaN\b/.test(text) ? 'NaN' : null,
+            /(^|\s)null(\s|$)/i.test(text) ? 'null' : null,
+          ].filter(Boolean);
+          const missingRequiredText = requiredText.filter((label) => !text.includes(label));
+          return {
+            url: location.href,
+            viewport: { width: innerWidth, height: innerHeight },
+            horizontal_overflow: root.scrollWidth > innerWidth + 2,
+            document_width: root.scrollWidth,
+            viewport_width: innerWidth,
+            bad_tokens: badTokens,
+            required_text: requiredText,
+            missing_required_text: missingRequiredText,
+            pass_dom_integrity: badTokens.length === 0 && missingRequiredText.length === 0 && !(root.scrollWidth > innerWidth + 2),
+          };
+        }
+      args:
+        - "{{required_text}}"
+
+  - id: mobile_screenshot
+    module: browser.screenshot
+    params:
+      path: "{{output_prefix}}-mobile.png"
+      full_page: true
+
+  - id: report_json
+    module: data.json.stringify
+    params:
+      pretty: true
+      data:
+        recipe: flyto2-ui-login-smoke
+        target:
+          login_url: "{{login_url}}"
+          page_url: "{{page_url}}"
+        desktop: ${audit.result}
+        mobile: ${mobile_audit.result}
+        console_errors: ${console_errors.messages}
+        network_sample:
+          count: ${network_sample.count}
+          requests: ${network_sample.requests}
+        artifacts:
+          desktop_screenshot: "{{output_prefix}}-desktop.png"
+          mobile_screenshot: "{{output_prefix}}-mobile.png"
+
+  - id: save
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: ${report_json.json}
+
+  - id: close
+    module: browser.close

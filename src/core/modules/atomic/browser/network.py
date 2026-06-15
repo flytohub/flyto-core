@@ -5,9 +5,10 @@ Browser Network Module
 
 Monitor and intercept network requests.
 """
-from typing import Any, Dict, List, Optional
 import asyncio
 import re
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlsplit, urlunsplit
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
@@ -74,6 +75,22 @@ from ...schema import compose, presets, field
             required=False,
             showIf={"action": {"$in": ["intercept"]}},
         ),
+        field(
+            'include_headers',
+            type='boolean',
+            label='Include Headers',
+            description='Include request headers in captured output. Disable for reusable smoke artifacts.',
+            default=True,
+            required=False,
+        ),
+        field(
+            'strip_query',
+            type='boolean',
+            label='Strip Query String',
+            description='Remove query strings and fragments from captured URLs.',
+            default=False,
+            required=False,
+        ),
     ),
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
@@ -128,6 +145,8 @@ class BrowserNetworkModule(BaseModule):
         self.resource_type = self.params.get('resource_type')
         self.timeout = self.params.get('timeout', 30000)
         self.mock_response = self.params.get('mock_response')
+        self.include_headers = self.params.get('include_headers', True)
+        self.strip_query = self.params.get('strip_query', False)
 
         if self.action == 'intercept' and not self.mock_response:
             raise ValueError("intercept action requires mock_response")
@@ -143,6 +162,12 @@ class BrowserNetworkModule(BaseModule):
             return False
         return True
 
+    def _safe_url(self, url: str) -> str:
+        if not self.strip_query:
+            return url
+        parts = urlsplit(url)
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, '', ''))
+
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
@@ -153,19 +178,24 @@ class BrowserNetworkModule(BaseModule):
         blocked_count = 0
 
         if self.action == 'monitor':
+            requests_by_url: Dict[str, List[Dict[str, Any]]] = {}
+
             def handle_request(request):
                 if self._matches_filter(request):
-                    requests.append({
-                        'url': request.url,
+                    entry = {
+                        'url': self._safe_url(request.url),
                         'method': request.method,
                         'resource_type': request.resource_type,
-                        'headers': dict(request.headers)
-                    })
+                    }
+                    if self.include_headers:
+                        entry['headers'] = dict(request.headers)
+                    requests.append(entry)
+                    requests_by_url.setdefault(request.url, []).append(entry)
 
             def handle_response(response):
                 # Find matching request and add response info
-                for req in requests:
-                    if req['url'] == response.url:
+                for req in requests_by_url.get(response.url, []):
+                    if 'status' not in req:
                         req['status'] = response.status
                         req['status_text'] = response.status_text
                         break
@@ -192,7 +222,7 @@ class BrowserNetworkModule(BaseModule):
                 if self._matches_filter(request):
                     blocked_count += 1
                     requests.append({
-                        'url': request.url,
+                        'url': self._safe_url(request.url),
                         'blocked': True
                     })
                     await route.abort()
@@ -217,7 +247,7 @@ class BrowserNetworkModule(BaseModule):
                 request = route.request
                 if self._matches_filter(request):
                     requests.append({
-                        'url': request.url,
+                        'url': self._safe_url(request.url),
                         'intercepted': True
                     })
                     await route.fulfill(
