@@ -86,13 +86,18 @@ steps:
         (requiredTextJson) => {
           const text = document.body?.innerText || '';
           const root = document.documentElement;
-          let requiredText = [];
-          try {
-            const parsed = JSON.parse(requiredTextJson || '[]');
-            requiredText = Array.isArray(parsed) ? parsed : [];
-          } catch {
-            requiredText = [];
-          }
+          const parseRequiredText = (value) => {
+            if (Array.isArray(value)) return value.filter((label) => typeof label === 'string');
+            if (typeof value !== 'string') return [];
+            try {
+              const parsed = JSON.parse(value || '[]');
+              return Array.isArray(parsed) ? parsed.filter((label) => typeof label === 'string') : [];
+            } catch {
+              const label = value.trim();
+              return label ? [label] : [];
+            }
+          };
+          const requiredText = parseRequiredText(requiredTextJson);
           const controls = Array.from(document.querySelectorAll('button, a, [role="button"], [role="tab"], [aria-haspopup="menu"]'))
             .map((el) => ({
               tag: el.tagName.toLowerCase(),
@@ -167,13 +172,18 @@ steps:
         (requiredTextJson) => {
           const root = document.documentElement;
           const text = document.body?.innerText || '';
-          let requiredText = [];
-          try {
-            const parsed = JSON.parse(requiredTextJson || '[]');
-            requiredText = Array.isArray(parsed) ? parsed : [];
-          } catch {
-            requiredText = [];
-          }
+          const parseRequiredText = (value) => {
+            if (Array.isArray(value)) return value.filter((label) => typeof label === 'string');
+            if (typeof value !== 'string') return [];
+            try {
+              const parsed = JSON.parse(value || '[]');
+              return Array.isArray(parsed) ? parsed.filter((label) => typeof label === 'string') : [];
+            } catch {
+              const label = value.trim();
+              return label ? [label] : [];
+            }
+          };
+          const requiredText = parseRequiredText(requiredTextJson);
           const badTokens = [
             /\bundefined\b/i.test(text) ? 'undefined' : null,
             /\bNaN\b/.test(text) ? 'NaN' : null,

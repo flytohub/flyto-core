@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Test, Lint, Build, Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: flytohub/flyto-indexer
+          path: flyto-indexer
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package and audit tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio pyyaml ruff build
+          pip install -e './flyto-indexer[dev]'
+
+      - name: Lint maintained recipe bundle surface
+        run: ruff check src/core/recipe_bundles.py tests/core/test_recipe_bundles.py
+
+      - name: Run focused tests
+        run: pytest tests/core/test_recipe_bundles.py -o addopts="" -q
+
+      - name: Build package
+        run: python -m build
+
+      - name: Run Flyto verify gate
+        run: flyto-index verify . --json

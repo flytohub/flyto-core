@@ -104,3 +104,4 @@ audit-report.json
 github-profile.json
 audit-page.pdf
 .venv/
+.flyto-index/

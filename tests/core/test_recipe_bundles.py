@@ -18,6 +18,10 @@ def _bundle_path() -> Path:
     )
 
 
+def _recipe_path(name: str) -> Path:
+    return Path(__file__).resolve().parents[2] / "src" / "recipes" / name
+
+
 def test_build_recipe_bundle_plan_places_assets_under_project_folders():
     manifest = load_bundle_manifest(_bundle_path())
 
@@ -79,3 +83,11 @@ def test_build_recipe_bundle_plan_rejects_stored_secret_fields():
 
     with pytest.raises(RecipeBundleError, match="password"):
         build_recipe_bundle_plan(manifest, {"project_slug": "acme"})
+
+
+def test_flyto2_smoke_recipes_accept_required_text_strings_or_arrays():
+    for recipe_name in ("flyto2-ui-smoke.yaml", "flyto2-ui-login-smoke.yaml"):
+        recipe = _recipe_path(recipe_name).read_text()
+
+        assert "Array.isArray(value)" in recipe
+        assert "const label = value.trim();" in recipe
