@@ -40,16 +40,47 @@ recipes:
         required_text:
           - Footprint
         output_prefix: "{{project_slug}}-footprint"
-      - scenario_id: pentest
-        path: /pentest
-        required_text:
-          - Pentest
-        output_prefix: "{{project_slug}}-pentest"
       - scenario_id: projects
         path: /projects
         required_text:
           - Projects
         output_prefix: "{{project_slug}}-projects"
+  - recipe_id: flyto2-ui-smoke
+    source: ../recipes/flyto2-ui-smoke.yaml
+    folder_path:
+      - Warroom
+      - "{{project_slug}}"
+      - Research Footprint
+    scenarios:
+      - scenario_id: research-footprint
+        path: /footprint
+        required_text:
+          - Footprint
+        output_prefix: "{{project_slug}}-research-footprint"
+  - recipe_id: flyto2-ui-smoke
+    source: ../recipes/flyto2-ui-smoke.yaml
+    folder_path:
+      - Warroom
+      - "{{project_slug}}"
+      - Pentest
+    scenarios:
+      - scenario_id: pentest
+        path: /pentest
+        required_text:
+          - Pentest
+        output_prefix: "{{project_slug}}-pentest"
+  - recipe_id: flyto2-ui-smoke
+    source: ../recipes/flyto2-ui-smoke.yaml
+    folder_path:
+      - Warroom
+      - "{{project_slug}}"
+      - Red Team
+    scenarios:
+      - scenario_id: redteam
+        path: /projects
+        required_text:
+          - Projects
+        output_prefix: "{{project_slug}}-redteam"
   - recipe_id: flyto2-ui-login-smoke
     source: ../recipes/flyto2-ui-login-smoke.yaml
     folder_path:
