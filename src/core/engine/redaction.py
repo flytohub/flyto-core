@@ -30,7 +30,8 @@ from typing import Any
 # Key names whose values are sensitive regardless of content.
 _SENSITIVE_KEY_PATTERN = re.compile(
     r'(?i)(api[_-]?key|secret|password|passwd|token|credential|auth|'
-    r'private[_-]?key|bearer|jwt|session|access[_-]?key|client[_-]?secret)',
+    r'private[_-]?key|bearer|jwt|session|access[_-]?key|client[_-]?secret|'
+    r'set[_-]?cookie|cookie)',
 )
 
 _REDACT_TOKEN = '[REDACTED]'
