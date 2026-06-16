@@ -19,7 +19,7 @@ We take security seriously. If you discover a security vulnerability within Flyt
 
 Instead, please report them via email to:
 
-**security@flyto.dev**
+**security@flyto2.com**
 
 Or, if you prefer, you can use GitHub's private vulnerability reporting feature:
 
@@ -255,7 +255,7 @@ We follow responsible disclosure practices:
 ## Contact
 
 For security concerns:
-- Email: security@flyto.dev
+- Email: security@flyto2.com
 - GitHub Security Advisories: [Report a vulnerability](../../security/advisories/new)
 
 For general questions:
