@@ -1,0 +1,42 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 6 * * 1'  # Mondays 06:17 UTC — offset to avoid runner stampede
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security:
+    name: Secret + Dependency scan
+    uses: flytohub/.github/.github/workflows/reusable-security.yml@main
+    with:
+      stack: python
+    permissions:
+      contents: read
+    secrets: inherit
+
+  sbom:
+    name: SBOM (CycloneDX)
+    uses: flytohub/.github/.github/workflows/reusable-sbom.yml@main
+    permissions:
+      contents: write
+      packages: read
+    secrets: inherit
+
+  codeql:
+    name: CodeQL
+    uses: flytohub/.github/.github/workflows/reusable-codeql.yml@main
+    with:
+      language: python
+    permissions:
+      contents: read
+      security-events: write
+    secrets: inherit
