@@ -36,11 +36,15 @@ recipes:
       - UI Smoke
     scenarios:
       - scenario_id: footprint
+        display_name: Flyto2 Footprint Smoke
+        base_url: "{{base_url}}"
         path: /footprint
         required_text:
           - Footprint
         output_prefix: "{{project_slug}}-footprint"
       - scenario_id: projects
+        display_name: Flyto2 Projects Smoke
+        base_url: "{{base_url}}"
         path: /projects
         required_text:
           - Projects
@@ -53,6 +57,8 @@ recipes:
       - Research Footprint
     scenarios:
       - scenario_id: research-footprint
+        display_name: Flyto2 Research Footprint Smoke
+        base_url: "{{base_url}}"
         path: /footprint
         required_text:
           - Footprint
@@ -65,6 +71,8 @@ recipes:
       - Pentest
     scenarios:
       - scenario_id: pentest
+        display_name: Flyto2 Pentest Smoke
+        base_url: "{{base_url}}"
         path: /pentest
         required_text:
           - Pentest
@@ -77,23 +85,34 @@ recipes:
       - Red Team
     scenarios:
       - scenario_id: redteam
+        display_name: Flyto2 Red Team Smoke
+        base_url: "{{base_url}}"
         path: /projects
         required_text:
           - Projects
         output_prefix: "{{project_slug}}-redteam"
   - recipe_id: flyto2-ui-login-smoke
     source: ../recipes/flyto2-ui-login-smoke.yaml
+    runtime_required_args:
+      - username
+      - password
     folder_path:
       - Warroom
       - "{{project_slug}}"
       - Authenticated UI Smoke
     scenarios:
       - scenario_id: authenticated-pentest
+        display_name: Flyto2 Authenticated Pentest Smoke
+        base_url: "{{base_url}}"
+        login_url: "{{base_url}}/login"
         page_url: "{{base_url}}/pentest"
         required_text:
           - Pentest
         output_prefix: "{{project_slug}}-authenticated-pentest"
       - scenario_id: authenticated-redteam
+        display_name: Flyto2 Authenticated Red Team Smoke
+        base_url: "{{base_url}}"
+        login_url: "{{base_url}}/login"
         page_url: "{{base_url}}/projects"
         required_text:
           - Projects

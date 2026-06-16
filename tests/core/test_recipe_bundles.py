@@ -41,13 +41,26 @@ def test_build_recipe_bundle_plan_places_assets_under_project_folders():
     assert footprint["recipe_id"] == "flyto2-ui-smoke"
     assert footprint["folder_path"] == ["Warroom", "acme", "UI Smoke"]
     assert footprint["default_args"]["path"] == "/footprint"
+    assert footprint["default_args"]["base_url"] == "http://localhost:8443"
+    assert footprint["display_name"] == "Flyto2 Footprint Smoke"
+    assert footprint["runtime_required_args"] == []
 
     authenticated = next(
         asset
         for asset in plan["recipe_assets"]
         if asset["scenario_id"] == "authenticated-pentest"
     )
+    assert authenticated["default_args"]["login_url"] == "http://localhost:8443/login"
     assert authenticated["default_args"]["page_url"] == "http://localhost:8443/pentest"
+    assert authenticated["runtime_required_args"] == ["username", "password"]
+
+    authenticated_redteam = next(
+        asset
+        for asset in plan["recipe_assets"]
+        if asset["scenario_id"] == "authenticated-redteam"
+    )
+    assert authenticated_redteam["default_args"]["page_url"] == "http://localhost:8443/projects"
+    assert authenticated_redteam["runtime_required_args"] == ["username", "password"]
 
 
 def test_build_recipe_bundle_plan_requires_declared_args():

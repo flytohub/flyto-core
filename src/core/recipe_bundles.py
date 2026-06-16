@@ -18,6 +18,7 @@ class RecipeBundleError(ValueError):
 
 
 _TEMPLATE_RE = re.compile(r"{{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*}}")
+_SCENARIO_METADATA_KEYS = {"scenario_id", "display_name", "runtime_required_args"}
 
 
 def load_bundle_manifest(path: str | Path) -> dict[str, Any]:
@@ -65,8 +66,12 @@ def build_recipe_bundle_plan(
             default_args = {
                 key: _render(value, args)
                 for key, value in scenario.items()
-                if key != "scenario_id"
+                if key not in _SCENARIO_METADATA_KEYS
             }
+            runtime_required_args = scenario.get(
+                "runtime_required_args",
+                recipe.get("runtime_required_args", []),
+            )
             _assert_no_stored_secrets(
                 default_args,
                 forbidden,
@@ -77,9 +82,11 @@ def build_recipe_bundle_plan(
                 {
                     "recipe_id": recipe["recipe_id"],
                     "scenario_id": scenario["scenario_id"],
+                    "display_name": scenario.get("display_name", scenario["scenario_id"]),
                     "source": recipe["source"],
                     "folder_path": folder_path,
                     "default_args": default_args,
+                    "runtime_required_args": list(runtime_required_args),
                 }
             )
 
