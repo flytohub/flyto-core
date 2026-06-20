@@ -98,6 +98,71 @@ def test_build_recipe_bundle_plan_rejects_stored_secret_fields():
         build_recipe_bundle_plan(manifest, {"project_slug": "acme"})
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        "https://example.com/recipe.yaml",
+        "/etc/flyto/recipe.yaml",
+        "../recipes/../../enterprise-secret.yaml",
+        "../enterprise/closed.yaml",
+        "../recipes/flyto2-ui-smoke.json",
+        r"..\recipes\flyto2-ui-smoke.yaml",
+    ],
+)
+def test_build_recipe_bundle_plan_rejects_non_portable_recipe_sources(source: str):
+    manifest = {
+        "bundle_id": "unsafe-source",
+        "cloud_target": {
+            "root_folder": "Warroom",
+            "default_folder_path": ["Warroom", "{{project_slug}}"],
+        },
+        "required_args": ["project_slug"],
+        "recipes": [
+            {
+                "recipe_id": "unsafe-source",
+                "source": source,
+                "folder_path": ["Warroom", "{{project_slug}}", "Unsafe"],
+                "scenarios": [{"scenario_id": "unsafe"}],
+            }
+        ],
+    }
+
+    with pytest.raises(RecipeBundleError, match="source"):
+        build_recipe_bundle_plan(manifest, {"project_slug": "acme"})
+
+
+def test_flyto2_warroom_bundle_keeps_revenue_loop_deployment_aware():
+    manifest = load_bundle_manifest(_bundle_path())
+    plan = build_recipe_bundle_plan(
+        manifest,
+        {"project_slug": "acme", "base_url": "https://warroom.customer.internal"},
+    )
+
+    scenario_ids = {asset["scenario_id"] for asset in plan["recipe_assets"]}
+    assert {
+        "footprint",
+        "research-footprint",
+        "pentest",
+        "redteam",
+        "authenticated-pentest",
+        "authenticated-redteam",
+    }.issubset(scenario_ids)
+
+    for asset in plan["recipe_assets"]:
+        assert asset["source"].startswith("../recipes/")
+        assert "flyto2.com" not in str(asset["default_args"])
+        if "base_url" in asset["default_args"]:
+            assert asset["default_args"]["base_url"] == "https://warroom.customer.internal"
+        if "login_url" in asset["default_args"]:
+            assert asset["default_args"]["login_url"].startswith(
+                "https://warroom.customer.internal"
+            )
+        if "page_url" in asset["default_args"]:
+            assert asset["default_args"]["page_url"].startswith(
+                "https://warroom.customer.internal"
+            )
+
+
 def test_flyto2_smoke_recipes_accept_required_text_strings_or_arrays():
     for recipe_name in ("flyto2-ui-smoke.yaml", "flyto2-ui-login-smoke.yaml"):
         recipe = _recipe_path(recipe_name).read_text()

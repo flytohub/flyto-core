@@ -7,7 +7,7 @@ portable bundle manifest into an import plan that another service can persist.
 from __future__ import annotations
 
 import re
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 import yaml
@@ -56,6 +56,7 @@ def build_recipe_bundle_plan(
         if not isinstance(recipe, dict):
             raise RecipeBundleError("Recipe bundle recipes must be mappings")
         _require_keys(recipe, ["recipe_id", "source", "folder_path"])
+        _validate_recipe_source(recipe["source"])
 
         folder_path = _render_list(recipe["folder_path"], args)
         folders.append({"path": folder_path})
@@ -113,6 +114,25 @@ def _validate_required_args(manifest: dict[str, Any], args: dict[str, Any]) -> N
     missing = [key for key in required if args.get(key) in (None, "")]
     if missing:
         raise RecipeBundleError(f"Recipe bundle args are missing: {', '.join(missing)}")
+
+
+def _validate_recipe_source(source: Any) -> None:
+    if not isinstance(source, str) or not source.strip():
+        raise RecipeBundleError("Recipe bundle recipe source must be a non-empty string")
+    source = source.strip()
+    if "\\" in source or re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", source) or source.startswith("/"):
+        raise RecipeBundleError(f"Recipe bundle source is not portable: {source}")
+
+    path = PurePosixPath(source)
+    parts = path.parts
+    if len(parts) < 3 or parts[:2] != ("..", "recipes"):
+        raise RecipeBundleError(
+            "Recipe bundle source must point to a bundled ../recipes/*.yaml asset"
+        )
+    if ".." in parts[2:]:
+        raise RecipeBundleError(f"Recipe bundle source escapes bundled recipes: {source}")
+    if path.suffix not in {".yaml", ".yml"}:
+        raise RecipeBundleError(f"Recipe bundle source must be YAML: {source}")
 
 
 def _forbidden_fields(manifest: dict[str, Any]) -> set[str]:
