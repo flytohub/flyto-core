@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check project memory docs
+        run: bash scripts/lint-project-memory.sh
+
       - uses: actions/checkout@v4
         with:
           repository: flytohub/flyto-indexer
