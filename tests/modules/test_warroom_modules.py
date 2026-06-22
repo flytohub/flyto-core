@@ -66,9 +66,57 @@ async def test_warroom_discover_flags_deterministic_p0_p1_findings():
     assert findings["blank_screen"]["severity"] == "P0"
     assert findings["console_error"]["severity"] == "P0"
     assert findings["api_5xx"]["severity"] == "P0"
+    assert findings["ghost_api_type_c"]["severity"] == "P0"
     assert findings["horizontal_overflow"]["severity"] == "P1"
-    assert result["scores"]["p0"] == 3
+    assert result["scores"]["p0"] == 4
     assert result["scores"]["p1"] == 1
+
+
+@pytest.mark.asyncio
+async def test_warroom_discover_builds_intent_state_and_reachable_coverage_graphs():
+    mod = get_module("warroom.discover")
+    page = {
+        "url": "https://app.flyto2.com/projects",
+        "title": "Projects",
+        "text": "Projects pending partial stale expired",
+        "router_paths": ["/projects", "/settings/billing", "/settings/sso"],
+        "business_state": {"credits_remaining": 0},
+        "controls": [
+            {"tag": "button", "text": "Generate report", "data-testid": "generate-report"},
+        ],
+        "requests": [
+            {
+                "method": "POST",
+                "url": "https://app.flyto2.com/api/reports",
+                "status": 200,
+                "trigger": "generate-report",
+                "has_ui_effect": False,
+            },
+            {
+                "method": "POST",
+                "url": "https://app.flyto2.com/api/invite",
+                "status": 200,
+                "source": "openapi",
+                "ui_path": False,
+            },
+        ],
+        "state_assertions": [
+            {"id": "credits_gate", "expected": "disabled", "observed": "enabled"},
+        ],
+    }
+
+    result = await mod({"target": page["url"], "pages": [page], "use_browser": False}, {}).execute()
+    graph = result["site_graph"]
+    findings = {item["code"]: item for item in graph["findings"]}
+
+    assert graph["intents"][0]["verb"] == "generate"
+    assert graph["actions"][0]["intent_id"] == graph["intents"][0]["id"]
+    assert graph["scores"]["reachable_coverage"] == 0.333
+    assert graph["scores"]["observed_coverage"] == 1.0
+    assert {"pending", "partial", "stale", "expired"}.issubset(set(graph["pages"][0]["states"]))
+    assert findings["ghost_api_type_a"]["severity"] == "P1"
+    assert findings["ghost_api_type_b"]["severity"] == "P1"
+    assert findings["state_contradiction"]["severity"] == "P0"
 
 
 @pytest.mark.asyncio

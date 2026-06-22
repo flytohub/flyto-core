@@ -91,6 +91,18 @@ recipes:
         required_text:
           - Projects
         output_prefix: "{{project_slug}}-redteam"
+  - recipe_id: warroom-deterministic-audit
+    source: ../recipes/warroom-deterministic-audit.yaml
+    folder_path:
+      - Warroom
+      - "{{project_slug}}"
+      - Product Verification
+    scenarios:
+      - scenario_id: product-verification
+        display_name: Flyto2 Product Verification
+        target: "{{base_url}}/product-verification"
+        output: "{{project_slug}}-product-verification.json"
+        markdown_output: "{{project_slug}}-product-verification.md"
   - recipe_id: flyto2-ui-login-smoke
     source: ../recipes/flyto2-ui-login-smoke.yaml
     runtime_required_args:
@@ -124,5 +136,11 @@ export_contract:
     - mobile.pass_dom_integrity
     - console_errors
     - network_sample.requests
+    - site_graph.intents
+    - site_graph.state_graph
+    - scores.observed_coverage
+    - scores.reachable_coverage
+    - scores.api_ui_consistency
+    - scores.business_logic_confidence
     - artifacts.desktop_screenshot
     - artifacts.mobile_screenshot
