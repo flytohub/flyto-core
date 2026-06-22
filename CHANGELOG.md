@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Deterministic Warroom verification modules: `warroom.discover`,
+  `warroom.generate_scenarios`, `warroom.run`, `warroom.report`, and
+  `warroom.llm_review`.
+- `warroom-deterministic-audit` recipe and Warroom verification docs.
+
+### Changed
+- `testing.e2e.run_steps` and `testing.scenario.run` now execute real module
+  steps and assertions instead of placeholder success.
+
 ## [2.26.3] - 2026-05-30
 
 ### Security

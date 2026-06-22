@@ -1,0 +1,76 @@
+name: Warroom Deterministic Audit
+description: Build a deterministic Warroom site graph, generate replay scenarios, and emit evidence without relying on LLM analysis.
+
+args:
+  target:
+    type: string
+    default: http://localhost:5173
+    description: Target URL. Credentials and browser sessions must be supplied at runtime only.
+  output:
+    type: string
+    default: warroom-evidence.json
+    description: JSON evidence pack output path.
+  markdown_output:
+    type: string
+    default: warroom-evidence.md
+    description: Markdown evidence summary output path.
+
+steps:
+  - id: launch
+    module: browser.launch
+    params:
+      headless: true
+      width: 1440
+      height: 900
+
+  - id: goto
+    module: browser.goto
+    params:
+      url: "{{target}}"
+      wait_until: domcontentloaded
+      timeout_ms: 30000
+
+  - id: settle
+    module: browser.wait
+    params:
+      duration_ms: 1500
+
+  - id: discover
+    module: warroom.discover
+    params:
+      target: "{{target}}"
+      use_browser: true
+
+  - id: generate
+    module: warroom.generate_scenarios
+    params:
+      site_graph: ${discover.site_graph}
+      name: Warroom deterministic replay
+
+  - id: replay
+    module: warroom.run
+    params:
+      scenarios: ${generate.scenarios}
+      stop_on_failure: true
+      timeout_per_step: 30000
+
+  - id: report_json
+    module: warroom.report
+    params:
+      site_graph: ${discover.site_graph}
+      scenarios: ${generate.scenarios}
+      run_result: ${replay}
+      format: json
+      output_path: "{{output}}"
+
+  - id: report_markdown
+    module: warroom.report
+    params:
+      site_graph: ${discover.site_graph}
+      scenarios: ${generate.scenarios}
+      run_result: ${replay}
+      format: markdown
+      output_path: "{{markdown_output}}"
+
+  - id: close
+    module: browser.close

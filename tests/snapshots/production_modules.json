@@ -1,5 +1,5 @@
 {
-  "total": 416,
+  "total": 421,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -1655,6 +1655,26 @@
     },
     {
       "id": "verify.visual_diff",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.discover",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.generate_scenarios",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.llm_review",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.report",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.run",
       "version": "1.0.0"
     },
     {

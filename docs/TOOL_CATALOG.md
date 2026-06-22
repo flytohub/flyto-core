@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **329 modules** across **63 categories**.
+> Auto-generated from flyto-core module registry. **334 modules** across **64 categories**.
 >
 > Last generated: 2026-02-15
 
@@ -67,6 +67,7 @@
 - [validate](#validate) (7)
 - [verify](#verify) (9)
 - [vision](#vision) (2)
+- [warroom](#warroom) (5)
 - [webhook](#webhook) (1)
 - [word](#word) (2)
 
@@ -701,6 +702,16 @@
 |--------|-------------|------------|--------|
 | `vision.analyze` | Analyze images using OpenAI Vision API (GPT-4V) | `image` string *(required)*, `prompt` string *(required)*, `analysis_type` string (default: `general`), `context` string, `output_format` string (default: `structured`), `model` string (default: `gpt-4o`), `max_tokens` number (default: `1000`), `api_key` string *(required)*, `header_name` string (default: `X-API-Key`), `detail` string (default: `high`) | `ok` (boolean), `analysis` (string), `structured` (object), `model` (string), `tokens_used` (number) |
 | `vision.compare` | Compare two images and identify visual differences | `image_before` string *(required)*, `image_after` string *(required)*, `comparison_type` string (default: `visual_regression`), `threshold` number (default: `5`), `focus_areas` array, `ignore_areas` array, `model` string (default: `gpt-4o`), `api_key` string *(required)*, `header_name` string (default: `X-API-Key`) | `ok` (boolean), `has_differences` (boolean), `similarity_score` (number), `differences` (array), `summary` (string), `recommendation` (string) |
+
+## warroom
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `warroom.discover` | Build a deterministic site graph from browser state or supplied page snapshots | `target` string *(required)*, `pages` array, `use_browser` boolean (default: `True`) | `ok` (boolean), `site_graph` (object), `scores` (object) |
+| `warroom.generate_scenarios` | Generate replayable Flyto YAML scenarios from a Warroom site graph | `site_graph` object *(required)*, `name` string, `output_format` string (default: `yaml`) | `ok` (boolean), `scenarios` (object), `workflow` (string) |
+| `warroom.llm_review` | Prepare redacted evidence for manual LLM review; never gates by itself | `enabled` boolean (default: `False`), `evidence_pack` object *(required)*, `question` string | `ok` (boolean), `status` (string), `advisory_only` (boolean), `redacted_evidence` (object) |
+| `warroom.report` | Create a deterministic Warroom evidence pack and optional report file | `site_graph` object, `scenarios` object, `run_result` object, `artifacts` object, `format` string (default: `json`), `output_path` string | `ok` (boolean), `evidence_pack` (object), `report` (string), `path` (string) |
+| `warroom.run` | Replay generated Warroom scenarios and return deterministic evidence | `scenarios` object *(required)*, `stop_on_failure` boolean (default: `True`), `timeout_per_step` number (default: `30000`) | `ok` (boolean), `passed` (number), `failed` (number), `results` (array), `evaluation` (object) |
 
 ## webhook
 

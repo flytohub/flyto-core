@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from .runner import execute_test_steps
 
 logger = logging.getLogger(__name__)
 
@@ -73,28 +74,11 @@ async def testing_e2e_run_steps(context: Dict[str, Any]) -> Dict[str, Any]:
     params = context['params']
     steps = params.get('steps', [])
     stop_on_failure = params.get('stop_on_failure', True)
-
-    results = []
-    passed = 0
-    failed = 0
-
-    for i, step in enumerate(steps):
-        step_result = {
-            'step': i + 1,
-            'name': step.get('name', f'Step {i + 1}'),
-            'status': 'passed',
-            'duration_ms': 0
-        }
-
-        # Placeholder: actual step execution would go here
-        # For now, mark as passed
-        passed += 1
-        results.append(step_result)
-
-    return {
-        'ok': failed == 0,
-        'passed': passed,
-        'failed': failed,
-        'total': len(steps),
-        'results': results
-    }
+    timeout_per_step = params.get('timeout_per_step', 30000)
+    runner_context = {key: value for key, value in context.items() if key != 'params'}
+    return await execute_test_steps(
+        steps,
+        context=runner_context,
+        stop_on_failure=stop_on_failure,
+        timeout_per_step=timeout_per_step,
+    )

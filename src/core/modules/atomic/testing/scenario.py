@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict
 
 from ...registry import register_module
+from .runner import execute_test_steps
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +69,42 @@ async def testing_scenario_run(context: Dict[str, Any]) -> Dict[str, Any]:
     for phase in ['given', 'when', 'then']:
         step_def = scenario.get(phase, [])
         for s in (step_def if isinstance(step_def, list) else [step_def]):
-            steps.append({
-                'phase': phase,
-                'description': s if isinstance(s, str) else s.get('description', ''),
-                'status': 'passed'
-            })
+            if isinstance(s, dict) and s.get('module'):
+                executable = dict(s)
+                executable.setdefault('id', f"{phase}_{len(steps) + 1}")
+                executable.setdefault('name', executable.get('description', executable['id']))
+                executable['phase'] = phase
+                steps.append(executable)
+            else:
+                steps.append({
+                    'id': f"{phase}_{len(steps) + 1}",
+                    'phase': phase,
+                    'description': s if isinstance(s, str) else s.get('description', ''),
+                    'status': 'passed',
+                    'note_only': True,
+                })
 
+    executable_steps = [step for step in steps if not step.get('note_only')]
+    if executable_steps:
+        runner_context = {key: value for key, value in context.items() if key != 'params'}
+        result = await execute_test_steps(
+            executable_steps,
+            context=runner_context,
+            stop_on_failure=params.get('stop_on_failure', True),
+            timeout_per_step=params.get('timeout_per_step', 30000),
+        )
+        note_steps = [step for step in steps if step.get('note_only')]
+        return {
+            'ok': result['ok'],
+            'passed': result['ok'],
+            'scenario': scenario.get('name', 'Unnamed'),
+            'steps': note_steps + result['results'],
+            'summary': {
+                'passed': result['passed'],
+                'failed': result['failed'],
+                'total': result['total'] + len(note_steps),
+            },
+        }
     return {
         'ok': True,
         'passed': True,

@@ -2,6 +2,13 @@
 
 ## Strategic Priorities
 
+### 0. Warroom Deterministic Verification
+- Deterministic graph, scenario generation, replay, report, and LLM-review
+  boundary in `flyto-core`
+- Multi-route BFS crawler for arbitrary sites
+- Stronger state-machine inference, visual diff scoring, and Cloud Warroom UI
+  integration
+
 ### 1. Marketplace Ecosystem
 - Template marketplace for buying/selling workflows
 - Community-contributed modules

@@ -2,6 +2,10 @@
 
 ## Current State
 
+- Warroom deterministic verification v1 exists in `flyto-core`: it can build a
+  redacted site graph, generate replay scenarios, execute module assertions, and
+  emit JSON/Markdown evidence packs. LLM review is disabled by default and
+  advisory only.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
 - The repository already contains workflow assets and CI for maintained recipe

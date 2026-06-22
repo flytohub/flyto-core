@@ -40,6 +40,7 @@ _ALL_CATEGORIES = [
     'template', 'testing', 'text', 'training',
     'ui', 'utility',
     'validate', 'vector', 'verify', 'vision',
+    'warroom',
 ]
 
 _OPTIONAL_CATEGORIES = ['huggingface', 'ssh']
@@ -96,6 +97,7 @@ from . import (  # noqa: F401
     template, testing, text, training,
     ui, utility,
     validate, vector, verify, vision,
+    warroom,
 )
 
 # Re-export element registry
