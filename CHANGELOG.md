@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `testing.e2e.run_steps` and `testing.scenario.run` now execute real module
   steps and assertions instead of placeholder success.
+- `Dockerfile.verification` packaging now keeps the root `README.md` in the
+  Docker build context while continuing to exclude bulk markdown/docs content.
+  This fixes local compose builds of the Product Verification runner image.
+- `Dockerfile.verification` now forces `HEADLESS=true` and
+  `DEPLOYMENT_MODE=worker`, so Product Verification browser replay works in
+  containerized runner environments without an X server.
 
 ## [2.26.3] - 2026-05-30
 

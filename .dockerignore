@@ -15,6 +15,7 @@ build
 tests
 docs
 *.md
+!/README.md
 LICENSE
 .dockerignore
 Dockerfile

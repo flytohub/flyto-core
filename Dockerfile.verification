@@ -30,7 +30,9 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir --no-index --find-links=/wheels flyto-core[browser,api] \
     && rm -rf /wheels
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
+    HEADLESS=true \
+    DEPLOYMENT_MODE=worker
 RUN playwright install chromium \
     && chmod -R o+rx /opt/pw-browsers
 
