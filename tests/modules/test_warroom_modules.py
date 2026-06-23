@@ -73,10 +73,59 @@ async def test_warroom_discover_flags_deterministic_p0_p1_findings():
     assert findings["blank_screen"]["severity"] == "P0"
     assert findings["console_error"]["severity"] == "P0"
     assert findings["api_5xx"]["severity"] == "P0"
+    assert findings["hidden_error"]["severity"] == "P0"
     assert findings["ghost_api_type_c"]["severity"] == "P0"
     assert findings["horizontal_overflow"]["severity"] == "P1"
-    assert result["scores"]["p0"] == 4
+    assert result["scores"]["p0"] == 5
     assert result["scores"]["p1"] == 1
+
+
+@pytest.mark.asyncio
+async def test_warroom_deterministic_rules_cover_false_empty_locked_hidden_error_and_rbac():
+    mod = get_module("warroom.discover")
+    result = await mod({
+        "target": "https://app.flyto2.com/product-verification",
+        "pages": [
+            {
+                "url": "https://app.flyto2.com/assets",
+                "text": "No data",
+                "business_state": {"data_count": 3},
+                "controls": [],
+            },
+            {
+                "url": "https://app.flyto2.com/automation",
+                "text": "Locked upgrade",
+                "business_state": {"has_access": True, "capability_enabled": True},
+                "controls": [],
+            },
+            {
+                "url": "https://app.flyto2.com/settings",
+                "text": "Settings hidden",
+                "states": ["hidden"],
+                "requests": [{"method": "GET", "url": "https://app.flyto2.com/api/settings", "status": 403}],
+            },
+            {
+                "url": "https://app.flyto2.com/admin",
+                "text": "Admin",
+                "rbac_matrix": {
+                    "roles_tested": ["viewer"],
+                    "tenant_pairs": ["org_a:org_b"],
+                    "fail_closed": False,
+                    "violations": ["viewer mutated org_b scheduler"],
+                },
+            },
+        ],
+        "use_browser": False,
+    }, {}).execute()
+
+    findings = result["site_graph"]["findings"]
+    by_code = {item["code"]: item for item in findings}
+    assert by_code["false_empty"]["severity"] == "P0"
+    assert by_code["false_locked"]["severity"] == "P0"
+    assert by_code["hidden_error"]["severity"] == "P0"
+    assert by_code["rbac_fail_open"]["severity"] == "P0"
+    assert by_code["ghost_api_type_c"]["severity"] == "P0"
+    assert result["site_graph"]["rbac_matrix"]["fail_closed"] is False
 
 
 @pytest.mark.asyncio
@@ -451,6 +500,8 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
     assert model["engine_mode"]["llm_role"] == "optional_evidence_reviewer"
     assert model["engine_mode"]["gate_authority"] == "deterministic_evidence_gate"
     assert model["deterministic_contract"]["llm_can_gate"] is False
+    assert "false_empty" in model["deterministic_rules"]["required"]
+    assert "rbac_fail_open" in model["deterministic_rules"]["required"]
     assert model["coverage"]["reachable_coverage"] == 1.0
     assert model["intent_graph"]["count"] == 1
     assert model["scenario_synthesis"]["step_count"] == 0
@@ -551,6 +602,8 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
     assert model["scenario_synthesis"]["step_count"] == 1
     assert model["ghost_api"]["type_a_count"] == 1
     assert model["ghost_api"]["type_b_count"] == 1
+    assert model["deterministic_rules"]["counts"]["ghost_api_type_a"] == 1
+    assert model["deterministic_rules"]["counts"]["state_contradiction"] == 1
     assert model["business_invariants"]["state_contradictions"] == 1
     assert model["rbac_matrix"]["status"] == "provided"
     assert model["rbac_matrix"]["tenant_pairs_tested"] == 1
@@ -595,6 +648,47 @@ async def test_warroom_report_gate_blocks_missing_artifacts_and_state_findings()
     assert "network_log" in pack["artifact_completeness"]["missing"]
     assert any(str(item).startswith("p0_findings:1") for item in pack["gate_blockers"])
     assert any(str(item).startswith("reachable_coverage_below_0.85") for item in pack["gate_blockers"])
+
+
+@pytest.mark.asyncio
+async def test_warroom_report_gate_blocks_rbac_fail_open_matrix():
+    report_mod = get_module("warroom.report")
+    report = await report_mod({
+        "site_graph": {
+            "scores": {"p0": 0, "p1": 0, "observed_coverage": 1.0, "reachable_coverage": 1.0},
+            "findings": [],
+            "intents": [{"id": "run_verification"}],
+            "state_graph": {"states": [{"state": "resolved_data"}]},
+            "apis": [{"id": "api_1", "status": 200}],
+            "rbac_matrix": {
+                "roles_tested": ["viewer"],
+                "tenant_pairs_tested": 1,
+                "fail_closed": False,
+                "violations": ["viewer accessed another tenant run"],
+            },
+        },
+        "run_result": {
+            "ok": True,
+            "passed": 1,
+            "failed": 0,
+            "total": 1,
+            "results": [{"id": "assert_ok", "status": "passed"}],
+        },
+        "artifacts": {
+            "target_url": "https://app.flyto2.com/product-verification",
+            "graph_contract": "warroom.product_verification.v1",
+            "verification_contract": "flyto.core.deterministic_verification.v1",
+            "product_contract": "flyto2.automated_product_testing.v1",
+            "screenshot": {"status": "success"},
+            "dom_snapshot": {"status": "success"},
+            "network_log": {"status": "success"},
+        },
+    }, {}).execute()
+
+    pack = report["evidence_pack"]
+    assert pack["gate_verdict"] == "blocked"
+    assert "rbac_fail_open" in pack["gate_blockers"]
+    assert pack["automation_test_model"]["deterministic_rules"]["counts"]["rbac_fail_open"] == 1
 
 
 @pytest.mark.asyncio

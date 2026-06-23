@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Mapping
@@ -50,13 +51,28 @@ DETERMINISTIC_TESTING_CONTRACT = {
         "evidence_pack",
         "gate_verdict",
         "readiness_score",
+        "false_empty",
+        "false_locked",
+        "hidden_error",
         "state_contradictions",
         "ghost_api_findings",
+        "rbac_fail_open",
         "replay_evidence",
     ],
     "llm_can_create_facts": False,
     "llm_can_gate": False,
 }
+
+DETERMINISTIC_RULE_CODES = [
+    "false_empty",
+    "false_locked",
+    "hidden_error",
+    "ghost_api_type_a",
+    "ghost_api_type_b",
+    "ghost_api_type_c",
+    "state_contradiction",
+    "rbac_fail_open",
+]
 
 
 @dataclass
@@ -191,6 +207,7 @@ def build_site_graph(target: str, pages: Iterable[Mapping[str, Any]]) -> Dict[st
     state_edges: List[Dict[str, Any]] = []
     reachable_paths: set[str] = set()
     findings: List[WarroomFinding] = []
+    rbac_matrices: List[Mapping[str, Any]] = []
 
     for page_index, raw_page in enumerate(pages):
         page = redact(dict(raw_page))
@@ -201,6 +218,10 @@ def build_site_graph(target: str, pages: Iterable[Mapping[str, Any]]) -> Dict[st
         controls = list(page.get("controls") or [])
         requests = list(page.get("requests") or page.get("network") or [])
         states = infer_states(page)
+        rbac_matrix = _normalize_rbac_matrix(page.get("rbac_matrix") or page.get("authz_matrix"))
+        if rbac_matrix:
+            rbac_matrices.append(rbac_matrix)
+            _append_rbac_findings(findings, page_id, rbac_matrix)
         reachable_paths.update(_explicit_reachable_paths(page))
         reachable_paths.add(_path_key(url))
 
@@ -336,6 +357,7 @@ def build_site_graph(target: str, pages: Iterable[Mapping[str, Any]]) -> Dict[st
                     {"page_id": page_id, "api_id": api_id, "status": status},
                 )
 
+        _append_product_state_rule_findings(findings, page_id, page, states, requests)
         _append_state_assertion_findings(findings, page_id, page)
         _append_business_state_findings(findings, page_id, page, action_edges)
 
@@ -377,6 +399,8 @@ def build_site_graph(target: str, pages: Iterable[Mapping[str, Any]]) -> Dict[st
         "observed_paths": sorted({_path_key(page.get("url", "")) for page in page_nodes}),
         "findings": [finding.to_dict() for finding in findings],
     }
+    if rbac_matrices:
+        graph["rbac_matrix"] = _aggregate_rbac_matrices(rbac_matrices)
     graph["scores"] = score_graph(graph)
     return graph
 
@@ -395,6 +419,162 @@ def classify_ghost_api(request: Mapping[str, Any], page_states: Iterable[str]) -
     if trigger and status and status < 400 and (has_ui_effect is False or ui_effect in {"none", "no-op", "noop"}):
         return "type_a_ui_api_no_effect"
     return ""
+
+
+def _append_product_state_rule_findings(
+    findings: List[WarroomFinding],
+    page_id: str,
+    page: Mapping[str, Any],
+    states: Iterable[str],
+    requests: Iterable[Mapping[str, Any]],
+) -> None:
+    state_set = set(states)
+    if "resolved_empty" in state_set:
+        count_key, count_value = _positive_data_count(page, requests)
+        if count_value > 0:
+            _append_finding(
+                findings,
+                "false_empty",
+                "P0",
+                "UI rendered an empty state while deterministic data evidence reported rows.",
+                {"page_id": page_id, "data_key": count_key, "data_count": count_value},
+            )
+
+    if "locked_preview" in state_set and _has_positive_access(page):
+        _append_finding(
+            findings,
+            "false_locked",
+            "P0",
+            "UI rendered a locked preview while entitlement or authorization evidence allowed access.",
+            {"page_id": page_id, "states": sorted(state_set)},
+        )
+
+    for index, request in enumerate(requests):
+        try:
+            status = int(request.get("status") or 0)
+        except (TypeError, ValueError):
+            status = 0
+        error_hidden = (
+            request.get("error_hidden") is True
+            or request.get("ui_error_visible") is False
+            or ("hidden" in state_set and "error" not in state_set)
+            or (status >= 400 and "error" not in state_set)
+        )
+        if status >= 400 and error_hidden:
+            _append_finding(
+                findings,
+                "hidden_error",
+                "P0",
+                "API or workflow error was not rendered as an observable UI error state.",
+                {
+                    "page_id": page_id,
+                    "api_index": index + 1,
+                    "status": status,
+                    "url": strip_query(str(request.get("url") or "")),
+                },
+            )
+
+
+def _positive_data_count(page: Mapping[str, Any], requests: Iterable[Mapping[str, Any]]) -> tuple[str, int]:
+    containers: List[tuple[str, Any]] = [
+        ("business_state", page.get("business_state")),
+        ("api_state", page.get("api_state")),
+        ("data_state", page.get("data_state")),
+    ]
+    for index, request in enumerate(requests):
+        containers.extend([
+            (f"request_{index + 1}", request),
+            (f"request_{index + 1}.response", request.get("response")),
+            (f"request_{index + 1}.json", request.get("json")),
+        ])
+
+    for prefix, value in containers:
+        if not isinstance(value, Mapping):
+            continue
+        for key in ("data_count", "items_count", "results_count", "row_count", "total", "count", "records"):
+            try:
+                count = int(value.get(key))
+            except (TypeError, ValueError):
+                continue
+            if count > 0:
+                return f"{prefix}.{key}", count
+        for key in ("items", "results", "rows", "data"):
+            items = value.get(key)
+            if isinstance(items, list) and len(items) > 0:
+                return f"{prefix}.{key}", len(items)
+    return "", 0
+
+
+def _has_positive_access(page: Mapping[str, Any]) -> bool:
+    state = page.get("business_state") or page.get("api_state") or page.get("authz_state") or {}
+    if not isinstance(state, Mapping):
+        return False
+    for key in ("has_access", "authorized", "entitled", "capability_enabled", "can_run", "allowed"):
+        if state.get(key) is True:
+            return True
+    return state.get("locked") is False or state.get("paywalled") is False
+
+
+def _normalize_rbac_matrix(value: Any) -> Dict[str, Any]:
+    if not isinstance(value, Mapping) or not value:
+        return {}
+    return dict(value)
+
+
+def _append_rbac_findings(findings: List[WarroomFinding], page_id: str, matrix: Mapping[str, Any]) -> None:
+    violations = matrix.get("violations") or []
+    if not isinstance(violations, list):
+        violations = [str(violations)]
+    fail_closed = bool(matrix.get("fail_closed", not violations))
+    fail_open = matrix.get("fail_open") is True or not fail_closed or len(violations) > 0
+    if not fail_open:
+        return
+    _append_finding(
+        findings,
+        "rbac_fail_open",
+        "P0",
+        "Authorization matrix allowed a role, tenant, or action that should fail closed.",
+        {
+            "page_id": page_id,
+            "roles_tested": matrix.get("roles_tested") or matrix.get("roles") or [],
+            "tenant_pairs_tested": matrix.get("tenant_pairs_tested") or matrix.get("tenant_pairs") or 0,
+            "violations": violations[:20],
+        },
+    )
+
+
+def _aggregate_rbac_matrices(matrices: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    roles: List[str] = []
+    tenant_pair_count = 0
+    violations: List[Any] = []
+    fail_closed = True
+    for matrix in matrices:
+        matrix_roles = matrix.get("roles_tested") or matrix.get("roles") or []
+        if isinstance(matrix_roles, list):
+            roles.extend(str(role) for role in matrix_roles if role)
+        elif matrix_roles:
+            roles.append(str(matrix_roles))
+
+        tenant_pairs = matrix.get("tenant_pairs_tested") or matrix.get("tenant_pairs") or 0
+        if isinstance(tenant_pairs, list):
+            tenant_pair_count += len(tenant_pairs)
+        else:
+            with suppress(TypeError, ValueError):
+                tenant_pair_count += int(tenant_pairs or 0)
+
+        matrix_violations = matrix.get("violations") or []
+        if isinstance(matrix_violations, list):
+            violations.extend(matrix_violations)
+        elif matrix_violations:
+            violations.append(str(matrix_violations))
+        fail_closed = fail_closed and bool(matrix.get("fail_closed", not matrix_violations))
+
+    return {
+        "roles_tested": sorted(set(roles)),
+        "tenant_pairs_tested": tenant_pair_count,
+        "fail_closed": fail_closed and not violations,
+        "violations": violations[:50],
+    }
 
 
 def _append_state_assertion_findings(findings: List[WarroomFinding], page_id: str, page: Mapping[str, Any]) -> None:
@@ -696,9 +876,9 @@ def automation_test_model(
     p1: int,
 ) -> Dict[str, Any]:
     """Summarize the deterministic automation-test model for UI/CI consumers."""
-    observed_paths = sorted(set(str(path) for path in (graph.get("observed_paths") or [])))
-    reachable_paths = sorted(set(str(path) for path in (graph.get("reachable_paths") or observed_paths)))
-    expected_paths = sorted(set(str(path) for path in (graph.get("expected_paths") or reachable_paths)))
+    observed_paths = sorted({str(path) for path in (graph.get("observed_paths") or [])})
+    reachable_paths = sorted({str(path) for path in (graph.get("reachable_paths") or observed_paths)})
+    expected_paths = sorted({str(path) for path in (graph.get("expected_paths") or reachable_paths)})
     blocked_paths = sorted(set(expected_paths) - set(observed_paths))
     graph_scores = graph.get("scores") if isinstance(graph.get("scores"), Mapping) else {}
     run_summary = run_evaluation.get("summary") if isinstance(run_evaluation.get("summary"), Mapping) else {}
@@ -709,7 +889,8 @@ def automation_test_model(
     scenario_steps = list(scenarios.get("steps") or [])
     run_results = list(run_result.get("results") or [])
     ghost_summary = _ghost_api_summary(api_edges, findings)
-    rbac_matrix = _rbac_matrix_summary(graph)
+    rbac_matrix = _rbac_matrix_summary(graph, artifacts)
+    rule_summary = _deterministic_rule_summary(findings, rbac_matrix)
     event_stream = _event_stream_summary(graph, artifacts)
     scheduler_loop = _scheduler_loop_summary(graph, artifacts)
     verification_contract = str(artifacts.get("verification_contract") or CORE_DETERMINISTIC_VERIFICATION_SCHEMA)
@@ -767,6 +948,7 @@ def automation_test_model(
             "steps": run_results[:30],
         },
         "ghost_api": ghost_summary,
+        "deterministic_rules": rule_summary,
         "business_invariants": {
             "state_contradictions": len(state_findings),
             "p0": p0,
@@ -819,8 +1001,29 @@ def _ghost_api_summary(api_edges: Iterable[Mapping[str, Any]], findings: Iterabl
     }
 
 
-def _rbac_matrix_summary(graph: Mapping[str, Any]) -> Dict[str, Any]:
-    matrix = graph.get("rbac_matrix") or graph.get("authz_matrix") or {}
+def _deterministic_rule_summary(findings: Iterable[Mapping[str, Any]], rbac_matrix: Mapping[str, Any]) -> Dict[str, Any]:
+    counts = dict.fromkeys(DETERMINISTIC_RULE_CODES, 0)
+    samples: Dict[str, List[Dict[str, Any]]] = {code: [] for code in DETERMINISTIC_RULE_CODES}
+    for finding in findings:
+        code = str(finding.get("code") or finding.get("type") or "")
+        if code not in counts:
+            continue
+        counts[code] += 1
+        if len(samples[code]) < 8:
+            samples[code].append(dict(finding))
+    if rbac_matrix.get("status") != "not_provided" and not rbac_matrix.get("fail_closed"):
+        counts["rbac_fail_open"] = max(1, counts["rbac_fail_open"])
+    return {
+        "required": list(DETERMINISTIC_RULE_CODES),
+        "counts": counts,
+        "samples": samples,
+        "has_blockers": any(counts.get(code, 0) > 0 for code in DETERMINISTIC_RULE_CODES),
+    }
+
+
+def _rbac_matrix_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any] | None = None) -> Dict[str, Any]:
+    artifact_matrix = (artifacts or {}).get("rbac_matrix") if isinstance(artifacts, Mapping) else None
+    matrix = graph.get("rbac_matrix") or graph.get("authz_matrix") or artifact_matrix or {}
     if not isinstance(matrix, Mapping) or not matrix:
         return {
             "status": "not_provided",
@@ -840,7 +1043,7 @@ def _rbac_matrix_summary(graph: Mapping[str, Any]) -> Dict[str, Any]:
             tenant_pair_count = 0
     violations = matrix.get("violations") or []
     return {
-        "status": "provided",
+        "status": str(matrix.get("status") or "provided"),
         "roles_tested": list(roles) if isinstance(roles, list) else [str(roles)],
         "tenant_pairs_tested": tenant_pair_count,
         "fail_closed": bool(matrix.get("fail_closed", not violations)),
@@ -953,6 +1156,7 @@ def evaluate_product_verification_gate(
     reachable = _score_value(scores.get("reachable_coverage"))
     replay = _score_value(run_summary.get("replay_reliability"))
     artifact_status = artifact_completeness(artifacts)
+    rbac_matrix = _rbac_matrix_summary(graph, artifacts)
 
     intents = graph.get("intents") if isinstance(graph.get("intents"), list) else []
     state_graph = graph.get("state_graph") if isinstance(graph.get("state_graph"), Mapping) else {}
@@ -1042,6 +1246,8 @@ def evaluate_product_verification_gate(
         blockers.append("invalid_product_contract")
     if not scope_checks["target_url"]:
         blockers.append("missing_target_url")
+    if rbac_matrix.get("status") != "not_provided" and not rbac_matrix.get("fail_closed"):
+        blockers.append("rbac_fail_open")
 
     gate_verdict = "pass" if total >= 90 and not blockers else "blocked"
     return {
@@ -1143,6 +1349,7 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
         lines.append(f"- readiness_score: {automation.get('readiness_score', 'n/a')}")
         replay = automation.get("replay") if isinstance(automation.get("replay"), Mapping) else {}
         ghost = automation.get("ghost_api") if isinstance(automation.get("ghost_api"), Mapping) else {}
+        rules = automation.get("deterministic_rules") if isinstance(automation.get("deterministic_rules"), Mapping) else {}
         rbac = automation.get("rbac_matrix") if isinstance(automation.get("rbac_matrix"), Mapping) else {}
         events = automation.get("event_stream") if isinstance(automation.get("event_stream"), Mapping) else {}
         scheduler = automation.get("scheduler_loop") if isinstance(automation.get("scheduler_loop"), Mapping) else {}
@@ -1153,6 +1360,15 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
             f"type_b={ghost.get('type_b_count', 0)} "
             f"type_c={ghost.get('type_c_count', 0)}"
         )
+        if isinstance(rules.get("counts"), Mapping):
+            rule_counts = rules["counts"]
+            lines.append(
+                "- deterministic_rules: "
+                f"false_empty={rule_counts.get('false_empty', 0)} "
+                f"false_locked={rule_counts.get('false_locked', 0)} "
+                f"hidden_error={rule_counts.get('hidden_error', 0)} "
+                f"rbac_fail_open={rule_counts.get('rbac_fail_open', 0)}"
+            )
         lines.append(f"- rbac_matrix: {rbac.get('status', 'not_provided')} fail_closed={rbac.get('fail_closed', False)}")
         lines.append(f"- event_stream: {events.get('status', 'not_provided')} expected={events.get('expected_events', [])}")
         lines.append(f"- scheduler_loop: {scheduler.get('status', 'not_provided')} scanner={scheduler.get('scanner_id', '')}")
