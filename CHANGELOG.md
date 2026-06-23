@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `testing.e2e.run_steps` and `testing.scenario.run` now execute real module
   steps and assertions instead of placeholder success.
+- `warroom.generate_scenarios` DOM assertions now wait up to five seconds for
+  SPA body text before flagging an empty page as P0, preventing hydration races
+  from reducing replay reliability while still failing true blank screens.
 - `Dockerfile.verification` packaging now keeps the root `README.md` in the
   Docker build context while continuing to exclude bulk markdown/docs content.
   This fixes local compose builds of the Product Verification runner image.

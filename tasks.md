@@ -20,6 +20,8 @@
   with focused tests for pass and blocked paths.
 - Split `warroom.run` module success from `replay_ok` product success so failed
   deterministic replay evidence remains available to `warroom.report`.
+- Made generated Warroom DOM assertions hydration-aware so SPA pages are not
+  scored as blank before body text settles.
 - Added a dedicated `flyto-verification` Docker image boundary for full-stack
   Product Verification compose/staging smoke.
 - Added operator-controlled SSRF dev-port allowlisting so Product Verification

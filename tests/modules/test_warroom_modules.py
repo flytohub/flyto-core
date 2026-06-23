@@ -176,6 +176,8 @@ async def test_warroom_generate_scenarios_outputs_replay_yaml():
     assert result["ok"] is True
     assert result["scenarios"]["name"] == "Projects regression"
     assert result["scenarios"]["steps"][0]["module"] == "browser.goto"
+    assert result["scenarios"]["steps"][1]["params"]["script"].startswith("async () =>")
+    assert "Date.now() + 5000" in result["scenarios"]["steps"][1]["params"]["script"]
     assert "browser.evaluate" in result["workflow"]
     assert "warroom.scenarios.v1" in result["workflow"]
 
