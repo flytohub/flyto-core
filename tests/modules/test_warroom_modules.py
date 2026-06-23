@@ -430,6 +430,87 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
     assert pack["gate_score"] == 100
     assert pack["artifact_completeness"]["complete"] is True
     assert pack["score_breakdown"]["replay_reliability"]["points"] == 20
+    model = pack["automation_test_model"]
+    assert model["schema_version"] == "warroom.automation_test_model.v1"
+    assert model["coverage"]["reachable_coverage"] == 1.0
+    assert model["intent_graph"]["count"] == 1
+    assert model["scenario_synthesis"]["step_count"] == 0
+    assert model["replay"]["reliability"] == 1.0
+    assert model["evidence_chain"]["has_screenshot"] is True
+    assert model["rbac_matrix"]["status"] == "not_provided"
+
+
+@pytest.mark.asyncio
+async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_and_rbac():
+    report_mod = get_module("warroom.report")
+    report = await report_mod({
+        "site_graph": {
+            "observed_paths": ["/projects"],
+            "reachable_paths": ["/projects", "/settings/sso"],
+            "expected_paths": ["/projects", "/settings/sso", "/billing"],
+            "scores": {"p0": 0, "p1": 0, "observed_coverage": 1.0, "reachable_coverage": 0.5},
+            "findings": [
+                {"code": "ghost_api_type_a", "severity": "P1"},
+                {"code": "state_contradiction", "severity": "P0", "message": "credits=0 but Run enabled"},
+            ],
+            "intents": [{"id": "run_verification", "verb": "run", "object": "verification"}],
+            "apis": [
+                {
+                    "id": "api_1",
+                    "method": "POST",
+                    "url": "https://app.flyto2.com/api/run",
+                    "status": 200,
+                    "trigger": "run",
+                    "ghost_api_type": "type_a_ui_api_no_effect",
+                },
+                {
+                    "id": "api_2",
+                    "method": "POST",
+                    "url": "https://app.flyto2.com/api/invite",
+                    "status": 200,
+                    "ghost_api_type": "type_b_api_without_ui_path",
+                },
+            ],
+            "rbac_matrix": {
+                "roles_tested": ["owner", "viewer"],
+                "tenant_pairs": ["org_a:org_b"],
+                "fail_closed": True,
+                "violations": [],
+            },
+            "state_graph": {"states": [{"state": "resolved_data"}]},
+        },
+        "scenarios": {
+            "schema_version": "warroom.scenarios.v1",
+            "name": "Automation model regression",
+            "generated_from": "warroom.site_graph.v1",
+            "steps": [{"id": "page_1_goto", "module": "browser.goto"}],
+        },
+        "run_result": {
+            "ok": True,
+            "passed": 1,
+            "failed": 0,
+            "total": 1,
+            "results": [{"id": "page_1_goto", "status": "passed"}],
+        },
+        "artifacts": {
+            "target_url": "https://app.flyto2.com/projects",
+            "graph_contract": "warroom.product_verification.v1",
+            "screenshot": {"status": "success"},
+            "dom_snapshot": {"status": "success"},
+            "network_log": {"count": 2},
+        },
+    }, {}).execute()
+
+    model = report["evidence_pack"]["automation_test_model"]
+    assert model["coverage"]["expected_coverage"] == 0.333
+    assert model["coverage"]["blocked_paths"] == ["/billing", "/settings/sso"]
+    assert model["scenario_synthesis"]["step_count"] == 1
+    assert model["ghost_api"]["type_a_count"] == 1
+    assert model["ghost_api"]["type_b_count"] == 1
+    assert model["business_invariants"]["state_contradictions"] == 1
+    assert model["rbac_matrix"]["status"] == "provided"
+    assert model["rbac_matrix"]["tenant_pairs_tested"] == 1
+    assert model["rbac_matrix"]["fail_closed"] is True
 
 
 @pytest.mark.asyncio

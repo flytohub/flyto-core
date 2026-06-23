@@ -615,10 +615,21 @@ def evidence_pack(
         p0=p0,
         p1=p1,
     )
+    automation_model = automation_test_model(
+        graph=graph,
+        scenarios=scenarios or {},
+        run_result=unwrapped_run,
+        run_evaluation=run_eval,
+        artifacts=safe_artifacts,
+        gate=gate,
+        p0=p0,
+        p1=p1,
+    )
     return {
         "schema_version": "warroom.evidence_pack.v1",
         "generated_at": now_iso(),
         "verdict": verdict,
+        "automation_test_model": automation_model,
         "gate_verdict": gate["gate_verdict"],
         "gate_score": gate["score"],
         "score_breakdown": gate["score_breakdown"],
@@ -636,6 +647,170 @@ def evidence_pack(
         "run_evaluation": run_eval,
         "artifacts": safe_artifacts,
     }
+
+
+def automation_test_model(
+    *,
+    graph: Mapping[str, Any],
+    scenarios: Mapping[str, Any],
+    run_result: Mapping[str, Any],
+    run_evaluation: Mapping[str, Any],
+    artifacts: Mapping[str, Any],
+    gate: Mapping[str, Any],
+    p0: int,
+    p1: int,
+) -> Dict[str, Any]:
+    """Summarize the deterministic automation-test model for UI/CI consumers."""
+    observed_paths = sorted(set(str(path) for path in (graph.get("observed_paths") or [])))
+    reachable_paths = sorted(set(str(path) for path in (graph.get("reachable_paths") or observed_paths)))
+    expected_paths = sorted(set(str(path) for path in (graph.get("expected_paths") or reachable_paths)))
+    blocked_paths = sorted(set(expected_paths) - set(observed_paths))
+    graph_scores = graph.get("scores") if isinstance(graph.get("scores"), Mapping) else {}
+    run_summary = run_evaluation.get("summary") if isinstance(run_evaluation.get("summary"), Mapping) else {}
+    artifact_status = artifact_completeness(artifacts)
+    api_edges = list(graph.get("apis") or [])
+    findings = list(graph.get("findings") or [])
+    state_findings = [item for item in findings if item.get("code") == "state_contradiction"]
+    scenario_steps = list(scenarios.get("steps") or [])
+    run_results = list(run_result.get("results") or [])
+    ghost_summary = _ghost_api_summary(api_edges, findings)
+    rbac_matrix = _rbac_matrix_summary(graph)
+    replay_reliability = _score_value(run_summary.get("replay_reliability"))
+    readiness_score = _automation_readiness_score(
+        reachable=_score_value(graph_scores.get("reachable_coverage")),
+        replay=replay_reliability,
+        artifact_score=_score_value(artifact_status["score"]),
+        p0=p0,
+        p1=p1,
+        ghost_p0=ghost_summary["type_c_count"],
+        rbac_matrix=rbac_matrix,
+    )
+
+    return {
+        "schema_version": "warroom.automation_test_model.v1",
+        "readiness_score": readiness_score,
+        "coverage": {
+            "observed_paths": observed_paths,
+            "reachable_paths": reachable_paths,
+            "expected_paths": expected_paths,
+            "blocked_paths": blocked_paths,
+            "observed_coverage": graph_scores.get("observed_coverage", 0),
+            "reachable_coverage": graph_scores.get("reachable_coverage", 0),
+            "expected_coverage": round(len(observed_paths) / max(len(expected_paths), 1), 3),
+        },
+        "intent_graph": {
+            "count": len(graph.get("intents") or []),
+            "intents": list(graph.get("intents") or [])[:20],
+        },
+        "scenario_synthesis": {
+            "schema_version": scenarios.get("schema_version", ""),
+            "name": scenarios.get("name", ""),
+            "step_count": len(scenario_steps),
+            "replayable_steps": sum(1 for step in scenario_steps if step.get("module")),
+            "generated_from": scenarios.get("generated_from", ""),
+        },
+        "replay": {
+            "ok": bool(run_result.get("replay_ok", run_result.get("ok", False))),
+            "total": run_summary.get("total", len(run_results)),
+            "passed": run_summary.get("passed", 0),
+            "failed": run_summary.get("failed", 0),
+            "reliability": replay_reliability,
+            "steps": run_results[:30],
+        },
+        "ghost_api": ghost_summary,
+        "business_invariants": {
+            "state_contradictions": len(state_findings),
+            "p0": p0,
+            "p1": p1,
+            "findings": state_findings[:20],
+        },
+        "rbac_matrix": rbac_matrix,
+        "evidence_chain": {
+            "artifact_completeness": artifact_status,
+            "has_screenshot": "screenshot" in artifact_status["present"],
+            "has_dom_snapshot": "dom_snapshot" in artifact_status["present"],
+            "has_network_log": "network_log" in artifact_status["present"],
+            "evidence_signature_expected": bool(artifacts.get("target_url")),
+        },
+        "gate": {
+            "verdict": gate.get("gate_verdict"),
+            "score": gate.get("score"),
+            "blockers": list(gate.get("blockers") or []),
+        },
+    }
+
+
+def _ghost_api_summary(api_edges: Iterable[Mapping[str, Any]], findings: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    by_type: Dict[str, List[Dict[str, Any]]] = {
+        "type_a_ui_api_no_effect": [],
+        "type_b_api_without_ui_path": [],
+        "type_c_error_swallowed": [],
+    }
+    for api in api_edges:
+        ghost_type = str(api.get("ghost_api_type") or "")
+        if ghost_type in by_type:
+            by_type[ghost_type].append({
+                "id": api.get("id"),
+                "method": api.get("method"),
+                "url": api.get("url"),
+                "status": api.get("status"),
+                "trigger": api.get("trigger"),
+            })
+    finding_codes = {str(item.get("code") or "") for item in findings}
+    return {
+        "type_a_count": len(by_type["type_a_ui_api_no_effect"]),
+        "type_b_count": len(by_type["type_b_api_without_ui_path"]),
+        "type_c_count": len(by_type["type_c_error_swallowed"]),
+        "type_a": by_type["type_a_ui_api_no_effect"][:20],
+        "type_b": by_type["type_b_api_without_ui_path"][:20],
+        "type_c": by_type["type_c_error_swallowed"][:20],
+        "has_findings": any(code.startswith("ghost_api") for code in finding_codes),
+    }
+
+
+def _rbac_matrix_summary(graph: Mapping[str, Any]) -> Dict[str, Any]:
+    matrix = graph.get("rbac_matrix") or graph.get("authz_matrix") or {}
+    if not isinstance(matrix, Mapping) or not matrix:
+        return {
+            "status": "not_provided",
+            "roles_tested": [],
+            "tenant_pairs_tested": 0,
+            "fail_closed": False,
+            "violations": [],
+        }
+    roles = matrix.get("roles_tested") or matrix.get("roles") or []
+    tenant_pairs = matrix.get("tenant_pairs_tested") or matrix.get("tenant_pairs") or 0
+    if isinstance(tenant_pairs, list):
+        tenant_pair_count = len(tenant_pairs)
+    else:
+        try:
+            tenant_pair_count = int(tenant_pairs or 0)
+        except (TypeError, ValueError):
+            tenant_pair_count = 0
+    violations = matrix.get("violations") or []
+    return {
+        "status": "provided",
+        "roles_tested": list(roles) if isinstance(roles, list) else [str(roles)],
+        "tenant_pairs_tested": tenant_pair_count,
+        "fail_closed": bool(matrix.get("fail_closed", not violations)),
+        "violations": list(violations)[:20] if isinstance(violations, list) else [str(violations)],
+    }
+
+
+def _automation_readiness_score(
+    *,
+    reachable: float,
+    replay: float,
+    artifact_score: float,
+    p0: int,
+    p1: int,
+    ghost_p0: int,
+    rbac_matrix: Mapping[str, Any],
+) -> float:
+    base = (reachable * 25) + (replay * 25) + (artifact_score * 20)
+    rbac_points = 15 if rbac_matrix.get("status") == "provided" and rbac_matrix.get("fail_closed") else 5
+    invariant_points = max(0, 15 - (p0 * 6) - (p1 * 2) - (ghost_p0 * 4))
+    return round(max(0.0, min(100.0, base + rbac_points + invariant_points)), 1)
 
 
 def evaluate_product_verification_gate(
@@ -821,6 +996,21 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
     blockers = pack.get("gate_blockers") or []
     if blockers:
         lines.append(f"- blockers: {', '.join(str(item) for item in blockers)}")
+    automation = pack.get("automation_test_model") or {}
+    if isinstance(automation, Mapping):
+        lines.extend(["", "## Automation Test Model"])
+        lines.append(f"- readiness_score: {automation.get('readiness_score', 'n/a')}")
+        replay = automation.get("replay") if isinstance(automation.get("replay"), Mapping) else {}
+        ghost = automation.get("ghost_api") if isinstance(automation.get("ghost_api"), Mapping) else {}
+        rbac = automation.get("rbac_matrix") if isinstance(automation.get("rbac_matrix"), Mapping) else {}
+        lines.append(f"- replay: {replay.get('passed', 'n/a')}/{replay.get('total', 'n/a')} reliability={replay.get('reliability', 'n/a')}")
+        lines.append(
+            "- ghost_api: "
+            f"type_a={ghost.get('type_a_count', 0)} "
+            f"type_b={ghost.get('type_b_count', 0)} "
+            f"type_c={ghost.get('type_c_count', 0)}"
+        )
+        lines.append(f"- rbac_matrix: {rbac.get('status', 'not_provided')} fail_closed={rbac.get('fail_closed', False)}")
     lines.extend(["", "## Findings"])
     findings = (pack.get("site_graph") or {}).get("findings") or []
     findings.extend((pack.get("run_evaluation") or {}).get("findings") or [])

@@ -16,6 +16,9 @@
 
 ## Done
 
+- Added `automation_test_model.v1` to Warroom evidence packs so UI/CI can read
+  coverage, scenario synthesis, replay, ghost API, invariant, RBAC, and
+  evidence-chain results without interpreting raw JSON.
 - Added the 90-point Product Verification evidence gate to `warroom.report`
   with focused tests for pass and blocked paths.
 - Split `warroom.run` module success from `replay_ok` product success so failed

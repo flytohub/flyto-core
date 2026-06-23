@@ -3,6 +3,7 @@
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
 | 2026-06-23 | Product Verification 90-point evidence gate | `2026-06-23-product-verification-90-gate.md` | Active |
+| 2026-06-23 | Automation test model evidence | `2026-06-23-automation-test-model.md` | Active |
 | 2026-06-23 | Warroom hydration-aware replay assertions | `2026-06-23-warroom-hydration-aware-replay.md` | Active |
 | 2026-06-23 | Verification Docker packaging | `2026-06-23-verification-docker-packaging.md` | Active |
 | 2026-06-23 | Verification service image | `2026-06-23-verification-service-image.md` | Active |
