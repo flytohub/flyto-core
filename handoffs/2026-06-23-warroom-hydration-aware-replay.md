@@ -17,6 +17,8 @@ blocks the 90-point gate even when the route later renders.
 
 `warroom.generate_scenarios` now emits an async DOM assertion script that polls
 for up to five seconds before measuring body text and horizontal overflow.
+The script is emitted as an immediately evaluable function expression
+(`(async () => ...)`) because `browser.evaluate` wraps non-function scripts.
 
 This keeps the blank-screen guard deterministic:
 

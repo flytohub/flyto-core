@@ -528,7 +528,7 @@ def generate_scenarios(graph: Mapping[str, Any], *, name: str = "Warroom Generat
             "module": "browser.evaluate",
             "params": {
                 "script": (
-                    "async () => {"
+                    "(async () => {"
                     "const deadline = Date.now() + 5000;"
                     "while (Date.now() < deadline) {"
                     "const text = (document.body?.innerText || '').trim();"
@@ -541,7 +541,7 @@ def generate_scenarios(graph: Mapping[str, Any], *, name: str = "Warroom Generat
                     "horizontal_overflow: document.documentElement.scrollWidth > innerWidth + 2,"
                     "title: document.title"
                     "};"
-                    "}"
+                    "})"
                 )
             },
             "assertions": [
