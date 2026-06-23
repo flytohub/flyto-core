@@ -23,6 +23,7 @@ SECRETISH_KEYS = re.compile(
     r"(authorization|cookie|auth[_-]?token|access[_-]?token|refresh[_-]?token|password|secret|session|firebase|bearer|(^|[_-])(token|pat)([_-]|$))",
     re.IGNORECASE,
 )
+SAFE_EVIDENCE_METADATA_KEYS = {"authorization_gate"}
 
 CORE_DETERMINISTIC_VERIFICATION_SCHEMA = "flyto.core.deterministic_verification.v1"
 LEGACY_AUTOMATION_TEST_MODEL_SCHEMA = "warroom.automation_test_model.v1"
@@ -105,10 +106,13 @@ def redact(value: Any) -> Any:
     if isinstance(value, Mapping):
         redacted: Dict[str, Any] = {}
         for key, inner in value.items():
-            if SECRETISH_KEYS.search(str(key)):
-                redacted[str(key)] = "[REDACTED]"
+            key_str = str(key)
+            if key_str in SAFE_EVIDENCE_METADATA_KEYS:
+                redacted[key_str] = redact(inner)
+            elif SECRETISH_KEYS.search(key_str):
+                redacted[key_str] = "[REDACTED]"
             else:
-                redacted[str(key)] = redact(inner)
+                redacted[key_str] = redact(inner)
         return redacted
     if isinstance(value, list):
         return [redact(item) for item in value]
@@ -891,6 +895,7 @@ def automation_test_model(
     ghost_summary = _ghost_api_summary(api_edges, findings)
     rbac_matrix = _rbac_matrix_summary(graph, artifacts)
     rule_summary = _deterministic_rule_summary(findings, rbac_matrix)
+    authorization_gate = _authorization_gate_summary(artifacts)
     event_stream = _event_stream_summary(graph, artifacts)
     scheduler_loop = _scheduler_loop_summary(graph, artifacts)
     verification_contract = str(artifacts.get("verification_contract") or CORE_DETERMINISTIC_VERIFICATION_SCHEMA)
@@ -956,6 +961,7 @@ def automation_test_model(
             "findings": state_findings[:20],
         },
         "rbac_matrix": rbac_matrix,
+        "authorization_gate": authorization_gate,
         "event_stream": event_stream,
         "scheduler_loop": scheduler_loop,
         "evidence_chain": {
@@ -1032,6 +1038,7 @@ def _rbac_matrix_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any] 
             "fail_closed": False,
             "violations": [],
         }
+    summary = dict(matrix)
     roles = matrix.get("roles_tested") or matrix.get("roles") or []
     tenant_pairs = matrix.get("tenant_pairs_tested") or matrix.get("tenant_pairs") or 0
     if isinstance(tenant_pairs, list):
@@ -1042,12 +1049,45 @@ def _rbac_matrix_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any] 
         except (TypeError, ValueError):
             tenant_pair_count = 0
     violations = matrix.get("violations") or []
+    summary["status"] = str(matrix.get("status") or "provided")
+    summary["roles_tested"] = list(roles) if isinstance(roles, list) else [str(roles)]
+    if "roles_required" in matrix:
+        summary["roles_required"] = _string_list(matrix.get("roles_required"))
+    role_expectations = matrix.get("role_expectations") or matrix.get("expectations")
+    if isinstance(role_expectations, Mapping):
+        summary["role_expectations"] = {str(role): str(expectation) for role, expectation in role_expectations.items()}
+    summary["tenant_pairs_tested"] = tenant_pair_count
+    summary["fail_closed"] = bool(matrix.get("fail_closed", not violations))
+    if "fail_open_disallowed" in matrix:
+        summary["fail_open_disallowed"] = bool(matrix.get("fail_open_disallowed"))
+    if "frontend_authority" in matrix:
+        summary["frontend_authority"] = bool(matrix.get("frontend_authority"))
+    summary["violations"] = list(violations)[:20] if isinstance(violations, list) else [str(violations)]
+    return summary
+
+
+def _authorization_gate_summary(artifacts: Mapping[str, Any]) -> Dict[str, Any]:
+    gate = artifacts.get("authorization_gate") or {}
+    if not isinstance(gate, Mapping) or not gate:
+        return {
+            "status": "not_provided",
+            "authority": "",
+            "org_gate": "",
+            "commercial_gate": "",
+            "scope_gate": "",
+            "capability_gate": "",
+            "frontend_authority": False,
+            "fail_closed": False,
+        }
     return {
-        "status": str(matrix.get("status") or "provided"),
-        "roles_tested": list(roles) if isinstance(roles, list) else [str(roles)],
-        "tenant_pairs_tested": tenant_pair_count,
-        "fail_closed": bool(matrix.get("fail_closed", not violations)),
-        "violations": list(violations)[:20] if isinstance(violations, list) else [str(violations)],
+        "status": str(gate.get("status") or "provided"),
+        "authority": str(gate.get("authority") or ""),
+        "org_gate": str(gate.get("org_gate") or ""),
+        "commercial_gate": str(gate.get("commercial_gate") or ""),
+        "scope_gate": str(gate.get("scope_gate") or ""),
+        "capability_gate": str(gate.get("capability_gate") or ""),
+        "frontend_authority": bool(gate.get("frontend_authority")),
+        "fail_closed": bool(gate.get("fail_closed")),
     }
 
 
@@ -1071,17 +1111,20 @@ def _event_stream_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any]
             "observed_count": 0,
             "fail_closed": False,
             "source": "",
+            "expected_payload_fields": [],
         }
 
     observed = stream.get("observed_events") or stream.get("published_events") or []
     observed_events = list(observed) if isinstance(observed, list) else _string_list(observed)
     expected_events = _string_list(stream.get("expected_events") or stream.get("events"))
+    expected_payload_fields = _string_list(stream.get("expected_payload_fields") or stream.get("payload_fields"))
     status = str(stream.get("status") or ("observed" if observed_events else "contract"))
     return {
         "status": status,
         "transport": str(stream.get("transport") or stream.get("protocol") or "text/event-stream"),
         "endpoint": str(stream.get("endpoint") or stream.get("sse_endpoint") or ""),
         "expected_events": expected_events,
+        "expected_payload_fields": expected_payload_fields,
         "observed_events": observed_events[:20],
         "observed_count": len(observed_events),
         "fail_closed": bool(stream.get("fail_closed", bool(expected_events))),
@@ -1132,7 +1175,8 @@ def _automation_readiness_score(
     rbac_matrix: Mapping[str, Any],
 ) -> float:
     base = (reachable * 25) + (replay * 25) + (artifact_score * 20)
-    rbac_points = 15 if rbac_matrix.get("status") == "provided" and rbac_matrix.get("fail_closed") else 5
+    rbac_status = str(rbac_matrix.get("status") or "not_provided")
+    rbac_points = 15 if rbac_status != "not_provided" and rbac_matrix.get("fail_closed") else 5
     invariant_points = max(0, 15 - (p0 * 6) - (p1 * 2) - (ghost_p0 * 4))
     return round(max(0.0, min(100.0, base + rbac_points + invariant_points)), 1)
 

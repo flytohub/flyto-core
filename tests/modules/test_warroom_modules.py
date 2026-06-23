@@ -508,6 +508,7 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
     assert model["replay"]["reliability"] == 1.0
     assert model["evidence_chain"]["has_screenshot"] is True
     assert model["rbac_matrix"]["status"] == "not_provided"
+    assert model["authorization_gate"]["status"] == "not_provided"
     assert model["event_stream"]["status"] == "not_provided"
     assert model["scheduler_loop"]["status"] == "not_provided"
 
@@ -544,9 +545,22 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
                 },
             ],
             "rbac_matrix": {
-                "roles_tested": ["owner", "viewer"],
+                "status": "engine_authorization_gate",
+                "authority": "flyto-engine",
+                "action": "scan:trigger",
+                "roles_required": ["owner", "admin", "member", "viewer"],
+                "role_expectations": {
+                    "owner": "allow",
+                    "admin": "allow",
+                    "member": "allow",
+                    "viewer": "deny",
+                },
+                "roles_tested": ["owner", "admin", "member", "viewer"],
                 "tenant_pairs": ["org_a:org_b"],
+                "tenant_isolation": "org_a_cannot_read_org_b",
                 "fail_closed": True,
+                "fail_open_disallowed": True,
+                "frontend_authority": False,
                 "violations": [],
             },
             "state_graph": {"states": [{"state": "resolved_data"}]},
@@ -579,7 +593,18 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
                 "transport": "text/event-stream",
                 "endpoint": "/api/v1/code/orgs/org_1/events",
                 "expected_events": ["campaign_execution.updated"],
+                "expected_payload_fields": ["runner_execution_id", "evidence_sig", "status", "artifacts"],
                 "source": "engine.runner_callback",
+                "fail_closed": True,
+            },
+            "authorization_gate": {
+                "status": "server_enforced",
+                "authority": "flyto-engine",
+                "org_gate": "requireOrgAccess",
+                "commercial_gate": "requireCommercialAction",
+                "scope_gate": "verified_repo_or_domain",
+                "capability_gate": "automated_product_testing",
+                "frontend_authority": False,
                 "fail_closed": True,
             },
             "scheduler_loop": {
@@ -605,11 +630,21 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
     assert model["deterministic_rules"]["counts"]["ghost_api_type_a"] == 1
     assert model["deterministic_rules"]["counts"]["state_contradiction"] == 1
     assert model["business_invariants"]["state_contradictions"] == 1
-    assert model["rbac_matrix"]["status"] == "provided"
+    assert model["rbac_matrix"]["status"] == "engine_authorization_gate"
+    assert model["rbac_matrix"]["roles_required"] == ["owner", "admin", "member", "viewer"]
+    assert model["rbac_matrix"]["role_expectations"]["viewer"] == "deny"
+    assert model["rbac_matrix"]["roles_tested"] == ["owner", "admin", "member", "viewer"]
     assert model["rbac_matrix"]["tenant_pairs_tested"] == 1
+    assert model["rbac_matrix"]["tenant_isolation"] == "org_a_cannot_read_org_b"
     assert model["rbac_matrix"]["fail_closed"] is True
+    assert model["rbac_matrix"]["fail_open_disallowed"] is True
+    assert model["rbac_matrix"]["frontend_authority"] is False
+    assert model["authorization_gate"]["status"] == "server_enforced"
+    assert model["authorization_gate"]["scope_gate"] == "verified_repo_or_domain"
+    assert model["authorization_gate"]["frontend_authority"] is False
     assert model["event_stream"]["status"] == "contract"
     assert model["event_stream"]["expected_events"] == ["campaign_execution.updated"]
+    assert model["event_stream"]["expected_payload_fields"] == ["runner_execution_id", "evidence_sig", "status", "artifacts"]
     assert model["event_stream"]["fail_closed"] is True
     assert model["scheduler_loop"]["scanner_id"] == "product_verification"
     assert model["scheduler_loop"]["durable_job"] is True
