@@ -4,7 +4,7 @@
 import pytest
 
 from core.modules import atomic  # noqa: F401 — registers modules
-from core.utils import ssrf_protection_enabled
+from core.utils import SSRFError, ssrf_protection_enabled, validate_url_with_env_config
 from core.mcp_handler import execute_module
 
 METADATA = "http://169.254.169.254/latest/meta-data/"
@@ -18,6 +18,29 @@ class TestHelper:
     def test_operator_can_disable(self, monkeypatch):
         monkeypatch.setenv("FLYTO_HTTP_DISABLE_SSRF_GUARD", "1")
         assert ssrf_protection_enabled() is False
+
+    def test_allowed_host_still_needs_operator_allowed_port(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
+        monkeypatch.setenv("FLYTO_ALLOWED_HOSTS", "127.0.0.1")
+        monkeypatch.delenv("FLYTO_HTTP_ALLOWED_PORTS", raising=False)
+
+        with pytest.raises(SSRFError, match="Port 5180 not allowed"):
+            validate_url_with_env_config("http://127.0.0.1:5180")
+
+    def test_operator_can_allow_dev_port_without_disabling_ssrf(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
+        monkeypatch.setenv("FLYTO_ALLOWED_HOSTS", "127.0.0.1")
+        monkeypatch.setenv("FLYTO_HTTP_ALLOWED_PORTS", "5180")
+
+        assert validate_url_with_env_config("http://127.0.0.1:5180") == "http://127.0.0.1:5180"
+
+    def test_allowed_port_without_host_still_blocks_loopback(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
+        monkeypatch.delenv("FLYTO_ALLOWED_HOSTS", raising=False)
+        monkeypatch.setenv("FLYTO_HTTP_ALLOWED_PORTS", "5180")
+
+        with pytest.raises(SSRFError, match="Hostname blocked"):
+            validate_url_with_env_config("http://127.0.0.1:5180")
 
 
 @pytest.mark.asyncio

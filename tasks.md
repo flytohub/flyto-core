@@ -16,6 +16,10 @@
 
 ## Done
 
+- Added a dedicated `flyto-verification` Docker image boundary for full-stack
+  Product Verification compose/staging smoke.
+- Added operator-controlled SSRF dev-port allowlisting so Product Verification
+  can replay local/staging browser targets without turning off the SSRF guard.
 - Added deterministic graph/scenario/report modules in `flyto-core`.
 - Made e2e/scenario test modules execute real module steps.
 - Bootstrapped project memory skeleton and lint gate.

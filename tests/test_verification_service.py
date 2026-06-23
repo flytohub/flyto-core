@@ -2,7 +2,9 @@ import pytest
 
 from core.verification_service import (
     VerificationRunRequest,
+    build_artifacts,
     count_findings,
+    create_app,
     execute_verification,
     target_allowed,
 )
@@ -12,6 +14,45 @@ def test_verification_scope_allows_only_engine_computed_hosts():
     assert target_allowed("https://app.flyto2.com/projects", ["https://app.flyto2.com"])
     assert target_allowed("https://app.flyto2.com/projects", ["app.flyto2.com"])
     assert not target_allowed("https://evil.example.com/projects", ["https://app.flyto2.com"])
+
+
+def test_verification_service_run_endpoint_accepts_background_task_injection():
+    from fastapi.testclient import TestClient
+
+    client = TestClient(create_app())
+    response = client.post(
+        "/run",
+        json={
+            "workflowYaml": "name: dry\nsteps: []\n",
+            "params": {"target_url": "https://app.flyto2.com"},
+            "allowed_targets": ["https://app.flyto2.com"],
+            "dry_run": True,
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["ok"] is True
+    assert body["execution_id"].startswith("verification-")
+
+
+def test_verification_service_extracts_screenshot_from_module_output(tmp_path):
+    screenshot = tmp_path / "warroom-product-verification.png"
+    screenshot.write_bytes(b"\x89PNG\r\n\x1a\nfixture")
+
+    artifacts = build_artifacts({
+        "artifacts": {
+            "screenshot": {
+                "status": "success",
+                "filepath": str(screenshot),
+            }
+        }
+    })
+
+    assert len(artifacts) == 1
+    assert artifacts[0]["kind"] == "screenshot"
+    assert artifacts[0]["mime_type"] == "image/png"
+    assert artifacts[0]["content_base64"]
 
 
 @pytest.mark.asyncio

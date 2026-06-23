@@ -8,10 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `Dockerfile.verification` for the dedicated `flyto-verification` runner
+  microservice. It installs browser/API extras, bundles Chromium, exposes
+  `:8344`, and serves `/health` for engine/compose readiness checks.
 - `flyto-verification` runner service entrypoint for deterministic Warroom
   Product Verification dispatches. The service validates engine-computed
   target scope, executes server-owned workflow YAML, and emits runner callback
   payloads with evidence signatures.
+- `flyto-verification` now converts `browser.screenshot` module outputs
+  (`filepath`/`path`) into screenshot callback artifacts, so engine can persist
+  previewable Product Verification evidence.
+- Operator-controlled `FLYTO_HTTP_ALLOWED_PORTS` support for the SSRF guard, so
+  dev/staging verification can allow a specific local browser target port
+  without disabling private-host protection or broadening production defaults.
 - Deterministic Warroom verification modules: `warroom.discover`,
   `warroom.generate_scenarios`, `warroom.run`, `warroom.report`, and
   `warroom.llm_review`.

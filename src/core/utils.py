@@ -390,10 +390,32 @@ def is_private_ip(ip_str: str) -> bool:
     return False
 
 
+DEFAULT_ALLOWED_PORTS = {80, 443, 8080, 8443}
+
+
+def _parse_allowed_ports(value: str) -> set[int]:
+    ports: set[int] = set()
+    for raw in value.split(','):
+        item = raw.strip()
+        if not item:
+            continue
+        try:
+            port = int(item)
+        except ValueError:
+            logger.warning("SSRF: ignoring invalid allowed port %r", item)
+            continue
+        if 1 <= port <= 65535:
+            ports.add(port)
+        else:
+            logger.warning("SSRF: ignoring out-of-range allowed port %r", item)
+    return ports
+
+
 def validate_url_ssrf(
     url: str,
     allow_private: bool = False,
     allowed_hosts: Optional[list] = None,
+    allowed_ports: Optional[set[int]] = None,
 ) -> str:
     """
     Validate a URL for SSRF attacks.
@@ -410,6 +432,8 @@ def validate_url_ssrf(
         url: URL to validate
         allow_private: If True, allow private IPs (for dev/self-hosted)
         allowed_hosts: List of allowed hostnames/IPs for private access
+        allowed_ports: Extra operator-approved ports in addition to the safe
+            default web ports
 
     Returns:
         The validated URL
@@ -448,12 +472,16 @@ def validate_url_ssrf(
     if parsed.scheme not in ('http', 'https'):
         raise SSRFError(f"URL scheme not allowed: {parsed.scheme}")
 
-    # Port whitelist — block non-web ports (SMTP 25, SSH 22, FTP 21, etc.)
-    _ALLOWED_PORTS = {80, 443, 8080, 8443}
-    if parsed.port and parsed.port not in _ALLOWED_PORTS:
+    # Port whitelist — block non-web ports (SMTP 25, SSH 22, FTP 21, etc.).
+    # Operators can explicitly add dev/staging ports via
+    # FLYTO_HTTP_ALLOWED_PORTS without weakening the host/private-IP guard.
+    allowed_port_set = set(DEFAULT_ALLOWED_PORTS)
+    if allowed_ports:
+        allowed_port_set.update(allowed_ports)
+    if parsed.port and parsed.port not in allowed_port_set:
         raise SSRFError(
             f"Port {parsed.port} not allowed. "
-            f"Allowed ports: {sorted(_ALLOWED_PORTS)}"
+            f"Allowed ports: {sorted(allowed_port_set)}"
         )
 
     hostname = parsed.hostname
@@ -501,6 +529,7 @@ def get_ssrf_config() -> dict:
     Environment variables:
     - FLYTO_ALLOW_PRIVATE_NETWORK: true/false (default: false)
     - FLYTO_ALLOWED_HOSTS: comma-separated list of allowed hosts
+    - FLYTO_HTTP_ALLOWED_PORTS: comma-separated extra ports allowed by operator
     - FLYTO_VSCODE_LOCAL_MODE: true/false (default: false)
       When enabled, allows localhost/127.0.0.1/::1 while blocking other private IPs.
       This is designed for VS Code extension local development.
@@ -511,6 +540,7 @@ def get_ssrf_config() -> dict:
     allow_private = os.environ.get('FLYTO_ALLOW_PRIVATE_NETWORK', 'false').lower() == 'true'
     allowed_hosts_str = os.environ.get('FLYTO_ALLOWED_HOSTS', '')
     allowed_hosts = [h.strip() for h in allowed_hosts_str.split(',') if h.strip()]
+    allowed_ports = _parse_allowed_ports(os.environ.get('FLYTO_HTTP_ALLOWED_PORTS', ''))
 
     # VS Code local mode: allow localhost only, still block other private IPs
     vscode_local_mode = os.environ.get('FLYTO_VSCODE_LOCAL_MODE', 'false').lower() == 'true'
@@ -525,6 +555,7 @@ def get_ssrf_config() -> dict:
     return {
         'allow_private': allow_private,
         'allowed_hosts': allowed_hosts or None,
+        'allowed_ports': allowed_ports or None,
     }
 
 

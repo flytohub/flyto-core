@@ -11,6 +11,7 @@ flyto-core workflow, and returns/callbacks deterministic evidence.
 from __future__ import annotations
 
 import base64
+import asyncio
 import hashlib
 import json
 import logging
@@ -193,7 +194,17 @@ def count_findings(pack: Mapping[str, Any] | None) -> tuple[int, int]:
     return len(findings), critical
 
 
+def _artifact_path_value(path_value: Any) -> Any:
+    if isinstance(path_value, Mapping):
+        for key in ("filepath", "path", "file_path"):
+            value = path_value.get(key)
+            if value:
+                return value
+    return path_value
+
+
 def _artifact_from_path(kind: str, name: str, path_value: Any) -> dict[str, Any] | None:
+    path_value = _artifact_path_value(path_value)
     if not isinstance(path_value, (str, Path)):
         return None
     path = Path(path_value)
@@ -335,7 +346,7 @@ async def run_and_callback(body: VerificationRunRequest) -> VerificationExecutio
 
 def create_app():
     try:
-        from fastapi import BackgroundTasks, FastAPI
+        from fastapi import FastAPI
     except ImportError as exc:  # pragma: no cover - optional runtime dependency
         raise RuntimeError("flyto-core[api] is required to run flyto-verification") from exc
 
@@ -350,7 +361,7 @@ def create_app():
         return {"status": "ok", "service": "flyto-verification", "graph_contract": GRAPH_CONTRACT}
 
     @app.post("/run")
-    async def run(body: VerificationRunRequest, background_tasks: BackgroundTasks):
+    async def run(body: VerificationRunRequest):
         execution_id = f"verification-{uuid.uuid4().hex[:12]}"
         queued = VerificationRunRequest(**body.model_dump())
 
@@ -359,7 +370,7 @@ def create_app():
             execution.execution_id = execution_id
             await post_callback(resolve_callback_url(queued), execution.callback_payload())
 
-        background_tasks.add_task(_execute_with_fixed_id)
+        asyncio.create_task(_execute_with_fixed_id())
         return {
             "ok": True,
             "execution_id": execution_id,
