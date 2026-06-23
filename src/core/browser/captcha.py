@@ -1,12 +1,17 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Captcha Solver — API-based solving via 2Captcha or CapSolver
+Captcha Solver — API-based solving via 2Captcha, CapSolver, or CaptchaAI
 
 Supports:
 - reCAPTCHA v2/v3
 - hCaptcha
 - Cloudflare Turnstile
+
+CaptchaAI is 2Captcha-API-compatible (in.php/res.php), so it reuses the
+2Captcha submit/poll path with a different base URL. It covers reCAPTCHA v2/v3
+and Cloudflare Turnstile; it does not solve hCaptcha (use 2Captcha/CapSolver for
+that), so hCaptcha tasks are not routed to it.
 
 Flow:
 1. Detect captcha type + extract sitekey from page
@@ -161,9 +166,16 @@ _INJECT_TOKEN_JS = {
 
 
 class CaptchaSolver:
-    """API-based captcha solver supporting 2Captcha and CapSolver."""
+    """API-based captcha solver supporting 2Captcha, CapSolver, and CaptchaAI."""
 
-    PROVIDERS = ('2captcha', 'capsolver')
+    PROVIDERS = ('2captcha', 'capsolver', 'captchaai')
+
+    # Base URLs for 2Captcha-compatible providers (in.php/res.php protocol).
+    # CaptchaAI shares 2Captcha's API, so it only needs a different host.
+    _2CAPTCHA_BASE_URLS = {
+        '2captcha': 'https://2captcha.com',
+        'captchaai': 'https://ocr.captchaai.com',
+    }
 
     def __init__(self, provider: str, api_key: str):
         if provider not in self.PROVIDERS:
@@ -262,22 +274,23 @@ class CaptchaSolver:
     # ── Provider APIs ────────────────────────────────────────────
 
     async def _submit_task(self, captcha_type: str, sitekey: str, page_url: str) -> Optional[str]:
-        if self.provider == '2captcha':
+        if self.provider in self._2CAPTCHA_BASE_URLS:
             return await self._submit_2captcha(captcha_type, sitekey, page_url)
         elif self.provider == 'capsolver':
             return await self._submit_capsolver(captcha_type, sitekey, page_url)
         return None
 
     async def _poll_result(self, task_id: str) -> Optional[str]:
-        if self.provider == '2captcha':
+        if self.provider in self._2CAPTCHA_BASE_URLS:
             return await self._poll_2captcha(task_id)
         elif self.provider == 'capsolver':
             return await self._poll_capsolver(task_id)
         return None
 
-    # ── 2Captcha ─────────────────────────────────────────────────
+    # ── 2Captcha (also used by CaptchaAI — same in.php/res.php protocol) ──
 
     async def _submit_2captcha(self, captcha_type, sitekey, page_url) -> Optional[str]:
+        base_url = self._2CAPTCHA_BASE_URLS[self.provider]
         params = {
             'key': self.api_key,
             'method': 'userrecaptcha',
@@ -287,6 +300,9 @@ class CaptchaSolver:
         }
 
         if captcha_type == 'hcaptcha':
+            if self.provider == 'captchaai':
+                logger.error("CaptchaAI does not support hCaptcha; use 2captcha or capsolver for hCaptcha")
+                return None
             params['method'] = 'hcaptcha'
             params['sitekey'] = sitekey
             del params['googlekey']
@@ -302,15 +318,16 @@ class CaptchaSolver:
         # Use POST to avoid leaking API key in URL/access logs
         resp = await asyncio.to_thread(
             self._http_post,
-            'https://2captcha.com/in.php',
+            f'{base_url}/in.php',
             params,
         )
         if resp and resp.get('status') == 1:
             return resp.get('request')
-        logger.error(f"2Captcha submit failed: status={resp.get('status') if resp else None}")
+        logger.error(f"{self.provider} submit failed: status={resp.get('status') if resp else None}")
         return None
 
     async def _poll_2captcha(self, task_id: str, timeout: int = 120) -> Optional[str]:
+        base_url = self._2CAPTCHA_BASE_URLS[self.provider]
         # Use POST to avoid leaking API key in URL/access logs
         params = {
             'key': self.api_key,
@@ -322,13 +339,13 @@ class CaptchaSolver:
             await asyncio.sleep(5)
             resp = await asyncio.to_thread(
                 self._http_post,
-                'https://2captcha.com/res.php',
+                f'{base_url}/res.php',
                 params,
             )
             if resp and resp.get('status') == 1:
                 return resp.get('request')
             if resp and 'ERROR' in str(resp.get('request', '')):
-                logger.error(f"2Captcha error: {resp.get('request')}")
+                logger.error(f"{self.provider} error: {resp.get('request')}")
                 return None
         return None
 

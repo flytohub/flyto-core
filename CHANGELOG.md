@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Captcha: CaptchaAI provider** — `CaptchaSolver` now accepts
+  `provider='captchaai'`. CaptchaAI is 2Captcha-API-compatible (in.php/res.php),
+  so it reuses the existing 2Captcha submit/poll path against
+  `https://ocr.captchaai.com` (reCAPTCHA v2/v3, Cloudflare Turnstile). Also
+  added to the `browser.challenge` captcha-solver dropdown.
 - Added generic `verification.discover`, `verification.generate_scenarios`,
   `verification.run`, and `verification.report` module IDs as the forward path
   for deterministic verification primitives. Existing `warroom.*` modules stay

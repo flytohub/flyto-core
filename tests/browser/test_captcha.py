@@ -6,7 +6,7 @@ from core.browser.captcha import CaptchaSolver, _EXTRACT_CAPTCHA_INFO_JS
 
 class TestCaptchaSolverInit:
     def test_valid_providers(self):
-        for provider in ('2captcha', 'capsolver'):
+        for provider in ('2captcha', 'capsolver', 'captchaai'):
             solver = CaptchaSolver(provider, 'test-key')
             assert solver.provider == provider
 
@@ -109,3 +109,27 @@ class TestCaptchaSolve:
                 })
         assert result['status'] == 'error'
         assert 'timed out' in result['error']
+
+
+class TestCaptchaAIProvider:
+    """CaptchaAI is 2Captcha-API-compatible and reuses the in.php/res.php path."""
+
+    @pytest.mark.asyncio
+    async def test_submit_uses_captchaai_base_url(self):
+        solver = CaptchaSolver('captchaai', 'key')
+        with patch.object(solver, '_http_post', return_value={'status': 1, 'request': 'task-123'}) as post:
+            task_id = await solver._submit_task('recaptcha_v2', 'sitekey-abc', 'https://example.com')
+        assert task_id == 'task-123'
+        url, params = post.call_args.args[0], post.call_args.args[1]
+        assert url == 'https://ocr.captchaai.com/in.php'
+        assert params['method'] == 'userrecaptcha'
+        assert params['googlekey'] == 'sitekey-abc'
+
+    @pytest.mark.asyncio
+    async def test_poll_uses_captchaai_base_url(self):
+        solver = CaptchaSolver('captchaai', 'key')
+        with patch('asyncio.sleep', new=AsyncMock()):
+            with patch.object(solver, '_http_post', return_value={'status': 1, 'request': 'token-xyz'}) as post:
+                token = await solver._poll_result('task-123')
+        assert token == 'token-xyz'
+        assert post.call_args.args[0] == 'https://ocr.captchaai.com/res.php'
