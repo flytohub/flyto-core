@@ -53,17 +53,13 @@ REQUIRED_SEO_GEO_SIGNALS = [
 ]
 
 AI_CRAWLER_UAS = {
-    "GPTBot",
     "ChatGPT-User",
     "OAI-SearchBot",
-    "ClaudeBot",
     "Claude-SearchBot",
     "Claude-User",
-    "anthropic-ai",
     "Claude-Web",
     "PerplexityBot",
     "Perplexity-User",
-    "Google-Extended",
     "Googlebot",
     "Bingbot",
 }
