@@ -438,6 +438,8 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
     assert model["replay"]["reliability"] == 1.0
     assert model["evidence_chain"]["has_screenshot"] is True
     assert model["rbac_matrix"]["status"] == "not_provided"
+    assert model["event_stream"]["status"] == "not_provided"
+    assert model["scheduler_loop"]["status"] == "not_provided"
 
 
 @pytest.mark.asyncio
@@ -498,6 +500,25 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
             "screenshot": {"status": "success"},
             "dom_snapshot": {"status": "success"},
             "network_log": {"count": 2},
+            "event_stream": {
+                "status": "contract",
+                "transport": "text/event-stream",
+                "endpoint": "/api/v1/code/orgs/org_1/events",
+                "expected_events": ["campaign_execution.updated"],
+                "source": "engine.runner_callback",
+                "fail_closed": True,
+            },
+            "scheduler_loop": {
+                "status": "contract",
+                "scanner_id": "product_verification",
+                "authority": "flyto-engine",
+                "dispatch_source": "manual_or_scheduler",
+                "manual_run_endpoint": "/api/v1/code/orgs/org_1/warroom-verification/runs",
+                "scheduler_control_endpoint": "/api/v1/system/scheduler/configs",
+                "durable_job": True,
+                "run_count": 3,
+                "fail_count": 0,
+            },
         },
     }, {}).execute()
 
@@ -511,6 +532,11 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
     assert model["rbac_matrix"]["status"] == "provided"
     assert model["rbac_matrix"]["tenant_pairs_tested"] == 1
     assert model["rbac_matrix"]["fail_closed"] is True
+    assert model["event_stream"]["status"] == "contract"
+    assert model["event_stream"]["expected_events"] == ["campaign_execution.updated"]
+    assert model["event_stream"]["fail_closed"] is True
+    assert model["scheduler_loop"]["scanner_id"] == "product_verification"
+    assert model["scheduler_loop"]["durable_job"] is True
 
 
 @pytest.mark.asyncio

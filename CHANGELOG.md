@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `warroom.report` now emits `automation_test_model.v1`, a deterministic
   automation-testing summary for coverage, intent graph, scenario synthesis,
   replay reliability, ghost API type A/B/C, business invariants, RBAC matrix,
-  and screenshot/DOM/network evidence chain.
+  event-stream contract, scheduler-loop contract, and screenshot/DOM/network
+  evidence chain.
 - `warroom.report` now emits a 90-point Product Verification evidence gate
   (`gate_verdict`, `gate_score`, score breakdown, artifact completeness, and
   blockers) so release readiness is tied to reproducible screenshots, DOM,

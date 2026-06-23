@@ -23,6 +23,10 @@ The model summarizes:
 - ghost API type A/B/C counts and samples
 - business invariant / state contradiction count
 - RBAC matrix status, roles, tenant pairs, fail-closed state, and violations
+- event stream status, transport, endpoint, expected events, observed events,
+  and fail-closed state
+- scheduler loop status, scanner/job id, authority, dispatch source, durable
+  job status, and run/failure counts
 - screenshot / DOM snapshot / network log evidence-chain completeness
 - gate score, verdict, and blockers
 
@@ -36,4 +40,6 @@ This remains deterministic. No LLM is involved in producing facts.
 
 - Expand discovery to feed `expected_paths` from router/sitemap/menu sources.
 - Feed real multi-role RBAC matrix results from engine into `site_graph`.
+- Feed observed scheduler runs and long-lived SSE delivery observations into
+  evidence packs when those are collected outside the runner.
 - Add multi-intent scenario synthesis beyond page-level replay.

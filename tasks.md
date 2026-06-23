@@ -16,6 +16,9 @@
 
 ## Done
 
+- Added event-stream and scheduler-loop summaries to
+  `automation_test_model.v1` so Product Verification evidence can distinguish
+  callback/SSE contracts and durable scheduler contracts from raw replay facts.
 - Added `automation_test_model.v1` to Warroom evidence packs so UI/CI can read
   coverage, scenario synthesis, replay, ghost API, invariant, RBAC, and
   evidence-chain results without interpreting raw JSON.

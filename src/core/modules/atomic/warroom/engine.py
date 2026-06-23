@@ -675,6 +675,8 @@ def automation_test_model(
     run_results = list(run_result.get("results") or [])
     ghost_summary = _ghost_api_summary(api_edges, findings)
     rbac_matrix = _rbac_matrix_summary(graph)
+    event_stream = _event_stream_summary(graph, artifacts)
+    scheduler_loop = _scheduler_loop_summary(graph, artifacts)
     replay_reliability = _score_value(run_summary.get("replay_reliability"))
     readiness_score = _automation_readiness_score(
         reachable=_score_value(graph_scores.get("reachable_coverage")),
@@ -725,6 +727,8 @@ def automation_test_model(
             "findings": state_findings[:20],
         },
         "rbac_matrix": rbac_matrix,
+        "event_stream": event_stream,
+        "scheduler_loop": scheduler_loop,
         "evidence_chain": {
             "artifact_completeness": artifact_status,
             "has_screenshot": "screenshot" in artifact_status["present"],
@@ -794,6 +798,76 @@ def _rbac_matrix_summary(graph: Mapping[str, Any]) -> Dict[str, Any]:
         "tenant_pairs_tested": tenant_pair_count,
         "fail_closed": bool(matrix.get("fail_closed", not violations)),
         "violations": list(violations)[:20] if isinstance(violations, list) else [str(violations)],
+    }
+
+
+def _string_list(value: Any) -> List[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list):
+        return [str(item) for item in value if item]
+    return []
+
+
+def _event_stream_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any]) -> Dict[str, Any]:
+    stream = artifacts.get("event_stream") or graph.get("event_stream") or {}
+    if not isinstance(stream, Mapping) or not stream:
+        return {
+            "status": "not_provided",
+            "transport": "",
+            "endpoint": "",
+            "expected_events": [],
+            "observed_events": [],
+            "observed_count": 0,
+            "fail_closed": False,
+            "source": "",
+        }
+
+    observed = stream.get("observed_events") or stream.get("published_events") or []
+    observed_events = list(observed) if isinstance(observed, list) else _string_list(observed)
+    expected_events = _string_list(stream.get("expected_events") or stream.get("events"))
+    status = str(stream.get("status") or ("observed" if observed_events else "contract"))
+    return {
+        "status": status,
+        "transport": str(stream.get("transport") or stream.get("protocol") or "text/event-stream"),
+        "endpoint": str(stream.get("endpoint") or stream.get("sse_endpoint") or ""),
+        "expected_events": expected_events,
+        "observed_events": observed_events[:20],
+        "observed_count": len(observed_events),
+        "fail_closed": bool(stream.get("fail_closed", bool(expected_events))),
+        "source": str(stream.get("source") or stream.get("producer") or ""),
+    }
+
+
+def _scheduler_loop_summary(graph: Mapping[str, Any], artifacts: Mapping[str, Any]) -> Dict[str, Any]:
+    loop = artifacts.get("scheduler_loop") or graph.get("scheduler_loop") or {}
+    if not isinstance(loop, Mapping) or not loop:
+        return {
+            "status": "not_provided",
+            "scanner_id": "",
+            "authority": "",
+            "enabled": None,
+            "dispatch_source": "",
+            "manual_run_endpoint": "",
+            "scheduler_control_endpoint": "",
+            "durable_job": False,
+            "last_run_status": "",
+            "run_count": 0,
+            "fail_count": 0,
+        }
+
+    return {
+        "status": str(loop.get("status") or "contract"),
+        "scanner_id": str(loop.get("scanner_id") or loop.get("job_id") or ""),
+        "authority": str(loop.get("authority") or "flyto-engine"),
+        "enabled": loop.get("enabled") if isinstance(loop.get("enabled"), bool) else None,
+        "dispatch_source": str(loop.get("dispatch_source") or loop.get("source") or ""),
+        "manual_run_endpoint": str(loop.get("manual_run_endpoint") or ""),
+        "scheduler_control_endpoint": str(loop.get("scheduler_control_endpoint") or ""),
+        "durable_job": bool(loop.get("durable_job") or loop.get("durable")),
+        "last_run_status": str(loop.get("last_run_status") or ""),
+        "run_count": int(loop.get("run_count") or 0),
+        "fail_count": int(loop.get("fail_count") or 0),
     }
 
 
@@ -1003,6 +1077,8 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
         replay = automation.get("replay") if isinstance(automation.get("replay"), Mapping) else {}
         ghost = automation.get("ghost_api") if isinstance(automation.get("ghost_api"), Mapping) else {}
         rbac = automation.get("rbac_matrix") if isinstance(automation.get("rbac_matrix"), Mapping) else {}
+        events = automation.get("event_stream") if isinstance(automation.get("event_stream"), Mapping) else {}
+        scheduler = automation.get("scheduler_loop") if isinstance(automation.get("scheduler_loop"), Mapping) else {}
         lines.append(f"- replay: {replay.get('passed', 'n/a')}/{replay.get('total', 'n/a')} reliability={replay.get('reliability', 'n/a')}")
         lines.append(
             "- ghost_api: "
@@ -1011,6 +1087,8 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
             f"type_c={ghost.get('type_c_count', 0)}"
         )
         lines.append(f"- rbac_matrix: {rbac.get('status', 'not_provided')} fail_closed={rbac.get('fail_closed', False)}")
+        lines.append(f"- event_stream: {events.get('status', 'not_provided')} expected={events.get('expected_events', [])}")
+        lines.append(f"- scheduler_loop: {scheduler.get('status', 'not_provided')} scanner={scheduler.get('scanner_id', '')}")
     lines.extend(["", "## Findings"])
     findings = (pack.get("site_graph") or {}).get("findings") or []
     findings.extend((pack.get("run_evaluation") or {}).get("findings") or [])
