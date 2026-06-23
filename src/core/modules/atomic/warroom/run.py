@@ -55,5 +55,10 @@ class WarroomRunModule(BaseModule):
             stop_on_failure=self.params.get("stop_on_failure", True),
             timeout_per_step=self.params.get("timeout_per_step", 30000),
         )
+        # `ok` is the module execution contract. Replay failures must remain
+        # inspectable by downstream report/evidence steps instead of being
+        # normalized into a generic workflow failure by BaseModule.
+        result["replay_ok"] = bool(result.get("ok"))
+        result["ok"] = True
         result["evaluation"] = evaluate_run(result)
         return result

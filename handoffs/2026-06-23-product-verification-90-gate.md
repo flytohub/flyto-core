@@ -21,6 +21,10 @@ flyto-code.
 - `artifact_completeness`: required screenshot, DOM snapshot, and network log.
 - `gate_blockers`: fail-closed reasons such as P0/P1 findings, weak coverage,
   weak replay, missing artifacts, or dry-run evidence.
+- `warroom.run` uses `ok=true` for module execution completion and
+  `replay_ok=false` for product replay failure. This keeps failed replay
+  results available to `warroom.report` and prevents generic workflow
+  normalization from erasing evidence.
 
 ## Verification
 

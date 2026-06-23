@@ -335,6 +335,48 @@ async def test_warroom_run_and_report_create_evidence_pack():
 
 
 @pytest.mark.asyncio
+async def test_warroom_run_preserves_failed_replay_for_report_gate():
+    run_mod = get_module("warroom.run")
+    report_mod = get_module("warroom.report")
+    scenarios = {
+        "name": "Failed replay remains evidence",
+        "steps": [{
+            "id": "assert_bad",
+            "module": "test.assert_true",
+            "params": {"condition": True},
+            "assertions": [{"path": "passed", "operator": "==", "expected": False, "severity": "P0"}],
+        }],
+    }
+
+    run = await run_mod({"scenarios": scenarios}, {}).execute()
+    report = await report_mod({
+        "site_graph": {
+            "scores": {"p0": 0, "p1": 0, "observed_coverage": 1.0, "reachable_coverage": 1.0},
+            "intents": [{"id": "run_verification"}],
+            "state_graph": {"states": [{"state": "resolved_data"}]},
+        },
+        "scenarios": scenarios,
+        "run_result": run,
+        "artifacts": {
+            "target_url": "https://app.flyto2.com/product-verification",
+            "graph_contract": "warroom.product_verification.v1",
+            "screenshot": {"status": "success"},
+            "dom_snapshot": {"status": "success"},
+            "network_log": {"count": 1},
+        },
+    }, {}).execute()
+
+    assert run["ok"] is True
+    assert run["replay_ok"] is False
+    assert run["failed"] == 1
+    assert run["results"][0]["status"] == "failed"
+    pack = report["evidence_pack"]
+    assert pack["verdict"] == "fail"
+    assert pack["scores"]["replay_reliability"] == 0
+    assert any(str(item).startswith("p0_findings:1") for item in pack["gate_blockers"])
+
+
+@pytest.mark.asyncio
 async def test_warroom_report_preserves_visual_dom_and_network_artifacts():
     report_mod = get_module("warroom.report")
     report = await report_mod({

@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blockers) so release readiness is tied to reproducible screenshots, DOM,
   network logs, replay reliability, reachable coverage, and live/non-dry-run
   evidence instead of a standalone score.
+- `warroom.run` now separates module execution `ok` from product replay
+  `replay_ok`, preserving failed replay results for downstream evidence packs
+  instead of letting workflow normalization collapse them into a generic error.
 - `Dockerfile.verification` for the dedicated `flyto-verification` runner
   microservice. It installs browser/API extras, bundles Chromium, exposes
   `:8344`, and serves `/health` for engine/compose readiness checks.
