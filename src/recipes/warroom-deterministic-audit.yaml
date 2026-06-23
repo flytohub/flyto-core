@@ -14,6 +14,18 @@ args:
     type: string
     default: warroom-evidence.md
     description: Markdown evidence summary output path.
+  output_prefix:
+    type: string
+    default: warroom-evidence
+    description: Prefix for replay screenshot artifacts.
+  network_url_pattern:
+    type: string
+    default: ".*"
+    description: Regex for captured network requests.
+  network_timeout_ms:
+    type: integer
+    default: 1500
+    description: How long to monitor network requests after initial render.
 
 steps:
   - id: launch
@@ -34,6 +46,26 @@ steps:
     module: browser.wait
     params:
       duration_ms: 1500
+
+  - id: network_log
+    module: browser.network
+    params:
+      action: monitor
+      url_pattern: "{{network_url_pattern}}"
+      timeout: "{{network_timeout_ms}}"
+      include_headers: false
+      strip_query: true
+
+  - id: dom_snapshot
+    module: browser.snapshot
+    params:
+      format: html
+
+  - id: desktop_screenshot
+    module: browser.screenshot
+    params:
+      path: "{{output_prefix}}-desktop.png"
+      full_page: true
 
   - id: discover
     module: warroom.discover
@@ -60,6 +92,13 @@ steps:
       site_graph: ${discover.site_graph}
       scenarios: ${generate.scenarios}
       run_result: ${replay}
+      artifacts:
+        target_url: "{{target}}"
+        graph_contract: warroom.product_verification.v1
+        screenshot: ${desktop_screenshot}
+        dom_snapshot: ${dom_snapshot}
+        network_log: ${network_log}
+        llm_positioning: advisory_only_after_evidence
       format: json
       output_path: "{{output}}"
 
@@ -69,6 +108,13 @@ steps:
       site_graph: ${discover.site_graph}
       scenarios: ${generate.scenarios}
       run_result: ${replay}
+      artifacts:
+        target_url: "{{target}}"
+        graph_contract: warroom.product_verification.v1
+        screenshot: ${desktop_screenshot}
+        dom_snapshot: ${dom_snapshot}
+        network_log: ${network_log}
+        llm_positioning: advisory_only_after_evidence
       format: markdown
       output_path: "{{markdown_output}}"
 

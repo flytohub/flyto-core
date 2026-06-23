@@ -120,6 +120,48 @@ async def test_warroom_discover_builds_intent_state_and_reachable_coverage_graph
 
 
 @pytest.mark.asyncio
+async def test_warroom_state_contradictions_cover_credits_api_error_and_capability_hidden():
+    mod = get_module("warroom.discover")
+    result = await mod({
+        "target": "https://app.flyto2.com/verification",
+        "pages": [
+            {
+                "url": "https://app.flyto2.com/verification",
+                "text": "Product Verification",
+                "business_state": {"credits_remaining": 0},
+                "controls": [{"tag": "button", "text": "Run verification", "disabled": False}],
+            },
+            {
+                "url": "https://app.flyto2.com/report",
+                "text": "Error",
+                "business_state": {"success": True},
+                "controls": [],
+            },
+            {
+                "url": "https://app.flyto2.com/governance",
+                "text": "Loading capability",
+                "controls": [],
+                "state_assertions": [
+                    {
+                        "id": "capability_resolved_before_hidden",
+                        "expected": "capability_loading_visible",
+                        "observed": "hidden",
+                    }
+                ],
+            },
+        ],
+        "use_browser": False,
+    }, {}).execute()
+
+    findings = [item for item in result["site_graph"]["findings"] if item["code"] == "state_contradiction"]
+    messages = {item["message"] for item in findings}
+    assert len(findings) >= 3
+    assert any("credits are exhausted" in message for message in messages)
+    assert any("API reported success" in message for message in messages)
+    assert any(item["evidence"].get("assertion_id") == "capability_resolved_before_hidden" for item in findings)
+
+
+@pytest.mark.asyncio
 async def test_warroom_generate_scenarios_outputs_replay_yaml():
     discover = get_module("warroom.discover")
     generate = get_module("warroom.generate_scenarios")
@@ -290,6 +332,26 @@ async def test_warroom_run_and_report_create_evidence_pack():
     assert report["ok"] is True
     assert report["evidence_pack"]["verdict"] == "pass"
     assert report["evidence_pack"]["artifacts"]["url"] == "https://app.flyto2.com/dashboard"
+
+
+@pytest.mark.asyncio
+async def test_warroom_report_preserves_visual_dom_and_network_artifacts():
+    report_mod = get_module("warroom.report")
+    report = await report_mod({
+        "site_graph": {"scores": {"p0": 1, "observed_coverage": 1.0, "reachable_coverage": 0.5}},
+        "run_result": {"ok": True, "passed": 1, "failed": 0, "total": 1, "results": []},
+        "artifacts": {
+            "screenshot": {"status": "success", "filepath": "/tmp/warroom.png"},
+            "dom_snapshot": {"format": "html", "content": "<button>Run</button>", "size_bytes": 20},
+            "network_log": {"count": 1, "requests": [{"url": "https://app.flyto2.com/api/run", "status": 200}]},
+        },
+    }, {}).execute()
+
+    artifacts = report["evidence_pack"]["artifacts"]
+    assert artifacts["screenshot"]["filepath"] == "/tmp/warroom.png"
+    assert artifacts["dom_snapshot"]["content"] == "<button>Run</button>"
+    assert artifacts["network_log"]["requests"][0]["status"] == 200
+    assert report["evidence_pack"]["scores"]["p0"] == 1
 
 
 @pytest.mark.asyncio
