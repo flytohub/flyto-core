@@ -103,6 +103,7 @@ Download = "https://flyto2.com/download.html"
 [project.scripts]
 flyto = "cli.main:main"
 flyto-serve = "core.api:main"
+flyto-verification = "core.verification_service:main"
 
 # Entry points for plugin discovery
 # Other packages can register modules by adding:

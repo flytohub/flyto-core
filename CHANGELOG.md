@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `flyto-verification` runner service entrypoint for deterministic Warroom
+  Product Verification dispatches. The service validates engine-computed
+  target scope, executes server-owned workflow YAML, and emits runner callback
+  payloads with evidence signatures.
 - Deterministic Warroom verification modules: `warroom.discover`,
   `warroom.generate_scenarios`, `warroom.run`, `warroom.report`, and
   `warroom.llm_review`.
