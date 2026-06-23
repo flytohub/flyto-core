@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `warroom.generate_scenarios`, `warroom.run`, `warroom.report`, and
   `warroom.llm_review`.
 - `warroom-deterministic-audit` recipe and Warroom verification docs.
+- `warroom.public_site_verify` and the `flyto2-public-site-verification` recipe
+  to evaluate DNS/TLS/route/browser/SEO-GEO evidence without LLM judgment.
 
 ### Changed
 - `testing.e2e.run_steps` and `testing.scenario.run` now execute real module

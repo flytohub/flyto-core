@@ -139,6 +139,81 @@ async def test_warroom_generate_scenarios_outputs_replay_yaml():
 
 
 @pytest.mark.asyncio
+async def test_warroom_public_site_verify_flags_homepage_timeout_as_p0():
+    mod = get_module("warroom.public_site_verify")
+    result = await mod({
+        "base_url": "https://flyto2.com",
+        "required_routes": ["/", "/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt"],
+        "observations": {
+            "dns_matrix": [{"host": "flyto2.com", "ok": True}],
+            "tls_matrix": [{"host": "flyto2.com", "ok": True}],
+            "route_matrix": [
+                {"path": "/", "timed_out": True, "error": "timeout"},
+                {"path": "/robots.txt", "status": 200},
+                {"path": "/sitemap.xml", "status": 200},
+                {"path": "/llms.txt", "status": 200},
+                {"path": "/llms-full.txt", "status": 200},
+            ],
+            "browser_matrix": [{"path": "/", "status": "timeout", "ok": False}],
+            "seo_geo_matrix": {
+                "title": False,
+                "meta_description": True,
+                "canonical": True,
+                "open_graph": True,
+                "structured_data": True,
+                "llms_txt": True,
+                "sitemap": True,
+                "robots": True,
+                "server_rendered_content": False,
+            },
+        },
+    }, {}).execute()
+
+    findings = {item["code"]: item for item in result["findings"]}
+    assert result["contract"] == "flyto2.public_site_verification.v1"
+    assert result["ok"] is False
+    assert result["p0_findings"] == 2
+    assert findings["critical_route_unavailable"]["severity"] == "P0"
+    assert findings["browser_render_unverified"]["severity"] == "P0"
+    assert result["p1_findings"] == 2
+
+
+@pytest.mark.asyncio
+async def test_warroom_public_site_verify_accepts_complete_route_browser_geo_evidence():
+    mod = get_module("warroom.public_site_verify")
+    required_routes = ["/", "/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt"]
+    result = await mod({
+        "base_url": "https://flyto2.com",
+        "generated_at": "2026-06-23T00:00:00+00:00",
+        "required_routes": required_routes,
+        "observations": {
+            "dns_matrix": [{"host": "flyto2.com", "ok": True}],
+            "tls_matrix": [{"host": "flyto2.com", "ok": True}],
+            "route_matrix": [{"path": path, "status": 200} for path in required_routes],
+            "browser_matrix": [{"path": "/", "status": "ok", "ok": True}],
+            "seo_geo_matrix": {
+                "title": True,
+                "meta_description": True,
+                "canonical": True,
+                "open_graph": True,
+                "structured_data": True,
+                "llms_txt": True,
+                "sitemap": True,
+                "robots": True,
+                "server_rendered_content": True,
+            },
+        },
+    }, {}).execute()
+
+    assert result["ok"] is True
+    assert result["generated_at"] == "2026-06-23T00:00:00+00:00"
+    assert result["p0_findings"] == 0
+    assert result["p1_findings"] == 0
+    assert result["scores"]["public_route_readiness"] == 1.0
+    assert result["scores"]["seo_geo_readiness"] == 1.0
+
+
+@pytest.mark.asyncio
 async def test_testing_e2e_run_steps_executes_modules_and_assertions():
     mod = get_module("testing.e2e.run_steps")
     result = await mod({

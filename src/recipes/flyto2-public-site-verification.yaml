@@ -1,0 +1,56 @@
+name: Flyto2 Public Site Verification
+description: Evaluate collected DNS, TLS, HTTP route, browser render, and SEO/GEO evidence for flyto2.com.
+
+args:
+  base_url:
+    type: string
+    default: https://flyto2.com
+    description: Public site base URL to verify.
+  output:
+    type: string
+    default: public-site-verification.json
+    description: JSON evidence output path.
+  markdown_output:
+    type: string
+    default: public-site-verification.md
+    description: Markdown evidence output path.
+
+steps:
+  - id: verify_public_site
+    module: warroom.public_site_verify
+    params:
+      base_url: "{{base_url}}"
+      observations:
+        dns_matrix: []
+        tls_matrix: []
+        route_matrix: []
+        browser_matrix:
+          - path: /
+            status: not_run
+            ok: false
+            reason: browser evidence must be supplied by the release run
+        seo_geo_matrix:
+          title: false
+          meta_description: false
+          canonical: false
+          open_graph: false
+          structured_data: false
+          llms_txt: false
+          sitemap: false
+          robots: false
+          server_rendered_content: false
+
+  - id: report_json
+    module: file.write
+    params:
+      path: "{{output}}"
+      content: ${verify_public_site}
+
+  - id: report_markdown
+    module: file.write
+    params:
+      path: "{{markdown_output}}"
+      content: |
+        # Flyto2 Public Site Verification
+
+        This recipe is fail-closed by default. Supply live DNS/TLS/route/browser/SEO evidence to `warroom.public_site_verify` during a release run.
