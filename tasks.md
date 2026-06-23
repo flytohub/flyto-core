@@ -16,6 +16,17 @@
 
 ## Done
 
+- Added generic `verification.*` module IDs for deterministic verification
+  primitives and kept `warroom.*` as compatibility aliases only; engine-owned
+  workflows should compose `verification.*`.
+- Renamed the emitted deterministic testing model to the core-owned
+  `flyto.core.deterministic_verification.v1` while retaining
+  `warroom.automation_test_model.v1` as the legacy schema reference.
+- Kept Flyto2 product naming out of core defaults; engine artifacts may attach
+  a product contract such as `flyto2.automated_product_testing.v1`.
+- Added explicit non-LLM execution policy to automation evidence:
+  deterministic evidence is the fact source and gate authority; LLM is only an
+  optional evidence reviewer.
 - Added event-stream and scheduler-loop summaries to
   `automation_test_model.v1` so Product Verification evidence can distinguish
   callback/SSE contracts and durable scheduler contracts from raw replay facts.

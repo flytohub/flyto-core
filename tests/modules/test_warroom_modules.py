@@ -13,6 +13,13 @@ def get_module(module_id: str):
     return ModuleRegistry.get(module_id)
 
 
+def test_generic_verification_modules_are_forward_path_aliases():
+    assert get_module("verification.discover").module_name == "Verification Discover"
+    assert get_module("verification.generate_scenarios").module_name == "Verification Generate Scenarios"
+    assert get_module("verification.run").module_name == "Verification Run"
+    assert get_module("verification.report").module_name == "Verification Report"
+
+
 @pytest.mark.asyncio
 async def test_warroom_discover_builds_redacted_site_graph():
     mod = get_module("warroom.discover")
@@ -418,6 +425,10 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
         "artifacts": {
             "target_url": "https://app.flyto2.com/product-verification",
             "graph_contract": "warroom.product_verification.v1",
+            "verification_contract": "flyto.core.deterministic_verification.v1",
+            "product_contract": "flyto2.automated_product_testing.v1",
+            "product_surface": "warroom",
+            "capability": "automated_product_testing",
             "screenshot": {"status": "success", "filepath": "/tmp/warroom.png"},
             "dom_snapshot": {"content": "<main>Product Verification</main>"},
             "network_log": {"count": 1, "requests": [{"status": 200}]},
@@ -431,7 +442,15 @@ async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifac
     assert pack["artifact_completeness"]["complete"] is True
     assert pack["score_breakdown"]["replay_reliability"]["points"] == 20
     model = pack["automation_test_model"]
-    assert model["schema_version"] == "warroom.automation_test_model.v1"
+    assert model["schema_version"] == "flyto.core.deterministic_verification.v1"
+    assert model["legacy_schema_version"] == "warroom.automation_test_model.v1"
+    assert model["product_contract"] == "flyto2.automated_product_testing.v1"
+    assert model["product_surface"] == "warroom"
+    assert model["capability"] == "automated_product_testing"
+    assert model["engine_mode"]["llm_required"] is False
+    assert model["engine_mode"]["llm_role"] == "optional_evidence_reviewer"
+    assert model["engine_mode"]["gate_authority"] == "deterministic_evidence_gate"
+    assert model["deterministic_contract"]["llm_can_gate"] is False
     assert model["coverage"]["reachable_coverage"] == 1.0
     assert model["intent_graph"]["count"] == 1
     assert model["scenario_synthesis"]["step_count"] == 0
@@ -497,6 +516,10 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
         "artifacts": {
             "target_url": "https://app.flyto2.com/projects",
             "graph_contract": "warroom.product_verification.v1",
+            "verification_contract": "flyto.core.deterministic_verification.v1",
+            "product_contract": "flyto2.automated_product_testing.v1",
+            "product_surface": "warroom",
+            "capability": "automated_product_testing",
             "screenshot": {"status": "success"},
             "dom_snapshot": {"status": "success"},
             "network_log": {"count": 2},
@@ -537,6 +560,7 @@ async def test_warroom_report_automation_model_summarizes_ghost_api_invariants_a
     assert model["event_stream"]["fail_closed"] is True
     assert model["scheduler_loop"]["scanner_id"] == "product_verification"
     assert model["scheduler_loop"]["durable_job"] is True
+    assert model["engine_mode"]["llm_required"] is False
 
 
 @pytest.mark.asyncio
@@ -559,6 +583,8 @@ async def test_warroom_report_gate_blocks_missing_artifacts_and_state_findings()
         "artifacts": {
             "target_url": "https://app.flyto2.com/product-verification",
             "graph_contract": "warroom.product_verification.v1",
+            "verification_contract": "flyto.core.deterministic_verification.v1",
+            "product_contract": "flyto2.automated_product_testing.v1",
             "screenshot": {"status": "success", "filepath": "/tmp/warroom.png"},
         },
     }, {}).execute()

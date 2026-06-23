@@ -17,8 +17,8 @@ DISCOVERY_JS = r"""() => {
     .slice(0, 160)
     .map((el, index) => {
       const testid = el.getAttribute('data-testid') || '';
-      if (!testid && !el.getAttribute('data-warroom-control')) {
-        el.setAttribute('data-warroom-control', String(index + 1));
+      if (!testid && !el.getAttribute('data-flyto-verification-control') && !el.getAttribute('data-warroom-control')) {
+        el.setAttribute('data-flyto-verification-control', String(index + 1));
       }
       return {
         tag: el.tagName.toLowerCase(),
@@ -30,7 +30,7 @@ DISCOVERY_JS = r"""() => {
         testid,
         href: el.getAttribute('href') || '',
         disabled: Boolean(el.disabled || el.getAttribute('aria-disabled') === 'true'),
-        selector: testid ? `[data-testid="${testid}"]` : `[data-warroom-control="${index + 1}"]`
+        selector: testid ? `[data-testid="${testid}"]` : `[data-flyto-verification-control="${index + 1}"]`
       };
     });
   const root = document.documentElement;
@@ -40,7 +40,7 @@ DISCOVERY_JS = r"""() => {
     text: document.body?.innerText || '',
     horizontal_overflow: root.scrollWidth > innerWidth + 2,
     controls,
-    requests: window.__flytoWarroomRequests || []
+    requests: window.__flytoVerificationRequests || window.__flytoWarroomRequests || []
   };
 }"""
 

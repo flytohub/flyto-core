@@ -39,7 +39,7 @@ _ALL_CATEGORIES = [
     'sandbox', 'scheduler', 'set', 'shell', 'stats', 'storage', 'string',
     'template', 'testing', 'text', 'training',
     'ui', 'utility',
-    'validate', 'vector', 'verify', 'vision',
+    'validate', 'vector', 'verify', 'verification', 'vision',
     'warroom',
 ]
 
@@ -96,7 +96,7 @@ from . import (  # noqa: F401
     sandbox, scheduler, set, shell, stats, storage, string,
     template, testing, text, training,
     ui, utility,
-    validate, vector, verify, vision,
+    validate, vector, verify, verification, vision,
     warroom,
 )
 

@@ -8,11 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- `warroom.report` now emits `automation_test_model.v1`, a deterministic
+- Added generic `verification.discover`, `verification.generate_scenarios`,
+  `verification.run`, and `verification.report` module IDs as the forward path
+  for deterministic verification primitives. Existing `warroom.*` modules stay
+  as compatibility aliases; product workflows should be composed by
+  flyto-engine.
+- `warroom.report` now emits `flyto.core.deterministic_verification.v1`, a deterministic
   automation-testing summary for coverage, intent graph, scenario synthesis,
   replay reliability, ghost API type A/B/C, business invariants, RBAC matrix,
   event-stream contract, scheduler-loop contract, and screenshot/DOM/network
   evidence chain.
+- Automation evidence now declares `engine_mode.llm_required=false`,
+  `llm_role=optional_evidence_reviewer`, and
+  `gate_authority=deterministic_evidence_gate`. Product naming is injected by
+  engine artifacts; core remains the deterministic verification runtime.
 - `warroom.report` now emits a 90-point Product Verification evidence gate
   (`gate_verdict`, `gate_score`, score breakdown, artifact completeness, and
   blockers) so release readiness is tied to reproducible screenshots, DOM,
@@ -53,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Dockerfile.verification` now forces `HEADLESS=true` and
   `DEPLOYMENT_MODE=worker`, so Product Verification browser replay works in
   containerized runner environments without an X server.
+- `warroom-deterministic-audit` now composes the generic `verification.*`
+  modules while preserving the existing recipe name for compatibility.
 
 ## [2.26.3] - 2026-05-30
 

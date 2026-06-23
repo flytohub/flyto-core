@@ -1,5 +1,5 @@
-name: Warroom Deterministic Audit
-description: Build a deterministic Warroom site graph, generate replay scenarios, and emit evidence without relying on LLM analysis.
+name: Deterministic Verification Replay
+description: Build deterministic site, intent, state, API and replay evidence without relying on LLM analysis.
 
 args:
   target:
@@ -68,26 +68,26 @@ steps:
       full_page: true
 
   - id: discover
-    module: warroom.discover
+    module: verification.discover
     params:
       target: "{{target}}"
       use_browser: true
 
   - id: generate
-    module: warroom.generate_scenarios
+    module: verification.generate_scenarios
     params:
       site_graph: ${discover.site_graph}
-      name: Warroom deterministic replay
+      name: Deterministic verification replay
 
   - id: replay
-    module: warroom.run
+    module: verification.run
     params:
       scenarios: ${generate.scenarios}
       stop_on_failure: true
       timeout_per_step: 30000
 
   - id: report_json
-    module: warroom.report
+    module: verification.report
     params:
       site_graph: ${discover.site_graph}
       scenarios: ${generate.scenarios}
@@ -95,15 +95,19 @@ steps:
       artifacts:
         target_url: "{{target}}"
         graph_contract: warroom.product_verification.v1
+        verification_contract: flyto.core.deterministic_verification.v1
         screenshot: ${desktop_screenshot}
         dom_snapshot: ${dom_snapshot}
         network_log: ${network_log}
-        llm_positioning: advisory_only_after_evidence
+        llm_policy:
+          required: false
+          role: optional_evidence_reviewer
+          can_gate: false
       format: json
       output_path: "{{output}}"
 
   - id: report_markdown
-    module: warroom.report
+    module: verification.report
     params:
       site_graph: ${discover.site_graph}
       scenarios: ${generate.scenarios}
@@ -111,10 +115,14 @@ steps:
       artifacts:
         target_url: "{{target}}"
         graph_contract: warroom.product_verification.v1
+        verification_contract: flyto.core.deterministic_verification.v1
         screenshot: ${desktop_screenshot}
         dom_snapshot: ${dom_snapshot}
         network_log: ${network_log}
-        llm_positioning: advisory_only_after_evidence
+        llm_policy:
+          required: false
+          role: optional_evidence_reviewer
+          can_gate: false
       format: markdown
       output_path: "{{markdown_output}}"
 

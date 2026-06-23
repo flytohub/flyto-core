@@ -79,7 +79,7 @@ async def test_verification_service_executes_warroom_yaml_and_emits_evidence_pac
 name: Verification Service Contract
 steps:
   - id: discover
-    module: warroom.discover
+    module: verification.discover
     params:
       target: "{{target_url}}"
       use_browser: false
@@ -103,17 +103,17 @@ steps:
               trigger: "run-verification"
               has_ui_effect: false
   - id: generate
-    module: warroom.generate_scenarios
+    module: verification.generate_scenarios
     params:
       site_graph: ${discover.site_graph}
       name: Verification Service Replay
   - id: replay
-    module: warroom.run
+    module: verification.run
     params:
       scenarios: ${generate.scenarios}
       stop_on_failure: true
   - id: evidence_pack
-    module: warroom.report
+    module: verification.report
     params:
       site_graph: ${discover.site_graph}
       scenarios: ${generate.scenarios}
@@ -121,7 +121,15 @@ steps:
       artifacts:
         target_url: "{{target_url}}"
         graph_contract: warroom.product_verification.v1
+        verification_contract: flyto.core.deterministic_verification.v1
+        product_contract: flyto2.automated_product_testing.v1
+        product_surface: warroom
+        capability: automated_product_testing
         verification_service: flyto-verification
+        llm_policy:
+          required: false
+          role: optional_evidence_reviewer
+          can_gate: false
       format: json
 """
 
@@ -137,6 +145,9 @@ steps:
     assert result.status == "complete"
     assert result.evidence_pack is not None
     assert result.evidence_pack["schema_version"] == "warroom.evidence_pack.v1"
+    assert result.evidence_pack["automation_test_model"]["schema_version"] == "flyto.core.deterministic_verification.v1"
+    assert result.evidence_pack["automation_test_model"]["product_contract"] == "flyto2.automated_product_testing.v1"
+    assert result.evidence_pack["automation_test_model"]["engine_mode"]["llm_required"] is False
     assert result.evidence_pack["artifacts"]["verification_service"] == "flyto-verification"
     assert result.findings_count >= 2
     assert result.critical_count >= 1

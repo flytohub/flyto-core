@@ -1,7 +1,7 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Deterministic Warroom discovery, scenario generation, and scoring helpers.
+Deterministic verification helpers.
 
 This module intentionally avoids LLM calls. It turns observable website facts
 into a graph and evidence scores that can be replayed by recipes or CI.
@@ -22,6 +22,41 @@ SECRETISH_KEYS = re.compile(
     r"(authorization|cookie|auth[_-]?token|access[_-]?token|refresh[_-]?token|password|secret|session|firebase|bearer|(^|[_-])(token|pat)([_-]|$))",
     re.IGNORECASE,
 )
+
+CORE_DETERMINISTIC_VERIFICATION_SCHEMA = "flyto.core.deterministic_verification.v1"
+LEGACY_AUTOMATION_TEST_MODEL_SCHEMA = "warroom.automation_test_model.v1"
+
+DETERMINISTIC_ENGINE_MODE = {
+    "name": "Deterministic Verification Runtime",
+    "execution_mode": "deterministic_evidence_first",
+    "llm_required": False,
+    "llm_role": "optional_evidence_reviewer",
+    "fact_source": "browser_dom_network_screenshot_sse",
+    "gate_authority": "deterministic_evidence_gate",
+    "human_editable_yaml": True,
+}
+
+DETERMINISTIC_TESTING_CONTRACT = {
+    "inputs": [
+        "site_graph",
+        "intent_graph",
+        "state_graph",
+        "api_graph",
+        "yaml_replay",
+        "browser_artifacts",
+        "event_stream",
+    ],
+    "outputs": [
+        "evidence_pack",
+        "gate_verdict",
+        "readiness_score",
+        "state_contradictions",
+        "ghost_api_findings",
+        "replay_evidence",
+    ],
+    "llm_can_create_facts": False,
+    "llm_can_gate": False,
+}
 
 
 @dataclass
@@ -81,7 +116,7 @@ def stable_selector(control: Mapping[str, Any], index: int = 0) -> str:
     selector = str(control.get("selector") or "").strip()
     if selector:
         return selector
-    return f'[data-warroom-control="{index + 1}"]'
+    return f'[data-flyto-verification-control="{index + 1}"]'
 
 
 def _escape_selector(value: str) -> str:
@@ -513,7 +548,7 @@ def score_graph(graph: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
-def generate_scenarios(graph: Mapping[str, Any], *, name: str = "Warroom Generated Regression") -> Dict[str, Any]:
+def generate_scenarios(graph: Mapping[str, Any], *, name: str = "Deterministic Verification Regression") -> Dict[str, Any]:
     """Generate deterministic YAML-compatible scenarios from a site graph."""
     steps: List[Dict[str, Any]] = []
     for page in graph.get("pages", []):
@@ -677,6 +712,12 @@ def automation_test_model(
     rbac_matrix = _rbac_matrix_summary(graph)
     event_stream = _event_stream_summary(graph, artifacts)
     scheduler_loop = _scheduler_loop_summary(graph, artifacts)
+    verification_contract = str(artifacts.get("verification_contract") or CORE_DETERMINISTIC_VERIFICATION_SCHEMA)
+    if verification_contract != CORE_DETERMINISTIC_VERIFICATION_SCHEMA:
+        verification_contract = CORE_DETERMINISTIC_VERIFICATION_SCHEMA
+    product_contract = str(artifacts.get("product_contract") or artifacts.get("automation_test_contract") or "")
+    product_surface = str(artifacts.get("product_surface") or "")
+    capability = str(artifacts.get("capability") or "deterministic_verification")
     replay_reliability = _score_value(run_summary.get("replay_reliability"))
     readiness_score = _automation_readiness_score(
         reachable=_score_value(graph_scores.get("reachable_coverage")),
@@ -689,7 +730,13 @@ def automation_test_model(
     )
 
     return {
-        "schema_version": "warroom.automation_test_model.v1",
+        "schema_version": verification_contract,
+        "legacy_schema_version": LEGACY_AUTOMATION_TEST_MODEL_SCHEMA,
+        "product_contract": product_contract,
+        "product_surface": product_surface,
+        "capability": capability,
+        "engine_mode": dict(DETERMINISTIC_ENGINE_MODE),
+        "deterministic_contract": dict(DETERMINISTIC_TESTING_CONTRACT),
         "readiness_score": readiness_score,
         "coverage": {
             "observed_paths": observed_paths,
@@ -920,10 +967,14 @@ def evaluate_product_verification_gate(
     graph_points = round(20 * sum(1 for ok in graph_checks.values() if ok) / len(graph_checks), 1)
 
     graph_contract = str(artifacts.get("graph_contract") or "")
+    verification_contract = str(artifacts.get("verification_contract") or "")
+    product_contract = str(artifacts.get("product_contract") or artifacts.get("automation_test_contract") or "")
     target_url = str(artifacts.get("target_url") or "")
     dry_run = bool(artifacts.get("dry_run"))
     scope_checks = {
         "graph_contract": graph_contract == "warroom.product_verification.v1",
+        "verification_contract": verification_contract in {"", CORE_DETERMINISTIC_VERIFICATION_SCHEMA},
+        "product_contract": not product_contract or _valid_contract_name(product_contract),
         "target_url": bool(target_url),
     }
     scope_points = round(15 * sum(1 for ok in scope_checks.values() if ok) / len(scope_checks), 1)
@@ -985,6 +1036,10 @@ def evaluate_product_verification_gate(
         blockers.append("dry_run_not_live_evidence")
     if not scope_checks["graph_contract"]:
         blockers.append("invalid_or_missing_graph_contract")
+    if not scope_checks["verification_contract"]:
+        blockers.append("invalid_verification_contract")
+    if not scope_checks["product_contract"]:
+        blockers.append("invalid_product_contract")
     if not scope_checks["target_url"]:
         blockers.append("missing_target_url")
 
@@ -1035,10 +1090,14 @@ def _score_value(value: Any) -> float:
     return number
 
 
+def _valid_contract_name(value: str) -> bool:
+    return bool(re.match(r"^[a-z0-9][a-z0-9_.-]*\.v[0-9]+$", str(value or "")))
+
+
 def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
     scores = pack.get("scores") or {}
     lines = [
-        "# Warroom Evidence Pack",
+        "# Deterministic Verification Evidence Pack",
         "",
         f"Verdict: {pack.get('verdict', 'unknown')}",
         f"Gate verdict: {pack.get('gate_verdict', 'unknown')}",
@@ -1073,6 +1132,14 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
     automation = pack.get("automation_test_model") or {}
     if isinstance(automation, Mapping):
         lines.extend(["", "## Automation Test Model"])
+        lines.append(f"- schema_version: {automation.get('schema_version', 'n/a')}")
+        mode = automation.get("engine_mode") if isinstance(automation.get("engine_mode"), Mapping) else {}
+        lines.append(
+            "- deterministic_mode: "
+            f"{mode.get('execution_mode', 'n/a')} "
+            f"llm_required={mode.get('llm_required', False)} "
+            f"llm_role={mode.get('llm_role', 'n/a')}"
+        )
         lines.append(f"- readiness_score: {automation.get('readiness_score', 'n/a')}")
         replay = automation.get("replay") if isinstance(automation.get("replay"), Mapping) else {}
         ghost = automation.get("ghost_api") if isinstance(automation.get("ghost_api"), Mapping) else {}

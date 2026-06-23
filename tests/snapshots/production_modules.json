@@ -1,5 +1,5 @@
 {
-  "total": 421,
+  "total": 426,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -1622,6 +1622,22 @@
       "version": "1.0.0"
     },
     {
+      "id": "verification.discover",
+      "version": "1.0.0"
+    },
+    {
+      "id": "verification.generate_scenarios",
+      "version": "1.0.0"
+    },
+    {
+      "id": "verification.report",
+      "version": "1.0.0"
+    },
+    {
+      "id": "verification.run",
+      "version": "1.0.0"
+    },
+    {
       "id": "verify.annotate",
       "version": "1.0.0"
     },
@@ -1667,6 +1683,10 @@
     },
     {
       "id": "warroom.llm_review",
+      "version": "1.0.0"
+    },
+    {
+      "id": "warroom.public_site_verify",
       "version": "1.0.0"
     },
     {
