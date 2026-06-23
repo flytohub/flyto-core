@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `warroom.report` now emits a 90-point Product Verification evidence gate
+  (`gate_verdict`, `gate_score`, score breakdown, artifact completeness, and
+  blockers) so release readiness is tied to reproducible screenshots, DOM,
+  network logs, replay reliability, reachable coverage, and live/non-dry-run
+  evidence instead of a standalone score.
 - `Dockerfile.verification` for the dedicated `flyto-verification` runner
   microservice. It installs browser/API extras, bundles Chromium, exposes
   `:8344`, and serves `/health` for engine/compose readiness checks.

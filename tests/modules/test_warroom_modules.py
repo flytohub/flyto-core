@@ -355,6 +355,72 @@ async def test_warroom_report_preserves_visual_dom_and_network_artifacts():
 
 
 @pytest.mark.asyncio
+async def test_warroom_report_scores_90_point_gate_from_replay_graph_and_artifacts():
+    report_mod = get_module("warroom.report")
+    report = await report_mod({
+        "site_graph": {
+            "scores": {"p0": 0, "p1": 0, "observed_coverage": 1.0, "reachable_coverage": 1.0},
+            "intents": [{"id": "run_verification", "verb": "run", "object": "verification"}],
+            "apis": [{"id": "api_1", "status": 200}],
+            "state_graph": {"states": [{"state": "resolved_data"}]},
+        },
+        "run_result": {
+            "ok": True,
+            "passed": 1,
+            "failed": 0,
+            "total": 1,
+            "results": [{"id": "assert_ok", "status": "passed"}],
+        },
+        "artifacts": {
+            "target_url": "https://app.flyto2.com/product-verification",
+            "graph_contract": "warroom.product_verification.v1",
+            "screenshot": {"status": "success", "filepath": "/tmp/warroom.png"},
+            "dom_snapshot": {"content": "<main>Product Verification</main>"},
+            "network_log": {"count": 1, "requests": [{"status": 200}]},
+        },
+    }, {}).execute()
+
+    pack = report["evidence_pack"]
+    assert pack["verdict"] == "pass"
+    assert pack["gate_verdict"] == "pass"
+    assert pack["gate_score"] == 100
+    assert pack["artifact_completeness"]["complete"] is True
+    assert pack["score_breakdown"]["replay_reliability"]["points"] == 20
+
+
+@pytest.mark.asyncio
+async def test_warroom_report_gate_blocks_missing_artifacts_and_state_findings():
+    report_mod = get_module("warroom.report")
+    report = await report_mod({
+        "site_graph": {
+            "scores": {"p0": 1, "p1": 0, "observed_coverage": 1.0, "reachable_coverage": 0.7},
+            "findings": [{"code": "state_contradiction", "severity": "P0"}],
+            "intents": [{"id": "run_verification"}],
+            "state_graph": {"states": [{"state": "resolved_data"}]},
+        },
+        "run_result": {
+            "ok": True,
+            "passed": 1,
+            "failed": 0,
+            "total": 1,
+            "results": [{"id": "assert_ok", "status": "passed"}],
+        },
+        "artifacts": {
+            "target_url": "https://app.flyto2.com/product-verification",
+            "graph_contract": "warroom.product_verification.v1",
+            "screenshot": {"status": "success", "filepath": "/tmp/warroom.png"},
+        },
+    }, {}).execute()
+
+    pack = report["evidence_pack"]
+    assert pack["gate_verdict"] == "blocked"
+    assert "dom_snapshot" in pack["artifact_completeness"]["missing"]
+    assert "network_log" in pack["artifact_completeness"]["missing"]
+    assert any(str(item).startswith("p0_findings:1") for item in pack["gate_blockers"])
+    assert any(str(item).startswith("reachable_coverage_below_0.85") for item in pack["gate_blockers"])
+
+
+@pytest.mark.asyncio
 async def test_warroom_report_unwraps_workflow_engine_module_output():
     report_mod = get_module("warroom.report")
     workflow_wrapped_run = {

@@ -16,6 +16,8 @@
 
 ## Done
 
+- Added the 90-point Product Verification evidence gate to `warroom.report`
+  with focused tests for pass and blocked paths.
 - Added a dedicated `flyto-verification` Docker image boundary for full-stack
   Product Verification compose/staging smoke.
 - Added operator-controlled SSRF dev-port allowlisting so Product Verification

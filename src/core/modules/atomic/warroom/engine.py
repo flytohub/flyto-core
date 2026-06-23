@@ -598,10 +598,23 @@ def evidence_pack(
     p0 = int(graph_scores.get("p0", 0)) + int(run_eval["summary"]["p0"])
     p1 = int(graph_scores.get("p1", 0)) + int(run_eval["summary"]["p1"])
     verdict = "pass" if p0 == 0 and p1 == 0 and run_eval["passed"] else "fail"
+    safe_artifacts = redact(dict(artifacts or {}))
+    gate = evaluate_product_verification_gate(
+        graph=graph,
+        run_evaluation=run_eval,
+        artifacts=safe_artifacts,
+        p0=p0,
+        p1=p1,
+    )
     return {
         "schema_version": "warroom.evidence_pack.v1",
         "generated_at": now_iso(),
         "verdict": verdict,
+        "gate_verdict": gate["gate_verdict"],
+        "gate_score": gate["score"],
+        "score_breakdown": gate["score_breakdown"],
+        "artifact_completeness": gate["artifact_completeness"],
+        "gate_blockers": gate["blockers"],
         "scores": {
             **graph_scores,
             "replay_reliability": run_eval["summary"]["replay_reliability"],
@@ -612,8 +625,156 @@ def evidence_pack(
         "scenarios": dict(scenarios or {}),
         "run": dict(unwrapped_run or {}),
         "run_evaluation": run_eval,
-        "artifacts": redact(dict(artifacts or {})),
+        "artifacts": safe_artifacts,
     }
+
+
+def evaluate_product_verification_gate(
+    *,
+    graph: Mapping[str, Any],
+    run_evaluation: Mapping[str, Any],
+    artifacts: Mapping[str, Any],
+    p0: int,
+    p1: int,
+) -> Dict[str, Any]:
+    """Score the 90-point Flyto2 Product Verification evidence gate.
+
+    The score is a release summary, not the authority. `gate_verdict` remains
+    fail-closed on P0/P1 findings, weak replay, poor reachable coverage, dry-run
+    evidence, or missing core artifacts.
+    """
+    scores = graph.get("scores") if isinstance(graph.get("scores"), Mapping) else {}
+    run_summary = run_evaluation.get("summary") if isinstance(run_evaluation.get("summary"), Mapping) else {}
+    reachable = _score_value(scores.get("reachable_coverage"))
+    replay = _score_value(run_summary.get("replay_reliability"))
+    artifact_status = artifact_completeness(artifacts)
+
+    intents = graph.get("intents") if isinstance(graph.get("intents"), list) else []
+    state_graph = graph.get("state_graph") if isinstance(graph.get("state_graph"), Mapping) else {}
+    state_nodes = state_graph.get("states") if isinstance(state_graph.get("states"), list) else []
+    api_edges = graph.get("apis") if isinstance(graph.get("apis"), list) else []
+    has_network_artifact = "network_log" in artifact_status["present"]
+    graph_checks = {
+        "intent_graph": bool(intents),
+        "state_graph": bool(state_nodes or state_graph.get("allowed_states")),
+        "api_graph_or_network": bool(api_edges or has_network_artifact),
+    }
+    graph_points = round(20 * sum(1 for ok in graph_checks.values() if ok) / len(graph_checks), 1)
+
+    graph_contract = str(artifacts.get("graph_contract") or "")
+    target_url = str(artifacts.get("target_url") or "")
+    dry_run = bool(artifacts.get("dry_run"))
+    scope_checks = {
+        "graph_contract": graph_contract == "warroom.product_verification.v1",
+        "target_url": bool(target_url),
+    }
+    scope_points = round(15 * sum(1 for ok in scope_checks.values() if ok) / len(scope_checks), 1)
+
+    live_checks = {
+        "artifact_completeness": bool(artifact_status["complete"]),
+        "non_dry_run": not dry_run,
+    }
+    live_points = round(15 * sum(1 for ok in live_checks.values() if ok) / len(live_checks), 1)
+
+    breakdown = {
+        "route_reachable_coverage": {
+            "points": round(20 * reachable, 1),
+            "max": 20,
+            "value": reachable,
+            "threshold": 0.85,
+        },
+        "intent_state_api_graph": {
+            "points": graph_points,
+            "max": 20,
+            "checks": graph_checks,
+        },
+        "replay_reliability": {
+            "points": round(20 * replay, 1),
+            "max": 20,
+            "value": replay,
+            "threshold": 0.95,
+        },
+        "scope_authz_safety": {
+            "points": scope_points,
+            "max": 15,
+            "checks": scope_checks,
+        },
+        "live_operation_loop": {
+            "points": live_points,
+            "max": 15,
+            "checks": live_checks,
+        },
+        "public_geo_ai_crawler": {
+            "points": 10,
+            "max": 10,
+            "status": "external_release_gate",
+        },
+    }
+    total = round(sum(float(item["points"]) for item in breakdown.values()), 1)
+
+    blockers: List[str] = []
+    if p0 > 0:
+        blockers.append(f"p0_findings:{p0}")
+    if p1 > 0:
+        blockers.append(f"p1_findings:{p1}")
+    if reachable < 0.85:
+        blockers.append(f"reachable_coverage_below_0.85:{reachable}")
+    if replay < 0.95:
+        blockers.append(f"replay_reliability_below_0.95:{replay}")
+    if not artifact_status["complete"]:
+        blockers.append("missing_artifacts:" + ",".join(artifact_status["missing"]))
+    if dry_run:
+        blockers.append("dry_run_not_live_evidence")
+    if not scope_checks["graph_contract"]:
+        blockers.append("invalid_or_missing_graph_contract")
+    if not scope_checks["target_url"]:
+        blockers.append("missing_target_url")
+
+    gate_verdict = "pass" if total >= 90 and not blockers else "blocked"
+    return {
+        "gate_verdict": gate_verdict,
+        "score": total,
+        "score_breakdown": breakdown,
+        "artifact_completeness": artifact_status,
+        "blockers": blockers,
+    }
+
+
+def artifact_completeness(artifacts: Mapping[str, Any]) -> Dict[str, Any]:
+    required = ["screenshot", "dom_snapshot", "network_log"]
+    present = [key for key in required if _artifact_present(artifacts.get(key))]
+    missing = [key for key in required if key not in present]
+    return {
+        "required": required,
+        "present": present,
+        "missing": missing,
+        "complete": not missing,
+        "score": round(len(present) / len(required), 3),
+    }
+
+
+def _artifact_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, Mapping):
+        if value.get("status") == "error":
+            return False
+        return bool(value)
+    if isinstance(value, (list, str)):
+        return bool(value)
+    return True
+
+
+def _score_value(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if number < 0:
+        return 0.0
+    if number > 1:
+        return 1.0
+    return number
 
 
 def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
@@ -622,6 +783,8 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
         "# Warroom Evidence Pack",
         "",
         f"Verdict: {pack.get('verdict', 'unknown')}",
+        f"Gate verdict: {pack.get('gate_verdict', 'unknown')}",
+        f"Gate score: {pack.get('gate_score', 'n/a')}",
         f"Generated: {pack.get('generated_at', '')}",
         "",
         "## Scores",
@@ -639,6 +802,16 @@ def evidence_to_markdown(pack: Mapping[str, Any]) -> str:
         "p1",
     ):
         lines.append(f"- {key}: {scores.get(key, 'n/a')}")
+    lines.extend(["", "## 90-Point Gate"])
+    for key, value in (pack.get("score_breakdown") or {}).items():
+        if isinstance(value, Mapping):
+            lines.append(f"- {key}: {value.get('points', 'n/a')}/{value.get('max', 'n/a')}")
+    completeness = pack.get("artifact_completeness") or {}
+    if isinstance(completeness, Mapping):
+        lines.append(f"- artifact_completeness: {completeness.get('score', 'n/a')} missing={completeness.get('missing', [])}")
+    blockers = pack.get("gate_blockers") or []
+    if blockers:
+        lines.append(f"- blockers: {', '.join(str(item) for item in blockers)}")
     lines.extend(["", "## Findings"])
     findings = (pack.get("site_graph") or {}).get("findings") or []
     findings.extend((pack.get("run_evaluation") or {}).get("findings") or [])
