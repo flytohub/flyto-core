@@ -15,11 +15,11 @@
 # Core dependencies (from pyproject.toml)
 # ============================================
 pyyaml==6.0
-aiohttp==3.13.5  # bumped from 3.11.0 — fixes multiple CVEs (zip bomb, smuggling, DoS); 3.13.x is the last line supporting Python 3.9 (3.14.0 requires >=3.10)
+aiohttp==3.14.1  # bumped from 3.13.5 — 11 CVEs (CVE-2026-34993/47265/54273–54280/50269); requires Python >=3.10 (Dockerfiles use 3.12)
 beautifulsoup4==4.12.0
 lxml==6.1.0  # bumped from 4.9.0 — was vulnerable to XXE/iterparse CVE-2026-41066
 pydantic==2.4.0  # bumped from 2.0.0 — GHSA-mr82-8j83-vxmv ReDoS fixed in 2.4.0
-python-dotenv==1.0.0
+python-dotenv==1.2.2  # bumped from 1.0.0 — CVE-2026-28684
 aiofiles==23.0.0
 
 # ============================================
@@ -32,7 +32,9 @@ playwright==1.40.0
 # Optional: API server
 # ============================================
 # pip install flyto-core[api]
-fastapi==0.115.0
+fastapi==0.138.0  # bumped from 0.115.0 — pulls starlette>=0.46 (allows 1.3.1)
+starlette==1.3.1  # explicit pin — 7 CVEs fixed (CVE-2024-47874/2026-48817/48818/54282/54283 etc.)
+python-multipart==0.0.32  # explicit pin — 3 CVEs fixed (CVE-2026-53538/53539/53540)
 uvicorn==0.24.0
 
 # ============================================
