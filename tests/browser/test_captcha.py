@@ -133,3 +133,21 @@ class TestCaptchaAIProvider:
                 token = await solver._poll_result('task-123')
         assert token == 'token-xyz'
         assert post.call_args.args[0] == 'https://ocr.captchaai.com/res.php'
+
+    @pytest.mark.asyncio
+    async def test_hcaptcha_refused_returns_none(self):
+        """CaptchaAI does not support hCaptcha — _submit_task must return None without HTTP calls."""
+        solver = CaptchaSolver('captchaai', 'key')
+        with patch.object(solver, '_http_post') as mock_post:
+            result = await solver._submit_task('hcaptcha', 'sitekey-abc', 'https://example.com')
+        assert result is None
+        mock_post.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_hcaptcha_refused_logs_error(self, caplog):
+        """CaptchaAI refusal of hCaptcha must emit an error log."""
+        import logging
+        solver = CaptchaSolver('captchaai', 'key')
+        with caplog.at_level(logging.ERROR, logger='core.browser.captcha'):
+            await solver._submit_task('hcaptcha', 'sitekey-abc', 'https://example.com')
+        assert any('hCaptcha' in r.message or 'captchaai' in r.message.lower() for r in caplog.records)
