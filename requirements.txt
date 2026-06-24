@@ -18,7 +18,7 @@ firebase-admin>=6.9.0
 
 # Other dependencies
 python-dotenv>=1.2.2  # CVE-2026-28684
-requests>=2.32.5
+requests>=2.34.2
 
 # Vector Database (for long-term memory)
 qdrant-client>=1.9.0  # GHSA-7m75-x27w-r52r input validation fixed in 1.9.0
