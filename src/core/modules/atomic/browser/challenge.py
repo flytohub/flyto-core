@@ -120,6 +120,7 @@ _CHECK_RESOLVED_JS = r"""
                   {'value': '', 'label': 'None (auto-wait + human only)'},
                   {'value': '2captcha', 'label': '2Captcha'},
                   {'value': 'capsolver', 'label': 'CapSolver'},
+                  {'value': 'captchaai', 'label': 'CaptchaAI'},
               ],
               group='basic'),
         field('captcha_api_key', type='string',
@@ -127,7 +128,7 @@ _CHECK_RESOLVED_JS = r"""
               description='API key for the captcha solving service',
               format='password',
               required=False,
-              showIf={"captcha_provider": {"$in": ["2captcha", "capsolver"]}},
+              showIf={"captcha_provider": {"$in": ["2captcha", "capsolver", "captchaai"]}},
               group='basic'),
 
         field('human_fallback', type='boolean',
