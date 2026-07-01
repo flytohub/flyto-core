@@ -1,5 +1,5 @@
 {
-  "total": 426,
+  "total": 427,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -1103,6 +1103,10 @@
     },
     {
       "id": "meta.modules.update_docs",
+      "version": "1.0.0"
+    },
+    {
+      "id": "mcp.recipe",
       "version": "1.0.0"
     },
     {

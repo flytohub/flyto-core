@@ -43,6 +43,7 @@ os.environ.setdefault("FLYTO_ENV", "test")
 
 from core.modules import atomic  # noqa: F401  — triggers registration
 from core.modules.registry import ModuleRegistry
+from tests.conftest import allow_local_http_port_for_test
 
 
 # ─── Test HTML Fixture ───────────────────────────────────────────────────
@@ -353,7 +354,8 @@ def local_server():
     port = srv.server_address[1]
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    yield f"http://127.0.0.1:{port}/mega_test.html"
+    with allow_local_http_port_for_test(port):
+        yield f"http://127.0.0.1:{port}/mega_test.html"
     srv.shutdown()
 
 

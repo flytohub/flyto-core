@@ -85,6 +85,7 @@ dev = [
     "pytest>=8.4.2",  # GHSA-6w46 tmpdir (dev/local-only) fully patched in 9.0.3 / py3.10; 8.4.2 is the last line supporting py3.9
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
+    "Pillow>=11.3.0",
     "black>=25.11.0",  # GHSA-fj7x ReDoS fixed in 24.3.0; 25.11.0 is the last line supporting py3.9 (GHSA-3936 file-write fix requires black 26.3.1 / py3.10)
     "ruff>=0.1.0",
     "mypy>=1.0.0",
@@ -139,6 +140,9 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "--cov=core --cov-report=term-missing --cov-fail-under=60"
+markers = [
+    "browser: real browser tests that require Playwright browser support",
+]
 
 [tool.mypy]
 python_version = "3.9"

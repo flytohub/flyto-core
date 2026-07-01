@@ -28,6 +28,7 @@ os.environ.setdefault("FLYTO_ENV", "test")
 
 from core.modules import atomic  # noqa: F401
 from core.modules.registry import ModuleRegistry
+from tests.conftest import allow_local_http_port_for_test
 
 
 # ─── Multi-page Test HTML ────────────────────────────────────────
@@ -104,7 +105,8 @@ def local_server():
     port = srv.server_address[1]
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    yield f"http://127.0.0.1:{port}"
+    with allow_local_http_port_for_test(port):
+        yield f"http://127.0.0.1:{port}"
     srv.shutdown()
 
 

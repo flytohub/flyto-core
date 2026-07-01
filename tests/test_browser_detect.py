@@ -26,6 +26,7 @@ os.environ.setdefault("FLYTO_ENV", "test")
 
 from core.modules.registry import ModuleRegistry
 import core.modules.atomic.browser  # trigger registration
+from tests.conftest import allow_local_http_port_for_test
 
 TEST_HTML = Path(__file__).parent / "fixtures" / "detect_test_page.html"
 
@@ -51,7 +52,8 @@ def local_server():
     port = srv.server_address[1]
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    yield f"http://127.0.0.1:{port}/detect_test_page.html"
+    with allow_local_http_port_for_test(port):
+        yield f"http://127.0.0.1:{port}/detect_test_page.html"
     srv.shutdown()
 
 

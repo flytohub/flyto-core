@@ -20,6 +20,7 @@ class TestHelper:
         assert ssrf_protection_enabled() is False
 
     def test_allowed_host_still_needs_operator_allowed_port(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_VSCODE_LOCAL_MODE", raising=False)
         monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
         monkeypatch.setenv("FLYTO_ALLOWED_HOSTS", "127.0.0.1")
         monkeypatch.delenv("FLYTO_HTTP_ALLOWED_PORTS", raising=False)
@@ -28,6 +29,7 @@ class TestHelper:
             validate_url_with_env_config("http://127.0.0.1:5180")
 
     def test_operator_can_allow_dev_port_without_disabling_ssrf(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_VSCODE_LOCAL_MODE", raising=False)
         monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
         monkeypatch.setenv("FLYTO_ALLOWED_HOSTS", "127.0.0.1")
         monkeypatch.setenv("FLYTO_HTTP_ALLOWED_PORTS", "5180")
@@ -35,6 +37,7 @@ class TestHelper:
         assert validate_url_with_env_config("http://127.0.0.1:5180") == "http://127.0.0.1:5180"
 
     def test_allowed_port_without_host_still_blocks_loopback(self, monkeypatch):
+        monkeypatch.delenv("FLYTO_VSCODE_LOCAL_MODE", raising=False)
         monkeypatch.delenv("FLYTO_ALLOW_PRIVATE_NETWORK", raising=False)
         monkeypatch.delenv("FLYTO_ALLOWED_HOSTS", raising=False)
         monkeypatch.setenv("FLYTO_HTTP_ALLOWED_PORTS", "5180")

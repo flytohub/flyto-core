@@ -4,8 +4,9 @@ Pytest Configuration for flyto-core tests
 Provides global fixtures and configuration for all tests.
 """
 
-import sys
 import os
+import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 # Add src and tests to path for imports
@@ -55,3 +56,32 @@ def mock_browser_context(base_context):
 
 # Register fixtures module
 pytest_plugins = ["tests.fixtures.module_base"]
+
+
+@contextmanager
+def allow_local_http_port_for_test(port: int, host: str = "127.0.0.1"):
+    """Temporarily allow a dynamic localhost port through the SSRF guard."""
+    old_hosts = os.environ.get("FLYTO_ALLOWED_HOSTS")
+    old_ports = os.environ.get("FLYTO_HTTP_ALLOWED_PORTS")
+
+    hosts = [h.strip() for h in (old_hosts or "").split(",") if h.strip()]
+    ports = [p.strip() for p in (old_ports or "").split(",") if p.strip()]
+    if host not in hosts:
+        hosts.append(host)
+    port_str = str(port)
+    if port_str not in ports:
+        ports.append(port_str)
+
+    os.environ["FLYTO_ALLOWED_HOSTS"] = ",".join(hosts)
+    os.environ["FLYTO_HTTP_ALLOWED_PORTS"] = ",".join(ports)
+    try:
+        yield
+    finally:
+        if old_hosts is None:
+            os.environ.pop("FLYTO_ALLOWED_HOSTS", None)
+        else:
+            os.environ["FLYTO_ALLOWED_HOSTS"] = old_hosts
+        if old_ports is None:
+            os.environ.pop("FLYTO_HTTP_ALLOWED_PORTS", None)
+        else:
+            os.environ["FLYTO_HTTP_ALLOWED_PORTS"] = old_ports
