@@ -36,7 +36,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers \
 RUN playwright install chromium \
     && chmod -R o+rx /opt/pw-browsers
 
-COPY --chown=flyto:flyto . /app
+RUN chown -R flyto:flyto /app
 
 USER flyto
 
