@@ -70,6 +70,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `warroom-deterministic-audit` now composes the generic `verification.*`
   modules while preserving the existing recipe name for compatibility.
 
+## [2.26.6] - 2026-07-07
+
+### Security
+- **GHSA-2956-977x-2w3r (Critical) — arbitrary file write.** Every file-writing
+  module now routes its output path through the central
+  `validate_path_with_env_config()` guard, confining writes to
+  `FLYTO_SANDBOX_DIR`; the caller can no longer supply the base its target is
+  checked against. Affects `image.download`/`convert`/`resize`/`crop`/
+  `compress`/`rotate`/`watermark`/`qrcode_generate`,
+  `document.excel_write`/`pdf_fill_form`/`word_to_pdf`/`pdf_to_word`, and the
+  `browser.pagination` checkpoint.
+- **GHSA-hr7p-wg7r-hg9m (High) — `${env.*}` secret exfil.** `${env.VAR}`
+  interpolation in the workflow resolver is now gated by the same policy as the
+  `env.get` module (new `is_env_var_allowed()`): deny-by-default, opt-in via
+  `env.get` being allowed or an explicit `FLYTO_ENV_VAR_ALLOWLIST`.
+- **GHSA-qq9q-xgm3-xv9g (High) — LLM/API key leak to attacker `base_url`.** An
+  environment-derived provider key is now only attached to the provider's
+  official endpoint or a host on `FLYTO_TRUSTED_LLM_HOSTS` (new
+  `assert_env_credential_endpoint_allowed()`), across `llm.chat`, `ai.model`,
+  `llm.agent` and `vector.connector`; also adds the missing SSRF check to
+  `ai.model`.
+
 ## [2.26.3] - 2026-05-30
 
 ### Security
