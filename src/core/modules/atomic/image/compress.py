@@ -11,6 +11,8 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -166,6 +168,12 @@ async def image_compress(context: Dict[str, Any]) -> Dict[str, Any]:
 
     original_size = os.path.getsize(input_path)
     output_path = _resolve_compress_output(input_path, output_path, output_format)
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
 
     def _compress():
         with Image.open(input_path) as img:

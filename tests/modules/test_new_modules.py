@@ -591,6 +591,13 @@ class TestCryptoJwt:
 
 class TestImageModules:
 
+    @pytest.fixture(autouse=True)
+    def _sandbox(self, tmp_path, monkeypatch):
+        # Image writer modules confine output to FLYTO_SANDBOX_DIR
+        # (GHSA-2956-977x-2w3r). Point the sandbox at this test's tmp_path so
+        # legitimate in-sandbox writes are allowed.
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
+
     @pytest.fixture
     def test_image(self, tmp_path):
         """Create a real test image (100x100 red square)."""

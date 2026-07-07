@@ -24,6 +24,7 @@ from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility
 from ...types import NodeType, EdgeType, DataType
+from ....utils import assert_env_credential_endpoint_allowed, CredentialEndpointError
 
 from typing import List, Optional
 
@@ -312,7 +313,10 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         user_context['input'] = stringify_value(main_input, max_input_size)
 
     # ── Resolve sub-node objects ────────────────────────────────
-    chat_model = _resolve_chat_model(context)
+    try:
+        chat_model = _resolve_chat_model(context)
+    except CredentialEndpointError as e:
+        return {'ok': False, 'error': str(e), 'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'}
     if not chat_model:
         return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL'}
 
@@ -879,6 +883,8 @@ def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
     api_key = params.get('api_key')
     base_url = params.get('base_url')
 
+    caller_base_url = base_url
+    key_from_env = False
     if not api_key and provider:
         env_vars = {
             'openai': 'OPENAI_API_KEY', 'anthropic': 'ANTHROPIC_API_KEY',
@@ -888,6 +894,12 @@ def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
         env_var = env_vars.get(provider)
         if env_var:
             api_key = os.getenv(env_var)
+            key_from_env = bool(api_key)
+
+    # SECURITY: never forward the operator's env-derived key to a caller-supplied
+    # endpoint (GHSA-qq9q-xgm3-xv9g). Checked against the caller's base_url before
+    # any official-provider default is substituted below.
+    assert_env_credential_endpoint_allowed(caller_base_url, key_from_env)
 
     # Ollama doesn't need a key
     if provider == 'ollama':

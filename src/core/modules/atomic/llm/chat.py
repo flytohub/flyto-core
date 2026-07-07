@@ -13,7 +13,12 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    assert_env_credential_endpoint_allowed,
+    CredentialEndpointError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -158,6 +163,7 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
             }
 
     # Get API key from environment if not provided
+    key_from_env = False
     if not api_key:
         env_vars = {
             'openai': 'OPENAI_API_KEY',
@@ -167,6 +173,19 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
         env_var = env_vars.get(provider)
         if env_var:
             api_key = os.getenv(env_var)
+            key_from_env = bool(api_key)
+
+    # SECURITY: never forward the operator's env-derived key to a caller-supplied
+    # endpoint (GHSA-qq9q-xgm3-xv9g). The SSRF check above does not stop this —
+    # it allows public attacker hosts.
+    try:
+        assert_env_credential_endpoint_allowed(base_url, key_from_env)
+    except CredentialEndpointError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'
+        }
 
     if provider != 'ollama' and not api_key:
         return {

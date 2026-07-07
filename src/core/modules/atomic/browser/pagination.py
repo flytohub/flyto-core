@@ -16,6 +16,8 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +323,12 @@ class BrowserPaginationModule(BaseModule):
         resumed = False
 
         if self.checkpoint_path:
+            # SECURITY: confine the checkpoint write to FLYTO_SANDBOX_DIR
+            # (GHSA-2956-977x-2w3r).
+            try:
+                self.checkpoint_path = validate_path_with_env_config(self.checkpoint_path)
+            except PathTraversalError as e:
+                raise ModuleError(str(e), code="PATH_TRAVERSAL")
             from core.browser.checkpoint import PaginationCheckpoint
             checkpoint = PaginationCheckpoint(
                 self.checkpoint_path, self.item_selector, self.mode,

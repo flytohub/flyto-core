@@ -12,6 +12,12 @@ from typing import Any, Dict
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...types import NodeType, EdgeType, DataType
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    assert_env_credential_endpoint_allowed,
+    CredentialEndpointError,
+)
 
 
 @register_module(
@@ -131,7 +137,19 @@ async def ai_model(context: Dict[str, Any]) -> Dict[str, Any]:
     base_url = params.get('base_url')
     max_tokens = params.get('max_tokens', 4096)
 
+    # SECURITY: validate custom base URL for SSRF (was previously unchecked here).
+    if base_url:
+        try:
+            validate_url_with_env_config(base_url)
+        except SSRFError as e:
+            return {
+                'ok': False,
+                'error': str(e),
+                'error_code': 'SSRF_BLOCKED'
+            }
+
     # Get API key from environment if not provided
+    key_from_env = False
     if not api_key:
         env_vars = {
             'openai': 'OPENAI_API_KEY',
@@ -142,6 +160,18 @@ async def ai_model(context: Dict[str, Any]) -> Dict[str, Any]:
         env_var = env_vars.get(provider)
         if env_var:
             api_key = os.getenv(env_var)
+            key_from_env = bool(api_key)
+
+    # SECURITY: never forward the operator's env-derived key to a caller-supplied
+    # endpoint (GHSA-qq9q-xgm3-xv9g).
+    try:
+        assert_env_credential_endpoint_allowed(base_url, key_from_env)
+    except CredentialEndpointError as e:
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'
+        }
 
     if not api_key:
         return {

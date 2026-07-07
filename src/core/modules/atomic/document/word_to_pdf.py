@@ -11,6 +11,8 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,13 @@ async def word_to_pdf(context: Dict[str, Any]) -> Dict[str, Any]:
     method = params.get('method', 'auto')
 
     output_path = _resolve_output_path(params, input_path, '.pdf')
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
+
     _validate_input_and_prepare_output(input_path, output_path, 'Word')
 
     success, method_used = await _run_conversion(method, input_path, output_path)

@@ -10,6 +10,7 @@ import re
 import socket
 import ipaddress
 import logging
+import fnmatch
 from typing import Any, Dict, Optional, TypeVar, Callable
 from urllib.parse import urlparse
 from functools import wraps
@@ -591,6 +592,63 @@ def validate_url_with_env_config(url: str) -> str:
     """
     config = get_ssrf_config()
     return validate_url_ssrf(url, **config)
+
+
+# =============================================================================
+# Credential-endpoint protection (env key exfil via caller-controlled base_url)
+# =============================================================================
+
+class CredentialEndpointError(ValueError):
+    """Raised when an environment-derived credential would be sent to a
+    caller-controlled endpoint that is not explicitly trusted."""
+    pass
+
+
+def _trusted_credential_hosts() -> list:
+    """Operator-configured allowlist of hosts an env credential may be sent to.
+
+    FLYTO_TRUSTED_LLM_HOSTS — comma-separated hostnames or fnmatch globs
+    (e.g. "llm-proxy.internal,*.mycorp.com"). Empty by default.
+    """
+    raw = os.environ.get('FLYTO_TRUSTED_LLM_HOSTS', '')
+    return [h.strip().lower() for h in raw.split(',') if h.strip()]
+
+
+def assert_env_credential_endpoint_allowed(base_url: Optional[str], key_from_env: bool) -> None:
+    """Guard against leaking the operator's env-derived API key to an
+    attacker-controlled endpoint (GHSA-qq9q-xgm3-xv9g).
+
+    The SSRF guard is the wrong control here: it blocks private targets but
+    happily allows an attacker's *public* host, so a caller-supplied base_url
+    plus the operator's env key hands the key to the attacker. This enforces:
+
+      - A caller-supplied key going anywhere is fine (it is the caller's own
+        secret, not the operator's).
+      - An env-derived key is only attached to the provider's official endpoint
+        (base_url is None/empty) or to a host on FLYTO_TRUSTED_LLM_HOSTS.
+
+    Args:
+        base_url: The caller-supplied custom endpoint, or None for the default.
+        key_from_env: True if the credential was read from the environment
+                      rather than supplied by the caller.
+
+    Raises:
+        CredentialEndpointError: if an env credential would be sent to an
+                                 untrusted custom endpoint.
+    """
+    if not key_from_env:
+        return
+    if not base_url:
+        return
+    host = (urlparse(base_url).hostname or '').lower()
+    for pattern in _trusted_credential_hosts():
+        if fnmatch.fnmatch(host, pattern):
+            return
+    raise CredentialEndpointError(
+        "Refusing to send the environment-provided API key to a custom "
+        f"endpoint ('{base_url}'). Supply an explicit 'api_key' for custom "
+        "endpoints, or add the host to FLYTO_TRUSTED_LLM_HOSTS."
+    )
 
 
 # =============================================================================

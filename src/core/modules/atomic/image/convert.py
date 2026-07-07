@@ -11,6 +11,8 @@ from typing import Any, Dict, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -53,7 +55,6 @@ def _resolve_convert_paths(input_path: str, output_path: Optional[str], output_f
         base_name = os.path.splitext(input_path)[0]
         extension = SUPPORTED_FORMATS[output_format][0]
         output_path = f"{base_name}{extension}"
-    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
     return output_path, output_format
 
 
@@ -175,6 +176,13 @@ async def image_convert(context: Dict[str, Any]) -> Dict[str, Any]:
     output_path = params.get('output_path')
 
     output_path, output_format = _resolve_convert_paths(input_path, output_path, output_format)
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
+    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
 
     with Image.open(input_path) as img:
         if resize:

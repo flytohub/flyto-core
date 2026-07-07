@@ -11,6 +11,8 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +106,12 @@ async def excel_write(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError("Data must be an array")
     if not data:
         raise ValueError("Data cannot be empty")
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        path = validate_path_with_env_config(path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
 
     Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
 

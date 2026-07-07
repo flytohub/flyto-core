@@ -9,7 +9,12 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    assert_env_credential_endpoint_allowed,
+    CredentialEndpointError,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -45,6 +50,11 @@ class VectorDBConnector:
         self.path = path or os.getenv("QDRANT_PATH", "./qdrant_storage")
         self.client = None
         self._connected = False
+        # SECURITY: track credential/endpoint provenance so we never forward the
+        # operator's env-derived QDRANT_API_KEY to a caller-supplied url
+        # (GHSA-qq9q-xgm3-xv9g).
+        self._url_from_caller = bool(url)
+        self._key_from_env = (not api_key) and bool(os.getenv("QDRANT_API_KEY"))
 
     def connect(self) -> bool:
         """
@@ -89,6 +99,13 @@ class VectorDBConnector:
                     validate_url_with_env_config(self.url)
                 except SSRFError as e:
                     raise ValueError(f"SSRF blocked: {e}")
+
+                # SECURITY: don't send the operator's env-derived key to a
+                # caller-supplied endpoint (GHSA-qq9q-xgm3-xv9g).
+                assert_env_credential_endpoint_allowed(
+                    self.url if self._url_from_caller else None,
+                    self._key_from_env,
+                )
 
                 self.client = QdrantClient(
                     url=self.url,

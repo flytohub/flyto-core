@@ -11,6 +11,8 @@ from typing import Any, Dict, Optional, Tuple
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -149,6 +151,12 @@ async def image_resize(context: Dict[str, Any]) -> Dict[str, Any]:
     if not output_path:
         base, ext = os.path.splitext(input_path)
         output_path = f"{base}_resized{ext}"
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
 
     def _resize():
         with Image.open(input_path) as img:

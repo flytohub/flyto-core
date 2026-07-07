@@ -109,6 +109,44 @@ module_filter = ModuleFilter()
 
 
 # ---------------------------------------------------------------------------
+# Environment-variable interpolation policy
+# ---------------------------------------------------------------------------
+#
+# The workflow engine expands ${env.VAR} in step parameters. That is the exact
+# capability the `env.get` module denylist exists to block (reading arbitrary
+# host env vars = secret exfil). Interpolation happens in the engine BEFORE the
+# module chokepoint, so denylisting `env.get` alone does not stop it
+# (GHSA-hr7p-wg7r-hg9m). We therefore gate ${env.*} through one shared policy:
+#
+#   - If `env.get` is permitted by the module filter, env access is enabled and
+#     ${env.VAR} resolves as before.
+#   - Otherwise (the secure default), ${env.VAR} is DENIED unless VAR matches an
+#     explicit allowlist the operator opts into via FLYTO_ENV_VAR_ALLOWLIST
+#     (comma-separated names or fnmatch globs, e.g. "PUBLIC_*,APP_REGION").
+#
+# This makes engine interpolation and module execution enforce the same env
+# policy, deny-by-default.
+
+def _env_var_allowlist() -> List[str]:
+    raw = os.environ.get("FLYTO_ENV_VAR_ALLOWLIST", "")
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+
+def is_env_var_allowed(name: str) -> bool:
+    """Whether ${env.<name>} interpolation is permitted by policy.
+
+    Ties ${env.*} to the same control as the `env.get` module: if `env.get` is
+    allowed, env access is enabled; otherwise only names explicitly allowlisted
+    via FLYTO_ENV_VAR_ALLOWLIST resolve, and everything else is denied.
+    """
+    if not name:
+        return False
+    if module_filter.is_allowed("env.get"):
+        return True
+    return any(fnmatch.fnmatch(name, pat) for pat in _env_var_allowlist())
+
+
+# ---------------------------------------------------------------------------
 # Per-module capability permissions (a second lock beyond the module allowlist)
 # ---------------------------------------------------------------------------
 #

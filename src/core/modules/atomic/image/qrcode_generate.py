@@ -10,6 +10,8 @@ from typing import Any, Dict
 
 from ...registry import register_module
 from ...schema import compose, patch, presets
+from ...errors import ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,11 @@ def _create_qr_code(qrcode, p, ec_map, border):
     output_path = p['output_path']
     if p['output_format'] == 'svg' and output_path.endswith('.png'):
         output_path = output_path[:-4] + '.svg'
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)

@@ -14,7 +14,13 @@ import aiohttp
 
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError
+from ...errors import ModuleError
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    validate_path_with_env_config,
+    PathTraversalError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +39,6 @@ def _validate_and_prepare_download(url: str, parsed, output_path, output_dir, he
             filename += '.jpg'
         output_path = os.path.join(output_dir, filename)
 
-    Path(os.path.dirname(output_path)).mkdir(parents=True, exist_ok=True)
     return output_path, default_headers
 
 
@@ -136,11 +141,16 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
         url, parsed, output_path, output_dir, headers
     )
 
-    # Validate output_path to prevent path traversal
-    base_real = os.path.realpath(output_dir)
-    target_real = os.path.realpath(output_path)
-    if os.path.commonpath([base_real, target_real]) != base_real:
-        raise Exception('Invalid file path')
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR. The previous check
+    # validated output_path against the caller-supplied output_dir, so the
+    # caller controlled both the target and its base and the check was a no-op
+    # (GHSA-2956-977x-2w3r). Use the central sandbox guard instead.
+    try:
+        target_real = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
+
+    Path(os.path.dirname(target_real)).mkdir(parents=True, exist_ok=True)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(

@@ -7,8 +7,11 @@ Supports item-based execution variables per ITEM_PIPELINE_SPEC.md Section 4.3
 """
 import re
 import os
+import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class VariableResolver:
@@ -194,6 +197,19 @@ class VariableResolver:
             if len(parts) < 2:
                 return None
             env_var = parts[1]
+            # SECURITY: gate ${env.*} through the same policy as the `env.get`
+            # module so denylisting env.get is not bypassable via interpolation
+            # (GHSA-hr7p-wg7r-hg9m). Deny-by-default; opt in via
+            # FLYTO_ENV_VAR_ALLOWLIST.
+            from core.module_policy import is_env_var_allowed
+            if not is_env_var_allowed(env_var):
+                logger.warning(
+                    "Blocked ${env.%s} interpolation: env access is denied by "
+                    "policy. Allow the env.get module or add %s to "
+                    "FLYTO_ENV_VAR_ALLOWLIST to permit it.",
+                    env_var, env_var,
+                )
+                return None
             return os.getenv(env_var)
 
         # Workflow parameters

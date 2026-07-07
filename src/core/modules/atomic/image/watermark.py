@@ -14,6 +14,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from ....utils import validate_path_with_env_config, PathTraversalError
 
 
 logger = logging.getLogger(__name__)
@@ -245,6 +246,12 @@ async def image_watermark(context: Dict[str, Any]) -> Dict[str, Any]:
 
     _validate_watermark_params(input_path, output_path, text, watermark_image_path)
     opacity = max(0.0, min(1.0, float(opacity)))
+
+    # SECURITY: confine the write to FLYTO_SANDBOX_DIR (GHSA-2956-977x-2w3r).
+    try:
+        output_path = validate_path_with_env_config(output_path)
+    except PathTraversalError as e:
+        raise ModuleError(str(e), code="PATH_TRAVERSAL")
 
     def _apply_watermark():
         with Image.open(input_path) as base_img:
