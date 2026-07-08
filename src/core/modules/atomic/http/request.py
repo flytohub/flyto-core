@@ -13,7 +13,12 @@ from typing import Any, Dict, List, Optional, Union
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility, FieldGroup
-from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    ssrf_protection_enabled,
+    guarded_aiohttp_request,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -334,7 +339,15 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
     for attempt in range(max_attempts):
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.request(method, url, **request_kwargs) as response:
+                # SECURITY: revalidate every redirect hop through the SSRF guard
+                # so a public URL cannot 302 into internal space
+                # (GHSA-c9hr-64h3-gxpc). follow_redirects=False => do not follow.
+                _follow = request_kwargs.get('allow_redirects', True)
+                _req_kwargs = {k: v for k, v in request_kwargs.items() if k != 'allow_redirects'}
+                response = await guarded_aiohttp_request(
+                    session, method, url,
+                    max_redirects=(5 if _follow else 0), **_req_kwargs)
+                try:
                     duration_ms = int((time.time() - start_time) * 1000)
                     body_content = await _read_response_body(response, response_type)
 
@@ -369,6 +382,8 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
                     if attempt > 0:
                         result['retries'] = attempt
                     return result
+                finally:
+                    response.release()
 
         except asyncio.TimeoutError:
             last_error = ('TIMEOUT', f'Request timed out after {timeout_seconds} seconds')

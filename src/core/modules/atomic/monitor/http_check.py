@@ -16,6 +16,7 @@ from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
+from ....utils import enforce_outbound_url, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -156,6 +157,23 @@ async def monitor_http_check(context: Dict[str, Any]) -> Dict[str, Any]:
 
     if body and method == 'POST':
         request_kwargs['data'] = body
+
+    # SECURITY: gate the client-controlled URL through the SSRF guard, like the
+    # guarded sibling http.get (GHSA-pgwh-4jj4-qm8v).
+    try:
+        enforce_outbound_url(url)
+    except SSRFError as e:
+        logger.warning(f"HTTP check SSRF blocked: {url} - {e}")
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED',
+            'data': {
+                'status': 'unhealthy',
+                'status_code': 0,
+                'url': url,
+            }
+        }
 
     start_time = time.time()
 

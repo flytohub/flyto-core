@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+from ....utils import enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +196,12 @@ class BrowserProxyRotateModule(BaseModule):
 
     async def _fetch_from_provider(self) -> list:
         """Fetch proxy list from a provider API (Bright Data, Oxylabs, SmartProxy, etc.)."""
+        # SECURITY: gate the client-controlled provider URL through the SSRF
+        # guard before fetching it server-side (GHSA-pgwh-4jj4-qm8v).
+        try:
+            enforce_outbound_url(self.provider_url)
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection blocked request: {e}")
         try:
             import httpx
             headers = {}

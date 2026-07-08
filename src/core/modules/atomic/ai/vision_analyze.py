@@ -16,6 +16,7 @@ import aiohttp
 from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose, field
+from ....utils import enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -361,6 +362,12 @@ async def _call_anthropic_vision(
         }
     else:
         # For URL, we need to download and encode
+        # SECURITY: gate the client-controlled URL through the SSRF guard
+        # (GHSA-pgwh-4jj4-qm8v).
+        try:
+            enforce_outbound_url(image_url)
+        except SSRFError as e:
+            raise ModuleError(f"SSRF protection blocked request: {e}")
         async with session.get(image_url) as img_resp:
             if img_resp.status != 200:
                 raise ModuleError(f"Failed to download image from URL: {image_url}")

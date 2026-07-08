@@ -13,6 +13,7 @@ import aiohttp
 from ....base import BaseModule
 from ....registry import register_module
 from .....constants import EnvVars
+from .....utils import enforce_outbound_url, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -145,6 +146,18 @@ class SlackSendMessageModule(BaseModule):
         self.icon_emoji = self.params.get('icon_emoji')
 
     async def execute(self) -> Any:
+        # SECURITY: gate the client-controlled webhook URL through the SSRF guard
+        # (GHSA-pgwh-4jj4-qm8v) — prevents posting to internal/metadata endpoints.
+        try:
+            enforce_outbound_url(self.webhook_url)
+        except SSRFError as e:
+            return {
+                'status': 'error',
+                'sent': False,
+                'message': f'SSRF protection blocked request: {e}',
+                'error_code': 'SSRF_BLOCKED',
+            }
+
         # Build Slack message payload
         payload = {
             'text': self.text

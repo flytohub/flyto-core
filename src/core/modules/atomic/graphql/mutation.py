@@ -12,6 +12,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from ....utils import enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,13 @@ def _prepare_graphql_request(params: Dict[str, Any], operation_key: str = 'mutat
         raise ValidationError("Missing required parameter: url", field="url")
     if not operation:
         raise ValidationError("Missing required parameter: {}".format(operation_key), field=operation_key)
+
+    # SECURITY: gate the client-controlled URL through the SSRF guard, like the
+    # guarded sibling http.get (GHSA-pgwh-4jj4-qm8v).
+    try:
+        enforce_outbound_url(url)
+    except SSRFError as e:
+        raise ModuleError("SSRF protection blocked request: {}".format(e))
 
     headers.setdefault('Content-Type', 'application/json')
     if auth_token:

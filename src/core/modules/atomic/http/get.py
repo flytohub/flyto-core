@@ -12,7 +12,12 @@ from typing import Any, Dict
 from ...registry import register_module
 from ...errors import ValidationError, NetworkError, ModuleError
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    ssrf_protection_enabled,
+    guarded_aiohttp_request,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -113,11 +118,17 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
         ssl_param = None if verify_ssl else False
         timeout = aiohttp.ClientTimeout(total=timeout_s)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url, headers=headers, ssl=ssl_param) as response:
+            # SECURITY: revalidate every redirect hop through the SSRF guard so a
+            # public URL cannot 302 into internal space (GHSA-c9hr-64h3-gxpc).
+            response = await guarded_aiohttp_request(
+                session, 'GET', url, headers=headers, ssl=ssl_param)
+            try:
                 body = await _parse_response_body(response)
                 if 200 <= response.status < 300:
                     return {'ok': True, 'data': {'status': response.status, 'body': body, 'headers': dict(response.headers)}}
                 raise NetworkError(f"HTTP {response.status} error", url=url, status_code=response.status)
+            finally:
+                response.release()
     except NetworkError:
         raise
     except Exception as e:

@@ -594,6 +594,77 @@ def validate_url_with_env_config(url: str) -> str:
     return validate_url_ssrf(url, **config)
 
 
+def enforce_outbound_url(url: str) -> str:
+    """Run the operator SSRF guard on a client-controlled outbound URL.
+
+    Convenience wrapper so every HTTP-emitting module gates identically
+    (GHSA-pgwh-4jj4-qm8v): modules that fetch a caller-supplied URL must call
+    this before issuing the request, matching their guarded siblings
+    (`http.get`, `ai.model`). No-op when the operator disabled the guard via
+    FLYTO_HTTP_DISABLE_SSRF_GUARD.
+
+    Args:
+        url: The outbound URL about to be requested.
+
+    Returns:
+        The validated URL (unchanged).
+
+    Raises:
+        SSRFError: If the target is blocked by policy.
+    """
+    if ssrf_protection_enabled():
+        return validate_url_with_env_config(url)
+    return url
+
+
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+
+
+async def guarded_aiohttp_request(session, method: str, url: str, *,
+                                  max_redirects: int = 5, **kwargs):
+    """Issue an aiohttp request that revalidates every redirect hop.
+
+    aiohttp's default ``allow_redirects=True`` follows 30x ``Location`` headers
+    with no revalidation, so a public URL that 302-redirects into internal space
+    bypasses the initial guard (GHSA-c9hr-64h3-gxpc). This disables auto-redirect
+    and re-runs the SSRF guard on each ``Location`` before following it.
+
+    The caller owns the returned response object (read the body, then
+    ``release()``/close it).
+
+    Args:
+        session: an ``aiohttp.ClientSession``.
+        method: HTTP method.
+        url: initial (already-caller-controlled) URL.
+        max_redirects: hops to follow (0 = do not follow; return the 30x as-is).
+        **kwargs: forwarded to ``session.request`` (``allow_redirects`` ignored).
+
+    Raises:
+        SSRFError: if the initial URL or any redirect target is blocked.
+    """
+    from urllib.parse import urljoin
+    kwargs.pop('allow_redirects', None)
+    guard = ssrf_protection_enabled()
+    if guard:
+        validate_url_with_env_config(url)
+    method = method.upper()
+    for hop in range(max_redirects + 1):
+        response = await session.request(method, url, allow_redirects=False, **kwargs)
+        location = response.headers.get('Location')
+        if response.status in _REDIRECT_STATUSES and location and hop < max_redirects:
+            response.release()
+            url = urljoin(url, location)
+            if guard:
+                validate_url_with_env_config(url)  # raises SSRFError on a blocked hop
+            if response.status == 303:
+                method = 'GET'
+                kwargs.pop('json', None)
+                kwargs.pop('data', None)
+            continue
+        return response
+    return response
+
+
 # =============================================================================
 # Credential-endpoint protection (env key exfil via caller-controlled base_url)
 # =============================================================================

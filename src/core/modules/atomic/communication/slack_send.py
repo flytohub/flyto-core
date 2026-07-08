@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import enforce_outbound_url, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -99,6 +100,13 @@ async def slack_send(context: Dict[str, Any]) -> Dict[str, Any]:
 
     if not webhook_url:
         raise ValueError("Slack webhook URL not configured. Set SLACK_WEBHOOK_URL env or provide webhook_url param")
+
+    # SECURITY: gate the client-controlled webhook URL through the SSRF guard
+    # (GHSA-pgwh-4jj4-qm8v) — prevents posting to internal/metadata endpoints.
+    try:
+        enforce_outbound_url(webhook_url)
+    except SSRFError as e:
+        raise ValueError(f"SSRF protection blocked request: {e}")
 
     payload = {'text': message}
 

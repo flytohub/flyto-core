@@ -23,6 +23,7 @@ from typing import Any, Dict, List, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field as schema_field
+from ....utils import enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -353,6 +354,15 @@ class VerifyVisualDiffModule(BaseModule):
 
         ref_is_url = self.reference_url.startswith(('http://', 'https://'))
         ref_is_image = not ref_is_url and Path(self.reference_url).suffix.lower() in ('.png', '.jpg', '.jpeg', '.webp')
+
+        # SECURITY: gate the client-controlled URLs through the SSRF guard before
+        # the headless browser navigates to them (GHSA-pgwh-4jj4-qm8v).
+        try:
+            if ref_is_url:
+                enforce_outbound_url(self.reference_url)
+            enforce_outbound_url(self.dev_url)
+        except SSRFError as e:
+            return {'ok': False, 'error': f'SSRF protection blocked request: {e}', 'error_code': 'SSRF_BLOCKED'}
 
         if ref_is_url:
             await _screenshot_url(self.reference_url, ref_screenshot, self.viewport_width, self.viewport_height)

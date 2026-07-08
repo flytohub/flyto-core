@@ -13,6 +13,7 @@ import aiohttp
 from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
+from .....utils import enforce_outbound_url, SSRFError
 
 
 @register_module(
@@ -79,6 +80,13 @@ class HTTPGetModule(BaseModule):
 
         if not url:
             raise ValueError("URL is required")
+
+        # SECURITY: gate the client-controlled URL through the SSRF guard, like
+        # the guarded sibling http.get (GHSA-pgwh-4jj4-qm8v).
+        try:
+            enforce_outbound_url(url)
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection blocked request: {e}")
 
         ssl_param = None if verify_ssl else False
         async with aiohttp.ClientSession() as session:
@@ -171,6 +179,13 @@ class HTTPPostModule(BaseModule):
 
         if not url:
             raise ValueError("URL is required")
+
+        # SECURITY: gate the client-controlled URL through the SSRF guard, like
+        # the guarded sibling http.get (GHSA-pgwh-4jj4-qm8v).
+        try:
+            enforce_outbound_url(url)
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection blocked request: {e}")
 
         ssl_param = None if verify_ssl else False
         kwargs = {

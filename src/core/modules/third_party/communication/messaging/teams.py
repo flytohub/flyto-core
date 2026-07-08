@@ -11,6 +11,7 @@ import aiohttp
 
 from ....base import BaseModule
 from ....registry import register_module
+from .....utils import enforce_outbound_url, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -128,6 +129,20 @@ class TeamsSendMessageModule(BaseModule):
         self.sections = self.params.get('sections')
 
     async def execute(self) -> Any:
+        # SECURITY: gate the client-controlled webhook URL through the SSRF guard
+        # (GHSA-pgwh-4jj4-qm8v) — prevents posting to internal/metadata endpoints.
+        try:
+            enforce_outbound_url(self.webhook_url)
+        except SSRFError as e:
+            return {
+                'ok': False,
+                'data': {
+                    'status': 'error',
+                    'message': f'SSRF protection blocked request: {e}',
+                },
+                'error_code': 'SSRF_BLOCKED',
+            }
+
         # Build Teams MessageCard payload
         payload = {
             '@type': 'MessageCard',

@@ -15,7 +15,12 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
-from ....utils import validate_url_with_env_config, SSRFError, ssrf_protection_enabled
+from ....utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    ssrf_protection_enabled,
+    guarded_aiohttp_request,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -62,9 +67,14 @@ async def _execute_single_request(
         else:
             kwargs["data"] = body
 
+    # SECURITY: revalidate every redirect hop through the SSRF guard so a public
+    # URL cannot 302 into internal space (GHSA-c9hr-64h3-gxpc).
+    _follow = kwargs.pop("allow_redirects", True)
     start = time.time()
     try:
-        async with session.request(method, url, **kwargs) as response:
+        response = await guarded_aiohttp_request(
+            session, method, url, max_redirects=(5 if _follow else 0), **kwargs)
+        try:
             raw_body = await response.read()
             try:
                 text_body = raw_body.decode("utf-8", errors="replace")
@@ -84,6 +94,8 @@ async def _execute_single_request(
                 "ok": 200 <= status < 300,
                 "error": None,
             }
+        finally:
+            response.release()
     except asyncio.TimeoutError:
         duration_ms = int((time.time() - start) * 1000)
         return _failed_request(label, method, url, duration_ms, "TIMEOUT",

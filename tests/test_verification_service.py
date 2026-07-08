@@ -16,24 +16,45 @@ def test_verification_scope_allows_only_engine_computed_hosts():
     assert not target_allowed("https://evil.example.com/projects", ["https://app.flyto2.com"])
 
 
-def test_verification_service_run_endpoint_accepts_background_task_injection():
+def _run_payload():
+    return {
+        "workflowYaml": "name: dry\nsteps: []\n",
+        "params": {"target_url": "https://app.flyto2.com"},
+        "allowed_targets": ["https://app.flyto2.com"],
+        "dry_run": True,
+    }
+
+
+def test_verification_service_run_requires_auth(monkeypatch):
+    """GHSA-jx74-cqjv-2c67: /run must reject unauthenticated callers and accept
+    a caller presenting the configured shared secret."""
     from fastapi.testclient import TestClient
 
+    monkeypatch.setenv("FLYTO_VERIFICATION_API_KEY", "test-runner-secret")
     client = TestClient(create_app())
-    response = client.post(
-        "/run",
-        json={
-            "workflowYaml": "name: dry\nsteps: []\n",
-            "params": {"target_url": "https://app.flyto2.com"},
-            "allowed_targets": ["https://app.flyto2.com"],
-            "dry_run": True,
-        },
-    )
 
+    # Unauthenticated -> rejected.
+    assert client.post("/run", json=_run_payload()).status_code == 401
+
+    # Authenticated -> accepted, background task injected.
+    response = client.post(
+        "/run", json=_run_payload(), headers={"X-Internal-Key": "test-runner-secret"}
+    )
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["ok"] is True
     assert body["execution_id"].startswith("verification-")
+
+
+def test_verification_service_run_fails_closed_without_configured_secret(monkeypatch):
+    """GHSA-jx74-cqjv-2c67: with no secret configured, /run refuses rather than
+    running unauthenticated."""
+    from fastapi.testclient import TestClient
+
+    for var in ("FLYTO_VERIFICATION_API_KEY", "FLYTO_RUNNER_SECRET", "FLYTO_VERIFICATION_SECRET"):
+        monkeypatch.delenv(var, raising=False)
+    client = TestClient(create_app())
+    assert client.post("/run", json=_run_payload()).status_code == 503
 
 
 def test_verification_service_extracts_screenshot_from_module_output(tmp_path):

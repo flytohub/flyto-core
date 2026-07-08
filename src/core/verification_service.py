@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import base64
 import asyncio
+import fnmatch
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -26,6 +28,12 @@ from urllib.parse import urlparse
 import aiohttp
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
+
+from core.utils import (
+    validate_url_with_env_config,
+    SSRFError,
+    ssrf_protection_enabled,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -320,8 +328,62 @@ def resolve_callback_url(body: VerificationRunRequest) -> str:
     return engine_url.rstrip("/") + DEFAULT_CALLBACK_PATH
 
 
+def _trusted_callback_hosts() -> set[str]:
+    """Hosts the runner may post evidence to and attach the internal key for.
+
+    Derived from the operator-configured engine URL (the only legitimate
+    callback target) plus an optional FLYTO_TRUSTED_CALLBACK_HOSTS allowlist
+    (comma-separated hostnames or fnmatch globs).
+    """
+    trusted: set[str] = set()
+    for src in (
+        os.environ.get("FLYTO_ENGINE_CALLBACK_URL"),
+        os.environ.get("FLYTO_ENGINE_URL"),
+    ):
+        if src:
+            candidate = src if "://" in src else "http://" + src
+            host = (urlparse(candidate).hostname or "").lower()
+            if host:
+                trusted.add(host)
+    return trusted
+
+
+def _callback_destination_allowed(callback_url: str) -> bool:
+    """Whether it is safe to POST the evidence + internal key to callback_url.
+
+    SECURITY (GHSA-jx74-cqjv-2c67): callback_url is client-controllable, so it
+    must (a) pass the SSRF guard — never reach internal/metadata — and (b) match
+    a trusted host, so the internal runner secret is never handed to an attacker.
+    """
+    if ssrf_protection_enabled():
+        try:
+            validate_url_with_env_config(callback_url)
+        except SSRFError as exc:
+            logger.warning("refusing verification callback to blocked URL %s: %s", callback_url, exc)
+            return False
+    host = (urlparse(callback_url).hostname or "").lower()
+    if not host:
+        return False
+    if host in _trusted_callback_hosts():
+        return True
+    patterns = [
+        p.strip().lower()
+        for p in os.environ.get("FLYTO_TRUSTED_CALLBACK_HOSTS", "").split(",")
+        if p.strip()
+    ]
+    if any(fnmatch.fnmatch(host, pat) for pat in patterns):
+        return True
+    logger.warning(
+        "refusing verification callback to untrusted host %r; set FLYTO_ENGINE_URL "
+        "or add it to FLYTO_TRUSTED_CALLBACK_HOSTS to allow.", host,
+    )
+    return False
+
+
 async def post_callback(callback_url: str, payload: Mapping[str, Any]) -> None:
     if not callback_url:
+        return
+    if not _callback_destination_allowed(callback_url):
         return
     headers = {"Content-Type": "application/json"}
     internal_key = os.environ.get("FLYTO_RUNNER_SECRET") or os.environ.get("FLYTO_VERIFICATION_SECRET")
@@ -346,9 +408,30 @@ async def run_and_callback(body: VerificationRunRequest) -> VerificationExecutio
 
 def create_app():
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, Depends, Header, HTTPException
     except ImportError as exc:  # pragma: no cover - optional runtime dependency
         raise RuntimeError("flyto-core[api] is required to run flyto-verification") from exc
+
+    def require_run_auth(x_internal_key: str = Header(default="", alias=INTERNAL_KEY_HEADER)):
+        """Authenticate callers of /run.
+
+        SECURITY (GHSA-jx74-cqjv-2c67): /run was unauthenticated on 0.0.0.0, which
+        made it an unauthenticated SSRF + runner-secret-exfil primitive. We now
+        require a shared secret and FAIL CLOSED when none is configured — the
+        engine must present it as the X-Internal-Key header.
+        """
+        expected = (
+            os.environ.get("FLYTO_VERIFICATION_API_KEY")
+            or os.environ.get("FLYTO_RUNNER_SECRET")
+            or os.environ.get("FLYTO_VERIFICATION_SECRET")
+        )
+        if not expected:
+            raise HTTPException(
+                status_code=503,
+                detail="verification runner auth is not configured; set FLYTO_VERIFICATION_API_KEY",
+            )
+        if not hmac.compare_digest(x_internal_key or "", expected):
+            raise HTTPException(status_code=401, detail="unauthorized")
 
     app = FastAPI(
         title="flyto-verification",
@@ -361,7 +444,7 @@ def create_app():
         return {"status": "ok", "service": "flyto-verification", "graph_contract": GRAPH_CONTRACT}
 
     @app.post("/run")
-    async def run(body: VerificationRunRequest):
+    async def run(body: VerificationRunRequest, _: None = Depends(require_run_auth)):
         execution_id = f"verification-{uuid.uuid4().hex[:12]}"
         queued = VerificationRunRequest(**body.model_dump())
 
