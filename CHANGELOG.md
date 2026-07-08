@@ -70,6 +70,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `warroom-deterministic-audit` now composes the generic `verification.*`
   modules while preserving the existing recipe name for compatibility.
 
+## [2.26.7] - 2026-07-08
+
+### Security
+- **GHSA-jx74-cqjv-2c67 (Critical) — flyto-verification `/run` unauth SSRF +
+  runner-secret exfil.** `/run` was unauthenticated (Dockerfile binds
+  `0.0.0.0:8344`) and forwarded a caller-controlled `callback_url` verbatim with
+  `X-Internal-Key: $FLYTO_RUNNER_SECRET` attached. `/run` now requires a shared
+  secret (`X-Internal-Key`; `FLYTO_VERIFICATION_API_KEY`, fallback
+  `FLYTO_RUNNER_SECRET`) and **fails closed** when none is configured;
+  `post_callback` runs `callback_url` through the SSRF guard and only attaches
+  the internal key for trusted hosts (`FLYTO_ENGINE_URL` /
+  `FLYTO_TRUSTED_CALLBACK_HOSTS`).
+- **GHSA-pgwh-4jj4-qm8v (High) — HTTP modules missing the SSRF guard.** Many
+  HTTP-emitting modules fetched client-controlled URLs without the SSRF guard
+  their siblings apply. New `enforce_outbound_url()` is now called before the
+  outbound request in `core.api.http_get`/`http_post`,
+  `graphql.query`/`mutation`, `monitor.http_check`, `slack_send`,
+  `notification.{slack,discord,teams}.send_message`, `ai.vision_analyze`
+  (Anthropic image download), `verify.visual_diff`, and `browser.proxy_rotate`.
+- **GHSA-c9hr-64h3-gxpc (High) — redirect SSRF on the guarded HTTP modules.**
+  `http.get`/`http.request`/`http.batch` validated only the initial URL then
+  followed 30x redirects with no revalidation. New `guarded_aiohttp_request()`
+  disables auto-redirect and revalidates every `Location` hop through the SSRF
+  guard before following it.
+
 ## [2.26.6] - 2026-07-07
 
 ### Security
