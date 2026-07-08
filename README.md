@@ -473,7 +473,7 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guideli
 
 ## Security
 
-Report security vulnerabilities via **[security@flyto.dev](mailto:security@flyto.dev)**.
+Report security vulnerabilities via **[security@flyto2.com](mailto:security@flyto2.com)**.
 See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ## License
