@@ -16,6 +16,7 @@ from ...registry import register_module
 from ...schema import compose, presets
 from ...errors import ModuleError
 from ....utils import (
+    guarded_client_session,
     validate_url_with_env_config,
     SSRFError,
     validate_path_with_env_config,
@@ -152,7 +153,7 @@ async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:
 
     Path(os.path.dirname(target_real)).mkdir(parents=True, exist_ok=True)
 
-    async with aiohttp.ClientSession() as session:
+    async with guarded_client_session() as session:
         async with session.get(
             url,
             headers=default_headers,

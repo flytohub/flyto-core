@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError
+from ....utils import guarded_client_session, validate_url_with_env_config, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ async def webhook_trigger(context: Dict[str, Any]) -> Dict[str, Any]:
 
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
 
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    async with guarded_client_session(timeout=timeout) as session:
         request_kwargs = {'headers': headers}
 
         if method in ('POST', 'PUT', 'PATCH') and payload:

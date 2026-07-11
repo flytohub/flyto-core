@@ -13,6 +13,7 @@ from ...registry import register_module
 from ...errors import ValidationError, NetworkError, ModuleError
 from ...schema import compose, presets
 from ....utils import (
+    guarded_client_session,
     validate_url_with_env_config,
     SSRFError,
     ssrf_protection_enabled,
@@ -117,7 +118,7 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         ssl_param = None if verify_ssl else False
         timeout = aiohttp.ClientTimeout(total=timeout_s)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with guarded_client_session(timeout=timeout) as session:
             # SECURITY: revalidate every redirect hop through the SSRF guard so a
             # public URL cannot 302 into internal space (GHSA-c9hr-64h3-gxpc).
             response = await guarded_aiohttp_request(

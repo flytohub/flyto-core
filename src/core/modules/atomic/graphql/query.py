@@ -12,7 +12,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
-from ....utils import enforce_outbound_url, SSRFError
+from ....utils import guarded_client_session, enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
         raise ModuleError("aiohttp is required for graphql modules. Install with: pip install aiohttp")
 
     try:
-        async with aiohttp.ClientSession() as session:
+        async with guarded_client_session() as session:
             async with session.post(url, json=payload, headers=headers) as response:
                 status_code = response.status
                 try:

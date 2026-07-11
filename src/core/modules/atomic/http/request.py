@@ -14,6 +14,7 @@ from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility, FieldGroup
 from ....utils import (
+    guarded_client_session,
     validate_url_with_env_config,
     SSRFError,
     ssrf_protection_enabled,
@@ -338,7 +339,7 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
 
     for attempt in range(max_attempts):
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with guarded_client_session(timeout=timeout) as session:
                 # SECURITY: revalidate every redirect hop through the SSRF guard
                 # so a public URL cannot 302 into internal space
                 # (GHSA-c9hr-64h3-gxpc). follow_redirects=False => do not follow.

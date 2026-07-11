@@ -99,6 +99,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   outside the bundled recipes directory (which `list_recipes` never discloses).
   `load_recipe()` now resolves the path and confines it to `RECIPES_DIR`,
   returning None for anything outside it.
+- **GHSA-pfg2-w999-497v (High) / GHSA-6pm8-6f34-9v3g (Medium) — DNS-rebinding
+  SSRF (resolve-then-connect TOCTOU).** `validate_url_ssrf` resolved the host,
+  checked the IP, then returned the *hostname*, so aiohttp performed an
+  independent second DNS lookup at connect time — an attacker controlling DNS
+  (TTL 0) could answer public for the guard and private for the connection.
+  Outbound HTTP modules now build their session via `guarded_client_session()`,
+  whose connector uses an `_SSRFGuardedResolver` that resolves once and rejects
+  private/blocked IPs at resolve time, so the address validated is the address
+  connected to. Wired into all outbound-guarded modules (`http.get/request/
+  batch/paginate/session`, `graphql.query/mutation`, `monitor.http_check`,
+  `notification.send`, `communication.slack_send/webhook_trigger`,
+  `ai.vision_analyze`, `image.download`, `llm.chat`). Operator-approved private
+  access via `FLYTO_ALLOW_PRIVATE_NETWORK` / `FLYTO_ALLOWED_HOSTS` is preserved.
 
 ## [2.26.7] - 2026-07-08
 

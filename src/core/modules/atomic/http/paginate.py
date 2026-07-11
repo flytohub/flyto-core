@@ -12,7 +12,7 @@ import time
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-from ....utils import SSRFError, validate_url_with_env_config
+from ....utils import guarded_client_session, SSRFError, validate_url_with_env_config
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
@@ -520,7 +520,7 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with guarded_client_session(timeout=timeout) as session:
             all_items, pages_fetched = await strategy_fn(
                 session, method, base_url, headers, verify_ssl,
                 data_path, page_size, max_pages, delay_ms,

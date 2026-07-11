@@ -11,6 +11,7 @@ import socket
 import ipaddress
 import logging
 import fnmatch
+import aiohttp
 from typing import Any, Dict, Optional, TypeVar, Callable
 from urllib.parse import urlparse
 from functools import wraps
@@ -663,6 +664,91 @@ async def guarded_aiohttp_request(session, method: str, url: str, *,
             continue
         return response
     return response
+
+
+# =============================================================================
+# DNS-rebinding guard (pin the validated IP at connect time)
+# =============================================================================
+
+def _host_in_allowlist(hostname: str, allowed_hosts) -> bool:
+    """True if hostname matches an FLYTO_ALLOWED_HOSTS entry (exact or *.wildcard)."""
+    if not allowed_hosts:
+        return False
+    h = (hostname or '').lower()
+    for allowed in allowed_hosts:
+        a = allowed.lower()
+        if h == a:
+            return True
+        if a.startswith('*.') and h.endswith(a[1:]):
+            return True
+    return False
+
+
+class _SSRFGuardedResolver(aiohttp.abc.AbstractResolver):
+    """aiohttp resolver that resolves a host ONCE and rejects private/blocked
+    IPs at resolve time, so the address that is checked is the exact address
+    aiohttp connects to.
+
+    This closes the DNS-rebinding TOCTOU (GHSA-pfg2-w999-497v /
+    GHSA-6pm8-6f34-9v3g): ``validate_url_ssrf`` resolved + checked the host and
+    then returned the *hostname*, leaving aiohttp to perform an independent
+    second lookup at connect time. An attacker controlling DNS (TTL 0) could
+    answer public for the guard's lookup and private for the connection's. With
+    this resolver there is a single lookup whose result is both validated and
+    connected to. Honors the same allow_private / allowed_hosts config as
+    ``validate_url_ssrf`` so operator-approved private hosts still work.
+    """
+
+    def __init__(self, allow_private: bool = False, allowed_hosts=None):
+        self._allow_private = allow_private
+        self._allowed_hosts = list(allowed_hosts or [])
+        from aiohttp.resolver import DefaultResolver
+        self._inner = DefaultResolver()
+
+    async def resolve(self, host: str, port: int = 0, family: int = socket.AF_INET):
+        infos = await self._inner.resolve(host, port, family)
+        if self._allow_private or _host_in_allowlist(host, self._allowed_hosts):
+            return infos
+        for info in infos:
+            ip = info['host']
+            if is_private_ip(ip):
+                raise SSRFError(
+                    f"Blocked connect-time resolution (DNS-rebinding guard): {host} -> {ip}. "
+                    f"Use FLYTO_ALLOWED_HOSTS for controlled private access."
+                )
+        return infos
+
+    async def close(self):
+        await self._inner.close()
+
+
+def ssrf_guarded_connector(**kwargs) -> "aiohttp.TCPConnector":
+    """A ``TCPConnector`` whose resolver rejects private IPs at connect time.
+
+    Outbound HTTP modules build their ``ClientSession`` with this so the IP the
+    SSRF guard validated is the IP actually connected to (no resolve-then-connect
+    gap). Returns a plain connector when the operator disabled the guard.
+    """
+    if not ssrf_protection_enabled():
+        return aiohttp.TCPConnector(**kwargs)
+    cfg = get_ssrf_config()
+    resolver = _SSRFGuardedResolver(
+        allow_private=cfg.get('allow_private', False),
+        allowed_hosts=cfg.get('allowed_hosts'),
+    )
+    return aiohttp.TCPConnector(resolver=resolver, **kwargs)
+
+
+def guarded_client_session(**kwargs) -> "aiohttp.ClientSession":
+    """``aiohttp.ClientSession`` pinned to the DNS-rebinding-guarded connector.
+
+    Drop-in for ``aiohttp.ClientSession(...)`` in outbound modules — forwards all
+    kwargs (``timeout=`` etc.) and injects ``connector=ssrf_guarded_connector()``
+    unless the caller already supplied a connector. The session owns and closes
+    the connector.
+    """
+    kwargs.setdefault('connector', ssrf_guarded_connector())
+    return aiohttp.ClientSession(**kwargs)
 
 
 # =============================================================================

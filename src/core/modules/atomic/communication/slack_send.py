@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import enforce_outbound_url, SSRFError
+from ....utils import guarded_client_session, enforce_outbound_url, SSRFError
 
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ async def slack_send(context: Dict[str, Any]) -> Dict[str, Any]:
     if attachments:
         payload['attachments'] = attachments
 
-    async with aiohttp.ClientSession() as session:
+    async with guarded_client_session() as session:
         async with session.post(webhook_url, json=payload) as response:
             if response.status == 200:
                 logger.info("Slack message sent successfully")

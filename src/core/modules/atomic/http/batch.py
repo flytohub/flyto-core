@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
 from ....utils import (
+    guarded_client_session,
     validate_url_with_env_config,
     SSRFError,
     ssrf_protection_enabled,
@@ -253,7 +254,7 @@ async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:
     timeout = aiohttp.ClientTimeout(total=timeout_s)
     batch_start = time.time()
 
-    async with aiohttp.ClientSession(timeout=timeout) as session:
+    async with guarded_client_session(timeout=timeout) as session:
         if measure_time:
             results = []
             for req in requests:
