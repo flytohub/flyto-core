@@ -6,6 +6,7 @@ meta.modules.update_docs - Generate or update MODULES.md documentation from regi
 from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import ModuleRegistry, register_module
+from ....utils import validate_path_with_env_config
 import json
 
 
@@ -100,7 +101,8 @@ class UpdateModuleDocsModule(BaseModule):
         # Generate markdown
         content = self._generate_markdown(by_category)
 
-        # Write to file
+        # Write to file (GHSA-p34x: confine to FLYTO_SANDBOX_DIR)
+        self.output_path = validate_path_with_env_config(self.output_path)
         with open(self.output_path, 'w', encoding='utf-8') as f:
             f.write(content)
 

@@ -11,6 +11,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -86,6 +87,11 @@ class FileMoveModule(BaseModule):
 
     async def execute(self) -> Any:
         try:
+            # GHSA-p34x: confine both operands to FLYTO_SANDBOX_DIR — move had
+            # NO path guard, so a client-controlled absolute source/destination
+            # was an arbitrary move/delete + write primitive.
+            self.source = validate_path_with_env_config(self.source)
+            self.destination = validate_path_with_env_config(self.destination)
             if not os.path.exists(self.source):
                 raise FileNotFoundError(f"Source file not found: {self.source}")
 

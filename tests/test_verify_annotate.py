@@ -26,6 +26,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from core.modules.atomic.verify.annotate import draw_annotations, VerifyAnnotateModule
 
 
+@pytest.fixture(autouse=True)
+def _sandbox_to_tmp(tmp_path, monkeypatch):
+    """GHSA-p34x: verify.annotate now confines its output to FLYTO_SANDBOX_DIR.
+    Point the sandbox at the per-test tmp dir so these tests (which write under
+    tmp_path) are allowed — same pattern as the guarded image-writer tests."""
+    monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
+
+
 @pytest.fixture
 def test_image(tmp_path):
     """Create a real 800x600 test image with some content."""

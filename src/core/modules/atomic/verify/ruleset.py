@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field as schema_field
+from ....utils import validate_path_with_env_config
 
 
 @dataclass
@@ -137,10 +138,10 @@ def save_ruleset(ruleset: Ruleset, path: Union[str, Path]) -> None:
     import yaml
 
     path = Path(path)
+    # GHSA-p34x: confine to FLYTO_SANDBOX_DIR (the '..' denylist missed
+    # absolute paths) BEFORE creating any directories.
+    path = Path(validate_path_with_env_config(str(path)))
     path.parent.mkdir(parents=True, exist_ok=True)
-
-    if '..' in str(path):
-        raise ValueError('Invalid file path')
     with open(path, 'w', encoding='utf-8') as f:
         yaml.dump(ruleset.to_dict(), f, default_flow_style=False, allow_unicode=True)
 

@@ -205,6 +205,11 @@ async def _paginate_link_header(
 
             if not next_url or len(items) == 0:
                 break
+            # GHSA-2mr3: the Link header's next-page URL is server-supplied and
+            # can point at a different (internal) host — revalidate it against
+            # the SSRF guard before following. offset/page/cursor stay on the
+            # already-validated base_url host, so only this hop needs rechecking.
+            validate_url_with_env_config(next_url)
             url = next_url
 
         if delay_ms > 0:
@@ -521,6 +526,10 @@ async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:
                 data_path, page_size, max_pages, delay_ms,
                 params, all_items, pages_fetched,
             )
+    except SSRFError as e:
+        # GHSA-2mr3: a follow-up page URL resolved to a blocked target.
+        logger.error(f"Pagination SSRF-blocked on follow-up URL: {e}")
+        return _make_result(False, all_items, pages_fetched, start_time, str(e), 'SSRF_BLOCKED')
     except asyncio.TimeoutError:
         logger.error(f"Pagination timeout after {pages_fetched} pages")
         return _make_result(False, all_items, pages_fetched, start_time,

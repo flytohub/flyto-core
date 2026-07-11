@@ -12,6 +12,7 @@ import yaml
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -222,7 +223,8 @@ class BrowserRecordModule(BaseModule):
             # Save to file if path provided
             if self.output_path:
                 from pathlib import Path
-                output_path = Path(self.output_path)
+                # GHSA-p34x: confine the recording output to FLYTO_SANDBOX_DIR.
+                output_path = Path(validate_path_with_env_config(self.output_path))
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(output_path, 'w') as f:
                     f.write(workflow)

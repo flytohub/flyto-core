@@ -70,6 +70,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `warroom-deterministic-audit` now composes the generic `verification.*`
   modules while preserving the existing recipe name for compatibility.
 
+## [2.26.8] - 2026-07-11
+
+### Security
+- **GHSA-p34x-fmph-9fjx (Critical) — arbitrary file write via unguarded
+  `data.*`/`file.*` write modules (incomplete fix of GHSA-2956).** The GHSA-2956
+  remediation routed only a hand-picked module list through
+  `validate_path_with_env_config()`; the `data.*`/`file.*` families stayed
+  unconfined — `data.csv.write` used a `'..'` substring denylist that misses
+  absolute paths, and `data.json_to_csv` / `file.copy` / `file.move` had no path
+  check at all, so a client-controlled absolute path was an arbitrary-write
+  primitive escaping `FLYTO_SANDBOX_DIR`. Every file-writing module that takes a
+  caller-controlled path now confines through `validate_path_with_env_config()`:
+  `data.csv.write`, `data.json_to_csv`, `file.copy`, `file.move`, plus
+  `browser.record`, `meta.update_docs`, `verify.annotate`, and `verify.ruleset`
+  found in the same audit.
+- **GHSA-2mr3-rxrq-238c (High) — second-order SSRF in `http.paginate`.**
+  `paginate` validated only the initial `base_url`, then followed the
+  server-supplied `Link: rel="next"` URL with no revalidation, so an attacker's
+  page-1 response could point `next` at internal/metadata space and aggregate
+  the internal body into the returned items. The Link-header next-page URL is
+  now re-run through the SSRF guard before being followed (offset/page/cursor
+  strategies stay on the already-validated base host); a blocked follow-up
+  returns `SSRF_BLOCKED`. Regression test added.
+- **GHSA-mxcc-cr6x-2mvr (Medium) — path traversal in MCP `run_recipe`.**
+  `load_recipe()` concatenated the caller-controlled `recipe_name` into
+  `RECIPES_DIR / f"{recipe_name}.yaml"`, so `../` segments loaded workflows
+  outside the bundled recipes directory (which `list_recipes` never discloses).
+  `load_recipe()` now resolves the path and confines it to `RECIPES_DIR`,
+  returning None for anything outside it.
+
 ## [2.26.7] - 2026-07-08
 
 ### Security

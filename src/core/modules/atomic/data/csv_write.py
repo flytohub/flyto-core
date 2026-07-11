@@ -11,6 +11,7 @@ import os
 from ...registry import register_module
 from ...schema import compose, presets
 from ...errors import ValidationError, InvalidTypeError, InvalidValueError, ModuleError
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -92,8 +93,10 @@ async def csv_write(context: Dict[str, Any]) -> Dict[str, Any]:
     if not file_path:
         raise ValidationError("Missing required parameter: file_path", field="file_path")
 
-    if '..' in file_path:
-        raise Exception('Invalid file path')
+    # GHSA-p34x: confine the write to FLYTO_SANDBOX_DIR. The prior '..'
+    # substring denylist missed absolute paths (arbitrary file write). Same
+    # guard the GHSA-2956 fix applied to sibling file-writing modules.
+    file_path = validate_path_with_env_config(file_path)
 
     if not isinstance(data, list):
         raise InvalidTypeError(

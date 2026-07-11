@@ -14,6 +14,7 @@ from core.modules.atomic.http.paginate import (
     _paginate_link_header,
     _STRATEGY_DISPATCH,
 )
+from core.utils import SSRFError
 
 
 # ── _merge_query ──
@@ -245,7 +246,11 @@ class TestPaginateCursor:
 
 
 class TestPaginateLinkHeader:
-    async def test_follows_link_header(self):
+    async def test_follows_link_header(self, monkeypatch):
+        # GHSA-2mr3: the server-supplied next_url is SSRF-revalidated before it
+        # is followed. Allowlist the (mock) API host so the guard passes without
+        # a real DNS lookup.
+        monkeypatch.setenv("FLYTO_ALLOWED_HOSTS", "api.example.com")
         session = _make_mock_session([
             ([1, 2], {"Link": '<https://api.example.com?page=2>; rel="next"'}),
             ([3, 4], {"Link": ""}),
@@ -256,6 +261,19 @@ class TestPaginateLinkHeader:
         )
         assert items == [1, 2, 3, 4]
         assert pages == 2
+
+    async def test_blocks_ssrf_next_url(self):
+        # GHSA-2mr3: a Link header pointing at internal space must be rejected
+        # (not followed) even though page 1 was allowed — second-order SSRF.
+        session = _make_mock_session([
+            ([1, 2], {"Link": '<http://169.254.169.254/latest/meta-data/>; rel="next"'}),
+            ([3, 4], {"Link": ""}),
+        ])
+        with pytest.raises(SSRFError):
+            await _paginate_link_header(
+                session, "GET", "https://api.example.com", {}, True,
+                "", 10, 10, 0, {}, [], 0,
+            )
 
     async def test_stops_when_no_next(self):
         session = _make_mock_session([

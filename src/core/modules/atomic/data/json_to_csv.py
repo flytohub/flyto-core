@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,8 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
     params = context['params']
     input_data = params['input_data']
     output_path = params.get('output_path', '/tmp/output.csv')
+    # GHSA-p34x: confine the CSV write target to FLYTO_SANDBOX_DIR.
+    output_path = validate_path_with_env_config(output_path)
     delimiter = params.get('delimiter', ',')
     include_header = params.get('include_header', True)
     flatten_nested = params.get('flatten_nested', True)
@@ -118,8 +121,9 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
     # Load data if it's a file path
     if isinstance(input_data, str):
         if os.path.exists(input_data):
-            if '..' in input_data:
-                raise Exception('Invalid file path')
+            # GHSA-p34x: confine the input read to FLYTO_SANDBOX_DIR too
+            # (the '..' substring denylist missed absolute paths).
+            input_data = validate_path_with_env_config(input_data)
             with open(input_data, 'r', encoding='utf-8') as f:
                 input_data = json.load(f)
         else:

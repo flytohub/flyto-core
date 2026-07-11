@@ -14,6 +14,7 @@ from typing import Any, Dict, List
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field as schema_field
+from ....utils import validate_path_with_env_config
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,8 @@ def draw_annotations(image_path: str, annotations: List[Dict], output_path: str)
     # Composite overlay onto original
     result = Image.alpha_composite(img, overlay).convert('RGB')
 
-    out = Path(output_path)
+    # GHSA-p34x: confine the annotated-image write to FLYTO_SANDBOX_DIR.
+    out = Path(validate_path_with_env_config(output_path))
     out.parent.mkdir(parents=True, exist_ok=True)
     result.save(str(out), quality=95)
 

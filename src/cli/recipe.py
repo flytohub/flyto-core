@@ -64,8 +64,17 @@ def _print_step_line(
 
 
 def load_recipe(recipe_name: str) -> Optional[Dict[str, Any]]:
-    """Load a recipe YAML file by name."""
-    recipe_path = RECIPES_DIR / f"{recipe_name}.yaml"
+    """Load a recipe YAML file by name.
+
+    GHSA-mxcc: ``recipe_name`` is caller-controlled (MCP ``run_recipe``). It is
+    confined to the bundled recipes directory — a name containing ``..`` or an
+    absolute path is rejected (returns None) so it can never load a workflow
+    outside ``RECIPES_DIR``.
+    """
+    recipes_root = RECIPES_DIR.resolve()
+    recipe_path = (RECIPES_DIR / f"{recipe_name}.yaml").resolve()
+    if recipe_path != recipes_root and recipes_root not in recipe_path.parents:
+        return None
     if not recipe_path.exists():
         return None
     with open(recipe_path, 'r') as f:
