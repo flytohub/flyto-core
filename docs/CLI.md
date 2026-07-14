@@ -176,7 +176,7 @@ export TELEGRAM_CHAT_ID=@your_channel
 **Email:**
 ```bash
 export SMTP_SERVER=smtp.gmail.com
-export SMTP_USERNAME=your_email@gmail.com
+export SMTP_USERNAME=your_email@flyto2.com
 export SMTP_PASSWORD=your_app_password
 ```
 
@@ -198,7 +198,7 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 
 # Email
 SMTP_SERVER=smtp.gmail.com
-SMTP_USERNAME=bot@example.com
+SMTP_USERNAME=bot@flyto2.com
 SMTP_PASSWORD=your_password
 
 # APIs
@@ -238,13 +238,13 @@ python -m cli.main workflows/github_to_slack.yaml \
 ```bash
 # Environment variables
 export SMTP_SERVER=smtp.gmail.com
-export SMTP_USERNAME=reports@company.com
+export SMTP_USERNAME=reports@flyto2.com
 export SMTP_PASSWORD=your_app_password
 export API_TOKEN=your_api_token
 
 # Run workflow
 python -m cli.main workflows/daily_report_email.yaml \
-  --param.recipient_email=manager@company.com
+  --param.recipient_email=manager@flyto2.com
 ```
 
 ### Example 4: Multi-Channel Alert
@@ -256,9 +256,9 @@ export DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 export TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
 export TELEGRAM_CHAT_ID=@alerts
 export SMTP_SERVER=smtp.gmail.com
-export SMTP_USERNAME=alerts@company.com
+export SMTP_USERNAME=alerts@flyto2.com
 export SMTP_PASSWORD=password
-export ALERT_EMAIL=oncall@company.com
+export ALERT_EMAIL=oncall@flyto2.com
 
 # Send alert
 python -m cli.main workflows/multi_channel_alert.yaml \

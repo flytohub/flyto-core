@@ -9,7 +9,7 @@ args:
   data:
     type: string
     required: true
-    description: "JSON string of field:value pairs (e.g. '{\"email\":\"test@example.com\",\"name\":\"John\"}')"
+    description: "JSON string of field:value pairs (e.g. '{\"email\":\"test@flyto2.com\",\"name\":\"John\"}')"
   submit:
     type: boolean
     default: true

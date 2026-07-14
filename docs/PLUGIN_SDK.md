@@ -36,7 +36,7 @@ my-plugin/
 ```yaml
 name: my-awesome-scraper
 version: 1.0.0
-author: developer@example.com
+author: developer@flyto2.com
 license: MIT
 
 runtime:

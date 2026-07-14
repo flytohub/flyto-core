@@ -67,6 +67,6 @@ jobs:
           Catch-up regeneration from the live ModuleRegistry after module set
           drift. No source change.
 
-          Co-Authored-By: Paperclip <noreply@paperclip.ing>"
+          Co-Authored-By: Paperclip <noreply@flyto2.com>"
             git push -f origin HEAD:bot/regen-module-snapshot
           fi

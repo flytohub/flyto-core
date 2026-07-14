@@ -370,7 +370,7 @@ flyto recipe competitor-intel --url https://github.com/pricing
 flyto recipe site-audit       --url https://example.com
 flyto recipe web-perf         --url https://example.com
 flyto recipe login-test       --url https://myapp.com/login --username user --password pass --success_selector .dashboard
-flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"test@example.com"}'
+flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"test@flyto2.com"}'
 
 # Browser Automation
 flyto recipe screenshot        --url https://example.com

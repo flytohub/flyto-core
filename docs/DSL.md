@@ -409,7 +409,7 @@ steps:
 Access nested object properties:
 
 ```yaml
-# If step returns: { user: { name: "John", email: "john@example.com" } }
+# If step returns: { user: { name: "John", email: "john@flyto2.com" } }
 email: "${fetch_user.user.email}"
 name: "${fetch_user.user.name}"
 

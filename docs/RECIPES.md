@@ -87,7 +87,7 @@ flyto recipe web-perf --url https://example.com --timeout 10000
 E2E login test — navigate to login page, fill credentials, submit, verify success element appears, screenshot the result.
 
 ```bash
-flyto recipe login-test --url https://myapp.com/login --username user@example.com --password s3cret --success_selector .dashboard
+flyto recipe login-test --url https://myapp.com/login --username user@flyto2.com --password s3cret --success_selector .dashboard
 flyto recipe login-test --url https://the-internet.herokuapp.com/login --username tomsmith --password SuperSecretPassword! --success_selector ".flash.success"
 ```
 
@@ -106,7 +106,7 @@ flyto recipe login-test --url https://the-internet.herokuapp.com/login --usernam
 Auto-fill a web form with data and optionally submit it. Pass field:value pairs as JSON.
 
 ```bash
-flyto recipe form-fill --url https://myapp.com/contact --data '{"email":"test@example.com","name":"John","message":"Hello"}'
+flyto recipe form-fill --url https://myapp.com/contact --data '{"email":"test@flyto2.com","name":"John","message":"Hello"}'
 flyto recipe form-fill --url https://httpbin.org/forms/post --data '{"custname":"Jane","custtel":"555-0123"}' --submit false
 ```
 

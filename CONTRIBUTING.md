@@ -16,7 +16,7 @@ Thank you for your interest in contributing to Flyto2 Core! This document provid
 
 ## Code of Conduct
 
-This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to conduct@flyto.dev.
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to conduct@flyto2.com.
 
 ## Getting Started
 
