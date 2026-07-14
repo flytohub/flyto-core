@@ -22,5 +22,5 @@ must be durable, visible, and checked.
 Decision: maintained recipes should represent executable contracts for product
 flows and release smoke, not only demos.
 
-Reason: Flyto needs closed-loop verification from UI and API behavior back to
+Reason: Flyto2 needs closed-loop verification from UI and API behavior back to
 backend state, evidence, and release readiness.

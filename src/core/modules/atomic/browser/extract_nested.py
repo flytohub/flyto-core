@@ -177,7 +177,7 @@ _NESTED_JS = r"""
         }},
         {'name': 'Auto-extract nested list', 'params': {'root_selector': 'li.item'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read"],
 )
 class BrowserExtractNestedModule(BaseModule):

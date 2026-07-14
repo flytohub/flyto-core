@@ -50,7 +50,7 @@ from ..integration import SlackIntegration
             "label": "Message",
             "description": "Message text (supports Slack markdown)",
                 "description_key": "modules.integration.slack.send_message.params.text.description",
-            "placeholder": "Hello from Flyto!",
+            "placeholder": "Hello from Flyto2!",
             "required": True,
         },
         "thread_ts": {
@@ -93,7 +93,7 @@ from ..integration import SlackIntegration
             },
         },
     ],
-    author="Flyto Team",
+    author="Flyto2 Team",
     license="MIT",
 )
 class SlackSendMessageModule(BaseModule):

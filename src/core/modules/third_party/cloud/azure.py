@@ -123,7 +123,7 @@ from ...registry import register_module
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class AzureUploadModule(BaseModule):
@@ -303,7 +303,7 @@ class AzureUploadModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class AzureDownloadModule(BaseModule):

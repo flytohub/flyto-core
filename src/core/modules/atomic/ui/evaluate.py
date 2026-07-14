@@ -208,7 +208,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:

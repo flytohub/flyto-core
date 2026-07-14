@@ -149,7 +149,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             'description_key': 'modules.notify.send.params.message.description',
             'required': True,
             'format': 'multiline',
-            'placeholder': 'Hello from Flyto!'
+            'placeholder': 'Hello from Flyto2!'
         },
         'title': {
             'type': 'string',
@@ -220,7 +220,7 @@ def build_payload(platform: str, message: str, title: str = None, extra: Dict = 
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def notify_send(context: Dict[str, Any]) -> Dict[str, Any]:

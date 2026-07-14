@@ -199,7 +199,7 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def graphql_query(context: Dict[str, Any]) -> Dict[str, Any]:

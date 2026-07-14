@@ -266,7 +266,7 @@ GET_OBSERVER_METRICS_SCRIPT = """
             'params': {'metrics': ['ttfb', 'domContentLoaded', 'load'], 'timeout_ms': 0}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=['browser.automation'],

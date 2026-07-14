@@ -68,7 +68,7 @@ from ...schema import compose, presets
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class FileDeleteModule(BaseModule):

@@ -87,7 +87,7 @@ from ...schema import compose, presets
             'params': {'headless': True}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class BrowserEnsureModule(BaseModule):

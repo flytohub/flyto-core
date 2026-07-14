@@ -1,4 +1,4 @@
-# Flyto Core State
+# Flyto2 Core State
 
 ## Current State
 

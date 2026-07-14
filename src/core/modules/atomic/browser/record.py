@@ -83,7 +83,7 @@ from ....utils import validate_path_with_env_config
             'params': {'action': 'get'}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

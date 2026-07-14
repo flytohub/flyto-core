@@ -1,4 +1,4 @@
-# Flyto Core Architecture
+# Flyto2 Core Architecture
 
 ## Boundaries
 

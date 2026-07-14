@@ -80,7 +80,7 @@ def _parse_search_results(items):
             'limit': 10
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GoogleSearchAPIModule(BaseModule):
@@ -155,7 +155,7 @@ class GoogleSearchAPIModule(BaseModule):
             'limit': 10
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class SerpAPISearchModule(BaseModule):

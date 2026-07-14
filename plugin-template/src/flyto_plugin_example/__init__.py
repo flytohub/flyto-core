@@ -1,3 +1,3 @@
-"""Flyto Plugin Example — a template for building flyto plugins."""
+"""Flyto2 Plugin Example — a template for building flyto plugins."""
 
 __version__ = "0.1.0"

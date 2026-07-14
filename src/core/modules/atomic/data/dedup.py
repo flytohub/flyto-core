@@ -96,7 +96,7 @@ def _record_hash(record: dict, keys: list) -> str:
         {'name': 'Dedup by URL', 'params': {'items': [], 'keys': ['url']}},
         {'name': 'Cross-run dedup', 'params': {'items': [], 'keys': ['url'], 'hash_file': '/tmp/seen.json'}},
     ],
-    author='Flyto Team', license='MIT',
+    author='Flyto2 Team', license='MIT',
     required_permissions=[],
 )
 class DataDedupModule(BaseModule):

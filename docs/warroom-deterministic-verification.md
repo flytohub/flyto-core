@@ -9,7 +9,7 @@ review is optional and advisory only.
 
 1. `warroom.discover` builds a redacted site graph from a browser page or
    supplied page observations.
-2. `warroom.generate_scenarios` turns the graph into replayable Flyto YAML.
+2. `warroom.generate_scenarios` turns the graph into replayable Flyto2 YAML.
 3. `warroom.run` replays scenarios through the real module runner.
 4. `warroom.report` creates JSON or Markdown evidence packs.
 5. `warroom.llm_review` prepares redacted evidence only when a human enables it.

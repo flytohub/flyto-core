@@ -249,7 +249,7 @@ async def _stop_registered_process(
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def process_stop(context: Dict[str, Any]) -> Dict[str, Any]:

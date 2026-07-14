@@ -141,7 +141,7 @@ def _simplify_charges(charges_data):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class StripeCreatePaymentModule(BaseModule):
@@ -276,7 +276,7 @@ class StripeCreatePaymentModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class StripeGetCustomerModule(BaseModule):
@@ -411,7 +411,7 @@ class StripeGetCustomerModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class StripeListChargesModule(BaseModule):

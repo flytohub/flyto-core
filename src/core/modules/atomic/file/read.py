@@ -72,7 +72,7 @@ import shutil
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def file_read(context):

@@ -157,7 +157,7 @@ def _hex_to_rgb(hex_color: str) -> tuple:
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def image_rotate(context: Dict[str, Any]) -> Dict[str, Any]:

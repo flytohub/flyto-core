@@ -77,7 +77,7 @@ from ....utils import validate_path_with_env_config
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class FileCopyModule(BaseModule):

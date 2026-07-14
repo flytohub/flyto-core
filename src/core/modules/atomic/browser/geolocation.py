@@ -88,7 +88,7 @@ from ...schema.constants import FieldGroup
             'params': {'latitude': 35.6762, 'longitude': 139.6503}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

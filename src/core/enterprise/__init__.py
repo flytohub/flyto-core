@@ -1,7 +1,7 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Enterprise Features - Flyto Enterprise RPA & AI Capabilities
+Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities
 
 This module provides enterprise-grade automation capabilities:
 - RPA: Desktop automation, vision, OCR

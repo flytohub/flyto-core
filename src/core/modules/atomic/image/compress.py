@@ -145,7 +145,7 @@ def _compress_to_target_size(img, output_path, save_kwargs, ext, output_format, 
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def image_compress(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -92,7 +92,7 @@ from ...schema import compose, field
             'params': {'width': 1366, 'height': 768}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=10000,
     required_permissions=['browser.automation'],

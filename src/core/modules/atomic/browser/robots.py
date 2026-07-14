@@ -150,7 +150,7 @@ async (options) => {
         {'name': 'Check if URL is allowed', 'params': {'check_url': '/api/data'}},
         {'name': 'Just get sitemaps', 'params': {}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=15000,
+    author='Flyto2 Team', license='MIT', timeout_ms=15000,
     required_permissions=["browser.read"],
 )
 class BrowserRobotsModule(BaseModule):

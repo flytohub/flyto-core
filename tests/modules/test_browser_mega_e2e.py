@@ -53,7 +53,7 @@ MEGA_HTML = """\
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Flyto Mega Test Page</title>
+  <title>Flyto2 Mega Test Page</title>
   <style>
     body { font-family: sans-serif; margin: 20px; }
     .hidden { display: none; }
@@ -345,7 +345,7 @@ def local_server():
     html_path.write_text(MEGA_HTML, encoding="utf-8")
 
     # Also create a small downloadable file
-    (Path(tmpdir) / "test-download.txt").write_text("Hello Flyto Test")
+    (Path(tmpdir) / "test-download.txt").write_text("Hello Flyto2 Test")
 
     handler = functools.partial(
         http.server.SimpleHTTPRequestHandler, directory=tmpdir
@@ -835,7 +835,7 @@ class TestBrowserMegaE2E:
         """Upload a file to file input."""
         # Create temp file to upload
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False, mode="w") as f:
-            f.write("Flyto mega test upload content")
+            f.write("Flyto2 mega test upload content")
             tmp_path = f.name
         try:
             r = await run("browser.upload", {

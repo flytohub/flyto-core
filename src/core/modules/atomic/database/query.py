@@ -91,7 +91,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite', 'mssql']
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def database_query(context: Dict[str, Any]) -> Dict[str, Any]:

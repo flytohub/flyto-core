@@ -283,7 +283,7 @@ def _assert_json_schema(params: dict, response: dict, assertions: list, errors: 
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def http_response_assert(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -70,7 +70,7 @@ from ...schema import compose, presets
             'params': {'action': 'clear'}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

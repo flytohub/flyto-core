@@ -178,7 +178,7 @@ def _format_json(content: Any) -> Any:
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def output_display(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -84,7 +84,7 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def google_gmail_search(context: Dict[str, Any]) -> Dict[str, Any]:

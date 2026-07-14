@@ -123,7 +123,7 @@ DEFAULT_PORTS = [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 3389, 54
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def network_port_scan(context: Dict[str, Any]) -> Dict[str, Any]:

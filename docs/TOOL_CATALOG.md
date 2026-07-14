@@ -908,7 +908,7 @@
 | Module | Description | Parameters | Output |
 |--------|-------------|------------|--------|
 | `verification.discover` | Build a deterministic site graph from browser state or supplied page snapshots | `target` string *(required)*, `pages` array, `use_browser` boolean (default: `True`) | `ok` (boolean), `site_graph` (object), `scores` (object) |
-| `verification.generate_scenarios` | Generate replayable Flyto YAML scenarios from a deterministic site graph | `site_graph` object *(required)*, `name` string, `output_format` string (default: `yaml`) | `ok` (boolean), `scenarios` (object), `workflow` (string) |
+| `verification.generate_scenarios` | Generate replayable Flyto2 YAML scenarios from a deterministic site graph | `site_graph` object *(required)*, `name` string, `output_format` string (default: `yaml`) | `ok` (boolean), `scenarios` (object), `workflow` (string) |
 | `verification.report` | Create a deterministic verification evidence pack and optional report file | `site_graph` object, `scenarios` object, `run_result` object, `artifacts` object, `format` string (default: `json`), `output_path` string | `ok` (boolean), `evidence_pack` (object), `report` (string), `path` (string) |
 | `verification.run` | Replay generated verification scenarios and return deterministic evidence | `scenarios` object *(required)*, `stop_on_failure` boolean (default: `True`), `timeout_per_step` number (default: `30000`) | `ok` (boolean), `passed` (number), `failed` (number), `results` (array), `evaluation` (object) |
 
@@ -938,7 +938,7 @@
 | Module | Description | Parameters | Output |
 |--------|-------------|------------|--------|
 | `warroom.discover` | Build a deterministic site graph from browser state or supplied page snapshots | `target` string *(required)*, `pages` array, `use_browser` boolean (default: `True`) | `ok` (boolean), `site_graph` (object), `scores` (object) |
-| `warroom.generate_scenarios` | Generate replayable Flyto YAML scenarios from a Warroom site graph | `site_graph` object *(required)*, `name` string, `output_format` string (default: `yaml`) | `ok` (boolean), `scenarios` (object), `workflow` (string) |
+| `warroom.generate_scenarios` | Generate replayable Flyto2 YAML scenarios from a Warroom site graph | `site_graph` object *(required)*, `name` string, `output_format` string (default: `yaml`) | `ok` (boolean), `scenarios` (object), `workflow` (string) |
 | `warroom.llm_review` | Prepare redacted evidence for manual LLM review; never gates by itself | `enabled` boolean (default: `False`), `evidence_pack` object *(required)*, `question` string | `ok` (boolean), `status` (string), `advisory_only` (boolean), `redacted_evidence` (object) |
 | `warroom.public_site_verify` | Evaluate DNS, TLS, route, browser, and SEO/GEO evidence for a public site | `base_url` string *(required)*, `observations` object *(required)*, `required_routes` array, `generated_at` string | `ok` (boolean), `contract` (string), `p0_findings` (number), `p1_findings` (number), `route_matrix` (array), `browser_matrix` (array) |
 | `warroom.report` | Create a deterministic Warroom evidence pack and optional report file | `site_graph` object, `scenarios` object, `run_result` object, `artifacts` object, `format` string (default: `json`), `output_path` string | `ok` (boolean), `evidence_pack` (object), `report` (string), `path` (string) |

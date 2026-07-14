@@ -240,7 +240,7 @@ async def _stop_ngrok(port: int) -> None:
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:

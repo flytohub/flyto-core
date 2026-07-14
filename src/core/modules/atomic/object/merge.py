@@ -64,7 +64,7 @@ from ...errors import InvalidTypeError
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def object_merge(context: Dict[str, Any]) -> Dict[str, Any]:

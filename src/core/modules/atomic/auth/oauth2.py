@@ -324,7 +324,7 @@ def _apply_client_auth(
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:

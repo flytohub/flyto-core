@@ -467,7 +467,7 @@ _STRATEGY_DISPATCH = {
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def http_paginate(context: Dict[str, Any]) -> Dict[str, Any]:

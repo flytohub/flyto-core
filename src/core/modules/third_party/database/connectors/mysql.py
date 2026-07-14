@@ -83,7 +83,7 @@ from ....schema import compose, presets
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     docs_url='https://dev.mysql.com/doc/refman/8.0/en/select.html'
 )

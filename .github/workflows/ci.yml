@@ -47,5 +47,5 @@ jobs:
       - name: Build package
         run: python -m build
 
-      - name: Run Flyto verify gate
+      - name: Run Flyto2 verify gate
         run: flyto-index verify . --json

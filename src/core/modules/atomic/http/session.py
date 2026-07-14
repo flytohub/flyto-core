@@ -250,7 +250,7 @@ async def _execute_request(
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def http_session(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,4 +1,4 @@
-# Flyto Item-Based Execution Pipeline Specification
+# Flyto2 Item-Based Execution Pipeline Specification
 
 > **Version:** 1.0.0-draft
 > **Status:** Draft - Pending Review
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-本規範定義 Flyto 的 **Item-Based Execution Pipeline**，使其達到 n8n 等級的資料處理能力。
+本規範定義 Flyto2 的 **Item-Based Execution Pipeline**，使其達到 n8n 等級的資料處理能力。
 
 ### 目標
 
@@ -932,7 +932,7 @@ function evaluateCondition(condition: Condition, params: Record<string, any>): b
 
 ## 12. Appendix: n8n Comparison
 
-| 功能 | n8n | Flyto 現況 | Flyto 目標 |
+| 功能 | n8n | Flyto2 現況 | Flyto2 目標 |
 |------|-----|------------|------------|
 | Item-based | ✅ 原生支援 | ❌ 單一結果 | ✅ 完整支援 |
 | Merge strategies | ✅ Append/Combine/Multiplex | ❌ 無 | ✅ 完整支援 |
@@ -1452,7 +1452,7 @@ class Deviation:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                        Flyto Orchestrator                                │
+│                        Flyto2 Orchestrator                                │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐    │
@@ -2261,7 +2261,7 @@ class WorkflowGeneratorModule(BaseModule):
 
 ## 20. Updated Comparison
 
-| 功能 | UiPath | n8n | Flyto 目標 |
+| 功能 | UiPath | n8n | Flyto2 目標 |
 |------|--------|-----|------------|
 | Item-based execution | ✅ | ✅ | ✅ |
 | Desktop automation | ✅ | ❌ | ✅ |

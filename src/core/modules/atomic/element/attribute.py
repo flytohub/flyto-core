@@ -72,7 +72,7 @@ from ..element_registry import get_element_registry
             'name': 'href'
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class ElementAttributeModule(BaseModule):

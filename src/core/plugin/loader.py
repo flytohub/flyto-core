@@ -3,7 +3,7 @@
 """
 Plugin Loader
 
-Discovers, loads, and manages Flyto plugins.
+Discovers, loads, and manages Flyto2 plugins.
 
 The loader uses Python's entry_points mechanism to discover plugins
 installed via pip. Plugins must be published as Python packages with
@@ -101,7 +101,7 @@ class PluginLoader:
 
     def discover_plugins(self, force: bool = False) -> Dict[str, InstalledPlugin]:
         """
-        Discover installed Flyto plugins.
+        Discover installed Flyto2 plugins.
 
         Scans installed packages for flyto-plugin-* prefixed packages
         and loads their manifests.

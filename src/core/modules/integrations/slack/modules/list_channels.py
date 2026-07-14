@@ -67,7 +67,7 @@ from ..integration import SlackIntegration
         "channels": {"type": "array", "description": "List of channels"},
         "count": {"type": "number", "description": "Number of channels"},
     },
-    author="Flyto Team",
+    author="Flyto2 Team",
     license="MIT",
 )
 class SlackListChannelsModule(BaseModule):

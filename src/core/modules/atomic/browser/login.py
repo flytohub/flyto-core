@@ -134,7 +134,7 @@ async (options) => {
         {'name': 'Auto-detect login form', 'params': {'username': 'user@example.com', 'password': 'secret'}},
         {'name': 'With custom selectors', 'params': {'username': 'admin', 'password': 'pass', 'username_selector': '#user', 'password_selector': '#pass', 'submit_selector': '#login-btn'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read", "browser.write"],
 )
 class BrowserLoginModule(BaseModule):

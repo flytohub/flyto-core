@@ -1,4 +1,4 @@
-# Flyto Module Icons Reference
+# Flyto2 Module Icons Reference
 
 This document lists available Lucide icons for use in `@register_module()`.
 

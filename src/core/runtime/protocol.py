@@ -199,7 +199,7 @@ class ErrorCode:
     INVALID_PARAMS = -32602
     INTERNAL_ERROR = -32603
 
-    # Flyto-specific error codes
+    # Flyto2-specific error codes
     STEP_NOT_FOUND = -32001
     VALIDATION_ERROR = -32002
     PERMISSION_DENIED = -32003

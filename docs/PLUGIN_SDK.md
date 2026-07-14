@@ -515,4 +515,4 @@ Build with: `go build -o plugin main.go`
 2. Ensure `plugin.yaml` is valid and complete
 3. Include an icon (256x256 PNG)
 4. Write clear documentation in README.md
-5. Submit to the Flyto marketplace (coming soon)
+5. Submit to the Flyto2 marketplace (coming soon)

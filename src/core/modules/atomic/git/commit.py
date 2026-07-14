@@ -140,7 +140,7 @@ def _parse_files_changed(stat_out: str) -> int:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def git_commit(context: Dict[str, Any]) -> Dict[str, Any]:

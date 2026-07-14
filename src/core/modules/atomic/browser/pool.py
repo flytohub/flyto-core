@@ -75,7 +75,7 @@ _browser_pool: Dict[str, Any] = {}
         {'name': 'Switch to browser', 'params': {'action': 'switch', 'name': 'scraper1'}},
         {'name': 'List all browsers', 'params': {'action': 'list'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read", "browser.write"],
 )
 class BrowserPoolModule(BaseModule):

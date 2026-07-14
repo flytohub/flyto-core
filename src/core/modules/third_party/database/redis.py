@@ -74,7 +74,7 @@ from ...schema import compose, presets
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class RedisGetModule(BaseModule):
@@ -193,7 +193,7 @@ class RedisGetModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class RedisSetModule(BaseModule):

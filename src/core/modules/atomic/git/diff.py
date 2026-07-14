@@ -149,7 +149,7 @@ def _parse_numstat(numstat_out: str) -> tuple:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def git_diff(context: Dict[str, Any]) -> Dict[str, Any]:

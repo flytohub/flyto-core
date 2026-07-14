@@ -76,7 +76,7 @@ from ..integration import JiraIntegration
         "issues": {"type": "array", "description": "List of matching issues"},
         "total": {"type": "number", "description": "Total number of matching issues"},
     },
-    author="Flyto Team",
+    author="Flyto2 Team",
     license="MIT",
 )
 class JiraSearchIssuesModule(BaseModule):

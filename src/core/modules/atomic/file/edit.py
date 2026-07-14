@@ -92,7 +92,7 @@ def _generate_diff(original: str, modified: str, path: str) -> str:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def file_edit(context):

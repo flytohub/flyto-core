@@ -1,6 +1,6 @@
 # Flyto2 Reusable Smoke Recipes
 
-Flyto2 UI smoke should be captured as versioned Flyto recipes instead of being
+Flyto2 UI smoke should be captured as versioned Flyto2 recipes instead of being
 rewritten by an agent for every session.
 
 ## Recipe Contract
@@ -36,9 +36,9 @@ The JSON report is the durable contract. Consumers should read
 `desktop.pass_dom_integrity`, `mobile.pass_dom_integrity`, `console_errors`,
 `network_sample.requests`, and artifact paths instead of scraping terminal logs.
 
-## Flyto Cloud Bundle Model
+## Flyto2 Cloud Bundle Model
 
-Flyto Cloud can import recipe bundles as account-scoped MCP assets without
+Flyto2 Cloud can import recipe bundles as account-scoped MCP assets without
 rewriting the YAML. Keep canonical recipes in this repo, then publish a bundle
 manifest that tells Cloud where to place them for a Firebase user.
 

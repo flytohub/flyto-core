@@ -91,7 +91,7 @@ from ...schema import compose, field
             'params': {'include_details': True, 'include_content_info': True}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=10000,
     required_permissions=['browser.automation'],

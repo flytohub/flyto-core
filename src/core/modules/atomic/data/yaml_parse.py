@@ -144,7 +144,7 @@ def _classify_type(data: Any) -> str:
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def yaml_parse(context: Dict[str, Any]) -> Dict[str, Any]:

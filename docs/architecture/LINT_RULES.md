@@ -1,4 +1,4 @@
-# Flyto-Core Lint Rules Reference
+# Flyto2-Core Lint Rules Reference
 
 This document provides a comprehensive reference for all validation rules in the flyto-core quality system.
 

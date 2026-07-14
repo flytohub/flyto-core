@@ -79,7 +79,7 @@ from ....schema import compose, presets
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     docs_url='https://www.postgresql.org/docs/current/sql-select.html'
 )

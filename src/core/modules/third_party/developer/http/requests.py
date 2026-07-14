@@ -57,7 +57,7 @@ from .....utils import enforce_outbound_url, SSRFError
             'url': 'https://api.github.com/users/octocat'
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=60000,
 )
@@ -155,7 +155,7 @@ class HTTPGetModule(BaseModule):
             'json': {'name': 'John', 'email': 'john@example.com'}
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=60000,
 )

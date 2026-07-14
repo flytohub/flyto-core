@@ -3,7 +3,7 @@
 """
 Core Analysis Package - Stub for OSS version
 
-Full implementation available in Flyto Pro.
+Full implementation available in Flyto2 Pro.
 """
 
 from .html_analyzer import HTMLAnalyzer

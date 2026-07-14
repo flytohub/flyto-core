@@ -149,7 +149,7 @@ class ProcessConfig:
         # Secrets should be injected via the secrets proxy
         env.update(self.env)
 
-        # Add Flyto-specific env vars
+        # Add Flyto2-specific env vars
         env["FLYTO_PLUGIN_ID"] = self.plugin_id
         env["FLYTO_PROTOCOL_VERSION"] = PROTOCOL_VERSION
         env["FLYTO_LANGUAGE"] = self.language

@@ -171,7 +171,7 @@ from ...schema.constants import FieldGroup, Visibility
         {'name': 'Launch visible browser', 'params': {'headless': False}},
         {'name': 'Human-like with stealth', 'params': {'headless': True, 'behavior': 'human_like', 'stealth': True}},
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class BrowserLaunchModule(BaseModule):

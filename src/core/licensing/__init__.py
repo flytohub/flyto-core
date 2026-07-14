@@ -1,7 +1,7 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Flyto Licensing - Type Definitions and Abstract Interface
+Flyto2 Licensing - Type Definitions and Abstract Interface
 
 This module provides ONLY:
 1. Type definitions (enums) - safe to expose in open source

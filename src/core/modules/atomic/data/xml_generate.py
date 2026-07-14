@@ -179,7 +179,7 @@ def _dict_to_element(tag: str, data: Any) -> ET.Element:
             },
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def xml_generate(context: Dict[str, Any]) -> Dict[str, Any]:

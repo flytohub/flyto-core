@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
             'title': 'Send simple message',
             'title_key': 'modules.slack.send.examples.simple.title',
             'params': {
-                'message': 'Hello from Flyto!'
+                'message': 'Hello from Flyto2!'
             }
         },
         {
@@ -74,12 +74,12 @@ logger = logging.getLogger(__name__)
             'title_key': 'modules.slack.send.examples.formatted.title',
             'params': {
                 'message': 'Task completed successfully',
-                'username': 'Flyto Bot',
+                'username': 'Flyto2 Bot',
                 'icon_emoji': ':white_check_mark:'
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def slack_send(context: Dict[str, Any]) -> Dict[str, Any]:

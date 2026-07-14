@@ -3,7 +3,7 @@
 """
 Meta Module Generator - Placeholder for OSS version
 
-The full module generator is available in Flyto Pro.
+The full module generator is available in Flyto2 Pro.
 This file provides stub implementations for compatibility.
 """
 
@@ -42,7 +42,7 @@ class TestGeneratorModule(BaseModule):
     """
     Test the module generator (stub for OSS)
 
-    Note: Full implementation available in Flyto Pro.
+    Note: Full implementation available in Flyto2 Pro.
 
     Parameters:
         module_spec (dict): Module specification
@@ -69,7 +69,7 @@ class TestGeneratorModule(BaseModule):
         """
         return {
             "status": "stub",
-            "message": "Module generation requires Flyto Pro",
+            "message": "Module generation requires Flyto2 Pro",
             "spec_received": bool(self.module_spec)
         }
 
@@ -103,7 +103,7 @@ class GenerateModuleModule(BaseModule):
     """
     Generate a new module from specification (stub for OSS)
 
-    Note: Full implementation available in Flyto Pro.
+    Note: Full implementation available in Flyto2 Pro.
 
     Parameters:
         module_id (str): Module ID (e.g., "string.reverse")
@@ -143,7 +143,7 @@ class GenerateModuleModule(BaseModule):
         """
         return {
             "status": "stub",
-            "message": "Module generation requires Flyto Pro",
+            "message": "Module generation requires Flyto2 Pro",
             "module_id": self.module_id,
             "description": self.description
         }

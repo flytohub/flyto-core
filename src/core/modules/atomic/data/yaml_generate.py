@@ -131,7 +131,7 @@ from ...errors import ValidationError, ModuleError
             },
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def yaml_generate(context: Dict[str, Any]) -> Dict[str, Any]:

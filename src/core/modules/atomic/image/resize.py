@@ -126,7 +126,7 @@ def _get_resampling(Image, algorithm: str):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def image_resize(context: Dict[str, Any]) -> Dict[str, Any]:

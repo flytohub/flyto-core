@@ -137,7 +137,7 @@ from ...types import NodeType, EdgeType, DataType
             'note': 'Connect default port for unsupported types'
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=5000,
 )

@@ -83,7 +83,7 @@ logger = logging.getLogger(__name__)
         {'name': 'Adaptive with backoff', 'params': {'strategy': 'adaptive', 'min_interval_ms': 1000, 'max_interval_ms': 15000}},
         {'name': 'Human-like delays', 'params': {'strategy': 'human_like', 'min_interval_ms': 1500, 'max_interval_ms': 8000}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=65000,
+    author='Flyto2 Team', license='MIT', timeout_ms=65000,
     required_permissions=["browser.read"],
 )
 class BrowserThrottleModule(BaseModule):

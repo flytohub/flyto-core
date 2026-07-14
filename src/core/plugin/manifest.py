@@ -3,7 +3,7 @@
 """
 Plugin Manifest Schema
 
-Defines the structure for Flyto plugin packages.
+Defines the structure for Flyto2 plugin packages.
 Third-party developers can create plugins following this manifest format.
 
 Usage:
@@ -17,7 +17,7 @@ Manifest Format:
         "name": "flyto-plugin-slack",
         "version": "1.0.0",
         "flyto_version": ">=2.0.0",
-        "description": "Slack integration for Flyto",
+        "description": "Slack integration for Flyto2",
         "author": "Your Name",
         "modules": [
             {
@@ -141,7 +141,7 @@ class PluginManifest:
     description: str                   # Short description
 
     # Version compatibility
-    flyto_version: str = ">=2.0.0"     # Required Flyto version
+    flyto_version: str = ">=2.0.0"     # Required Flyto2 version
 
     # Author info
     author: str = ""

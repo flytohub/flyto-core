@@ -61,7 +61,7 @@ from ..element_registry import get_element_registry
             'limit': 10
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class BrowserFindModule(BaseModule):

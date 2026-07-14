@@ -144,7 +144,7 @@ from ...schema.constants import FieldGroup
             'params': {'type_method': 'selector', 'selector': '#email', 'text': 'user@example.com'}
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

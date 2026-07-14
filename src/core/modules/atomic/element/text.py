@@ -62,7 +62,7 @@ from ..element_registry import get_element_registry
             'element_id': '${title_element}'
         }
     }],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class ElementTextModule(BaseModule):

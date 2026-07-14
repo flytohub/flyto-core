@@ -162,7 +162,7 @@ def _element_to_dict(element: ET.Element, preserve_attributes: bool) -> Any:
             },
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def xml_parse(context: Dict[str, Any]) -> Dict[str, Any]:

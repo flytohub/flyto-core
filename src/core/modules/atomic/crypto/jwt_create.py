@@ -146,7 +146,7 @@ logger = logging.getLogger(__name__)
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def crypto_jwt_create(context: Dict[str, Any]) -> Dict[str, Any]:

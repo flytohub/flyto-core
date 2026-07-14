@@ -141,7 +141,7 @@ from ..vector.embeddings import EmbeddingGenerator
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
 )

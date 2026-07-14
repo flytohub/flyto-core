@@ -229,7 +229,7 @@ steps:
 
       Date: [api_data.scan_date]
 
-      Engine: Flyto Security Audit Engine v3.0
+      Engine: Flyto2 Security Audit Engine v3.0
 
       Scan Depth: {{scan_depth}}
 
@@ -804,7 +804,7 @@ steps:
 
       ══════════════════════════════════════════════════
 
-      Flyto Security Audit Engine v3.0
+      Flyto2 Security Audit Engine v3.0
 
       Scan completed: [api_data.scan_timestamp]
 

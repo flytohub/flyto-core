@@ -70,7 +70,7 @@ from ...errors import ValidationError, InvalidTypeError
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def array_join(context: Dict[str, Any]) -> Dict[str, Any]:

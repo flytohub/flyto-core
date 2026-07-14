@@ -56,7 +56,7 @@ GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
         field('subject', type='string', label='Subject', required=True,
               group=FieldGroup.BASIC,
               description='Email subject line',
-              placeholder='Hello from Flyto'),
+              placeholder='Hello from Flyto2'),
         field('body', type='string', label='Body', required=True,
               group=FieldGroup.BASIC,
               description='Email body content',
@@ -90,7 +90,7 @@ GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def google_gmail_send(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document defines the architecture for the Flyto module validation (lint) system.
+This document defines the architecture for the Flyto2 module validation (lint) system.
 
 ### Design Goals
 

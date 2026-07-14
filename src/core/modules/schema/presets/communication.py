@@ -729,7 +729,7 @@ def NOTIFY_MESSAGE(
     *,
     key: str = "message",
     required: bool = True,
-    placeholder: str = "Hello from Flyto!",
+    placeholder: str = "Hello from Flyto2!",
     label: str = "Message",
     label_key: str = "schema.field.notify_message",
 ) -> Dict[str, Dict[str, Any]]:

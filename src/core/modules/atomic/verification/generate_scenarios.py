@@ -15,7 +15,7 @@ from ..warroom.engine import generate_scenarios, scenarios_to_yaml
     category="verification",
     tags=["verification", "scenario", "yaml", "deterministic"],
     label="Verification Generate Scenarios",
-    description="Generate replayable Flyto YAML scenarios from a deterministic site graph",
+    description="Generate replayable Flyto2 YAML scenarios from a deterministic site graph",
     icon="FileCode",
     color="#14B8A6",
     input_types=["object"],

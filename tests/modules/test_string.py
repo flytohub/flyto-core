@@ -266,4 +266,4 @@ class TestStringTitlecase:
         """Test single word title case."""
         instance = module_class({"text": "flyto"}, {})
         result = await instance.execute()
-        assert result["data"]["result"] == "Flyto"
+        assert result["data"]["result"] == "Flyto2"

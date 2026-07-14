@@ -68,7 +68,7 @@ steps:
   - id: greet
     module: string.hello
     params:
-      name: "Flyto"
+      name: "Flyto2"
 ```
 
 ```bash

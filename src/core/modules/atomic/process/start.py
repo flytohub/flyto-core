@@ -142,7 +142,7 @@ def get_process_registry() -> Dict[str, Dict[str, Any]]:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def process_start(context: Dict[str, Any]) -> Dict[str, Any]:

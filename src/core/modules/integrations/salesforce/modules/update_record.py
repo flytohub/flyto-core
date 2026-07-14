@@ -73,7 +73,7 @@ from ..integration import SalesforceIntegration
     output_schema={
         "ok": {"type": "boolean", "description": "Whether the operation was successful"},
     },
-    author="Flyto Team",
+    author="Flyto2 Team",
     license="MIT",
 )
 class SalesforceUpdateRecordModule(BaseModule):

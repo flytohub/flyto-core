@@ -225,7 +225,7 @@ def _apply_text_watermark(base_img, text, position, opacity, font_size):
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def image_watermark(context: Dict[str, Any]) -> Dict[str, Any]:

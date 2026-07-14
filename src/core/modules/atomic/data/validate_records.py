@@ -104,7 +104,7 @@ _VALIDATORS = {
             }
         },
     ],
-    author='Flyto Team', license='MIT',
+    author='Flyto2 Team', license='MIT',
     required_permissions=[],
 )
 class DataValidateRecordsModule(BaseModule):

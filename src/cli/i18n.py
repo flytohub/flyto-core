@@ -17,7 +17,7 @@ class I18n:
         self.lang = lang
         # Default English fallbacks for common CLI messages
         self._fallbacks = {
-            'cli.welcome': 'Welcome to Flyto Workflow Engine',
+            'cli.welcome': 'Welcome to Flyto2 Workflow Engine',
             'cli.version': 'Version: 1.0.0',
             'cli.description': 'Automate your workflows with ease',
             'cli.loading_workflow': 'Loading workflow',

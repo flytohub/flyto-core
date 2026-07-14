@@ -263,7 +263,7 @@ MAX_AGENT_DEPTH = 3
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -180,7 +180,7 @@ def _ocr_boxes(img, language, custom_config):
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def image_ocr(context: Dict[str, Any]) -> Dict[str, Any]:

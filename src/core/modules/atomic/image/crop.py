@@ -169,7 +169,7 @@ def _validate_crop_params(input_path, output_path, left, top, right, bottom):
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def image_crop(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -6,7 +6,7 @@
 
 ## Overview
 
-The Flyto core has been restructured to follow a **Core Minimal** architecture where:
+The Flyto2 core has been restructured to follow a **Core Minimal** architecture where:
 
 1. **Core** contains only essential components (runtime, engine, flow modules)
 2. **Plugins** handle all other functionality (LLM, Browser, Database, etc.)

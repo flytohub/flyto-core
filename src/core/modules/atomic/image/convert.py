@@ -158,7 +158,7 @@ def _build_save_kwargs(output_format: str, quality: int) -> dict:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def image_convert(context: Dict[str, Any]) -> Dict[str, Any]:

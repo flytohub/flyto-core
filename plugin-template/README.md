@@ -1,7 +1,7 @@
 # Plugin Template
 
 `plugin-template/` is the starting point for third-party or enterprise flyto-core
-plugins. It should remain minimal, documented, and free of Flyto private
+plugins. It should remain minimal, documented, and free of Flyto2 private
 infrastructure assumptions.
 
 ## Expectations

@@ -225,7 +225,7 @@ def _generate_png_qr(qr, output_path, color, background, size, logo_path):
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:

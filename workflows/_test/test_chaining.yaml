@@ -5,7 +5,7 @@ steps:
   - id: reverse
     module: string.reverse
     params:
-      text: "Hello Flyto"
+      text: "Hello Flyto2"
 
   - id: shout
     module: string.uppercase

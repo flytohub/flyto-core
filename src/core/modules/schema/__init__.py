@@ -1,7 +1,7 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Schema Module - Composable schema construction for Flyto modules
+Schema Module - Composable schema construction for Flyto2 modules
 
 This module provides tools to build params_schema in a DRY, composable way.
 Instead of repeating field definitions across 100+ modules, use presets.

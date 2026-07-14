@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def _github_headers(token=None):
     """Build common GitHub API headers."""
-    headers = {'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER, 'User-Agent': 'Flyto-Workflow-Engine'}
+    headers = {'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER, 'User-Agent': 'Flyto2-Workflow-Engine'}
     if token:
         headers['Authorization'] = f'token {token}'
     return headers
@@ -133,7 +133,7 @@ def _simplify_repos(data):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GitHubGetRepoModule(BaseModule):
@@ -157,7 +157,7 @@ class GitHubGetRepoModule(BaseModule):
 
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
-            'User-Agent': 'Flyto-Workflow-Engine'
+            'User-Agent': 'Flyto2-Workflow-Engine'
         }
 
         if self.token:
@@ -281,7 +281,7 @@ class GitHubGetRepoModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GitHubListIssuesModule(BaseModule):
@@ -420,7 +420,7 @@ class GitHubListIssuesModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GitHubCreateIssueModule(BaseModule):
@@ -456,7 +456,7 @@ class GitHubCreateIssueModule(BaseModule):
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'Authorization': f'token {self.token}',
-            'User-Agent': 'Flyto-Workflow-Engine'
+            'User-Agent': 'Flyto2-Workflow-Engine'
         }
 
         payload = {
@@ -597,7 +597,7 @@ class GitHubCreateIssueModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GitHubCreatePRModule(BaseModule):
@@ -634,7 +634,7 @@ class GitHubCreatePRModule(BaseModule):
         headers = {
             'Accept': APIEndpoints.GITHUB_API_ACCEPT_HEADER,
             'Authorization': f'token {self.token}',
-            'User-Agent': 'Flyto-Workflow-Engine'
+            'User-Agent': 'Flyto2-Workflow-Engine'
         }
 
         payload = {
@@ -768,7 +768,7 @@ class GitHubCreatePRModule(BaseModule):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class GitHubListReposModule(BaseModule):

@@ -15,7 +15,7 @@ from .engine import generate_scenarios, scenarios_to_yaml
     category="warroom",
     tags=["warroom", "scenario", "yaml", "deterministic"],
     label="Warroom Generate Scenarios",
-    description="Generate replayable Flyto YAML scenarios from a Warroom site graph",
+    description="Generate replayable Flyto2 YAML scenarios from a Warroom site graph",
     icon="FileCode",
     color="#14B8A6",
     input_types=["object"],

@@ -253,7 +253,7 @@ class ModuleMigrator:
 {category.upper()} Plugin Entry Point
 
 JSON-RPC server that handles {category} operations.
-Communicates with Flyto core via stdin/stdout.
+Communicates with Flyto2 core via stdin/stdout.
 """
 
 import asyncio

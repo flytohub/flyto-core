@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
             'label': 'Message',
             'description': 'The message text to send',
             'description_key': 'modules.notification.teams.send_message.params.message.description',
-            'placeholder': 'Hello from Flyto!',
+            'placeholder': 'Hello from Flyto2!',
             'required': True
         },
         'title': {
@@ -103,7 +103,7 @@ logger = logging.getLogger(__name__)
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class TeamsSendMessageModule(BaseModule):

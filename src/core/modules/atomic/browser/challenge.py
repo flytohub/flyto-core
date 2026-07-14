@@ -153,7 +153,7 @@ _CHECK_RESOLVED_JS = r"""
         {'name': 'Skip auto-wait, always ask human', 'params': {'auto_wait_seconds': 0, 'human_fallback': True}},
         {'name': 'Auto-only, no human fallback', 'params': {'auto_wait_seconds': 30, 'human_fallback': False}},
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=180000,  # 3 minutes max (challenge + human)
     required_permissions=["browser.read"],

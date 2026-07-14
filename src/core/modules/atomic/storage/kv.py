@@ -155,7 +155,7 @@ def _is_expired(entry: Dict[str, Any]) -> bool:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def storage_get(context: Dict[str, Any]) -> Dict[str, Any]:
@@ -320,7 +320,7 @@ async def storage_get(context: Dict[str, Any]) -> Dict[str, Any]:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def storage_set(context: Dict[str, Any]) -> Dict[str, Any]:
@@ -442,7 +442,7 @@ async def storage_set(context: Dict[str, Any]) -> Dict[str, Any]:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def storage_delete(context: Dict[str, Any]) -> Dict[str, Any]:

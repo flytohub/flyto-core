@@ -268,7 +268,7 @@ class CircuitState(str, Enum):
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=60000,
 )

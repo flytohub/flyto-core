@@ -201,7 +201,7 @@ def _sanitize_error(error_msg: str, token: str = None) -> str:
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:

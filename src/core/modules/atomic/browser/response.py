@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
         {'name': 'Capture JSON API calls', 'params': {'url_pattern': '/api/', 'wait_ms': 5000}},
         {'name': 'Capture GraphQL responses', 'params': {'url_pattern': 'graphql', 'wait_ms': 3000}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=65000,
+    author='Flyto2 Team', license='MIT', timeout_ms=65000,
     required_permissions=["browser.read"],
 )
 class BrowserResponseModule(BaseModule):

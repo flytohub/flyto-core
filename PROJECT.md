@@ -1,9 +1,9 @@
-# Flyto Core Project
+# Flyto2 Core Project
 
 ## Mission
 
 `flyto-core` provides automation modules, recipes, browser control, and workflow
-validation used to prove Flyto product loops end to end.
+validation used to prove Flyto2 product loops end to end.
 
 ## Product Role
 

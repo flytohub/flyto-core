@@ -384,7 +384,7 @@ _DETECT_LIST_JS = r"""
             'params': {'min_items': 5, 'max_items': 50},
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.read"],

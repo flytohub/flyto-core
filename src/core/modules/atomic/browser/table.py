@@ -149,7 +149,7 @@ _TABLE_JS = r"""
         {'name': 'Extract first table', 'params': {}},
         {'name': 'Extract specific table', 'params': {'selector': '#results-table', 'max_rows': 100}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read"],
 )
 class BrowserTableModule(BaseModule):

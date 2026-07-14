@@ -151,7 +151,7 @@ from ...schema.constants import FieldGroup
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=60000,
     required_permissions=['browser.automation'],

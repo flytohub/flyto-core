@@ -151,7 +151,7 @@ MAX_CONTAINER_DEPTH = 5
             'note': 'Variables from parent are not accessible inside'
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=5000,
 )

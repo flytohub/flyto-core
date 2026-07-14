@@ -90,7 +90,7 @@ logger = logging.getLogger(__name__)
         {'name': 'Init pool', 'params': {'action': 'init', 'proxies': ['http://p1:8080', 'http://p2:8080']}},
         {'name': 'Rotate', 'params': {'action': 'rotate'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read", "browser.write"],
 )
 class BrowserProxyRotateModule(BaseModule):

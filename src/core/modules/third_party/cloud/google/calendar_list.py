@@ -87,7 +87,7 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
             },
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def google_calendar_list_events(context: Dict[str, Any]) -> Dict[str, Any]:

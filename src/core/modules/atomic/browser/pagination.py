@@ -259,7 +259,7 @@ logger = logging.getLogger(__name__)
             }
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=600000,  # 10 minutes for large multi-page operations
     required_permissions=['browser.automation'],

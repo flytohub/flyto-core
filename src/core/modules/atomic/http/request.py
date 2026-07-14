@@ -280,7 +280,7 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:

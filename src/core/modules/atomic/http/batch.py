@@ -214,7 +214,7 @@ def _compute_pattern_matches(
         'total_duration_ms': {'type': 'number', 'description': 'Total elapsed ms across the batch'},
         'detected': {'type': 'array', 'description': 'Pattern match summary when detect_patterns provided'},
     },
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
 )
 async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:

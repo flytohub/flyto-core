@@ -109,7 +109,7 @@ class TestProcessConfig:
         )
         env = config.get_process_env()
 
-        # Check Flyto vars
+        # Check Flyto2 vars
         assert env["FLYTO_PLUGIN_ID"] == "test-plugin"
         assert env["FLYTO_PROTOCOL_VERSION"] == PROTOCOL_VERSION
         assert env["FLYTO_LANGUAGE"] == "python"

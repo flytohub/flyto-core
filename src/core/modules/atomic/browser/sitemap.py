@@ -158,7 +158,7 @@ async (options) => {
         {'name': 'Parse site sitemap', 'params': {}},
         {'name': 'Filter blog posts', 'params': {'url_pattern': '/blog/', 'max_urls': 100}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=30000,
+    author='Flyto2 Team', license='MIT', timeout_ms=30000,
     required_permissions=["browser.read"],
 )
 class BrowserSitemapModule(BaseModule):

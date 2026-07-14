@@ -82,7 +82,7 @@ steps:
     label: "9. Fill form"
     params:
       data:
-        custname: "Flyto Test User"
+        custname: "Flyto2 Test User"
         custtel: "1234567890"
         custemail: "test@flyto.dev"
         comments: "This is an automated browser test"
@@ -181,7 +181,7 @@ steps:
     module: browser.evaluate
     label: "Trigger delayed alert"
     params:
-      script: "setTimeout(() => alert('Flyto test alert'), 1500); return 'alert scheduled';"
+      script: "setTimeout(() => alert('Flyto2 test alert'), 1500); return 'alert scheduled';"
 
   - id: dialog_accept
     module: browser.dialog

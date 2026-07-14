@@ -64,7 +64,7 @@ logger = logging.getLogger(__name__)
         {'name': 'Import session', 'params': {'action': 'import', 'file_path': 'cookies.json'}},
         {'name': 'Export for specific domain', 'params': {'action': 'export', 'file_path': 'gh.json', 'domain_filter': '.github.com'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=10000,
+    author='Flyto2 Team', license='MIT', timeout_ms=10000,
     required_permissions=["browser.read", "browser.write"],
 )
 class BrowserCookiesFileModule(BaseModule):

@@ -412,7 +412,7 @@ class CaptchaSolver:
     @staticmethod
     def _http_get(url: str) -> Optional[dict]:
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Flyto/1.0'})
+            req = urllib.request.Request(url, headers={'User-Agent': 'Flyto2/1.0'})
             with urllib.request.urlopen(req, timeout=15) as resp:
                 return json.loads(resp.read())
         except Exception as e:
@@ -432,7 +432,7 @@ class CaptchaSolver:
                 content_type = 'application/json'
             req = urllib.request.Request(
                 url, data=data,
-                headers={'Content-Type': content_type, 'User-Agent': 'Flyto/1.0'},
+                headers={'Content-Type': content_type, 'User-Agent': 'Flyto2/1.0'},
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 return json.loads(resp.read())

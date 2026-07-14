@@ -150,7 +150,7 @@ from ...types import NodeType, EdgeType, DataType
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
 )

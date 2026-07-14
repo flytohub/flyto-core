@@ -112,7 +112,7 @@ def _validate_and_prepare_download(url: str, parsed, output_path, output_dir, he
             }
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 async def image_download(context: Dict[str, Any]) -> Dict[str, Any]:

@@ -85,7 +85,7 @@ class TestEnvironmentVariableWhitelist:
         # PATH is essential for subprocess execution
         assert "PATH" in env
 
-        # Flyto-specific vars should be set
+        # Flyto2-specific vars should be set
         assert env["FLYTO_PLUGIN_ID"] == "test-plugin"
         assert "FLYTO_PROTOCOL_VERSION" in env
         assert "FLYTO_LANGUAGE" in env

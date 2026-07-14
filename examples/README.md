@@ -2,7 +2,7 @@
 
 Examples are public, runnable starting points for community users and sales or
 support demos. They should stay safe to publish and should not require private
-Flyto infrastructure.
+Flyto2 infrastructure.
 
 ## Rules
 

@@ -84,7 +84,7 @@ from ..integration import SalesforceIntegration
             },
         },
     ],
-    author="Flyto Team",
+    author="Flyto2 Team",
     license="MIT",
 )
 class SalesforceCreateRecordModule(BaseModule):

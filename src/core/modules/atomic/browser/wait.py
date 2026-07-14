@@ -81,7 +81,7 @@ from ...schema.constants import FieldGroup
             'params': {'selector': '#loading-complete', 'timeout_ms': 5000}
         }
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT'
 )
 class BrowserWaitModule(BaseModule):

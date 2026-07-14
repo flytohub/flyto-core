@@ -302,7 +302,7 @@ FUZZY_DETECT_JS = """(config) => {
             'params': {'selector': '#old-login-btn', 'text': 'Login', 'match_mode': 'best'}
         },
     ],
-    author='Flyto Team',
+    author='Flyto2 Team',
     license='MIT',
     timeout_ms=30000,
     required_permissions=["browser.automation"],

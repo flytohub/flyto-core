@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
         {'name': 'Connect to BrowserBase', 'params': {'ws_endpoint': 'wss://connect.browserbase.com?apiKey=KEY'}},
         {'name': 'Self-hosted', 'params': {'ws_endpoint': 'ws://localhost:3000'}},
     ],
-    author='Flyto Team', license='MIT', timeout_ms=35000,
+    author='Flyto2 Team', license='MIT', timeout_ms=35000,
     required_permissions=["browser.read", "browser.write"],
 )
 class BrowserConnectModule(BaseModule):
