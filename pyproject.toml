@@ -75,6 +75,9 @@ image = [
 telegram = [
     "python-telegram-bot>=22.8",
 ]
+search = [
+    "tavily-python>=0.5",
+]
 cloud = [
     "flyto-core[browser,image]",
 ]

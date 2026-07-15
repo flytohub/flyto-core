@@ -313,6 +313,7 @@
 | `core.api.http_get` | Send HTTP GET request to any URL | `url` string *(required)*, `headers` object (default: `{}`), `params` object (default: `{}`), `timeout` number (default: `30`), `verify_ssl` boolean (default: `True`) | `status_code` (number), `headers` (object), `body` (string), `json` (object) |
 | `core.api.http_post` | Send HTTP POST request to any URL | `url` string *(required)*, `headers` object (default: `{}`), `body` string, `json` any, `timeout` number (default: `30`), `verify_ssl` boolean (default: `True`) | `status_code` (number), `headers` (object), `body` (string), `json` (object) |
 | `core.api.serpapi_search` | Use SerpAPI to search keywords (100 free searches/month) | `keyword` string *(required)*, `limit` number (default: `10`) | `status` (string), `data` (array), `count` (number) |
+| `core.api.tavily_search` | Use Tavily API to search the web (1000 free credits/month) | `keyword` string *(required)*, `limit` number (default: `10`) | `status` (string), `data` (array), `count` (number) |
 
 ## crypto
 

@@ -1,5 +1,5 @@
 {
-  "total": 427,
+  "total": 428,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -535,6 +535,10 @@
     },
     {
       "id": "core.api.serpapi_search",
+      "version": "1.0.0"
+    },
+    {
+      "id": "core.api.tavily_search",
       "version": "1.0.0"
     },
     {

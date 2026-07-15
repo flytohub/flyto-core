@@ -3,7 +3,7 @@
 """
 Search API Modules
 
-Google Search and SerpAPI integration modules.
+Google Search, SerpAPI, and Tavily integration modules.
 """
 
 import os
@@ -210,6 +210,110 @@ class SerpAPISearchModule(BaseModule):
                         'title': item.get('title'),
                         'url': item.get('link'),
                         'description': item.get('snippet')
+                    })
+
+                return {
+                    "status": "success",
+                    "data": results,
+                    "count": len(results)
+                }
+
+
+@register_module(
+    module_id='core.api.tavily_search',
+    version='1.0.0',
+    category='api',
+    subcategory='api',
+    tags=['api', 'search', 'tavily', 'third-party', 'ssrf_protected'],
+    label='Web Search (Tavily)',
+    label_key='modules.api.tavily_search.label',
+    description='Use Tavily API to search the web (1000 free credits/month)',
+    description_key='modules.api.tavily_search.description',
+    icon='Search',
+    color='#5B4FDB',
+    input_types=['string'],
+    output_types=['json', 'array', 'api_response'],
+    can_connect_to=['data.*', 'notify.*', 'file.*'],
+    can_receive_from=['start', 'flow.*'],
+    timeout_ms=30000,
+    retryable=True,
+    max_retries=3,
+    concurrent_safe=True,
+    requires_credentials=True,
+    credential_keys=['TAVILY_API_KEY'],
+    handles_sensitive_data=False,
+    required_permissions=['network.access'],
+    params_schema=compose(
+        presets.SEARCH_KEYWORD(placeholder='python tutorial'),
+        presets.SEARCH_LIMIT(),
+    ),
+    output_schema={
+        'status': {'type': 'string', 'description': 'Operation status (success/error)'},
+        'data': {'type': 'array', 'description': 'Output data from the operation'},
+        'count': {'type': 'number', 'description': 'Number of items'}
+    },
+    examples=[{
+        'title': 'Search with Tavily',
+        'params': {
+            'keyword': 'machine learning',
+            'limit': 10
+        }
+    }],
+    author='Flyto2 Team',
+    license='MIT'
+)
+class TavilySearchModule(BaseModule):
+    """Tavily Search Module - Use Tavily API for web search"""
+
+    module_name = "Web Search (Tavily)"
+    module_description = "Use Tavily API to search the web (1000 free credits/month)"
+    required_permission = "api.search"
+
+    def validate_params(self) -> None:
+        if 'keyword' not in self.params:
+            raise ValueError("Missing parameter: keyword")
+        self.keyword = self.params['keyword']
+        self.limit = self.params.get('limit', 10)
+
+    async def execute(self) -> Any:
+        api_key = os.getenv('TAVILY_API_KEY')
+
+        if not api_key:
+            return {
+                "status": "error",
+                "message": "Please set TAVILY_API_KEY environment variable",
+                "setup_guide": {
+                    "step1": "Go to https://app.tavily.com/",
+                    "step2": "Register account (1000 free API credits per month)",
+                    "step3": "Get API Key",
+                    "step4": "Set environment variable: TAVILY_API_KEY"
+                }
+            }
+
+        url = "https://api.tavily.com/search"
+        payload = {
+            'api_key': api_key,
+            'query': self.keyword,
+            'max_results': self.limit,
+            'search_depth': 'basic',
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                if response.status != 200:
+                    return {
+                        "status": "error",
+                        "message": f"API error: HTTP {response.status}"
+                    }
+
+                data = await response.json()
+
+                results = []
+                for item in data.get('results', []):
+                    results.append({
+                        'title': item.get('title'),
+                        'url': item.get('url'),
+                        'description': item.get('content')
                     })
 
                 return {
