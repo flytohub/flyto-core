@@ -22,7 +22,7 @@ requests>=2.34.2
 
 # Vector Database (for long-term memory)
 qdrant-client>=1.9.0  # GHSA-7m75-x27w-r52r input validation fixed in 1.9.0
-sentence-transformers>=2.2.0  # For local embeddings
+sentence-transformers>=2.7.0  # For local embeddings
 
 # ============================================
 # Telegram Bot Dependencies
