@@ -89,7 +89,7 @@ dev = [
     "black>=25.11.0",  # GHSA-fj7x ReDoS fixed in 24.3.0; 25.11.0 is the last line supporting py3.9 (GHSA-3936 file-write fix requires black 26.3.1 / py3.10)
     "ruff>=0.1.0",
     "mypy>=1.0.0",
-    "build>=1.0.0",
+    "build>=1.5.0",
     "twine>=4.0.0",
 ]
 
