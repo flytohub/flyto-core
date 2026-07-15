@@ -73,7 +73,7 @@ image = [
     "Pillow>=11.3.0",  # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed; 11.3.0 is the last line supporting py3.9 (12.2.0 CVEs require py3.10)
 ]
 telegram = [
-    "python-telegram-bot>=20.0",
+    "python-telegram-bot>=22.8",
 ]
 cloud = [
     "flyto-core[browser,image]",
