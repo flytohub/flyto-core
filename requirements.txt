@@ -8,7 +8,7 @@ beautifulsoup4>=4.15.0
 lxml>=6.1.0
 
 # API dependencies (for web UI)
-# bumped to 0.138.0 — allows starlette>=1.3.1 (7 CVEs) + python-multipart>=0.0.32 (3 CVEs)
+# bumped to 0.139.0 — keeps the FastAPI/Starlette advisory floor aligned.
 fastapi>=0.139.0
 uvicorn>=0.51.0
 pydantic>=2.4.0  # GHSA-mr82-8j83-vxmv ReDoS fixed in 2.4.0
