@@ -89,6 +89,9 @@ ai = [
 telegram = [
     "python-telegram-bot>=22.8,<23",
 ]
+search = [
+    "tavily-python>=0.5",
+]
 cloud = [
     "flyto-core[browser,image]",
 ]

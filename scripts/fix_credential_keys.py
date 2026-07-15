@@ -23,6 +23,7 @@ CREDENTIAL_MAPPING = {
     'api.google_sheets': ['GOOGLE_CREDENTIALS'],
     'core.api.google_search': ['GOOGLE_API_KEY', 'GOOGLE_CSE_ID'],
     'core.api.serpapi': ['SERPAPI_KEY'],
+    'core.api.tavily_search': ['TAVILY_API_KEY'],
 
     # Notion
     'api.notion': ['NOTION_TOKEN'],

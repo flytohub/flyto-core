@@ -209,6 +209,9 @@ class APIEndpoints:
     # SerpAPI
     SERPAPI_BASE_URL: str = "https://serpapi.com/search"
 
+    # Tavily
+    TAVILY_BASE_URL: str = "https://api.tavily.com/search"
+
     # Airtable
     AIRTABLE_BASE_URL: str = "https://api.airtable.com/v0"
 
@@ -285,6 +288,7 @@ class EnvVars:
     GOOGLE_AI_API_KEY: str = "GOOGLE_AI_API_KEY"
     GOOGLE_SEARCH_ENGINE_ID: str = "GOOGLE_SEARCH_ENGINE_ID"
     SERPAPI_KEY: str = "SERPAPI_KEY"
+    TAVILY_API_KEY: str = "TAVILY_API_KEY"
     STRIPE_API_KEY: str = "STRIPE_API_KEY"
     AIRTABLE_API_KEY: str = "AIRTABLE_API_KEY"
     OPENAI_API_KEY: str = "OPENAI_API_KEY"
