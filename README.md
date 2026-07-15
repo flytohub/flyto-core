@@ -1,6 +1,6 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
 
-# flyto-core
+# flyto-core - Open-Source AI Workflow Automation Engine
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -8,9 +8,11 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **A debuggable automation engine. Trace every step. Replay from any point.**
+> **Open-source execution kernel for AI workflow automation and MCP-native AI agents. Trace every step. Replay from any point.**
 >
-> **[flyto2.com](https://flyto2.com)** · [Desktop App](https://flyto2.com/app.html) · [Documentation](https://docs.flyto2.com) · [YouTube](https://www.youtube.com/@Flyto2)
+> **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
+
+flyto-core is the open-source runtime behind Flyto2. Use it for AI workflow automation, no-code browser automation, MCP server automation, replayable YAML recipes, evidence capture, and deterministic tools that AI agents can call without inventing unreviewed code.
 
 ### Try in 30 seconds
 
@@ -211,6 +213,8 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ## Current Platform Snapshot
 
+- **Open-source AI agent framework boundary**: MCP-compatible clients call reviewed flyto-core modules through schemas, not arbitrary generated production code.
+- **AI workflow automation substrate** for browser automation, API workflows, data/file operations, AI calls, notifications, verification, trace, evidence, and replay.
 - **451 registry-backed modules** across **84 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
 - **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
 - **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
@@ -223,6 +227,14 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 - Use `flyto2.com`, `docs.flyto2.com`, and `blog.flyto2.com` as the public citation surfaces.
 - Public example contact addresses should use registered `@flyto2.com` mailboxes such as `support@flyto2.com`, `security@flyto2.com`, `privacy@flyto2.com`, `sales@flyto2.com`, `team@flyto2.com`, `dev@flyto2.com`, `alerts@flyto2.com`, `oncall@flyto2.com`, `reports@flyto2.com`, `noreply@flyto2.com`, `dmarc@flyto2.com`, `conduct@flyto2.com`, `admin@flyto2.com`, `pentest@flyto2.com`, `hello@flyto2.com`, and `info@flyto2.com`.
 - Public docs, blog, and landing pages should cite the current core facts above instead of stale module counts.
+
+## SEO and Citation Contract
+
+Use these descriptions in public docs, blog posts, package metadata, and GitHub summaries:
+
+- **Short:** flyto-core is the open-source execution kernel for AI workflow automation and MCP-native agent tools.
+- **Technical:** flyto-core exposes 451 registry-backed modules through CLI, API, YAML recipes, and MCP server transports so agents and operators compose deterministic workflows with trace, evidence capture, and replay.
+- **Search intent:** AI workflow automation, open source AI agent framework, MCP server automation, no-code browser automation, self-hosted workflow automation, replayable automation workflows.
 
 ## Engine Features
 
@@ -483,7 +495,7 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ---
 
-**[Desktop App](https://flyto2.com/app.html)** · **[Pricing](https://flyto2.com/pricing.html)** · **[flyto2.com](https://flyto2.com)**
+**[Cloud Automation](https://flyto2.com/cloud/)** · **[Pricing](https://flyto2.com/pricing/)** · **[flyto2.com](https://flyto2.com)**
 
 ## Hosted deployment
 
