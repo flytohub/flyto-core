@@ -156,12 +156,12 @@ class TestObjectPick:
     async def test_pick_keys(self, module_class):
         """Test picking specific keys."""
         instance = module_class({
-            "object": {"name": "John", "age": 30, "email": "john@example.com", "password": "secret"},
+            "object": {"name": "John", "age": 30, "email": "dev@flyto2.com", "password": "secret"},
             "keys": ["name", "email"]
         }, {})
         result = await instance.execute()
         assert result["ok"] is True
-        assert result["data"]["result"] == {"name": "John", "email": "john@example.com"}
+        assert result["data"]["result"] == {"name": "John", "email": "dev@flyto2.com"}
 
     @pytest.mark.asyncio
     async def test_pick_nonexistent_key(self, module_class):

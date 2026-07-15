@@ -17,6 +17,8 @@ import sys
 import time
 from pathlib import Path
 
+from core.catalog_facts import CORE_MODULE_COUNT
+
 os.environ["FLYTO_VALIDATION_MODE"] = "dev"
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -293,7 +295,7 @@ async def _run_demo(work_dir, evidence_path):
 
     {D}# Or start the HTTP API:{X}
     flyto serve
-    curl localhost:8333/v1/modules  {D}# discover all 329 modules{X}
+    curl localhost:8333/v1/modules  {D}# discover all {CORE_MODULE_COUNT} modules{X}
 
   {P}github.com/flytohub/flyto-core{X}
 """)

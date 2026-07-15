@@ -6,6 +6,8 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
+- The generated catalog currently exposes 451 modules across 84 categories, and
+  the bundled recipe inventory contains 41 recipes.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
 - The repository already contains workflow assets and CI for maintained recipe

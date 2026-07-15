@@ -24,7 +24,7 @@ args:
     type: string
     required: true
     description: "JSON object of field:value pairs to fill"
-    placeholder: '{"name":"John","email":"john@flyto2.com","notes":"Monthly report"}'
+    placeholder: '{"name":"John","email":"dev@flyto2.com","notes":"Monthly report"}'
 
 steps:
   - id: launch

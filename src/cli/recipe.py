@@ -137,7 +137,7 @@ def _auto_type(value: str) -> Any:
         return float(value)
     except ValueError:
         pass
-    # Try JSON for objects/arrays (e.g. '{"email":"test@example.com"}')
+    # Try JSON for objects/arrays (e.g. '{"email":"dev@flyto2.com"}')
     if value.startswith(('{', '[')):
         try:
             return _json.loads(value)

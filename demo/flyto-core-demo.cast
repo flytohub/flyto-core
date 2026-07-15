@@ -1,6 +1,6 @@
-{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color"},"timestamp":1771956458,"command":"bash -c 'run_demo'","title":"flyto-core: 412 modules, trace everything, replay from any point","env":{"SHELL":"/bin/zsh"}}
+{"version":3,"term":{"cols":80,"rows":24,"type":"xterm-256color"},"timestamp":1771956458,"command":"bash -c 'run_demo'","title":"flyto-core: 451 modules, trace everything, replay from any point","env":{"SHELL":"/bin/zsh"}}
 [0.007, "o", "\u001b[3J\u001b[H\u001b[2J"]
-[0.000, "o", "\u001b[1mflyto-core\u001b[0m — 412 modules, trace every step, replay from any point\r\n\r\n"]
+[0.000, "o", "\u001b[1mflyto-core\u001b[0m — 451 modules, trace every step, replay from any point\r\n\r\n"]
 [2.005, "o", "\u001b[96m# 1. Fetch GitHub user data in 5 steps — no code, just YAML\u001b[0m\r\n"]
 [1.009, "o", "$ f"]
 [0.033, "o", "l"]
@@ -356,5 +356,5 @@
 [2.005, "o", "\r\n"]
 [0.000, "o", "\u001b[2m────────────────────────────────────────\u001b[0m\r\n\r\n"]
 [0.000, "o", "\u001b[1mpip install flyto-core\u001b[0m\r\n"]
-[0.000, "o", "412 modules. Trace every step. Replay from any point.\r\nhttps://github.com/flytohub/flyto-core\r\n"]
+[0.000, "o", "451 modules. Trace every step. Replay from any point.\r\nhttps://github.com/flytohub/flyto-core\r\n"]
 [4.010, "x", "0"]

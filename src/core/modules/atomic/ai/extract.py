@@ -153,7 +153,7 @@ logger = logging.getLogger(__name__)
             'title': 'Extract Contact Info',
             'title_key': 'modules.ai.extract.examples.contact.title',
             'params': {
-                'text': 'John Smith is a senior engineer at Acme Corp. Email: john@acme.com',
+                'text': 'John Smith is a senior engineer at Acme Corp. Email: dev@flyto2.com',
                 'schema': {
                     'type': 'object',
                     'properties': {

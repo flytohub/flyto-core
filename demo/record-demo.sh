@@ -48,7 +48,7 @@ separator() {
 run_demo() {
     export FLYTO_SANDBOX_DIR="$PWD"
     clear
-    echo -e "${BOLD}flyto-core${RESET} — 412 modules, trace every step, replay from any point"
+    echo -e "${BOLD}flyto-core${RESET} — 451 modules, trace every step, replay from any point"
     echo
     pause 2
 
@@ -100,7 +100,7 @@ run_demo() {
     separator
 
     echo -e "${BOLD}pip install flyto-core${RESET}"
-    echo -e "412 modules. Trace every step. Replay from any point."
+    echo -e "451 modules. Trace every step. Replay from any point."
     echo -e "https://github.com/flytohub/flyto-core"
     pause 4
 }
@@ -134,7 +134,7 @@ case "${1:-record}" in
         export -f type_cmd pause separator run_demo
 
         asciinema rec \
-            --title "flyto-core: 412 modules, trace everything, replay from any point" \
+            --title "flyto-core: 451 modules, trace everything, replay from any point" \
             --cols 90 \
             --rows 32 \
             --command "bash -c 'run_demo'" \

@@ -179,7 +179,7 @@ class RedisGetModule(BaseModule):
             'title': 'Cache user profile',
             'params': {
                 'key': 'user:123:profile',
-                'value': '{"name": "John", "email": "john@example.com"}',
+                'value': '{"name": "John", "email": "dev@flyto2.com"}',
                 'ttl': 3600
             }
         },

@@ -143,7 +143,7 @@ from ...types import NodeType, EdgeType, DataType
         {
             'title': 'Cloud Redis with Auth',
             'params': {
-                'redis_url': 'redis://:password@redis-cloud.example.com:6379',
+                'redis_url': 'redis://cache.flyto2.com:6379',
                 'session_id': 'user-session',
                 'ttl_seconds': 86400,
                 'max_messages': 500

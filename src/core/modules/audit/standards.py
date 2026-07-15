@@ -44,7 +44,7 @@ DEFAULT_PLACEHOLDERS: Dict[str, str] = {
     'selector': '#element-id or .class-name',
     'file_path': '/path/to/file',
     'path': '/path/to/file',
-    'email': 'user@example.com',
+    'email': 'team@flyto2.com',
     'password': '********',
     'json': '{"key": "value"}',
     'array': '[1, 2, 3]',

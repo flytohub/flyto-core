@@ -21,7 +21,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Ensure modules are registered BEFORE any handler/app import
 # ---------------------------------------------------------------------------
-from core.modules import atomic  # noqa: F401  — triggers 400+ module registration
+from core.modules import atomic  # noqa: F401  — triggers production module registration
 
 from core.mcp_handler import (
     execute_module,
@@ -309,7 +309,7 @@ def mcp_server():
         env=env,
     )
 
-    # Initialize — wait up to 30s (400+ module imports take time)
+    # Initialize — wait up to 30s (production module imports take time)
     _send_jsonrpc(proc, "initialize", {
         "protocolVersion": "2025-11-25",
         "capabilities": {},

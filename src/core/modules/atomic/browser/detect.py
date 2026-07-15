@@ -260,7 +260,7 @@ FUZZY_DETECT_JS = """(config) => {
               label="Text to Type",
               label_key="modules.browser.detect.param.action_value.label",
               description="Text to type into the element (when action is 'type')",
-              placeholder="user@example.com",
+              placeholder="team@flyto2.com",
               required=False,
               showIf={"action": {"$in": ["type"]}},
               group=FieldGroup.OPTIONS),
@@ -295,7 +295,7 @@ FUZZY_DETECT_JS = """(config) => {
         },
         {
             'name': 'Find input by placeholder',
-            'params': {'text': 'Enter your email', 'role': 'textbox', 'action': 'type', 'action_value': 'user@example.com'}
+            'params': {'text': 'Enter your email', 'role': 'textbox', 'action': 'type', 'action_value': 'team@flyto2.com'}
         },
         {
             'name': 'Selector with text fallback',

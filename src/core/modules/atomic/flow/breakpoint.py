@@ -161,7 +161,7 @@ from ...types import NodeType, EdgeType, DataType
             'params': {
                 'title': 'Manager Approval Required',
                 'description': 'Large transaction requires manager approval',
-                'required_approvers': ['manager@example.com'],
+                'required_approvers': ['oncall@flyto2.com'],
                 'timeout_seconds': 3600
             }
         },

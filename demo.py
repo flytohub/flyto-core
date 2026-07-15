@@ -1,4 +1,4 @@
-"""30-second demo: Give your AI 412 tools with one command."""
+"""30-second demo: Give your AI 451 tools with one command."""
 import asyncio
 import sys
 import logging
@@ -16,7 +16,7 @@ R = "\033[0m"
 
 
 async def main():
-    print(f"\n{B}flyto-core demo — 412 tools for AI agents{R}\n")
+    print(f"\n{B}flyto-core demo — 451 tools for AI agents{R}\n")
 
     ctx = {}
 
@@ -52,7 +52,7 @@ async def main():
     # Step 4: String transform
     print(f"\n{D}━━━ Step 4: string.uppercase ━━━{R}")
     r = await ModuleRegistry.execute("string.uppercase",
-        params={"text": "flyto-core: 412 tools, zero config"}, context={})
+        params={"text": "flyto-core: 451 tools, zero config"}, context={})
     result = r.get("result", r.get("data", {}).get("result", ""))
     print(f"{G}✓{R} {Y}{result}{R}\n")
 

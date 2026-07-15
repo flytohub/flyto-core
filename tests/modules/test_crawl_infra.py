@@ -279,7 +279,7 @@ class TestLoginE2E:
         """)
 
         mod = get_module("browser.login")({
-            "username": "test@example.com",
+            "username": "dev@flyto2.com",
             "password": "secret123",
             "success_indicator": ".dashboard",
         }, ctx)

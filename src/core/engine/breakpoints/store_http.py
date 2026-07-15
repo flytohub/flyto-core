@@ -33,7 +33,7 @@ class HttpBreakpointStore:
     breakpoints are visible to the frontend and resolvable by users.
 
     Args:
-        base_url: Control plane API base URL (e.g., "https://api.flyto.app")
+        base_url: Control plane API base URL (e.g., "https://api.flyto2.com")
         auth_token: Bearer token for worker authentication
         poll_interval: Seconds between status polls (default: 1.0)
     """

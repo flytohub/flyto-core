@@ -57,7 +57,7 @@ from ...errors import InvalidTypeError
         {
             'title': 'Pick user fields',
             'params': {
-                'object': {'name': 'John', 'age': 30, 'email': 'john@example.com', 'password': 'secret'},
+                'object': {'name': 'John', 'age': 30, 'email': 'dev@flyto2.com', 'password': 'secret'},
                 'keys': ['name', 'email']
             }
         }

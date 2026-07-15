@@ -131,7 +131,7 @@ async (options) => {
         'fields_found': {'type': 'object',  'description': 'Which form fields were auto-detected'},
     },
     examples=[
-        {'name': 'Auto-detect login form', 'params': {'username': 'user@example.com', 'password': 'secret'}},
+        {'name': 'Auto-detect login form', 'params': {'username': 'team@flyto2.com', 'password': 'secret'}},
         {'name': 'With custom selectors', 'params': {'username': 'admin', 'password': 'pass', 'username_selector': '#user', 'password_selector': '#pass', 'submit_selector': '#login-btn'}},
     ],
     author='Flyto2 Team', license='MIT', timeout_ms=30000,

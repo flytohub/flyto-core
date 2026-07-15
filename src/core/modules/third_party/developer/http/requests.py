@@ -152,7 +152,7 @@ class HTTPGetModule(BaseModule):
         'title': 'Post JSON data',
         'params': {
             'url': 'https://api.example.com/users',
-            'json': {'name': 'John', 'email': 'john@example.com'}
+            'json': {'name': 'John', 'email': 'dev@flyto2.com'}
         }
     }],
     author='Flyto2 Team',

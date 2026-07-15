@@ -711,7 +711,7 @@ class TestGitModules:
         """Create a real local git repository."""
         repo_dir = tmp_path / "test_repo"
         repo_dir.mkdir()
-        os.system(f'cd "{repo_dir}" && git init -q && git config user.email "test@test.com" && git config user.name "Test"')
+        os.system(f'cd "{repo_dir}" && git init -q && git config user.email "dev@flyto2.com" && git config user.name "Test"')
         # Create initial commit
         (repo_dir / "README.md").write_text("# Test Repo")
         os.system(f'cd "{repo_dir}" && git add . && git commit -q -m "Initial commit"')

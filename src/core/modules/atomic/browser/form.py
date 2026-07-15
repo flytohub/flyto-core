@@ -131,7 +131,7 @@ from ...schema.constants import FieldGroup
             'name': 'Fill login form',
             'params': {
                 'data': {
-                    'email': 'user@example.com',
+                    'email': 'team@flyto2.com',
                     'password': 'secret123'
                 },
                 'submit': True

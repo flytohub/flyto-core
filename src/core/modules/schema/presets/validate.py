@@ -23,7 +23,7 @@ def VALIDATE_EMAIL(
         label=label,
         label_key=label_key,
         required=required,
-        placeholder="user@example.com",
+        placeholder="team@flyto2.com",
         description='Email address to validate',
         group=FieldGroup.BASIC,
     )

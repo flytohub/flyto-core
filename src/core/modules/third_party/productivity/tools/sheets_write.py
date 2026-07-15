@@ -113,8 +113,8 @@ logger = logging.getLogger(__name__)
                 'range': 'Sheet1!A1',
                 'values': [
                     ['Name', 'Email', 'Status'],
-                    ['John Doe', 'john@example.com', 'Active'],
-                    ['Jane Smith', 'jane@example.com', 'Active']
+                    ['John Doe', 'dev@flyto2.com', 'Active'],
+                    ['Jane Smith', 'team@flyto2.com', 'Active']
                 ]
             }
         }

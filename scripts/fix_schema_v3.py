@@ -31,7 +31,7 @@ PLACEHOLDER_MAP = {
     'secret': 'your-secret',
     'password': '********',
     'username': 'username',
-    'email': 'user@example.com',
+    'email': 'team@flyto2.com',
     'host': 'localhost',
     'port': '8080',
     'model': 'gpt-4o',

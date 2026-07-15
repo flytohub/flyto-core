@@ -176,7 +176,7 @@ export TELEGRAM_CHAT_ID=@your_channel
 **Email:**
 ```bash
 export SMTP_SERVER=smtp.gmail.com
-export SMTP_USERNAME=your_email@flyto2.com
+export SMTP_USERNAME=dev@flyto2.com
 export SMTP_PASSWORD=your_app_password
 ```
 
@@ -198,7 +198,7 @@ DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 
 # Email
 SMTP_SERVER=smtp.gmail.com
-SMTP_USERNAME=bot@flyto2.com
+SMTP_USERNAME=alerts@flyto2.com
 SMTP_PASSWORD=your_password
 
 # APIs
@@ -244,7 +244,7 @@ export API_TOKEN=your_api_token
 
 # Run workflow
 python -m cli.main workflows/daily_report_email.yaml \
-  --param.recipient_email=manager@flyto2.com
+  --param.recipient_email=oncall@flyto2.com
 ```
 
 ### Example 4: Multi-Channel Alert

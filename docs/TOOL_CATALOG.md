@@ -1,8 +1,8 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **450 modules** across **83 categories**.
+> Auto-generated from flyto-core module registry. **451 modules** across **84 categories**.
 >
-> Last generated: 2026-06-29
+> Last generated: 2026-07-15
 
 ## Categories
 
@@ -50,6 +50,7 @@
 - [logic](#logic) (5)
 - [markdown](#markdown) (3)
 - [math](#math) (6)
+- [mcp](#mcp) (1)
 - [meta](#meta) (4)
 - [monitor](#monitor) (1)
 - [network](#network) (4)
@@ -598,6 +599,12 @@
 | `math.floor` | Round number down to nearest integer | `number` number *(required)* | `result` (number), `original` (number) |
 | `math.power` | Raise number to a power | `base` number *(required)*, `exponent` number *(required)* | `result` (number), `base` (number), `exponent` (number) |
 | `math.round` | Round number to specified decimal places | `number` number *(required)*, `decimals` number (default: `0`) | `result` (number), `original` (number), `decimals` (number) |
+
+## mcp
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `mcp.recipe` | Run an approved MCP recipe contract and emit redacted execution evidence | `recipe_id` string *(required)*, `scenario_id` string *(required)*, `default_args` object (default: `{}`), `runtime_required_args` array (default: `[]`) | `ok` (boolean), `recipe_ok` (boolean), `recipe_id` (string), `scenario_id` (string), `status` (string), `runtime_args_present` (array), `runtime_args_missing` (array), `evidence` (object) |
 
 ## meta
 

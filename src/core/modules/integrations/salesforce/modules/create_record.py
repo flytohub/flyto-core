@@ -79,7 +79,7 @@ from ..integration import SalesforceIntegration
                     "FirstName": "John",
                     "LastName": "Doe",
                     "Company": "Acme Corp",
-                    "Email": "john.doe@acme.com",
+                    "Email": "sales@flyto2.com",
                 },
             },
         },

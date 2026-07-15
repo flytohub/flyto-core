@@ -674,7 +674,7 @@ class TestWorkflowVersionManager:
             {"id": "s1", "module": "http.get", "params": {"url": "https://b.com"}},  # modified url
             # s2 removed
             {"id": "s3", "module": "log", "params": {"msg": "done"}},  # unchanged
-            {"id": "s4", "module": "email.send", "params": {"to": "a@b.com"}},  # added
+            {"id": "s4", "module": "email.send", "params": {"to": "team@flyto2.com"}},  # added
         ]}
 
         v1 = mgr.save_version(workflow_id="wf-1", name="V1", definition=def_a, version="1.0.0")

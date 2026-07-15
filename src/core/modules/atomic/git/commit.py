@@ -106,7 +106,7 @@ def _parse_files_changed(stat_out: str) -> int:
               description='Override commit author name', placeholder='John Doe',
               group=FieldGroup.ADVANCED),
         field('author_email', type='string', label='Author Email', label_key='modules.git.commit.params.author_email.label',
-              description='Override commit author email', placeholder='john@example.com',
+              description='Override commit author email', placeholder='dev@flyto2.com',
               group=FieldGroup.ADVANCED),
     ),
     output_schema={

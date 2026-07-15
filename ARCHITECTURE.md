@@ -4,6 +4,8 @@
 
 - Modules expose narrow automation actions and documented parameters.
 - Recipes compose modules into repeatable workflows.
+- `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
+  source of truth for the current 451-module, 84-category public inventory.
 - Browser modules interact with pages but do not become product business logic.
 - Workflow fixtures must stay separate from secret material and local-only
   machine assumptions.

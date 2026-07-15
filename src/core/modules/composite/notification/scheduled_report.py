@@ -98,12 +98,12 @@ from ..base import CompositeModule, register_composite
         'from_email': {
             'type': 'string',
             'label': 'From Email',
-            'placeholder': 'reports@company.com'
+            'placeholder': 'reports@flyto2.com'
         },
         'to_email': {
             'type': 'string',
             'label': 'To Email',
-            'placeholder': 'manager@company.com'
+            'placeholder': 'oncall@flyto2.com'
         }
     },
 

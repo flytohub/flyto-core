@@ -259,7 +259,7 @@ Create a list of test cases to verify the goal. Each test case should have:
             "name": "Valid Login",
             "description": "Test login with correct credentials",
             "test_type": "positive",
-            "inputs": {{"email": "user@example.com", "password": "password123"}},
+            "inputs": {{"email": "team@flyto2.com", "password": "password123"}},
             "expected": "Should redirect to dashboard/home"
         }},
         ...
@@ -447,7 +447,7 @@ Respond with JSON only."""
 async def main():
     # 用自然語言描述目標，讓 AI 自己規劃
     agent = RealAgent(
-        goal="Test the login functionality with email user@example.com and password your_password",
+        goal="Test the login functionality with email team@flyto2.com and password your_password",
         start_url="http://localhost:3000"
     )
     await agent.run()

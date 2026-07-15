@@ -201,8 +201,8 @@ def _generate_png_qr(qr, output_path, color, background, size, logo_path):
             'title': 'Generate URL QR code',
             'title_key': 'modules.image.qrcode_generate.examples.url.title',
             'params': {
-                'data': 'https://flyto.dev',
-                'output_path': '/tmp/flyto_qr.png',
+                'data': 'https://flyto2.com',
+                'output_path': '/tmp/flyto2_qr.png',
             },
         },
         {
@@ -219,7 +219,7 @@ def _generate_png_qr(qr, output_path, color, background, size, logo_path):
             'title': 'SVG QR code',
             'title_key': 'modules.image.qrcode_generate.examples.svg.title',
             'params': {
-                'data': 'https://flyto.dev',
+                'data': 'https://flyto2.com',
                 'format': 'svg',
                 'border': 2,
             },

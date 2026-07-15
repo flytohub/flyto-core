@@ -18,7 +18,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Trigger @register_module decorators BEFORE any test runs
 # ---------------------------------------------------------------------------
-from core.modules import atomic  # noqa: F401 — registers 400+ modules
+from core.modules import atomic  # noqa: F401 — registers production modules
 
 from core.engine.step_executor.executor import StepExecutor, _redact_sensitive_output
 from core.engine.variable_resolver import VariableResolver
@@ -106,7 +106,7 @@ class TestBasicExecution:
         step_config = {
             "id": "email_check",
             "module": "validate.email",
-            "params": {"email": "user@example.com"},
+            "params": {"email": "team@flyto2.com"},
         }
         executor = make_executor()
         resolver = make_resolver(context=context)

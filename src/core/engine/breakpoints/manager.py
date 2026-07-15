@@ -443,7 +443,7 @@ def create_cloud_worker_manager(
     for user responses.
 
     Args:
-        control_plane_url: Control plane API URL (e.g., "https://api.flyto.app")
+        control_plane_url: Control plane API URL (e.g., "https://api.flyto2.com")
         auth_token: Bearer token for worker authentication
         poll_interval: Seconds between status polls
 

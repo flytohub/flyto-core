@@ -23,7 +23,7 @@ class JiraIntegration(PaginatedIntegration):
     Usage:
         async with JiraIntegration(
             domain="your-domain.atlassian.net",
-            email="user@example.com",
+            email="team@flyto2.com",
             api_token="your-api-token",
         ) as jira:
             await jira.create_issue(

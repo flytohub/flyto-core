@@ -86,7 +86,7 @@ logger = logging.getLogger(__name__)
             'label': 'From Email',
             'description': 'Sender email address',
                 'description_key': 'modules.notification.email.send.params.from_email.description',
-            'placeholder': 'bot@example.com',
+            'placeholder': 'alerts@flyto2.com',
             'required': True
         },
         'to_email': {
@@ -94,7 +94,7 @@ logger = logging.getLogger(__name__)
             'label': 'To Email',
             'description': 'Recipient email address',
                 'description_key': 'modules.notification.email.send.params.to_email.description',
-            'placeholder': 'user@example.com',
+            'placeholder': 'team@flyto2.com',
             'required': True
         },
         'subject': {
@@ -136,8 +136,8 @@ logger = logging.getLogger(__name__)
             'params': {
                 'smtp_server': 'smtp.gmail.com',
                 'smtp_port': 587,
-                'from_email': 'bot@example.com',
-                'to_email': 'user@example.com',
+                'from_email': 'alerts@flyto2.com',
+                'to_email': 'team@flyto2.com',
                 'subject': 'Workflow Complete',
                 'body': 'Your automation workflow has finished successfully.'
             }

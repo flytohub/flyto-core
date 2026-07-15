@@ -59,7 +59,7 @@ PLACEHOLDER_PATTERNS = [
     (r'.*secret.*', 'your-secret'),
     (r'.*password.*', 'password'),
     (r'.*user(name)?.*', 'username'),
-    (r'.*email.*', 'user@example.com'),
+    (r'.*email.*', 'team@flyto2.com'),
 
     # Data formats
     (r'.*json.*', '{"key": "value"}'),

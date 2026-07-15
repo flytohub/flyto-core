@@ -78,7 +78,7 @@ SUPPORTED_DATABASES = ['postgresql', 'mysql', 'sqlite']
             'title_key': 'modules.database.insert.examples.single.title',
             'params': {
                 'table': 'users',
-                'data': {'name': 'John', 'email': 'john@example.com'},
+                'data': {'name': 'John', 'email': 'dev@flyto2.com'},
                 'database_type': 'postgresql'
             }
         }

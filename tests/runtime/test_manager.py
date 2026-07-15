@@ -157,10 +157,10 @@ class TestPluginManifest:
         """Test using 'author' field as 'vendor'."""
         data = {
             "id": "test-plugin",
-            "author": "developer@example.com",  # 'author' instead of 'vendor'
+            "author": "dev@flyto2.com",  # 'author' instead of 'vendor'
         }
         manifest = PluginManifest.from_dict(data)
-        assert manifest.vendor == "developer@example.com"
+        assert manifest.vendor == "dev@flyto2.com"
 
 
 class TestPluginManagerDiscovery:

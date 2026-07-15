@@ -48,7 +48,7 @@ EMAIL_PATTERN = re.compile(
             'label_key': 'modules.text.extract_emails.params.text.label',
             'description': 'Text to extract emails from',
             'description_key': 'modules.text.extract_emails.params.text.description',
-            'placeholder': 'Contact us at info@example.com',
+            'placeholder': 'Contact us at info@flyto2.com',
             'required': True
         },
         'unique': {

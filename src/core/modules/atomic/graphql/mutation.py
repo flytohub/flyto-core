@@ -186,7 +186,7 @@ async def _execute_graphql(url: str, payload: dict, headers: dict, label: str) -
             'params': {
                 'url': 'https://api.example.com/graphql',
                 'mutation': 'mutation CreateUser($input: UserInput!) { createUser(input: $input) { id name } }',
-                'variables': {'input': {'name': 'John', 'email': 'john@example.com'}},
+                'variables': {'input': {'name': 'John', 'email': 'dev@flyto2.com'}},
             },
         },
     ],

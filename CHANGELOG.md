@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to evaluate DNS/TLS/route/browser/SEO-GEO evidence without LLM judgment.
 
 ### Changed
+- Documentation and package metadata now reflect the live registry inventory:
+  451 modules across 84 catalog categories, 41 built-in recipes, and Flyto2
+  website/documentation URLs.
 - `testing.e2e.run_steps` and `testing.scenario.run` now execute real module
   steps and assertions instead of placeholder success.
 - `warroom.generate_scenarios` DOM assertions now wait up to five seconds for

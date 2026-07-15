@@ -547,7 +547,7 @@ steps:
     data:
       custname: Flyto2 Test User
       custtel: '1234567890'
-      custemail: test@flyto2.com
+      custemail: dev@flyto2.com
       comments: This is an automated browser test
     clear_before_fill: true
     submit: false

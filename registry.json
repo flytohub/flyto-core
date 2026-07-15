@@ -1,7 +1,7 @@
 {
-  "$schema": "https://flyto.dev/schemas/plugin-registry-v1.json",
+  "$schema": "https://flyto2.com/schemas/plugin-registry-v1.json",
   "version": "1.0.0",
-  "updated_at": "2026-03-02T00:00:00Z",
+  "updated_at": "2026-07-15T00:00:00Z",
   "plugins": [
     {
       "name": "flyto-plugin-example",

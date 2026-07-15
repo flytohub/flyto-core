@@ -192,5 +192,5 @@ async def run_agent(task: str, start_url: str, max_steps: int = 15):
 
 
 if __name__ == '__main__':
-    task = "Login with email user@example.com and password your_password"
+    task = "Login with email team@flyto2.com and password your_password"
     asyncio.run(run_agent(task, "http://localhost:3000", max_steps=10))

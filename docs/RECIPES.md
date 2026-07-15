@@ -1,6 +1,6 @@
 # Recipes
 
-Pre-built workflow templates. No code, no API key — just `flyto recipe <name>`.
+41 pre-built workflow templates. No code, no API key — just `flyto recipe <name>`.
 
 ```bash
 pip install flyto-core[browser]
@@ -87,7 +87,7 @@ flyto recipe web-perf --url https://example.com --timeout 10000
 E2E login test — navigate to login page, fill credentials, submit, verify success element appears, screenshot the result.
 
 ```bash
-flyto recipe login-test --url https://myapp.com/login --username user@flyto2.com --password s3cret --success_selector .dashboard
+flyto recipe login-test --url https://myapp.com/login --username team@flyto2.com --password s3cret --success_selector .dashboard
 flyto recipe login-test --url https://the-internet.herokuapp.com/login --username tomsmith --password SuperSecretPassword! --success_selector ".flash.success"
 ```
 
@@ -106,7 +106,7 @@ flyto recipe login-test --url https://the-internet.herokuapp.com/login --usernam
 Auto-fill a web form with data and optionally submit it. Pass field:value pairs as JSON.
 
 ```bash
-flyto recipe form-fill --url https://myapp.com/contact --data '{"email":"test@flyto2.com","name":"John","message":"Hello"}'
+flyto recipe form-fill --url https://myapp.com/contact --data '{"email":"dev@flyto2.com","name":"John","message":"Hello"}'
 flyto recipe form-fill --url https://httpbin.org/forms/post --data '{"custname":"Jane","custtel":"555-0123"}' --submit false
 ```
 
@@ -581,4 +581,4 @@ steps:
 - `{{arg}}` — substituted with CLI `--arg` value before execution
 - `${step.field}` — resolved at runtime from previous step output
 - Args with `default` are optional; args with `required: true` must be provided
-- Steps use any of the [467 built-in modules](TOOL_CATALOG.md)
+- Steps use any of the [451 registry-backed modules](TOOL_CATALOG.md)

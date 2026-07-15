@@ -89,7 +89,7 @@ logger = logging.getLogger(__name__)
             'title': 'Send simple email',
             'title_key': 'modules.email.send.examples.basic.title',
             'params': {
-                'to': 'user@example.com',
+                'to': 'team@flyto2.com',
                 'subject': 'Hello',
                 'body': 'This is a test email.'
             }

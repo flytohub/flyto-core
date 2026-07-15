@@ -258,7 +258,7 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
             'params': {
                 'url': 'https://api.example.com/users',
                 'method': 'POST',
-                'body': {'name': 'John', 'email': 'john@example.com'}
+                'body': {'name': 'John', 'email': 'dev@flyto2.com'}
             }
         },
         {

@@ -129,11 +129,11 @@ from ...schema.constants import FieldGroup
     examples=[
         {
             'name': 'Type by placeholder',
-            'params': {'type_method': 'placeholder', 'target': 'Enter your email', 'text': 'user@example.com'}
+            'params': {'type_method': 'placeholder', 'target': 'Enter your email', 'text': 'team@flyto2.com'}
         },
         {
             'name': 'Type by label',
-            'params': {'type_method': 'label', 'target': 'Email', 'text': 'user@example.com'}
+            'params': {'type_method': 'label', 'target': 'Email', 'text': 'team@flyto2.com'}
         },
         {
             'name': 'Type password',
@@ -141,7 +141,7 @@ from ...schema.constants import FieldGroup
         },
         {
             'name': 'Type with selector',
-            'params': {'type_method': 'selector', 'selector': '#email', 'text': 'user@example.com'}
+            'params': {'type_method': 'selector', 'selector': '#email', 'text': 'team@flyto2.com'}
         },
     ],
     author='Flyto2 Team',

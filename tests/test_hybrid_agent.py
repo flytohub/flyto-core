@@ -229,7 +229,7 @@ async def main():
     """測試登入流程"""
     task = LoginTask(
         url="http://localhost:3000",
-        email="user@example.com",
+        email="team@flyto2.com",
         password="your_password",
         # 可以自訂選擇器
         success_indicators=[

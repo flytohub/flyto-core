@@ -74,7 +74,7 @@ class TestDataValidateRecords:
 
     async def test_is_email_validator(self):
         items = [
-            {"email": "user@example.com"},
+            {"email": "team@flyto2.com"},
             {"email": "invalid"},
         ]
         r = await run("data.validate_records", {

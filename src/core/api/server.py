@@ -19,6 +19,7 @@ from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from core.catalog_facts import CORE_CATALOG_CATEGORY_COUNT, CORE_MODULE_COUNT
 from .state import ServerState
 from .routes import modules_router, workflows_router, replay_router, mcp_router
 from .security import get_cors_origins, init_auth, enforce_bind_policy
@@ -50,8 +51,12 @@ def create_app(
     app = FastAPI(
         title="flyto-core Execution API",
         version=SERVER_VERSION,
-        description="Deterministic execution engine for AI agents. "
-                    "300+ atomic modules, workflow execution, evidence collection, and replay.",
+        description=(
+            "Deterministic execution engine for AI agents. "
+            f"{CORE_MODULE_COUNT} registry-backed modules across "
+            f"{CORE_CATALOG_CATEGORY_COUNT} catalog categories, workflow execution, "
+            "evidence collection, and replay."
+        ),
     )
 
     # CORS — configurable via FLYTO_CORS_ORIGINS env var

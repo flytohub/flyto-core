@@ -244,7 +244,7 @@ steps:
 | `enum` | `"option1"` | `{"enum": [...]}` | Dropdown/Select |
 | `file` | `"/path/to/file"` | `{"type": "string", "format": "file"}` | File picker |
 | `url` | `"https://..."` | `{"type": "string", "format": "uri"}` | URL input |
-| `email` | `"a@flyto2.com"` | `{"type": "string", "format": "email"}` | Email input |
+| `email` | `"team@flyto2.com"` | `{"type": "string", "format": "email"}` | Email input |
 | `password` | `"***"` | `{"type": "string", "format": "password"}` | Password input |
 | `textarea` | `"long text..."` | `{"type": "string", "format": "textarea"}` | Textarea |
 | `code` | `"console.log()"` | `{"type": "string", "format": "code"}` | Code editor |

@@ -48,7 +48,7 @@ EMAIL_REGEX = re.compile(
             'label_key': 'modules.validate.email.params.email.label',
             'description': 'Email address to validate',
             'description_key': 'modules.validate.email.params.email.description',
-            'placeholder': 'user@example.com',
+            'placeholder': 'team@flyto2.com',
             'required': True
         }
     },

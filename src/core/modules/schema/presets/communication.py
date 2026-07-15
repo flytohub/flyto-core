@@ -77,7 +77,7 @@ def EMAIL_TO(
     *,
     key: str = "to",
     required: bool = True,
-    placeholder: str = "recipient@example.com",
+    placeholder: str = "support@flyto2.com",
     label: str = "To",
     label_key: str = "schema.field.email_to",
 ) -> Dict[str, Dict[str, Any]]:
@@ -175,7 +175,7 @@ def EMAIL_FROM(
         format="email",
         description='Sender email (uses SMTP_FROM_EMAIL env if not provided)',
         group=FieldGroup.OPTIONS,
-        placeholder='sender@example.com',
+        placeholder='noreply@flyto2.com',
     )
 
 
@@ -196,7 +196,7 @@ def EMAIL_CC(
         description='CC recipients, comma-separated',
         group=FieldGroup.OPTIONS,
     
-        placeholder='cc@example.com',
+        placeholder='team@flyto2.com',
 )
 
 
@@ -217,7 +217,7 @@ def EMAIL_BCC(
         description='BCC recipients, comma-separated',
         group=FieldGroup.OPTIONS,
     
-        placeholder='bcc@example.com',
+        placeholder='team@flyto2.com',
 )
 
 
@@ -300,7 +300,7 @@ def SMTP_USER(
         format="email",
         description='SMTP username (uses SMTP_USER env if not provided)',
         group=FieldGroup.CONNECTION,
-        placeholder='user@example.com',
+        placeholder='team@flyto2.com',
     )
 
 
@@ -404,7 +404,7 @@ def IMAP_USER(
         description='IMAP username',
         group=FieldGroup.CONNECTION,
     
-        placeholder='user@example.com',
+        placeholder='team@flyto2.com',
 )
 
 
@@ -530,7 +530,7 @@ def EMAIL_FROM_FILTER(
         description='Filter by sender email address',
         group=FieldGroup.OPTIONS,
     
-        placeholder='sender@example.com',
+        placeholder='noreply@flyto2.com',
 )
 
 

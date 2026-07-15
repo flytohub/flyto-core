@@ -10,7 +10,7 @@ Set TypingSpeed 35ms
 Set CursorBlink false
 
 # Title
-Type "# flyto-core: give your AI 412 tools"
+Type "# flyto-core: give your AI 451 tools"
 Enter
 Sleep 400ms
 
@@ -30,7 +30,7 @@ Sleep 300ms
 # Simulated output
 Type@1ms ""
 Enter
-Type@1ms "flyto-core demo -- 412 tools for AI agents"
+Type@1ms "flyto-core demo -- 451 tools for AI agents"
 Enter
 Sleep 200ms
 Type@1ms ""
@@ -79,7 +79,7 @@ Enter
 Type@1ms "--- Step 4: string.uppercase ---"
 Enter
 Sleep 300ms
-Type@1ms "[ok] FLYTO-CORE: 412 TOOLS, ZERO CONFIG"
+Type@1ms "[ok] FLYTO-CORE: 451 TOOLS, ZERO CONFIG"
 Enter
 Sleep 200ms
 Type@1ms ""

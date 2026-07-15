@@ -67,7 +67,7 @@ from ....schema import compose, presets
                 'collection': 'users',
                 'document': {
                     'name': 'John Doe',
-                    'email': 'john@example.com',
+                    'email': 'dev@flyto2.com',
                     'created_at': '${timestamp}'
                 }
             }

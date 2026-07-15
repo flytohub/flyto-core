@@ -176,7 +176,7 @@ class TestDetectListE2E:
         <html><body>
         <h1>About Us</h1>
         <p>We are a company that does things.</p>
-        <p>Contact us at hello@example.com.</p>
+        <p>Contact us at hello@flyto2.com.</p>
         </body></html>
         """
         await page.set_content(html)

@@ -13,6 +13,12 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from core.catalog_facts import (
+    BROWSER_MODULE_COUNT,
+    CORE_CATALOG_CATEGORY_COUNT,
+    CORE_MODULE_COUNT,
+)
+
 
 def _get_version() -> str:
     """Read version from installed package or pyproject.toml fallback."""
@@ -654,8 +660,8 @@ TOOLS = [
         "description": (
             "List all available flyto-core modules organized by category. "
             "Use this FIRST to discover what capabilities are available. "
-            "300+ modules across 40+ categories including: "
-            "browser (38 modules: launch, goto, click, type, extract, screenshot, evaluate, wait, etc), "
+            f"{CORE_MODULE_COUNT} modules across {CORE_CATALOG_CATEGORY_COUNT} catalog categories including: "
+            f"browser ({BROWSER_MODULE_COUNT} modules: launch, goto, click, type, extract, screenshot, evaluate, wait, etc), "
             "string, array, datetime, file, image, api, database, notification, and more. "
             "Returns: category names, module counts, descriptions, and common use cases. "
             "Pass a category name to list all modules within that category."
@@ -667,7 +673,7 @@ TOOLS = [
                     "type": "string",
                     "description": (
                         "Filter to a specific category. Key categories: "
-                        "'browser' (38 modules for web automation and E2E testing), "
+                        f"'browser' ({BROWSER_MODULE_COUNT} modules for web automation and E2E testing), "
                         "'string' (text manipulation), 'array' (list operations), "
                         "'file' (file I/O), 'image' (image processing), "
                         "'api' (HTTP requests), 'database' (DB operations), "

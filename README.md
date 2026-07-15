@@ -69,7 +69,7 @@ flyto recipe full-audit --url https://your-site.com
 flyto recipe scrape-to-csv --url https://news.ycombinator.com --selector ".titleline a"
 ```
 
-Every recipe is traced. Every run is replayable. [See all 32 recipes →](docs/RECIPES.md)
+Every recipe is traced. Every run is replayable. [See all 41 recipes ->](docs/RECIPES.md)
 
 ---
 
@@ -209,12 +209,20 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ---
 
-## What's New in v2.19.0
+## Current Platform Snapshot
 
-- **Smart validate_params** — auto-corrects wrong field names via alias mapping (e.g., `site` to `url`) and suggests alternatives when a non-existent module is requested
-- **Enhanced search_modules** — word-level and tag matching scoring replaces the old substring-only search, producing more relevant results for natural language queries
-- **browser.extract default text mode** — when no `fields` are specified, `browser.extract` now returns the text content of matched elements by default (previously returned empty objects)
-- **Browser channel support** — pass `channel: 'chrome'` to `browser.launch` to use the system-installed Chrome instead of bundled Chromium, useful for bypassing anti-bot detection on sites that fingerprint headless browsers
+- **451 registry-backed modules** across **84 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
+- **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
+- **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
+- **Hardened outbound and file access** in the 2.26.x line: guarded HTTP clients prevent SSRF bypasses, and file/data writes are confined through the sandbox path guard.
+- **Replayable browser and workflow execution** remains the core contract: every step can produce trace data, evidence snapshots, and targeted replay from the failing point.
+
+## Public Naming Contract
+
+- Use **Flyto2** for the product and company-facing brand. Do not shorten public docs, examples, or SEO copy to "Flyto".
+- Use `flyto2.com`, `docs.flyto2.com`, and `blog.flyto2.com` as the public citation surfaces.
+- Public example contact addresses should use registered `@flyto2.com` mailboxes such as `support@flyto2.com`, `security@flyto2.com`, `privacy@flyto2.com`, `sales@flyto2.com`, `team@flyto2.com`, `dev@flyto2.com`, `alerts@flyto2.com`, `oncall@flyto2.com`, `reports@flyto2.com`, `noreply@flyto2.com`, `dmarc@flyto2.com`, `conduct@flyto2.com`, `admin@flyto2.com`, `pentest@flyto2.com`, `hello@flyto2.com`, and `info@flyto2.com`.
+- Public docs, blog, and landing pages should cite the current core facts above instead of stale module counts.
 
 ## Engine Features
 
@@ -227,36 +235,29 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ---
 
-## 450 Modules, 83 Categories
+## 451 Modules, 84 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|
-| `browser.*` | 38 | launch, goto, click, extract, screenshot, fill forms, wait |
+| `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
 | `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
 | `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
+| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
 | `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
-| `api.*` | 11 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
 | `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
+| `testing.*` | 10 | assertions, scenarios, E2E steps, reports |
 | `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
-| `data.*` | 8 | json/xml/yaml/csv parse and generate |
+| `verify.*` | 9 | evidence, visual diff, rulesets, annotations |
 | `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
 | `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
+| `test.*` | 8 | API, browser, and visual checks |
+| `check.*` | 7 | validation and guard checks |
+| `crypto.*` | 7 | AES encrypt/decrypt, JWT create/verify, hashes |
+| `http.*` | 7 | get, request, batch, paginate, session |
 | `validate.*` | 7 | email, url, json, phone, credit card |
-| `docker.*` | 6 | run, ps, logs, stop, build, inspect |
-| `archive.*` | 6 | zip create/extract, tar create/extract, gzip, gunzip |
-| `math.*` | 6 | calculate, round, ceil, floor, power, abs |
-| `k8s.*` | 5 | get_pods, apply, logs, scale, describe |
-| `crypto.*` | 4 | AES encrypt/decrypt, JWT create/verify |
-| `network.*` | 4 | ping, traceroute, whois, port scan |
-| `pdf.*` | 4 | parse, extract text, merge, compress |
-| `aws.s3.*` | 4 | upload, download, list, delete |
-| `google.*` | 4 | Gmail send/search, Calendar create/list events |
-| `cache.*` | 4 | get, set, delete, clear (memory + Redis) |
-| `ssh.*` | 3 | remote exec, SFTP upload, SFTP download |
-| `git.*` | 3 | clone, commit, diff |
-| `sandbox.*` | 3 | execute Python, Shell, JavaScript |
-| `dns.*` | 1 | DNS lookup (A, AAAA, MX, CNAME, TXT, NS) |
-| `monitor.*` | 1 | HTTP health check with SSL cert verification |
+| 66 more prefixes | 221 | Docker, archive, math, k8s, network, PDF, AWS, cache, git |
 
 See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
 
@@ -312,7 +313,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all modules as tools.
+Your AI gets all 451 modules as tools.
 
 </details>
 
@@ -357,7 +358,7 @@ asyncio.run(main())
 
 ---
 
-## 30+ Built-in Recipes
+## 41 Built-in Recipes
 
 No code required — every recipe is a YAML workflow template:
 
@@ -370,7 +371,7 @@ flyto recipe competitor-intel --url https://github.com/pricing
 flyto recipe site-audit       --url https://example.com
 flyto recipe web-perf         --url https://example.com
 flyto recipe login-test       --url https://myapp.com/login --username user --password pass --success_selector .dashboard
-flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"test@flyto2.com"}'
+flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"dev@flyto2.com"}'
 
 # Browser Automation
 flyto recipe screenshot        --url https://example.com
@@ -486,4 +487,4 @@ See **[SECURITY.md](SECURITY.md)** for our security policy.
 
 ## Hosted deployment
 
-A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/flytohub-flyto-core).
+A hosted deployment is available on [Frontier AI](https://fronteir.ai/mcp/flytohub-flyto-core).

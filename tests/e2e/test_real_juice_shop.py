@@ -86,7 +86,7 @@ async def test_sql_injection_blueprint_against_juice_shop():
     probes = [
         {
             "method": "POST", "url": url, "headers": headers,
-            "body": {"email": "nonexistent@example.com", "password": "wrong"},
+            "body": {"email": "dev@flyto2.com", "password": "wrong"},
             "label": "baseline_wrong",
         },
         {

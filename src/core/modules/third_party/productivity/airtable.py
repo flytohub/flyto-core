@@ -275,7 +275,7 @@ class AirtableReadModule(BaseModule):
                 'table_name': 'Customers',
                 'fields': {
                     'Name': 'John Doe',
-                    'Email': 'john@example.com',
+                    'Email': 'dev@flyto2.com',
                     'Status': 'Active'
                 }
             }

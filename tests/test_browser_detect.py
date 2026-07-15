@@ -333,12 +333,12 @@ class TestActions:
             "text": "Enter your email",
             "role": "textbox",
             "action": "type",
-            "action_value": "test@example.com",
+            "action_value": "dev@flyto2.com",
         })
         assert r["found"] is True
         assert r["action_result"] == "typed"
         page = ctx["browser"].page
-        assert await page.input_value("#email") == "test@example.com"
+        assert await page.input_value("#email") == "dev@flyto2.com"
 
     @pytest.mark.asyncio(loop_scope="module")
     async def test_click(self, ctx, local_server):

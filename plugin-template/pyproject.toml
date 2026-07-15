@@ -9,7 +9,7 @@ description = "Example flyto plugin — use this as a template for your own plug
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Your Name", email = "you@flyto2.com"}
+    {name = "Your Name", email = "dev@flyto2.com"}
 ]
 keywords = ["flyto", "plugin", "automation"]
 classifiers = [
