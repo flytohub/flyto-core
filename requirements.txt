@@ -3,7 +3,7 @@ pyyaml>=6.0
 playwright>=1.40.0
 # 11 CVEs fixed in 3.14.1 (CVE-2026-34993/47265/54273-54280/50269); requires Python >=3.10
 aiohttp>=3.14.1
-beautifulsoup4>=4.12.0
+beautifulsoup4>=4.15.0
 # CVE-2026-41066: iterparse/ETCompatXMLParser XXE fixed in 6.1.0
 lxml>=6.1.0
 
