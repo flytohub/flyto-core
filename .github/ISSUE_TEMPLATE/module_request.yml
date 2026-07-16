@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Request a new atomic module for flyto-core. We currently have 412 modules across 40+ categories.
+        Request a new atomic module for flyto-core. We currently have 451 registry-backed modules across 84 catalog categories.
 
   - type: input
     id: module-name
