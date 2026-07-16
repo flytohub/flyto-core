@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Prepared a metadata-only PyPI patch release so live registry backlinks,
+  project URLs, and the 451-module Flyto2 package description can replace the
+  stale 412-module listing.
+
 ### Added
 - **Captcha: CaptchaAI provider** — `CaptchaSolver` now accepts
   `provider='captchaai'`. CaptchaAI is 2Captcha-API-compatible (in.php/res.php),
