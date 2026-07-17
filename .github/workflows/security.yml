@@ -31,13 +31,3 @@ jobs:
       packages: read
       security-events: write
     secrets: inherit
-
-  codeql:
-    name: CodeQL
-    uses: flytohub/.github/.github/workflows/reusable-codeql.yml@main
-    with:
-      language: python
-    permissions:
-      contents: read
-      security-events: write
-    secrets: inherit
