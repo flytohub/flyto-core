@@ -102,6 +102,9 @@ Documentation = "https://docs.flyto2.com"
 Repository = "https://github.com/flytohub/flyto-core"
 Issues = "https://github.com/flytohub/flyto-core/issues"
 Changelog = "https://github.com/flytohub/flyto-core/blob/main/CHANGELOG.md"
+Security = "https://github.com/flytohub/flyto-core/blob/main/SECURITY.md"
+Blog = "https://blog.flyto2.com/posts/ai-workflow-automation-alternatives"
+Examples = "https://docs.flyto2.com/guide/first-workflow"
 Download = "https://flyto2.com/download.html"
 
 [project.scripts]
