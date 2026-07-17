@@ -1,6 +1,6 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
 
-# Flyto2 Core - Open-Source AI Workflow Automation Engine
+# Flyto2 Core - Open-Source AI Agent Framework and Workflow Automation Engine
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -12,15 +12,24 @@
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
-Flyto2 Core is the open-source runtime behind Flyto2. Use it for AI workflow
-automation, no-code browser automation, MCP server automation, replayable YAML
-recipes, evidence capture, and deterministic tools that AI agents can call
-without inventing unreviewed code.
+Flyto2 Core is the open-source runtime behind Flyto2. It is built for people who
+want an **AI agent framework** that actually runs work: browser automation, API
+integration, web scraping, MCP server automation, replayable YAML recipes,
+evidence capture, and deterministic tools that agents can call without
+inventing unreviewed code.
 
-Use it when you need a local execution engine for browser automation, API
-integration, workflow replay, AI-agent tool calls, MCP-native automation,
-Web Vitals checks, screenshot capture, structured extraction, and audit-ready
-evidence.
+Use it when the question is simple but the job is annoying: "open this page,
+capture the proof, extract the data, check performance, and let me retry only
+the failed step." Flyto2 Core gives you a local execution engine for browser
+automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
+capture, structured extraction, and audit-ready evidence.
+
+Good fit if you searched for:
+
+- open source AI agent framework for production workflows
+- Python AI workflow automation with Playwright
+- MCP server automation with trace and replay
+- browser automation that can resume from a failed step
 
 ### Try in 30 seconds
 

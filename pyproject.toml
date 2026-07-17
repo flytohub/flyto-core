@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flyto-core"
 version = "2.26.9"
-description = "A workflow engine with 451 registry-backed modules. Trace every step. Replay from any point."
+description = "Open-source AI agent framework and workflow automation engine with 451 registry-backed modules, MCP tools, trace, and replay."
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
@@ -20,9 +20,12 @@ keywords = [
     "mcp",
     "mcp-server",
     "ai-agents",
+    "ai-agent-framework",
+    "open-source-ai",
     "browser-automation",
     "web-scraping",
     "playwright",
+    "rpa",
     "atomic-modules",
     "workflow-engine",
 ]
