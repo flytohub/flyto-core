@@ -1,6 +1,6 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
 
-# flyto-core - Open-Source AI Workflow Automation Engine
+# Flyto2 Core - Open-Source AI Workflow Automation Engine
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -12,7 +12,15 @@
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
-flyto-core is the open-source runtime behind Flyto2. Use it for AI workflow automation, no-code browser automation, MCP server automation, replayable YAML recipes, evidence capture, and deterministic tools that AI agents can call without inventing unreviewed code.
+Flyto2 Core is the open-source runtime behind Flyto2. Use it for AI workflow
+automation, no-code browser automation, MCP server automation, replayable YAML
+recipes, evidence capture, and deterministic tools that AI agents can call
+without inventing unreviewed code.
+
+Use it when you need a local execution engine for browser automation, API
+integration, workflow replay, AI-agent tool calls, MCP-native automation,
+Web Vitals checks, screenshot capture, structured extraction, and audit-ready
+evidence.
 
 ### Try in 30 seconds
 
@@ -247,6 +255,8 @@ Use these descriptions in public docs, blog posts, package metadata, and GitHub 
 
 ---
 
+## API / Module Reference
+
 ## 451 Modules, 84 Catalog Categories
 
 | Category | Count | Examples |
@@ -287,7 +297,7 @@ See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parame
 
 ---
 
-## How to Use
+## Usage
 
 <details>
 <summary><b>CLI</b> — run workflows from the terminal</summary>
@@ -483,6 +493,14 @@ See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete gu
 ## Contributing
 
 We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
+
+## Testing
+
+```bash
+python -m pytest
+python -m ruff check .
+flyto recipe full-audit --url https://example.com
+```
 
 ## Security
 
