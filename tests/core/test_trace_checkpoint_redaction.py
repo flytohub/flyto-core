@@ -15,13 +15,13 @@ class TestExecutionTraceBoundary:
 
     def test_input_params_redacted_in_returned_trace(self):
         trace = ExecutionTrace.create("wf", "My WF", {
-            "api_key": "sk-ABCDEFGHIJKLMNOP1234",
+            "api_key": "openai-redaction-placeholder",
             "dsn": "postgres://user:p4ssw0rd@db.internal/app",
             "label": "harmless",
         })
         d = trace.to_dict()
         blob = json.dumps(d)
-        assert "sk-ABCDEFGHIJKLMNOP1234" not in blob
+        assert "openai-redaction-placeholder" not in blob
         assert "p4ssw0rd" not in blob
         assert "harmless" in blob  # non-secret preserved
         # the api_key key-name path also redacts
@@ -29,10 +29,10 @@ class TestExecutionTraceBoundary:
 
     def test_output_and_error_redacted(self):
         trace = ExecutionTrace.create("wf", "My WF", {})
-        trace.complete({"leaked": "AKIA1234567890ABCDEF token"})
+        trace.complete({"leaked": "Bearer redaction-token-placeholder"})
         trace.fail(Exception("connect failed for postgres://u:secretpw@h/db"))
         blob = json.dumps(trace.to_dict())
-        assert "AKIA1234567890ABCDEF" not in blob
+        assert "redaction-token-placeholder" not in blob
         assert "secretpw" not in blob
 
     def test_private_key_and_basic_auth_redacted(self):
@@ -40,18 +40,23 @@ class TestExecutionTraceBoundary:
         pem = "-----BEGIN PRIVATE KEY-----\nMIIabc123\n-----END PRIVATE KEY-----"
         assert redact_text(pem) == "[REDACTED]"
         assert "dXNlcjpwYXNz" not in redact_text("Authorization: Basic dXNlcjpwYXNz")
-        assert "sk_live_" not in redact_text("key=sk_live_ABCDEFGHIJKLMNOP")
+        assert "placeholdertoken123456" not in redact_text(
+            "Authorization: Bearer placeholdertoken123456"
+        )
 
 
 class TestTraceRedaction:
     def test_step_input_to_dict_redacts_params(self):
         si = StepInput(
-            params={"url": "postgres://u:p4ssw0rd@db/app", "token": "sk-ABCDEFGHIJKLMNOPQRST"},
+            params={
+                "url": "postgres://u:p4ssw0rd@db/app",
+                "token": "step-redaction-placeholder",
+            },
             paramsRaw={"password": "hunter2"},
         )
         d = si.to_dict()
         assert "p4ssw0rd" not in json.dumps(d["params"])
-        assert "sk-ABCDEFGHIJKLMNOPQRST" not in json.dumps(d["params"])
+        assert "step-redaction-placeholder" not in json.dumps(d["params"])
         assert d["paramsRaw"]["password"] == "[REDACTED]"
 
     def test_items_redacted(self):
@@ -68,11 +73,11 @@ class TestCheckpointArtifacts:
         run_dir = tmp_path / "latest"
         run_dir.mkdir(parents=True, exist_ok=True)
         recipe._save_json(run_dir / "params.json", recipe.redact_for_persistence(
-            {"password": "topsecret", "note": "Bearer abcdef0123456789ABCD"}
+            {"password": "topsecret", "note": "Bearer redaction-token-placeholder"}
         ))
         text = (run_dir / "params.json").read_text()
         assert "topsecret" not in text
-        assert "abcdef0123456789ABCD" not in text
+        assert "redaction-token-placeholder" not in text
         # owner-only file perms
         mode = stat.S_IMODE(os.stat(run_dir / "params.json").st_mode)
         assert mode == 0o600

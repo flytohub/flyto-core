@@ -51,7 +51,7 @@ class TestEnvironmentVariableWhitelist:
             "SECRET_API_KEY": "super_secret_key_12345",
             "DATABASE_PASSWORD": "db_password_67890",
             "AWS_SECRET_ACCESS_KEY": "aws_secret_abcdef",
-            "OPENAI_API_KEY": "sk-test123456789",
+            "OPENAI_API_KEY": "openai-redaction-placeholder",
             "GITHUB_TOKEN": "ghp_xxxxxxxxxxxx",
             "ANTHROPIC_API_KEY": "sk-ant-api123",
         }

@@ -56,7 +56,7 @@ class TestBuildSandboxEnv:
 async def test_shell_exec_cannot_leak_host_secret(monkeypatch):
     """shell.exec returns child stdout; with a scrubbed env, `env` must not
     surface a host secret. shell.* is denied by default, so allowlist it first."""
-    monkeypatch.setenv("SUPER_SECRET_TOKEN", "leak-me-AKIA1234567890ABCDEF")
+    monkeypatch.setenv("SUPER_SECRET_TOKEN", "leak-me-redaction-placeholder")
     monkeypatch.delenv("FLYTO_SANDBOX_INHERIT_ENV", raising=False)
     monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
     monkeypatch.setenv("FLYTO_MODULE_ALLOWLIST", "shell.exec")

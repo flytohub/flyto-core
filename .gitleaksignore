@@ -1,0 +1,7 @@
+68af171dcf42b89fb5d3f5f3f60c2ae25f91e5ce:tests/core/test_exec_hardening.py:generic-api-key:59
+68af171dcf42b89fb5d3f5f3f60c2ae25f91e5ce:tests/core/test_trace_checkpoint_redaction.py:generic-api-key:18
+68af171dcf42b89fb5d3f5f3f60c2ae25f91e5ce:tests/core/test_trace_checkpoint_redaction.py:stripe-access-token:43
+182bc2f103b19eb4cef53b98bc676c662759a8e2:workflows/pentests/secrets_crypto.yaml:jwt:32
+182bc2f103b19eb4cef53b98bc676c662759a8e2:workflows/pentests/secrets_crypto.yaml:jwt:37
+4aedac788e7a1395b5f63f8c9c2df571d9678dcb:src/core/modules/atomic/crypto/jwt_verify.py:generic-api-key:131
+a737b9f50df675d663badd238d8b7647417effa3:tests/runtime/test_security.py:generic-api-key:54
