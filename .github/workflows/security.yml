@@ -27,6 +27,7 @@ jobs:
     name: SBOM (CycloneDX)
     uses: flytohub/.github/.github/workflows/reusable-sbom.yml@main
     permissions:
+      actions: read
       contents: write
       packages: read
       security-events: write
