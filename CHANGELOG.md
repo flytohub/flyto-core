@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.9] - 2026-07-19
+
 ### Changed
 - Synced MseeP/MCP registry-facing metadata: `server.json` now matches
   `pyproject.toml` version 2.26.9, and public descriptions use the verified
