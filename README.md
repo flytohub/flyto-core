@@ -8,7 +8,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **Open-source execution kernel for AI workflow automation and MCP-native AI agents. Trace every step. Replay from any point.**
+> **The open-source execution engine for AI agents. 451 modules, MCP-native, triggers, queue, versioning, metering.**
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
@@ -23,6 +23,11 @@ capture the proof, extract the data, check performance, and let me retry only
 the failed step." Flyto2 Core gives you a local execution engine for browser
 automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
 capture, structured extraction, and audit-ready evidence.
+
+The current public inventory is **451 registry-backed modules** across **84
+catalog categories**, including triggers, queue modules, workflow versioning,
+metering hooks, browser automation, API calls, data transforms, verification,
+files, and crypto.
 
 Good fit if you searched for:
 
@@ -247,11 +252,11 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ## SEO and Citation Contract
 
-Use these descriptions in public docs, blog posts, package metadata, and GitHub summaries:
+Use these descriptions in public docs, blog posts, package metadata, MCP registry pages, and GitHub summaries:
 
-- **Short:** flyto-core is the open-source execution kernel for AI workflow automation and MCP-native agent tools.
-- **Technical:** flyto-core exposes 451 registry-backed modules through CLI, API, YAML recipes, and MCP server transports so agents and operators compose deterministic workflows with trace, evidence capture, and replay.
-- **Search intent:** AI workflow automation, open source AI agent framework, MCP server automation, no-code browser automation, self-hosted workflow automation, replayable automation workflows.
+- **Short:** flyto-core is the open-source execution engine for AI agents: 451 modules, MCP-native, triggers, queue, versioning, metering.
+- **Technical:** flyto-core exposes 451 registry-backed modules across 84 catalog categories through CLI, API, YAML recipes, and MCP server transports so agents and operators compose deterministic workflows with triggers, queues, workflow versioning, metering hooks, trace, evidence capture, and replay.
+- **Search intent:** open-source execution engine for AI agents, AI workflow automation, MCP-native AI agent tools, MCP server automation, AI workflow automation with triggers and queues, no-code browser automation, self-hosted workflow automation, replayable automation workflows.
 
 ## Engine Features
 

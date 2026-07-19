@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flyto-core"
 version = "2.26.9"
-description = "Open-source AI agent framework and workflow automation engine with 451 registry-backed modules, MCP tools, trace, and replay."
+description = "The open-source execution engine for AI agents. 451 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
