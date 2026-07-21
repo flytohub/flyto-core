@@ -1,4 +1,5 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/9a708224-9666-46b6-8660-dad08fb16096)
 
 # Flyto2 Core - Open-Source AI Agent Framework and Workflow Automation Engine
 
