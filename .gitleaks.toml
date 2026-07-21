@@ -1,0 +1,10 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Known JWT test vectors introduced in bf90968; no production credential material"
+commits = ["bf9096898c4df6584f1a4d73112975f4dbe9011c"]
+
+[[allowlists]]
+description = "Generated local Indexer cache is ignored and mirrors scanned source"
+paths = ['''^\.flyto-index/''']

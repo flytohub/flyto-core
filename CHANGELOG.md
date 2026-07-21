@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dynamic `__import__` call from the Gmail adapter.
 
 ### Security
+- Kept the default gitleaks rules active while narrowly documenting historical
+  JWT test vectors and generating current test keys without secret-shaped
+  literals, so remote history and directory scans remain actionable.
 - Explicitly named workflow ports now fail closed instead of silently binding
   to the only available port when the requested ID is invalid.
 - Removed test-order paths that could leave localhost/private-network access or
