@@ -8,7 +8,7 @@ Tasks: 1.21, 1.22
 import pytest
 from unittest.mock import MagicMock
 
-from src.core.metering.tracker import (
+from core.metering.tracker import (
     MeteringTracker,
     MeteringRecord,
     MeteringConfig,

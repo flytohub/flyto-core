@@ -74,9 +74,6 @@ def _find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
         match = next((p for p in ports if p.get('id') == stripped), None)
         if match:
             return match
-    # Fallback: if only one port exists, use it (common for sub-nodes)
-    if len(ports) == 1:
-        return ports[0]
     return None
 
 

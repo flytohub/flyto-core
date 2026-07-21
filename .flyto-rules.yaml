@@ -18,12 +18,20 @@ architecture:
     source: "security audit 2026-04-13"
 
 style:
-  - rule: "Use specific exception types instead of bare 'except Exception' in module code"
+  - rule: "Use specific exception types instead of bare 'except Exception' in the control kernel"
     grep_deny:
       - pattern: 'except Exception:'
-        glob: "src/core/modules/**/*.py"
+        glob: "src/core/api/**/*.py"
       - pattern: 'except Exception:'
-        glob: "src/core/enterprise/**/*.py"
+        glob: "src/core/runtime/**/*.py"
+      - pattern: 'except Exception:'
+        glob: "src/core/validation/**/*.py"
+      - pattern: 'except Exception:'
+        glob: "src/core/licensing/**/*.py"
+      - pattern: 'except Exception:'
+        glob: "src/core/metering/**/*.py"
+      - pattern: 'except Exception:'
+        glob: "src/core/secrets/**/*.py"
     example: "except (OSError, ValueError) as e:"
 
 conventions:

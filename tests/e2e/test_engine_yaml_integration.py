@@ -13,10 +13,8 @@ If the engine fails to resolve a module, fails to bind variables
 """
 from __future__ import annotations
 
-import asyncio
 import http.server
 import importlib.util
-import os
 import socketserver
 import sys
 import threading
@@ -27,10 +25,6 @@ from pathlib import Path
 import pytest
 import yaml as pyyaml
 
-# Loosen SSRF guard BEFORE importing modules, since the config is read once.
-os.environ["FLYTO_ALLOW_PRIVATE_NETWORK"] = "true"
-os.environ["FLYTO_AI_ALLOW_PROD_TARGETS"] = "1"  # relax generator's hostname check
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO_ROOT / "flyto-core" / "src"
 AI_ROOT = REPO_ROOT / "flyto-ai"
@@ -39,6 +33,13 @@ CLOUD_BACKEND = REPO_ROOT / "flyto-cloud" / "src" / "ui" / "web" / "backend"
 for p in (str(CORE_SRC), str(AI_ROOT), str(CLOUD_BACKEND)):
     if p not in sys.path:
         sys.path.insert(0, p)
+
+
+@pytest.fixture(autouse=True)
+def local_target_security_policy(monkeypatch):
+    """Scope local-target exceptions to each E2E instead of global collection."""
+    monkeypatch.setenv("FLYTO_ALLOW_PRIVATE_NETWORK", "true")
+    monkeypatch.setenv("FLYTO_AI_ALLOW_PROD_TARGETS", "1")
 
 
 # ---------------------------------------------------------------------------
@@ -260,27 +261,46 @@ def _load_closed_loop_modules():
 
 
 def _load_verdict_aggregator():
-    from unittest.mock import MagicMock
-    for name in ("gateway", "gateway.auth", "fastapi", "pydantic"):
-        if name not in sys.modules:
-            sys.modules[name] = MagicMock()
+    from types import ModuleType
+    from unittest.mock import MagicMock, patch
 
     class _FakeBase:
         def __init_subclass__(cls, **kw):
             return None
-    sys.modules["pydantic"].BaseModel = _FakeBase
-    sys.modules["pydantic"].Field = lambda *a, **kw: None
-    sys.modules["pydantic"].ConfigDict = dict
-    sys.modules["fastapi"].APIRouter = lambda *a, **kw: MagicMock()
-    sys.modules["fastapi"].Depends = lambda *a, **kw: None
-    sys.modules["fastapi"].HTTPException = type("HTTPException", (Exception,), {})
+    fake_fastapi = ModuleType("fastapi")
+    fake_fastapi.APIRouter = lambda *a, **kw: MagicMock()
+    fake_fastapi.Depends = lambda *a, **kw: None
+    fake_fastapi.HTTPException = type("HTTPException", (Exception,), {})
+
+    fake_pydantic = ModuleType("pydantic")
+    fake_pydantic.BaseModel = _FakeBase
+    fake_pydantic.Field = lambda *a, **kw: None
+    fake_pydantic.ConfigDict = dict
+
+    fake_modules = {
+        "gateway": MagicMock(),
+        "gateway.auth": MagicMock(),
+        "fastapi": fake_fastapi,
+        "pydantic": fake_pydantic,
+    }
 
     spec = importlib.util.spec_from_file_location(
         "verify_mod", CLOUD_BACKEND / "api" / "workflows" / "verify.py",
     )
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    with patch.dict(sys.modules, fake_modules):
+        spec.loader.exec_module(mod)
     return mod._compute_verdict
+
+
+def test_verdict_loader_does_not_mutate_framework_modules():
+    """Loading the Cloud helper must not replace process-wide auth primitives."""
+    import fastapi
+    import pydantic
+
+    before = (fastapi.Depends, fastapi.HTTPException, pydantic.BaseModel)
+    _load_verdict_aggregator()
+    assert (fastapi.Depends, fastapi.HTTPException, pydantic.BaseModel) == before
 
 
 def _extract_step_outputs(engine) -> dict:
@@ -302,7 +322,8 @@ async def test_full_yaml_pipeline_produces_exploitable_verdict(mock_server):
     """flyto-ai → YAML → WorkflowEngine → verdict aggregator → exploitable."""
     _load_closed_loop_modules()
 
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(
@@ -364,7 +385,8 @@ async def test_auth_bypass_yaml_pipeline_produces_sanitized(mock_server):
     """auth_bypass blueprint → guarded endpoint → WorkflowEngine → sanitized."""
     _load_closed_loop_modules()
 
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(
@@ -408,7 +430,8 @@ async def test_ssrf_yaml_pipeline_reports_exploitable(mock_server):
     """SSRF blueprint → mock echo-fetch → WorkflowEngine → exploitable."""
     _load_closed_loop_modules()
 
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(
@@ -446,7 +469,8 @@ async def test_open_redirect_yaml_pipeline_reports_exploitable(mock_server):
     """Open redirect blueprint → vulnerable /redirect → exploitable."""
     _load_closed_loop_modules()
 
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(
@@ -484,7 +508,8 @@ async def test_command_injection_yaml_pipeline_reports_exploitable(mock_server):
     """Command injection blueprint → /exec → exploitable via pattern + timing."""
     _load_closed_loop_modules()
 
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(
@@ -520,7 +545,8 @@ async def test_command_injection_yaml_pipeline_reports_exploitable(mock_server):
 async def _run_blueprint(mock_server, category, param, endpoint, method="GET"):
     """Shared runner: generate YAML → engine → verdict."""
     _load_closed_loop_modules()
-    from flyto_ai.security import generate_test_from_finding, SecurityFinding
+    from flyto_ai.security import SecurityFinding, generate_test_from_finding
+
     from core.engine.workflow import WorkflowEngine
 
     finding = SecurityFinding(

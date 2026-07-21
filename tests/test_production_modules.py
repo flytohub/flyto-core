@@ -15,33 +15,39 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
-class TestProductionModules:
-    """Test suite for production module verification."""
-
-    @pytest.fixture(scope="class")
-    def production_modules(self):
-        """Load current production modules."""
-        os.environ["FLYTO_ENV"] = "production"
-
+@pytest.fixture(scope="class")
+def production_modules():
+    """Load current production modules."""
+    old_env = os.environ.get("FLYTO_ENV")
+    os.environ["FLYTO_ENV"] = "production"
+    try:
+        from core.modules import atomic  # noqa: F401 - trigger registration
         from core.modules.registry import ModuleRegistry
-        from core.modules import atomic  # Trigger registration
 
         modules = ModuleRegistry.get_all_metadata(
             filter_by_stability=True,
             env="production"
         )
-        # Exclude test modules except test.assert_* (real testing utilities)
-        # Also exclude express test modules like math.express_abs
-        return {k: v for k, v in modules.items()
-                if (not k.startswith('test.') or k.startswith('test.assert'))
-                and '.express_' not in k}
+        yield {k: v for k, v in modules.items()
+               if (not k.startswith('test.') or k.startswith('test.assert'))
+               and '.express_' not in k}
+    finally:
+        if old_env is None:
+            os.environ.pop("FLYTO_ENV", None)
+        else:
+            os.environ["FLYTO_ENV"] = old_env
 
-    @pytest.fixture(scope="class")
-    def snapshot_data(self):
-        """Load snapshot file."""
-        snapshot_path = Path(__file__).parent / "snapshots" / "production_modules.json"
-        with open(snapshot_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+
+@pytest.fixture(scope="class")
+def snapshot_data():
+    """Load snapshot file."""
+    snapshot_path = Path(__file__).parent / "snapshots" / "production_modules.json"
+    with open(snapshot_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+class TestProductionModules:
+    """Test suite for production module verification."""
 
     def test_production_module_count(self, production_modules):
         """Production module count must meet minimum threshold."""

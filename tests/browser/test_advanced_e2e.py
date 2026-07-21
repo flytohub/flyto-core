@@ -11,25 +11,21 @@ Tests:
 7. Retry with simulated failures
 """
 import asyncio
-import functools
 import http.server
-import json
 import os
-import pytest
-import pytest_asyncio
 import sys
-import tempfile
 import threading
 from pathlib import Path
 
+import pytest
+import pytest_asyncio
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 os.environ.setdefault("FLYTO_ENV", "test")
 
 from core.modules import atomic  # noqa: F401
 from core.modules.registry import ModuleRegistry
 from tests.conftest import allow_local_http_port_for_test
-
 
 # ─── Multi-page Test HTML ────────────────────────────────────────
 
@@ -68,7 +64,7 @@ class _TestHandler(http.server.BaseHTTPRequestHandler):
     """HTTP handler that serves paginated pages."""
 
     def do_GET(self):
-        from urllib.parse import urlparse, parse_qs
+        from urllib.parse import parse_qs, urlparse
         parsed = urlparse(self.path)
         params = parse_qs(parsed.query)
 
@@ -163,9 +159,12 @@ class TestAdvancedBrowserFeatures:
 
     # ── 2. Pagination with Checkpoint ────────────────────────────
 
-    async def test_pagination_checkpoint_save_and_clear(self, ctx, local_server):
+    async def test_pagination_checkpoint_save_and_clear(
+        self, ctx, local_server, tmp_path, monkeypatch
+    ):
         """Checkpoint is saved during pagination and cleared on success."""
-        checkpoint_path = tempfile.mkstemp(suffix=".json")[1]
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
+        checkpoint_path = str(tmp_path / "pagination.json")
         try:
             await ctx["browser"].goto(f"{local_server}/?page=1")
 
@@ -187,11 +186,14 @@ class TestAdvancedBrowserFeatures:
         finally:
             Path(checkpoint_path).unlink(missing_ok=True)
 
-    async def test_pagination_checkpoint_resume(self, ctx, local_server):
+    async def test_pagination_checkpoint_resume(
+        self, ctx, local_server, tmp_path, monkeypatch
+    ):
         """Simulate checkpoint resume: pre-seed a checkpoint file."""
         from core.browser.checkpoint import PaginationCheckpoint
 
-        checkpoint_path = tempfile.mkstemp(suffix=".json")[1]
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
+        checkpoint_path = str(tmp_path / "pagination.json")
         try:
             # Pre-seed checkpoint as if we already scraped 2 pages
             cp = PaginationCheckpoint(checkpoint_path, '.item', 'next_button')
@@ -380,8 +382,8 @@ class TestAdvancedBrowserFeatures:
 
     async def test_proxy_pool_round_robin_in_driver(self):
         """ProxyPool integrates correctly with driver attributes."""
-        from core.browser.proxy_pool import ProxyPool
         from core.browser.driver import BrowserDriver
+        from core.browser.proxy_pool import ProxyPool
 
         pool = ProxyPool(
             ['http://p1:8080', 'http://p2:8080', 'http://p3:8080'],

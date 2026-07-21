@@ -16,13 +16,15 @@ of the API (deny-by-default). MCP clients connecting over HTTP must send
 See GHSA-h9f9-h6gm-wc85.
 """
 
+import json
 import secrets
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, Response
 
 from core.mcp_handler import handle_jsonrpc_request
+
 from ..security import require_auth
 
 router = APIRouter(tags=["mcp"])
@@ -83,7 +85,7 @@ async def mcp_post(request: Request):
     # Parse body
     try:
         body = await request.json()
-    except Exception:
+    except (json.JSONDecodeError, UnicodeDecodeError, RuntimeError):
         return JSONResponse(
             status_code=400,
             content={"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}},

@@ -505,7 +505,7 @@ class TestCryptoJwt:
         """Create a JWT token."""
         result = await create_mod({
             'payload': {'user_id': 123, 'role': 'admin'},
-            'secret': 'my-jwt-secret',
+            'secret': 'flyto2-test-jwt-secret-32-bytes!',
             'algorithm': 'HS256',
         }, {}).execute()
         assert result['ok'] is True
@@ -516,7 +516,7 @@ class TestCryptoJwt:
     async def test_create_verify_roundtrip(self, create_mod, verify_mod):
         """Create → Verify should return original payload."""
         payload = {'user_id': 42, 'role': 'editor', 'org': 'flyto'}
-        secret = 'test-secret-key-256'
+        secret = 'flyto2-roundtrip-jwt-secret-32-bytes'
 
         # Create
         create_result = await create_mod({
@@ -544,12 +544,12 @@ class TestCryptoJwt:
         """Verify with wrong secret should return valid=False."""
         create_result = await create_mod({
             'payload': {'test': True},
-            'secret': 'correct-secret',
+            'secret': 'flyto2-correct-jwt-secret-32-bytes',
         }, {}).execute()
 
         verify_result = await verify_mod({
             'token': create_result['data']['token'],
-            'secret': 'wrong-secret',
+            'secret': 'flyto2-wrong-jwt-secret-32-bytes!!',
         }, {}).execute()
         assert verify_result['ok'] is True
         assert verify_result['data']['valid'] is False
@@ -559,7 +559,7 @@ class TestCryptoJwt:
         """Tampered token should be invalid."""
         result = await verify_mod({
             'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.TAMPERED.signature',
-            'secret': 'any-secret',
+            'secret': 'flyto2-tampered-jwt-secret-32-bytes',
         }, {}).execute()
         assert result['ok'] is True
         assert result['data']['valid'] is False
@@ -569,7 +569,7 @@ class TestCryptoJwt:
         """JWT with expiry should include exp claim."""
         result = await create_mod({
             'payload': {'data': 'test'},
-            'secret': 'secret',
+            'secret': 'flyto2-expiry-jwt-secret-32-bytes!',
             'expires_in': 7200,
             'issuer': 'flyto-test',
         }, {}).execute()
@@ -577,7 +577,7 @@ class TestCryptoJwt:
 
         verify_result = await verify_mod({
             'token': result['data']['token'],
-            'secret': 'secret',
+            'secret': 'flyto2-expiry-jwt-secret-32-bytes!',
             'issuer': 'flyto-test',
         }, {}).execute()
         assert verify_result['data']['valid'] is True

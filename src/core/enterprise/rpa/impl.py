@@ -7,7 +7,7 @@ Cross-platform desktop automation using pyautogui with optional
 platform-specific API integration.
 
 For usage:
-    from src.core.enterprise.rpa.impl import get_automation
+    from core.enterprise.rpa.impl import get_automation
     automation = get_automation()
 """
 

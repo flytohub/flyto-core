@@ -4,7 +4,6 @@ import asyncio
 import os
 import sys
 
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 sys.path.insert(0, 'src')
 
 import core.modules.atomic.browser.launch

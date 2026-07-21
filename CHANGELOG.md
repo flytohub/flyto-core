@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a locked jsdom test runtime and dependency audit for browser-contract
+  tests.
+- Added import and test-isolation contracts that reject duplicate `src.core`
+  package identities and collection-time security overrides.
+- Added an architecture-aware coverage profile for the maintained control
+  kernel while preserving adapter catalog and integration suites.
+
+### Changed
+- Migrated the HTTP API shutdown hook to FastAPI lifespan handling and made
+  browser-session cleanup observable on failure.
+- Updated async plugin tests for current event-loop ownership and isolated
+  Cloud verdict test stubs from process-wide FastAPI/Pydantic modules.
+- Scoped local HTTP test access to explicit hosts and ports and declared the
+  `e2e` marker.
+- Migrated package licensing to PEP 639 SPDX metadata and removed stale
+  manifest globs so maintained build backends produce warning-free artifacts.
+- Made Indexer policy enforceable on the security-control kernel, replaced its
+  broad API catches with explicit exception families, and removed the final
+  dynamic `__import__` call from the Gmail adapter.
+
+### Security
+- Explicitly named workflow ports now fail closed instead of silently binding
+  to the only available port when the requested ID is invalid.
+- Removed test-order paths that could leave localhost/private-network access or
+  verification API auth disabled for later security tests.
+
 ## [2.26.9] - 2026-07-19
 
 ### Changed

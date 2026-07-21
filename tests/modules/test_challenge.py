@@ -288,13 +288,17 @@ class TestStealthPatches:
         platform = result["platform"]
         assert "SwiftShader" not in renderer
         assert "ANGLE" in renderer
-        # Renderer should match platform
+        # Renderer families and graphics APIs must match the platform profile.
+        # Intel Macs legitimately use AMD Radeon GPUs, so Apple-only is invalid.
         if "Mac" in platform:
-            assert "Apple" in renderer
+            assert "Apple" in renderer or "AMD" in renderer
+            assert "OpenGL" in renderer
         elif "Win" in platform:
-            assert "Intel" in renderer or "NVIDIA" in renderer
+            assert any(vendor in renderer for vendor in ("Intel", "NVIDIA", "AMD"))
+            assert "D3D11" in renderer
         else:  # Linux
-            assert "NVIDIA" in renderer or "Intel" in renderer
+            assert any(vendor in renderer for vendor in ("Intel", "NVIDIA", "AMD"))
+            assert "OpenGL" in renderer
 
     @pytest.mark.asyncio
     async def test_connection_api_present(self, stealth_page):

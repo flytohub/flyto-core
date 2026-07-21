@@ -8,7 +8,7 @@ Tasks: 2.4, 2.5, 2.6
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.core.runtime.routing import (
+from core.runtime.routing import (
     ModuleRouter,
     RoutingConfig,
     RoutingResult,
@@ -18,7 +18,7 @@ from src.core.runtime.routing import (
     get_router,
     reset_router,
 )
-from src.core.runtime.invoke import (
+from core.runtime.invoke import (
     RuntimeInvoker,
     get_invoker,
     reset_invoker,

@@ -3,83 +3,19 @@
 """
 Real integration tests for cli/runner.py.
 
-Uses real YAML workflow files and the real workflow engine — no mocks.
-
-The cli package uses relative imports (e.g. `from ..core.engine.workflow_engine
-import WorkflowEngine`) that require cli to be a sub-package of a parent.
-A module-level fixture patches sys.modules so that `src.cli` / `src.core` are
-recognised as siblings under a synthetic `src` namespace package, which makes
-the relative import resolve correctly at runtime.
+Uses real YAML workflow files and the real workflow engine.
 """
 
+import builtins
 import json
-import sys
-import types
 from pathlib import Path
 
 import pytest
 import yaml
 
 # ---------------------------------------------------------------------------
-# Bootstrap: make cli look like src.cli so relative imports resolve
-# ---------------------------------------------------------------------------
-
-def _bootstrap_src_namespace() -> None:
-    """
-    Inject a synthetic 'src' namespace package and register shim modules so
-    that ``from ..core.engine.workflow_engine import WorkflowEngine`` inside
-    cli/runner.py resolves to the real engine.
-    """
-    if "src" in sys.modules:
-        return  # already done
-
-    # Ensure src/ is on the path
-    src_root = Path(__file__).parent.parent.parent / "src"
-    if str(src_root) not in sys.path:
-        sys.path.insert(0, str(src_root))
-
-    import cli  # noqa: PLC0415
-    import core  # noqa: PLC0415
-    import cli.runner  # noqa: PLC0415  – loads the module before we patch it
-
-    # Synthetic 'src' package
-    src_mod = types.ModuleType("src")
-    src_mod.__path__ = [str(src_root)]
-    src_mod.__package__ = ""
-    sys.modules["src"] = src_mod
-
-    # Re-register cli as src.cli
-    cli.__name__ = "src.cli"
-    cli.__package__ = "src.cli"
-    sys.modules["src.cli"] = cli
-    sys.modules["src.cli.runner"] = cli.runner
-    cli.runner.__package__ = "src.cli"
-
-    # Re-register core as src.core
-    core.__name__ = "src.core"
-    core.__package__ = "src.core"
-    sys.modules["src.core"] = core
-
-    import core.engine as _ce  # noqa: PLC0415
-    _ce.__name__ = "src.core.engine"
-    sys.modules["src.core.engine"] = _ce
-
-    # Compatibility shim: src.core.engine.workflow_engine
-    from core.engine.workflow.engine import WorkflowEngine  # noqa: PLC0415
-    _shim = types.ModuleType("src.core.engine.workflow_engine")
-    _shim.WorkflowEngine = WorkflowEngine
-    sys.modules["src.core.engine.workflow_engine"] = _shim
-
-    # Register built-in atomic modules
-    from core.modules import atomic  # noqa: PLC0415, F401
-
-
-_bootstrap_src_namespace()
-
-# ---------------------------------------------------------------------------
 # Now safe to import from cli
 # ---------------------------------------------------------------------------
-
 from cli.i18n import I18n  # noqa: E402
 from cli.runner import (  # noqa: E402
     _handle_execution_error,
@@ -88,6 +24,7 @@ from cli.runner import (  # noqa: E402
     _show_completion,
     run_workflow,
 )
+from core.modules import atomic  # noqa: E402, F401
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -707,31 +644,33 @@ class TestRunWorkflowErrorPaths:
         # At minimum the first step progress header must appear
         assert "Step 1/3" in captured.out
 
-    def test_engine_import_failure_exits_with_code_1(self, tmp_path):
+    def test_engine_import_failure_exits_with_code_1(self, tmp_path, monkeypatch):
         """Lines 120-124: if WorkflowEngine cannot be imported, runner exits(1)."""
-        # Temporarily shadow the shim module so the relative import in runner.py fails
-        shim_key = "src.core.engine.workflow_engine"
-        original = sys.modules.pop(shim_key, None)
-        try:
-            workflow_content = {
-                "name": "Import Fail Test",
-                "steps": [
-                    {
-                        "id": "s1",
-                        "module": "data.json.parse",
-                        "params": {"json_string": "{}"},
-                    }
-                ],
-            }
-            wf_file = _make_workflow_yaml(tmp_path, workflow_content)
-            config = {"storage": {"output_dir": str(tmp_path)}}
-            i18n = _make_i18n()
+        real_import = builtins.__import__
 
-            with pytest.raises(SystemExit) as exc_info:
-                run_workflow(wf_file, {}, config, i18n)
+        def fail_engine_import(
+            name, global_vars=None, local_vars=None, fromlist=(), level=0
+        ):
+            if name == "core.engine.workflow.engine":
+                raise ImportError("forced workflow engine import failure")
+            return real_import(name, global_vars, local_vars, fromlist, level)
 
-            assert exc_info.value.code == 1
-        finally:
-            # Restore the shim so other tests keep working
-            if original is not None:
-                sys.modules[shim_key] = original
+        monkeypatch.setattr(builtins, "__import__", fail_engine_import)
+        workflow_content = {
+            "name": "Import Fail Test",
+            "steps": [
+                {
+                    "id": "s1",
+                    "module": "data.json.parse",
+                    "params": {"json_string": "{}"},
+                }
+            ],
+        }
+        wf_file = _make_workflow_yaml(tmp_path, workflow_content)
+        config = {"storage": {"output_dir": str(tmp_path)}}
+        i18n = _make_i18n()
+
+        with pytest.raises(SystemExit) as exc_info:
+            run_workflow(wf_file, {}, config, i18n)
+
+        assert exc_info.value.code == 1

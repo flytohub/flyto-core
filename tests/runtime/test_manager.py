@@ -5,14 +5,12 @@ Tests for PluginManager with multi-language manifest support.
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
 from core.runtime.manager import (
-    PluginManifest,
     PluginManager,
-    PluginInfo,
+    PluginManifest,
     RuntimeConfig,
 )
 
@@ -172,7 +170,8 @@ class TestPluginManagerDiscovery:
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
-    def test_discover_json_manifest(self, plugin_dir):
+    @pytest.mark.asyncio
+    async def test_discover_json_manifest(self, plugin_dir):
         """Test discovering plugin with JSON manifest."""
         # Create plugin directory
         test_plugin = plugin_dir / "test-plugin"
@@ -192,15 +191,13 @@ class TestPluginManagerDiscovery:
         (test_plugin / "main.py").touch()
 
         # Discover
-        import asyncio
         manager = PluginManager(plugin_dir)
-        discovered = asyncio.get_event_loop().run_until_complete(
-            manager.discover_plugins()
-        )
+        discovered = await manager.discover_plugins()
 
         assert "test-plugin" in discovered
 
-    def test_discover_yaml_manifest(self, plugin_dir):
+    @pytest.mark.asyncio
+    async def test_discover_yaml_manifest(self, plugin_dir):
         """Test discovering plugin with YAML manifest."""
         pytest.importorskip("yaml")  # Skip if PyYAML not installed
 
@@ -227,15 +224,13 @@ class TestPluginManagerDiscovery:
         (node_plugin / "index.js").touch()
 
         # Discover
-        import asyncio
         manager = PluginManager(plugin_dir)
-        discovered = asyncio.get_event_loop().run_until_complete(
-            manager.discover_plugins()
-        )
+        discovered = await manager.discover_plugins()
 
         assert "node-plugin" in discovered
 
-    def test_discover_multiple_languages(self, plugin_dir):
+    @pytest.mark.asyncio
+    async def test_discover_multiple_languages(self, plugin_dir):
         """Test discovering plugins in multiple languages."""
         # Python plugin
         py_plugin = plugin_dir / "py-plugin"
@@ -255,11 +250,8 @@ class TestPluginManagerDiscovery:
         (node_plugin / "index.js").touch()
 
         # Discover
-        import asyncio
         manager = PluginManager(plugin_dir)
-        discovered = asyncio.get_event_loop().run_until_complete(
-            manager.discover_plugins()
-        )
+        discovered = await manager.discover_plugins()
 
         assert "py-plugin" in discovered
         assert "node-plugin" in discovered

@@ -1,0 +1,15 @@
+{
+  "name": "flyto2-core-test-runtime",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Declared JavaScript runtime for Flyto2 Core browser-contract tests",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
+  },
+  "scripts": {
+    "audit": "npm audit --audit-level=high"
+  },
+  "devDependencies": {
+    "jsdom": "29.1.1"
+  }
+}

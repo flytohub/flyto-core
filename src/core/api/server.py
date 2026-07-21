@@ -13,6 +13,7 @@ Usage:
 
 import importlib.metadata
 import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -20,9 +21,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.catalog_facts import CORE_CATALOG_CATEGORY_COUNT, CORE_MODULE_COUNT
+
+from .routes import mcp_router, modules_router, replay_router, workflows_router
+from .security import enforce_bind_policy, get_cors_origins, init_auth
 from .state import ServerState
-from .routes import modules_router, workflows_router, replay_router, mcp_router
-from .security import get_cors_origins, init_auth, enforce_bind_policy
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,21 @@ def create_app(
     port: int = 8333,
 ) -> FastAPI:
     """Create and configure the FastAPI application."""
+    state = ServerState(evidence_path=evidence_path or Path("./evidence"))
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        try:
+            yield
+        finally:
+            for driver in list(state.browser_sessions.values()):
+                try:
+                    await driver.close()
+                except RuntimeError:
+                    logger.exception("Failed to close browser session during shutdown")
+            state.browser_sessions.clear()
+            logger.info("Server shutdown - browser sessions cleaned up")
+
     app = FastAPI(
         title="flyto-core Execution API",
         version=SERVER_VERSION,
@@ -57,6 +74,7 @@ def create_app(
             f"{CORE_CATALOG_CATEGORY_COUNT} catalog categories, workflow execution, "
             "evidence collection, and replay."
         ),
+        lifespan=lifespan,
     )
 
     # CORS — configurable via FLYTO_CORS_ORIGINS env var
@@ -74,7 +92,6 @@ def create_app(
     if token:
         logger.info("API token written to ~/.flyto/.api-token-%s", port)
 
-    state = ServerState(evidence_path=evidence_path or Path("./evidence"))
     app.state.server = state
 
     app.include_router(modules_router, prefix="/v1")
@@ -108,17 +125,6 @@ def create_app(
                 "execution_trace",
             ],
         }
-
-    @app.on_event("shutdown")
-    async def shutdown():
-        # Close browser sessions
-        for sid, driver in list(state.browser_sessions.items()):
-            try:
-                await driver.close()
-            except Exception:
-                pass
-        state.browser_sessions.clear()
-        logger.info("Server shutdown — browser sessions cleaned up")
 
     return app
 

@@ -7,7 +7,7 @@ Document classification, field extraction, and validation.
 Supports text-based extraction with optional OCR.
 
 For usage:
-    from src.core.enterprise.idp.impl import get_processor, get_validation_queue
+    from core.enterprise.idp.impl import get_processor, get_validation_queue
     processor = get_processor()
 """
 

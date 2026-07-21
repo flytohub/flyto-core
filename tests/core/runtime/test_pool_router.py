@@ -10,7 +10,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.core.runtime.pool_router import (
+from core.runtime.pool_router import (
     PoolRouter,
     PoolConfig,
     PoolStats,
@@ -20,7 +20,7 @@ from src.core.runtime.pool_router import (
     get_pool_router,
     reset_pool_router,
 )
-from src.core.runtime.types import TenantContext, InvokeRequest, InvokeResponse
+from core.runtime.types import TenantContext, InvokeRequest, InvokeResponse
 
 
 class TestPoolRouterCreation:

@@ -32,6 +32,7 @@ from core.modules.atomic.http.batch import http_batch as HttpBatchModule
 from core.modules.atomic.testing.assert_status import AssertStatusModule
 from core.modules.atomic.testing.assert_timing import AssertTimingModule
 from core.modules.atomic.testing.assert_contains import AssertContainsModule
+from tests.conftest import allow_local_http_port_for_test
 
 
 # ---------------------------------------------------------------------------
@@ -66,12 +67,21 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 
 @pytest.fixture(scope="module")
-def base_url():
+def local_server():
     server = socketserver.TCPServer(("127.0.0.1", 0), _Handler)
     port = server.server_address[1]
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{port}"
-    server.shutdown()
+    try:
+        yield f"http://127.0.0.1:{port}", port
+    finally:
+        server.shutdown()
+
+
+@pytest.fixture
+def base_url(local_server):
+    url, port = local_server
+    with allow_local_http_port_for_test(port), allow_local_http_port_for_test(1):
+        yield url
 
 
 async def _run_batch(params: dict) -> dict:

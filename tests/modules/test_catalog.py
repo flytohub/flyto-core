@@ -4,7 +4,7 @@ Tests for catalog module - public view sanitization.
 Tests the scrub_catalog_metadata and related functions.
 """
 import pytest
-from src.core.modules.catalog import (
+from core.modules.catalog import (
     scrub_catalog_metadata,
     scrub_schema_defaults,
     scrub_examples,

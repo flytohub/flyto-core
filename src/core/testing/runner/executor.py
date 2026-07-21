@@ -71,7 +71,7 @@ class WorkflowTestRunner:
         try:
             from ...engine import WorkflowEngine
         except ImportError:
-            from src.core.engine import WorkflowEngine
+            from core.engine import WorkflowEngine
 
         engine = WorkflowEngine(workflow=workflow, params=params)
         result = await engine.execute()

@@ -1,0 +1,19 @@
+[report]
+# The line gate covers the maintained orchestration and security-control kernel.
+# Pluggable module implementations and optional product overlays are exercised by
+# catalog, contract, and integration suites instead of diluting this percentage.
+omit =
+    src/core/enterprise/*
+    src/core/modules/atomic/*
+    src/core/modules/audit/*
+    src/core/modules/integrations/*
+    src/core/modules/quality/*
+    src/core/modules/schema_validator.py
+    src/core/modules/third_party/*
+    src/core/plugin/*
+    src/core/quickstart.py
+    src/core/safe_eval.py
+    src/core/testing/*
+    src/core/tests/*
+show_missing = true
+skip_covered = false

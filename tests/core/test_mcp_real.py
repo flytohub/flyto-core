@@ -8,7 +8,6 @@ Tests the full MCP stack with real module execution:
   1d. STDIO subprocess → JSON-RPC over stdin/stdout
 """
 
-import asyncio
 import json
 import os
 import subprocess
@@ -18,21 +17,19 @@ from pathlib import Path
 
 import pytest
 
+from core.mcp_handler import (
+    execute_module,
+    get_module_examples,
+    get_module_info,
+    list_modules,
+    search_modules,
+    validate_params,
+)
+
 # ---------------------------------------------------------------------------
 # Ensure modules are registered BEFORE any handler/app import
 # ---------------------------------------------------------------------------
 from core.modules import atomic  # noqa: F401  — triggers production module registration
-
-from core.mcp_handler import (
-    execute_module,
-    validate_params,
-    list_modules,
-    search_modules,
-    get_module_info,
-    get_module_examples,
-    handle_jsonrpc_request,
-    TOOLS,
-)
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 EXPECTED_TOOL_COUNT = 8  # list_modules, search_modules, get_module_info, get_module_examples, execute_module, validate_params, list_recipes, run_recipe
@@ -138,21 +135,21 @@ class TestCatalog:
 # 1c. HTTP Transport — TestClient → POST /mcp
 # ===================================================================
 
+@pytest.fixture(scope="class")
+def client():
+    from fastapi.testclient import TestClient
+
+    from core.api import security as sec
+    from core.api.server import create_app
+
+    app = create_app()
+    with TestClient(
+        app, headers={"Authorization": f"Bearer {sec._active_token}"}
+    ) as test_client:
+        yield test_client
+
 class TestHTTPTransport:
     """Real HTTP requests through FastAPI TestClient, real module execution."""
-
-    @pytest.fixture(scope="class")
-    def client(self):
-        from fastapi.testclient import TestClient
-        from core.api.server import create_app
-        from core.api import security as sec
-
-        app = create_app()
-        # /mcp is auth-protected (GHSA-h9f9-h6gm-wc85); send the active token
-        # so these legitimate-client tests reach the dispatcher.
-        return TestClient(
-            app, headers={"Authorization": f"Bearer {sec._active_token}"}
-        )
 
     def _mcp_call(self, client, tool_name: str, arguments: dict, req_id: int = 1) -> dict:
         """Send tools/call via POST /mcp and return structuredContent."""

@@ -15,7 +15,6 @@ follow in production, minus the network + firestore hops.
 """
 from __future__ import annotations
 
-import asyncio
 import http.server
 import importlib.util
 import socketserver
@@ -26,6 +25,8 @@ import urllib.parse
 from pathlib import Path
 
 import pytest
+
+from tests.conftest import allow_local_http_port_for_test
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO_ROOT / "flyto-core" / "src"
@@ -88,8 +89,11 @@ def mock_server():
     server = socketserver.TCPServer(("127.0.0.1", 0), _VulnHandler)
     port = server.server_address[1]
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    yield f"http://127.0.0.1:{port}"
-    server.shutdown()
+    try:
+        with allow_local_http_port_for_test(port):
+            yield f"http://127.0.0.1:{port}"
+    finally:
+        server.shutdown()
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +103,7 @@ def mock_server():
 def _load_modules():
     """Import the three new flyto-core modules so their decorators register."""
     import importlib
+
     from core.modules.registry import ModuleRegistry
 
     importlib.import_module("core.modules.atomic.http.batch")
@@ -125,30 +130,48 @@ def _load_verdict_aggregator():
     stub those before exec'ing the file. This keeps the e2e's dep surface
     minimal while still exercising the real aggregator code.
     """
-    from unittest.mock import MagicMock
-
-    for name in ("gateway", "gateway.auth", "fastapi", "pydantic"):
-        if name not in sys.modules:
-            sys.modules[name] = MagicMock()
+    from types import ModuleType
+    from unittest.mock import MagicMock, patch
 
     # Pydantic's BaseModel/Field must be subclassable and callable for the
     # module-level class definitions to work.
     class _FakeBase:
         def __init_subclass__(cls, **kw):
             return None
-    sys.modules["pydantic"].BaseModel = _FakeBase
-    sys.modules["pydantic"].Field = lambda *a, **kw: None
-    sys.modules["pydantic"].ConfigDict = dict
-    sys.modules["fastapi"].APIRouter = lambda *a, **kw: MagicMock()
-    sys.modules["fastapi"].Depends = lambda *a, **kw: None
-    sys.modules["fastapi"].HTTPException = type("HTTPException", (Exception,), {})
+    fake_fastapi = ModuleType("fastapi")
+    fake_fastapi.APIRouter = lambda *a, **kw: MagicMock()
+    fake_fastapi.Depends = lambda *a, **kw: None
+    fake_fastapi.HTTPException = type("HTTPException", (Exception,), {})
+
+    fake_pydantic = ModuleType("pydantic")
+    fake_pydantic.BaseModel = _FakeBase
+    fake_pydantic.Field = lambda *a, **kw: None
+    fake_pydantic.ConfigDict = dict
+
+    fake_modules = {
+        "gateway": MagicMock(),
+        "gateway.auth": MagicMock(),
+        "fastapi": fake_fastapi,
+        "pydantic": fake_pydantic,
+    }
 
     spec = importlib.util.spec_from_file_location(
         "verify_mod", CLOUD_BACKEND / "api" / "workflows" / "verify.py",
     )
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    with patch.dict(sys.modules, fake_modules):
+        spec.loader.exec_module(mod)
     return mod._compute_verdict
+
+
+def test_verdict_loader_does_not_mutate_framework_modules():
+    """Loading the Cloud helper must not replace process-wide auth primitives."""
+    import fastapi
+    import pydantic
+
+    before = (fastapi.Depends, fastapi.HTTPException, pydantic.BaseModel)
+    _load_verdict_aggregator()
+    assert (fastapi.Depends, fastapi.HTTPException, pydantic.BaseModel) == before
 
 
 # ---------------------------------------------------------------------------

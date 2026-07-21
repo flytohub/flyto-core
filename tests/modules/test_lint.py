@@ -4,7 +4,7 @@ Tests for module metadata lint.
 Tests the registry-driven lint rules.
 """
 import pytest
-from src.core.modules.lint import (
+from core.modules.lint import (
     lint_module,
     lint_all_modules,
     LintResult,

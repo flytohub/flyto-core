@@ -34,7 +34,6 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 sys.path.insert(0, 'src')
 
 from pathlib import Path
@@ -62,6 +61,8 @@ class TaskStatus(Enum):
 @dataclass
 class TestCase:
     """一個測試案例"""
+    __test__ = False
+
     name: str
     description: str
     steps: List[Dict[str, Any]] = field(default_factory=list)

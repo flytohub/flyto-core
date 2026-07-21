@@ -7,7 +7,7 @@ Pure Python implementation of process discovery and analysis.
 Implements DFG-based discovery, metrics calculation, and conformance checking.
 
 For actual usage:
-    from src.core.enterprise.mining.impl import get_discovery
+    from core.enterprise.mining.impl import get_discovery
     discovery = get_discovery()
 """
 

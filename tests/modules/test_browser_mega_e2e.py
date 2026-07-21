@@ -38,7 +38,6 @@ import threading
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 os.environ.setdefault("FLYTO_ENV", "test")
 
 from core.modules import atomic  # noqa: F401  — triggers registration

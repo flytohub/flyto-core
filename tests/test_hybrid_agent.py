@@ -13,7 +13,6 @@ import sys
 from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 sys.path.insert(0, 'src')
 
 from pathlib import Path

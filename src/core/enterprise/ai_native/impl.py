@@ -7,7 +7,7 @@ Implements LLM client, AI Agent, Workflow Evolution, and NL-to-Workflow generati
 Can work standalone or integrate with flyto-pro's agent system.
 
 For usage:
-    from src.core.enterprise.ai_native.impl import (
+    from core.enterprise.ai_native.impl import (
         get_llm_client,
         get_agent,
         get_evolution_engine,

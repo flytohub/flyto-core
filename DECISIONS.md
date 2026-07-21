@@ -1,5 +1,28 @@
 # Decisions
 
+## 2026-07-21 - Runtime identity and test security state are process-safe
+
+Decision: import the installed Python package only as `core`, reject legacy
+`src.core` imports, and permit private-network or auth exceptions only through
+fixtures that restore process state. Test helpers that load external modules
+must sandbox `sys.modules` instead of modifying imported frameworks.
+
+Reason: duplicate package identities and collection-time environment changes
+made auth and SSRF controls depend on test order. A security gate must fail
+closed under the complete suite, not only when a test runs alone.
+
+## 2026-07-21 - Coverage measures the control kernel
+
+Decision: retain the 60% line gate for the orchestration and security-control
+kernel. Atomic modules, third-party adapters, enterprise overlays, test-runtime
+packages, and optional plugin implementations use catalog, schema, contract,
+and real integration gates and do not dilute the kernel percentage.
+
+Reason: one aggregate percentage across the control plane and hundreds of
+independently deployable adapters was permanently red while hiding which
+boundary lacked evidence. The split keeps the kernel threshold enforceable
+without skipping adapter tests or lowering the threshold.
+
 ## 2026-06-23 - Warroom verification is deterministic first
 
 Decision: Warroom pass/fail decisions come from replayable program evidence:

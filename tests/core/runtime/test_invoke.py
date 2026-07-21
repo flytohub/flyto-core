@@ -10,19 +10,19 @@ import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.core.runtime.invoke import (
+from core.runtime.invoke import (
     RuntimeInvoker,
     get_invoker,
     parse_module_id,
 )
-from src.core.runtime.types import (
+from core.runtime.types import (
     InvokeRequest,
     InvokeResponse,
     InvokeError,
     InvokeMetrics,
     InvokeStatus,
 )
-from src.core.runtime.protocol import (
+from core.runtime.protocol import (
     ProtocolEncoder,
     ProtocolDecoder,
 )
@@ -110,7 +110,7 @@ class TestInvokeQueryReturnsResults:
     @pytest.mark.asyncio
     async def test_invoker_with_real_module(self):
         """Test RuntimeInvoker with actual string.uppercase module."""
-        from src.core.runtime.invoke import reset_invoker
+        from core.runtime.invoke import reset_invoker
         reset_invoker()
 
         invoker = RuntimeInvoker()

@@ -8,11 +8,13 @@ Search Gmail messages using the Gmail API with OAuth2 access token and aiohttp.
 import logging
 from typing import Any, Dict, List, Optional
 
+import aiohttp
+
+from ....errors import ModuleError, ValidationError
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
 from ....schema.constants import FieldGroup
-from ....errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
 
@@ -110,11 +112,6 @@ async def google_gmail_search(context: Dict[str, Any]) -> Dict[str, Any]:
 
 async def _search_messages(access_token: str, query: str, max_results: int) -> List[Dict[str, Any]]:
     """Search Gmail and fetch message metadata."""
-    try:
-        import aiohttp
-    except ImportError:
-        raise ModuleError('aiohttp package is required. Install with: pip install aiohttp')
-
     headers = {'Authorization': f'Bearer {access_token}'}
     messages: List[Dict[str, Any]] = []
 
@@ -138,7 +135,7 @@ async def _search_messages(access_token: str, query: str, max_results: int) -> L
                 if msg:
                     messages.append(msg)
     except aiohttp.ClientError as exc:
-        raise ModuleError(f'Gmail API request failed: {exc}')
+        raise ModuleError(f'Gmail API request failed: {exc}') from exc
 
     return messages
 
@@ -150,7 +147,7 @@ async def _fetch_message_metadata(session, headers: dict, msg_id: str) -> Option
 
     async with session.get(
         msg_url, params=msg_params, headers=headers,
-        timeout=__import__('aiohttp').ClientTimeout(total=10),
+        timeout=aiohttp.ClientTimeout(total=10),
     ) as msg_resp:
         if msg_resp.status != 200:
             logger.warning('Failed to fetch message %s: HTTP %s', msg_id, msg_resp.status)

@@ -9,7 +9,7 @@ import time
 import pytest
 from unittest.mock import patch
 
-from src.core.secrets.proxy import (
+from core.secrets.proxy import (
     SecretsProxy,
     SecretRef,
     SecretResolution,

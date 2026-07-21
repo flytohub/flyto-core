@@ -5,8 +5,8 @@ Tests the capability checking and production policy enforcement.
 """
 import os
 import pytest
-from src.core.constants import Capability, ProductionPolicy, ErrorCode
-from src.core.modules.runtime import check_capabilities, execute_module
+from core.constants import Capability, ProductionPolicy, ErrorCode
+from core.modules.runtime import check_capabilities, execute_module
 
 
 class TestProductionPolicy:

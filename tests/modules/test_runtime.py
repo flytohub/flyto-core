@@ -5,19 +5,19 @@ Tests the unified execute_module function.
 """
 import asyncio
 import pytest
-from src.core.modules.runtime import (
+from core.modules.runtime import (
     execute_module,
     execute_module_with_retry,
     wrap_sync_module,
     _normalize_result,
 )
-from src.core.modules.result import ModuleResult
-from src.core.modules.errors import (
+from core.modules.result import ModuleResult
+from core.modules.errors import (
     ModuleError,
     ValidationError,
     NetworkError,
 )
-from src.core.constants import ErrorCode
+from core.constants import ErrorCode
 
 
 class TestExecuteModule:

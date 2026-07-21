@@ -5,9 +5,10 @@ Ensures ALL 66 atomic module categories are importable, all registered
 modules have valid metadata/schema, and all modules are instantiable.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -28,9 +29,14 @@ ALL_CATEGORIES = [
 
 def _load_registry():
     """Import atomic modules to populate the registry and return module IDs."""
-    from core.modules.registry import ModuleRegistry
     import core.modules.atomic  # noqa: F401 — triggers registration
+    from core.modules.registry import ModuleRegistry
     return list(ModuleRegistry.list_all().keys())
+
+
+@pytest.fixture(scope="class")
+def all_module_ids():
+    return _load_registry()
 
 
 class TestAtomicImports:
@@ -45,10 +51,6 @@ class TestAtomicImports:
 
 class TestModuleMetadata:
     """Ensure all registered modules have required metadata fields."""
-
-    @pytest.fixture(scope="class")
-    def all_module_ids(self):
-        return _load_registry()
 
     def test_modules_registered(self, all_module_ids):
         """At least 100 modules should be registered."""
@@ -95,10 +97,6 @@ class TestModuleMetadata:
 
 class TestModuleInstantiation:
     """Ensure all registered modules can be instantiated."""
-
-    @pytest.fixture(scope="class")
-    def all_module_ids(self):
-        return _load_registry()
 
     def test_all_modules_class_retrievable(self, all_module_ids):
         """Every registered module ID should return a class from the registry."""

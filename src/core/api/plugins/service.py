@@ -10,15 +10,14 @@ Used by API routes and can be used directly by other services.
 import hashlib
 import json
 import logging
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
-from ...runtime.manager import PluginManager, PluginManifest, PluginInfo
+from ...runtime.manager import PluginManager, PluginManifest
 from ...runtime.transformer import (
-    transform_manifest_to_modules,
     merge_plugin_modules_with_core,
+    transform_manifest_to_modules,
     transform_modules_for_tiered_response,
 )
 
@@ -162,7 +161,7 @@ class PluginService:
         """
         modules = []
 
-        for plugin_id, manifest in self._installed_plugins.items():
+        for manifest in self._installed_plugins.values():
             manifest_dict = manifest.to_dict() if hasattr(manifest, 'to_dict') else manifest.__dict__
             plugin_modules = transform_manifest_to_modules(
                 manifest_dict,
@@ -199,7 +198,7 @@ class PluginService:
                     if manifest_data.get("id") == plugin_id:
                         plugin_dir = candidate
                         break
-                except Exception:
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                     continue
 
         if not plugin_dir:
@@ -305,7 +304,7 @@ class PluginService:
                         if manifest_data.get("id") == plugin_id:
                             plugin_dir = candidate
                             break
-                    except Exception:
+                    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
                         continue
 
             if not plugin_dir:

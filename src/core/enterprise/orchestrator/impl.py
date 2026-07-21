@@ -6,7 +6,7 @@ Enterprise Orchestrator Implementation
 Robot management, job scheduling, and execution coordination.
 
 For usage:
-    from src.core.enterprise.orchestrator.impl import get_orchestrator
+    from core.enterprise.orchestrator.impl import get_orchestrator
     orchestrator = get_orchestrator()
 """
 

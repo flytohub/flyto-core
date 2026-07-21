@@ -119,7 +119,7 @@ class TestBasicExecution:
         )
 
         assert result["data"]["valid"] is True
-        assert result["data"]["domain"] == "example.com"
+        assert result["data"]["domain"] == "flyto2.com"
 
 
 # ---------------------------------------------------------------------------

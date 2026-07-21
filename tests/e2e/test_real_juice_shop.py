@@ -11,15 +11,12 @@ doesn't fail.
 """
 from __future__ import annotations
 
-import asyncio
 import importlib
-import os
 import socket
 import sys
 from pathlib import Path
 
 import pytest
-import yaml as pyyaml
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO_ROOT / "flyto-core" / "src"
@@ -28,11 +25,14 @@ for p in (str(CORE_SRC), str(AI_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-os.environ["FLYTO_ALLOW_PRIVATE_NETWORK"] = "true"
-os.environ["FLYTO_AI_ALLOW_PROD_TARGETS"] = "1"
-
 JUICE_HOST = "127.0.0.1"
 JUICE_PORT = 3000
+
+
+@pytest.fixture(autouse=True)
+def local_target_security_policy(monkeypatch):
+    """Allow only this test process to reach its local Juice Shop target."""
+    monkeypatch.setenv("FLYTO_ALLOW_PRIVATE_NETWORK", "true")
 
 
 def _juice_shop_running() -> bool:

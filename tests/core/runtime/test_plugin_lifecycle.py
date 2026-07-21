@@ -15,23 +15,23 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import runtime components
-from src.core.runtime.protocol import (
+from core.runtime.protocol import (
     ProtocolEncoder,
     ProtocolDecoder,
     PROTOCOL_VERSION,
 )
-from src.core.runtime.process import (
+from core.runtime.process import (
     PluginProcess,
     ProcessConfig,
     ProcessStatus,
     RestartPolicy,
 )
-from src.core.runtime.manager import (
+from core.runtime.manager import (
     PluginManager,
     PluginManifest,
     PluginInfo,
 )
-from src.core.runtime.health import (
+from core.runtime.health import (
     HealthChecker,
     HealthCheckConfig,
     HealthStatus,
@@ -157,7 +157,7 @@ class TestPluginTimeout:
     @pytest.mark.asyncio
     async def test_invoke_timeout_raises_error(self, tmp_path):
         """Test that invoke timeout raises PluginTimeoutError."""
-        from src.core.runtime.exceptions import PluginTimeoutError
+        from core.runtime.exceptions import PluginTimeoutError
 
         # Create a slow plugin
         plugin_dir = tmp_path / "slow-plugin"

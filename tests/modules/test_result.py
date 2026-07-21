@@ -4,7 +4,7 @@ Tests for ModuleResult dataclass.
 Tests the standardized module execution result format.
 """
 import pytest
-from src.core.modules.result import ModuleResult
+from core.modules.result import ModuleResult
 
 
 class TestModuleResultSuccess:

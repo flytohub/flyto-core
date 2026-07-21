@@ -1124,8 +1124,11 @@ async def https_test_server():
     ssl_ctx = _ssl.SSLContext(_ssl.PROTOCOL_TLS_SERVER)
     ssl_ctx.load_cert_chain(cert_path, key_path)
 
+    async def tls_data_handler(_request):
+        return web.json_response([{'tls': True}])
+
     app = web.Application()
-    app.router.add_get('/data', lambda _req: web.json_response([{'tls': True}]))
+    app.router.add_get('/data', tls_data_handler)
 
     runner = web.AppRunner(app)
     await runner.setup()

@@ -16,7 +16,6 @@ import sys
 import json
 from pathlib import Path
 
-os.environ["FLYTO_VSCODE_LOCAL_MODE"] = "true"
 sys.path.insert(0, 'src')
 
 # Load .env from project root

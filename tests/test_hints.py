@@ -229,7 +229,8 @@ NO_ID_HTML = """
 
 def get_js():
     """Load EXTRACT_HINTS_JS from _hints.py"""
-    import importlib, sys, os
+    import os
+    import sys
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
     from core.modules.atomic.browser._hints import EXTRACT_HINTS_JS
     return EXTRACT_HINTS_JS
@@ -242,7 +243,7 @@ def js_code():
 
 def run(html, js_code):
     page = MockPage(html)
-    return asyncio.get_event_loop().run_until_complete(page.evaluate(js_code))
+    return asyncio.run(page.evaluate(js_code))
 
 
 # =========================================================================

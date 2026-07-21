@@ -254,7 +254,7 @@ class StateMachineEngine:
     Manages state machine instances and event processing.
 
     For actual implementation, use:
-        from src.core.enterprise.state_machine.engine import get_engine
+        from core.enterprise.state_machine.engine import get_engine
         engine = get_engine()
     """
 

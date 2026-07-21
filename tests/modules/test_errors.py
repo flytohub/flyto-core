@@ -4,7 +4,7 @@ Tests for ModuleError exception hierarchy.
 Tests the standardized module error classes.
 """
 import pytest
-from src.core.modules.errors import (
+from core.modules.errors import (
     ModuleError,
     ValidationError,
     InvalidTypeError,
@@ -20,7 +20,7 @@ from src.core.modules.errors import (
     FileNotFoundError,
     error_from_code,
 )
-from src.core.constants import ErrorCode
+from core.constants import ErrorCode
 
 
 class TestModuleError:

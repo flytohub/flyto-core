@@ -11,13 +11,13 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.core.runtime.transformer import (
+from core.runtime.transformer import (
     transform_manifest_to_modules,
     transform_step_to_module,
     merge_plugin_modules_with_core,
     transform_modules_for_tiered_response,
 )
-from src.core.api.plugins.service import (
+from core.api.plugins.service import (
     PluginService,
     PluginServiceConfig,
     get_plugin_service,

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,8 @@ name = "flyto-core"
 version = "2.26.9"
 description = "The open-source execution engine for AI agents. 451 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [
     {name = "Flyto2 Team", email = "team@flyto2.com"}
 ]
@@ -45,7 +46,6 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Framework :: AsyncIO",
     "Framework :: Pydantic :: 2",
-    "License :: OSI Approved :: Apache Software License",
 ]
 requires-python = ">=3.9"
 
@@ -148,6 +148,7 @@ python_functions = ["test_*"]
 addopts = "--cov=core --cov-report=term-missing --cov-fail-under=60"
 markers = [
     "browser: real browser tests that require Playwright browser support",
+    "e2e: cross-component integration tests with real workflow boundaries",
 ]
 
 [tool.mypy]
