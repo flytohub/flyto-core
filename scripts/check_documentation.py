@@ -72,7 +72,15 @@ def repository_files() -> list[str]:
 
 
 def documentation_paths(manifest: dict) -> list[str]:
-    paths = list(manifest["documentation"].values())
+    paths = []
+    scope_keys = {"source_reference_exclude", "module_roots", "configuration_not_applicable"}
+    for key, value in manifest["documentation"].items():
+        if key in scope_keys:
+            continue
+        if isinstance(value, str):
+            paths.append(value)
+        elif isinstance(value, list):
+            paths.extend(item for item in value if isinstance(item, str))
     for area in manifest["source_areas"]:
         paths.extend(area["documentation"])
     return paths

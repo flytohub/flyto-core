@@ -1,6 +1,12 @@
 {
+  "$schema": "https://docs.flyto2.com/schemas/documentation-contract-v1.json",
+  "schema_version": 1,
   "schema": "flyto-core.documentation.v1",
+  "repository": "flyto-core",
+  "status": "active",
+  "audiences": ["automation users", "module authors", "integrators", "maintainers"],
   "documentation": {
+    "index": "docs/README.md",
     "overview": "README.md",
     "project": "PROJECT.md",
     "architecture_memory": "ARCHITECTURE.md",
@@ -10,6 +16,8 @@
     "changelog": "CHANGELOG.md",
     "whitepaper": "docs/WHITEPAPER.md",
     "features": "docs/FEATURES.md",
+    "feature_reference": "docs/FEATURES.md",
+    "security": "SECURITY.md",
     "architecture": "docs/architecture-map.md",
     "cli": "docs/CLI.md",
     "http_api": "docs/API.md",
@@ -24,6 +32,8 @@
     "reference_index": "docs/reference/README.md",
     "source_modules": "docs/reference/source-modules.md",
     "python_api": "docs/reference/python-api.md",
+    "source_reference": "docs/reference/python-api.md",
+    "source_reference_exclude": ["tests/**", "src/core/tests/**", "**/__tests__/**", "**/test_*.py", "**/*_test.py"],
     "registered_modules": "docs/reference/registered-modules.md",
     "cli_reference": "docs/reference/cli.md",
     "http_reference": "docs/reference/http-api.md",
@@ -48,7 +58,7 @@
     },
     {
       "name": "Workflow engine, runtime, replay, evidence, and state",
-      "paths": ["src/core/engine/**", "src/core/runtime/**", "src/core/evidence/**", "src/core/state/**", "src/core/workflow/**"],
+      "paths": ["src/core/engine/**", "src/core/runtime/**"],
       "documentation": ["docs/WHITEPAPER.md", "docs/architecture-map.md", "docs/YAML_WORKFLOW_SPEC.md", "docs/reference/python-api.md"]
     },
     {

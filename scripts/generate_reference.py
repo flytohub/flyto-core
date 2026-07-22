@@ -136,6 +136,11 @@ def declarations(tree: ast.Module) -> list[tuple[int, str, str, str]]:
                     )
                 )
                 visit(node.body, qualified)
+            else:
+                visit(
+                    [child for child in ast.iter_child_nodes(node) if isinstance(child, ast.stmt)],
+                    owner,
+                )
 
     visit(tree.body)
     return sorted(rows)

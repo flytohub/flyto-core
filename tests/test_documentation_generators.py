@@ -1,6 +1,7 @@
 """Regression tests for source-backed documentation generators."""
 
 import importlib.util
+import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,3 +52,21 @@ def test_http_reference_detects_signature_dependencies():
 
     run_row = next(line for line in reference.splitlines() if "| `/run` |" in line)
     assert "| internal key |" in run_row
+
+
+def test_declarations_include_classes_nested_in_control_flow():
+    generator = _load_generator()
+    tree = ast.parse(
+        "def render():\n"
+        "    try:\n"
+        "        class Parser:\n"
+        "            def feed(self):\n"
+        "                return None\n"
+        "    except RuntimeError:\n"
+        "        return None\n"
+    )
+
+    signatures = [row[2] for row in generator.declarations(tree)]
+
+    assert any("render.Parser" in signature for signature in signatures)
+    assert any("render.Parser.feed" in signature for signature in signatures)
