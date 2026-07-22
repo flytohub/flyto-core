@@ -139,7 +139,7 @@ logger = logging.getLogger(__name__)
             'title_key': 'modules.crypto.jwt_create.examples.basic.title',
             'params': {
                 'payload': {'sub': 'user123', 'role': 'admin'},
-                'secret': 'my-jwt-secret',
+                'secret': '${JWT_SECRET_FROM_ENV}',
                 'algorithm': 'HS256',
                 'expires_in': 3600,
             },

@@ -131,7 +131,7 @@ logger = logging.getLogger(__name__)
             'title_key': 'modules.crypto.jwt_verify.examples.basic.title',
             'params': {
                 'token': '<jwt-token>',
-                'secret': 'my-jwt-secret',
+                'secret': '${JWT_SECRET_FROM_ENV}',
                 'algorithms': ['HS256'],
                 'verify_exp': True,
             },
