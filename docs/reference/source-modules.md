@@ -2,11 +2,11 @@
 
 # Source Module Inventory
 
-Inventory: **932 Python files**, **190,897 lines**, and **5,382 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **932 Python files**, **190,896 lines**, and **5,382 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
-| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 67 | 1 | `asyncio, core, logging, sys` | 30-second demo: Give your AI 451 tools with one command. |
+| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 452 tools with one command. |
 | [`examples/agent_demo/planner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/planner.py#L1) | 59 | 3 | `pathlib, typing, yaml` | Simple Task Planner |
 | [`examples/agent_demo/run.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/run.py#L1) | 138 | 3 | `asyncio, core, json, pathlib, planner, sys, uuid, yaml` | flyto-core Agent Demo: Deterministic Browser Research |
 | [`examples/demo_video/record.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/demo_video/record.py#L1) | 413 | 6 | `asyncio, core, httpx, json, os, pathlib, rich, shutil, sys, time` | flyto-core Demo Video Script |

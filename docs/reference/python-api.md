@@ -8,7 +8,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def main()` | Implements `main`; linked source is authoritative. | [`demo.py:18`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L18) |
+| function | `async def main()` | Implements `main`; linked source is authoritative. | [`demo.py:17`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L17) |
 
 ## `examples/agent_demo/planner.py`
 

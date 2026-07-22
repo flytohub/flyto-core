@@ -63,5 +63,5 @@ or unredacted workflow context.
 
 Build with `python -m build`, inspect the wheel/sdist contents, and validate with
 Twine before publishing. PyPI metadata, GitHub README totals, docs, MCP registry
-metadata, and release notes must use the generated 451-module/84-category
+metadata, and release notes must use the generated 452-module/84-category
 snapshot until the catalog changes.

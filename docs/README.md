@@ -21,7 +21,7 @@
 
 ## Build Modules And Plugins
 
-- [Tool Catalog](TOOL_CATALOG.md): all 451 active runtime modules, parameters,
+- [Tool Catalog](TOOL_CATALOG.md): all 452 active runtime modules, parameters,
   and outputs.
 - [Module Quick Reference](MODULE_QUICK_REFERENCE.md)
 - [Module Specification](MODULE_SPECIFICATION.md)

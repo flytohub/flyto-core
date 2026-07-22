@@ -8,7 +8,7 @@ every maintained source/configuration area to documentation, and reject drift,
 broken local links, unowned files, stale Flyto2 naming, or unapproved public
 mailboxes in CI.
 
-Reason: hand-maintained totals and symbol lists become stale in a 451-module
+Reason: hand-maintained totals and symbol lists become stale in a 452-module
 runtime. Generated inventory proves coverage while narrative docs remain usable.
 
 ## 2026-07-22 - Evidence-bearing workflow reads require authentication

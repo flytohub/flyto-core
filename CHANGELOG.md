@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kernel while preserving adapter catalog and integration suites.
 
 ### Changed
+- Reconciled public package, registry, documentation, and demo metadata to the
+  generated 452-module catalog after adding `core.api.tavily_search`.
 - Made the Python reference generator discover declarations nested in control
   flow and explicitly scoped API coverage away from test-only functions.
 - Migrated the HTTP API shutdown hook to FastAPI lifespan handling and made
