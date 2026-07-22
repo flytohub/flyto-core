@@ -16,6 +16,19 @@
 
 ## Done
 
+- Added the source-backed documentation contract, technical whitepaper,
+  feature/API/configuration/security/operations/testing guides, generated
+  declaration/module/CLI/HTTP/environment references, ownership manifest, and
+  deterministic drift/link checks.
+- Added a Flyto2 brand and approved-mailbox policy gate for public repository
+  content.
+- Declared `crypto`, `dns`, and `ai` package extras and aligned contributor
+  dependencies with the tested capability set.
+- Protected workflow status and evidence reads with the Execution API bearer
+  token and added regression coverage.
+- Expanded CI from one recipe test to documentation, brand, audited lint,
+  non-browser tests, npm audit, package/Twine, and strict Indexer gates.
+
 - Added generic `verification.*` module IDs for deterministic verification
   primitives and kept `warroom.*` as compatibility aliases only; engine-owned
   workflows should compose `verification.*`.

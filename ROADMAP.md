@@ -43,3 +43,11 @@
 - Core modules remain open source
 - Cloud features provide sustainable moat
 - Focus on ecosystem over feature parity
+
+## Documentation Maintenance
+
+- Keep generated source and runtime references deterministic and CI-enforced.
+- Add real browser/E2E evidence when the required services and credentials are
+  available; do not represent skipped integrations as verified.
+- Resolve whether plugin HTTP management stays source-only or becomes an
+  explicitly mounted authenticated product surface.

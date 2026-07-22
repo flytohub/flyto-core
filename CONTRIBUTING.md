@@ -22,7 +22,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher
 - Git
 - pip package manager
 
@@ -39,19 +39,20 @@ cd flyto-core
 git remote add upstream https://github.com/flytohub/flyto-core.git
 
 # 4. Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # 5. Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # Development dependencies
+pip install -e '.[dev,browser]'
 
 # 6. Install Playwright (for browser modules)
 pip install playwright
 playwright install chromium
 
 # 7. Verify setup
-python run.py  # Should launch interactive mode
+python scripts/check_documentation.py
+python scripts/check_brand_identity.py
+python -m pytest -m 'not browser and not e2e'
 ```
 
 ## How to Contribute
@@ -70,12 +71,12 @@ We welcome many types of contributions:
 
 ### Finding Something to Work On
 
-1. Check [open issues](../../issues) for bugs and feature requests
+1. Check [open issues](https://github.com/flytohub/flyto-core/issues) for bugs and feature requests
 2. Look for issues labeled:
    - `good first issue` - Great for newcomers
    - `help wanted` - We need community help
    - `documentation` - Docs improvements needed
-3. Check the [project board](../../projects) for planned work
+3. Check the [project board](https://github.com/flytohub/flyto-core/projects) for planned work
 
 ## Module Development
 

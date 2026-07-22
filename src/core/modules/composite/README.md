@@ -163,5 +163,5 @@ Composite modules:
 
 ## Related Documents
 
-- [ADR-001: Module Tiered Architecture](../../../docs/architecture/ADR_001_MODULE_TIERED_ARCHITECTURE.md)
-- [MODULE_SPECIFICATION.md](../../../docs/MODULE_SPECIFICATION.md)
+- [ADR-001: Module Tiered Architecture](../../../../docs/architecture/ADR_001_MODULE_TIERED_ARCHITECTURE.md)
+- [MODULE_SPECIFICATION.md](../../../../docs/MODULE_SPECIFICATION.md)

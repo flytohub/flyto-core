@@ -6,9 +6,7 @@ Constants and configuration for the CLI.
 
 from pathlib import Path
 
-
 # CLI Constants
-CLI_VERSION = "1.1.0"
 CLI_LINE_WIDTH = 70
 SUPPORTED_LANGUAGES = {
     '1': ('en', 'English'),

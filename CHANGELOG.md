@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added a source-backed documentation system covering all maintained Python
+  files/declarations, literal module registrations, CLI parsers, HTTP routes,
+  environment readers, recipes, bundles, and workflow assets.
+- Added technical whitepaper, feature, API, configuration, security, testing,
+  operations, and migration guides plus CI-enforced documentation ownership,
+  generated drift, local-link, Flyto2 naming, and public-mailbox checks.
+- Added `crypto`, `dns`, and `ai` package extras and aligned the development
+  extra with the non-browser test suite.
+- Made `pyproject.toml` the single dependency source, converted legacy
+  requirements files to extra delegates, and regenerated the base runtime lock.
 - Added a locked jsdom test runtime and dependency audit for browser-contract
   tests.
 - Added import and test-isolation contracts that reject duplicate `src.core`
@@ -29,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dynamic `__import__` call from the Gmail adapter.
 
 ### Security
+- Protected workflow status and evidence reads with bearer authentication and
+  added unauthenticated-access regression tests.
 - Kept the default gitleaks rules active while narrowly documenting historical
   JWT test vectors and generating current test keys without secret-shaped
   literals, so remote history and directory scans remain actionable.

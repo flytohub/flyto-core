@@ -23,7 +23,7 @@ Instead, please report them via email to:
 
 Or, if you prefer, you can use GitHub's private vulnerability reporting feature:
 
-1. Go to the [Security tab](../../security) of this repository
+1. Go to the [Security tab](https://github.com/flytohub/flyto-core/security) of this repository
 2. Click "Report a vulnerability"
 3. Fill out the form with details about the vulnerability
 
@@ -242,7 +242,7 @@ Security updates are released as patch versions (e.g., 1.0.1, 1.0.2). We recomme
 
 1. **Subscribe** to this repository's releases
 2. **Update** promptly when security patches are released
-3. **Monitor** the [security advisories](../../security/advisories)
+3. **Monitor** the [security advisories](https://github.com/flytohub/flyto-core/security/advisories)
 
 ## Responsible Disclosure
 
@@ -256,7 +256,7 @@ We follow responsible disclosure practices:
 
 For security concerns:
 - Email: security@flyto2.com
-- GitHub Security Advisories: [Report a vulnerability](../../security/advisories/new)
+- GitHub Security Advisories: [Report a vulnerability](https://github.com/flytohub/flyto-core/security/advisories/new)
 
 For general questions:
 - GitHub Issues: For non-security bugs and feature requests

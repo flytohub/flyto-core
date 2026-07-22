@@ -11,6 +11,31 @@
   machine assumptions.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
+- `docs/reference/` is generated from Python AST and repository assets. It maps
+  932 maintained Python files, 5,351 declarations, 466 literal module
+  registrations, 22 HTTP operations, 93 environment names, CLI parsers,
+  recipes, bundles, and workflows back to source.
+
+## Runtime Components
+
+| Component | Ownership |
+|---|---|
+| `src/cli` | command parsing, local/remote workflow operations, templates, plugins |
+| `src/core/engine`, `runtime`, `workflow` | validation, orchestration, execution, replay |
+| `src/core/modules` | registry plus atomic, composite, and third-party capabilities |
+| `src/core/api` | local authenticated Execution API and MCP HTTP transport |
+| `src/core/verification_service.py` | isolated deterministic runner boundary |
+| `src/core/browser` | browser lifecycle and Playwright integration |
+| `src/core/evidence`, `state`, `metering` | persistence, artifacts, usage, and recovery |
+| `src/recipes`, `src/recipe_bundles`, `workflows` | maintained executable workflow assets |
+
+## Public Interfaces
+
+The public interfaces are the three console scripts, Python imports, module
+metadata/schema, YAML workflow contract, MCP stdio/HTTP operations, Execution
+API routes, verification service routes, plugin entry-point/protocol contract,
+and packaged recipes. Source-defined plugin HTTP handlers are not public server
+routes until an authenticated application explicitly mounts them.
 
 ## Data Flow
 
@@ -38,3 +63,8 @@ broken product assertions.
 
 Warroom reports must redact secret-looking keys and strip URL query strings.
 LLM review is explicit opt-in and advisory only.
+
+Provider SDKs, browsers, image/crypto/DNS features, and server frameworks are
+capability extras. Base-package import cannot assume every extra is installed;
+the feature boundary must either provide a safe fallback or return an
+actionable named-extra instruction such as `flyto-core[crypto]`.

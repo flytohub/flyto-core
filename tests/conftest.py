@@ -13,8 +13,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import pytest
 import asyncio
+
+import pytest
+
+# These are executable, credential-backed AI demos with no pytest test cases.
+# Keep them available as scripts without importing optional OpenAI dependencies
+# during normal unit-test collection.
+collect_ignore = [
+    "test_agent_loop.py",
+    "test_real_agent.py",
+    "test_smart_agent.py",
+]
 
 
 @pytest.fixture(scope="session")

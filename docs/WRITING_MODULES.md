@@ -502,7 +502,7 @@ setup(
         'flyto-core>=1.0.0',
     ],
     entry_points={
-        'flyto-core.modules': [
+        'flyto.modules': [
             'custom = modules.my_custom_modules',
         ],
     },
@@ -592,9 +592,9 @@ async def execute(self):
 ## Examples
 
 See real module implementations in:
-- [`src/core/modules/browser_modules.py`](../src/core/modules/browser_modules.py) - Browser automation
-- [`src/core/modules/api_modules.py`](../src/core/modules/api_modules.py) - HTTP/API modules
-- [`src/core/modules/flow_modules.py`](../src/core/modules/flow_modules.py) - Flow control
+- [`src/core/modules/atomic/browser/`](../src/core/modules/atomic/browser/) - Browser automation
+- [`src/core/modules/atomic/http/`](../src/core/modules/atomic/http/) - HTTP/API modules
+- [`src/core/modules/atomic/flow/`](../src/core/modules/atomic/flow/) - Flow control
 
 ---
 

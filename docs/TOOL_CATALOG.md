@@ -2,7 +2,7 @@
 
 > Auto-generated from flyto-core module registry. **451 modules** across **84 categories**.
 >
-> Last generated: 2026-07-15
+> Generated from the active `ModuleRegistry`; do not edit manually.
 
 ## Categories
 

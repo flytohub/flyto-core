@@ -15,7 +15,6 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -119,8 +118,9 @@ async def dns_lookup(context: Dict[str, Any]) -> Dict[str, Any]:
 
     # Try using dnspython (dns.resolver) for full record type support
     try:
-        import dns.resolver
+        from dns import resolver as _resolver
 
+        del _resolver
         return await _lookup_with_dnspython(domain, record_type, timeout)
     except ImportError:
         pass
@@ -133,7 +133,7 @@ async def dns_lookup(context: Dict[str, Any]) -> Dict[str, Any]:
         'ok': False,
         'error': (
             f'Record type {record_type} requires dnspython library. '
-            'Install with: pip install dnspython'
+            "Install with: pip install 'flyto-core[dns]'"
         ),
         'error_code': 'MISSING_DEPENDENCY'
     }
@@ -141,8 +141,8 @@ async def dns_lookup(context: Dict[str, Any]) -> Dict[str, Any]:
 
 async def _lookup_with_dnspython(domain: str, record_type: str, timeout: int) -> Dict[str, Any]:
     """DNS lookup using dnspython"""
-    import dns.resolver
     import dns.exception
+    import dns.resolver
 
     loop = asyncio.get_event_loop()
 
@@ -250,7 +250,7 @@ async def _lookup_with_socket(domain: str, record_type: str, timeout: int) -> Di
             timeout=timeout
         )
 
-        records = list(set(addr[4][0] for addr in results))
+        records = list({addr[4][0] for addr in results})
 
         logger.info(f"DNS lookup (socket): {domain} {record_type} -> {len(records)} records")
 

@@ -6,10 +6,10 @@ Usage:
     python scripts/generate_catalog.py
 """
 
-import sys
+import argparse
 import os
+import sys
 from pathlib import Path
-from datetime import datetime
 
 # Setup path
 script_dir = Path(__file__).resolve().parent
@@ -54,10 +54,7 @@ def format_output(output_schema: dict) -> str:
 
     parts = []
     for name, defn in output_schema.items():
-        if isinstance(defn, dict):
-            ptype = defn.get("type", "any")
-        else:
-            ptype = str(defn)
+        ptype = defn.get("type", "any") if isinstance(defn, dict) else str(defn)
         parts.append(f"`{name}` ({ptype})")
 
     return ", ".join(parts)
@@ -68,7 +65,8 @@ def escape_md(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ").strip()
 
 
-def main():
+def render_catalog() -> tuple[str, int, int]:
+    """Render the runtime-discovered module catalog deterministically."""
     from core.modules.registry import ModuleRegistry
 
     registry = ModuleRegistry()
@@ -89,14 +87,12 @@ def main():
 
     total = len(all_metadata)
     cat_count = len(categories)
-    now = datetime.now().strftime("%Y-%m-%d")
-
     lines = [
         "# Tool Catalog",
         "",
         f"> Auto-generated from flyto-core module registry. **{total} modules** across **{cat_count} categories**.",
-        f">",
-        f"> Last generated: {now}",
+        ">",
+        "> Generated from the active `ModuleRegistry`; do not edit manually.",
         "",
         "## Categories",
         "",
@@ -129,13 +125,27 @@ def main():
 
         lines.append("")
 
-    # Write
+    return "\n".join(lines).rstrip() + "\n", total, cat_count
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="fail when the catalog is stale")
+    args = parser.parse_args()
     output_path = project_root / "docs" / "TOOL_CATALOG.md"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text("\n".join(lines), encoding="utf-8")
-    print(f"Generated {output_path}")
+    content, total, cat_count = render_catalog()
+    if args.check:
+        if not output_path.exists() or output_path.read_text(encoding="utf-8") != content:
+            print(f"Stale catalog: {output_path}", file=sys.stderr)
+            return 1
+        print(f"Catalog check passed: {output_path}")
+    else:
+        output_path.write_text(content, encoding="utf-8")
+        print(f"Generated {output_path}")
     print(f"  {total} modules across {cat_count} categories")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

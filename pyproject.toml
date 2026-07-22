@@ -61,38 +61,57 @@ dependencies = [
 
 [project.optional-dependencies]
 browser = [
-    "playwright>=1.40.0",
+    "playwright>=1.40.0,<2",
 ]
 api = [
-    "fastapi>=0.139.0",
-    "uvicorn>=0.51.0",
+    "fastapi>=0.139.0,<1",
+    "uvicorn>=0.51.0,<1",
 ]
 vector = [
-    "qdrant-client>=1.9.0",
-    "sentence-transformers>=2.7.0",
+    "qdrant-client>=1.9.0,<2",
+    "sentence-transformers>=2.7.0,<6",
+    "requests>=2.34.2,<3",
 ]
 image = [
-    "qrcode[pil]>=7.0",
-    "Pillow>=11.3.0",  # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed; 11.3.0 is the last line supporting py3.9 (12.2.0 CVEs require py3.10)
+    "qrcode[pil]>=7.0,<9",
+    "Pillow>=11.3.0,<13",  # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed; 11.3.0 is the last line supporting py3.9 (12.2.0 CVEs require py3.10)
+]
+crypto = [
+    "cryptography>=44.0.1,<47",
+    "PyJWT>=2.10.1,<3",
+]
+dns = [
+    "dnspython>=2.7.0,<3",
+]
+ai = [
+    "openai>=1.109.1,<3",
 ]
 telegram = [
-    "python-telegram-bot>=22.8",
+    "python-telegram-bot>=22.8,<23",
 ]
 cloud = [
     "flyto-core[browser,image]",
 ]
 all = [
-    "flyto-core[browser,api,vector,telegram,image]",
+    "flyto-core[browser,api,vector,telegram,image,crypto,dns,ai]",
 ]
 dev = [
+    "flyto-core[api]",
+    "httpx2>=2.7.0,<3",
     "pytest>=8.4.2",  # GHSA-6w46 tmpdir (dev/local-only) fully patched in 9.0.3 / py3.10; 8.4.2 is the last line supporting py3.9
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "Pillow>=11.3.0",
+    "cryptography>=44.0.1,<47",
+    "PyJWT>=2.10.1,<3",
+    "dnspython>=2.7.0,<3",
+    "openai>=1.109.1,<3",
     "black>=25.12.0",  # GHSA-fj7x ReDoS fixed in 24.3.0; keep the dev-tool floor current until the Python floor can move.
     "ruff>=0.1.0",
     "mypy>=1.0.0",
     "build>=1.5.0",
+    "pip-tools>=7.5,<8",
+    "pip-audit>=2.9,<3",
     "twine>=4.0.2",
 ]
 

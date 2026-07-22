@@ -712,8 +712,8 @@ output:
 ## Module Reference
 
 For a complete list of available modules and their parameters, see:
-- [MODULES.md](MODULES.md) - Complete module registry
-- [NAMESPACES.yaml](../NAMESPACES.yaml) - Module taxonomy
+- [Tool Catalog](TOOL_CATALOG.md) - Complete runtime module registry
+- [Module Specification](MODULE_SPECIFICATION.md) - Module taxonomy and schema
 
 ---
 

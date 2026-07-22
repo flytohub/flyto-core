@@ -8,12 +8,11 @@ import base64
 import logging
 from typing import Any, Dict
 
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-
 
 logger = logging.getLogger(__name__)
 
@@ -125,16 +124,16 @@ logger = logging.getLogger(__name__)
 async def crypto_decrypt(context: Dict[str, Any]) -> Dict[str, Any]:
     """Decrypt ciphertext using AES symmetric decryption."""
     try:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        from cryptography.hazmat.primitives import padding as sym_padding
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
         from cryptography.hazmat.primitives import hashes
-    except ImportError:
+        from cryptography.hazmat.primitives import padding as sym_padding
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    except ImportError as exc:
         raise ModuleError(
             "cryptography library is required for crypto.decrypt. "
-            "Install with: pip install cryptography"
-        )
+            "Install with: pip install 'flyto-core[crypto]'"
+        ) from exc
 
     params = context['params']
     ciphertext = params.get('ciphertext')
@@ -153,8 +152,10 @@ async def crypto_decrypt(context: Dict[str, Any]) -> Dict[str, Any]:
             packed = bytes.fromhex(ciphertext)
         else:
             packed = base64.b64decode(ciphertext)
-    except Exception as e:
-        raise ValidationError(f"Failed to decode ciphertext ({input_format}): {e}", field="ciphertext")
+    except Exception as exc:
+        raise ValidationError(
+            f"Failed to decode ciphertext ({input_format}): {exc}", field="ciphertext"
+        ) from exc
 
     # Extract salt (first 16 bytes)
     if len(packed) < 16:
@@ -204,8 +205,10 @@ async def crypto_decrypt(context: Dict[str, Any]) -> Dict[str, Any]:
         raise
     except ModuleError:
         raise
-    except Exception as e:
-        raise ModuleError(f"Decryption failed (wrong key or corrupted data): {e}")
+    except Exception as exc:
+        raise ModuleError(
+            f"Decryption failed (wrong key or corrupted data): {exc}"
+        ) from exc
 
     plaintext = plaintext_bytes.decode('utf-8')
     logger.info(f"Decrypted {len(plaintext_bytes)} bytes using AES-{mode}")

@@ -38,3 +38,6 @@ conventions:
   - rule: "pyproject.toml dependencies must have upper bound (e.g. pydantic>=2.0.0,<3)"
   - rule: "mypy python_version must be a valid Python version like '3.9', not a mypy version"
   - rule: "pytest cov-fail-under should be at least 60%"
+
+verify:
+  min_docs_score: 90

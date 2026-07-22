@@ -8,12 +8,11 @@ import logging
 import time
 from typing import Any, Dict
 
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-
 
 logger = logging.getLogger(__name__)
 
@@ -153,11 +152,11 @@ async def crypto_jwt_create(context: Dict[str, Any]) -> Dict[str, Any]:
     """Create a signed JWT token."""
     try:
         import jwt
-    except ImportError:
+    except ImportError as exc:
         raise ModuleError(
             "PyJWT is required for crypto.jwt_create. "
-            "Install with: pip install PyJWT"
-        )
+            "Install with: pip install 'flyto-core[crypto]'"
+        ) from exc
 
     params = context['params']
     payload = params.get('payload')
@@ -200,8 +199,8 @@ async def crypto_jwt_create(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         token = jwt.encode(claims, secret, algorithm=algorithm)
-    except Exception as e:
-        raise ModuleError(f"Failed to create JWT: {e}")
+    except Exception as exc:
+        raise ModuleError(f"Failed to create JWT: {exc}") from exc
 
     logger.info(f"Created JWT token using {algorithm}, expires_at={expires_at}")
 

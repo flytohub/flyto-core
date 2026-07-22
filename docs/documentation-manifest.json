@@ -1,0 +1,105 @@
+{
+  "schema": "flyto-core.documentation.v1",
+  "documentation": {
+    "overview": "README.md",
+    "project": "PROJECT.md",
+    "architecture_memory": "ARCHITECTURE.md",
+    "state": "STATE.md",
+    "roadmap": "ROADMAP.md",
+    "decisions": "DECISIONS.md",
+    "changelog": "CHANGELOG.md",
+    "whitepaper": "docs/WHITEPAPER.md",
+    "features": "docs/FEATURES.md",
+    "architecture": "docs/architecture-map.md",
+    "cli": "docs/CLI.md",
+    "http_api": "docs/API.md",
+    "module_catalog": "docs/TOOL_CATALOG.md",
+    "module_specification": "docs/MODULE_SPECIFICATION.md",
+    "workflow_specification": "docs/YAML_WORKFLOW_SPEC.md",
+    "configuration": "docs/CONFIGURATION.md",
+    "testing": "docs/TESTING.md",
+    "operations": "docs/OPERATIONS.md",
+    "security": "docs/SECURITY_MODEL.md",
+    "migration": "docs/MIGRATION_STATUS.md",
+    "reference_index": "docs/reference/README.md",
+    "source_modules": "docs/reference/source-modules.md",
+    "python_api": "docs/reference/python-api.md",
+    "registered_modules": "docs/reference/registered-modules.md",
+    "cli_reference": "docs/reference/cli.md",
+    "http_reference": "docs/reference/http-api.md",
+    "configuration_reference": "docs/reference/configuration.md",
+    "recipe_reference": "docs/reference/recipes.md"
+  },
+  "source_areas": [
+    {
+      "name": "CI and release automation",
+      "paths": [".github/**"],
+      "documentation": ["docs/TESTING.md", "docs/OPERATIONS.md"]
+    },
+    {
+      "name": "CLI",
+      "paths": ["src/cli/**"],
+      "documentation": ["docs/CLI.md", "docs/reference/cli.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Execution API and verification service",
+      "paths": ["src/core/api/**", "src/core/verification_service.py"],
+      "documentation": ["docs/API.md", "docs/SECURITY_MODEL.md", "docs/reference/http-api.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Workflow engine, runtime, replay, evidence, and state",
+      "paths": ["src/core/engine/**", "src/core/runtime/**", "src/core/evidence/**", "src/core/state/**", "src/core/workflow/**"],
+      "documentation": ["docs/WHITEPAPER.md", "docs/architecture-map.md", "docs/YAML_WORKFLOW_SPEC.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Module registry and implementations",
+      "paths": ["src/core/modules/**", "src/core/catalog/**"],
+      "documentation": ["docs/TOOL_CATALOG.md", "docs/MODULE_SPECIFICATION.md", "docs/WRITING_MODULES.md", "docs/reference/registered-modules.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Browser automation",
+      "paths": ["src/core/browser/**"],
+      "documentation": ["docs/FEATURES.md", "docs/SECURITY_MODEL.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Core services and contracts",
+      "paths": ["src/core/**"],
+      "documentation": ["docs/architecture-map.md", "docs/FEATURES.md", "docs/SECURITY_MODEL.md", "docs/reference/source-modules.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Packaged recipes and bundles",
+      "paths": ["src/recipes/**", "src/recipe_bundles/**"],
+      "documentation": ["docs/RECIPES.md", "docs/reference/configuration.md", "docs/reference/recipes.md"]
+    },
+    {
+      "name": "Maintenance scripts",
+      "paths": ["scripts/**"],
+      "documentation": ["scripts/README.md", "docs/TESTING.md", "docs/OPERATIONS.md", "docs/reference/python-api.md"]
+    },
+    {
+      "name": "Test suites",
+      "paths": ["tests/**"],
+      "documentation": ["docs/TESTING.md"]
+    },
+    {
+      "name": "Maintained workflow files",
+      "paths": ["workflows/**"],
+      "documentation": ["workflows/README.md", "docs/YAML_WORKFLOW_SPEC.md", "docs/TESTING.md", "docs/reference/configuration.md"]
+    },
+    {
+      "name": "Examples, demos, and plugin template",
+      "paths": ["examples/**", "demo/**", "plugin-template/**", "demo.py", "run.py", "run_demo.sh", "demo.tape"],
+      "documentation": ["docs/FEATURES.md", "docs/PLUGIN_SDK.md", "demo/README.md", "docs/reference/source-modules.md"]
+    },
+    {
+      "name": "Audit evidence",
+      "paths": ["audit_report/**"],
+      "documentation": ["audit_report/summary.md", "docs/MIGRATION_STATUS.md"]
+    },
+    {
+      "name": "Package and root configuration",
+      "paths": ["pyproject.toml", "setup.py", "requirements*.txt", "requirements.lock", "package.json", "package-lock.json", "registry.json", "server.json", "Dockerfile", "Dockerfile.verification", "MANIFEST.in", ".flyto-rules.yaml"],
+      "documentation": ["docs/CONFIGURATION.md", "docs/OPERATIONS.md", "docs/TESTING.md"]
+    }
+  ]
+}

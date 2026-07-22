@@ -6,8 +6,7 @@ Core Constants - Centralized configuration values
 This module contains all constants and default values used throughout the flyto-core system.
 All magic numbers, default URLs, and configuration values should be defined here.
 """
-from typing import Dict, Any
-
+from typing import Dict
 
 # =============================================================================
 # Execution Defaults
@@ -326,9 +325,6 @@ class EnvVars:
 # =============================================================================
 
 CLI_SEPARATOR: str = "=" * 70
-CLI_VERSION: str = "1.0.0"
-
-
 # =============================================================================
 # Module Categories
 # =============================================================================
@@ -548,18 +544,14 @@ class ProductionPolicy:
         Returns:
             Set of denied capability strings
         """
-        env_lower = env.lower()
-        if env_lower == "production":
-            return cls.PRODUCTION_DENIED
-        elif env_lower == "staging":
-            return cls.STAGING_DENIED
-        elif env_lower == "development":
-            return cls.DEVELOPMENT_DENIED
-        elif env_lower == "local":
-            return cls.LOCAL_DENIED
-        else:
-            # Unknown environment - use production policy (safest)
-            return cls.PRODUCTION_DENIED
+        policies = {
+            "production": cls.PRODUCTION_DENIED,
+            "staging": cls.STAGING_DENIED,
+            "development": cls.DEVELOPMENT_DENIED,
+            "local": cls.LOCAL_DENIED,
+        }
+        # Unknown environments fail closed to the production policy.
+        return policies.get(env.lower(), cls.PRODUCTION_DENIED)
 
     @classmethod
     def is_capability_allowed(

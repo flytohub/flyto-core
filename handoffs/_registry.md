@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-07-22 | Source-backed documentation and release gates | `2026-07-22-source-backed-documentation.md` | Active |
 | 2026-06-23 | Product Verification 90-point evidence gate | `2026-06-23-product-verification-90-gate.md` | Active |
 | 2026-06-23 | Automation test model evidence | `2026-06-23-automation-test-model.md` | Active |
 | 2026-06-23 | Warroom hydration-aware replay assertions | `2026-06-23-warroom-hydration-aware-replay.md` | Active |

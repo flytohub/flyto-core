@@ -2,6 +2,10 @@
 
 41 pre-built workflow templates. No code, no API key — just `flyto recipe <name>`.
 
+The generated [complete recipe reference](reference/recipes.md) lists all 41
+packaged recipe parameters, exact step counts, composed modules, and source
+files. The longer examples below explain common workflows.
+
 ```bash
 pip install flyto-core[browser]
 playwright install chromium
@@ -82,22 +86,26 @@ flyto recipe web-perf --url https://example.com --timeout 10000
 
 ---
 
-### login-test
+### flyto2-ui-login-smoke
 
 E2E login test — navigate to login page, fill credentials, submit, verify success element appears, screenshot the result.
 
 ```bash
-flyto recipe login-test --url https://myapp.com/login --username team@flyto2.com --password s3cret --success_selector .dashboard
-flyto recipe login-test --url https://the-internet.herokuapp.com/login --username tomsmith --password SuperSecretPassword! --success_selector ".flash.success"
+flyto recipe flyto2-ui-login-smoke --login_url https://myapp.com/login --page_url https://myapp.com/projects --username team@flyto2.com --password "$FLYTO_TEST_PASSWORD"
 ```
 
 | Arg | Required | Default | Description |
 |-----|----------|---------|-------------|
-| `--url` | yes | — | Login page URL |
+| `--login_url` | yes | — | Login page URL |
+| `--page_url` | yes | — | Page to verify after login |
 | `--username` | yes | — | Username or email |
 | `--password` | yes | — | Password |
-| `--success_selector` | yes | — | CSS selector that appears after successful login |
-| `--output` | no | `login-result.png` | Screenshot output path |
+| `--success_indicator` | no | `/projects` | CSS selector or URL fragment proving success |
+| `--output` | no | `flyto2-ui-login-smoke.json` | JSON audit output path |
+| `--output_prefix` | no | `flyto2-ui-login-smoke` | Screenshot artifact prefix |
+| `--required_text` | no | `[]` | JSON array of text labels that must appear |
+| `--api_url_pattern` | no | `/api/` | Safe network sampling regex |
+| `--network_timeout_ms` | no | `1500` | Late network sampling duration |
 
 ---
 

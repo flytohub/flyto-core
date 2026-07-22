@@ -9,6 +9,11 @@ before changing workflow, module, recipe, or browser validation behavior.
 - Prefer DOM extraction and JavaScript evaluation for browser assertions; use
   screenshots only for visual/layout verification.
 - Run `bash scripts/lint-project-memory.sh` after editing project memory files.
+- Run `python scripts/check_documentation.py` after changing Python source,
+  API routes, CLI parsers, recipes, environment readers, or workflows.
+- Run `python scripts/check_brand_identity.py` after changing public copy.
+- Install contributor dependencies with `pip install -e '.[dev]'`; do not make
+  provider SDKs implicit base dependencies when an explicit extra is suitable.
 
 ## Flyto2 Project Memory Contract
 

@@ -5,16 +5,14 @@ Crypto Encrypt Module
 AES symmetric encryption using Fernet (PBKDF2 key derivation).
 """
 import base64
-import hashlib
 import logging
 from typing import Any, Dict
 
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-
 
 logger = logging.getLogger(__name__)
 
@@ -132,16 +130,16 @@ logger = logging.getLogger(__name__)
 async def crypto_encrypt(context: Dict[str, Any]) -> Dict[str, Any]:
     """Encrypt plaintext using AES symmetric encryption."""
     try:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-        from cryptography.hazmat.primitives import padding as sym_padding
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
         from cryptography.hazmat.primitives import hashes
-    except ImportError:
+        from cryptography.hazmat.primitives import padding as sym_padding
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    except ImportError as exc:
         raise ModuleError(
             "cryptography library is required for crypto.encrypt. "
-            "Install with: pip install cryptography"
-        )
+            "Install with: pip install 'flyto-core[crypto]'"
+        ) from exc
 
     params = context['params']
     plaintext = params.get('plaintext')

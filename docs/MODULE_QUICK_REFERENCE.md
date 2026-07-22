@@ -183,18 +183,17 @@ modules.data.json.parse.examples.basic.title
 ## Quick Commands
 
 ```bash
-# Create new module from template
-python scripts/create_module.py \\
-    --category data \\
-    --subcategory xml \\
-    --action parse \\
-    --label "Parse XML"
+# Inspect the maintained third-party module scaffold
+find plugin-template -maxdepth 2 -type f -print
 
-# Lint a module
-python scripts/lint_modules.py path/to/module.py
+# Lint a registered module
+python scripts/lint_modules.py --module data.xml.parse
 
 # Lint all modules
 python scripts/lint_modules.py
+
+# Run the full module quality validator
+python scripts/validate_all_modules.py --strict default
 
 # Test module registration
 python -c "from core.modules import atomic; print('OK')"

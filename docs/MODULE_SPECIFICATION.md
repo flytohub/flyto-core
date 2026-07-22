@@ -551,11 +551,13 @@ def register_module(**metadata):
     # ... register module
 ```
 
-### 2. CLI Linting Tool
+### 2. Module Validation
 
 ```bash
-# Validate a module file
-flyto-core lint src/core/modules/my_module.py
+# Inspect validator options, then run module tests
+python scripts/lint_modules.py --help
+python scripts/validate_all_modules.py --help
+python -m pytest tests/modules -q
 
 # Output:
 ✓ Module ID format correct
@@ -574,19 +576,16 @@ Score: 3/6 checks passed
 # .github/workflows/validate-modules.yml
 - name: Validate Modules
   run: |
-    python scripts/validate_modules.py
+    python scripts/validate_all_modules.py --strict default
     # Fails PR if modules don't pass validation
 ```
 
-### 4. Module Template Generator
+### 4. Module Scaffolding
 
 ```bash
-# Generate a new module from template
-flyto-core create-module --category data --subcategory xml --action parse
-
-# Creates:
-# src/core/modules/data/xml/parse.py
-# With all required fields pre-filled
+# Start from the maintained plugin scaffold, or copy a nearby module that uses
+# the same decorator and schema style.
+find plugin-template -maxdepth 2 -type f -print
 ```
 
 ---
@@ -615,8 +614,8 @@ flyto-core create-module --category data --subcategory xml --action parse
 ### Next Steps
 
 1. Read this specification thoroughly
-2. Use `flyto-core create-module` to generate new modules
-3. Run `flyto-core lint` before submitting
+2. Start from `plugin-template/` or a nearby maintained module with the same capability shape
+3. Run `python scripts/lint_modules.py`, the relevant Ruff checks, and module tests before submitting
 4. All PRs must pass validation checks
 
 ---

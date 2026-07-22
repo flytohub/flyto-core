@@ -5,15 +5,16 @@ Tests health, info, modules, execute, workflow endpoints,
 plus ModuleFilter, Pydantic models, ServerState, and security helpers.
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 from starlette.testclient import TestClient
 
 from core.api.server import create_app
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -136,8 +137,25 @@ class TestWorkflowEndpoint:
         })
         assert resp.status_code in (401, 403)
 
-    def test_get_nonexistent_execution(self, client):
+    def test_get_execution_without_auth(self, client):
         resp = client.get("/v1/workflow/nonexistent")
+        assert resp.status_code in (401, 403)
+
+    def test_get_evidence_without_auth(self, client):
+        resp = client.get("/v1/workflow/nonexistent/evidence")
+        assert resp.status_code in (401, 403)
+
+    def test_get_nonexistent_execution(self, client, auth_header):
+        resp = client.get("/v1/workflow/nonexistent", headers=auth_header)
+        assert resp.status_code == 404
+        body = resp.json()
+        assert "error" in body
+
+    def test_get_nonexistent_evidence(self, client, auth_header):
+        resp = client.get(
+            "/v1/workflow/nonexistent/evidence",
+            headers=auth_header,
+        )
         assert resp.status_code == 404
         body = resp.json()
         assert "error" in body
@@ -191,8 +209,9 @@ class TestModels:
         assert req.context is None
 
     def test_execute_module_request_missing_module_id(self):
-        from core.api.models import ExecuteModuleRequest
         from pydantic import ValidationError
+
+        from core.api.models import ExecuteModuleRequest
         with pytest.raises(ValidationError):
             ExecuteModuleRequest(params={"value": 1})
 
@@ -360,8 +379,11 @@ class TestWorkflowWithAuth:
         assert body["ok"] is False
         assert "blocked" in body.get("error", "").lower() or body["status"] == "blocked"
 
-    def test_get_nonexistent_evidence(self, client):
-        resp = client.get("/v1/workflow/nonexistent/evidence")
+    def test_get_nonexistent_evidence(self, client, auth_header):
+        resp = client.get(
+            "/v1/workflow/nonexistent/evidence",
+            headers=auth_header,
+        )
         assert resp.status_code == 404
 
 
@@ -457,7 +479,7 @@ class TestSecurityExtended:
 
     def test_write_and_read_token_file(self, tmp_path, monkeypatch):
         monkeypatch.setattr("core.api.security._TOKEN_DIR", tmp_path)
-        from core.api.security import write_token_file, read_token_file
+        from core.api.security import read_token_file, write_token_file
         write_token_file("my-secret", 7777)
         assert read_token_file(7777) == "my-secret"
 
@@ -536,8 +558,8 @@ class TestEvidenceHooks:
 
     def test_hooks_lifecycle(self, tmp_path):
         from core.api.evidence_hooks import APIEvidenceHooks
-        from core.engine.hooks import HookContext, HookResult, HookAction
         from core.engine.evidence import EvidenceStore
+        from core.engine.hooks import HookAction, HookContext
         store = EvidenceStore(base_path=tmp_path)
         hooks = APIEvidenceHooks(store, "exec_test")
         ctx = HookContext(workflow_id="wf1", step_id="s1", module_id="math.abs", variables={})
@@ -553,8 +575,8 @@ class TestEvidenceHooks:
 
     def test_hooks_pre_post_execute(self, tmp_path):
         from core.api.evidence_hooks import APIEvidenceHooks
-        from core.engine.hooks import HookContext
         from core.engine.evidence import EvidenceStore
+        from core.engine.hooks import HookContext
         store = EvidenceStore(base_path=tmp_path)
         hooks = APIEvidenceHooks(store, "exec_test")
         # Pre-execute
@@ -568,8 +590,8 @@ class TestEvidenceHooks:
 
     def test_hooks_error(self, tmp_path):
         from core.api.evidence_hooks import APIEvidenceHooks
-        from core.engine.hooks import HookContext
         from core.engine.evidence import EvidenceStore
+        from core.engine.hooks import HookContext
         store = EvidenceStore(base_path=tmp_path)
         hooks = APIEvidenceHooks(store, "exec_test")
         # Pre-execute then error
@@ -582,8 +604,8 @@ class TestEvidenceHooks:
     def test_hooks_error_without_pre(self, tmp_path):
         """Error without pre_execute should still work."""
         from core.api.evidence_hooks import APIEvidenceHooks
-        from core.engine.hooks import HookContext, HookAction
         from core.engine.evidence import EvidenceStore
+        from core.engine.hooks import HookAction, HookContext
         store = EvidenceStore(base_path=tmp_path)
         hooks = APIEvidenceHooks(store, "exec_test")
         err_ctx = HookContext(workflow_id="wf1", step_id="s1", module_id="math.abs", variables={}, error=Exception("test"), error_message="test error")
@@ -617,7 +639,7 @@ class TestPluginService:
         assert svc1 is svc2
 
     def test_plugin_service_default_config(self):
-        from core.api.plugins.service import PluginService, PluginServiceConfig
+        from core.api.plugins.service import PluginService
         svc = PluginService()
         assert svc.config.enable_marketplace is True
         assert svc.config.catalog_cache_ttl == 300

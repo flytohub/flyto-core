@@ -5,7 +5,15 @@
 - Before changing module registration, browser automation, recipe execution, or recipe bundle behavior, use flyto-indexer impact/search to understand callers.
 - After changing recipes or recipe bundles, run the focused recipe bundle tests and a flyto-core recipe smoke.
 - Before finishing any code change, run the relevant verify/test/smoke checks and record any skipped gate.
+- Changes to Python source, routes, parsers, environment readers, recipes, or workflows must regenerate `docs/reference/` and pass `python scripts/check_documentation.py`.
+- Public copy must use Flyto2 and only the approved `@flyto2.com` mailbox aliases; run `python scripts/check_brand_identity.py`.
+- Install contributor dependencies with `pip install -e '.[dev]'`; runtime integrations belong in explicit package extras.
 - Keep `.flyto-index/`, run outputs, screenshots, and other generated artifacts out of commits.
+
+The normal release closure is documented in `docs/TESTING.md`. At minimum run
+the documentation and brand checks, audited-surface Ruff checks, the
+non-browser/non-E2E suite, package build plus Twine validation, npm audit, and
+strict full-scan Flyto2 Indexer verification.
 
 ## Flyto2 Project Memory Contract
 

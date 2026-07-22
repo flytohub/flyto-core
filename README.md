@@ -246,7 +246,8 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 ## Public Naming Contract
 
-- Use **Flyto2** for the product and company-facing brand. Do not shorten public docs, examples, or SEO copy to "Flyto".
+- Use **Flyto2** for the product and company-facing brand. Do not use a
+  shortened legacy spelling in public docs, examples, or SEO copy.
 - Use `flyto2.com`, `docs.flyto2.com`, and `blog.flyto2.com` as the public citation surfaces.
 - Public example contact addresses should use registered `@flyto2.com` mailboxes such as `support@flyto2.com`, `security@flyto2.com`, `privacy@flyto2.com`, `sales@flyto2.com`, `team@flyto2.com`, `dev@flyto2.com`, `alerts@flyto2.com`, `oncall@flyto2.com`, `reports@flyto2.com`, `noreply@flyto2.com`, `dmarc@flyto2.com`, `conduct@flyto2.com`, `admin@flyto2.com`, `pentest@flyto2.com`, `hello@flyto2.com`, and `info@flyto2.com`.
 - Public docs, blog, and landing pages should cite the current core facts above instead of stale module counts.
@@ -267,6 +268,23 @@ Use these descriptions in public docs, blog posts, package metadata, MCP registr
 - **Evidence Snapshots** — full state before and after each step boundary
 - **Data Lineage** — track data flow across steps, build dependency graphs
 - **Timeout Guard** — configurable workflow-level and per-step timeout protection
+
+## Architecture
+
+CLI, MCP, HTTP, Python, and packaged recipes converge on the same workflow
+engine, module registry, policy, trace, evidence, and replay boundaries. Start
+with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
+[Architecture Map](docs/architecture-map.md) and exhaustive
+[source reference](docs/reference/README.md) for implementation detail.
+
+## Configuration
+
+Core is configured through package extras, CLI arguments, workflow parameters,
+module policy, environment variables, and local run state. Security-sensitive
+network, filesystem, auth, callback, and permission switches are documented in
+[Configuration](docs/CONFIGURATION.md); all 93 detected environment readers are
+linked to source in the generated
+[configuration reference](docs/reference/configuration.md).
 
 ---
 
@@ -407,7 +425,7 @@ flyto recipe full-audit       --url https://example.com
 flyto recipe competitor-intel --url https://github.com/pricing
 flyto recipe site-audit       --url https://example.com
 flyto recipe web-perf         --url https://example.com
-flyto recipe login-test       --url https://myapp.com/login --username user --password pass --success_selector .dashboard
+flyto recipe flyto2-ui-login-smoke --login_url https://myapp.com/login --page_url https://myapp.com/projects --username team@flyto2.com --password "$FLYTO_TEST_PASSWORD"
 flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"dev@flyto2.com"}'
 
 # Browser Automation

@@ -8,6 +8,7 @@ GET  /v1/workflow/{id}          — Get execution info + trace
 GET  /v1/workflow/{id}/evidence — Get step-by-step evidence
 """
 
+import contextlib
 import json
 import logging
 import time
@@ -16,9 +17,9 @@ import uuid
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from ..models import RunWorkflowRequest, WorkflowRunResponse, StepEvidenceResponse
 from ..evidence_hooks import APIEvidenceHooks
-from ..security import require_auth, module_filter
+from ..models import RunWorkflowRequest, StepEvidenceResponse, WorkflowRunResponse
+from ..security import module_filter, require_auth
 
 router = APIRouter(tags=["workflows"])
 logger = logging.getLogger(__name__)
@@ -115,7 +116,7 @@ async def run_workflow(body: RunWorkflowRequest, request: Request):
 # GET /v1/workflow/{execution_id}
 # ---------------------------------------------------------------------------
 
-@router.get("/workflow/{execution_id}")
+@router.get("/workflow/{execution_id}", dependencies=[Depends(require_auth)])
 async def get_execution_info(execution_id: str, request: Request):
     """Get execution info: steps, status, evidence summary."""
     state = request.app.state.server
@@ -161,7 +162,10 @@ async def get_execution_info(execution_id: str, request: Request):
 # GET /v1/workflow/{execution_id}/evidence
 # ---------------------------------------------------------------------------
 
-@router.get("/workflow/{execution_id}/evidence")
+@router.get(
+    "/workflow/{execution_id}/evidence",
+    dependencies=[Depends(require_auth)],
+)
 async def get_execution_evidence(execution_id: str, request: Request):
     """Get step-by-step evidence for an execution."""
     state = request.app.state.server
@@ -200,6 +204,7 @@ def _save_workflow_definition(state, execution_id: str, workflow: dict):
     """Persist workflow.json for replay."""
     try:
         import os as _os
+
         from core.engine.redaction import redact_for_persistence
         exec_dir = state.evidence_store.get_execution_dir(execution_id)
         path = exec_dir / "workflow.json"
@@ -207,9 +212,7 @@ def _save_workflow_definition(state, execution_id: str, workflow: dict):
         # before the definition lands on disk, and lock the file to the owner.
         with open(path, "w", encoding="utf-8") as f:
             json.dump(redact_for_persistence(workflow), f, ensure_ascii=False, indent=2)
-        try:
+        with contextlib.suppress(OSError):
             _os.chmod(path, 0o600)
-        except OSError:
-            pass
     except Exception as e:
         logger.warning("Failed to save workflow definition: %s", e)

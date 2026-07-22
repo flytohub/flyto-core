@@ -3,8 +3,8 @@ Workflow Engine CLI Package
 
 Provides command-line interface for workflow automation.
 """
-__version__ = "1.0.0"
+from core import __version__
 
 from .main import main
 
-__all__ = ['main']
+__all__ = ["__version__", "main"]

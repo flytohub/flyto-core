@@ -18,9 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check project memory docs
-        run: bash scripts/lint-project-memory.sh
-
       - uses: actions/checkout@v4
         with:
           repository: flytohub/flyto-indexer
@@ -31,21 +28,59 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
       - name: Install package and audit tooling
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-          pip install pytest pytest-asyncio pyyaml ruff build
+          pip install -e '.[dev]'
           pip install './flyto-indexer[dev]'
+          npm ci --ignore-scripts
 
-      - name: Lint maintained recipe bundle surface
-        run: ruff check src/core/recipe_bundles.py tests/core/test_recipe_bundles.py
+      - name: Check documentation and project memory
+        run: |
+          bash scripts/lint-project-memory.sh
+          bash scripts/lock-deps.sh
+          git diff --exit-code -- requirements.lock
+          python -m pip_audit -r requirements.lock
+          python scripts/check_documentation.py
+          python scripts/check_brand_identity.py
 
-      - name: Run focused tests
-        run: pytest tests/core/test_recipe_bundles.py -o addopts="" -q
+      - name: Lint audited maintenance and security surfaces
+        run: |
+          ruff check \
+            scripts/generate_catalog.py \
+            scripts/generate_reference.py \
+            scripts/check_documentation.py \
+            scripts/check_brand_identity.py \
+            src/cli/__init__.py \
+            src/cli/config.py \
+            src/core/constants.py \
+            src/core/api/routes/workflows.py \
+            src/core/modules/atomic/crypto/encrypt.py \
+            src/core/modules/atomic/crypto/decrypt.py \
+            src/core/modules/atomic/crypto/jwt_create.py \
+            src/core/modules/atomic/crypto/jwt_verify.py \
+            src/core/modules/atomic/dns/lookup.py \
+            tests/conftest.py \
+            tests/test_documentation_generators.py \
+            tests/test_version_identity.py \
+            tests/core/api/test_routes.py
+
+      - name: Run non-browser test suite
+        run: pytest -m 'not browser and not e2e'
+
+      - name: Audit JavaScript test runtime
+        run: npm run audit
 
       - name: Build package
-        run: python -m build
+        run: |
+          python -m build
+          twine check dist/*
 
       - name: Run Flyto2 verify gate
-        run: flyto-index verify . --json
+        run: flyto-index verify . --full-scan --strict --json

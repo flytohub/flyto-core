@@ -29,3 +29,23 @@ categories, with 41 maintained built-in recipes exposed through the CLI.
   on LLM output for pass/fail decisions.
 - Public documentation and package metadata stay aligned with the generated
   module catalog and recipe inventory.
+- Every maintained Python file and declaration is discoverable through the
+  generated source reference, while narrative docs explain each owned source
+  area, public runtime surface, security boundary, and operator workflow.
+- Optional capabilities declare installable extras and fail with an actionable
+  package-level installation command when their dependency is absent.
+
+## Owned Surfaces
+
+- Python package `core`, workflow engine, registry, policy, trace, evidence,
+  replay, state, metering, browser control, and provider adapters.
+- CLI entry points `flyto`, `flyto-serve`, and `flyto-verification`.
+- MCP stdio, authenticated MCP HTTP, Execution API, and verification service.
+- Packaged recipes, workflow fixtures, plugin protocol, package metadata,
+  generated module/source references, and release verification automation.
+
+## Non-Goals
+
+- Hosted account, billing, team, or marketplace business logic owned by Cloud.
+- Product UI behavior owned by Console, App, Admin, or the public websites.
+- Treating optional provider availability or LLM output as deterministic proof.

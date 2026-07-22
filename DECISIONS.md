@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-07-22 - Documentation is source-backed and release-controlled
+
+Decision: keep concise narrative guides for intent and operations, generate
+exhaustive references from Python AST/runtime catalog/repository assets, map
+every maintained source/configuration area to documentation, and reject drift,
+broken local links, unowned files, stale Flyto2 naming, or unapproved public
+mailboxes in CI.
+
+Reason: hand-maintained totals and symbol lists become stale in a 451-module
+runtime. Generated inventory proves coverage while narrative docs remain usable.
+
+## 2026-07-22 - Evidence-bearing workflow reads require authentication
+
+Decision: require the active Execution API bearer token for workflow status and
+evidence GET routes, not only workflow mutation and replay routes.
+
+Reason: status and evidence can disclose workflow parameters, outputs, errors,
+and artifact paths. They are operational data, not public module metadata.
+
+## 2026-07-22 - Optional capability dependencies use explicit extras
+
+Decision: publish `crypto`, `dns`, and `ai` extras, include their dependencies
+in contributor validation, and return package-extra install instructions when
+a module cannot load its SDK.
+
+Reason: runtime discovery may expose optional modules, but installation and
+failure behavior must still be predictable without bloating the base package.
+
 ## 2026-07-21 - Runtime identity and test security state are process-safe
 
 Decision: import the installed Python package only as `core`, reject legacy
