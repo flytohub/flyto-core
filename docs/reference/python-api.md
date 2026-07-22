@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,379 declarations across 786 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,382 declarations across 786 files**.
 
 ## `demo.py`
 
@@ -150,9 +150,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def get_credential_keys(module_id: str) -> list` | Get credential keys for a module based on its ID. | [`scripts/fix_credential_keys.py:66`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L66) |
-| function | `def add_credential_keys_to_file(file_path: str) -> int` | Add credential_keys to @register_module decorators in a file. | [`scripts/fix_credential_keys.py:74`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L74) |
-| function | `def main()` | Main entry point. | [`scripts/fix_credential_keys.py:122`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L122) |
+| function | `def get_credential_keys(module_id: str) -> list` | Get credential keys for a module based on its ID. | [`scripts/fix_credential_keys.py:67`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L67) |
+| function | `def add_credential_keys_to_file(file_path: str) -> int` | Add credential_keys to @register_module decorators in a file. | [`scripts/fix_credential_keys.py:75`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L75) |
+| function | `def main()` | Main entry point. | [`scripts/fix_credential_keys.py:123`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L123) |
 
 ## `scripts/fix_lint_warnings.py`
 
@@ -303,10 +303,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def cli_reference() -> str` | Implements `cli_reference`; linked source is authoritative. | [`scripts/generate_reference.py:284`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L284) |
 | function | `def http_reference() -> str` | Implements `http_reference`; linked source is authoritative. | [`scripts/generate_reference.py:399`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L399) |
 | function | `def configuration_reference() -> str` | Implements `configuration_reference`; linked source is authoritative. | [`scripts/generate_reference.py:464`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L464) |
-| function | `def recipe_reference() -> str` | Implements `recipe_reference`; linked source is authoritative. | [`scripts/generate_reference.py:508`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L508) |
-| function | `def reference_index() -> str` | Implements `reference_index`; linked source is authoritative. | [`scripts/generate_reference.py:547`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L547) |
-| function | `def outputs() -> dict&#91;Path, str&#93;` | Implements `outputs`; linked source is authoritative. | [`scripts/generate_reference.py:564`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L564) |
-| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_reference.py:578`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L578) |
+| function | `def recipe_reference() -> str` | Implements `recipe_reference`; linked source is authoritative. | [`scripts/generate_reference.py:510`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L510) |
+| function | `def reference_index() -> str` | Implements `reference_index`; linked source is authoritative. | [`scripts/generate_reference.py:549`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L549) |
+| function | `def outputs() -> dict&#91;Path, str&#93;` | Implements `outputs`; linked source is authoritative. | [`scripts/generate_reference.py:566`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L566) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_reference.py:580`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L580) |
 
 ## `scripts/lint_modules.py`
 
@@ -991,21 +991,21 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def APIEndpoints.github_repo(cls, owner: str, repo: str) -> str` | Implements `APIEndpoints.github_repo`; linked source is authoritative. | [`src/core/constants.py:193`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L193) |
 | method | `def APIEndpoints.github_issues(cls, owner: str, repo: str) -> str` | Implements `APIEndpoints.github_issues`; linked source is authoritative. | [`src/core/constants.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L197) |
 | method | `def APIEndpoints.google_gemini_generate(cls, model: str) -> str` | Get Gemini API URL. | [`src/core/constants.py:205`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L205) |
-| method | `def APIEndpoints.airtable_table(cls, base_id: str, table_name: str) -> str` | Implements `APIEndpoints.airtable_table`; linked source is authoritative. | [`src/core/constants.py:216`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L216) |
-| method | `def APIEndpoints.notion_pages(cls) -> str` | Implements `APIEndpoints.notion_pages`; linked source is authoritative. | [`src/core/constants.py:225`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L225) |
-| method | `def APIEndpoints.notion_database_query(cls, database_id: str) -> str` | Implements `APIEndpoints.notion_database_query`; linked source is authoritative. | [`src/core/constants.py:229`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L229) |
-| method | `def APIEndpoints.twilio_messages(cls, account_sid: str) -> str` | Implements `APIEndpoints.twilio_messages`; linked source is authoritative. | [`src/core/constants.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L245) |
-| method | `def APIEndpoints.twilio_calls(cls, account_sid: str) -> str` | Implements `APIEndpoints.twilio_calls`; linked source is authoritative. | [`src/core/constants.py:249`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L249) |
-| class | `class EnvVars` | Environment variable names | [`src/core/constants.py:279`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L279) |
-| class | `class WorkflowStatus` | Workflow execution status values | [`src/core/constants.py:356`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L356) |
-| class | `class ErrorCode` | Standardized error codes for module execution. | [`src/core/constants.py:371`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L371) |
-| class | `class ErrorMessages` | Centralized error messages | [`src/core/constants.py:442`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L442) |
-| method | `def ErrorMessages.format(cls, message: str, **kwargs) -> str` | Format error message with parameters | [`src/core/constants.py:454`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L454) |
-| class | `class Capability` | Module capability declarations. | [`src/core/constants.py:463`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L463) |
-| class | `class ProductionPolicy` | Capability enforcement policy for each environment. | [`src/core/constants.py:506`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L506) |
-| method | `def ProductionPolicy.get_denied_capabilities(cls, env: str) -> set` | Get set of denied capabilities for an environment. | [`src/core/constants.py:537`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L537) |
-| method | `def ProductionPolicy.is_capability_allowed(cls, capability: str, env: str) -> bool` | Check if a capability is allowed in an environment. | [`src/core/constants.py:557`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L557) |
-| method | `def ProductionPolicy.check_capabilities(cls, capabilities: list, env: str) -> tuple` | Check if all capabilities are allowed. | [`src/core/constants.py:576`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L576) |
+| method | `def APIEndpoints.airtable_table(cls, base_id: str, table_name: str) -> str` | Implements `APIEndpoints.airtable_table`; linked source is authoritative. | [`src/core/constants.py:220`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L220) |
+| method | `def APIEndpoints.notion_pages(cls) -> str` | Implements `APIEndpoints.notion_pages`; linked source is authoritative. | [`src/core/constants.py:229`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L229) |
+| method | `def APIEndpoints.notion_database_query(cls, database_id: str) -> str` | Implements `APIEndpoints.notion_database_query`; linked source is authoritative. | [`src/core/constants.py:233`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L233) |
+| method | `def APIEndpoints.twilio_messages(cls, account_sid: str) -> str` | Implements `APIEndpoints.twilio_messages`; linked source is authoritative. | [`src/core/constants.py:249`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L249) |
+| method | `def APIEndpoints.twilio_calls(cls, account_sid: str) -> str` | Implements `APIEndpoints.twilio_calls`; linked source is authoritative. | [`src/core/constants.py:253`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L253) |
+| class | `class EnvVars` | Environment variable names | [`src/core/constants.py:283`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L283) |
+| class | `class WorkflowStatus` | Workflow execution status values | [`src/core/constants.py:361`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L361) |
+| class | `class ErrorCode` | Standardized error codes for module execution. | [`src/core/constants.py:376`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L376) |
+| class | `class ErrorMessages` | Centralized error messages | [`src/core/constants.py:447`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L447) |
+| method | `def ErrorMessages.format(cls, message: str, **kwargs) -> str` | Format error message with parameters | [`src/core/constants.py:459`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L459) |
+| class | `class Capability` | Module capability declarations. | [`src/core/constants.py:468`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L468) |
+| class | `class ProductionPolicy` | Capability enforcement policy for each environment. | [`src/core/constants.py:511`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L511) |
+| method | `def ProductionPolicy.get_denied_capabilities(cls, env: str) -> set` | Get set of denied capabilities for an environment. | [`src/core/constants.py:542`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L542) |
+| method | `def ProductionPolicy.is_capability_allowed(cls, capability: str, env: str) -> bool` | Check if a capability is allowed in an environment. | [`src/core/constants.py:562`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L562) |
+| method | `def ProductionPolicy.check_capabilities(cls, capabilities: list, env: str) -> tuple` | Check if all capabilities are allowed. | [`src/core/constants.py:581`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L581) |
 
 ## `src/core/engine/_interfaces_compat.py`
 
@@ -8400,14 +8400,17 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _google_search_setup_error()` | Implements `_google_search_setup_error`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L19) |
-| function | `def _parse_search_results(items)` | Implements `_parse_search_results`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L34) |
-| class | `class GoogleSearchAPIModule(BaseModule)` | Google Search API Module - Use official Custom Search API | [`src/core/modules/third_party/developer/http/search.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L86) |
-| method | `def GoogleSearchAPIModule.validate_params(self) -> None` | Implements `GoogleSearchAPIModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L93) |
-| method | `async def GoogleSearchAPIModule.execute(self) -> Any` | Implements `GoogleSearchAPIModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L99) |
-| class | `class SerpAPISearchModule(BaseModule)` | SerpAPI Search Module - Use third-party API (with free tier) | [`src/core/modules/third_party/developer/http/search.py:161`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L161) |
-| method | `def SerpAPISearchModule.validate_params(self) -> None` | Implements `SerpAPISearchModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L168) |
-| method | `async def SerpAPISearchModule.execute(self) -> Any` | Implements `SerpAPISearchModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L174) |
+| function | `def _google_search_setup_error()` | Implements `_google_search_setup_error`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:20`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L20) |
+| function | `def _parse_search_results(items)` | Implements `_parse_search_results`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L41) |
+| class | `class GoogleSearchAPIModule(BaseModule)` | Google Search API Module - Use official Custom Search API | [`src/core/modules/third_party/developer/http/search.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L93) |
+| method | `def GoogleSearchAPIModule.validate_params(self) -> None` | Implements `GoogleSearchAPIModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L100) |
+| method | `async def GoogleSearchAPIModule.execute(self) -> Any` | Implements `GoogleSearchAPIModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:106`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L106) |
+| class | `class SerpAPISearchModule(BaseModule)` | SerpAPI Search Module - Use third-party API (with free tier) | [`src/core/modules/third_party/developer/http/search.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L171) |
+| method | `def SerpAPISearchModule.validate_params(self) -> None` | Implements `SerpAPISearchModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L178) |
+| method | `async def SerpAPISearchModule.execute(self) -> Any` | Implements `SerpAPISearchModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L184) |
+| class | `class TavilySearchModule(BaseModule)` | Tavily Search Module - Use Tavily API for web search | [`src/core/modules/third_party/developer/http/search.py:277`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L277) |
+| method | `def TavilySearchModule.validate_params(self) -> None` | Implements `TavilySearchModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:284`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L284) |
+| method | `async def TavilySearchModule.execute(self) -> Any` | Implements `TavilySearchModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/search.py:290`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L290) |
 
 ## `src/core/modules/third_party/payment/stripe.py`
 

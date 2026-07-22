@@ -1,7 +1,7 @@
 """Regression tests for source-backed documentation generators."""
 
-import importlib.util
 import ast
+import importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,6 +52,16 @@ def test_http_reference_detects_signature_dependencies():
 
     run_row = next(line for line in reference.splitlines() if "| `/run` |" in line)
     assert "| internal key |" in run_row
+
+
+def test_configuration_reference_detects_envvar_constant_readers():
+    reference = _load_generator().configuration_reference()
+
+    assert "| `TAVILY_API_KEY` |" in reference
+    tavily_row = next(
+        line for line in reference.splitlines() if "| `TAVILY_API_KEY` |" in line
+    )
+    assert "src/core/modules/third_party/developer/http/search.py" in tavily_row
 
 
 def test_declarations_include_classes_nested_in_control_flow():

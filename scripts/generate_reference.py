@@ -467,6 +467,8 @@ def configuration_reference() -> str:
         re.compile(r"os\.environ\.get\([\"']([A-Z][A-Z0-9_]+)"),
         re.compile(r"os\.getenv\([\"']([A-Z][A-Z0-9_]+)"),
         re.compile(r"os\.environ\[[\"']([A-Z][A-Z0-9_]+)"),
+        re.compile(r"os\.(?:environ\.get|getenv)\(EnvVars\.([A-Z][A-Z0-9_]+)"),
+        re.compile(r"os\.environ\[EnvVars\.([A-Z][A-Z0-9_]+)"),
     )
     for path in source_files():
         lines = path.read_text(encoding="utf-8").splitlines()

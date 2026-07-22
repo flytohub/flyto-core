@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **451 modules** across **84 categories**.
+> Auto-generated from flyto-core module registry. **452 modules** across **84 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -21,7 +21,7 @@
 - [communication](#communication) (2)
 - [compare](#compare) (1)
 - [convert](#convert) (5)
-- [core](#core) (4)
+- [core](#core) (5)
 - [crypto](#crypto) (7)
 - [data](#data) (13)
 - [database](#database) (3)
@@ -313,7 +313,7 @@
 | `core.api.http_get` | Send HTTP GET request to any URL | `url` string *(required)*, `headers` object (default: `{}`), `params` object (default: `{}`), `timeout` number (default: `30`), `verify_ssl` boolean (default: `True`) | `status_code` (number), `headers` (object), `body` (string), `json` (object) |
 | `core.api.http_post` | Send HTTP POST request to any URL | `url` string *(required)*, `headers` object (default: `{}`), `body` string, `json` any, `timeout` number (default: `30`), `verify_ssl` boolean (default: `True`) | `status_code` (number), `headers` (object), `body` (string), `json` (object) |
 | `core.api.serpapi_search` | Use SerpAPI to search keywords (100 free searches/month) | `keyword` string *(required)*, `limit` number (default: `10`) | `status` (string), `data` (array), `count` (number) |
-| `core.api.tavily_search` | Use Tavily API to search the web (1000 free credits/month) | `keyword` string *(required)*, `limit` number (default: `10`) | `status` (string), `data` (array), `count` (number) |
+| `core.api.tavily_search` | Use Tavily API for AI-optimized web search | `keyword` string *(required)*, `limit` number (default: `10`) | `status` (string), `data` (array), `count` (number) |
 
 ## crypto
 

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **932 Python files**, **190,766 lines**, and **5,379 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **932 Python files**, **190,897 lines**, and **5,382 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -24,7 +24,7 @@ Inventory: **932 Python files**, **190,766 lines**, and **5,379 class/function/m
 | [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 200 | 6 | `__future__, fnmatch, json, pathlib, re, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
 | [`scripts/export_i18n_baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/export_i18n_baseline.py#L1) | 172 | 3 | `argparse, core, json, pathlib, src, sys, typing` | export_i18n_baseline.py - Export module metadata to i18n baseline format |
 | [`scripts/fix_all_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_all_connection_rules.py#L1) | 164 | 6 | `pathlib, re` | Fix ALL modules missing can_receive_from across all directories. |
-| [`scripts/fix_credential_keys.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L1) | 151 | 3 | `os, pathlib, re` | Fix C003 warnings by adding credential_keys to modules with requires_credentials=True. |
+| [`scripts/fix_credential_keys.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L1) | 152 | 3 | `os, pathlib, re` | Fix C003 warnings by adding credential_keys to modules with requires_credentials=True. |
 | [`scripts/fix_lint_warnings.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_lint_warnings.py#L1) | 179 | 6 | `os, pathlib, re, sys` | Fix lint warnings automatically. |
 | [`scripts/fix_missing_can_receive_from.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_missing_can_receive_from.py#L1) | 131 | 6 | `pathlib, re` | Fix modules missing can_receive_from. |
 | [`scripts/fix_output_descriptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_output_descriptions.py#L1) | 272 | 3 | `os, pathlib, re, sys` | Fix output_schema descriptions in modules. |
@@ -36,7 +36,7 @@ Inventory: **932 Python files**, **190,766 lines**, and **5,379 class/function/m
 | [`scripts/fix_schema_v3.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_schema_v3.py#L1) | 438 | 8 | `argparse, ast, core, os, pathlib, re, sys, typing` | Schema Fixer v3 - Safe per-field patching with AST rollback. |
 | [`scripts/fix_schema_v4.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_schema_v4.py#L1) | 324 | 9 | `ast, core, pathlib, re, sys, typing` | Schema Fixer v4 - Handles field(), schema_field(), and dict-style schemas. |
 | [`scripts/generate_catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L1) | 151 | 5 | `argparse, core, os, pathlib, sys` | Generate docs/TOOL_CATALOG.md from the module registry. |
-| [`scripts/generate_reference.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L1) | 608 | 22 | `__future__, argparse, ast, collections, json, pathlib, re, sys, typing, yaml` | Generate exhaustive Flyto2 Core references from implementation sources. |
+| [`scripts/generate_reference.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L1) | 610 | 22 | `__future__, argparse, ast, collections, json, pathlib, re, sys, typing, yaml` | Generate exhaustive Flyto2 Core references from implementation sources. |
 | [`scripts/lint_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/lint_modules.py#L1) | 865 | 17 | `argparse, core, datetime, hashlib, importlib, json, logging, os, pathlib, pkgutil, re, sys` | lint_modules.py - Unified Module Linter |
 | [`scripts/mcp_drive_demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_demo.py#L1) | 182 | 4 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core's MCP server over stdio to capture a screenshot. |
 | [`scripts/mcp_drive_login.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_login.py#L1) | 202 | 6 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core MCP to log in and screenshot key pages. |
@@ -99,7 +99,7 @@ Inventory: **932 Python files**, **190,766 lines**, and **5,379 class/function/m
 | [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 279 | 5 | `modules, typing` | Catalog Module Detail API |
 | [`src/core/catalog/outline.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/outline.py#L1) | 196 | 2 | `modules, typing` | Catalog Outline API |
 | [`src/core/catalog_facts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog_facts.py#L1) | 8 | 0 | `none` | Public catalog facts shared by user-facing help text. |
-| [`src/core/constants.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L1) | 597 | 22 | `typing, urllib` | Core Constants - Centralized configuration values |
+| [`src/core/constants.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L1) | 602 | 22 | `typing, urllib` | Core Constants - Centralized configuration values |
 | [`src/core/engine/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/__init__.py#L1) | 261 | 0 | `breakpoint, evidence, exceptions, flow_control, hooks, lineage, replay, step_executor, trace, variable_resolver, workflow` | Workflow Engine Package |
 | [`src/core/engine/_interfaces_compat.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/_interfaces_compat.py#L1) | 21 | 2 | `typing` | Compatibility layer for using ChatModel in engine components. |
 | [`src/core/engine/breakpoints/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/breakpoints/__init__.py#L1) | 64 | 1 | `manager, models, store, store_http, store_redis` | Breakpoints Module |
@@ -876,9 +876,9 @@ Inventory: **932 Python files**, **190,766 lines**, and **5,379 class/function/m
 | [`src/core/modules/third_party/database/redis.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L1) | 253 | 6 | `base, os, redis, registry, schema, typing` | Redis Caching Modules |
 | [`src/core/modules/third_party/developer/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/__init__.py#L1) | 13 | 0 | `github, http` | Developer Tool Integrations GitHub, HTTP REST APIs |
 | [`src/core/modules/third_party/developer/github.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/github.py#L1) | 815 | 18 | `aiohttp, base, constants, logging, os, registry, typing` | GitHub API Integration Modules Work with GitHub repositories, issues, pull requests, etc. |
-| [`src/core/modules/third_party/developer/http/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/__init__.py#L1) | 17 | 0 | `requests, search` | HTTP and API Modules Package |
+| [`src/core/modules/third_party/developer/http/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/__init__.py#L1) | 18 | 0 | `requests, search` | HTTP and API Modules Package |
 | [`src/core/modules/third_party/developer/http/requests.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L1) | 220 | 6 | `aiohttp, base, registry, schema, typing, utils` | HTTP Request Modules |
-| [`src/core/modules/third_party/developer/http/search.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L1) | 219 | 8 | `aiohttp, base, os, registry, schema, typing` | Search API Modules |
+| [`src/core/modules/third_party/developer/http/search.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L1) | 341 | 11 | `aiohttp, base, constants, os, registry, schema, typing` | Search API Modules |
 | [`src/core/modules/third_party/payment/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/payment/__init__.py#L1) | 12 | 0 | `stripe` | Payment Service Integrations Stripe |
 | [`src/core/modules/third_party/payment/stripe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/payment/stripe.py#L1) | 450 | 10 | `aiohttp, base, constants, logging, os, registry, typing` | Stripe Payment Integration Modules |
 | [`src/core/modules/third_party/productivity/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/productivity/__init__.py#L1) | 13 | 0 | `airtable, tools` | Productivity Tool Integrations Notion, Google Sheets, Airtable |

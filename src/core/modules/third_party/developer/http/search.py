@@ -11,6 +11,7 @@ from typing import Any
 
 import aiohttp
 
+from .....constants import APIEndpoints, EnvVars
 from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
@@ -19,14 +20,20 @@ from ....schema import compose, presets
 def _google_search_setup_error():
     return {
         "status": "error",
-        "message": "Please set GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID environment variables",
+        "message": (
+            f"Please set {EnvVars.GOOGLE_API_KEY} and "
+            f"{EnvVars.GOOGLE_SEARCH_ENGINE_ID} environment variables"
+        ),
         "setup_guide": {
             "step1": "Go to https://console.cloud.google.com/apis/credentials",
             "step2": "Create API Key",
             "step3": "Enable Custom Search API",
             "step4": "Go to https://programmablesearchengine.google.com/",
             "step5": "Create search engine and get Search Engine ID",
-            "step6": "Set environment variable: GOOGLE_API_KEY and GOOGLE_SEARCH_ENGINE_ID"
+            "step6": (
+                f"Set environment variables: {EnvVars.GOOGLE_API_KEY} and "
+                f"{EnvVars.GOOGLE_SEARCH_ENGINE_ID}"
+            ),
         }
     }
 
@@ -56,7 +63,7 @@ def _parse_search_results(items):
     max_retries=3,
     concurrent_safe=True,
     requires_credentials=True,
-    credential_keys=['GOOGLE_API_KEY', 'GOOGLE_CSE_ID'],
+    credential_keys=['GOOGLE_API_KEY', 'GOOGLE_SEARCH_ENGINE_ID'],
     handles_sensitive_data=False,
     required_permissions=['network.access'],
     params_schema=compose(
@@ -97,22 +104,25 @@ class GoogleSearchAPIModule(BaseModule):
         self.limit = self.params.get('limit', 10)
 
     async def execute(self) -> Any:
-        api_key = os.getenv('GOOGLE_API_KEY')
-        search_engine_id = os.getenv('GOOGLE_SEARCH_ENGINE_ID')
+        api_key = os.getenv(EnvVars.GOOGLE_API_KEY)
+        search_engine_id = os.getenv(EnvVars.GOOGLE_SEARCH_ENGINE_ID)
 
         if not api_key or not search_engine_id:
             return _google_search_setup_error()
 
         params = {'key': api_key, 'cx': search_engine_id, 'q': self.keyword, 'num': min(self.limit, 10)}
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://www.googleapis.com/customsearch/v1", params=params) as response:
-                if response.status != 200:
-                    error_data = await response.json()
-                    return {"status": "error", "message": f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"}
-                data = await response.json()
-                results = _parse_search_results(data.get('items', []))
-                return {"status": "success", "data": results, "count": len(results),
-                        "total_results": data.get('searchInformation', {}).get('totalResults', 0)}
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with (
+            aiohttp.ClientSession(timeout=timeout) as session,
+            session.get(APIEndpoints.GOOGLE_SEARCH_URL, params=params) as response,
+        ):
+            if response.status != 200:
+                error_data = await response.json()
+                return {"status": "error", "message": f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"}
+            data = await response.json()
+            results = _parse_search_results(data.get('items', []))
+            return {"status": "success", "data": results, "count": len(results),
+                    "total_results": data.get('searchInformation', {}).get('totalResults', 0)}
 
 
 @register_module(
@@ -172,21 +182,20 @@ class SerpAPISearchModule(BaseModule):
         self.limit = self.params.get('limit', 10)
 
     async def execute(self) -> Any:
-        api_key = os.getenv('SERPAPI_KEY')
+        api_key = os.getenv(EnvVars.SERPAPI_KEY)
 
         if not api_key:
             return {
                 "status": "error",
-                "message": "Please set SERPAPI_KEY environment variable",
+                "message": f"Please set {EnvVars.SERPAPI_KEY} environment variable",
                 "setup_guide": {
                     "step1": "Go to https://serpapi.com/",
                     "step2": "Register account (Free 100 searches per month)",
                     "step3": "Get API Key",
-                    "step4": "Set environment variable: SERPAPI_KEY"
+                    "step4": f"Set environment variable: {EnvVars.SERPAPI_KEY}"
                 }
             }
 
-        url = "https://serpapi.com/search"
         params = {
             'api_key': api_key,
             'q': self.keyword,
@@ -194,29 +203,32 @@ class SerpAPISearchModule(BaseModule):
             'engine': 'google'
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                if response.status != 200:
-                    return {
-                        "status": "error",
-                        "message": f"API error: HTTP {response.status}"
-                    }
-
-                data = await response.json()
-
-                results = []
-                for item in data.get('organic_results', []):
-                    results.append({
-                        'title': item.get('title'),
-                        'url': item.get('link'),
-                        'description': item.get('snippet')
-                    })
-
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with (
+            aiohttp.ClientSession(timeout=timeout) as session,
+            session.get(APIEndpoints.SERPAPI_BASE_URL, params=params) as response,
+        ):
+            if response.status != 200:
                 return {
-                    "status": "success",
-                    "data": results,
-                    "count": len(results)
+                    "status": "error",
+                    "message": f"API error: HTTP {response.status}"
                 }
+
+            data = await response.json()
+
+            results = []
+            for item in data.get('organic_results', []):
+                results.append({
+                    'title': item.get('title'),
+                    'url': item.get('link'),
+                    'description': item.get('snippet')
+                })
+
+            return {
+                "status": "success",
+                "data": results,
+                "count": len(results)
+            }
 
 
 @register_module(
@@ -227,7 +239,7 @@ class SerpAPISearchModule(BaseModule):
     tags=['api', 'search', 'tavily', 'third-party', 'ssrf_protected'],
     label='Web Search (Tavily)',
     label_key='modules.api.tavily_search.label',
-    description='Use Tavily API to search the web (1000 free credits/month)',
+    description='Use Tavily API for AI-optimized web search',
     description_key='modules.api.tavily_search.description',
     icon='Search',
     color='#5B4FDB',
@@ -266,7 +278,7 @@ class TavilySearchModule(BaseModule):
     """Tavily Search Module - Use Tavily API for web search"""
 
     module_name = "Web Search (Tavily)"
-    module_description = "Use Tavily API to search the web (1000 free credits/month)"
+    module_description = "Use Tavily API for AI-optimized web search"
     required_permission = "api.search"
 
     def validate_params(self) -> None:
@@ -276,48 +288,54 @@ class TavilySearchModule(BaseModule):
         self.limit = self.params.get('limit', 10)
 
     async def execute(self) -> Any:
-        api_key = os.getenv('TAVILY_API_KEY')
+        api_key = os.getenv(EnvVars.TAVILY_API_KEY)
 
         if not api_key:
             return {
                 "status": "error",
-                "message": "Please set TAVILY_API_KEY environment variable",
+                "message": f"Please set {EnvVars.TAVILY_API_KEY} environment variable",
                 "setup_guide": {
                     "step1": "Go to https://app.tavily.com/",
-                    "step2": "Register account (1000 free API credits per month)",
+                    "step2": "Create an account",
                     "step3": "Get API Key",
-                    "step4": "Set environment variable: TAVILY_API_KEY"
+                    "step4": f"Set environment variable: {EnvVars.TAVILY_API_KEY}"
                 }
             }
 
-        url = "https://api.tavily.com/search"
         payload = {
-            'api_key': api_key,
             'query': self.keyword,
-            'max_results': self.limit,
+            'max_results': min(max(self.limit, 1), APIEndpoints.TAVILY_MAX_RESULTS),
             'search_depth': 'basic',
         }
+        headers = {'Authorization': f'Bearer {api_key}'}
+        timeout = aiohttp.ClientTimeout(total=30)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=payload) as response:
-                if response.status != 200:
-                    return {
-                        "status": "error",
-                        "message": f"API error: HTTP {response.status}"
-                    }
-
-                data = await response.json()
-
-                results = []
-                for item in data.get('results', []):
-                    results.append({
-                        'title': item.get('title'),
-                        'url': item.get('url'),
-                        'description': item.get('content')
-                    })
-
+        async with (
+            aiohttp.ClientSession(timeout=timeout) as session,
+            session.post(
+                APIEndpoints.TAVILY_BASE_URL,
+                headers=headers,
+                json=payload,
+            ) as response,
+        ):
+            if response.status != 200:
                 return {
-                    "status": "success",
-                    "data": results,
-                    "count": len(results)
+                    "status": "error",
+                    "message": f"API error: HTTP {response.status}"
                 }
+
+            data = await response.json()
+
+            results = []
+            for item in data.get('results', []):
+                results.append({
+                    'title': item.get('title'),
+                    'url': item.get('url'),
+                    'description': item.get('content')
+                })
+
+            return {
+                "status": "success",
+                "data": results,
+                "count": len(results)
+            }

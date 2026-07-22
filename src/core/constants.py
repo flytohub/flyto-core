@@ -211,6 +211,7 @@ class APIEndpoints:
 
     # Tavily
     TAVILY_BASE_URL: str = "https://api.tavily.com/search"
+    TAVILY_MAX_RESULTS: int = 20
 
     # Airtable
     AIRTABLE_BASE_URL: str = "https://api.airtable.com/v0"

@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **466 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **467 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -144,10 +144,11 @@ The AST contains **466 explicit, literal `@register_module` declarations**. This
 | `convert.to_number` | `1.0.0` | `convert` | `convert_to_number` | no | `&#91;&#93;` | [`src/core/modules/atomic/convert/to_number.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/convert/to_number.py#L91) |
 | `convert.to_object` | `1.0.0` | `convert` | `convert_to_object` | no | `&#91;&#93;` | [`src/core/modules/atomic/convert/to_object.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/convert/to_object.py#L83) |
 | `convert.to_string` | `1.0.0` | `convert` | `convert_to_string` | no | `&#91;&#93;` | [`src/core/modules/atomic/convert/to_string.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/convert/to_string.py#L77) |
-| `core.api.google_search` | `1.0.0` | `api` | `GoogleSearchAPIModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/http/search.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L86) |
+| `core.api.google_search` | `1.0.0` | `api` | `GoogleSearchAPIModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/http/search.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L93) |
 | `core.api.http_get` | `1.0.0` | `api` | `HTTPGetModule` | no | `&#91;&#93;` | [`src/core/modules/third_party/developer/http/requests.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L64) |
 | `core.api.http_post` | `1.0.0` | `api` | `HTTPPostModule` | no | `&#91;&#93;` | [`src/core/modules/third_party/developer/http/requests.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L162) |
-| `core.api.serpapi_search` | `1.0.0` | `api` | `SerpAPISearchModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/http/search.py:161`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L161) |
+| `core.api.serpapi_search` | `1.0.0` | `api` | `SerpAPISearchModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/http/search.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L171) |
+| `core.api.tavily_search` | `1.0.0` | `api` | `TavilySearchModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/http/search.py:277`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/search.py#L277) |
 | `crypto.decrypt` | `1.0.0` | `crypto` | `crypto_decrypt` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/decrypt.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/decrypt.py#L124) |
 | `crypto.encrypt` | `1.0.0` | `crypto` | `crypto_encrypt` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/encrypt.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/encrypt.py#L130) |
 | `crypto.hmac` | `1.0.0` | `crypto` | `crypto_hmac` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/hmac.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/hmac.py#L112) |
