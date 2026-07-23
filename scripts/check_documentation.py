@@ -6,6 +6,7 @@ from __future__ import annotations
 import fnmatch
 import json
 import re
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -117,12 +118,88 @@ def local_target(source: Path, raw_target: str) -> Optional[Path]:
     return (source.parent / path).resolve() if path else None
 
 
+def check_current_inventory() -> list[str]:
+    """Require current prose to match generated catalog and source references."""
+    facts = runpy.run_path(str(ROOT / "src" / "core" / "catalog_facts.py"))
+    modules = facts["CORE_MODULE_COUNT"]
+    categories = facts["CORE_CATALOG_CATEGORY_COUNT"]
+    recipes = facts["BUILT_IN_RECIPE_COUNT"]
+
+    registered = (ROOT / "docs" / "reference" / "registered-modules.md").read_text(
+        encoding="utf-8"
+    )
+    registered_match = re.search(r"\*\*(\d+) explicit, literal", registered)
+    python_reference = (ROOT / "docs" / "reference" / "python-api.md").read_text(
+        encoding="utf-8"
+    )
+    python_match = re.search(
+        r"\*\*(\d[\d,]*) declarations across (\d[\d,]*) files\*\*",
+        python_reference,
+    )
+    if not registered_match or not python_match:
+        return ["generated source references do not expose inventory facts"]
+    registrations = int(registered_match.group(1))
+    declarations = int(python_match.group(1).replace(",", ""))
+    declaration_files = int(python_match.group(2).replace(",", ""))
+
+    expected = {
+        "README.md": [
+            f"{modules} registry-backed modules",
+            f"{categories} catalog categories",
+            f"{recipes} built-in recipes",
+        ],
+        "ARCHITECTURE.md": [
+            f"{modules}-module",
+            f"{categories}-category",
+            f"{declarations:,} declarations",
+            f"{registrations} literal module",
+        ],
+        "STATE.md": [
+            f"{modules} modules across {categories} categories",
+            f"{recipes} recipes",
+            f"{declarations:,}",
+            f"{registrations} literal module",
+        ],
+        "docs/README.md": [
+            f"{modules} active runtime modules",
+            f"{recipes} packaged recipes",
+            f"{declarations:,} declarations",
+            f"{registrations} literal module",
+        ],
+        "docs/MIGRATION_STATUS.md": [
+            f"{modules} modules, {categories} categories",
+            f"| Literal module registrations | {registrations} |",
+            f"| Packaged recipes | {recipes} |",
+            f"{declarations:,} across {declaration_files} files",
+        ],
+        "docs/WHITEPAPER.md": [
+            f"{modules} modules across {categories} categories",
+            f"{recipes} packaged recipes",
+            f"{declarations:,} class/function/method declarations",
+            f"{registrations} literal registrations",
+        ],
+        "docs/FEATURES.md": [
+            f"{modules} modules are active",
+            f"{categories} categories",
+            f"{registrations} literal decorator registrations",
+            f"{declarations:,} maintained Python declarations",
+        ],
+    }
+    errors: list[str] = []
+    for relative, tokens in expected.items():
+        content = (ROOT / relative).read_text(encoding="utf-8")
+        for token in tokens:
+            if token not in content:
+                errors.append(f"{relative}: missing current inventory token {token!r}")
+    return errors
+
+
 def main() -> int:
     command(sys.executable, "scripts/generate_reference.py", "--check")
     command(sys.executable, "scripts/generate_catalog.py", "--check")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     files = repository_files()
-    missing = []
+    missing = check_current_inventory()
     for raw_path in documentation_paths(manifest):
         path = raw_path.split("#", 1)[0]
         if path and not (ROOT / path).exists():

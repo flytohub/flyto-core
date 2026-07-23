@@ -5,10 +5,10 @@
 | Surface | Measured state |
 |---|---:|
 | Runtime catalog | 452 modules, 84 categories |
-| Literal module registrations | 466 |
+| Literal module registrations | 467 |
 | Packaged recipes | 41 |
 | Maintained Python source | 932 files, 190,753 lines |
-| Python declarations | 5,351 across 786 files |
+| Python declarations | 5,383 across 786 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 22 |
 | Environment-variable names | 93 |

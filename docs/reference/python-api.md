@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,382 declarations across 786 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,383 declarations across 786 files**.
 
 ## `demo.py`
 
@@ -120,12 +120,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def command(*args: str) -> None` | Implements `command`; linked source is authoritative. | [`scripts/check_documentation.py:59`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L59) |
-| function | `def repository_files() -> list&#91;str&#93;` | Implements `repository_files`; linked source is authoritative. | [`scripts/check_documentation.py:63`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L63) |
-| function | `def documentation_paths(manifest: dict) -> list&#91;str&#93;` | Implements `documentation_paths`; linked source is authoritative. | [`scripts/check_documentation.py:74`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L74) |
-| function | `def owned_source_files(files: list&#91;str&#93;) -> list&#91;str&#93;` | Implements `owned_source_files`; linked source is authoritative. | [`scripts/check_documentation.py:89`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L89) |
-| function | `def local_target(source: Path, raw_target: str) -> Optional&#91;Path&#93;` | Implements `local_target`; linked source is authoritative. | [`scripts/check_documentation.py:112`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L112) |
-| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_documentation.py:120`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L120) |
+| function | `def command(*args: str) -> None` | Implements `command`; linked source is authoritative. | [`scripts/check_documentation.py:60`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L60) |
+| function | `def repository_files() -> list&#91;str&#93;` | Implements `repository_files`; linked source is authoritative. | [`scripts/check_documentation.py:64`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L64) |
+| function | `def documentation_paths(manifest: dict) -> list&#91;str&#93;` | Implements `documentation_paths`; linked source is authoritative. | [`scripts/check_documentation.py:75`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L75) |
+| function | `def owned_source_files(files: list&#91;str&#93;) -> list&#91;str&#93;` | Implements `owned_source_files`; linked source is authoritative. | [`scripts/check_documentation.py:90`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L90) |
+| function | `def local_target(source: Path, raw_target: str) -> Optional&#91;Path&#93;` | Implements `local_target`; linked source is authoritative. | [`scripts/check_documentation.py:113`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L113) |
+| function | `def check_current_inventory() -> list&#91;str&#93;` | Require current prose to match generated catalog and source references. | [`scripts/check_documentation.py:121`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L121) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_documentation.py:197`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L197) |
 
 ## `scripts/export_i18n_baseline.py`
 

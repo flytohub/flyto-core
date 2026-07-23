@@ -10,7 +10,7 @@ local HTTP Execution API, packaged recipes, evidence capture, and replay.
 
 The current generated runtime catalog contains 452 modules across 84 categories
 and 41 packaged recipes. Source traceability covers 932 maintained Python files,
-190,753 lines, and 5,351 class/function/method declarations. These measurements
+190,753 lines, and 5,383 class/function/method declarations. These measurements
 come from checked generators and are not hand-maintained marketing totals.
 
 ## Problem

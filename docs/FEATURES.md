@@ -34,7 +34,7 @@ meanings:
 
 - 452 modules are active in the checked catalog generation environment.
 - 84 categories group that active catalog.
-- 466 literal decorator registrations exist in maintained source.
+- 467 literal decorator registrations exist in maintained source.
 - Additional modules can appear from installed plugins or optional dependencies.
 
 Use `flyto modules --format json` to inspect the active runtime where the
@@ -58,8 +58,8 @@ evidence but does not decide the gate.
 ## Reference Closure
 
 - [All 452 active module schemas](TOOL_CATALOG.md)
-- [All 466 literal module implementations](reference/registered-modules.md)
-- [All 5,351 maintained Python declarations](reference/python-api.md)
+- [All 467 literal module implementations](reference/registered-modules.md)
+- [All 5,383 maintained Python declarations](reference/python-api.md)
 - [All CLI parsers](reference/cli.md)
 - [All HTTP decorators](reference/http-api.md)
 - [All environment readers and packaged workflow assets](reference/configuration.md)

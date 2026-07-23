@@ -58,9 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Synced MseeP/MCP registry-facing metadata: `server.json` now matches
   `pyproject.toml` version 2.26.9, and public descriptions use the verified
-  Flyto2 Core 451-module positioning.
+  the then-current Flyto2 Core 451-module positioning.
 - Prepared a metadata-only PyPI patch release so live registry backlinks,
-  project URLs, and the 451-module Flyto2 package description can replace the
+  project URLs, and the then-current 451-module package description can replace the
   stale 412-module listing.
 
 ### Added
@@ -112,7 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to evaluate DNS/TLS/route/browser/SEO-GEO evidence without LLM judgment.
 
 ### Changed
-- Documentation and package metadata now reflect the live registry inventory:
+- Documentation and package metadata reflected that release's registry inventory:
   451 modules across 84 catalog categories, 41 built-in recipes, and Flyto2
   website/documentation URLs.
 - `testing.e2e.run_steps` and `testing.scenario.run` now execute real module

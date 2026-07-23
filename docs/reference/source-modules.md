@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **932 Python files**, **190,896 lines**, and **5,382 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -21,7 +21,7 @@ Inventory: **932 Python files**, **190,896 lines**, and **5,382 class/function/m
 | [`scripts/analyze_module_returns.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/analyze_module_returns.py#L1) | 410 | 9 | `argparse, ast, collections, dataclasses, os, pathlib, sys, typing` | Module Return Pattern Analyzer |
 | [`scripts/batch_update_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/batch_update_connection_rules.py#L1) | 464 | 8 | `argparse, os, pathlib, re, typing` | Batch Update Connection Rules for flyto-core modules |
 | [`scripts/check_brand_identity.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_brand_identity.py#L1) | 91 | 2 | `__future__, pathlib, re, subprocess` | Enforce Flyto2 public naming and email-domain policy. |
-| [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 200 | 6 | `__future__, fnmatch, json, pathlib, re, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
+| [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 277 | 7 | `__future__, fnmatch, json, pathlib, re, runpy, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
 | [`scripts/export_i18n_baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/export_i18n_baseline.py#L1) | 172 | 3 | `argparse, core, json, pathlib, src, sys, typing` | export_i18n_baseline.py - Export module metadata to i18n baseline format |
 | [`scripts/fix_all_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_all_connection_rules.py#L1) | 164 | 6 | `pathlib, re` | Fix ALL modules missing can_receive_from across all directories. |
 | [`scripts/fix_credential_keys.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L1) | 152 | 3 | `os, pathlib, re` | Fix C003 warnings by adding credential_keys to modules with requires_credentials=True. |
