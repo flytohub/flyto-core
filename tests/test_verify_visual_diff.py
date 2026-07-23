@@ -17,6 +17,8 @@ import sys
 import pytest
 from pathlib import Path
 
+pytestmark = pytest.mark.browser
+
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 

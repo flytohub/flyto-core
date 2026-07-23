@@ -16,6 +16,8 @@ import pytest
 import sys
 from pathlib import Path
 
+pytestmark = pytest.mark.browser
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 # Import all modules to trigger registration

@@ -5,6 +5,8 @@ import sys
 import pytest
 from pathlib import Path
 
+pytestmark = pytest.mark.browser
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 os.environ.setdefault("FLYTO_ENV", "test")
 

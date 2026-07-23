@@ -28,6 +28,8 @@ import pytest
 
 from tests.conftest import allow_local_http_port_for_test
 
+pytestmark = pytest.mark.e2e
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO_ROOT / "flyto-core" / "src"
 AI_ROOT = REPO_ROOT / "flyto-ai"

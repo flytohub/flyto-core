@@ -25,6 +25,8 @@ from pathlib import Path
 import pytest
 import yaml as pyyaml
 
+pytestmark = pytest.mark.e2e
+
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_SRC = REPO_ROOT / "flyto-core" / "src"
 AI_ROOT = REPO_ROOT / "flyto-ai"
