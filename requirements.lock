@@ -8,7 +8,7 @@ aiofiles==24.1.0
     # via flyto-core (pyproject.toml)
 aiohappyeyeballs==2.7.1
     # via aiohttp
-aiohttp==3.14.2
+aiohttp==3.14.3
     # via flyto-core (pyproject.toml)
 aiosignal==1.4.0
     # via aiohttp
