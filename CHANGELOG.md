@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.10] - 2026-07-23
+
 ### Added
 - Added a source-backed documentation system covering all maintained Python
   files/declarations, literal module registrations, CLI parsers, HTTP routes,
@@ -26,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kernel while preserving adapter catalog and integration suites.
 
 ### Changed
+- Published the generated 452-module package description, current Flyto2 links,
+  and Apache 2.0 metadata to replace the 451-module PyPI listing from 2.26.9.
 - Reconciled public package, registry, documentation, and demo metadata to the
   generated 452-module catalog after adding `core.api.tavily_search`.
 - Made the Python reference generator discover declarations nested in control
@@ -633,6 +637,8 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.26.10 | 2026-07-23 | 452-module catalog, Tavily search, source-backed docs, deterministic verification |
+| 2.26.9 | 2026-07-19 | Registry metadata and PyPI backlink refresh |
 | 1.5.0 | 2025-12-04 | Level 4 Advanced Patterns (Enterprise) |
 | 1.4.0 | 2025-12-04 | Level 3 Composite Modules + Level 1 Templates |
 | 1.3.0 | 2025-12-04 | Third-party module refactoring |
@@ -642,7 +648,9 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 ---
 
-[Unreleased]: https://github.com/flytohub/flyto-core/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.10...HEAD
+[2.26.10]: https://github.com/flytohub/flyto-core/compare/v2.26.9...v2.26.10
+[2.26.9]: https://github.com/flytohub/flyto-core/compare/v2.26.8...v2.26.9
 [1.5.0]: https://github.com/flytohub/flyto-core/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/flytohub/flyto-core/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/flytohub/flyto-core/compare/v1.2.0...v1.3.0
