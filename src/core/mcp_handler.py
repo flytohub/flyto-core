@@ -233,6 +233,7 @@ async def execute_module(
     params: Dict[str, Any],
     context: Dict[str, Any] = None,
     browser_sessions: Dict[str, Any] = None,
+    debugger_sessions: Dict[str, Any] = None,
 ) -> dict:
     """
     Execute a single module.
@@ -242,9 +243,12 @@ async def execute_module(
         params: Module parameters
         context: Execution context (optional)
         browser_sessions: Browser session store (injected by transport)
+        debugger_sessions: Reverse-debugger (ReverseSession) store (injected by transport)
     """
     if browser_sessions is None:
         browser_sessions = {}
+    if debugger_sessions is None:
+        debugger_sessions = {}
 
     # Capability gate — fail closed before any module is resolved/instantiated.
     if not _module_is_allowed(module_id):
@@ -288,7 +292,11 @@ async def execute_module(
         ctx = context or {}
 
         is_browser = module_id.startswith("browser.")
-        if is_browser and module_id != "browser.launch":
+        is_reverse = module_id.startswith("reverse.")
+
+        # reverse.attach needs a live browser session, exactly like any other
+        # browser.* call — it CDP-attaches to ctx['browser'].real_page.
+        if (is_browser and module_id != "browser.launch") or module_id == "reverse.attach":
             session_id = ctx.get("browser_session")
             if session_id and session_id in browser_sessions:
                 ctx["browser"] = browser_sessions[session_id]
@@ -315,6 +323,35 @@ async def execute_module(
                     "error": "No active browser session. Call browser.launch first.",
                 }
 
+        # Every other reverse.* call rehydrates the ReverseSession minted by
+        # reverse.attach (mirrors the browser_session rehydration above).
+        if is_reverse and module_id != "reverse.attach":
+            debugger_session_id = ctx.get("debugger_session")
+            if debugger_session_id and debugger_session_id in debugger_sessions:
+                ctx["reverse_session"] = debugger_sessions[debugger_session_id]
+            elif not debugger_session_id and len(debugger_sessions) == 1:
+                only_id = next(iter(debugger_sessions))
+                ctx["reverse_session"] = debugger_sessions[only_id]
+                debugger_session_id = only_id
+            elif not debugger_session_id and len(debugger_sessions) > 1:
+                return {
+                    "ok": False,
+                    "error": (
+                        f"Multiple debugger sessions active ({len(debugger_sessions)}). "
+                        f"Pass debugger_session in context. IDs: {list(debugger_sessions.keys())}"
+                    ),
+                }
+            elif debugger_session_id and debugger_session_id not in debugger_sessions:
+                return {
+                    "ok": False,
+                    "error": f"Debugger session not found: {debugger_session_id}. Active: {list(debugger_sessions.keys())}",
+                }
+            else:
+                return {
+                    "ok": False,
+                    "error": "No active debugger session. Call reverse.attach first.",
+                }
+
         module_instance = module_class(params, ctx)
         result = await module_instance.run()
 
@@ -331,6 +368,20 @@ async def execute_module(
                 del browser_sessions[session_id]
             elif len(browser_sessions) == 1:
                 browser_sessions.clear()
+
+        if module_id == "reverse.attach":
+            reverse_session = ctx.get("reverse_session")
+            if reverse_session:
+                debugger_session_id = str(uuid.uuid4())[:8]
+                debugger_sessions[debugger_session_id] = reverse_session
+                result["debugger_session"] = debugger_session_id
+
+        if module_id == "reverse.detach":
+            debugger_session_id = ctx.get("debugger_session")
+            if debugger_session_id and debugger_session_id in debugger_sessions:
+                del debugger_sessions[debugger_session_id]
+            elif len(debugger_sessions) == 1:
+                debugger_sessions.clear()
 
         return result
 
@@ -930,11 +981,14 @@ TOOLS = [
 async def handle_jsonrpc_request(
     request: dict,
     browser_sessions: Dict[str, Any],
+    debugger_sessions: Optional[Dict[str, Any]] = None,
 ) -> Optional[dict]:
     """
     Handle a single JSON-RPC request. Returns a JSON-RPC response dict,
     or None for notifications (no id).
     """
+    if debugger_sessions is None:
+        debugger_sessions = {}
     method = request.get("method", "")
     req_id = request.get("id")
     params = request.get("params", {})
@@ -975,6 +1029,7 @@ async def handle_jsonrpc_request(
                     params=arguments.get("params", {}),
                     context=arguments.get("context"),
                     browser_sessions=browser_sessions,
+                    debugger_sessions=debugger_sessions,
                 )
             elif tool_name == "validate_params":
                 result = validate_params(

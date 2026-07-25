@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,383 declarations across 786 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,433 declarations across 796 files**.
 
 ## `demo.py`
 
@@ -702,12 +702,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | class | `class RunWorkflowRequest(BaseModel)` | Defines the RunWorkflowRequest runtime contract. | [`src/core/api/models.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L22) |
 | class | `class ReplayRequest(BaseModel)` | Defines the ReplayRequest runtime contract. | [`src/core/api/models.py:29`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L29) |
 | class | `class ExecuteModuleResponse(BaseModel)` | Defines the ExecuteModuleResponse runtime contract. | [`src/core/api/models.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L38) |
-| class | `class WorkflowRunResponse(BaseModel)` | Defines the WorkflowRunResponse runtime contract. | [`src/core/api/models.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L46) |
-| class | `class ReplayResponse(BaseModel)` | Defines the ReplayResponse runtime contract. | [`src/core/api/models.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L57) |
-| class | `class StepEvidenceResponse(BaseModel)` | Defines the StepEvidenceResponse runtime contract. | [`src/core/api/models.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L67) |
-| class | `class ModuleInfo(BaseModel)` | Defines the ModuleInfo runtime contract. | [`src/core/api/models.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L78) |
-| class | `class CategoryInfo(BaseModel)` | Defines the CategoryInfo runtime contract. | [`src/core/api/models.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L84) |
-| class | `class ServerInfo(BaseModel)` | Defines the ServerInfo runtime contract. | [`src/core/api/models.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L92) |
+| class | `class WorkflowRunResponse(BaseModel)` | Defines the WorkflowRunResponse runtime contract. | [`src/core/api/models.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L47) |
+| class | `class ReplayResponse(BaseModel)` | Defines the ReplayResponse runtime contract. | [`src/core/api/models.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L58) |
+| class | `class StepEvidenceResponse(BaseModel)` | Defines the StepEvidenceResponse runtime contract. | [`src/core/api/models.py:68`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L68) |
+| class | `class ModuleInfo(BaseModel)` | Defines the ModuleInfo runtime contract. | [`src/core/api/models.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L79) |
+| class | `class CategoryInfo(BaseModel)` | Defines the CategoryInfo runtime contract. | [`src/core/api/models.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L85) |
+| class | `class ServerInfo(BaseModel)` | Defines the ServerInfo runtime contract. | [`src/core/api/models.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L93) |
 
 ## `src/core/api/plugins/routes.py`
 
@@ -759,8 +759,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _is_notification(item: dict) -> bool` | A JSON-RPC notification has no 'id' field. | [`src/core/api/routes/mcp.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L64) |
 | function | `def _is_initialize(item: dict) -> bool` | Implements `_is_initialize`; linked source is authoritative. | [`src/core/api/routes/mcp.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L69) |
 | function | `async def mcp_post(request: Request)` | Implements `mcp_post`; linked source is authoritative. | [`src/core/api/routes/mcp.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L74) |
-| function | `async def mcp_get()` | Implements `mcp_get`; linked source is authoritative. | [`src/core/api/routes/mcp.py:138`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L138) |
-| function | `async def mcp_delete(request: Request)` | Implements `mcp_delete`; linked source is authoritative. | [`src/core/api/routes/mcp.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L146) |
+| function | `async def mcp_get()` | Implements `mcp_get`; linked source is authoritative. | [`src/core/api/routes/mcp.py:139`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L139) |
+| function | `async def mcp_delete(request: Request)` | Implements `mcp_delete`; linked source is authoritative. | [`src/core/api/routes/mcp.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L147) |
 
 ## `src/core/api/routes/modules.py`
 
@@ -818,7 +818,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 |---|---|---|---|
 | class | `class ServerState` | Singleton-ish state shared across all API requests. | [`src/core/api/state.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L22) |
 | method | `def ServerState.__init__(self, evidence_path: Path=DEFAULT_EVIDENCE_PATH)` | Implements `ServerState.__init__`; linked source is authoritative. | [`src/core/api/state.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L25) |
-| method | `def ServerState.evidence_path(self) -> Path` | Implements `ServerState.evidence_path`; linked source is authoritative. | [`src/core/api/state.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L34) |
+| method | `def ServerState.evidence_path(self) -> Path` | Implements `ServerState.evidence_path`; linked source is authoritative. | [`src/core/api/state.py:37`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L37) |
 
 ## `src/core/browser/captcha.py`
 
@@ -955,6 +955,34 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def RateLimiter.on_error(self, is_rate_limit: bool=False)` | Report error — increases delay for adaptive strategies. | [`src/core/browser/rate_limiter.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L86) |
 | method | `def RateLimiter.current_delay_ms(self) -> int` | Implements `RateLimiter.current_delay_ms`; linked source is authoritative. | [`src/core/browser/rate_limiter.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L108) |
 | method | `def RateLimiter.consecutive_errors(self) -> int` | Implements `RateLimiter.consecutive_errors`; linked source is authoritative. | [`src/core/browser/rate_limiter.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L112) |
+
+## `src/core/browser/reverse_session.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseSession` | CDP Debugger session for one page: scripts, breakpoints, pause/resume/step. | [`src/core/browser/reverse_session.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L26) |
+| method | `def ReverseSession.__init__(self, driver: Any)` | Args: driver: BrowserDriver instance. | [`src/core/browser/reverse_session.py:29`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L29) |
+| method | `def ReverseSession.is_paused(self) -> bool` | Implements `ReverseSession.is_paused`; linked source is authoritative. | [`src/core/browser/reverse_session.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L46) |
+| method | `async def ReverseSession.enable(self) -> Dict&#91;str, Any&#93;` | Attach a CDP session to the driver's real page and enable the Debugger domain. | [`src/core/browser/reverse_session.py:49`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L49) |
+| method | `async def ReverseSession.detach(self) -> Dict&#91;str, Any&#93;` | Detach the CDP session. | [`src/core/browser/reverse_session.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L76) |
+| method | `async def ReverseSession._on_script_parsed(self, params: dict) -> None` | Implements `ReverseSession._on_script_parsed`; linked source is authoritative. | [`src/core/browser/reverse_session.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L105) |
+| method | `async def ReverseSession._on_paused(self, params: dict) -> None` | Implements `ReverseSession._on_paused`; linked source is authoritative. | [`src/core/browser/reverse_session.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L121) |
+| method | `async def ReverseSession._on_resumed(self, params: dict) -> None` | Implements `ReverseSession._on_resumed`; linked source is authoritative. | [`src/core/browser/reverse_session.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L125) |
+| method | `def ReverseSession._enrich_pause(self, params: dict) -> dict` | Attach resolved script URLs to each call frame's location. | [`src/core/browser/reverse_session.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L128) |
+| method | `def ReverseSession.list_scripts(self) -> List&#91;dict&#93;` | Implements `ReverseSession.list_scripts`; linked source is authoritative. | [`src/core/browser/reverse_session.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L155) |
+| method | `async def ReverseSession.get_script_source(self, script_id: str) -> str` | Implements `ReverseSession.get_script_source`; linked source is authoritative. | [`src/core/browser/reverse_session.py:158`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L158) |
+| method | `async def ReverseSession.search_scripts(self, query: str, is_regex: bool=False, case_sensitive: bool=False, script_id: Optional&#91;str&#93;=None) -> List&#91;dict&#93;` | Search loaded script sources for `query` via CDP's own search (no hand-rolled grep). | [`src/core/browser/reverse_session.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L162) |
+| method | `async def ReverseSession.set_breakpoint(self, url: Optional&#91;str&#93;=None, url_regex: Optional&#91;str&#93;=None, line_number: int=0, column_number: int=0, condition: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Implements `ReverseSession.set_breakpoint`; linked source is authoritative. | [`src/core/browser/reverse_session.py:199`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L199) |
+| method | `async def ReverseSession.remove_breakpoint(self, breakpoint_id: str) -> Dict&#91;str, Any&#93;` | Implements `ReverseSession.remove_breakpoint`; linked source is authoritative. | [`src/core/browser/reverse_session.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L231) |
+| method | `def ReverseSession.list_breakpoints(self) -> List&#91;dict&#93;` | Implements `ReverseSession.list_breakpoints`; linked source is authoritative. | [`src/core/browser/reverse_session.py:236`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L236) |
+| method | `async def ReverseSession.wait_paused(self, timeout_s: float) -> Optional&#91;dict&#93;` | Block until the page hits a breakpoint (or is already paused). | [`src/core/browser/reverse_session.py:243`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L243) |
+| method | `async def ReverseSession.resume(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseSession.resume`; linked source is authoritative. | [`src/core/browser/reverse_session.py:251`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L251) |
+| method | `async def ReverseSession._step(self, cdp_method: str, timeout_s: float) -> Optional&#91;dict&#93;` | Implements `ReverseSession._step`; linked source is authoritative. | [`src/core/browser/reverse_session.py:257`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L257) |
+| method | `async def ReverseSession.step_over(self, timeout_s: float) -> Optional&#91;dict&#93;` | Implements `ReverseSession.step_over`; linked source is authoritative. | [`src/core/browser/reverse_session.py:268`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L268) |
+| method | `async def ReverseSession.step_into(self, timeout_s: float) -> Optional&#91;dict&#93;` | Implements `ReverseSession.step_into`; linked source is authoritative. | [`src/core/browser/reverse_session.py:271`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L271) |
+| method | `async def ReverseSession.step_out(self, timeout_s: float) -> Optional&#91;dict&#93;` | Implements `ReverseSession.step_out`; linked source is authoritative. | [`src/core/browser/reverse_session.py:274`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L274) |
+| method | `def ReverseSession.get_call_frames(self) -> List&#91;dict&#93;` | Implements `ReverseSession.get_call_frames`; linked source is authoritative. | [`src/core/browser/reverse_session.py:281`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L281) |
+| method | `async def ReverseSession.evaluate_on_call_frame(self, call_frame_id: str, expression: str) -> Dict&#91;str, Any&#93;` | Implements `ReverseSession.evaluate_on_call_frame`; linked source is authoritative. | [`src/core/browser/reverse_session.py:286`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L286) |
 
 ## `src/core/catalog/category.py`
 
@@ -2617,24 +2645,24 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _module_missing_permissions(module_id: str) -> list` | Dangerous required_permissions a module declares that aren't granted. | [`src/core/mcp_handler.py:191`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L191) |
 | function | `def _denied_permissions_response(module_id: str, missing: list) -> dict` | Implements `_denied_permissions_response`; linked source is authoritative. | [`src/core/mcp_handler.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L202) |
 | function | `def _collect_module_ids(obj: Any) -> set` | Collect every module id declared in a workflow, including ids smuggled inside inline workflow_source/template string payloads (flow.invoke vector). | [`src/core/mcp_handler.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L215) |
-| function | `async def execute_module(module_id: str, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Execute a single module. | [`src/core/mcp_handler.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L231) |
-| function | `def validate_params(module_id: str, params: Dict&#91;str, Any&#93;) -> dict` | Validate params and suggest corrections for common mistakes. | [`src/core/mcp_handler.py:341`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L341) |
-| method | `def validate_params._sim(mid)` | Implements `validate_params._sim`; linked source is authoritative. | [`src/core/mcp_handler.py:365`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L365) |
-| function | `def _try_alias_fix(field_name: str, params: Dict&#91;str, Any&#93;) -> Optional&#91;tuple&#93;` | Try to resolve a missing field via alias mapping. | [`src/core/mcp_handler.py:427`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L427) |
-| function | `def _suggest_param_fixes(params: Dict&#91;str, Any&#93;, schema: Dict&#91;str, Any&#93;, error_msg: str) -> Dict&#91;str, Any&#93;` | Generate correction suggestions for invalid params. | [`src/core/mcp_handler.py:444`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L444) |
-| function | `def get_module_examples(module_id: str) -> dict` | Implements `get_module_examples`; linked source is authoritative. | [`src/core/mcp_handler.py:494`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L494) |
-| function | `def list_recipes() -> dict` | List all available recipes with metadata. | [`src/core/mcp_handler.py:513`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L513) |
-| function | `async def run_recipe(recipe_name: str, args: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Load and execute a recipe, returning step-by-step results. | [`src/core/mcp_handler.py:526`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L526) |
-| function | `def _build_recipe_result(recipe_name: str, trace: Optional&#91;Any&#93;, error_msg: Optional&#91;str&#93;=None) -> dict` | Build the run_recipe response from engine trace. | [`src/core/mcp_handler.py:607`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L607) |
-| function | `async def handle_jsonrpc_request(request: dict, browser_sessions: Dict&#91;str, Any&#93;) -> Optional&#91;dict&#93;` | Handle a single JSON-RPC request. | [`src/core/mcp_handler.py:930`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L930) |
+| function | `async def execute_module(module_id: str, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None, debugger_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Execute a single module. | [`src/core/mcp_handler.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L231) |
+| function | `def validate_params(module_id: str, params: Dict&#91;str, Any&#93;) -> dict` | Validate params and suggest corrections for common mistakes. | [`src/core/mcp_handler.py:392`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L392) |
+| method | `def validate_params._sim(mid)` | Implements `validate_params._sim`; linked source is authoritative. | [`src/core/mcp_handler.py:416`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L416) |
+| function | `def _try_alias_fix(field_name: str, params: Dict&#91;str, Any&#93;) -> Optional&#91;tuple&#93;` | Try to resolve a missing field via alias mapping. | [`src/core/mcp_handler.py:478`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L478) |
+| function | `def _suggest_param_fixes(params: Dict&#91;str, Any&#93;, schema: Dict&#91;str, Any&#93;, error_msg: str) -> Dict&#91;str, Any&#93;` | Generate correction suggestions for invalid params. | [`src/core/mcp_handler.py:495`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L495) |
+| function | `def get_module_examples(module_id: str) -> dict` | Implements `get_module_examples`; linked source is authoritative. | [`src/core/mcp_handler.py:545`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L545) |
+| function | `def list_recipes() -> dict` | List all available recipes with metadata. | [`src/core/mcp_handler.py:564`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L564) |
+| function | `async def run_recipe(recipe_name: str, args: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Load and execute a recipe, returning step-by-step results. | [`src/core/mcp_handler.py:577`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L577) |
+| function | `def _build_recipe_result(recipe_name: str, trace: Optional&#91;Any&#93;, error_msg: Optional&#91;str&#93;=None) -> dict` | Build the run_recipe response from engine trace. | [`src/core/mcp_handler.py:658`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L658) |
+| function | `async def handle_jsonrpc_request(request: dict, browser_sessions: Dict&#91;str, Any&#93;, debugger_sessions: Optional&#91;Dict&#91;str, Any&#93;&#93;=None) -> Optional&#91;dict&#93;` | Handle a single JSON-RPC request. | [`src/core/mcp_handler.py:981`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L981) |
 
 ## `src/core/mcp_server.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def execute_module(module_id, params, context=None)` | Backward-compatible wrapper that injects STDIO _browser_sessions. | [`src/core/mcp_server.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L59) |
-| function | `async def async_main()` | MCP Server main loop — persistent event loop for browser session survival. | [`src/core/mcp_server.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L66) |
-| function | `def main()` | Entry point — runs the async main loop. | [`src/core/mcp_server.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L92) |
+| function | `async def execute_module(module_id, params, context=None)` | Backward-compatible wrapper that injects STDIO _browser_sessions. | [`src/core/mcp_server.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L65) |
+| function | `async def async_main()` | MCP Server main loop — persistent event loop for browser session survival. | [`src/core/mcp_server.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L74) |
+| function | `def main()` | Entry point — runs the async main loop. | [`src/core/mcp_server.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L110) |
 
 ## `src/core/metering/tracker.py`
 
@@ -2666,12 +2694,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ModuleFilter.is_allowed(self, module_id: str) -> bool` | Check if a module is allowed to execute. | [`src/core/module_policy.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L98) |
 | function | `def _env_var_allowlist() -> List&#91;str&#93;` | Implements `_env_var_allowlist`; linked source is authoritative. | [`src/core/module_policy.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L130) |
 | function | `def is_env_var_allowed(name: str) -> bool` | Whether ${env.<name>} interpolation is permitted by policy. | [`src/core/module_policy.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L135) |
-| function | `def granted_permissions() -> set` | Implements `granted_permissions`; linked source is authoritative. | [`src/core/module_policy.py:166`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L166) |
-| function | `def missing_permissions(required) -> list` | Return the dangerous permissions in `required` that have NOT been granted. | [`src/core/module_policy.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L171) |
-| class | `class ModulePolicyError(PermissionError)` | Raised at the execution chokepoint when a module is blocked by policy. | [`src/core/module_policy.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L184) |
-| function | `def enforce_module_policy(module_id, required_permissions=None) -> None` | Fail-closed gate, called at the single execution chokepoint (BaseModule.run). | [`src/core/module_policy.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L188) |
-| function | `def _parse_inline_workflow(text: str) -> Any` | Best-effort parse of an inline workflow string (YAML superset of JSON). | [`src/core/module_policy.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L231) |
-| function | `def _collect_module_ids(obj: Any, _depth: int=0) -> set` | Recursively collect every module id declared anywhere in a workflow dict. | [`src/core/module_policy.py:247`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L247) |
+| function | `def granted_permissions() -> set` | Implements `granted_permissions`; linked source is authoritative. | [`src/core/module_policy.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L170) |
+| function | `def missing_permissions(required) -> list` | Return the dangerous permissions in `required` that have NOT been granted. | [`src/core/module_policy.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L175) |
+| class | `class ModulePolicyError(PermissionError)` | Raised at the execution chokepoint when a module is blocked by policy. | [`src/core/module_policy.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L188) |
+| function | `def enforce_module_policy(module_id, required_permissions=None) -> None` | Fail-closed gate, called at the single execution chokepoint (BaseModule.run). | [`src/core/module_policy.py:192`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L192) |
+| function | `def _parse_inline_workflow(text: str) -> Any` | Best-effort parse of an inline workflow string (YAML superset of JSON). | [`src/core/module_policy.py:235`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L235) |
+| function | `def _collect_module_ids(obj: Any, _depth: int=0) -> set` | Recursively collect every module id declared anywhere in a workflow dict. | [`src/core/module_policy.py:251`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L251) |
 
 ## `src/core/modules/atomic/__init__.py`
 
@@ -5385,6 +5413,78 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def regex_test(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Test if string matches a regex pattern. | [`src/core/modules/atomic/regex/test.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L99) |
+
+## `src/core/modules/atomic/reverse/attach.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseAttachModule(BaseModule)` | Attach a CDP debugger session to the current page. | [`src/core/modules/atomic/reverse/attach.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L57) |
+| method | `def ReverseAttachModule.validate_params(self) -> None` | Implements `ReverseAttachModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/attach.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L64) |
+| method | `async def ReverseAttachModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseAttachModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/attach.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L67) |
+
+## `src/core/modules/atomic/reverse/breakpoint.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseBreakpointModule(BaseModule)` | Set or remove a CDP breakpoint by script URL and line number. | [`src/core/modules/atomic/reverse/breakpoint.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L136) |
+| method | `def ReverseBreakpointModule.validate_params(self) -> None` | Implements `ReverseBreakpointModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/breakpoint.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L143) |
+| method | `async def ReverseBreakpointModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseBreakpointModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/breakpoint.py:161`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L161) |
+
+## `src/core/modules/atomic/reverse/call_frames.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseGetCallFramesModule(BaseModule)` | Get the call stack captured at the current pause point. | [`src/core/modules/atomic/reverse/call_frames.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L56) |
+| method | `def ReverseGetCallFramesModule.validate_params(self) -> None` | Implements `ReverseGetCallFramesModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/call_frames.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L63) |
+| method | `async def ReverseGetCallFramesModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseGetCallFramesModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/call_frames.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L66) |
+
+## `src/core/modules/atomic/reverse/detach.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseDetachModule(BaseModule)` | Detach the CDP debugger session from the current page. | [`src/core/modules/atomic/reverse/detach.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L55) |
+| method | `def ReverseDetachModule.validate_params(self) -> None` | Implements `ReverseDetachModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/detach.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L62) |
+| method | `async def ReverseDetachModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseDetachModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/detach.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L65) |
+
+## `src/core/modules/atomic/reverse/evaluate.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseEvaluateOnCallFrameModule(BaseModule)` | Evaluate a JavaScript expression in the scope of a paused call frame. | [`src/core/modules/atomic/reverse/evaluate.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L77) |
+| method | `def ReverseEvaluateOnCallFrameModule.validate_params(self) -> None` | Implements `ReverseEvaluateOnCallFrameModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/evaluate.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L84) |
+| method | `async def ReverseEvaluateOnCallFrameModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseEvaluateOnCallFrameModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/evaluate.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L93) |
+
+## `src/core/modules/atomic/reverse/resume.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseResumeModule(BaseModule)` | Resume execution of a page paused at a breakpoint. | [`src/core/modules/atomic/reverse/resume.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L54) |
+| method | `def ReverseResumeModule.validate_params(self) -> None` | Implements `ReverseResumeModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/resume.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L61) |
+| method | `async def ReverseResumeModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseResumeModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/resume.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L64) |
+
+## `src/core/modules/atomic/reverse/scripts.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseScriptsModule(BaseModule)` | List, fetch, or search JavaScript sources loaded by the debugged page. | [`src/core/modules/atomic/reverse/scripts.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L117) |
+| method | `def ReverseScriptsModule.validate_params(self) -> None` | Implements `ReverseScriptsModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/scripts.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L124) |
+| method | `async def ReverseScriptsModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseScriptsModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/scripts.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L140) |
+
+## `src/core/modules/atomic/reverse/step.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseStepModule(BaseModule)` | Step over, into, or out of the current line while paused. | [`src/core/modules/atomic/reverse/step.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L77) |
+| method | `def ReverseStepModule.validate_params(self) -> None` | Implements `ReverseStepModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/step.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L84) |
+| method | `async def ReverseStepModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseStepModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/step.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L92) |
+
+## `src/core/modules/atomic/reverse/wait_paused.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ReverseWaitPausedModule(BaseModule)` | Block until the debugged page hits a breakpoint. | [`src/core/modules/atomic/reverse/wait_paused.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L64) |
+| method | `def ReverseWaitPausedModule.validate_params(self) -> None` | Implements `ReverseWaitPausedModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:71`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L71) |
+| method | `async def ReverseWaitPausedModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseWaitPausedModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L75) |
 
 ## `src/core/modules/atomic/sandbox/execute_js.py`
 

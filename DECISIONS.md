@@ -1,5 +1,42 @@
 # Decisions
 
+## 2026-07-25 - reverse.* CDP debugger uses a dedicated pause/resume primitive, not BreakpointManager
+
+Decision: `ReverseSession` (src/core/browser/reverse_session.py) owns its own
+`asyncio.Event` + last-pause-state dict for pause/resume, mirroring the
+existing `browser.dialog` pattern (register a page/CDP event listener, block on
+an asyncio primitive with a timeout, clean up in `finally`). It does not reuse
+`src/core/engine/breakpoints/manager.py`'s `BreakpointManager`.
+
+Reason: `BreakpointManager` is built for human-approval breakpoints with
+pluggable stores (in-memory/Redis/HTTP) so a resolution can reach a different
+worker process than the one that created the request. That cross-process value
+is moot for a CDP debugger session — the live `CDPSession` object only exists
+in the process that called `reverse.attach`, so no other process could ever act
+on a pause anyway. A dedicated primitive is simpler and keeps the two
+breakpoint concepts (human-approval gates vs. JS execution pauses) from
+bleeding into each other's data models. This also means `reverse.*` session
+state is process-local, exactly like `browser.*` session state (see STATE.md).
+
+## 2026-07-25 - A paused CDP debugger freezes the page; workflow authors must design around it
+
+Decision: document, rather than engineer around, the fact that while a page is
+paused at a `reverse.*` breakpoint, the browser freezes that page's
+JS/renderer. Any other `browser.*` step issued against the same page before
+`reverse.resume` will block until its own timeout, since Chrome will not
+service a generic `Runtime.evaluate`-based call while the isolate is paused
+(only `reverse.evaluate_on_call_frame`, which uses
+`Debugger.evaluateOnCallFrame`, can execute during a pause, and only in the
+scope of the paused call frame).
+
+Reason: this is expected CDP semantics, not a flyto-core bug — trying to make
+other browser steps "just work" during a pause would require either a fake
+queuing layer or silently no-oping calls, both of which would hide real state
+from workflow authors. Recipes that use `reverse.*` breakpoints must trigger
+the paused code path without awaiting it (fire-and-forget), call
+`reverse.wait_paused`, inspect/resume, and only then issue further `browser.*`
+steps against that page.
+
 ## 2026-07-22 - Documentation is source-backed and release-controlled
 
 Decision: keep concise narrative guides for intent and operations, generate

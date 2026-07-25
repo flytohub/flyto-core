@@ -113,9 +113,11 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
 
         ctx: Dict[str, Any] = body.context or {}
         is_browser = body.module_id.startswith("browser.")
+        is_reverse = body.module_id.startswith("reverse.")
 
-        # Browser session injection (same logic as mcp_server.py)
-        if is_browser and body.module_id != "browser.launch":
+        # Browser session injection (same logic as mcp_server.py). reverse.attach
+        # needs a live browser session too — it CDP-attaches to ctx['browser'].
+        if (is_browser and body.module_id != "browser.launch") or body.module_id == "reverse.attach":
             session_id = ctx.get("browser_session")
             if session_id and session_id in state.browser_sessions:
                 ctx["browser"] = state.browser_sessions[session_id]
@@ -142,10 +144,40 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
                     error="No active browser session. Call browser.launch first.",
                 )
 
+        # Debugger session injection — every reverse.* call except attach
+        # rehydrates the ReverseSession minted by reverse.attach.
+        if is_reverse and body.module_id != "reverse.attach":
+            debugger_session_id = ctx.get("debugger_session")
+            if debugger_session_id and debugger_session_id in state.debugger_sessions:
+                ctx["reverse_session"] = state.debugger_sessions[debugger_session_id]
+            elif not debugger_session_id and len(state.debugger_sessions) == 1:
+                only_id = next(iter(state.debugger_sessions))
+                ctx["reverse_session"] = state.debugger_sessions[only_id]
+                debugger_session_id = only_id
+            elif not debugger_session_id and len(state.debugger_sessions) > 1:
+                return ExecuteModuleResponse(
+                    ok=False,
+                    error=(
+                        f"Multiple debugger sessions active ({len(state.debugger_sessions)}). "
+                        f"Pass debugger_session in context. IDs: {list(state.debugger_sessions.keys())}"
+                    ),
+                )
+            elif debugger_session_id and debugger_session_id not in state.debugger_sessions:
+                return ExecuteModuleResponse(
+                    ok=False,
+                    error=f"Debugger session not found: {debugger_session_id}. Active: {list(state.debugger_sessions.keys())}",
+                )
+            else:
+                return ExecuteModuleResponse(
+                    ok=False,
+                    error="No active debugger session. Call reverse.attach first.",
+                )
+
         module_instance = module_class(body.params, ctx)
         result = await module_instance.run()
 
         browser_session_id = None
+        debugger_session_id = None
 
         # After browser.launch — persist driver
         if is_browser and body.module_id == "browser.launch":
@@ -164,6 +196,23 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
             elif len(state.browser_sessions) == 1:
                 state.browser_sessions.clear()
 
+        # After reverse.attach — persist ReverseSession
+        if body.module_id == "reverse.attach":
+            reverse_session = ctx.get("reverse_session")
+            if reverse_session:
+                debugger_session_id = str(uuid.uuid4())[:8]
+                state.debugger_sessions[debugger_session_id] = reverse_session
+                if isinstance(result, dict):
+                    result["debugger_session"] = debugger_session_id
+
+        # After reverse.detach — remove session
+        if body.module_id == "reverse.detach":
+            session_id = ctx.get("debugger_session")
+            if session_id and session_id in state.debugger_sessions:
+                del state.debugger_sessions[session_id]
+            elif len(state.debugger_sessions) == 1:
+                state.debugger_sessions.clear()
+
         duration_ms = int((time.time() - t0) * 1000)
 
         data = result if isinstance(result, dict) else {"result": result}
@@ -171,6 +220,7 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
             ok=True,
             data=data,
             browser_session=browser_session_id,
+            debugger_session=debugger_session_id,
             duration_ms=duration_ms,
         )
 

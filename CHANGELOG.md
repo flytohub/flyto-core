@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added a `reverse.*` module category (Phase 1 of the reverse-engineering
+  roadmap): a CDP-based interactive JavaScript debugger. `reverse.attach` /
+  `reverse.detach` manage a `ReverseSession` CDP Debugger session;
+  `reverse.scripts` lists/fetches/searches loaded scripts; `reverse.breakpoint`
+  sets/removes breakpoints; `reverse.wait_paused`, `reverse.resume`, and
+  `reverse.step` control execution; `reverse.get_call_frames` and
+  `reverse.evaluate_on_call_frame` inspect paused state, including in-memory
+  locals/closures. All nine modules require the new `browser.debug` permission,
+  which is deny-by-default (added to `_DANGEROUS_PERMISSIONS`) since a paused
+  debugger can read secrets held in page memory and freezes the page's JS.
+  Reconciled the generated catalog to 461 modules across 85 categories.
+
 ## [2.26.10] - 2026-07-23
 
 ### Added

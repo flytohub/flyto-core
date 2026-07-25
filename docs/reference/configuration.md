@@ -33,10 +33,10 @@ Implementation sources read **103 environment-variable names**. The package ship
 | `FLYTO_ENGINE_URL` | [`src/core/verification_service.py:325`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L325), [`src/core/verification_service.py:341`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L341) |
 | `FLYTO_ENV` | [`src/cli/modules.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L27), [`src/core/modules/runtime.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/runtime.py#L34) |
 | `FLYTO_ENV_VAR_ALLOWLIST` | [`src/core/module_policy.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L131) |
-| `FLYTO_GRANTED_PERMISSIONS` | [`src/core/module_policy.py:167`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L167) |
+| `FLYTO_GRANTED_PERMISSIONS` | [`src/core/module_policy.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L171) |
 | `FLYTO_HTTP_ALLOWED_PORTS` | [`src/core/utils.py:545`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L545) |
 | `FLYTO_HTTP_DISABLE_SSRF_GUARD` | [`src/core/utils.py:574`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L574) |
-| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L55) |
+| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L61) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L80) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L87) |
 | `FLYTO_RUNNER_SECRET` | [`src/core/verification_service.py:389`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L389), [`src/core/verification_service.py:425`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L425) |

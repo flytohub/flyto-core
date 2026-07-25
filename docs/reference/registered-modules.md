@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **467 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **476 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -369,6 +369,15 @@ The AST contains **467 explicit, literal `@register_module` declarations**. This
 | `regex.replace` | `1.0.0` | `regex` | `regex_replace` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/replace.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L116) |
 | `regex.split` | `1.0.0` | `regex` | `regex_split` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/split.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L110) |
 | `regex.test` | `1.0.0` | `regex` | `regex_test` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/test.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L99) |
+| `reverse.attach` | `1.0.0` | `reverse` | `ReverseAttachModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/attach.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L57) |
+| `reverse.breakpoint` | `1.0.0` | `reverse` | `ReverseBreakpointModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/breakpoint.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L136) |
+| `reverse.detach` | `1.0.0` | `reverse` | `ReverseDetachModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/detach.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L55) |
+| `reverse.evaluate_on_call_frame` | `1.0.0` | `reverse` | `ReverseEvaluateOnCallFrameModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/evaluate.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L77) |
+| `reverse.get_call_frames` | `1.0.0` | `reverse` | `ReverseGetCallFramesModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/call_frames.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L56) |
+| `reverse.resume` | `1.0.0` | `reverse` | `ReverseResumeModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/resume.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L54) |
+| `reverse.scripts` | `1.0.0` | `reverse` | `ReverseScriptsModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/scripts.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L117) |
+| `reverse.step` | `1.0.0` | `reverse` | `ReverseStepModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/step.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L77) |
+| `reverse.wait_paused` | `1.0.0` | `reverse` | `ReverseWaitPausedModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/wait_paused.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L64) |
 | `sandbox.execute_js` | `1.0.0` | `sandbox` | `sandbox_execute_js` | no | `&#91;'subprocess.execute'&#93;` | [`src/core/modules/atomic/sandbox/execute_js.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_js.py#L116) |
 | `sandbox.execute_python` | `1.0.0` | `sandbox` | `sandbox_execute_python` | no | `&#91;'subprocess.execute'&#93;` | [`src/core/modules/atomic/sandbox/execute_python.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_python.py#L129) |
 | `sandbox.execute_shell` | `1.0.0` | `sandbox` | `sandbox_execute_shell` | no | `&#91;'subprocess.execute'&#93;` | [`src/core/modules/atomic/sandbox/execute_shell.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_shell.py#L136) |

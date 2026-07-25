@@ -160,6 +160,10 @@ _DANGEROUS_PERMISSIONS = frozenset({
     "shell.execute",
     "subprocess.execute",
     "payment.process",
+    # reverse.* (CDP debugger): evaluate_on_call_frame can read in-memory
+    # locals/closures (secrets, tokens), and pausing at a breakpoint freezes
+    # the page's JS/renderer — materially higher risk than browser.evaluate.
+    "browser.debug",
 })
 
 

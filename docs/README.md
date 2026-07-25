@@ -21,7 +21,7 @@
 
 ## Build Modules And Plugins
 
-- [Tool Catalog](TOOL_CATALOG.md): all 452 active runtime modules, parameters,
+- [Tool Catalog](TOOL_CATALOG.md): all 461 active runtime modules, parameters,
   and outputs.
 - [Module Quick Reference](MODULE_QUICK_REFERENCE.md)
 - [Module Specification](MODULE_SPECIFICATION.md)
@@ -53,8 +53,8 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 932 maintained Python files and 5,383 declarations.
-- 467 literal module registrations linked to source.
+- 943 maintained Python files and 5,433 declarations.
+- 476 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 93 environment-variable readers.
 - every packaged recipe, bundle, and maintained workflow YAML.

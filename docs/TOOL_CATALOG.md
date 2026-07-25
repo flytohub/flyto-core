@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **452 modules** across **84 categories**.
+> Auto-generated from flyto-core module registry. **461 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,6 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
+- [reverse](#reverse) (9)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -746,6 +747,20 @@
 | `regex.replace` | Replace pattern matches in text | `text` string *(required)*, `pattern` string *(required)*, `replacement` string *(required)*, `ignore_case` boolean (default: `False`), `count` number (default: `0`) | `result` (string), `replacements` (number), `original` (string) |
 | `regex.split` | Split text by a regex pattern | `text` string *(required)*, `pattern` string *(required)*, `ignore_case` boolean (default: `False`), `max_split` number (default: `0`), `remove_empty` boolean (default: `False`) | `result` (array), `count` (number) |
 | `regex.test` | Test if string matches a regex pattern | `text` string *(required)*, `pattern` string *(required)*, `ignore_case` boolean (default: `False`), `full_match` boolean (default: `False`) | `result` (boolean), `pattern` (string) |
+
+## reverse
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `reverse.attach` | Attach a CDP debugger session to the current page | `_no_params` boolean (default: `True`) | `status` (string), `url` (string) |
+| `reverse.breakpoint` | Set or remove a breakpoint by script URL and line number | `action` select *(required)*, `url` string, `url_regex` string, `line_number` number (default: `0`), `column_number` number (default: `0`), `condition` string, `breakpoint_id` string | `status` (string), `breakpointId` (string), `locations` (array) |
+| `reverse.detach` | Detach the CDP debugger session from the current page | `_no_params` boolean (default: `True`) | `status` (string) |
+| `reverse.evaluate_on_call_frame` | Evaluate a JavaScript expression in a paused call frame scope | `call_frame_id` string *(required)*, `expression` string *(required)* | `status` (string), `result` (object), `error` (string) |
+| `reverse.get_call_frames` | Get the call stack at the current pause point | `_no_params` boolean (default: `True`) | `status` (string), `callFrames` (array) |
+| `reverse.resume` | Resume execution of a page paused at a breakpoint | `_no_params` boolean (default: `True`) | `status` (string) |
+| `reverse.scripts` | List, fetch, or search loaded JavaScript sources | `action` select *(required)*, `script_id` string, `query` string, `is_regex` boolean (default: `False`), `case_sensitive` boolean (default: `False`) | `status` (string), `scripts` (array), `source` (string), `matches` (array) |
+| `reverse.step` | Step over, into, or out of the current line while paused | `action` select *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `callFrames` (array) |
+| `reverse.wait_paused` | Block until the page hits a breakpoint | `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `reason` (string), `callFrames` (array) |
 
 ## sandbox
 

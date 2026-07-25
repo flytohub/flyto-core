@@ -101,15 +101,16 @@ async def mcp_post(request: Request):
             content={"jsonrpc": "2.0", "error": {"code": -32600, "message": "Empty batch"}},
         )
 
-    # Get browser sessions from app state
+    # Get browser and debugger sessions from app state
     browser_sessions: Dict[str, Any] = request.app.state.server.browser_sessions
+    debugger_sessions: Dict[str, Any] = request.app.state.server.debugger_sessions
 
     # Process each item
     responses = []
     new_session_id = None
 
     for item in items:
-        result = await handle_jsonrpc_request(item, browser_sessions)
+        result = await handle_jsonrpc_request(item, browser_sessions, debugger_sessions)
 
         # On successful initialize, create a session
         if _is_initialize(item) and result and "result" in result:

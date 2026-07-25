@@ -2,11 +2,11 @@
 
 # Source Module Inventory
 
-Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **943 Python files**, **192,365 lines**, and **5,433 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
-| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 452 tools with one command. |
+| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 461 tools with one command. |
 | [`examples/agent_demo/planner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/planner.py#L1) | 59 | 3 | `pathlib, typing, yaml` | Simple Task Planner |
 | [`examples/agent_demo/run.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/run.py#L1) | 138 | 3 | `asyncio, core, json, pathlib, planner, sys, uuid, yaml` | flyto-core Agent Demo: Deterministic Browser Research |
 | [`examples/demo_video/record.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/demo_video/record.py#L1) | 413 | 6 | `asyncio, core, httpx, json, os, pathlib, rich, shutil, sys, time` | flyto-core Demo Video Script |
@@ -74,18 +74,18 @@ Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/m
 | [`src/core/api/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/__init__.py#L1) | 26 | 0 | `plugins, server` | Core API Module |
 | [`src/core/api/__main__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/__main__.py#L1) | 8 | 0 | `server` | Allow running as: python -m core.api |
 | [`src/core/api/evidence_hooks.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/evidence_hooks.py#L1) | 160 | 12 | `asyncio, core, datetime, json, logging, time, typing` | API Evidence Hooks |
-| [`src/core/api/models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L1) | 97 | 10 | `pydantic, typing` | HTTP API Request/Response Models |
+| [`src/core/api/models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L1) | 98 | 10 | `pydantic, typing` | HTTP API Request/Response Models |
 | [`src/core/api/plugins/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/__init__.py#L1) | 16 | 0 | `routes, service` | Plugin API Module |
 | [`src/core/api/plugins/routes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/routes.py#L1) | 228 | 14 | `fastapi, logging, pydantic, service, typing` | Plugin API Routes |
 | [`src/core/api/plugins/service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/service.py#L1) | 464 | 17 | `dataclasses, hashlib, json, logging, pathlib, runtime, typing` | Plugin Service |
 | [`src/core/api/routes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/__init__.py#L1) | 10 | 0 | `mcp, modules, replay, workflows` | API Routes |
-| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 155 | 7 | `core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
-| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 179 | 3 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
+| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 156 | 7 | `core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
+| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 229 | 3 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |
 | [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 218 | 4 | `contextlib, core, evidence_hooks, fastapi, json, logging, models, os, security, time, uuid` | Workflow Routes |
 | [`src/core/api/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/security.py#L1) | 209 | 10 | `core, fastapi, logging, os, pathlib, secrets, typing` | Security — CORS, Bearer Token Auth, Module Denylist/Allowlist |
 | [`src/core/api/server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/server.py#L1) | 146 | 6 | `contextlib, core, fastapi, importlib, logging, pathlib, routes, security, state, typing, uvicorn` | flyto-core HTTP Execution API Server |
-| [`src/core/api/state.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L1) | 35 | 3 | `core, logging, pathlib, typing` | Server State |
+| [`src/core/api/state.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L1) | 38 | 3 | `core, logging, pathlib, typing` | Server State |
 | [`src/core/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/__init__.py#L1) | 23 | 0 | `captcha, checkpoint, driver, humanize, pool, proxy_pool, rate_limiter` | Browser Automation Package |
 | [`src/core/browser/captcha.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/captcha.py#L1) | 441 | 13 | `asyncio, json, logging, time, typing, urllib` | Captcha Solver — API-based solving via 2Captcha, CapSolver, or CaptchaAI |
 | [`src/core/browser/checkpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/checkpoint.py#L1) | 168 | 9 | `json, logging, pathlib, time, typing` | Pagination Checkpoint — Save/resume pagination state |
@@ -94,6 +94,7 @@ Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/m
 | [`src/core/browser/pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/pool.py#L1) | 256 | 16 | `asyncio, driver, humanize, logging, typing` | Browser Pool — Multiple concurrent browser instances |
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
+| [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 302 | 23 | `asyncio, logging, typing` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
 | [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 279 | 5 | `modules, typing` | Catalog Module Detail API |
@@ -184,11 +185,11 @@ Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/m
 | [`src/core/enterprise/state_machine/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/__init__.py#L1) | 569 | 28 | `dataclasses, datetime, enum, typing` | State Machine - Long-Running Workflow Support |
 | [`src/core/enterprise/state_machine/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/engine.py#L1) | 603 | 37 | `abc, asyncio, core, datetime, logging, re, typing, uuid` | State Machine Engine - Complete Implementation |
 | [`src/core/licensing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/licensing/__init__.py#L1) | 184 | 16 | `enum, typing` | Flyto2 Licensing - Type Definitions and Abstract Interface |
-| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1038 | 21 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
-| [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 98 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
+| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1093 | 21 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
+| [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 116 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
 | [`src/core/metering/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/__init__.py#L1) | 23 | 0 | `tracker` | Metering Module |
 | [`src/core/metering/tracker.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L1) | 311 | 15 | `dataclasses, enum, logging, secrets, time, typing` | Metering Tracker |
-| [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 277 | 12 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
+| [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 281 | 12 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
 | [`src/core/modules/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/__init__.py#L1) | 288 | 0 | `atomic, base, builtin, catalog, connection_rules, errors, express, items, lint, registry, result, runtime` | Module System - Core Registration and Execution |
 | [`src/core/modules/atomic/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/__init__.py#L1) | 128 | 1 | `browser, element, element_registry, flow, importlib` | Atomic Modules - Community Edition |
 | [`src/core/modules/atomic/_deprecation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/_deprecation.py#L1) | 93 | 6 | `functools, typing, warnings` | Deprecation Notice for Atomic Modules |
@@ -562,6 +563,16 @@ Inventory: **932 Python files**, **190,973 lines**, and **5,383 class/function/m
 | [`src/core/modules/atomic/regex/replace.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L1) | 159 | 1 | `errors, re, registry, schema, typing` | Regex Replace Module Replace pattern matches in text. |
 | [`src/core/modules/atomic/regex/split.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L1) | 145 | 1 | `errors, re, registry, schema, typing` | Regex Split Module Split text by a regex pattern. |
 | [`src/core/modules/atomic/regex/test.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L1) | 131 | 1 | `errors, re, registry, schema, typing` | Regex Test Module Test if a string matches a regular expression pattern. |
+| [`src/core/modules/atomic/reverse/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/__init__.py#L1) | 28 | 0 | `attach, breakpoint, call_frames, detach, evaluate, resume, scripts, step, wait_paused` | Atomic Reverse-Engineering Operations |
+| [`src/core/modules/atomic/reverse/attach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L1) | 85 | 3 | `base, core, registry, types, typing` | Reverse Attach Module |
+| [`src/core/modules/atomic/reverse/breakpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L1) | 176 | 3 | `base, registry, schema, types, typing` | Reverse Breakpoint Module |
+| [`src/core/modules/atomic/reverse/call_frames.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L1) | 71 | 3 | `base, registry, types, typing` | Reverse Get Call Frames Module |
+| [`src/core/modules/atomic/reverse/detach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L1) | 72 | 3 | `base, registry, types, typing` | Reverse Detach Module |
+| [`src/core/modules/atomic/reverse/evaluate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L1) | 98 | 3 | `base, registry, schema, types, typing` | Reverse Evaluate On Call Frame Module |
+| [`src/core/modules/atomic/reverse/resume.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L1) | 69 | 3 | `base, registry, types, typing` | Reverse Resume Module |
+| [`src/core/modules/atomic/reverse/scripts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L1) | 159 | 3 | `base, registry, schema, types, typing` | Reverse Scripts Module |
+| [`src/core/modules/atomic/reverse/step.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L1) | 111 | 3 | `base, registry, schema, types, typing` | Reverse Step Module |
+| [`src/core/modules/atomic/reverse/wait_paused.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L1) | 89 | 3 | `base, registry, schema, types, typing` | Reverse Wait Paused Module |
 | [`src/core/modules/atomic/sandbox/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/__init__.py#L1) | 23 | 0 | `execute_js, execute_python, execute_shell` | Atomic Sandbox Operations Execute code and commands in sandboxed environments. |
 | [`src/core/modules/atomic/sandbox/execute_js.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_js.py#L1) | 227 | 2 | `asyncio, errors, logging, os, registry, schema, tempfile, time, typing` | Sandbox Execute JavaScript Module Execute JavaScript code via Node.js with timeout. |
 | [`src/core/modules/atomic/sandbox/execute_python.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_python.py#L1) | 235 | 2 | `asyncio, errors, logging, os, registry, safe_env, schema, sys, tempfile, time, typing` | Sandbox Execute Python Module Execute Python code safely in a subprocess with timeout. |

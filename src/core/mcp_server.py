@@ -35,6 +35,12 @@ from core.mcp_handler import (
 # Browser session store — persists BrowserDriver across MCP tool calls (STDIO-specific)
 _browser_sessions: Dict[str, Any] = {}
 
+# Debugger session store — persists ReverseSession (CDP debugger) across MCP tool
+# calls (STDIO-specific). Process-local like _browser_sessions: the live
+# CDPSession object only exists in this process, so no other transport process
+# could act on it anyway.
+_debugger_sessions: Dict[str, Any] = {}
+
 # ============================================================
 # Host allowlist — caller MUST opt in
 # ============================================================
@@ -59,7 +65,9 @@ if os.environ.get('FLYTO_MCP_ALLOW_LOCALHOST') == '1':
 async def execute_module(module_id, params, context=None):
     """Backward-compatible wrapper that injects STDIO _browser_sessions."""
     return await _handler_execute_module(
-        module_id, params, context=context, browser_sessions=_browser_sessions,
+        module_id, params, context=context,
+        browser_sessions=_browser_sessions,
+        debugger_sessions=_debugger_sessions,
     )
 
 
@@ -72,13 +80,23 @@ async def async_main():
             break  # EOF
         try:
             request = json.loads(line.strip())
-            response = await handle_jsonrpc_request(request, _browser_sessions)
+            response = await handle_jsonrpc_request(request, _browser_sessions, _debugger_sessions)
             if response is not None:
                 print(json.dumps(response), flush=True)
         except json.JSONDecodeError:
             pass
         except Exception as e:
             print(json.dumps({"jsonrpc": "2.0", "error": {"code": -32000, "message": str(e)}}), flush=True)
+
+    # Cleanup: detach any remaining debugger sessions first — detach() is
+    # best-effort and safe even mid-pause. No reaper/timeout exists for Phase 1
+    # (manual reverse.detach is the primary path); see STATE.md.
+    for session_id, reverse_session in list(_debugger_sessions.items()):
+        try:
+            await reverse_session.detach()
+        except Exception:
+            pass
+    _debugger_sessions.clear()
 
     # Cleanup: close all browser sessions to prevent zombie Chromium processes
     for session_id, driver in list(_browser_sessions.items()):

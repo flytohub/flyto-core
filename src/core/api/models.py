@@ -40,6 +40,7 @@ class ExecuteModuleResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     browser_session: Optional[str] = None
+    debugger_session: Optional[str] = None
     duration_ms: int = 0
 
 
