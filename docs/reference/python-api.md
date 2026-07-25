@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,460 declarations across 799 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,470 declarations across 800 files**.
 
 ## `demo.py`
 
@@ -5455,6 +5455,21 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | class | `class ReverseGetCallFramesModule(BaseModule)` | Get the call stack captured at the current pause point. | [`src/core/modules/atomic/reverse/call_frames.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L56) |
 | method | `def ReverseGetCallFramesModule.validate_params(self) -> None` | Implements `ReverseGetCallFramesModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/call_frames.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L63) |
 | method | `async def ReverseGetCallFramesModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseGetCallFramesModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/call_frames.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L66) |
+
+## `src/core/modules/atomic/reverse/code.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _walk(node)` | Implements `_walk`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:30`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L30) |
+| class | `class ReverseCodeModule(BaseModule)` | Beautify JavaScript and search its AST for functions, strings, and call sites. | [`src/core/modules/atomic/reverse/code.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L120) |
+| method | `def ReverseCodeModule.validate_params(self) -> None` | Implements `ReverseCodeModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L127) |
+| method | `async def ReverseCodeModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseCodeModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L142) |
+| method | `def ReverseCodeModule._beautify(self) -> str` | Implements `ReverseCodeModule._beautify`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:159`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L159) |
+| method | `def ReverseCodeModule._parse(self)` | Implements `ReverseCodeModule._parse`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:167`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L167) |
+| method | `def ReverseCodeModule._list_functions(self, tree, source_bytes: bytes) -> List&#91;dict&#93;` | Implements `ReverseCodeModule._list_functions`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:179`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L179) |
+| method | `def ReverseCodeModule._list_strings(self, tree, source_bytes: bytes) -> List&#91;dict&#93;` | Implements `ReverseCodeModule._list_strings`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L207) |
+| method | `def ReverseCodeModule._find_calls(self, tree, source_bytes: bytes, function_name: str) -> List&#91;dict&#93;` | Implements `ReverseCodeModule._find_calls`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:217`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L217) |
+| method | `def ReverseCodeModule._text(node, source_bytes: bytes) -> str` | Implements `ReverseCodeModule._text`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L245) |
 
 ## `src/core/modules/atomic/reverse/detach.py`
 

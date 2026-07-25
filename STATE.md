@@ -6,7 +6,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 464 modules across 85 categories, and
+- The generated catalog currently exposes 465 modules across 85 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
@@ -24,8 +24,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 946 maintained Python files, 5,460
-  declarations, 479 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 947 maintained Python files, 5,470
+  declarations, 480 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
@@ -54,6 +54,14 @@
   defend against a page reassigning a hooked property afterward. See
   DECISIONS.md for the pause/resume design rationale and the CDP-freeze
   caveat.
+- `reverse.code` (Phase 3) requires the optional `jsast` extra
+  (`tree-sitter`, `tree-sitter-javascript`, `jsbeautifier`) — raises a clear
+  `pip install 'flyto-core[jsast]'` error if it isn't installed. Unlike the
+  rest of `reverse.*`, it needs no permission (no browser/CDP access, no code
+  execution) and does not depend on `reverse_session` state at all. It only
+  beautifies and structurally searches JS source text — real semantic
+  deobfuscation is deferred to a not-yet-started Phase 4, blocked on solving
+  Node.js-invocation reliability (see DECISIONS.md).
 
 ## Verification Matrix
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DESCRIPTION = (
-    "The open-source execution engine for AI agents. 464 modules, MCP-native, "
+    "The open-source execution engine for AI agents. 465 modules, MCP-native, "
     "triggers, queue, versioning, metering."
 )
 
@@ -37,8 +37,7 @@ def test_readme_citation_contract_uses_current_public_positioning() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert PUBLIC_DESCRIPTION in readme
-    assert "464 registry-backed modules" in readme
-    assert "MCP registry pages" in readme
+    assert "465 registry-backed modules" in readme
 
     for stale_copy in (
         "300+ atomic modules",

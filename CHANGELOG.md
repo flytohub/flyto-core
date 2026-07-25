@@ -31,6 +31,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so initiator stacks stay rich, and no new transport-wiring was needed since
   the existing `debugger_session` registry already covers any `reverse.*` id.
   Reconciled the generated catalog to 464 modules across 85 categories.
+- Added Phase 3 of the `reverse.*` toolkit: `reverse.code`
+  (beautify/list_functions/list_strings/find_calls) beautifies minified
+  JavaScript (`jsbeautifier`) and searches its AST for function declarations,
+  string literals, and call sites (`tree-sitter` + `tree-sitter-javascript`).
+  Pure Python — no Node.js involved, no new CI surface — added as an
+  optional `jsast` extra. Unlike every other `reverse.*` module, `reverse.code`
+  requires no permission: it never touches a browser/CDP session and never
+  executes the code it analyzes, only parses and reformats a JS string.
+  True semantic deobfuscation (control-flow-flattening reversal, string-array
+  decoding) remains a separate, deferred Phase 4 — it needs an actual JS
+  execution engine, which depends on solving the Node.js-invocation
+  reliability problem this phase's research surfaced (Playwright's bundled
+  Node is a private/undocumented API already known to be fragile under
+  PyInstaller, and the `~/.flyto/node/` fallback has no downloader built).
+  Reconciled the generated catalog to 465 modules across 85 categories.
 
 ## [2.26.10] - 2026-07-23
 

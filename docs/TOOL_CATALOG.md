@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **464 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **465 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,7 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
-- [reverse](#reverse) (12)
+- [reverse](#reverse) (13)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -754,6 +754,7 @@
 |--------|-------------|------------|--------|
 | `reverse.attach` | Attach a CDP debugger session to the current page | `_no_params` boolean (default: `True`) | `status` (string), `url` (string) |
 | `reverse.breakpoint` | Set or remove a breakpoint by script URL and line number | `action` select *(required)*, `url` string, `url_regex` string, `line_number` number (default: `0`), `column_number` number (default: `0`), `condition` string, `breakpoint_id` string | `status` (string), `breakpointId` (string), `locations` (array) |
+| `reverse.code` | Beautify minified JavaScript and search its AST for functions, strings, and call sites | `action` select *(required)*, `source` string *(required)*, `function_name` string | `status` (string), `formatted` (string), `functions` (array), `strings` (array), `calls` (array) |
 | `reverse.detach` | Detach the CDP debugger session from the current page | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.evaluate_on_call_frame` | Evaluate a JavaScript expression in a paused call frame scope | `call_frame_id` string *(required)*, `expression` string *(required)* | `status` (string), `result` (object), `error` (string) |
 | `reverse.get_call_frames` | Get the call stack at the current pause point | `_no_params` boolean (default: `True`) | `status` (string), `callFrames` (array) |

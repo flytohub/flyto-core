@@ -2,11 +2,11 @@
 
 # Source Module Inventory
 
-Inventory: **946 Python files**, **193,225 lines**, and **5,460 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **947 Python files**, **193,478 lines**, and **5,470 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
-| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 464 tools with one command. |
+| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 465 tools with one command. |
 | [`examples/agent_demo/planner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/planner.py#L1) | 59 | 3 | `pathlib, typing, yaml` | Simple Task Planner |
 | [`examples/agent_demo/run.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/run.py#L1) | 138 | 3 | `asyncio, core, json, pathlib, planner, sys, uuid, yaml` | flyto-core Agent Demo: Deterministic Browser Research |
 | [`examples/demo_video/record.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/demo_video/record.py#L1) | 413 | 6 | `asyncio, core, httpx, json, os, pathlib, rich, shutil, sys, time` | flyto-core Demo Video Script |
@@ -563,10 +563,11 @@ Inventory: **946 Python files**, **193,225 lines**, and **5,460 class/function/m
 | [`src/core/modules/atomic/regex/replace.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L1) | 159 | 1 | `errors, re, registry, schema, typing` | Regex Replace Module Replace pattern matches in text. |
 | [`src/core/modules/atomic/regex/split.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L1) | 145 | 1 | `errors, re, registry, schema, typing` | Regex Split Module Split text by a regex pattern. |
 | [`src/core/modules/atomic/regex/test.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L1) | 131 | 1 | `errors, re, registry, schema, typing` | Regex Test Module Test if a string matches a regular expression pattern. |
-| [`src/core/modules/atomic/reverse/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/__init__.py#L1) | 38 | 0 | `attach, breakpoint, call_frames, detach, evaluate, hook, network, resume, scripts, step, wait_paused, websocket` | Atomic Reverse-Engineering Operations |
+| [`src/core/modules/atomic/reverse/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/__init__.py#L1) | 45 | 0 | `attach, breakpoint, call_frames, code, detach, evaluate, hook, network, resume, scripts, step, wait_paused` | Atomic Reverse-Engineering Operations |
 | [`src/core/modules/atomic/reverse/attach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L1) | 85 | 3 | `base, core, registry, types, typing` | Reverse Attach Module |
 | [`src/core/modules/atomic/reverse/breakpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L1) | 176 | 3 | `base, registry, schema, types, typing` | Reverse Breakpoint Module |
 | [`src/core/modules/atomic/reverse/call_frames.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L1) | 71 | 3 | `base, registry, types, typing` | Reverse Get Call Frames Module |
+| [`src/core/modules/atomic/reverse/code.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L1) | 246 | 10 | `base, errors, jsbeautifier, registry, schema, tree_sitter, tree_sitter_javascript, types, typing` | Reverse Code Module |
 | [`src/core/modules/atomic/reverse/detach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L1) | 72 | 3 | `base, registry, types, typing` | Reverse Detach Module |
 | [`src/core/modules/atomic/reverse/evaluate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L1) | 98 | 3 | `base, registry, schema, types, typing` | Reverse Evaluate On Call Frame Module |
 | [`src/core/modules/atomic/reverse/hook.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/hook.py#L1) | 190 | 3 | `base, registry, schema, types, typing` | Reverse Hook Module |

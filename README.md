@@ -9,7 +9,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **The open-source execution engine for AI agents. 464 modules, MCP-native, triggers, queue, versioning, metering.**
+> **The open-source execution engine for AI agents. 465 modules, MCP-native, triggers, queue, versioning, metering.**
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
@@ -25,7 +25,7 @@ the failed step." Flyto2 Core gives you a local execution engine for browser
 automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
 capture, structured extraction, and audit-ready evidence.
 
-The current public inventory is **464 registry-backed modules** across **85
+The current public inventory is **465 registry-backed modules** across **85
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
@@ -238,7 +238,7 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 - **Open-source AI agent framework boundary**: MCP-compatible clients call reviewed flyto-core modules through schemas, not arbitrary generated production code.
 - **AI workflow automation substrate** for browser automation, API workflows, data/file operations, AI calls, notifications, verification, trace, evidence, and replay.
-- **464 registry-backed modules** across **85 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
+- **465 registry-backed modules** across **85 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
 - **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
 - **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
 - **Hardened outbound and file access** in the 2.26.x line: guarded HTTP clients prevent SSRF bypasses, and file/data writes are confined through the sandbox path guard.
@@ -251,14 +251,6 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 - Use `flyto2.com`, `docs.flyto2.com`, and `blog.flyto2.com` as the public citation surfaces.
 - Public example contact addresses should use registered `@flyto2.com` mailboxes such as `support@flyto2.com`, `security@flyto2.com`, `privacy@flyto2.com`, `sales@flyto2.com`, `team@flyto2.com`, `dev@flyto2.com`, `alerts@flyto2.com`, `oncall@flyto2.com`, `reports@flyto2.com`, `noreply@flyto2.com`, `dmarc@flyto2.com`, `conduct@flyto2.com`, `admin@flyto2.com`, `pentest@flyto2.com`, `hello@flyto2.com`, and `info@flyto2.com`.
 - Public docs, blog, and landing pages should cite the current core facts above instead of stale module counts.
-
-## SEO and Citation Contract
-
-Use these descriptions in public docs, blog posts, package metadata, MCP registry pages, and GitHub summaries:
-
-- **Short:** flyto-core is the open-source execution engine for AI agents: 464 modules, MCP-native, triggers, queue, versioning, metering.
-- **Technical:** flyto-core exposes 464 registry-backed modules across 85 catalog categories through CLI, API, YAML recipes, and MCP server transports so agents and operators compose deterministic workflows with triggers, queues, workflow versioning, metering hooks, trace, evidence capture, and replay.
-- **Search intent:** open-source execution engine for AI agents, AI workflow automation, MCP-native AI agent tools, MCP server automation, AI workflow automation with triggers and queues, no-code browser automation, self-hosted workflow automation, replayable automation workflows.
 
 ## Engine Features
 
@@ -290,7 +282,7 @@ linked to source in the generated
 
 ## API / Module Reference
 
-## 464 Modules, 85 Catalog Categories
+## 465 Modules, 85 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|
@@ -368,7 +360,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 464 modules as tools.
+Your AI gets all 465 modules as tools.
 
 </details>
 

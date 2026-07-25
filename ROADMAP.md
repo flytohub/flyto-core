@@ -24,13 +24,24 @@
   All three extend the same `ReverseSession`/CDP session `reverse.attach`
   creates rather than a second session type. See `DECISIONS.md`
   (2026-07-25 Phase 2 entry) for the rationale and known hooking limitations.
-- **Phase 2+ remaining (not started, explicitly out of scope for Phase 1/2):**
-  deobfuscation/AST tooling (variable renaming, control-flow simplification,
-  static analysis of minified/obfuscated bundles) — needs new npm
-  dependencies (repo's `package.json` currently has none for AST/parsing) and
-  a reliable cross-platform Node invocation path, a different engineering
-  axis from the CDP-wrapping work above. A separate follow-up phase, not an
-  extension of the Phase 1/2 module set.
+- **Phase 3 (done, 2026-07-25):** `reverse.code` —
+  beautify/list_functions/list_strings/find_calls. Pure Python
+  (`tree-sitter` + `tree-sitter-javascript` + `jsbeautifier`, new optional
+  `jsast` extra), no Node.js. Beautifies minified JS and structurally
+  searches its AST. The only `reverse.*` module with no permission gate — it
+  never touches a browser/CDP session and never executes the analyzed code.
+  See `DECISIONS.md` (2026-07-25 Phase 3 entry).
+- **Phase 4 (not started):** true semantic deobfuscation — control-flow-
+  flattening reversal, string-array decoding via constant folding, and other
+  transforms that require actually executing/evaluating JS (Babel/webcrack-
+  style), which pure-Python AST tools cannot do. Blocked on solving the
+  Node.js-invocation reliability problem first: Playwright's bundled Node is
+  only reachable via a private, undocumented API (`playwright._impl._driver`)
+  already known to be fragile under PyInstaller (see `driver.py`'s
+  `_find_external_node()` workaround), and the imagined `~/.flyto/node/`
+  fallback has no downloader anywhere in the repo (`_NODE_VERSION` is dead
+  code). Needs new npm dependencies and CI audit surface too. A separate
+  follow-up phase, not an extension of the Phase 1/2/3 module set.
 
 ### 1. Marketplace Ecosystem
 - Template marketplace for buying/selling workflows

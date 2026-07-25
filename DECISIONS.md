@@ -1,5 +1,51 @@
 # Decisions
 
+## 2026-07-25 - reverse.code (Phase 3) is pure Python, no Node.js, and no permission gate
+
+Decision: `reverse.code`'s beautify/list_functions/list_strings/find_calls
+actions are built entirely on `tree-sitter` + `tree-sitter-javascript` (AST
+parsing/querying) and `jsbeautifier` (reformatting) — all pure-Python,
+prebuilt-wheel pip packages added as a new optional `jsast` extra. No Node.js
+subprocess is involved anywhere in this module.
+
+Reason: research into a Node.js-based route (needed for real AST tooling
+like `@babel/parser`/`acorn`/`terser`) found the cross-platform Node
+invocation problem is not currently solved in this codebase. Playwright's
+bundled Node binary is reachable only via `playwright._impl._driver`, a
+private module with no compatibility guarantee — and this exact binary is
+already known to be unreliable (`src/core/browser/driver.py`'s
+`_find_external_node()` exists specifically to work around it crashing
+under PyInstaller `--onefile`). The apparent fallback, `~/.flyto/node/`
+(referenced by a `_NODE_VERSION` constant in `driver.py`), turned out to
+have no downloader anywhere in the repo — it's dead code, not a working
+auto-install mechanism. `sandbox.execute_js` was also considered and
+rejected as an internal primitive: it's denylisted by default and only
+exposes stdout/stderr/exit_code, no structured-output channel. Building
+reliable Node infrastructure is its own project, not something to bundle
+into this module's scope.
+
+Decision: `reverse.code` declares `required_permissions=[]` — the only
+`reverse.*` module with no permission gate.
+
+Reason: every other module in this category is gated behind `browser.debug`
+because it reads live in-memory browser state (locals, closures, hook
+records, captured network/WebSocket traffic) or freezes the page.
+`reverse.code` operates on a plain JS source string passed as a parameter —
+it never creates or touches a CDP session, never touches a live page, and
+never executes the JS it analyzes (tree-sitter only parses syntax structure;
+jsbeautifier only reformats text). There is no elevated capability to gate.
+
+Decision: real semantic deobfuscation (control-flow-flattening reversal,
+string-array decoding via constant folding) is explicitly out of scope for
+`reverse.code` and deferred to a separate, not-yet-started Phase 4.
+
+Reason: those transforms require actually executing/evaluating JS
+(Babel/webcrack-style passes), which pure-Python AST tools cannot do, and
+which depends on solving the Node-invocation reliability problem above
+first. Scoping `reverse.code` to beautify + structural search (functions,
+strings, call sites) delivers real value now without taking on that
+unsolved infrastructure dependency.
+
 ## 2026-07-25 - reverse.* Phase 2 extends ReverseSession instead of a second session type
 
 Decision: `reverse.hook`, `reverse.network`, and `reverse.websocket` (function

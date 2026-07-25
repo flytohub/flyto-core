@@ -15,7 +15,7 @@ For Flyto2 Warroom, core is the deterministic verification engine: discover the
 site graph, generate replay YAML, run module-level assertions, and produce
 evidence packs before any optional LLM review.
 
-The current registry inventory is 464 modules across 85 generated catalog
+The current registry inventory is 465 modules across 85 generated catalog
 categories, with 41 maintained built-in recipes exposed through the CLI.
 
 ## Success Criteria

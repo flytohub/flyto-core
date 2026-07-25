@@ -7,9 +7,10 @@
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.
 - Add recipe fixtures for capability states and report/export flows.
 - Keep maintained recipe bundle tests aligned with product-loop contracts.
-- Reverse-engineering toolkit Phase 2+ remaining: deobfuscation/AST tooling
-  (see `ROADMAP.md` 0.5) — needs new npm dependencies and a cross-platform
-  Node invocation path, not started.
+- Reverse-engineering toolkit Phase 4: true semantic deobfuscation (see
+  `ROADMAP.md` 0.5) — blocked on building a reliable `~/.flyto/node/`
+  downloader first, then new npm dependencies and CI audit surface; not
+  started.
 
 ## Watch
 
@@ -19,6 +20,11 @@
 
 ## Done
 
+- Added Phase 3 of the `reverse.*` toolkit: `reverse.code`
+  (beautify/list_functions/list_strings/find_calls) — pure Python
+  (`tree-sitter` + `jsbeautifier`, new `jsast` extra), no Node.js, no
+  permission gate (never touches a browser/CDP session or executes code).
+  Reconciled the generated catalog to 465 modules / 85 categories.
 - Added Phase 2 of the `reverse.*` toolkit: `reverse.hook`
   (install/remove/list/get_records), `reverse.network`
   (start/stop/list/get_initiator), and `reverse.websocket`
