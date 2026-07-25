@@ -31,6 +31,7 @@ from core.mcp_handler import (
     TOOLS,
     SERVER_VERSION,
 )
+from core.session_reaper import reaper_loop
 
 # Browser session store — persists BrowserDriver across MCP tool calls (STDIO-specific)
 _browser_sessions: Dict[str, Any] = {}
@@ -40,6 +41,11 @@ _browser_sessions: Dict[str, Any] = {}
 # CDPSession object only exists in this process, so no other transport process
 # could act on it anyway.
 _debugger_sessions: Dict[str, Any] = {}
+
+# Last-used timestamp per session id (either store) — feeds the idle-timeout
+# reaper below so an abandoned session doesn't leak a Chromium process/CDP
+# session for the life of this server process. See session_reaper.py.
+_session_activity: Dict[str, float] = {}
 
 # ============================================================
 # Host allowlist — caller MUST opt in
@@ -68,19 +74,25 @@ async def execute_module(module_id, params, context=None):
         module_id, params, context=context,
         browser_sessions=_browser_sessions,
         debugger_sessions=_debugger_sessions,
+        session_activity=_session_activity,
     )
 
 
 async def async_main():
     """MCP Server main loop — persistent event loop for browser session survival."""
     loop = asyncio.get_event_loop()
+    reaper_task = asyncio.create_task(
+        reaper_loop(_browser_sessions, _debugger_sessions, _session_activity)
+    )
     while True:
         line = await loop.run_in_executor(None, sys.stdin.readline)
         if not line:
             break  # EOF
         try:
             request = json.loads(line.strip())
-            response = await handle_jsonrpc_request(request, _browser_sessions, _debugger_sessions)
+            response = await handle_jsonrpc_request(
+                request, _browser_sessions, _debugger_sessions, _session_activity,
+            )
             if response is not None:
                 print(json.dumps(response), flush=True)
         except json.JSONDecodeError:
@@ -88,9 +100,13 @@ async def async_main():
         except Exception as e:
             print(json.dumps({"jsonrpc": "2.0", "error": {"code": -32000, "message": str(e)}}), flush=True)
 
+    reaper_task.cancel()
+    await asyncio.gather(reaper_task, return_exceptions=True)
+
     # Cleanup: detach any remaining debugger sessions first — detach() is
-    # best-effort and safe even mid-pause. No reaper/timeout exists for Phase 1
-    # (manual reverse.detach is the primary path); see STATE.md.
+    # best-effort and safe even mid-pause. The idle-timeout reaper above
+    # catches sessions abandoned mid-workflow; this is the final backstop
+    # for whatever's still open at process EOF.
     for session_id, reverse_session in list(_debugger_sessions.items()):
         try:
             await reverse_session.detach()

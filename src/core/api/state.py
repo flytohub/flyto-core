@@ -27,6 +27,9 @@ class ServerState:
         # Reverse-debugger (ReverseSession) store — process-local like
         # browser_sessions; see DECISIONS.md.
         self.debugger_sessions: Dict[str, Any] = {}
+        # Last-used timestamp per session id (either store above) — feeds
+        # the idle-timeout reaper. See session_reaper.py.
+        self.session_activity: Dict[str, float] = {}
         self.running_workflows: Dict[str, Any] = {}
         self.evidence_store: EvidenceStore = create_evidence_store(evidence_path)
         self.replay_manager: ReplayManager = create_replay_manager(evidence_path)

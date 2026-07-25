@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **948 Python files**, **193,826 lines**, and **5,482 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **949 Python files**, **194,046 lines**, and **5,489 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -79,13 +79,13 @@ Inventory: **948 Python files**, **193,826 lines**, and **5,482 class/function/m
 | [`src/core/api/plugins/routes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/routes.py#L1) | 228 | 14 | `fastapi, logging, pydantic, service, typing` | Plugin API Routes |
 | [`src/core/api/plugins/service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/service.py#L1) | 464 | 17 | `dataclasses, hashlib, json, logging, pathlib, runtime, typing` | Plugin Service |
 | [`src/core/api/routes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/__init__.py#L1) | 10 | 0 | `mcp, modules, replay, workflows` | API Routes |
-| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 156 | 7 | `core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
-| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 229 | 3 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
+| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 157 | 7 | `core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
+| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 242 | 3 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |
 | [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 218 | 4 | `contextlib, core, evidence_hooks, fastapi, json, logging, models, os, security, time, uuid` | Workflow Routes |
 | [`src/core/api/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/security.py#L1) | 209 | 10 | `core, fastapi, logging, os, pathlib, secrets, typing` | Security — CORS, Bearer Token Auth, Module Denylist/Allowlist |
-| [`src/core/api/server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/server.py#L1) | 146 | 6 | `contextlib, core, fastapi, importlib, logging, pathlib, routes, security, state, typing, uvicorn` | flyto-core HTTP Execution API Server |
-| [`src/core/api/state.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L1) | 38 | 3 | `core, logging, pathlib, typing` | Server State |
+| [`src/core/api/server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/server.py#L1) | 161 | 6 | `asyncio, contextlib, core, fastapi, importlib, logging, pathlib, routes, security, state, typing, uvicorn` | flyto-core HTTP Execution API Server |
+| [`src/core/api/state.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L1) | 41 | 3 | `core, logging, pathlib, typing` | Server State |
 | [`src/core/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/__init__.py#L1) | 23 | 0 | `captcha, checkpoint, driver, humanize, pool, proxy_pool, rate_limiter` | Browser Automation Package |
 | [`src/core/browser/captcha.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/captcha.py#L1) | 441 | 13 | `asyncio, json, logging, time, typing, urllib` | Captcha Solver — API-based solving via 2Captcha, CapSolver, or CaptchaAI |
 | [`src/core/browser/checkpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/checkpoint.py#L1) | 168 | 9 | `json, logging, pathlib, time, typing` | Pagination Checkpoint — Save/resume pagination state |
@@ -94,7 +94,7 @@ Inventory: **948 Python files**, **193,826 lines**, and **5,482 class/function/m
 | [`src/core/browser/pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/pool.py#L1) | 256 | 16 | `asyncio, driver, humanize, logging, typing` | Browser Pool — Multiple concurrent browser instances |
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
-| [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 697 | 41 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
+| [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 734 | 41 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
 | [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 279 | 5 | `modules, typing` | Catalog Module Detail API |
@@ -185,8 +185,8 @@ Inventory: **948 Python files**, **193,826 lines**, and **5,482 class/function/m
 | [`src/core/enterprise/state_machine/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/__init__.py#L1) | 569 | 28 | `dataclasses, datetime, enum, typing` | State Machine - Long-Running Workflow Support |
 | [`src/core/enterprise/state_machine/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/engine.py#L1) | 603 | 37 | `abc, asyncio, core, datetime, logging, re, typing, uuid` | State Machine Engine - Complete Implementation |
 | [`src/core/licensing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/licensing/__init__.py#L1) | 184 | 16 | `enum, typing` | Flyto2 Licensing - Type Definitions and Abstract Interface |
-| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1093 | 21 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
-| [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 116 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
+| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1115 | 21 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
+| [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 132 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
 | [`src/core/metering/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/__init__.py#L1) | 23 | 0 | `tracker` | Metering Module |
 | [`src/core/metering/tracker.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L1) | 311 | 15 | `dataclasses, enum, logging, secrets, time, typing` | Metering Tracker |
 | [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 281 | 12 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
@@ -938,6 +938,7 @@ Inventory: **948 Python files**, **193,826 lines**, and **5,482 class/function/m
 | [`src/core/safe_eval.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/safe_eval.py#L1) | 252 | 4 | `ast, typing` | Safe expression evaluator — drop-in replacement for `eval()` in guard/condition contexts. |
 | [`src/core/secrets/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/secrets/__init__.py#L1) | 22 | 0 | `proxy` | Secrets Management Module |
 | [`src/core/secrets/proxy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/secrets/proxy.py#L1) | 324 | 18 | `dataclasses, hashlib, logging, secrets, time, typing` | Secrets Proxy |
+| [`src/core/session_reaper.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/session_reaper.py#L1) | 113 | 7 | `asyncio, logging, os, time, typing` | Session idle-timeout reaper — shared by all three transports. |
 | [`src/core/testing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/testing/__init__.py#L1) | 57 | 0 | `assertions, runner, snapshot` | Workflow Testing Framework |
 | [`src/core/testing/assertions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/testing/assertions.py#L1) | 501 | 25 | `dataclasses, enum, json, re, typing` | Test Assertions |
 | [`src/core/testing/runner/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/testing/runner/__init__.py#L1) | 50 | 1 | `executor, models, typing` | Workflow Test Runner Module |

@@ -18,6 +18,7 @@ from core.catalog_facts import (
     CORE_CATALOG_CATEGORY_COUNT,
     CORE_MODULE_COUNT,
 )
+from core.session_reaper import touch_session, untrack_session
 
 
 def _get_version() -> str:
@@ -234,6 +235,7 @@ async def execute_module(
     context: Dict[str, Any] = None,
     browser_sessions: Dict[str, Any] = None,
     debugger_sessions: Dict[str, Any] = None,
+    session_activity: Dict[str, float] = None,
 ) -> dict:
     """
     Execute a single module.
@@ -244,11 +246,15 @@ async def execute_module(
         context: Execution context (optional)
         browser_sessions: Browser session store (injected by transport)
         debugger_sessions: Reverse-debugger (ReverseSession) store (injected by transport)
+        session_activity: Last-used timestamp per session id, for the idle-timeout
+            reaper (session_reaper.py). Touched on resolve/mint, cleared on removal.
     """
     if browser_sessions is None:
         browser_sessions = {}
     if debugger_sessions is None:
         debugger_sessions = {}
+    if session_activity is None:
+        session_activity = {}
 
     # Capability gate — fail closed before any module is resolved/instantiated.
     if not _module_is_allowed(module_id):
@@ -300,10 +306,12 @@ async def execute_module(
             session_id = ctx.get("browser_session")
             if session_id and session_id in browser_sessions:
                 ctx["browser"] = browser_sessions[session_id]
+                touch_session(session_activity, session_id)
             elif not session_id and len(browser_sessions) == 1:
                 only_id = next(iter(browser_sessions))
                 ctx["browser"] = browser_sessions[only_id]
                 session_id = only_id
+                touch_session(session_activity, session_id)
             elif not session_id and len(browser_sessions) > 1:
                 return {
                     "ok": False,
@@ -329,10 +337,12 @@ async def execute_module(
             debugger_session_id = ctx.get("debugger_session")
             if debugger_session_id and debugger_session_id in debugger_sessions:
                 ctx["reverse_session"] = debugger_sessions[debugger_session_id]
+                touch_session(session_activity, debugger_session_id)
             elif not debugger_session_id and len(debugger_sessions) == 1:
                 only_id = next(iter(debugger_sessions))
                 ctx["reverse_session"] = debugger_sessions[only_id]
                 debugger_session_id = only_id
+                touch_session(session_activity, debugger_session_id)
             elif not debugger_session_id and len(debugger_sessions) > 1:
                 return {
                     "ok": False,
@@ -361,12 +371,16 @@ async def execute_module(
                 session_id = str(uuid.uuid4())[:8]
                 browser_sessions[session_id] = driver
                 result["browser_session"] = session_id
+                touch_session(session_activity, session_id)
 
         if is_browser and module_id == "browser.close":
             session_id = ctx.get("browser_session")
             if session_id and session_id in browser_sessions:
                 del browser_sessions[session_id]
+                untrack_session(session_activity, session_id)
             elif len(browser_sessions) == 1:
+                for stale_id in list(browser_sessions):
+                    untrack_session(session_activity, stale_id)
                 browser_sessions.clear()
 
         if module_id == "reverse.attach":
@@ -375,12 +389,16 @@ async def execute_module(
                 debugger_session_id = str(uuid.uuid4())[:8]
                 debugger_sessions[debugger_session_id] = reverse_session
                 result["debugger_session"] = debugger_session_id
+                touch_session(session_activity, debugger_session_id)
 
         if module_id == "reverse.detach":
             debugger_session_id = ctx.get("debugger_session")
             if debugger_session_id and debugger_session_id in debugger_sessions:
                 del debugger_sessions[debugger_session_id]
+                untrack_session(session_activity, debugger_session_id)
             elif len(debugger_sessions) == 1:
+                for stale_id in list(debugger_sessions):
+                    untrack_session(session_activity, stale_id)
                 debugger_sessions.clear()
 
         return result
@@ -982,6 +1000,7 @@ async def handle_jsonrpc_request(
     request: dict,
     browser_sessions: Dict[str, Any],
     debugger_sessions: Optional[Dict[str, Any]] = None,
+    session_activity: Optional[Dict[str, float]] = None,
 ) -> Optional[dict]:
     """
     Handle a single JSON-RPC request. Returns a JSON-RPC response dict,
@@ -989,6 +1008,8 @@ async def handle_jsonrpc_request(
     """
     if debugger_sessions is None:
         debugger_sessions = {}
+    if session_activity is None:
+        session_activity = {}
     method = request.get("method", "")
     req_id = request.get("id")
     params = request.get("params", {})
@@ -1030,6 +1051,7 @@ async def handle_jsonrpc_request(
                     context=arguments.get("context"),
                     browser_sessions=browser_sessions,
                     debugger_sessions=debugger_sessions,
+                    session_activity=session_activity,
                 )
             elif tool_name == "validate_params":
                 result = validate_params(

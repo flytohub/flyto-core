@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 
 from ..models import ExecuteModuleRequest, ExecuteModuleResponse
 from ..security import require_auth, module_filter
+from core.session_reaper import touch_session, untrack_session
 
 router = APIRouter(tags=["modules"])
 
@@ -121,10 +122,12 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
             session_id = ctx.get("browser_session")
             if session_id and session_id in state.browser_sessions:
                 ctx["browser"] = state.browser_sessions[session_id]
+                touch_session(state.session_activity, session_id)
             elif not session_id and len(state.browser_sessions) == 1:
                 only_id = next(iter(state.browser_sessions))
                 ctx["browser"] = state.browser_sessions[only_id]
                 session_id = only_id
+                touch_session(state.session_activity, session_id)
             elif not session_id and len(state.browser_sessions) > 1:
                 return ExecuteModuleResponse(
                     ok=False,
@@ -150,10 +153,12 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
             debugger_session_id = ctx.get("debugger_session")
             if debugger_session_id and debugger_session_id in state.debugger_sessions:
                 ctx["reverse_session"] = state.debugger_sessions[debugger_session_id]
+                touch_session(state.session_activity, debugger_session_id)
             elif not debugger_session_id and len(state.debugger_sessions) == 1:
                 only_id = next(iter(state.debugger_sessions))
                 ctx["reverse_session"] = state.debugger_sessions[only_id]
                 debugger_session_id = only_id
+                touch_session(state.session_activity, debugger_session_id)
             elif not debugger_session_id and len(state.debugger_sessions) > 1:
                 return ExecuteModuleResponse(
                     ok=False,
@@ -187,13 +192,17 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
                 state.browser_sessions[browser_session_id] = driver
                 if isinstance(result, dict):
                     result["browser_session"] = browser_session_id
+                touch_session(state.session_activity, browser_session_id)
 
         # After browser.close — remove session
         if is_browser and body.module_id == "browser.close":
             session_id = ctx.get("browser_session")
             if session_id and session_id in state.browser_sessions:
                 del state.browser_sessions[session_id]
+                untrack_session(state.session_activity, session_id)
             elif len(state.browser_sessions) == 1:
+                for stale_id in list(state.browser_sessions):
+                    untrack_session(state.session_activity, stale_id)
                 state.browser_sessions.clear()
 
         # After reverse.attach — persist ReverseSession
@@ -204,13 +213,17 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
                 state.debugger_sessions[debugger_session_id] = reverse_session
                 if isinstance(result, dict):
                     result["debugger_session"] = debugger_session_id
+                touch_session(state.session_activity, debugger_session_id)
 
         # After reverse.detach — remove session
         if body.module_id == "reverse.detach":
             session_id = ctx.get("debugger_session")
             if session_id and session_id in state.debugger_sessions:
                 del state.debugger_sessions[session_id]
+                untrack_session(state.session_activity, session_id)
             elif len(state.debugger_sessions) == 1:
+                for stale_id in list(state.debugger_sessions):
+                    untrack_session(state.session_activity, stale_id)
                 state.debugger_sessions.clear()
 
         duration_ms = int((time.time() - t0) * 1000)

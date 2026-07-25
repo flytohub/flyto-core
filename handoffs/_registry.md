@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-07-25 | Reverse-engineering toolkit — hook robustness + session reaper | `2026-07-25-reverse-hardening.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit — source map resolution | `2026-07-25-reverse-sourcemap.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit, Phase 3 | `2026-07-25-reverse-code-phase3.md` | Active |
 | 2026-07-25 | Reverse-engineering debugger, Phase 2 | `2026-07-25-reverse-debugger-phase2.md` | Active |

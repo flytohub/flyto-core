@@ -458,7 +458,49 @@ class TestReverseSubPhaseC:
         assert result["status"] == "success"
         assert result["count"] == 0
 
-    async def test_08_detach(self, ctx):
+    async def test_08_hook_survives_lazy_definition(self, ctx):
+        # Install a hook on a property that doesn't exist yet — unlike a
+        # direct property wrap, the Object.defineProperty trap installs
+        # regardless, and only starts recording once the page assigns it.
+        result = await run("reverse.hook", {
+            "action": "install",
+            "function_path": "window.lazyAppFn",
+        }, ctx)
+        assert result["status"] == "success"
+        hook_id = result["hookId"]
+
+        driver = ctx["browser"]
+        value = await driver.evaluate("() => { window.lazyAppFn = function(a, b) { return a + b; }; return window.lazyAppFn(2, 3); }")
+        assert value == 5
+
+        records = await run("reverse.hook", {"action": "get_records", "hook_id": hook_id}, ctx)
+        assert records["status"] == "success"
+        assert records["count"] == 1
+        assert records["records"][0]["args"] == [2, 3]
+        assert records["records"][0]["result"] == 5
+
+        ctx["_lazy_hook_id"] = hook_id
+
+    async def test_09_hook_survives_reassignment(self, ctx):
+        # The page overwrites the same property a second time — the hook
+        # must re-wrap the new function and keep recording, not silently
+        # stop after the first reassignment.
+        driver = ctx["browser"]
+        value = await driver.evaluate("() => { window.lazyAppFn = function(a, b) { return a * b; }; return window.lazyAppFn(4, 5); }")
+        assert value == 20
+
+        records = await run("reverse.hook", {
+            "action": "get_records",
+            "hook_id": ctx["_lazy_hook_id"],
+        }, ctx)
+        assert records["status"] == "success"
+        assert records["count"] == 2
+        assert records["records"][1]["args"] == [4, 5]
+        assert records["records"][1]["result"] == 20
+
+        await run("reverse.hook", {"action": "remove", "hook_id": ctx["_lazy_hook_id"]}, ctx)
+
+    async def test_10_detach(self, ctx):
         result = await run("reverse.detach", {}, ctx)
         assert result["status"] == "success"
 

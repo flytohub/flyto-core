@@ -2,7 +2,7 @@
 
 # Configuration And Packaged Assets
 
-Implementation sources read **103 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
+Implementation sources read **104 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
 
 ## Environment variables
 
@@ -36,12 +36,13 @@ Implementation sources read **103 environment-variable names**. The package ship
 | `FLYTO_GRANTED_PERMISSIONS` | [`src/core/module_policy.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L171) |
 | `FLYTO_HTTP_ALLOWED_PORTS` | [`src/core/utils.py:545`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L545) |
 | `FLYTO_HTTP_DISABLE_SSRF_GUARD` | [`src/core/utils.py:574`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L574) |
-| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L61) |
+| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L67) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L80) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L87) |
 | `FLYTO_RUNNER_SECRET` | [`src/core/verification_service.py:389`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L389), [`src/core/verification_service.py:425`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L425) |
 | `FLYTO_SANDBOX_DIR` | [`src/core/utils.py:905`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L905) |
 | `FLYTO_SANDBOX_INHERIT_ENV` | [`src/core/safe_env.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/safe_env.py#L40) |
+| `FLYTO_SESSION_IDLE_TIMEOUT_S` | [`src/core/session_reaper.py:37`](https://github.com/flytohub/flyto-core/blob/main/src/core/session_reaper.py#L37) |
 | `FLYTO_STORAGE_DIR` | [`src/core/modules/atomic/storage/kv.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/storage/kv.py#L25) |
 | `FLYTO_TEST_EMAIL` | [`scripts/mcp_drive_login.py:87`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_login.py#L87), [`scripts/mcp_find_orgid.py:50`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_find_orgid.py#L50), [`scripts/mcp_grab_ctem_error.py:41`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_grab_ctem_error.py#L41), [`scripts/mcp_grab_ctem_html.py:53`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_grab_ctem_html.py#L53), [`scripts/mcp_tour.py:116`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour.py#L116), [`scripts/mcp_tour_ctem_uglies.py:86`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_ctem_uglies.py#L86), [`scripts/mcp_tour_custom_picker.py:145`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_custom_picker.py#L145), [`scripts/mcp_tour_projecttype.py:134`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_projecttype.py#L134), [`scripts/mcp_tour_workspace.py:100`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_workspace.py#L100) |
 | `FLYTO_TEST_ORG_ID` | [`scripts/mcp_tour.py:185`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour.py#L185) |

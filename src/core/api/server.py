@@ -11,6 +11,7 @@ Usage:
     flyto serve --port 9000         # Custom port
 """
 
+import asyncio
 import importlib.metadata
 import logging
 from contextlib import asynccontextmanager
@@ -21,6 +22,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.catalog_facts import CORE_CATALOG_CATEGORY_COUNT, CORE_MODULE_COUNT
+from core.session_reaper import reaper_loop
 
 from .routes import mcp_router, modules_router, replay_router, workflows_router
 from .security import enforce_bind_policy, get_cors_origins, init_auth
@@ -54,16 +56,29 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        reaper_task = asyncio.create_task(
+            reaper_loop(state.browser_sessions, state.debugger_sessions, state.session_activity)
+        )
         try:
             yield
         finally:
+            reaper_task.cancel()
+            await asyncio.gather(reaper_task, return_exceptions=True)
+
+            for session in list(state.debugger_sessions.values()):
+                try:
+                    await session.detach()
+                except Exception:
+                    logger.exception("Failed to detach debugger session during shutdown")
+            state.debugger_sessions.clear()
+
             for driver in list(state.browser_sessions.values()):
                 try:
                     await driver.close()
                 except RuntimeError:
                     logger.exception("Failed to close browser session during shutdown")
             state.browser_sessions.clear()
-            logger.info("Server shutdown - browser sessions cleaned up")
+            logger.info("Server shutdown - browser and debugger sessions cleaned up")
 
     app = FastAPI(
         title="flyto-core Execution API",

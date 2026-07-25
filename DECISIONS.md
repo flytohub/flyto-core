@@ -1,5 +1,64 @@
 # Decisions
 
+## 2026-07-25 - reverse.hook rewritten on Object.defineProperty; session idle-timeout reaper added
+
+Decision (hook redesign): `reverse.hook`'s injected JS (`_HOOK_SCRIPT_TEMPLATE`
+in `src/core/browser/reverse_session.py`) now traps the target property with
+a single `Object.defineProperty(parent, key, {get, set})` accessor instead of
+directly overwriting `parent[key]` once at install time.
+
+Reason: the previous one-shot overwrite had two known gaps — a property the
+page assigns *after* the init script runs was never wrapped (nothing existed
+yet to overwrite), and a page reassigning an already-hooked property silently
+clobbered the hook, ending recording with no error. The accessor closes both
+gaps at once: the `set` trap re-wraps whatever value gets assigned (including
+the first-ever assignment of a not-yet-defined property), and the `get` trap
+always returns the current wrapped version. Verified empirically with a
+Playwright scratch script across 4 scenarios (hook-before-define, hook survives
+reassignment, hooking an existing built-in like `Math.max`, and reload
+persistence) before touching the real module, per this codebase's established
+"verify empirically first" discipline. `defineProperty` throwing (some
+built-ins are non-configurable) falls back to the old one-time direct wrap —
+narrower, but not a regression, since that path never worked with reassignment
+anyway. Remaining known limitation: a path whose *immediate parent* object
+does not exist yet at document-start (e.g. `myNamespace.fn` where
+`myNamespace` itself is lazily created later) still cannot be trapped — the
+common cases (`window.X`, existing built-in namespaces) are unaffected. No
+Python-level API change — `install_hook`/`remove_hook`/`list_hooks`/
+`get_hook_records` and `reverse.hook`'s params/output schema are untouched.
+
+Decision (session reaper): added `src/core/session_reaper.py`, a shared
+idle-timeout sweep wired identically into all three transports (STDIO
+`mcp_server.py`, HTTP MCP `api/routes/mcp.py`, plain REST
+`api/routes/modules.py`) plus the HTTP server's `lifespan` (`api/server.py`).
+It reaps both `browser_sessions` and `debugger_sessions` uniformly — closing
+or detaching, then removing from the relevant dict and from the shared
+`session_activity` timestamp map.
+
+Reason: before this, a session was only ever cleaned up by an explicit
+`browser.close`/`reverse.detach` call, or (STDIO only) on process EOF. A
+session abandoned mid-workflow — client crash, disconnect, forgotten cleanup
+— leaked a live Chromium process and/or CDP session for the server's entire
+lifetime. This applied to `browser_sessions` too (it never had a reaper
+either), so both are swept the same way rather than fixing only the newer
+`debugger_sessions` as a half-measure. Default timeout is 30 minutes
+(`FLYTO_SESSION_IDLE_TIMEOUT_S` env override), generous enough that a human
+actively debugging — including long pauses at a breakpoint while thinking —
+is unlikely to trip it; this is an intentional, documented tradeoff, not a
+bug. A session with **no** entry in `session_activity` is deliberately left
+alone rather than treated as stale — absence of activity data is not evidence
+of staleness, and protects any session minted by a code path that (for now
+or forever) doesn't call `touch_session`. This also fixed a small pre-existing
+gap noticed while wiring the HTTP server's shutdown path: it previously closed
+`browser_sessions` on shutdown but never detached `debugger_sessions`.
+
+Both items leave the accepted architectural constraints from earlier phases
+in place: sessions are still process-local (not shared across server
+instances or restarts — unchanged since Phase 1, mirrors `browser_sessions`'
+pre-existing design) and Phase 4 (real semantic deobfuscation) remains
+blocked on Node.js infrastructure that doesn't exist in this codebase yet
+(see the `reverse.code` decision below).
+
 ## 2026-07-25 - reverse.sourcemap hand-rolls VLQ decoding and never fetches anything itself
 
 Decision: `reverse.sourcemap` implements its own Source Map v3 base64-VLQ

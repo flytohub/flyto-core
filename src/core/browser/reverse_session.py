@@ -13,13 +13,16 @@ CDP freeze caveat: while paused at a breakpoint, the browser freezes the
 page's JS/renderer. Other browser.* steps issued before resume() will block
 until their own timeout. See DECISIONS.md.
 
-Hooking is intentionally scoped: reverse.hook wraps a function that already
-exists at the time install_hook() runs (either a built-in available from
-document start, e.g. `window.fetch`, or a page-defined function installed
-after the page has already loaded it). It does not install a
-lazy/Object.defineProperty guard for a property a page assigns *after* our
-init script runs, and it does not defend against the page later reassigning
-the same property out from under the hook. See DECISIONS.md.
+Hooking uses an Object.defineProperty(get/set) trap rather than a one-time
+direct reassignment, so it also wraps a function the page assigns *after*
+our init script runs (not just one that already exists at install time),
+and survives the page reassigning the same property afterward — both
+re-wrap transparently. The one remaining scope boundary: the property's
+*immediate parent* must already exist at document-start (true for
+`window.X` and built-in namespaces like `Math`/`JSON`, not for a path whose
+parent object is itself lazily created later). A handful of non-configurable
+built-ins fall back to a one-time direct wrap (hooks the current value, does
+not survive reassignment for that specific property). See DECISIONS.md.
 """
 import asyncio
 import json
@@ -62,9 +65,8 @@ _HOOK_SCRIPT_TEMPLATE = """
     parent = parent[parts[i]];
   }
   var key = parts[parts.length - 1];
-  if (!parent || typeof parent[key] !== 'function') return;
+  if (!parent) return;
 
-  var original = parent[key];
   window.__flytoHooks[hookId] = [];
 
   function safeSerialize(v) {
@@ -78,32 +80,67 @@ _HOOK_SCRIPT_TEMPLATE = """
     if (arr.length > maxRecords) arr.shift();
   }
 
-  parent[key] = function() {
-    var args = Array.prototype.slice.call(arguments);
-    var record = { timestamp: Date.now() };
-    if (captureArgs) record.args = args.map(safeSerialize);
-    var result;
-    try {
-      result = original.apply(this, args);
-    } catch (e) {
-      record.threw = safeSerialize(e && e.message ? e.message : String(e));
-      pushRecord(record);
-      throw e;
-    }
-    pushRecord(record);
-    if (captureResult) {
-      if (result && typeof result.then === 'function') {
-        result.then(function(v) { record.result = safeSerialize(v); })
-              .catch(function(e) { record.resultError = safeSerialize(e && e.message ? e.message : String(e)); });
-      } else {
-        record.result = safeSerialize(result);
+  function wrap(fn) {
+    if (typeof fn !== 'function') return fn;
+    return function() {
+      var args = Array.prototype.slice.call(arguments);
+      var record = { timestamp: Date.now() };
+      if (captureArgs) record.args = args.map(safeSerialize);
+      var result;
+      try {
+        result = fn.apply(this, args);
+      } catch (e) {
+        record.threw = safeSerialize(e && e.message ? e.message : String(e));
+        pushRecord(record);
+        throw e;
       }
+      pushRecord(record);
+      if (captureResult) {
+        if (result && typeof result.then === 'function') {
+          result.then(function(v) { record.result = safeSerialize(v); })
+                .catch(function(e) { record.resultError = safeSerialize(e && e.message ? e.message : String(e)); });
+        } else {
+          record.result = safeSerialize(result);
+        }
+      }
+      return result;
+    };
+  }
+
+  // currentRaw/currentWrapped are captured in this closure so the get/set
+  // trap below re-wraps every future assignment, not just the value
+  // present when the hook was installed — this is what makes the hook
+  // survive both "not-yet-defined" and "reassigned later" cases.
+  var currentRaw = parent[key];
+  var currentWrapped = wrap(currentRaw);
+
+  try {
+    Object.defineProperty(parent, key, {
+      configurable: true,
+      enumerable: true,
+      get: function() { return currentWrapped; },
+      set: function(fn) {
+        currentRaw = fn;
+        currentWrapped = wrap(fn);
+      },
+    });
+  } catch (e) {
+    // Non-configurable property (some built-ins) — fall back to a one-time
+    // direct wrap. Hooks the current value; won't survive reassignment.
+    if (typeof parent[key] === 'function') {
+      var original = parent[key];
+      parent[key] = wrap(original);
+      window.__flytoHookRestore[hookId] = function() {
+        parent[key] = original;
+        delete window.__flytoHookRestore[hookId];
+      };
     }
-    return result;
-  };
+    return;
+  }
 
   window.__flytoHookRestore[hookId] = function() {
-    parent[key] = original;
+    try { delete parent[key]; } catch (e) {}
+    parent[key] = currentRaw;
     delete window.__flytoHookRestore[hookId];
   };
 })();

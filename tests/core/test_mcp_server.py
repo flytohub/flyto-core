@@ -14,15 +14,17 @@ import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import the module under test
-from core.mcp_server import execute_module, _browser_sessions
+from core.mcp_server import execute_module, _browser_sessions, _session_activity
 
 
 @pytest.fixture(autouse=True)
 def clear_sessions():
     """Ensure clean session state for each test."""
     _browser_sessions.clear()
+    _session_activity.clear()
     yield
     _browser_sessions.clear()
+    _session_activity.clear()
 
 
 def _make_mock_module(ok=True, data=None):
@@ -192,6 +194,42 @@ class TestBrowserCloseRemovesSession:
         assert result["ok"] is True
         assert "keep" in _browser_sessions
         assert "remove" not in _browser_sessions
+
+
+class TestSessionActivityTracking:
+    """browser.launch/close should populate/clear _session_activity."""
+
+    async def test_launch_populates_session_activity(self):
+        fake_driver = MagicMock()
+        launch_result = {"status": "success"}
+
+        mock_instance = MagicMock()
+        mock_instance.run = AsyncMock(return_value=launch_result)
+
+        def capture_ctx(params, ctx):
+            ctx["browser"] = fake_driver
+            return mock_instance
+
+        mock_class = MagicMock(side_effect=capture_ctx)
+
+        with patch("core.modules.registry.ModuleRegistry.get", return_value=mock_class):
+            result = await execute_module("browser.launch", {"headless": True})
+
+        session_id = result["browser_session"]
+        assert session_id in _session_activity
+
+    async def test_close_clears_session_activity(self):
+        fake_driver = MagicMock()
+        _browser_sessions["sess-x"] = fake_driver
+        _session_activity["sess-x"] = 0.0
+
+        mock_class, mock_instance = _make_mock_module(ok=True, data={})
+        mock_class.side_effect = lambda params, ctx: mock_instance
+
+        with patch("core.modules.registry.ModuleRegistry.get", return_value=mock_class):
+            await execute_module("browser.close", {})
+
+        assert "sess-x" not in _session_activity
 
 
 class TestNonBrowserModulesUnaffected:

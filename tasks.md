@@ -20,6 +20,14 @@
 
 ## Done
 
+- Hardened the `reverse.*` toolkit: rewrote `reverse.hook`'s injected JS on
+  `Object.defineProperty` so hooks survive lazy (not-yet-defined) properties
+  and later reassignment (narrower known limitation: immediate parent object
+  must already exist), and added a shared session idle-timeout reaper
+  (`src/core/session_reaper.py`, 30 min default, `FLYTO_SESSION_IDLE_TIMEOUT_S`
+  override) wired into all three transports, reaping both `browser_sessions`
+  and `debugger_sessions` uniformly. No catalog/module-count change — no
+  new or changed module IDs.
 - Added `reverse.sourcemap` (resolve/list_sources/get_original_source):
   hand-rolled Source Map v3 VLQ decoder, no pip dependency, no permission
   gate, delegates external `.map` fetches to the already SSRF-guarded

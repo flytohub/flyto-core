@@ -8,7 +8,7 @@
 | Literal module registrations | 481 |
 | Packaged recipes | 41 |
 | Maintained Python source | 948 files, 190,753 lines |
-| Python declarations | 5,482 across 801 files |
+| Python declarations | 5,489 across 802 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 22 |
 | Environment-variable names | 93 |

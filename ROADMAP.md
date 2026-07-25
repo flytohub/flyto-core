@@ -41,6 +41,17 @@
   workflow step). Not a new numbered phase — it fills a capability gap in
   Phase 1-3 rather than adding a new tier. See `DECISIONS.md`
   (2026-07-25 sourcemap entry).
+- **Hardening pass (done, 2026-07-25):** `reverse.hook`'s JS rewritten on
+  `Object.defineProperty` so hooks survive both lazy (not-yet-defined at
+  install time) properties and later reassignment — narrows the previous
+  "only wraps what already exists" limitation down to just an
+  immediate-parent-doesn't-exist-yet edge case. Also added a shared session
+  idle-timeout reaper (`src/core/session_reaper.py`, 30 min default) wired
+  into all three transports, reaping both `browser_sessions` and
+  `debugger_sessions` uniformly so a session abandoned mid-workflow no
+  longer leaks for the server's full lifetime. Not a new phase — a
+  strengthening pass on Phase 1/2, same as the sourcemap entry above. See
+  `DECISIONS.md` (2026-07-25 hook/reaper entry).
 - **Phase 4 (not started):** true semantic deobfuscation — control-flow-
   flattening reversal, string-array decoding via constant folding, and other
   transforms that require actually executing/evaluating JS (Babel/webcrack-

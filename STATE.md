@@ -24,7 +24,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 948 maintained Python files, 5,482
+- Source-backed documentation now covers 948 maintained Python files, 5,489
   declarations, 481 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -40,20 +40,29 @@
 - Browser/E2E integrations that require external services, browsers, or
   credentials remain environment-backed evidence and are not inferred from the
   offline suite.
-- `reverse.*` (CDP debugger, Phase 1 + Phase 2) known risks: session state
-  (`ReverseSession` objects, keyed by `debugger_session` id) is process-local,
-  matching the existing `browser_sessions` constraint across all three
-  transports (STDIO MCP, HTTP MCP, plain REST) — a `debugger_session` id minted
-  by one server process cannot be resolved by another. Cleanup is manual:
-  `reverse.detach` is the primary path, and the STDIO transport's
-  EOF-cleanup loop best-effort `detach()`s any remaining debugger sessions
-  (including installed hooks, via `Page.removeScriptToEvaluateOnNewDocument`),
-  but there is no reaper/timeout thread for sessions abandoned mid-workflow.
-  `reverse.hook` only wraps a function that already exists when installed —
-  it has no lazy-hook guard for not-yet-defined properties and does not
-  defend against a page reassigning a hooked property afterward. See
-  DECISIONS.md for the pause/resume design rationale and the CDP-freeze
-  caveat.
+- `reverse.*` (CDP debugger, Phase 1 + Phase 2, hardened 2026-07-25) known
+  risks: session state (`ReverseSession` objects, keyed by `debugger_session`
+  id) is process-local, matching the existing `browser_sessions` constraint
+  across all three transports (STDIO MCP, HTTP MCP, plain REST) — a
+  `debugger_session` id minted by one server process cannot be resolved by
+  another; this remains an accepted constraint, not something planned for
+  redesign. Cleanup is now three-layered: explicit `reverse.detach`/
+  `browser.close` (primary path), a shared idle-timeout reaper
+  (`src/core/session_reaper.py`, 30 min default via
+  `FLYTO_SESSION_IDLE_TIMEOUT_S`) wired into all three transports that
+  closes/detaches sessions with no recorded activity past the timeout, and
+  the STDIO transport's EOF-cleanup loop as a final backstop. A session
+  abandoned mid-workflow (crash, disconnect) no longer leaks its Chromium
+  process/CDP session for the server's entire lifetime, though process-local
+  scoping is still unchanged. `reverse.hook` now traps the target property
+  with `Object.defineProperty` (get/set accessor) instead of a one-time
+  overwrite, so it survives both a page assigning the property after install
+  and a page reassigning it later; the one remaining known limitation is
+  narrower — a path whose *immediate parent* object doesn't exist yet at
+  document-start (e.g. `myNamespace.fn` where `myNamespace` is itself
+  lazily created) still can't be trapped. See DECISIONS.md for the
+  pause/resume design rationale, the CDP-freeze caveat, and the hook/reaper
+  redesign rationale.
 - `reverse.code` (Phase 3) requires the optional `jsast` extra
   (`tree-sitter`, `tree-sitter-javascript`, `jsbeautifier`) — raises a clear
   `pip install 'flyto-core[jsast]'` error if it isn't installed. Unlike the
