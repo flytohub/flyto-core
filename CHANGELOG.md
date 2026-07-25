@@ -19,6 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which is deny-by-default (added to `_DANGEROUS_PERMISSIONS`) since a paused
   debugger can read secrets held in page memory and freezes the page's JS.
   Reconciled the generated catalog to 461 modules across 85 categories.
+- Added Phase 2 of the `reverse.*` toolkit: `reverse.hook`
+  (install/remove/list/get_records) wraps a JS function via CDP's
+  `Page.addScriptToEvaluateOnNewDocument` so calls, arguments, and return
+  values are recorded without a paused breakpoint; `reverse.network`
+  (start/stop/list/get_initiator) traces which JS call stack triggered a
+  given HTTP request via CDP's Network domain; `reverse.websocket`
+  (start/stop/list/get_frames) captures WebSocket connections and frames.
+  All three extend the same `ReverseSession`/CDP session `reverse.attach`
+  already creates rather than a second session type — Debugger stays enabled
+  so initiator stacks stay rich, and no new transport-wiring was needed since
+  the existing `debugger_session` registry already covers any `reverse.*` id.
+  Reconciled the generated catalog to 464 modules across 85 categories.
 
 ## [2.26.10] - 2026-07-23
 

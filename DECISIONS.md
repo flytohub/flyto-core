@@ -1,5 +1,43 @@
 # Decisions
 
+## 2026-07-25 - reverse.* Phase 2 extends ReverseSession instead of a second session type
+
+Decision: `reverse.hook`, `reverse.network`, and `reverse.websocket` (function
+hooking, network-initiator tracing, WebSocket capture) all operate on the same
+`ReverseSession`/CDP session that `reverse.attach` already creates, rather
+than opening a parallel CDP session or session registry for Network/Page
+domain work.
+
+Reason: two independent arguments point the same way. First, Chrome only
+populates `Network.requestWillBeSent`'s `initiator.stack` with full JS call
+frames when the Debugger agent is active — `ReverseSession.enable()` already
+calls `Debugger.enable` unconditionally, so a shared session gets rich
+initiator stacks for free, while a standalone Network-only session would get
+poorer data. Second, `mcp_handler.py`'s `is_reverse = module_id.startswith("reverse.")`
+check and the existing `debugger_session` registry (wired across STDIO MCP,
+HTTP MCP, and plain REST in Phase 1) already generically cover any new
+`reverse.*` module id — extending the one session type meant Phase 2 needed
+zero new transport-wiring changes.
+
+Decision: `reverse.hook` wraps a function that already exists at the time
+`install_hook()` runs — a built-in available from document start (e.g.
+`window.fetch`, `window.Math.max`) or a page-defined function installed after
+the page has already loaded it. It does not implement an
+`Object.defineProperty`-based lazy-hook guard for a property a page assigns
+*after* our init script runs, and it does not defend against the page later
+reassigning the same property out from under an installed hook.
+
+Reason: a fully general lazy-hook (trapping assignment of a not-yet-defined,
+possibly-deeply-nested property, and re-trapping after reassignment) is
+substantially more complex than direct wrapping, and the direct-wrap approach
+already covers the two most common real cases (hooking built-in browser APIs,
+and hooking an already-loaded page function after navigation). Documenting
+the limitation keeps Phase 2's scope matched to its actual engineering cost;
+a lazy-hook guard can be added later as a targeted enhancement if a concrete
+use case needs it, without changing `reverse.hook`'s params_schema or the
+CDP-level mechanism (`Page.addScriptToEvaluateOnNewDocument` /
+`Page.removeScriptToEvaluateOnNewDocument`).
+
 ## 2026-07-25 - reverse.* CDP debugger uses a dedicated pause/resume primitive, not BreakpointManager
 
 Decision: `ReverseSession` (src/core/browser/reverse_session.py) owns its own

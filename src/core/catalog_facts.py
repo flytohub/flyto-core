@@ -2,7 +2,7 @@
 
 """Public catalog facts shared by user-facing help text."""
 
-CORE_MODULE_COUNT = 461
+CORE_MODULE_COUNT = 464
 CORE_CATALOG_CATEGORY_COUNT = 85
 BUILT_IN_RECIPE_COUNT = 41
 BROWSER_MODULE_COUNT = 54

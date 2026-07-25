@@ -7,9 +7,9 @@
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.
 - Add recipe fixtures for capability states and report/export flows.
 - Keep maintained recipe bundle tests aligned with product-loop contracts.
-- Reverse-engineering toolkit Phase 2+: function hooking, network-initiator
-  tracing, WebSocket frame capture, and deobfuscation/AST tooling (see
-  `ROADMAP.md` 0.5).
+- Reverse-engineering toolkit Phase 2+ remaining: deobfuscation/AST tooling
+  (see `ROADMAP.md` 0.5) — needs new npm dependencies and a cross-platform
+  Node invocation path, not started.
 
 ## Watch
 
@@ -19,6 +19,12 @@
 
 ## Done
 
+- Added Phase 2 of the `reverse.*` toolkit: `reverse.hook`
+  (install/remove/list/get_records), `reverse.network`
+  (start/stop/list/get_initiator), and `reverse.websocket`
+  (start/stop/list/get_frames) — all extending the same `ReverseSession`/CDP
+  session Phase 1's `reverse.attach` creates. Reconciled the generated
+  catalog to 464 modules / 85 categories.
 - Added the `reverse.*` CDP debugger module category (Phase 1 of the
   reverse-engineering toolkit): attach/detach, script list/get_source/search,
   breakpoint set/remove, wait_paused, resume, step, get_call_frames, and

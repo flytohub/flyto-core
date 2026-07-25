@@ -16,12 +16,21 @@
   `evaluate_on_call_frame`. Gated behind the deny-by-default `browser.debug`
   permission. See `DECISIONS.md` (2026-07-25 entries) for the pause/resume and
   CDP-freeze design rationale.
-- **Phase 2+ (not started, explicitly out of scope for Phase 1):** function
-  hooking (intercept/rewrite calls without a paused breakpoint), network-
-  initiator tracing (which JS call triggered a given request), WebSocket frame
-  capture, and deobfuscation/AST tooling (variable renaming, control-flow
-  simplification, static analysis of minified/obfuscated bundles). Each is a
-  separate follow-up phase, not an extension of the Phase 1 module set.
+- **Phase 2 (done, 2026-07-25):** function hooking (`reverse.hook` —
+  install/remove/list/get_records via CDP's
+  `Page.addScriptToEvaluateOnNewDocument`), network-initiator tracing
+  (`reverse.network` — which JS call stack triggered a given request, via
+  CDP's Network domain), and WebSocket frame capture (`reverse.websocket`).
+  All three extend the same `ReverseSession`/CDP session `reverse.attach`
+  creates rather than a second session type. See `DECISIONS.md`
+  (2026-07-25 Phase 2 entry) for the rationale and known hooking limitations.
+- **Phase 2+ remaining (not started, explicitly out of scope for Phase 1/2):**
+  deobfuscation/AST tooling (variable renaming, control-flow simplification,
+  static analysis of minified/obfuscated bundles) — needs new npm
+  dependencies (repo's `package.json` currently has none for AST/parsing) and
+  a reliable cross-platform Node invocation path, a different engineering
+  axis from the CDP-wrapping work above. A separate follow-up phase, not an
+  extension of the Phase 1/2 module set.
 
 ### 1. Marketplace Ecosystem
 - Template marketplace for buying/selling workflows

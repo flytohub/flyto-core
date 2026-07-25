@@ -4,16 +4,28 @@
 ReverseSession - CDP Debugger wrapper for interactive JS debugging.
 
 Thin Playwright/CDP wrapper, sibling of BrowserDriver. Owns a single CDP
-session against a page's Debugger domain: script inventory, breakpoints,
-and pause/resume/step state. Has no BaseModule knowledge — the reverse.*
+session against a page's Debugger, Page, and Network domains: script
+inventory, breakpoints, pause/resume/step state, installed function hooks,
+and request/WebSocket capture. Has no BaseModule knowledge — the reverse.*
 modules translate params <-> these methods.
 
 CDP freeze caveat: while paused at a breakpoint, the browser freezes the
 page's JS/renderer. Other browser.* steps issued before resume() will block
 until their own timeout. See DECISIONS.md.
+
+Hooking is intentionally scoped: reverse.hook wraps a function that already
+exists at the time install_hook() runs (either a built-in available from
+document start, e.g. `window.fetch`, or a page-defined function installed
+after the page has already loaded it). It does not install a
+lazy/Object.defineProperty guard for a property a page assigns *after* our
+init script runs, and it does not defend against the page later reassigning
+the same property out from under the hook. See DECISIONS.md.
 """
 import asyncio
+import json
 import logging
+import time
+import uuid
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -22,9 +34,85 @@ logger = logging.getLogger(__name__)
 # against a large bundle can't blow up the response.
 _MAX_SEARCH_MATCHES_PER_SCRIPT = 200
 
+# Bound how many requests/websocket connections and frames-per-connection are
+# retained so a chatty page can't grow the session's memory unbounded.
+_MAX_NETWORK_REQUESTS = 500
+_MAX_WEBSOCKET_FRAMES_PER_CONNECTION = 200
+
+# Placeholder-based template (not an f-string) so the many literal JS braces
+# below don't need escaping. Values are substituted via .replace() after
+# json.dumps()-encoding any string coming from module params, so a
+# function_path containing quotes/backticks can't break out of the snippet.
+_HOOK_SCRIPT_TEMPLATE = """
+(function() {
+  var path = __FUNCTION_PATH__;
+  var hookId = __HOOK_ID__;
+  var captureArgs = __CAPTURE_ARGS__;
+  var captureResult = __CAPTURE_RESULT__;
+  var maxRecords = __MAX_RECORDS__;
+
+  window.__flytoHooks = window.__flytoHooks || {};
+  window.__flytoHookRestore = window.__flytoHookRestore || {};
+  if (window.__flytoHookRestore[hookId]) return;
+
+  var parts = path.split('.');
+  var parent = window;
+  for (var i = 0; i < parts.length - 1; i++) {
+    if (parent == null) { parent = null; break; }
+    parent = parent[parts[i]];
+  }
+  var key = parts[parts.length - 1];
+  if (!parent || typeof parent[key] !== 'function') return;
+
+  var original = parent[key];
+  window.__flytoHooks[hookId] = [];
+
+  function safeSerialize(v) {
+    try { return JSON.parse(JSON.stringify(v)); }
+    catch (e) { try { return String(v); } catch (e2) { return null; } }
+  }
+
+  function pushRecord(rec) {
+    var arr = window.__flytoHooks[hookId];
+    arr.push(rec);
+    if (arr.length > maxRecords) arr.shift();
+  }
+
+  parent[key] = function() {
+    var args = Array.prototype.slice.call(arguments);
+    var record = { timestamp: Date.now() };
+    if (captureArgs) record.args = args.map(safeSerialize);
+    var result;
+    try {
+      result = original.apply(this, args);
+    } catch (e) {
+      record.threw = safeSerialize(e && e.message ? e.message : String(e));
+      pushRecord(record);
+      throw e;
+    }
+    pushRecord(record);
+    if (captureResult) {
+      if (result && typeof result.then === 'function') {
+        result.then(function(v) { record.result = safeSerialize(v); })
+              .catch(function(e) { record.resultError = safeSerialize(e && e.message ? e.message : String(e)); });
+      } else {
+        record.result = safeSerialize(result);
+      }
+    }
+    return result;
+  };
+
+  window.__flytoHookRestore[hookId] = function() {
+    parent[key] = original;
+    delete window.__flytoHookRestore[hookId];
+  };
+})();
+"""
+
 
 class ReverseSession:
-    """CDP Debugger session for one page: scripts, breakpoints, pause/resume/step."""
+    """CDP session for one page: scripts, breakpoints, pause/resume/step,
+    installed function hooks, and request/WebSocket capture."""
 
     def __init__(self, driver: Any):
         """
@@ -41,6 +129,15 @@ class ReverseSession:
         self._paused_event = asyncio.Event()
         self._last_pause: Optional[dict] = None
         self._enabled = False
+
+        # Page domain (function hooking via addScriptToEvaluateOnNewDocument)
+        self._page_domain_enabled = False
+        self._hooks: Dict[str, dict] = {}
+
+        # Network domain (request-initiator tracing + WebSocket capture)
+        self._network_enabled = False
+        self._requests: Dict[str, dict] = {}
+        self._websockets: Dict[str, dict] = {}
 
     @property
     def is_paused(self) -> bool:
@@ -80,10 +177,29 @@ class ReverseSession:
 
         try:
             if self._cdp:
+                # Best-effort: stop any installed hooks from re-applying on
+                # future navigations. Does not attempt to restore the current
+                # page's live bindings — the session (and page, usually) is
+                # going away anyway.
+                for hook_id, hook in list(self._hooks.items()):
+                    try:
+                        await self._cdp.send(
+                            'Page.removeScriptToEvaluateOnNewDocument',
+                            {'identifier': hook['cdpScriptId']},
+                        )
+                    except Exception:
+                        logger.debug("Failed to remove hook %s on detach", hook_id, exc_info=True)
+
                 try:
                     self._cdp.remove_listener('Debugger.scriptParsed', self._on_script_parsed)
                     self._cdp.remove_listener('Debugger.paused', self._on_paused)
                     self._cdp.remove_listener('Debugger.resumed', self._on_resumed)
+                    if self._network_enabled:
+                        self._cdp.remove_listener('Network.requestWillBeSent', self._on_request_will_be_sent)
+                        self._cdp.remove_listener('Network.webSocketCreated', self._on_websocket_created)
+                        self._cdp.remove_listener('Network.webSocketFrameSent', self._on_websocket_frame_sent)
+                        self._cdp.remove_listener('Network.webSocketFrameReceived', self._on_websocket_frame_received)
+                        self._cdp.remove_listener('Network.webSocketClosed', self._on_websocket_closed)
                 except Exception:
                     pass
                 try:
@@ -95,6 +211,11 @@ class ReverseSession:
             self._cdp = None
             self._paused_event.clear()
             self._last_pause = None
+            self._page_domain_enabled = False
+            self._hooks.clear()
+            self._network_enabled = False
+            self._requests.clear()
+            self._websockets.clear()
 
         return {'status': 'success'}
 
@@ -300,3 +421,277 @@ class ReverseSession:
             'status': 'success',
             'result': result.get('result', {}),
         }
+
+    # -------------------------------------------------------------------
+    # Function hooking (Page domain: addScriptToEvaluateOnNewDocument)
+    # -------------------------------------------------------------------
+
+    async def install_hook(
+        self,
+        function_path: str,
+        capture_args: bool = True,
+        capture_result: bool = True,
+        max_records: int = 500,
+    ) -> Dict[str, Any]:
+        """Wrap a JS function so every call/return/throw is recorded.
+
+        Applies both to future navigations (via
+        Page.addScriptToEvaluateOnNewDocument, which runs before the page's
+        own scripts) and immediately to the current page (via page.evaluate)
+        so a function already present on an already-loaded page gets hooked
+        too. Only wraps a function that already exists at the time the
+        wrapping code runs — see module docstring for the not-yet-defined
+        limitation.
+        """
+        if not self._page_domain_enabled:
+            await self._cdp.send('Page.enable')
+            self._page_domain_enabled = True
+
+        hook_id = f"hook_{uuid.uuid4().hex[:8]}"
+        hook_js = self._build_hook_script(
+            function_path, hook_id, capture_args, capture_result, max_records,
+        )
+
+        result = await self._cdp.send('Page.addScriptToEvaluateOnNewDocument', {'source': hook_js})
+
+        entry = {
+            'hookId': hook_id,
+            'functionPath': function_path,
+            'cdpScriptId': result.get('identifier'),
+            'installedAt': time.time(),
+        }
+        self._hooks[hook_id] = entry
+
+        try:
+            await self._page.evaluate(hook_js)
+        except Exception:
+            logger.debug(
+                "Immediate hook application failed for %s (target may not exist yet)",
+                function_path, exc_info=True,
+            )
+
+        return entry
+
+    async def remove_hook(self, hook_id: str) -> Dict[str, Any]:
+        entry = self._hooks.get(hook_id)
+        if not entry:
+            return {'status': 'success', 'note': 'hook not found', 'hookId': hook_id}
+
+        try:
+            await self._cdp.send(
+                'Page.removeScriptToEvaluateOnNewDocument',
+                {'identifier': entry['cdpScriptId']},
+            )
+        except Exception:
+            logger.debug("Failed to remove init script for hook %s", hook_id, exc_info=True)
+
+        hook_id_js = json.dumps(hook_id)
+        restore_script = (
+            "() => {"
+            "  if (window.__flytoHookRestore && window.__flytoHookRestore[" + hook_id_js + "]) {"
+            "    window.__flytoHookRestore[" + hook_id_js + "]();"
+            "  }"
+            "}"
+        )
+        try:
+            await self._page.evaluate(restore_script)
+        except Exception:
+            logger.debug("Failed to restore original function for hook %s", hook_id, exc_info=True)
+
+        self._hooks.pop(hook_id, None)
+        return {'status': 'success', 'hookId': hook_id}
+
+    def list_hooks(self) -> List[dict]:
+        return list(self._hooks.values())
+
+    async def get_hook_records(self, hook_id: str, clear: bool = False) -> List[dict]:
+        hook_id_js = json.dumps(hook_id)
+        clear_js = 'true' if clear else 'false'
+        script = (
+            "() => {"
+            "  var arr = (window.__flytoHooks && window.__flytoHooks[" + hook_id_js + "]) || [];"
+            "  var copy = arr.slice();"
+            "  if (" + clear_js + " && window.__flytoHooks) { window.__flytoHooks[" + hook_id_js + "] = []; }"
+            "  return copy;"
+            "}"
+        )
+        return await self._page.evaluate(script)
+
+    def _build_hook_script(
+        self,
+        function_path: str,
+        hook_id: str,
+        capture_args: bool,
+        capture_result: bool,
+        max_records: int,
+    ) -> str:
+        script = _HOOK_SCRIPT_TEMPLATE
+        script = script.replace('__FUNCTION_PATH__', json.dumps(function_path))
+        script = script.replace('__HOOK_ID__', json.dumps(hook_id))
+        script = script.replace('__CAPTURE_ARGS__', 'true' if capture_args else 'false')
+        script = script.replace('__CAPTURE_RESULT__', 'true' if capture_result else 'false')
+        script = script.replace('__MAX_RECORDS__', str(int(max_records)))
+        return script
+
+    # -------------------------------------------------------------------
+    # Network (request-initiator tracing + WebSocket capture)
+    # -------------------------------------------------------------------
+
+    async def enable_network(self) -> None:
+        """Enable the Network domain. Idempotent — safe to call from both
+        reverse.network and reverse.websocket."""
+        if self._network_enabled:
+            return
+
+        # Listeners before Network.enable, same reasoning as Debugger.enable
+        # in enable() — consistent practice even though Network domain has no
+        # equivalent scriptParsed-style backfill for already-sent requests.
+        self._cdp.on('Network.requestWillBeSent', self._on_request_will_be_sent)
+        self._cdp.on('Network.webSocketCreated', self._on_websocket_created)
+        self._cdp.on('Network.webSocketFrameSent', self._on_websocket_frame_sent)
+        self._cdp.on('Network.webSocketFrameReceived', self._on_websocket_frame_received)
+        self._cdp.on('Network.webSocketClosed', self._on_websocket_closed)
+
+        await self._cdp.send('Network.enable')
+        self._network_enabled = True
+
+    async def disable_network(self) -> None:
+        if not self._network_enabled:
+            return
+        try:
+            self._cdp.remove_listener('Network.requestWillBeSent', self._on_request_will_be_sent)
+            self._cdp.remove_listener('Network.webSocketCreated', self._on_websocket_created)
+            self._cdp.remove_listener('Network.webSocketFrameSent', self._on_websocket_frame_sent)
+            self._cdp.remove_listener('Network.webSocketFrameReceived', self._on_websocket_frame_received)
+            self._cdp.remove_listener('Network.webSocketClosed', self._on_websocket_closed)
+        except Exception:
+            pass
+        try:
+            await self._cdp.send('Network.disable')
+        except Exception:
+            logger.debug("Network.disable failed", exc_info=True)
+        self._network_enabled = False
+
+    async def _on_request_will_be_sent(self, params: dict) -> None:
+        request_id = params.get('requestId')
+        if not request_id:
+            return
+        request = params.get('request', {})
+        self._requests[request_id] = {
+            'requestId': request_id,
+            'url': request.get('url', ''),
+            'method': request.get('method', ''),
+            'resourceType': params.get('type', ''),
+            'timestamp': params.get('timestamp'),
+            'initiator': params.get('initiator', {}),
+        }
+        if len(self._requests) > _MAX_NETWORK_REQUESTS:
+            oldest_id = next(iter(self._requests))
+            del self._requests[oldest_id]
+
+    def list_requests(self) -> List[dict]:
+        return [
+            {
+                'requestId': r['requestId'],
+                'url': r['url'],
+                'method': r['method'],
+                'resourceType': r['resourceType'],
+                'timestamp': r['timestamp'],
+            }
+            for r in self._requests.values()
+        ]
+
+    def get_request_initiator(self, request_id: str) -> Dict[str, Any]:
+        entry = self._requests.get(request_id)
+        if not entry:
+            raise ValueError(f"Unknown request_id: {request_id}")
+
+        initiator = entry.get('initiator', {})
+        frames: List[dict] = []
+
+        def _walk(stack: Optional[dict]) -> None:
+            if not stack:
+                return
+            for frame in stack.get('callFrames', []):
+                frames.append({
+                    'functionName': frame.get('functionName', ''),
+                    'url': frame.get('url', ''),
+                    'lineNumber': frame.get('lineNumber'),
+                    'columnNumber': frame.get('columnNumber'),
+                })
+            _walk(stack.get('parent'))
+
+        _walk(initiator.get('stack'))
+
+        return {
+            'requestId': request_id,
+            'type': initiator.get('type', ''),
+            'url': initiator.get('url'),
+            'stack': frames,
+        }
+
+    async def _on_websocket_created(self, params: dict) -> None:
+        request_id = params.get('requestId')
+        if not request_id:
+            return
+        self._websockets[request_id] = {
+            'requestId': request_id,
+            'url': params.get('url', ''),
+            'createdAt': time.time(),
+            'closedAt': None,
+            'frames': [],
+        }
+
+    async def _on_websocket_frame_sent(self, params: dict) -> None:
+        self._append_websocket_frame(params, direction='sent')
+
+    async def _on_websocket_frame_received(self, params: dict) -> None:
+        self._append_websocket_frame(params, direction='received')
+
+    def _append_websocket_frame(self, params: dict, direction: str) -> None:
+        conn = self._websockets.get(params.get('requestId'))
+        if conn is None:
+            return
+        payload = params.get('response', {})
+        conn['frames'].append({
+            'direction': direction,
+            'opcode': payload.get('opcode'),
+            'payloadData': payload.get('payloadData', ''),
+            'timestamp': params.get('timestamp'),
+        })
+        if len(conn['frames']) > _MAX_WEBSOCKET_FRAMES_PER_CONNECTION:
+            conn['frames'].pop(0)
+
+    async def _on_websocket_closed(self, params: dict) -> None:
+        conn = self._websockets.get(params.get('requestId'))
+        if conn:
+            conn['closedAt'] = time.time()
+
+    def list_websockets(self) -> List[dict]:
+        return [
+            {
+                'requestId': ws['requestId'],
+                'url': ws['url'],
+                'createdAt': ws['createdAt'],
+                'closedAt': ws['closedAt'],
+                'frameCount': len(ws['frames']),
+            }
+            for ws in self._websockets.values()
+        ]
+
+    def get_websocket_frames(
+        self,
+        request_id: str,
+        direction: str = 'both',
+        limit: Optional[int] = None,
+    ) -> List[dict]:
+        conn = self._websockets.get(request_id)
+        if not conn:
+            raise ValueError(f"Unknown websocket request_id: {request_id}")
+
+        frames = conn['frames']
+        if direction != 'both':
+            frames = [f for f in frames if f['direction'] == direction]
+        if limit:
+            frames = frames[-limit:]
+        return frames

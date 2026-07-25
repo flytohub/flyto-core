@@ -1,14 +1,20 @@
 """
-E2E tests for the reverse.* CDP debugger modules (Phase 1).
+E2E tests for the reverse.* CDP debugger modules (Phase 1 + Phase 2).
 
 Real BrowserDriver + real CDP session against a locally served HTML page.
 Covers sub-phase A (attach/scripts/detach) and sub-phase B (breakpoint,
-pause/resume) from the build sequencing in the reverse.* debugger plan.
+pause/resume) from Phase 1, plus sub-phases C/D/E (function hooking,
+network-initiator tracing, WebSocket capture) from Phase 2.
 """
 import asyncio
+import base64
 import functools
+import hashlib
 import http.server
+import json
 import os
+import socket
+import struct
 import sys
 import tempfile
 import threading
@@ -47,6 +53,7 @@ class TestRegistration:
         "reverse.attach", "reverse.detach", "reverse.scripts",
         "reverse.breakpoint", "reverse.wait_paused", "reverse.resume",
         "reverse.step", "reverse.get_call_frames", "reverse.evaluate_on_call_frame",
+        "reverse.hook", "reverse.network", "reverse.websocket",
     ])
     def test_registered(self, mid):
         meta = ModuleRegistry.get_metadata(mid)
@@ -70,6 +77,10 @@ function computeSecret(x) {
   return localVar;
 }
 window.__computeSecretMarker = 'reverse-modules-test-marker';
+
+function triggerFetch() {
+  return fetch('/ping.json').then(function(r) { return r.json(); });
+}
 </script>
 </body>
 </html>
@@ -90,9 +101,10 @@ def event_loop():
 
 @pytest.fixture(scope="module")
 def local_server():
-    """Serve PAGE_HTML on a random local port."""
+    """Serve PAGE_HTML (plus a companion JSON endpoint for network tracing) on a random local port."""
     tmpdir = tempfile.mkdtemp()
     (Path(tmpdir) / "reverse_test.html").write_text(PAGE_HTML, encoding="utf-8")
+    (Path(tmpdir) / "ping.json").write_text('{"ok": true}', encoding="utf-8")
 
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=tmpdir)
     srv = http.server.HTTPServer(("127.0.0.1", 0), handler)
@@ -102,6 +114,115 @@ def local_server():
     with allow_local_http_port_for_test(port):
         yield f"http://127.0.0.1:{port}/reverse_test.html"
     srv.shutdown()
+
+
+# ─── Minimal stdlib-only WebSocket echo server (RFC 6455) ────────────────
+# No new pip dependency — `websockets` is present in some dev sandboxes only
+# as a transitive dep of unrelated tools and must not be relied on in CI.
+
+_WS_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+
+def _ws_accept_key(key: str) -> str:
+    digest = hashlib.sha1((key + _WS_MAGIC).encode("utf-8")).digest()
+    return base64.b64encode(digest).decode("utf-8")
+
+
+def _recv_ws_frame(conn):
+    header = conn.recv(2)
+    if len(header) < 2:
+        return None, None
+    b1, b2 = header[0], header[1]
+    opcode = b1 & 0x0F
+    masked = (b2 & 0x80) != 0
+    length = b2 & 0x7F
+    if length == 126:
+        length = struct.unpack(">H", conn.recv(2))[0]
+    elif length == 127:
+        length = struct.unpack(">Q", conn.recv(8))[0]
+    mask_key = conn.recv(4) if masked else None
+    data = b""
+    while len(data) < length:
+        chunk = conn.recv(length - len(data))
+        if not chunk:
+            break
+        data += chunk
+    if masked:
+        data = bytes(b ^ mask_key[i % 4] for i, b in enumerate(data))
+    return opcode, data
+
+
+def _send_ws_frame(conn, opcode: int, payload: bytes):
+    b1 = 0x80 | opcode  # FIN + opcode
+    length = len(payload)
+    if length < 126:
+        header = bytes([b1, length])
+    elif length < 65536:
+        header = bytes([b1, 126]) + struct.pack(">H", length)
+    else:
+        header = bytes([b1, 127]) + struct.pack(">Q", length)
+    conn.sendall(header + payload)
+
+
+def _ws_serve_one(sock):
+    """Accept exactly one connection, handshake, and echo text frames until close."""
+    conn, _ = sock.accept()
+    try:
+        request = b""
+        while b"\r\n\r\n" not in request:
+            chunk = conn.recv(4096)
+            if not chunk:
+                return
+            request += chunk
+        key = None
+        for line in request.decode("utf-8", errors="replace").split("\r\n"):
+            if line.lower().startswith("sec-websocket-key:"):
+                key = line.split(":", 1)[1].strip()
+        if not key:
+            return
+        response = (
+            "HTTP/1.1 101 Switching Protocols\r\n"
+            "Upgrade: websocket\r\nConnection: Upgrade\r\n"
+            f"Sec-WebSocket-Accept: {_ws_accept_key(key)}\r\n\r\n"
+        )
+        conn.sendall(response.encode("utf-8"))
+        while True:
+            opcode, data = _recv_ws_frame(conn)
+            if opcode is None:
+                break
+            if opcode == 0x8:  # close
+                _send_ws_frame(conn, 0x8, b"")
+                break
+            if opcode == 0x1:  # text frame — echo back
+                _send_ws_frame(conn, 0x1, data)
+    finally:
+        conn.close()
+
+
+@pytest.fixture(scope="module")
+def ws_server():
+    """Minimal local WebSocket echo server for capture tests."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", 0))
+    sock.listen(1)
+    port = sock.getsockname()[1]
+
+    def _serve_forever():
+        while True:
+            try:
+                _ws_serve_one(sock)
+            except OSError:
+                break
+
+    t = threading.Thread(target=_serve_forever, daemon=True)
+    t.start()
+    with allow_local_http_port_for_test(port):
+        yield f"ws://127.0.0.1:{port}/"
+    try:
+        sock.close()
+    except Exception:
+        pass
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -257,5 +378,199 @@ class TestReverseSubPhaseB:
         assert result["status"] == "success"
 
     async def test_08_detach(self, ctx):
+        result = await run("reverse.detach", {}, ctx)
+        assert result["status"] == "success"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Sub-phase C — function hooking
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.browser
+@pytest.mark.asyncio(loop_scope="module")
+class TestReverseSubPhaseC:
+
+    async def test_01_reattach(self, ctx):
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+
+    async def test_02_install_hook(self, ctx):
+        result = await run("reverse.hook", {
+            "action": "install",
+            "function_path": "window.Math.max",
+        }, ctx)
+        assert result["status"] == "success"
+        assert result["hookId"]
+        ctx["_hook_id"] = result["hookId"]
+
+    async def test_03_call_and_get_records(self, ctx):
+        driver = ctx["browser"]
+        value = await driver.evaluate("Math.max(1, 2, 3)")
+        assert value == 3
+
+        result = await run("reverse.hook", {
+            "action": "get_records",
+            "hook_id": ctx["_hook_id"],
+        }, ctx)
+        assert result["status"] == "success"
+        assert result["count"] == 1
+        assert result["records"][0]["args"] == [1, 2, 3]
+        assert result["records"][0]["result"] == 3
+
+    async def test_04_hook_survives_reload(self, ctx):
+        await ctx["browser"].real_page.reload(wait_until="load")
+
+        value = await ctx["browser"].evaluate("Math.max(10, 20)")
+        assert value == 20
+
+        result = await run("reverse.hook", {
+            "action": "get_records",
+            "hook_id": ctx["_hook_id"],
+        }, ctx)
+        assert result["status"] == "success"
+        # Fresh document after reload — only the post-reload call is present.
+        assert result["count"] == 1
+        assert result["records"][0]["args"] == [10, 20]
+        assert result["records"][0]["result"] == 20
+
+    async def test_05_list_hooks(self, ctx):
+        result = await run("reverse.hook", {"action": "list"}, ctx)
+        assert result["status"] == "success"
+        assert any(h["hookId"] == ctx["_hook_id"] for h in result["hooks"])
+
+    async def test_06_remove_hook(self, ctx):
+        result = await run("reverse.hook", {
+            "action": "remove",
+            "hook_id": ctx["_hook_id"],
+        }, ctx)
+        assert result["status"] == "success"
+
+    async def test_07_removed_hook_does_not_reapply_after_reload(self, ctx):
+        await ctx["browser"].real_page.reload(wait_until="load")
+
+        value = await ctx["browser"].evaluate("Math.max(100, 200)")
+        assert value == 200  # original Math.max, unaffected
+
+        result = await run("reverse.hook", {
+            "action": "get_records",
+            "hook_id": ctx["_hook_id"],
+        }, ctx)
+        assert result["status"] == "success"
+        assert result["count"] == 0
+
+    async def test_08_detach(self, ctx):
+        result = await run("reverse.detach", {}, ctx)
+        assert result["status"] == "success"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Sub-phase D — network-initiator tracing
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.browser
+@pytest.mark.asyncio(loop_scope="module")
+class TestReverseSubPhaseD:
+
+    async def test_01_reattach(self, ctx, local_server):
+        # A fresh reload put the page back at its original URL/state after
+        # sub-phase C's hook-removal reload.
+        await ctx["browser"].real_page.goto(local_server, wait_until="load")
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+
+    async def test_02_start_tracing(self, ctx):
+        result = await run("reverse.network", {"action": "start"}, ctx)
+        assert result["status"] == "success"
+
+    async def test_03_trigger_fetch_and_list(self, ctx):
+        driver = ctx["browser"]
+        fetch_result = await driver.evaluate("triggerFetch()")
+        assert fetch_result == {"ok": True}
+
+        result = await run("reverse.network", {"action": "list"}, ctx)
+        assert result["status"] == "success"
+        matching = [r for r in result["requests"] if "ping.json" in r["url"]]
+        assert matching, f"Expected a ping.json request, got {result['requests']}"
+        ctx["_request_id"] = matching[0]["requestId"]
+
+    async def test_04_get_initiator_names_triggering_function(self, ctx):
+        result = await run("reverse.network", {
+            "action": "get_initiator",
+            "request_id": ctx["_request_id"],
+        }, ctx)
+        assert result["status"] == "success"
+        assert result["type"] == "script"
+        function_names = [f["functionName"] for f in result["stack"]]
+        assert "triggerFetch" in function_names, function_names
+
+    async def test_05_stop_tracing(self, ctx):
+        result = await run("reverse.network", {"action": "stop"}, ctx)
+        assert result["status"] == "success"
+
+    async def test_06_detach(self, ctx):
+        result = await run("reverse.detach", {}, ctx)
+        assert result["status"] == "success"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Sub-phase E — WebSocket capture
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.browser
+@pytest.mark.asyncio(loop_scope="module")
+class TestReverseSubPhaseE:
+
+    async def test_01_reattach(self, ctx):
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+
+    async def test_02_start_capture(self, ctx):
+        result = await run("reverse.websocket", {"action": "start"}, ctx)
+        assert result["status"] == "success"
+
+    async def test_03_connect_send_and_receive(self, ctx, ws_server):
+        driver = ctx["browser"]
+        script = (
+            "() => new Promise((resolve, reject) => {"
+            f"const ws = new WebSocket({json.dumps(ws_server)});"
+            "ws.onopen = () => { ws.send('hello-from-test'); };"
+            "ws.onmessage = (evt) => { resolve(evt.data); };"
+            "ws.onerror = () => reject(new Error('ws error'));"
+            "setTimeout(() => reject(new Error('timeout')), 5000);"
+            "})"
+        )
+        result = await driver.evaluate(script)
+        assert result == "hello-from-test"
+
+    async def test_04_list_and_get_frames(self, ctx):
+        result = await run("reverse.websocket", {"action": "list"}, ctx)
+        assert result["status"] == "success"
+        assert result["connections"], "Expected at least one captured websocket connection"
+        ctx["_ws_request_id"] = result["connections"][0]["requestId"]
+
+        frames_result = await run("reverse.websocket", {
+            "action": "get_frames",
+            "request_id": ctx["_ws_request_id"],
+        }, ctx)
+        assert frames_result["status"] == "success"
+        sent = [f for f in frames_result["frames"] if f["direction"] == "sent"]
+        received = [f for f in frames_result["frames"] if f["direction"] == "received"]
+        assert any("hello-from-test" in f["payloadData"] for f in sent)
+        assert any("hello-from-test" in f["payloadData"] for f in received)
+
+    async def test_05_get_frames_filtered_by_direction(self, ctx):
+        result = await run("reverse.websocket", {
+            "action": "get_frames",
+            "request_id": ctx["_ws_request_id"],
+            "direction": "received",
+        }, ctx)
+        assert result["status"] == "success"
+        assert all(f["direction"] == "received" for f in result["frames"])
+
+    async def test_06_stop_capture(self, ctx):
+        result = await run("reverse.websocket", {"action": "stop"}, ctx)
+        assert result["status"] == "success"
+
+    async def test_07_detach(self, ctx):
         result = await run("reverse.detach", {}, ctx)
         assert result["status"] == "success"

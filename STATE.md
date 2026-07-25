@@ -6,7 +6,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 461 modules across 85 categories, and
+- The generated catalog currently exposes 464 modules across 85 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
@@ -24,8 +24,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 943 maintained Python files, 5,433
-  declarations, 476 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 946 maintained Python files, 5,460
+  declarations, 479 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
@@ -40,14 +40,18 @@
 - Browser/E2E integrations that require external services, browsers, or
   credentials remain environment-backed evidence and are not inferred from the
   offline suite.
-- `reverse.*` (CDP debugger, Phase 1) known risks: session state
+- `reverse.*` (CDP debugger, Phase 1 + Phase 2) known risks: session state
   (`ReverseSession` objects, keyed by `debugger_session` id) is process-local,
   matching the existing `browser_sessions` constraint across all three
   transports (STDIO MCP, HTTP MCP, plain REST) — a `debugger_session` id minted
-  by one server process cannot be resolved by another. Cleanup is manual for
-  Phase 1: `reverse.detach` is the primary path, and the STDIO transport's
-  EOF-cleanup loop best-effort `detach()`s any remaining debugger sessions, but
-  there is no reaper/timeout thread for sessions abandoned mid-workflow. See
+  by one server process cannot be resolved by another. Cleanup is manual:
+  `reverse.detach` is the primary path, and the STDIO transport's
+  EOF-cleanup loop best-effort `detach()`s any remaining debugger sessions
+  (including installed hooks, via `Page.removeScriptToEvaluateOnNewDocument`),
+  but there is no reaper/timeout thread for sessions abandoned mid-workflow.
+  `reverse.hook` only wraps a function that already exists when installed —
+  it has no lazy-hook guard for not-yet-defined properties and does not
+  defend against a page reassigning a hooked property afterward. See
   DECISIONS.md for the pause/resume design rationale and the CDP-freeze
   caveat.
 

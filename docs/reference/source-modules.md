@@ -2,11 +2,11 @@
 
 # Source Module Inventory
 
-Inventory: **943 Python files**, **192,365 lines**, and **5,433 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **946 Python files**, **193,225 lines**, and **5,460 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
-| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 461 tools with one command. |
+| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 464 tools with one command. |
 | [`examples/agent_demo/planner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/planner.py#L1) | 59 | 3 | `pathlib, typing, yaml` | Simple Task Planner |
 | [`examples/agent_demo/run.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/run.py#L1) | 138 | 3 | `asyncio, core, json, pathlib, planner, sys, uuid, yaml` | flyto-core Agent Demo: Deterministic Browser Research |
 | [`examples/demo_video/record.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/demo_video/record.py#L1) | 413 | 6 | `asyncio, core, httpx, json, os, pathlib, rich, shutil, sys, time` | flyto-core Demo Video Script |
@@ -94,7 +94,7 @@ Inventory: **943 Python files**, **192,365 lines**, and **5,433 class/function/m
 | [`src/core/browser/pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/pool.py#L1) | 256 | 16 | `asyncio, driver, humanize, logging, typing` | Browser Pool — Multiple concurrent browser instances |
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
-| [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 302 | 23 | `asyncio, logging, typing` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
+| [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 697 | 41 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
 | [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 279 | 5 | `modules, typing` | Catalog Module Detail API |
@@ -563,16 +563,19 @@ Inventory: **943 Python files**, **192,365 lines**, and **5,433 class/function/m
 | [`src/core/modules/atomic/regex/replace.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L1) | 159 | 1 | `errors, re, registry, schema, typing` | Regex Replace Module Replace pattern matches in text. |
 | [`src/core/modules/atomic/regex/split.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L1) | 145 | 1 | `errors, re, registry, schema, typing` | Regex Split Module Split text by a regex pattern. |
 | [`src/core/modules/atomic/regex/test.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L1) | 131 | 1 | `errors, re, registry, schema, typing` | Regex Test Module Test if a string matches a regular expression pattern. |
-| [`src/core/modules/atomic/reverse/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/__init__.py#L1) | 28 | 0 | `attach, breakpoint, call_frames, detach, evaluate, resume, scripts, step, wait_paused` | Atomic Reverse-Engineering Operations |
+| [`src/core/modules/atomic/reverse/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/__init__.py#L1) | 38 | 0 | `attach, breakpoint, call_frames, detach, evaluate, hook, network, resume, scripts, step, wait_paused, websocket` | Atomic Reverse-Engineering Operations |
 | [`src/core/modules/atomic/reverse/attach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L1) | 85 | 3 | `base, core, registry, types, typing` | Reverse Attach Module |
 | [`src/core/modules/atomic/reverse/breakpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L1) | 176 | 3 | `base, registry, schema, types, typing` | Reverse Breakpoint Module |
 | [`src/core/modules/atomic/reverse/call_frames.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L1) | 71 | 3 | `base, registry, types, typing` | Reverse Get Call Frames Module |
 | [`src/core/modules/atomic/reverse/detach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L1) | 72 | 3 | `base, registry, types, typing` | Reverse Detach Module |
 | [`src/core/modules/atomic/reverse/evaluate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/evaluate.py#L1) | 98 | 3 | `base, registry, schema, types, typing` | Reverse Evaluate On Call Frame Module |
+| [`src/core/modules/atomic/reverse/hook.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/hook.py#L1) | 190 | 3 | `base, registry, schema, types, typing` | Reverse Hook Module |
+| [`src/core/modules/atomic/reverse/network.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/network.py#L1) | 118 | 3 | `base, registry, schema, types, typing` | Reverse Network Module |
 | [`src/core/modules/atomic/reverse/resume.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L1) | 69 | 3 | `base, registry, types, typing` | Reverse Resume Module |
 | [`src/core/modules/atomic/reverse/scripts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L1) | 159 | 3 | `base, registry, schema, types, typing` | Reverse Scripts Module |
 | [`src/core/modules/atomic/reverse/step.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L1) | 111 | 3 | `base, registry, schema, types, typing` | Reverse Step Module |
 | [`src/core/modules/atomic/reverse/wait_paused.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L1) | 89 | 3 | `base, registry, schema, types, typing` | Reverse Wait Paused Module |
+| [`src/core/modules/atomic/reverse/websocket.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/websocket.py#L1) | 147 | 3 | `base, registry, schema, types, typing` | Reverse WebSocket Module |
 | [`src/core/modules/atomic/sandbox/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/__init__.py#L1) | 23 | 0 | `execute_js, execute_python, execute_shell` | Atomic Sandbox Operations Execute code and commands in sandboxed environments. |
 | [`src/core/modules/atomic/sandbox/execute_js.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_js.py#L1) | 227 | 2 | `asyncio, errors, logging, os, registry, schema, tempfile, time, typing` | Sandbox Execute JavaScript Module Execute JavaScript code via Node.js with timeout. |
 | [`src/core/modules/atomic/sandbox/execute_python.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_python.py#L1) | 235 | 2 | `asyncio, errors, logging, os, registry, safe_env, schema, sys, tempfile, time, typing` | Sandbox Execute Python Module Execute Python code safely in a subprocess with timeout. |

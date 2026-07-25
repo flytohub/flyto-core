@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **461 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **464 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,7 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
-- [reverse](#reverse) (9)
+- [reverse](#reverse) (12)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -757,10 +757,13 @@
 | `reverse.detach` | Detach the CDP debugger session from the current page | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.evaluate_on_call_frame` | Evaluate a JavaScript expression in a paused call frame scope | `call_frame_id` string *(required)*, `expression` string *(required)* | `status` (string), `result` (object), `error` (string) |
 | `reverse.get_call_frames` | Get the call stack at the current pause point | `_no_params` boolean (default: `True`) | `status` (string), `callFrames` (array) |
+| `reverse.hook` | Install or remove a call/return recorder on a JavaScript function | `action` select *(required)*, `function_path` string, `capture_args` boolean (default: `True`), `capture_result` boolean (default: `True`), `max_records` number (default: `500`), `hook_id` string, `clear` boolean (default: `False`) | `status` (string), `hookId` (string), `hooks` (array), `records` (array) |
+| `reverse.network` | Trace which JavaScript call triggered an HTTP request | `action` select *(required)*, `request_id` string | `status` (string), `requests` (array), `type` (string), `stack` (array) |
 | `reverse.resume` | Resume execution of a page paused at a breakpoint | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.scripts` | List, fetch, or search loaded JavaScript sources | `action` select *(required)*, `script_id` string, `query` string, `is_regex` boolean (default: `False`), `case_sensitive` boolean (default: `False`) | `status` (string), `scripts` (array), `source` (string), `matches` (array) |
 | `reverse.step` | Step over, into, or out of the current line while paused | `action` select *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `callFrames` (array) |
 | `reverse.wait_paused` | Block until the page hits a breakpoint | `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `reason` (string), `callFrames` (array) |
+| `reverse.websocket` | Capture WebSocket connections and frames on the debugged page | `action` select *(required)*, `request_id` string, `direction` select (default: `both`), `limit` number | `status` (string), `connections` (array), `frames` (array) |
 
 ## sandbox
 
