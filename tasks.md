@@ -7,6 +7,9 @@
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.
 - Add recipe fixtures for capability states and report/export flows.
 - Keep maintained recipe bundle tests aligned with product-loop contracts.
+- Reverse-engineering toolkit Phase 2+: function hooking, network-initiator
+  tracing, WebSocket frame capture, and deobfuscation/AST tooling (see
+  `ROADMAP.md` 0.5).
 
 ## Watch
 
@@ -16,6 +19,11 @@
 
 ## Done
 
+- Added the `reverse.*` CDP debugger module category (Phase 1 of the
+  reverse-engineering toolkit): attach/detach, script list/get_source/search,
+  breakpoint set/remove, wait_paused, resume, step, get_call_frames, and
+  evaluate_on_call_frame, gated behind the new deny-by-default `browser.debug`
+  permission. Reconciled the generated catalog to 461 modules / 85 categories.
 - Added the source-backed documentation contract, technical whitepaper,
   feature/API/configuration/security/operations/testing guides, generated
   declaration/module/CLI/HTTP/environment references, ownership manifest, and

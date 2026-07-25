@@ -9,6 +9,20 @@
 - Stronger state-machine inference, visual diff scoring, and Cloud Warroom UI
   integration
 
+### 0.5. Reverse-Engineering Toolkit
+- **Phase 1 (done, 2026-07-25):** `reverse.*` interactive JS debugger on CDP's
+  Debugger domain — attach/detach, script list/get_source/search, set/remove
+  breakpoints, pause/resume/step, call-frame inspection, and
+  `evaluate_on_call_frame`. Gated behind the deny-by-default `browser.debug`
+  permission. See `DECISIONS.md` (2026-07-25 entries) for the pause/resume and
+  CDP-freeze design rationale.
+- **Phase 2+ (not started, explicitly out of scope for Phase 1):** function
+  hooking (intercept/rewrite calls without a paused breakpoint), network-
+  initiator tracing (which JS call triggered a given request), WebSocket frame
+  capture, and deobfuscation/AST tooling (variable renaming, control-flow
+  simplification, static analysis of minified/obfuscated bundles). Each is a
+  separate follow-up phase, not an extension of the Phase 1 module set.
+
 ### 1. Marketplace Ecosystem
 - Template marketplace for buying/selling workflows
 - Community-contributed modules

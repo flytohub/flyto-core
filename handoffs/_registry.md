@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-07-25 | Reverse-engineering debugger, Phase 1 | `2026-07-25-reverse-debugger-phase1.md` | Active |
 | 2026-07-22 | Source-backed documentation and release gates | `2026-07-22-source-backed-documentation.md` | Active |
 | 2026-06-23 | Product Verification 90-point evidence gate | `2026-06-23-product-verification-90-gate.md` | Active |
 | 2026-06-23 | Automation test model evidence | `2026-06-23-automation-test-model.md` | Active |
