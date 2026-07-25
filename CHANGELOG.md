@@ -46,6 +46,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Node is a private/undocumented API already known to be fragile under
   PyInstaller, and the `~/.flyto/node/` fallback has no downloader built).
   Reconciled the generated catalog to 465 modules across 85 categories.
+- Added `reverse.sourcemap` (resolve/list_sources/get_original_source),
+  strengthening the `reverse.*` toolkit: resolves a generated (minified/
+  bundled) code location to its original source file/line/column/name via
+  a hand-rolled Source Map v3 VLQ decoder (no pip dependency — the one
+  plausible package, `sourcemap` on PyPI, has had no release since 2017).
+  Session-independent and permission-free like `reverse.code`: takes the
+  source map JSON (or a `data:` URI) as a plain parameter — `sourceMapURL`
+  was already captured and exposed by `reverse.scripts` (action=list), and
+  this module never fetches an external `.map` file itself; that's a normal
+  `http.get` step in the calling workflow, already SSRF-guarded, so no new
+  security-sensitive fetch code was written. Reconciled the generated
+  catalog to 466 modules across 85 categories.
 
 ## [2.26.10] - 2026-07-23
 

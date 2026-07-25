@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,470 declarations across 800 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,482 declarations across 801 files**.
 
 ## `demo.py`
 
@@ -5518,6 +5518,23 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | class | `class ReverseScriptsModule(BaseModule)` | List, fetch, or search JavaScript sources loaded by the debugged page. | [`src/core/modules/atomic/reverse/scripts.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L117) |
 | method | `def ReverseScriptsModule.validate_params(self) -> None` | Implements `ReverseScriptsModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/scripts.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L124) |
 | method | `async def ReverseScriptsModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseScriptsModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/scripts.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L140) |
+
+## `src/core/modules/atomic/reverse/sourcemap.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _decode_vlq_value(s: str, pos: int)` | Decode one base64-VLQ value starting at `pos`. | [`src/core/modules/atomic/reverse/sourcemap.py:37`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L37) |
+| function | `def _decode_segment(segment_str: str) -> List&#91;int&#93;` | Implements `_decode_segment`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L54) |
+| function | `def _parse_mappings(mappings: str) -> List&#91;dict&#93;` | Decode a Source Map v3 `mappings` string into a list of segments. | [`src/core/modules/atomic/reverse/sourcemap.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L63) |
+| function | `def _resolve_sources(source_map: dict) -> List&#91;str&#93;` | Implements `_resolve_sources`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L105) |
+| function | `def _parse_source_map_text(text: str) -> dict` | Accept either raw Source Map v3 JSON, or a `data:` URI containing it. | [`src/core/modules/atomic/reverse/sourcemap.py:113`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L113) |
+| class | `class _SourceMapIndex` | Parsed Source Map v3 payload, ready for generated->original lookups. | [`src/core/modules/atomic/reverse/sourcemap.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L124) |
+| method | `def _SourceMapIndex.__init__(self, source_map: dict)` | Implements `_SourceMapIndex.__init__`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L127) |
+| method | `def _SourceMapIndex.lookup(self, line: int, column: int) -> Optional&#91;dict&#93;` | Implements `_SourceMapIndex.lookup`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L135) |
+| class | `class ReverseSourcemapModule(BaseModule)` | Resolve a generated code location to its original source file/line/column. | [`src/core/modules/atomic/reverse/sourcemap.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L267) |
+| method | `def ReverseSourcemapModule.validate_params(self) -> None` | Implements `ReverseSourcemapModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:274`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L274) |
+| method | `async def ReverseSourcemapModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseSourcemapModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:294`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L294) |
+| method | `def ReverseSourcemapModule._get_original_source(self, source_map: dict) -> Dict&#91;str, Any&#93;` | Implements `ReverseSourcemapModule._get_original_source`; linked source is authoritative. | [`src/core/modules/atomic/reverse/sourcemap.py:318`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L318) |
 
 ## `src/core/modules/atomic/reverse/step.py`
 

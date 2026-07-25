@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **480 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **481 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -379,6 +379,7 @@ The AST contains **480 explicit, literal `@register_module` declarations**. This
 | `reverse.network` | `1.0.0` | `reverse` | `ReverseNetworkModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/network.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/network.py#L85) |
 | `reverse.resume` | `1.0.0` | `reverse` | `ReverseResumeModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/resume.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L54) |
 | `reverse.scripts` | `1.0.0` | `reverse` | `ReverseScriptsModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/scripts.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L117) |
+| `reverse.sourcemap` | `1.0.0` | `reverse` | `ReverseSourcemapModule` | no | `&#91;&#93;` | [`src/core/modules/atomic/reverse/sourcemap.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L267) |
 | `reverse.step` | `1.0.0` | `reverse` | `ReverseStepModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/step.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/step.py#L77) |
 | `reverse.wait_paused` | `1.0.0` | `reverse` | `ReverseWaitPausedModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/wait_paused.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L64) |
 | `reverse.websocket` | `1.0.0` | `reverse` | `ReverseWebSocketModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/websocket.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/websocket.py#L110) |

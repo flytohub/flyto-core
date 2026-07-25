@@ -31,6 +31,16 @@
   searches its AST. The only `reverse.*` module with no permission gate — it
   never touches a browser/CDP session and never executes the analyzed code.
   See `DECISIONS.md` (2026-07-25 Phase 3 entry).
+- **Strengthening pass (done, 2026-07-25):** `reverse.sourcemap` —
+  resolve/list_sources/get_original_source. Resolves a generated (minified/
+  bundled) code location back to its original source file/line/column/name
+  via a hand-rolled Source Map v3 VLQ decoder (no pip dependency — the one
+  plausible package on PyPI hasn't been released since 2017). Also
+  session-independent and permission-free; never fetches an external `.map`
+  file itself (delegates to `http.get`, already SSRF-guarded, as a normal
+  workflow step). Not a new numbered phase — it fills a capability gap in
+  Phase 1-3 rather than adding a new tier. See `DECISIONS.md`
+  (2026-07-25 sourcemap entry).
 - **Phase 4 (not started):** true semantic deobfuscation — control-flow-
   flattening reversal, string-array decoding via constant folding, and other
   transforms that require actually executing/evaluating JS (Babel/webcrack-

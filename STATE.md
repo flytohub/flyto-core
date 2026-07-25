@@ -6,7 +6,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 465 modules across 85 categories, and
+- The generated catalog currently exposes 466 modules across 85 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
@@ -24,8 +24,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 947 maintained Python files, 5,470
-  declarations, 480 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 948 maintained Python files, 5,482
+  declarations, 481 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
@@ -62,6 +62,13 @@
   beautifies and structurally searches JS source text — real semantic
   deobfuscation is deferred to a not-yet-started Phase 4, blocked on solving
   Node.js-invocation reliability (see DECISIONS.md).
+- `reverse.sourcemap` requires no extra pip dependency (hand-rolled VLQ
+  decoder) and no permission, same reasoning as `reverse.code`. It never
+  fetches an external `.map` file itself — the caller uses `http.get`
+  (already SSRF-guarded) for that and passes the fetched text in. It only
+  resolves generated-to-original locations and reads `sourcesContent` that
+  was already embedded in the source map — it cannot fetch an original file
+  that isn't inlined.
 
 ## Verification Matrix
 

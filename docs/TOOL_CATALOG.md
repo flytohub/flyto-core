@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **465 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **466 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,7 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
-- [reverse](#reverse) (13)
+- [reverse](#reverse) (14)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -762,6 +762,7 @@
 | `reverse.network` | Trace which JavaScript call triggered an HTTP request | `action` select *(required)*, `request_id` string | `status` (string), `requests` (array), `type` (string), `stack` (array) |
 | `reverse.resume` | Resume execution of a page paused at a breakpoint | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.scripts` | List, fetch, or search loaded JavaScript sources | `action` select *(required)*, `script_id` string, `query` string, `is_regex` boolean (default: `False`), `case_sensitive` boolean (default: `False`) | `status` (string), `scripts` (array), `source` (string), `matches` (array) |
+| `reverse.sourcemap` | Resolve a generated code location to its original source file/line/column | `action` select *(required)*, `source_map` string *(required)*, `generated_line` number, `generated_column` number (default: `0`), `source` string | `status` (string), `source` (string), `originalLine` (number), `originalColumn` (number), `name` (string), `sources` (array), `content` (string) |
 | `reverse.step` | Step over, into, or out of the current line while paused | `action` select *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `callFrames` (array) |
 | `reverse.wait_paused` | Block until the page hits a breakpoint | `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `reason` (string), `callFrames` (array) |
 | `reverse.websocket` | Capture WebSocket connections and frames on the debugged page | `action` select *(required)*, `request_id` string, `direction` select (default: `both`), `limit` number | `status` (string), `connections` (array), `frames` (array) |

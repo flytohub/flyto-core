@@ -20,6 +20,12 @@
 
 ## Done
 
+- Added `reverse.sourcemap` (resolve/list_sources/get_original_source):
+  hand-rolled Source Map v3 VLQ decoder, no pip dependency, no permission
+  gate, delegates external `.map` fetches to the already SSRF-guarded
+  `http.get` instead of fetching anything itself. Strengthens Phase 1-3
+  rather than adding a new phase. Reconciled the generated catalog to 466
+  modules / 85 categories.
 - Added Phase 3 of the `reverse.*` toolkit: `reverse.code`
   (beautify/list_functions/list_strings/find_calls) — pure Python
   (`tree-sitter` + `jsbeautifier`, new `jsast` extra), no Node.js, no

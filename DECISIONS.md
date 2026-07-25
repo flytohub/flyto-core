@@ -1,5 +1,40 @@
 # Decisions
 
+## 2026-07-25 - reverse.sourcemap hand-rolls VLQ decoding and never fetches anything itself
+
+Decision: `reverse.sourcemap` implements its own Source Map v3 base64-VLQ
+decoder and mapping-segment parser (`src/core/modules/atomic/reverse/sourcemap.py`)
+rather than depending on a pip package, and never performs an HTTP fetch —
+it only accepts the source map JSON (or a `data:` URI) as a plain parameter.
+
+Reason (no dependency): the one plausible candidate, the `sourcemap` package
+on PyPI, has an active GitHub repo but its last **PyPI** release is 2017 —
+installing it would pull 8-year-old code. The Source Map v3 spec is small
+and has been stable for a decade, so hand-rolling the decoder (~150 LOC) was
+judged lower-risk than a stale dependency, consistent with `reverse.code`'s
+same reasoning for choosing actively-maintained `tree-sitter`/`jsbeautifier`
+over alternatives. The decoder was verified against hand-computed VLQ test
+vectors (round-tripping an independent encoder through the decoder across
+positive/negative/multi-continuation values, plus a full mappings string
+with known per-segment deltas) before writing `tests/modules/test_reverse_sourcemap.py`,
+the same "verify empirically first" discipline used for Phase 1's CDP
+line-number semantics and Phase 2's hook/network/WebSocket mechanics.
+
+Reason (no fetch): `Debugger.scriptParsed`'s `sourceMapURL` field was already
+captured by `ReverseSession` and already exposed by `reverse.scripts`
+(action=list) — no changes needed there. When `sourceMapURL` points to an
+external `.map` file (not an inline `data:` URI), fetching it is a security-
+sensitive operation: `http.get` (`src/core/modules/atomic/http/get.py`)
+explicitly wires SSRF protection (`validate_url_with_env_config`,
+`guarded_aiohttp_request` from `src/core/utils.py`) into every request,
+including redirect-hop revalidation. That protection is not ambient — a new
+module fetching a URL itself would need to reuse those same helpers
+correctly or risk bypassing SSRF guarding entirely. Since the fetch is a
+single already-solved step (`http.get`), `reverse.sourcemap` takes the
+already-fetched (or already-decoded) text as input instead of duplicating
+that security-sensitive code, keeping the module itself session-independent
+and permission-free, matching `reverse.code`'s precedent exactly.
+
 ## 2026-07-25 - reverse.code (Phase 3) is pure Python, no Node.js, and no permission gate
 
 Decision: `reverse.code`'s beautify/list_functions/list_strings/find_calls
