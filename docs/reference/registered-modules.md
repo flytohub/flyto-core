@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **481 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **482 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -369,7 +369,7 @@ The AST contains **481 explicit, literal `@register_module` declarations**. This
 | `regex.replace` | `1.0.0` | `regex` | `regex_replace` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/replace.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L116) |
 | `regex.split` | `1.0.0` | `regex` | `regex_split` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/split.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L110) |
 | `regex.test` | `1.0.0` | `regex` | `regex_test` | no | `&#91;&#93;` | [`src/core/modules/atomic/regex/test.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L99) |
-| `reverse.attach` | `1.0.0` | `reverse` | `ReverseAttachModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/attach.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L57) |
+| `reverse.attach` | `1.1.0` | `reverse` | `ReverseAttachModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/attach.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/attach.py#L85) |
 | `reverse.breakpoint` | `1.0.0` | `reverse` | `ReverseBreakpointModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/breakpoint.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/breakpoint.py#L136) |
 | `reverse.code` | `1.0.0` | `reverse` | `ReverseCodeModule` | no | `&#91;&#93;` | [`src/core/modules/atomic/reverse/code.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L120) |
 | `reverse.detach` | `1.0.0` | `reverse` | `ReverseDetachModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/detach.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/detach.py#L55) |
@@ -377,6 +377,7 @@ The AST contains **481 explicit, literal `@register_module` declarations**. This
 | `reverse.get_call_frames` | `1.0.0` | `reverse` | `ReverseGetCallFramesModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/call_frames.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/call_frames.py#L56) |
 | `reverse.hook` | `1.0.0` | `reverse` | `ReverseHookModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/hook.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/hook.py#L143) |
 | `reverse.network` | `1.0.0` | `reverse` | `ReverseNetworkModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/network.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/network.py#L85) |
+| `reverse.request_breakpoint` | `1.0.0` | `reverse` | `ReverseRequestBreakpointModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/request_breakpoint.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/request_breakpoint.py#L93) |
 | `reverse.resume` | `1.0.0` | `reverse` | `ReverseResumeModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/resume.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/resume.py#L54) |
 | `reverse.scripts` | `1.0.0` | `reverse` | `ReverseScriptsModule` | no | `&#91;'browser.debug'&#93;` | [`src/core/modules/atomic/reverse/scripts.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/scripts.py#L117) |
 | `reverse.sourcemap` | `1.0.0` | `reverse` | `ReverseSourcemapModule` | no | `&#91;&#93;` | [`src/core/modules/atomic/reverse/sourcemap.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/sourcemap.py#L267) |

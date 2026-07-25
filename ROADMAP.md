@@ -52,6 +52,18 @@
   longer leaks for the server's full lifetime. Not a new phase — a
   strengthening pass on Phase 1/2, same as the sourcemap entry above. See
   `DECISIONS.md` (2026-07-25 hook/reaper entry).
+- **Strengthening pass (done, 2026-07-25):** `reverse.request_breakpoint` —
+  set/remove/list request-level (XHR/fetch) breakpoints via CDP's
+  `DOMDebugger.setXHRBreakpoint`/`removeXHRBreakpoint`, pausing execution on a
+  matching request URL instead of a known script/line — a hit surfaces
+  through the same `Debugger.paused` event as a script breakpoint, so
+  `wait_paused`/`resume`/`get_call_frames`/`evaluate_on_call_frame` all apply
+  unchanged. Also gave `reverse.attach` session-snapshot reuse: reattaching to
+  a page that already has an enabled session now returns its existing
+  snapshot (script cache, breakpoints, request breakpoints, hooks) instead of
+  detaching and rebuilding from scratch, unless `force_new=True`. Not a new
+  phase — strengthens Phase 1. See `DECISIONS.md` (2026-07-25 request
+  breakpoint / session reuse entry).
 - **Phase 4 (not started):** true semantic deobfuscation — control-flow-
   flattening reversal, string-array decoding via constant folding, and other
   transforms that require actually executing/evaluating JS (Babel/webcrack-

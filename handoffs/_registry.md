@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-07-25 | Reverse-engineering toolkit — request breakpoints + session-snapshot reuse | `2026-07-25-reverse-request-breakpoint-session-reuse.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit — hook robustness + session reaper | `2026-07-25-reverse-hardening.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit — source map resolution | `2026-07-25-reverse-sourcemap.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit, Phase 3 | `2026-07-25-reverse-code-phase3.md` | Active |

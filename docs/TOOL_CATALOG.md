@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **466 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **467 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,7 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
-- [reverse](#reverse) (14)
+- [reverse](#reverse) (15)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -752,7 +752,7 @@
 
 | Module | Description | Parameters | Output |
 |--------|-------------|------------|--------|
-| `reverse.attach` | Attach a CDP debugger session to the current page | `_no_params` boolean (default: `True`) | `status` (string), `url` (string) |
+| `reverse.attach` | Attach a CDP debugger session to the current page | `force_new` boolean (default: `False`) | `status` (string), `url` (string), `reused` (boolean), `scriptCount` (number), `breakpointCount` (number), `requestBreakpointCount` (number), `hookCount` (number), `isPaused` (boolean), `networkEnabled` (boolean) |
 | `reverse.breakpoint` | Set or remove a breakpoint by script URL and line number | `action` select *(required)*, `url` string, `url_regex` string, `line_number` number (default: `0`), `column_number` number (default: `0`), `condition` string, `breakpoint_id` string | `status` (string), `breakpointId` (string), `locations` (array) |
 | `reverse.code` | Beautify minified JavaScript and search its AST for functions, strings, and call sites | `action` select *(required)*, `source` string *(required)*, `function_name` string | `status` (string), `formatted` (string), `functions` (array), `strings` (array), `calls` (array) |
 | `reverse.detach` | Detach the CDP debugger session from the current page | `_no_params` boolean (default: `True`) | `status` (string) |
@@ -760,6 +760,7 @@
 | `reverse.get_call_frames` | Get the call stack at the current pause point | `_no_params` boolean (default: `True`) | `status` (string), `callFrames` (array) |
 | `reverse.hook` | Install or remove a call/return recorder on a JavaScript function | `action` select *(required)*, `function_path` string, `capture_args` boolean (default: `True`), `capture_result` boolean (default: `True`), `max_records` number (default: `500`), `hook_id` string, `clear` boolean (default: `False`) | `status` (string), `hookId` (string), `hooks` (array), `records` (array) |
 | `reverse.network` | Trace which JavaScript call triggered an HTTP request | `action` select *(required)*, `request_id` string | `status` (string), `requests` (array), `type` (string), `stack` (array) |
+| `reverse.request_breakpoint` | Pause execution when a matching XHR/fetch request is sent | `action` select *(required)*, `url` string | `status` (string), `url` (string), `breakpoints` (array), `count` (number) |
 | `reverse.resume` | Resume execution of a page paused at a breakpoint | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.scripts` | List, fetch, or search loaded JavaScript sources | `action` select *(required)*, `script_id` string, `query` string, `is_regex` boolean (default: `False`), `case_sensitive` boolean (default: `False`) | `status` (string), `scripts` (array), `source` (string), `matches` (array) |
 | `reverse.sourcemap` | Resolve a generated code location to its original source file/line/column | `action` select *(required)*, `source_map` string *(required)*, `generated_line` number, `generated_column` number (default: `0`), `source` string | `status` (string), `source` (string), `originalLine` (number), `originalColumn` (number), `name` (string), `sources` (array), `content` (string) |

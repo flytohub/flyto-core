@@ -20,6 +20,12 @@
 
 ## Done
 
+- Added `reverse.request_breakpoint` (set/remove/list request-level XHR/fetch
+  breakpoints via CDP's `DOMDebugger.setXHRBreakpoint`) and session-snapshot
+  reuse in `reverse.attach` (reattaching to the same still-enabled page
+  returns the existing session's snapshot instead of detaching and rebuilding
+  it, unless `force_new=True`). Reconciled the generated catalog to 467
+  modules / 85 categories.
 - Hardened the `reverse.*` toolkit: rewrote `reverse.hook`'s injected JS on
   `Object.defineProperty` so hooks survive lazy (not-yet-defined) properties
   and later reassignment (narrower known limitation: immediate parent object

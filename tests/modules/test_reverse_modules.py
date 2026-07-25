@@ -51,7 +51,8 @@ async def run(module_id: str, params: dict, ctx: dict) -> dict:
 class TestRegistration:
     @pytest.mark.parametrize("mid", [
         "reverse.attach", "reverse.detach", "reverse.scripts",
-        "reverse.breakpoint", "reverse.wait_paused", "reverse.resume",
+        "reverse.breakpoint", "reverse.request_breakpoint",
+        "reverse.wait_paused", "reverse.resume",
         "reverse.step", "reverse.get_call_frames", "reverse.evaluate_on_call_frame",
         "reverse.hook", "reverse.network", "reverse.websocket",
     ])
@@ -614,5 +615,121 @@ class TestReverseSubPhaseE:
         assert result["status"] == "success"
 
     async def test_07_detach(self, ctx):
+        result = await run("reverse.detach", {}, ctx)
+        assert result["status"] == "success"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Sub-phase F — request-level breakpoints (DOMDebugger XHR/fetch)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.browser
+@pytest.mark.asyncio(loop_scope="module")
+class TestReverseSubPhaseF:
+
+    async def test_01_reattach(self, ctx, local_server):
+        await ctx["browser"].real_page.goto(local_server, wait_until="load")
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+
+    async def test_02_set_request_breakpoint(self, ctx):
+        result = await run("reverse.request_breakpoint", {
+            "action": "set",
+            "url": "ping.json",
+        }, ctx)
+        assert result["status"] == "success"
+        assert result["url"] == "ping.json"
+
+    async def test_03_list_shows_breakpoint(self, ctx):
+        result = await run("reverse.request_breakpoint", {"action": "list"}, ctx)
+        assert result["status"] == "success"
+        assert any(bp["url"] == "ping.json" for bp in result["breakpoints"])
+
+    async def test_04_trigger_and_wait_paused(self, ctx):
+        driver = ctx["browser"]
+
+        # Fire-and-forget, same reasoning as sub-phase B's script breakpoint:
+        # the CDP pause freezes the page's JS, so awaiting this directly
+        # would deadlock the test.
+        eval_task = asyncio.ensure_future(driver.evaluate("triggerFetch()"))
+        ctx["_fetch_eval_task"] = eval_task
+
+        result = await run("reverse.wait_paused", {"timeout_ms": 10000}, ctx)
+        assert result["status"] == "success"
+        assert result["paused"] is True
+        assert result["reason"] == "XHR"
+
+    async def test_05_resume_lets_fetch_continue(self, ctx):
+        result = await run("reverse.resume", {}, ctx)
+        assert result["status"] == "success"
+
+        fetch_result = await asyncio.wait_for(ctx["_fetch_eval_task"], timeout=5)
+        assert fetch_result == {"ok": True}
+
+    async def test_06_remove_request_breakpoint(self, ctx):
+        result = await run("reverse.request_breakpoint", {
+            "action": "remove",
+            "url": "ping.json",
+        }, ctx)
+        assert result["status"] == "success"
+
+        result = await run("reverse.request_breakpoint", {"action": "list"}, ctx)
+        assert result["breakpoints"] == []
+
+    async def test_07_detach(self, ctx):
+        result = await run("reverse.detach", {}, ctx)
+        assert result["status"] == "success"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  Sub-phase G — reverse.attach session-snapshot reuse
+# ═══════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.browser
+@pytest.mark.asyncio(loop_scope="module")
+class TestReverseSessionReuse:
+
+    async def test_01_attach(self, ctx, local_server):
+        await ctx["browser"].real_page.goto(local_server, wait_until="load")
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+        assert result["reused"] is False
+        await asyncio.sleep(0.3)
+
+    async def test_02_reattach_without_detach_reuses_session(self, ctx, local_server):
+        session_before = ctx["reverse_session"]
+
+        bp = await run("reverse.breakpoint", {
+            "action": "set",
+            "url": local_server,
+            "line_number": BREAKPOINT_LINE,
+        }, ctx)
+        assert bp["status"] == "success"
+        ctx["_reuse_breakpoint_id"] = bp["breakpointId"]
+
+        result = await run("reverse.attach", {}, ctx)
+        assert result["status"] == "success"
+        assert result["reused"] is True
+        assert result["breakpointCount"] == 1
+        assert ctx["reverse_session"] is session_before
+
+        # The breakpoint set before the redundant reattach must still exist —
+        # reuse must not have wiped session state.
+        assert any(
+            b["breakpointId"] == ctx["_reuse_breakpoint_id"]
+            for b in session_before.list_breakpoints()
+        )
+
+    async def test_03_force_new_discards_the_reused_session(self, ctx):
+        session_before = ctx["reverse_session"]
+
+        result = await run("reverse.attach", {"force_new": True}, ctx)
+        assert result["status"] == "success"
+        assert result["reused"] is False
+        assert ctx["reverse_session"] is not session_before
+        # A brand-new session has no breakpoints carried over.
+        assert ctx["reverse_session"].list_breakpoints() == []
+
+    async def test_04_detach(self, ctx):
         result = await run("reverse.detach", {}, ctx)
         assert result["status"] == "success"

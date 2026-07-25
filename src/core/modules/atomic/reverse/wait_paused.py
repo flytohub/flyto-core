@@ -47,8 +47,10 @@ _REGISTRY_TIMEOUT_MS = 310000
                 'description_key': 'modules.reverse.wait_paused.output.status.description'},
         'paused': {'type': 'boolean', 'description': 'Whether the page paused before the timeout',
                 'description_key': 'modules.reverse.wait_paused.output.paused.description'},
-        'reason': {'type': 'string', 'description': 'CDP pause reason (e.g. "other", "debuggerStatement")',
+        'reason': {'type': 'string', 'description': 'CDP pause reason (e.g. "other", "debuggerStatement", "XHR")',
                 'description_key': 'modules.reverse.wait_paused.output.reason.description'},
+        'data': {'type': 'object', 'description': 'Reason-specific detail (e.g. the matched URL for an "XHR" request-level breakpoint)',
+                'description_key': 'modules.reverse.wait_paused.output.data.description'},
         'callFrames': {'type': 'array', 'description': 'Call frames at the pause point',
                 'description_key': 'modules.reverse.wait_paused.output.callFrames.description'},
     },
@@ -85,5 +87,6 @@ class ReverseWaitPausedModule(BaseModule):
             'status': 'success',
             'paused': True,
             'reason': pause.get('reason', ''),
+            'data': pause.get('data'),
             'callFrames': pause.get('callFrames', []),
         }

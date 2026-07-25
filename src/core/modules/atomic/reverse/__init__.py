@@ -27,6 +27,14 @@ Session-independent and permission-free like reverse.code — it never
 fetches an external .map file itself (that's a normal http.get step in the
 calling workflow, already SSRF-guarded).
 
+reverse.request_breakpoint strengthens Phase 1: pauses execution on a
+matching XHR/fetch request via CDP's DOMDebugger domain, surfacing through
+the same Debugger.paused event as a script breakpoint so wait_paused/resume/
+get_call_frames/evaluate_on_call_frame all apply unchanged. reverse.attach
+also gained session-snapshot reuse: reattaching to a page that already has
+an enabled session returns its existing snapshot (script cache, breakpoints,
+request breakpoints, hooks) instead of discarding it, unless force_new=True.
+
 Every other module in this category requires the browser.debug permission
 (see src/core/module_policy.py _DANGEROUS_PERMISSIONS) — evaluate_on_call_frame,
 hook records, and captured network/WebSocket traffic can all expose
@@ -37,6 +45,7 @@ from .attach import *
 from .detach import *
 from .scripts import *
 from .breakpoint import *
+from .request_breakpoint import *
 from .wait_paused import *
 from .resume import *
 from .step import *

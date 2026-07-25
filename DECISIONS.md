@@ -1,5 +1,61 @@
 # Decisions
 
+## 2026-07-25 - reverse.request_breakpoint reuses the Debugger pause pipeline; reverse.attach gains session-snapshot reuse
+
+Decision (request breakpoint): implement request-level breakpoints via CDP's
+`DOMDebugger.setXHRBreakpoint`/`removeXHRBreakpoint` — the same mechanism
+Chrome DevTools' Sources > XHR/Fetch Breakpoints panel uses — rather than
+building a second, Fetch-domain-based interception/pause/continue pipeline.
+`ReverseSession` tracks active request breakpoints in a new
+`_request_breakpoints` dict keyed by the URL substring itself (CDP has no
+separate breakpoint-id concept here, unlike script breakpoints; setting the
+same URL twice is idempotent).
+
+Reason: a request breakpoint's *pause* is just another `Debugger.paused`
+event (`reason: "XHR"`), which `ReverseSession._on_paused`/`_paused_event`
+already handles — so `reverse.wait_paused`, `reverse.resume`,
+`reverse.get_call_frames`, and `reverse.evaluate_on_call_frame` all work
+against a request-breakpoint pause with zero changes. A Fetch-domain
+interception design would have needed its own pause/continue/fail/fulfill
+state machine parallel to the existing one, duplicating exactly the
+cross-process-scoping and CDP-freeze concerns already documented below for
+script breakpoints, for no behavioral gain. `_enrich_pause` now also passes
+through CDP's `data` field unfiltered (reason-specific detail, e.g. the
+matched URL for an `"XHR"` pause) since its shape varies by pause reason and
+guessing at field names across reasons risks silently returning a wrong key.
+Verified against a real Chromium instance: setting a breakpoint on `ping.json`,
+triggering `fetch('/ping.json')`, and observing `reason == "XHR"` in the pause
+result (`tests/modules/test_reverse_modules.py::TestReverseSubPhaseF`).
+
+Decision (session-snapshot reuse): `reverse.attach` now checks whether
+`context['reverse_session']` is already enabled and attached to the exact
+same page object (`existing.page is browser.real_page`) before deciding to
+detach; if so, it returns that session's existing snapshot (script cache,
+script/request breakpoint counts, hook count, pause/network-enabled state)
+instead of detaching and calling `ReverseSession.enable()` again. A new
+`force_new` param (default `False`) opts back into the old unconditional
+detach-and-recreate behavior.
+
+Reason: before this, calling `reverse.attach` a second time on the same page
+— e.g. a recipe defensively re-attaching without knowing whether a debugger
+session was already live — silently discarded every breakpoint, request
+breakpoint, and installed hook, and forced Chrome to re-send the full
+`Debugger.scriptParsed` backfill for no reason. Comparing the CDP session's
+page object directly (rather than, say, comparing URLs) avoids a false-positive
+reuse across a same-URL navigation that actually tore down and recreated the
+underlying page. If `browser.real_page` differs (navigated to a new page/tab)
+or no session exists yet, behavior is unchanged — detach the stale session
+(best-effort) and create a fresh one. Verified against a real Chromium
+instance: setting a script breakpoint, reattaching without detaching, and
+confirming the breakpoint is still present and the session object identity is
+unchanged (`tests/modules/test_reverse_modules.py::TestReverseSessionReuse`).
+
+Both additions strengthen Phase 1 rather than opening a new phase — no new
+permission, no new transport wiring (the existing `is_reverse =
+module_id.startswith("reverse.")` checks in `mcp_handler.py` and
+`api/routes/modules.py` already cover the new module id by prefix).
+Reconciled the generated catalog to 467 modules across 85 categories.
+
 ## 2026-07-25 - reverse.hook rewritten on Object.defineProperty; session idle-timeout reaper added
 
 Decision (hook redesign): `reverse.hook`'s injected JS (`_HOOK_SCRIPT_TEMPLATE`

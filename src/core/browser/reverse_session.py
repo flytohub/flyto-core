@@ -148,8 +148,9 @@ _HOOK_SCRIPT_TEMPLATE = """
 
 
 class ReverseSession:
-    """CDP session for one page: scripts, breakpoints, pause/resume/step,
-    installed function hooks, and request/WebSocket capture."""
+    """CDP session for one page: scripts, script-line and request-level
+    breakpoints, pause/resume/step, installed function hooks, and
+    request/WebSocket capture."""
 
     def __init__(self, driver: Any):
         """
@@ -176,9 +177,34 @@ class ReverseSession:
         self._requests: Dict[str, dict] = {}
         self._websockets: Dict[str, dict] = {}
 
+        # DOMDebugger request-level breakpoints (XHR/fetch), keyed by the URL
+        # substring CDP itself uses as the breakpoint's identity.
+        self._request_breakpoints: Dict[str, dict] = {}
+
     @property
     def is_paused(self) -> bool:
         return self._paused_event.is_set()
+
+    @property
+    def is_enabled(self) -> bool:
+        return self._enabled
+
+    @property
+    def page(self) -> Any:
+        return self._page
+
+    def snapshot(self) -> Dict[str, Any]:
+        """Current session state, for a caller deciding whether to reuse this
+        session instead of detaching and re-attaching from scratch."""
+        return {
+            'url': self._page.url if self._page else None,
+            'scriptCount': len(self._scripts),
+            'breakpointCount': len(self._breakpoints),
+            'requestBreakpointCount': len(self._request_breakpoints),
+            'hookCount': len(self._hooks),
+            'isPaused': self.is_paused,
+            'networkEnabled': self._network_enabled,
+        }
 
     async def enable(self) -> Dict[str, Any]:
         """Attach a CDP session to the driver's real page and enable the Debugger domain."""
@@ -253,6 +279,7 @@ class ReverseSession:
             self._network_enabled = False
             self._requests.clear()
             self._websockets.clear()
+            self._request_breakpoints.clear()
 
         return {'status': 'success'}
 
@@ -303,6 +330,11 @@ class ReverseSession:
         return {
             'reason': params.get('reason', ''),
             'hitBreakpoints': params.get('hitBreakpoints', []),
+            # Present for non-script-line pause reasons (e.g. 'XHR' for a
+            # request-level breakpoint) — carries reason-specific detail such
+            # as the matched URL. Passed through as-is; CDP's shape varies by
+            # reason and we don't want to guess at wrong field names.
+            'data': params.get('data'),
             'callFrames': frames,
         }
 
@@ -393,6 +425,29 @@ class ReverseSession:
 
     def list_breakpoints(self) -> List[dict]:
         return list(self._breakpoints.values())
+
+    # -------------------------------------------------------------------
+    # Request-level breakpoints (DOMDebugger: pause on XHR/fetch send)
+    # -------------------------------------------------------------------
+
+    async def set_request_breakpoint(self, url: str) -> Dict[str, Any]:
+        """Pause execution when an XHR/fetch request URL contains `url`
+        (empty string matches every request). Unlike script breakpoints,
+        CDP has no separate breakpoint-id concept here — the URL substring
+        itself is the breakpoint's identity, so setting the same url twice
+        is idempotent."""
+        await self._cdp.send('DOMDebugger.setXHRBreakpoint', {'url': url})
+        entry = {'url': url}
+        self._request_breakpoints[url] = entry
+        return entry
+
+    async def remove_request_breakpoint(self, url: str) -> Dict[str, Any]:
+        await self._cdp.send('DOMDebugger.removeXHRBreakpoint', {'url': url})
+        self._request_breakpoints.pop(url, None)
+        return {'status': 'success', 'url': url}
+
+    def list_request_breakpoints(self) -> List[dict]:
+        return list(self._request_breakpoints.values())
 
     # -------------------------------------------------------------------
     # Pause / resume / step

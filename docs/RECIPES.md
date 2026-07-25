@@ -589,4 +589,4 @@ steps:
 - `{{arg}}` — substituted with CLI `--arg` value before execution
 - `${step.field}` — resolved at runtime from previous step output
 - Args with `default` are optional; args with `required: true` must be provided
-- Steps use any of the [466 registry-backed modules](TOOL_CATALOG.md)
+- Steps use any of the [467 registry-backed modules](TOOL_CATALOG.md)

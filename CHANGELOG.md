@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `reverse.request_breakpoint` (set/remove/list), strengthening the
+  `reverse.*` toolkit: pauses execution when an XHR/fetch request URL
+  contains a given substring, via CDP's DOMDebugger domain (the same
+  mechanism behind Chrome DevTools' Sources > XHR/Fetch Breakpoints panel).
+  A hit surfaces through the same `Debugger.paused` event as a script
+  breakpoint, so `reverse.wait_paused`/`reverse.resume`/
+  `reverse.get_call_frames`/`reverse.evaluate_on_call_frame` all apply
+  unchanged — no new pause/resume mechanism was needed. Also added
+  session-snapshot reuse to `reverse.attach`: reattaching to a page that
+  already has an enabled debugger session now returns that session's
+  existing snapshot (script cache, breakpoints, request breakpoints, hooks)
+  instead of always detaching and rebuilding from scratch; pass
+  `force_new: true` to opt back into the old always-fresh behavior.
+  Reconciled the generated catalog to 467 modules across 85 categories.
 - Added a `reverse.*` module category (Phase 1 of the reverse-engineering
   roadmap): a CDP-based interactive JavaScript debugger. `reverse.attach` /
   `reverse.detach` manage a `ReverseSession` CDP Debugger session;
