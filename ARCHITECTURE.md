@@ -5,14 +5,14 @@
 - Modules expose narrow automation actions and documented parameters.
 - Recipes compose modules into repeatable workflows.
 - `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
-  source of truth for the current 467-module, 85-category public inventory.
+  source of truth for the current 468-module, 85-category public inventory.
 - Browser modules interact with pages but do not become product business logic.
 - Workflow fixtures must stay separate from secret material and local-only
   machine assumptions.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  949 maintained Python files, 5,498 declarations, 482 literal module
+  950 maintained Python files, 5,502 declarations, 483 literal module
   registrations, 22 HTTP operations, 93 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 

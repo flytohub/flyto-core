@@ -1,5 +1,112 @@
 # Decisions
 
+## 2026-07-25 - reverse.deobfuscate (Phase 4): own Node.js subprocess, not the generic plugin runtime; webcrack only, not restringer; new code.execute permission
+
+Decision (delivery mechanism): `reverse.deobfuscate` manages its own Node.js
+subprocess directly (`asyncio.create_subprocess_exec('node', worker.mjs, ...)`
+in the module's `execute()`) rather than going through the existing polyglot
+JSON-RPC plugin runtime (`src/core/runtime/manager.py`/`process.py`/
+`languages.py`, documented in `docs/PLUGIN_SDK.md`), even though that system
+already declares a `node` language config.
+
+Reason: investigation before writing any code found the generic plugin
+runtime unfinished in ways that matter here. `ProcessConfig`'s declared
+`max_memory_mb`/`max_cpu_percent` are never enforced anywhere. An `invoke()`
+timeout (`process.py`) raises `PluginTimeoutError` but never kills the
+subprocess — the abandoned process keeps running. Restart backoff is
+declared but unused. Most importantly, a `plugin.yaml` manifest's `modules:`
+list is never wired into `ModuleRegistry` — there is no code path that turns
+a plugin manifest into a callable module today, and no example `plugin.yaml`
+exists anywhere in this repo. Building "the strongest" implementation of a
+security-sensitive, code-executing feature on top of that would either
+inherit those gaps silently or require first fixing shared plugin
+infrastructure with a much larger blast radius than one new module. A
+dedicated, self-contained subprocess call is simpler, fully reviewable in one
+module, and explicitly fixes the exact "no kill on timeout" gap found in
+`process.py` — `reverse.deobfuscate`'s own timeout path calls `proc.kill()`
+and awaits `proc.wait()` before raising, unlike the shared runtime.
+
+Decision (Node.js requirement): require a system-installed Node.js 22 or 24
+on `PATH`, plus a one-time `npm install` in the sidecar worker directory
+(`src/core/modules/atomic/reverse/deobfuscate_worker/`) — the same BYO-runtime
+tradeoff the existing plugin `node` language config already makes, and the
+same shape of tradeoff `reverse.code`'s `jsast` pip extra makes (clear error
+if missing, not auto-installed).
+
+Reason: this repo has no reliable, working Node.js auto-bundling mechanism.
+Playwright's bundled Node is reachable only via the private, undocumented
+`playwright._impl._driver`, already known to be fragile under PyInstaller
+(`src/core/browser/driver.py`'s `_find_external_node()` exists specifically
+to work around it). The `~/.flyto/node/` fallback referenced by
+`driver.py`'s `_NODE_VERSION` constant has no downloader implemented
+anywhere — dead code, not a working mechanism (confirmed by search across
+the repo). Building that downloader is a separate, large, not-yet-scoped
+project (`tasks.md`), and bundling it into this change would repeat the same
+scope-creep this repo's own Phase 3 decision explicitly avoided. Requiring a
+system Node.js delivers Phase 4's functional goal now without taking on that
+unsolved dependency — Node.js 22/24 is also webcrack's own stated
+requirement (even-numbered releases only, since its `isolated-vm` dependency
+warns against non-LTS/odd-numbered Node ABI breakage), not an arbitrary
+choice made here.
+
+Decision (engine: webcrack only, not restringer, in this first version):
+use `webcrack` (npm, published directly by its author `j4k0xb`) as the sole
+deobfuscation engine. Do not add `restringer` in this version, despite it
+being part of the original plan approved with the user.
+
+Reason: verifying both packages directly (not just trusting search-summary
+descriptions) before implementing found two things that changed the plan.
+First, the npm-published `restringer` package (`2.2.0`) is maintained by
+`ctrl_esc`/`ctrl-escp/restringer`, a 23-star fork — not the canonical,
+598-star `HumanSecurity/restringer`. The fork's published `package.json` has
+dropped `isolated-vm` as a dependency, while the canonical GitHub repo's
+`package.json` still declares it — an unresolved, unexplained discrepancy in
+exactly the dependency the whole "safe dynamic evaluation" story rests on,
+not something to build a security-relevant feature on without further
+verification. Second, reading `webcrack`'s own source
+(`deobfuscate/vm.ts`, `createNodeSandbox()`) showed it unconditionally uses
+its own `isolated-vm`-backed sandbox (10s per-eval timeout, isolate disposed
+after use) as a normal part of every run — there is no "pure zero-execution"
+mode when using webcrack at all, which invalidated the original plan's
+safe/full mode split (safe was assumed to mean "webcrack only, zero
+execution"; that assumption was wrong). webcrack alone already covers
+string-array decoding, control-flow-flattening reversal, self-defending/
+debug-protection bypass, and webpack/browserify unpacking — restringer's
+40+ modules would be a genuine deeper pass, but not required to deliver
+Phase 4's stated goal. Adding it later, once its npm situation is resolved
+or it's vendored from the canonical repo at a pinned commit, is tracked in
+`tasks.md` rather than blocking this change.
+
+Decision (permission): gate the whole module behind one new deny-by-default
+permission, `code.execute` (added to `module_policy.py`'s
+`_DANGEROUS_PERMISSIONS`), rather than trying to make part of the module
+permission-free the way `reverse.code`/`reverse.sourcemap` are.
+
+Reason: confirmed with the user directly, and now on firmer ground than
+originally planned — since webcrack itself always executes sandboxed code
+(see above), there was never going to be a genuinely zero-execution mode to
+carve out an exemption for, unlike `reverse.code`'s pure AST parsing (which
+DECISIONS.md's Phase 3 entry below explicitly says "has no elevated
+capability to gate"). One permission covering the whole module is simpler to
+reason about and review than a per-call conditional gate would have been.
+
+Decision (packaging): ship the worker's `package.json`/`package-lock.json`/
+`worker.mjs` (not `node_modules`) as package data for the
+`core.modules.atomic.reverse` package (`pyproject.toml`
+`[tool.setuptools.package-data]`, `MANIFEST.in`), so a `pip install
+flyto-core` still gets the worker source even though `npm install` remains a
+separate, required, manual step.
+
+Reason: the repo's package layout (`package-dir = {"" = "src"}`,
+`[tool.setuptools.packages.find] where = ["src"]`) only ships what's under
+`src/` by default, and the sidecar needs its own directory (not the root
+`package.json`, which is explicitly scoped `flyto2-core-test-runtime` for
+jsdom browser-contract tests only — conflating a production runtime
+dependency with a test-only manifest would be confusing and wrong). Placing
+the worker under `src/core/modules/atomic/reverse/deobfuscate_worker/`
+keeps it shippable via ordinary Python packaging with two small, explicit
+additions rather than a new packaging mechanism.
+
 ## 2026-07-25 - reverse.request_breakpoint reuses the Debugger pause pipeline; reverse.attach gains session-snapshot reuse
 
 Decision (request breakpoint): implement request-level breakpoints via CDP's

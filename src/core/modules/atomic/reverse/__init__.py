@@ -35,6 +35,16 @@ also gained session-snapshot reuse: reattaching to a page that already has
 an enabled session returns its existing snapshot (script cache, breakpoints,
 request breakpoints, hooks) instead of discarding it, unless force_new=True.
 
+Phase 4: reverse.deobfuscate delivers real semantic deobfuscation
+(control-flow-flattening reversal, string-array decoding, self-defending-code
+bypass, webpack/browserify unpacking) via `webcrack`, run in a dedicated
+Node.js sidecar worker (deobfuscate_worker/worker.mjs) rather than the
+generic JSON-RPC plugin runtime (src/core/runtime/manager.py) or Playwright's
+private/fragile bundled Node — see DECISIONS.md for why both of those were
+rejected. Unlike reverse.code, webcrack unconditionally evaluates the input
+inside its own isolated-vm sandbox, so this module requires the new
+code.execute permission instead of being permission-free.
+
 Every other module in this category requires the browser.debug permission
 (see src/core/module_policy.py _DANGEROUS_PERMISSIONS) — evaluate_on_call_frame,
 hook records, and captured network/WebSocket traffic can all expose
@@ -56,6 +66,7 @@ from .network import *
 from .websocket import *
 from .code import *
 from .sourcemap import *
+from .deobfuscate import *
 
 __all__ = [
     # Reverse modules will be auto-discovered by module registry

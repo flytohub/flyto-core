@@ -7,10 +7,13 @@
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.
 - Add recipe fixtures for capability states and report/export flows.
 - Keep maintained recipe bundle tests aligned with product-loop contracts.
-- Reverse-engineering toolkit Phase 4: true semantic deobfuscation (see
-  `ROADMAP.md` 0.5) — blocked on building a reliable `~/.flyto/node/`
-  downloader first, then new npm dependencies and CI audit surface; not
-  started.
+- Add `restringer` to `reverse.deobfuscate` once its npm publishing situation
+  is resolved (currently maintained by an unofficial fork whose dependency
+  tree dropped `isolated-vm`), or vendor it from `HumanSecurity/restringer`
+  at a pinned commit instead.
+- Build a reliable `~/.flyto/node/` auto-download mechanism if a future need
+  requires bundled (not system-installed) Node.js — `reverse.deobfuscate`
+  sidesteps this by requiring a system Node.js instead of solving it.
 
 ## Watch
 
@@ -20,6 +23,11 @@
 
 ## Done
 
+- Added `reverse.deobfuscate` (Phase 4 of the `reverse.*` toolkit): real
+  semantic deobfuscation via `webcrack`, run in a dedicated Node.js sidecar
+  worker spawned/killed per invocation, gated behind a new `code.execute`
+  permission. Requires a system-installed Node.js 22/24. Reconciled the
+  generated catalog to 468 modules / 85 categories.
 - Added `reverse.request_breakpoint` (set/remove/list request-level XHR/fetch
   breakpoints via CDP's `DOMDebugger.setXHRBreakpoint`) and session-snapshot
   reuse in `reverse.attach` (reattaching to the same still-enabled page

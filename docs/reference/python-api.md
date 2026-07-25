@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,498 declarations across 803 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,502 declarations across 804 files**.
 
 ## `demo.py`
 
@@ -2718,12 +2718,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ModuleFilter.is_allowed(self, module_id: str) -> bool` | Check if a module is allowed to execute. | [`src/core/module_policy.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L98) |
 | function | `def _env_var_allowlist() -> List&#91;str&#93;` | Implements `_env_var_allowlist`; linked source is authoritative. | [`src/core/module_policy.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L130) |
 | function | `def is_env_var_allowed(name: str) -> bool` | Whether ${env.<name>} interpolation is permitted by policy. | [`src/core/module_policy.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L135) |
-| function | `def granted_permissions() -> set` | Implements `granted_permissions`; linked source is authoritative. | [`src/core/module_policy.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L170) |
-| function | `def missing_permissions(required) -> list` | Return the dangerous permissions in `required` that have NOT been granted. | [`src/core/module_policy.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L175) |
-| class | `class ModulePolicyError(PermissionError)` | Raised at the execution chokepoint when a module is blocked by policy. | [`src/core/module_policy.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L188) |
-| function | `def enforce_module_policy(module_id, required_permissions=None) -> None` | Fail-closed gate, called at the single execution chokepoint (BaseModule.run). | [`src/core/module_policy.py:192`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L192) |
-| function | `def _parse_inline_workflow(text: str) -> Any` | Best-effort parse of an inline workflow string (YAML superset of JSON). | [`src/core/module_policy.py:235`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L235) |
-| function | `def _collect_module_ids(obj: Any, _depth: int=0) -> set` | Recursively collect every module id declared anywhere in a workflow dict. | [`src/core/module_policy.py:251`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L251) |
+| function | `def granted_permissions() -> set` | Implements `granted_permissions`; linked source is authoritative. | [`src/core/module_policy.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L175) |
+| function | `def missing_permissions(required) -> list` | Return the dangerous permissions in `required` that have NOT been granted. | [`src/core/module_policy.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L180) |
+| class | `class ModulePolicyError(PermissionError)` | Raised at the execution chokepoint when a module is blocked by policy. | [`src/core/module_policy.py:193`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L193) |
+| function | `def enforce_module_policy(module_id, required_permissions=None) -> None` | Fail-closed gate, called at the single execution chokepoint (BaseModule.run). | [`src/core/module_policy.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L197) |
+| function | `def _parse_inline_workflow(text: str) -> Any` | Best-effort parse of an inline workflow string (YAML superset of JSON). | [`src/core/module_policy.py:240`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L240) |
+| function | `def _collect_module_ids(obj: Any, _depth: int=0) -> set` | Recursively collect every module id declared anywhere in a workflow dict. | [`src/core/module_policy.py:256`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L256) |
 
 ## `src/core/modules/atomic/__init__.py`
 
@@ -5477,6 +5477,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ReverseCodeModule._find_calls(self, tree, source_bytes: bytes, function_name: str) -> List&#91;dict&#93;` | Implements `ReverseCodeModule._find_calls`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:217`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L217) |
 | method | `def ReverseCodeModule._text(node, source_bytes: bytes) -> str` | Implements `ReverseCodeModule._text`; linked source is authoritative. | [`src/core/modules/atomic/reverse/code.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/code.py#L245) |
 
+## `src/core/modules/atomic/reverse/deobfuscate.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _scrubbed_env() -> Dict&#91;str, str&#93;` | Implements `_scrubbed_env`; linked source is authoritative. | [`src/core/modules/atomic/reverse/deobfuscate.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/deobfuscate.py#L74) |
+| class | `class ReverseDeobfuscateModule(BaseModule)` | Real semantic JS deobfuscation via webcrack, run in a dedicated Node.js worker. | [`src/core/modules/atomic/reverse/deobfuscate.py:133`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/deobfuscate.py#L133) |
+| method | `def ReverseDeobfuscateModule.validate_params(self) -> None` | Implements `ReverseDeobfuscateModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/deobfuscate.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/deobfuscate.py#L140) |
+| method | `async def ReverseDeobfuscateModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseDeobfuscateModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/deobfuscate.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/deobfuscate.py#L150) |
+
 ## `src/core/modules/atomic/reverse/detach.py`
 
 | Kind | Signature | Responsibility | Source |
@@ -5562,9 +5571,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class ReverseWaitPausedModule(BaseModule)` | Block until the debugged page hits a breakpoint. | [`src/core/modules/atomic/reverse/wait_paused.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L64) |
-| method | `def ReverseWaitPausedModule.validate_params(self) -> None` | Implements `ReverseWaitPausedModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:71`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L71) |
-| method | `async def ReverseWaitPausedModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseWaitPausedModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L75) |
+| class | `class ReverseWaitPausedModule(BaseModule)` | Block until the debugged page hits a breakpoint. | [`src/core/modules/atomic/reverse/wait_paused.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L66) |
+| method | `def ReverseWaitPausedModule.validate_params(self) -> None` | Implements `ReverseWaitPausedModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:73`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L73) |
+| method | `async def ReverseWaitPausedModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `ReverseWaitPausedModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/reverse/wait_paused.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/reverse/wait_paused.py#L77) |
 
 ## `src/core/modules/atomic/reverse/websocket.py`
 

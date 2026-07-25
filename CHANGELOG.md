@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `reverse.deobfuscate`, delivering Phase 4 of the `reverse.*` toolkit:
+  real semantic JavaScript deobfuscation (control-flow-flattening reversal,
+  string-array decoding, self-defending/debug-protection bypass, webpack/
+  browserify unpacking) via the `webcrack` npm package, run in a dedicated
+  Node.js sidecar worker (`deobfuscate_worker/worker.mjs`) spawned and killed
+  per invocation — not the generic JSON-RPC plugin runtime
+  (`src/core/runtime/manager.py`), which was found to have unenforced
+  resource limits and no kill-on-timeout, nor Playwright's private/fragile
+  bundled Node, both already rejected in DECISIONS.md for exactly this
+  reason. Unlike `reverse.code`, webcrack's own pipeline unconditionally
+  evaluates the input inside an `isolated-vm` sandbox, so this module is
+  gated behind a new deny-by-default `code.execute` permission. Requires a
+  system-installed Node.js 22 or 24 plus a one-time `npm install` in the
+  worker directory — this module does not attempt to auto-install or bundle
+  Node.js itself. The `restringer` npm package was deliberately left out of
+  this first version: its published package is maintained by an unofficial
+  fork whose dependency tree has silently dropped the `isolated-vm` sandbox
+  the canonical `HumanSecurity/restringer` project still declares — not
+  something to build on without further verification. Reconciled the
+  generated catalog to 468 modules across 85 categories.
 - Added `reverse.request_breakpoint` (set/remove/list), strengthening the
   `reverse.*` toolkit: pauses execution when an XHR/fetch request URL
   contains a given substring, via CDP's DOMDebugger domain (the same

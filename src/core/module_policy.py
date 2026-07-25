@@ -164,6 +164,11 @@ _DANGEROUS_PERMISSIONS = frozenset({
     # locals/closures (secrets, tokens), and pausing at a breakpoint freezes
     # the page's JS/renderer — materially higher risk than browser.evaluate.
     "browser.debug",
+    # reverse.deobfuscate: webcrack's own pipeline unconditionally evaluates
+    # caller-supplied JS inside an isolated-vm sandbox (10s per-eval timeout)
+    # to resolve string-array/decoder values — materially higher risk than
+    # reverse.code's pure AST parsing, which never executes anything.
+    "code.execute",
 })
 
 

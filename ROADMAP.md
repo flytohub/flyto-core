@@ -64,17 +64,23 @@
   detaching and rebuilding from scratch, unless `force_new=True`. Not a new
   phase — strengthens Phase 1. See `DECISIONS.md` (2026-07-25 request
   breakpoint / session reuse entry).
-- **Phase 4 (not started):** true semantic deobfuscation — control-flow-
-  flattening reversal, string-array decoding via constant folding, and other
-  transforms that require actually executing/evaluating JS (Babel/webcrack-
-  style), which pure-Python AST tools cannot do. Blocked on solving the
-  Node.js-invocation reliability problem first: Playwright's bundled Node is
-  only reachable via a private, undocumented API (`playwright._impl._driver`)
-  already known to be fragile under PyInstaller (see `driver.py`'s
-  `_find_external_node()` workaround), and the imagined `~/.flyto/node/`
-  fallback has no downloader anywhere in the repo (`_NODE_VERSION` is dead
-  code). Needs new npm dependencies and CI audit surface too. A separate
-  follow-up phase, not an extension of the Phase 1/2/3 module set.
+- **Phase 4 (done, 2026-07-25):** `reverse.deobfuscate` — real semantic
+  deobfuscation (control-flow-flattening reversal, string-array decoding,
+  self-defending/debug-protection bypass, webpack/browserify unpacking) via
+  the `webcrack` npm package, run in a dedicated Node.js sidecar worker
+  (`deobfuscate_worker/worker.mjs`, spawned and killed per invocation) rather
+  than the generic JSON-RPC plugin runtime (`src/core/runtime/manager.py`,
+  found to have unenforced resource limits and no kill-on-timeout, and whose
+  plugin manifests aren't wired into `ModuleRegistry` at all) or Playwright's
+  private/fragile bundled Node. This delivers Phase 4's goal via a narrower
+  path than originally assumed below: it requires a **system-installed**
+  Node.js 22/24 (the same accepted tradeoff the existing plugin `node`
+  language config and `reverse.code`'s `jsast` extra already make) rather
+  than solving Node auto-bundling — that larger problem (the `~/.flyto/node/`
+  downloader remains unimplemented) is sidestepped, not solved, and remains
+  open for any future need that requires it. See `DECISIONS.md`
+  (2026-07-25 deobfuscate entry) for the full rationale, including why the
+  `restringer` npm package was left out of this first version.
 
 ### 1. Marketplace Ecosystem
 - Template marketplace for buying/selling workflows

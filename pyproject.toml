@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flyto-core"
 version = "2.26.10"
-description = "The open-source execution engine for AI agents. 467 modules, MCP-native, triggers, queue, versioning, metering."
+description = "The open-source execution engine for AI agents. 468 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -154,6 +154,13 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "*" = ["*.json", "*.yaml", "*.yml"]
+# reverse.deobfuscate's Node.js sidecar worker (requires a separate `npm
+# install` regardless — this only ships the worker source, not node_modules).
+"core.modules.atomic.reverse" = [
+    "deobfuscate_worker/package.json",
+    "deobfuscate_worker/package-lock.json",
+    "deobfuscate_worker/worker.mjs",
+]
 
 [tool.black]
 line-length = 100

@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **467 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **468 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -67,7 +67,7 @@
 - [queue](#queue) (3)
 - [random](#random) (4)
 - [regex](#regex) (5)
-- [reverse](#reverse) (15)
+- [reverse](#reverse) (16)
 - [sandbox](#sandbox) (3)
 - [scheduler](#scheduler) (3)
 - [set](#set) (4)
@@ -755,6 +755,7 @@
 | `reverse.attach` | Attach a CDP debugger session to the current page | `force_new` boolean (default: `False`) | `status` (string), `url` (string), `reused` (boolean), `scriptCount` (number), `breakpointCount` (number), `requestBreakpointCount` (number), `hookCount` (number), `isPaused` (boolean), `networkEnabled` (boolean) |
 | `reverse.breakpoint` | Set or remove a breakpoint by script URL and line number | `action` select *(required)*, `url` string, `url_regex` string, `line_number` number (default: `0`), `column_number` number (default: `0`), `condition` string, `breakpoint_id` string | `status` (string), `breakpointId` (string), `locations` (array) |
 | `reverse.code` | Beautify minified JavaScript and search its AST for functions, strings, and call sites | `action` select *(required)*, `source` string *(required)*, `function_name` string | `status` (string), `formatted` (string), `functions` (array), `strings` (array), `calls` (array) |
+| `reverse.deobfuscate` | Reverse control-flow-flattening, string-array encoding, and bundling via webcrack | `source` string *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `deobfuscated` (string), `bundleDetected` (boolean) |
 | `reverse.detach` | Detach the CDP debugger session from the current page | `_no_params` boolean (default: `True`) | `status` (string) |
 | `reverse.evaluate_on_call_frame` | Evaluate a JavaScript expression in a paused call frame scope | `call_frame_id` string *(required)*, `expression` string *(required)* | `status` (string), `result` (object), `error` (string) |
 | `reverse.get_call_frames` | Get the call stack at the current pause point | `_no_params` boolean (default: `True`) | `status` (string), `callFrames` (array) |
@@ -765,7 +766,7 @@
 | `reverse.scripts` | List, fetch, or search loaded JavaScript sources | `action` select *(required)*, `script_id` string, `query` string, `is_regex` boolean (default: `False`), `case_sensitive` boolean (default: `False`) | `status` (string), `scripts` (array), `source` (string), `matches` (array) |
 | `reverse.sourcemap` | Resolve a generated code location to its original source file/line/column | `action` select *(required)*, `source_map` string *(required)*, `generated_line` number, `generated_column` number (default: `0`), `source` string | `status` (string), `source` (string), `originalLine` (number), `originalColumn` (number), `name` (string), `sources` (array), `content` (string) |
 | `reverse.step` | Step over, into, or out of the current line while paused | `action` select *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `callFrames` (array) |
-| `reverse.wait_paused` | Block until the page hits a breakpoint | `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `reason` (string), `callFrames` (array) |
+| `reverse.wait_paused` | Block until the page hits a breakpoint | `timeout_ms` number (default: `30000`) | `status` (string), `paused` (boolean), `reason` (string), `data` (object), `callFrames` (array) |
 | `reverse.websocket` | Capture WebSocket connections and frames on the debugged page | `action` select *(required)*, `request_id` string, `direction` select (default: `both`), `limit` number | `status` (string), `connections` (array), `frames` (array) |
 
 ## sandbox

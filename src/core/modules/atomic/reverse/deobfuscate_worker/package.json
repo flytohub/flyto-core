@@ -1,0 +1,16 @@
+{
+  "name": "flyto2-deobfuscate-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js sidecar worker for core.modules.atomic.reverse.deobfuscate — runs webcrack in an isolated subprocess, one invocation per process.",
+  "type": "module",
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
+  },
+  "scripts": {
+    "audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "webcrack": "2.16.0"
+  }
+}

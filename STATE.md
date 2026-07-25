@@ -6,7 +6,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 467 modules across 85 categories, and
+- The generated catalog currently exposes 468 modules across 85 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
@@ -24,8 +24,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 949 maintained Python files, 5,498
-  declarations, 482 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 950 maintained Python files, 5,502
+  declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
@@ -69,8 +69,7 @@
   rest of `reverse.*`, it needs no permission (no browser/CDP access, no code
   execution) and does not depend on `reverse_session` state at all. It only
   beautifies and structurally searches JS source text — real semantic
-  deobfuscation is deferred to a not-yet-started Phase 4, blocked on solving
-  Node.js-invocation reliability (see DECISIONS.md).
+  deobfuscation is `reverse.deobfuscate` (Phase 4, see below).
 - `reverse.sourcemap` requires no extra pip dependency (hand-rolled VLQ
   decoder) and no permission, same reasoning as `reverse.code`. It never
   fetches an external `.map` file itself — the caller uses `http.get`
@@ -88,6 +87,21 @@
   `reverse.attach` call returns (`reused: true` plus the session's existing
   snapshot) but not what a fresh attach on a new page returns. See
   `DECISIONS.md` (2026-07-25 request breakpoint / session reuse entry).
+- `reverse.deobfuscate` (Phase 4) requires a system-installed Node.js 22 or
+  24 on `PATH` plus a one-time `npm install` in
+  `src/core/modules/atomic/reverse/deobfuscate_worker/` — raises a clear
+  `ModuleError` naming the exact fix if either is missing. Unlike
+  `reverse.code`, it is gated behind a new deny-by-default `code.execute`
+  permission, since its `webcrack` engine unconditionally evaluates the
+  input inside an `isolated-vm` sandbox. It manages its own dedicated Node.js
+  subprocess (spawned and killed per invocation) rather than the generic
+  JSON-RPC plugin runtime (`src/core/runtime/manager.py`), which was found
+  to have unenforced resource limits, no kill-on-timeout, and no wiring from
+  plugin manifests into `ModuleRegistry` — not something to build on
+  silently. Does not include `restringer`: the npm-published package is
+  maintained by an unofficial fork whose dependency tree has dropped the
+  `isolated-vm` sandbox the canonical `HumanSecurity/restringer` project
+  still declares. See `DECISIONS.md` (2026-07-25 deobfuscate entry).
 
 ## Verification Matrix
 

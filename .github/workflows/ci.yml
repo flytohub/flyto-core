@@ -77,6 +77,11 @@ jobs:
       - name: Audit JavaScript test runtime
         run: npm run audit
 
+      - name: Audit reverse.deobfuscate's Node.js worker
+        run: |
+          npm ci --ignore-scripts --prefix src/core/modules/atomic/reverse/deobfuscate_worker
+          npm run audit --prefix src/core/modules/atomic/reverse/deobfuscate_worker
+
       - name: Build package
         run: |
           python -m build

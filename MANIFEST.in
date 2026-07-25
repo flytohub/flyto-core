@@ -6,4 +6,10 @@ include pyproject.toml
 recursive-include src *.py
 recursive-include src *.yaml
 
+# reverse.deobfuscate's Node.js sidecar worker source (not node_modules,
+# which requires a separate `npm install` regardless of packaging).
+include src/core/modules/atomic/reverse/deobfuscate_worker/package.json
+include src/core/modules/atomic/reverse/deobfuscate_worker/package-lock.json
+include src/core/modules/atomic/reverse/deobfuscate_worker/worker.mjs
+
 recursive-include workflows *.yaml
