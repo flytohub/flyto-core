@@ -119,7 +119,7 @@ dev = [
     "mypy>=1.0.0",
     "build>=1.5.0",
     "pip-tools>=7.5,<8",
-    "pip-audit>=2.9,<3",
+    "pip-audit>=2.10.1,<3",
     "twine>=4.0.2",
 ]
 
