@@ -65,7 +65,7 @@ browser = [
 ]
 api = [
     "fastapi>=0.139.0,<1",
-    "uvicorn>=0.51.0,<1",
+    "uvicorn>=0.52.0,<1",
 ]
 vector = [
     "qdrant-client>=1.9.0,<2",
