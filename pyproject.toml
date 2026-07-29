@@ -54,7 +54,7 @@ dependencies = [
     "aiohttp>=3.14.1,<4",
     "beautifulsoup4>=4.15.0,<5",
     "lxml>=6.1.0,<7",
-    "pydantic>=2.4.0,<3",
+    "pydantic>=2.13.4,<3",
     "python-dotenv>=1.2.2,<2",
     "aiofiles>=23.2.1,<25",
 ]
