@@ -90,7 +90,7 @@ telegram = [
     "python-telegram-bot>=22.8,<23",
 ]
 jsast = [
-    "tree-sitter>=0.23,<1",
+    "tree-sitter>=0.26.0,<1",
     "tree-sitter-javascript>=0.23,<1",
     "jsbeautifier>=1.15,<3",
 ]
@@ -111,7 +111,7 @@ dev = [
     "PyJWT>=2.10.1,<3",
     "dnspython>=2.7.0,<3",
     "openai>=1.109.1,<3",
-    "tree-sitter>=0.23,<1",
+    "tree-sitter>=0.26.0,<1",
     "tree-sitter-javascript>=0.23,<1",
     "jsbeautifier>=1.15,<3",
     "black>=25.12.0",  # GHSA-fj7x ReDoS fixed in 24.3.0; keep the dev-tool floor current until the Python floor can move.
