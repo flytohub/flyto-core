@@ -36,7 +36,8 @@ jobs:
 
       - name: Install package and audit tooling
         run: |
-          python -m pip install --upgrade pip
+          # pip-tools 7.6.0 is incompatible with pip 26.2.
+          python -m pip install --upgrade 'pip<26.2'
           pip install -e '.[dev,browser]'
           pip install './flyto-indexer[dev]'
           npm ci --ignore-scripts
