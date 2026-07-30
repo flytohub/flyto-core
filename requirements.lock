@@ -12,7 +12,7 @@ aiohttp==3.14.3
     # via flyto-core (pyproject.toml)
 aiosignal==1.4.0
     # via aiohttp
-annotated-types==0.7.0
+annotated-types==0.8.0
     # via pydantic
 attrs==26.1.0
     # via aiohttp

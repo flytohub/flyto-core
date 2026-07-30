@@ -45,11 +45,14 @@ def _juice_shop_running() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _juice_shop_running(),
-    reason="juice-shop not running on :3000 — "
-    "`docker run -d -p 3000:3000 bkimminich/juice-shop` to enable",
-)
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.skipif(
+        not _juice_shop_running(),
+        reason="juice-shop not running on :3000 — "
+        "`docker run -d -p 3000:3000 bkimminich/juice-shop` to enable",
+    ),
+]
 
 
 def _load_modules():
