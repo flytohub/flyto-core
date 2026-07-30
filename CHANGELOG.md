@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added 6 `api.xquik.*` modules for X search, profile reads, post lookup,
+  post creation, write-status polling, and arbitrary documented API paths.
+  Requests use a fixed Xquik host, contract header, runtime credentials, and
+  required idempotency keys for writes.
 - Added `reverse.deobfuscate`, delivering Phase 4 of the `reverse.*` toolkit:
   real semantic JavaScript deobfuscation (control-flow-flattening reversal,
   string-array decoding, self-defending/debug-protection bypass, webpack/
@@ -92,6 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `http.get` step in the calling workflow, already SSRF-guarded, so no new
   security-sensitive fetch code was written. Reconciled the generated
   catalog to 466 modules across 85 categories.
+
+### Fixed
+- Fixed `http.get` success results to expose the documented `status`, `body`,
+  and `headers` fields while preserving the existing nested `data` object.
 
 ## [2.26.10] - 2026-07-23
 

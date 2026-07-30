@@ -9,16 +9,16 @@ Simplified GET request for API calls.
 import logging
 from typing import Any, Dict
 
-from ...registry import register_module
-from ...errors import ValidationError, NetworkError, ModuleError
-from ...schema import compose, presets
 from ....utils import (
-    guarded_client_session,
-    validate_url_with_env_config,
     SSRFError,
-    ssrf_protection_enabled,
     guarded_aiohttp_request,
+    guarded_client_session,
+    ssrf_protection_enabled,
+    validate_url_with_env_config,
 )
+from ...errors import ModuleError, NetworkError, ValidationError
+from ...registry import register_module
+from ...schema import compose, presets
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +92,10 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     """Send HTTP GET request."""
     try:
         import aiohttp
-    except ImportError:
-        raise ModuleError("aiohttp required. Install: pip install aiohttp")
+    except ImportError as error:
+        raise ModuleError(
+            "aiohttp required. Install: pip install aiohttp"
+        ) from error
 
     params = context['params']
     url = params.get('url')
@@ -108,9 +110,13 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
     if ssrf_protection_enabled():
         try:
             validate_url_with_env_config(url)
-        except SSRFError as e:
+        except SSRFError as error:
             logger.warning(f"SSRF protection blocked GET to: {url}")
-            raise NetworkError(str(e), url=url, status_code=0)
+            raise NetworkError(
+                str(error),
+                url=url,
+                status_code=0,
+            ) from error
 
     if query:
         url = _append_query_params(url, query)
@@ -126,12 +132,22 @@ async def http_get(context: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 body = await _parse_response_body(response)
                 if 200 <= response.status < 300:
-                    return {'ok': True, 'data': {'status': response.status, 'body': body, 'headers': dict(response.headers)}}
+                    response_headers = dict(response.headers)
+                    data = {
+                        'status': response.status,
+                        'body': body,
+                        'headers': response_headers,
+                    }
+                    return {
+                        'ok': True,
+                        **data,
+                        'data': data,
+                    }
                 raise NetworkError(f"HTTP {response.status} error", url=url, status_code=response.status)
             finally:
                 response.release()
     except NetworkError:
         raise
-    except Exception as e:
-        logger.error(f"HTTP GET failed: {e}")
-        raise NetworkError(str(e), url=url)
+    except Exception as error:
+        logger.error(f"HTTP GET failed: {error}")
+        raise NetworkError(str(error), url=url) from error

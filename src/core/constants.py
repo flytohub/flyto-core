@@ -179,6 +179,10 @@ MAX_RETRIES_LIMIT: int = 10
 class APIEndpoints:
     """Centralized API endpoint configuration"""
 
+    # Xquik
+    XQUIK_BASE_URL: str = "https://xquik.com/api/v1"
+    XQUIK_API_CONTRACT: str = "2026-04-29"
+
     # Stripe
     STRIPE_BASE_URL: str = "https://api.stripe.com/v1"
     STRIPE_PAYMENT_INTENTS: str = f"{STRIPE_BASE_URL}/payment_intents"
@@ -284,6 +288,7 @@ class EnvVars:
     """Environment variable names"""
 
     # API Keys
+    XQUIK_API_KEY: str = "XQUIK_API_KEY"
     GITHUB_TOKEN: str = "GITHUB_TOKEN"
     GOOGLE_API_KEY: str = "GOOGLE_API_KEY"
     GOOGLE_AI_API_KEY: str = "GOOGLE_AI_API_KEY"

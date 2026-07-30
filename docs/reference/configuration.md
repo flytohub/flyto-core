@@ -2,7 +2,7 @@
 
 # Configuration And Packaged Assets
 
-Implementation sources read **104 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
+Implementation sources read **105 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
 
 ## Environment variables
 
@@ -112,6 +112,7 @@ Implementation sources read **104 environment-variable names**. The package ship
 | `TWILIO_AUTH_TOKEN` | [`src/core/modules/third_party/communication/twilio.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/twilio.py#L149), [`src/core/modules/third_party/communication/twilio.py:311`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/twilio.py#L311) |
 | `WEBHOOK_SIGNING_KEY` | [`src/core/modules/integrations/base/webhook.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/integrations/base/webhook.py#L19) |
 | `WORKER_AUTH_TOKEN` | [`src/core/engine/breakpoints/manager.py:492`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/breakpoints/manager.py#L492), [`src/core/engine/breakpoints/screenshot.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/breakpoints/screenshot.py#L184) |
+| `XQUIK_API_KEY` | [`src/core/modules/third_party/developer/xquik.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L109) |
 
 ## Packaged recipes
 

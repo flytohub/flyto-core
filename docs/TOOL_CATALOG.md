@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **468 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **474 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 
@@ -9,7 +9,7 @@
 - [agent](#agent) (3)
 - [ai](#ai) (10)
 - [analysis](#analysis) (6)
-- [api](#api) (13)
+- [api](#api) (19)
 - [archive](#archive) (6)
 - [array](#array) (15)
 - [auth](#auth) (1)
@@ -145,6 +145,12 @@
 | `api.notion.query_database` | Query pages from Notion database with filters and sorting | `api_key` string, `database_id` string *(required)*, `filter` object, `sorts` array, `page_size` number (default: `100`) | `results` (array), `count` (number), `has_more` (boolean) |
 | `api.openai.chat` | Send a chat message to OpenAI GPT models | `prompt` string *(required)*, `model` select (default: `gpt-4o`), `temperature` number (default: `0.7`), `max_tokens` number (default: `1000`), `system_message` string | `response` (string), `model` (string), `usage` (object) |
 | `api.openai.image` | Generate images using DALL-E | `prompt` string *(required)*, `size` select (default: `1024x1024`), `model` select (default: `dall-e-3`), `quality` select (default: `standard`), `n` number (default: `1`) | `images` (array), `model` (string) |
+| `api.xquik.create_tweet` | Create an X post with Xquik | `account` string *(required)*, `text` string, `media` array, `reply_to_tweet_id` string, `community_id` string, `is_note_tweet` boolean (default: `False`), `idempotency_key` string *(required)*, `api_key` string | `status` (string), `action` (object), `data` (object), `http_status` (number), `message` (string) |
+| `api.xquik.get_tweet` | Get one X post with Xquik | `tweet_id` string *(required)*, `api_key` string | `status` (string), `tweet` (object), `author` (object), `data` (object), `http_status` (number), `message` (string) |
+| `api.xquik.get_user` | Get an X user profile with Xquik | `user` string *(required)*, `api_key` string | `status` (string), `user` (object), `data` (object), `http_status` (number), `message` (string) |
+| `api.xquik.get_write_action` | Get an Xquik write action status | `action_id` string *(required)*, `api_key` string | `status` (string), `action` (object), `data` (object), `http_status` (number), `message` (string) |
+| `api.xquik.request` | Call any documented Xquik API path | `method` select *(required)*, `path` string *(required)*, `query` object, `body` object, `idempotency_key` string, `api_key` string | `status` (string), `http_status` (number), `data` (any), `message` (string) |
+| `api.xquik.search_tweets` | Search X posts with Xquik | `query` string *(required)*, `query_type` select (default: `Latest`), `cursor` string, `limit` number (default: `20`), `filters` object, `api_key` string | `status` (string), `tweets` (array), `count` (number), `has_next_page` (boolean), `next_cursor` (string), `data` (object), `http_status` (number), `message` (string) |
 
 ## archive
 

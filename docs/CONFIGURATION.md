@@ -3,7 +3,7 @@
 Flyto2 Core reads configuration from CLI arguments, workflow parameters,
 environment variables, package extras, module policy, and persisted local
 state. The generated [configuration reference](reference/configuration.md)
-links all 93 detected environment-variable names to their readers.
+links all 105 detected environment-variable names to their readers.
 
 ## Runtime Installation
 
@@ -67,6 +67,13 @@ AI, cloud, messaging, database, and productivity modules read provider-specific
 environment names. Install only the needed extra/integration, grant only the
 required permissions, and inject credentials at runtime. Never place real
 tokens in workflow YAML, recipe defaults, examples, or checked-in `.env` files.
+
+Xquik modules read `XQUIK_API_KEY` or an `api_key` workflow parameter. The
+generic request module accepts only paths on the fixed Xquik API host. Write
+requests also require an idempotency key. Never log either credential.
+
+Xquik is an independent third-party service. Not affiliated with X Corp.
+"Twitter" and "X" are trademarks of X Corp.
 
 ## Local State
 

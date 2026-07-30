@@ -2,12 +2,47 @@
 
 """
 Developer Tool Integrations
-GitHub, HTTP REST APIs
+GitHub, HTTP REST APIs, Xquik
 """
 
-from .github import *
-from .http import *
+from .github import (
+    GitHubCreateIssueModule,
+    GitHubCreatePRModule,
+    GitHubGetRepoModule,
+    GitHubListIssuesModule,
+    GitHubListReposModule,
+)
+from .http import (
+    GoogleSearchAPIModule,
+    HTTPGetModule,
+    HTTPPostModule,
+    SerpAPISearchModule,
+    TavilySearchModule,
+)
+from .xquik import (
+    XquikCreateTweetModule,
+    XquikGetTweetModule,
+    XquikGetUserModule,
+    XquikGetWriteActionModule,
+    XquikRequestModule,
+    XquikSearchTweetsModule,
+)
 
 __all__ = [
-    # Developer modules will be auto-discovered by module registry
+    "GitHubCreateIssueModule",
+    "GitHubCreatePRModule",
+    "GitHubGetRepoModule",
+    "GitHubListIssuesModule",
+    "GitHubListReposModule",
+    "GoogleSearchAPIModule",
+    "HTTPGetModule",
+    "HTTPPostModule",
+    "SerpAPISearchModule",
+    "TavilySearchModule",
+    "XquikCreateTweetModule",
+    "XquikGetTweetModule",
+    "XquikGetUserModule",
+    "XquikGetWriteActionModule",
+    "XquikRequestModule",
+    "XquikSearchTweetsModule",
 ]

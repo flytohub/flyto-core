@@ -23,6 +23,8 @@
 
 ## Done
 
+- Added 6 `api.xquik.*` modules for fixed-host X read and write workflows.
+- Aligned `http.get` success output with its declared top-level schema.
 - Added `reverse.deobfuscate` (Phase 4 of the `reverse.*` toolkit): real
   semantic deobfuscation via `webcrack`, run in a dedicated Node.js sidecar
   worker spawned/killed per invocation, gated behind a new `code.execute`

@@ -1,5 +1,5 @@
 {
-  "total": 428,
+  "total": 434,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -99,6 +99,30 @@
     },
     {
       "id": "api.openai.image",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.create_tweet",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.get_tweet",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.get_user",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.get_write_action",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.request",
+      "version": "1.0.0"
+    },
+    {
+      "id": "api.xquik.search_tweets",
       "version": "1.0.0"
     },
     {

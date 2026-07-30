@@ -9,7 +9,7 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **The open-source execution engine for AI agents. 468 modules, MCP-native, triggers, queue, versioning, metering.**
+> **The open-source execution engine for AI agents. 474 modules, MCP-native, triggers, queue, versioning, metering.**
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
@@ -25,7 +25,7 @@ the failed step." Flyto2 Core gives you a local execution engine for browser
 automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
 capture, structured extraction, and audit-ready evidence.
 
-The current public inventory is **468 registry-backed modules** across **85
+The current public inventory is **474 registry-backed modules** across **85
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
@@ -238,7 +238,7 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 - **Open-source AI agent framework boundary**: MCP-compatible clients call reviewed flyto-core modules through schemas, not arbitrary generated production code.
 - **AI workflow automation substrate** for browser automation, API workflows, data/file operations, AI calls, notifications, verification, trace, evidence, and replay.
-- **468 registry-backed modules** across **85 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
+- **474 registry-backed modules** across **85 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
 - **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
 - **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
 - **Hardened outbound and file access** in the 2.26.x line: guarded HTTP clients prevent SSRF bypasses, and file/data writes are confined through the sandbox path guard.
@@ -274,7 +274,7 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 Core is configured through package extras, CLI arguments, workflow parameters,
 module policy, environment variables, and local run state. Security-sensitive
 network, filesystem, auth, callback, and permission switches are documented in
-[Configuration](docs/CONFIGURATION.md); all 93 detected environment readers are
+[Configuration](docs/CONFIGURATION.md); all 105 detected environment readers are
 linked to source in the generated
 [configuration reference](docs/reference/configuration.md).
 
@@ -282,14 +282,14 @@ linked to source in the generated
 
 ## API / Module Reference
 
-## 468 Modules, 85 Catalog Categories
+## 474 Modules, 85 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|
 | `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
 | `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
 | `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
-| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `api.*` | 19 | Xquik, OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
 | `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
 | `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
 | `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
@@ -360,7 +360,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 468 modules as tools.
+Your AI gets all 474 modules as tools.
 
 </details>
 

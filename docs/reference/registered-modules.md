@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **483 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **489 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -39,6 +39,12 @@ The AST contains **483 explicit, literal `@register_module` declarations**. This
 | `api.notion.query_database` | `1.0.0` | `productivity` | `notion_query_database` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/productivity/tools/notion_query.py:126`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/productivity/tools/notion_query.py#L126) |
 | `api.openai.chat` | `1.0.0` | `ai` | `OpenAIChatModule` | yes | `&#91;'ai.api'&#93;` | [`src/core/modules/third_party/ai/openai_integration.py:154`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/openai_integration.py#L154) |
 | `api.openai.image` | `1.0.0` | `ai` | `OpenAIImageModule` | yes | `&#91;'ai.api'&#93;` | [`src/core/modules/third_party/ai/openai_integration.py:352`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/openai_integration.py#L352) |
+| `api.xquik.create_tweet` | `1.0.0` | `api` | `XquikCreateTweetModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:656`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L656) |
+| `api.xquik.get_tweet` | `1.0.0` | `api` | `XquikGetTweetModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:449`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L449) |
+| `api.xquik.get_user` | `1.0.0` | `api` | `XquikGetUserModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:534`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L534) |
+| `api.xquik.get_write_action` | `1.0.0` | `api` | `XquikGetWriteActionModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:764`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L764) |
+| `api.xquik.request` | `1.0.0` | `api` | `XquikRequestModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:203`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L203) |
+| `api.xquik.search_tweets` | `1.0.0` | `api` | `XquikSearchTweetsModule` | yes | `&#91;'network.access'&#93;` | [`src/core/modules/third_party/developer/xquik.py:341`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/xquik.py#L341) |
 | `archive.gunzip` | `1.0.0` | `archive` | `archive_gunzip` | no | `&#91;'filesystem.read', 'filesystem.write'&#93;` | [`src/core/modules/atomic/archive/gunzip.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/archive/gunzip.py#L95) |
 | `archive.gzip` | `1.0.0` | `archive` | `archive_gzip` | no | `&#91;'filesystem.read', 'filesystem.write'&#93;` | [`src/core/modules/atomic/archive/gzip.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/archive/gzip.py#L105) |
 | `archive.tar_create` | `1.0.0` | `archive` | `archive_tar_create` | no | `&#91;'filesystem.read', 'filesystem.write'&#93;` | [`src/core/modules/atomic/archive/tar_create.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/archive/tar_create.py#L125) |
