@@ -99,6 +99,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   security-sensitive fetch code was written. Reconciled the generated
   catalog to 466 modules across 85 categories.
 
+### Fixed
+- Hardened all core API, OAuth2 token, and Slack/Discord/Teams webhook HTTP
+  emitters with connect-time DNS pinning and per-redirect URL validation.
+  OAuth2 failures no longer reflect token-endpoint response bodies.
+- Confined Azure, GCS, and both S3 download implementations to the configured
+  filesystem sandbox before provider SDKs create directories or write files.
+
 ## [2.26.10] - 2026-07-23
 
 ### Added

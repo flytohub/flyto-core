@@ -10,11 +10,12 @@ import logging
 import os
 from typing import Any, Dict
 
+from .....utils import validate_path_with_env_config
+from ....errors import ModuleError, ValidationError
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
 from ....schema.constants import FieldGroup
-from ....errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,8 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
     if not output_path:
         raise ValidationError('Output path is required', field='output_path')
 
+    output_path = validate_path_with_env_config(output_path)
+
     region = params.get('region') or os.getenv('AWS_REGION', 'us-east-1')
     access_key_id = params.get('access_key_id') or os.getenv('AWS_ACCESS_KEY_ID')
     secret_access_key = params.get('secret_access_key') or os.getenv('AWS_SECRET_ACCESS_KEY')
@@ -109,11 +112,10 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         import boto3
-        from botocore.exceptions import ClientError, BotoCoreError
     except ImportError:
         raise ModuleError(
             'boto3 package is required. Install with: pip install boto3'
-        )
+        ) from None
 
     content_type = ''
     file_size = 0
@@ -143,7 +145,7 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
         await loop.run_in_executor(None, _download)
     except Exception as exc:
         error_name = type(exc).__name__
-        raise ModuleError(f'S3 download failed ({error_name}): {exc}')
+        raise ModuleError(f'S3 download failed ({error_name}): {exc}') from exc
 
     return {
         'ok': True,

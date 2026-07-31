@@ -6,14 +6,20 @@ HTTP Request Modules
 Generic HTTP GET and POST request modules.
 """
 
+from contextlib import suppress
 from typing import Any
 
 import aiohttp
 
+from .....utils import (
+    SSRFError,
+    enforce_outbound_url,
+    guarded_aiohttp_request,
+    guarded_client_session,
+)
 from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
-from .....utils import enforce_outbound_url, SSRFError
 
 
 @register_module(
@@ -86,34 +92,40 @@ class HTTPGetModule(BaseModule):
         try:
             enforce_outbound_url(url)
         except SSRFError as e:
-            raise ValueError(f"SSRF protection blocked request: {e}")
+            raise ValueError(f"SSRF protection blocked request: {e}") from e
 
         ssl_param = None if verify_ssl else False
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url,
-                headers=headers,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=timeout),
-                ssl=ssl_param,
-            ) as response:
-                status_code = response.status
-                response_headers = dict(response.headers)
-                body = await response.text()
+        try:
+            async with guarded_client_session() as session:
+                response = await guarded_aiohttp_request(
+                    session,
+                    'GET',
+                    url,
+                    headers=headers,
+                    params=params,
+                    timeout=aiohttp.ClientTimeout(total=timeout),
+                    ssl=ssl_param,
+                )
+                try:
+                    status_code = response.status
+                    response_headers = dict(response.headers)
+                    body = await response.text()
 
-                result = {
-                    'status_code': status_code,
-                    'headers': response_headers,
-                    'body': body
-                }
+                    result = {
+                        'status_code': status_code,
+                        'headers': response_headers,
+                        'body': body
+                    }
 
-                if 'application/json' in response_headers.get('Content-Type', ''):
-                    try:
-                        result['json'] = await response.json()
-                    except Exception:
-                        pass
+                    if 'application/json' in response_headers.get('Content-Type', ''):
+                        with suppress(Exception):
+                            result['json'] = await response.json()
 
-                return result
+                    return result
+                finally:
+                    response.release()
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection blocked request: {e}") from e
 
 
 @register_module(
@@ -185,7 +197,7 @@ class HTTPPostModule(BaseModule):
         try:
             enforce_outbound_url(url)
         except SSRFError as e:
-            raise ValueError(f"SSRF protection blocked request: {e}")
+            raise ValueError(f"SSRF protection blocked request: {e}") from e
 
         ssl_param = None if verify_ssl else False
         kwargs = {
@@ -199,22 +211,27 @@ class HTTPPostModule(BaseModule):
         elif body:
             kwargs['data'] = body
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, **kwargs) as response:
-                status_code = response.status
-                response_headers = dict(response.headers)
-                response_body = await response.text()
+        try:
+            async with guarded_client_session() as session:
+                response = await guarded_aiohttp_request(
+                    session, 'POST', url, **kwargs)
+                try:
+                    status_code = response.status
+                    response_headers = dict(response.headers)
+                    response_body = await response.text()
 
-                result = {
-                    'status_code': status_code,
-                    'headers': response_headers,
-                    'body': response_body
-                }
+                    result = {
+                        'status_code': status_code,
+                        'headers': response_headers,
+                        'body': response_body
+                    }
 
-                if 'application/json' in response_headers.get('Content-Type', ''):
-                    try:
-                        result['json'] = await response.json()
-                    except Exception:
-                        pass
+                    if 'application/json' in response_headers.get('Content-Type', ''):
+                        with suppress(Exception):
+                            result['json'] = await response.json()
 
-                return result
+                    return result
+                finally:
+                    response.release()
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection blocked request: {e}") from e

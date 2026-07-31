@@ -5,7 +5,9 @@ Google Cloud Storage (GCS) Integration Modules
 
 Provides upload and download operations for Google Cloud Storage.
 """
-from typing import Any, Dict
+from typing import Any
+
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 
@@ -154,7 +156,7 @@ class GCSUploadModule(BaseModule):
                 raise ImportError(
                     "Google Cloud Storage library not installed. "
                     "Install with: pip install google-cloud-storage"
-                )
+                ) from None
 
             import os
 
@@ -194,7 +196,7 @@ class GCSUploadModule(BaseModule):
             }
 
         except Exception as e:
-            raise RuntimeError(f"GCS upload error: {str(e)}")
+            raise RuntimeError(f"GCS upload error: {str(e)}") from e
 
 
 @register_module(
@@ -297,6 +299,8 @@ class GCSDownloadModule(BaseModule):
             raise ValueError("bucket, object_name, and destination_path are required")
 
     async def execute(self) -> Any:
+        destination_path = validate_path_with_env_config(self.destination_path)
+
         try:
             # Import GCS library
             try:
@@ -305,12 +309,12 @@ class GCSDownloadModule(BaseModule):
                 raise ImportError(
                     "Google Cloud Storage library not installed. "
                     "Install with: pip install google-cloud-storage"
-                )
+                ) from None
 
             import os
 
             # Ensure destination directory exists
-            dest_dir = os.path.dirname(self.destination_path)
+            dest_dir = os.path.dirname(destination_path)
             if dest_dir and not os.path.exists(dest_dir):
                 os.makedirs(dest_dir, exist_ok=True)
 
@@ -320,17 +324,17 @@ class GCSDownloadModule(BaseModule):
             blob = bucket.blob(self.object_name)
 
             # Download file
-            blob.download_to_filename(self.destination_path)
+            blob.download_to_filename(destination_path)
 
             # Get file size
-            file_size = os.path.getsize(self.destination_path)
+            file_size = os.path.getsize(destination_path)
 
             return {
-                "file_path": self.destination_path,
+                "file_path": destination_path,
                 "size": file_size,
                 "bucket": self.bucket,
                 "object_name": self.object_name
             }
 
         except Exception as e:
-            raise RuntimeError(f"GCS download error: {str(e)}")
+            raise RuntimeError(f"GCS download error: {str(e)}") from e

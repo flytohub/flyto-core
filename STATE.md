@@ -26,10 +26,15 @@
   private-network and verification-auth overrides are rejected by contract.
 - The browser-contract JavaScript runtime is declared and locked in
   `package.json` / `package-lock.json`; `npm audit` is part of local closure.
+- Core API, OAuth2 token, and provider-webhook HTTP emitters use the shared
+  connect-time DNS and per-redirect SSRF guards. OAuth2 error responses do not
+  reflect provider response bodies.
+- Azure, GCS, and S3 download destinations are canonicalized and confined to
+  `FLYTO_SANDBOX_DIR` before any provider SDK can create or write a local file.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 950 maintained Python files, 5,514
+- Source-backed documentation now covers 951 maintained Python files, 5,514
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -124,14 +129,13 @@
 
 ## Last Verification
 
-Verified locally on 2026-07-22:
+Verified locally on 2026-07-31:
 
 - project memory, documentation, brand, generated catalog/reference, and
   audited Ruff checks passed;
-- 2,227 tests passed, 24 skipped, 101 deselected, with 63.27% coverage;
+- 2,211 tests passed, 13 skipped, 273 deselected, with 61.24% coverage;
 - npm audit reported 0 vulnerabilities;
-- pip-audit reported no known vulnerabilities in the base runtime lock;
 - wheel and source distribution built, and Twine validated both artifacts;
-- Flyto2 Indexer strict full scan passed 18/18 checks with 0 warnings/failures,
-  docs score 92, README score 100, 0 secret findings, and 0 high-risk taint
+- Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
+  docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
   flows.

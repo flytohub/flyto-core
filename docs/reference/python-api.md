@@ -3018,9 +3018,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _build_token_body(params: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Build the token request body based on grant_type. | [`src/core/modules/atomic/auth/oauth2.py:21`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L21) |
-| function | `def _apply_client_auth(headers: Dict&#91;str, str&#93;, body: Dict&#91;str, Any&#93;, params: Dict&#91;str, Any&#93;) -> None` | Apply client authentication (header vs body). | [`src/core/modules/atomic/auth/oauth2.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L53) |
-| function | `async def auth_oauth2(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Exchange OAuth2 credentials for an access token. | [`src/core/modules/atomic/auth/oauth2.py:330`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L330) |
+| function | `def _build_token_body(params: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Build the token request body based on grant_type. | [`src/core/modules/atomic/auth/oauth2.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L27) |
+| function | `def _apply_client_auth(headers: Dict&#91;str, str&#93;, body: Dict&#91;str, Any&#93;, params: Dict&#91;str, Any&#93;) -> None` | Apply client authentication (header vs body). | [`src/core/modules/atomic/auth/oauth2.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L59) |
+| function | `async def auth_oauth2(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Exchange OAuth2 credentials for an access token. | [`src/core/modules/atomic/auth/oauth2.py:336`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L336) |
 
 ## `src/core/modules/atomic/browser/_hints.py`
 
@@ -8398,8 +8398,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def aws_s3_download(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Download a file from AWS S3. | [`src/core/modules/third_party/cloud/aws/s3_download.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_download.py#L85) |
-| method | `def aws_s3_download._download()` | Implements `aws_s3_download._download`; linked source is authoritative. | [`src/core/modules/third_party/cloud/aws/s3_download.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_download.py#L121) |
+| function | `async def aws_s3_download(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Download a file from AWS S3. | [`src/core/modules/third_party/cloud/aws/s3_download.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_download.py#L86) |
+| method | `def aws_s3_download._download()` | Implements `aws_s3_download._download`; linked source is authoritative. | [`src/core/modules/third_party/cloud/aws/s3_download.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_download.py#L123) |
 
 ## `src/core/modules/third_party/cloud/aws/s3_list.py`
 
@@ -8421,23 +8421,23 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class AzureUploadModule(BaseModule)` | Azure Blob Storage Upload Module | [`src/core/modules/third_party/cloud/azure.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L129) |
-| method | `def AzureUploadModule.validate_params(self) -> None` | Implements `AzureUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L132) |
-| method | `async def AzureUploadModule.execute(self) -> Any` | Implements `AzureUploadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:157`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L157) |
-| class | `class AzureDownloadModule(BaseModule)` | Azure Blob Storage Download Module | [`src/core/modules/third_party/cloud/azure.py:309`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L309) |
-| method | `def AzureDownloadModule.validate_params(self) -> None` | Implements `AzureDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:312`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L312) |
-| method | `async def AzureDownloadModule.execute(self) -> Any` | Implements `AzureDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:331`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L331) |
+| class | `class AzureUploadModule(BaseModule)` | Azure Blob Storage Upload Module | [`src/core/modules/third_party/cloud/azure.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L131) |
+| method | `def AzureUploadModule.validate_params(self) -> None` | Implements `AzureUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:134`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L134) |
+| method | `async def AzureUploadModule.execute(self) -> Any` | Implements `AzureUploadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:159`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L159) |
+| class | `class AzureDownloadModule(BaseModule)` | Azure Blob Storage Download Module | [`src/core/modules/third_party/cloud/azure.py:311`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L311) |
+| method | `def AzureDownloadModule.validate_params(self) -> None` | Implements `AzureDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:314`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L314) |
+| method | `async def AzureDownloadModule.execute(self) -> Any` | Implements `AzureDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/azure.py:333`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/azure.py#L333) |
 
 ## `src/core/modules/third_party/cloud/gcs.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class GCSUploadModule(BaseModule)` | Google Cloud Storage Upload Module | [`src/core/modules/third_party/cloud/gcs.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L130) |
-| method | `def GCSUploadModule.validate_params(self) -> None` | Implements `GCSUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:133`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L133) |
-| method | `async def GCSUploadModule.execute(self) -> Any` | Implements `GCSUploadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L148) |
-| class | `class GCSDownloadModule(BaseModule)` | Google Cloud Storage Download Module | [`src/core/modules/third_party/cloud/gcs.py:288`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L288) |
-| method | `def GCSDownloadModule.validate_params(self) -> None` | Implements `GCSDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:291`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L291) |
-| method | `async def GCSDownloadModule.execute(self) -> Any` | Implements `GCSDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:299`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L299) |
+| class | `class GCSUploadModule(BaseModule)` | Google Cloud Storage Upload Module | [`src/core/modules/third_party/cloud/gcs.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L132) |
+| method | `def GCSUploadModule.validate_params(self) -> None` | Implements `GCSUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L135) |
+| method | `async def GCSUploadModule.execute(self) -> Any` | Implements `GCSUploadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L150) |
+| class | `class GCSDownloadModule(BaseModule)` | Google Cloud Storage Download Module | [`src/core/modules/third_party/cloud/gcs.py:290`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L290) |
+| method | `def GCSDownloadModule.validate_params(self) -> None` | Implements `GCSDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:293`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L293) |
+| method | `async def GCSDownloadModule.execute(self) -> Any` | Implements `GCSDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/cloud/gcs.py:301`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/gcs.py#L301) |
 
 ## `src/core/modules/third_party/cloud/google/calendar_create.py`
 
@@ -8475,16 +8475,16 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def aws_s3_upload(context)` | Upload file to AWS S3 | [`src/core/modules/third_party/cloud/storage.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/storage.py#L188) |
-| function | `async def aws_s3_download(context)` | Download file from AWS S3 | [`src/core/modules/third_party/cloud/storage.py:380`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/storage.py#L380) |
+| function | `async def aws_s3_upload(context)` | Upload file to AWS S3 | [`src/core/modules/third_party/cloud/storage.py:189`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/storage.py#L189) |
+| function | `async def aws_s3_download(context)` | Download file from AWS S3 | [`src/core/modules/third_party/cloud/storage.py:383`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/storage.py#L383) |
 
 ## `src/core/modules/third_party/communication/messaging/discord.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class DiscordSendMessageModule(BaseModule)` | Send message to Discord via webhook | [`src/core/modules/third_party/communication/messaging/discord.py:106`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L106) |
-| method | `def DiscordSendMessageModule.validate_params(self) -> None` | Implements `DiscordSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/discord.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L112) |
-| method | `async def DiscordSendMessageModule.execute(self) -> Any` | Implements `DiscordSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/discord.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L131) |
+| class | `class DiscordSendMessageModule(BaseModule)` | Send message to Discord via webhook | [`src/core/modules/third_party/communication/messaging/discord.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L110) |
+| method | `def DiscordSendMessageModule.validate_params(self) -> None` | Implements `DiscordSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/discord.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L116) |
+| method | `async def DiscordSendMessageModule.execute(self) -> Any` | Implements `DiscordSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/discord.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L135) |
 
 ## `src/core/modules/third_party/communication/messaging/email.py`
 
@@ -8498,17 +8498,17 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class SlackSendMessageModule(BaseModule)` | Send message to Slack via webhook | [`src/core/modules/third_party/communication/messaging/slack.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L122) |
-| method | `def SlackSendMessageModule.validate_params(self) -> None` | Implements `SlackSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/slack.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L128) |
-| method | `async def SlackSendMessageModule.execute(self) -> Any` | Implements `SlackSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/slack.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L148) |
+| class | `class SlackSendMessageModule(BaseModule)` | Send message to Slack via webhook | [`src/core/modules/third_party/communication/messaging/slack.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L124) |
+| method | `def SlackSendMessageModule.validate_params(self) -> None` | Implements `SlackSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/slack.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L130) |
+| method | `async def SlackSendMessageModule.execute(self) -> Any` | Implements `SlackSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/slack.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/slack.py#L150) |
 
 ## `src/core/modules/third_party/communication/messaging/teams.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class TeamsSendMessageModule(BaseModule)` | Send message to Microsoft Teams via incoming webhook | [`src/core/modules/third_party/communication/messaging/teams.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L109) |
-| method | `def TeamsSendMessageModule.validate_params(self) -> None` | Implements `TeamsSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/teams.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L115) |
-| method | `async def TeamsSendMessageModule.execute(self) -> Any` | Implements `TeamsSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/teams.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L131) |
+| class | `class TeamsSendMessageModule(BaseModule)` | Send message to Microsoft Teams via incoming webhook | [`src/core/modules/third_party/communication/messaging/teams.py:113`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L113) |
+| method | `def TeamsSendMessageModule.validate_params(self) -> None` | Implements `TeamsSendMessageModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/teams.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L119) |
+| method | `async def TeamsSendMessageModule.execute(self) -> Any` | Implements `TeamsSendMessageModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/teams.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/teams.py#L135) |
 
 ## `src/core/modules/third_party/communication/messaging/telegram.py`
 
@@ -8599,12 +8599,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class HTTPGetModule(BaseModule)` | Send HTTP GET request | [`src/core/modules/third_party/developer/http/requests.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L64) |
-| method | `def HTTPGetModule.validate_params(self) -> None` | Implements `HTTPGetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L70) |
-| method | `async def HTTPGetModule.execute(self) -> Any` | Implements `HTTPGetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L74) |
-| class | `class HTTPPostModule(BaseModule)` | Send HTTP POST request | [`src/core/modules/third_party/developer/http/requests.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L162) |
-| method | `def HTTPPostModule.validate_params(self) -> None` | Implements `HTTPPostModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L168) |
-| method | `async def HTTPPostModule.execute(self) -> Any` | Implements `HTTPPostModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:172`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L172) |
+| class | `class HTTPGetModule(BaseModule)` | Send HTTP GET request | [`src/core/modules/third_party/developer/http/requests.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L70) |
+| method | `def HTTPGetModule.validate_params(self) -> None` | Implements `HTTPGetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L76) |
+| method | `async def HTTPGetModule.execute(self) -> Any` | Implements `HTTPGetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L80) |
+| class | `class HTTPPostModule(BaseModule)` | Send HTTP POST request | [`src/core/modules/third_party/developer/http/requests.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L174) |
+| method | `def HTTPPostModule.validate_params(self) -> None` | Implements `HTTPPostModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L180) |
+| method | `async def HTTPPostModule.execute(self) -> Any` | Implements `HTTPPostModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/developer/http/requests.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/developer/http/requests.py#L184) |
 
 ## `src/core/modules/third_party/developer/http/search.py`
 

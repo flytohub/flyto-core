@@ -23,6 +23,9 @@
 
 ## Done
 
+- Closed the reported outbound-request and cloud-download gaps: core API,
+  OAuth2, and provider webhooks now use connect-time/per-redirect SSRF guards;
+  Azure, GCS, and S3 downloads enforce the filesystem sandbox before writes.
 - Added `reverse.deobfuscate` (Phase 4 of the `reverse.*` toolkit): real
   semantic deobfuscation via `webcrack`, run in a dedicated Node.js sidecar
   worker spawned/killed per invocation, gated behind a new `code.execute`

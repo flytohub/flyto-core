@@ -9,11 +9,17 @@ Supports most OAuth2 providers (Google, GitHub, Slack, Notion, Stripe, etc.)
 import asyncio
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
+from ....utils import (
+    SSRFError,
+    enforce_outbound_url,
+    guarded_aiohttp_request,
+    guarded_client_session,
+)
 from ...registry import register_module
 from ...schema import compose, field
-from ...schema.constants import Visibility, FieldGroup
+from ...schema.constants import FieldGroup, Visibility
 
 logger = logging.getLogger(__name__)
 
@@ -332,12 +338,23 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         import aiohttp
     except ImportError:
-        raise ImportError("aiohttp is required for auth.oauth2. Install with: pip install aiohttp")
+        raise ImportError(
+            "aiohttp is required for auth.oauth2. Install with: pip install aiohttp"
+        ) from None
 
     params = context['params']
     token_url = params['token_url']
     grant_type = params.get('grant_type', 'authorization_code')
     timeout_seconds = params.get('timeout', 15)
+
+    try:
+        enforce_outbound_url(token_url)
+    except SSRFError as e:
+        return {
+            'ok': False,
+            'error': f'SSRF protection blocked token endpoint: {e}',
+            'error_code': 'SSRF_BLOCKED',
+        }
 
     body = _build_token_body(params)
 
@@ -355,13 +372,16 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
     start_time = time.time()
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
+        async with guarded_client_session(timeout=timeout) as session:
+            response = await guarded_aiohttp_request(
+                session,
+                'POST',
                 token_url,
                 data=body,
                 headers=headers,
                 ssl=True,
-            ) as response:
+            )
+            try:
                 duration_ms = int((time.time() - start_time) * 1000)
 
                 # Some providers (GitHub) return text by default
@@ -381,15 +401,15 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
                         data = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
 
                 if response.status >= 400 or 'error' in data:
-                    error_desc = data.get('error_description', data.get('error', f'HTTP {response.status}'))
-                    error_code = data.get('error', 'token_error')
-                    logger.error(f"OAuth2 token exchange failed: {error_code} - {error_desc}")
+                    logger.error(
+                        "OAuth2 token endpoint rejected the request (HTTP %s)",
+                        response.status,
+                    )
                     return {
                         'ok': False,
-                        'error': error_desc,
-                        'error_code': error_code,
+                        'error': f'Token endpoint rejected request (HTTP {response.status})',
+                        'error_code': 'TOKEN_ENDPOINT_ERROR',
                         'status': response.status,
-                        'raw': data,
                         'duration_ms': duration_ms,
                     }
 
@@ -408,7 +428,18 @@ async def auth_oauth2(context: Dict[str, Any]) -> Dict[str, Any]:
                     'raw': data,
                     'duration_ms': duration_ms,
                 }
+            finally:
+                response.release()
 
+    except SSRFError as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.warning("SSRF protection blocked OAuth2 token endpoint")
+        return {
+            'ok': False,
+            'error': f'SSRF protection blocked token endpoint: {e}',
+            'error_code': 'SSRF_BLOCKED',
+            'duration_ms': duration_ms,
+        }
     except asyncio.TimeoutError:
         duration_ms = int((time.time() - start_time) * 1000)
         logger.error(f"OAuth2 token exchange timeout after {timeout_seconds}s")

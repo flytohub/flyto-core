@@ -5,7 +5,9 @@ Azure Blob Storage Integration Modules
 
 Provides upload and download operations for Azure Blob Storage.
 """
-from typing import Any, Dict
+from typing import Any
+
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 
@@ -163,7 +165,7 @@ class AzureUploadModule(BaseModule):
                 raise ImportError(
                     "Azure Blob Storage library not installed. "
                     "Install with: pip install azure-storage-blob"
-                )
+                ) from None
 
             import os
 
@@ -205,7 +207,7 @@ class AzureUploadModule(BaseModule):
             }
 
         except Exception as e:
-            raise RuntimeError(f"Azure upload error: {str(e)}")
+            raise RuntimeError(f"Azure upload error: {str(e)}") from e
 
 
 @register_module(
@@ -329,6 +331,8 @@ class AzureDownloadModule(BaseModule):
                 )
 
     async def execute(self) -> Any:
+        destination_path = validate_path_with_env_config(self.destination_path)
+
         try:
             # Import Azure library
             try:
@@ -337,12 +341,12 @@ class AzureDownloadModule(BaseModule):
                 raise ImportError(
                     "Azure Blob Storage library not installed. "
                     "Install with: pip install azure-storage-blob"
-                )
+                ) from None
 
             import os
 
             # Ensure destination directory exists
-            dest_dir = os.path.dirname(self.destination_path)
+            dest_dir = os.path.dirname(destination_path)
             if dest_dir and not os.path.exists(dest_dir):
                 os.makedirs(dest_dir, exist_ok=True)
 
@@ -354,18 +358,18 @@ class AzureDownloadModule(BaseModule):
             blob_client = container_client.get_blob_client(self.blob_name)
 
             # Download file
-            with open(self.destination_path, 'wb') as download_file:
+            with open(destination_path, 'wb') as download_file:
                 download_file.write(blob_client.download_blob().readall())
 
             # Get file size
-            file_size = os.path.getsize(self.destination_path)
+            file_size = os.path.getsize(destination_path)
 
             return {
-                "file_path": self.destination_path,
+                "file_path": destination_path,
                 "size": file_size,
                 "container": self.container,
                 "blob_name": self.blob_name
             }
 
         except Exception as e:
-            raise RuntimeError(f"Azure download error: {str(e)}")
+            raise RuntimeError(f"Azure download error: {str(e)}") from e

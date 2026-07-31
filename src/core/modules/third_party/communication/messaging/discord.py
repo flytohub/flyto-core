@@ -10,11 +10,15 @@ from typing import Any
 
 import aiohttp
 
+from .....constants import EnvVars
+from .....utils import (
+    SSRFError,
+    enforce_outbound_url,
+    guarded_aiohttp_request,
+    guarded_client_session,
+)
 from ....base import BaseModule
 from ....registry import register_module
-from .....constants import EnvVars
-from .....utils import enforce_outbound_url, SSRFError
-
 
 logger = logging.getLogger(__name__)
 
@@ -154,22 +158,34 @@ class DiscordSendMessageModule(BaseModule):
         # Send to Discord webhook
         # SECURITY: Set timeout to prevent hanging API calls
         timeout = aiohttp.ClientTimeout(total=30, connect=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                self.webhook_url,
-                json=payload,
-                headers={'Content-Type': 'application/json'}
-            ) as response:
-                if response.status in [200, 204]:
-                    return {
-                        'status': 'success',
-                        'sent': True,
-                        'message': 'Message sent to Discord successfully'
-                    }
-                else:
+        try:
+            async with guarded_client_session(timeout=timeout) as session:
+                response = await guarded_aiohttp_request(
+                    session,
+                    'POST',
+                    self.webhook_url,
+                    json=payload,
+                    headers={'Content-Type': 'application/json'},
+                )
+                try:
+                    if response.status in [200, 204]:
+                        return {
+                            'status': 'success',
+                            'sent': True,
+                            'message': 'Message sent to Discord successfully'
+                        }
                     error_text = await response.text()
                     return {
                         'status': 'error',
                         'sent': False,
                         'message': f'Failed to send message: {error_text}'
                     }
+                finally:
+                    response.release()
+        except SSRFError as e:
+            return {
+                'status': 'error',
+                'sent': False,
+                'message': f'SSRF protection blocked request: {e}',
+                'error_code': 'SSRF_BLOCKED',
+            }

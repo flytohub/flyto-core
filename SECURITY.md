@@ -113,13 +113,23 @@ chmod 600 .env
 
 When creating custom modules, always validate and sanitize inputs:
 
-All network modules use `validate_url_with_env_config()` from `src/core/utils.py`.
+Network modules validate the initial destination and use the shared guarded
+session/request helpers from `src/core/utils.py`. The guarded connector checks
+the address used for the actual connection, and the request helper revalidates
+every redirect target before following it.
 
 ```python
-from core.utils import validate_url_with_env_config, SSRFError
+from core.utils import (
+    guarded_aiohttp_request,
+    guarded_client_session,
+    validate_url_with_env_config,
+    SSRFError,
+)
 
 try:
     validate_url_with_env_config(url)
+    async with guarded_client_session() as session:
+        response = await guarded_aiohttp_request(session, "GET", url)
 except SSRFError as e:
     return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
 ```
@@ -144,7 +154,10 @@ except SSRFError as e:
 
 #### DNS Resolution Check
 
-After hostname resolution, the resolved IP is checked against all blocked ranges. This prevents DNS rebinding attacks where a hostname resolves to a private IP.
+The guarded connector checks the resolved IP at connection time and connects
+through that validated resolver. Redirects are followed only after each new
+target passes the same policy. This closes resolve-then-connect DNS rebinding
+and public-to-private redirect gaps.
 
 #### Protected Modules (11 total)
 

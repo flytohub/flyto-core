@@ -5,9 +5,10 @@ Cloud Storage Integration Modules
 Provides integrations with cloud storage services like AWS S3
 """
 
-from ...registry import register_module
 import os
-import base64
+
+from ....utils import validate_path_with_env_config
+from ...registry import register_module
 
 
 @register_module(
@@ -192,7 +193,9 @@ async def aws_s3_upload(context):
     try:
         import aioboto3
     except ImportError:
-        raise ImportError("aioboto3 package required. Install with: pip install aioboto3")
+        raise ImportError(
+            "aioboto3 package required. Install with: pip install aioboto3"
+        ) from None
 
     # Get AWS credentials
     aws_access_key_id = params.get('aws_access_key_id') or os.getenv('AWS_ACCESS_KEY_ID')
@@ -380,11 +383,16 @@ async def aws_s3_upload(context):
 async def aws_s3_download(context):
     """Download file from AWS S3"""
     params = context['params']
+    file_path = params.get('file_path')
+    if file_path:
+        file_path = validate_path_with_env_config(file_path)
 
     try:
         import aioboto3
     except ImportError:
-        raise ImportError("aioboto3 package required. Install with: pip install aioboto3")
+        raise ImportError(
+            "aioboto3 package required. Install with: pip install aioboto3"
+        ) from None
 
     # Get AWS credentials
     aws_access_key_id = params.get('aws_access_key_id') or os.getenv('AWS_ACCESS_KEY_ID')
@@ -396,8 +404,6 @@ async def aws_s3_download(context):
 
     bucket = params['bucket']
     key = params['key']
-    file_path = params.get('file_path')
-
     session = aioboto3.Session(
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,
