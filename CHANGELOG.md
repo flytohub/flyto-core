@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Updated the STDIO and Streamable HTTP MCP surfaces to the 2026-07-28
+  protocol. Modern clients can discover the server without a setup handshake,
+  send independent requests without sticky protocol sessions, and safely
+  cache discovery and tool-list results. Required request metadata and HTTP
+  header mirrors are validated before tool execution. Existing
+  handshake-based clients remain supported through MCP 2025-11-25.
 - Added `reverse.deobfuscate`, delivering Phase 4 of the `reverse.*` toolkit:
   real semantic JavaScript deobfuscation (control-flow-flattening reversal,
   string-array decoding, self-defending/debug-protection bypass, webpack/

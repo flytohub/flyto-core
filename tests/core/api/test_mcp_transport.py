@@ -4,12 +4,13 @@ Tests for MCP Streamable HTTP Transport.
 Tests POST /mcp, GET /mcp, DELETE /mcp endpoints.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
-from core.api.server import create_app
 from core.api.routes.mcp import _mcp_sessions
+from core.api.server import create_app
 
 
 @pytest.fixture
@@ -43,6 +44,38 @@ INIT_REQUEST = {
         "clientInfo": {"name": "test-client", "version": "1.0"},
     },
 }
+
+MODERN_VERSION = "2026-07-28"
+MODERN_META = {
+    "io.modelcontextprotocol/protocolVersion": MODERN_VERSION,
+    "io.modelcontextprotocol/clientCapabilities": {},
+    "io.modelcontextprotocol/clientInfo": {
+        "name": "test-client",
+        "version": "1.0",
+    },
+}
+
+
+def modern_request(request_id, method, params=None):
+    request_params = dict(params or {})
+    request_params["_meta"] = dict(MODERN_META)
+    return {
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "method": method,
+        "params": request_params,
+    }
+
+
+def modern_headers(method, name=None):
+    headers = {
+        "Accept": "application/json",
+        "MCP-Protocol-Version": MODERN_VERSION,
+        "Mcp-Method": method,
+    }
+    if name is not None:
+        headers["Mcp-Name"] = name
+    return headers
 
 
 class TestInitializeHandshake:
@@ -105,7 +138,7 @@ class TestProtocolVersionNegotiation:
         assert resp.json()["result"]["protocolVersion"] == client_version
 
     def test_unsupported_version_falls_back_to_server_preferred(self, client):
-        from core.mcp_handler import SUPPORTED_PROTOCOL_VERSIONS
+        from core.mcp_handler import LEGACY_PROTOCOL_VERSIONS
 
         resp = client.post(
             "/mcp",
@@ -122,10 +155,10 @@ class TestProtocolVersionNegotiation:
             headers={"Accept": "application/json"},
         )
         assert resp.status_code == 200
-        assert resp.json()["result"]["protocolVersion"] == SUPPORTED_PROTOCOL_VERSIONS[0]
+        assert resp.json()["result"]["protocolVersion"] == LEGACY_PROTOCOL_VERSIONS[0]
 
     def test_missing_version_falls_back_to_server_preferred(self, client):
-        from core.mcp_handler import SUPPORTED_PROTOCOL_VERSIONS
+        from core.mcp_handler import LEGACY_PROTOCOL_VERSIONS
 
         resp = client.post(
             "/mcp",
@@ -138,17 +171,123 @@ class TestProtocolVersionNegotiation:
             headers={"Accept": "application/json"},
         )
         assert resp.status_code == 200
-        assert resp.json()["result"]["protocolVersion"] == SUPPORTED_PROTOCOL_VERSIONS[0]
+        assert resp.json()["result"]["protocolVersion"] == LEGACY_PROTOCOL_VERSIONS[0]
 
     def test_negotiate_helper_directly(self):
-        from core.mcp_handler import negotiate_protocol_version, SUPPORTED_PROTOCOL_VERSIONS
+        from core.mcp_handler import (
+            MODERN_PROTOCOL_VERSION,
+            negotiate_legacy_protocol_version,
+            negotiate_protocol_version,
+        )
 
         assert negotiate_protocol_version("2024-11-05") == "2024-11-05"
         assert negotiate_protocol_version("2025-06-18") == "2025-06-18"
         assert negotiate_protocol_version("2025-11-25") == "2025-11-25"
-        assert negotiate_protocol_version("bogus") == SUPPORTED_PROTOCOL_VERSIONS[0]
-        assert negotiate_protocol_version(None) == SUPPORTED_PROTOCOL_VERSIONS[0]
-        assert negotiate_protocol_version("") == SUPPORTED_PROTOCOL_VERSIONS[0]
+        assert negotiate_protocol_version(MODERN_VERSION) == MODERN_VERSION
+        assert negotiate_protocol_version("bogus") == MODERN_PROTOCOL_VERSION
+        assert negotiate_legacy_protocol_version("bogus") == "2025-11-25"
+        assert negotiate_legacy_protocol_version(None) == "2025-11-25"
+
+
+class TestModernProtocol:
+
+    def test_discover_is_stateless_and_cacheable(self, client):
+        resp = client.post(
+            "/mcp",
+            json=modern_request(20, "server/discover"),
+            headers=modern_headers("server/discover"),
+        )
+        assert resp.status_code == 200
+        assert "mcp-session-id" not in resp.headers
+        result = resp.json()["result"]
+        assert result["resultType"] == "complete"
+        assert result["supportedVersions"][0] == MODERN_VERSION
+        assert result["ttlMs"] == 60_000
+        assert result["cacheScope"] == "public"
+        assert result["_meta"]["io.modelcontextprotocol/serverInfo"]["name"] == "flyto-core"
+
+    def test_tools_list_has_modern_result_fields(self, client):
+        resp = client.post(
+            "/mcp",
+            json=modern_request(21, "tools/list"),
+            headers=modern_headers("tools/list"),
+        )
+        assert resp.status_code == 200
+        result = resp.json()["result"]
+        assert len(result["tools"]) == 8
+        assert result["resultType"] == "complete"
+        assert result["ttlMs"] == 60_000
+        assert result["cacheScope"] == "public"
+
+    def test_tools_call_requires_and_mirrors_name_header(self, client):
+        with patch("core.modules.registry.ModuleRegistry.get", return_value=None):
+            resp = client.post(
+                "/mcp",
+                json=modern_request(
+                    22,
+                    "tools/call",
+                    {
+                        "name": "validate_params",
+                        "arguments": {
+                            "module_id": "missing.module",
+                            "params": {},
+                        },
+                    },
+                ),
+                headers=modern_headers("tools/call", "validate_params"),
+            )
+        assert resp.status_code == 200
+        assert resp.json()["result"]["resultType"] == "complete"
+
+    def test_missing_protocol_header_is_rejected(self, client):
+        resp = client.post(
+            "/mcp",
+            json=modern_request(23, "tools/list"),
+            headers={"Accept": "application/json", "Mcp-Method": "tools/list"},
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == -32020
+
+    def test_method_header_mismatch_is_rejected(self, client):
+        resp = client.post(
+            "/mcp",
+            json=modern_request(24, "tools/list"),
+            headers=modern_headers("server/discover"),
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == -32020
+
+    def test_unsupported_protocol_version_is_rejected(self, client):
+        request = modern_request(25, "tools/list")
+        request["params"]["_meta"][
+            "io.modelcontextprotocol/protocolVersion"
+        ] = "1900-01-01"
+        headers = modern_headers("tools/list")
+        headers["MCP-Protocol-Version"] = "1900-01-01"
+        resp = client.post("/mcp", json=request, headers=headers)
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == -32022
+
+    @pytest.mark.parametrize("method", ["initialize", "ping", "logging/setLevel"])
+    def test_removed_methods_are_rejected(self, client, method):
+        resp = client.post(
+            "/mcp",
+            json=modern_request(26, method),
+            headers=modern_headers(method),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["error"]["code"] == -32601
+
+    def test_modern_session_header_is_rejected(self, client):
+        headers = modern_headers("tools/list")
+        headers["Mcp-Session-Id"] = "legacy-session"
+        resp = client.post(
+            "/mcp",
+            json=modern_request(27, "tools/list"),
+            headers=headers,
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == -32020
 
 
 class TestToolsList:

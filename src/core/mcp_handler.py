@@ -7,8 +7,8 @@ Shared by both STDIO transport (mcp_server.py) and HTTP transport (api/routes/mc
 Contains tool definitions, dispatch, and execution functions.
 """
 
-import json
 import importlib.metadata
+import json
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -37,44 +37,70 @@ def _get_version() -> str:
 
 SERVER_VERSION = _get_version()
 
-# MCP protocol versions we support, newest first.
-# Server echoes the client's requested version if it appears here;
-# otherwise it returns SUPPORTED_PROTOCOL_VERSIONS[0] and lets the client decide.
-# Reference: https://modelcontextprotocol.io/specification/versioning
-SUPPORTED_PROTOCOL_VERSIONS = (
+# MCP 2026-07-28 is stateless and selected on every request through `_meta`.
+# Older revisions keep the initialize handshake for compatibility.
+# Reference:
+# https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning
+MODERN_PROTOCOL_VERSION = "2026-07-28"
+LEGACY_PROTOCOL_VERSIONS = (
     "2025-11-25",
     "2025-06-18",
     "2025-03-26",
     "2024-11-05",
 )
+SUPPORTED_PROTOCOL_VERSIONS = (
+    MODERN_PROTOCOL_VERSION,
+    *LEGACY_PROTOCOL_VERSIONS,
+)
+_PROTOCOL_VERSION_META_KEY = "io.modelcontextprotocol/protocolVersion"
+_CLIENT_CAPABILITIES_META_KEY = "io.modelcontextprotocol/clientCapabilities"
+_CLIENT_INFO_META_KEY = "io.modelcontextprotocol/clientInfo"
+_SERVER_INFO_META_KEY = "io.modelcontextprotocol/serverInfo"
+_DISCOVERY_TTL_MS = 60_000
+_STATIC_LIST_TTL_MS = 60_000
 
-SERVER_CAPABILITIES = {
-    "capabilities": {
-        "tools": {"listChanged": False},
-    },
-    "serverInfo": {
+
+def _server_info() -> dict:
+    return {
         "name": "flyto-core",
         "title": "Flyto2 Core Execution Engine",
         "version": SERVER_VERSION,
-    },
+        "description": (
+            "Execute validated automation modules and recipes through a stable "
+            "MCP tool surface."
+        ),
+        "websiteUrl": "https://github.com/flytohub/flyto-core",
+    }
+
+
+def _server_capabilities() -> dict:
+    return {"tools": {"listChanged": False}}
+
+
+SERVER_CAPABILITIES = {
+    "capabilities": _server_capabilities(),
+    "serverInfo": _server_info(),
 }
 
 
 def negotiate_protocol_version(client_version: Optional[str]) -> str:
-    """Pick the protocol version to advertise to a client.
-
-    Echoes the client's request when supported; otherwise returns the server's
-    preferred (newest) version, leaving the client free to disconnect.
-    """
+    """Select a supported version, preferring the latest revision."""
     if client_version and client_version in SUPPORTED_PROTOCOL_VERSIONS:
         return client_version
     return SUPPORTED_PROTOCOL_VERSIONS[0]
 
 
+def negotiate_legacy_protocol_version(client_version: Optional[str]) -> str:
+    """Select a handshake revision without crossing into stateless MCP."""
+    if client_version and client_version in LEGACY_PROTOCOL_VERSIONS:
+        return client_version
+    return LEGACY_PROTOCOL_VERSIONS[0]
+
+
 def build_initialize_response(client_version: Optional[str]) -> dict:
-    """Build the `result` payload for an MCP initialize response."""
+    """Build the legacy `result` payload for an initialize response."""
     return {
-        "protocolVersion": negotiate_protocol_version(client_version),
+        "protocolVersion": negotiate_legacy_protocol_version(client_version),
         **SERVER_CAPABILITIES,
     }
 
@@ -996,6 +1022,203 @@ TOOLS = [
 # JSON-RPC Dispatch
 # ============================================================
 
+def _jsonrpc_error(
+    request_id: Any,
+    code: int,
+    message: str,
+    data: Optional[dict] = None,
+) -> dict:
+    error = {"code": code, "message": message}
+    if data is not None:
+        error["data"] = data
+    return {"jsonrpc": "2.0", "id": request_id, "error": error}
+
+
+def _modern_result(
+    result: dict,
+    *,
+    ttl_ms: Optional[int] = None,
+    cache_scope: Optional[str] = None,
+) -> dict:
+    """Add the fields required on successful MCP 2026-07-28 results."""
+    modern_result = dict(result)
+    modern_result.setdefault("resultType", "complete")
+    result_meta = modern_result.get("_meta")
+    result_meta = dict(result_meta) if isinstance(result_meta, dict) else {}
+    result_meta.setdefault(_SERVER_INFO_META_KEY, _server_info())
+    modern_result["_meta"] = result_meta
+    if ttl_ms is not None and cache_scope is not None:
+        modern_result["ttlMs"] = ttl_ms
+        modern_result["cacheScope"] = cache_scope
+    return modern_result
+
+
+def _request_protocol_era(
+    request_id: Any,
+    method: str,
+    params: Any,
+) -> tuple[Optional[str], Optional[dict]]:
+    """Return the request era plus a structured error when metadata is invalid."""
+    if not isinstance(params, dict):
+        if method == "server/discover":
+            return None, _jsonrpc_error(
+                request_id,
+                -32602,
+                "Request params must be an object",
+            )
+        return "legacy", None
+
+    metadata = params.get("_meta")
+    has_version = (
+        isinstance(metadata, dict)
+        and _PROTOCOL_VERSION_META_KEY in metadata
+    )
+    if not has_version:
+        if method == "server/discover":
+            return None, _jsonrpc_error(
+                request_id,
+                -32602,
+                f"Missing required request metadata: {_PROTOCOL_VERSION_META_KEY}",
+            )
+        return "legacy", None
+
+    requested = metadata.get(_PROTOCOL_VERSION_META_KEY)
+    if not isinstance(requested, str):
+        return None, _jsonrpc_error(
+            request_id,
+            -32602,
+            f"{_PROTOCOL_VERSION_META_KEY} must be a string",
+        )
+    if requested != MODERN_PROTOCOL_VERSION:
+        return None, _jsonrpc_error(
+            request_id,
+            -32022,
+            "Unsupported protocol version",
+            {
+                "requested": requested,
+                "supported": list(SUPPORTED_PROTOCOL_VERSIONS),
+            },
+        )
+
+    client_capabilities = metadata.get(_CLIENT_CAPABILITIES_META_KEY)
+    if not isinstance(client_capabilities, dict):
+        return None, _jsonrpc_error(
+            request_id,
+            -32602,
+            f"Missing or invalid request metadata: {_CLIENT_CAPABILITIES_META_KEY}",
+        )
+    client_info = metadata.get(_CLIENT_INFO_META_KEY)
+    if client_info is not None and (
+        not isinstance(client_info, dict)
+        or not isinstance(client_info.get("name"), str)
+        or not isinstance(client_info.get("version"), str)
+    ):
+        return None, _jsonrpc_error(
+            request_id,
+            -32602,
+            f"Invalid request metadata: {_CLIENT_INFO_META_KEY}",
+        )
+    return "modern", None
+
+
+def _jsonrpc_result(
+    request_id: Any,
+    result: dict,
+    *,
+    modern: bool,
+    ttl_ms: Optional[int] = None,
+    cache_scope: Optional[str] = None,
+) -> dict:
+    if modern:
+        result = _modern_result(
+            result,
+            ttl_ms=ttl_ms,
+            cache_scope=cache_scope,
+        )
+    return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+
+async def _handle_tool_call(
+    request_id: Any,
+    params: Any,
+    *,
+    modern: bool,
+    browser_sessions: Dict[str, Any],
+    debugger_sessions: Dict[str, Any],
+    session_activity: Dict[str, float],
+) -> dict:
+    if not isinstance(params, dict):
+        return _jsonrpc_error(request_id, -32602, "Request params must be an object")
+    tool_name = params.get("name", "")
+    arguments = params.get("arguments", {})
+    if not isinstance(tool_name, str) or not isinstance(arguments, dict):
+        return _jsonrpc_error(
+            request_id,
+            -32602,
+            "Tool name must be a string and arguments must be an object",
+        )
+
+    try:
+        if tool_name == "list_modules":
+            result = list_modules(category=arguments.get("category"))
+        elif tool_name == "search_modules":
+            result = search_modules(
+                query=arguments.get("query", ""),
+                category=arguments.get("category"),
+                limit=arguments.get("limit", 20),
+            )
+        elif tool_name == "get_module_info":
+            result = get_module_info(module_id=arguments.get("module_id", ""))
+        elif tool_name == "execute_module":
+            result = await execute_module(
+                module_id=arguments.get("module_id", ""),
+                params=arguments.get("params", {}),
+                context=arguments.get("context"),
+                browser_sessions=browser_sessions,
+                debugger_sessions=debugger_sessions,
+                session_activity=session_activity,
+            )
+        elif tool_name == "validate_params":
+            result = validate_params(
+                module_id=arguments.get("module_id", ""),
+                params=arguments.get("params", {}),
+            )
+        elif tool_name == "get_module_examples":
+            result = get_module_examples(module_id=arguments.get("module_id", ""))
+        elif tool_name == "list_recipes":
+            result = list_recipes()
+        elif tool_name == "run_recipe":
+            result = await run_recipe(
+                recipe_name=arguments.get("recipe_name", ""),
+                args=arguments.get("args", {}),
+                browser_sessions=browser_sessions,
+            )
+        else:
+            return _jsonrpc_error(
+                request_id,
+                -32601,
+                f"Unknown tool: {tool_name}",
+            )
+
+        text = json.dumps(result, ensure_ascii=False, indent=2)
+        is_error = (
+            isinstance(result, dict)
+            and (result.get("error") is not None or result.get("ok") is False)
+        )
+        response_body = {
+            "content": [{"type": "text", "text": text}],
+            "structuredContent": result,
+            "isError": is_error,
+        }
+        return _jsonrpc_result(request_id, response_body, modern=modern)
+    except Exception as exc:
+        response_body = {
+            "content": [{"type": "text", "text": str(exc)}],
+            "isError": True,
+        }
+        return _jsonrpc_result(request_id, response_body, modern=modern)
+
+
 async def handle_jsonrpc_request(
     request: dict,
     browser_sessions: Dict[str, Any],
@@ -1013,103 +1236,63 @@ async def handle_jsonrpc_request(
     method = request.get("method", "")
     req_id = request.get("id")
     params = request.get("params", {})
+    era, protocol_error = _request_protocol_era(req_id, method, params)
+    if protocol_error is not None:
+        return protocol_error
+    modern = era == "modern"
 
-    if method == "initialize":
+    if method == "initialize" and not modern:
         client_version = params.get("protocolVersion") if isinstance(params, dict) else None
-        return {
-            "jsonrpc": "2.0",
-            "id": req_id,
-            "result": build_initialize_response(client_version),
-        }
+        return _jsonrpc_result(
+            req_id,
+            build_initialize_response(client_version),
+            modern=False,
+        )
 
-    elif method == "tools/list":
-        return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}}
+    if method == "server/discover" and modern:
+        return _jsonrpc_result(
+            req_id,
+            {
+                "supportedVersions": list(SUPPORTED_PROTOCOL_VERSIONS),
+                "capabilities": _server_capabilities(),
+                "instructions": (
+                    "Discover, validate, and execute Flyto2 modules and recipes "
+                    "through MCP tools."
+                ),
+            },
+            modern=True,
+            ttl_ms=_DISCOVERY_TTL_MS,
+            cache_scope="public",
+        )
 
-    elif method == "tools/call":
-        tool_name = params.get("name", "")
-        arguments = params.get("arguments", {})
+    if modern and method in {"initialize", "ping", "logging/setLevel"}:
+        return _jsonrpc_error(req_id, -32601, f"Method not found: {method}")
 
-        try:
-            if tool_name == "list_modules":
-                result = list_modules(
-                    category=arguments.get("category"),
-                )
-            elif tool_name == "search_modules":
-                result = search_modules(
-                    query=arguments.get("query", ""),
-                    category=arguments.get("category"),
-                    limit=arguments.get("limit", 20),
-                )
-            elif tool_name == "get_module_info":
-                result = get_module_info(
-                    module_id=arguments.get("module_id", ""),
-                )
-            elif tool_name == "execute_module":
-                result = await execute_module(
-                    module_id=arguments.get("module_id", ""),
-                    params=arguments.get("params", {}),
-                    context=arguments.get("context"),
-                    browser_sessions=browser_sessions,
-                    debugger_sessions=debugger_sessions,
-                    session_activity=session_activity,
-                )
-            elif tool_name == "validate_params":
-                result = validate_params(
-                    module_id=arguments.get("module_id", ""),
-                    params=arguments.get("params", {}),
-                )
-            elif tool_name == "get_module_examples":
-                result = get_module_examples(
-                    module_id=arguments.get("module_id", ""),
-                )
-            elif tool_name == "list_recipes":
-                result = list_recipes()
-            elif tool_name == "run_recipe":
-                result = await run_recipe(
-                    recipe_name=arguments.get("recipe_name", ""),
-                    args=arguments.get("args", {}),
-                    browser_sessions=browser_sessions,
-                )
-            else:
-                return {
-                    "jsonrpc": "2.0",
-                    "id": req_id,
-                    "error": {"code": -32601, "message": f"Unknown tool: {tool_name}"},
-                }
+    if method == "tools/list":
+        return _jsonrpc_result(
+            req_id,
+            {"tools": TOOLS},
+            modern=modern,
+            ttl_ms=_STATIC_LIST_TTL_MS,
+            cache_scope="public",
+        )
 
-            text = json.dumps(result, ensure_ascii=False, indent=2)
-            is_error = (
-                isinstance(result, dict)
-                and (result.get("error") is not None or result.get("ok") is False)
-            )
-            response_body = {
-                "content": [{"type": "text", "text": text}],
-                "structuredContent": result,
-                "isError": is_error,
-            }
-            return {"jsonrpc": "2.0", "id": req_id, "result": response_body}
+    if method == "tools/call":
+        return await _handle_tool_call(
+            req_id,
+            params,
+            modern=modern,
+            browser_sessions=browser_sessions,
+            debugger_sessions=debugger_sessions,
+            session_activity=session_activity,
+        )
 
-        except Exception as e:
-            return {
-                "jsonrpc": "2.0",
-                "id": req_id,
-                "result": {
-                    "content": [{"type": "text", "text": str(e)}],
-                    "isError": True,
-                },
-            }
+    if method == "ping":
+        return _jsonrpc_result(req_id, {}, modern=False)
 
-    elif method == "ping":
-        return {"jsonrpc": "2.0", "id": req_id, "result": {}}
-
-    elif method.startswith("notifications/"):
+    if method.startswith("notifications/"):
         return None  # Notifications have no response
 
-    else:
-        if req_id is not None:
-            return {
-                "jsonrpc": "2.0",
-                "id": req_id,
-                "error": {"code": -32601, "message": f"Method not found: {method}"},
-            }
-        return None
+    if req_id is not None:
+        return _jsonrpc_error(req_id, -32601, f"Method not found: {method}")
+    return None

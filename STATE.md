@@ -2,6 +2,11 @@
 
 ## Current State
 
+- MCP clients no longer have to guess whether a connection is ready or keep a
+  fragile server-side session alive. Core supports the stateless MCP
+  2026-07-28 request model, publishes discovery and cache guidance, validates
+  HTTP request mirrors before execution, and still accepts handshake-based
+  clients from 2024-11-05 through 2025-11-25.
 - Warroom deterministic verification v1 exists in `flyto-core`: it can build a
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
@@ -24,7 +29,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 950 maintained Python files, 5,502
+- Source-backed documentation now covers 950 maintained Python files, 5,514
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
