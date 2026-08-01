@@ -1,21 +1,21 @@
 """
 Integration tests for verify.visual_diff module.
 
-Tests the full pipeline: screenshot → AI vision compare → annotate → report.
-Uses real URLs, real Playwright, real OpenAI Vision API.
+Tests the full pipeline: screenshot → deterministic TypeScript comparison → report.
+Uses real URLs, real Playwright, and the real visual worker subprocess.
 
 Requires:
 - playwright (pip install playwright && playwright install chromium)
 - Pillow
-- httpx
-- OPENAI_API_KEY env var
+- npm install in src/core/modules/atomic/testing/visual_worker
 
 Run: pytest tests/test_verify_visual_diff.py -v
 """
 import os
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 pytestmark = pytest.mark.browser
 
@@ -25,17 +25,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 # Skip entire file if dependencies missing
 playwright = pytest.importorskip("playwright", reason="playwright required")
 PIL = pytest.importorskip("PIL", reason="Pillow required")
-httpx = pytest.importorskip("httpx", reason="httpx required")
-
-from core.modules.atomic.verify.visual_diff import (
-    _screenshot_url,
-    _vision_compare_images,
-    _pct_to_px,
-    _generate_visual_diff_html,
+from core.modules.atomic.verify.visual_diff import (  # noqa: E402
     VerifyVisualDiffModule,
+    _generate_visual_diff_html,
+    _pct_to_px,
+    _screenshot_url,
 )
-from core.modules.atomic.verify.annotate import draw_annotations
-
+from core.modules.composite.test.ui_review import UIReview  # noqa: E402
 
 # =============================================================================
 # Unit: _pct_to_px conversion
@@ -101,12 +97,17 @@ class TestGenerateReport:
         report_path = str(tmp_path / "report.html")
         report_data = {
             "similarity_score": 82,
+            "passed": False,
+            "difference_percentage": 18,
+            "threshold_percentage": 0.1,
+            "algorithm": "pixelmatch@7.2.0",
+            "run_id": "run-123",
             "annotations": [
                 {"label": "A", "x": 10, "y": 20, "width": 50, "height": 30, "description": "Color diff", "severity": "Major"},
             ],
             "summary": "Header color differs from design.",
         }
-        result = _generate_visual_diff_html(
+        _generate_visual_diff_html(
             report_data,
             str(tmp_path / "ref.png"),
             str(tmp_path / "dev.png"),
@@ -130,11 +131,55 @@ class TestGenerateReport:
             img.close()
 
         report_path = str(tmp_path / "empty_report.html")
-        report_data = {"similarity_score": 99, "annotations": [], "summary": "Looks identical."}
+        report_data = {
+            "similarity_score": 99,
+            "passed": True,
+            "difference_percentage": 0,
+            "threshold_percentage": 0.1,
+            "annotations": [],
+            "summary": "Looks identical.",
+        }
         _generate_visual_diff_html(report_data, str(tmp_path / "ref.png"), str(tmp_path / "dev.png"), str(tmp_path / "annotated.png"), report_path)
         assert os.path.exists(report_path)
         html = Path(report_path).read_text()
         assert "No differences found" in html
+
+    def test_untrusted_report_text_is_html_escaped(self, tmp_path):
+        report_path = str(tmp_path / "escaped.html")
+        report_data = {
+            "similarity_score": 0,
+            "passed": False,
+            "annotations": [{"label": "<img src=x>", "description": "<script>alert(1)</script>"}],
+            "summary": "<svg onload=alert(1)>",
+        }
+        _generate_visual_diff_html(report_data, "ref.png", "dev.png", "diff.png", report_path)
+        rendered = Path(report_path).read_text()
+        assert "<script>alert(1)</script>" not in rendered
+        assert "<svg onload=alert(1)>" not in rendered
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in rendered
+
+
+class TestUIReviewFailClosed:
+    def test_missing_comparison_cannot_be_reported_as_passed(self):
+        review = UIReview(params={}, context={})
+        review.step_results = {"screenshot": {"path": "current.png"}}
+
+        result = review._build_output({})
+
+        assert result["status"] == "failed"
+        assert result["passed"] is False
+        assert result["diff_percentage"] is None
+
+    def test_real_ratio_and_percentage_contract_are_not_confused(self):
+        review = UIReview(params={"diff_threshold": 0.001}, context={})
+        review.step_results = {
+            "compare": {"ok": True, "match": True, "difference": 0.0005, "diff_percentage": 0.05}
+        }
+
+        result = review._build_output({})
+
+        assert result["passed"] is True
+        assert result["diff_percentage"] == 0.05
 
 
 # =============================================================================
@@ -151,7 +196,7 @@ class TestScreenshotUrl:
         from PIL import Image
         img = Image.open(result)
         assert img.size[0] == 1280  # default viewport
-        assert img.size[1] == 800
+        assert img.size[1] >= 800
         img.close()
 
     @pytest.mark.asyncio
@@ -166,76 +211,9 @@ class TestScreenshotUrl:
 
 
 # =============================================================================
-# Integration: _vision_compare_images with real OpenAI API
-# =============================================================================
-
-@pytest.mark.skipif(not os.getenv("OPENAI_API_KEY"), reason="OPENAI_API_KEY not set")
-class TestVisionCompare:
-    @pytest.mark.asyncio
-    async def test_compare_identical_images(self, tmp_path):
-        """Two identical images should have high similarity."""
-        from PIL import Image
-        img = Image.new("RGB", (400, 300), color=(255, 255, 255))
-        from PIL import ImageDraw
-        draw = ImageDraw.Draw(img)
-        draw.rectangle([50, 50, 350, 250], fill=(0, 100, 200))
-        draw.text((100, 130), "Hello", fill=(255, 255, 255))
-        path1 = str(tmp_path / "img1.png")
-        path2 = str(tmp_path / "img2.png")
-        img.save(path1)
-        img.save(path2)
-        img.close()
-
-        result = await _vision_compare_images(path1, path2)
-        assert result.get("ok") is True
-        score = result.get("similarity_score")
-        if score is not None:
-            assert score >= 90, f"Identical images should be 90%+ similar, got {score}"
-
-    @pytest.mark.asyncio
-    async def test_compare_different_images(self, tmp_path):
-        """Two different images should have differences."""
-        from PIL import Image, ImageDraw
-        img1 = Image.new("RGB", (400, 300), color=(255, 255, 255))
-        draw1 = ImageDraw.Draw(img1)
-        draw1.rectangle([50, 50, 350, 250], fill=(0, 0, 255))  # blue
-        path1 = str(tmp_path / "blue.png")
-        img1.save(path1)
-        img1.close()
-
-        img2 = Image.new("RGB", (400, 300), color=(255, 255, 255))
-        draw2 = ImageDraw.Draw(img2)
-        draw2.rectangle([50, 50, 350, 250], fill=(255, 0, 0))  # red
-        path2 = str(tmp_path / "red.png")
-        img2.save(path2)
-        img2.close()
-
-        result = await _vision_compare_images(path1, path2, focus_areas=["center rectangle"])
-        assert result.get("ok") is True
-        # Should detect at least some difference
-        diffs = result.get("differences", [])
-        # AI may or may not return structured differences, but should succeed
-        assert "summary" in result or "differences" in result
-
-    @pytest.mark.asyncio
-    async def test_compare_missing_api_key(self, tmp_path):
-        """Should fail gracefully without API key."""
-        from PIL import Image
-        img = Image.new("RGB", (100, 100))
-        p = str(tmp_path / "test.png")
-        img.save(p)
-        img.close()
-
-        result = await _vision_compare_images(p, p, api_key="invalid-key-xxx")
-        # Should get an error from OpenAI
-        assert result.get("ok") is False or result.get("error")
-
-
-# =============================================================================
 # Integration: Full VerifyVisualDiffModule pipeline
 # =============================================================================
 
-@pytest.mark.skipif(not os.getenv("OPENAI_API_KEY"), reason="OPENAI_API_KEY not set")
 class TestFullPipeline:
     @pytest.mark.asyncio
     async def test_compare_two_urls(self, tmp_path):
@@ -254,6 +232,9 @@ class TestFullPipeline:
         assert result["ok"] is True
         data = result["data"]
         assert "similarity_score" in data
+        assert data["passed"] is True
+        assert data["advisory"]["owner"] == "flyto-ai"
+        assert data["advisory"]["can_override_gate"] is False
         assert "annotations" in data
         assert "annotated_image" in data
         assert "report_path" in data

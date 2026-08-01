@@ -12,7 +12,7 @@
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  950 maintained Python files, 5,514 declarations, 483 literal module
+  950 maintained Python files, 5,518 declarations, 483 literal module
   registrations, 22 HTTP operations, 93 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
@@ -23,6 +23,7 @@
 | `src/cli` | command parsing, local/remote workflow operations, templates, plugins |
 | `src/core/engine`, `runtime`, `workflow` | validation, orchestration, execution, replay |
 | `src/core/modules` | registry plus atomic, composite, and third-party capabilities |
+| `src/core/modules/atomic/testing/visual_worker` | detachable, credential-free PNG comparison process and content-addressed diff evidence |
 | `src/core/api` | local authenticated Execution API and MCP HTTP transport |
 | `src/core/verification_service.py` | isolated deterministic runner boundary |
 | `src/core/browser` | browser lifecycle and Playwright integration |
@@ -63,6 +64,14 @@ broken product assertions.
 
 Warroom reports must redact secret-looking keys and strip URL query strings.
 LLM review is explicit opt-in and advisory only.
+
+Private-network authorization is never a global SSRF bypass. An attested
+campaign can install an exact task-local host/port scope; redirects and the
+connect-time resolver enforce the same scope, while metadata endpoints remain
+unconditionally forbidden. The visual worker receives only local PNG paths and
+bounded comparison options through one JSON request, runs without provider
+credentials, rejects oversized PNG dimensions before decoding, and refuses to
+overwrite existing diff evidence or either input image.
 
 Provider SDKs, browsers, image/crypto/DNS features, and server frameworks are
 capability extras. Base-package import cannot assume every extra is installed;

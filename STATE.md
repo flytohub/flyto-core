@@ -34,13 +34,23 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 951 maintained Python files, 5,514
+- Source-backed documentation now covers 951 maintained Python files, 5,518
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
 - `crypto`, `dns`, and `ai` extras express tested optional dependency
   boundaries; the development extra supports the complete offline suite.
+- `testing.visual.compare` now delegates real PNG decoding and pixel comparison
+  to a detachable TypeScript worker with a scrubbed environment, bounded JSON
+  and image inputs, pre-decode PNG dimension checks, non-overwriting diff
+  evidence, and content hashes. Its no-mock subprocess matrix covers 101
+  distinct cases across identical, pixel-difference, and dimension-mismatch
+  tiers.
+- Trusted security campaigns may open a task-local exact host/port outbound
+  scope. Redirects and connect-time DNS checks remain inside that scope, cloud
+  metadata endpoints remain permanently denied, and concurrent tasks do not
+  inherit one another's authorization.
 
 ## Release Blockers
 

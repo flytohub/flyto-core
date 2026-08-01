@@ -1,0 +1,25 @@
+{
+  "name": "flyto2-visual-worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Deterministic PNG comparison worker used behind the flyto-core visual facade.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "tsx src/worker.ts",
+    "check": "tsc --noEmit",
+    "audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "pixelmatch": "7.2.0",
+    "pngjs": "7.0.0",
+    "tsx": "4.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.1.2",
+    "@types/pngjs": "6.0.5",
+    "typescript": "7.0.2"
+  }
+}

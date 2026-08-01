@@ -41,6 +41,8 @@ from ..base import CompositeModule, register_composite
                 'expected': '${params.baseline_path}',
                 'threshold': '${params.diff_threshold}'
             },
+            # Continue only so the browser.close cleanup step always runs;
+            # _build_output treats every missing/failed comparison as failed.
             'on_error': 'continue'
         },
         {
@@ -69,8 +71,8 @@ from ..base import CompositeModule, register_composite
         },
         'diff_threshold': {
             'type': 'number',
-            'label': 'Diff Threshold (%)',
-            'default': 0.1
+            'label': 'Allowed Difference Ratio (0-1)',
+            'default': 0.001
         }
     },
 
@@ -90,12 +92,15 @@ class UIReview(CompositeModule):
     def _build_output(self, metadata):
         screenshot = self.step_results.get('screenshot', {})
         compare = self.step_results.get('compare', {})
-        diff = compare.get('diff_percentage', 0)
-        threshold = self.params.get('diff_threshold', 0.1)
+        compare_ok = compare.get('ok') is True
+        diff = compare.get('difference')
+        threshold = self.params.get('diff_threshold', 0.001)
+        passed = compare_ok and isinstance(diff, (int, float)) and diff <= threshold
 
         return {
-            'status': 'passed' if diff <= threshold else 'failed',
-            'diff_percentage': diff,
-            'passed': diff <= threshold,
-            'screenshot': screenshot.get('path', '')
+            'status': 'passed' if passed else 'failed',
+            'diff_percentage': compare.get('diff_percentage'),
+            'passed': passed,
+            'screenshot': screenshot.get('path', ''),
+            'comparison': compare,
         }

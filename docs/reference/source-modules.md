@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **951 Python files**, **194,919 lines**, and **5,514 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **951 Python files**, **195,210 lines**, and **5,518 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -644,7 +644,7 @@ Inventory: **951 Python files**, **194,919 lines**, and **5,514 class/function/m
 | [`src/core/modules/atomic/testing/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/security.py#L1) | 90 | 1 | `logging, registry, typing` | Security Scanner Module |
 | [`src/core/modules/atomic/testing/suite.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/suite.py#L1) | 101 | 1 | `logging, registry, typing` | Test Suite Runner Module |
 | [`src/core/modules/atomic/testing/unit.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/unit.py#L1) | 87 | 1 | `logging, registry, typing` | Unit Test Runner Module |
-| [`src/core/modules/atomic/testing/visual.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L1) | 96 | 1 | `logging, registry, typing` | Visual Comparison Module |
+| [`src/core/modules/atomic/testing/visual.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L1) | 283 | 5 | `asyncio, base64, binascii, json, logging, math, os, pathlib, registry, shutil, tempfile, typing` | Deterministic visual comparison through a detachable TypeScript worker. |
 | [`src/core/modules/atomic/text/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/__init__.py#L1) | 38 | 0 | `char_count, detect_encoding, extract_emails, extract_numbers, extract_urls, word_count` | Atomic Text Analysis Operations Word count, character count, extract URLs, emails, numbers, and detect encoding |
 | [`src/core/modules/atomic/text/char_count.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/char_count.py#L1) | 109 | 1 | `errors, registry, typing` | Character Count Module Count characters in text |
 | [`src/core/modules/atomic/text/detect_encoding.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/detect_encoding.py#L1) | 150 | 2 | `errors, registry, typing` | Detect Encoding Module Detect text encoding using heuristics |
@@ -696,7 +696,7 @@ Inventory: **951 Python files**, **194,919 lines**, and **5,514 class/function/m
 | [`src/core/modules/atomic/verify/ruleset.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/ruleset.py#L1) | 207 | 12 | `base, dataclasses, pathlib, registry, schema, typing, utils, yaml` | Verify Ruleset Module - Load verification rules from YAML |
 | [`src/core/modules/atomic/verify/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L1) | 375 | 8 | `base, capture, compare, core, figma, pathlib, registry, report, ruleset, schema, typing` | Verify Run Module - Main entry point for design verification |
 | [`src/core/modules/atomic/verify/spec_runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L1) | 370 | 12 | `base, dataclasses, datetime, json, logging, pathlib, registry, schema, typing, yaml` | Spec-as-Test Dynamic Runner |
-| [`src/core/modules/atomic/verify/visual_diff.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L1) | 435 | 9 | `PIL, annotate, base, base64, datetime, httpx, json, logging, os, pathlib, playwright, re` | Verify Visual Diff Module - End-to-end visual comparison pipeline |
+| [`src/core/modules/atomic/verify/visual_diff.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L1) | 375 | 7 | `PIL, base, datetime, html, logging, os, pathlib, playwright, registry, schema, testing, typing` | Verify Visual Diff Module - End-to-end visual comparison pipeline |
 | [`src/core/modules/atomic/vision/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/__init__.py#L1) | 11 | 0 | `analyze, compare` | Vision Analysis Modules AI-powered image and screenshot analysis using Vision APIs |
 | [`src/core/modules/atomic/vision/analyze.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L1) | 406 | 4 | `aiohttp, base64, httpx, json, logging, os, pathlib, re, registry, schema, typing` | Vision Analyze Module Analyze images/screenshots using OpenAI Vision API (GPT-4V) |
 | [`src/core/modules/atomic/vision/compare.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L1) | 332 | 3 | `aiohttp, base64, httpx, json, logging, os, pathlib, re, registry, schema, typing` | Vision Compare Module Compare two images/screenshots for visual differences |
@@ -736,7 +736,7 @@ Inventory: **951 Python files**, **194,919 lines**, and **5,514 class/function/m
 | [`src/core/modules/composite/test/api_test.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/api_test.py#L1) | 112 | 2 | `base` | API Test Suite Composite Module |
 | [`src/core/modules/composite/test/e2e_flow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/e2e_flow.py#L1) | 106 | 2 | `base` | E2E Flow Test Composite Module |
 | [`src/core/modules/composite/test/quality_gate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/quality_gate.py#L1) | 116 | 2 | `base` | Quality Gate Composite Module |
-| [`src/core/modules/composite/test/ui_review.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/ui_review.py#L1) | 101 | 2 | `base` | UI Review Composite Module |
+| [`src/core/modules/composite/test/ui_review.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/ui_review.py#L1) | 106 | 2 | `base` | UI Review Composite Module |
 | [`src/core/modules/composite/test/verify_fix.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/test/verify_fix.py#L1) | 96 | 2 | `base` | Verify Fix Composite Module |
 | [`src/core/modules/connection_rules/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/connection_rules/__init__.py#L1) | 39 | 0 | `management, models, rules` | Connection Rules Package |
 | [`src/core/modules/connection_rules/management.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/connection_rules/management.py#L1) | 142 | 8 | `logging, models, rules, typing` | Connection Rules Management |
@@ -949,7 +949,7 @@ Inventory: **951 Python files**, **194,919 lines**, and **5,514 class/function/m
 | [`src/core/testing/snapshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/testing/snapshot.py#L1) | 478 | 23 | `dataclasses, datetime, enum, hashlib, json, logging, pathlib, typing` | Snapshot Testing |
 | [`src/core/training/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/__init__.py#L1) | 11 | 0 | `daily_practice` | Core Training Package - Stub for OSS version |
 | [`src/core/training/daily_practice.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/daily_practice.py#L1) | 56 | 6 | `typing` | Daily Practice Engine - Stub for OSS version |
-| [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1008 | 39 | `aiohttp, constants, fnmatch, functools, ipaddress, logging, os, re, socket, typing, urllib` | Core Utilities - Shared utility functions |
+| [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1167 | 41 | `aiohttp, constants, contextlib, contextvars, fnmatch, functools, ipaddress, logging, os, re, socket, typing` | Core Utilities - Shared utility functions |
 | [`src/core/validation/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/__init__.py#L1) | 61 | 0 | `connection, errors, index, workflow` | Flyto2 Core Validation API |
 | [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 663 | 15 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 159 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |

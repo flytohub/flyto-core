@@ -161,6 +161,14 @@ where = ["src"]
     "deobfuscate_worker/package-lock.json",
     "deobfuscate_worker/worker.mjs",
 ]
+# testing.visual.compare's detachable TypeScript sidecar. node_modules stays
+# excluded; installations remain explicit and reproducible from package-lock.
+"core.modules.atomic.testing" = [
+    "visual_worker/package.json",
+    "visual_worker/package-lock.json",
+    "visual_worker/tsconfig.json",
+    "visual_worker/src/worker.ts",
+]
 
 [tool.black]
 line-length = 100

@@ -12,4 +12,10 @@ include src/core/modules/atomic/reverse/deobfuscate_worker/package.json
 include src/core/modules/atomic/reverse/deobfuscate_worker/package-lock.json
 include src/core/modules/atomic/reverse/deobfuscate_worker/worker.mjs
 
+# testing.visual.compare's deterministic TypeScript sidecar source and lock.
+include src/core/modules/atomic/testing/visual_worker/package.json
+include src/core/modules/atomic/testing/visual_worker/package-lock.json
+include src/core/modules/atomic/testing/visual_worker/tsconfig.json
+include src/core/modules/atomic/testing/visual_worker/src/worker.ts
+
 recursive-include workflows *.yaml

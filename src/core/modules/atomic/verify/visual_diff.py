@@ -5,25 +5,26 @@ Verify Visual Diff Module - End-to-end visual comparison pipeline
 
 Pipeline:
 1. Screenshot reference_url and dev_url via Playwright
-2. AI vision comparison via vision.compare (GPT-4o)
-3. Annotate dev screenshot with labeled difference regions
-4. Generate HTML report with side-by-side comparison
+2. Deterministically compare PNG pixels in the detachable TypeScript worker
+3. Preserve content-addressed diff evidence
+4. Generate a sanitized HTML report
 
-Returns annotated image, annotations list, similarity score, and report path.
+Model interpretation belongs to flyto-ai and can consume this evidence as an
+advisory step; it is never allowed to override the deterministic pass/fail.
 """
-import base64
-import json
+import html
 import logging
 import os
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
+from ....utils import SSRFError, enforce_outbound_url
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, field as schema_field
-from ....utils import enforce_outbound_url, SSRFError
+from ...schema import compose
+from ...schema import field as schema_field
+from ..testing.visual import compare_visual_files
 
 logger = logging.getLogger(__name__)
 
@@ -32,114 +33,24 @@ async def _screenshot_url(url: str, output_path: str, viewport_width: int = 1280
     """Take a full-page screenshot of a URL using Playwright."""
     try:
         from playwright.async_api import async_playwright
-    except ImportError:
-        raise ImportError("playwright is required. Install with: pip install playwright && playwright install chromium")
+    except ImportError as exc:
+        raise ImportError(
+            "playwright is required. Install with: pip install playwright && playwright install chromium"
+        ) from exc
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page(viewport={'width': viewport_width, 'height': viewport_height})
-        await page.goto(url, wait_until='networkidle', timeout=30000)
-        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        await page.screenshot(path=output_path, full_page=False)
-        await browser.close()
+        try:
+            page = await browser.new_page(viewport={'width': viewport_width, 'height': viewport_height})
+            await page.emulate_media(reduced_motion='reduce')
+            await page.goto(url, wait_until='networkidle', timeout=30000)
+            await page.evaluate("document.fonts && document.fonts.ready")
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            await page.screenshot(path=output_path, full_page=True, animations='disabled')
+        finally:
+            await browser.close()
 
     return output_path
-
-
-async def _vision_compare_images(
-    reference_path: str,
-    dev_path: str,
-    focus_areas: Optional[List[str]] = None,
-    api_key: Optional[str] = None,
-    model: str = 'gpt-4o',
-) -> Dict[str, Any]:
-    """
-    Use OpenAI Vision API to compare two screenshots and identify differences.
-    Returns structured difference data with bounding box estimates.
-    """
-    try:
-        import httpx
-    except ImportError:
-        raise ImportError("httpx is required. Install with: pip install httpx")
-
-    api_key = api_key or os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        return {'ok': False, 'error': 'OpenAI API key not configured (OPENAI_API_KEY)'}
-
-    def load_image_b64(img_path: str) -> Dict:
-        if img_path.startswith(('http://', 'https://')):
-            return {"type": "image_url", "image_url": {"url": img_path, "detail": "high"}}
-        data = base64.b64encode(Path(img_path).read_bytes()).decode('utf-8')
-        suffix = Path(img_path).suffix.lower()
-        mime = {'png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}.get(suffix, 'image/png')
-        return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{data}", "detail": "high"}}
-
-    ref_content = load_image_b64(reference_path)
-    dev_content = load_image_b64(dev_path)
-
-    focus_hint = ""
-    if focus_areas:
-        focus_hint = f"\nFocus specifically on these areas: {', '.join(focus_areas)}"
-
-    messages = [
-        {
-            "role": "system",
-            "content": """You are an expert visual QA analyst comparing a reference design with a development implementation.
-
-Analyze both images and identify visual differences. For EACH difference, estimate the bounding box location as percentage of image dimensions (0-100).
-
-Return your analysis as JSON:
-{
-  "similarity_score": 85,
-  "differences": [
-    {
-      "label": "A",
-      "description": "Button color differs - expected blue, got green",
-      "severity": "Major",
-      "x_pct": 10, "y_pct": 20, "w_pct": 15, "h_pct": 5
-    }
-  ],
-  "summary": "Brief overall summary"
-}
-
-Labels should be A, B, C, etc. Coordinates are percentages of image dimensions.
-Severity: Critical, Major, Minor, or Cosmetic.
-Return ONLY the JSON, no other text."""
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": f"REFERENCE (design/target):{focus_hint}"},
-                ref_content,
-                {"type": "text", "text": "DEVELOPMENT (current implementation):"},
-                dev_content,
-            ],
-        },
-    ]
-
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"model": model, "messages": messages, "max_tokens": 2000},
-        )
-        result = response.json()
-
-    if 'error' in result:
-        return {'ok': False, 'error': result['error'].get('message', 'OpenAI API error')}
-
-    analysis_text = result['choices'][0]['message']['content']
-
-    # Parse JSON from response
-    json_match = re.search(r'\{[\s\S]*\}', analysis_text)
-    if json_match:
-        try:
-            analysis = json.loads(json_match.group())
-            return {'ok': True, **analysis}
-        except json.JSONDecodeError:
-            pass
-
-    return {'ok': True, 'similarity_score': None, 'differences': [], 'summary': analysis_text}
 
 
 def _pct_to_px(differences: List[Dict], img_width: int, img_height: int) -> List[Dict]:
@@ -168,27 +79,32 @@ def _generate_visual_diff_html(
     """Generate an HTML report with side-by-side comparison and annotations."""
     annotations = report_data.get('annotations', [])
     similarity = report_data.get('similarity_score', 'N/A')
-    summary = report_data.get('summary', '')
+    summary = html.escape(str(report_data.get('summary', '')))
+    passed = report_data.get('passed') is True
+    difference_percentage = report_data.get('difference_percentage', 'N/A')
+    threshold_percentage = report_data.get('threshold_percentage', 'N/A')
+    algorithm = html.escape(str(report_data.get('algorithm', 'unknown')))
+    run_id = html.escape(str(report_data.get('run_id', '')))
     created_at = datetime.now().isoformat()
 
     ann_rows = ''
     for a in annotations:
-        severity = a.get('severity', 'Minor')
+        severity = html.escape(str(a.get('severity', 'Minor')))
         sev_class = {'Critical': 'error', 'Major': 'error', 'Minor': 'warning', 'Cosmetic': 'info'}.get(severity, 'info')
         ann_rows += f'''
         <tr class="{sev_class}">
-            <td><strong>{a.get('label', '?')}</strong></td>
+            <td><strong>{html.escape(str(a.get('label', '?')))}</strong></td>
             <td>{severity}</td>
-            <td>{a.get('description', '')}</td>
+            <td>{html.escape(str(a.get('description', '')))}</td>
             <td>({a.get('x', 0)}, {a.get('y', 0)}) {a.get('width', 0)}x{a.get('height', 0)}</td>
         </tr>'''
 
     # Use relative paths for images
-    ref_rel = os.path.basename(ref_screenshot) if ref_screenshot else ''
-    dev_rel = os.path.basename(dev_screenshot) if dev_screenshot else ''
-    ann_rel = os.path.basename(annotated_screenshot) if annotated_screenshot else ''
+    ref_rel = html.escape(os.path.basename(ref_screenshot), quote=True) if ref_screenshot else ''
+    dev_rel = html.escape(os.path.basename(dev_screenshot), quote=True) if dev_screenshot else ''
+    ann_rel = html.escape(os.path.basename(annotated_screenshot), quote=True) if annotated_screenshot else ''
 
-    html = f'''<!DOCTYPE html>
+    report_html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -200,6 +116,7 @@ def _generate_visual_diff_html(
         .header {{ background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
         .header h1 {{ margin: 0 0 0.5rem 0; }}
         .score {{ font-size: 2rem; font-weight: bold; color: {_score_color(similarity)}; }}
+        .status {{ display:inline-block; padding:.25rem .65rem; border-radius:999px; color:white; background:{'#16a34a' if passed else '#dc2626'}; font-weight:700; }}
         .comparison {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }}
         .panel {{ background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }}
         .panel h3 {{ margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #666; }}
@@ -218,7 +135,11 @@ def _generate_visual_diff_html(
 <body>
     <div class="header">
         <h1>Visual Diff Report</h1>
+        <div class="status">{'PASSED' if passed else 'FAILED'}</div>
         <div>Similarity: <span class="score">{similarity}%</span></div>
+        <div>Difference: {difference_percentage}% / budget {threshold_percentage}%</div>
+        <div>Algorithm: {algorithm}</div>
+        <div>Run ID: <code>{run_id}</code></div>
         <div style="color:#999;font-size:0.85rem;">Generated at {created_at}</div>
     </div>
 
@@ -256,7 +177,7 @@ def _generate_visual_diff_html(
 </html>'''
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(output_path).write_text(html, encoding='utf-8')
+    Path(output_path).write_text(report_html, encoding='utf-8')
     return output_path
 
 
@@ -274,12 +195,12 @@ def _score_color(score) -> str:
 
 @register_module(
     module_id='verify.visual_diff',
-    version='1.0.0',
+    version='2.0.0',
     category='verify',
     tags=['verify', 'visual', 'diff', 'compare', 'screenshot', 'design', 'figma'],
     label='Visual Diff',
     label_key='modules.verify.visual_diff.label',
-    description='Compare reference design with dev site visually, annotate differences',
+    description='Deterministically compare a reference design with a dev site and preserve diff evidence',
     description_key='modules.verify.visual_diff.description',
     icon='ScanSearch',
     color='#8B5CF6',
@@ -295,8 +216,8 @@ def _score_color(score) -> str:
     max_retries=1,
     concurrent_safe=True,
 
-    requires_credentials=True,
-    credential_keys=['OPENAI_API_KEY'],
+    requires_credentials=False,
+    credential_keys=[],
     handles_sensitive_data=False,
     required_permissions=['browser.automation', 'file.write'],
 
@@ -307,16 +228,15 @@ def _score_color(score) -> str:
                      placeholder='https://example.com'),
         schema_field('output_dir', type='string', required=False, default='./verify-reports/visual-diff', description='Output directory for reports',
                      placeholder='/path/to/output'),
-        schema_field('focus_areas', type='array', required=False, description='Areas to focus on (e.g. ["header", "login form"])'),
         schema_field('viewport_width', type='number', required=False, default=1280, description='Browser viewport width'),
         schema_field('viewport_height', type='number', required=False, default=800, description='Browser viewport height'),
-        schema_field('model', type='string', required=False, default='gpt-4o', description='Vision model to use',
-                     placeholder='gpt-4o'),
-        schema_field('api_key', type='string', required=False, description='OpenAI API key (or use OPENAI_API_KEY env var)',
-                     placeholder='sk-...'),
+        schema_field('threshold', type='number', required=False, default=0.001, description='Maximum changed-pixel ratio (0-1)'),
+        schema_field('color_threshold', type='number', required=False, default=0.1, description='Per-pixel color sensitivity (0-1)'),
     ),
     output_schema={
         'similarity_score': {'type': 'number', 'description': 'Similarity percentage (0-100)'},
+        'passed': {'type': 'boolean', 'description': 'Whether deterministic visual budget passed'},
+        'difference_percentage': {'type': 'number', 'description': 'Changed-pixel percentage (0-100)'},
         'annotations': {'type': 'array', 'description': 'List of annotated differences'},
         'annotated_image': {'type': 'string', 'description': 'Path to annotated screenshot'},
         'report_path': {'type': 'string', 'description': 'Path to HTML report'},
@@ -324,7 +244,7 @@ def _score_color(score) -> str:
     },
 )
 class VerifyVisualDiffModule(BaseModule):
-    """End-to-end visual comparison: screenshot, AI diff, annotate, report."""
+    """End-to-end deterministic visual comparison and evidence report."""
 
     module_name = "Visual Diff"
     module_description = "Compare reference with dev site and annotate differences"
@@ -333,16 +253,23 @@ class VerifyVisualDiffModule(BaseModule):
         self.reference_url = self.params.get('reference_url')
         self.dev_url = self.params.get('dev_url')
         self.output_dir = Path(self.params.get('output_dir', './verify-reports/visual-diff'))
-        self.focus_areas = self.params.get('focus_areas', [])
-        self.viewport_width = self.params.get('viewport_width', 1280)
-        self.viewport_height = self.params.get('viewport_height', 800)
-        self.model = self.params.get('model', 'gpt-4o')
-        self.api_key = self.params.get('api_key')
+        self.viewport_width = int(self.params.get('viewport_width', 1280))
+        self.viewport_height = int(self.params.get('viewport_height', 800))
+        self.threshold = float(self.params.get('threshold', 0.001))
+        self.color_threshold = float(self.params.get('color_threshold', 0.1))
 
         if not self.reference_url:
             raise ValueError("reference_url is required")
         if not self.dev_url:
             raise ValueError("dev_url is required")
+        if not 320 <= self.viewport_width <= 7680:
+            raise ValueError("viewport_width must be between 320 and 7680")
+        if not 320 <= self.viewport_height <= 4320:
+            raise ValueError("viewport_height must be between 320 and 4320")
+        if not 0 <= self.threshold <= 1:
+            raise ValueError("threshold must be between 0 and 1")
+        if not 0 <= self.color_threshold <= 1:
+            raise ValueError("color_threshold must be between 0 and 1")
 
     async def execute(self) -> Dict[str, Any]:
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -367,54 +294,52 @@ class VerifyVisualDiffModule(BaseModule):
         if ref_is_url:
             await _screenshot_url(self.reference_url, ref_screenshot, self.viewport_width, self.viewport_height)
         elif ref_is_image:
-            # Use existing image as reference
-            import shutil
-            shutil.copy2(self.reference_url, ref_screenshot)
+            try:
+                from PIL import Image
+            except ImportError as exc:
+                raise ImportError("Pillow is required for local reference images") from exc
+            with Image.open(self.reference_url) as source_image:
+                source_image.convert('RGBA').save(ref_screenshot, format='PNG')
         else:
             return {'ok': False, 'error': f'reference_url must be a URL or image path: {self.reference_url}'}
 
         await _screenshot_url(self.dev_url, dev_screenshot, self.viewport_width, self.viewport_height)
 
-        # Step 2: AI vision comparison
-        vision_result = await _vision_compare_images(
+        # Step 2: deterministic comparison. This is the sole pass/fail authority;
+        # flyto-ai may later interpret the evidence, but cannot override it.
+        diff_image = str(self.output_dir / f'diff_{timestamp}.png')
+        comparison = await compare_visual_files(
             ref_screenshot,
             dev_screenshot,
-            focus_areas=self.focus_areas,
-            api_key=self.api_key,
-            model=self.model,
+            threshold=self.threshold,
+            color_threshold=self.color_threshold,
+            output_diff=True,
+            diff_path=diff_image,
         )
 
-        if not vision_result.get('ok', False):
-            return {'ok': False, 'error': vision_result.get('error', 'Vision comparison failed')}
+        if not comparison.get('ok', False):
+            return comparison
 
-        similarity_score = vision_result.get('similarity_score')
-        differences = vision_result.get('differences', [])
-        summary = vision_result.get('summary', '')
-
-        # Step 3: Convert percentage coordinates to pixel coordinates and annotate
-        try:
-            from PIL import Image
-            dev_img = Image.open(dev_screenshot)
-            img_width, img_height = dev_img.size
-            dev_img.close()
-        except ImportError:
-            img_width, img_height = self.viewport_width, self.viewport_height
-
-        annotations = _pct_to_px(differences, img_width, img_height)
-
-        annotated_image = str(self.output_dir / f'annotated_{timestamp}.png')
-        if annotations:
-            from .annotate import draw_annotations
-            draw_annotations(dev_screenshot, annotations, annotated_image)
-        else:
-            # No differences: copy dev screenshot as-is
-            import shutil
-            shutil.copy2(dev_screenshot, annotated_image)
+        difference_ratio = comparison['difference']
+        difference_percentage = comparison['diff_percentage']
+        similarity_score = max(0.0, (1 - difference_ratio) * 100)
+        passed = comparison['match']
+        annotations: List[Dict[str, Any]] = []
+        annotated_image = comparison['diff_image']
+        summary = (
+            f"Deterministic visual budget {'passed' if passed else 'failed'}: "
+            f"{difference_percentage:.4f}% changed pixels with a {self.threshold * 100:.4f}% budget."
+        )
 
         # Step 4: Generate HTML report
         report_path = str(self.output_dir / f'visual_diff_{timestamp}.html')
         report_data = {
             'similarity_score': similarity_score,
+            'passed': passed,
+            'difference_percentage': difference_percentage,
+            'threshold_percentage': self.threshold * 100,
+            'algorithm': comparison['algorithm'],
+            'run_id': comparison['run_id'],
             'annotations': annotations,
             'summary': summary,
         }
@@ -424,12 +349,27 @@ class VerifyVisualDiffModule(BaseModule):
             'ok': True,
             'data': {
                 'similarity_score': similarity_score,
+                'passed': passed,
+                'match': passed,
+                'difference_ratio': difference_ratio,
+                'difference_percentage': difference_percentage,
+                'threshold': self.threshold,
                 'annotations': annotations,
                 'annotated_image': annotated_image,
+                'diff_image': comparison['diff_image'],
                 'report_path': report_path,
                 'reference_screenshot': ref_screenshot,
                 'dev_screenshot': dev_screenshot,
                 'summary': summary,
                 'difference_count': len(annotations),
+                'algorithm': comparison['algorithm'],
+                'run_id': comparison['run_id'],
+                'evidence': comparison['evidence'],
+                'dimensions': comparison['dimensions'],
+                'advisory': {
+                    'status': 'not_requested',
+                    'owner': 'flyto-ai',
+                    'can_override_gate': False,
+                },
             },
         }

@@ -5,19 +5,21 @@ Core Utilities - Shared utility functions
 
 This module contains reusable utility functions to reduce code duplication.
 """
+import fnmatch
+import ipaddress
+import logging
 import os
 import re
 import socket
-import ipaddress
-import logging
-import fnmatch
-import aiohttp
-from typing import Any, Dict, Optional, TypeVar, Callable
-from urllib.parse import urlparse
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, TypeVar
+from urllib.parse import urlparse
 
-from .constants import EnvVars, ErrorMessages
+import aiohttp
 
+from .constants import ErrorMessages
 
 logger = logging.getLogger(__name__)
 
@@ -137,16 +139,19 @@ def get_param(
     """
     value = params.get(param_name, default)
 
-    if value is not None and param_type is not None:
-        if not isinstance(value, param_type):
-            raise ValueError(
-                ErrorMessages.format(
-                    ErrorMessages.INVALID_PARAM_TYPE,
-                    param_name=param_name,
-                    expected=param_type.__name__,
-                    actual=type(value).__name__
-                )
+    if (
+        value is not None
+        and param_type is not None
+        and not isinstance(value, param_type)
+    ):
+        raise ValueError(
+            ErrorMessages.format(
+                ErrorMessages.INVALID_PARAM_TYPE,
+                param_name=param_name,
+                expected=param_type.__name__,
+                actual=type(value).__name__
             )
+        )
 
     return value
 
@@ -330,6 +335,26 @@ BLOCKED_HOSTNAMES = {
     'metadata.internal',
 }
 
+METADATA_HOSTNAMES = frozenset({
+    '169.254.169.254',
+    '169.254.170.2',
+    '100.100.100.200',
+    'metadata.google.internal',
+    'metadata.goog',
+    'metadata.internal',
+})
+METADATA_IPS = frozenset({
+    ipaddress.ip_address('169.254.169.254'),
+    ipaddress.ip_address('169.254.170.2'),
+    ipaddress.ip_address('100.100.100.200'),
+    ipaddress.ip_address('fd00:ec2::254'),
+})
+
+_TRUSTED_OUTBOUND_SCOPE: ContextVar[Optional[Dict[str, Any]]] = ContextVar(
+    'flyto_trusted_outbound_scope',
+    default=None,
+)
+
 
 class SSRFError(ValueError):
     """Raised when a URL targets a blocked internal resource."""
@@ -392,6 +417,19 @@ def is_private_ip(ip_str: str) -> bool:
     return False
 
 
+def _is_metadata_ip(ip_str: str) -> bool:
+    """Return whether an address is a known cloud credential endpoint."""
+    try:
+        address = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    candidates = [address]
+    embedded = _extract_embedded_ipv4(address)
+    if embedded is not None:
+        candidates.append(embedded)
+    return any(candidate in METADATA_IPS for candidate in candidates)
+
+
 DEFAULT_ALLOWED_PORTS = {80, 443, 8080, 8443}
 
 
@@ -418,6 +456,8 @@ def validate_url_ssrf(
     allow_private: bool = False,
     allowed_hosts: Optional[list] = None,
     allowed_ports: Optional[set[int]] = None,
+    restricted_hosts: Optional[list] = None,
+    restricted_ports: Optional[set[int]] = None,
 ) -> str:
     """
     Validate a URL for SSRF attacks.
@@ -427,7 +467,7 @@ def validate_url_ssrf(
 
     Security Modes:
     - Default (production): Block private IPs, localhost, metadata endpoints
-    - allow_private=True: Allow all (for development/self-hosted)
+    - allow_private=True: Allow private targets except metadata endpoints
     - allowed_hosts=['example.internal']: Allow only specified hosts
 
     Args:
@@ -451,28 +491,53 @@ def validate_url_ssrf(
         # Allow specific hosts (controlled access)
         validate_url_ssrf("http://internal.corp.com", allowed_hosts=["internal.corp.com"])
 
-        # Allow all (development)
+        # Allow private targets except metadata endpoints (development)
         validate_url_ssrf("http://localhost:8080", allow_private=True)
     """
     # Strip whitespace from URL (common user input error)
     url = url.strip()
 
+    # Preserve the operator-private compatibility contract for an empty value:
+    # the HTTP client will reject it as a normal client error. Non-empty values
+    # still pass scheme, permanent-metadata, DNS, and scope validation below.
+    if allow_private and not url:
+        return url
+
     # Auto-prepend https:// if no scheme provided (common user input error)
     if url and '://' not in url:
         url = 'https://' + url
 
-    # Development/self-hosted mode - allow all
-    if allow_private:
-        return url
-
     try:
         parsed = urlparse(url)
     except Exception as e:
-        raise ValueError(f"Invalid URL format: {e}")
+        raise ValueError(f"Invalid URL format: {e}") from e
 
     # Check scheme
     if parsed.scheme not in ('http', 'https'):
         raise SSRFError(f"URL scheme not allowed: {parsed.scheme}")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("URL missing hostname")
+    hostname_lower = hostname.lower().rstrip('.')
+
+    # Cloud credential endpoints are never valid, including when an operator
+    # enables broad private networking or accidentally adds one to an allowlist.
+    if hostname_lower in METADATA_HOSTNAMES or _is_metadata_ip(hostname_lower):
+        raise SSRFError(f"Cloud metadata endpoint blocked: {hostname}")
+
+    effective_port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+    if restricted_hosts is not None and not _host_in_allowlist(
+        hostname_lower,
+        restricted_hosts,
+    ):
+        raise SSRFError(
+            f"Hostname is outside the trusted outbound scope: {hostname}"
+        )
+    if restricted_ports is not None and effective_port not in restricted_ports:
+        raise SSRFError(
+            f"Port {effective_port} is outside the trusted outbound scope"
+        )
 
     # Port whitelist — block non-web ports (SMTP 25, SSH 22, FTP 21, etc.).
     # Operators can explicitly add dev/staging ports via
@@ -480,46 +545,52 @@ def validate_url_ssrf(
     allowed_port_set = set(DEFAULT_ALLOWED_PORTS)
     if allowed_ports:
         allowed_port_set.update(allowed_ports)
-    if parsed.port and parsed.port not in allowed_port_set:
+    if parsed.port and parsed.port not in allowed_port_set and not allow_private:
         raise SSRFError(
             f"Port {parsed.port} not allowed. "
             f"Allowed ports: {sorted(allowed_port_set)}"
         )
 
-    hostname = parsed.hostname
-    if not hostname:
-        raise ValueError("URL missing hostname")
+    # Resolve before honoring private/allowlist exceptions so a trusted alias
+    # cannot resolve to a cloud metadata credential endpoint.
+    try:
+        addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC)
+        resolved_ips = [sockaddr[0] for _, _, _, _, sockaddr in addr_info]
+        for ip in resolved_ips:
+            if _is_metadata_ip(ip):
+                raise SSRFError(
+                    f"Cloud metadata endpoint blocked: {hostname} -> {ip}"
+                )
+    except socket.gaierror as e:
+        if _host_in_allowlist(hostname_lower, allowed_hosts):
+            logger.debug(
+                "SSRF: Allowing explicitly allowlisted host despite current DNS failure"
+            )
+            return url
+        raise SSRFError(f"DNS resolution failed for {hostname}: {e}") from e
 
-    hostname_lower = hostname.lower()
+    # Development/self-hosted mode still permits private targets, but never
+    # the permanent metadata deny above.
+    if allow_private:
+        return url
 
-    # Check if host is in allowlist (controlled private access)
-    if allowed_hosts:
-        for allowed in allowed_hosts:
-            if hostname_lower == allowed.lower():
-                logger.debug("SSRF: Allowing host (in allowlist)")
-                return url
-            # Support wildcard: *.example.com
-            if allowed.startswith('*.') and hostname_lower.endswith(allowed[1:].lower()):
-                logger.debug("SSRF: Allowing host (matches wildcard allowlist entry)")
-                return url
+    # Check if host is in allowlist (controlled private access).
+    if _host_in_allowlist(hostname_lower, allowed_hosts):
+        logger.debug("SSRF: Allowing host (in allowlist)")
+        return url
 
-    # Block known dangerous hostnames (metadata endpoints, etc.)
-    # Note: localhost/127.0.0.1 are in BLOCKED_HOSTNAMES but can be unblocked via allowed_hosts
+    # localhost/loopback entries may be unblocked only by the allowlist above.
     if hostname_lower in BLOCKED_HOSTNAMES:
         raise SSRFError(f"Hostname blocked: {hostname}")
 
-    # Resolve hostname and check IP
-    try:
-        addr_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC)
-        for family, _, _, _, sockaddr in addr_info:
-            ip = sockaddr[0]
-            if is_private_ip(ip):
-                raise SSRFError(
-                    f"URL resolves to private IP: {hostname} -> {ip}. "
-                    f"Use 'allowed_hosts' to enable controlled private access."
-                )
-    except socket.gaierror as e:
-        raise SSRFError(f"DNS resolution failed for {hostname}: {e}")
+    if not resolved_ips:
+        raise SSRFError(f"DNS resolution produced no addresses for {hostname}")
+    for ip in resolved_ips:
+        if is_private_ip(ip):
+            raise SSRFError(
+                f"URL resolves to private IP: {hostname} -> {ip}. "
+                f"Use 'allowed_hosts' to enable controlled private access."
+            )
 
     return url
 
@@ -539,6 +610,22 @@ def get_ssrf_config() -> dict:
     Returns:
         dict with allow_private and allowed_hosts
     """
+    trusted_scope = _TRUSTED_OUTBOUND_SCOPE.get()
+    if trusted_scope is not None:
+        exact_hosts = list(trusted_scope['allowed_hosts'])
+        exact_ports = set(trusted_scope['allowed_ports'])
+        return {
+            'allow_private': False,
+            'allowed_hosts': (
+                exact_hosts
+                if trusted_scope['allow_private_targets']
+                else None
+            ),
+            'allowed_ports': exact_ports,
+            'restricted_hosts': exact_hosts,
+            'restricted_ports': exact_ports,
+        }
+
     allow_private = os.environ.get('FLYTO_ALLOW_PRIVATE_NETWORK', 'false').lower() == 'true'
     allowed_hosts_str = os.environ.get('FLYTO_ALLOWED_HOSTS', '')
     allowed_hosts = [h.strip() for h in allowed_hosts_str.split(',') if h.strip()]
@@ -558,7 +645,55 @@ def get_ssrf_config() -> dict:
         'allow_private': allow_private,
         'allowed_hosts': allowed_hosts or None,
         'allowed_ports': allowed_ports or None,
+        'restricted_hosts': None,
+        'restricted_ports': None,
     }
+
+
+@contextmanager
+def trusted_outbound_network_scope(
+    *,
+    allowed_hosts,
+    allowed_ports,
+    allow_private_targets: bool = False,
+):
+    """Narrow one internal async execution to exact outbound hosts and ports.
+
+    This is an in-process integration hook for an already authenticated Runner
+    contract.  It is intentionally not a module parameter or MCP tool field.
+    ContextVar isolation prevents one concurrent campaign from authorizing
+    another task, and nested scopes restore the previous policy on exit.
+    """
+    if not isinstance(allowed_hosts, (list, tuple, set)) or not allowed_hosts:
+        raise ValueError("allowed_hosts must be a non-empty collection")
+    if not isinstance(allowed_ports, (list, tuple, set)) or not allowed_ports:
+        raise ValueError("allowed_ports must be a non-empty collection")
+    normalized_hosts = []
+    for value in allowed_hosts:
+        host = str(value or '').strip().lower().rstrip('.')
+        if not host or '*' in host or any(char.isspace() for char in host):
+            raise ValueError("trusted outbound hosts must be exact")
+        if host in METADATA_HOSTNAMES or _is_metadata_ip(host):
+            raise ValueError("cloud metadata endpoints are never allowed")
+        normalized_hosts.append(host)
+    normalized_ports = []
+    for value in allowed_ports:
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or not 1 <= value <= 65535
+        ):
+            raise ValueError("trusted outbound ports must be integers")
+        normalized_ports.append(value)
+    token = _TRUSTED_OUTBOUND_SCOPE.set({
+        'allowed_hosts': tuple(sorted(set(normalized_hosts))),
+        'allowed_ports': tuple(sorted(set(normalized_ports))),
+        'allow_private_targets': allow_private_targets is True,
+    })
+    try:
+        yield
+    finally:
+        _TRUSTED_OUTBOUND_SCOPE.reset(token)
 
 
 def ssrf_protection_enabled() -> bool:
@@ -699,14 +834,37 @@ class _SSRFGuardedResolver(aiohttp.abc.AbstractResolver):
     ``validate_url_ssrf`` so operator-approved private hosts still work.
     """
 
-    def __init__(self, allow_private: bool = False, allowed_hosts=None):
+    def __init__(
+        self,
+        allow_private: bool = False,
+        allowed_hosts=None,
+        restricted_hosts=None,
+    ):
         self._allow_private = allow_private
         self._allowed_hosts = list(allowed_hosts or [])
+        self._restricted_hosts = (
+            list(restricted_hosts)
+            if restricted_hosts is not None
+            else None
+        )
         from aiohttp.resolver import DefaultResolver
         self._inner = DefaultResolver()
 
     async def resolve(self, host: str, port: int = 0, family: int = socket.AF_INET):
+        if self._restricted_hosts is not None and not _host_in_allowlist(
+            host,
+            self._restricted_hosts,
+        ):
+            raise SSRFError(
+                f"Connect target is outside the trusted outbound scope: {host}"
+            )
         infos = await self._inner.resolve(host, port, family)
+        for info in infos:
+            ip = info['host']
+            if _is_metadata_ip(ip):
+                raise SSRFError(
+                    f"Cloud metadata endpoint blocked at connect time: {host} -> {ip}"
+                )
         if self._allow_private or _host_in_allowlist(host, self._allowed_hosts):
             return infos
         for info in infos:
@@ -735,6 +893,7 @@ def ssrf_guarded_connector(**kwargs) -> "aiohttp.TCPConnector":
     resolver = _SSRFGuardedResolver(
         allow_private=cfg.get('allow_private', False),
         allowed_hosts=cfg.get('allowed_hosts'),
+        restricted_hosts=cfg.get('restricted_hosts'),
     )
     return aiohttp.TCPConnector(resolver=resolver, **kwargs)
 
@@ -867,7 +1026,7 @@ def validate_path_safe(
     try:
         canonical_path = os.path.realpath(expanded_path)
     except (OSError, ValueError) as e:
-        raise ValueError(f"Invalid path: {path} - {e}")
+        raise ValueError(f"Invalid path: {path} - {e}") from e
 
     # If base_dir specified, ensure path stays within it
     if base_dir:

@@ -11,7 +11,7 @@ import socket
 
 import pytest
 
-from core.utils import _SSRFGuardedResolver, guarded_client_session, SSRFError
+from core.utils import SSRFError, _SSRFGuardedResolver, guarded_client_session
 
 
 @pytest.mark.asyncio
@@ -41,6 +41,36 @@ async def test_resolver_allows_when_allow_private():
     try:
         infos = await r.resolve("localhost", 80, socket.AF_INET)
         assert infos  # not blocked
+    finally:
+        await r.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("allow_private", [False, True])
+async def test_resolver_never_allows_metadata_resolution(allow_private):
+    class MetadataResolver:
+        async def resolve(self, host, port, family):
+            return [{
+                "hostname": host,
+                "host": "169.254.169.254",
+                "port": port,
+                "family": family,
+                "proto": 0,
+                "flags": 0,
+            }]
+
+        async def close(self):
+            return None
+
+    r = _SSRFGuardedResolver(
+        allow_private=allow_private,
+        allowed_hosts=["metadata-alias.example"],
+    )
+    await r._inner.close()
+    r._inner = MetadataResolver()
+    try:
+        with pytest.raises(SSRFError, match="metadata"):
+            await r.resolve("metadata-alias.example", 80, socket.AF_INET)
     finally:
         await r.close()
 

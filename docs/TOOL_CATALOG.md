@@ -883,7 +883,7 @@
 | `testing.security.scan` | Scan for security vulnerabilities | `targets` array *(required)*, `scan_type` string (default: `all`), `severity_threshold` string (default: `medium`) | `ok` (boolean), `vulnerabilities` (array), `summary` (object) |
 | `testing.suite.run` | Execute a collection of tests | `tests` array *(required)*, `parallel` boolean (default: `False`), `max_failures` number (default: `0`) | `ok` (boolean), `passed` (number), `failed` (number), `skipped` (number), `results` (array) |
 | `testing.unit.run` | Execute unit tests | `paths` array *(required)*, `pattern` string (default: `test_*.py`), `verbose` boolean (default: `False`) | `ok` (boolean), `passed` (number), `failed` (number), `errors` (number), `results` (array) |
-| `testing.visual.compare` | Compare visual outputs for differences | `actual` string *(required)*, `expected` string *(required)*, `threshold` number (default: `0.1`), `output_diff` boolean (default: `True`) | `ok` (boolean), `match` (boolean), `difference` (number), `diff_image` (string) |
+| `testing.visual.compare` | Deterministically compare PNG outputs with replayable diff evidence | `actual` string *(required)*, `expected` string *(required)*, `threshold` number (default: `0.001`), `color_threshold` number (default: `0.1`), `output_diff` boolean (default: `True`), `diff_path` string | `ok` (boolean), `match` (boolean), `difference` (number), `diff_percentage` (number), `diff_image` (string), `evidence` (object) |
 
 ## text
 
@@ -954,7 +954,7 @@
 | `verify.ruleset` | Load verification rules from YAML file | `path` string *(required)* | `ruleset` (object), `rules_count` (integer) |
 | `verify.run` | Run full design verification: capture → compare → report | `url` string *(required)*, `selectors` array, `ruleset_path` string, `expected_styles` object, `figma_file_id` string, `figma_token` string, `figma_mapping` object, `output_dir` string (default: `./verify-reports`), `report_format` string (default: `html`), `take_screenshot` boolean (default: `True`), `viewport_width` number (default: `1280`), `viewport_height` number (default: `800`) | `passed` (boolean), `summary` (object), `report_path` (string) |
 | `verify.spec` | Dynamic spec verification - compose any modules via YAML | `ruleset_path` string, `ruleset` object | `passed` (boolean), `summary` (object), `results` (array) |
-| `verify.visual_diff` | Compare reference design with dev site visually, annotate differences | `reference_url` string *(required)*, `dev_url` string *(required)*, `output_dir` string (default: `./verify-reports/visual-diff`), `focus_areas` array, `viewport_width` number (default: `1280`), `viewport_height` number (default: `800`), `model` string (default: `gpt-4o`), `api_key` string | `similarity_score` (number), `annotations` (array), `annotated_image` (string), `report_path` (string), `summary` (string) |
+| `verify.visual_diff` | Deterministically compare a reference design with a dev site and preserve diff evidence | `reference_url` string *(required)*, `dev_url` string *(required)*, `output_dir` string (default: `./verify-reports/visual-diff`), `viewport_width` number (default: `1280`), `viewport_height` number (default: `800`), `threshold` number (default: `0.001`), `color_threshold` number (default: `0.1`) | `similarity_score` (number), `passed` (boolean), `difference_percentage` (number), `annotations` (array), `annotated_image` (string), `report_path` (string), `summary` (string) |
 
 ## vision
 
