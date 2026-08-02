@@ -37,7 +37,9 @@ jobs:
       - name: Install package and audit tooling
         run: |
           # pip-tools 7.6.0 is incompatible with pip 26.2.
-          python -m pip install --upgrade 'pip>=26.1.2,<26.2'
+          # The packaging regression test builds without isolation, so keep the
+          # runner's build backend aligned with pyproject.toml too.
+          python -m pip install --upgrade 'pip>=26.1.2,<26.2' 'setuptools>=83.0.0'
           pip install -e '.[dev,browser]'
           pip install './flyto-indexer[dev]'
           npm ci --ignore-scripts
