@@ -2,6 +2,10 @@
 
 ## Current State
 
+- Package metadata is prepared for the 2.26.11 security patch release. The
+  release contains the completed filesystem, outbound HTTP, plugin discovery,
+  MCP header, and Ollama trust-boundary fixes tracked by the private GitHub
+  advisories.
 - MCP clients no longer have to guess whether a connection is ready or keep a
   fragile server-side session alive. Core supports the stateless MCP
   2026-07-28 request model, publishes discovery and cache guidance, validates
@@ -154,11 +158,11 @@
 
 ## Last Verification
 
-Verified locally on 2026-08-02:
+Verified locally on 2026-08-03 for the 2.26.11 release candidate:
 
 - project memory, documentation, brand, generated catalog/reference, and
   audited plus changed-surface Ruff checks passed;
-- 2,336 tests passed, 13 skipped, 273 deselected, with 61.39% coverage;
+- 2,349 tests passed, 13 skipped, 273 deselected, with 61.39% coverage;
 - Python `pip-audit` and npm audit both reported 0 vulnerabilities;
 - `actionlint` accepted the PyPI publishing workflow and its pinned
   `pypa/gh-action-pypi-publish` v1.14.2 commit;
@@ -166,7 +170,6 @@ Verified locally on 2026-08-02:
 - Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
   flows;
-- exact code SHA `31cbf19c18455056fd9db9473c519bd72a724be2` passed remote
-  CI `30751451499`, Security `30751451672`, and CodeQL `30751451016`.
-  GitHub then reported zero open code-scanning, Dependabot, and secret-scanning
-  alerts.
+- package, MCP registry, and changelog version metadata all resolve to
+  `2.26.11`; the release tag remains gated on green remote CI for the exact
+  release commit.

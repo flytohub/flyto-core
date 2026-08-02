@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.11] - 2026-08-03
+
 ### Fixed
 - Confined caller-supplied paths for CSV/YAML/Excel/PDF/image readers and
   browser/document file writers to the configured filesystem sandbox before
@@ -758,6 +760,7 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.26.11 | 2026-08-03 | Security boundary hardening for filesystems, outbound HTTP, plugins, MCP headers, and Ollama |
 | 2.26.10 | 2026-07-23 | 452-module catalog, Tavily search, source-backed docs, deterministic verification |
 | 2.26.9 | 2026-07-19 | Registry metadata and PyPI backlink refresh |
 | 1.5.0 | 2025-12-04 | Level 4 Advanced Patterns (Enterprise) |
@@ -769,7 +772,8 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 ---
 
-[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.10...HEAD
+[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.11...HEAD
+[2.26.11]: https://github.com/flytohub/flyto-core/compare/v2.26.10...v2.26.11
 [2.26.10]: https://github.com/flytohub/flyto-core/compare/v2.26.9...v2.26.10
 [2.26.9]: https://github.com/flytohub/flyto-core/compare/v2.26.8...v2.26.9
 [1.5.0]: https://github.com/flytohub/flyto-core/compare/v1.4.0...v1.5.0
