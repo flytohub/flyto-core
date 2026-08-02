@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **951 Python files**, **195,210 lines**, and **5,518 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **951 Python files**, **195,215 lines**, and **5,518 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -79,7 +79,7 @@ Inventory: **951 Python files**, **195,210 lines**, and **5,518 class/function/m
 | [`src/core/api/plugins/routes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/routes.py#L1) | 228 | 14 | `fastapi, logging, pydantic, service, typing` | Plugin API Routes |
 | [`src/core/api/plugins/service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/service.py#L1) | 464 | 17 | `dataclasses, hashlib, json, logging, pathlib, runtime, typing` | Plugin Service |
 | [`src/core/api/routes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/__init__.py#L1) | 10 | 0 | `mcp, modules, replay, workflows` | API Routes |
-| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 295 | 11 | `base64, binascii, core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
+| [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 302 | 11 | `base64, binascii, core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
 | [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 242 | 3 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |
 | [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 218 | 4 | `contextlib, core, evidence_hooks, fastapi, json, logging, models, os, security, time, uuid` | Workflow Routes |
@@ -929,7 +929,7 @@ Inventory: **951 Python files**, **195,210 lines**, and **5,518 class/function/m
 | [`src/core/runtime/health.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/health.py#L1) | 296 | 20 | `asyncio, dataclasses, enum, logging, time, typing` | Plugin Health Check System |
 | [`src/core/runtime/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/invoke.py#L1) | 589 | 18 | `browser_session, exceptions, logging, manager, modules, routing, time, types, typing` | Runtime Invoker |
 | [`src/core/runtime/languages.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/languages.py#L1) | 482 | 10 | `dataclasses, exceptions, glob, logging, os, pathlib, shutil, stat, typing` | Multi-Language Runtime Support |
-| [`src/core/runtime/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/manager.py#L1) | 657 | 26 | `asyncio, dataclasses, exceptions, json, languages, logging, pathlib, process, re, typing, yaml` | Plugin Manager |
+| [`src/core/runtime/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/manager.py#L1) | 655 | 26 | `asyncio, contextlib, dataclasses, exceptions, json, languages, logging, pathlib, process, re, typing, yaml` | Plugin Manager |
 | [`src/core/runtime/pool_router.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/pool_router.py#L1) | 456 | 17 | `asyncio, dataclasses, enum, logging, manager, pathlib, types, typing` | Pool Router for Multi-Tenant Isolation |
 | [`src/core/runtime/process.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/process.py#L1) | 574 | 20 | `asyncio, dataclasses, enum, exceptions, json, languages, logging, os, pathlib, protocol, signal, time` | Plugin Process Management |
 | [`src/core/runtime/protocol.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/protocol.py#L1) | 720 | 39 | `dataclasses, json, logging, pydantic, re, typing` | JSON-RPC Protocol Implementation |

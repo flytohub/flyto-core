@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from core.runtime.exceptions import SecurityError
 from core.runtime.manager import (
     PluginManager,
     PluginManifest,
@@ -257,6 +258,22 @@ class TestPluginManagerDiscovery:
         assert "node-plugin" in discovered
         assert len(discovered) == 2
 
+    @pytest.mark.asyncio
+    async def test_discovery_rejects_symlink_outside_plugin_root(self, tmp_path):
+        plugin_dir = tmp_path / "plugins"
+        plugin_dir.mkdir()
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        with open(outside / "plugin.manifest.json", "w") as f:
+            json.dump({"id": "outside-plugin", "entryPoint": "main.py"}, f)
+        (outside / "main.py").touch()
+        (plugin_dir / "linked-plugin").symlink_to(outside, target_is_directory=True)
+
+        manager = PluginManager(plugin_dir)
+
+        assert await manager.discover_plugins() == []
+        assert manager.get_manifest("outside-plugin") is None
+
 
 class TestPluginManagerLoading:
     """Tests for PluginManager plugin loading."""
@@ -304,6 +321,30 @@ class TestPluginManagerLoading:
         assert info.plugin_id == "py-plugin"
         assert info.manifest.runtime.language == "python"
         assert info.process.config.language == "python"
+
+    @pytest.mark.asyncio
+    async def test_load_uses_discovered_path_for_namespaced_id(self, tmp_path):
+        plugin_dir = tmp_path / "plugins"
+        plugin_dir.mkdir()
+        physical_dir = plugin_dir / "physical-directory"
+        physical_dir.mkdir()
+        with open(physical_dir / "plugin.manifest.json", "w") as f:
+            json.dump({"id": "vendor/plugin", "entryPoint": "main.py"}, f)
+        (physical_dir / "main.py").touch()
+
+        manager = PluginManager(plugin_dir)
+        await manager.discover_plugins()
+
+        info = await manager.load_plugin("vendor/plugin")
+
+        assert info.path == physical_dir.resolve()
+
+    @pytest.mark.asyncio
+    async def test_load_rejects_untrusted_plugin_id_before_path_selection(self, tmp_path):
+        manager = PluginManager(tmp_path)
+
+        with pytest.raises(SecurityError):
+            await manager.load_plugin("../outside")
 
     @pytest.mark.asyncio
     async def test_load_node_plugin(self, plugin_dir_with_plugins):

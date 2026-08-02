@@ -51,6 +51,10 @@
   scope. Redirects and connect-time DNS checks remain inside that scope, cloud
   metadata endpoints remain permanently denied, and concurrent tasks do not
   inherit one another's authorization.
+- Plugin runtime loads now select only directories recorded by confined
+  manifest discovery. External plugin IDs cannot construct filesystem paths,
+  symlink escapes are rejected, and MCP header-decoding failures return a
+  stable generic error instead of exception details.
 
 ## Release Blockers
 
@@ -139,12 +143,14 @@
 
 ## Last Verification
 
-Verified locally on 2026-07-31:
+Verified locally on 2026-08-02:
 
 - project memory, documentation, brand, generated catalog/reference, and
-  audited Ruff checks passed;
-- 2,211 tests passed, 13 skipped, 273 deselected, with 61.24% coverage;
-- npm audit reported 0 vulnerabilities;
+  audited plus changed-surface Ruff checks passed;
+- 2,336 tests passed, 13 skipped, 273 deselected, with 61.39% coverage;
+- Python `pip-audit` and npm audit both reported 0 vulnerabilities;
+- `actionlint` accepted the PyPI publishing workflow and its pinned
+  `pypa/gh-action-pypi-publish` v1.14.2 commit;
 - wheel and source distribution built, and Twine validated both artifacts;
 - Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint

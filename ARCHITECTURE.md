@@ -73,6 +73,13 @@ bounded comparison options through one JSON request, runs without provider
 credentials, rejects oversized PNG dimensions before decoding, and refuses to
 overwrite existing diff evidence or either input image.
 
+Plugin IDs are lookup keys, never filesystem path fragments. The runtime
+discovers manifests under the configured plugin root, resolves and confines
+each physical directory there, and records the resulting ID-to-directory map.
+Later API requests can only select from that validated map; an invalid ID or a
+directory symlink that escapes the root fails closed before language detection
+or entry-point access.
+
 Provider SDKs, browsers, image/crypto/DNS features, and server frameworks are
 capability extras. Base-package import cannot assume every extra is installed;
 the feature boundary must either provide a safe fallback or return an

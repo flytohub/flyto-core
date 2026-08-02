@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Closed the open plugin-runtime path-injection chain by validating caller
+  plugin IDs at the manager boundary, selecting plugin directories only from
+  the validated discovery map, and rejecting discovered symlinks that resolve
+  outside the configured plugin root.
+- Stopped MCP HTTP header-decoding failures from reflecting exception details
+  to remote callers; malformed `Mcp-Name` values now receive a stable generic
+  protocol error.
+- Replaced URL-prefix assertions in the Warroom bundle regression with parsed
+  HTTPS origin checks, and updated the pinned PyPI publishing action to
+  `pypa/gh-action-pypi-publish` v1.14.2.
+
 ### Added
 - Updated the STDIO and Streamable HTTP MCP surfaces to the 2026-07-28
   protocol. Modern clients can discover the server without a setup handshake,

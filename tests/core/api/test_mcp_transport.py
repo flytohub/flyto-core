@@ -257,6 +257,28 @@ class TestModernProtocol:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == -32020
 
+    def test_invalid_name_header_does_not_expose_decoder_exception(self, client):
+        request = modern_request(
+            241,
+            "tools/call",
+            {"name": "validate_params", "arguments": {"module_id": "math.abs"}},
+        )
+        with patch(
+            "core.api.routes.mcp._decode_mcp_header",
+            side_effect=ValueError("traceback: /srv/flyto/private/decoder.py"),
+        ):
+            resp = client.post(
+                "/mcp",
+                json=request,
+                headers=modern_headers("tools/call", "invalid"),
+            )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"] == {
+            "code": -32020,
+            "message": "Header mismatch: invalid Mcp-Name header encoding",
+        }
+
     def test_unsupported_protocol_version_is_rejected(self, client):
         request = modern_request(25, "tools/list")
         request["params"]["_meta"][

@@ -159,8 +159,10 @@ def _validate_modern_http_headers(request: Request, payload: dict) -> Optional[d
         return _header_mismatch(payload, "required Mcp-Name header is missing")
     try:
         decoded_name = _decode_mcp_header(name_header)
-    except ValueError as exc:
-        return _header_mismatch(payload, str(exc))
+    except ValueError:
+        # Header decoding errors are intentionally opaque to remote callers.
+        # The decoder's exception chain may contain implementation details.
+        return _header_mismatch(payload, "invalid Mcp-Name header encoding")
     if decoded_name != expected_name:
         return _header_mismatch(
             payload,
@@ -243,7 +245,12 @@ async def mcp_post(request: Request):
     new_session_id = None
 
     for item in items:
-        result = await handle_jsonrpc_request(item, browser_sessions, debugger_sessions, session_activity)
+        result = await handle_jsonrpc_request(
+            item,
+            browser_sessions,
+            debugger_sessions,
+            session_activity,
+        )
 
         # Only handshake-era clients receive a protocol session.
         if not modern and _is_initialize(item) and result and "result" in result:

@@ -117,7 +117,7 @@ jobs:
           path: dist/
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1 (pinned, FLYA-18)
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 (pinned, FLYA-18)
         with:
           repository-url: https://test.pypi.org/legacy/
 
@@ -139,7 +139,7 @@ jobs:
           path: dist/
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1 (pinned, FLYA-18)
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2 (pinned, FLYA-18)
 
       - name: Trigger downstream rebuilds
         uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71  # v9.0.0

@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -154,13 +155,15 @@ def test_flyto2_warroom_bundle_keeps_revenue_loop_deployment_aware():
         if "base_url" in asset["default_args"]:
             assert asset["default_args"]["base_url"] == "https://warroom.customer.internal"
         if "login_url" in asset["default_args"]:
-            assert asset["default_args"]["login_url"].startswith(
-                "https://warroom.customer.internal"
-            )
+            login_url = urlsplit(asset["default_args"]["login_url"])
+            assert login_url.scheme == "https"
+            assert login_url.hostname == "warroom.customer.internal"
+            assert login_url.port is None
         if "page_url" in asset["default_args"]:
-            assert asset["default_args"]["page_url"].startswith(
-                "https://warroom.customer.internal"
-            )
+            page_url = urlsplit(asset["default_args"]["page_url"])
+            assert page_url.scheme == "https"
+            assert page_url.hostname == "warroom.customer.internal"
+            assert page_url.port is None
 
 
 def test_flyto2_smoke_recipes_accept_required_text_strings_or_arrays():

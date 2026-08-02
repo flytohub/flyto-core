@@ -12,22 +12,23 @@ Security:
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
-from .process import PluginProcess, ProcessConfig, ProcessStatus, RestartPolicy
 from .exceptions import (
+    PathTraversalError,
     PluginNotFoundError,
     PluginUnhealthyError,
     SecurityError,
-    PathTraversalError,
     ValidationError,
 )
-from .languages import get_language_config, detect_language, validate_entry_point
+from .languages import detect_language, get_language_config, validate_entry_point
+from .process import PluginProcess, ProcessConfig, ProcessStatus, RestartPolicy
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +139,7 @@ def validate_permissions(permissions: List[str]) -> List[str]:
 
     dangerous_found = []
     for perm in permissions:
-        if perm in DANGEROUS_PERMISSIONS:
-            dangerous_found.append(perm)
-        # Check for wildcard permissions
-        elif perm.endswith(":*") or perm == "*":
+        if perm in DANGEROUS_PERMISSIONS or perm.endswith(":*") or perm == "*":
             dangerous_found.append(perm)
 
     if dangerous_found:
@@ -313,6 +311,10 @@ class PluginManager:
 
         self._plugins: Dict[str, PluginInfo] = {}
         self._manifests: Dict[str, PluginManifest] = {}
+        # Manifest IDs are external-facing identifiers, not filesystem paths.
+        # Keep the directory discovered for each validated manifest so later
+        # API requests only select an already-confined path from this map.
+        self._manifest_paths: Dict[str, Path] = {}
 
         # Configuration from runtime config
         self._start_policy = self.config.get("startPolicy", "lazy")
@@ -345,8 +347,16 @@ class PluginManager:
             logger.warning(f"Plugin directory does not exist: {self.plugin_dir}")
             return discovered
 
+        plugin_root = self.plugin_dir.resolve()
         for entry in self.plugin_dir.iterdir():
-            if not entry.is_dir():
+            try:
+                plugin_path = entry.resolve(strict=True)
+                plugin_path.relative_to(plugin_root)
+            except (OSError, ValueError):
+                logger.warning(f"Skipping plugin directory outside configured root: {entry}")
+                continue
+
+            if not plugin_path.is_dir():
                 continue
 
             # Try different manifest formats
@@ -360,7 +370,7 @@ class PluginManager:
                 ("plugin.manifest.json", "json"),
                 ("manifest.json", "json"),
             ]:
-                path = entry / filename
+                path = plugin_path / filename
                 if path.exists():
                     manifest_path = path
                     manifest_format = fmt
@@ -387,6 +397,7 @@ class PluginManager:
 
                 manifest = PluginManifest.from_dict(data)
                 self._manifests[manifest.id] = manifest
+                self._manifest_paths[manifest.id] = plugin_path
                 discovered.append(manifest.id)
 
                 logger.info(
@@ -412,35 +423,23 @@ class PluginManager:
         Raises:
             PluginNotFoundError: If plugin not found
         """
+        # Validate at the trust boundary even though discovered manifests are
+        # validated too. The route parameter must never become a path.
+        validate_plugin_id(plugin_id)
+
         if plugin_id in self._plugins:
             return self._plugins[plugin_id]
 
-        # Find manifest
+        # Find the manifest and its independently discovered directory.
         manifest = self._manifests.get(plugin_id)
-        if not manifest:
+        plugin_path = self._manifest_paths.get(plugin_id)
+        if not manifest or not plugin_path:
             # Try to discover it
             await self.discover_plugins()
             manifest = self._manifests.get(plugin_id)
+            plugin_path = self._manifest_paths.get(plugin_id)
 
-        if not manifest:
-            raise PluginNotFoundError(plugin_id)
-
-        # Find plugin directory
-        # Try different naming conventions
-        possible_names = [
-            plugin_id,
-            plugin_id.replace("/", "_"),
-            plugin_id.replace("-", "_"),
-        ]
-
-        plugin_path = None
-        for name in possible_names:
-            path = self.plugin_dir / name
-            if path.exists():
-                plugin_path = path
-                break
-
-        if not plugin_path:
+        if not manifest or not plugin_path:
             raise PluginNotFoundError(plugin_id)
 
         # Determine language: manifest > auto-detect
@@ -598,29 +597,28 @@ class PluginManager:
         idle_timeout = 300  # 5 minutes
         now = asyncio.get_event_loop().time()
         for plugin_id, info in list(self._plugins.items()):
-            last_invoke = getattr(info, 'last_invoke_time', None)
-            if last_invoke and (now - last_invoke) > idle_timeout:
-                if info.process.status == ProcessStatus.READY:
-                    logger.info(f"Stopping idle plugin: {plugin_id}")
-                    await self.stop_plugin(plugin_id)
+            last_invoke = getattr(info, "last_invoke_time", None)
+            if (
+                last_invoke
+                and (now - last_invoke) > idle_timeout
+                and info.process.status == ProcessStatus.READY
+            ):
+                logger.info(f"Stopping idle plugin: {plugin_id}")
+                await self.stop_plugin(plugin_id)
 
     async def shutdown(self):
         """Shutdown all plugins and cleanup."""
         # Cancel health check task
         if self._health_check_task:
             self._health_check_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._health_check_task
-            except asyncio.CancelledError:
-                pass
 
         # Cancel idle check task
         if self._idle_check_task:
             self._idle_check_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._idle_check_task
-            except asyncio.CancelledError:
-                pass
 
         # Stop all plugins
         for plugin_id in list(self._plugins.keys()):

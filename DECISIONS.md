@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-08-02 - Plugin IDs select discovered directories; they never construct paths
+
+Decision: `PluginManager` records the resolved directory associated with each
+validated manifest during discovery. A later `load_plugin(plugin_id)` request
+validates the external identifier and uses it only as a dictionary key; it no
+longer joins the request value, or naming variants derived from it, onto the
+plugin root. Discovery also rejects directory symlinks that resolve outside the
+configured root.
+
+Reason: a manifest ID and its physical directory name are separate identities.
+Constructing candidate paths from a route parameter unnecessarily coupled them
+and left filesystem probes dependent on external input, even though manifest
+validation blocked common traversal strings. The discovery map both preserves
+namespaced IDs whose directory names differ and gives the runtime a simple
+invariant: every path used by language detection and entry-point validation was
+enumerated and confined before any load request selected it.
+
+Decision: MCP header decoder exceptions are server-side details. The HTTP
+transport returns one fixed `invalid Mcp-Name header encoding` message rather
+than reflecting `str(exc)` into a JSON-RPC response.
+
+Reason: current decoder errors are intentionally generic, but keeping exception
+text on a remote response path makes that safety depend on every future decoder
+implementation. A stable protocol message preserves diagnostics semantics
+without exposing paths, parser internals, or chained exception data.
+
 ## 2026-07-25 - reverse.deobfuscate (Phase 4): own Node.js subprocess, not the generic plugin runtime; webcrack only, not restringer; new code.execute permission
 
 Decision (delivery mechanism): `reverse.deobfuscate` manages its own Node.js
