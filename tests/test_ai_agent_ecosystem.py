@@ -3,12 +3,10 @@ Tests for AI Agent Ecosystem
 Covers: LLMClientMixin, agent.tool_use, ai.memory.vector, tool name mapping
 """
 
-import asyncio
-import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -200,9 +198,11 @@ class TestLLMClientMixin:
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=False)
 
-        with patch('aiohttp.ClientSession', return_value=mock_session):
-            with pytest.raises(RuntimeError, match="Anthropic API error"):
-                await agent._call_anthropic([{'role': 'user', 'content': 'Hi'}])
+        with (
+            patch('aiohttp.ClientSession', return_value=mock_session),
+            pytest.raises(RuntimeError, match="Anthropic API error"),
+        ):
+            await agent._call_anthropic([{'role': 'user', 'content': 'Hi'}])
 
     # -- _call_gemini -------------------------------------------------------
 
@@ -273,9 +273,11 @@ class TestLLMClientMixin:
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=False)
 
-        with patch('aiohttp.ClientSession', return_value=mock_session):
-            with pytest.raises(RuntimeError, match="no candidates"):
-                await agent._call_gemini([{'role': 'user', 'content': 'Hi'}])
+        with (
+            patch('aiohttp.ClientSession', return_value=mock_session),
+            pytest.raises(RuntimeError, match="no candidates"),
+        ):
+            await agent._call_gemini([{'role': 'user', 'content': 'Hi'}])
 
     # -- _call_ollama -------------------------------------------------------
 
@@ -293,6 +295,7 @@ class TestLLMClientMixin:
         mock_resp.status = 200
         mock_resp.json = AsyncMock(return_value=mock_response)
         mock_resp.text = AsyncMock(return_value='')
+        mock_resp.release = MagicMock()
         mock_resp.__aenter__ = AsyncMock(return_value=mock_resp)
         mock_resp.__aexit__ = AsyncMock(return_value=False)
 
@@ -301,10 +304,22 @@ class TestLLMClientMixin:
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=False)
 
-        with patch('aiohttp.ClientSession', return_value=mock_session):
+        guarded_request = AsyncMock(return_value=mock_resp)
+        with (
+            patch(
+                'core.modules.third_party.ai.agents.llm_client.guarded_client_session',
+                return_value=mock_session,
+            ),
+            patch(
+                'core.modules.third_party.ai.agents.llm_client.guarded_aiohttp_request',
+                guarded_request,
+            ),
+        ):
             result = await agent._call_ollama([{'role': 'user', 'content': 'Hi'}])
 
         assert result == 'Hello from Ollama'
+        guarded_request.assert_awaited_once()
+        mock_resp.release.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -318,7 +333,7 @@ class TestMemoryVector:
     async def test_add_message_with_embedder(self):
         """Messages should get real embeddings when embedder is available."""
         from core.modules.atomic.ai.memory_vector import (
-            _vector_add_message, _vector_clear,
+            _vector_add_message,
         )
 
         mock_embedder = MagicMock()
@@ -349,10 +364,10 @@ class TestMemoryVector:
     async def test_semantic_search(self):
         """Semantic search should rank by cosine similarity."""
         from core.modules.atomic.ai.memory_vector import (
-            _vector_add_message, _vector_search, _vector_get_relevant,
+            _vector_add_message,
+            _vector_get_relevant,
         )
 
-        call_count = 0
         embeddings = [
             [1.0, 0.0, 0.0],   # "Python sorting"
             [0.0, 0.0, 1.0],   # "Weather forecast"
@@ -382,7 +397,8 @@ class TestMemoryVector:
     async def test_fallback_without_embedder(self):
         """Without embedder, should fallback to recent messages."""
         from core.modules.atomic.ai.memory_vector import (
-            _vector_add_message, _vector_get_relevant,
+            _vector_add_message,
+            _vector_get_relevant,
         )
 
         memory_state = {
@@ -408,7 +424,8 @@ class TestMemoryVector:
     async def test_clear_memory(self):
         """Clear should empty all stores."""
         from core.modules.atomic.ai.memory_vector import (
-            _vector_add_message, _vector_clear,
+            _vector_add_message,
+            _vector_clear,
         )
 
         memory_state = {
@@ -641,9 +658,11 @@ class TestLLMClientMixinOpenAI:
         mock_client = MagicMock()
         mock_client.chat = mock_chat
 
-        with patch('openai.AsyncOpenAI', return_value=mock_client):
-            with pytest.raises(Exception, match="Rate limit exceeded"):
-                await agent._call_openai([{'role': 'user', 'content': 'Hi'}])
+        with (
+            patch('openai.AsyncOpenAI', return_value=mock_client),
+            pytest.raises(Exception, match="Rate limit exceeded"),
+        ):
+            await agent._call_openai([{'role': 'user', 'content': 'Hi'}])
 
 
 # ---------------------------------------------------------------------------

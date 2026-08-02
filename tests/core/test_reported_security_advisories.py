@@ -1,4 +1,4 @@
-"""Regression coverage for the 2026-07-31 security reports.
+"""Regression coverage for the 2026-07-31 and 2026-08-02 security reports.
 
 The tests keep provider/network handlers fake and assert the protected sink is
 never reached when SSRF or path-sandbox validation rejects caller input.
@@ -283,5 +283,172 @@ async def test_cloud_downloads_block_paths_outside_sandbox(
 
     with pytest.raises(PathTraversalError):
         await operation
+
+    assert outside_path.exists() is False
+
+
+def _make_agent():
+    module = importlib.import_module(
+        'core.modules.third_party.ai.agents.llm_client'
+    )
+
+    class TestAgent(module.LLMClientMixin):
+        pass
+
+    return module, TestAgent()
+
+
+def test_agent_ollama_blocks_metadata_even_when_remote_is_enabled(monkeypatch):
+    _, agent = _make_agent()
+    monkeypatch.setenv('FLYTO_ALLOW_REMOTE_OLLAMA', 'true')
+    monkeypatch.delenv('FLYTO_ALLOW_PRIVATE_NETWORK', raising=False)
+    monkeypatch.delenv('FLYTO_ALLOWED_HOSTS', raising=False)
+    monkeypatch.delenv('FLYTO_HTTP_DISABLE_SSRF_GUARD', raising=False)
+
+    with pytest.raises(SSRFError):
+        agent.validate_llm_params({
+            'llm_provider': 'ollama',
+            'ollama_url': 'http://169.254.169.254:80',
+        })
+
+
+@pytest.mark.asyncio
+async def test_agent_ollama_uses_pinned_guard_and_redacts_error_body(
+    monkeypatch,
+):
+    module, agent = _make_agent()
+    agent.validate_llm_params({
+        'llm_provider': 'ollama',
+        'ollama_url': 'http://127.0.0.1:11434',
+    })
+    session = _FakeSession()
+    response = _FakeResponse(
+        status=500,
+        data={'error': 'sensitive internal response'},
+    )
+    calls = []
+
+    monkeypatch.setattr(
+        module, 'guarded_client_session', lambda **kwargs: session
+    )
+
+    async def fake_guarded_request(active_session, method, url, **kwargs):
+        calls.append((active_session, method, url, kwargs.get('max_redirects')))
+        return response
+
+    monkeypatch.setattr(
+        module, 'guarded_aiohttp_request', fake_guarded_request
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        await agent._call_ollama([{'role': 'user', 'content': 'Hi'}])
+
+    assert calls == [
+        (session, 'POST', 'http://127.0.0.1:11434/api/chat', 2),
+    ]
+    assert 'sensitive internal response' not in str(exc_info.value)
+    assert response.released is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('module_name', 'module_attr', 'path_param'),
+    [
+        ('core.modules.atomic.data.csv_read', 'csv_read', 'file_path'),
+        ('core.modules.atomic.data.yaml_parse', 'yaml_parse', 'file_path'),
+        ('core.modules.atomic.document.excel_read', 'excel_read', 'path'),
+        ('core.modules.atomic.document.pdf_parse', 'pdf_parse', 'path'),
+        ('core.modules.atomic.image.ocr', 'image_ocr', 'image_path'),
+        ('core.modules.atomic.document.word_parse', 'word_parse', 'file_path'),
+    ],
+)
+async def test_reported_file_readers_block_paths_outside_sandbox(
+    monkeypatch,
+    tmp_path,
+    module_name,
+    module_attr,
+    path_param,
+):
+    sandbox = tmp_path / 'sandbox'
+    sandbox.mkdir()
+    outside_path = tmp_path / 'outside' / 'secret'
+    monkeypatch.setenv('FLYTO_SANDBOX_DIR', str(sandbox))
+    monkeypatch.setenv('FLYTO_ALLOW_ABSOLUTE_PATHS', 'true')
+
+    module = importlib.import_module(module_name)
+    operation = getattr(module, module_attr)(
+        {path_param: str(outside_path)},
+        {},
+    ).execute()
+
+    with pytest.raises(PathTraversalError):
+        await operation
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'module_case',
+    ['snapshot', 'trace', 'cookies', 'word_images', 'pdf_generate'],
+)
+async def test_reported_file_writers_block_paths_outside_sandbox(
+    monkeypatch,
+    tmp_path,
+    module_case,
+):
+    sandbox = tmp_path / 'sandbox'
+    sandbox.mkdir()
+    outside_path = tmp_path / 'outside' / 'attacker-controlled'
+    monkeypatch.setenv('FLYTO_SANDBOX_DIR', str(sandbox))
+    monkeypatch.setenv('FLYTO_ALLOW_ABSOLUTE_PATHS', 'true')
+
+    if module_case == 'snapshot':
+        module = importlib.import_module(
+            'core.modules.atomic.browser.snapshot'
+        )
+        with pytest.raises(PathTraversalError):
+            module.BrowserSnapshotModule(
+                {'format': 'html', 'path': str(outside_path)},
+                {},
+            )
+    elif module_case == 'trace':
+        module = importlib.import_module('core.modules.atomic.browser.trace')
+        with pytest.raises(PathTraversalError):
+            module.BrowserTraceModule(
+                {'action': 'stop', 'path': str(outside_path)},
+                {},
+            )
+    elif module_case == 'cookies':
+        module = importlib.import_module(
+            'core.modules.atomic.browser.cookies_file'
+        )
+        with pytest.raises(PathTraversalError):
+            module.BrowserCookiesFileModule(
+                {'action': 'export', 'file_path': str(outside_path)},
+                {},
+            )
+    elif module_case == 'word_images':
+        module = importlib.import_module(
+            'core.modules.atomic.document.word_parse'
+        )
+        operation = module.word_parse(
+            {
+                'file_path': str(sandbox / 'source.docx'),
+                'extract_images': True,
+                'images_output_dir': str(outside_path),
+            },
+            {},
+        ).execute()
+        with pytest.raises(PathTraversalError):
+            await operation
+    else:
+        module = importlib.import_module(
+            'core.modules.atomic.document.pdf_generate'
+        )
+        operation = module.pdf_generate(
+            {'content': 'payload', 'output_path': str(outside_path)},
+            {},
+        ).execute()
+        with pytest.raises(PathTraversalError):
+            await operation
 
     assert outside_path.exists() is False

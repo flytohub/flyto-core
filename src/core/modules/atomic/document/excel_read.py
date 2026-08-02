@@ -8,9 +8,9 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -88,17 +88,19 @@ logger = logging.getLogger(__name__)
 )
 async def excel_read(context: Dict[str, Any]) -> Dict[str, Any]:
     """Read data from Excel file"""
-    try:
-        import openpyxl
-    except ImportError:
-        raise ImportError("openpyxl is required for Excel reading. Install with: pip install openpyxl")
-
     params = context['params']
-    path = params['path']
+    path = validate_path_with_env_config(params['path'])
     sheet_name = params.get('sheet')
     header_row = params.get('header_row', 1)
     cell_range = params.get('range')
     as_dict = params.get('as_dict', True)
+
+    try:
+        import openpyxl
+    except ImportError:
+        raise ImportError(
+            "openpyxl is required for Excel reading. Install with: pip install openpyxl"
+        ) from None
 
     if not os.path.exists(path):
         raise FileNotFoundError(f"Excel file not found: {path}")

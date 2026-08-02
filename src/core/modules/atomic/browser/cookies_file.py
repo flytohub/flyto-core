@@ -12,6 +12,8 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
@@ -78,7 +80,7 @@ class BrowserCookiesFileModule(BaseModule):
         raw_path = self.params.get('file_path', '')
         if not raw_path:
             raise ValueError("file_path is required")
-        self.file_path = Path(raw_path).expanduser()
+        self.file_path = Path(validate_path_with_env_config(raw_path))
         self.domain_filter = self.params.get('domain_filter', '')
 
     async def execute(self) -> Any:
@@ -94,30 +96,32 @@ class BrowserCookiesFileModule(BaseModule):
             return await self._import(context)
 
     async def _export(self, context) -> dict:
+        file_path = Path(validate_path_with_env_config(str(self.file_path)))
         cookies = await context.cookies()
 
         if self.domain_filter:
             cookies = [c for c in cookies if self.domain_filter in c.get('domain', '')]
 
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        self.file_path.write_text(json.dumps(cookies, indent=2, default=str), encoding='utf-8')
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(json.dumps(cookies, indent=2, default=str), encoding='utf-8')
 
-        domains = sorted(set(c.get('domain', '') for c in cookies))
-        logger.info("Exported %d cookies to %s", len(cookies), self.file_path)
+        domains = sorted({c.get('domain', '') for c in cookies})
+        logger.info("Exported %d cookies to %s", len(cookies), file_path)
 
         return {
             "status": "success",
             "action": "export",
             "cookie_count": len(cookies),
-            "file_path": str(self.file_path),
+            "file_path": str(file_path),
             "domains": domains,
         }
 
     async def _import(self, context) -> dict:
-        if not self.file_path.exists():
-            raise FileNotFoundError(f"Cookie file not found: {self.file_path}")
+        file_path = Path(validate_path_with_env_config(str(self.file_path)))
+        if not file_path.exists():
+            raise FileNotFoundError(f"Cookie file not found: {file_path}")
 
-        data = json.loads(self.file_path.read_text(encoding='utf-8'))
+        data = json.loads(file_path.read_text(encoding='utf-8'))
         if not isinstance(data, list):
             raise ValueError("Cookie file must contain a JSON array")
 
@@ -146,13 +150,13 @@ class BrowserCookiesFileModule(BaseModule):
 
         await context.add_cookies(clean)
 
-        domains = sorted(set(c.get('domain', '') for c in clean))
-        logger.info("Imported %d cookies from %s", len(clean), self.file_path)
+        domains = sorted({c.get('domain', '') for c in clean})
+        logger.info("Imported %d cookies from %s", len(clean), file_path)
 
         return {
             "status": "success",
             "action": "import",
             "cookie_count": len(clean),
-            "file_path": str(self.file_path),
+            "file_path": str(file_path),
             "domains": domains,
         }

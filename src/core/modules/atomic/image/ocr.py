@@ -9,12 +9,12 @@ import logging
 import os
 from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,8 @@ async def image_ocr(context: Dict[str, Any]) -> Dict[str, Any]:
     if not image_path:
         raise ValidationError("Missing required parameter: image_path", field="image_path")
 
+    image_path = validate_path_with_env_config(image_path)
+
     if not os.path.exists(image_path):
         raise ModuleError(f"Image file not found: {image_path}")
 
@@ -205,7 +207,7 @@ async def image_ocr(context: Dict[str, Any]) -> Dict[str, Any]:
             raise ModuleError(
                 "pytesseract and Pillow are required for image.ocr. "
                 "Install with: pip install pytesseract Pillow"
-            )
+            ) from None
 
         img = Image.open(image_path)
         custom_config = f'--psm {psm}'

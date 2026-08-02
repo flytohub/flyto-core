@@ -7,11 +7,11 @@ Generate PDF files from HTML or text content
 import asyncio
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -87,27 +87,25 @@ logger = logging.getLogger(__name__)
 )
 async def pdf_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate PDF from HTML or text content"""
-    try:
-        from reportlab.lib.pagesizes import A4, LETTER, LEGAL, A3, A5
-        from reportlab.lib.pagesizes import landscape, portrait
-        from reportlab.lib.units import mm
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-    except ImportError:
-        raise ImportError("reportlab is required for pdf.generate. Install with: pip install reportlab")
-
     params = context['params']
     content = params['content']
-    output_path = params['output_path']
+    output_path = validate_path_with_env_config(params['output_path'])
+
+    try:
+        from reportlab.lib.pagesizes import A3, A4, A5, LEGAL, LETTER, landscape
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.units import mm
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+    except ImportError:
+        raise ImportError(
+            "reportlab is required for pdf.generate. Install with: pip install reportlab"
+        ) from None
+
     title = params.get('title', '')
     author = params.get('author', '')
     page_size_name = params.get('page_size', 'A4')
     orientation = params.get('orientation', 'portrait')
     margin = params.get('margin', 20)
-    header_text = params.get('header', '')
-    footer_text = params.get('footer', '')
-
     page_sizes = {
         'A4': A4,
         'Letter': LETTER,
@@ -139,9 +137,7 @@ async def pdf_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
         if content.strip().startswith('<'):
             try:
-                from reportlab.platypus import XPreformatted
                 from html.parser import HTMLParser
-                import html
 
                 class SimpleHTMLParser(HTMLParser):
                     def __init__(self):
@@ -189,8 +185,6 @@ async def pdf_generate(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         import pypdf
-        if '..' in output_path:
-            raise Exception('Invalid file path')
         with open(output_path, 'rb') as f:
             reader = pypdf.PdfReader(f)
             page_count = len(reader.pages)

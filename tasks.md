@@ -23,6 +23,11 @@
 
 ## Done
 
+- Hardened the remaining reported module boundaries: agent Ollama requests are
+  localhost-only by default and use the guarded HTTP path, while the reported
+  file readers and browser/document writers enforce `FLYTO_SANDBOX_DIR` before
+  touching the filesystem. Updated supported dependency floors and CI tooling
+  so the Python 3.10+ audited environment has no known package vulnerabilities.
 - Closed the reported outbound-request and cloud-download gaps: core API,
   OAuth2, and provider webhooks now use connect-time/per-redirect SSRF guards;
   Azure, GCS, and S3 downloads enforce the filesystem sandbox before writes.

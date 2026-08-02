@@ -4,13 +4,20 @@
 CSV Read Module
 Read and parse CSV file into array of objects
 """
-from typing import Any, Dict
 import csv
 import os
+from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
+from ...errors import (
+    FileNotFoundError as ModuleFileNotFoundError,
+)
+from ...errors import (
+    ModuleError,
+    ValidationError,
+)
 from ...registry import register_module
 from ...schema import compose, presets
-from ...errors import ValidationError, FileNotFoundError, ModuleError
 
 
 @register_module(
@@ -103,11 +110,12 @@ async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
     if not file_path:
         raise ValidationError("Missing required parameter: file_path", field="file_path")
 
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File not found: {file_path}", path=file_path)
+    file_path = validate_path_with_env_config(file_path)
 
-    if '..' in file_path:
-        raise Exception('Invalid file path')
+    if not os.path.exists(file_path):
+        raise ModuleFileNotFoundError(
+            f"File not found: {file_path}", path=file_path
+        )
 
     try:
         with open(file_path, 'r', encoding=encoding) as csvfile:
@@ -129,4 +137,4 @@ async def csv_read(context: Dict[str, Any]) -> Dict[str, Any]:
             }
 
     except Exception as e:
-        raise ModuleError(f"Failed to read CSV: {str(e)}")
+        raise ModuleError(f"Failed to read CSV: {str(e)}") from e

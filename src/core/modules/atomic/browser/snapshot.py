@@ -10,8 +10,10 @@ Capture DOM snapshots in various formats:
 
 Works across all browsers, with MHTML limited to Chromium.
 """
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any
+
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
@@ -124,6 +126,8 @@ class BrowserSnapshotModule(BaseModule):
         self.format = self.params.get('format', 'html')
         self.selector = self.params.get('selector')
         self.output_path = self.params.get('path', '')
+        if self.output_path:
+            self.output_path = validate_path_with_env_config(self.output_path)
 
         if self.format not in ['html', 'mhtml', 'text']:
             raise ValueError(f"Invalid format: {self.format}. Must be html, mhtml, or text")
@@ -174,7 +178,7 @@ class BrowserSnapshotModule(BaseModule):
 
         # Save to file or return content
         if self.output_path:
-            path = Path(self.output_path)
+            path = Path(validate_path_with_env_config(self.output_path))
             path.parent.mkdir(parents=True, exist_ok=True)
 
             if isinstance(content, bytes):

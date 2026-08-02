@@ -16,18 +16,17 @@ Covers:
 - ssh.exec / ssh.sftp_upload / ssh.sftp_download (registration only)
 """
 
-import pytest
-import sys
 import os
-import json
-import tempfile
-import shutil
-import asyncio
+import sys
+from contextlib import suppress
 from pathlib import Path
+
+import pytest
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
+from core.modules.errors import ModuleError
 
 # ============================================================================
 # Helpers
@@ -42,10 +41,8 @@ def get_module(module_id: str):
 def ensure_modules_loaded():
     """Ensure all modules are imported and registered."""
     from core.modules import atomic  # noqa
-    try:
+    with suppress(Exception):
         from core.modules import third_party  # noqa
-    except Exception:
-        pass
 
 
 # Load modules once
@@ -96,14 +93,14 @@ class TestDataXmlParse:
     async def test_parse_empty_raises(self, mod):
         """No content or file_path should error."""
         instance = mod({}, {})
-        with pytest.raises(Exception):
+        with pytest.raises(ModuleError):
             await instance.execute()
 
     @pytest.mark.asyncio
     async def test_parse_invalid_xml(self, mod):
         """Invalid XML should error."""
         instance = mod({'content': 'not xml at all <><>'}, {})
-        with pytest.raises(Exception):
+        with pytest.raises(ModuleError):
             await instance.execute()
 
 
@@ -191,8 +188,9 @@ class TestDataYamlParse:
         assert len(result['data']['result']) == 3
 
     @pytest.mark.asyncio
-    async def test_parse_yaml_from_file(self, mod, tmp_path):
+    async def test_parse_yaml_from_file(self, mod, tmp_path, monkeypatch):
         """Parse YAML from file."""
+        monkeypatch.setenv('FLYTO_SANDBOX_DIR', str(tmp_path))
         yaml_file = tmp_path / "test.yaml"
         yaml_file.write_text("database:\n  host: localhost\n  port: 5432")
         instance = mod({'file_path': str(yaml_file)}, {})

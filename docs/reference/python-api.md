@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,518 declarations across 804 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,519 declarations across 804 files**.
 
 ## `demo.py`
 
@@ -3081,11 +3081,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserCookiesFileModule(BaseModule)` | Defines the BrowserCookiesFileModule runtime contract. | [`src/core/modules/atomic/browser/cookies_file.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L70) |
-| method | `def BrowserCookiesFileModule.validate_params(self) -> None` | Implements `BrowserCookiesFileModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L74) |
-| method | `async def BrowserCookiesFileModule.execute(self) -> Any` | Implements `BrowserCookiesFileModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L84) |
-| method | `async def BrowserCookiesFileModule._export(self, context) -> dict` | Implements `BrowserCookiesFileModule._export`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L96) |
-| method | `async def BrowserCookiesFileModule._import(self, context) -> dict` | Implements `BrowserCookiesFileModule._import`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L116) |
+| class | `class BrowserCookiesFileModule(BaseModule)` | Defines the BrowserCookiesFileModule runtime contract. | [`src/core/modules/atomic/browser/cookies_file.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L72) |
+| method | `def BrowserCookiesFileModule.validate_params(self) -> None` | Implements `BrowserCookiesFileModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L76) |
+| method | `async def BrowserCookiesFileModule.execute(self) -> Any` | Implements `BrowserCookiesFileModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L86) |
+| method | `async def BrowserCookiesFileModule._export(self, context) -> dict` | Implements `BrowserCookiesFileModule._export`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L98) |
+| method | `async def BrowserCookiesFileModule._import(self, context) -> dict` | Implements `BrowserCookiesFileModule._import`; linked source is authoritative. | [`src/core/modules/atomic/browser/cookies_file.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/cookies_file.py#L119) |
 
 ## `src/core/modules/atomic/browser/detect.py`
 
@@ -3436,12 +3436,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserSnapshotModule(BaseModule)` | DOM Snapshot Module | [`src/core/modules/atomic/browser/snapshot.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L116) |
-| method | `def BrowserSnapshotModule.validate_params(self) -> None` | Implements `BrowserSnapshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/snapshot.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L123) |
-| method | `async def BrowserSnapshotModule.execute(self) -> Any` | Implements `BrowserSnapshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/snapshot.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L131) |
-| method | `async def BrowserSnapshotModule._capture_html(self, page) -> str` | Capture HTML content | [`src/core/modules/atomic/browser/snapshot.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L202) |
-| method | `async def BrowserSnapshotModule._capture_mhtml(self, page) -> bytes` | Capture MHTML archive using CDP | [`src/core/modules/atomic/browser/snapshot.py:214`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L214) |
-| method | `async def BrowserSnapshotModule._capture_text(self, page) -> str` | Capture text content | [`src/core/modules/atomic/browser/snapshot.py:224`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L224) |
+| class | `class BrowserSnapshotModule(BaseModule)` | DOM Snapshot Module | [`src/core/modules/atomic/browser/snapshot.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L118) |
+| method | `def BrowserSnapshotModule.validate_params(self) -> None` | Implements `BrowserSnapshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/snapshot.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L125) |
+| method | `async def BrowserSnapshotModule.execute(self) -> Any` | Implements `BrowserSnapshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/snapshot.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L135) |
+| method | `async def BrowserSnapshotModule._capture_html(self, page) -> str` | Capture HTML content | [`src/core/modules/atomic/browser/snapshot.py:206`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L206) |
+| method | `async def BrowserSnapshotModule._capture_mhtml(self, page) -> bytes` | Capture MHTML archive using CDP | [`src/core/modules/atomic/browser/snapshot.py:218`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L218) |
+| method | `async def BrowserSnapshotModule._capture_text(self, page) -> str` | Capture text content | [`src/core/modules/atomic/browser/snapshot.py:228`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/snapshot.py#L228) |
 
 ## `src/core/modules/atomic/browser/storage.py`
 
@@ -3479,11 +3479,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserTraceModule(BaseModule)` | Performance Trace Module using Chrome DevTools Protocol | [`src/core/modules/atomic/browser/trace.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L121) |
-| method | `def BrowserTraceModule.validate_params(self) -> None` | Implements `BrowserTraceModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/trace.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L128) |
-| method | `async def BrowserTraceModule.execute(self) -> Any` | Implements `BrowserTraceModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/trace.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L140) |
-| method | `async def BrowserTraceModule._start_tracing(self, browser) -> Dict&#91;str, Any&#93;` | Start performance tracing | [`src/core/modules/atomic/browser/trace.py:158`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L158) |
-| method | `async def BrowserTraceModule._stop_tracing(self, browser) -> Dict&#91;str, Any&#93;` | Stop performance tracing and optionally save to file | [`src/core/modules/atomic/browser/trace.py:203`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L203) |
+| class | `class BrowserTraceModule(BaseModule)` | Performance Trace Module using Chrome DevTools Protocol | [`src/core/modules/atomic/browser/trace.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L123) |
+| method | `def BrowserTraceModule.validate_params(self) -> None` | Implements `BrowserTraceModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/trace.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L130) |
+| method | `async def BrowserTraceModule.execute(self) -> Any` | Implements `BrowserTraceModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/trace.py:144`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L144) |
+| method | `async def BrowserTraceModule._start_tracing(self, browser) -> Dict&#91;str, Any&#93;` | Start performance tracing | [`src/core/modules/atomic/browser/trace.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L162) |
+| method | `async def BrowserTraceModule._stop_tracing(self, browser) -> Dict&#91;str, Any&#93;` | Stop performance tracing and optionally save to file | [`src/core/modules/atomic/browser/trace.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L207) |
 
 ## `src/core/modules/atomic/browser/type.py`
 
@@ -3694,7 +3694,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def csv_read(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Read and parse CSV file into array of objects. | [`src/core/modules/atomic/data/csv_read.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_read.py#L95) |
+| function | `async def csv_read(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Read and parse CSV file into array of objects. | [`src/core/modules/atomic/data/csv_read.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_read.py#L102) |
 
 ## `src/core/modules/atomic/data/csv_write.py`
 
@@ -3794,8 +3794,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _classify_type(data: Any) -> str` | Classify the parsed YAML result type. | [`src/core/modules/atomic/data/yaml_parse.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/yaml_parse.py#L22) |
-| function | `async def yaml_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse YAML string or file into Python object. | [`src/core/modules/atomic/data/yaml_parse.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/yaml_parse.py#L150) |
+| function | `def _classify_type(data: Any) -> str` | Classify the parsed YAML result type. | [`src/core/modules/atomic/data/yaml_parse.py:29`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/yaml_parse.py#L29) |
+| function | `async def yaml_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse YAML string or file into Python object. | [`src/core/modules/atomic/data/yaml_parse.py:157`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/yaml_parse.py#L157) |
 
 ## `src/core/modules/atomic/database/_dsn_guard.py`
 
@@ -3925,10 +3925,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def excel_read(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Read data from Excel file | [`src/core/modules/atomic/document/excel_read.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L89) |
-| function | `def _select_sheet(wb, sheet_name: Optional&#91;str&#93;, sheet_names: List&#91;str&#93;)` | Implements `_select_sheet`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L128) |
-| function | `def _read_rows(ws, cell_range: Optional&#91;str&#93;) -> List&#91;List&#91;Any&#93;&#93;` | Implements `_read_rows`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L136) |
-| function | `def _extract_headers(all_rows: List&#91;List&#91;Any&#93;&#93;, header_row: int)` | Implements `_extract_headers`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:141`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L141) |
-| function | `def _rows_to_dicts(data_rows: List&#91;List&#91;Any&#93;&#93;, headers: List&#91;str&#93;) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Implements `_rows_to_dicts`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L148) |
+| function | `def _select_sheet(wb, sheet_name: Optional&#91;str&#93;, sheet_names: List&#91;str&#93;)` | Implements `_select_sheet`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L130) |
+| function | `def _read_rows(ws, cell_range: Optional&#91;str&#93;) -> List&#91;List&#91;Any&#93;&#93;` | Implements `_read_rows`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:138`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L138) |
+| function | `def _extract_headers(all_rows: List&#91;List&#91;Any&#93;&#93;, header_row: int)` | Implements `_extract_headers`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L143) |
+| function | `def _rows_to_dicts(data_rows: List&#91;List&#91;Any&#93;&#93;, headers: List&#91;str&#93;) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Implements `_rows_to_dicts`; linked source is authoritative. | [`src/core/modules/atomic/document/excel_read.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/excel_read.py#L150) |
 
 ## `src/core/modules/atomic/document/excel_write.py`
 
@@ -3954,18 +3954,18 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def pdf_generate(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate PDF from HTML or text content | [`src/core/modules/atomic/document/pdf_generate.py:88`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L88) |
-| method | `def pdf_generate._generate()` | Implements `pdf_generate._generate`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L123) |
-| class | `class pdf_generate._generate.SimpleHTMLParser(HTMLParser)` | Defines the SimpleHTMLParser runtime contract. | [`src/core/modules/atomic/document/pdf_generate.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L146) |
-| method | `def pdf_generate._generate.SimpleHTMLParser.__init__(self)` | Implements `pdf_generate._generate.SimpleHTMLParser.__init__`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L147) |
-| method | `def pdf_generate._generate.SimpleHTMLParser.handle_starttag(self, tag, attrs)` | Implements `pdf_generate._generate.SimpleHTMLParser.handle_starttag`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:152`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L152) |
-| method | `def pdf_generate._generate.SimpleHTMLParser.handle_data(self, data)` | Implements `pdf_generate._generate.SimpleHTMLParser.handle_data`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:158`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L158) |
+| method | `def pdf_generate._generate()` | Implements `pdf_generate._generate`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L121) |
+| class | `class pdf_generate._generate.SimpleHTMLParser(HTMLParser)` | Defines the SimpleHTMLParser runtime contract. | [`src/core/modules/atomic/document/pdf_generate.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L142) |
+| method | `def pdf_generate._generate.SimpleHTMLParser.__init__(self)` | Implements `pdf_generate._generate.SimpleHTMLParser.__init__`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L143) |
+| method | `def pdf_generate._generate.SimpleHTMLParser.handle_starttag(self, tag, attrs)` | Implements `pdf_generate._generate.SimpleHTMLParser.handle_starttag`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L148) |
+| method | `def pdf_generate._generate.SimpleHTMLParser.handle_data(self, data)` | Implements `pdf_generate._generate.SimpleHTMLParser.handle_data`; linked source is authoritative. | [`src/core/modules/atomic/document/pdf_generate.py:154`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_generate.py#L154) |
 
 ## `src/core/modules/atomic/document/pdf_parse.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def pdf_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse PDF and extract text | [`src/core/modules/atomic/document/pdf_parse.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_parse.py#L90) |
-| function | `def _parse_page_range(pages: str, total: int) -> List&#91;int&#93;` | Parse page range string to list of indices (0-based) | [`src/core/modules/atomic/document/pdf_parse.py:157`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_parse.py#L157) |
+| function | `def _parse_page_range(pages: str, total: int) -> List&#91;int&#93;` | Parse page range string to list of indices (0-based) | [`src/core/modules/atomic/document/pdf_parse.py:153`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/pdf_parse.py#L153) |
 
 ## `src/core/modules/atomic/document/pdf_to_word.py`
 
@@ -3983,11 +3983,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def word_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse Word document and extract content | [`src/core/modules/atomic/document/word_parse.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L102) |
-| method | `def word_parse._parse()` | Implements `word_parse._parse`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L120) |
-| function | `def _extract_paragraphs(doc, preserve_formatting: bool)` | Implements `_extract_paragraphs`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:152`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L152) |
-| function | `def _extract_tables(doc) -> List` | Implements `_extract_tables`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:167`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L167) |
-| function | `def _extract_images(doc, images_output_dir: str) -> List&#91;str&#93;` | Implements `_extract_images`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L178) |
-| function | `def _extract_metadata(doc) -> Dict&#91;str, Any&#93;` | Implements `_extract_metadata`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:206`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L206) |
+| method | `def word_parse._parse()` | Implements `word_parse._parse`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L125) |
+| function | `def _extract_paragraphs(doc, preserve_formatting: bool)` | Implements `_extract_paragraphs`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:159`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L159) |
+| function | `def _extract_tables(doc) -> List` | Implements `_extract_tables`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L174) |
+| function | `def _extract_images(doc, images_output_dir: str) -> List&#91;str&#93;` | Implements `_extract_images`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:185`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L185) |
+| function | `def _extract_metadata(doc) -> Dict&#91;str, Any&#93;` | Implements `_extract_metadata`; linked source is authoritative. | [`src/core/modules/atomic/document/word_parse.py:213`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/document/word_parse.py#L213) |
 
 ## `src/core/modules/atomic/document/word_to_pdf.py`
 
@@ -4808,7 +4808,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _ocr_data(img, language, custom_config)` | Implements `_ocr_data`; linked source is authoritative. | [`src/core/modules/atomic/image/ocr.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/image/ocr.py#L40) |
 | function | `def _ocr_boxes(img, language, custom_config)` | Implements `_ocr_boxes`; linked source is authoritative. | [`src/core/modules/atomic/image/ocr.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/image/ocr.py#L67) |
 | function | `async def image_ocr(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Extract text from images using OCR. | [`src/core/modules/atomic/image/ocr.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/image/ocr.py#L186) |
-| method | `def image_ocr._ocr()` | Implements `image_ocr._ocr`; linked source is authoritative. | [`src/core/modules/atomic/image/ocr.py:200`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/image/ocr.py#L200) |
+| method | `def image_ocr._ocr()` | Implements `image_ocr._ocr`; linked source is authoritative. | [`src/core/modules/atomic/image/ocr.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/image/ocr.py#L202) |
 
 ## `src/core/modules/atomic/image/qrcode_generate.py`
 
@@ -8343,13 +8343,14 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class LLMClientMixin` | Mixin providing LLM calling capabilities. | [`src/core/modules/third_party/ai/agents/llm_client.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L26) |
-| method | `def LLMClientMixin.validate_llm_params(self, params: dict) -> None` | Validate and set LLM parameters. | [`src/core/modules/third_party/ai/agents/llm_client.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L46) |
-| method | `async def LLMClientMixin._call_llm(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call LLM based on configured provider. | [`src/core/modules/third_party/ai/agents/llm_client.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L80) |
-| method | `async def LLMClientMixin._call_openai(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call OpenAI API. | [`src/core/modules/third_party/ai/agents/llm_client.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L93) |
-| method | `async def LLMClientMixin._call_anthropic(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call Anthropic Claude API via HTTP. | [`src/core/modules/third_party/ai/agents/llm_client.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L109) |
-| method | `async def LLMClientMixin._call_gemini(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call Google Gemini API via HTTP. | [`src/core/modules/third_party/ai/agents/llm_client.py:151`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L151) |
-| method | `async def LLMClientMixin._call_ollama(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call local Ollama API. | [`src/core/modules/third_party/ai/agents/llm_client.py:200`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L200) |
+| class | `class LLMClientMixin` | Mixin providing LLM calling capabilities. | [`src/core/modules/third_party/ai/agents/llm_client.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L35) |
+| method | `def LLMClientMixin.validate_llm_params(self, params: dict) -> None` | Validate and set LLM parameters. | [`src/core/modules/third_party/ai/agents/llm_client.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L55) |
+| method | `def LLMClientMixin._validate_ollama_url(url: str) -> bool` | Validate an Ollama endpoint and return whether it is loopback-only. | [`src/core/modules/third_party/ai/agents/llm_client.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L91) |
+| method | `async def LLMClientMixin._call_llm(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call LLM based on configured provider. | [`src/core/modules/third_party/ai/agents/llm_client.py:126`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L126) |
+| method | `async def LLMClientMixin._call_openai(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call OpenAI API. | [`src/core/modules/third_party/ai/agents/llm_client.py:139`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L139) |
+| method | `async def LLMClientMixin._call_anthropic(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call Anthropic Claude API via HTTP. | [`src/core/modules/third_party/ai/agents/llm_client.py:157`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L157) |
+| method | `async def LLMClientMixin._call_gemini(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call Google Gemini API via HTTP. | [`src/core/modules/third_party/ai/agents/llm_client.py:198`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L198) |
+| method | `async def LLMClientMixin._call_ollama(self, messages: List&#91;Dict&#91;str, str&#93;&#93;) -> str` | Call local Ollama API. | [`src/core/modules/third_party/ai/agents/llm_client.py:246`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L246) |
 
 ## `src/core/modules/third_party/ai/agents/tool_use.py`
 

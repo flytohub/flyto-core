@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-08-02 | Private advisory network and filesystem hardening | `2026-08-02-private-advisory-boundary-hardening.md` | Active |
 | 2026-08-02 | GitHub code-scanning security closure | `2026-08-02-code-scanning-security-closure.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit, Phase 4 — reverse.deobfuscate | `2026-07-25-reverse-deobfuscate-phase4.md` | Active |
 | 2026-07-25 | Reverse-engineering toolkit — request breakpoints + session-snapshot reuse | `2026-07-25-reverse-request-breakpoint-session-reuse.md` | Active |

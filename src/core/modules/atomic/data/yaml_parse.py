@@ -4,19 +4,26 @@
 YAML Parse Module
 Parse YAML string or file into Python object
 """
-from typing import Any, Dict
 import os
+from typing import Any, Dict
 
 try:
     import yaml
 except ImportError:
     yaml = None  # type: ignore
 
+from ....utils import validate_path_with_env_config
+from ...errors import (
+    FileNotFoundError as ModuleFileNotFoundError,
+)
+from ...errors import (
+    ModuleError,
+    ValidationError,
+)
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
-from ...schema.constants import FieldGroup, Visibility
-from ...errors import ValidationError, FileNotFoundError, ModuleError
+from ...schema.constants import FieldGroup
 
 
 def _classify_type(data: Any) -> str:
@@ -164,17 +171,17 @@ async def yaml_parse(context: Dict[str, Any]) -> Dict[str, Any]:
             "Either 'content' or 'file_path' must be provided",
             field='content',
         )
+    if not content:
+        file_path = validate_path_with_env_config(file_path)
 
     try:
         if content:
             raw = content
         else:
             if not os.path.exists(file_path):
-                raise FileNotFoundError(
+                raise ModuleFileNotFoundError(
                     f"File not found: {file_path}", path=file_path
                 )
-            if '..' in file_path:
-                raise Exception('Invalid file path')
             with open(file_path, 'r', encoding='utf-8') as f:
                 raw = f.read()
 
@@ -193,9 +200,9 @@ async def yaml_parse(context: Dict[str, Any]) -> Dict[str, Any]:
             },
         }
 
-    except FileNotFoundError:
+    except ModuleFileNotFoundError:
         raise
     except yaml.YAMLError as e:
-        raise ModuleError(f"Invalid YAML: {str(e)}")
+        raise ModuleError(f"Invalid YAML: {str(e)}") from e
     except Exception as e:
-        raise ModuleError(f"Failed to parse YAML: {str(e)}")
+        raise ModuleError(f"Failed to parse YAML: {str(e)}") from e

@@ -4,10 +4,10 @@ Tests for 5 new browser modules: response, table, extract_nested, cookies_file, 
 All tests run through the actual module execute() framework.
 """
 import json
-import pytest
 import sys
-import tempfile
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 from core.modules import atomic  # noqa: F401
@@ -161,15 +161,15 @@ class TestCookiesFileE2E:
         await driver.close()
 
     @pytest.mark.asyncio
-    async def test_export_import_roundtrip(self, ctx):
+    async def test_export_import_roundtrip(self, ctx, tmp_path, monkeypatch):
         # Set a cookie via context API (data: URLs don't support cookies)
         await ctx["browser"]._context.add_cookies([{
             "name": "test_key", "value": "test_value",
             "domain": "example.com", "path": "/",
         }])
 
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            cookie_path = f.name
+        monkeypatch.setenv('FLYTO_SANDBOX_DIR', str(tmp_path))
+        cookie_path = str(tmp_path / 'cookies.json')
 
         try:
             # Export
@@ -207,10 +207,10 @@ class TestPoolE2E:
     @pytest.mark.asyncio
     async def test_create_switch_close(self):
         ctx = {}
-        Pool = get_module("browser.pool")
+        pool_cls = get_module("browser.pool")
 
         # Create browser A
-        mod_a = Pool({"action": "create", "name": "browser_a", "headless": True, "stealth": False}, ctx)
+        mod_a = pool_cls({"action": "create", "name": "browser_a", "headless": True, "stealth": False}, ctx)
         mod_a.validate_params()
         result_a = await mod_a.execute()
         assert result_a["count"] == 1
@@ -218,7 +218,7 @@ class TestPoolE2E:
         driver_a = ctx["browser"]
 
         # Create browser B
-        mod_b = Pool({"action": "create", "name": "browser_b", "headless": True, "stealth": False}, ctx)
+        mod_b = pool_cls({"action": "create", "name": "browser_b", "headless": True, "stealth": False}, ctx)
         mod_b.validate_params()
         result_b = await mod_b.execute()
         assert result_b["count"] == 2
@@ -226,19 +226,19 @@ class TestPoolE2E:
         assert driver_a is not driver_b  # Different instances
 
         # List
-        mod_list = Pool({"action": "list"}, ctx)
+        mod_list = pool_cls({"action": "list"}, ctx)
         mod_list.validate_params()
         result_list = await mod_list.execute()
         assert set(result_list["pool"]) == {"browser_a", "browser_b"}
 
         # Switch back to A
-        mod_switch = Pool({"action": "switch", "name": "browser_a"}, ctx)
+        mod_switch = pool_cls({"action": "switch", "name": "browser_a"}, ctx)
         mod_switch.validate_params()
-        result_switch = await mod_switch.execute()
+        await mod_switch.execute()
         assert ctx["browser"] is driver_a
 
         # Close all
-        mod_close = Pool({"action": "close_all"}, ctx)
+        mod_close = pool_cls({"action": "close_all"}, ctx)
         mod_close.validate_params()
         result_close = await mod_close.execute()
         assert result_close["count"] == 0

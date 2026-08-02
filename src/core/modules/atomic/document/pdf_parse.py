@@ -6,11 +6,11 @@ Extract text and metadata from PDF files
 """
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -89,24 +89,20 @@ logger = logging.getLogger(__name__)
 )
 async def pdf_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     """Parse PDF and extract text"""
+    params = context['params']
+    path = validate_path_with_env_config(params['path'])
+    pages_param = params.get('pages', 'all')
+
     try:
         import pypdf
     except ImportError:
-        raise ImportError("pypdf is required for PDF parsing. Install with: pip install pypdf")
-
-    params = context['params']
-    path = params['path']
-    pages_param = params.get('pages', 'all')
-    extract_images = params.get('extract_images', False)
-    extract_tables = params.get('extract_tables', False)
+        raise ImportError(
+            "pypdf is required for PDF parsing. Install with: pip install pypdf"
+        ) from None
 
     # Validate file exists
     if not os.path.exists(path):
         raise FileNotFoundError(f"PDF file not found: {path}")
-
-    # Validate path to prevent traversal
-    if ".." in path:
-        raise Exception("Invalid file path")
 
     # Open and parse PDF
     with open(path, 'rb') as f:

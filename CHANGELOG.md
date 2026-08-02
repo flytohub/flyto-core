@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Confined caller-supplied paths for CSV/YAML/Excel/PDF/image readers and
+  browser/document file writers to the configured filesystem sandbox before
+  any read, directory creation, provider call, or write can occur.
+- Restricted agent Ollama endpoints to loopback by default. Operator-enabled
+  remote endpoints now pass the shared SSRF policy, connect-time DNS pinning,
+  redirect revalidation, and response-body redaction controls.
+- Raised patched dependency floors for cryptography and, on Python 3.10+,
+  Starlette and the Python build/install toolchain. Python 3.9 retains its
+  compatible API and build-tool lines where upstream no longer publishes a
+  patched release.
 - Closed the open plugin-runtime path-injection chain by validating caller
   plugin IDs at the manager boundary, selecting plugin directories only from
   the validated discovery map, and rejecting discovered symlinks that resolve

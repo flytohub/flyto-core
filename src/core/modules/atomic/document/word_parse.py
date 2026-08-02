@@ -9,9 +9,9 @@ import logging
 import os
 from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -101,18 +101,23 @@ logger = logging.getLogger(__name__)
 )
 async def word_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     """Parse Word document and extract content"""
-    try:
-        from docx import Document
-        from docx.opc.exceptions import PackageNotFoundError
-    except ImportError:
-        raise ImportError("python-docx is required for word.parse. Install with: pip install python-docx")
-
     params = context['params']
-    file_path = params['file_path']
+    file_path = validate_path_with_env_config(params['file_path'])
     extract_tables = params.get('extract_tables', True)
     extract_images = params.get('extract_images', False)
     images_output_dir = params.get('images_output_dir')
     preserve_formatting = params.get('preserve_formatting', False)
+
+    if extract_images and images_output_dir:
+        images_output_dir = validate_path_with_env_config(images_output_dir)
+
+    try:
+        from docx import Document
+        from docx.opc.exceptions import PackageNotFoundError
+    except ImportError:
+        raise ImportError(
+            "python-docx is required for word.parse. Install with: pip install python-docx"
+        ) from None
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
@@ -120,8 +125,10 @@ async def word_parse(context: Dict[str, Any]) -> Dict[str, Any]:
     def _parse():
         try:
             doc = Document(file_path)
-        except PackageNotFoundError:
-            raise ValueError(f"Invalid or corrupted Word document: {file_path}")
+        except PackageNotFoundError as exc:
+            raise ValueError(
+                f"Invalid or corrupted Word document: {file_path}"
+            ) from exc
 
         paragraphs, full_text_parts = _extract_paragraphs(doc, preserve_formatting)
         tables = _extract_tables(doc) if extract_tables else []
@@ -193,7 +200,7 @@ def _extract_images(doc, images_output_dir: str) -> List[str]:
 
             image_path = os.path.join(images_output_dir, f"image_{image_count}.{ext}")
             base_real = os.path.realpath(images_output_dir)
-            target_real = os.path.realpath(image_path)
+            target_real = validate_path_with_env_config(image_path)
             if os.path.commonpath([base_real, target_real]) != base_real:
                 raise ValueError('Invalid file path')
             with open(target_real, 'wb') as f:

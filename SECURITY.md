@@ -159,7 +159,7 @@ through that validated resolver. Redirects are followed only after each new
 target passes the same policy. This closes resolve-then-connect DNS rebinding
 and public-to-private redirect gaps.
 
-#### Protected Modules (11 total)
+#### Representative Protected Modules
 
 | Module | Protection |
 |--------|-----------|
@@ -174,6 +174,7 @@ and public-to-private redirect gaps.
 | `vector.connector` | `validate_url_with_env_config()` |
 | `port.check` | `is_private_ip()` direct check |
 | `ai.local_ollama` | localhost-only enforcement |
+| `agent.chain`, `agent.autonomous` | localhost-only by default; exact host/port scope for loopback and full guarded requests for operator-enabled remote Ollama |
 
 #### Validator Enforcement
 
@@ -193,6 +194,23 @@ FLYTO_VSCODE_LOCAL_MODE=true
 
 # Allow remote Ollama server (default: localhost only)
 FLYTO_ALLOW_REMOTE_OLLAMA=true
+```
+
+### Filesystem Sandbox Protection
+
+Modules that accept file paths canonicalize them with
+`validate_path_with_env_config()` before reading, creating directories, or
+writing. The canonical path must remain within `FLYTO_SANDBOX_DIR`; symlink and
+`..` escapes are rejected. This applies to general file modules as well as
+document/image readers, browser snapshots/traces/cookie persistence, generated
+PDFs, extracted Word images, and cloud-download destinations.
+
+```bash
+# Set an explicit production sandbox root.
+FLYTO_SANDBOX_DIR=/srv/flyto/workspace
+
+# Absolute paths are accepted only when they still resolve inside the sandbox.
+FLYTO_ALLOW_ABSOLUTE_PATHS=true
 ```
 
 ### Browser Automation Security

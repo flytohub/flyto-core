@@ -8,8 +8,10 @@ Uses Playwright's browser.start_tracing() and browser.stop_tracing().
 
 Note: This module only works with Chromium browsers.
 """
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict
+
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
@@ -136,6 +138,8 @@ class BrowserTraceModule(BaseModule):
         self.categories = self.params.get('categories', ['devtools.timeline'])
         self.screenshots = self.params.get('screenshots', True)
         self.output_path = self.params.get('path', '')
+        if self.output_path:
+            self.output_path = validate_path_with_env_config(self.output_path)
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
@@ -221,7 +225,7 @@ class BrowserTraceModule(BaseModule):
 
             # Save to file if path provided, otherwise to temp file
             if self.output_path:
-                path = Path(self.output_path)
+                path = Path(validate_path_with_env_config(self.output_path))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 await context.tracing.stop(path=str(path))
                 trace_data = path.read_bytes()
@@ -250,7 +254,7 @@ class BrowserTraceModule(BaseModule):
 
             return result
 
-        except Exception as e:
+        except Exception:
             # Reset state on error
             self.context['_tracing_active'] = False
             raise

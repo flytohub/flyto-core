@@ -31,10 +31,21 @@
   reflect provider response bodies.
 - Azure, GCS, and S3 download destinations are canonicalized and confined to
   `FLYTO_SANDBOX_DIR` before any provider SDK can create or write a local file.
+- CSV, YAML, Excel, PDF, image, browser persistence, and document-generation
+  paths are canonicalized and confined before any filesystem sink. Browser
+  cookie imports and document readers use the same boundary for reads.
+- Agent-chain Ollama calls are loopback-only by default. Loopback calls run in
+  an exact host/port network scope; explicitly enabled remote calls still use
+  the shared DNS-pinned, redirect-revalidating SSRF boundary and do not reflect
+  provider error bodies.
+- Cryptography uses the patched 48.x line, while Python 3.10+ API and CI
+  environments select patched Starlette, pip, and setuptools floors. Python
+  3.9 keeps explicit compatibility branches for upstream lines that no longer
+  publish patched Python 3.9 releases.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 951 maintained Python files, 5,518
+- Source-backed documentation now covers 951 maintained Python files, 5,519
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
