@@ -40,6 +40,19 @@ audit also reported zero vulnerable dependencies.
   README scores 100, zero secret findings, and zero high-risk taint flows.
 
 Browser/E2E suites were not run because this security closure changes no
-browser behavior and requires no external service or credential. Remote GitHub
-alert closure must be confirmed after the change is pushed and the final-sha
-Security/CodeQL workflows complete.
+browser behavior and requires no external service or credential.
+
+## Remote Closure
+
+Code SHA `31cbf19c18455056fd9db9473c519bd72a724be2` passed all required
+remote checks:
+
+- CI `30751451499`: success, including tests, dependency/worker audits, build,
+  and Flyto2 verify.
+- Security `30751451672`: success for Python dependencies, gitleaks, SBOM, and
+  Grype.
+- CodeQL `30751451016`: success for Python, JavaScript/TypeScript, and Actions.
+
+After those scans completed, GitHub reported zero open code-scanning alerts,
+zero open Dependabot alerts, and zero open secret-scanning alerts. This closes
+the 11-alert baseline without dismissing findings as false positives.

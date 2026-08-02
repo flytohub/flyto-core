@@ -154,4 +154,8 @@ Verified locally on 2026-08-02:
 - wheel and source distribution built, and Twine validated both artifacts;
 - Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
-  flows.
+  flows;
+- exact code SHA `31cbf19c18455056fd9db9473c519bd72a724be2` passed remote
+  CI `30751451499`, Security `30751451672`, and CodeQL `30751451016`.
+  GitHub then reported zero open code-scanning, Dependabot, and secret-scanning
+  alerts.
