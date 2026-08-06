@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,519 declarations across 804 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,541 declarations across 805 files**.
 
 ## `demo.py`
 
@@ -863,38 +863,39 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _find_external_node() -> Optional&#91;str&#93;` | Find a usable Node.js binary outside the PyInstaller temp dir. | [`src/core/browser/driver.py:30`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L30) |
 | class | `class BrowserDriver` | Playwright-based browser automation driver | [`src/core/browser/driver.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L47) |
 | method | `def BrowserDriver.__init__(self, headless: bool=True, viewport: Optional&#91;Dict&#91;str, int&#93;&#93;=None, browser_type: str='chromium')` | Initialize browser driver | [`src/core/browser/driver.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L59) |
-| method | `async def BrowserDriver.launch(self, proxy: Optional&#91;str&#93;=None, user_agent: Optional&#91;str&#93;=None, locale: Optional&#91;str&#93;=None, slow_mo: int=0, record_video_dir: Optional&#91;str&#93;=None, record_video_size: Optional&#91;Dict&#91;str, int&#93;&#93;=None, channel: Optional&#91;str&#93;=None, stealth: bool=True) -> Dict&#91;str, Any&#93;` | Launch browser instance | [`src/core/browser/driver.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L99) |
-| method | `async def BrowserDriver._install_egress_guard(self)` | Install network-level egress guard on the browser context. | [`src/core/browser/driver.py:508`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L508) |
-| method | `async def BrowserDriver._install_egress_guard._egress_handler(route)` | Implements `BrowserDriver._install_egress_guard._egress_handler`; linked source is authoritative. | [`src/core/browser/driver.py:529`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L529) |
-| method | `async def BrowserDriver._launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None)` | Try launching with persistent context for cookie persistence (Cloudflare etc.). | [`src/core/browser/driver.py:558`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L558) |
-| method | `async def BrowserDriver._launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None)` | Fallback: regular launch + new_context (no cookie persistence). | [`src/core/browser/driver.py:598`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L598) |
-| method | `async def BrowserDriver.goto(self, url: str, wait_until: str='domcontentloaded', timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS) -> Dict&#91;str, Any&#93;` | Navigate to URL | [`src/core/browser/driver.py:623`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L623) |
-| method | `async def BrowserDriver.click(self, selector: str, timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS, force: bool=False) -> Dict&#91;str, Any&#93;` | Click element by selector | [`src/core/browser/driver.py:743`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L743) |
-| method | `async def BrowserDriver.type(self, selector: str, text: str, delay_ms: int=0, timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS) -> Dict&#91;str, Any&#93;` | Type text into element | [`src/core/browser/driver.py:784`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L784) |
-| method | `async def BrowserDriver.wait(self, selector: str, state: str='visible', timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS) -> Dict&#91;str, Any&#93;` | Wait for element to reach specified state | [`src/core/browser/driver.py:831`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L831) |
-| method | `async def BrowserDriver.extract(self, selector: str, fields: Dict&#91;str, str&#93;, multiple: bool=False) -> Dict&#91;str, Any&#93;` | Extract data from elements | [`src/core/browser/driver.py:869`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L869) |
-| method | `async def BrowserDriver._extract_from_element(self, element: ElementHandle, fields: Dict&#91;str, str&#93;) -> Dict&#91;str, Any&#93;` | Extract fields from a single element | [`src/core/browser/driver.py:929`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L929) |
-| method | `async def BrowserDriver.screenshot(self, path: Optional&#91;str&#93;=None, full_page: bool=False, type: Optional&#91;str&#93;=None, quality: Optional&#91;int&#93;=None) -> Dict&#91;str, Any&#93;` | Take screenshot | [`src/core/browser/driver.py:983`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L983) |
-| method | `async def BrowserDriver.evaluate(self, script: str, arg=None) -> Any` | Execute JavaScript in page context | [`src/core/browser/driver.py:1037`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1037) |
-| method | `async def BrowserDriver.close(self) -> Dict&#91;str, Any&#93;` | Close browser instance | [`src/core/browser/driver.py:1062`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1062) |
-| method | `async def BrowserDriver.get_hints(self, force: bool=False) -> Dict&#91;str, Any&#93;` | Get interactive element hints for current page, with URL-based caching. | [`src/core/browser/driver.py:1114`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1114) |
-| method | `async def BrowserDriver.invalidate_hints(self, clear_stamps: bool=False)` | Clear cached hints. | [`src/core/browser/driver.py:1144`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1144) |
-| method | `async def BrowserDriver.block_resources(self, resource_types: list)` | Block specified resource types to speed up page loads. | [`src/core/browser/driver.py:1169`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1169) |
-| method | `async def BrowserDriver.block_resources._abort_blocked(route)` | Implements `BrowserDriver.block_resources._abort_blocked`; linked source is authoritative. | [`src/core/browser/driver.py:1183`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1183) |
-| method | `async def BrowserDriver.unblock_resources(self)` | Remove all resource blocking rules. | [`src/core/browser/driver.py:1192`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1192) |
-| method | `def BrowserDriver.human(self)` | Get HumanBehavior instance (or None if fast mode). | [`src/core/browser/driver.py:1200`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1200) |
-| method | `async def BrowserDriver.rotate_proxy(self) -> Optional&#91;str&#93;` | Rotate to next proxy from pool. | [`src/core/browser/driver.py:1204`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1204) |
-| method | `def BrowserDriver._ensure_page(self)` | Ensure page is available | [`src/core/browser/driver.py:1247`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1247) |
-| method | `def BrowserDriver._needs_locator_api(self, selector: str) -> bool` | Check if selector needs Playwright's locator API. | [`src/core/browser/driver.py:1252`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1252) |
-| method | `def BrowserDriver._parse_modifiers(self, selector: str) -> tuple` | Parse selector modifiers like :nth=N and :near=selector. | [`src/core/browser/driver.py:1273`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1273) |
-| method | `def BrowserDriver._normalize_selector(self, selector: str) -> str` | Normalize user-friendly selectors to CSS or locator format. | [`src/core/browser/driver.py:1306`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1306) |
-| method | `def BrowserDriver._get_locator_selector(self, selector: str) -> str` | Convert selector to Playwright locator format. | [`src/core/browser/driver.py:1334`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1334) |
-| method | `async def BrowserDriver._query_selector(self, selector: str) -> Optional&#91;ElementHandle&#93;` | Query single element with CSS, XPath, text, or shortcut selectors. | [`src/core/browser/driver.py:1350`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1350) |
-| method | `async def BrowserDriver._query_selector_all(self, selector: str) -> List&#91;ElementHandle&#93;` | Query all matching elements with CSS, XPath, text, or shortcut selectors. | [`src/core/browser/driver.py:1404`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1404) |
-| method | `async def BrowserDriver.new_page(self) -> Page` | Create a new page (or return existing if only one needed). | [`src/core/browser/driver.py:1455`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1455) |
-| method | `def BrowserDriver.page(self) -> Page` | Get current page instance | [`src/core/browser/driver.py:1472`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1472) |
-| method | `def BrowserDriver.real_page(self)` | Get the actual Page object, even when inside a frame context. | [`src/core/browser/driver.py:1478`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1478) |
-| method | `def BrowserDriver.browser(self) -> Browser` | Get browser instance | [`src/core/browser/driver.py:1487`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1487) |
+| method | `async def BrowserDriver.launch(self, proxy: Optional&#91;str&#93;=None, user_agent: Optional&#91;str&#93;=None, locale: Optional&#91;str&#93;=None, slow_mo: int=0, record_video_dir: Optional&#91;str&#93;=None, record_video_size: Optional&#91;Dict&#91;str, int&#93;&#93;=None, channel: Optional&#91;str&#93;=None, stealth: bool=True) -> Dict&#91;str, Any&#93;` | Launch browser instance | [`src/core/browser/driver.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L105) |
+| method | `async def BrowserDriver._install_egress_guard(self)` | Install network-level egress guard on the browser context. | [`src/core/browser/driver.py:514`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L514) |
+| method | `async def BrowserDriver._install_egress_guard._egress_handler(route)` | Implements `BrowserDriver._install_egress_guard._egress_handler`; linked source is authoritative. | [`src/core/browser/driver.py:535`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L535) |
+| method | `async def BrowserDriver._launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None)` | Try launching with persistent context for cookie persistence (Cloudflare etc.). | [`src/core/browser/driver.py:564`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L564) |
+| method | `async def BrowserDriver._launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None)` | Fallback: regular launch + new_context (no cookie persistence). | [`src/core/browser/driver.py:604`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L604) |
+| method | `def BrowserDriver._guard_navigation(self, url: str, validate_ssrf: Optional&#91;bool&#93;) -> None` | Validate a navigation target against the SSRF rules. | [`src/core/browser/driver.py:629`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L629) |
+| method | `async def BrowserDriver.goto(self, url: str, wait_until: str='domcontentloaded', timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS, validate_ssrf: Optional&#91;bool&#93;=None) -> Dict&#91;str, Any&#93;` | Navigate to URL | [`src/core/browser/driver.py:658`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L658) |
+| method | `async def BrowserDriver.click(self, selector: str, timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS, force: bool=False) -> Dict&#91;str, Any&#93;` | Click element by selector | [`src/core/browser/driver.py:783`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L783) |
+| method | `async def BrowserDriver.type(self, selector: str, text: str, delay_ms: int=0, timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS) -> Dict&#91;str, Any&#93;` | Type text into element | [`src/core/browser/driver.py:824`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L824) |
+| method | `async def BrowserDriver.wait(self, selector: str, state: str='visible', timeout_ms: int=DEFAULT_BROWSER_TIMEOUT_MS) -> Dict&#91;str, Any&#93;` | Wait for element to reach specified state | [`src/core/browser/driver.py:871`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L871) |
+| method | `async def BrowserDriver.extract(self, selector: str, fields: Dict&#91;str, str&#93;, multiple: bool=False) -> Dict&#91;str, Any&#93;` | Extract data from elements | [`src/core/browser/driver.py:909`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L909) |
+| method | `async def BrowserDriver._extract_from_element(self, element: ElementHandle, fields: Dict&#91;str, str&#93;) -> Dict&#91;str, Any&#93;` | Extract fields from a single element | [`src/core/browser/driver.py:969`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L969) |
+| method | `async def BrowserDriver.screenshot(self, path: Optional&#91;str&#93;=None, full_page: bool=False, type: Optional&#91;str&#93;=None, quality: Optional&#91;int&#93;=None) -> Dict&#91;str, Any&#93;` | Take screenshot | [`src/core/browser/driver.py:1023`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1023) |
+| method | `async def BrowserDriver.evaluate(self, script: str, arg=None) -> Any` | Execute JavaScript in page context | [`src/core/browser/driver.py:1077`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1077) |
+| method | `async def BrowserDriver.close(self) -> Dict&#91;str, Any&#93;` | Close browser instance | [`src/core/browser/driver.py:1102`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1102) |
+| method | `async def BrowserDriver.get_hints(self, force: bool=False) -> Dict&#91;str, Any&#93;` | Get interactive element hints for current page, with URL-based caching. | [`src/core/browser/driver.py:1154`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1154) |
+| method | `async def BrowserDriver.invalidate_hints(self, clear_stamps: bool=False)` | Clear cached hints. | [`src/core/browser/driver.py:1184`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1184) |
+| method | `async def BrowserDriver.block_resources(self, resource_types: list)` | Block specified resource types to speed up page loads. | [`src/core/browser/driver.py:1209`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1209) |
+| method | `async def BrowserDriver.block_resources._abort_blocked(route)` | Implements `BrowserDriver.block_resources._abort_blocked`; linked source is authoritative. | [`src/core/browser/driver.py:1223`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1223) |
+| method | `async def BrowserDriver.unblock_resources(self)` | Remove all resource blocking rules. | [`src/core/browser/driver.py:1232`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1232) |
+| method | `def BrowserDriver.human(self)` | Get HumanBehavior instance (or None if fast mode). | [`src/core/browser/driver.py:1240`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1240) |
+| method | `async def BrowserDriver.rotate_proxy(self) -> Optional&#91;str&#93;` | Rotate to next proxy from pool. | [`src/core/browser/driver.py:1244`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1244) |
+| method | `def BrowserDriver._ensure_page(self)` | Ensure page is available | [`src/core/browser/driver.py:1287`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1287) |
+| method | `def BrowserDriver._needs_locator_api(self, selector: str) -> bool` | Check if selector needs Playwright's locator API. | [`src/core/browser/driver.py:1292`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1292) |
+| method | `def BrowserDriver._parse_modifiers(self, selector: str) -> tuple` | Parse selector modifiers like :nth=N and :near=selector. | [`src/core/browser/driver.py:1313`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1313) |
+| method | `def BrowserDriver._normalize_selector(self, selector: str) -> str` | Normalize user-friendly selectors to CSS or locator format. | [`src/core/browser/driver.py:1346`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1346) |
+| method | `def BrowserDriver._get_locator_selector(self, selector: str) -> str` | Convert selector to Playwright locator format. | [`src/core/browser/driver.py:1374`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1374) |
+| method | `async def BrowserDriver._query_selector(self, selector: str) -> Optional&#91;ElementHandle&#93;` | Query single element with CSS, XPath, text, or shortcut selectors. | [`src/core/browser/driver.py:1390`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1390) |
+| method | `async def BrowserDriver._query_selector_all(self, selector: str) -> List&#91;ElementHandle&#93;` | Query all matching elements with CSS, XPath, text, or shortcut selectors. | [`src/core/browser/driver.py:1444`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1444) |
+| method | `async def BrowserDriver.new_page(self) -> Page` | Create a new page (or return existing if only one needed). | [`src/core/browser/driver.py:1495`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1495) |
+| method | `def BrowserDriver.page(self) -> Page` | Get current page instance | [`src/core/browser/driver.py:1512`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1512) |
+| method | `def BrowserDriver.real_page(self)` | Get the actual Page object, even when inside a frame context. | [`src/core/browser/driver.py:1518`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1518) |
+| method | `def BrowserDriver.browser(self) -> Browser` | Get browser instance | [`src/core/browser/driver.py:1527`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1527) |
 
 ## `src/core/browser/humanize.py`
 
@@ -3122,9 +3123,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserDownloadModule(BaseModule)` | Download File Module | [`src/core/modules/atomic/browser/download.py:71`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L71) |
-| method | `def BrowserDownloadModule.validate_params(self) -> None` | Implements `BrowserDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/download.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L78) |
-| method | `async def BrowserDownloadModule.execute(self) -> Any` | Implements `BrowserDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/download.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L90) |
+| class | `class BrowserDownloadModule(BaseModule)` | Download File Module | [`src/core/modules/atomic/browser/download.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L72) |
+| method | `def BrowserDownloadModule.validate_params(self) -> None` | Implements `BrowserDownloadModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/download.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L79) |
+| method | `async def BrowserDownloadModule.execute(self) -> Any` | Implements `BrowserDownloadModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/download.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/download.py#L96) |
 
 ## `src/core/modules/atomic/browser/drag.py`
 
@@ -3215,10 +3216,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | class | `class BrowserGotoModule(BaseModule)` | Navigate to URL Module | [`src/core/modules/atomic/browser/goto.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L96) |
-| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L103) |
-| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L135) |
-| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:169`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L169) |
-| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle www prefix. | [`src/core/modules/atomic/browser/goto.py:199`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L199) |
+| method | `def BrowserGotoModule._ssrf_enforced(self) -> bool` | Whether the SSRF guard applies to this invocation. | [`src/core/modules/atomic/browser/goto.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L103) |
+| method | `def BrowserGotoModule._check_url(self, url: str) -> None` | Apply the SSRF guard to ``url``, honouring the deployment opt-out. | [`src/core/modules/atomic/browser/goto.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L112) |
+| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L127) |
+| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L150) |
+| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:189`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L189) |
+| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle www prefix. | [`src/core/modules/atomic/browser/goto.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L234) |
 
 ## `src/core/modules/atomic/browser/hover.py`
 
@@ -3241,9 +3244,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserLaunchModule(BaseModule)` | Launch Browser Module — single browser, single responsibility. | [`src/core/modules/atomic/browser/launch.py:177`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L177) |
-| method | `def BrowserLaunchModule.validate_params(self) -> None` | Implements `BrowserLaunchModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L184) |
-| method | `async def BrowserLaunchModule.execute(self) -> Any` | Implements `BrowserLaunchModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L207) |
+| class | `class BrowserLaunchModule(BaseModule)` | Launch Browser Module — single browser, single responsibility. | [`src/core/modules/atomic/browser/launch.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L178) |
+| method | `def BrowserLaunchModule.validate_params(self) -> None` | Implements `BrowserLaunchModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:185`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L185) |
+| method | `async def BrowserLaunchModule.execute(self) -> Any` | Implements `BrowserLaunchModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L215) |
 
 ## `src/core/modules/atomic/browser/login.py`
 
@@ -3304,9 +3307,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserPdfModule(BaseModule)` | Generate PDF Module | [`src/core/modules/atomic/browser/pdf.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L89) |
-| method | `def BrowserPdfModule.validate_params(self) -> None` | Implements `BrowserPdfModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/pdf.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L96) |
-| method | `async def BrowserPdfModule.execute(self) -> Any` | Implements `BrowserPdfModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/pdf.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L118) |
+| class | `class BrowserPdfModule(BaseModule)` | Generate PDF Module | [`src/core/modules/atomic/browser/pdf.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L90) |
+| method | `def BrowserPdfModule.validate_params(self) -> None` | Implements `BrowserPdfModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/pdf.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L97) |
+| method | `async def BrowserPdfModule.execute(self) -> Any` | Implements `BrowserPdfModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/pdf.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pdf.py#L121) |
 
 ## `src/core/modules/atomic/browser/performance.py`
 
@@ -3400,9 +3403,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserScreenshotModule(BaseModule)` | Screenshot Module | [`src/core/modules/atomic/browser/screenshot.py:52`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L52) |
-| method | `def BrowserScreenshotModule.validate_params(self) -> None` | Implements `BrowserScreenshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L59) |
-| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L65) |
+| class | `class BrowserScreenshotModule(BaseModule)` | Screenshot Module | [`src/core/modules/atomic/browser/screenshot.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L53) |
+| method | `def BrowserScreenshotModule.validate_params(self) -> None` | Implements `BrowserScreenshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:60`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L60) |
+| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L70) |
 
 ## `src/core/modules/atomic/browser/scroll.py`
 
@@ -3706,12 +3709,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _record_hash(record: dict, keys: list) -> str` | Compute a stable hash for a record based on specified keys. | [`src/core/modules/atomic/data/dedup.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L26) |
-| class | `class DataDedupModule(BaseModule)` | Deduplicate records by key fields. | [`src/core/modules/atomic/data/dedup.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L102) |
-| method | `def DataDedupModule.validate_params(self) -> None` | Implements `DataDedupModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/data/dedup.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L108) |
-| method | `async def DataDedupModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `DataDedupModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/data/dedup.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L118) |
-| method | `def DataDedupModule._load_hashes(self) -> Dict&#91;str, None&#93;` | Load hashes as ordered dict (preserves insertion order for eviction). | [`src/core/modules/atomic/data/dedup.py:161`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L161) |
-| method | `def DataDedupModule._save_hashes(self, hashes: Dict&#91;str, None&#93;)` | Save hashes to disk. | [`src/core/modules/atomic/data/dedup.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L174) |
+| function | `def _record_hash(record: dict, keys: list) -> str` | Compute a stable hash for a record based on specified keys. | [`src/core/modules/atomic/data/dedup.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L27) |
+| class | `class DataDedupModule(BaseModule)` | Deduplicate records by key fields. | [`src/core/modules/atomic/data/dedup.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L103) |
+| method | `def DataDedupModule.validate_params(self) -> None` | Implements `DataDedupModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/data/dedup.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L109) |
+| method | `async def DataDedupModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `DataDedupModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/data/dedup.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L125) |
+| method | `def DataDedupModule._load_hashes(self) -> Dict&#91;str, None&#93;` | Load hashes as ordered dict (preserves insertion order for eviction). | [`src/core/modules/atomic/data/dedup.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L168) |
+| method | `def DataDedupModule._save_hashes(self, hashes: Dict&#91;str, None&#93;)` | Save hashes to disk. | [`src/core/modules/atomic/data/dedup.py:181`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L181) |
 
 ## `src/core/modules/atomic/data/json_parse.py`
 
@@ -5342,9 +5345,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L149) |
-| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:194`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L194) |
-| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:241`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L241) |
+| function | `def _guard_ip(host: str) -> Optional&#91;str&#93;` | Return an IP string to range-check for the SSRF guard, or None. | [`src/core/modules/atomic/port/check.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L19) |
+| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L170) |
+| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L215) |
+| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:262`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L262) |
 
 ## `src/core/modules/atomic/port/wait.py`
 
@@ -5420,35 +5424,56 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 |---|---|---|---|
 | function | `async def random_uuid(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate random UUID. | [`src/core/modules/atomic/random/uuid.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/random/uuid.py#L76) |
 
+## `src/core/modules/atomic/regex/_safe.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def validate_regex_inputs(pattern: str, text: str) -> None` | Reject over-long patterns/inputs before any matching happens. | [`src/core/modules/atomic/regex/_safe.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L54) |
+| class | `class GuardedPattern` | A compiled pattern whose match methods carry a hard timeout. | [`src/core/modules/atomic/regex/_safe.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L70) |
+| method | `def GuardedPattern.__init__(self, compiled: 'regex.Pattern') -> None` | Implements `GuardedPattern.__init__`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L80) |
+| method | `def GuardedPattern.search(self, text: str) -> Optional&#91;Any&#93;` | Implements `GuardedPattern.search`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L83) |
+| method | `def GuardedPattern.fullmatch(self, text: str) -> Optional&#91;Any&#93;` | Implements `GuardedPattern.fullmatch`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L86) |
+| method | `def GuardedPattern.finditer(self, text: str) -> List&#91;Any&#93;` | Implements `GuardedPattern.finditer`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L89) |
+| method | `def GuardedPattern.findall(self, text: str) -> List&#91;Any&#93;` | Implements `GuardedPattern.findall`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L93) |
+| method | `def GuardedPattern.sub(self, replacement: str, text: str, count: int=0) -> str` | Implements `GuardedPattern.sub`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L96) |
+| method | `def GuardedPattern.split(self, text: str, maxsplit: int=0) -> List&#91;str&#93;` | Implements `GuardedPattern.split`; linked source is authoritative. | [`src/core/modules/atomic/regex/_safe.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L101) |
+| function | `def compile_guarded(pattern: str, flags: int=0) -> GuardedPattern` | Compile ``pattern`` with the interruptible ``regex`` engine. | [`src/core/modules/atomic/regex/_safe.py:107`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L107) |
+| function | `async def run_regex_safely(operation: Callable&#91;&#91;&#93;, T&#93;) -> T` | Run a guarded regex ``operation`` off the event loop. | [`src/core/modules/atomic/regex/_safe.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/_safe.py#L121) |
+
 ## `src/core/modules/atomic/regex/extract.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def regex_extract(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Extract named groups from text. | [`src/core/modules/atomic/regex/extract.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/extract.py#L94) |
+| function | `async def regex_extract(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Extract named groups from text. | [`src/core/modules/atomic/regex/extract.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/extract.py#L95) |
+| method | `def regex_extract._run()` | Implements `regex_extract._run`; linked source is authoritative. | [`src/core/modules/atomic/regex/extract.py:113`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/extract.py#L113) |
 
 ## `src/core/modules/atomic/regex/match.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def regex_match(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Find all matches of a pattern in text. | [`src/core/modules/atomic/regex/match.py:104`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/match.py#L104) |
+| function | `async def regex_match(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Find all matches of a pattern in text. | [`src/core/modules/atomic/regex/match.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/match.py#L105) |
+| method | `def regex_match._run()` | Implements `regex_match._run`; linked source is authoritative. | [`src/core/modules/atomic/regex/match.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/match.py#L124) |
 
 ## `src/core/modules/atomic/regex/replace.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def regex_replace(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Replace pattern matches in text. | [`src/core/modules/atomic/regex/replace.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L116) |
+| function | `async def regex_replace(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Replace pattern matches in text. | [`src/core/modules/atomic/regex/replace.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L117) |
+| method | `def regex_replace._run()` | Implements `regex_replace._run`; linked source is authoritative. | [`src/core/modules/atomic/regex/replace.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/replace.py#L140) |
 
 ## `src/core/modules/atomic/regex/split.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def regex_split(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Split text by a regex pattern. | [`src/core/modules/atomic/regex/split.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L110) |
+| function | `async def regex_split(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Split text by a regex pattern. | [`src/core/modules/atomic/regex/split.py:111`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L111) |
+| method | `def regex_split._run()` | Implements `regex_split._run`; linked source is authoritative. | [`src/core/modules/atomic/regex/split.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/split.py#L131) |
 
 ## `src/core/modules/atomic/regex/test.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def regex_test(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Test if string matches a regex pattern. | [`src/core/modules/atomic/regex/test.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L99) |
+| function | `async def regex_test(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Test if string matches a regex pattern. | [`src/core/modules/atomic/regex/test.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L100) |
+| method | `def regex_test._run()` | Implements `regex_test._run`; linked source is authoritative. | [`src/core/modules/atomic/regex/test.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/regex/test.py#L119) |
 
 ## `src/core/modules/atomic/reverse/attach.py`
 
@@ -6376,11 +6401,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class VerifyReportModule(BaseModule)` | Generate verification report. | [`src/core/modules/atomic/verify/report.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L61) |
-| method | `def VerifyReportModule.validate_params(self) -> None` | Implements `VerifyReportModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L67) |
-| method | `async def VerifyReportModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyReportModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L80) |
-| method | `def VerifyReportModule._generate_html(self, data: Dict) -> str` | Implements `VerifyReportModule._generate_html`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L136) |
-| method | `def VerifyReportModule._generate_markdown(self, data: Dict) -> str` | Implements `VerifyReportModule._generate_markdown`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:209`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L209) |
+| class | `class VerifyReportModule(BaseModule)` | Generate verification report. | [`src/core/modules/atomic/verify/report.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L67) |
+| method | `def VerifyReportModule.validate_params(self) -> None` | Implements `VerifyReportModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:73`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L73) |
+| method | `def VerifyReportModule._report_path(self, extension: str) -> Path` | Resolve the report destination, re-validated against the sandbox. | [`src/core/modules/atomic/verify/report.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L94) |
+| method | `async def VerifyReportModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyReportModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:107`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L107) |
+| method | `def VerifyReportModule._generate_html(self, data: Dict) -> str` | Implements `VerifyReportModule._generate_html`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:163`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L163) |
+| method | `def VerifyReportModule._generate_html.esc(value: Any) -> str` | Implements `VerifyReportModule._generate_html.esc`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L170) |
+| method | `def VerifyReportModule._generate_markdown(self, data: Dict) -> str` | Implements `VerifyReportModule._generate_markdown`; linked source is authoritative. | [`src/core/modules/atomic/verify/report.py:242`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L242) |
 
 ## `src/core/modules/atomic/verify/ruleset.py`
 
@@ -6403,14 +6430,14 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class VerifyRunModule(BaseModule)` | Run full design verification workflow using other verify modules. | [`src/core/modules/atomic/verify/runner.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L89) |
-| method | `def VerifyRunModule.validate_params(self) -> None` | Implements `VerifyRunModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L95) |
-| method | `async def VerifyRunModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyRunModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L114) |
-| class | `class VerifyRunner` | High-level API for design verification. | [`src/core/modules/atomic/verify/runner.py:303`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L303) |
-| method | `def VerifyRunner.__init__(self, output_dir: str='./verify-reports', figma_token: str=None)` | Implements `VerifyRunner.__init__`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:314`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L314) |
-| method | `async def VerifyRunner.run_quick(self, url: str, selectors: List&#91;str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Quick verification with selectors. | [`src/core/modules/atomic/verify/runner.py:318`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L318) |
-| method | `async def VerifyRunner.run(self, url: str, ruleset_path: str, report_format: str='html') -> Dict&#91;str, Any&#93;` | Full verification with YAML ruleset. | [`src/core/modules/atomic/verify/runner.py:336`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L336) |
-| method | `async def VerifyRunner.run_with_figma(self, url: str, selectors: List&#91;str&#93;, figma_file_id: str, figma_mapping: Dict&#91;str, str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Verification with Figma design comparison. | [`src/core/modules/atomic/verify/runner.py:354`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L354) |
+| class | `class VerifyRunModule(BaseModule)` | Run full design verification workflow using other verify modules. | [`src/core/modules/atomic/verify/runner.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L90) |
+| method | `def VerifyRunModule.validate_params(self) -> None` | Implements `VerifyRunModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L96) |
+| method | `async def VerifyRunModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyRunModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L121) |
+| class | `class VerifyRunner` | High-level API for design verification. | [`src/core/modules/atomic/verify/runner.py:310`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L310) |
+| method | `def VerifyRunner.__init__(self, output_dir: str='./verify-reports', figma_token: str=None)` | Implements `VerifyRunner.__init__`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:321`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L321) |
+| method | `async def VerifyRunner.run_quick(self, url: str, selectors: List&#91;str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Quick verification with selectors. | [`src/core/modules/atomic/verify/runner.py:325`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L325) |
+| method | `async def VerifyRunner.run(self, url: str, ruleset_path: str, report_format: str='html') -> Dict&#91;str, Any&#93;` | Full verification with YAML ruleset. | [`src/core/modules/atomic/verify/runner.py:343`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L343) |
+| method | `async def VerifyRunner.run_with_figma(self, url: str, selectors: List&#91;str&#93;, figma_file_id: str, figma_mapping: Dict&#91;str, str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Verification with Figma design comparison. | [`src/core/modules/atomic/verify/runner.py:361`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L361) |
 
 ## `src/core/modules/atomic/verify/spec_runner.py`
 
@@ -6439,7 +6466,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _score_color(score) -> str` | Implements `_score_color`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L184) |
 | class | `class VerifyVisualDiffModule(BaseModule)` | End-to-end deterministic visual comparison and evidence report. | [`src/core/modules/atomic/verify/visual_diff.py:246`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L246) |
 | method | `def VerifyVisualDiffModule.validate_params(self) -> None` | Implements `VerifyVisualDiffModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:252`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L252) |
-| method | `async def VerifyVisualDiffModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyVisualDiffModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:274`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L274) |
+| method | `async def VerifyVisualDiffModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyVisualDiffModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:280`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L280) |
 
 ## `src/core/modules/atomic/vision/analyze.py`
 
@@ -6553,9 +6580,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class WarroomReportModule(BaseModule)` | Generate deterministic Warroom evidence report. | [`src/core/modules/atomic/warroom/report.py:42`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L42) |
-| method | `def WarroomReportModule.validate_params(self) -> None` | Implements `WarroomReportModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/warroom/report.py:48`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L48) |
-| method | `async def WarroomReportModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `WarroomReportModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/warroom/report.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L53) |
+| class | `class WarroomReportModule(BaseModule)` | Generate deterministic Warroom evidence report. | [`src/core/modules/atomic/warroom/report.py:43`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L43) |
+| method | `def WarroomReportModule.validate_params(self) -> None` | Implements `WarroomReportModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/warroom/report.py:49`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L49) |
+| method | `async def WarroomReportModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `WarroomReportModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/warroom/report.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/warroom/report.py#L54) |
 
 ## `src/core/modules/atomic/warroom/run.py`
 

@@ -2,10 +2,13 @@
 
 ## Current State
 
-- Package metadata is prepared for the 2.26.11 security patch release. The
-  release contains the completed filesystem, outbound HTTP, plugin discovery,
-  MCP header, and Ollama trust-boundary fixes tracked by the private GitHub
-  advisories.
+- Package metadata is prepared for the 2.26.12 security patch release. The
+  release closes the remaining browser file-write and SSRF gaps the 2.26.11
+  hardening waves left open (`browser.download`/`screenshot`/`pdf`,
+  `warroom.report`, `verify.report`/`visual_diff`/`run`, `browser.launch`,
+  `data.dedup`; `browser.goto`'s www-toggle retry), plus a tar-extract
+  symlink (Tar Slip), a `port.check` IPv6 SSRF fail-open, and a regex ReDoS,
+  tracked by public GitHub security advisories.
 - MCP clients no longer have to guess whether a connection is ready or keep a
   fragile server-side session alive. Core supports the stateless MCP
   2026-07-28 request model, publishes discovery and cache guidance, validates
@@ -49,7 +52,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 951 maintained Python files, 5,519
+- Source-backed documentation now covers 951 maintained Python files, 5,541
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -158,18 +161,47 @@
 
 ## Last Verification
 
-Verified locally on 2026-08-03 for the 2.26.11 release candidate:
+Verified locally on 2026-08-07 for the 2.26.12 release candidate:
 
-- project memory, documentation, brand, generated catalog/reference, and
-  audited plus changed-surface Ruff checks passed;
-- 2,349 tests passed, 13 skipped, 273 deselected, with 61.39% coverage;
-- Python `pip-audit` and npm audit both reported 0 vulnerabilities;
-- `actionlint` accepted the PyPI publishing workflow and its pinned
-  `pypa/gh-action-pypi-publish` v1.14.2 commit;
+- documentation, brand, generated catalog/reference (5,541 declarations
+  across 805 files, regenerated after the fix set), and both the CI's fixed
+  audited-surface Ruff list and a full changed-surface Ruff diff (every file
+  touched by this release, compared byte-for-byte against its pre-fix
+  baseline) passed with zero new findings;
+- 2,615 tests passed, 18 skipped, with 64.42% coverage (the Juice Shop
+  container e2e test is excluded, same as CI's own gate);
+- Python `pip-audit` (against a freshly regenerated `requirements.lock`
+  adding the `regex` dependency) and npm audit both reported 0
+  vulnerabilities;
 - wheel and source distribution built, and Twine validated both artifacts;
+  additionally, the built wheel was installed into a clean venv and the two
+  named advisories plus the four same-class findings (below) were each
+  re-exercised directly against the *installed* package (not the source
+  tree) to confirm the shipped artifact — not just the source — carries the
+  fix;
 - Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
   flows;
 - package, MCP registry, and changelog version metadata all resolve to
-  `2.26.11`; the release tag remains gated on green remote CI for the exact
-  release commit.
+  `2.26.12`; the release tag remains gated on green remote CI for the exact
+  release commit. `actionlint` was not re-run — no workflow file changed in
+  this release.
+
+### 2.26.12 fix set
+
+Closes the two publicly-reported advisories plus four same-class findings
+surfaced while scoping the first (CWE-22, unvalidated caller path to a write
+sink — the exact pattern the advisory calls out as recurring wave-over-wave):
+
+- `browser.download` (GHSA-p64w-hgfm-824v, critical) and, found in the same
+  sweep, `browser.screenshot`, `browser.pdf`, `warroom.report`,
+  `verify.report` (+ unescaped HTML), `verify.visual_diff`, `verify.run`,
+  `browser.launch`'s `record_video_dir`, and `data.dedup`'s `hash_file` — all
+  now confined to `FLYTO_SANDBOX_DIR`.
+- `browser.goto`'s www-toggle retry (GHSA-662f-hr85-mg6c, high) — the
+  toggled host is now revalidated against the SSRF guard before navigating,
+  plus a driver-level `_guard_navigation()` defense-in-depth layer.
+- Also included: Tar Slip in `archive.tar_extract` (GHSA-pxvx-67rw-8352,
+  high), the `port.check` IPv6-transition SSRF fail-open
+  (GHSA-v7q9-pr72-5fmv, medium), and regex ReDoS in `regex.*`
+  (GHSA-v468-p4jx-7vj3, medium).

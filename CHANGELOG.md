@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.26.12] - 2026-08-07
+
+### Fixed
+- Confined `browser.download`'s `save_path` to the configured filesystem
+  sandbox before the directory is created or the downloaded bytes are
+  written, closing the gap the 2026-07 file-write hardening waves left in
+  `browser.download`, `browser.screenshot`, and `browser.pdf`.
+- Escaped caller- and page-derived values in the `verify.report` HTML
+  report and confined its `output_dir`/`name`-derived destination, the
+  `warroom.report` `output_path`, `verify.visual_diff` and `verify.run`
+  `output_dir`, `browser.launch`'s `record_video_dir`, and `data.dedup`'s
+  `hash_file` to the same sandbox boundary — the same unvalidated-path
+  pattern found while auditing the `browser.download` report.
+- Revalidated the www-toggled retry host in `browser.goto` against the SSRF
+  guard before navigating, closing a bypass where the submitted host passed
+  validation, navigation failed, and the toggled host (equally attacker-
+  controlled) was never checked. Added the same guard as defense in depth
+  inside the browser driver's `goto()` so a future caller that derives a new
+  navigation target and forgets to revalidate is still covered.
+- Rejected tar archive members that are symlinks, hardlinks, or other
+  special types before extraction in `archive.tar_extract`, closing a Tar
+  Slip where a symlink member pointing outside the sandbox let a following
+  member write through it on Python runtimes without `tarfile` `filter=`
+  support. Hardened the post-extraction path check (both `tar_extract` and
+  `zip_extract`) to compare resolved real paths against an `os.sep`-bounded
+  base instead of a lexical prefix match.
+- Made `port.check`'s SSRF guard fail closed: an unresolvable host (rather
+  than only a resolved private IP) is now treated as unsafe, closing a
+  bypass via IPv6 transition literals (e.g. `::ffff:127.0.0.1`) that raised
+  `gaierror` and fell through a bare `pass`.
+- Replaced stdlib `re` with the interruptible `regex` engine (native
+  per-call timeout) in the `regex.*` modules, so a catastrophic
+  backtracking pattern is abandoned within a bounded wall-clock budget
+  instead of freezing the event loop for every other in-flight request.
+
 ## [2.26.11] - 2026-08-03
 
 ### Fixed
@@ -760,6 +795,7 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.26.12 | 2026-08-07 | Closed remaining browser file-write and SSRF gaps (download/screenshot/pdf/report/launch/dedup, goto www-toggle), Tar Slip, port.check IPv6 SSRF, regex ReDoS |
 | 2.26.11 | 2026-08-03 | Security boundary hardening for filesystems, outbound HTTP, plugins, MCP headers, and Ollama |
 | 2.26.10 | 2026-07-23 | 452-module catalog, Tavily search, source-backed docs, deterministic verification |
 | 2.26.9 | 2026-07-19 | Registry metadata and PyPI backlink refresh |
@@ -772,7 +808,8 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 ---
 
-[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.11...HEAD
+[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.12...HEAD
+[2.26.12]: https://github.com/flytohub/flyto-core/compare/v2.26.11...v2.26.12
 [2.26.11]: https://github.com/flytohub/flyto-core/compare/v2.26.10...v2.26.11
 [2.26.10]: https://github.com/flytohub/flyto-core/compare/v2.26.9...v2.26.10
 [2.26.9]: https://github.com/flytohub/flyto-core/compare/v2.26.8...v2.26.9
