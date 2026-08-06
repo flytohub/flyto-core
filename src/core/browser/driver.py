@@ -85,6 +85,12 @@ class BrowserDriver:
         self._cached_hints: Dict[str, Any] = {}
         self._hints_url: Optional[str] = None
 
+        # SECURITY: sticky record of a caller opting out of the SSRF guard
+        # (desktop/self-hosted only — never honoured in cloud modes). Internal
+        # re-navigations such as pagination resume inherit the same decision
+        # instead of being blocked or, worse, silently unguarded.
+        self._ssrf_opt_out = False
+
         # Human-like behavior simulation (set via launch params)
         self._human = None  # HumanBehavior instance
         # Proxy tracking for rotation
@@ -620,10 +626,40 @@ class BrowserDriver:
             logger.warning(f"Regular launch (chromium) failed: {e}")
         return False
 
+    def _guard_navigation(self, url: str, validate_ssrf: Optional[bool]) -> None:
+        """Validate a navigation target against the SSRF rules.
+
+        SECURITY (defense in depth): every navigation funnels through here, so a
+        caller that derives a *new* URL and forgets to revalidate it is still
+        covered. ``browser.goto``'s www-toggle retry was exactly that bug: the
+        submitted host passed the guard, the toggled host never did.
+
+        ``validate_ssrf=False`` is the documented desktop/self-hosted opt-out
+        and is remembered on the driver so internal re-navigations (pagination
+        resume, proxy rotation) inherit it. Cloud modes ignore the opt-out
+        entirely.
+        """
+        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
+        if not _is_cloud:
+            if validate_ssrf is False:
+                self._ssrf_opt_out = True
+                return
+            if validate_ssrf is None and self._ssrf_opt_out:
+                return
+
+        from ..utils import SSRFError, validate_url_with_env_config
+
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            logger.warning("Navigation blocked by SSRF guard: %s", url[:200])
+            raise RuntimeError(f"SSRF protection: {e}") from e
+
     async def goto(self,
                    url: str,
                    wait_until: str = 'domcontentloaded',
-                   timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS) -> Dict[str, Any]:
+                   timeout_ms: int = DEFAULT_BROWSER_TIMEOUT_MS,
+                   validate_ssrf: Optional[bool] = None) -> Dict[str, Any]:
         """
         Navigate to URL
 
@@ -632,11 +668,15 @@ class BrowserDriver:
             wait_until: When to consider navigation succeeded
                        ('load', 'domcontentloaded', 'networkidle')
             timeout_ms: Navigation timeout in milliseconds
+            validate_ssrf: None (default) applies the SSRF guard unless a prior
+                          call opted out; False records the desktop opt-out;
+                          True forces the guard. Cloud modes always enforce.
 
         Returns:
             Navigation result with status and final URL
         """
         self._ensure_page()
+        self._guard_navigation(url, validate_ssrf)
 
         try:
             logger.info(f"Navigating to: {url}")

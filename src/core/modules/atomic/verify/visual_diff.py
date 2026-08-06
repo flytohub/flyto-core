@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ....utils import SSRFError, enforce_outbound_url
+from ....utils import SSRFError, enforce_outbound_url, validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose
@@ -252,7 +252,13 @@ class VerifyVisualDiffModule(BaseModule):
     def validate_params(self) -> None:
         self.reference_url = self.params.get('reference_url')
         self.dev_url = self.params.get('dev_url')
-        self.output_dir = Path(self.params.get('output_dir', './verify-reports/visual-diff'))
+        # SECURITY: confine report/screenshot writes to FLYTO_SANDBOX_DIR — the
+        # same guard verify.report and verify.runner apply to this parameter.
+        self.output_dir = Path(
+            validate_path_with_env_config(
+                str(self.params.get('output_dir', './verify-reports/visual-diff'))
+            )
+        )
         self.viewport_width = int(self.params.get('viewport_width', 1280))
         self.viewport_height = int(self.params.get('viewport_height', 800))
         self.threshold = float(self.params.get('threshold', 0.001))

@@ -4,14 +4,15 @@
 Regex Replace Module
 Replace pattern matches in text.
 """
-from typing import Any, Dict
 import re
+from typing import Any, Dict
 
+from ...errors import ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError
+from ._safe import compile_guarded, run_regex_safely, validate_regex_inputs
 
 
 @register_module(
@@ -132,22 +133,20 @@ async def regex_replace(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError("Missing required parameter: replacement", field="replacement")
 
     flags = re.IGNORECASE if ignore_case else 0
+    original = str(text)
+    validate_regex_inputs(pattern, original)
+    compiled = compile_guarded(pattern, flags)
 
-    try:
-        regex = re.compile(pattern, flags)
-        original = str(text)
-
+    def _run():
         # Count matches before replacement
-        match_count = len(regex.findall(original))
-
+        match_count = len(compiled.findall(original))
         if count > 0:
-            result = regex.sub(replacement, original, count=int(count))
-            replacements = min(match_count, int(count))
-        else:
-            result = regex.sub(replacement, original)
-            replacements = match_count
-    except re.error as e:
-        raise ValidationError(f"Invalid regex pattern: {e}", field="pattern")
+            return compiled.sub(replacement, original, count=int(count)), min(
+                match_count, int(count)
+            )
+        return compiled.sub(replacement, original), match_count
+
+    result, replacements = await run_regex_safely(_run)
 
     return {
         'ok': True,

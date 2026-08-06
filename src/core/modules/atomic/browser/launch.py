@@ -13,6 +13,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -194,7 +195,14 @@ class BrowserLaunchModule(BaseModule):
         self.user_agent = self.params.get('user_agent')
         self.locale = self.params.get('locale', 'en-US')
         self.slow_mo = self.params.get('slow_mo', 0)
-        self.record_video_dir = self.params.get('record_video_dir')
+        # SECURITY: confine recorded video to FLYTO_SANDBOX_DIR. The driver
+        # mkdir()s this directory and Playwright drops .webm files into it —
+        # an unvalidated caller-controlled path is an arbitrary directory
+        # create/write outside the sandbox the file.* modules enforce.
+        raw_video_dir = self.params.get('record_video_dir')
+        self.record_video_dir = (
+            validate_path_with_env_config(raw_video_dir) if raw_video_dir else None
+        )
         self.viewport = {
             'width': self.params.get('width', 1280),
             'height': self.params.get('height', 720),

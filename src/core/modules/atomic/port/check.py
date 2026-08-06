@@ -6,13 +6,34 @@ Check if a network port is open or closed
 """
 
 import asyncio
+import ipaddress
 import logging
 import os
 import socket
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from ...registry import register_module
 from ....utils import is_private_ip
+from ...registry import register_module
+
+
+def _guard_ip(host: str) -> Optional[str]:
+    """Return an IP string to range-check for the SSRF guard, or None.
+
+    ``socket.gethostbyname`` raises ``gaierror`` on IPv6 literals (e.g.
+    ``::ffff:127.0.0.1``), so relying on it alone lets IPv6 transition forms
+    skip ``is_private_ip`` entirely. If ``host`` is already an IP literal we
+    range-check it directly; otherwise we resolve it. ``None`` means the host
+    could not be resolved and must be treated as unsafe (fail closed).
+    """
+    try:
+        ipaddress.ip_address(host)
+        return host  # literal (incl. IPv4-mapped / 6to4 / NAT64 forms)
+    except ValueError:
+        pass
+    try:
+        return socket.gethostbyname(host)
+    except socket.gaierror:
+        return None
 
 
 logger = logging.getLogger(__name__)
@@ -160,23 +181,23 @@ async def port_check(context: Dict[str, Any]) -> Dict[str, Any]:
         # Check if scanning non-localhost is allowed
         allow_remote = os.environ.get('FLYTO_ALLOW_PORT_SCAN', '').lower() == 'true'
         if not allow_remote:
-            # Try to resolve and check if it's a private IP
-            try:
-                resolved_ip = socket.gethostbyname(host)
-                if is_private_ip(resolved_ip):
-                    return {
-                        'ok': False,
-                        'error': f'SSRF blocked: Cannot scan private network host ({host} -> {resolved_ip}). '
-                                 'Set FLYTO_ALLOW_PORT_SCAN=true to allow.',
-                        'error_code': 'SSRF_BLOCKED',
-                        'results': [],
-                        'open_ports': [],
-                        'closed_ports': [],
-                        'summary': {'total': 0, 'open': 0, 'closed': 0}
-                    }
-            except socket.gaierror:
-                # DNS resolution failed - allow the check to fail naturally
-                pass
+            # Fail closed: an unresolvable host is treated as unsafe rather than
+            # allowed through. This closes the IPv6-literal bypass where
+            # gethostbyname() raised gaierror and the old bare `pass` let the
+            # connect proceed against e.g. ::ffff:127.0.0.1.
+            guard_ip = _guard_ip(host)
+            if guard_ip is None or is_private_ip(guard_ip):
+                target = host if guard_ip is None else f'{host} -> {guard_ip}'
+                return {
+                    'ok': False,
+                    'error': f'SSRF blocked: Cannot scan private/unresolvable network host ({target}). '
+                             'Set FLYTO_ALLOW_PORT_SCAN=true to allow.',
+                    'error_code': 'SSRF_BLOCKED',
+                    'results': [],
+                    'open_ports': [],
+                    'closed_ports': [],
+                    'summary': {'total': 0, 'open': 0, 'closed': 0}
+                }
 
     # Normalize ports to list
     if isinstance(ports_input, int):

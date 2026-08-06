@@ -10,6 +10,7 @@ from pathlib import Path
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -97,7 +98,9 @@ class BrowserPdfModule(BaseModule):
         if 'path' not in self.params:
             raise ValueError("Missing required parameter: path")
 
-        self.path = self.params['path']
+        # SECURITY: confine the PDF write to FLYTO_SANDBOX_DIR — the path is
+        # caller-controlled and the rendered page decides the bytes.
+        self.path = validate_path_with_env_config(self.params['path'])
         self.format = self.params.get('page_size', self.params.get('format', 'A4'))
         orientation = self.params.get('orientation', 'portrait')
         self.landscape = orientation == 'landscape'

@@ -324,6 +324,25 @@ async def run(module_id: str, params: dict, ctx: dict) -> dict:
     return result
 
 
+# ─── Sandbox ─────────────────────────────────────────────────────────────
+
+@pytest.fixture(scope="module", autouse=True)
+def _flyto_sandbox_dir():
+    """Confine the GHSA-p64w-class path guard to the system temp dir.
+
+    test_42_screenshot / test_97_pdf write to tempfile.NamedTemporaryFile
+    paths (system temp dir, not the repo); module-scoped monkeypatch needs
+    the documented MonkeyPatch() workaround since the built-in `monkeypatch`
+    fixture is function-scoped.
+    """
+    from _pytest.monkeypatch import MonkeyPatch
+
+    mp = MonkeyPatch()
+    mp.setenv("FLYTO_SANDBOX_DIR", tempfile.gettempdir())
+    yield
+    mp.undo()
+
+
 # ─── Event Loop ──────────────────────────────────────────────────────────
 
 @pytest.fixture(scope="module")

@@ -4,14 +4,15 @@
 Regex Split Module
 Split text by a regex pattern.
 """
-from typing import Any, Dict, List
 import re
+from typing import Any, Dict
 
+from ...errors import ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError
+from ._safe import compile_guarded, run_regex_safely, validate_regex_inputs
 
 
 @register_module(
@@ -123,18 +124,20 @@ async def regex_split(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError("Missing required parameter: pattern", field="pattern")
 
     flags = re.IGNORECASE if ignore_case else 0
+    text_str = str(text)
+    validate_regex_inputs(pattern, text_str)
+    compiled = compile_guarded(pattern, flags)
 
-    try:
-        regex = re.compile(pattern, flags)
+    def _run():
         if max_split > 0:
-            result = regex.split(str(text), maxsplit=int(max_split))
+            parts = compiled.split(text_str, maxsplit=int(max_split))
         else:
-            result = regex.split(str(text))
-
+            parts = compiled.split(text_str)
         if remove_empty:
-            result = [part for part in result if part]
-    except re.error as e:
-        raise ValidationError(f"Invalid regex pattern: {e}", field="pattern")
+            parts = [part for part in parts if part]
+        return parts
+
+    result = await run_regex_safely(_run)
 
     return {
         'ok': True,

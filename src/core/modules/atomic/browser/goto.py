@@ -100,22 +100,37 @@ class BrowserGotoModule(BaseModule):
     module_description = "Navigate to a specific URL"
     required_permission = "browser.navigate"
 
+    def _ssrf_enforced(self) -> bool:
+        """Whether the SSRF guard applies to this invocation.
+
+        Cloud/worker modes ALWAYS enforce — the user cannot disable it.
+        Desktop mode allows opt-out for local development / self-hosted targets.
+        """
+        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
+        return _is_cloud or bool(self.params.get('ssrf_protection', True))
+
+    def _check_url(self, url: str) -> None:
+        """Apply the SSRF guard to ``url``, honouring the deployment opt-out.
+
+        SECURITY: every URL this module navigates to must pass through here —
+        not just the caller's original ``url``. Any URL the module *derives*
+        (e.g. the www-toggled retry host) is attacker-influenced too.
+        """
+        if not self._ssrf_enforced():
+            logger.warning("SSRF protection disabled by user for URL: %s", url[:80])
+            return
+        try:
+            validate_url_with_env_config(url)
+        except SSRFError as e:
+            raise ValueError(f"SSRF protection: {e}")
+
     def validate_params(self) -> None:
         if 'url' not in self.params:
             raise ValueError("Missing required parameter: url")
         self.url = self.params['url']
 
         # SECURITY: Validate URL against SSRF attacks.
-        # Cloud/worker modes ALWAYS enforce SSRF protection — user cannot disable it.
-        # Desktop mode allows opt-out for local development / self-hosted targets.
-        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
-        if _is_cloud or self.params.get('ssrf_protection', True):
-            try:
-                validate_url_with_env_config(self.url)
-            except SSRFError as e:
-                raise ValueError(f"SSRF protection: {e}")
-        else:
-            logger.warning("SSRF protection disabled by user for URL: %s", self.url[:80])
+        self._check_url(self.url)
 
         # Default to 'domcontentloaded' for faster page loads (was 'networkidle' which hangs on many sites)
         self.wait_until = self.params.get('wait_until', 'domcontentloaded')
@@ -138,7 +153,12 @@ class BrowserGotoModule(BaseModule):
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         try:
-            result = await browser.goto(self.url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+            result = await browser.goto(
+                self.url,
+                wait_until=self.wait_until,
+                timeout_ms=self.timeout_ms,
+                validate_ssrf=self._ssrf_enforced(),
+            )
 
             # driver.goto() returns success even for HTTP errors (403 etc.)
             # when the page URL isn't chrome-error://.  Detect and try www toggle.
@@ -171,6 +191,16 @@ class BrowserGotoModule(BaseModule):
         alt_url = self._toggle_www(self.url)
         if not alt_url:
             return None
+        # SECURITY: the toggled host is a *different* host than the one
+        # validate_params() cleared, and the attacker chooses both (they own the
+        # domain and its DNS). Re-run the guard; an unvalidated retry here was
+        # an SSRF bypass — www.evil.test passes, then the failure fires the
+        # toggle and evil.test resolves to 127.0.0.1.
+        try:
+            self._check_url(alt_url)
+        except ValueError as e:
+            logger.warning("goto: www toggle target rejected by SSRF guard: %s", e)
+            return None
         logger.info("goto: www toggle %s → %s", self.url, alt_url)
         # Replace page to clear chrome-error:// state
         try:
@@ -180,7 +210,12 @@ class BrowserGotoModule(BaseModule):
         except Exception:
             pass
         try:
-            result = await browser.goto(alt_url, wait_until=self.wait_until, timeout_ms=self.timeout_ms)
+            result = await browser.goto(
+                alt_url,
+                wait_until=self.wait_until,
+                timeout_ms=self.timeout_ms,
+                validate_ssrf=self._ssrf_enforced(),
+            )
             # Only accept if the toggle actually fixed it
             if not result.get('warning'):
                 logger.info("goto: www toggle succeeded → %s", result.get('url', alt_url))

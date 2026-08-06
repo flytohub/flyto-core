@@ -11,6 +11,7 @@ import asyncio
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -80,10 +81,15 @@ class BrowserDownloadModule(BaseModule):
             raise ValueError("Missing required parameter: save_path")
 
         self.selector = self.params.get('selector')
-        self.save_path = self.params['save_path']
+        # SECURITY: confine the write to FLYTO_SANDBOX_DIR. save_path is
+        # caller-controlled and the bytes are attacker-controlled (whatever the
+        # visited page serves), so an unvalidated path here is an arbitrary
+        # file write — the module's 'path_restricted' tag is metadata, it
+        # enforces nothing on its own.
+        self.save_path = validate_path_with_env_config(self.params['save_path'])
         self.timeout = self.params.get('timeout_ms', 60000)
 
-        # Ensure directory exists
+        # Ensure directory exists (validated path only)
         save_dir = Path(self.save_path).parent
         save_dir.mkdir(parents=True, exist_ok=True)
 

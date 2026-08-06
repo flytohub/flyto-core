@@ -9,12 +9,12 @@ import os
 import zipfile
 from typing import Any, Dict
 
+from ....utils import PathTraversalError, validate_path_with_env_config
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-from ....utils import validate_path_with_env_config, PathTraversalError
 
 logger = logging.getLogger(__name__)
 
@@ -138,10 +138,13 @@ async def archive_zip_extract(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         with zipfile.ZipFile(safe_archive, 'r') as zf:
-            # Security: check for path traversal in archive entries (zip slip)
+            # Security: check for path traversal in archive entries (zip slip).
+            # Use a realpath + os.sep boundary; a lexical startswith would accept
+            # e.g. /tmp/out_evil for a /tmp/out sandbox.
+            base = os.path.realpath(safe_output)
             for info in zf.infolist():
-                target_path = os.path.normpath(os.path.join(safe_output, info.filename))
-                if not target_path.startswith(os.path.normpath(safe_output)):
+                resolved = os.path.realpath(os.path.join(safe_output, info.filename))
+                if not (resolved == base or resolved.startswith(base + os.sep)):
                     raise ModuleError(
                         "Zip entry attempts path traversal: {}".format(info.filename),
                         code="PATH_TRAVERSAL",
