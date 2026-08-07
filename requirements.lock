@@ -44,7 +44,7 @@ pyyaml==6.0.3
     # via flyto-core (pyproject.toml)
 regex==2026.7.19
     # via flyto-core (pyproject.toml)
-soupsieve==2.9.1
+soupsieve==2.9.2
     # via beautifulsoup4
 typing-extensions==4.16.0
     # via
