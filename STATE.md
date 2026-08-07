@@ -183,9 +183,21 @@ Verified locally on 2026-08-07 for the 2.26.12 release candidate:
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
   flows;
 - package, MCP registry, and changelog version metadata all resolve to
-  `2.26.12`; the release tag remains gated on green remote CI for the exact
-  release commit. `actionlint` was not re-run — no workflow file changed in
-  this release.
+  `2.26.12`. `actionlint` was not re-run — no workflow file changed in this
+  release.
+
+**Remote CI note**: the `v2.26.12` tag and its release commit (`989f3db`)
+initially failed remote CI twice — a `requirements.lock` transitive-pin
+drift (`soupsieve` resolved to a newer patch between local lock and CI's
+own re-lock) and a stale doc regeneration (one file's line numbers hadn't
+been refreshed after a later same-day edit) — plus a separately-failing
+`npm audit` gate on 5 pre-existing Dependabot alerts for `undici` (a JS
+devDependency used only by the `test_hints.py` harness, never shipped in
+the wheel). None of the three affected the published package's actual
+content, confirmed by re-downloading the live PyPI wheel and diffing its
+`screenshot.py` against source. Three follow-up commits on `main`
+(`5067f54`, `b32d36c`, `a0587eb`) fixed all three; remote CI is green as of
+`a0587eb`. No new PyPI version was needed since nothing shippable changed.
 
 ### 2.26.12 fix set
 
