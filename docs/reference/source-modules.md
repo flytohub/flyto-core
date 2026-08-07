@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **952 Python files**, **195,648 lines**, and **5,541 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **952 Python files**, **195,647 lines**, and **5,541 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -278,7 +278,7 @@ Inventory: **952 Python files**, **195,648 lines**, and **5,541 class/function/m
 | [`src/core/modules/atomic/browser/release.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/release.py#L1) | 181 | 3 | `base, registry, schema, typing` | Browser Release Module - Smart browser session cleanup |
 | [`src/core/modules/atomic/browser/response.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/response.py#L1) | 149 | 4 | `asyncio, base, json, logging, re, registry, schema, typing` | Browser Response Module — Capture network response bodies |
 | [`src/core/modules/atomic/browser/robots.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/robots.py#L1) | 178 | 3 | `base, logging, re, registry, schema, typing, urllib` | Browser Robots Module — robots.txt compliance + sitemap discovery |
-| [`src/core/modules/atomic/browser/screenshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L1) | 93 | 3 | `base, registry, schema, typing, utils` | Browser Screenshot Module - Take a screenshot of the current page |
+| [`src/core/modules/atomic/browser/screenshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L1) | 92 | 3 | `base, registry, schema, typing, utils` | Browser Screenshot Module - Take a screenshot of the current page |
 | [`src/core/modules/atomic/browser/scroll.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/scroll.py#L1) | 151 | 3 | `base, registry, schema, typing` | Browser Scroll Module |
 | [`src/core/modules/atomic/browser/select.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/select.py#L1) | 298 | 7 | `base, registry, schema, typing` | Browser Select Module |
 | [`src/core/modules/atomic/browser/sitemap.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/sitemap.py#L1) | 186 | 3 | `base, logging, registry, schema, typing` | Browser Sitemap Module — Parse sitemap.xml and extract URLs |

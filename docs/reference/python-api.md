@@ -3405,7 +3405,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 |---|---|---|---|
 | class | `class BrowserScreenshotModule(BaseModule)` | Screenshot Module | [`src/core/modules/atomic/browser/screenshot.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L53) |
 | method | `def BrowserScreenshotModule.validate_params(self) -> None` | Implements `BrowserScreenshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:60`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L60) |
-| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L70) |
+| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L69) |
 
 ## `src/core/modules/atomic/browser/scroll.py`
 
