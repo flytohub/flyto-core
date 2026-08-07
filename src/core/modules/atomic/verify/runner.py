@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from ....utils import validate_path_with_env_config
 from ...base import BaseModule
+from ....utils import enforce_outbound_url
 from ...registry import register_module
 from ...schema import compose, field as schema_field
 
@@ -261,6 +262,11 @@ class VerifyRunModule(BaseModule):
             try:
                 page = await driver.new_page()
                 await page.set_viewport_size({'width': self.viewport_width, 'height': self.viewport_height})
+                # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+                # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+                # about. The cloud egress guard does not cover this path either when the
+                # page comes from a bare playwright instance. Validate before navigating.
+                enforce_outbound_url(self.url)
                 await page.goto(self.url, wait_until='networkidle')
                 await page.screenshot(path=str(screenshot_path), full_page=True)
                 screenshots.append(str(screenshot_path))

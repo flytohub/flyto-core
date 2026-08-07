@@ -2,6 +2,23 @@
 
 ## Current State
 
+- Both security boundaries are now closed registry-wide and enforced in CI,
+  rather than patched per advisory:
+  - Filesystem — 88 modules declare a path-shaped parameter; 71 reach
+    `validate_path_with_env_config`, 17 are documented as not filesystem paths,
+    0 unaccounted. Enforced by `tests/core/test_write_sink_coverage.py`.
+  - Outbound network — 57 modules declare a URL/host-shaped parameter; 46 reach
+    an SSRF guard, 11 are documented as never reaching the network or as
+    validating locally, 0 unaccounted. Enforced by
+    `tests/core/test_outbound_guard_coverage.py` (MRO-aware, so inherited
+    guards count).
+  Exemptions require a written reason and are re-verified each run. The audits
+  confined roughly 30 modules that no advisory had named — see CHANGELOG
+  `[Unreleased]` and the two 2026-08-08 entries in DECISIONS.md.
+- Two breaking changes come with that: paths outside `FLYTO_SANDBOX_DIR`
+  (default: the process working directory) are refused, and connections to
+  private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
+  `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
 - Package metadata is prepared for the 2.26.12 security patch release. The
   release closes the remaining browser file-write and SSRF gaps the 2.26.11
   hardening waves left open (`browser.download`/`screenshot`/`pdf`,
@@ -52,7 +69,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 951 maintained Python files, 5,541
+- Source-backed documentation now covers 952 maintained Python files, 5,544
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -163,7 +180,7 @@
 
 Verified locally on 2026-08-07 for the 2.26.12 release candidate:
 
-- documentation, brand, generated catalog/reference (5,541 declarations
+- documentation, brand, generated catalog/reference (5,544 declarations
   across 805 files, regenerated after the fix set), and both the CI's fixed
   audited-surface Ruff list and a full changed-surface Ruff diff (every file
   touched by this release, compared byte-for-byte against its pre-fix

@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Closed the filesystem sandbox boundary across the whole module registry
+  rather than one report at a time. A registry-wide audit found every
+  remaining module that took a caller-supplied path to a filesystem sink
+  without `validate_path_with_env_config`, and confined all of them:
+  `testing.visual.compare` (`diff_path`, and the `expected`/`actual` read
+  paths — this module declares no `required_permissions`, so the write was
+  unauthenticated), `data.xml.parse` (`file_path`, the sibling
+  GHSA-wc94-386q-5478 missed), `browser.upload` and `aws.s3.upload`
+  (`file_path` — host files shipped to a remote origin), `ssh.sftp_upload`
+  and `ssh.sftp_download` (`local_path`, the SFTP counterpart of
+  GHSA-hmq9-xw4w-7ppc), `file.delete` (`file_path` — arbitrary file
+  deletion), `file.exists` (`path` — filesystem oracle), `git.clone`
+  (`destination`), `git.commit`/`git.diff` (`repo_path`), `llm.code_fix`
+  (`source_files`, where the previous `'..'` substring check let absolute
+  paths through), `verify.spec` (`ruleset_path`), plus `docker.build`,
+  `process.start` and `sandbox.execute_shell` as hardening. None of these
+  were reported; they are the same CWE-22 shape as the published advisories.
+- Closed the outbound network boundary across the registry on the same basis.
+  Added `enforce_outbound_host` and `enforce_outbound_service_url` to
+  `core/utils.py` — the raw-TCP and non-HTTP-scheme counterparts of
+  `enforce_outbound_url`, which only understands http(s) — and routed every
+  module that reaches the network from a caller-supplied target through one of
+  them: `verify.run`, `verify.capture` and `verify.visual_diff` (raw
+  Playwright `page.goto` bypassing `BrowserDriver._guard_navigation`, and in
+  `visual_diff`'s case a bare playwright browser with no egress guard in any
+  mode), `browser.connect` (`ws_endpoint` — CDP is remote code execution by
+  design), `browser.launch` (`proxy` — the egress guard inspects request URLs,
+  not where the proxy points), `git.clone` (`url` — the existing validator
+  bounded the transport but never the destination), `cache.*` and `queue.*`
+  (`redis_url`), `db.mysql.query`, `db.redis.get/set`, `notification.email.send`
+  (`smtp_server`, which also carries SMTP credentials to whatever answers),
+  `ssh.exec`/`ssh.sftp_upload`/`ssh.sftp_download` (`host`), `network.ping`,
+  `network.port_scan`, `network.traceroute`, `port.wait`, and `browser.emulate`.
+- Deduplicated the host resolver that GHSA-v7q9-pr72-5fmv was about.
+  `port.check` carried the only correct implementation (IP literals
+  range-checked directly so IPv6 transition forms cannot skip the check, and
+  fail-closed on resolution failure); it now lives in `core/utils.py` as
+  `resolve_guard_ip` and backs every host-taking module.
+- Added `tests/core/test_write_sink_coverage.py` and
+  `tests/core/test_outbound_guard_coverage.py`, which walk the module registry
+  and fail the build if any module declares a path- or network-shaped parameter
+  without reaching the corresponding guard. The outbound test is MRO-aware, so
+  a guard inherited from a mixin (`LLMClientMixin` for `agent.chain` /
+  `agent.autonomous`) counts. Exemptions must state what the value really
+  addresses and are re-verified each run: a module excused as "makes no
+  request" fails once it opens a connection, and one excused for validating
+  locally fails once that validation is deleted. Guard coverage is now a CI
+  property instead of something an author has to remember.
+
+### Changed
+- **Breaking for callers relying on the old permissiveness.** Modules listed
+  above now reject paths outside `FLYTO_SANDBOX_DIR`, which defaults to the
+  process working directory. Workflows that passed absolute paths such as
+  `/tmp/repo` to `git.clone` or `data.xml.parse` must set
+  `FLYTO_SANDBOX_DIR` to a directory covering them. Tests needing real files
+  outside the working directory can use the new `sandboxed_tmp_path` fixture.
+- **Breaking for workflows targeting private hosts.** Modules that connect to
+  a caller-supplied host now reject private and link-local targets unless the
+  operator sets `FLYTO_ALLOWED_HOSTS` or `FLYTO_ALLOW_PRIVATE_NETWORK=true`.
+  Loopback is unaffected, so self-hosted Redis/MySQL/SMTP on `localhost`
+  continues to work; a Redis at `10.0.0.5`, an SMTP relay on the LAN, or
+  `network.ping` against an internal host now needs an explicit allowlist
+  entry. Unresolvable hosts are refused rather than attempted.
+- `register_module` now preserves the defining module on function-style
+  module wrappers (`__module__`, `__wrapped_func__`) instead of reporting
+  `decorators.py`, so registry-wide static checks can resolve real sources.
+
+### Fixed
+- `SECURITY.md` advertised support for the 1.x line, which has not existed
+  since well before the 2.26 series. It now names the supported range, the
+  current secure release, and documents the two environment variables that
+  define the filesystem trust boundary.
+
 ## [2.26.12] - 2026-08-07
 
 ### Fixed

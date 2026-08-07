@@ -43,6 +43,24 @@ def setup_test_env():
 
 
 @pytest.fixture
+def sandboxed_tmp_path(tmp_path, monkeypatch):
+    """A tmp_path that modules are actually allowed to touch.
+
+    Filesystem modules confine caller-supplied paths to FLYTO_SANDBOX_DIR,
+    which defaults to the current working directory — so pytest's tmp_path
+    (under /private/var/folders/...) is outside the sandbox and every path
+    parameter pointing at it is correctly rejected.
+
+    Functional tests that need real files should take this fixture instead of
+    tmp_path. Security tests deliberately do NOT use it: they set up their own
+    sandbox and assert that paths outside it are refused.
+    """
+    monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
+    monkeypatch.setenv("FLYTO_ALLOW_ABSOLUTE_PATHS", "true")
+    return tmp_path
+
+
+@pytest.fixture
 def base_context():
     """Basic execution context for modules."""
     return {

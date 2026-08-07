@@ -11,6 +11,7 @@ import re
 import time
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -132,6 +133,11 @@ async def network_ping(context: Dict[str, Any]) -> Dict[str, Any]:
     """Ping a host to check connectivity and measure latency."""
     params = context['params']
     host = params.get('host', '').strip()
+    # SECURITY: probing is this module's purpose, which is exactly why the
+    # target must be bounded — otherwise it is a ready-made internal network
+    # scanner reachable from any workflow. Loopback stays allowed; private
+    # ranges need FLYTO_ALLOWED_HOSTS or FLYTO_ALLOW_PRIVATE_NETWORK.
+    enforce_outbound_host(host, purpose='ping')
     count = int(params.get('count', 4))
     timeout = int(params.get('timeout', 5))
 

@@ -8,6 +8,7 @@ import fnmatch
 import logging
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -100,6 +101,11 @@ async def cache_clear(context: Dict[str, Any]) -> Dict[str, Any]:
     pattern = params.get('pattern', '*')
     backend = params.get('backend', 'memory')
     redis_url = params.get('redis_url', 'redis://localhost:6379')
+    # SECURITY: redis_url is caller-controlled and aioredis will dial
+    # whatever host it names. Unguarded that is an internal port prober and a
+    # route to the cloud metadata service — the non-HTTP twin of the SSRF
+    # advisories. Loopback (the normal self-hosted case) stays allowed.
+    enforce_outbound_service_url(redis_url, purpose='Redis')
 
     if backend == 'memory':
         if pattern == '*':

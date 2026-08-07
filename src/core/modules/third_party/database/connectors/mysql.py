@@ -6,6 +6,7 @@ Execute SQL queries on MySQL database.
 """
 import os
 
+from .....utils import enforce_outbound_host
 from ....registry import register_module
 from ....schema import compose, presets
 
@@ -103,6 +104,12 @@ async def mysql_query(context):
             "Database host not configured. "
             "Set 'host' parameter or MYSQL_HOST environment variable."
         )
+
+    # SECURITY: a caller-supplied `host` makes this module a TCP client aimed
+    # anywhere the runner can route, which is SSRF without a URL. A host from
+    # MYSQL_HOST is operator configuration and gets the same check — the guard
+    # is cheap and the operator can widen it via FLYTO_ALLOWED_HOSTS.
+    enforce_outbound_host(host, purpose='MySQL')
 
     conn_params = {
         'host': host,

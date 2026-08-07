@@ -13,7 +13,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
-from ....utils import validate_path_with_env_config
+from ....utils import enforce_outbound_service_url, validate_path_with_env_config
 
 
 @register_module(
@@ -191,7 +191,15 @@ class BrowserLaunchModule(BaseModule):
         self.channel = self.params.get('channel', '')
         self.stealth = self.params.get('stealth', True)
         self.behavior = self.params.get('behavior', 'fast')
-        self.proxy = self.params.get('proxy')
+        # SECURITY: every request the browser makes is routed through this
+        # proxy, so a caller-supplied internal address turns the browser into a
+        # relay into the private network — and the egress guard, which inspects
+        # the request URL, does not see where the proxy itself points.
+        raw_proxy = self.params.get('proxy')
+        self.proxy = (
+            enforce_outbound_service_url(raw_proxy, purpose='browser proxy')
+            if raw_proxy else raw_proxy
+        )
         self.user_agent = self.params.get('user_agent')
         self.locale = self.params.get('locale', 'en-US')
         self.slow_mo = self.params.get('slow_mo', 0)

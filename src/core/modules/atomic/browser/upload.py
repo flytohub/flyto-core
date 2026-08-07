@@ -7,6 +7,7 @@ Upload file to file input element.
 """
 from typing import Any, Dict, List
 from pathlib import Path
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
@@ -80,7 +81,11 @@ class BrowserUploadModule(BaseModule):
             raise ValueError("Missing required parameter: file_path")
 
         self.selector = self.params['selector']
-        self.file_path = self.params['file_path']
+        # SECURITY: the file's bytes are handed to the visited page, so an
+        # unvalidated file_path exfiltrates any host file (~/.ssh/id_rsa,
+        # .env) to whatever origin the workflow navigated to. Same read
+        # boundary as GHSA-wc94-386q-5478, with a network egress attached.
+        self.file_path = validate_path_with_env_config(self.params['file_path'])
         self.timeout = self.params.get('timeout_ms', 30000)
 
         # Verify file exists

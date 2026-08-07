@@ -8,6 +8,7 @@ from typing import Any, Dict
 import xml.etree.ElementTree as ET
 import os
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -177,6 +178,16 @@ async def xml_parse(context: Dict[str, Any]) -> Dict[str, Any]:
             "Either 'content' or 'file_path' must be provided",
             field='content',
         )
+
+    # SECURITY: the parsed document is returned to the caller, so an unvalidated
+    # file_path is the arbitrary file read of GHSA-wc94-386q-5478. That advisory
+    # closed data.csv.read, data.yaml.parse, excel.read, pdf.parse and image.ocr
+    # but not this sibling — same permission set, same sink, same boundary.
+    # Validated out here, not inside the try: the except below wraps everything
+    # in ModuleError, which would turn a rejected path into a parse failure and
+    # hide the sandbox violation from the caller and from the logs.
+    if not content:
+        file_path = validate_path_with_env_config(str(file_path))
 
     try:
         if content:

@@ -6,35 +6,12 @@ Check if a network port is open or closed
 """
 
 import asyncio
-import ipaddress
 import logging
 import os
-import socket
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from ....utils import is_private_ip
+from ....utils import is_private_ip, resolve_guard_ip
 from ...registry import register_module
-
-
-def _guard_ip(host: str) -> Optional[str]:
-    """Return an IP string to range-check for the SSRF guard, or None.
-
-    ``socket.gethostbyname`` raises ``gaierror`` on IPv6 literals (e.g.
-    ``::ffff:127.0.0.1``), so relying on it alone lets IPv6 transition forms
-    skip ``is_private_ip`` entirely. If ``host`` is already an IP literal we
-    range-check it directly; otherwise we resolve it. ``None`` means the host
-    could not be resolved and must be treated as unsafe (fail closed).
-    """
-    try:
-        ipaddress.ip_address(host)
-        return host  # literal (incl. IPv4-mapped / 6to4 / NAT64 forms)
-    except ValueError:
-        pass
-    try:
-        return socket.gethostbyname(host)
-    except socket.gaierror:
-        return None
-
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +161,10 @@ async def port_check(context: Dict[str, Any]) -> Dict[str, Any]:
             # Fail closed: an unresolvable host is treated as unsafe rather than
             # allowed through. This closes the IPv6-literal bypass where
             # gethostbyname() raised gaierror and the old bare `pass` let the
-            # connect proceed against e.g. ::ffff:127.0.0.1.
-            guard_ip = _guard_ip(host)
+            # connect proceed against e.g. ::ffff:127.0.0.1
+            # (GHSA-v7q9-pr72-5fmv). The resolver now lives in core.utils and is
+            # shared with every other host-taking module rather than duplicated.
+            guard_ip = resolve_guard_ip(host)
             if guard_ip is None or is_private_ip(guard_ip):
                 target = host if guard_ip is None else f'{host} -> {guard_ip}'
                 return {

@@ -53,9 +53,14 @@ class ModuleCatalogManager:
         import json
         from pathlib import Path
 
+        from ...utils import validate_path_with_env_config
+
         catalog = self.export_catalog(lang)
 
-        file_path = Path(filepath)
+        # SECURITY: re-exported from registry/__init__.py with no in-tree
+        # caller, so filepath comes from whatever embeds the SDK. Validate
+        # before mkdir so a traversal cannot create directories either.
+        file_path = Path(validate_path_with_env_config(str(filepath)))
         file_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(file_path, 'w', encoding='utf-8') as f:

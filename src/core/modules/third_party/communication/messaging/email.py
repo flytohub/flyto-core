@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 from typing import Any
 
 from ....base import BaseModule
+from .....utils import enforce_outbound_host
 from ....registry import register_module
 
 
@@ -158,7 +159,12 @@ class EmailSendModule(BaseModule):
             if param not in self.params or not self.params[param]:
                 raise ValueError(f"Missing required parameter: {param}")
 
-        self.smtp_server = self.params['smtp_server']
+        # SECURITY: smtp_server is caller-controlled and smtplib will connect to
+        # it, carrying self.username/self.password with it — so an unguarded
+        # value both probes internal hosts and hands them SMTP credentials.
+        self.smtp_server = enforce_outbound_host(
+            self.params['smtp_server'], purpose='SMTP'
+        )
         self.smtp_port = self.params.get('smtp_port', 587)
         self.username = self.params['username']
         self.password = self.params['password']

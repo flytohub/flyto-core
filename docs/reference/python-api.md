@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,541 declarations across 805 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,544 declarations across 805 files**.
 
 ## `demo.py`
 
@@ -3057,9 +3057,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserConnectModule(BaseModule)` | Defines the BrowserConnectModule runtime contract. | [`src/core/modules/atomic/browser/connect.py:73`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L73) |
-| method | `def BrowserConnectModule.validate_params(self) -> None` | Implements `BrowserConnectModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/connect.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L77) |
-| method | `async def BrowserConnectModule.execute(self) -> Any` | Implements `BrowserConnectModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/connect.py:88`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L88) |
+| class | `class BrowserConnectModule(BaseModule)` | Defines the BrowserConnectModule runtime contract. | [`src/core/modules/atomic/browser/connect.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L74) |
+| method | `def BrowserConnectModule.validate_params(self) -> None` | Implements `BrowserConnectModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/connect.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L78) |
+| method | `async def BrowserConnectModule.execute(self) -> Any` | Implements `BrowserConnectModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/connect.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L95) |
 
 ## `src/core/modules/atomic/browser/console.py`
 
@@ -3139,10 +3139,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserEmulateModule(BaseModule)` | Device Emulation Module | [`src/core/modules/atomic/browser/emulate.py:325`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L325) |
-| method | `def BrowserEmulateModule.validate_params(self) -> None` | Implements `BrowserEmulateModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/emulate.py:332`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L332) |
-| method | `async def BrowserEmulateModule.execute(self) -> Any` | Implements `BrowserEmulateModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/emulate.py:361`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L361) |
-| method | `async def BrowserEmulateModule._emulate_via_cdp(self, browser, settings, current_url)` | Apply device emulation via CDP for persistent context mode. | [`src/core/modules/atomic/browser/emulate.py:435`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L435) |
+| class | `class BrowserEmulateModule(BaseModule)` | Device Emulation Module | [`src/core/modules/atomic/browser/emulate.py:326`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L326) |
+| method | `def BrowserEmulateModule.validate_params(self) -> None` | Implements `BrowserEmulateModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/emulate.py:333`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L333) |
+| method | `async def BrowserEmulateModule.execute(self) -> Any` | Implements `BrowserEmulateModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/emulate.py:362`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L362) |
+| method | `async def BrowserEmulateModule._emulate_via_cdp(self, browser, settings, current_url)` | Apply device emulation via CDP for persistent context mode. | [`src/core/modules/atomic/browser/emulate.py:441`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/emulate.py#L441) |
 
 ## `src/core/modules/atomic/browser/ensure.py`
 
@@ -3246,7 +3246,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 |---|---|---|---|
 | class | `class BrowserLaunchModule(BaseModule)` | Launch Browser Module — single browser, single responsibility. | [`src/core/modules/atomic/browser/launch.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L178) |
 | method | `def BrowserLaunchModule.validate_params(self) -> None` | Implements `BrowserLaunchModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:185`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L185) |
-| method | `async def BrowserLaunchModule.execute(self) -> Any` | Implements `BrowserLaunchModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L215) |
+| method | `async def BrowserLaunchModule.execute(self) -> Any` | Implements `BrowserLaunchModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/launch.py:223`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L223) |
 
 ## `src/core/modules/atomic/browser/login.py`
 
@@ -3500,9 +3500,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserUploadModule(BaseModule)` | Upload File Module | [`src/core/modules/atomic/browser/upload.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L69) |
-| method | `def BrowserUploadModule.validate_params(self) -> None` | Implements `BrowserUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/upload.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L76) |
-| method | `async def BrowserUploadModule.execute(self) -> Any` | Implements `BrowserUploadModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/upload.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L93) |
+| class | `class BrowserUploadModule(BaseModule)` | Upload File Module | [`src/core/modules/atomic/browser/upload.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L70) |
+| method | `def BrowserUploadModule.validate_params(self) -> None` | Implements `BrowserUploadModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/upload.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L77) |
+| method | `async def BrowserUploadModule.execute(self) -> Any` | Implements `BrowserUploadModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/upload.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L98) |
 
 ## `src/core/modules/atomic/browser/viewport.py`
 
@@ -3524,27 +3524,27 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def cache_clear(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clear all cache entries or filter by pattern. | [`src/core/modules/atomic/cache/clear.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/clear.py#L97) |
+| function | `async def cache_clear(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clear all cache entries or filter by pattern. | [`src/core/modules/atomic/cache/clear.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/clear.py#L98) |
 
 ## `src/core/modules/atomic/cache/delete.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def cache_delete(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Delete a cache entry by key. | [`src/core/modules/atomic/cache/delete.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/delete.py#L101) |
+| function | `async def cache_delete(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Delete a cache entry by key. | [`src/core/modules/atomic/cache/delete.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/delete.py#L102) |
 
 ## `src/core/modules/atomic/cache/get.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _cache_get(key: str) -> Optional&#91;Any&#93;` | Get a value from the memory cache, respecting TTL. | [`src/core/modules/atomic/cache/get.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L25) |
-| function | `def _cache_has(key: str) -> bool` | Check if a key exists in memory cache (respecting TTL). | [`src/core/modules/atomic/cache/get.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L40) |
-| function | `async def cache_get(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get a value from cache by key. | [`src/core/modules/atomic/cache/get.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L129) |
+| function | `def _cache_get(key: str) -> Optional&#91;Any&#93;` | Get a value from the memory cache, respecting TTL. | [`src/core/modules/atomic/cache/get.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L26) |
+| function | `def _cache_has(key: str) -> bool` | Check if a key exists in memory cache (respecting TTL). | [`src/core/modules/atomic/cache/get.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L41) |
+| function | `async def cache_get(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get a value from cache by key. | [`src/core/modules/atomic/cache/get.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L130) |
 
 ## `src/core/modules/atomic/cache/set.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def cache_set(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Set a value in cache with optional TTL. | [`src/core/modules/atomic/cache/set.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L130) |
+| function | `async def cache_set(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Set a value in cache with optional TTL. | [`src/core/modules/atomic/cache/set.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L131) |
 
 ## `src/core/modules/atomic/check/is_array.py`
 
@@ -3784,8 +3784,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _element_to_dict(element: ET.Element, preserve_attributes: bool) -> Any` | Convert an XML element to a nested dict. | [`src/core/modules/atomic/data/xml_parse.py:18`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/xml_parse.py#L18) |
-| function | `async def xml_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse XML string or file into Python dict. | [`src/core/modules/atomic/data/xml_parse.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/xml_parse.py#L168) |
+| function | `def _element_to_dict(element: ET.Element, preserve_attributes: bool) -> Any` | Convert an XML element to a nested dict. | [`src/core/modules/atomic/data/xml_parse.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/xml_parse.py#L19) |
+| function | `async def xml_parse(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Parse XML string or file into Python dict. | [`src/core/modules/atomic/data/xml_parse.py:169`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/xml_parse.py#L169) |
 
 ## `src/core/modules/atomic/data/yaml_generate.py`
 
@@ -3886,9 +3886,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _build_build_args(params: Dict&#91;str, Any&#93;) -> List&#91;str&#93;` | Build docker build CLI arguments from params. | [`src/core/modules/atomic/docker/build.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L22) |
-| function | `def _parse_image_id(output: str) -> str` | Extract image ID from docker build output. | [`src/core/modules/atomic/docker/build.py:50`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L50) |
-| function | `async def docker_build(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Build a Docker image from a Dockerfile. | [`src/core/modules/atomic/docker/build.py:182`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L182) |
+| function | `def _build_build_args(params: Dict&#91;str, Any&#93;) -> List&#91;str&#93;` | Build docker build CLI arguments from params. | [`src/core/modules/atomic/docker/build.py:23`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L23) |
+| function | `def _parse_image_id(output: str) -> str` | Extract image ID from docker build output. | [`src/core/modules/atomic/docker/build.py:51`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L51) |
+| function | `async def docker_build(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Build a Docker image from a Dockerfile. | [`src/core/modules/atomic/docker/build.py:183`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/docker/build.py#L183) |
 
 ## `src/core/modules/atomic/docker/inspect.py`
 
@@ -4168,9 +4168,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class FileDeleteModule(BaseModule)` | Delete File Module | [`src/core/modules/atomic/file/delete.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L74) |
-| method | `def FileDeleteModule.validate_params(self) -> None` | Implements `FileDeleteModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/file/delete.py:77`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L77) |
-| method | `async def FileDeleteModule.execute(self) -> Any` | Implements `FileDeleteModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/file/delete.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L84) |
+| class | `class FileDeleteModule(BaseModule)` | Delete File Module | [`src/core/modules/atomic/file/delete.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L75) |
+| method | `def FileDeleteModule.validate_params(self) -> None` | Implements `FileDeleteModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/file/delete.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L78) |
+| method | `async def FileDeleteModule.execute(self) -> Any` | Implements `FileDeleteModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/file/delete.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/delete.py#L91) |
 
 ## `src/core/modules/atomic/file/diff.py`
 
@@ -4189,7 +4189,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def file_exists(context)` | Check if file exists | [`src/core/modules/atomic/file/exists.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/exists.py#L79) |
+| function | `async def file_exists(context)` | Check if file exists | [`src/core/modules/atomic/file/exists.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/file/exists.py#L80) |
 
 ## `src/core/modules/atomic/file/move.py`
 
@@ -4543,32 +4543,33 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class UnsafeCloneURL(ValueError)` | Raised when a clone URL could trigger command execution or local access. | [`src/core/modules/atomic/git/clone.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L35) |
-| function | `def _validate_clone_url(url: str) -> None` | Reject clone URLs that can run commands (ext::), read local files (file://), inject git options (leading '-'), or hit arbitrary local paths. | [`src/core/modules/atomic/git/clone.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L39) |
-| function | `def _build_clone_env() -> Dict&#91;str, str&#93;` | Scrubbed environment for the git subprocess. | [`src/core/modules/atomic/git/clone.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L59) |
-| function | `def _inject_token_into_url(url: str, token: str) -> str` | Inject access token into HTTPS URL for private repos. | [`src/core/modules/atomic/git/clone.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L74) |
-| function | `def _build_clone_cmd(clone_url: str, destination: str, branch: str=None, depth: int=None) -> list` | Build git clone command list. | [`src/core/modules/atomic/git/clone.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L84) |
-| function | `async def _get_repo_info(destination: str) -> tuple` | Get current branch and HEAD commit hash from cloned repo. | [`src/core/modules/atomic/git/clone.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L97) |
-| function | `def _sanitize_error(error_msg: str, token: str=None) -> str` | Remove token from error messages. | [`src/core/modules/atomic/git/clone.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L117) |
-| function | `async def git_clone(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clone a git repository | [`src/core/modules/atomic/git/clone.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L207) |
+| class | `class UnsafeCloneURL(ValueError)` | Raised when a clone URL could trigger command execution or local access. | [`src/core/modules/atomic/git/clone.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L41) |
+| function | `def _validate_clone_url(url: str) -> None` | Reject clone URLs that can run commands (ext::), read local files (file://), inject git options (leading '-'), or hit arbitrary local paths. | [`src/core/modules/atomic/git/clone.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L45) |
+| function | `def _guard_clone_target(url: str) -> None` | SSRF guard for the clone target. | [`src/core/modules/atomic/git/clone.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L65) |
+| function | `def _build_clone_env() -> Dict&#91;str, str&#93;` | Scrubbed environment for the git subprocess. | [`src/core/modules/atomic/git/clone.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L87) |
+| function | `def _inject_token_into_url(url: str, token: str) -> str` | Inject access token into HTTPS URL for private repos. | [`src/core/modules/atomic/git/clone.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L102) |
+| function | `def _build_clone_cmd(clone_url: str, destination: str, branch: str=None, depth: int=None) -> list` | Build git clone command list. | [`src/core/modules/atomic/git/clone.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L112) |
+| function | `async def _get_repo_info(destination: str) -> tuple` | Get current branch and HEAD commit hash from cloned repo. | [`src/core/modules/atomic/git/clone.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L125) |
+| function | `def _sanitize_error(error_msg: str, token: str=None) -> str` | Remove token from error messages. | [`src/core/modules/atomic/git/clone.py:145`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L145) |
+| function | `async def git_clone(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clone a git repository | [`src/core/modules/atomic/git/clone.py:235`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L235) |
 
 ## `src/core/modules/atomic/git/commit.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def _run_git(repo_path: str, *args: str) -> tuple` | Run a git command in the given repo and return (returncode, stdout, stderr). | [`src/core/modules/atomic/git/commit.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L22) |
-| function | `async def _stage_files(repo_path: str, add_all: bool, files: List&#91;str&#93;)` | Stage files for commit. | [`src/core/modules/atomic/git/commit.py:33`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L33) |
-| function | `def _parse_files_changed(stat_out: str) -> int` | Parse files changed count from git diff --stat output. | [`src/core/modules/atomic/git/commit.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L47) |
-| function | `async def git_commit(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Create a git commit | [`src/core/modules/atomic/git/commit.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L146) |
+| function | `async def _run_git(repo_path: str, *args: str) -> tuple` | Run a git command in the given repo and return (returncode, stdout, stderr). | [`src/core/modules/atomic/git/commit.py:23`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L23) |
+| function | `async def _stage_files(repo_path: str, add_all: bool, files: List&#91;str&#93;)` | Stage files for commit. | [`src/core/modules/atomic/git/commit.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L34) |
+| function | `def _parse_files_changed(stat_out: str) -> int` | Parse files changed count from git diff --stat output. | [`src/core/modules/atomic/git/commit.py:48`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L48) |
+| function | `async def git_commit(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Create a git commit | [`src/core/modules/atomic/git/commit.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/commit.py#L147) |
 
 ## `src/core/modules/atomic/git/diff.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def _run_git(repo_path: str, *args: str) -> tuple` | Run a git command in the given repo and return (returncode, stdout, stderr). | [`src/core/modules/atomic/git/diff.py:22`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L22) |
-| function | `def _build_diff_args(staged: bool, ref1: str, ref2: str=None, extra_flags: List&#91;str&#93;=None) -> List&#91;str&#93;` | Build git diff argument list. | [`src/core/modules/atomic/git/diff.py:33`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L33) |
-| function | `def _parse_numstat(numstat_out: str) -> tuple` | Parse git diff --numstat output into (files_changed, insertions, deletions). | [`src/core/modules/atomic/git/diff.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L47) |
-| function | `async def git_diff(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get git diff | [`src/core/modules/atomic/git/diff.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L155) |
+| function | `async def _run_git(repo_path: str, *args: str) -> tuple` | Run a git command in the given repo and return (returncode, stdout, stderr). | [`src/core/modules/atomic/git/diff.py:23`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L23) |
+| function | `def _build_diff_args(staged: bool, ref1: str, ref2: str=None, extra_flags: List&#91;str&#93;=None) -> List&#91;str&#93;` | Build git diff argument list. | [`src/core/modules/atomic/git/diff.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L34) |
+| function | `def _parse_numstat(numstat_out: str) -> tuple` | Parse git diff --numstat output into (files_changed, insertions, deletions). | [`src/core/modules/atomic/git/diff.py:48`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L48) |
+| function | `async def git_diff(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get git diff | [`src/core/modules/atomic/git/diff.py:156`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/diff.py#L156) |
 
 ## `src/core/modules/atomic/graphql/mutation.py`
 
@@ -5044,12 +5045,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def llm_code_fix(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate and optionally apply code fixes using AI | [`src/core/modules/atomic/llm/code_fix.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L115) |
-| function | `def _get_system_prompt() -> str` | Get system prompt for code fixing | [`src/core/modules/atomic/llm/code_fix.py:259`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L259) |
-| function | `def _build_fix_prompt(issues: List&#91;Dict&#93;, files: Dict&#91;str, str&#93;, context: str) -> str` | Build the fix generation prompt | [`src/core/modules/atomic/llm/code_fix.py:287`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L287) |
-| function | `def _parse_fixes(response: str, parsed: Optional&#91;Dict&#93;) -> List&#91;Dict&#93;` | Parse fixes from LLM response | [`src/core/modules/atomic/llm/code_fix.py:310`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L310) |
-| function | `def _apply_fix(content: str, fix: Dict) -> str` | Apply a single fix to content | [`src/core/modules/atomic/llm/code_fix.py:331`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L331) |
-| function | `def _generate_diff(original: str, new: str) -> str` | Generate a simple diff | [`src/core/modules/atomic/llm/code_fix.py:354`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L354) |
+| function | `async def llm_code_fix(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate and optionally apply code fixes using AI | [`src/core/modules/atomic/llm/code_fix.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L116) |
+| function | `def _get_system_prompt() -> str` | Get system prompt for code fixing | [`src/core/modules/atomic/llm/code_fix.py:272`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L272) |
+| function | `def _build_fix_prompt(issues: List&#91;Dict&#93;, files: Dict&#91;str, str&#93;, context: str) -> str` | Build the fix generation prompt | [`src/core/modules/atomic/llm/code_fix.py:300`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L300) |
+| function | `def _parse_fixes(response: str, parsed: Optional&#91;Dict&#93;) -> List&#91;Dict&#93;` | Parse fixes from LLM response | [`src/core/modules/atomic/llm/code_fix.py:323`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L323) |
+| function | `def _apply_fix(content: str, fix: Dict) -> str` | Apply a single fix to content | [`src/core/modules/atomic/llm/code_fix.py:344`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L344) |
+| function | `def _generate_diff(original: str, new: str) -> str` | Generate a simple diff | [`src/core/modules/atomic/llm/code_fix.py:367`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L367) |
 
 ## `src/core/modules/atomic/logic/and_op.py`
 
@@ -5200,23 +5201,23 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def network_ping(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Ping a host to check connectivity and measure latency. | [`src/core/modules/atomic/network/ping.py:131`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/ping.py#L131) |
+| function | `async def network_ping(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Ping a host to check connectivity and measure latency. | [`src/core/modules/atomic/network/ping.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/ping.py#L132) |
 
 ## `src/core/modules/atomic/network/port_scan.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def network_port_scan(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Scan ports on a host to check which are open. | [`src/core/modules/atomic/network/port_scan.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L129) |
-| method | `async def network_port_scan._check_port(port: int) -> bool` | Implements `network_port_scan._check_port`; linked source is authoritative. | [`src/core/modules/atomic/network/port_scan.py:153`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L153) |
-| function | `async def _is_port_open(host: str, port: int, timeout: float) -> bool` | Check if a single port is open using TCP connect. | [`src/core/modules/atomic/network/port_scan.py:191`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L191) |
-| function | `def _parse_ports(ports_input: Union&#91;str, list, None&#93;) -> List&#91;int&#93;` | Parse port specification into a list of port numbers. | [`src/core/modules/atomic/network/port_scan.py:209`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L209) |
+| function | `async def network_port_scan(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Scan ports on a host to check which are open. | [`src/core/modules/atomic/network/port_scan.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L130) |
+| method | `async def network_port_scan._check_port(port: int) -> bool` | Implements `network_port_scan._check_port`; linked source is authoritative. | [`src/core/modules/atomic/network/port_scan.py:159`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L159) |
+| function | `async def _is_port_open(host: str, port: int, timeout: float) -> bool` | Check if a single port is open using TCP connect. | [`src/core/modules/atomic/network/port_scan.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L197) |
+| function | `def _parse_ports(ports_input: Union&#91;str, list, None&#93;) -> List&#91;int&#93;` | Parse port specification into a list of port numbers. | [`src/core/modules/atomic/network/port_scan.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/port_scan.py#L215) |
 
 ## `src/core/modules/atomic/network/traceroute.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def network_traceroute(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Trace the route packets take to reach a destination host. | [`src/core/modules/atomic/network/traceroute.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/traceroute.py#L114) |
-| function | `def _parse_traceroute_output(output: str) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Parse traceroute output lines into structured hop data. | [`src/core/modules/atomic/network/traceroute.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/traceroute.py#L170) |
+| function | `async def network_traceroute(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Trace the route packets take to reach a destination host. | [`src/core/modules/atomic/network/traceroute.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/traceroute.py#L115) |
+| function | `def _parse_traceroute_output(output: str) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Parse traceroute output lines into structured hop data. | [`src/core/modules/atomic/network/traceroute.py:176`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/network/traceroute.py#L176) |
 
 ## `src/core/modules/atomic/network/whois.py`
 
@@ -5345,18 +5346,17 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _guard_ip(host: str) -> Optional&#91;str&#93;` | Return an IP string to range-check for the SSRF guard, or None. | [`src/core/modules/atomic/port/check.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L19) |
-| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L170) |
-| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L215) |
-| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:262`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L262) |
+| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L150) |
+| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L197) |
+| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:244`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L244) |
 
 ## `src/core/modules/atomic/port/wait.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def port_wait(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Wait for a network port to become available | [`src/core/modules/atomic/port/wait.py:164`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L164) |
-| function | `async def _check_port(host: str, port: int) -> bool` | Check if a port is open | [`src/core/modules/atomic/port/wait.py:230`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L230) |
-| method | `def _check_port.sync_check()` | Implements `_check_port.sync_check`; linked source is authoritative. | [`src/core/modules/atomic/port/wait.py:236`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L236) |
+| function | `async def port_wait(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Wait for a network port to become available | [`src/core/modules/atomic/port/wait.py:165`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L165) |
+| function | `async def _check_port(host: str, port: int) -> bool` | Check if a port is open | [`src/core/modules/atomic/port/wait.py:237`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L237) |
+| method | `def _check_port.sync_check()` | Implements `_check_port.sync_check`; linked source is authoritative. | [`src/core/modules/atomic/port/wait.py:243`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/wait.py#L243) |
 
 ## `src/core/modules/atomic/process/list.py`
 
@@ -5368,9 +5368,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def get_process_registry() -> Dict&#91;str, Dict&#91;str, Any&#93;&#93;` | Get the global process registry | [`src/core/modules/atomic/process/start.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L26) |
-| function | `async def process_start(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Start a background process | [`src/core/modules/atomic/process/start.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L148) |
-| function | `async def _read_output(process_id: str, process: asyncio.subprocess.Process, log_handle)` | Background task to read process output | [`src/core/modules/atomic/process/start.py:301`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L301) |
+| function | `def get_process_registry() -> Dict&#91;str, Dict&#91;str, Any&#93;&#93;` | Get the global process registry | [`src/core/modules/atomic/process/start.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L27) |
+| function | `async def process_start(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Start a background process | [`src/core/modules/atomic/process/start.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L149) |
+| function | `async def _read_output(process_id: str, process: asyncio.subprocess.Process, log_handle)` | Background task to read process output | [`src/core/modules/atomic/process/start.py:307`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/process/start.py#L307) |
 
 ## `src/core/modules/atomic/process/stop.py`
 
@@ -5385,20 +5385,20 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def queue_dequeue(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Remove and return an item from a queue. | [`src/core/modules/atomic/queue/dequeue.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/dequeue.py#L120) |
+| function | `async def queue_dequeue(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Remove and return an item from a queue. | [`src/core/modules/atomic/queue/dequeue.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/dequeue.py#L121) |
 
 ## `src/core/modules/atomic/queue/enqueue.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _get_memory_queue(name: str) -> asyncio.Queue` | Get or create an in-memory queue by name. | [`src/core/modules/atomic/queue/enqueue.py:24`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/enqueue.py#L24) |
-| function | `async def queue_enqueue(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Add an item to a queue. | [`src/core/modules/atomic/queue/enqueue.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/enqueue.py#L121) |
+| function | `def _get_memory_queue(name: str) -> asyncio.Queue` | Get or create an in-memory queue by name. | [`src/core/modules/atomic/queue/enqueue.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/enqueue.py#L25) |
+| function | `async def queue_enqueue(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Add an item to a queue. | [`src/core/modules/atomic/queue/enqueue.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/enqueue.py#L122) |
 
 ## `src/core/modules/atomic/queue/size.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def queue_size(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get the current size of a queue. | [`src/core/modules/atomic/queue/size.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/size.py#L96) |
+| function | `async def queue_size(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Get the current size of a queue. | [`src/core/modules/atomic/queue/size.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/queue/size.py#L97) |
 
 ## `src/core/modules/atomic/random/choice.py`
 
@@ -5638,7 +5638,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def sandbox_execute_shell(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Execute a shell command with timeout and environment control. | [`src/core/modules/atomic/sandbox/execute_shell.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_shell.py#L136) |
+| function | `async def sandbox_execute_shell(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Execute a shell command with timeout and environment control. | [`src/core/modules/atomic/sandbox/execute_shell.py:137`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/sandbox/execute_shell.py#L137) |
 
 ## `src/core/modules/atomic/scheduler/cron_parse.py`
 
@@ -5705,19 +5705,19 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ssh_exec(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Execute command on remote server via SSH | [`src/core/modules/atomic/ssh/exec.py:107`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/exec.py#L107) |
+| function | `async def ssh_exec(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Execute command on remote server via SSH | [`src/core/modules/atomic/ssh/exec.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/exec.py#L108) |
 
 ## `src/core/modules/atomic/ssh/sftp_download.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ssh_sftp_download(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Download file from remote server via SFTP | [`src/core/modules/atomic/ssh/sftp_download.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/sftp_download.py#L97) |
+| function | `async def ssh_sftp_download(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Download file from remote server via SFTP | [`src/core/modules/atomic/ssh/sftp_download.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/sftp_download.py#L98) |
 
 ## `src/core/modules/atomic/ssh/sftp_upload.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ssh_sftp_upload(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Upload file to remote server via SFTP | [`src/core/modules/atomic/ssh/sftp_upload.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/sftp_upload.py#L100) |
+| function | `async def ssh_sftp_upload(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Upload file to remote server via SFTP | [`src/core/modules/atomic/ssh/sftp_upload.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ssh/sftp_upload.py#L101) |
 
 ## `src/core/modules/atomic/stats/mean.py`
 
@@ -6002,11 +6002,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _scrubbed_env() -> Dict&#91;str, str&#93;` | Keep provider credentials and unrelated process state out of the worker. | [`src/core/modules/atomic/testing/visual.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L31) |
-| function | `def _decode_image_input(value: str, name: str, temp_dir: Path) -> Path` | Materialize a PNG data URI/raw base64 value or return a local path. | [`src/core/modules/atomic/testing/visual.py:36`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L36) |
-| function | `def _ratio(value: Any, name: str, default: float) -> float` | Implements `_ratio`; linked source is authoritative. | [`src/core/modules/atomic/testing/visual.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L63) |
-| function | `async def compare_visual_files(expected: str, actual: str, *, threshold: float=0.001, color_threshold: float=0.1, output_diff: bool=True, diff_path: Optional&#91;str&#93;=None, timeout_ms: int=120000) -> Dict&#91;str, Any&#93;` | Compare two real PNG inputs in a bounded, credential-free subprocess. | [`src/core/modules/atomic/testing/visual.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L70) |
-| function | `async def testing_visual_compare(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Run the deterministic visual comparison facade. | [`src/core/modules/atomic/testing/visual.py:272`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L272) |
+| function | `def _scrubbed_env() -> Dict&#91;str, str&#93;` | Keep provider credentials and unrelated process state out of the worker. | [`src/core/modules/atomic/testing/visual.py:32`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L32) |
+| function | `def _decode_image_input(value: str, name: str, temp_dir: Path) -> Path` | Materialize a PNG data URI/raw base64 value or return a local path. | [`src/core/modules/atomic/testing/visual.py:37`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L37) |
+| function | `def _ratio(value: Any, name: str, default: float) -> float` | Implements `_ratio`; linked source is authoritative. | [`src/core/modules/atomic/testing/visual.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L67) |
+| function | `async def compare_visual_files(expected: str, actual: str, *, threshold: float=0.001, color_threshold: float=0.1, output_diff: bool=True, diff_path: Optional&#91;str&#93;=None, timeout_ms: int=120000) -> Dict&#91;str, Any&#93;` | Compare two real PNG inputs in a bounded, credential-free subprocess. | [`src/core/modules/atomic/testing/visual.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L74) |
+| function | `async def testing_visual_compare(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Run the deterministic visual comparison facade. | [`src/core/modules/atomic/testing/visual.py:280`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L280) |
 
 ## `src/core/modules/atomic/text/char_count.py`
 
@@ -6254,10 +6254,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def KnowledgeManager.reindex_collection(self, embedding_provider: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Reindex collection with new embeddings | [`src/core/modules/atomic/vector/knowledge_manager.py:217`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L217) |
 | method | `def KnowledgeManager.get_statistics(self) -> Dict&#91;str, Any&#93;` | Get knowledge base statistics | [`src/core/modules/atomic/vector/knowledge_manager.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L267) |
 | method | `def KnowledgeManager.export_entries(self, output_file: str, format: str='json') -> bool` | Export knowledge entries to file | [`src/core/modules/atomic/vector/knowledge_manager.py:307`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L307) |
-| class | `class KnowledgeSearch` | Advanced search capabilities | [`src/core/modules/atomic/vector/knowledge_manager.py:363`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L363) |
-| method | `def KnowledgeSearch.__init__(self, knowledge_store: KnowledgeStore)` | Initialize knowledge search | [`src/core/modules/atomic/vector/knowledge_manager.py:368`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L368) |
-| method | `def KnowledgeSearch.search_by_date_range(self, query: str, start_date: datetime, end_date: datetime, top_k: int=10) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search within date range | [`src/core/modules/atomic/vector/knowledge_manager.py:377`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L377) |
-| method | `def KnowledgeSearch.search_with_score_threshold(self, query: str, min_score: float=0.7, top_k: int=10) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search with minimum score threshold | [`src/core/modules/atomic/vector/knowledge_manager.py:416`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L416) |
+| class | `class KnowledgeSearch` | Advanced search capabilities | [`src/core/modules/atomic/vector/knowledge_manager.py:368`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L368) |
+| method | `def KnowledgeSearch.__init__(self, knowledge_store: KnowledgeStore)` | Initialize knowledge search | [`src/core/modules/atomic/vector/knowledge_manager.py:373`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L373) |
+| method | `def KnowledgeSearch.search_by_date_range(self, query: str, start_date: datetime, end_date: datetime, top_k: int=10) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search within date range | [`src/core/modules/atomic/vector/knowledge_manager.py:382`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L382) |
+| method | `def KnowledgeSearch.search_with_score_threshold(self, query: str, min_score: float=0.7, top_k: int=10) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search with minimum score threshold | [`src/core/modules/atomic/vector/knowledge_manager.py:421`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vector/knowledge_manager.py#L421) |
 
 ## `src/core/modules/atomic/vector/knowledge_store.py`
 
@@ -6354,11 +6354,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class CapturedElement` | Captured element with computed styles. | [`src/core/modules/atomic/verify/capture.py:17`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L17) |
-| method | `def CapturedElement.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `CapturedElement.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L63) |
-| class | `class VerifyCaptureModule(BaseModule)` | Capture computed styles from browser element. | [`src/core/modules/atomic/verify/capture.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L168) |
-| method | `def VerifyCaptureModule.validate_params(self) -> None` | Implements `VerifyCaptureModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L174) |
-| method | `async def VerifyCaptureModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyCaptureModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L186) |
+| class | `class CapturedElement` | Captured element with computed styles. | [`src/core/modules/atomic/verify/capture.py:18`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L18) |
+| method | `def CapturedElement.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `CapturedElement.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L64) |
+| class | `class VerifyCaptureModule(BaseModule)` | Capture computed styles from browser element. | [`src/core/modules/atomic/verify/capture.py:169`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L169) |
+| method | `def VerifyCaptureModule.validate_params(self) -> None` | Implements `VerifyCaptureModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L175) |
+| method | `async def VerifyCaptureModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyCaptureModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/capture.py:187`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/capture.py#L187) |
 
 ## `src/core/modules/atomic/verify/compare.py`
 
@@ -6430,43 +6430,43 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class VerifyRunModule(BaseModule)` | Run full design verification workflow using other verify modules. | [`src/core/modules/atomic/verify/runner.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L90) |
-| method | `def VerifyRunModule.validate_params(self) -> None` | Implements `VerifyRunModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L96) |
-| method | `async def VerifyRunModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyRunModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L121) |
-| class | `class VerifyRunner` | High-level API for design verification. | [`src/core/modules/atomic/verify/runner.py:310`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L310) |
-| method | `def VerifyRunner.__init__(self, output_dir: str='./verify-reports', figma_token: str=None)` | Implements `VerifyRunner.__init__`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:321`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L321) |
-| method | `async def VerifyRunner.run_quick(self, url: str, selectors: List&#91;str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Quick verification with selectors. | [`src/core/modules/atomic/verify/runner.py:325`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L325) |
-| method | `async def VerifyRunner.run(self, url: str, ruleset_path: str, report_format: str='html') -> Dict&#91;str, Any&#93;` | Full verification with YAML ruleset. | [`src/core/modules/atomic/verify/runner.py:343`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L343) |
-| method | `async def VerifyRunner.run_with_figma(self, url: str, selectors: List&#91;str&#93;, figma_file_id: str, figma_mapping: Dict&#91;str, str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Verification with Figma design comparison. | [`src/core/modules/atomic/verify/runner.py:361`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L361) |
+| class | `class VerifyRunModule(BaseModule)` | Run full design verification workflow using other verify modules. | [`src/core/modules/atomic/verify/runner.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L91) |
+| method | `def VerifyRunModule.validate_params(self) -> None` | Implements `VerifyRunModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:97`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L97) |
+| method | `async def VerifyRunModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyRunModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L122) |
+| class | `class VerifyRunner` | High-level API for design verification. | [`src/core/modules/atomic/verify/runner.py:316`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L316) |
+| method | `def VerifyRunner.__init__(self, output_dir: str='./verify-reports', figma_token: str=None)` | Implements `VerifyRunner.__init__`; linked source is authoritative. | [`src/core/modules/atomic/verify/runner.py:327`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L327) |
+| method | `async def VerifyRunner.run_quick(self, url: str, selectors: List&#91;str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Quick verification with selectors. | [`src/core/modules/atomic/verify/runner.py:331`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L331) |
+| method | `async def VerifyRunner.run(self, url: str, ruleset_path: str, report_format: str='html') -> Dict&#91;str, Any&#93;` | Full verification with YAML ruleset. | [`src/core/modules/atomic/verify/runner.py:349`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L349) |
+| method | `async def VerifyRunner.run_with_figma(self, url: str, selectors: List&#91;str&#93;, figma_file_id: str, figma_mapping: Dict&#91;str, str&#93;, expected_styles: Dict&#91;str, Dict&#93;=None) -> Dict&#91;str, Any&#93;` | Verification with Figma design comparison. | [`src/core/modules/atomic/verify/runner.py:367`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L367) |
 
 ## `src/core/modules/atomic/verify/spec_runner.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class SpecResult` | 单条规则的验证结果 | [`src/core/modules/atomic/verify/spec_runner.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L44) |
-| method | `def SpecResult.coverage(self) -> float` | 计算覆盖率百分比 | [`src/core/modules/atomic/verify/spec_runner.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L56) |
-| method | `def SpecResult.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `SpecResult.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L67) |
-| function | `async def execute_module_dynamic(module_id: str, params: Dict&#91;str, Any&#93;, context: Optional&#91;Dict&#93;=None) -> Dict&#91;str, Any&#93;` | 动态执行任意 flyto-core 模组 | [`src/core/modules/atomic/verify/spec_runner.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L83) |
-| function | `def extract_keys(data: Any, key_field: Optional&#91;str&#93;=None) -> Set&#91;str&#93;` | 从模组输出中提取 keys | [`src/core/modules/atomic/verify/spec_runner.py:113`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L113) |
-| function | `def compare_keys(source_keys: Set&#91;str&#93;, target_keys: Set&#91;str&#93;, direction: str='bidirectional') -> tuple` | 比较两个 key 集合 | [`src/core/modules/atomic/verify/spec_runner.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L178) |
-| function | `async def run_spec_rule(rule: Dict&#91;str, Any&#93;) -> SpecResult` | 执行单条验证规则 | [`src/core/modules/atomic/verify/spec_runner.py:206`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L206) |
-| function | `async def run_spec_ruleset(ruleset: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | 执行整个 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:270`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L270) |
-| function | `def load_spec_ruleset(path: Union&#91;str, Path&#93;) -> Dict&#91;str, Any&#93;` | 从 YAML 文件加载 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:299`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L299) |
-| class | `class VerifySpecModule(BaseModule)` | 动态 Spec 验证模组 | [`src/core/modules/atomic/verify/spec_runner.py:344`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L344) |
-| method | `def VerifySpecModule.validate_params(self) -> None` | Implements `VerifySpecModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:350`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L350) |
-| method | `async def VerifySpecModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifySpecModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:356`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L356) |
+| class | `class SpecResult` | 单条规则的验证结果 | [`src/core/modules/atomic/verify/spec_runner.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L45) |
+| method | `def SpecResult.coverage(self) -> float` | 计算覆盖率百分比 | [`src/core/modules/atomic/verify/spec_runner.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L57) |
+| method | `def SpecResult.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `SpecResult.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:68`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L68) |
+| function | `async def execute_module_dynamic(module_id: str, params: Dict&#91;str, Any&#93;, context: Optional&#91;Dict&#93;=None) -> Dict&#91;str, Any&#93;` | 动态执行任意 flyto-core 模组 | [`src/core/modules/atomic/verify/spec_runner.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L84) |
+| function | `def extract_keys(data: Any, key_field: Optional&#91;str&#93;=None) -> Set&#91;str&#93;` | 从模组输出中提取 keys | [`src/core/modules/atomic/verify/spec_runner.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L114) |
+| function | `def compare_keys(source_keys: Set&#91;str&#93;, target_keys: Set&#91;str&#93;, direction: str='bidirectional') -> tuple` | 比较两个 key 集合 | [`src/core/modules/atomic/verify/spec_runner.py:179`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L179) |
+| function | `async def run_spec_rule(rule: Dict&#91;str, Any&#93;) -> SpecResult` | 执行单条验证规则 | [`src/core/modules/atomic/verify/spec_runner.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L207) |
+| function | `async def run_spec_ruleset(ruleset: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | 执行整个 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:271`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L271) |
+| function | `def load_spec_ruleset(path: Union&#91;str, Path&#93;) -> Dict&#91;str, Any&#93;` | 从 YAML 文件加载 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:300`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L300) |
+| class | `class VerifySpecModule(BaseModule)` | 动态 Spec 验证模组 | [`src/core/modules/atomic/verify/spec_runner.py:345`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L345) |
+| method | `def VerifySpecModule.validate_params(self) -> None` | Implements `VerifySpecModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:351`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L351) |
+| method | `async def VerifySpecModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifySpecModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:367`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L367) |
 
 ## `src/core/modules/atomic/verify/visual_diff.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def _screenshot_url(url: str, output_path: str, viewport_width: int=1280, viewport_height: int=800) -> str` | Take a full-page screenshot of a URL using Playwright. | [`src/core/modules/atomic/verify/visual_diff.py:32`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L32) |
-| function | `def _pct_to_px(differences: List&#91;Dict&#93;, img_width: int, img_height: int) -> List&#91;Dict&#93;` | Convert percentage-based coordinates to pixel coordinates. | [`src/core/modules/atomic/verify/visual_diff.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L56) |
-| function | `def _generate_visual_diff_html(report_data: Dict, ref_screenshot: str, dev_screenshot: str, annotated_screenshot: str, output_path: str) -> str` | Generate an HTML report with side-by-side comparison and annotations. | [`src/core/modules/atomic/verify/visual_diff.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L72) |
-| function | `def _score_color(score) -> str` | Implements `_score_color`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L184) |
-| class | `class VerifyVisualDiffModule(BaseModule)` | End-to-end deterministic visual comparison and evidence report. | [`src/core/modules/atomic/verify/visual_diff.py:246`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L246) |
-| method | `def VerifyVisualDiffModule.validate_params(self) -> None` | Implements `VerifyVisualDiffModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:252`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L252) |
-| method | `async def VerifyVisualDiffModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyVisualDiffModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:280`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L280) |
+| function | `def _pct_to_px(differences: List&#91;Dict&#93;, img_width: int, img_height: int) -> List&#91;Dict&#93;` | Convert percentage-based coordinates to pixel coordinates. | [`src/core/modules/atomic/verify/visual_diff.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L64) |
+| function | `def _generate_visual_diff_html(report_data: Dict, ref_screenshot: str, dev_screenshot: str, annotated_screenshot: str, output_path: str) -> str` | Generate an HTML report with side-by-side comparison and annotations. | [`src/core/modules/atomic/verify/visual_diff.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L80) |
+| function | `def _score_color(score) -> str` | Implements `_score_color`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:192`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L192) |
+| class | `class VerifyVisualDiffModule(BaseModule)` | End-to-end deterministic visual comparison and evidence report. | [`src/core/modules/atomic/verify/visual_diff.py:254`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L254) |
+| method | `def VerifyVisualDiffModule.validate_params(self) -> None` | Implements `VerifyVisualDiffModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:260`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L260) |
+| method | `async def VerifyVisualDiffModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifyVisualDiffModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/visual_diff.py:288`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L288) |
 
 ## `src/core/modules/atomic/vision/analyze.py`
 
@@ -7503,18 +7503,18 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ModuleCatalogManager.__init__(self)` | Implements `ModuleCatalogManager.__init__`; linked source is authoritative. | [`src/core/modules/registry/catalog.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L25) |
 | method | `def ModuleCatalogManager.export_catalog(self, lang: str='en') -> Dict&#91;str, Any&#93;` | Export complete module catalog | [`src/core/modules/registry/catalog.py:28`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L28) |
 | method | `def ModuleCatalogManager.export_to_json_file(self, filepath: str, lang: str='en')` | Export catalog to JSON file | [`src/core/modules/registry/catalog.py:51`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L51) |
-| method | `def ModuleCatalogManager.search_modules(self, query: str, category: Optional&#91;str&#93;=None, tags: Optional&#91;List&#91;str&#93;&#93;=None, lang: str='en') -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search modules by query string | [`src/core/modules/registry/catalog.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L67) |
-| method | `def ModuleCatalogManager.get_module_by_category(self, category: str, lang: str='en') -> List&#91;Dict&#91;str, Any&#93;&#93;` | Get all modules in a category | [`src/core/modules/registry/catalog.py:107`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L107) |
-| method | `def ModuleCatalogManager.get_statistics(self) -> Dict&#91;str, Any&#93;` | Get catalog statistics | [`src/core/modules/registry/catalog.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L112) |
-| method | `async def ModuleCatalogManager.sync_to_vectordb(self, lang: str='en')` | Sync module catalog to VectorDB for RAG | [`src/core/modules/registry/catalog.py:134`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L134) |
-| method | `def ModuleCatalogManager._format_module_for_rag(self, module_id: str, metadata: Dict&#91;str, Any&#93;) -> str` | Format module information for RAG ingestion | [`src/core/modules/registry/catalog.py:170`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L170) |
-| method | `def ModuleCatalogManager._get_categories(self, modules: Dict&#91;str, Dict&#91;str, Any&#93;&#93;) -> List&#91;str&#93;` | Extract unique categories | [`src/core/modules/registry/catalog.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L197) |
-| method | `def ModuleCatalogManager._get_all_tags(self, modules: Dict&#91;str, Dict&#91;str, Any&#93;&#93;) -> List&#91;str&#93;` | Extract all unique tags | [`src/core/modules/registry/catalog.py:201`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L201) |
-| method | `def ModuleCatalogManager._get_timestamp(self) -> str` | Get current ISO timestamp | [`src/core/modules/registry/catalog.py:208`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L208) |
-| method | `def ModuleCatalogManager.get_tiered_catalog(self, lang: str='en', filter_by_stability: bool=True, env: Optional&#91;str&#93;=None, include_internal: bool=False) -> Dict&#91;str, Any&#93;` | Get module catalog grouped by tier for frontend display. | [`src/core/modules/registry/catalog.py:216`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L216) |
-| method | `def ModuleCatalogManager.get_start_module_catalog(self, lang: str='en', filter_by_stability: bool=True, env: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Get modules that can be used as workflow start nodes. | [`src/core/modules/registry/catalog.py:247`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L247) |
-| method | `def ModuleCatalogManager.get_tier_statistics(self) -> Dict&#91;str, Any&#93;` | Get statistics by tier | [`src/core/modules/registry/catalog.py:272`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L272) |
-| function | `def get_catalog_manager() -> ModuleCatalogManager` | Get singleton catalog manager instance | [`src/core/modules/registry/catalog.py:300`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L300) |
+| method | `def ModuleCatalogManager.search_modules(self, query: str, category: Optional&#91;str&#93;=None, tags: Optional&#91;List&#91;str&#93;&#93;=None, lang: str='en') -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search modules by query string | [`src/core/modules/registry/catalog.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L72) |
+| method | `def ModuleCatalogManager.get_module_by_category(self, category: str, lang: str='en') -> List&#91;Dict&#91;str, Any&#93;&#93;` | Get all modules in a category | [`src/core/modules/registry/catalog.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L112) |
+| method | `def ModuleCatalogManager.get_statistics(self) -> Dict&#91;str, Any&#93;` | Get catalog statistics | [`src/core/modules/registry/catalog.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L117) |
+| method | `async def ModuleCatalogManager.sync_to_vectordb(self, lang: str='en')` | Sync module catalog to VectorDB for RAG | [`src/core/modules/registry/catalog.py:139`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L139) |
+| method | `def ModuleCatalogManager._format_module_for_rag(self, module_id: str, metadata: Dict&#91;str, Any&#93;) -> str` | Format module information for RAG ingestion | [`src/core/modules/registry/catalog.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L175) |
+| method | `def ModuleCatalogManager._get_categories(self, modules: Dict&#91;str, Dict&#91;str, Any&#93;&#93;) -> List&#91;str&#93;` | Extract unique categories | [`src/core/modules/registry/catalog.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L202) |
+| method | `def ModuleCatalogManager._get_all_tags(self, modules: Dict&#91;str, Dict&#91;str, Any&#93;&#93;) -> List&#91;str&#93;` | Extract all unique tags | [`src/core/modules/registry/catalog.py:206`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L206) |
+| method | `def ModuleCatalogManager._get_timestamp(self) -> str` | Get current ISO timestamp | [`src/core/modules/registry/catalog.py:213`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L213) |
+| method | `def ModuleCatalogManager.get_tiered_catalog(self, lang: str='en', filter_by_stability: bool=True, env: Optional&#91;str&#93;=None, include_internal: bool=False) -> Dict&#91;str, Any&#93;` | Get module catalog grouped by tier for frontend display. | [`src/core/modules/registry/catalog.py:221`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L221) |
+| method | `def ModuleCatalogManager.get_start_module_catalog(self, lang: str='en', filter_by_stability: bool=True, env: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Get modules that can be used as workflow start nodes. | [`src/core/modules/registry/catalog.py:252`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L252) |
+| method | `def ModuleCatalogManager.get_tier_statistics(self) -> Dict&#91;str, Any&#93;` | Get statistics by tier | [`src/core/modules/registry/catalog.py:277`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L277) |
+| function | `def get_catalog_manager() -> ModuleCatalogManager` | Get singleton catalog manager instance | [`src/core/modules/registry/catalog.py:305`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L305) |
 
 ## `src/core/modules/registry/core.py`
 
@@ -7558,8 +7558,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def _wrap_function_as_module.FunctionModuleWrapper.__init__(self, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;)` | Implements `_wrap_function_as_module.FunctionModuleWrapper.__init__`; linked source is authoritative. | [`src/core/modules/registry/decorators.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L89) |
 | method | `def _wrap_function_as_module.FunctionModuleWrapper.validate_params(self) -> None` | Implements `_wrap_function_as_module.FunctionModuleWrapper.validate_params`; linked source is authoritative. | [`src/core/modules/registry/decorators.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L93) |
 | method | `async def _wrap_function_as_module.FunctionModuleWrapper.execute(self) -> Any` | Implements `_wrap_function_as_module.FunctionModuleWrapper.execute`; linked source is authoritative. | [`src/core/modules/registry/decorators.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L96) |
-| function | `def register_module(module_id: str, version: str='1.0.0', stability: StabilityLevel=StabilityLevel.STABLE, level: ModuleLevel=ModuleLevel.ATOMIC, category: Optional&#91;str&#93;=None, subcategory: Optional&#91;str&#93;=None, tags: Optional&#91;List&#91;str&#93;&#93;=None, requires_context: Optional&#91;List&#91;str&#93;&#93;=None, provides_context: Optional&#91;List&#91;str&#93;&#93;=None, ui_visibility: Optional&#91;UIVisibility&#93;=None, ui_label: Optional&#91;Any&#93;=None, ui_label_key: Optional&#91;str&#93;=None, ui_description: Optional&#91;Any&#93;=None, ui_description_key: Optional&#91;str&#93;=None, ui_group: Optional&#91;str&#93;=None, ui_icon: Optional&#91;str&#93;=None, ui_color: Optional&#91;str&#93;=None, ui_help: Optional&#91;str&#93;=None, ui_help_key: Optional&#91;str&#93;=None, label: Optional&#91;Any&#93;=None, label_key: Optional&#91;str&#93;=None, description: Optional&#91;Any&#93;=None, description_key: Optional&#91;str&#93;=None, icon: Optional&#91;str&#93;=None, color: Optional&#91;str&#93;=None, input_types: Optional&#91;List&#91;str&#93;&#93;=None, output_types: Optional&#91;List&#91;str&#93;&#93;=None, can_receive_from: Optional&#91;List&#91;str&#93;&#93;=None, can_connect_to: Optional&#91;List&#91;str&#93;&#93;=None, input_type_labels: Optional&#91;Dict&#91;str, str&#93;&#93;=None, input_type_descriptions: Optional&#91;Dict&#91;str, str&#93;&#93;=None, output_type_labels: Optional&#91;Dict&#91;str, str&#93;&#93;=None, output_type_descriptions: Optional&#91;Dict&#91;str, str&#93;&#93;=None, suggested_predecessors: Optional&#91;List&#91;str&#93;&#93;=None, suggested_successors: Optional&#91;List&#91;str&#93;&#93;=None, connection_error_messages: Optional&#91;Dict&#91;str, str&#93;&#93;=None, params_schema: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, output_schema: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, timeout_ms: Optional&#91;int&#93;=None, timeout: Optional&#91;int&#93;=None, retryable: bool=False, max_retries: int=3, concurrent_safe: bool=True, requires_credentials: bool=False, handles_sensitive_data: bool=False, required_permissions: Optional&#91;List&#91;str&#93;&#93;=None, credential_keys: Optional&#91;List&#91;str&#93;&#93;=None, required_secrets: Optional&#91;List&#91;str&#93;&#93;=None, env_vars: Optional&#91;List&#91;str&#93;&#93;=None, execution_environment: Optional&#91;ExecutionEnvironment&#93;=None, node_type: NodeType=NodeType.STANDARD, input_ports: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, output_ports: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, dynamic_ports: Optional&#91;Dict&#91;str, Dict&#91;str, Any&#93;&#93;&#93;=None, container_config: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, can_be_start: Optional&#91;bool&#93;=None, start_requires_params: Optional&#91;List&#91;str&#93;&#93;=None, requires: Optional&#91;List&#91;str&#93;&#93;=None, permissions: Optional&#91;List&#91;str&#93;&#93;=None, examples: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, docs_url: Optional&#91;str&#93;=None, author: Optional&#91;str&#93;=None, license: str='MIT', required_tier: Optional&#91;str&#93;=None, required_feature: Optional&#91;str&#93;=None, tier: Optional&#91;ModuleTier&#93;=None)` | Module registration decorator. | [`src/core/modules/registry/decorators.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L109) |
-| method | `def register_module.decorator(module_class_or_func)` | Implements `register_module.decorator`; linked source is authoritative. | [`src/core/modules/registry/decorators.py:232`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L232) |
+| function | `def register_module(module_id: str, version: str='1.0.0', stability: StabilityLevel=StabilityLevel.STABLE, level: ModuleLevel=ModuleLevel.ATOMIC, category: Optional&#91;str&#93;=None, subcategory: Optional&#91;str&#93;=None, tags: Optional&#91;List&#91;str&#93;&#93;=None, requires_context: Optional&#91;List&#91;str&#93;&#93;=None, provides_context: Optional&#91;List&#91;str&#93;&#93;=None, ui_visibility: Optional&#91;UIVisibility&#93;=None, ui_label: Optional&#91;Any&#93;=None, ui_label_key: Optional&#91;str&#93;=None, ui_description: Optional&#91;Any&#93;=None, ui_description_key: Optional&#91;str&#93;=None, ui_group: Optional&#91;str&#93;=None, ui_icon: Optional&#91;str&#93;=None, ui_color: Optional&#91;str&#93;=None, ui_help: Optional&#91;str&#93;=None, ui_help_key: Optional&#91;str&#93;=None, label: Optional&#91;Any&#93;=None, label_key: Optional&#91;str&#93;=None, description: Optional&#91;Any&#93;=None, description_key: Optional&#91;str&#93;=None, icon: Optional&#91;str&#93;=None, color: Optional&#91;str&#93;=None, input_types: Optional&#91;List&#91;str&#93;&#93;=None, output_types: Optional&#91;List&#91;str&#93;&#93;=None, can_receive_from: Optional&#91;List&#91;str&#93;&#93;=None, can_connect_to: Optional&#91;List&#91;str&#93;&#93;=None, input_type_labels: Optional&#91;Dict&#91;str, str&#93;&#93;=None, input_type_descriptions: Optional&#91;Dict&#91;str, str&#93;&#93;=None, output_type_labels: Optional&#91;Dict&#91;str, str&#93;&#93;=None, output_type_descriptions: Optional&#91;Dict&#91;str, str&#93;&#93;=None, suggested_predecessors: Optional&#91;List&#91;str&#93;&#93;=None, suggested_successors: Optional&#91;List&#91;str&#93;&#93;=None, connection_error_messages: Optional&#91;Dict&#91;str, str&#93;&#93;=None, params_schema: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, output_schema: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, timeout_ms: Optional&#91;int&#93;=None, timeout: Optional&#91;int&#93;=None, retryable: bool=False, max_retries: int=3, concurrent_safe: bool=True, requires_credentials: bool=False, handles_sensitive_data: bool=False, required_permissions: Optional&#91;List&#91;str&#93;&#93;=None, credential_keys: Optional&#91;List&#91;str&#93;&#93;=None, required_secrets: Optional&#91;List&#91;str&#93;&#93;=None, env_vars: Optional&#91;List&#91;str&#93;&#93;=None, execution_environment: Optional&#91;ExecutionEnvironment&#93;=None, node_type: NodeType=NodeType.STANDARD, input_ports: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, output_ports: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, dynamic_ports: Optional&#91;Dict&#91;str, Dict&#91;str, Any&#93;&#93;&#93;=None, container_config: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, can_be_start: Optional&#91;bool&#93;=None, start_requires_params: Optional&#91;List&#91;str&#93;&#93;=None, requires: Optional&#91;List&#91;str&#93;&#93;=None, permissions: Optional&#91;List&#91;str&#93;&#93;=None, examples: Optional&#91;List&#91;Dict&#91;str, Any&#93;&#93;&#93;=None, docs_url: Optional&#91;str&#93;=None, author: Optional&#91;str&#93;=None, license: str='MIT', required_tier: Optional&#91;str&#93;=None, required_feature: Optional&#91;str&#93;=None, tier: Optional&#91;ModuleTier&#93;=None)` | Module registration decorator. | [`src/core/modules/registry/decorators.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L115) |
+| method | `def register_module.decorator(module_class_or_func)` | Implements `register_module.decorator`; linked source is authoritative. | [`src/core/modules/registry/decorators.py:238`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L238) |
 
 ## `src/core/modules/registry/metadata.py`
 
@@ -8444,8 +8444,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def aws_s3_upload(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Upload a local file to AWS S3. | [`src/core/modules/third_party/cloud/aws/s3_upload.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_upload.py#L90) |
-| method | `def aws_s3_upload._upload()` | Implements `aws_s3_upload._upload`; linked source is authoritative. | [`src/core/modules/third_party/cloud/aws/s3_upload.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_upload.py#L129) |
+| function | `async def aws_s3_upload(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Upload a local file to AWS S3. | [`src/core/modules/third_party/cloud/aws/s3_upload.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_upload.py#L91) |
+| method | `def aws_s3_upload._upload()` | Implements `aws_s3_upload._upload`; linked source is authoritative. | [`src/core/modules/third_party/cloud/aws/s3_upload.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/cloud/aws/s3_upload.py#L135) |
 
 ## `src/core/modules/third_party/cloud/azure.py`
 
@@ -8520,9 +8520,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class EmailSendModule(BaseModule)` | Send email via SMTP | [`src/core/modules/third_party/communication/messaging/email.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L149) |
-| method | `def EmailSendModule.validate_params(self) -> None` | Implements `EmailSendModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/email.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L155) |
-| method | `async def EmailSendModule.execute(self) -> Any` | Implements `EmailSendModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/email.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L171) |
+| class | `class EmailSendModule(BaseModule)` | Send email via SMTP | [`src/core/modules/third_party/communication/messaging/email.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L150) |
+| method | `def EmailSendModule.validate_params(self) -> None` | Implements `EmailSendModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/email.py:156`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L156) |
+| method | `async def EmailSendModule.execute(self) -> Any` | Implements `EmailSendModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/communication/messaging/email.py:177`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/email.py#L177) |
 
 ## `src/core/modules/third_party/communication/messaging/slack.py`
 
@@ -8583,7 +8583,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def mysql_query(context)` | Execute MySQL query | [`src/core/modules/third_party/database/connectors/mysql.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/connectors/mysql.py#L90) |
+| function | `async def mysql_query(context)` | Execute MySQL query | [`src/core/modules/third_party/database/connectors/mysql.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/connectors/mysql.py#L91) |
 
 ## `src/core/modules/third_party/database/connectors/postgresql.py`
 
@@ -8595,12 +8595,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class RedisGetModule(BaseModule)` | Redis Get Module | [`src/core/modules/third_party/database/redis.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L80) |
-| method | `def RedisGetModule.validate_params(self) -> None` | Implements `RedisGetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L83) |
-| method | `async def RedisGetModule.execute(self) -> Any` | Implements `RedisGetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L100) |
-| class | `class RedisSetModule(BaseModule)` | Redis Set Module | [`src/core/modules/third_party/database/redis.py:199`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L199) |
-| method | `def RedisSetModule.validate_params(self) -> None` | Implements `RedisSetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L202) |
-| method | `async def RedisSetModule.execute(self) -> Any` | Implements `RedisSetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:221`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L221) |
+| class | `class RedisGetModule(BaseModule)` | Redis Get Module | [`src/core/modules/third_party/database/redis.py:81`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L81) |
+| method | `def RedisGetModule.validate_params(self) -> None` | Implements `RedisGetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L84) |
+| method | `async def RedisGetModule.execute(self) -> Any` | Implements `RedisGetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:106`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L106) |
+| class | `class RedisSetModule(BaseModule)` | Redis Set Module | [`src/core/modules/third_party/database/redis.py:205`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L205) |
+| method | `def RedisSetModule.validate_params(self) -> None` | Implements `RedisSetModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:208`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L208) |
+| method | `async def RedisSetModule.execute(self) -> Any` | Implements `RedisSetModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/database/redis.py:232`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/database/redis.py#L232) |
 
 ## `src/core/modules/third_party/developer/github.py`
 
@@ -9464,24 +9464,27 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def ssrf_protection_enabled() -> bool` | Whether outbound HTTP modules must run the SSRF guard. | [`src/core/utils.py:699`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L699) |
 | function | `def validate_url_with_env_config(url: str) -> str` | Validate URL using environment-based SSRF configuration. | [`src/core/utils.py:714`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L714) |
 | function | `def enforce_outbound_url(url: str) -> str` | Run the operator SSRF guard on a client-controlled outbound URL. | [`src/core/utils.py:733`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L733) |
-| function | `async def guarded_aiohttp_request(session, method: str, url: str, *, max_redirects: int=5, **kwargs)` | Issue an aiohttp request that revalidates every redirect hop. | [`src/core/utils.py:759`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L759) |
-| function | `def _host_in_allowlist(hostname: str, allowed_hosts) -> bool` | True if hostname matches an FLYTO_ALLOWED_HOSTS entry (exact or *.wildcard). | [`src/core/utils.py:808`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L808) |
-| class | `class _SSRFGuardedResolver(aiohttp.abc.AbstractResolver)` | aiohttp resolver that resolves a host ONCE and rejects private/blocked IPs at resolve time, so the address that is checked is the exact address aiohttp connects to. | [`src/core/utils.py:822`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L822) |
-| method | `def _SSRFGuardedResolver.__init__(self, allow_private: bool=False, allowed_hosts=None, restricted_hosts=None)` | Implements `_SSRFGuardedResolver.__init__`; linked source is authoritative. | [`src/core/utils.py:837`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L837) |
-| method | `async def _SSRFGuardedResolver.resolve(self, host: str, port: int=0, family: int=socket.AF_INET)` | Implements `_SSRFGuardedResolver.resolve`; linked source is authoritative. | [`src/core/utils.py:853`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L853) |
-| method | `async def _SSRFGuardedResolver.close(self)` | Implements `_SSRFGuardedResolver.close`; linked source is authoritative. | [`src/core/utils.py:879`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L879) |
-| function | `def ssrf_guarded_connector(**kwargs) -> 'aiohttp.TCPConnector'` | A ``TCPConnector`` whose resolver rejects private IPs at connect time. | [`src/core/utils.py:883`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L883) |
-| function | `def guarded_client_session(**kwargs) -> 'aiohttp.ClientSession'` | ``aiohttp.ClientSession`` pinned to the DNS-rebinding-guarded connector. | [`src/core/utils.py:901`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L901) |
-| class | `class CredentialEndpointError(ValueError)` | Raised when an environment-derived credential would be sent to a caller-controlled endpoint that is not explicitly trusted. | [`src/core/utils.py:917`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L917) |
-| function | `def _trusted_credential_hosts() -> list` | Operator-configured allowlist of hosts an env credential may be sent to. | [`src/core/utils.py:923`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L923) |
-| function | `def assert_env_credential_endpoint_allowed(base_url: Optional&#91;str&#93;, key_from_env: bool) -> None` | Guard against leaking the operator's env-derived API key to an attacker-controlled endpoint (GHSA-qq9q-xgm3-xv9g). | [`src/core/utils.py:933`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L933) |
-| class | `class PathTraversalError(ValueError)` | Raised when a path traversal attack is detected. | [`src/core/utils.py:974`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L974) |
-| function | `def validate_path_safe(path: str, base_dir: Optional&#91;str&#93;=None, allow_absolute: bool=True) -> str` | Validate a file path to prevent path traversal attacks. | [`src/core/utils.py:979`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L979) |
-| function | `def get_safe_path_config() -> dict` | Get path safety configuration from environment. | [`src/core/utils.py:1053`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1053) |
-| function | `def validate_path_with_env_config(path: str) -> str` | Validate file path using environment-based safety configuration. | [`src/core/utils.py:1081`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1081) |
-| class | `class SQLInjectionError(ValueError)` | Raised when SQL injection is detected in identifiers. | [`src/core/utils.py:1104`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1104) |
-| function | `def validate_sql_identifier(name: str, identifier_type: str='identifier') -> str` | Validate a SQL identifier (table name, column name) to prevent SQL injection. | [`src/core/utils.py:1113`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1113) |
-| function | `def validate_sql_identifiers(names: list, identifier_type: str='identifier') -> list` | Validate multiple SQL identifiers. | [`src/core/utils.py:1153`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1153) |
+| function | `def resolve_guard_ip(host: str) -> Optional&#91;str&#93;` | Return an IP string to range-check, or None when it cannot be resolved. | [`src/core/utils.py:764`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L764) |
+| function | `def enforce_outbound_host(host: str, *, purpose: str='connection') -> str` | SSRF guard for a caller-supplied *host* on a non-HTTP connection. | [`src/core/utils.py:785`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L785) |
+| function | `def enforce_outbound_service_url(url: str, *, purpose: str='service') -> str` | SSRF guard for a caller-supplied non-HTTP service URL (redis://, etc.). | [`src/core/utils.py:852`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L852) |
+| function | `async def guarded_aiohttp_request(session, method: str, url: str, *, max_redirects: int=5, **kwargs)` | Issue an aiohttp request that revalidates every redirect hop. | [`src/core/utils.py:875`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L875) |
+| function | `def _host_in_allowlist(hostname: str, allowed_hosts) -> bool` | True if hostname matches an FLYTO_ALLOWED_HOSTS entry (exact or *.wildcard). | [`src/core/utils.py:924`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L924) |
+| class | `class _SSRFGuardedResolver(aiohttp.abc.AbstractResolver)` | aiohttp resolver that resolves a host ONCE and rejects private/blocked IPs at resolve time, so the address that is checked is the exact address aiohttp connects to. | [`src/core/utils.py:938`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L938) |
+| method | `def _SSRFGuardedResolver.__init__(self, allow_private: bool=False, allowed_hosts=None, restricted_hosts=None)` | Implements `_SSRFGuardedResolver.__init__`; linked source is authoritative. | [`src/core/utils.py:953`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L953) |
+| method | `async def _SSRFGuardedResolver.resolve(self, host: str, port: int=0, family: int=socket.AF_INET)` | Implements `_SSRFGuardedResolver.resolve`; linked source is authoritative. | [`src/core/utils.py:969`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L969) |
+| method | `async def _SSRFGuardedResolver.close(self)` | Implements `_SSRFGuardedResolver.close`; linked source is authoritative. | [`src/core/utils.py:995`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L995) |
+| function | `def ssrf_guarded_connector(**kwargs) -> 'aiohttp.TCPConnector'` | A ``TCPConnector`` whose resolver rejects private IPs at connect time. | [`src/core/utils.py:999`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L999) |
+| function | `def guarded_client_session(**kwargs) -> 'aiohttp.ClientSession'` | ``aiohttp.ClientSession`` pinned to the DNS-rebinding-guarded connector. | [`src/core/utils.py:1017`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1017) |
+| class | `class CredentialEndpointError(ValueError)` | Raised when an environment-derived credential would be sent to a caller-controlled endpoint that is not explicitly trusted. | [`src/core/utils.py:1033`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1033) |
+| function | `def _trusted_credential_hosts() -> list` | Operator-configured allowlist of hosts an env credential may be sent to. | [`src/core/utils.py:1039`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1039) |
+| function | `def assert_env_credential_endpoint_allowed(base_url: Optional&#91;str&#93;, key_from_env: bool) -> None` | Guard against leaking the operator's env-derived API key to an attacker-controlled endpoint (GHSA-qq9q-xgm3-xv9g). | [`src/core/utils.py:1049`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1049) |
+| class | `class PathTraversalError(ValueError)` | Raised when a path traversal attack is detected. | [`src/core/utils.py:1090`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1090) |
+| function | `def validate_path_safe(path: str, base_dir: Optional&#91;str&#93;=None, allow_absolute: bool=True) -> str` | Validate a file path to prevent path traversal attacks. | [`src/core/utils.py:1095`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1095) |
+| function | `def get_safe_path_config() -> dict` | Get path safety configuration from environment. | [`src/core/utils.py:1169`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1169) |
+| function | `def validate_path_with_env_config(path: str) -> str` | Validate file path using environment-based safety configuration. | [`src/core/utils.py:1197`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1197) |
+| class | `class SQLInjectionError(ValueError)` | Raised when SQL injection is detected in identifiers. | [`src/core/utils.py:1220`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1220) |
+| function | `def validate_sql_identifier(name: str, identifier_type: str='identifier') -> str` | Validate a SQL identifier (table name, column name) to prevent SQL injection. | [`src/core/utils.py:1229`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1229) |
+| function | `def validate_sql_identifiers(names: list, identifier_type: str='identifier') -> list` | Validate multiple SQL identifiers. | [`src/core/utils.py:1269`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1269) |
 
 ## `src/core/validation/connection.py`
 

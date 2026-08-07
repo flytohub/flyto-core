@@ -2,12 +2,62 @@
 
 ## Supported Versions
 
-We release patches for security vulnerabilities in the following versions:
+Security fixes land on the latest 2.26.x release. Older lines do not receive
+backports — upgrading is the supported path.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version  | Supported          |
+| -------- | ------------------ |
+| 2.26.x   | :white_check_mark: |
+| < 2.26   | :x:                |
+
+The current secure release is **2.26.12**. Every advisory published against
+this project is patched at or below that version; see the
+[Security tab](https://github.com/flytohub/flyto-core/security) for the full
+list with affected and patched ranges.
+
+### Filesystem and network boundaries
+
+Every advisory published against this project concerns one of two boundaries:
+which files a caller-supplied path may reach, and which hosts a caller-supplied
+target may reach. Both are configured by environment, and both should be set
+explicitly in production.
+
+**Filesystem**
+
+| Variable | Effect |
+| -------- | ------ |
+| `FLYTO_SANDBOX_DIR` | Confines every caller-supplied path to this directory. **Defaults to the process working directory**, which is rarely what you want for a server. |
+| `FLYTO_ALLOW_ABSOLUTE_PATHS` | Whether absolute paths may be supplied at all (they are still confined by `FLYTO_SANDBOX_DIR`). |
+
+**Outbound network**
+
+| Variable | Effect |
+| -------- | ------ |
+| `FLYTO_ALLOW_PRIVATE_NETWORK` | Allow targets that resolve into private/link-local ranges. Default `false`. |
+| `FLYTO_ALLOWED_HOSTS` | Comma-separated hosts (wildcards allowed) permitted regardless of the range check. |
+| `FLYTO_HTTP_ALLOWED_PORTS` | Extra ports the HTTP guard accepts. |
+| `FLYTO_ALLOW_PORT_SCAN` | Allow `port.check` to probe non-loopback hosts. |
+
+Loopback is always permitted for infrastructure connections (Redis, MySQL,
+SMTP, SSH), because self-hosted deployments legitimately connect there and
+blocking it closes no path a workflow does not already have.
+
+### Coverage is enforced, not assumed
+
+Centralizing a guard only moves the failure mode from "the guard is wrong" to
+"the guard was not called" — which is harder to see and just as exploitable.
+Both boundaries therefore have a registry-wide coverage test that fails the
+build rather than a convention that relies on reviewers:
+
+| Test | Enforces |
+| ---- | -------- |
+| `tests/core/test_write_sink_coverage.py` | Every module declaring a path-shaped parameter reaches `validate_path_with_env_config`. |
+| `tests/core/test_outbound_guard_coverage.py` | Every module declaring a URL/host-shaped parameter reaches an SSRF guard (`enforce_outbound_url`, `enforce_outbound_service_url`, `enforce_outbound_host`, or a guarded session). |
+
+Exemptions must state what the parameter really addresses, and they are
+re-verified on every run: a module excused as "makes no request" fails the
+moment it opens a connection, and a module excused for validating locally fails
+the moment that validation is removed.
 
 ## Reporting a Vulnerability
 

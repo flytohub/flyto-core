@@ -210,7 +210,8 @@ class TestVisualWorkerNoMockMatrix:
 @requires_worker
 class TestCoreVisualFacadeRealProcess:
     @pytest.mark.asyncio
-    async def test_python_facade_executes_the_typescript_worker(self, tmp_path):
+    async def test_python_facade_executes_the_typescript_worker(self, sandboxed_tmp_path):
+        tmp_path = sandboxed_tmp_path
         expected = _image(tmp_path / "expected.png", rectangle=(10, 10, 50, 50))
         actual = shutil.copyfile(expected, tmp_path / "actual.png")
 
@@ -232,7 +233,8 @@ class TestCoreVisualFacadeRealProcess:
         assert result["match"] is True
 
     @pytest.mark.asyncio
-    async def test_missing_file_is_a_closed_failure(self, tmp_path):
+    async def test_missing_file_is_a_closed_failure(self, sandboxed_tmp_path):
+        tmp_path = sandboxed_tmp_path
         actual = _image(tmp_path / "actual.png")
 
         result = await compare_visual_files(str(tmp_path / "missing.png"), str(actual))

@@ -1,5 +1,70 @@
 # Decisions
 
+## 2026-08-08 - Sandbox guard coverage is a CI property, not an author's habit
+
+Decision: every module that declares a path-shaped parameter must route it
+through `validate_path_with_env_config`, and
+`tests/core/test_write_sink_coverage.py` walks the registry to enforce that on
+every run. A parameter may be exempted only by an entry in
+`NON_FILESYSTEM_PARAMS` stating what the value actually addresses — a JSONPath,
+a URL segment, a remote host path — and the exemption is void the moment the
+module's source contains a filesystem call.
+
+Reason: the guard was already centralized and already correct. Every published
+arbitrary file read/write advisory against this project
+(GHSA-2956-977x-2w3r, GHSA-p34x-fmph-9fjx, GHSA-xchh-cp84-9838,
+GHSA-hmq9-xw4w-7ppc, GHSA-wc94-386q-5478, GHSA-p64w-hgfm-824v) is the same
+defect: a module that did not call it. Fixing them one report at a time never
+converged, because each wave patched the modules that had been named and left
+the ones that had not — GHSA-p64w explicitly notes the prior waves missed
+`browser.download`. Centralization without a coverage check only moves the
+failure from "the guard is wrong" to "the guard was not called", which is
+harder to see and just as exploitable. A registry-wide audit at the time this
+decision was made found 13 further unguarded modules that no one had reported.
+
+Consequence: adding a module with a path parameter now forces one of two
+explicit acts — call the guard, or write down why the parameter is not a path.
+Neither can be skipped silently. The cost is that the default sandbox
+(the process working directory) is now actually enforced on modules that
+previously ignored it, which is a breaking change for callers that passed
+absolute paths outside it; `FLYTO_SANDBOX_DIR` is the supported way to widen it.
+
+## 2026-08-08 - The outbound boundary is a host check, not only a URL check
+
+Decision: `core/utils.py` owns three outbound guards, not one.
+`enforce_outbound_url` keeps the http(s) path; `enforce_outbound_service_url`
+parses the host out of a non-HTTP endpoint (`redis://`, `ws://`, a proxy URL);
+`enforce_outbound_host` guards a bare hostname for raw TCP. All three share one
+policy — loopback allowed, `FLYTO_ALLOWED_HOSTS` allowed,
+`FLYTO_ALLOW_PRIVATE_NETWORK` allowed, otherwise resolve and reject private,
+link-local, metadata, or unresolvable — and one resolver, `resolve_guard_ip`,
+promoted out of `port.check`. `tests/core/test_outbound_guard_coverage.py`
+enforces that every module with a network-shaped parameter reaches one of them.
+
+Reason: `validate_url_ssrf` only understands http(s), so every module that took
+a bare host or a `redis://` endpoint had no guard available to call. That is
+why the gap was structural rather than careless: Redis, MySQL, SMTP, SSH, the
+CDP endpoint, the browser proxy and the network probes were reaching arbitrary
+internal addresses with no shared primitive to reach for, and `port.check` had
+quietly grown the only correct host resolver in the codebase — the one whose
+IPv6 fail-open was GHSA-v7q9-pr72-5fmv. A guard nobody can call is not a
+boundary.
+
+Decision: loopback stays allowed for infrastructure connections. Reason:
+self-hosted deployments legitimately point Redis, MySQL and SMTP at
+`localhost`, and blocking that breaks real operation without closing any path —
+a workflow that can reach loopback can already do so through the module's own
+default configuration. The attack this bounds is reaching *elsewhere* on the
+private network, above all the cloud metadata endpoint.
+
+Consequence: workflows that deliberately target a private host now need
+`FLYTO_ALLOWED_HOSTS` or `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Unresolvable hosts
+are refused rather than attempted, which is a behaviour change for callers that
+relied on a connection error to probe DNS. The coverage test is MRO-aware
+because guards are legitimately inherited (`LLMClientMixin` holds the
+`ollama_url` guard for `agent.chain` and `agent.autonomous`); a same-file scan
+would report those as unguarded and train readers to ignore the test.
+
 ## 2026-08-02 - Plugin IDs select discovered directories; they never construct paths
 
 Decision: `PluginManager` records the resolved directory associated with each

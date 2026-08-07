@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -140,12 +141,24 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     # Read source files
+    # SECURITY: source_files is caller-controlled and each entry is both read
+    # here and written back below with model-generated content. Confine every
+    # entry to FLYTO_SANDBOX_DIR up front so one validated path is carried
+    # through to the write — this module holds the same filesystem.read /
+    # filesystem.write permissions as the modules named in GHSA-wc94-386q-5478
+    # and GHSA-p64w-hgfm-824v, so it needs the same boundary.
     file_contents = {}
+    validated_paths: Dict[str, Path] = {}
     for file_path in source_files:
-        path = Path(file_path).expanduser()
+        try:
+            path = Path(validate_path_with_env_config(str(file_path)))
+        except Exception as e:
+            logger.warning(f"Rejected source file outside the sandbox: {e}")
+            continue
         if path.exists():
             try:
                 file_contents[file_path] = path.read_text(encoding='utf-8')
+                validated_paths[file_path] = path
             except Exception as e:
                 logger.warning(f"Could not read {file_path}: {e}")
 
@@ -216,10 +229,10 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
             fix['diff'] = _generate_diff(original_content, new_content)
 
             if fix_mode == 'apply':
-                path = Path(file_path).expanduser()
-                
-                if '..' in file_path:
-                    raise Exception('Invalid file path')
+                # Reuse the path already validated at read time. The substring
+                # '..' check this replaces never blocked an absolute path, so
+                # `source_files: ["/etc/cron.d/job"]` reached write_text intact.
+                path = validated_paths[file_path]
 
                 # Create backup
                 if backup:

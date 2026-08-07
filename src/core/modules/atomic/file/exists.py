@@ -6,6 +6,7 @@ Basic file system operations
 """
 
 from typing import Any, Dict
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
@@ -79,7 +80,10 @@ import shutil
 async def file_exists(context):
     """Check if file exists"""
     params = context['params']
-    path = params['path']
+    # SECURITY: an unconfined path turns this into a host filesystem oracle —
+    # probe for /etc/kubernetes, ~/.aws/credentials, container markers — which
+    # is the reconnaissance step ahead of the read and write advisories.
+    path = validate_path_with_env_config(str(params['path']))
 
     exists = os.path.exists(path)
     is_file = os.path.isfile(path) if exists else False

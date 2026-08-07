@@ -103,6 +103,12 @@ def _wrap_function_as_module(func, module_id: str):
     FunctionModuleWrapper.module_id = module_id
     FunctionModuleWrapper.__name__ = f"{func.__name__}_Wrapper"
     FunctionModuleWrapper.__doc__ = func.__doc__
+    # Keep the defining module reachable. Without this every function-style
+    # module reports decorators.py as its source, which hides it from any
+    # registry-wide static check — including the write-sink guard coverage
+    # test in tests/core/test_write_sink_coverage.py.
+    FunctionModuleWrapper.__module__ = func.__module__
+    FunctionModuleWrapper.__wrapped_func__ = staticmethod(func)
     return FunctionModuleWrapper, True
 
 

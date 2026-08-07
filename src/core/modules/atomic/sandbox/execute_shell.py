@@ -10,6 +10,7 @@ import os
 import time
 from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -143,6 +144,13 @@ async def sandbox_execute_shell(context: Dict[str, Any]) -> Dict[str, Any]:
 
     if not command.strip():
         raise ValidationError("Missing required parameter: command", field="command")
+
+    # Hardening, not a privilege boundary: this module holds
+    # subprocess.execute, so `command` already reaches anywhere working_dir
+    # could. Routed through the one sandbox helper anyway so the coverage test
+    # in tests/core/test_write_sink_coverage.py needs no exception for it.
+    if working_dir:
+        working_dir = validate_path_with_env_config(str(working_dir))
 
     # Validate working directory if provided
     if working_dir and not os.path.isdir(working_dir):

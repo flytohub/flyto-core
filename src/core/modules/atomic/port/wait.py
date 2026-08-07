@@ -11,6 +11,7 @@ import socket
 import time
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 
 
@@ -166,6 +167,12 @@ async def port_wait(context: Dict[str, Any]) -> Dict[str, Any]:
     params = context['params']
     port = int(params['port'])
     host = params.get('host', 'localhost')
+    # SECURITY: `host` is caller-controlled and this module opens a raw
+    # connection to it. Unguarded that reaches any internal service the runner
+    # can route to, including the cloud metadata endpoint — the same
+    # reachability the HTTP SSRF advisories are about, without a URL. Loopback
+    # stays allowed so self-hosted deployments are unaffected.
+    enforce_outbound_host(host, purpose='port wait')
     timeout_seconds = params.get('timeout', 60)
     interval_ms = params.get('interval', 500)
     expect_closed = params.get('expect_closed', False)

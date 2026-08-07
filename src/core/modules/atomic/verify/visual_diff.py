@@ -43,6 +43,14 @@ async def _screenshot_url(url: str, output_path: str, viewport_width: int = 1280
         try:
             page = await browser.new_page(viewport={'width': viewport_width, 'height': viewport_height})
             await page.emulate_media(reduced_motion='reduce')
+            # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+            # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+            # about. The cloud egress guard does not cover this path either when the
+            # page comes from a bare playwright instance. Validate before navigating.
+            # This module drives a bare async_playwright() browser, so it has
+            # no egress guard in any deployment mode — the guard here is the
+            # only boundary between the caller's URL and the network.
+            enforce_outbound_url(url)
             await page.goto(url, wait_until='networkidle', timeout=30000)
             await page.evaluate("document.fonts && document.fonts.ready")
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)

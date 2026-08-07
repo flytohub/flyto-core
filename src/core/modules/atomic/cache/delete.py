@@ -7,6 +7,7 @@ Delete a cache entry by key.
 import logging
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -104,6 +105,11 @@ async def cache_delete(context: Dict[str, Any]) -> Dict[str, Any]:
     key = params.get('key')
     backend = params.get('backend', 'memory')
     redis_url = params.get('redis_url', 'redis://localhost:6379')
+    # SECURITY: redis_url is caller-controlled and aioredis will dial
+    # whatever host it names. Unguarded that is an internal port prober and a
+    # route to the cloud metadata service — the non-HTTP twin of the SSRF
+    # advisories. Loopback (the normal self-hosted case) stays allowed.
+    enforce_outbound_service_url(redis_url, purpose='Redis')
 
     if not key:
         raise ValidationError("Missing required parameter: key", field="key")

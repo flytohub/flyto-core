@@ -10,6 +10,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -186,6 +187,12 @@ async def docker_build(context: Dict[str, Any]) -> Dict[str, Any]:
     path = params.get('path')
     if not path:
         raise ValidationError("Missing required parameter: path", field="path")
+
+    # SECURITY: the build context directory is tarred up and shipped to the
+    # Docker daemon in full, so an unconfined path exfiltrates every file
+    # under it. Holding docker.build is already powerful, but that is not a
+    # reason to leave the read boundary off.
+    path = validate_path_with_env_config(str(path))
 
     tag = params.get('tag')
     if not tag:

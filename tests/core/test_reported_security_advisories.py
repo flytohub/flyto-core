@@ -960,3 +960,287 @@ def test_data_dedup_allows_no_hash_file(monkeypatch, tmp_path):
         {'items': [{'url': 'a'}], 'keys': ['url'], 'storage': 'context'}, {}
     )
     assert instance.hash_file is None
+
+
+def _handler(module, name):
+    """Return the raw async handler for a function-style module.
+
+    register_module() rebinds the name to a BaseModule subclass, so calling
+    module.xml_parse(...) would construct the wrapper instead of running the
+    handler. The wrapper keeps the original function at __wrapped_func__.
+    """
+    attr = getattr(module, name)
+    return getattr(attr, '__wrapped_func__', attr)
+
+# ---------------------------------------------------------------------------
+# Wave 3, closed by coverage rather than by report. The registry-wide audit in
+# tests/core/test_write_sink_coverage.py found every remaining module that took
+# a caller-supplied path to a filesystem sink without the sandbox helper. None
+# of these were reported; they are the modules a fourth advisory wave would
+# have been written about. Each is the same CWE-22 shape as the published
+# advisories, so each gets the same regression test.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_visual_compare_rejects_diff_path_outside_sandbox(monkeypatch, tmp_path):
+    """testing.visual.compare declares no required_permissions, so diff_path was
+    an unauthenticated arbitrary file write — the GHSA-p64w-hgfm-824v shape with
+    no permission gate in front of it."""
+    _sandbox(monkeypatch, tmp_path)
+    victim = tmp_path / 'outside' / 'victim.png'
+
+    module = importlib.import_module('core.modules.atomic.testing.visual')
+    with pytest.raises(PathTraversalError):
+        await module.compare_visual_files(
+            'data:image/png;base64,aGk=',
+            'data:image/png;base64,aGk=',
+            diff_path=str(victim),
+        )
+
+    assert victim.exists() is False
+
+
+@pytest.mark.asyncio
+async def test_xml_parse_rejects_file_path_outside_sandbox(monkeypatch, tmp_path):
+    """GHSA-wc94-386q-5478 closed data.csv.read / data.yaml.parse / excel.read /
+    pdf.parse / image.ocr. data.xml.parse is the same read sink and was missed;
+    the parsed document is returned straight to the caller."""
+    sandbox = _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'secret.xml'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_text('<root><token>s3cret</token></root>', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.data.xml_parse')
+    with pytest.raises(PathTraversalError):
+        await _handler(module, 'xml_parse')({'params': {'file_path': str(secret)}})
+
+    inside = sandbox / 'ok.xml'
+    inside.write_text('<root><a>1</a></root>', encoding='utf-8')
+    result = await _handler(module, 'xml_parse')({'params': {'file_path': str(inside)}})
+    assert result['ok'] is True
+
+
+def test_browser_upload_rejects_file_path_outside_sandbox(monkeypatch, tmp_path):
+    """browser.upload hands the file's bytes to the visited page, so an
+    unconfined file_path exfiltrates host secrets to a remote origin."""
+    _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'id_rsa'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_text('PRIVATE KEY', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.browser.upload')
+    with pytest.raises(PathTraversalError):
+        module.BrowserUploadModule({'selector': '#f', 'file_path': str(secret)}, {})
+
+
+def test_file_delete_rejects_path_outside_sandbox(monkeypatch, tmp_path):
+    """os.remove() on an unconfined path is arbitrary file deletion — the
+    destructive counterpart of the arbitrary file write advisories."""
+    _sandbox(monkeypatch, tmp_path)
+    victim = tmp_path / 'outside' / 'important.db'
+    victim.parent.mkdir(parents=True, exist_ok=True)
+    victim.write_text('data', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.file.delete')
+    with pytest.raises(PathTraversalError):
+        module.FileDeleteModule({'file_path': str(victim)}, {})
+
+    assert victim.exists() is True
+
+
+@pytest.mark.asyncio
+async def test_sftp_download_rejects_local_path_outside_sandbox(monkeypatch, tmp_path):
+    """GHSA-hmq9-xw4w-7ppc closed destination_path on cloud.{azure,gcs,aws_s3}
+    .download. ssh.sftp_download is the same remote-bytes-to-local-path sink."""
+    _sandbox(monkeypatch, tmp_path)
+    victim = tmp_path / 'outside' / 'authorized_keys'
+
+    module = importlib.import_module('core.modules.atomic.ssh.sftp_download')
+    with pytest.raises(PathTraversalError):
+        await _handler(module, 'ssh_sftp_download')({'params': {
+            'host': 'example.com', 'username': 'u', 'password': 'p',
+            'remote_path': '/tmp/x', 'local_path': str(victim),
+        }})
+
+    assert victim.parent.exists() is False
+
+
+@pytest.mark.asyncio
+async def test_sftp_upload_rejects_local_path_outside_sandbox(monkeypatch, tmp_path):
+    """The read side: local_path is shipped to a caller-chosen SSH host."""
+    _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'credentials'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_text('aws_secret_access_key = ...', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.ssh.sftp_upload')
+    with pytest.raises(PathTraversalError):
+        await _handler(module, 'ssh_sftp_upload')({'params': {
+            'host': 'example.com', 'username': 'u', 'password': 'p',
+            'local_path': str(secret), 'remote_path': '/tmp/stolen',
+        }})
+
+
+@pytest.mark.asyncio
+async def test_git_clone_rejects_destination_outside_sandbox(monkeypatch, tmp_path):
+    """git writes a whole remote-authored tree at destination; unconfined that
+    is an arbitrary file write with a friendlier interface."""
+    _sandbox(monkeypatch, tmp_path)
+    outside = tmp_path / 'outside' / 'repo'
+
+    module = importlib.import_module('core.modules.atomic.git.clone')
+    with pytest.raises(PathTraversalError):
+        await _handler(module, 'git_clone')({'params': {
+            'url': 'https://github.com/example/repo.git',
+            'destination': str(outside),
+        }})
+
+    assert outside.exists() is False
+
+
+@pytest.mark.asyncio
+async def test_code_fix_rejects_absolute_source_file_outside_sandbox(monkeypatch, tmp_path):
+    """llm.code_fix guarded only against '..', so an absolute path sailed
+    through to write_text with model-generated content."""
+    _sandbox(monkeypatch, tmp_path)
+    victim = tmp_path / 'outside' / 'job'
+    victim.parent.mkdir(parents=True, exist_ok=True)
+    victim.write_text('original', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.llm.code_fix')
+    result = await _handler(module, 'llm_code_fix')({'params': {
+        'issues': [{'file': str(victim), 'message': 'x'}],
+        'source_files': [str(victim)],
+        'fix_mode': 'apply',
+    }})
+
+    # The out-of-sandbox file is dropped before it can be read or written.
+    assert result['ok'] is False
+    assert victim.read_text(encoding='utf-8') == 'original'
+
+
+# ---------------------------------------------------------------------------
+# Outbound-boundary wave, closed by coverage rather than by report. The
+# registry audit in tests/core/test_outbound_guard_coverage.py found the
+# modules that reach the network from a caller-supplied target without an SSRF
+# guard. Like the filesystem wave above, none were reported; they are what a
+# further advisory round would have been written about.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def _no_private_network(monkeypatch):
+    monkeypatch.delenv('FLYTO_ALLOW_PRIVATE_NETWORK', raising=False)
+    monkeypatch.delenv('FLYTO_ALLOWED_HOSTS', raising=False)
+    monkeypatch.delenv('FLYTO_HTTP_DISABLE_SSRF_GUARD', raising=False)
+
+
+def test_outbound_host_guard_blocks_metadata_and_private(_no_private_network):
+    """The shared raw-TCP guard: the non-HTTP twin of validate_url_ssrf."""
+    from core.utils import enforce_outbound_host
+
+    for blocked in ('169.254.169.254', '10.0.0.5', '192.168.1.1', '::ffff:127.0.0.1'):
+        with pytest.raises(SSRFError):
+            enforce_outbound_host(blocked, purpose='test')
+
+    # Loopback stays allowed — self-hosted Redis/MySQL/SMTP is the normal case
+    # and blocking it would break deployments without closing a path.
+    for allowed in ('localhost', '127.0.0.1', '::1'):
+        assert enforce_outbound_host(allowed, purpose='test') == allowed
+
+
+def test_outbound_host_guard_fails_closed_on_unresolvable(_no_private_network):
+    """GHSA-v7q9-pr72-5fmv was a fail-open on resolution failure."""
+    from core.utils import enforce_outbound_host
+
+    with pytest.raises(SSRFError):
+        enforce_outbound_host('no-such-host.invalid', purpose='test')
+
+
+def test_outbound_host_guard_honours_operator_allowlist(monkeypatch):
+    """An operator can still reach an internal host on purpose."""
+    from core.utils import enforce_outbound_host
+
+    monkeypatch.setenv('FLYTO_ALLOWED_HOSTS', 'internal.corp')
+    assert enforce_outbound_host('internal.corp', purpose='test') == 'internal.corp'
+
+
+def test_service_url_guard_blocks_metadata_redis(_no_private_network):
+    """validate_url_ssrf only speaks http(s); redis:// needed its own path."""
+    from core.utils import enforce_outbound_service_url
+
+    with pytest.raises(SSRFError):
+        enforce_outbound_service_url('redis://169.254.169.254:6379', purpose='Redis')
+    assert enforce_outbound_service_url('redis://localhost:6379', purpose='Redis')
+
+
+@pytest.mark.asyncio
+async def test_ssh_exec_rejects_private_host(_no_private_network):
+    """ssh.exec opened a connection to any caller-named host."""
+    module = importlib.import_module('core.modules.atomic.ssh.exec')
+    with pytest.raises(SSRFError):
+        await _handler(module, 'ssh_exec')({'params': {
+            'host': '169.254.169.254', 'username': 'u', 'password': 'p',
+            'command': 'id',
+        }})
+
+
+@pytest.mark.asyncio
+async def test_cache_get_rejects_metadata_redis_url(_no_private_network):
+    """redis_url reached aioredis unchecked — an internal port prober."""
+    module = importlib.import_module('core.modules.atomic.cache.get')
+    with pytest.raises(SSRFError):
+        await _handler(module, 'cache_get')({'params': {
+            'key': 'k', 'redis_url': 'redis://169.254.169.254:6379',
+        }})
+
+
+@pytest.mark.asyncio
+async def test_network_ping_rejects_private_host(_no_private_network):
+    """Probing is the module's purpose, which is why the target must be bounded."""
+    module = importlib.import_module('core.modules.atomic.network.ping')
+    with pytest.raises(SSRFError):
+        await _handler(module, 'network_ping')({'params': {'host': '10.0.0.5'}})
+
+
+def test_browser_connect_rejects_internal_cdp_endpoint(_no_private_network):
+    """connect_over_cdp hands full DevTools control of whatever answers, and
+    CDP is remote code execution by design."""
+    module = importlib.import_module('core.modules.atomic.browser.connect')
+    with pytest.raises(SSRFError):
+        module.BrowserConnectModule({'ws_endpoint': 'ws://169.254.169.254:9222'}, {})
+
+
+def test_browser_launch_rejects_internal_proxy(_no_private_network):
+    """Every browser request routes through the proxy, and the egress guard
+    inspects request URLs — not where the proxy itself points."""
+    module = importlib.import_module('core.modules.atomic.browser.launch')
+    with pytest.raises(SSRFError):
+        module.BrowserLaunchModule({'proxy': 'http://169.254.169.254:8080'}, {})
+
+
+@pytest.mark.asyncio
+async def test_git_clone_rejects_metadata_url(_no_private_network, monkeypatch, tmp_path):
+    """_validate_clone_url bounded the transport but never the destination."""
+    _sandbox(monkeypatch, tmp_path)
+    module = importlib.import_module('core.modules.atomic.git.clone')
+
+    result = await _handler(module, 'git_clone')({'params': {
+        'url': 'http://169.254.169.254/latest/meta-data/',
+        'destination': str(tmp_path / 'sandbox' / 'repo'),
+    }})
+
+    assert result['ok'] is False
+    assert result['error_code'] == 'SSRF_BLOCKED'
+
+
+@pytest.mark.asyncio
+async def test_visual_diff_screenshot_rejects_metadata_url(_no_private_network):
+    """verify.visual_diff drives a bare playwright browser, so it has no egress
+    guard in any deployment mode — the Python-side guard is the only boundary."""
+    module = importlib.import_module('core.modules.atomic.verify.visual_diff')
+    with pytest.raises(SSRFError):
+        await module._screenshot_url(
+            'http://169.254.169.254/latest/meta-data/', '/tmp/unused.png'
+        )

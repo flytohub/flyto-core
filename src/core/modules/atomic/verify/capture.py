@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 
 from ...base import BaseModule
+from ....utils import enforce_outbound_url
 from ...registry import register_module
 from ...schema import compose, presets, field as schema_field
 
@@ -202,6 +203,11 @@ class VerifyCaptureModule(BaseModule):
                 'height': self.viewport_height
             })
 
+            # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+            # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+            # about. The cloud egress guard does not cover this path either when the
+            # page comes from a bare playwright instance. Validate before navigating.
+            enforce_outbound_url(self.url)
             await page.goto(self.url, wait_until='networkidle')
 
             if self.wait_for:

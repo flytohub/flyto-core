@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -155,7 +156,10 @@ def _parse_numstat(numstat_out: str) -> tuple:
 async def git_diff(context: Dict[str, Any]) -> Dict[str, Any]:
     """Get git diff"""
     params = context['params']
-    repo_path = os.path.abspath(os.path.expanduser(params['repo_path']))
+    # SECURITY: the diff body is returned to the caller, so an unconfined
+    # repo_path reads out any git tree on the host — the read side of
+    # GHSA-wc94-386q-5478.
+    repo_path = validate_path_with_env_config(str(params['repo_path']))
     ref1 = params.get('ref1', 'HEAD')
     ref2 = params.get('ref2')
     staged = params.get('staged', False)

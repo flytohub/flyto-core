@@ -10,6 +10,7 @@ import re
 import time
 from typing import Any, Dict, List, Union
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -130,6 +131,11 @@ async def network_port_scan(context: Dict[str, Any]) -> Dict[str, Any]:
     """Scan ports on a host to check which are open."""
     params = context['params']
     host = params.get('host', '').strip()
+    # SECURITY: probing is this module's purpose, which is exactly why the
+    # target must be bounded — otherwise it is a ready-made internal network
+    # scanner reachable from any workflow. Loopback stays allowed; private
+    # ranges need FLYTO_ALLOWED_HOSTS or FLYTO_ALLOW_PRIVATE_NETWORK.
+    enforce_outbound_host(host, purpose='port scan')
     ports_input = params.get('ports', '')
     timeout = float(params.get('timeout', 1.0))
 
