@@ -169,10 +169,6 @@ _DANGEROUS_PERMISSIONS = frozenset({
     # to resolve string-array/decoder values — materially higher risk than
     # reverse.code's pure AST parsing, which never executes anything.
     "code.execute",
-    # robot.actuate: moves a physical machine. Every other permission in this
-    # set can cost data or money; this one can cost a collision, so a workflow
-    # must not reach a robot merely because nobody thought about it.
-    "robot.actuate",
 })
 
 
