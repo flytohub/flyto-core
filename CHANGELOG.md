@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run at all. The global module filter still runs first, so the plugin dimension
   can only narrow. Ownership is stamped by the registry and cannot be claimed by
   a module.
+- The out-of-process plugin path now passes the same gate. `RuntimeInvoker.invoke`
+  calls `enforce_module_policy` on the resolved module id before routing, so the
+  plugin path and the legacy fallback are covered alike, and a step naming an id
+  the registry does not know can no longer reach a subprocess that the chokepoint
+  never sees. A refusal returns `MODULE_POLICY_DENIED`; a manifest that cannot be
+  read does not open the gate.
 
 ### Added
 

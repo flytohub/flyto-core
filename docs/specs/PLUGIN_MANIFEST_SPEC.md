@@ -34,7 +34,7 @@ this spec covers both.
 | Mechanism | How a plugin arrives | Goes through the policy gate? |
 |---|---|---|
 | **In-process (Python)** | `flyto.modules` entry point → `register_all()` → `ModuleRegistry` | **Yes.** `BaseModule.run` calls `enforce_module_policy`, with the plugin the module was registered by |
-| **Out-of-process (any language)** | `plugin.yaml` in the plugins directory → `PluginManager.discover_plugins()` → subprocess | **No.** See below |
+| **Out-of-process (any language)** | `plugin.yaml` in the plugins directory → `PluginManager.discover_plugins()` → subprocess | **Yes**, since 2026-08-08. `RuntimeInvoker.invoke` gates before routing |
 
 ### The out-of-process path, exactly as it stands
 
@@ -49,13 +49,15 @@ this spec covers both.
 - **`RuntimeInvoker.set_plugin_manager` has no caller anywhere.** The invoker's
   `_plugin_manager` is therefore `None`, and `_invoke_plugin` raises
   `PluginNotFoundError`. A workflow step cannot reach a plugin subprocess today.
-- **`enforce_module_policy` does not appear in `core/runtime/` or in the step
-  executor.** So the day that one missing call is added, plugin subprocesses run
-  outside the gate that every in-process module passes through.
+- `enforce_module_policy` did not appear anywhere in `core/runtime/` or in the
+  step executor. **Fixed 2026-08-08:** `RuntimeInvoker.invoke` now gates on the
+  resolved module id before routing, so the plugin path and the legacy fallback
+  are covered alike. Routing decides *which* handler runs; neither may run what
+  policy denies.
 
-That last pair of facts is the reason this spec leads with authority rather than
-with fields. The out-of-process runtime is one connection away from working and
-the same connection away from being a policy bypass.
+The out-of-process runtime was one connection away from working and the same
+connection away from being a policy bypass. It is still the first, and no longer
+the second.
 
 ---
 
@@ -102,13 +104,21 @@ direct, recipe step, foreach item, composite sub-node, and anything reached via
    The lie worth blocking is not "I am plugin B" but "I am no plugin at all",
    because the empty owner is the one the global grant still covers.
 
-### Out-of-process — **SPECIFIED, not implemented**
+### Out-of-process — implemented
 
-A conforming host MUST call `enforce_module_policy` before dispatching a step to
-a plugin process, with the plugin id from the manifest, so the three controls
-above apply identically to both shapes. **This call does not exist yet.** Until
-it does, the out-of-process path has no policy gate and this spec's authority
-section describes an intention.
+`RuntimeInvoker.invoke` calls `enforce_module_policy` on the resolved module id
+before routing, passing the plugin id from the manifest and that step's declared
+`required_permissions`. The three controls above therefore apply identically to
+both shapes.
+
+A refusal is returned as `{"ok": false, "error": {"code": "MODULE_POLICY_DENIED"}}`
+rather than raised, because `invoke` answers with an envelope and its callers
+already treat `ok: false` as a stop — so it still fails closed.
+
+A plugin that declares no permissions, has no manifest, or whose manifest cannot
+be read simply declares none: the module filter and the plugin allow/deny list
+still apply, so silence cannot buy a denied module id. A manifest lookup that
+raises is caught and does **not** open the gate.
 
 ### What adoption grants
 
@@ -280,7 +290,7 @@ where it is *verified*.
 | `artifact.digest` verification | **Not implemented** |
 | Derived endpoint/token env names | **Not implemented** |
 | `locality` enforcement | **Not implemented** |
-| Policy gate on the out-of-process path | **Not implemented** — and the runtime is one wiring change from being reachable |
+| Policy gate on the out-of-process path | **Implemented**, 7 tests |
 | Registry / adoption in flyto-cloud | **Not implemented** |
 
 ## Open questions

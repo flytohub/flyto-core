@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-08-08 | Plugin contribution point, per-plugin policy scope, manifest draft | `2026-08-08-plugin-contribution-and-policy-scope.md` | Active |
 | 2026-08-08 | Registry-wide filesystem and outbound boundary coverage enforcement | `2026-08-08-boundary-coverage-enforcement.md` | Active |
 | 2026-08-02 | Private advisory network and filesystem hardening | `2026-08-02-private-advisory-boundary-hardening.md` | Active |
 | 2026-08-02 | GitHub code-scanning security closure | `2026-08-02-code-scanning-security-closure.md` | Active |

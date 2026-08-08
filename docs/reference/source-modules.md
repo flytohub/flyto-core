@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,492 lines**, and **5,557 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,540 lines**, and **5,558 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -929,7 +929,7 @@ Inventory: **953 Python files**, **196,492 lines**, and **5,557 class/function/m
 | [`src/core/runtime/config.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/config.py#L1) | 409 | 31 | `dataclasses, logging, os, pathlib, typing, yaml` | Runtime Configuration |
 | [`src/core/runtime/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/exceptions.py#L1) | 259 | 31 | `typing` | Runtime Exceptions |
 | [`src/core/runtime/health.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/health.py#L1) | 296 | 20 | `asyncio, dataclasses, enum, logging, time, typing` | Plugin Health Check System |
-| [`src/core/runtime/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/invoke.py#L1) | 589 | 18 | `browser_session, exceptions, logging, manager, modules, routing, time, types, typing` | Runtime Invoker |
+| [`src/core/runtime/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/invoke.py#L1) | 637 | 19 | `browser_session, exceptions, logging, manager, module_policy, modules, routing, time, types, typing` | Runtime Invoker |
 | [`src/core/runtime/languages.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/languages.py#L1) | 482 | 10 | `dataclasses, exceptions, glob, logging, os, pathlib, shutil, stat, typing` | Multi-Language Runtime Support |
 | [`src/core/runtime/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/manager.py#L1) | 655 | 26 | `asyncio, contextlib, dataclasses, exceptions, json, languages, logging, pathlib, process, re, typing, yaml` | Plugin Manager |
 | [`src/core/runtime/pool_router.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/pool_router.py#L1) | 456 | 17 | `asyncio, dataclasses, enum, logging, manager, pathlib, types, typing` | Pool Router for Multi-Tenant Isolation |
