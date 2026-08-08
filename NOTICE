@@ -17,22 +17,7 @@ limitations under the License.
 
 ================================================================================
 
-1. TRADEMARKS
-
-   "Flyto2", "Flyto2 Core", and the Flyto2 logo are trademarks of Flyto2.
-
-   Apache-2.0 grants copyright and patent rights; section 6 states plainly that
-   it does not grant trademark rights. Nothing here restricts what the licence
-   permits — it says only what the licence already leaves untouched.
-
-   You may use these marks to refer to Flyto2 Core accurately and descriptively,
-   and in attribution notices. Using them in a way that suggests endorsement or
-   affiliation, in your own product, service or domain names, or as part of your
-   own branding, needs prior written permission.
-
-================================================================================
-
-2. THIRD-PARTY COMPONENTS
+1. THIRD-PARTY COMPONENTS
 
    Flyto2 Core includes or depends on the following third-party components.
    Each component is subject to its own license terms.
@@ -101,7 +86,7 @@ limitations under the License.
 
 ================================================================================
 
-3. CONTRIBUTING
+2. CONTRIBUTING
 
    Contributions are accepted under Apache-2.0 section 5: unless you state
    otherwise, anything you deliberately submit for inclusion is licensed under
@@ -112,14 +97,14 @@ limitations under the License.
 
 ================================================================================
 
-4. SECURITY
+3. SECURITY
 
    Report a vulnerability to security@flyto2.com. See SECURITY.md for the
    disclosure process.
 
 ================================================================================
 
-5. CONTACT
+4. CONTACT
 
    General:       hello@flyto2.com
    Security:      security@flyto2.com
