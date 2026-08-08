@@ -106,6 +106,11 @@ class ModuleRegistry:
     _metadata: Dict[str, Dict[str, Any]] = {}
     _plugins: Dict[str, PluginInfo] = {}
     _initialized: bool = False
+    # The plugin whose register_all() is currently running, or "" for
+    # flyto-core's own modules. Set only inside discover_plugins so that
+    # ownership is a fact about how a module arrived, not something a module
+    # can claim about itself.
+    _loading_plugin: str = ""
 
     def __new__(cls):
         if cls._instance is None:
@@ -123,12 +128,24 @@ class ModuleRegistry:
             metadata: Module metadata (optional)
         """
         cls._modules[module_id] = module_class
-        if metadata:
+        if not metadata and cls._loading_plugin:
+            # A module registered by a plugin with no metadata would otherwise
+            # carry no owner, and an absent owner reads as flyto-core's own —
+            # which is precisely the identity a denied plugin would want. Give
+            # it the minimum needed to be attributable.
+            metadata = {}
+        if metadata is not None and (metadata or cls._loading_plugin):
             # Ensure required fields
             metadata.setdefault('module_id', module_id)
             metadata.setdefault('version', '1.0.0')
             metadata.setdefault('category', module_id.split('.')[0])
             metadata.setdefault('tags', [])
+            # Which plugin this module arrived from, assigned rather than
+            # accepted: it is overwritten unconditionally, so a package cannot
+            # register a module claiming to belong to another plugin — or to
+            # none, which is the more valuable lie because flyto-core's own
+            # modules are the ones the process-global permission grant reaches.
+            metadata['plugin'] = cls._loading_plugin
             cls._metadata[module_id] = metadata
         logger.debug(f"Module registered: {module_id}")
 
@@ -175,6 +192,35 @@ class ModuleRegistry:
     def module_count(cls) -> int:
         """Get number of registered modules"""
         return len(cls._modules)
+
+    @classmethod
+    def capabilities(cls) -> Dict[str, List[str]]:
+        """What the installed modules can do, by capability.
+
+        The plugin contribution point, read side. A package declares
+        ``provides_capability`` on a module, and this is how a host discovers
+        that installing it made a capability available — without anyone having
+        to hand-type the capability name into a command somewhere else.
+
+        Returns ``{capability: [module_id, ...]}``, module ids sorted so the
+        answer is stable across runs and can be compared or cached. Modules
+        declaring nothing are absent rather than present with an empty key,
+        which is almost all of them: a capability is about work a *resource*
+        must be chosen for, and most modules are software that needs none.
+
+        A capability with several providers is normal and not an error. Two
+        packages may both be able to read a code, and which one runs is a
+        binding decision the host makes with the resources it has, not one this
+        registry is entitled to make by discarding a provider.
+        """
+        found: Dict[str, List[str]] = {}
+        for module_id, metadata in cls._metadata.items():
+            capability = (metadata or {}).get("provides_capability") or ""
+            capability = capability.strip()
+            if not capability:
+                continue
+            found.setdefault(capability, []).append(module_id)
+        return {name: sorted(ids) for name, ids in sorted(found.items())}
 
     @classmethod
     def clear(cls):
@@ -394,10 +440,18 @@ class ModuleRegistry:
                 # Track module count before loading
                 count_before = len(cls._modules)
 
-                # Load the register_all function and call it
+                # Load the register_all function and call it. The plugin's name
+                # is set for exactly the span of its own registration, and
+                # cleared in `finally` so a plugin that raises part-way through
+                # cannot leave its name attached to the next plugin's modules —
+                # or, worse, to flyto-core's if discovery is re-entered.
                 register_func = ep.load()
-                if callable(register_func):
-                    register_func()
+                cls._loading_plugin = ep.name
+                try:
+                    if callable(register_func):
+                        register_func()
+                finally:
+                    cls._loading_plugin = ""
 
                 # Track module count after loading
                 count_after = len(cls._modules)

@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Documentation
+
+- `docs/specs/PLUGIN_MANIFEST_SPEC.md` — DRAFT specification of the
+  language-neutral plugin manifest, with an implementation-status table
+  separating what the code enforces from what is only specified. Records that
+  the out-of-process plugin path currently has no policy gate and no caller
+  wiring it to workflow execution.
+
+### Security
+
+- Policy is now scoped per plugin. A plugin's modules are checked against
+  `FLYTO_PLUGIN_GRANTS` (`plugin:permission`) rather than the process-global
+  `FLYTO_GRANTED_PERMISSIONS`, so a plugin declaring a dangerous permission can
+  no longer reach a grant the operator made for flyto-core itself.
+  `FLYTO_PLUGIN_DENYLIST` / `FLYTO_PLUGIN_ALLOWLIST` govern which plugins may
+  run at all. The global module filter still runs first, so the plugin dimension
+  can only narrow. Ownership is stamped by the registry and cannot be claimed by
+  a module.
+- The out-of-process plugin path now passes the same gate. `RuntimeInvoker.invoke`
+  calls `enforce_module_policy` on the resolved module id before routing, so the
+  plugin path and the legacy fallback are covered alike, and a step naming an id
+  the registry does not know can no longer reach a subprocess that the chokepoint
+  never sees. A refusal returns `MODULE_POLICY_DENIED`; a manifest that cannot be
+  read does not open the gate.
+
+### Added
+
+- `register_module(provides_capability=...)` lets a module declare the capability
+  it provides, and `ModuleRegistry.capabilities()` returns them grouped by
+  capability. This is how a host discovers that installing a package made a
+  capability available, instead of an operator hand-typing the name into a
+  command elsewhere. Optional; unset for every existing module. Serves plugins
+  arriving through the Python `flyto.modules` entry point — one binding, not a
+  language-neutral plugin contract.
+
 ## [Unreleased]
 
 ## [2.27.0] - 2026-08-08

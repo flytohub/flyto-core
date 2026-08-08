@@ -73,6 +73,9 @@ def build_module_metadata(
     license_str: str,
     required_tier: Optional[str],
     required_feature: Optional[str],
+    # Optional, and last, so every existing caller keeps working: this field
+    # was added after the signature was in use by other packages.
+    provides_capability: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Build the full metadata dict for a module registration."""
     resolved_visibility = resolved["visibility"]
@@ -161,6 +164,13 @@ def build_module_metadata(
 
         # Advanced
         "requires": requires or [],
+        # What this module can do, named in the vocabulary a Flyto2 Space uses
+        # to bind work to resources. This is the plugin contribution point: an
+        # installed package says "I provide vision.observe" here, and a host
+        # can read it without anyone hand-typing the capability into a command.
+        # Empty for the vast majority of modules, which do software work no
+        # resource needs to be chosen for.
+        "provides_capability": (provides_capability or "").strip(),
         "permissions": permissions or [],
         "examples": examples or [],
         "docs_url": docs_url,

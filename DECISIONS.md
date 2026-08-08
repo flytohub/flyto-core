@@ -1,5 +1,108 @@
 # Decisions
 
+## 2026-08-08 - The plugin manifest is specified before it is built, and says so
+
+Decision: `docs/specs/PLUGIN_MANIFEST_SPEC.md` states the language-neutral
+plugin contract as a DRAFT, with an implementation-status table naming which of
+its guarantees the code enforces today and which are intentions. Sections that
+describe unbuilt behaviour are marked SPECIFIED.
+
+Reason: three independent adversarial reviews of candidate designs each returned
+a fatal finding, and the shape was the same every time — an authority model
+whose gates existed in prose and not in code. Per-plugin module policy,
+per-plugin permission scope and manifest-verified integrity were all written in
+the present tense against a codebase that had none of them. An operator adopts a
+plugin on the strength of what the contract claims, so a contract that overstates
+is worse than one that promises nothing.
+
+Three constraints fell out of those reviews and are load-bearing in the spec:
+
+**Sign the code, not the map.** A bundle of declaration alone attests to a
+mapping, not to a plugin; `artifact.digest` binds the manifest to what runs. The
+existing PyPI Trusted Publishing + SLSA provenance already signs the wheel and is
+recognised rather than replaced.
+
+**The address is derived, never declared.** A manifest that names its own
+endpoint and token environment variables lets one publisher name another's, and
+no other check catches it because nothing binds a freely-chosen suffix to the
+publisher. Deriving from the namespace, which is bound, closes it by
+construction.
+
+**No absent-means-true boolean crosses a language boundary.** Go's
+`json:"usable,omitempty"` on a bool omits false, as does Jackson's NON_DEFAULT;
+the field that decides whether a mission counts as proven would silently invert.
+
+Recorded openly: `docs/PLUGIN_SDK.md` already documents a different `plugin.yaml`
+and a 14-language runtime that really does spawn subprocesses. Whether
+`flyto.plugin.v1` supersedes it or converts to it is an open question in the
+spec rather than a decision taken here.
+
+Also recorded, because it is the finding that most needs an owner: the
+out-of-process plugin path has no `enforce_module_policy` call, and
+`RuntimeInvoker.set_plugin_manager` has no caller, so a workflow step cannot
+reach a plugin subprocess today. It is one wiring change from working and the
+same change from being a policy bypass.
+
+## 2026-08-08 - Policy has a plugin dimension, and it can only narrow
+
+Decision: `enforce_module_policy` takes the plugin a module arrived from, and
+three environment variables scope policy to it — `FLYTO_PLUGIN_GRANTS`
+(`plugin:permission` pairs), `FLYTO_PLUGIN_DENYLIST`, `FLYTO_PLUGIN_ALLOWLIST`.
+A plugin module is checked against its own grants only; the process-global
+`FLYTO_GRANTED_PERMISSIONS` does not reach it. The global module filter runs
+first, so the plugin dimension can never widen what a plugin may run.
+
+Reason: with one global grant set, a plugin that *honestly* declared
+`required_permissions: [shell.execute]` was asking the operator to grant
+shell.execute to every module in the process — flyto-core's own and every other
+plugin's. Declaring a permission is how a plugin tells the truth about itself,
+and it must not be how it acquires reach. An operator who granted shell.execute
+so flyto-core could run a build step has not granted it to everything they
+install afterwards.
+
+Ownership is assigned, never claimed. The registry stamps the plugin whose
+`register_all` is running into the module's metadata and overwrites whatever the
+module supplied. The lie worth blocking is not "I am plugin B" but "I am no
+plugin at all", because the empty owner is the one the global grant still
+covers — so a module registered during a plugin load that supplies
+`plugin: ""` is corrected to the loading plugin, and a module registered with no
+metadata at all is given the minimum needed to stay attributable rather than
+defaulting to first-party.
+
+The marker is cleared in `finally`, so a plugin that raises part-way through
+registration cannot leave its name attached to the next plugin's modules.
+
+Scope: this bounds what a plugin's modules may do *inside this process*. It does
+not bound a plugin that runs as its own process — nothing here can, and a design
+that claims otherwise is describing a sandbox flyto-core does not have.
+
+## 2026-08-08 - A module may declare the capability it provides
+
+Decision: `register_module` accepts `provides_capability`, a single capability
+id in the vocabulary a Flyto2 Space uses to bind work to resources. It is stored
+in module metadata and read back through `ModuleRegistry.capabilities()`, which
+returns `{capability: [module_id, ...]}`. It is optional, defaults to empty, and
+almost every module leaves it unset.
+
+Reason: this is the plugin contribution point, read side. Before it, installing
+a package added a step to the builder but told the host nothing — a Space's
+evidence layer could not learn that a capability had become available until an
+operator hand-typed its name into a command somewhere else. "Install the plugin
+and the loop can use it" was not expressible.
+
+A capability with several providers is returned whole rather than resolved here.
+Which provider runs is a binding decision the host makes with the resources it
+has; discarding one would be this registry deciding something it cannot know.
+
+Scope, stated because it is easy to over-read: this serves plugins that arrive
+through the Python `flyto.modules` entry point. It is one binding, not the
+ecosystem's contribution point — a plugin written in another language cannot use
+it at all, and the language-neutral manifest that would serve those is a
+separate, unbuilt contract.
+
+`build_module_metadata` takes the new field last and with a default, so callers
+outside this repository keep working unchanged.
+
 ## 2026-08-08 - Sandbox guard coverage is a CI property, not an author's habit
 
 Decision: every module that declares a path-shaped parameter must route it
