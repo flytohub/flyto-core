@@ -177,13 +177,88 @@ def granted_permissions() -> set:
     return {p.strip() for p in raw.split(",") if p.strip()}
 
 
-def missing_permissions(required) -> list:
+# ---------------------------------------------------------------------------
+# Per-plugin scope
+# ---------------------------------------------------------------------------
+#
+# Everything above this line is process-global: one denylist, one grant set,
+# applied to every module in the process. That is right for the modules
+# flyto-core ships, which the operator installed by installing flyto-core.
+#
+# It is wrong for a plugin. A plugin is third-party code the operator adopted
+# separately, and with a single global grant set, a plugin that *honestly*
+# declares `required_permissions: [shell.execute]` is asking the operator to
+# grant shell.execute to EVERY module in the process — including flyto-core's
+# own and every other plugin's. Honesty became privilege escalation, which is
+# the opposite of what declaring a permission is for.
+#
+# So a plugin's modules are scoped:
+#
+#   FLYTO_PLUGIN_GRANTS   — per-plugin dangerous-permission grants, as
+#                           "plugin:permission" pairs, e.g.
+#                           "vision:shell.execute,thermal:code.execute".
+#                           A plugin module does NOT inherit
+#                           FLYTO_GRANTED_PERMISSIONS: granting a permission to
+#                           flyto-core must not silently grant it to everything
+#                           the operator later installs.
+#   FLYTO_PLUGIN_DENYLIST — plugin names whose modules never run.
+#   FLYTO_PLUGIN_ALLOWLIST— if set, ONLY these plugins' modules run.
+#
+# The global module filter still applies to a plugin's modules. The plugin
+# dimension can only narrow, never widen: a plugin cannot name itself into
+# running `shell.exec`, because that id is denied before the plugin dimension
+# is consulted at all.
+
+
+def _pairs(raw: str) -> dict:
+    """Parse "a:x,b:y,a:z" into {"a": {"x", "z"}, "b": {"y"}}."""
+    out: dict = {}
+    for chunk in raw.split(","):
+        chunk = chunk.strip()
+        if not chunk or ":" not in chunk:
+            continue
+        name, _, value = chunk.partition(":")
+        name, value = name.strip(), value.strip()
+        if name and value:
+            out.setdefault(name, set()).add(value)
+    return out
+
+
+def plugin_grants(plugin: str) -> set:
+    """Dangerous permissions granted to ONE plugin, and to it alone."""
+    if not plugin:
+        return set()
+    return _pairs(os.environ.get("FLYTO_PLUGIN_GRANTS", "")).get(plugin, set())
+
+
+def is_plugin_allowed(plugin: str) -> bool:
+    """Whether a plugin's modules may run at all.
+
+    An empty plugin name means "not from a plugin" — flyto-core's own modules —
+    and is always allowed here; the module filter is what governs those.
+    """
+    if not plugin:
+        return True
+    allow = [p.strip() for p in os.environ.get("FLYTO_PLUGIN_ALLOWLIST", "").split(",") if p.strip()]
+    if allow:
+        return plugin in allow
+    deny = [p.strip() for p in os.environ.get("FLYTO_PLUGIN_DENYLIST", "").split(",") if p.strip()]
+    return plugin not in deny
+
+
+def missing_permissions(required, *, plugin: str = "") -> list:
     """Return the dangerous permissions in `required` that have NOT been granted.
 
     An empty list means the module is permitted. Non-dangerous permissions are
-    always allowed (returned never lists them).
+    always allowed (never returned).
+
+    ``plugin`` scopes the grant. A module belonging to a plugin is checked
+    against that plugin's own grants ONLY — the process-global
+    FLYTO_GRANTED_PERMISSIONS does not reach it. An operator who granted
+    shell.execute so that flyto-core could run a build step has not thereby
+    granted it to every plugin they install afterwards, and that is the point.
     """
-    granted = granted_permissions()
+    granted = plugin_grants(plugin) if plugin else granted_permissions()
     return [
         p for p in (required or [])
         if p in _DANGEROUS_PERMISSIONS and p not in granted
@@ -194,16 +269,24 @@ class ModulePolicyError(PermissionError):
     """Raised at the execution chokepoint when a module is blocked by policy."""
 
 
-def enforce_module_policy(module_id, required_permissions=None) -> None:
+def enforce_module_policy(module_id, required_permissions=None, plugin: str = "") -> None:
     """Fail-closed gate, called at the single execution chokepoint (BaseModule.run).
 
-    Raises ModulePolicyError if the module id is denied by the capability filter
-    or declares an ungranted dangerous permission. Because EVERY module — direct,
-    recipe step, foreach item, composite sub-node, and any child reached via
-    flow.invoke / template.invoke / flow.subflow / agent tools — is executed
+    Raises ModulePolicyError if the module id is denied by the capability filter,
+    if it belongs to a plugin that is not permitted, or if it declares a
+    dangerous permission that has not been granted to it. Because EVERY module —
+    direct, recipe step, foreach item, composite sub-node, and any child reached
+    via flow.invoke / template.invoke / flow.subflow / agent tools — is executed
     through this gate, a denied module cannot run no matter how it was invoked.
     The MCP-boundary checks remain as a first line; this is the backstop the
     nested-execution gadgets were bypassing.
+
+    ``plugin`` is the plugin that registered the module, stamped into metadata at
+    registration and passed through from there. Empty means flyto-core's own.
+    The order below is deliberate: the global module filter runs FIRST, so the
+    plugin dimension can only ever narrow. A plugin cannot name itself into
+    running ``shell.exec`` — that id is denied before anything plugin-specific is
+    consulted.
     """
     if not module_id:
         return
@@ -212,11 +295,20 @@ def enforce_module_policy(module_id, required_permissions=None) -> None:
             f"Module '{module_id}' is blocked by the capability policy "
             "(FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST)."
         )
-    missing = missing_permissions(required_permissions)
-    if missing:
+    if not is_plugin_allowed(plugin):
         raise ModulePolicyError(
-            f"Module '{module_id}' requires ungranted permission(s) {missing} "
-            "(grant via FLYTO_GRANTED_PERMISSIONS)."
+            f"Module '{module_id}' belongs to plugin '{plugin}', which is not "
+            "permitted here (FLYTO_PLUGIN_DENYLIST / FLYTO_PLUGIN_ALLOWLIST)."
+        )
+    missing = missing_permissions(required_permissions, plugin=plugin)
+    if missing:
+        where = (
+            f"grant to this plugin via FLYTO_PLUGIN_GRANTS={plugin}:{missing[0]}"
+            if plugin
+            else "grant via FLYTO_GRANTED_PERMISSIONS"
+        )
+        raise ModulePolicyError(
+            f"Module '{module_id}' requires ungranted permission(s) {missing} ({where})."
         )
 
 

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,366 lines**, and **5,554 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,492 lines**, and **5,557 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -190,7 +190,7 @@ Inventory: **953 Python files**, **196,366 lines**, and **5,554 class/function/m
 | [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 132 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
 | [`src/core/metering/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/__init__.py#L1) | 23 | 0 | `tracker` | Metering Module |
 | [`src/core/metering/tracker.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L1) | 311 | 15 | `dataclasses, enum, logging, secrets, time, typing` | Metering Tracker |
-| [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 286 | 12 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
+| [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 378 | 15 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
 | [`src/core/modules/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/__init__.py#L1) | 288 | 0 | `atomic, base, builtin, catalog, connection_rules, errors, express, items, lint, registry, result, runtime` | Module System - Core Registration and Execution |
 | [`src/core/modules/atomic/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/__init__.py#L1) | 128 | 1 | `browser, element, element_registry, flow, importlib` | Atomic Modules - Community Edition |
 | [`src/core/modules/atomic/_deprecation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/_deprecation.py#L1) | 93 | 6 | `functools, typing, warnings` | Deprecation Notice for Atomic Modules |
@@ -714,7 +714,7 @@ Inventory: **953 Python files**, **196,366 lines**, and **5,554 class/function/m
 | [`src/core/modules/audit/report_generator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/report_generator.py#L1) | 268 | 9 | `__future__, collections, datetime, json, os, schema_auditor, standards, typing` | Report Generator - Generate audit reports in various formats |
 | [`src/core/modules/audit/schema_auditor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/schema_auditor.py#L1) | 371 | 21 | `__future__, collections, dataclasses, registry, standards, typing` | Schema Auditor - Main audit logic for module schemas |
 | [`src/core/modules/audit/standards.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/standards.py#L1) | 239 | 1 | `enum, typing` | Quality Standards - Defines schema quality requirements |
-| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 557 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation, warnings` | Base Module Class with Phase 2 execution support and Item-based execution. |
+| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 566 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation, warnings` | Base Module Class with Phase 2 execution support and Item-based execution. |
 | [`src/core/modules/builtin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/builtin/__init__.py#L1) | 233 | 5 | `atomic, logging, registry, typing` | Builtin Modules |
 | [`src/core/modules/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/catalog.py#L1) | 388 | 10 | `copy, licensing, logging, re, typing` | Module Catalog - Public view sanitization and catalog utilities. |
 | [`src/core/modules/composite/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/__init__.py#L1) | 97 | 2 | `base, browser, data, developer, notification, test` | Composite Modules (Level 3) |
@@ -799,7 +799,7 @@ Inventory: **953 Python files**, **196,366 lines**, and **5,554 class/function/m
 | [`src/core/modules/quality/types.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/types.py#L1) | 263 | 29 | `dataclasses, enum, typing` | Validation Types |
 | [`src/core/modules/registry/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/__init__.py#L1) | 121 | 2 | `catalog, core, decorators, express, metadata, ports, quality_validator, resolve, validation_types` | Module Registry - Registration and Management |
 | [`src/core/modules/registry/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L1) | 310 | 16 | `core, datetime, json, logging, pathlib, typing, utils` | Module Catalog Manager - Export, Search, and Sync |
-| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 800 | 28 | `base, connection_rules, constants, dataclasses, datetime, hashlib, importlib, logging, sys, types, typing` | Module Registry - Core Registration and Lookup |
+| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 825 | 28 | `base, connection_rules, constants, dataclasses, datetime, hashlib, importlib, logging, sys, types, typing` | Module Registry - Core Registration and Lookup |
 | [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 355 | 8 | `base, core, inspect, metadata, quality_validator, resolve, types, typing` | Module registration decorators |
 | [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 183 | 1 | `types, typing` | Module Metadata Builder |
 | [`src/core/modules/registry/ports.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/ports.py#L1) | 116 | 2 | `re, typing` | Dynamic port generation utilities |

@@ -1,5 +1,38 @@
 # Decisions
 
+## 2026-08-08 - Policy has a plugin dimension, and it can only narrow
+
+Decision: `enforce_module_policy` takes the plugin a module arrived from, and
+three environment variables scope policy to it — `FLYTO_PLUGIN_GRANTS`
+(`plugin:permission` pairs), `FLYTO_PLUGIN_DENYLIST`, `FLYTO_PLUGIN_ALLOWLIST`.
+A plugin module is checked against its own grants only; the process-global
+`FLYTO_GRANTED_PERMISSIONS` does not reach it. The global module filter runs
+first, so the plugin dimension can never widen what a plugin may run.
+
+Reason: with one global grant set, a plugin that *honestly* declared
+`required_permissions: [shell.execute]` was asking the operator to grant
+shell.execute to every module in the process — flyto-core's own and every other
+plugin's. Declaring a permission is how a plugin tells the truth about itself,
+and it must not be how it acquires reach. An operator who granted shell.execute
+so flyto-core could run a build step has not granted it to everything they
+install afterwards.
+
+Ownership is assigned, never claimed. The registry stamps the plugin whose
+`register_all` is running into the module's metadata and overwrites whatever the
+module supplied. The lie worth blocking is not "I am plugin B" but "I am no
+plugin at all", because the empty owner is the one the global grant still
+covers — so a module registered during a plugin load that supplies
+`plugin: ""` is corrected to the loading plugin, and a module registered with no
+metadata at all is given the minimum needed to stay attributable rather than
+defaulting to first-party.
+
+The marker is cleared in `finally`, so a plugin that raises part-way through
+registration cannot leave its name attached to the next plugin's modules.
+
+Scope: this bounds what a plugin's modules may do *inside this process*. It does
+not bound a plugin that runs as its own process — nothing here can, and a design
+that claims otherwise is describing a sandbox flyto-core does not have.
+
 ## 2026-08-08 - A module may declare the capability it provides
 
 Decision: `register_module` accepts `provides_capability`, a single capability

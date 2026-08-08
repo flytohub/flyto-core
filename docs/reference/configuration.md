@@ -2,7 +2,7 @@
 
 # Configuration And Packaged Assets
 
-Implementation sources read **104 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
+Implementation sources read **107 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **17 workflow fixtures/templates**.
 
 ## Environment variables
 
@@ -39,6 +39,9 @@ Implementation sources read **104 environment-variable names**. The package ship
 | `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L67) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L80) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L87) |
+| `FLYTO_PLUGIN_ALLOWLIST` | [`src/core/module_policy.py:242`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L242) |
+| `FLYTO_PLUGIN_DENYLIST` | [`src/core/module_policy.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L245) |
+| `FLYTO_PLUGIN_GRANTS` | [`src/core/module_policy.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L231) |
 | `FLYTO_RUNNER_SECRET` | [`src/core/verification_service.py:389`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L389), [`src/core/verification_service.py:425`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L425) |
 | `FLYTO_SANDBOX_DIR` | [`src/core/utils.py:1180`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1180) |
 | `FLYTO_SANDBOX_INHERIT_ENV` | [`src/core/safe_env.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/safe_env.py#L40) |

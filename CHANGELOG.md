@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Security
+
+- Policy is now scoped per plugin. A plugin's modules are checked against
+  `FLYTO_PLUGIN_GRANTS` (`plugin:permission`) rather than the process-global
+  `FLYTO_GRANTED_PERMISSIONS`, so a plugin declaring a dangerous permission can
+  no longer reach a grant the operator made for flyto-core itself.
+  `FLYTO_PLUGIN_DENYLIST` / `FLYTO_PLUGIN_ALLOWLIST` govern which plugins may
+  run at all. The global module filter still runs first, so the plugin dimension
+  can only narrow. Ownership is stamped by the registry and cannot be claimed by
+  a module.
+
 ### Added
 
 - `register_module(provides_capability=...)` lets a module declare the capability
