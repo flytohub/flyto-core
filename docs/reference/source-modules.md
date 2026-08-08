@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,319 lines**, and **5,553 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,366 lines**, and **5,554 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -799,9 +799,9 @@ Inventory: **953 Python files**, **196,319 lines**, and **5,553 class/function/m
 | [`src/core/modules/quality/types.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/types.py#L1) | 263 | 29 | `dataclasses, enum, typing` | Validation Types |
 | [`src/core/modules/registry/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/__init__.py#L1) | 121 | 2 | `catalog, core, decorators, express, metadata, ports, quality_validator, resolve, validation_types` | Module Registry - Registration and Management |
 | [`src/core/modules/registry/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L1) | 310 | 16 | `core, datetime, json, logging, pathlib, typing, utils` | Module Catalog Manager - Export, Search, and Sync |
-| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 771 | 27 | `base, connection_rules, constants, dataclasses, datetime, hashlib, importlib, logging, sys, types, typing` | Module Registry - Core Registration and Lookup |
-| [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 347 | 8 | `base, core, inspect, metadata, quality_validator, resolve, types, typing` | Module registration decorators |
-| [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 173 | 1 | `types, typing` | Module Metadata Builder |
+| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 800 | 28 | `base, connection_rules, constants, dataclasses, datetime, hashlib, importlib, logging, sys, types, typing` | Module Registry - Core Registration and Lookup |
+| [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 355 | 8 | `base, core, inspect, metadata, quality_validator, resolve, types, typing` | Module registration decorators |
+| [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 183 | 1 | `types, typing` | Module Metadata Builder |
 | [`src/core/modules/registry/ports.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/ports.py#L1) | 116 | 2 | `re, typing` | Dynamic port generation utilities |
 | [`src/core/modules/registry/quality_validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/quality_validator.py#L1) | 697 | 25 | `ast, dataclasses, inspect, logging, re, rule_config, typing, validation_types` | Module Quality Validator - Code quality checks integrated with @register_module |
 | [`src/core/modules/registry/resolve.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/resolve.py#L1) | 292 | 5 | `connection_rules, logging, types, typing, warnings` | Module Configuration Resolution |

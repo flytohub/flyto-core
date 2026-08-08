@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-08-08 - A module may declare the capability it provides
+
+Decision: `register_module` accepts `provides_capability`, a single capability
+id in the vocabulary a Flyto2 Space uses to bind work to resources. It is stored
+in module metadata and read back through `ModuleRegistry.capabilities()`, which
+returns `{capability: [module_id, ...]}`. It is optional, defaults to empty, and
+almost every module leaves it unset.
+
+Reason: this is the plugin contribution point, read side. Before it, installing
+a package added a step to the builder but told the host nothing — a Space's
+evidence layer could not learn that a capability had become available until an
+operator hand-typed its name into a command somewhere else. "Install the plugin
+and the loop can use it" was not expressible.
+
+A capability with several providers is returned whole rather than resolved here.
+Which provider runs is a binding decision the host makes with the resources it
+has; discarding one would be this registry deciding something it cannot know.
+
+Scope, stated because it is easy to over-read: this serves plugins that arrive
+through the Python `flyto.modules` entry point. It is one binding, not the
+ecosystem's contribution point — a plugin written in another language cannot use
+it at all, and the language-neutral manifest that would serve those is a
+separate, unbuilt contract.
+
+`build_module_metadata` takes the new field last and with a default, so callers
+outside this repository keep working unchanged.
+
 ## 2026-08-08 - Sandbox guard coverage is a CI property, not an author's habit
 
 Decision: every module that declares a path-shaped parameter must route it

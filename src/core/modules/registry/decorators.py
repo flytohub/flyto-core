@@ -121,6 +121,13 @@ def register_module(
     subcategory: Optional[str] = None,
     tags: Optional[List[str]] = None,
 
+    # What this module can do, in the capability vocabulary a Flyto2 Space
+    # uses to bind work to resources. This is the plugin contribution point:
+    # an installed package declares "I provide vision.observe" and a host can
+    # read it, instead of an operator hand-typing the capability into a
+    # command. Leave unset for software modules, which need no resource chosen.
+    provides_capability: Optional[str] = None,
+
     # Context requirements (for connection validation)
     requires_context: Optional[List[str]] = None,
     provides_context: Optional[List[str]] = None,
@@ -322,6 +329,7 @@ def register_module(
             container_config=container_config,
             start_requires_params=start_requires_params,
             requires=requires,
+            provides_capability=provides_capability,
             permissions=permissions,
             examples=examples,
             docs_url=docs_url,

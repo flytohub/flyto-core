@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `register_module(provides_capability=...)` lets a module declare the capability
+  it provides, and `ModuleRegistry.capabilities()` returns them grouped by
+  capability. This is how a host discovers that installing a package made a
+  capability available, instead of an operator hand-typing the name into a
+  command elsewhere. Optional; unset for every existing module. Serves plugins
+  arriving through the Python `flyto.modules` entry point — one binding, not a
+  language-neutral plugin contract.
+
 ## [Unreleased]
 
 ## [2.27.0] - 2026-08-08

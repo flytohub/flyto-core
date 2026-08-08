@@ -177,6 +177,35 @@ class ModuleRegistry:
         return len(cls._modules)
 
     @classmethod
+    def capabilities(cls) -> Dict[str, List[str]]:
+        """What the installed modules can do, by capability.
+
+        The plugin contribution point, read side. A package declares
+        ``provides_capability`` on a module, and this is how a host discovers
+        that installing it made a capability available — without anyone having
+        to hand-type the capability name into a command somewhere else.
+
+        Returns ``{capability: [module_id, ...]}``, module ids sorted so the
+        answer is stable across runs and can be compared or cached. Modules
+        declaring nothing are absent rather than present with an empty key,
+        which is almost all of them: a capability is about work a *resource*
+        must be chosen for, and most modules are software that needs none.
+
+        A capability with several providers is normal and not an error. Two
+        packages may both be able to read a code, and which one runs is a
+        binding decision the host makes with the resources it has, not one this
+        registry is entitled to make by discarding a provider.
+        """
+        found: Dict[str, List[str]] = {}
+        for module_id, metadata in cls._metadata.items():
+            capability = (metadata or {}).get("provides_capability") or ""
+            capability = capability.strip()
+            if not capability:
+                continue
+            found.setdefault(capability, []).append(module_id)
+        return {name: sorted(ids) for name, ids in sorted(found.items())}
+
+    @classmethod
     def clear(cls):
         """Clear all registered modules and metadata (for hot-reload)"""
         cls._modules.clear()
