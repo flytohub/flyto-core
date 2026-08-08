@@ -197,6 +197,7 @@ def check_current_inventory() -> list[str]:
 def main() -> int:
     command(sys.executable, "scripts/generate_reference.py", "--check")
     command(sys.executable, "scripts/generate_catalog.py", "--check")
+    command(sys.executable, "scripts/generate_security_status.py", "--check")
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     files = repository_files()
     missing = check_current_inventory()

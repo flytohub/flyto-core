@@ -57,6 +57,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   locally fails once that validation is deleted. Guard coverage is now a CI
   property instead of something an author has to remember.
 
+- Published `SECURITY_STATUS.md`: every advisory with its severity, affected
+  range, fixed-in version and the regression test that covers it. It is
+  generated from `security/advisories.json` by
+  `scripts/generate_security_status.py` and verified in CI —
+  `tests/core/test_security_status.py` asserts that every test it names
+  resolves to a collectable node, so the coverage column cannot drift into
+  fiction, and `scripts/check_documentation.py` fails on a stale page.
+- Wrote regression tests for three advisory fixes that shipped without one.
+  Building the status page required naming a test per advisory and found that
+  GHSA-hr7p-wg7r-hg9m (`${env.VAR}` interpolation bypassing the `env.get`
+  denylist), GHSA-qq9q-xgm3-xv9g (environment API keys sent to a
+  caller-supplied `base_url`) and GHSA-mxcc-cr6x-2mvr (MCP `run_recipe`
+  loading workflows outside the bundled directory) had none. The fixes were
+  present and correct, but nothing would have caught their removal.
+
 ### Changed
 - **Breaking for callers relying on the old permissiveness.** Modules listed
   above now reject paths outside `FLYTO_SANDBOX_DIR`, which defaults to the

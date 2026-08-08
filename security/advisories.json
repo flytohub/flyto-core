@@ -1,0 +1,290 @@
+[
+  {
+    "ghsa": "GHSA-v7q9-pr72-5fmv",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-08-07",
+    "affected": "<= 2.26.11",
+    "patched": "2.26.12",
+    "summary": "port.check skips the IPv6 transition SSRF guard because gethostbyname raises first and the gaierror handler is a bare pass",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_port_check_blocks_ipv6_transition_and_fails_closed"
+    ]
+  },
+  {
+    "ghsa": "GHSA-v468-p4jx-7vj3",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-08-07",
+    "affected": "<= 2.26.11",
+    "patched": "2.26.12",
+    "summary": "Regular expression denial of service (ReDoS) in `regex.match` / `regex.extract` \u2014 ineffective timeout freezes the whole server",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_regex_match_redos_times_out_without_freezing_loop"
+    ]
+  },
+  {
+    "ghsa": "GHSA-pxvx-67rw-8352",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-07",
+    "affected": "<= 2.26.11",
+    "patched": "2.26.12",
+    "summary": "Tar Slip \u2014 symlink bypass of path pre-check in `archive.tar_extract`",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_tar_extract_rejects_symlink_slip"
+    ]
+  },
+  {
+    "ghsa": "GHSA-p64w-hgfm-824v",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-08-07",
+    "affected": ">= 1.2.0, <= 2.26.11",
+    "patched": "2.26.12",
+    "summary": "Arbitrary file write via browser.download save_path",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_browser_writers_reject_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-662f-hr85-mg6c",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-07",
+    "affected": "<= 2.26.11",
+    "patched": "2.26.12",
+    "summary": "browser.goto bypasses SSRF validation by re-navigating to the www-toggled host",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_goto_www_toggle_revalidates_the_toggled_host"
+    ]
+  },
+  {
+    "ghsa": "GHSA-xchh-cp84-9838",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "Arbitrary file write in browser.{snapshot,trace,cookies_file}, word.parse and pdf.generate modules (RCE)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_file_writers_block_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-wc94-386q-5478",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "Arbitrary file read via path traversal in data.csv.read, data.yaml.parse, excel.read, pdf.parse and image.ocr modules",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_file_readers_block_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-hmq9-xw4w-7ppc",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "Arbitrary file write via unvalidated destination_path in cloud.{azure,gcs,aws_s3}.download modules (RCE)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_cloud_downloads_block_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-h8xc-824q-pwfh",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "SSRF in agent.chain/agent.autonomous via unvalidated ollama_url parameter",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_agent_ollama_blocks_metadata_even_when_remote_is_enabled"
+    ]
+  },
+  {
+    "ghsa": "GHSA-cjg2-qmrg-6h4h",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "SSRF via unrevalidated redirects and DNS rebinding in core.api.http_* and notification.{slack,discord,teams} modules",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_redirect_target_is_revalidated_before_second_request"
+    ]
+  },
+  {
+    "ghsa": "GHSA-6whm-vq2p-8m93",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-02",
+    "affected": "<= 2.26.10",
+    "patched": ">= 2.26.11",
+    "summary": "SSRF in auth.oauth2 module via unvalidated token_url (readable, IAM credential theft)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_oauth2_blocks_metadata_before_session_creation"
+    ]
+  },
+  {
+    "ghsa": "GHSA-pfg2-w999-497v",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-07-11",
+    "affected": "<= 2.26.7",
+    "patched": "2.26.8",
+    "summary": "SSRF guard validates the resolved IP but connects by hostname, allowing DNS-rebinding TOCTOU",
+    "regression_tests": [
+      "tests/core/test_ssrf_dns_rebinding.py"
+    ]
+  },
+  {
+    "ghsa": "GHSA-p34x-fmph-9fjx",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-07-11",
+    "affected": "<= 2.26.7",
+    "patched": "2.26.8",
+    "summary": "Arbitrary file write via unguarded data.*/file.* modules (incomplete fix of GHSA-2956)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_file_writers_block_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-mxcc-cr6x-2mvr",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-07-11",
+    "affected": "<= 2.26.7",
+    "patched": "2.26.8",
+    "summary": "Path traversal in MCP `run_recipe` allows execution of workflows outside bundled recipe directory",
+    "regression_tests": [
+      "tests/core/test_unwitnessed_advisory_fixes.py::TestRecipeLoaderConfinement"
+    ]
+  },
+  {
+    "ghsa": "GHSA-6pm8-6f34-9v3g",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-07-11",
+    "affected": "<= 2.26.7",
+    "patched": "2.26.8",
+    "summary": "SSRF guard bypass via DNS rebinding (validate_url_ssrf resolves-then-connects without pinning)",
+    "regression_tests": [
+      "tests/core/test_ssrf_dns_rebinding.py"
+    ]
+  },
+  {
+    "ghsa": "GHSA-2mr3-rxrq-238c",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-07-11",
+    "affected": "<= 2.26.7",
+    "patched": "2.26.8",
+    "summary": "http.paginate follows server-supplied next-page URLs (Link header / cursor) without SSRF revalidation",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_http_emitters_use_full_ssrf_guard"
+    ]
+  },
+  {
+    "ghsa": "GHSA-pgwh-4jj4-qm8v",
+    "severity": "high",
+    "cve": "CVE-2026-67428",
+    "published": "2026-07-08",
+    "affected": "<= 2.26.6",
+    "patched": "2.26.7",
+    "summary": "Multiple HTTP-family modules fetch client-controlled URLs without the SSRF guard their siblings apply (SSRF to internal/metadata)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_http_emitters_use_full_ssrf_guard"
+    ]
+  },
+  {
+    "ghsa": "GHSA-jx74-cqjv-2c67",
+    "severity": "critical",
+    "cve": "CVE-2026-67426",
+    "published": "2026-07-08",
+    "affected": "<= 2.26.6",
+    "patched": "2.26.7",
+    "summary": "Unauthenticated flyto-verification /run: callback_url SSRF and internal runner-secret exfiltration",
+    "regression_tests": [
+      "tests/test_verification_service.py::test_verification_service_run_requires_auth"
+    ]
+  },
+  {
+    "ghsa": "GHSA-c9hr-64h3-gxpc",
+    "severity": "high",
+    "cve": "CVE-2026-67424",
+    "published": "2026-07-08",
+    "affected": "<= 2.26.6",
+    "patched": "2.26.7",
+    "summary": "Guarded HTTP modules follow redirects into internal space without per-hop SSRF revalidation",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_redirect_target_is_revalidated_before_second_request"
+    ]
+  },
+  {
+    "ghsa": "GHSA-qq9q-xgm3-xv9g",
+    "severity": "high",
+    "cve": "CVE-2026-67425",
+    "published": "2026-07-07",
+    "affected": "< 2.26.6",
+    "patched": "2.26.6",
+    "summary": "LLM/API keys leak to an attacker-controlled base_url",
+    "regression_tests": [
+      "tests/core/test_unwitnessed_advisory_fixes.py::TestEnvCredentialEndpointGuard"
+    ]
+  },
+  {
+    "ghsa": "GHSA-hr7p-wg7r-hg9m",
+    "severity": "high",
+    "cve": "CVE-2026-67427",
+    "published": "2026-07-07",
+    "affected": "< 2.26.6",
+    "patched": "2.26.6",
+    "summary": "${env.VAR} interpolation reads any env secret despite env.get being denylisted",
+    "regression_tests": [
+      "tests/core/test_unwitnessed_advisory_fixes.py::TestEnvInterpolationPolicy"
+    ]
+  },
+  {
+    "ghsa": "GHSA-2956-977x-2w3r",
+    "severity": "critical",
+    "cve": "CVE-2026-67429",
+    "published": "2026-07-07",
+    "affected": "< 2.26.6",
+    "patched": "2.26.6",
+    "summary": "Arbitrary file write via image.download (and other file-writing modules)",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_reported_file_writers_block_paths_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-h9f9-h6gm-wc85",
+    "severity": "high",
+    "cve": "CVE-2026-55786",
+    "published": "2026-05-30",
+    "affected": ">= 2.26.2, < 2.26.4",
+    "patched": "2.26.4",
+    "summary": "Unauthenticated Command Execution via HTTP MCP `execute_module`",
+    "regression_tests": [
+      "tests/core/api/test_mcp_auth.py::TestMcpTransportRequiresAuth::test_execute_module_without_token_is_denied_and_never_dispatched"
+    ]
+  },
+  {
+    "ghsa": "GHSA-794r-5rp2-fpg8",
+    "severity": "high",
+    "cve": "CVE-2026-55787",
+    "published": "2026-05-30",
+    "affected": "<= 2.26.2",
+    "patched": "2.26.3",
+    "summary": "SSRF guard bypass via IPv6 transition addresses (IPv4-mapped / 6to4 / NAT64) in validate_url_ssrf",
+    "regression_tests": [
+      "tests/core/test_ssrf_ipv6_transition.py::test_validate_url_ssrf_rejects_transition_literal"
+    ]
+  }
+]

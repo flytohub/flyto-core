@@ -11,9 +11,14 @@ backports — upgrading is the supported path.
 | < 2.26   | :x:                |
 
 The current secure release is **2.26.12**. Every advisory published against
-this project is patched at or below that version; see the
-[Security tab](https://github.com/flytohub/flyto-core/security) for the full
-list with affected and patched ranges.
+this project is patched at or below that version, and every one has a named
+regression test that runs in CI.
+
+[**SECURITY_STATUS.md**](SECURITY_STATUS.md) lists all of them —
+advisory, severity, affected range, fixed-in version, and the regression test
+that covers it. That page is generated from `security/advisories.json` and
+verified in CI: every test it names must resolve to a collectable test node, so
+the coverage column cannot drift into fiction.
 
 ### Filesystem and network boundaries
 

@@ -69,7 +69,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 952 maintained Python files, 5,544
+- Source-backed documentation now covers 953 maintained Python files, 5,551
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -180,7 +180,7 @@
 
 Verified locally on 2026-08-07 for the 2.26.12 release candidate:
 
-- documentation, brand, generated catalog/reference (5,544 declarations
+- documentation, brand, generated catalog/reference (5,551 declarations
   across 805 files, regenerated after the fix set), and both the CI's fixed
   audited-surface Ruff list and a full changed-surface Ruff diff (every file
   touched by this release, compared byte-for-byte against its pre-fix
