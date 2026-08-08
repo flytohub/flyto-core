@@ -1,5 +1,48 @@
 # Decisions
 
+## 2026-08-08 - The plugin manifest is specified before it is built, and says so
+
+Decision: `docs/specs/PLUGIN_MANIFEST_SPEC.md` states the language-neutral
+plugin contract as a DRAFT, with an implementation-status table naming which of
+its guarantees the code enforces today and which are intentions. Sections that
+describe unbuilt behaviour are marked SPECIFIED.
+
+Reason: three independent adversarial reviews of candidate designs each returned
+a fatal finding, and the shape was the same every time — an authority model
+whose gates existed in prose and not in code. Per-plugin module policy,
+per-plugin permission scope and manifest-verified integrity were all written in
+the present tense against a codebase that had none of them. An operator adopts a
+plugin on the strength of what the contract claims, so a contract that overstates
+is worse than one that promises nothing.
+
+Three constraints fell out of those reviews and are load-bearing in the spec:
+
+**Sign the code, not the map.** A bundle of declaration alone attests to a
+mapping, not to a plugin; `artifact.digest` binds the manifest to what runs. The
+existing PyPI Trusted Publishing + SLSA provenance already signs the wheel and is
+recognised rather than replaced.
+
+**The address is derived, never declared.** A manifest that names its own
+endpoint and token environment variables lets one publisher name another's, and
+no other check catches it because nothing binds a freely-chosen suffix to the
+publisher. Deriving from the namespace, which is bound, closes it by
+construction.
+
+**No absent-means-true boolean crosses a language boundary.** Go's
+`json:"usable,omitempty"` on a bool omits false, as does Jackson's NON_DEFAULT;
+the field that decides whether a mission counts as proven would silently invert.
+
+Recorded openly: `docs/PLUGIN_SDK.md` already documents a different `plugin.yaml`
+and a 14-language runtime that really does spawn subprocesses. Whether
+`flyto.plugin.v1` supersedes it or converts to it is an open question in the
+spec rather than a decision taken here.
+
+Also recorded, because it is the finding that most needs an owner: the
+out-of-process plugin path has no `enforce_module_policy` call, and
+`RuntimeInvoker.set_plugin_manager` has no caller, so a workflow step cannot
+reach a plugin subprocess today. It is one wiring change from working and the
+same change from being a policy bypass.
+
 ## 2026-08-08 - Policy has a plugin dimension, and it can only narrow
 
 Decision: `enforce_module_policy` takes the plugin a module arrived from, and

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Documentation
+
+- `docs/specs/PLUGIN_MANIFEST_SPEC.md` — DRAFT specification of the
+  language-neutral plugin manifest, with an implementation-status table
+  separating what the code enforces from what is only specified. Records that
+  the out-of-process plugin path currently has no policy gate and no caller
+  wiring it to workflow execution.
+
 ### Security
 
 - Policy is now scoped per plugin. A plugin's modules are checked against
