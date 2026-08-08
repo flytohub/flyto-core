@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,552 declarations across 806 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,553 declarations across 806 files**.
 
 ## `demo.py`
 
@@ -276,11 +276,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def format_params(params_schema: dict) -> str` | Format params_schema into a readable string. | [`scripts/generate_catalog.py:22`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L22) |
-| function | `def format_output(output_schema: dict) -> str` | Format output_schema into a readable string. | [`scripts/generate_catalog.py:50`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L50) |
-| function | `def escape_md(text: str) -> str` | Escape pipe characters for markdown tables. | [`scripts/generate_catalog.py:63`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L63) |
-| function | `def render_catalog() -> tuple&#91;str, int, int&#93;` | Render the runtime-discovered module catalog deterministically. | [`scripts/generate_catalog.py:68`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L68) |
-| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_catalog.py:131`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L131) |
+| function | `def format_params(params_schema: dict) -> str` | Format params_schema into a readable string. | [`scripts/generate_catalog.py:44`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L44) |
+| function | `def format_output(output_schema: dict) -> str` | Format output_schema into a readable string. | [`scripts/generate_catalog.py:72`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L72) |
+| function | `def escape_md(text: str) -> str` | Escape pipe characters for markdown tables. | [`scripts/generate_catalog.py:85`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L85) |
+| function | `def _optional_note() -> str` | One stable sentence naming the categories excluded from the counts. | [`scripts/generate_catalog.py:90`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L90) |
+| function | `def render_catalog() -> tuple&#91;str, int, int&#93;` | Render the runtime-discovered module catalog deterministically. | [`scripts/generate_catalog.py:110`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L110) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_catalog.py:182`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L182) |
 
 ## `scripts/generate_reference.py`
 

@@ -3,6 +3,8 @@
 > Auto-generated from flyto-core module registry. **468 modules** across **85 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
+>
+> Counts cover what a default `pip install flyto-core` exposes. `huggingface` registers only when the matching optional dependency is installed (see the extras in `pyproject.toml`), and is excluded here so this file does not vary by developer environment.
 
 ## Categories
 
