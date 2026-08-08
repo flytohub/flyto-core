@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.27.0] - 2026-08-08
+
+Minor rather than patch: the two boundary changes below refuse inputs that
+previous releases accepted, so this is not a drop-in upgrade for every caller.
+Read the **Changed** section before upgrading.
+
 ### Security
 - Closed the filesystem sandbox boundary across the whole module registry
   rather than one report at a time. A registry-wide audit found every

@@ -530,7 +530,17 @@ flyto recipe full-audit --url https://example.com
 ## Security
 
 Report security vulnerabilities via **[security@flyto2.com](mailto:security@flyto2.com)**.
-See **[SECURITY.md](SECURITY.md)** for our security policy.
+See **[SECURITY.md](https://github.com/flytohub/flyto-core/blob/main/SECURITY.md)**
+for the security policy and the environment variables that define the filesystem
+and outbound-network boundaries.
+
+**[SECURITY_STATUS.md](https://github.com/flytohub/flyto-core/blob/main/SECURITY_STATUS.md)**
+lists every published advisory with its severity, affected range, fixed-in
+version, and the regression test that covers it. Two boundaries are enforced
+registry-wide by tests that fail the build — every module taking a
+caller-supplied path must reach the filesystem sandbox helper, and every module
+taking a caller-supplied URL or host must reach an SSRF guard — so coverage is a
+CI property rather than a convention.
 
 ## License
 

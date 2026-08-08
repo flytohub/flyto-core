@@ -2,15 +2,15 @@
 
 ## Supported Versions
 
-Security fixes land on the latest 2.26.x release. Older lines do not receive
+Security fixes land on the latest 2.27.x release. Older lines do not receive
 backports — upgrading is the supported path.
 
 | Version  | Supported          |
 | -------- | ------------------ |
-| 2.26.x   | :white_check_mark: |
-| < 2.26   | :x:                |
+| 2.27.x   | :white_check_mark: |
+| < 2.27   | :x:                |
 
-The current secure release is **2.26.12**. Every advisory published against
+The current secure release is **2.27.0**. Every advisory published against
 this project is patched at or below that version, and every one has a named
 regression test that runs in CI.
 

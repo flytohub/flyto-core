@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,233 lines**, and **5,551 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,253 lines**, and **5,552 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -37,7 +37,7 @@ Inventory: **953 Python files**, **196,233 lines**, and **5,551 class/function/m
 | [`scripts/fix_schema_v4.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_schema_v4.py#L1) | 324 | 9 | `ast, core, pathlib, re, sys, typing` | Schema Fixer v4 - Handles field(), schema_field(), and dict-style schemas. |
 | [`scripts/generate_catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L1) | 151 | 5 | `argparse, core, os, pathlib, sys` | Generate docs/TOOL_CATALOG.md from the module registry. |
 | [`scripts/generate_reference.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L1) | 610 | 22 | `__future__, argparse, ast, collections, json, pathlib, re, sys, typing, yaml` | Generate exhaustive Flyto2 Core references from implementation sources. |
-| [`scripts/generate_security_status.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L1) | 161 | 7 | `__future__, argparse, json, pathlib` | Render SECURITY_STATUS.md from security/advisories.json. |
+| [`scripts/generate_security_status.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L1) | 181 | 8 | `__future__, argparse, json, pathlib` | Render SECURITY_STATUS.md from security/advisories.json. |
 | [`scripts/lint_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/lint_modules.py#L1) | 865 | 17 | `argparse, core, datetime, hashlib, importlib, json, logging, os, pathlib, pkgutil, re, sys` | lint_modules.py - Unified Module Linter |
 | [`scripts/mcp_drive_demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_demo.py#L1) | 182 | 4 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core's MCP server over stdio to capture a screenshot. |
 | [`scripts/mcp_drive_login.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_login.py#L1) | 202 | 6 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core MCP to log in and screenshot key pages. |

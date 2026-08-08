@@ -122,13 +122,44 @@ def test_status_page_is_current():
     )
 
 
-def test_status_page_states_the_current_secure_release():
-    """The headline claim readers act on: which version is safe to install."""
+def test_status_page_states_both_version_claims():
+    """The headline claims readers act on: which version ships, and which
+    version clears every advisory. They are different questions and the page
+    must not conflate them — that is how a status page starts telling readers
+    something subtly untrue."""
     page = STATUS_PAGE.read_text(encoding="utf-8")
+
     patched = {
         entry["patched"].lstrip(">= ").strip()
         for entry in advisories()
         if entry["patched"] != "-"
     }
-    newest = max(patched, key=lambda v: tuple(int(p) for p in v.split(".") if p.isdigit()))
-    assert f"Current secure release: `{newest}`" in page
+    fully_patched_from = max(
+        patched, key=lambda v: tuple(int(p) for p in v.split(".") if p.isdigit())
+    )
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    release = next(
+        line.split("=", 1)[1].strip().strip('"')
+        for line in pyproject.splitlines()
+        if line.startswith("version = ")
+    )
+
+    assert f"Current release: `{release}`" in page
+    assert f"fixed as of `{fully_patched_from}`" in page
+
+
+def test_status_page_release_matches_the_packaged_version():
+    """A status page naming a version the package does not ship is worse than
+    no page. This catches a version bump that forgot to regenerate."""
+    page = STATUS_PAGE.read_text(encoding="utf-8")
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    release = next(
+        line.split("=", 1)[1].strip().strip('"')
+        for line in pyproject.splitlines()
+        if line.startswith("version = ")
+    )
+    assert f"`{release}`" in page, (
+        f"SECURITY_STATUS.md does not mention the packaged version {release}. "
+        "Run `python scripts/generate_security_status.py`."
+    )

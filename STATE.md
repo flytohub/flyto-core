@@ -19,8 +19,14 @@
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- Package metadata is prepared for the 2.26.12 security patch release. The
-  release closes the remaining browser file-write and SSRF gaps the 2.26.11
+- Package metadata is prepared for the **2.27.0** release. It is a minor, not a
+  patch, because the two boundary changes above refuse inputs earlier releases
+  accepted — it is not a drop-in upgrade for callers that passed absolute paths
+  outside the sandbox or connected to private hosts. `SECURITY_STATUS.md`
+  publishes all 24 advisories with the regression test covering each, generated
+  from `security/advisories.json` and verified in CI.
+- The preceding 2.26.12 security patch release closed the remaining browser
+  file-write and SSRF gaps the 2.26.11
   hardening waves left open (`browser.download`/`screenshot`/`pdf`,
   `warroom.report`, `verify.report`/`visual_diff`/`run`, `browser.launch`,
   `data.dedup`; `browser.goto`'s www-toggle retry), plus a tar-extract
@@ -69,7 +75,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 953 maintained Python files, 5,551
+- Source-backed documentation now covers 953 maintained Python files, 5,552
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -178,9 +184,47 @@
 
 ## Last Verification
 
+Verified locally on 2026-08-08 for the **2.27.0** release candidate — the full
+closure in `docs/TESTING.md`, every gate run, none skipped silently:
+
+- documentation contract, brand identity, project-memory lint, generated
+  catalog (468 modules / 85 categories), generated reference (5,552
+  declarations across 806 files), and the new security-status check
+  (24 advisories) all passed;
+- audited-surface Ruff (the CI list plus `generate_security_status.py`) passed
+  with zero findings;
+- 2,467 tests passed, 13 skipped, 273 deselected, with 61.63% coverage against
+  the 60% control-kernel gate;
+- `requirements.lock` regenerated and unchanged (the only diff was the
+  pip-compile generator's Python 3.11 → 3.12 header comment, reverted; no
+  dependency moved), `pip-audit` reported no known vulnerabilities, `npm audit`
+  reported 0;
+- wheel and sdist built and Twine-validated. The wheel was then installed into
+  a clean venv and the boundaries were exercised against the **installed**
+  package, not the source tree: `/etc/passwd` refused and an in-sandbox path
+  accepted; the metadata address, an RFC1918 host, and an IPv4-mapped IPv6
+  loopback literal each refused while loopback was accepted; `redis://` to the
+  metadata address refused; and end to end, `file.delete` refused `/etc/hosts`
+  and `ssh.exec` refused the metadata host. The installed registry reports 468
+  modules, matching the committed catalog;
+- Flyto2 Indexer strict full scan passed 19/19 checks;
+- package and MCP registry metadata both resolve to `2.27.0`.
+
+Not run: browser and E2E suites (require browsers, services, or credentials).
+`actionlint` was not re-run — no workflow file changed in this release.
+
+**Environment note**: this machine's venv has `transformers` (via the `vector`
+extra), which CI does not install. `huggingface` is an optional module category
+(`src/core/modules/atomic/__init__.py:_OPTIONAL_CATEGORIES`), so generating the
+catalog here would have advertised 475 modules / 86 categories instead of the
+468 / 85 the released package actually exposes. Generated artifacts were
+produced with `transformers` hidden so they match CI and the shipped wheel.
+
+### Previous release
+
 Verified locally on 2026-08-07 for the 2.26.12 release candidate:
 
-- documentation, brand, generated catalog/reference (5,551 declarations
+- documentation, brand, generated catalog/reference (5,552 declarations
   across 805 files, regenerated after the fix set), and both the CI's fixed
   audited-surface Ruff list and a full changed-surface Ruff diff (every file
   touched by this release, compared byte-for-byte against its pre-fix

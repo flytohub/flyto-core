@@ -24,6 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "security" / "advisories.json"
 OUTPUT = ROOT / "SECURITY_STATUS.md"
+PYPROJECT = ROOT / "pyproject.toml"
 
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 REPO_URL = "https://github.com/flytohub/flyto-core"
@@ -33,14 +34,28 @@ def load_advisories() -> list[dict]:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
-def current_secure_release(advisories: list[dict]) -> str:
-    """The highest patched version across all advisories."""
+def version_key(version: str) -> tuple:
+    return tuple(int(part) for part in version.split(".") if part.isdigit())
 
-    def key(version: str) -> tuple:
-        return tuple(int(part) for part in version.split(".") if part.isdigit())
 
+def fully_patched_from(advisories: list[dict]) -> str:
+    """The lowest version at which every published advisory is fixed.
+
+    Deliberately distinct from the current release: they answer different
+    questions ("what is the oldest version I can safely stay on" vs "what is
+    the newest version"), and conflating them is how a status page starts
+    telling readers something subtly untrue.
+    """
     patched = {a["patched"].lstrip(">= ").strip() for a in advisories if a["patched"] != "-"}
-    return max(patched, key=key)
+    return max(patched, key=version_key)
+
+
+def current_release() -> str:
+    """The version this checkout ships, read from pyproject.toml."""
+    for line in PYPROJECT.read_text(encoding="utf-8").splitlines():
+        if line.startswith("version = "):
+            return line.split("=", 1)[1].strip().strip('"')
+    raise RuntimeError("could not read version from pyproject.toml")
 
 
 def severity_counts(advisories: list[dict]) -> dict[str, int]:
@@ -57,7 +72,8 @@ def test_link(reference: str) -> str:
 
 
 def render(advisories: list[dict]) -> str:
-    secure = current_secure_release(advisories)
+    patched_from = fully_patched_from(advisories)
+    release = current_release()
     counts = severity_counts(advisories)
     summary = ", ".join(
         f"{counts[sev]} {sev}"
@@ -69,9 +85,13 @@ def render(advisories: list[dict]) -> str:
         "",
         "# Security Status",
         "",
-        f"**Current secure release: `{secure}`.** Every advisory published against "
-        "this project is patched at or below that version, and every one has a "
-        "named regression test that runs in CI.",
+        f"**Current release: `{release}`.** Every advisory published against this "
+        f"project is fixed as of `{patched_from}`, and every one has a named "
+        "regression test that runs in CI.",
+        "",
+        f"Installing `>= {patched_from}` clears every known advisory; `{release}` "
+        "is the supported line and the one that receives fixes. See "
+        "[`SECURITY.md`](SECURITY.md#supported-versions).",
         "",
         f"{len(advisories)} advisories have been published and fixed "
         f"({summary}). They are listed here in full, oldest patch first, because "

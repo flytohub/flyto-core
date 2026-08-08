@@ -2,7 +2,9 @@
 
 # Security Status
 
-**Current secure release: `2.26.12`.** Every advisory published against this project is patched at or below that version, and every one has a named regression test that runs in CI.
+**Current release: `2.27.0`.** Every advisory published against this project is fixed as of `2.26.12`, and every one has a named regression test that runs in CI.
+
+Installing `>= 2.26.12` clears every known advisory; `2.27.0` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
 
 24 advisories have been published and fixed (6 critical, 13 high, 5 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
 
