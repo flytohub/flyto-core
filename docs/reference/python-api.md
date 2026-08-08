@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,544 declarations across 805 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,551 declarations across 806 files**.
 
 ## `demo.py`
 
@@ -308,6 +308,18 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def reference_index() -> str` | Implements `reference_index`; linked source is authoritative. | [`scripts/generate_reference.py:549`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L549) |
 | function | `def outputs() -> dict&#91;Path, str&#93;` | Implements `outputs`; linked source is authoritative. | [`scripts/generate_reference.py:566`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L566) |
 | function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_reference.py:580`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L580) |
+
+## `scripts/generate_security_status.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def load_advisories() -> list&#91;dict&#93;` | Implements `load_advisories`; linked source is authoritative. | [`scripts/generate_security_status.py:33`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L33) |
+| function | `def current_secure_release(advisories: list&#91;dict&#93;) -> str` | The highest patched version across all advisories. | [`scripts/generate_security_status.py:37`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L37) |
+| method | `def current_secure_release.key(version: str) -> tuple` | Implements `current_secure_release.key`; linked source is authoritative. | [`scripts/generate_security_status.py:40`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L40) |
+| function | `def severity_counts(advisories: list&#91;dict&#93;) -> dict&#91;str, int&#93;` | Implements `severity_counts`; linked source is authoritative. | [`scripts/generate_security_status.py:47`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L47) |
+| function | `def test_link(reference: str) -> str` | Implements `test_link`; linked source is authoritative. | [`scripts/generate_security_status.py:54`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L54) |
+| function | `def render(advisories: list&#91;dict&#93;) -> str` | Implements `render`; linked source is authoritative. | [`scripts/generate_security_status.py:60`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L60) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_security_status.py:139`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L139) |
 
 ## `scripts/lint_modules.py`
 
@@ -4543,15 +4555,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class UnsafeCloneURL(ValueError)` | Raised when a clone URL could trigger command execution or local access. | [`src/core/modules/atomic/git/clone.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L41) |
-| function | `def _validate_clone_url(url: str) -> None` | Reject clone URLs that can run commands (ext::), read local files (file://), inject git options (leading '-'), or hit arbitrary local paths. | [`src/core/modules/atomic/git/clone.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L45) |
-| function | `def _guard_clone_target(url: str) -> None` | SSRF guard for the clone target. | [`src/core/modules/atomic/git/clone.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L65) |
-| function | `def _build_clone_env() -> Dict&#91;str, str&#93;` | Scrubbed environment for the git subprocess. | [`src/core/modules/atomic/git/clone.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L87) |
-| function | `def _inject_token_into_url(url: str, token: str) -> str` | Inject access token into HTTPS URL for private repos. | [`src/core/modules/atomic/git/clone.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L102) |
-| function | `def _build_clone_cmd(clone_url: str, destination: str, branch: str=None, depth: int=None) -> list` | Build git clone command list. | [`src/core/modules/atomic/git/clone.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L112) |
-| function | `async def _get_repo_info(destination: str) -> tuple` | Get current branch and HEAD commit hash from cloned repo. | [`src/core/modules/atomic/git/clone.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L125) |
-| function | `def _sanitize_error(error_msg: str, token: str=None) -> str` | Remove token from error messages. | [`src/core/modules/atomic/git/clone.py:145`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L145) |
-| function | `async def git_clone(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clone a git repository | [`src/core/modules/atomic/git/clone.py:235`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L235) |
+| class | `class UnsafeCloneURL(ValueError)` | Raised when a clone URL could trigger command execution or local access. | [`src/core/modules/atomic/git/clone.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L39) |
+| function | `def _validate_clone_url(url: str) -> None` | Reject clone URLs that can run commands (ext::), read local files (file://), inject git options (leading '-'), or hit arbitrary local paths. | [`src/core/modules/atomic/git/clone.py:43`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L43) |
+| function | `def _guard_clone_target(url: str) -> None` | SSRF guard for the clone target. | [`src/core/modules/atomic/git/clone.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L63) |
+| function | `def _build_clone_env() -> Dict&#91;str, str&#93;` | Scrubbed environment for the git subprocess. | [`src/core/modules/atomic/git/clone.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L85) |
+| function | `def _inject_token_into_url(url: str, token: str) -> str` | Inject access token into HTTPS URL for private repos. | [`src/core/modules/atomic/git/clone.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L100) |
+| function | `def _build_clone_cmd(clone_url: str, destination: str, branch: str=None, depth: int=None) -> list` | Build git clone command list. | [`src/core/modules/atomic/git/clone.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L110) |
+| function | `async def _get_repo_info(destination: str) -> tuple` | Get current branch and HEAD commit hash from cloned repo. | [`src/core/modules/atomic/git/clone.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L123) |
+| function | `def _sanitize_error(error_msg: str, token: str=None) -> str` | Remove token from error messages. | [`src/core/modules/atomic/git/clone.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L143) |
+| function | `async def git_clone(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Clone a git repository | [`src/core/modules/atomic/git/clone.py:233`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/git/clone.py#L233) |
 
 ## `src/core/modules/atomic/git/commit.py`
 
@@ -5346,9 +5358,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L150) |
-| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L197) |
-| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:244`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L244) |
+| function | `async def port_check(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Check if network port(s) are open or closed | [`src/core/modules/atomic/port/check.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L147) |
+| method | `async def port_check.check_single_port(port: int) -> Dict&#91;str, Any&#93;` | Implements `port_check.check_single_port`; linked source is authoritative. | [`src/core/modules/atomic/port/check.py:194`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L194) |
+| function | `async def _check_port_async(host: str, port: int, timeout: float) -> bool` | Check if a port is open using asyncio | [`src/core/modules/atomic/port/check.py:241`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L241) |
 
 ## `src/core/modules/atomic/port/wait.py`
 

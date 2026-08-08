@@ -22,7 +22,7 @@ Implementation sources read **104 environment-variable names**. The package ship
 | `FLYTO_ALLOWED_HOSTS` | [`src/core/utils.py:630`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L630) |
 | `FLYTO_ALLOW_ABSOLUTE_PATHS` | [`src/core/utils.py:1181`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1181) |
 | `FLYTO_ALLOW_CLIENT_DB_DSN` | [`src/core/modules/atomic/database/_dsn_guard.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/database/_dsn_guard.py#L46) |
-| `FLYTO_ALLOW_PORT_SCAN` | [`src/core/modules/atomic/port/check.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L162) |
+| `FLYTO_ALLOW_PORT_SCAN` | [`src/core/modules/atomic/port/check.py:159`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L159) |
 | `FLYTO_ALLOW_PRIVATE_NETWORK` | [`src/core/utils.py:629`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L629) |
 | `FLYTO_ALLOW_REMOTE_OLLAMA` | [`src/core/modules/third_party/ai/agents/llm_client.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/agents/llm_client.py#L117), [`src/core/modules/third_party/ai/local_ollama.py:195`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L195) |
 | `FLYTO_API_TOKEN` | [`src/core/api/security.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/security.py#L108) |
