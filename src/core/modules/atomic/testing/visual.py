@@ -86,6 +86,21 @@ async def compare_visual_files(
     pixel_color_threshold = _ratio(color_threshold, "color_threshold", 0.1)
     timeout_ms = max(1, min(int(timeout_ms), 120_000))
 
+    # SECURITY: diff_path is caller-controlled and the worker writes
+    # attacker-influenceable PNG bytes to it. Unvalidated, this is the same
+    # arbitrary file write as browser.download save_path (GHSA-p64w-hgfm-824v),
+    # so confine it to FLYTO_SANDBOX_DIR.
+    #
+    # Validated here, before the Node availability checks below, so the
+    # boundary does not depend on an optional toolchain: on a host without
+    # Node this function returns a structured error, and a guard placed after
+    # that check would silently never run.
+    validated_diff_path = (
+        validate_path_with_env_config(diff_path)
+        if (output_diff and diff_path)
+        else None
+    )
+
     node_path = shutil.which("node")
     if not node_path:
         return {
@@ -112,12 +127,8 @@ async def compare_visual_files(
 
         resolved_diff_path: Optional[Path] = None
         if output_diff:
-            if diff_path:
-                # SECURITY: diff_path is caller-controlled and the worker writes
-                # attacker-influenceable PNG bytes to it. Unvalidated, this is
-                # the same arbitrary file write as browser.download save_path
-                # (GHSA-p64w-hgfm-824v), so confine it to FLYTO_SANDBOX_DIR.
-                resolved_diff_path = Path(validate_path_with_env_config(diff_path))
+            if validated_diff_path:
+                resolved_diff_path = Path(validated_diff_path)
             else:
                 evidence_dir = Path(tempfile.mkdtemp(prefix="flyto-visual-evidence-"))
                 resolved_diff_path = evidence_dir / "diff.png"

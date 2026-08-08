@@ -31,6 +31,18 @@ logger = logging.getLogger(__name__)
 
 async def _screenshot_url(url: str, output_path: str, viewport_width: int = 1280, viewport_height: int = 800) -> str:
     """Take a full-page screenshot of a URL using Playwright."""
+    # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+    # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+    # about. This module drives a bare async_playwright() browser, so it has no
+    # egress guard in any deployment mode either: this call is the only boundary
+    # between the caller's URL and the network.
+    #
+    # Checked before the playwright import and the browser launch, so a refused
+    # target costs nothing and the boundary does not depend on browsers being
+    # installed — a guard placed after the launch never runs on a host without
+    # them, which is exactly how this slipped through local testing.
+    enforce_outbound_url(url)
+
     try:
         from playwright.async_api import async_playwright
     except ImportError as exc:
@@ -43,14 +55,6 @@ async def _screenshot_url(url: str, output_path: str, viewport_width: int = 1280
         try:
             page = await browser.new_page(viewport={'width': viewport_width, 'height': viewport_height})
             await page.emulate_media(reduced_motion='reduce')
-            # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
-            # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
-            # about. The cloud egress guard does not cover this path either when the
-            # page comes from a bare playwright instance. Validate before navigating.
-            # This module drives a bare async_playwright() browser, so it has
-            # no egress guard in any deployment mode — the guard here is the
-            # only boundary between the caller's URL and the network.
-            enforce_outbound_url(url)
             await page.goto(url, wait_until='networkidle', timeout=30000)
             await page.evaluate("document.fonts && document.fonts.ready")
             Path(output_path).parent.mkdir(parents=True, exist_ok=True)

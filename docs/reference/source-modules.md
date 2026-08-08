@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,253 lines**, and **5,552 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,268 lines**, and **5,552 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -646,7 +646,7 @@ Inventory: **953 Python files**, **196,253 lines**, and **5,552 class/function/m
 | [`src/core/modules/atomic/testing/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/security.py#L1) | 90 | 1 | `logging, registry, typing` | Security Scanner Module |
 | [`src/core/modules/atomic/testing/suite.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/suite.py#L1) | 101 | 1 | `logging, registry, typing` | Test Suite Runner Module |
 | [`src/core/modules/atomic/testing/unit.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/unit.py#L1) | 87 | 1 | `logging, registry, typing` | Unit Test Runner Module |
-| [`src/core/modules/atomic/testing/visual.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L1) | 291 | 5 | `asyncio, base64, binascii, json, logging, math, os, pathlib, registry, shutil, tempfile, typing` | Deterministic visual comparison through a detachable TypeScript worker. |
+| [`src/core/modules/atomic/testing/visual.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/visual.py#L1) | 302 | 5 | `asyncio, base64, binascii, json, logging, math, os, pathlib, registry, shutil, tempfile, typing` | Deterministic visual comparison through a detachable TypeScript worker. |
 | [`src/core/modules/atomic/text/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/__init__.py#L1) | 38 | 0 | `char_count, detect_encoding, extract_emails, extract_numbers, extract_urls, word_count` | Atomic Text Analysis Operations Word count, character count, extract URLs, emails, numbers, and detect encoding |
 | [`src/core/modules/atomic/text/char_count.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/char_count.py#L1) | 109 | 1 | `errors, registry, typing` | Character Count Module Count characters in text |
 | [`src/core/modules/atomic/text/detect_encoding.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/text/detect_encoding.py#L1) | 150 | 2 | `errors, registry, typing` | Detect Encoding Module Detect text encoding using heuristics |
@@ -698,7 +698,7 @@ Inventory: **953 Python files**, **196,253 lines**, and **5,552 class/function/m
 | [`src/core/modules/atomic/verify/ruleset.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/ruleset.py#L1) | 207 | 12 | `base, dataclasses, pathlib, registry, schema, typing, utils, yaml` | Verify Ruleset Module - Load verification rules from YAML |
 | [`src/core/modules/atomic/verify/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L1) | 388 | 8 | `base, capture, compare, core, figma, pathlib, registry, report, ruleset, schema, typing, utils` | Verify Run Module - Main entry point for design verification |
 | [`src/core/modules/atomic/verify/spec_runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L1) | 381 | 12 | `base, dataclasses, datetime, json, logging, pathlib, registry, schema, typing, utils, yaml` | Spec-as-Test Dynamic Runner |
-| [`src/core/modules/atomic/verify/visual_diff.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L1) | 389 | 7 | `PIL, base, datetime, html, logging, os, pathlib, playwright, registry, schema, testing, typing` | Verify Visual Diff Module - End-to-end visual comparison pipeline |
+| [`src/core/modules/atomic/verify/visual_diff.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L1) | 393 | 7 | `PIL, base, datetime, html, logging, os, pathlib, playwright, registry, schema, testing, typing` | Verify Visual Diff Module - End-to-end visual comparison pipeline |
 | [`src/core/modules/atomic/vision/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/__init__.py#L1) | 11 | 0 | `analyze, compare` | Vision Analysis Modules AI-powered image and screenshot analysis using Vision APIs |
 | [`src/core/modules/atomic/vision/analyze.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L1) | 406 | 4 | `aiohttp, base64, httpx, json, logging, os, pathlib, re, registry, schema, typing` | Vision Analyze Module Analyze images/screenshots using OpenAI Vision API (GPT-4V) |
 | [`src/core/modules/atomic/vision/compare.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L1) | 332 | 3 | `aiohttp, base64, httpx, json, logging, os, pathlib, re, registry, schema, typing` | Vision Compare Module Compare two images/screenshots for visual differences |
