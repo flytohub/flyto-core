@@ -313,13 +313,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def load_advisories() -> list&#91;dict&#93;` | Implements `load_advisories`; linked source is authoritative. | [`scripts/generate_security_status.py:33`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L33) |
-| function | `def current_secure_release(advisories: list&#91;dict&#93;) -> str` | The highest patched version across all advisories. | [`scripts/generate_security_status.py:37`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L37) |
-| method | `def current_secure_release.key(version: str) -> tuple` | Implements `current_secure_release.key`; linked source is authoritative. | [`scripts/generate_security_status.py:40`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L40) |
-| function | `def severity_counts(advisories: list&#91;dict&#93;) -> dict&#91;str, int&#93;` | Implements `severity_counts`; linked source is authoritative. | [`scripts/generate_security_status.py:47`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L47) |
-| function | `def test_link(reference: str) -> str` | Implements `test_link`; linked source is authoritative. | [`scripts/generate_security_status.py:54`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L54) |
-| function | `def render(advisories: list&#91;dict&#93;) -> str` | Implements `render`; linked source is authoritative. | [`scripts/generate_security_status.py:60`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L60) |
-| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_security_status.py:139`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L139) |
+| function | `def load_advisories() -> list&#91;dict&#93;` | Implements `load_advisories`; linked source is authoritative. | [`scripts/generate_security_status.py:32`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L32) |
+| function | `def current_secure_release(advisories: list&#91;dict&#93;) -> str` | The highest patched version across all advisories. | [`scripts/generate_security_status.py:36`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L36) |
+| method | `def current_secure_release.key(version: str) -> tuple` | Implements `current_secure_release.key`; linked source is authoritative. | [`scripts/generate_security_status.py:39`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L39) |
+| function | `def severity_counts(advisories: list&#91;dict&#93;) -> dict&#91;str, int&#93;` | Implements `severity_counts`; linked source is authoritative. | [`scripts/generate_security_status.py:46`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L46) |
+| function | `def test_link(reference: str) -> str` | Implements `test_link`; linked source is authoritative. | [`scripts/generate_security_status.py:53`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L53) |
+| function | `def render(advisories: list&#91;dict&#93;) -> str` | Implements `render`; linked source is authoritative. | [`scripts/generate_security_status.py:59`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L59) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/generate_security_status.py:138`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L138) |
 
 ## `scripts/lint_modules.py`
 
