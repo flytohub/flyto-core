@@ -1,44 +1,38 @@
 Flyto2 Core
-Copyright (c) 2025 Flyto2. All Rights Reserved.
+Copyright 2025-2026 Flyto2
+
+This product includes software developed at Flyto2 (https://flyto2.com).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 ================================================================================
 
-NOTICE FILE
-
-This file contains attribution notices and license information for Flyto2 Core
-and any third-party components included in this software.
-
-================================================================================
-
-1. FLYTO2 CORE
-
-   Licensed under the Flyto2 Source Available License v1.0
-   See LICENSE file for the complete license terms.
-
-   Commercial use requires a separate license.
-   See LICENSE-COMMERCIAL.md for commercial licensing options.
-
-   Website: https://flyto2.com
-   Source: https://github.com/flytohub/flyto-core
-
-================================================================================
-
-2. TRADEMARKS
+1. TRADEMARKS
 
    "Flyto2", "Flyto2 Core", and the Flyto2 logo are trademarks of Flyto2.
 
-   These trademarks may not be used without prior written permission except:
-   - To refer to the Flyto2 Core software in an accurate, descriptive manner
-   - In attribution notices as required by the license
+   Apache-2.0 grants copyright and patent rights; section 6 states plainly that
+   it does not grant trademark rights. Nothing here restricts what the licence
+   permits — it says only what the licence already leaves untouched.
 
-   You may NOT use these trademarks:
-   - In a way that suggests endorsement or affiliation
-   - In product names, service names, or domain names
-   - As part of your own branding
+   You may use these marks to refer to Flyto2 Core accurately and descriptively,
+   and in attribution notices. Using them in a way that suggests endorsement or
+   affiliation, in your own product, service or domain names, or as part of your
+   own branding, needs prior written permission.
 
 ================================================================================
 
-3. THIRD-PARTY COMPONENTS
+2. THIRD-PARTY COMPONENTS
 
    Flyto2 Core includes or depends on the following third-party components.
    Each component is subject to its own license terms.
@@ -107,45 +101,32 @@ and any third-party components included in this software.
 
 ================================================================================
 
-4. CONTRIBUTOR ACKNOWLEDGMENTS
+3. CONTRIBUTING
 
-   We thank all contributors who have helped improve Flyto2 Core.
+   Contributions are accepted under Apache-2.0 section 5: unless you state
+   otherwise, anything you deliberately submit for inclusion is licensed under
+   the same terms, with no separate agreement to sign.
 
-   By contributing to Flyto2 Core, you agree to the Contributor License Agreement
-   as described in the LICENSE file (Section 5).
-
-   For a full list of contributors, see:
+   For the list of contributors, see:
    https://github.com/flytohub/flyto-core/graphs/contributors
 
 ================================================================================
 
-5. SECURITY NOTICES
+4. SECURITY
 
-   If you discover a security vulnerability in Flyto2 Core, please report it
-   responsibly to: security@flyto2.com
-
-   See SECURITY.md for our security policy and vulnerability disclosure process.
+   Report a vulnerability to security@flyto2.com. See SECURITY.md for the
+   disclosure process.
 
 ================================================================================
 
-6. CONTACT INFORMATION
+5. CONTACT
 
-   General Inquiries:     hello@flyto2.com
-   Licensing:             sales@flyto2.com
-   Security:              security@flyto2.com
-   Support:               support@flyto2.com
+   General:       hello@flyto2.com
+   Security:      security@flyto2.com
+   Support:       support@flyto2.com
 
-   Website:               https://flyto2.com
-   Documentation:         https://docs.flyto2.com
-   GitHub:                https://github.com/flytohub/flyto-core
-
-================================================================================
-
-7. CHANGELOG
-
-   For a detailed changelog, see:
-   https://github.com/flytohub/flyto-core/releases
+   Website:       https://flyto2.com
+   Documentation: https://docs.flyto2.com
+   Source:        https://github.com/flytohub/flyto-core
 
 ================================================================================
-
-END OF NOTICE FILE
