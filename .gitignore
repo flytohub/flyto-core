@@ -104,4 +104,10 @@ audit-report.json
 github-profile.json
 audit-page.pdf
 .venv/
+
+# Ignore new Flyto workspace artifacts; allow the verification contract.
+.flyto/
+!.flyto/
+.flyto/*
+!.flyto/coding.yaml
 .flyto-index/

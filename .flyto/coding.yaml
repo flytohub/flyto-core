@@ -1,0 +1,73 @@
+# Repository-owned trusted verification contract for `flyto-ai code-mcp`.
+#
+# Every declared check is a real, bounded, argv-only command that runs locally
+# against this checkout with no network, secrets, or deployment access. They
+# are trusted because they are source-controlled in this repository and invoke
+# only in-repo scripts and pinned dev tooling. All five are required: an
+# implementer's change is only acceptable when each one passes exactly as
+# written here.
+#
+# No `capabilities` block is declared on purpose: Core verification needs no
+# external MCP server or detachable capability, so the required capability set
+# is intentionally empty. The Claude service adapter fails closed on unattached
+# required capabilities, so declaring one here would block every job.
+#
+# The MCP service prepends its Python venv to PATH, so `python` resolves to the
+# correct interpreter without an absolute path.
+version: flyto.coding-config.v1
+
+checks:
+  # Project-memory scaffold contract required by CLAUDE.md/AGENTS.md.
+  - name: project_memory
+    argv: ["bash", "scripts/lint-project-memory.sh"]
+    timeout_seconds: 300
+    required: true
+
+  # Byte-compile the package so syntax and import-time breakage fail fast.
+  - name: compile
+    argv: ["python", "-m", "compileall", "-q", "src"]
+    timeout_seconds: 300
+    required: true
+
+  # Mirrors the audited CI maintenance/security lint surface: the repository's
+  # Ruff configuration applied to exactly the files CI gates, not a whole-tree
+  # scan.
+  - name: lint
+    argv:
+      - "python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "scripts/generate_catalog.py"
+      - "scripts/generate_reference.py"
+      - "scripts/check_documentation.py"
+      - "scripts/check_brand_identity.py"
+      - "src/cli/__init__.py"
+      - "src/cli/config.py"
+      - "src/core/constants.py"
+      - "src/core/api/routes/workflows.py"
+      - "src/core/modules/atomic/crypto/encrypt.py"
+      - "src/core/modules/atomic/crypto/decrypt.py"
+      - "src/core/modules/atomic/crypto/jwt_create.py"
+      - "src/core/modules/atomic/crypto/jwt_verify.py"
+      - "src/core/modules/atomic/dns/lookup.py"
+      - "tests/conftest.py"
+      - "tests/test_documentation_generators.py"
+      - "tests/test_version_identity.py"
+      - "tests/core/api/test_routes.py"
+    timeout_seconds: 300
+    required: true
+
+  # Reject drift between source, API routes, CLI parsers, recipes, environment
+  # readers, workflows, and the committed generated documentation.
+  - name: generated_reference
+    argv: ["python", "scripts/check_documentation.py"]
+    timeout_seconds: 600
+    required: true
+
+  # Local test floor; excludes only the browser and e2e lanes that need a real
+  # browser or cross-component runtime.
+  - name: tests
+    argv: ["python", "-m", "pytest", "-q", "-m", "not browser and not e2e"]
+    timeout_seconds: 900
+    required: true
