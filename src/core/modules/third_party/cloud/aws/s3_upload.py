@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict
 
+from .....utils import validate_path_with_env_config
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -101,6 +102,11 @@ async def aws_s3_upload(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError('Object key is required', field='key')
     if not file_path:
         raise ValidationError('File path is required', field='file_path')
+
+    # SECURITY: the mirror image of GHSA-hmq9-xw4w-7ppc. That advisory closed
+    # the cloud.*.download write path; this is the upload read path, where an
+    # unvalidated file_path ships any host file to a caller-chosen bucket.
+    file_path = validate_path_with_env_config(str(file_path))
 
     if not os.path.isfile(file_path):
         raise ModuleError(f'File not found: {file_path}')

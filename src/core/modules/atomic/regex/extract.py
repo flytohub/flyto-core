@@ -4,14 +4,15 @@
 Regex Extract Module
 Extract named groups from text using regex.
 """
-from typing import Any, Dict
 import re
+from typing import Any, Dict
 
+from ...errors import ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError
+from ._safe import compile_guarded, run_regex_safely, validate_regex_inputs
 
 
 @register_module(
@@ -105,21 +106,17 @@ async def regex_extract(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError("Missing required parameter: pattern", field="pattern")
 
     flags = re.IGNORECASE if ignore_case else 0
+    text_str = str(text)
+    validate_regex_inputs(pattern, text_str)
+    compiled = compile_guarded(pattern, flags)
 
-    try:
-        regex = re.compile(pattern, flags)
-        match = regex.search(str(text))
-
+    def _run():
+        match = compiled.search(text_str)
         if match:
-            extracted = match.groupdict()
-            matched = True
-            full_match = match.group()
-        else:
-            extracted = {}
-            matched = False
-            full_match = ''
-    except re.error as e:
-        raise ValidationError(f"Invalid regex pattern: {e}", field="pattern")
+            return match.groupdict(), True, match.group()
+        return {}, False, ''
+
+    extracted, matched, full_match = await run_regex_safely(_run)
 
     return {
         'ok': True,

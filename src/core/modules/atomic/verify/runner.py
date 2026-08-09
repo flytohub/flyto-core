@@ -9,7 +9,9 @@ Uses other verify modules instead of inline logic.
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
+from ....utils import enforce_outbound_url
 from ...registry import register_module
 from ...schema import compose, field as schema_field
 
@@ -100,7 +102,13 @@ class VerifyRunModule(BaseModule):
         self.figma_file_id = self.params.get('figma_file_id')
         self.figma_token = self.params.get('figma_token')
         self.figma_mapping = self.params.get('figma_mapping', {})
-        self.output_dir = Path(self.params.get('output_dir', './verify-reports'))
+        # SECURITY: confine the screenshot + nested report writes (Step 4/5
+        # below) to FLYTO_SANDBOX_DIR. Must be validated here, before the
+        # mkdir/screenshot sink in Step 4 — validating only when it reaches
+        # the nested VerifyReportModule in Step 5 is too late.
+        self.output_dir = Path(
+            validate_path_with_env_config(str(self.params.get('output_dir', './verify-reports')))
+        )
         self.report_format = self.params.get('report_format', 'html')
         self.take_screenshot = self.params.get('take_screenshot', True)
         self.viewport_width = self.params.get('viewport_width', 1280)
@@ -254,6 +262,11 @@ class VerifyRunModule(BaseModule):
             try:
                 page = await driver.new_page()
                 await page.set_viewport_size({'width': self.viewport_width, 'height': self.viewport_height})
+                # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+                # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+                # about. The cloud egress guard does not cover this path either when the
+                # page comes from a bare playwright instance. Validate before navigating.
+                enforce_outbound_url(self.url)
                 await page.goto(self.url, wait_until='networkidle')
                 await page.screenshot(path=str(screenshot_path), full_page=True)
                 screenshots.append(str(screenshot_path))

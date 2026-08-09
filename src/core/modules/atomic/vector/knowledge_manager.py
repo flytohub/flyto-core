@@ -322,10 +322,15 @@ class KnowledgeManager:
         import json
         from pathlib import Path
 
+        from ....utils import validate_path_with_env_config
+
         entries = self.store.list_entries(limit=10000)
 
         try:
-            output_path = Path(output_file)
+            # SECURITY: exported on the public SDK surface (vector/__init__.py)
+            # with no in-tree caller, so output_file is whatever a downstream
+            # consumer passes through — confine it before the write.
+            output_path = Path(validate_path_with_env_config(str(output_file)))
 
             if format == "json":
                 with open(output_path, 'w', encoding='utf-8') as f:

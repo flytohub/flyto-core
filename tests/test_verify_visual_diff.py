@@ -216,8 +216,9 @@ class TestScreenshotUrl:
 
 class TestFullPipeline:
     @pytest.mark.asyncio
-    async def test_compare_two_urls(self, tmp_path):
+    async def test_compare_two_urls(self, tmp_path, monkeypatch):
         """Full pipeline: compare example.com with itself (should be ~100% similar)."""
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
         module = VerifyVisualDiffModule(
             params={
                 "reference_url": "https://example.com",
@@ -247,8 +248,9 @@ class TestFullPipeline:
         assert "Visual Diff Report" in html
 
     @pytest.mark.asyncio
-    async def test_compare_url_with_local_image(self, tmp_path):
+    async def test_compare_url_with_local_image(self, tmp_path, monkeypatch):
         """Pipeline with local image as reference."""
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", str(tmp_path))
         # Create a simple reference image
         from PIL import Image
         ref = Image.new("RGB", (1280, 800), color=(200, 200, 200))

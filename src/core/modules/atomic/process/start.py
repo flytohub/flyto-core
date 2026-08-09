@@ -13,6 +13,7 @@ import sys
 import time
 from typing import Any, Dict, Optional
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -186,8 +187,13 @@ async def process_start(context: Dict[str, Any]) -> Dict[str, Any]:
     # Open log file if specified
     log_handle = None
     if log_file:
-        if '..' in log_file:
-            raise Exception('Invalid file path')
+        # Hardening, not a privilege boundary: this module already holds
+        # shell.execute, so `command` can write anywhere log_file could reach.
+        # The substring '..' check it replaces was ineffective anyway (absolute
+        # paths sailed through), and routing every write sink through the one
+        # sandbox helper is what keeps the coverage test in
+        # tests/core/test_write_sink_coverage.py green.
+        log_file = validate_path_with_env_config(log_file)
         log_handle = open(log_file, 'a', encoding='utf-8')
 
     try:

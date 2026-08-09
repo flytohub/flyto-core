@@ -19,6 +19,28 @@ sys.path.insert(0, str(project_root / "src"))
 os.environ["FLYTO_VALIDATION_MODE"] = "dev"
 
 
+# Categories whose *registration* is gated on an optional dependency being
+# importable, so whether they appear depends on which extras the machine
+# running this script happens to have installed.
+#
+# `core.modules.atomic._OPTIONAL_CATEGORIES` lists categories imported inside a
+# try/except, but most of those still register unconditionally because their
+# third-party imports are lazy (ssh defers asyncssh into the call). Only these
+# gate registration itself — huggingface/__init__.py checks
+# `find_spec("transformers")` before importing any module.
+#
+# They are excluded so the catalog is a property of the source tree rather than
+# of the developer's virtualenv. Without this, running the generator on a
+# machine with the `vector` extra installed (which pulls transformers in
+# transitively) silently rewrites the catalog to advertise 7 modules and a
+# category that a default `pip install flyto-core` does not expose — and every
+# cross-referencing count in README/STATE/ARCHITECTURE with it.
+#
+# tests/core/test_catalog_determinism.py enforces that the generated file is
+# byte-identical with and without the gating dependency present.
+_ENV_GATED_CATEGORIES = {"huggingface"}
+
+
 def format_params(params_schema: dict) -> str:
     """Format params_schema into a readable string."""
     if not params_schema:
@@ -65,6 +87,26 @@ def escape_md(text: str) -> str:
     return text.replace("|", "\\|").replace("\n", " ").strip()
 
 
+def _optional_note() -> str:
+    """One stable sentence naming the categories excluded from the counts.
+
+    Written from the constant rather than from the runtime registry, so the
+    sentence is identical whether or not the gating dependency is installed.
+    """
+    ordered = sorted(_ENV_GATED_CATEGORIES)
+    names = ", ".join(f"`{c}`" for c in ordered)
+    subject, verb = (names, "registers") if len(ordered) == 1 else (names, "register")
+    return (
+        f"{subject} {verb} only when the matching optional dependency is "
+        "installed (see the extras in `pyproject.toml`), and is excluded here "
+        "so this file does not vary by developer environment."
+        if len(ordered) == 1
+        else f"{subject} {verb} only when their matching optional dependencies "
+        "are installed (see the extras in `pyproject.toml`), and are excluded "
+        "here so this file does not vary by developer environment."
+    )
+
+
 def render_catalog() -> tuple[str, int, int]:
     """Render the runtime-discovered module catalog deterministically."""
     from core.modules.registry import ModuleRegistry
@@ -81,11 +123,17 @@ def render_catalog() -> tuple[str, int, int]:
     categories: dict[str, list] = {}
     for module_id, meta in sorted(all_metadata.items()):
         cat = module_id.split(".")[0]
+        # Skip categories whose registration depends on an optional dependency
+        # being installed locally — see _ENV_GATED_CATEGORIES.
+        if cat in _ENV_GATED_CATEGORIES:
+            continue
         if cat not in categories:
             categories[cat] = []
         categories[cat].append((module_id, meta))
 
-    total = len(all_metadata)
+    # Count what is actually rendered, not what the registry happened to hold:
+    # all_metadata still contains the env-gated categories filtered out above.
+    total = sum(len(modules) for modules in categories.values())
     cat_count = len(categories)
     lines = [
         "# Tool Catalog",
@@ -93,6 +141,9 @@ def render_catalog() -> tuple[str, int, int]:
         f"> Auto-generated from flyto-core module registry. **{total} modules** across **{cat_count} categories**.",
         ">",
         "> Generated from the active `ModuleRegistry`; do not edit manually.",
+        ">",
+        "> Counts cover what a default `pip install flyto-core` exposes. "
+        + _optional_note(),
         "",
         "## Categories",
         "",

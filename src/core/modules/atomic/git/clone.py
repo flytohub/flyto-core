@@ -7,16 +7,20 @@ Clone a git repository to a local path
 
 import asyncio
 import logging
-import os
 import re
 from typing import Any, Dict
 from urllib.parse import urlparse, urlunparse
 
+from ....utils import (
+    SSRFError,
+    enforce_outbound_host,
+    enforce_outbound_url,
+    validate_path_with_env_config,
+)
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +58,28 @@ def _validate_clone_url(url: str) -> None:
     # legitimate git feature and not command execution; the dangerous vectors
     # (ext::/fd:: transports, file://, option-injecting leading '-') are already
     # rejected above.
+
+
+def _guard_clone_target(url: str) -> None:
+    """SSRF guard for the clone target.
+
+    Kept separate from ``_validate_clone_url``, which bounds *how* git connects
+    (transport, option injection). This bounds *where*: without it,
+    `git clone https://169.254.169.254/x` or an internal git host is a plain
+    SSRF, with the response surfacing in git's error output. http(s) targets
+    reuse the guard the HTTP modules use; scp-style `user@host:path` has no URL
+    to parse, so its host is checked directly. Scheme-less local paths have no
+    network component and are left to the path guard.
+    """
+    u = (url or '').strip()
+    parsed = urlparse(u)
+    scheme = (parsed.scheme or '').lower()
+    if scheme in ('http', 'https'):
+        enforce_outbound_url(u)
+    elif not scheme and '@' in u and ':' in u:
+        scp_host = u.split('@', 1)[1].split(':', 1)[0]
+        if scp_host:
+            enforce_outbound_host(scp_host, purpose='git remote')
 
 
 def _build_clone_env() -> Dict[str, str]:
@@ -208,7 +234,12 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
     """Clone a git repository"""
     params = context['params']
     url = params['url']
-    destination = os.path.abspath(os.path.expanduser(params['destination']))
+    # SECURITY: git writes a whole tree at destination, with file names and
+    # contents taken from the remote repository. Unconfined, a clone can drop
+    # attacker-authored files anywhere the process can write — an arbitrary
+    # file write with a nicer interface. The URL side already has its own
+    # guard (tests/core/test_git_clone_url.py); this is the path side.
+    destination = validate_path_with_env_config(str(params['destination']))
     branch = params.get('branch')
     depth = params.get('depth')
     token = params.get('token')
@@ -220,6 +251,15 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
     except UnsafeCloneURL as e:
         logger.error(f"Git clone refused unsafe url: {e}")
         return {'ok': False, 'error': f'Unsafe clone url: {e}', 'error_code': 'UNSAFE_URL'}
+
+    # SECURITY: and where it points. _validate_clone_url bounds the transport;
+    # this bounds the destination, so an internal git host or the metadata
+    # endpoint cannot be reached through a module that looked "already guarded".
+    try:
+        _guard_clone_target(url)
+    except SSRFError as e:
+        logger.warning("Git clone blocked by SSRF guard")
+        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
 
     clone_url = _inject_token_into_url(url, token) if token and url.startswith('https://') else url
     cmd = _build_clone_cmd(clone_url, destination, branch, depth)

@@ -59,7 +59,10 @@ class TestDataDedup:
         assert r["total_out"] == 0
         assert r["duplicates"] == 0
 
-    async def test_cross_run_persistence(self):
+    async def test_cross_run_persistence(self, monkeypatch):
+        # hash_file lands in the system temp dir; confine the sandbox there so
+        # the GHSA-p64w-class path guard on hash_file doesn't reject it.
+        monkeypatch.setenv("FLYTO_SANDBOX_DIR", tempfile.gettempdir())
         hash_file = tempfile.mkstemp(suffix=".json")[1]
         try:
             items1 = [{"url": "https://a.com"}, {"url": "https://b.com"}]

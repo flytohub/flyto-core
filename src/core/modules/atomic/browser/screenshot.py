@@ -7,6 +7,7 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+from ....utils import validate_path_with_env_config
 
 
 @register_module(
@@ -57,7 +58,10 @@ class BrowserScreenshotModule(BaseModule):
     required_permission = "browser.screenshot"
 
     def validate_params(self) -> None:
-        self.path = self.params.get('path', 'screenshot.png')
+        # SECURITY: confine the image write to FLYTO_SANDBOX_DIR — the path is
+        # caller-controlled and the rendered page decides the bytes.
+        raw_path = self.params.get('path', 'screenshot.png')
+        self.path = validate_path_with_env_config(raw_path) if raw_path else None
         self.full_page = self.params.get('full_page', False)
         self.format = self.params.get('format', 'png')
         self.quality = self.params.get('quality', None)

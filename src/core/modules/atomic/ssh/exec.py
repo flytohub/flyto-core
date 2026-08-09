@@ -9,6 +9,7 @@ import asyncio
 import logging
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -106,6 +107,16 @@ logger = logging.getLogger(__name__)
 )
 async def ssh_exec(context: Dict[str, Any]) -> Dict[str, Any]:
     """Execute command on remote server via SSH"""
+    # SECURITY: `host` is caller-controlled and this module opens a raw
+    # connection to it. Unguarded that reaches any internal service the runner
+    # can route to, including the cloud metadata endpoint — the same
+    # reachability the HTTP SSRF advisories are about, without a URL. Loopback
+    # stays allowed so self-hosted deployments are unaffected.
+    #
+    # Checked before the optional-dependency import so it fails closed whether
+    # or not asyncssh is installed.
+    enforce_outbound_host(context['params']['host'], purpose='SSH')
+
     try:
         import asyncssh
     except ImportError:

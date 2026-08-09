@@ -5,6 +5,7 @@
 from pathlib import Path
 from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from .engine import evidence_pack, evidence_to_markdown, to_json
@@ -60,6 +61,8 @@ class WarroomReportModule(BaseModule):
         report = evidence_to_markdown(pack) if self.format == "markdown" else to_json(pack)
         path_value = self.params.get("output_path") or ""
         if path_value:
+            # SECURITY: confine the report write to FLYTO_SANDBOX_DIR.
+            path_value = validate_path_with_env_config(path_value)
             path = Path(path_value)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(report, encoding="utf-8")

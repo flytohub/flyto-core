@@ -753,6 +753,122 @@ def enforce_outbound_url(url: str) -> str:
     return url
 
 
+# Hosts that always name this machine. Infrastructure modules (Redis, MySQL,
+# SMTP, SSH) connect here as a matter of course in self-hosted deployments, so
+# blocking them would break normal operation without closing any real path —
+# a workflow that can reach localhost can already do so through the module's
+# own default configuration.
+_LOOPBACK_HOSTS = frozenset({'localhost', '127.0.0.1', '::1', '0.0.0.0', ''})
+
+
+def resolve_guard_ip(host: str) -> Optional[str]:
+    """Return an IP string to range-check, or None when it cannot be resolved.
+
+    ``socket.gethostbyname`` raises ``gaierror`` on IPv6 literals such as
+    ``::ffff:127.0.0.1``, so relying on it alone lets IPv6 transition forms skip
+    the range check entirely — that was GHSA-v7q9-pr72-5fmv, where the bare
+    ``except gaierror: pass`` turned the miss into a fail-open. IP literals are
+    range-checked directly; everything else is resolved; ``None`` means
+    unresolvable and the caller must fail closed.
+    """
+    try:
+        ipaddress.ip_address(host)
+        return host  # literal, including IPv4-mapped / 6to4 / NAT64 forms
+    except ValueError:
+        pass
+    try:
+        return socket.gethostbyname(host)
+    except socket.gaierror:
+        return None
+
+
+def enforce_outbound_host(host: str, *, purpose: str = 'connection') -> str:
+    """SSRF guard for a caller-supplied *host* on a non-HTTP connection.
+
+    ``enforce_outbound_url`` covers modules that fetch a URL. Modules that open
+    a raw TCP connection — Redis, MySQL, SMTP, SSH, port probes, CDP
+    WebSockets — take a bare host instead and had no shared equivalent, so each
+    either reimplemented the check (``port.check``) or skipped it. Skipping it
+    turns any such module into an internal port scanner and a route to the
+    cloud metadata service, which is the same reachability the published SSRF
+    advisories are about.
+
+    Policy, in order:
+
+    * loopback is always allowed (see ``_LOOPBACK_HOSTS``)
+    * a host in ``FLYTO_ALLOWED_HOSTS`` is allowed (operator opt-in, wildcards)
+    * ``FLYTO_ALLOW_PRIVATE_NETWORK=true`` allows everything
+    * otherwise the host is resolved and rejected if private, link-local,
+      metadata, or unresolvable — failing closed on resolution failure
+
+    Args:
+        host: The caller-supplied hostname or IP literal.
+        purpose: Short noun used in the error message (e.g. 'Redis', 'SSH').
+
+    Returns:
+        The host, unchanged, so callers can use this inline.
+
+    Raises:
+        SSRFError: If the target is blocked by policy.
+
+    Note:
+        This validates the host but returns the *name*, not the resolved
+        address, because the third-party drivers these modules use accept only
+        a hostname. That leaves the DNS-rebinding TOCTOU that
+        ``_SSRFGuardedResolver`` closes for aiohttp open here — the guard
+        raises the bar to "attacker controls DNS" rather than "attacker types
+        169.254.169.254". Prefer the URL/session guards where a resolver can
+        be injected.
+    """
+    if not ssrf_protection_enabled():
+        return host
+
+    hostname = (host or '').strip()
+    if hostname.lower() in _LOOPBACK_HOSTS:
+        return host
+
+    config = get_ssrf_config()
+    if _host_in_allowlist(hostname, config.get('allowed_hosts')):
+        return host
+    if config.get('allow_private'):
+        return host
+
+    guard_ip = resolve_guard_ip(hostname)
+    if guard_ip is None:
+        raise SSRFError(
+            f"SSRF blocked: {purpose} host '{hostname}' could not be resolved. "
+            f"Unresolvable hosts are refused rather than attempted. "
+            f"Add it to FLYTO_ALLOWED_HOSTS if it is expected."
+        )
+    if is_private_ip(guard_ip):
+        raise SSRFError(
+            f"SSRF blocked: {purpose} host '{hostname}' resolves to the "
+            f"private/link-local address {guard_ip}. Set FLYTO_ALLOWED_HOSTS "
+            f"or FLYTO_ALLOW_PRIVATE_NETWORK=true to permit it."
+        )
+    return host
+
+
+def enforce_outbound_service_url(url: str, *, purpose: str = 'service') -> str:
+    """SSRF guard for a caller-supplied non-HTTP service URL (redis://, etc.).
+
+    ``validate_url_ssrf`` only understands http/https, so a ``redis_url`` or
+    ``amqp://`` endpoint cannot go through it. This parses the host out and
+    applies :func:`enforce_outbound_host` to it, giving Redis/queue modules the
+    same boundary the HTTP modules have.
+    """
+    if not ssrf_protection_enabled():
+        return url
+
+    parsed = urlparse(url if '://' in (url or '') else f'//{url}')
+    hostname = parsed.hostname
+    if hostname is None:
+        # No host component at all (e.g. a unix socket path) — nothing to reach.
+        return url
+    enforce_outbound_host(hostname, purpose=purpose)
+    return url
+
+
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 
 

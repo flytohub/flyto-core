@@ -2,10 +2,36 @@
 
 ## Current State
 
-- Package metadata is prepared for the 2.26.11 security patch release. The
-  release contains the completed filesystem, outbound HTTP, plugin discovery,
-  MCP header, and Ollama trust-boundary fixes tracked by the private GitHub
-  advisories.
+- Both security boundaries are now closed registry-wide and enforced in CI,
+  rather than patched per advisory:
+  - Filesystem — 88 modules declare a path-shaped parameter; 71 reach
+    `validate_path_with_env_config`, 17 are documented as not filesystem paths,
+    0 unaccounted. Enforced by `tests/core/test_write_sink_coverage.py`.
+  - Outbound network — 57 modules declare a URL/host-shaped parameter; 46 reach
+    an SSRF guard, 11 are documented as never reaching the network or as
+    validating locally, 0 unaccounted. Enforced by
+    `tests/core/test_outbound_guard_coverage.py` (MRO-aware, so inherited
+    guards count).
+  Exemptions require a written reason and are re-verified each run. The audits
+  confined roughly 30 modules that no advisory had named — see CHANGELOG
+  `[Unreleased]` and the two 2026-08-08 entries in DECISIONS.md.
+- Two breaking changes come with that: paths outside `FLYTO_SANDBOX_DIR`
+  (default: the process working directory) are refused, and connections to
+  private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
+  `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
+- Package metadata is prepared for the **2.27.0** release. It is a minor, not a
+  patch, because the two boundary changes above refuse inputs earlier releases
+  accepted — it is not a drop-in upgrade for callers that passed absolute paths
+  outside the sandbox or connected to private hosts. `SECURITY_STATUS.md`
+  publishes all 24 advisories with the regression test covering each, generated
+  from `security/advisories.json` and verified in CI.
+- The preceding 2.26.12 security patch release closed the remaining browser
+  file-write and SSRF gaps the 2.26.11
+  hardening waves left open (`browser.download`/`screenshot`/`pdf`,
+  `warroom.report`, `verify.report`/`visual_diff`/`run`, `browser.launch`,
+  `data.dedup`; `browser.goto`'s www-toggle retry), plus a tar-extract
+  symlink (Tar Slip), a `port.check` IPv6 SSRF fail-open, and a regex ReDoS,
+  tracked by public GitHub security advisories.
 - MCP clients no longer have to guess whether a connection is ready or keep a
   fragile server-side session alive. Core supports the stateless MCP
   2026-07-28 request model, publishes discovery and cache guidance, validates
@@ -49,7 +75,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 951 maintained Python files, 5,519
+- Source-backed documentation now covers 953 maintained Python files, 5,558
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -158,18 +184,97 @@
 
 ## Last Verification
 
-Verified locally on 2026-08-03 for the 2.26.11 release candidate:
+Verified locally on 2026-08-08 for the **2.27.0** release candidate — the full
+closure in `docs/TESTING.md`, every gate run, none skipped silently:
 
-- project memory, documentation, brand, generated catalog/reference, and
-  audited plus changed-surface Ruff checks passed;
-- 2,349 tests passed, 13 skipped, 273 deselected, with 61.39% coverage;
-- Python `pip-audit` and npm audit both reported 0 vulnerabilities;
-- `actionlint` accepted the PyPI publishing workflow and its pinned
-  `pypa/gh-action-pypi-publish` v1.14.2 commit;
+- documentation contract, brand identity, project-memory lint, generated
+  catalog (468 modules / 85 categories), generated reference (5,558
+  declarations across 806 files), and the new security-status check
+  (24 advisories) all passed;
+- audited-surface Ruff (the CI list plus `generate_security_status.py`) passed
+  with zero findings;
+- 2,467 tests passed, 13 skipped, 273 deselected, with 61.63% coverage against
+  the 60% control-kernel gate;
+- `requirements.lock` regenerated and unchanged (the only diff was the
+  pip-compile generator's Python 3.11 → 3.12 header comment, reverted; no
+  dependency moved), `pip-audit` reported no known vulnerabilities, `npm audit`
+  reported 0;
+- wheel and sdist built and Twine-validated. The wheel was then installed into
+  a clean venv and the boundaries were exercised against the **installed**
+  package, not the source tree: `/etc/passwd` refused and an in-sandbox path
+  accepted; the metadata address, an RFC1918 host, and an IPv4-mapped IPv6
+  loopback literal each refused while loopback was accepted; `redis://` to the
+  metadata address refused; and end to end, `file.delete` refused `/etc/hosts`
+  and `ssh.exec` refused the metadata host. The installed registry reports 468
+  modules, matching the committed catalog;
+- Flyto2 Indexer strict full scan passed 19/19 checks;
+- package and MCP registry metadata both resolve to `2.27.0`.
+
+Not run: browser and E2E suites (require browsers, services, or credentials).
+`actionlint` was not re-run — no workflow file changed in this release.
+
+**Environment note**: this machine's venv has `transformers` (via the `vector`
+extra), which CI does not install. `huggingface` is an optional module category
+(`src/core/modules/atomic/__init__.py:_OPTIONAL_CATEGORIES`), so generating the
+catalog here would have advertised 475 modules / 86 categories instead of the
+468 / 85 the released package actually exposes. Generated artifacts were
+produced with `transformers` hidden so they match CI and the shipped wheel.
+
+### Previous release
+
+Verified locally on 2026-08-07 for the 2.26.12 release candidate:
+
+- documentation, brand, generated catalog/reference (5,558 declarations
+  across 805 files, regenerated after the fix set), and both the CI's fixed
+  audited-surface Ruff list and a full changed-surface Ruff diff (every file
+  touched by this release, compared byte-for-byte against its pre-fix
+  baseline) passed with zero new findings;
+- 2,615 tests passed, 18 skipped, with 64.42% coverage (the Juice Shop
+  container e2e test is excluded, same as CI's own gate);
+- Python `pip-audit` (against a freshly regenerated `requirements.lock`
+  adding the `regex` dependency) and npm audit both reported 0
+  vulnerabilities;
 - wheel and source distribution built, and Twine validated both artifacts;
+  additionally, the built wheel was installed into a clean venv and the two
+  named advisories plus the four same-class findings (below) were each
+  re-exercised directly against the *installed* package (not the source
+  tree) to confirm the shipped artifact — not just the source — carries the
+  fix;
 - Flyto2 Indexer strict full scan passed 19/19 checks with 0 warnings/failures,
   docs score 100, README score 100, 0 secret findings, and 0 high-risk taint
   flows;
 - package, MCP registry, and changelog version metadata all resolve to
-  `2.26.11`; the release tag remains gated on green remote CI for the exact
-  release commit.
+  `2.26.12`. `actionlint` was not re-run — no workflow file changed in this
+  release.
+
+**Remote CI note**: the `v2.26.12` tag and its release commit (`989f3db`)
+initially failed remote CI twice — a `requirements.lock` transitive-pin
+drift (`soupsieve` resolved to a newer patch between local lock and CI's
+own re-lock) and a stale doc regeneration (one file's line numbers hadn't
+been refreshed after a later same-day edit) — plus a separately-failing
+`npm audit` gate on 5 pre-existing Dependabot alerts for `undici` (a JS
+devDependency used only by the `test_hints.py` harness, never shipped in
+the wheel). None of the three affected the published package's actual
+content, confirmed by re-downloading the live PyPI wheel and diffing its
+`screenshot.py` against source. Three follow-up commits on `main`
+(`5067f54`, `b32d36c`, `a0587eb`) fixed all three; remote CI is green as of
+`a0587eb`. No new PyPI version was needed since nothing shippable changed.
+
+### 2.26.12 fix set
+
+Closes the two publicly-reported advisories plus four same-class findings
+surfaced while scoping the first (CWE-22, unvalidated caller path to a write
+sink — the exact pattern the advisory calls out as recurring wave-over-wave):
+
+- `browser.download` (GHSA-p64w-hgfm-824v, critical) and, found in the same
+  sweep, `browser.screenshot`, `browser.pdf`, `warroom.report`,
+  `verify.report` (+ unescaped HTML), `verify.visual_diff`, `verify.run`,
+  `browser.launch`'s `record_video_dir`, and `data.dedup`'s `hash_file` — all
+  now confined to `FLYTO_SANDBOX_DIR`.
+- `browser.goto`'s www-toggle retry (GHSA-662f-hr85-mg6c, high) — the
+  toggled host is now revalidated against the SSRF guard before navigating,
+  plus a driver-level `_guard_navigation()` defense-in-depth layer.
+- Also included: Tar Slip in `archive.tar_extract` (GHSA-pxvx-67rw-8352,
+  high), the `port.check` IPv6-transition SSRF fail-open
+  (GHSA-v7q9-pr72-5fmv, medium), and regex ReDoS in `regex.*`
+  (GHSA-v468-p4jx-7vj3, medium).

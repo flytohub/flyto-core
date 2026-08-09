@@ -5,14 +5,20 @@ Verify Report Module - Generate verification reports
 
 Outputs HTML, JSON, or Markdown reports with screenshots.
 """
+import html
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field as schema_field
+
+# Severity values that map to a stylesheet class; anything else is untrusted
+# text and must not reach a class attribute.
+_SEVERITIES = frozenset({'error', 'warning', 'info'})
 
 
 @register_module(
@@ -69,13 +75,34 @@ class VerifyReportModule(BaseModule):
         self.name = self.params.get('name', 'verify-report')
         self.url = self.params.get('url', '')
         self.format = self.params.get('format', 'html')
-        self.output_dir = Path(self.params.get('output_dir', './verify-reports'))
+        # SECURITY: confine report writes to FLYTO_SANDBOX_DIR. Both parts of
+        # the destination are caller-controlled — output_dir and name, the
+        # latter being interpolated straight into the filename — so validate
+        # the directory here and each joined path at write time.
+        self.output_dir = Path(
+            validate_path_with_env_config(
+                str(self.params.get('output_dir', './verify-reports'))
+            )
+        )
         self.screenshots = self.params.get('screenshots', [])
 
         # Use compare_result from context if not provided
         if not self.results and 'compare_result' in self.context:
             result = self.context['compare_result']
             self.results = [result.to_dict() if hasattr(result, 'to_dict') else result]
+
+    def _report_path(self, extension: str) -> Path:
+        """Resolve the report destination, re-validated against the sandbox.
+
+        SECURITY: ``name`` is caller-controlled and interpolated into the
+        filename, so it can carry its own traversal ('../../etc/cron.d/x').
+        Validating output_dir alone would not catch that.
+        """
+        return Path(
+            validate_path_with_env_config(
+                str(self.output_dir / f'{self.name}.{extension}')
+            )
+        )
 
     async def execute(self) -> Dict[str, Any]:
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -111,17 +138,17 @@ class VerifyReportModule(BaseModule):
         report_paths = {}
 
         if self.format in ('html', 'all'):
-            path = self.output_dir / f'{self.name}.html'
+            path = self._report_path('html')
             path.write_text(self._generate_html(report_data), encoding='utf-8')
             report_paths['html'] = str(path)
 
         if self.format in ('json', 'all'):
-            path = self.output_dir / f'{self.name}.json'
+            path = self._report_path('json')
             path.write_text(json.dumps(report_data, indent=2, ensure_ascii=False), encoding='utf-8')
             report_paths['json'] = str(path)
 
         if self.format in ('markdown', 'all'):
-            path = self.output_dir / f'{self.name}.md'
+            path = self._report_path('md')
             path.write_text(self._generate_markdown(report_data), encoding='utf-8')
             report_paths['markdown'] = str(path)
 
@@ -138,25 +165,31 @@ class VerifyReportModule(BaseModule):
         status_class = 'pass' if summary['overall_passed'] else 'fail'
         status_text = 'PASSED' if summary['overall_passed'] else 'FAILED'
 
+        # SECURITY: every value below comes from the verified page or the
+        # caller's params, so it is untrusted; escape before interpolation.
+        def esc(value: Any) -> str:
+            return html.escape('' if value is None else str(value), quote=True)
+
         results_html = ''
         for result in data['results']:
             result_class = 'pass' if result.get('passed') else 'fail'
             violations_html = ''
             for v in result.get('violations', []):
                 severity = v.get('severity', 'warning')
+                severity_class = severity if severity in _SEVERITIES else 'warning'
                 violations_html += f'''
-                <div class="violation {severity}">
-                    <span class="severity">{severity.upper()}</span>
-                    <span class="property">{v.get('property')}</span>:
-                    expected <code>{v.get('expected')}</code>,
-                    got <code>{v.get('actual')}</code>
-                    {f"(diff: {v.get('difference')})" if v.get('difference') else ''}
+                <div class="violation {severity_class}">
+                    <span class="severity">{esc(severity).upper()}</span>
+                    <span class="property">{esc(v.get('property'))}</span>:
+                    expected <code>{esc(v.get('expected'))}</code>,
+                    got <code>{esc(v.get('actual'))}</code>
+                    {f"(diff: {esc(v.get('difference'))})" if v.get('difference') else ''}
                 </div>
                 '''
 
             results_html += f'''
             <div class="result {result_class}">
-                <h3>{"✓" if result.get('passed') else "✗"} {result.get('selector', 'unknown')}</h3>
+                <h3>{"✓" if result.get('passed') else "✗"} {esc(result.get('selector', 'unknown'))}</h3>
                 {violations_html if violations_html else '<p class="no-violations">No violations</p>'}
             </div>
             '''
@@ -166,7 +199,7 @@ class VerifyReportModule(BaseModule):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Report - {data['name']}</title>
+    <title>Verify Report - {esc(data['name'])}</title>
     <style>
         * {{ box-sizing: border-box; }}
         body {{ font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; background: #f5f5f5; }}
@@ -191,8 +224,8 @@ class VerifyReportModule(BaseModule):
 </head>
 <body>
     <div class="header">
-        <h1>{data['name']}</h1>
-        <div>{data.get('url', '')}</div>
+        <h1>{esc(data['name'])}</h1>
+        <div>{esc(data.get('url', ''))}</div>
     </div>
     <div class="summary">
         <div class="summary-card {status_class}"><div class="value">{status_text}</div><div>Status</div></div>

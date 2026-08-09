@@ -17,6 +17,9 @@
 - [YAML Workflow Specification](YAML_WORKFLOW_SPEC.md): workflow schema.
 - [DSL](DSL.md): expressions, data references, and control flow.
 - [Item Pipeline Specification](specs/ITEM_PIPELINE_SPEC.md): item semantics.
+- [Plugin Manifest Specification](specs/PLUGIN_MANIFEST_SPEC.md): DRAFT —
+  the language-neutral plugin contract, and which of its guarantees the code
+  actually enforces today.
 - [Flyto2 Smoke Recipes](flyto2-smoke-recipes.md): maintained product checks.
 
 ## Build Modules And Plugins
@@ -53,7 +56,7 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 951 maintained Python files and 5,519 declarations.
+- 953 maintained Python files and 5,558 declarations.
 - 483 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 93 environment-variable readers.

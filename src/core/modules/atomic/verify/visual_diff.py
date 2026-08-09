@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ....utils import SSRFError, enforce_outbound_url
+from ....utils import SSRFError, enforce_outbound_url, validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose
@@ -31,6 +31,18 @@ logger = logging.getLogger(__name__)
 
 async def _screenshot_url(url: str, output_path: str, viewport_width: int = 1280, viewport_height: int = 800) -> str:
     """Take a full-page screenshot of a URL using Playwright."""
+    # SECURITY: raw Playwright page.goto() bypasses BrowserDriver.goto(), and
+    # with it _guard_navigation — the check GHSA-662f-hr85-mg6c was written
+    # about. This module drives a bare async_playwright() browser, so it has no
+    # egress guard in any deployment mode either: this call is the only boundary
+    # between the caller's URL and the network.
+    #
+    # Checked before the playwright import and the browser launch, so a refused
+    # target costs nothing and the boundary does not depend on browsers being
+    # installed — a guard placed after the launch never runs on a host without
+    # them, which is exactly how this slipped through local testing.
+    enforce_outbound_url(url)
+
     try:
         from playwright.async_api import async_playwright
     except ImportError as exc:
@@ -252,7 +264,13 @@ class VerifyVisualDiffModule(BaseModule):
     def validate_params(self) -> None:
         self.reference_url = self.params.get('reference_url')
         self.dev_url = self.params.get('dev_url')
-        self.output_dir = Path(self.params.get('output_dir', './verify-reports/visual-diff'))
+        # SECURITY: confine report/screenshot writes to FLYTO_SANDBOX_DIR — the
+        # same guard verify.report and verify.runner apply to this parameter.
+        self.output_dir = Path(
+            validate_path_with_env_config(
+                str(self.params.get('output_dir', './verify-reports/visual-diff'))
+            )
+        )
         self.viewport_width = int(self.params.get('viewport_width', 1280))
         self.viewport_height = int(self.params.get('viewport_height', 800))
         self.threshold = float(self.params.get('threshold', 0.001))

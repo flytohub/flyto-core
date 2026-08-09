@@ -9,12 +9,12 @@ import os
 import tarfile
 from typing import Any, Dict
 
+from ....utils import PathTraversalError, validate_path_with_env_config
+from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
-from ...errors import ValidationError, ModuleError
-from ....utils import validate_path_with_env_config, PathTraversalError
 
 logger = logging.getLogger(__name__)
 
@@ -127,16 +127,35 @@ async def archive_tar_extract(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         # Auto-detect compression via 'r:*'
         with tarfile.open(safe_archive, 'r:*') as tf:
-            # Security: check for path traversal in archive entries
+            base = os.path.realpath(safe_output)
             for member in tf.getmembers():
-                target_path = os.path.normpath(os.path.join(safe_output, member.name))
-                if not target_path.startswith(os.path.normpath(safe_output)):
+                # Security: reject symlink/hardlink/special members outright.
+                # This is version-independent and closes the Tar Slip where a
+                # symlink member points outside the sandbox and a following
+                # regular member is written *through* it. Without this, the
+                # extractall fallback on Python < 3.12 (no filter= support)
+                # follows the symlink and escapes safe_output.
+                if member.issym() or member.islnk() or not (
+                    member.isfile() or member.isdir()
+                ):
+                    raise ModuleError(
+                        "Tar entry with link/special type is not allowed: {}".format(
+                            member.name
+                        ),
+                        code="PATH_TRAVERSAL",
+                    )
+                # Security: resolve the destination and require it to stay within
+                # safe_output using an os.sep boundary (a lexical startswith would
+                # accept e.g. /tmp/out_evil for a /tmp/out sandbox).
+                resolved = os.path.realpath(os.path.join(safe_output, member.name))
+                if not (resolved == base or resolved.startswith(base + os.sep)):
                     raise ModuleError(
                         "Tar entry attempts path traversal: {}".format(member.name),
                         code="PATH_TRAVERSAL",
                     )
 
-            # Use data_filter if available (Python 3.12+), otherwise fallback
+            # Use data_filter if available (Python 3.12+); on older runtimes the
+            # fallback is now safe because link/special members are rejected above.
             try:
                 tf.extractall(path=safe_output, filter='data')
             except TypeError:

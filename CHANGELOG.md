@@ -5,7 +5,174 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Documentation
+
+- `docs/specs/PLUGIN_MANIFEST_SPEC.md` — DRAFT specification of the
+  language-neutral plugin manifest, with an implementation-status table
+  separating what the code enforces from what is only specified. Records that
+  the out-of-process plugin path currently has no policy gate and no caller
+  wiring it to workflow execution.
+
+### Security
+
+- Policy is now scoped per plugin. A plugin's modules are checked against
+  `FLYTO_PLUGIN_GRANTS` (`plugin:permission`) rather than the process-global
+  `FLYTO_GRANTED_PERMISSIONS`, so a plugin declaring a dangerous permission can
+  no longer reach a grant the operator made for flyto-core itself.
+  `FLYTO_PLUGIN_DENYLIST` / `FLYTO_PLUGIN_ALLOWLIST` govern which plugins may
+  run at all. The global module filter still runs first, so the plugin dimension
+  can only narrow. Ownership is stamped by the registry and cannot be claimed by
+  a module.
+- The out-of-process plugin path now passes the same gate. `RuntimeInvoker.invoke`
+  calls `enforce_module_policy` on the resolved module id before routing, so the
+  plugin path and the legacy fallback are covered alike, and a step naming an id
+  the registry does not know can no longer reach a subprocess that the chokepoint
+  never sees. A refusal returns `MODULE_POLICY_DENIED`; a manifest that cannot be
+  read does not open the gate.
+
+### Added
+
+- `register_module(provides_capability=...)` lets a module declare the capability
+  it provides, and `ModuleRegistry.capabilities()` returns them grouped by
+  capability. This is how a host discovers that installing a package made a
+  capability available, instead of an operator hand-typing the name into a
+  command elsewhere. Optional; unset for every existing module. Serves plugins
+  arriving through the Python `flyto.modules` entry point — one binding, not a
+  language-neutral plugin contract.
+
 ## [Unreleased]
+
+## [2.27.0] - 2026-08-08
+
+Minor rather than patch: the two boundary changes below refuse inputs that
+previous releases accepted, so this is not a drop-in upgrade for every caller.
+Read the **Changed** section before upgrading.
+
+### Security
+- Closed the filesystem sandbox boundary across the whole module registry
+  rather than one report at a time. A registry-wide audit found every
+  remaining module that took a caller-supplied path to a filesystem sink
+  without `validate_path_with_env_config`, and confined all of them:
+  `testing.visual.compare` (`diff_path`, and the `expected`/`actual` read
+  paths — this module declares no `required_permissions`, so the write was
+  unauthenticated), `data.xml.parse` (`file_path`, the sibling
+  GHSA-wc94-386q-5478 missed), `browser.upload` and `aws.s3.upload`
+  (`file_path` — host files shipped to a remote origin), `ssh.sftp_upload`
+  and `ssh.sftp_download` (`local_path`, the SFTP counterpart of
+  GHSA-hmq9-xw4w-7ppc), `file.delete` (`file_path` — arbitrary file
+  deletion), `file.exists` (`path` — filesystem oracle), `git.clone`
+  (`destination`), `git.commit`/`git.diff` (`repo_path`), `llm.code_fix`
+  (`source_files`, where the previous `'..'` substring check let absolute
+  paths through), `verify.spec` (`ruleset_path`), plus `docker.build`,
+  `process.start` and `sandbox.execute_shell` as hardening. None of these
+  were reported; they are the same CWE-22 shape as the published advisories.
+- Closed the outbound network boundary across the registry on the same basis.
+  Added `enforce_outbound_host` and `enforce_outbound_service_url` to
+  `core/utils.py` — the raw-TCP and non-HTTP-scheme counterparts of
+  `enforce_outbound_url`, which only understands http(s) — and routed every
+  module that reaches the network from a caller-supplied target through one of
+  them: `verify.run`, `verify.capture` and `verify.visual_diff` (raw
+  Playwright `page.goto` bypassing `BrowserDriver._guard_navigation`, and in
+  `visual_diff`'s case a bare playwright browser with no egress guard in any
+  mode), `browser.connect` (`ws_endpoint` — CDP is remote code execution by
+  design), `browser.launch` (`proxy` — the egress guard inspects request URLs,
+  not where the proxy points), `git.clone` (`url` — the existing validator
+  bounded the transport but never the destination), `cache.*` and `queue.*`
+  (`redis_url`), `db.mysql.query`, `db.redis.get/set`, `notification.email.send`
+  (`smtp_server`, which also carries SMTP credentials to whatever answers),
+  `ssh.exec`/`ssh.sftp_upload`/`ssh.sftp_download` (`host`), `network.ping`,
+  `network.port_scan`, `network.traceroute`, `port.wait`, and `browser.emulate`.
+- Deduplicated the host resolver that GHSA-v7q9-pr72-5fmv was about.
+  `port.check` carried the only correct implementation (IP literals
+  range-checked directly so IPv6 transition forms cannot skip the check, and
+  fail-closed on resolution failure); it now lives in `core/utils.py` as
+  `resolve_guard_ip` and backs every host-taking module.
+- Added `tests/core/test_write_sink_coverage.py` and
+  `tests/core/test_outbound_guard_coverage.py`, which walk the module registry
+  and fail the build if any module declares a path- or network-shaped parameter
+  without reaching the corresponding guard. The outbound test is MRO-aware, so
+  a guard inherited from a mixin (`LLMClientMixin` for `agent.chain` /
+  `agent.autonomous`) counts. Exemptions must state what the value really
+  addresses and are re-verified each run: a module excused as "makes no
+  request" fails once it opens a connection, and one excused for validating
+  locally fails once that validation is deleted. Guard coverage is now a CI
+  property instead of something an author has to remember.
+
+- Published `SECURITY_STATUS.md`: every advisory with its severity, affected
+  range, fixed-in version and the regression test that covers it. It is
+  generated from `security/advisories.json` by
+  `scripts/generate_security_status.py` and verified in CI —
+  `tests/core/test_security_status.py` asserts that every test it names
+  resolves to a collectable node, so the coverage column cannot drift into
+  fiction, and `scripts/check_documentation.py` fails on a stale page.
+- Wrote regression tests for three advisory fixes that shipped without one.
+  Building the status page required naming a test per advisory and found that
+  GHSA-hr7p-wg7r-hg9m (`${env.VAR}` interpolation bypassing the `env.get`
+  denylist), GHSA-qq9q-xgm3-xv9g (environment API keys sent to a
+  caller-supplied `base_url`) and GHSA-mxcc-cr6x-2mvr (MCP `run_recipe`
+  loading workflows outside the bundled directory) had none. The fixes were
+  present and correct, but nothing would have caught their removal.
+
+### Changed
+- **Breaking for callers relying on the old permissiveness.** Modules listed
+  above now reject paths outside `FLYTO_SANDBOX_DIR`, which defaults to the
+  process working directory. Workflows that passed absolute paths such as
+  `/tmp/repo` to `git.clone` or `data.xml.parse` must set
+  `FLYTO_SANDBOX_DIR` to a directory covering them. Tests needing real files
+  outside the working directory can use the new `sandboxed_tmp_path` fixture.
+- **Breaking for workflows targeting private hosts.** Modules that connect to
+  a caller-supplied host now reject private and link-local targets unless the
+  operator sets `FLYTO_ALLOWED_HOSTS` or `FLYTO_ALLOW_PRIVATE_NETWORK=true`.
+  Loopback is unaffected, so self-hosted Redis/MySQL/SMTP on `localhost`
+  continues to work; a Redis at `10.0.0.5`, an SMTP relay on the LAN, or
+  `network.ping` against an internal host now needs an explicit allowlist
+  entry. Unresolvable hosts are refused rather than attempted.
+- `register_module` now preserves the defining module on function-style
+  module wrappers (`__module__`, `__wrapped_func__`) instead of reporting
+  `decorators.py`, so registry-wide static checks can resolve real sources.
+
+### Fixed
+- `SECURITY.md` advertised support for the 1.x line, which has not existed
+  since well before the 2.26 series. It now names the supported range, the
+  current secure release, and documents the two environment variables that
+  define the filesystem trust boundary.
+
+## [2.26.12] - 2026-08-07
+
+### Fixed
+- Confined `browser.download`'s `save_path` to the configured filesystem
+  sandbox before the directory is created or the downloaded bytes are
+  written, closing the gap the 2026-07 file-write hardening waves left in
+  `browser.download`, `browser.screenshot`, and `browser.pdf`.
+- Escaped caller- and page-derived values in the `verify.report` HTML
+  report and confined its `output_dir`/`name`-derived destination, the
+  `warroom.report` `output_path`, `verify.visual_diff` and `verify.run`
+  `output_dir`, `browser.launch`'s `record_video_dir`, and `data.dedup`'s
+  `hash_file` to the same sandbox boundary — the same unvalidated-path
+  pattern found while auditing the `browser.download` report.
+- Revalidated the www-toggled retry host in `browser.goto` against the SSRF
+  guard before navigating, closing a bypass where the submitted host passed
+  validation, navigation failed, and the toggled host (equally attacker-
+  controlled) was never checked. Added the same guard as defense in depth
+  inside the browser driver's `goto()` so a future caller that derives a new
+  navigation target and forgets to revalidate is still covered.
+- Rejected tar archive members that are symlinks, hardlinks, or other
+  special types before extraction in `archive.tar_extract`, closing a Tar
+  Slip where a symlink member pointing outside the sandbox let a following
+  member write through it on Python runtimes without `tarfile` `filter=`
+  support. Hardened the post-extraction path check (both `tar_extract` and
+  `zip_extract`) to compare resolved real paths against an `os.sep`-bounded
+  base instead of a lexical prefix match.
+- Made `port.check`'s SSRF guard fail closed: an unresolvable host (rather
+  than only a resolved private IP) is now treated as unsafe, closing a
+  bypass via IPv6 transition literals (e.g. `::ffff:127.0.0.1`) that raised
+  `gaierror` and fell through a bare `pass`.
+- Replaced stdlib `re` with the interruptible `regex` engine (native
+  per-call timeout) in the `regex.*` modules, so a catastrophic
+  backtracking pattern is abandoned within a bounded wall-clock budget
+  instead of freezing the event loop for every other in-flight request.
 
 ## [2.26.11] - 2026-08-03
 
@@ -760,6 +927,7 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 2.26.12 | 2026-08-07 | Closed remaining browser file-write and SSRF gaps (download/screenshot/pdf/report/launch/dedup, goto www-toggle), Tar Slip, port.check IPv6 SSRF, regex ReDoS |
 | 2.26.11 | 2026-08-03 | Security boundary hardening for filesystems, outbound HTTP, plugins, MCP headers, and Ollama |
 | 2.26.10 | 2026-07-23 | 452-module catalog, Tavily search, source-backed docs, deterministic verification |
 | 2.26.9 | 2026-07-19 | Registry metadata and PyPI backlink refresh |
@@ -772,7 +940,8 @@ When creating new modules, the `ui_visibility` is now auto-detected based on cat
 
 ---
 
-[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.11...HEAD
+[Unreleased]: https://github.com/flytohub/flyto-core/compare/v2.26.12...HEAD
+[2.26.12]: https://github.com/flytohub/flyto-core/compare/v2.26.11...v2.26.12
 [2.26.11]: https://github.com/flytohub/flyto-core/compare/v2.26.10...v2.26.11
 [2.26.10]: https://github.com/flytohub/flyto-core/compare/v2.26.9...v2.26.10
 [2.26.9]: https://github.com/flytohub/flyto-core/compare/v2.26.8...v2.26.9

@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Any, Dict
 
+from ....utils import enforce_outbound_host, validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -99,6 +100,19 @@ logger = logging.getLogger(__name__)
 )
 async def ssh_sftp_upload(context: Dict[str, Any]) -> Dict[str, Any]:
     """Upload file to remote server via SFTP"""
+    # SECURITY: the path boundary is checked before the optional-dependency
+    # import so it fails closed either way. Validating after the import would
+    # make the guard conditional on asyncssh being installed.
+    context['params']['local_path'] = validate_path_with_env_config(
+        str(context['params']['local_path'])
+    )
+
+    # SECURITY: `host` is caller-controlled and this module opens an SSH
+    # connection to it, so both the filesystem and the network side need a
+    # boundary. Checked here, before the optional-dependency import, so it
+    # fails closed whether or not asyncssh is installed.
+    enforce_outbound_host(context['params']['host'], purpose='SFTP')
+
     try:
         import asyncssh
     except ImportError:
@@ -124,8 +138,10 @@ async def ssh_sftp_upload(context: Dict[str, Any]) -> Dict[str, Any]:
             'error_code': 'MISSING_CREDENTIALS'
         }
 
-    # Validate local file exists
-    local_path = os.path.abspath(os.path.expanduser(local_path))
+    # local_path was confined at entry (see the top of this function): it is
+    # read and shipped to a caller-chosen SSH host, so an unconfined path is
+    # credential exfiltration with its own egress channel. remote_path is
+    # deliberately NOT validated — it names a location on the remote host.
     if not os.path.isfile(local_path):
         return {
             'ok': False,

@@ -81,9 +81,9 @@ class TestDataXmlParse:
         assert result['ok'] is True
 
     @pytest.mark.asyncio
-    async def test_parse_xml_from_file(self, mod, tmp_path):
+    async def test_parse_xml_from_file(self, mod, sandboxed_tmp_path):
         """Parse XML from file."""
-        xml_file = tmp_path / "test.xml"
+        xml_file = sandboxed_tmp_path / "test.xml"
         xml_file.write_text('<root><item>hello</item></root>')
         instance = mod({'file_path': str(xml_file)}, {})
         result = await instance.execute()
@@ -710,9 +710,9 @@ class TestImageModules:
 class TestGitModules:
 
     @pytest.fixture
-    def git_repo(self, tmp_path):
+    def git_repo(self, sandboxed_tmp_path):
         """Create a real local git repository."""
-        repo_dir = tmp_path / "test_repo"
+        repo_dir = sandboxed_tmp_path / "test_repo"
         repo_dir.mkdir()
         os.system(f'cd "{repo_dir}" && git init -q && git config user.email "dev@flyto2.com" && git config user.name "Test"')
         # Create initial commit

@@ -1,50 +1,32 @@
 # Claude Notes
 
-Read `STATE.md`, `ARCHITECTURE.md`, `DECISIONS.md`, and the latest handoff
-before changing workflow, module, recipe, or browser validation behavior.
+@AGENTS.md
 
-- Treat recipes as executable product-loop contracts.
-- Keep credentials as runtime inputs or environment values, never checked-in
-  docs or fixtures.
-- Prefer DOM extraction and JavaScript evaluation for browser assertions; use
-  screenshots only for visual/layout verification.
-- Run `bash scripts/lint-project-memory.sh` after editing project memory files.
-- Run `python scripts/check_documentation.py` after changing Python source,
-  API routes, CLI parsers, recipes, environment readers, or workflows.
-- Run `python scripts/check_brand_identity.py` after changing public copy.
-- Install contributor dependencies with `pip install -e '.[dev]'`; do not make
-  provider SDKs implicit base dependencies when an explicit extra is suitable.
+The rules above are shared with Codex and are the single source of truth. Do not
+restate or paraphrase them here — a second copy drifts, and the two agents then
+work from different instructions. Repo rules go in `AGENTS.md`; only the
+Claude-specific handoff rules below belong in this file.
 
-## Flyto2 Project Memory Contract
+## Cross-agent handoff
 
-Every Flyto2 repository must keep this project-memory scaffold current:
+This repo is edited by both Codex and Claude, sometimes on the same day.
 
-- `AGENTS.md`: agent operating rules, repo-specific constraints, verification commands.
-- `CLAUDE.md`: Claude-facing handoff rules when this repo is edited outside Codex.
-- `PROJECT.md`: product purpose, owned surfaces, users, and non-goals.
-- `ARCHITECTURE.md`: module boundaries, runtime shape, data flow, and integration points.
-- `STATE.md`: current status, known risks, release/deploy state, and last verification.
-- `ROADMAP.md`: near-term, later, and explicitly out-of-scope work.
-- `tasks.md`: actionable checklist with owners/status when known.
-- `DECISIONS.md`: durable architectural/product decisions with dates and rationale.
-- `CHANGELOG.md`: user-visible or operator-visible changes.
-- `docs/README.md`: index for durable docs in this repo.
-- `workflows/*.md`: repeatable agent workflows for idea capture, planning, implementation, bugfix, refactor, investigation, and wrap-up.
-- `handoffs/_registry.md`: index of handoffs; new handoffs use `YYYY-MM-DD-topic.md`.
+- Before starting, read the newest `handoffs/_registry.md` entry and check its
+  `Owner` and `Branch`.
+- If an `Active` entry is owned by the other agent, do not edit the same files on
+  the shared branch. Work on `claude/<topic>` or pick up different work.
+- When you finish something durable, write a handoff with `Owner: claude` and the
+  branch you worked on. Conversation-only context is not a release record.
+- State what you actually verified and what you did not. The other agent will
+  treat your handoff as fact.
 
-When changing behavior, public copy, deployment, security posture, or frontend UX, update the relevant memory files in the same change. Do not leave stale brand, email, module count, route, or deployment information behind.
+## Shared code intelligence
 
-## Flyto2 Frontend Quality Gate
+Both agents query the same index through the `flyto-indexer` MCP server —
+registered in `.mcp.json` for Claude and `~/.codex/config.toml` for Codex.
 
-Any frontend, website, dashboard, extension webview, app screen, or generated UI in this repository must avoid these eight failures:
-
-1. Ignoring accessibility: every interactive control needs keyboard access, visible focus, semantic HTML or ARIA, sufficient contrast, and useful alt/labels.
-2. Missing responsive design: verify mobile, tablet, and desktop; no clipped text, overflow, hidden primary actions, or broken navigation.
-3. Weak visual hierarchy: users must immediately see page purpose, primary action, status, and next step.
-4. Template-looking UI: reuse Flyto2 design tokens and local components, but tailor layout and copy to the actual product surface.
-5. Useless elements: remove decorative or placeholder UI that does not help the workflow, trust, navigation, or comprehension.
-6. Unclear hierarchy: controls, cards, tables, panels, and modals must have clear grouping, spacing, headings, and state.
-7. Unintuitive navigation: current location, back/forward paths, and cross-links to docs/blog/product pages must be obvious.
-8. Hard-to-understand content: copy must be concrete, scannable, current, and consistent with Flyto2 terminology.
-
-Frontend verification must include the relevant automated checks plus manual or screenshot review for responsive layout, accessibility states, navigation clarity, loading/empty/error states, and content readability. Public pages must preserve SEO basics: canonical URL, sitemap coverage, metadata, structured data when relevant, and no broken internal or external links.
+- A `post-commit` hook reindexes this repo automatically, so committed work by the
+  other agent is visible to you. Uncommitted work is not.
+- If `search` or `impact` results look stale, run `flyto-index scan .` first.
+- Agent scratch checkouts under `.claude/worktrees/` are excluded from the index.
+  Delete them when the work is merged; they are full copies of the repo.

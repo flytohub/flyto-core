@@ -10,6 +10,7 @@ Works across all browsers (Chromium, Firefox, WebKit).
 """
 from typing import Any, Dict, List, Optional
 from ...base import BaseModule
+from ....utils import enforce_outbound_url
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
@@ -406,6 +407,11 @@ class BrowserEmulateModule(BaseModule):
 
             # Navigate to same URL if we had one
             if current_url and current_url != 'about:blank':
+                # Defense in depth: current_url already passed the guard when
+                # it was first navigated to, but a redirect or DNS change since
+                # then makes re-navigation a fresh outbound request
+                # (GHSA-pfg2-w999-497v is that TOCTOU).
+                enforce_outbound_url(current_url)
                 await new_page.goto(current_url)
 
             # Close old context (this also closes old page)

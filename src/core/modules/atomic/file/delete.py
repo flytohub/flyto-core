@@ -8,6 +8,7 @@ Provides extended file manipulation capabilities.
 import os
 import shutil
 from typing import Any, Dict
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
@@ -75,11 +76,17 @@ class FileDeleteModule(BaseModule):
     """Delete File Module"""
 
     def validate_params(self) -> None:
-        self.file_path = self.params.get('file_path')
+        raw_file_path = self.params.get('file_path')
         self.ignore_missing = self.params.get('ignore_missing', False)
 
-        if not self.file_path:
+        if not raw_file_path:
             raise ValueError("file_path is required")
+
+        # SECURITY: os.remove() on an unconfined path is arbitrary file
+        # deletion — the destructive counterpart of the arbitrary file write
+        # advisories (GHSA-p64w-hgfm-824v, GHSA-hmq9-xw4w-7ppc). Confine it to
+        # FLYTO_SANDBOX_DIR before anything can reach the unlink.
+        self.file_path = validate_path_with_env_config(str(raw_file_path))
 
     async def execute(self) -> Any:
         try:

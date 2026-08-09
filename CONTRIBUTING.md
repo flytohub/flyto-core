@@ -482,4 +482,4 @@ Thank you for contributing to Flyto2 Core!
 
 ---
 
-*Copyright (c) 2025 Flyto2. All Rights Reserved.*
+*Copyright 2025-2026 Flyto2. Licensed under the Apache License, Version 2.0.*

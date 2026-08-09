@@ -238,7 +238,16 @@ class BaseModule(ABC):
         # how it was invoked. This is the backstop the nested-execution gadgets
         # used to bypass the MCP-boundary capability checks.
         from ..module_policy import enforce_module_policy
-        enforce_module_policy(self.module_id, metadata.get('required_permissions'))
+        # `plugin` is stamped at registration by the registry, so it says how
+        # this module arrived rather than what it claims about itself. Empty
+        # means flyto-core's own, which is what keeps the process-global grant
+        # meaning exactly what it always did for exactly the modules it always
+        # covered.
+        enforce_module_policy(
+            self.module_id,
+            metadata.get('required_permissions'),
+            plugin=metadata.get('plugin', ''),
+        )
 
         timeout_ms = metadata.get('timeout_ms')
         timeout = timeout_ms / 1000.0 if timeout_ms else None

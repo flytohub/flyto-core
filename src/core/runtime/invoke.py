@@ -193,6 +193,19 @@ class RuntimeInvoker:
         # Resolve legacy module ID for routing
         legacy_module_id = self._resolve_legacy_module_id(module_id, step_id)
 
+        # SECURITY: the same gate every in-process module passes through at
+        # BaseModule.run. Without it this path is a way around the module
+        # denylist: a step naming an id the registry does not know falls
+        # through to here, and a plugin claiming that id would run it in a
+        # subprocess that the chokepoint never sees.
+        #
+        # Applied before routing, so it covers the plugin path and the legacy
+        # fallback alike — routing decides *which* handler runs, and neither
+        # should run something policy denies.
+        denial = self._policy_denial(legacy_module_id, module_id, step_id)
+        if denial:
+            return self._error_response("MODULE_POLICY_DENIED", denial, start_time)
+
         # Get routing decision
         routing = self._router.route(legacy_module_id)
 
@@ -296,6 +309,41 @@ class RuntimeInvoker:
 
             logger.error(f"Module invocation failed: {e}", exc_info=True)
             return self._error_response("EXECUTION_ERROR", str(e), start_time)
+
+    def _policy_denial(self, legacy_module_id: str, plugin_id: str, step_id: str) -> str:
+        """Why policy refuses this step, or empty when it does not.
+
+        Returns a reason rather than raising because ``invoke`` answers with an
+        envelope; the caller already treats ``ok: False`` as a stop, so this
+        still fails closed.
+
+        ``required_permissions`` come from the plugin's own manifest when one is
+        loaded. A plugin that declares none simply declares none — the module
+        filter and the plugin allow/deny list still apply, so an unmanifested or
+        lying plugin cannot use silence to reach a denied module id.
+        """
+        from ..module_policy import ModulePolicyError, enforce_module_policy
+
+        required: Optional[list] = None
+        plugin_name = ""
+        manager = self._plugin_manager
+        if manager is not None:
+            try:
+                manifest = manager.get_manifest(plugin_id)
+            except Exception:  # noqa: BLE001 - a manifest lookup must not gate-fail open
+                manifest = None
+            if manifest is not None:
+                plugin_name = str(getattr(manifest, "id", "") or plugin_id)
+                for step in getattr(manifest, "steps", None) or []:
+                    if str(getattr(step, "id", "")) == str(step_id):
+                        required = list(getattr(step, "required_permissions", None) or [])
+                        break
+
+        try:
+            enforce_module_policy(legacy_module_id, required, plugin=plugin_name)
+        except ModulePolicyError as exc:
+            return str(exc)
+        return ""
 
     async def _invoke_plugin(
         self,

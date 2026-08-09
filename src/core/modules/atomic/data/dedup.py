@@ -15,6 +15,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
@@ -109,7 +110,13 @@ class DataDedupModule(BaseModule):
         self.items = self.params.get('items', [])
         self.keys = self.params.get('keys', [])
         self.storage_mode = self.params.get('storage', 'disk')
-        self.hash_file = self.params.get('hash_file')
+        # SECURITY: confine the cross-run hash-state file to FLYTO_SANDBOX_DIR.
+        # An unvalidated hash_file lets a caller overwrite an arbitrary
+        # existing file via the write-then-rename in _save_hashes().
+        raw_hash_file = self.params.get('hash_file')
+        self.hash_file = (
+            validate_path_with_env_config(raw_hash_file) if raw_hash_file else None
+        )
         self.max_hashes = self.params.get('max_hashes', 100000)
 
         if not isinstance(self.items, list):

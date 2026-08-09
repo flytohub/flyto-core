@@ -17,6 +17,61 @@ architecture:
   - rule: "Plugin install/uninstall must validate package names before subprocess"
     source: "security audit 2026-04-13"
 
+  - rule: "Archive extract must use a realpath+os.sep boundary, not a lexical startswith prefix check (Tar/Zip Slip)"
+    grep_deny:
+      - pattern: 'startswith\(os\.path\.normpath\(safe_output\)\)'
+        glob: "src/core/modules/atomic/archive/*.py"
+    source: "GHSA-pxvx-67rw-8352 (Tar Slip) 2026-08-04"
+
+  - rule: "regex.* modules must compile user patterns via compile_guarded (interruptible), never raw re.compile (ReDoS)"
+    grep_deny:
+      - pattern: 're\.compile\('
+        glob: "src/core/modules/atomic/regex/match.py"
+      - pattern: 're\.compile\('
+        glob: "src/core/modules/atomic/regex/extract.py"
+      - pattern: 're\.compile\('
+        glob: "src/core/modules/atomic/regex/replace.py"
+      - pattern: 're\.compile\('
+        glob: "src/core/modules/atomic/regex/split.py"
+      - pattern: 're\.compile\('
+        glob: "src/core/modules/atomic/regex/test.py"
+    source: "GHSA-v468-p4jx-7vj3 (ReDoS) 2026-08-04"
+
+  - rule: "port.check SSRF guard must fail closed on resolution failure, not swallow gaierror and connect anyway"
+    grep_deny:
+      - pattern: 'allow the check to fail naturally'
+        glob: "src/core/modules/atomic/port/check.py"
+    source: "GHSA-v7q9-pr72-5fmv (IPv6 SSRF bypass) 2026-08-04"
+
+  - rule: "Caller-controlled write-sink paths (save_path/path/output_dir/hash_file/record_video_dir) must be routed through validate_path_with_env_config before use, not passed to the sink raw (arbitrary file/directory write outside FLYTO_SANDBOX_DIR)"
+    grep_deny:
+      - pattern: "self\\.save_path = self\\.params\\['save_path'\\]$"
+        glob: "src/core/modules/atomic/browser/download.py"
+      - pattern: "self\\.path = self\\.params\\['path'\\]$"
+        glob: "src/core/modules/atomic/browser/pdf.py"
+      - pattern: "self\\.path = self\\.params\\.get\\('path', 'screenshot\\.png'\\)$"
+        glob: "src/core/modules/atomic/browser/screenshot.py"
+      - pattern: "self\\.record_video_dir = self\\.params\\.get\\('record_video_dir'\\)$"
+        glob: "src/core/modules/atomic/browser/launch.py"
+      - pattern: "self\\.hash_file = self\\.params\\.get\\('hash_file'\\)$"
+        glob: "src/core/modules/atomic/data/dedup.py"
+      - pattern: "self\\.output_dir = Path\\(self\\.params\\.get\\('output_dir', '\\./verify-reports'\\)\\)$"
+        glob: "src/core/modules/atomic/verify/report.py"
+      - pattern: "self\\.output_dir = Path\\(self\\.params\\.get\\('output_dir', '\\./verify-reports'\\)\\)$"
+        glob: "src/core/modules/atomic/verify/runner.py"
+      - pattern: "self\\.output_dir = Path\\(self\\.params\\.get\\('output_dir', '\\./verify-reports/visual-diff'\\)\\)$"
+        glob: "src/core/modules/atomic/verify/visual_diff.py"
+    source: "GHSA-p64w-hgfm-824v (browser.download arbitrary file write) 2026-08-05"
+
+  - rule: "warroom.report's output_path must be validated (validate_path_with_env_config) before Path()/write_text — no automated check (fix spans lines, not a single grep-able signature); see tests/core/test_reported_security_advisories.py::test_warroom_report_rejects_path_outside_sandbox"
+    source: "GHSA-p64w-hgfm-824v (browser.download arbitrary file write) 2026-08-05"
+
+  - rule: "browser.goto must revalidate any URL it derives (e.g. the www-toggle retry) against the SSRF guard before navigating — not just the caller's original url, since a derived host (attacker owns both) is equally untrusted"
+    grep_deny:
+      - pattern: "result = await browser\\.goto\\(alt_url, wait_until=self\\.wait_until, timeout_ms=self\\.timeout_ms\\)$"
+        glob: "src/core/modules/atomic/browser/goto.py"
+    source: "GHSA-662f-hr85-mg6c (browser.goto www-toggle SSRF bypass) 2026-08-05"
+
 style:
   - rule: "Use specific exception types instead of bare 'except Exception' in the control kernel"
     grep_deny:

@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,10 @@ def _decode_image_input(value: str, name: str, temp_dir: Path) -> Path:
     else:
         candidate = Path(value).expanduser()
         if candidate.exists() or len(value) < 128 or candidate.suffix.lower() == ".png":
-            return candidate.resolve()
+            # SECURITY: the caller-supplied branch is a real filesystem read, so
+            # it is confined to FLYTO_SANDBOX_DIR like every other read sink
+            # (data.csv.read, excel.read, pdf.parse — GHSA-wc94-386q-5478).
+            return Path(validate_path_with_env_config(str(candidate)))
         encoded = value
 
     try:
@@ -82,6 +86,21 @@ async def compare_visual_files(
     pixel_color_threshold = _ratio(color_threshold, "color_threshold", 0.1)
     timeout_ms = max(1, min(int(timeout_ms), 120_000))
 
+    # SECURITY: diff_path is caller-controlled and the worker writes
+    # attacker-influenceable PNG bytes to it. Unvalidated, this is the same
+    # arbitrary file write as browser.download save_path (GHSA-p64w-hgfm-824v),
+    # so confine it to FLYTO_SANDBOX_DIR.
+    #
+    # Validated here, before the Node availability checks below, so the
+    # boundary does not depend on an optional toolchain: on a host without
+    # Node this function returns a structured error, and a guard placed after
+    # that check would silently never run.
+    validated_diff_path = (
+        validate_path_with_env_config(diff_path)
+        if (output_diff and diff_path)
+        else None
+    )
+
     node_path = shutil.which("node")
     if not node_path:
         return {
@@ -108,8 +127,8 @@ async def compare_visual_files(
 
         resolved_diff_path: Optional[Path] = None
         if output_diff:
-            if diff_path:
-                resolved_diff_path = Path(diff_path).expanduser().resolve()
+            if validated_diff_path:
+                resolved_diff_path = Path(validated_diff_path)
             else:
                 evidence_dir = Path(tempfile.mkdtemp(prefix="flyto-visual-evidence-"))
                 resolved_diff_path = evidence_dir / "diff.png"

@@ -10,6 +10,7 @@ import platform
 import re
 from typing import Any, Dict, List
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -115,6 +116,11 @@ async def network_traceroute(context: Dict[str, Any]) -> Dict[str, Any]:
     """Trace the route packets take to reach a destination host."""
     params = context['params']
     host = params.get('host', '').strip()
+    # SECURITY: probing is this module's purpose, which is exactly why the
+    # target must be bounded — otherwise it is a ready-made internal network
+    # scanner reachable from any workflow. Loopback stays allowed; private
+    # ranges need FLYTO_ALLOWED_HOSTS or FLYTO_ALLOW_PRIVATE_NETWORK.
+    enforce_outbound_host(host, purpose='traceroute')
     max_hops = int(params.get('max_hops', 30))
     timeout = int(params.get('timeout', 5))
 

@@ -10,6 +10,7 @@ import logging
 import os
 from typing import Any, Dict, List
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -146,7 +147,11 @@ def _parse_files_changed(stat_out: str) -> int:
 async def git_commit(context: Dict[str, Any]) -> Dict[str, Any]:
     """Create a git commit"""
     params = context['params']
-    repo_path = os.path.abspath(os.path.expanduser(params['repo_path']))
+    # SECURITY: `git -C repo_path add/commit` writes into whatever tree this
+    # names, under the same filesystem.write permission the arbitrary file
+    # write advisories covered. The `files` param stays unvalidated: git
+    # resolves a pathspec relative to repo_path, which is now confined.
+    repo_path = validate_path_with_env_config(str(params['repo_path']))
     message = params['message']
     author_name = params.get('author_name')
     author_email = params.get('author_email')

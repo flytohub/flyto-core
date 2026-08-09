@@ -1,5 +1,173 @@
 # Decisions
 
+## 2026-08-08 - The plugin manifest is specified before it is built, and says so
+
+Decision: `docs/specs/PLUGIN_MANIFEST_SPEC.md` states the language-neutral
+plugin contract as a DRAFT, with an implementation-status table naming which of
+its guarantees the code enforces today and which are intentions. Sections that
+describe unbuilt behaviour are marked SPECIFIED.
+
+Reason: three independent adversarial reviews of candidate designs each returned
+a fatal finding, and the shape was the same every time — an authority model
+whose gates existed in prose and not in code. Per-plugin module policy,
+per-plugin permission scope and manifest-verified integrity were all written in
+the present tense against a codebase that had none of them. An operator adopts a
+plugin on the strength of what the contract claims, so a contract that overstates
+is worse than one that promises nothing.
+
+Three constraints fell out of those reviews and are load-bearing in the spec:
+
+**Sign the code, not the map.** A bundle of declaration alone attests to a
+mapping, not to a plugin; `artifact.digest` binds the manifest to what runs. The
+existing PyPI Trusted Publishing + SLSA provenance already signs the wheel and is
+recognised rather than replaced.
+
+**The address is derived, never declared.** A manifest that names its own
+endpoint and token environment variables lets one publisher name another's, and
+no other check catches it because nothing binds a freely-chosen suffix to the
+publisher. Deriving from the namespace, which is bound, closes it by
+construction.
+
+**No absent-means-true boolean crosses a language boundary.** Go's
+`json:"usable,omitempty"` on a bool omits false, as does Jackson's NON_DEFAULT;
+the field that decides whether a mission counts as proven would silently invert.
+
+Recorded openly: `docs/PLUGIN_SDK.md` already documents a different `plugin.yaml`
+and a 14-language runtime that really does spawn subprocesses. Whether
+`flyto.plugin.v1` supersedes it or converts to it is an open question in the
+spec rather than a decision taken here.
+
+Also recorded, because it is the finding that most needs an owner: the
+out-of-process plugin path has no `enforce_module_policy` call, and
+`RuntimeInvoker.set_plugin_manager` has no caller, so a workflow step cannot
+reach a plugin subprocess today. It is one wiring change from working and the
+same change from being a policy bypass.
+
+## 2026-08-08 - Policy has a plugin dimension, and it can only narrow
+
+Decision: `enforce_module_policy` takes the plugin a module arrived from, and
+three environment variables scope policy to it — `FLYTO_PLUGIN_GRANTS`
+(`plugin:permission` pairs), `FLYTO_PLUGIN_DENYLIST`, `FLYTO_PLUGIN_ALLOWLIST`.
+A plugin module is checked against its own grants only; the process-global
+`FLYTO_GRANTED_PERMISSIONS` does not reach it. The global module filter runs
+first, so the plugin dimension can never widen what a plugin may run.
+
+Reason: with one global grant set, a plugin that *honestly* declared
+`required_permissions: [shell.execute]` was asking the operator to grant
+shell.execute to every module in the process — flyto-core's own and every other
+plugin's. Declaring a permission is how a plugin tells the truth about itself,
+and it must not be how it acquires reach. An operator who granted shell.execute
+so flyto-core could run a build step has not granted it to everything they
+install afterwards.
+
+Ownership is assigned, never claimed. The registry stamps the plugin whose
+`register_all` is running into the module's metadata and overwrites whatever the
+module supplied. The lie worth blocking is not "I am plugin B" but "I am no
+plugin at all", because the empty owner is the one the global grant still
+covers — so a module registered during a plugin load that supplies
+`plugin: ""` is corrected to the loading plugin, and a module registered with no
+metadata at all is given the minimum needed to stay attributable rather than
+defaulting to first-party.
+
+The marker is cleared in `finally`, so a plugin that raises part-way through
+registration cannot leave its name attached to the next plugin's modules.
+
+Scope: this bounds what a plugin's modules may do *inside this process*. It does
+not bound a plugin that runs as its own process — nothing here can, and a design
+that claims otherwise is describing a sandbox flyto-core does not have.
+
+## 2026-08-08 - A module may declare the capability it provides
+
+Decision: `register_module` accepts `provides_capability`, a single capability
+id in the vocabulary a Flyto2 Space uses to bind work to resources. It is stored
+in module metadata and read back through `ModuleRegistry.capabilities()`, which
+returns `{capability: [module_id, ...]}`. It is optional, defaults to empty, and
+almost every module leaves it unset.
+
+Reason: this is the plugin contribution point, read side. Before it, installing
+a package added a step to the builder but told the host nothing — a Space's
+evidence layer could not learn that a capability had become available until an
+operator hand-typed its name into a command somewhere else. "Install the plugin
+and the loop can use it" was not expressible.
+
+A capability with several providers is returned whole rather than resolved here.
+Which provider runs is a binding decision the host makes with the resources it
+has; discarding one would be this registry deciding something it cannot know.
+
+Scope, stated because it is easy to over-read: this serves plugins that arrive
+through the Python `flyto.modules` entry point. It is one binding, not the
+ecosystem's contribution point — a plugin written in another language cannot use
+it at all, and the language-neutral manifest that would serve those is a
+separate, unbuilt contract.
+
+`build_module_metadata` takes the new field last and with a default, so callers
+outside this repository keep working unchanged.
+
+## 2026-08-08 - Sandbox guard coverage is a CI property, not an author's habit
+
+Decision: every module that declares a path-shaped parameter must route it
+through `validate_path_with_env_config`, and
+`tests/core/test_write_sink_coverage.py` walks the registry to enforce that on
+every run. A parameter may be exempted only by an entry in
+`NON_FILESYSTEM_PARAMS` stating what the value actually addresses — a JSONPath,
+a URL segment, a remote host path — and the exemption is void the moment the
+module's source contains a filesystem call.
+
+Reason: the guard was already centralized and already correct. Every published
+arbitrary file read/write advisory against this project
+(GHSA-2956-977x-2w3r, GHSA-p34x-fmph-9fjx, GHSA-xchh-cp84-9838,
+GHSA-hmq9-xw4w-7ppc, GHSA-wc94-386q-5478, GHSA-p64w-hgfm-824v) is the same
+defect: a module that did not call it. Fixing them one report at a time never
+converged, because each wave patched the modules that had been named and left
+the ones that had not — GHSA-p64w explicitly notes the prior waves missed
+`browser.download`. Centralization without a coverage check only moves the
+failure from "the guard is wrong" to "the guard was not called", which is
+harder to see and just as exploitable. A registry-wide audit at the time this
+decision was made found 13 further unguarded modules that no one had reported.
+
+Consequence: adding a module with a path parameter now forces one of two
+explicit acts — call the guard, or write down why the parameter is not a path.
+Neither can be skipped silently. The cost is that the default sandbox
+(the process working directory) is now actually enforced on modules that
+previously ignored it, which is a breaking change for callers that passed
+absolute paths outside it; `FLYTO_SANDBOX_DIR` is the supported way to widen it.
+
+## 2026-08-08 - The outbound boundary is a host check, not only a URL check
+
+Decision: `core/utils.py` owns three outbound guards, not one.
+`enforce_outbound_url` keeps the http(s) path; `enforce_outbound_service_url`
+parses the host out of a non-HTTP endpoint (`redis://`, `ws://`, a proxy URL);
+`enforce_outbound_host` guards a bare hostname for raw TCP. All three share one
+policy — loopback allowed, `FLYTO_ALLOWED_HOSTS` allowed,
+`FLYTO_ALLOW_PRIVATE_NETWORK` allowed, otherwise resolve and reject private,
+link-local, metadata, or unresolvable — and one resolver, `resolve_guard_ip`,
+promoted out of `port.check`. `tests/core/test_outbound_guard_coverage.py`
+enforces that every module with a network-shaped parameter reaches one of them.
+
+Reason: `validate_url_ssrf` only understands http(s), so every module that took
+a bare host or a `redis://` endpoint had no guard available to call. That is
+why the gap was structural rather than careless: Redis, MySQL, SMTP, SSH, the
+CDP endpoint, the browser proxy and the network probes were reaching arbitrary
+internal addresses with no shared primitive to reach for, and `port.check` had
+quietly grown the only correct host resolver in the codebase — the one whose
+IPv6 fail-open was GHSA-v7q9-pr72-5fmv. A guard nobody can call is not a
+boundary.
+
+Decision: loopback stays allowed for infrastructure connections. Reason:
+self-hosted deployments legitimately point Redis, MySQL and SMTP at
+`localhost`, and blocking that breaks real operation without closing any path —
+a workflow that can reach loopback can already do so through the module's own
+default configuration. The attack this bounds is reaching *elsewhere* on the
+private network, above all the cloud metadata endpoint.
+
+Consequence: workflows that deliberately target a private host now need
+`FLYTO_ALLOWED_HOSTS` or `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Unresolvable hosts
+are refused rather than attempted, which is a behaviour change for callers that
+relied on a connection error to probe DNS. The coverage test is MRO-aware
+because guards are legitimately inherited (`LLMClientMixin` holds the
+`ollama_url` guard for `agent.chain` and `agent.autonomous`); a same-file scan
+would report those as unguarded and train readers to ignore the test.
+
 ## 2026-08-02 - Plugin IDs select discovered directories; they never construct paths
 
 Decision: `PluginManager` records the resolved directory associated with each

@@ -48,3 +48,22 @@ Any frontend, website, dashboard, extension webview, app screen, or generated UI
 8. Hard-to-understand content: copy must be concrete, scannable, current, and consistent with Flyto2 terminology.
 
 Frontend verification must include the relevant automated checks plus manual or screenshot review for responsive layout, accessibility states, navigation clarity, loading/empty/error states, and content readability. Public pages must preserve SEO basics: canonical URL, sitemap coverage, metadata, structured data when relevant, and no broken internal or external links.
+
+## Repo notes
+
+Merged from `CLAUDE.md` so Codex and Claude read one set of rules.
+
+Read `STATE.md`, `ARCHITECTURE.md`, `DECISIONS.md`, and the latest handoff
+before changing workflow, module, recipe, or browser validation behavior.
+
+- Treat recipes as executable product-loop contracts.
+- Keep credentials as runtime inputs or environment values, never checked-in
+  docs or fixtures.
+- Prefer DOM extraction and JavaScript evaluation for browser assertions; use
+  screenshots only for visual/layout verification.
+- Run `bash scripts/lint-project-memory.sh` after editing project memory files.
+- Run `python scripts/check_documentation.py` after changing Python source,
+  API routes, CLI parsers, recipes, environment readers, or workflows.
+- Run `python scripts/check_brand_identity.py` after changing public copy.
+- Install contributor dependencies with `pip install -e '.[dev]'`; do not make
+  provider SDKs implicit base dependencies when an explicit extra is suitable.

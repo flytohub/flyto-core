@@ -32,6 +32,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, Callable
 
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import get_module, register_module
 from ...schema import compose, field as schema_field
@@ -348,10 +349,20 @@ class VerifySpecModule(BaseModule):
     module_description = "Compose any modules for spec verification"
 
     def validate_params(self) -> None:
-        self.ruleset_path = self.params.get("ruleset_path")
+        raw_ruleset_path = self.params.get("ruleset_path")
         self.ruleset = self.params.get("ruleset")
-        if not self.ruleset_path and not self.ruleset:
+        if not raw_ruleset_path and not self.ruleset:
             raise ValueError("Either ruleset_path or ruleset is required")
+
+        # SECURITY: load_spec_ruleset() reads and parses this path, and a
+        # ruleset drives which modules run — so an unconfined path is both an
+        # arbitrary file read and a way to smuggle in a ruleset the operator
+        # never wrote. Same boundary as GHSA-mxcc-cr6x-2mvr (MCP run_recipe).
+        self.ruleset_path = (
+            validate_path_with_env_config(str(raw_ruleset_path))
+            if raw_ruleset_path
+            else None
+        )
 
     async def execute(self) -> Dict[str, Any]:
         if self.ruleset_path:

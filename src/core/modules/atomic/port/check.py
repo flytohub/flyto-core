@@ -8,12 +8,10 @@ Check if a network port is open or closed
 import asyncio
 import logging
 import os
-import socket
 from typing import Any, Dict, List
 
+from ....utils import is_private_ip, resolve_guard_ip
 from ...registry import register_module
-from ....utils import is_private_ip
-
 
 logger = logging.getLogger(__name__)
 
@@ -160,23 +158,25 @@ async def port_check(context: Dict[str, Any]) -> Dict[str, Any]:
         # Check if scanning non-localhost is allowed
         allow_remote = os.environ.get('FLYTO_ALLOW_PORT_SCAN', '').lower() == 'true'
         if not allow_remote:
-            # Try to resolve and check if it's a private IP
-            try:
-                resolved_ip = socket.gethostbyname(host)
-                if is_private_ip(resolved_ip):
-                    return {
-                        'ok': False,
-                        'error': f'SSRF blocked: Cannot scan private network host ({host} -> {resolved_ip}). '
-                                 'Set FLYTO_ALLOW_PORT_SCAN=true to allow.',
-                        'error_code': 'SSRF_BLOCKED',
-                        'results': [],
-                        'open_ports': [],
-                        'closed_ports': [],
-                        'summary': {'total': 0, 'open': 0, 'closed': 0}
-                    }
-            except socket.gaierror:
-                # DNS resolution failed - allow the check to fail naturally
-                pass
+            # Fail closed: an unresolvable host is treated as unsafe rather than
+            # allowed through. This closes the IPv6-literal bypass where
+            # gethostbyname() raised gaierror and the old bare `pass` let the
+            # connect proceed against e.g. ::ffff:127.0.0.1
+            # (GHSA-v7q9-pr72-5fmv). The resolver now lives in core.utils and is
+            # shared with every other host-taking module rather than duplicated.
+            guard_ip = resolve_guard_ip(host)
+            if guard_ip is None or is_private_ip(guard_ip):
+                target = host if guard_ip is None else f'{host} -> {guard_ip}'
+                return {
+                    'ok': False,
+                    'error': f'SSRF blocked: Cannot scan private/unresolvable network host ({target}). '
+                             'Set FLYTO_ALLOW_PORT_SCAN=true to allow.',
+                    'error_code': 'SSRF_BLOCKED',
+                    'results': [],
+                    'open_ports': [],
+                    'closed_ports': [],
+                    'summary': {'total': 0, 'open': 0, 'closed': 0}
+                }
 
     # Normalize ports to list
     if isinstance(ports_input, int):

@@ -7,6 +7,7 @@ Provides Redis key-value store operations.
 """
 from typing import Any, Dict
 from ...base import BaseModule
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose, presets
 
@@ -84,7 +85,12 @@ class RedisGetModule(BaseModule):
         import os
         self.key = self.params.get('key')
         # NO hardcoded defaults - require explicit configuration
-        self.host = self.params.get('host') or os.getenv('REDIS_HOST')
+        # SECURITY: caller-controlled host, raw TCP connection — SSRF without
+        # a URL. Loopback stays allowed for the normal self-hosted case.
+        self.host = enforce_outbound_host(
+            self.params.get('host') or os.getenv('REDIS_HOST') or 'localhost',
+            purpose='Redis',
+        )
         self.port = self.params.get('port', 6379)
         self.db = self.params.get('db', 0)
 
@@ -205,7 +211,12 @@ class RedisSetModule(BaseModule):
         self.value = self.params.get('value')
         self.ttl = self.params.get('ttl')
         # NO hardcoded defaults - require explicit configuration
-        self.host = self.params.get('host') or os.getenv('REDIS_HOST')
+        # SECURITY: caller-controlled host, raw TCP connection — SSRF without
+        # a URL. Loopback stays allowed for the normal self-hosted case.
+        self.host = enforce_outbound_host(
+            self.params.get('host') or os.getenv('REDIS_HOST') or 'localhost',
+            purpose='Redis',
+        )
         self.port = self.params.get('port', 6379)
         self.db = self.params.get('db', 0)
 

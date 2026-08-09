@@ -8,6 +8,8 @@ module execution flows through — so a denied module cannot run no matter how i
 is reached.
 """
 
+import os
+
 import pytest
 
 from core.modules import atomic  # noqa: F401 — registers modules
@@ -48,12 +50,25 @@ class TestEnforce:
 
 @pytest.mark.asyncio
 class TestRunBackstop:
-    async def test_denied_module_blocked_at_run(self, default_policy):
+    async def test_denied_module_blocked_at_run(self, default_policy, tmp_path):
         # Construct a denied module directly (bypassing the mcp_handler gate) and
         # call run() — the chokepoint must still block it before execute().
-        mod = FileDeleteModule({"file_path": "/tmp/should-not-be-touched"}, {})
-        with pytest.raises(ModulePolicyError):
-            await mod.run()
+        #
+        # The path has to sit inside the sandbox: file.delete now confines
+        # file_path at construction, so an out-of-sandbox literal would raise
+        # PathTraversalError before run() and this test would pass for the wrong
+        # reason, proving nothing about the policy chokepoint.
+        victim = tmp_path / "should-not-be-touched"
+        victim.write_text("x", encoding="utf-8")
+        os.environ["FLYTO_SANDBOX_DIR"] = str(tmp_path)
+        try:
+            mod = FileDeleteModule({"file_path": str(victim)}, {})
+            with pytest.raises(ModulePolicyError):
+                await mod.run()
+        finally:
+            del os.environ["FLYTO_SANDBOX_DIR"]
+
+        assert victim.exists() is True
 
     async def test_allowed_module_runs(self, default_policy):
         mod = ModuleRegistry.get("string.uppercase")({"text": "hi"}, {})

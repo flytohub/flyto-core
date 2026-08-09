@@ -17,6 +17,7 @@ Supported services:
 import logging
 from typing import Any, Dict, Optional
 from ...base import BaseModule
+from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose, field
 
@@ -78,6 +79,12 @@ class BrowserConnectModule(BaseModule):
         self.ws_endpoint = self.params.get('ws_endpoint', '')
         if not self.ws_endpoint:
             raise ValueError("ws_endpoint is required")
+        # SECURITY: connect_over_cdp() dials this endpoint and hands the caller
+        # full DevTools control of whatever answers. An unguarded ws:// target
+        # reaches any internal debugging port the runner can route to, and CDP
+        # is remote code execution by design. validate_url_ssrf only speaks
+        # http(s), so the ws/wss host goes through the service-URL guard.
+        enforce_outbound_service_url(self.ws_endpoint, purpose='CDP endpoint')
         self.viewport = {
             'width': self.params.get('viewport_width', 1280),
             'height': self.params.get('viewport_height', 720),
