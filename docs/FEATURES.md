@@ -37,6 +37,10 @@ meanings:
 - 483 literal decorator registrations exist in maintained source.
 - Additional modules can appear from installed plugins or optional dependencies.
 
+Catalog search and detail carry each module's registry-declared
+`provides_capability` and `plugin`, so an installed package's contribution is
+visible without deriving either value from the module ID.
+
 Use `flyto modules --format json` to inspect the active runtime where the
 workflow will execute.
 
@@ -59,7 +63,7 @@ evidence but does not decide the gate.
 
 - [All 468 active module schemas](TOOL_CATALOG.md)
 - [All 483 literal module implementations](reference/registered-modules.md)
-- [All 5,558 maintained Python declarations](reference/python-api.md)
+- [All 5,559 maintained Python declarations](reference/python-api.md)
 - [All CLI parsers](reference/cli.md)
 - [All HTTP decorators](reference/http-api.md)
 - [All environment readers and packaged workflow assets](reference/configuration.md)

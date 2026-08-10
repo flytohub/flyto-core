@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,558 declarations across 806 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,559 declarations across 806 files**.
 
 ## `demo.py`
 
@@ -1039,11 +1039,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def get_module_detail(module_id: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Get complete module information. | [`src/core/catalog/module.py:13`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L13) |
-| function | `def get_modules_batch(module_ids: List&#91;str&#93;) -> Dict&#91;str, Dict&#91;str, Any&#93;&#93;` | Get complete info for multiple modules at once. | [`src/core/catalog/module.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L103) |
-| function | `def _score_module(query_words: List&#91;str&#93;, query_lower: str, module_id: str, meta: Dict&#91;str, Any&#93;) -> float` | Score a single module against query words. | [`src/core/catalog/module.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L127) |
-| function | `def search_modules(query: str, category: Optional&#91;str&#93;=None, limit: int=20) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search modules by keyword with multi-signal scoring. | [`src/core/catalog/module.py:190`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L190) |
-| function | `def get_suggested_workflow(task_description: str, max_steps: int=5) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Suggest a workflow based on task description. | [`src/core/catalog/module.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L231) |
+| function | `def _registry_identity(metadata: Mapping&#91;str, Any&#93;) -> Dict&#91;str, str&#93;` | Project the registry's capability-identity fields for a public result. | [`src/core/catalog/module.py:18`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L18) |
+| function | `def get_module_detail(module_id: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Get complete module information. | [`src/core/catalog/module.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L38) |
+| function | `def get_modules_batch(module_ids: List&#91;str&#93;) -> Dict&#91;str, Dict&#91;str, Any&#93;&#93;` | Get complete info for multiple modules at once. | [`src/core/catalog/module.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L136) |
+| function | `def _score_module(query_words: List&#91;str&#93;, query_lower: str, module_id: str, meta: Dict&#91;str, Any&#93;) -> float` | Score a single module against query words. | [`src/core/catalog/module.py:160`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L160) |
+| function | `def search_modules(query: str, category: Optional&#91;str&#93;=None, limit: int=20) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Search modules by keyword with multi-signal scoring. | [`src/core/catalog/module.py:223`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L223) |
+| function | `def get_suggested_workflow(task_description: str, max_steps: int=5) -> List&#91;Dict&#91;str, Any&#93;&#93;` | Suggest a workflow based on task description. | [`src/core/catalog/module.py:273`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L273) |
 
 ## `src/core/catalog/outline.py`
 

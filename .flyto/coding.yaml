@@ -16,6 +16,20 @@
 # correct interpreter without an absolute path.
 version: flyto.coding-config.v1
 
+# Deterministic source-to-reference rewrite available to the audited
+# implementer by name only. The argv is fixed here, runs in the isolated
+# project-action sandbox, and is still followed by the required
+# generated_reference check below.
+actions:
+  - name: generate_reference
+    argv: ["python", "scripts/generate_reference.py"]
+    timeout_seconds: 300
+    description: Rewrite generated reference docs from the current Core source.
+  - name: generate_catalog
+    argv: ["python", "scripts/generate_catalog.py"]
+    timeout_seconds: 300
+    description: Rewrite the generated Core tool catalog from current registrations.
+
 checks:
   # Project-memory scaffold contract required by CLAUDE.md/AGENTS.md.
   - name: project_memory

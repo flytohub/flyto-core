@@ -43,6 +43,8 @@
   advisory only.
 - The generated catalog currently exposes 468 modules across 85 categories, and
   the bundled recipe inventory contains 41 recipes.
+- Catalog search and detail results carry each module's registry-declared
+  `provides_capability` and `plugin`; neither is derived from the module ID.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
 - The repository already contains workflow assets and CI for maintained recipe
@@ -75,7 +77,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 953 maintained Python files, 5,558
+- Source-backed documentation now covers 953 maintained Python files, 5,559
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces, and all maintained recipe/workflow assets. CI rejects drift,
   missing ownership, broken local links, stale naming, and mailbox violations.
@@ -188,7 +190,7 @@ Verified locally on 2026-08-08 for the **2.27.0** release candidate — the full
 closure in `docs/TESTING.md`, every gate run, none skipped silently:
 
 - documentation contract, brand identity, project-memory lint, generated
-  catalog (468 modules / 85 categories), generated reference (5,558
+  catalog (468 modules / 85 categories), generated reference (5,559
   declarations across 806 files), and the new security-status check
   (24 advisories) all passed;
 - audited-surface Ruff (the CI list plus `generate_security_status.py`) passed

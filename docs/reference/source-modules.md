@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **953 Python files**, **196,540 lines**, and **5,558 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **953 Python files**, **196,582 lines**, and **5,559 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -98,7 +98,7 @@ Inventory: **953 Python files**, **196,540 lines**, and **5,558 class/function/m
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
-| [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 279 | 5 | `modules, typing` | Catalog Module Detail API |
+| [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 321 | 6 | `modules, typing` | Catalog Module Detail API |
 | [`src/core/catalog/outline.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/outline.py#L1) | 196 | 2 | `modules, typing` | Catalog Outline API |
 | [`src/core/catalog_facts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog_facts.py#L1) | 8 | 0 | `none` | Public catalog facts shared by user-facing help text. |
 | [`src/core/constants.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L1) | 602 | 22 | `typing, urllib` | Core Constants - Centralized configuration values |

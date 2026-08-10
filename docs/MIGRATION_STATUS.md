@@ -7,11 +7,15 @@
 | Runtime catalog | 468 modules, 85 categories |
 | Literal module registrations | 483 |
 | Packaged recipes | 41 |
-| Maintained Python source | 953 files, 196,319 lines |
-| Python declarations | 5,558 across 806 files |
+| Maintained Python source | 953 files, 196,582 lines |
+| Python declarations | 5,559 across 806 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 22 |
 | Environment-variable names | 93 |
+
+Catalog search and detail report each module's registry-declared
+`provides_capability` and `plugin` as the registry holds them, without deriving
+either value from the module ID.
 
 ## Active And Defined Surfaces
 

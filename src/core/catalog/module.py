@@ -7,7 +7,32 @@ Returns complete module information for workflow assembly.
 Only fetch when LLM has decided to use a specific module.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Mapping, Optional, List
+
+
+# Settled at registration: the module declares ``provides_capability``,
+# ``ModuleRegistry.register`` assigns ``plugin``. The catalog only forwards them.
+_IDENTITY_FIELDS = ('provides_capability', 'plugin')
+
+
+def _registry_identity(metadata: Mapping[str, Any]) -> Dict[str, str]:
+    """Project the registry's capability-identity fields for a public result.
+
+    Read from ``metadata`` only — never derived from the query, module id,
+    category, or a mapping kept here, which would let the catalog announce an
+    undeclared capability or misattribute a plugin's module to Core.
+    Any read-only ``Mapping`` is accepted; only key reads are performed.
+
+    Normalization matches the registry's ``(value or "").strip()``: the empty
+    string means "declares nothing", so a missing key or a non-string left by a
+    legacy direct registration reads as empty rather than raising. One shared
+    projection is what keeps :func:`search_modules` and
+    :func:`get_module_detail` in agreement.
+    """
+    return {
+        field: value.strip() if isinstance(value := metadata.get(field), str) else ''
+        for field in _IDENTITY_FIELDS
+    }
 
 
 def get_module_detail(module_id: str) -> Optional[Dict[str, Any]]:
@@ -56,6 +81,11 @@ def get_module_detail(module_id: str) -> Optional[Dict[str, Any]]:
                     'params': {'selector': '#login-btn'},
                 },
             ],
+
+            # Registry-declared identity, identical to what search reports.
+            # Empty string means no declared capability / no owning plugin.
+            'provides_capability': '',
+            'plugin': '',
         }
     """
     from ..modules.registry import ModuleRegistry
@@ -97,6 +127,9 @@ def get_module_detail(module_id: str) -> Optional[Dict[str, Any]]:
         'timeout': meta.get('timeout'),
         'retryable': meta.get('retryable', False),
         'requires_credentials': meta.get('requires_credentials', False),
+
+        # Same projection search uses, so search and detail cannot disagree.
+        **_registry_identity(meta),
     }
 
 
@@ -197,6 +230,11 @@ def search_modules(
 
     Also handles fuzzy module_id lookup: if query looks like a module_id
     (contains '.'), tries to find the closest match.
+
+    Each result also carries ``provides_capability`` and ``plugin`` exactly as
+    the registry holds them (see :func:`_registry_identity`), so a host can see
+    what installing an optional package made available. Both are empty strings
+    for the majority of modules, which ship with Core and declare nothing.
     """
     from ..modules.registry import ModuleRegistry
 
@@ -221,6 +259,10 @@ def search_modules(
                 'description': meta.get('ui_description', ''),
                 'category': meta.get('category', ''),
                 'can_be_start': meta.get('can_be_start', False),
+                # Carried through, not matched on: _score_module never reads
+                # either field, so results say more without matching or
+                # ordering differently.
+                **_registry_identity(meta),
                 'score': score,
             })
 
