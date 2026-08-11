@@ -37,6 +37,10 @@ Non-loopback binding fails closed when authentication is not active.
 | `GET /v1/workflow/{execution_id}` | Bearer | Read execution status and step summary |
 | `GET /v1/workflow/{execution_id}/evidence` | Bearer | Read step evidence and outputs |
 | `POST /v1/workflow/{execution_id}/replay/{step_id}` | Bearer | Replay a persisted workflow boundary |
+| `GET /v1/extensions` | Bearer | Installed extensions of both supported kinds |
+| `GET /v1/extensions/kinds` | Bearer | The supported prefixes and entry-point groups |
+| `POST /v1/extensions/install` | Bearer + opt-in | Install or upgrade one extension |
+| `POST /v1/extensions/uninstall` | Bearer + opt-in | Uninstall one extension |
 | `POST /mcp` | Bearer | MCP JSON-RPC and session initialization |
 | `GET /mcp` | Public, always 405 | Documents that server-initiated SSE is unsupported |
 | `DELETE /mcp` | Bearer | Delete an MCP session |
@@ -71,6 +75,72 @@ For a process-local transport without an HTTP bind, run:
 ```bash
 python -m core.mcp_server
 ```
+
+## Extension Management
+
+Core manages exactly two extension shapes, and the pair is the whole contract:
+
+| Kind | Name prefix | Entry-point group |
+|---|---|---|
+| `modules` | `flyto-modules-` | `flyto.modules` |
+| `plugins` | `flyto-plugin-` | `flyto.plugins` |
+
+Nothing is special-cased per extension. A module pack such as
+`flyto-modules-robotics` is admitted on its prefix and served by the same code
+path as every other pack; no Core source names it.
+
+`GET /v1/extensions/kinds` serves that table from the same object the installer
+enforces, so a client's idea of what is installable cannot drift from Core's.
+
+Install requests take the full prefixed distribution name. A bare name is
+rejected rather than completed: `robotics` is ambiguous between the two kinds,
+and guessing would install a package the caller did not ask for.
+
+An install proceeds as: classify → validate name/version → record the prior
+version → run pip → **prove** the installed distribution declares at least one
+entry point in its kind's group → refresh the loader manifests and, for the
+`modules` kind, the module registry. A package that installs but declares no
+entry point is not an extension:
+
+- on a **first** install it is uninstalled again (`rolled_back: true`), because
+  the only thing on disk is a package Core cannot use and did not have before;
+- on an **upgrade** it is left in place, because uninstalling would remove the
+  working version the operator already had.
+
+Successful responses report `restart_required`. An upgrade sets it: the
+extension's code is already imported into the running interpreter and Python
+does not un-import, so a refresh updates what Core *reports* while only a
+restart changes what it *runs*. A first install does not set it. Uninstall
+always sets it.
+
+Both mutating routes require the bearer token **and** an explicit operator
+opt-in, `FLYTO_EXTENSIONS_INSTALL_ENABLED=1`. Installing a package runs its
+build hooks as host code, and the auto-minted local token authorises module
+execution, not arbitrary code installation. Read routes need only the token;
+`GET /v1/extensions` reports whether the opt-in is active.
+
+Failures return a fixed envelope with a stable code:
+
+```json
+{"ok": false, "error": {"code": "entrypoint_missing", "message": "...", "name": "flyto-modules-x", "rolled_back": true}}
+```
+
+| Code | Status | Meaning |
+|---|---|---|
+| `unsupported_extension` | 400 | Name matches no supported prefix |
+| `invalid_name` | 400 | Not a valid package name |
+| `invalid_version` | 400 | Not a valid version string |
+| `not_installed` | 404 | Nothing to uninstall |
+| `entrypoint_missing` | 409 | Installed, but declares no Flyto2 entry point |
+| `rollback_failed` | 409 | Not an extension, and the undo also failed |
+| `install_failed` | 502 | Package manager reported failure |
+| `uninstall_failed` | 502 | Package manager reported failure |
+| `timeout` | 504 | Package manager exceeded its bound |
+| `extension_management_disabled` | 403 | Operator opt-in not set |
+
+Package-manager stdout and stderr are logged locally and never returned: they
+carry interpreter paths, index URLs, and sometimes credentials embedded in an
+index URL. `see server logs` in a message is literal, not a hedge.
 
 ## Verification Service
 

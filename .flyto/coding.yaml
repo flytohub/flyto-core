@@ -3,17 +3,29 @@
 # Every declared check is a real, bounded, argv-only command that runs locally
 # against this checkout with no network, secrets, or deployment access. They
 # are trusted because they are source-controlled in this repository and invoke
-# only in-repo scripts and pinned dev tooling. All five are required: an
-# implementer's change is only acceptable when each one passes exactly as
-# written here.
+# only in-repo scripts and pinned dev tooling. Every declared check is required:
+# an implementer's change is only acceptable when each one passes exactly as
+# written here. The count is deliberately not restated in prose — it drifted
+# from six to nine while this sentence still said six, and a contract that
+# miscounts its own gates cannot be used to tell whether one was dropped.
 #
 # No `capabilities` block is declared on purpose: Core verification needs no
 # external MCP server or detachable capability, so the required capability set
 # is intentionally empty. The Claude service adapter fails closed on unattached
 # required capabilities, so declaring one here would block every job.
 #
-# The MCP service prepends its Python venv to PATH, so `python` resolves to the
-# correct interpreter without an absolute path.
+# Verification runs with a private HOME and must not depend on user-site
+# packages.  Pin Python checks to this checkout's contributor venv so the
+# interpreter and installed test/lint tooling cannot drift with the service
+# process PATH.
+#
+# The pin is spelled `.venv/bin/python`, relative to the checkout the job runs
+# in — never an absolute path. An absolute `/Users/<someone>/...` interpreter
+# pins the contract to one machine and one clone: it fails closed for every
+# other contributor, for CI, and for a second worktree of this same repository,
+# while reading as though it verified something. Relative keeps the anti-drift
+# property (still this checkout's venv, never the service process PATH) without
+# encoding whose laptop wrote it.
 version: flyto.coding-config.v1
 
 # Deterministic source-to-reference rewrite available to the audited
@@ -21,12 +33,17 @@ version: flyto.coding-config.v1
 # project-action sandbox, and is still followed by the required
 # generated_reference check below.
 actions:
+  # Same interpreter as the `generated_reference` check below, on purpose: the
+  # generator and the check that diffs its output have to agree, and a bare
+  # `python` from the service PATH is not guaranteed to be the interpreter the
+  # check runs. When they differ, regeneration can produce output the check then
+  # rejects, with nothing in either result saying why.
   - name: generate_reference
-    argv: ["python", "scripts/generate_reference.py"]
+    argv: [".venv/bin/python", "scripts/generate_reference.py"]
     timeout_seconds: 300
     description: Rewrite generated reference docs from the current Core source.
   - name: generate_catalog
-    argv: ["python", "scripts/generate_catalog.py"]
+    argv: [".venv/bin/python", "scripts/generate_catalog.py"]
     timeout_seconds: 300
     description: Rewrite the generated Core tool catalog from current registrations.
 
@@ -39,16 +56,22 @@ checks:
 
   # Byte-compile the package so syntax and import-time breakage fail fast.
   - name: compile
-    argv: ["python", "-m", "compileall", "-q", "src"]
+    argv: [".venv/bin/python", "-m", "compileall", "-q", "src"]
     timeout_seconds: 300
     required: true
 
   # Mirrors the audited CI maintenance/security lint surface: the repository's
   # Ruff configuration applied to exactly the files CI gates, not a whole-tree
   # scan.
+  #
+  # The Flyto2 Indexer lints the exact task targets — the file paths enumerated
+  # below are the audited surface, so a target added to or removed from a task
+  # must be added to or removed from this argv in the same change. A file edited
+  # by a task but absent from this list is not linted by this check, and a path
+  # listed here that no longer exists fails the check outright.
   - name: lint
     argv:
-      - "python"
+      - ".venv/bin/python"
       - "-m"
       - "ruff"
       - "check"
@@ -65,23 +88,151 @@ checks:
       - "src/core/modules/atomic/crypto/jwt_create.py"
       - "src/core/modules/atomic/crypto/jwt_verify.py"
       - "src/core/modules/atomic/dns/lookup.py"
+      # Capability-manifest surface: the document, the registry read and
+      # generation counter it is derived from, and both transports that serve
+      # it. Edited together and therefore linted together — a change to the
+      # manifest that is only linted on one side of the seam is a change whose
+      # other side CI never sees.
+      - "src/core/capability_manifest.py"
+      - "src/core/modules/registry/core.py"
+      - "src/core/api/routes/modules.py"
+      - "src/core/mcp_handler.py"
       - "tests/conftest.py"
       - "tests/test_documentation_generators.py"
       - "tests/test_version_identity.py"
       - "tests/core/api/test_routes.py"
+      # Every test that pins the capability surface, including the two whose
+      # tool-count expectations move whenever a tool is added.
+      - "tests/core/test_capability_manifest.py"
+      - "tests/core/api/test_capability_surface.py"
+      - "tests/core/api/test_mcp_transport.py"
+      - "tests/core/test_mcp_real.py"
+      - "tests/core/test_plugin_policy_scope.py"
+    timeout_seconds: 300
+    required: true
+
+  # Kept as a separate required command so both lint argv vectors stay within
+  # the coding service's bounded 32-item contract. This is the out-of-process
+  # plugin policy seam and both suites that pin its denial behavior.
+  #
+  # `exceptions.py` is linted here rather than with the extension seam that most
+  # recently edited it: it is the runtime's exception vocabulary, raised by
+  # invoke.py and manager.py, so this is where it stays lintable after that
+  # edit is forgotten. It was unlinted until then, which is how an f-string with
+  # no placeholders and a builtin-shadowing class name survived in it.
+  - name: lint_runtime_invoke
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "src/core/runtime/invoke.py"
+      - "src/core/runtime/routing.py"
+      - "src/core/runtime/exceptions.py"
+      - "tests/core/test_runtime_policy_gate.py"
+      - "tests/core/runtime/test_routing.py"
+      - "tests/core/runtime/test_invoke.py"
+    timeout_seconds: 300
+    required: true
+
+  # The plugin process-lifecycle seam and the suite that pins it. Separate argv
+  # for the same reason as lint_runtime_invoke: each vector stays inside the
+  # coding service's bounded 32-item contract. A target added to or removed from
+  # this surface must be added to or removed from this argv in the same change.
+  - name: lint_runtime_manager
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "src/core/runtime/manager.py"
+      - "tests/runtime/test_manager.py"
+    timeout_seconds: 300
+    required: true
+
+  # The generic Core extension-management seam and the suite that pins it.
+  # Separate argv for the same reason as lint_runtime_invoke: each vector stays
+  # inside the coding service's bounded 32-item contract. A target added to or
+  # removed from this surface must be added to or removed from this argv in the
+  # same change.
+  - name: lint_extensions
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "src/core/plugin/loader.py"
+      - "src/core/api/routes/extensions.py"
+      - "src/core/api/routes/__init__.py"
+      - "src/core/api/server.py"
+      - "tests/core/api/test_extensions.py"
+    timeout_seconds: 300
+    required: true
+
+  # Deterministic proof for the extension contract: prefix/entry-point-group
+  # admission, argv-and-scrubbed-env pip invocation, stable error codes with no
+  # subprocess output in any response, entry-point proof, rollback of a failed
+  # *new* install but not of a failed upgrade, restart_required on upgrade, and
+  # the auth plus operator opt-in on /v1/extensions. None of it is reachable
+  # through one module's parameter contract, and none of it may reach the
+  # network, so it is gated here as its own command.
+  - name: extension_management
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "pytest"
+      - "-p"
+      - "no:cacheprovider"
+      - "--no-cov"
+      - "-q"
+      - "tests/core/api/test_extensions.py"
+    timeout_seconds: 300
+    required: true
+
+  # Deterministic proof for the lifecycle contract itself: idle reclaim on the
+  # configured timeout, stop-without-unload with lazy restart, idempotent
+  # sweeper start/shutdown, and the locking that keeps invoke, start, idle stop,
+  # and unload from interleaving. None of it is reachable through one module's
+  # parameter contract, so it is gated here.
+  - name: runtime_manager_lifecycle
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "pytest"
+      - "-p"
+      - "no:cacheprovider"
+      - "--no-cov"
+      - "-q"
+      - "tests/runtime/test_manager.py"
     timeout_seconds: 300
     required: true
 
   # Reject drift between source, API routes, CLI parsers, recipes, environment
   # readers, workflows, and the committed generated documentation.
   - name: generated_reference
-    argv: ["python", "scripts/check_documentation.py"]
+    argv: [".venv/bin/python", "scripts/check_documentation.py"]
     timeout_seconds: 600
     required: true
+
+  # Deterministic proof for registry/plugin infrastructure changes that cannot
+  # be validated through one executable module's parameter contract.
+  - name: registry_plugin_contract
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "pytest"
+      - "-p"
+      - "no:cacheprovider"
+      - "--no-cov"
+      - "-q"
+      - "tests/core/test_plugin_policy_scope.py"
+    timeout_seconds: 300
+    required: true
+    proof_kinds: ["flyto.core.module-contract.v1"]
 
   # Local test floor; excludes only the browser and e2e lanes that need a real
   # browser or cross-component runtime.
   - name: tests
-    argv: ["python", "-m", "pytest", "-q", "-m", "not browser and not e2e"]
+    argv: [".venv/bin/python", "-m", "pytest", "-q", "-m", "not browser and not e2e"]
     timeout_seconds: 900
     required: true

@@ -24,7 +24,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.catalog_facts import CORE_CATALOG_CATEGORY_COUNT, CORE_MODULE_COUNT
 from core.session_reaper import reaper_loop
 
-from .routes import mcp_router, modules_router, replay_router, workflows_router
+from .routes import (
+    extensions_router,
+    mcp_router,
+    modules_router,
+    replay_router,
+    workflows_router,
+)
 from .security import enforce_bind_policy, get_cors_origins, init_auth
 from .state import ServerState
 
@@ -112,6 +118,7 @@ def create_app(
     app.include_router(modules_router, prefix="/v1")
     app.include_router(workflows_router, prefix="/v1")
     app.include_router(replay_router, prefix="/v1")
+    app.include_router(extensions_router, prefix="/v1")
     app.include_router(mcp_router, prefix="/mcp")
 
     # ------------------------------------------------------------------
@@ -138,6 +145,11 @@ def create_app(
                 "evidence_collection",
                 "replay",
                 "execution_trace",
+                # Advertised unconditionally: the read side of /v1/extensions is
+                # always served. Whether the *mutating* routes are enabled is an
+                # operator opt-in reported by GET /v1/extensions itself, not a
+                # property of the build.
+                "extension_management",
             ],
         }
 

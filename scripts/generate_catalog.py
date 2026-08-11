@@ -41,6 +41,52 @@ os.environ["FLYTO_VALIDATION_MODE"] = "dev"
 _ENV_GATED_CATEGORIES = {"huggingface"}
 
 
+def _is_plugin_owned(meta: object) -> bool:
+    """Whether a registry row arrived from an installed plugin package.
+
+    ``ModuleRegistry.register`` stamps every row with the entry point that was
+    loading when it was registered, and with ``""`` for flyto-core's own. The
+    owner is assigned rather than accepted, so this is the registry's answer
+    about how a module arrived, not the module's claim about itself.
+
+    This file documents flyto-core, so a plugin's modules are not part of it.
+    That is the second way the catalog used to depend on the machine: a checkout
+    with any ``flyto.modules`` distribution installed — a pro module pack, a
+    locally `pip install -e`'d plugin — generated a catalog carrying that
+    plugin's modules, so `--check` passed inside the release container and
+    failed on the developer's host for reasons that had nothing to do with the
+    change under review. Excluded here rather than by name, because the set of
+    installed plugins is exactly the thing that is not knowable from the source.
+
+    Fails closed: first-party means the owner is exactly ``""``, and every other
+    value is treated as plugin-owned and excluded. A truthiness test let three
+    non-first-party rows through as flyto-core's own — ``None``, a falsy
+    non-string, and a row carrying no ``plugin`` key at all. ``register`` stamps
+    an explicit owner on every row it stores, so a stored row missing the key is
+    not a first-party module; it is a row that reached ``_metadata`` by some
+    route that did not stamp it, and the catalog is the wrong place to guess.
+    Being wrong in this direction drops a module from the docs, which is
+    visible; being wrong in the other publishes a plugin's module as Core's.
+
+    A row that is not an exact ``dict`` is plugin-owned by the same rule, and
+    that case is the reason this takes ``object``. A subclass decides what
+    ``.get`` returns, so a row overriding it answers the very question asked
+    about it. And ``(meta or {}).get`` raised ``AttributeError`` on anything —
+    a string, a list, a dataclass — so a single malformed row aborted the whole
+    generator with a traceback instead of producing a catalog. Worse, the crash
+    is the *safe* half of the behaviour: `--check` failing loudly is survivable,
+    but it happens at the exact boundary that decides whose module this is, and
+    the answer to "I cannot read this row's owner" must be the conservative one.
+    A row whose provenance cannot be established is not flyto-core's.
+    """
+    if type(meta) is not dict:
+        return True
+    owner = meta.get("plugin")
+    # Exactly the built-in empty string. `isinstance` admitted `str` subclasses,
+    # and a subclass defines `==`, so the type is settled before the value is asked.
+    return not (type(owner) is str and owner == "")
+
+
 def format_params(params_schema: dict) -> str:
     """Format params_schema into a readable string."""
     if not params_schema:
@@ -127,6 +173,9 @@ def render_catalog() -> tuple[str, int, int]:
         # being installed locally — see _ENV_GATED_CATEGORIES.
         if cat in _ENV_GATED_CATEGORIES:
             continue
+        # Skip modules an installed plugin contributed — see _is_plugin_owned.
+        if _is_plugin_owned(meta):
+            continue
         if cat not in categories:
             categories[cat] = []
         categories[cat].append((module_id, meta))
@@ -144,6 +193,17 @@ def render_catalog() -> tuple[str, int, int]:
         ">",
         "> Counts cover what a default `pip install flyto-core` exposes. "
         + _optional_note(),
+        ">",
+        "> Modules contributed by installed `flyto.modules` plugin packages are "
+        "excluded. This file documents flyto-core, and which plugins a machine "
+        "happens to have installed is not a property of this source tree.",
+        ">",
+        "> The test fails closed: a module is listed here only when the registry "
+        "recorded its owner as exactly the empty string. Any other owner — a "
+        "plugin name, `null`, a falsy non-string, an absent owner key — and any "
+        "row that is not a metadata mapping at all counts as plugin-owned and is "
+        "left out, because a row whose provenance cannot be established is not "
+        "flyto-core's to publish.",
         "",
         "## Categories",
         "",

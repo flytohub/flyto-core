@@ -2,6 +2,23 @@
 
 ## Open
 
+- `PluginService` / runtime plugin lifecycle: the out-of-process plugin path
+  (`src/core/api/plugins/service.py`, `src/core/plugin/`) is still outside the
+  discovery transaction. It is omitted from the coverage kernel, has no
+  equivalent rollback, and its `PluginLoader.discover_plugins` returns its own
+  live mapping. Not addressed by the registry 1.4.0 work, open since
+  2026-08-08. This item is scoped to that runtime lifecycle only — it is not a
+  statement about the plugin surface as a whole; other plugin surfaces are
+  documented open separately (see the next item).
+- Other plugin surfaces documented open in this repository, listed so the item
+  above is not read as covering them. Per `docs/specs/PLUGIN_MANIFEST_SPEC.md`:
+  the `flyto.plugin.v1` manifest is a DRAFT specification, not an implemented
+  contract; `RuntimeInvoker.set_plugin_manager` has no caller anywhere, leaving
+  `_plugin_manager` as `None` so a workflow step cannot reach a plugin
+  subprocess; and the limits on what flyto-core can bound for a plugin running
+  as its own process are recorded there rather than resolved. Neither the
+  registry 1.4.0 work nor its acceptance touched or assessed these.
+
 - Add multi-route BFS crawler for arbitrary sites.
 - Connect Warroom evidence packs into Flyto2 Cloud UI.
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.
@@ -23,6 +40,33 @@
 
 ## Done
 
+- Closed the capability/extension/runtime change set on 2026-08-12: all pinned
+  checks and 2,785 non-browser/e2e tests pass. Codex also fixed a routed-plugin
+  policy alias that could omit the actual handler manifest's permissions; the
+  regression pins both resolved identity and denial. Clean-tree strict Indexer
+  verification remains the final post-commit receipt.
+- Made plugin discovery a transaction over the registry, keyed on what each
+  `register_all()` actually registered: stale modules a plugin stopped
+  providing are removed, a failed load restores displaced rows to their real
+  owner, and the contribution record is replayed only into a registry that
+  began the pass empty. Closed the registry torn-read window in the same work:
+  every public read holds `_discovery_lock` for its whole body,
+  `discover_plugins`/`refresh` return a copied plugin mapping on every path,
+  and `PluginInfo` is frozen so a caller cannot edit registry state through a
+  value it was handed. `REGISTRY_VERSION` is 1.4.0. Verified and accepted
+  2026-08-11 on branch `main`: six pinned checks, Core module-contract proof,
+  strict Indexer verification, and an independent 78 registry / 25 catalog test
+  replay all passed. Accepted against these flyto coding implementation
+  revisions (SHA-256, not Git commit hashes): docs — `job_453f3754aa2041309060b75a`
+  / `ebeb0ebfcab2d56bec576a944dcadd23fa197ff9726c558379df1c76eb12e341`;
+  source/tests — `job_ad0baf4f580e4bc6aaac37de`
+  / `b391189517db77146c4ab51def48ed7ada04fb30308296480e2e083df46bf65c`;
+  catalog/tests — `job_8d8d49019afa402a8c503aa0`
+  / `a08df544401cf36a54dfe4f6fc084512cb3035a9febf885442baca5cd8366f15`.
+- Settled the `registry_plugin_contract` coverage question: the pinned argv in
+  `.flyto/coding.yaml` now passes `--no-cov`, so the check reports the registry
+  contract it was pinned to prove rather than the project-wide coverage floor
+  it inherited from `addopts`.
 - Hardened the remaining reported module boundaries: agent Ollama requests are
   localhost-only by default and use the guarded HTTP path, while the reported
   file readers and browser/document writers enforce `FLYTO_SANDBOX_DIR` before

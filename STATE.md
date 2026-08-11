@@ -2,6 +2,19 @@
 
 ## Current State
 
+- Core extension management is generic and closed to two kinds:
+  `flyto-modules-*` into `flyto.modules` and `flyto-plugin-*` into
+  `flyto.plugins`, declared once in `EXTENSION_KINDS` and read by every other
+  decision. No Core source names an individual extension, so a pack such as
+  `flyto-modules-robotics` is managed by the generic path with no Core change.
+  Served at `/v1/extensions` (bearer token on all four routes; the two mutating
+  routes additionally require `FLYTO_EXTENSIONS_INSTALL_ENABLED=1`). An install
+  is reported successful only after entry-point proof; a failed **new** install
+  is rolled back, a failed **upgrade** is not; upgrades and uninstalls report
+  `restart_required`. Failures carry a stable code and never package-manager
+  output. Pinned by `tests/core/api/test_extensions.py` and gated by the
+  `lint_extensions` and `extension_management` checks in `.flyto/coding.yaml`.
+  **Verified 2026-08-12 — see Last Verification.**
 - Both security boundaries are now closed registry-wide and enforced in CI,
   rather than patched per advisory:
   - Filesystem — 88 modules declare a path-shaped parameter; 71 reach
@@ -45,6 +58,40 @@
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
+- Plugin discovery is a transaction keyed on what each `register_all()` actually
+  registered, held for exactly the span of that call. A forced pass removes
+  modules a plugin stopped providing, a failed load restores rows it overwrote
+  to their real owner instead of deleting them, and the contribution record is
+  replayed only into a registry that began the pass empty. **Verified and
+  accepted 2026-08-11** — see Last Verification.
+- A registry read is answered from a registry that stood whole at one instant,
+  and the answer is a copy rather than a handle. Every public read holds
+  `_discovery_lock` for its whole body; `discover_plugins()` and `refresh()`
+  return a copied plugin mapping on every path; `PluginInfo` is frozen, closing
+  the last route by which a caller could edit registry state through a value it
+  was handed. `REGISTRY_VERSION` is 1.4.0. **Verified and accepted 2026-08-11**
+  — see Last Verification.
+- `flyto.core.capability-manifest.v1` describes what an installation can do,
+  derived from the registry and free of timestamps, paths, and host identity, so
+  two hosts with the same installed distributions produce byte-identical
+  documents. It is served read-only over `GET /v1/capabilities` and the MCP
+  `get_capability_manifest` tool; `POST /v1/capabilities/refresh` re-runs
+  discovery and requires bearer authentication.
+- The manifest cache is ordered by a monotonic registry generation, not by which
+  build stored last. `ModuleRegistry.capability_snapshot()` reports
+  `generation` under the same lock hold that produced the data, and a build only
+  publishes when its generation is at least the cached one. A build that read
+  the registry before a refresh and finished after it is therefore rejected
+  instead of silently republishing the pre-refresh surface. **Verified
+  2026-08-12** — see Last Verification.
+- The registry transaction covers the in-process path only. The out-of-process
+  `PluginService` / runtime plugin lifecycle (`src/core/api/plugins/service.py`,
+  `src/core/plugin/`) is a separate surface: it is outside the transaction and
+  outside the coverage kernel, and remains open work. It is not the only open
+  plugin surface — the `flyto.plugin.v1` manifest is still a DRAFT
+  specification and `RuntimeInvoker.set_plugin_manager` still has no caller, so
+  a workflow step cannot reach a plugin subprocess. See
+  `docs/specs/PLUGIN_MANIFEST_SPEC.md`.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
 - The repository already contains workflow assets and CI for maintained recipe
@@ -77,10 +124,11 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 953 maintained Python files, 5,559
+- Source-backed documentation now covers 955 maintained Python files, 5,631
   declarations, 483 literal module registrations, all CLI/HTTP/environment
-  surfaces, and all maintained recipe/workflow assets. CI rejects drift,
-  missing ownership, broken local links, stale naming, and mailbox violations.
+  surfaces (28 static HTTP operations, 107 environment names), and all
+  maintained recipe/workflow assets. CI rejects drift, missing ownership,
+  broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.
 - `crypto`, `dns`, and `ai` extras express tested optional dependency
   boundaries; the development extra supports the complete offline suite.
@@ -185,6 +233,483 @@
 | Indexer | `flyto-index verify . --full-scan --strict --json` | Repository closure and 90-point docs budget |
 
 ## Last Verification
+
+### 2026-08-12 — capability, extension and runtime closure: VERIFIED
+
+Codex independently reviewed the full working diff and found one additional
+policy-alias defect: `database.scan` can route to
+`flyto-official/database`, but the gate queried the manifest under the caller's
+legacy `database` spelling. The resolved plugin id now drives manifest and
+plugin-grant policy before either primary or fallback execution; legacy-first
+routes retain that id. A regression test proves the dangerous permission is
+denied and the real resolved id is queried.
+
+All repository-pinned checks pass on the current source: project-memory,
+compile, four Ruff surfaces, extension management (**81 passed**), runtime
+lifecycle (**45 passed**), generated documentation, registry/plugin
+(**78 passed**), and the full non-browser/e2e suite at **2785 passed, 11
+skipped, 273 deselected**, 63.20% coverage against the 60% floor. Generated
+references report 955 source files and 5,631 declarations; the catalog remains
+468 modules across 85 categories. Strict Indexer pre-commit reported 18 passes
+and one expected hygiene failure because `.flyto/coding.yaml` is a tracked
+generated control file in the dirty working tree; a clean post-commit receipt
+is required before final closure.
+
+### 2026-08-11 — generic extension documentation closure: PARTIALLY VERIFIED
+
+Scope: documentation only. No source, test, or config file was changed. This
+pass exists to close the one thing the "generic extension management" entry
+below recorded as outstanding *and* mechanically fixable — `docs/reference/`
+was known stale because the generator had never been run against the extension
+surface.
+
+What was executed here, and what it returned:
+
+| Check | Result |
+| --- | --- |
+| `generate_reference` (declared project action) | exit 0 — 5,631 declarations, 955 source files |
+| `generate_catalog` (declared project action) | exit 0 — 468 modules across 85 categories |
+
+`generate_reference` **did** write this working tree: `docs/reference/` now
+reports 955 files / 199,204 lines / 5,631 declarations across 808 files, and
+`docs/reference/http-api.md` carries all four `/v1/extensions` routes while
+`docs/reference/configuration.md` carries `FLYTO_EXTENSIONS_INSTALL_ENABLED`.
+`generate_catalog` reported writing `/workspace/docs/TOOL_CATALOG.md` — the
+sandbox copy, not this tree — so it is evidence the catalog figures are
+unchanged at 468/85, not evidence that this tree's `TOOL_CATALOG.md` was
+rewritten. It did not need to be: `src/core/catalog_facts.py` still declares
+468/85/41.
+
+Documentation drift found and fixed (the extension surface moved these):
+
+| File | Token | Was | Now (generated) |
+| --- | --- | ---: | ---: |
+| `ARCHITECTURE.md` | Python files / declarations / HTTP operations | 954 / 5,599 / 24 | 955 / 5,631 / 28 |
+| `STATE.md` | Python files / declarations | 954 / 5,599 | 955 / 5,631 |
+| `docs/README.md` | Python files / declarations | 954 / 5,599 | 955 / 5,631 |
+| `docs/README.md` | environment readers | 93 | 107 |
+| `docs/MIGRATION_STATUS.md` | files / lines / declarations / HTTP operations | 954 / 198,471 / 5,599 across 807 / 24 | 955 / 199,204 / 5,631 across 808 / 28 |
+| `docs/WHITEPAPER.md` | files / lines / declarations | 954 / 198,471 / 5,599 | 955 / 199,204 / 5,631 |
+| `docs/FEATURES.md` | declarations | 5,599 | 5,631 |
+
+`docs/README.md`'s environment-reader count is a *new* find: the 2026-08-11
+lifecycle-closure entry corrected that token in `README.md`,
+`docs/CONFIGURATION.md` and `docs/MIGRATION_STATUS.md` but missed this file,
+which still read 93. It is not covered by `check_current_inventory()`, same
+root cause as the six tokens that entry recorded.
+
+Reviewed and found already correct — deliberately not edited: `README.md`,
+`docs/API.md`, `docs/CONFIGURATION.md`, `CHANGELOG.md`, and `DECISIONS.md`
+already document the generic extension surface. `docs/API.md`'s error table was
+checked row by row against `ExtensionErrorCode` and `_STATUS_BY_CODE` and its
+ten codes and statuses match, including the transport-level
+`extension_management_disabled` → 403 that lives in the router rather than the
+loader; its kinds table matches `EXTENSION_KINDS`. The closure rule "no change
+is acceptable if already correct" was honored.
+
+**Every command-line gate was again unavailable in this session.**
+`.venv/bin/python`, `python3`, `scripts/check_documentation.py`,
+`scripts/lint-project-memory.sh`, `scripts/check_brand_identity.py`, `pytest`,
+`ruff`, `compileall`, the package build, `npm audit`, and `git` all required an
+approval this session could not obtain; the two declared project actions above
+were the only execution route. The `flyto-index` CLI and the `flyto-indexer`
+MCP verify tools were likewise unavailable, so **strict full-scan Indexer
+verification was NOT run**.
+
+The 27 inventory tokens that `check_current_inventory()` pins across the seven
+prose files were matched by hand, byte-for-byte, against its exact expected
+strings and the regenerated headers. That is a reading, not a run: the
+documentation gate itself has **not** been executed against this tree, and it
+is the only check that settles whether `docs/reference/` is current. Re-run
+`scripts/check_documentation.py` before treating this as closed.
+
+Unchanged by this pass: the extension suite
+(`tests/core/api/test_extensions.py`) has still never been executed, so the
+generic extension management change remains functionally unverified — see the
+entry immediately below. This pass closed its documentation debt only.
+
+No commit, push, or deployment was made.
+
+### 2026-08-11 — generic extension management: NOT VERIFIED (gates skipped)
+
+Scope: `src/core/plugin/loader.py`, `src/core/api/routes/extensions.py`,
+`src/core/api/routes/__init__.py`, `src/core/api/server.py`,
+`tests/core/api/test_extensions.py`, `.flyto/coding.yaml`, and the prose
+surfaces (README, docs/API.md, CHANGELOG, DECISIONS, this file).
+
+**Every executable gate was skipped: command execution was unavailable in the
+session that made these edits.** Nothing below has been observed to pass. Treat
+the change as unverified until the gates are run.
+
+Skipped, and required before this is releasable:
+
+- `.venv/bin/python -m pytest -p no:cacheprovider --no-cov -q tests/core/api/test_extensions.py`
+  (`extension_management`) — the new suite has never been executed.
+- `.venv/bin/python -m ruff check` over the five files in `lint_extensions`.
+- `.venv/bin/python -m compileall -q src` — no syntax check was run.
+- `.venv/bin/python scripts/generate_reference.py` then
+  `.venv/bin/python scripts/check_documentation.py`. This change adds four HTTP
+  routes and one environment reader (`FLYTO_EXTENSIONS_INSTALL_ENABLED`), so
+  `docs/reference/http-api.md`, `docs/reference/configuration.md` and
+  `docs/reference/python-api.md` were **known stale** and the documentation gate
+  was expected to fail until the generator was re-run.
+  **The generator half is now done** — see the documentation-closure entry above,
+  which regenerated `docs/reference/` and corrected the prose counts that moved
+  with it. `scripts/check_documentation.py` itself is still unrun.
+- `bash scripts/lint-project-memory.sh`, `python scripts/check_brand_identity.py`,
+  and the offline suite `-m 'not browser and not e2e'` — the last matters because
+  `GET /v1/info` now advertises an `extension_management` capability.
+
+Design intent that the suite is written to pin, for whoever runs it: prefix and
+entry-point-group admission with no per-extension branch; argv-only pip with a
+scrubbed environment; stable error codes with no subprocess output in any
+response; entry-point proof; rollback of a failed new install but not of a failed
+upgrade; `restart_required` on upgrade; auth on all four routes plus the operator
+opt-in on the mutating two. The suite performs no network I/O — pip is
+intercepted at `subprocess.run` and entry-point reads are served from a fake
+group.
+
+### 2026-08-11 — lifecycle closure re-verification: PARTIALLY VERIFIED
+
+Scope: a read-only closure pass over the lifecycle edits already in
+`src/core/runtime/invoke.py`, `src/core/runtime/manager.py`, and
+`src/core/runtime/exceptions.py`, plus the prose inventory surfaces. No source
+file was changed: the three runtime modules and their suites were re-read
+against the three closure claims and found already correct, so the closure rule
+"no source change is acceptable if already correct" was honored.
+
+What was re-read and confirmed, by reading rather than by running:
+
+- Malformed manifest shapes fail closed. `_require_sequence` rejects
+  string/bytes/mapping before iteration, `_manifest_step_policy` rejects a
+  non-step entry and a non-string permission, and every raising path in
+  `_policy_denial` (lookup, field read, malformed shape) returns a denial that
+  names the plugin and never interpolates the cause.
+  `tests/core/test_runtime_policy_gate.py` pins all of these, including the
+  no-leak assertions.
+- invoke/start/idle-stop/unload/shutdown are race-safe. `_registry_lock` guards
+  the registry, `info.lock` serializes lifecycle transitions, `claim`/`release`
+  order the timestamp before the count, `_drain` is bounded, and both re-read
+  the registry under the lock. `tests/runtime/test_manager.py` pins each
+  interleave with events rather than sleeps.
+- Docs report 5,599, confirmed by an executed generator, not by reading.
+
+What was executed here, and what it returned:
+
+| Check | Result |
+| --- | --- |
+| `generate_reference` (declared project action) | exit 0 — 5,599 declarations, 954 source files |
+
+Real gaps found and fixed (documentation only, no source):
+
+Six prose inventory tokens had drifted from the generated reference and are not
+covered by `check_current_inventory()`, which is why they went stale unnoticed —
+that gate pins module/recipe/declaration/registration counts but not line,
+route, or environment totals.
+
+| File | Token | Was | Now (generated) |
+| --- | --- | ---: | ---: |
+| `docs/WHITEPAPER.md` | maintained Python lines | 197,902 | 198,471 |
+| `docs/MIGRATION_STATUS.md` | maintained Python lines | 197,902 | 198,471 |
+| `docs/MIGRATION_STATUS.md` | static HTTP operations | 22 | 24 |
+| `docs/MIGRATION_STATUS.md` | environment-variable names | 93 | 107 |
+| `docs/CONFIGURATION.md` | environment-variable names | 93 | 107 |
+| `README.md` | environment readers | 93 | 107 |
+
+The HTTP-operation and environment-name corrections are the same ones the
+2026-08-11 stale-refresh entry recorded as applied to `ARCHITECTURE.md`; that
+pass missed `docs/MIGRATION_STATUS.md`, `docs/CONFIGURATION.md`, and
+`README.md`. All six now match `docs/reference/` as regenerated in this session.
+
+**Strict Indexer post: NOT RUN — blocked on authorization.** The exact target
+(`flyto-index verify . --full-scan --strict` over the lifecycle and docs
+surfaces) could not be executed. `mcp__flyto-indexer__verify` and
+`mcp__flyto-indexer__verify_workspace` are not authorized in this session, and
+the `flyto-index` CLI and every other command-line route
+(`pytest`, `ruff`, `scripts/check_documentation.py`,
+`scripts/check_brand_identity.py`, `scripts/lint-project-memory.sh`, build,
+`npm audit`) require an approval this session could not obtain. The declared
+project action above was the only execution route available. This entry
+therefore remains PARTIALLY VERIFIED: treat the strict Indexer receipt and every
+command-line gate as outstanding, and re-run them before this is released.
+
+### 2026-08-11 — plugin runtime lifecycle hardening: PARTIALLY VERIFIED
+
+Scope: the fail-closed manifest-shape check in `src/core/runtime/invoke.py`, the
+`PluginManager` lifecycle work in `src/core/runtime/manager.py`, the new
+`PluginManagerShutdownError`, the extended suites
+(`tests/runtime/test_manager.py`, `tests/core/test_runtime_policy_gate.py`), the
+two new required checks in `.flyto/coding.yaml`, and the regenerated
+`docs/reference/` plus the six prose inventory surfaces.
+
+What was executed here, and what it returned:
+
+| Check | Result |
+| --- | --- |
+| `generate_reference` (declared project action) | exit 0 — 5,599 declarations, 954 source files |
+| `generate_catalog` (declared project action) | exit 0 — 468 modules across 85 categories |
+
+What was NOT executed, and must be run before this is treated as released:
+
+- `compile`, `lint`, `lint_runtime_invoke`, `lint_runtime_manager`,
+  `generated_reference` (`scripts/check_documentation.py`),
+  `registry_plugin_contract`, `runtime_manager_lifecycle`, and `tests` — every
+  command-line gate. The session running this work could not execute
+  `.venv/bin/python`; only the two declared project actions above were
+  available.
+- `scripts/check_brand_identity.py` and `scripts/lint-project-memory.sh`, for
+  the same reason.
+- Strict full-scan Flyto2 Indexer verification: the `flyto-indexer` MCP tools
+  were not authorized in that session.
+
+The six inventory tokens were matched by hand against
+`check_current_inventory()`'s exact expected strings and the regenerated
+`docs/reference/python-api.md` header (`**5,599 declarations across 807
+files**`). That is a reading, not an execution: the documentation gate itself
+has not been run against this tree.
+
+### 2026-08-11 — capability-manifest stale-refresh closure: PARTIALLY VERIFIED
+
+Scope: the capability-manifest cache ordering fix, its regression test, the
+regenerated `docs/reference/`, the widened `.flyto/coding.yaml` lint surface,
+and the prose inventory tokens. Registry/plugin work and unrelated edits were
+left as they stood.
+
+What was executed here, and what it returned:
+
+| Check | Result |
+| --- | --- |
+| `generate_reference` (declared project action) | exit 0 — 5,584 declarations, 954 source files |
+| `generate_catalog` (declared project action) | exit 0 — 468 modules across 85 categories |
+
+Those two are the only commands this session could run. The declared project
+actions were the sole execution route available: `pytest`, `ruff`,
+`compileall`, `scripts/check_documentation.py` and the Indexer MCP tools were
+all denied here, as they were for the sessions that built this change.
+
+**Not run in this session, and therefore not claimed green:** `project_memory`,
+`compile`, `lint`, `generated_reference`, `registry_plugin_contract`, and
+`tests` — the six pinned checks in `.flyto/coding.yaml` — plus strict Indexer
+verification, the package build, and `npm audit`.
+
+The declaration total moved 5,572 → 5,584 across 953 → 954 maintained Python
+files (807 of them now carrying declarations, up from 806), which is the
+capability-manifest module and the methods added with it. The six prose
+inventory files — `ARCHITECTURE.md`, `STATE.md`, `docs/README.md`,
+`docs/MIGRATION_STATUS.md`, `docs/WHITEPAPER.md`, `docs/FEATURES.md` — were
+updated to those figures, which is what the preceding audit round found stale.
+`ARCHITECTURE.md`'s HTTP-operation and environment-name counts were corrected
+to the generated 24 and 107 in the same pass.
+
+The regression test for the stale-store race is deterministic by construction —
+the interleave is forced with events rather than sleeps — but it has not been
+executed here, so it is a written test, not a passing one. Treat every
+correctness claim in this entry as read from source, not as a green run.
+
+No commit, push, deployment, or hardware claim is made.
+
+### 2026-08-11 — registry 1.4.0 plugin-load transaction: VERIFIED / ACCEPTED
+
+The registry plugin-load transaction and the return-value closure that followed
+it are verified and accepted. This supersedes the "NOT verified" status the
+three 2026-08-11 entries below were written under; those entries remain as the
+record of how the change was built, not of its current status.
+
+Accepted on branch `main`.
+
+Receipts. The revisions are flyto coding implementation revisions (SHA-256), not
+Git commit hashes:
+
+| Covers | Acceptance job ID | Accepted implementation revision (SHA-256) |
+| --- | --- | --- |
+| Documentation | `job_453f3754aa2041309060b75a` | `ebeb0ebfcab2d56bec576a944dcadd23fa197ff9726c558379df1c76eb12e341` |
+| Source and tests | `job_ad0baf4f580e4bc6aaac37de` | `b391189517db77146c4ab51def48ed7ada04fb30308296480e2e083df46bf65c` |
+| Generated catalog and tests | `job_8d8d49019afa402a8c503aa0` | `a08df544401cf36a54dfe4f6fc084512cb3035a9febf885442baca5cd8366f15` |
+
+Passed against those receipts: the six pinned checks in `.flyto/coding.yaml`
+(`project_memory`, `compile`, `lint`, `generated_reference`,
+`registry_plugin_contract`, `tests`), the Core module-contract proof
+(`flyto.core.module-contract.v1`), strict Indexer verification, and an
+independent replay of 78 registry tests and 25 catalog tests.
+
+`REGISTRY_VERSION` is 1.4.0.
+
+**Provenance of this record.** The acceptance above was produced by the audited
+acceptance run against those receipts; it was reported into this session rather
+than re-executed here. This session could execute only the two declared project
+actions, as prior sessions on this work could: `generate_reference` (exit 0 —
+5,572 declarations across 953 files) and `generate_catalog` (exit 0 — 468
+modules across 85 categories), both matching the figures already recorded.
+
+**That agreement is weaker evidence than this entry originally claimed, and the
+claim is withdrawn.** The declared actions run in the isolated project-action
+sandbox, not against this checkout: the 2026-08-11 closure session observed
+`generate_catalog` reporting `Generated /workspace/docs/TOOL_CATALOG.md`, and
+`git status` was byte-for-byte unchanged after both actions ran. Stable figures
+therefore show the generators are deterministic and that the sandbox copy has
+the recorded shape; they do **not** establish that `docs/reference/` and
+`docs/TOOL_CATALOG.md` *in this working tree* are current. Only the pinned
+`generated_reference` check (`scripts/check_documentation.py`) settles that, and
+it is unrun here. The six pinned checks, the Core proof and
+the Indexer strict run were **not** re-run in this session — `pytest`,
+`compileall`, `ruff` and the Indexer MCP tools were all denied here. No commit,
+deployment, or hardware claim is made.
+
+Still open, tracked separately: the out-of-process `PluginService` / runtime
+plugin lifecycle. That is this change's remaining scope, not a claim that it is
+the last open plugin surface — the DRAFT `flyto.plugin.v1` manifest and the
+uncalled `RuntimeInvoker.set_plugin_manager` are documented open in
+`docs/specs/PLUGIN_MANIFEST_SPEC.md` and were neither touched nor assessed here.
+
+### 2026-08-11 — registry 1.3.0 return-value closure: superseded by the acceptance above
+
+*Status at the time of writing: not verified. Build record only — the change is
+now verified and accepted as registry 1.4.0. Do not read the status lines below
+as current.*
+
+Closes the two gaps the 1.3.0 audit left in this tree. Like every session on
+this work, it could execute only the two declared project actions; no check in
+`.flyto/coding.yaml` was available, so the change is unverified.
+
+- `discover_plugins()` returns `_plugins.copy()` on all three paths — the
+  reentrant answer to plugin code, the already-initialised fast path, and the
+  completed pass — so `refresh()`, which returns `discover_plugins(force=True)`,
+  is copied too. `PluginInfo` is frozen, which closes the route the shallow copy
+  leaves open: the values in the copy are the registry's own objects, so an edit
+  to one was an unlocked write to what the registry says a plugin contains.
+- The TOCTOU regression
+  (`test_a_forced_pass_waits_for_a_reader_that_is_past_the_fast_path`) now sets
+  a `forcer_entered` event immediately before `discover_plugins(force=True)` and
+  waits on it before asserting the forced pass is blocked. Without it the
+  negative assertion could pass because the forcing thread had not started yet
+  rather than because the lock held it.
+- Six new tests in `tests/core/test_plugin_policy_scope.py`: no discovery path
+  returns the live dict; a caller cannot edit the registry through the mapping;
+  a plugin cannot empty the record by clearing what it was handed mid-pass; a
+  caller cannot edit it through a `PluginInfo` value; a new pass replaces a
+  `PluginInfo` rather than editing one; a retained mapping does not change under
+  its caller.
+- Ran and passed: `generate_reference` (5,572 declarations across 953 files),
+  run after the final source edit, so `docs/reference/python-api.md` and
+  `docs/reference/source-modules.md` match the tree as it stands. It imports and
+  exercises the modified registry end to end, so the frozen `PluginInfo` and the
+  copied returns are import-clean and first-party registration is undisturbed.
+  That is the only execution evidence. The declaration total was already 5,572
+  in this tree while the six pinned prose tokens still read 5,570; all six —
+  `ARCHITECTURE.md`, `STATE.md`, `docs/README.md`, `docs/MIGRATION_STATUS.md`,
+  `docs/WHITEPAPER.md`, `docs/FEATURES.md` — now match the generated reference.
+- Not run, status unknown: `project_memory`, `compile`, `lint`,
+  `generated_reference`, `registry_plugin_contract`, `tests`. Also not run:
+  brand identity, npm audit, package build/Twine, and Indexer verification.
+
+### 2026-08-11 — catalog plugin exclusion + serialised discovery: superseded by the acceptance above
+
+*Status at the time of writing: not verified. Build record only — the change is
+now verified and accepted as registry 1.4.0. Do not read the status lines below
+as current.*
+
+Two defects were closed on top of the plugin-load transaction work below. Like
+it, they could not be run: this session also had only the two declared project
+actions, and every check in `.flyto/coding.yaml` was unavailable.
+
+- **The host/container catalog disagreement.** `generate_catalog --check` passed
+  at 468 modules inside the clean release container and failed on a developer
+  host. The catalog is rendered from the live `ModuleRegistry`, which is
+  deliberately open to any distribution declaring a `flyto.modules` entry point,
+  so a host with a module pack installed generated a catalog carrying that
+  pack's modules. `scripts/generate_catalog.py` now skips rows whose registry
+  owner is a plugin (`_is_plugin_owned`), so the file is a property of this
+  source tree and not of the machine. The generated header says so.
+- **First discovery is now serialised.** `_ensure_discovered` answered any
+  caller that arrived mid-pass from the half-built registry, so two threads in
+  one process could take `RegistrySnapshot`s with different `module_count` and
+  `modules_hash` for the same install. A reentrant `_discovery_lock` plus a
+  recorded `_discovery_thread` now separate the two callers: the discovering
+  thread re-entering through a plugin is still answered from the partial state
+  (the only answer that cannot deadlock), and every other thread waits and is
+  handed the finished registry. `_ensure_discovered` asks whether a pass is in
+  flight *before* whether the registry is initialised: a forced rediscovery
+  rebuilds an already-initialised registry and never lowers `_initialized`, so
+  the opposite order sent readers past the lock and into the rebuild — which is
+  every `refresh()`, not a corner case. `refresh()` also holds the lock across
+  `clear()` + rediscover so the empty gap between them is not observable.
+  Rollback, ownership and `clear()` semantics are untouched.
+- Known residual, deliberately not closed here: a reader releases the lock
+  before copying `_modules`, so a forced pass starting inside that window can
+  still be observed torn. Closing it means holding the lock across every
+  reader's copy, which is a wider change than this fix and is recorded in
+  `tasks.md` rather than done silently.
+- `REGISTRY_VERSION` moved 1.1.0 → 1.2.0, with the pinned assertion in
+  `tests/core/test_plugin_policy_scope.py` moved deliberately alongside it: a
+  checkpoint carrying 1.1.0 cannot be assumed to have been matched against a
+  complete registry.
+- Ran and passed: `generate_catalog` (468 modules / 85 categories — unchanged,
+  which is the evidence that the exclusion drops no first-party module) and
+  `generate_reference` (5,570 declarations across 953 files). The declaration
+  total moved 5,568 → 5,570 for the two added helpers
+  (`ModuleRegistry._discover_locked`, `generate_catalog._is_plugin_owned`); all
+  six pinned prose inventory tokens were moved with it.
+- New tests: nine thread-safety cases in
+  `tests/core/test_plugin_policy_scope.py` (reentrancy without deadlock, no
+  nested pass, a concurrent read and a concurrent snapshot seeing the whole
+  registry, one pass for four concurrent first reads, owner id not leaked, and
+  three more that begin from an initialised registry and run a slow *forced*
+  pass — the case `_initialized`-first ordering let through), and
+  four catalog cases in `tests/core/test_catalog_determinism.py` driven by a
+  `sitecustomize` shim that installs a real `flyto.modules` entry point, one of
+  which is a guard proving the shim still registers something.
+- Not run, status unknown: `project_memory`, `compile`, `lint`,
+  `generated_reference`, `registry_plugin_contract`, `tests`. Also not run:
+  brand identity, npm audit, package build/Twine, and Indexer verification.
+
+### 2026-08-11 — registry plugin-load transaction: superseded by the acceptance above
+
+*Status at the time of writing: not verified. Build record only — the change is
+now verified and accepted as registry 1.4.0. Do not read the status lines below
+as current.*
+
+The change to `src/core/modules/registry/core.py` and
+`tests/core/test_plugin_policy_scope.py` described under Current State has **not
+been run**. Successive sessions on it could execute only the two declared project
+actions; every check in `.flyto/coding.yaml` was unavailable to them, including
+the pinned `registry_plugin_contract` Core proof. Nothing below is a substitute
+for running them, and the change should not be treated as released until they
+are.
+
+- Ran and passed: `generate_catalog` (468 modules / 85 categories, unchanged) and
+  `generate_reference` (5,568 declarations across 953 files, 806 of them
+  declaration-bearing). Both import and exercise the modified registry, so the
+  change is import-clean and does not disturb first-party registration or the
+  generated catalog.
+- The reference was regenerated **after** the final source edit, so
+  `docs/reference/python-api.md` and `docs/reference/source-modules.md` match the
+  tree as it stands. The declaration total moved 5,567 → 5,568 because the fix
+  adds one method (`ModuleRegistry._note_pass_touch`); the six prose inventory
+  tokens that `scripts/check_documentation.py` pins to that total —
+  `ARCHITECTURE.md`, `STATE.md`, `docs/README.md`, `docs/MIGRATION_STATUS.md`,
+  `docs/WHITEPAPER.md`, `docs/FEATURES.md` — were all moved with it.
+- `REGISTRY_VERSION` moved 1.0.5 → 1.1.0. It is a contract version carried in
+  every `RegistrySnapshot`, and rollback becoming total changed what a caller may
+  conclude from a registry that survived a failed load, so a resumed checkpoint
+  must be able to tell the two apart.
+- `clear()` is now pass-aware, closing an ownership escalation. A plugin whose
+  `register_all` called `ModuleRegistry.clear()` had the loading owner reset
+  mid-pass, so every module it registered afterwards was stamped with no plugin
+  at all — first-party, the one identity the process-global permission grant
+  reaches. Inside a pass the owner and the rollback ledger are now kept, and the
+  rows the clear drops are banked first, so a pass that wipes the registry and
+  then raises is rolled back whole rather than against an empty ledger.
+  `_load_plugin` also restores the entire prior `_plugins` map instead of the
+  failing entry point's single line, since a wipe takes every plugin's
+  `PluginInfo` with it. Outside a pass `clear()` is byte-identical to before.
+- Not run, status unknown: `project_memory`, `compile`, `lint`,
+  `generated_reference`, `registry_plugin_contract`, `tests`. Also not run:
+  brand identity, npm audit, package build/Twine, and Indexer verification.
+- The coverage-floor obstacle previously recorded here is resolved: the pinned
+  `registry_plugin_contract` argv in `.flyto/coding.yaml` now carries `--no-cov`
+  (and `-p no:cacheprovider`), so the check no longer inherits the 60% gate from
+  `pyproject.toml` and a non-zero exit is once again a real defect signal rather
+  than an artefact of running one file against a whole-suite floor.
 
 Verified locally on 2026-08-08 for the **2.27.0** release candidate — the full
 closure in `docs/TESTING.md`, every gate run, none skipped silently:

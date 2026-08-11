@@ -11,6 +11,14 @@ from fastapi.testclient import TestClient
 
 from core.api.routes.mcp import _mcp_sessions
 from core.api.server import create_app
+from core.mcp_handler import TOOLS
+
+# Derived from the handler's own tool table rather than hand-typed. These
+# assertions exist to prove the transport surfaces *every* registered tool;
+# pinning a literal count only meant that adding a tool broke five unrelated
+# transport tests, which is what happened when get_capability_manifest landed.
+# Tool *identity* is asserted by name below, where it is actually meaningful.
+EXPECTED_TOOL_COUNT = len(TOOLS)
 
 
 @pytest.fixture
@@ -214,7 +222,7 @@ class TestModernProtocol:
         )
         assert resp.status_code == 200
         result = resp.json()["result"]
-        assert len(result["tools"]) == 8
+        assert len(result["tools"]) == EXPECTED_TOOL_COUNT
         assert result["resultType"] == "complete"
         assert result["ttlMs"] == 60_000
         assert result["cacheScope"] == "public"
@@ -335,10 +343,11 @@ class TestToolsList:
         assert resp.status_code == 200
         body = resp.json()
         tools = body["result"]["tools"]
-        assert len(tools) == 8
+        assert len(tools) == EXPECTED_TOOL_COUNT
         tool_names = {t["name"] for t in tools}
         assert "execute_module" in tool_names
         assert "list_modules" in tool_names
+        assert "get_capability_manifest" in tool_names
 
     def test_tools_list_without_session_still_works(self, client):
         """Session is optional for non-initialize requests."""
@@ -348,7 +357,7 @@ class TestToolsList:
             headers={"Accept": "application/json"},
         )
         assert resp.status_code == 200
-        assert len(resp.json()["result"]["tools"]) == 8
+        assert len(resp.json()["result"]["tools"]) == EXPECTED_TOOL_COUNT
 
 
 class TestToolsCall:

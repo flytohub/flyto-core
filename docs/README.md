@@ -57,10 +57,10 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 953 maintained Python files and 5,559 declarations.
+- 955 maintained Python files and 5,631 declarations.
 - 483 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
-- 93 environment-variable readers.
+- 107 environment-variable readers.
 - every packaged recipe, bundle, and maintained workflow YAML.
 - every packaged recipe parameter and composed module step.
 

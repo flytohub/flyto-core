@@ -109,6 +109,23 @@ def build_initialize_response(client_version: Optional[str]) -> dict:
 # Tool Implementations
 # ============================================================
 
+def get_capability_manifest() -> dict:
+    """Return the deterministic capability manifest for this installation.
+
+    Read-only. Delegates to `core.capability_manifest`, which owns the
+    determinism contract; this wrapper exists only to give the MCP surface a
+    dispatch target with the same error shape as the other tools.
+    """
+    try:
+        from core.capability_manifest import (
+            get_capability_manifest as _build_manifest,
+        )
+
+        return _build_manifest()
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def list_modules(category: str = None) -> dict:
     try:
         from core.catalog import get_outline
@@ -851,6 +868,33 @@ TOOLS = [
         },
     },
     {
+        "name": "get_capability_manifest",
+        "title": "Get Capability Manifest",
+        "description": (
+            "Get the deterministic capability manifest for this flyto-core installation "
+            "(schema 'flyto.core.capability-manifest.v1'). "
+            "Read-only: it describes what is installed, it does not start or change anything. "
+            "Use this to check whether two workers expose the same modules, or to confirm a "
+            "plugin's modules are actually loaded before depending on them. "
+            "Returns: sorted module ids, capabilities with their providing module ids, categories "
+            "with counts, loaded plugin ids/versions/module counts, the registry and core versions, "
+            "and a stable SHA-256 'hash' over all of it. "
+            "The hash is comparable across hosts — identical installed packages produce an identical "
+            "hash, because the document contains no timestamps, paths, or host identity. "
+            "For a module's parameter schema use get_module_info instead; this returns ids, not schemas."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {},
+        },
+        "annotations": {
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    },
+    {
         "name": "get_module_examples",
         "title": "Get Module Examples",
         "description": (
@@ -1169,6 +1213,8 @@ async def _handle_tool_call(
             )
         elif tool_name == "get_module_info":
             result = get_module_info(module_id=arguments.get("module_id", ""))
+        elif tool_name == "get_capability_manifest":
+            result = get_capability_manifest()
         elif tool_name == "execute_module":
             result = await execute_module(
                 module_id=arguments.get("module_id", ""),

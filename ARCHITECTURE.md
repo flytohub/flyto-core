@@ -14,8 +14,8 @@
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  953 maintained Python files, 5,559 declarations, 483 literal module
-  registrations, 22 HTTP operations, 93 environment names, CLI parsers,
+  955 maintained Python files, 5,631 declarations, 483 literal module
+  registrations, 28 HTTP operations, 107 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
 ## Runtime Components

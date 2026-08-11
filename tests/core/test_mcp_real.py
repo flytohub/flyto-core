@@ -8,6 +8,7 @@ Tests the full MCP stack with real module execution:
   1d. STDIO subprocess → JSON-RPC over stdin/stdout
 """
 
+import contextlib
 import json
 import os
 import subprocess
@@ -32,7 +33,7 @@ from core.mcp_handler import (
 from core.modules import atomic  # noqa: F401  — triggers production module registration
 
 REPO_ROOT = Path(__file__).parent.parent.parent
-EXPECTED_TOOL_COUNT = 8  # list_modules, search_modules, get_module_info, get_module_examples, execute_module, validate_params, list_recipes, run_recipe
+EXPECTED_TOOL_COUNT = 9  # list_modules, search_modules, get_module_info, get_capability_manifest, get_module_examples, execute_module, validate_params, list_recipes, run_recipe
 
 
 # ===================================================================
@@ -269,10 +270,8 @@ def _read_response(proc, timeout: float = 10.0) -> dict:
     if "data" not in result:
         stderr_out = ""
         if proc.stderr:
-            try:
+            with contextlib.suppress(Exception):
                 stderr_out = proc.stderr.read(4096).decode(errors="replace")
-            except Exception:
-                pass
         raise RuntimeError(f"Empty response from MCP server. stderr: {stderr_out}")
     return result["data"]
 
@@ -316,11 +315,11 @@ def mcp_server():
     try:
         resp = _read_response(proc, timeout=30.0)
         assert resp.get("id") == 0, f"Unexpected init response: {resp}"
-    except Exception:
+    except Exception as exc:
         proc.terminate()
         proc.wait(timeout=5)
         stderr = proc.stderr.read().decode(errors="replace") if proc.stderr else ""
-        raise RuntimeError(f"MCP server failed to initialize. stderr:\n{stderr}")
+        raise RuntimeError(f"MCP server failed to initialize. stderr:\n{stderr}") from exc
 
     # Send notifications/initialized
     _send_jsonrpc(proc, "notifications/initialized", {}, req_id=None)

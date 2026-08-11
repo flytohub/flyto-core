@@ -5,6 +5,8 @@ Module Routes
 
 GET  /v1/modules            — List all modules by category
 GET  /v1/modules/{module_id} — Module detail + schema
+GET  /v1/capabilities       — Deterministic capability manifest (read-only)
+POST /v1/capabilities/refresh — Re-discover plugins, rebuild manifest (auth)
 POST /v1/execute            — Execute single module
 """
 
@@ -15,9 +17,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
-from ..models import ExecuteModuleRequest, ExecuteModuleResponse
-from ..security import require_auth, module_filter
 from core.session_reaper import touch_session, untrack_session
+
+from ..models import ExecuteModuleRequest, ExecuteModuleResponse
+from ..security import module_filter, require_auth
 
 router = APIRouter(tags=["modules"])
 
@@ -85,6 +88,45 @@ async def get_module_info(module_id: str):
     if not detail:
         return JSONResponse({"error": f"Module not found: {module_id}"}, status_code=404)
     return detail
+
+
+# ---------------------------------------------------------------------------
+# GET /v1/capabilities
+# ---------------------------------------------------------------------------
+
+@router.get("/capabilities")
+async def get_capabilities():
+    """Deterministic capability manifest for this installation.
+
+    Read-only and unauthenticated, matching the other discovery endpoints
+    (`/v1/modules`, `/v1/info`): it reports which module ids and capabilities
+    are installed, which is the information a client needs *before* it can
+    authenticate a call to execute any of them. The document carries no
+    timestamps, paths, secrets, or host identity — see
+    `core.capability_manifest` for the determinism contract.
+    """
+    from core.capability_manifest import get_capability_manifest
+
+    return get_capability_manifest()
+
+
+# ---------------------------------------------------------------------------
+# POST /v1/capabilities/refresh
+# ---------------------------------------------------------------------------
+
+@router.post("/capabilities/refresh", dependencies=[Depends(require_auth)])
+async def refresh_capabilities():
+    """Re-run plugin discovery and rebuild the capability manifest.
+
+    Authenticated because it is a state change, not a read: it clears and
+    rebuilds the process-wide module registry, which is disruptive to
+    in-flight work and is exactly the kind of surface an unauthenticated
+    caller could use to churn a server. `GET /v1/capabilities` stays open;
+    only the rebuild is gated.
+    """
+    from core.capability_manifest import refresh_capability_manifest
+
+    return refresh_capability_manifest()
 
 
 # ---------------------------------------------------------------------------

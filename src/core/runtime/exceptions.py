@@ -3,13 +3,13 @@
 """
 Runtime Exceptions
 
-Custom exceptions for the plugin runtime system.
+Custom exceptions for the plugin runtime system. ``RuntimeError`` here deliberately shadows the builtin of the same name: it is the published base class every other exception in this module derives from and that callers catch by name, so the shadowing is suppressed at the definition rather than renamed out from under them.
 """
 
 from typing import Any, Dict, Optional
 
 
-class RuntimeError(Exception):
+class RuntimeError(Exception):  # noqa: A001 (public base name; see module docstring)
     """Base exception for runtime errors."""
 
     def __init__(
@@ -53,6 +53,38 @@ class PluginNotFoundError(RuntimeError):
         )
         self.plugin_id = plugin_id
         self.step_id = step_id
+
+
+class PluginManagerShutdownError(PluginNotFoundError):
+    """Raised when a plugin is requested from a manager that has shut down.
+
+    A subclass of ``PluginNotFoundError`` so existing handlers — including the
+    invoker's fallback to in-process modules — keep working unchanged: from the
+    caller's side the plugin genuinely is no longer obtainable here. It is still
+    its own type because "this manager is gone" and "no such plugin" call for
+    different operator responses, and the first one is otherwise invisible.
+
+    This exists so shutdown is final. Loading after it would build a process
+    that no sweeper watches, no unload reaches, and no shutdown stops.
+    """
+
+    def __init__(self, plugin_id: str, pool_id: str = ""):
+        # Base initializer rather than PluginNotFoundError's: that one bakes its
+        # own message into ``args``, so amending the attributes afterwards would
+        # leave ``str(exc)`` saying "Plugin not found" — the misdiagnosis this
+        # type exists to prevent, in the one rendering most logs actually use.
+        RuntimeError.__init__(
+            self,
+            message=(
+                f"Plugin manager {pool_id or 'pool'} is shut down; "
+                f"cannot serve plugin: {plugin_id}"
+            ),
+            code="PLUGIN_MANAGER_SHUTDOWN",
+            details={"plugin_id": plugin_id, "step_id": None, "pool_id": pool_id},
+        )
+        self.plugin_id = plugin_id
+        self.step_id = None
+        self.pool_id = pool_id
 
 
 class PluginTimeoutError(RuntimeError):
@@ -231,7 +263,7 @@ class PathTraversalError(SecurityError):
 
     def __init__(self, path: str, base_dir: str):
         super().__init__(
-            message=f"Path traversal detected: path escapes allowed directory",
+            message="Path traversal detected: path escapes allowed directory",
             violation_type="PATH_TRAVERSAL",
             details={"attempted_path": path, "base_dir": base_dir},
         )

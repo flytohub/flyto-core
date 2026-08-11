@@ -3,7 +3,7 @@
 Flyto2 Core reads configuration from CLI arguments, workflow parameters,
 environment variables, package extras, module policy, and persisted local
 state. The generated [configuration reference](reference/configuration.md)
-links all 93 detected environment-variable names to their readers.
+links all 107 detected environment-variable names to their readers.
 
 ## Runtime Installation
 
@@ -36,6 +36,7 @@ with `scripts/lock-deps.sh`; it does not claim to lock every optional provider.
 | Variable | Purpose |
 |---|---|
 | `FLYTO_API_TOKEN` | Fixed Execution API bearer token |
+| `FLYTO_EXTENSIONS_INSTALL_ENABLED` | Operator opt-in for `POST /v1/extensions/install` and `/uninstall`. Off by default: installing a package runs its build hooks as host code, which is a strictly larger authority than the bearer token otherwise grants. Read routes are unaffected. |
 | `FLYTO_CORS_ORIGINS` | Explicit browser origins for the Execution API |
 | `FLYTO_MODULE_ALLOWLIST` | Only modules matching these patterns may execute |
 | `FLYTO_MODULE_DENYLIST` | Deny matching modules when no allowlist overrides it |

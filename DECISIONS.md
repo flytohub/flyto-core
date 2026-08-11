@@ -1,5 +1,131 @@
 # Decisions
 
+## 2026-08-12 - Capability policy follows the resolved handler identity
+
+Decision: route a legacy module id first, then apply capability policy before
+execution using the resolved plugin id whenever the primary or fallback route
+can reach a plugin. A legacy-first route retains that plugin id in its
+`RoutingResult`.
+
+Reason: policy still precedes all execution, but it cannot precede identity
+resolution. `database.scan` may execute `flyto-official/database`; querying the
+manifest under `database` returns no declaration and can erase the plugin's
+`required_permissions`. The module denylist remains keyed on the canonical
+legacy module id, while plugin grants and manifest permissions are keyed on the
+handler that can actually run. One pre-execution gate therefore covers both the
+primary and its permitted fallback without duplicating policy inside handlers.
+
+## 2026-08-11 - Extension admission is a table, and a successful install must prove itself
+
+Decision: Core manages exactly two extension kinds — `flyto-modules-*` into
+`flyto.modules`, `flyto-plugin-*` into `flyto.plugins` — declared once in
+`EXTENSION_KINDS` and read by every other decision (classification, install,
+entry-point proof, which refresh to run). No Core source names an individual
+extension. An install is reported successful only after the installed
+distribution is read back and shown to declare at least one entry point in its
+kind's group; a first install that fails that proof is uninstalled again, an
+upgrade that fails it is not.
+
+Reason: three things were being conflated, and each failed differently.
+
+*What Core is willing to install* was a single hardcoded prefix, so module packs
+were unmanageable and the obvious fix — a branch per pack — would have made
+every new pack a Core change. It is now data, and the same table is served to
+clients at `GET /v1/extensions/kinds` so their idea of what is installable
+cannot drift from the one the installer enforces.
+
+*What a successful install means* was "pip exited 0". pip exits 0 for a
+typosquat, an empty placeholder, and a package that simply forgot its
+`[project.entry-points]` block. Each left the operator with a package Core would
+never load and a success message saying otherwise. Proof is the only thing that
+distinguishes an extension from a package with a matching name, so it is taken
+before success is reported, not after the operator notices nothing appeared.
+
+*What to do when proof fails* is not one answer. On a first install the package
+is strictly new and strictly useless, so removing it returns the machine to
+where it was. On an upgrade the same removal would take the working version with
+it — the operator asked to move forward and would be left with nothing. Rollback
+is therefore conditioned on whether the extension existed beforehand, which is
+why the prior version is read before pip runs rather than inferred after.
+
+Two constraints are load-bearing:
+
+- A bare name is refused, never completed. `robotics` is ambiguous between
+  `flyto-modules-robotics` and `flyto-plugin-robotics`; completing it would
+  install a different package than the caller named. The plugin-only
+  `install_plugin` keeps its historical bare-name resolution because its prefix
+  is unambiguous by construction.
+- `restart_required` is reported, not worked around. Python does not un-import,
+  so a refresh after an upgrade updates what Core *reports* while leaving what it
+  *runs* untouched. Telling the caller the truth is correct; pretending a
+  hot-reload happened would make the registry and the interpreter disagree
+  silently.
+
+## 2026-08-11 - Remote extension installation needs an opt-in, not just a token
+
+Decision: `GET /v1/extensions` and `/v1/extensions/kinds` require the bearer
+token. `POST /v1/extensions/install` and `/uninstall` require the token **and**
+`FLYTO_EXTENSIONS_INSTALL_ENABLED=1`. Package-manager stdout/stderr never
+appears in a response; failures carry a stable code from a fixed table instead.
+
+Reason: the token is minted automatically at startup for local clients and
+authorises module execution — work bounded by module policy. Installing a
+package runs its setup.py / PEP 517 backend as host code before any policy,
+prefix gate or entry-point proof can apply, which is a strictly larger authority
+than anything else the token opens. Treating "held the token" as consent to that
+would silently widen what every existing local client is permitted to do. The
+loader itself is not gated, because the CLI is a local operator acting directly;
+the gate belongs to the transport that made the capability remote.
+
+Stderr is withheld for the same reason it is useful: it names the interpreter,
+the index, and — when an operator configures an authenticated mirror — the
+credentials embedded in that index URL. A stable code lets a client branch
+correctly without any of that crossing the boundary, and the detail stays in the
+server log where the operator can already read it.
+
+## 2026-08-11 - Discovery records what a plugin registered, not what it owns
+
+Decision: `ModuleRegistry` keeps a per-pass record — `_pass_registered` and
+`_pass_displaced` — for exactly the span of one plugin's `register_all()`, and
+every decision `_load_plugin` makes reads that record rather than re-deriving
+intent from ownership metadata. A pass that registered something is treated as
+the plugin's whole answer; a pass that registered nothing is treated as having
+said nothing at all.
+
+Reason: ownership metadata answers "who owns this row now". Three separate
+questions were being asked of it that it cannot answer, and each was wrong in a
+different direction. Whether a module the plugin owns is still provided — it
+looked provided, because the stale row was still there, so a plugin that dropped
+a module kept it forever and kept being billed for it in `module_count`. Whether
+a row the plugin owns was created by this pass or overwritten from someone else
+— a failing registration stamps its own name onto whatever it displaced, so
+rollback deleted flyto-core's module instead of giving it back. Whether an empty
+result means "cached import, ask the record" or "this plugin provides nothing" —
+indistinguishable, so a legitimately empty plugin was handed a previous pass's
+modules.
+
+Two constraints are load-bearing:
+
+**The record spans the same window as the owner stamp.** `_pass_registered` is
+installed and torn down in the same `try/finally` as `_loading_plugin`, so a
+plugin that raises part-way through cannot leave either one attached to the next
+plugin's registrations. `_load_plugin` holds the sets as locals, so the `finally`
+can clear the class attributes while the rollback still reads what it needs.
+
+**Replay is a repair for a cleared registry, not an override of a live one.**
+The contribution record exists because a package that registers as an import
+side effect can only be asked once per process, so a clear/discover cycle would
+otherwise return a smaller registry than it replaced. That is the only condition
+it fires under: `_cleared`, set by `clear()` and consumed by the next pass. The
+condition has to be "`clear()` happened" and not "the registry is empty",
+because a registry emptied deliberately — by unregistering a plugin's modules
+one at a time — looks identical to a cleared one, and replaying into it would
+resurrect exactly the modules somebody just removed.
+
+Rejected: comparing registry size before and after each plugin. It is what the
+original `module_count` did, and it reads 0 on every pass after the first,
+because a cached import re-registers the same ids instead of adding new ones.
+
 ## 2026-08-08 - The plugin manifest is specified before it is built, and says so
 
 Decision: `docs/specs/PLUGIN_MANIFEST_SPEC.md` states the language-neutral

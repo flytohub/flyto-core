@@ -274,9 +274,42 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 Core is configured through package extras, CLI arguments, workflow parameters,
 module policy, environment variables, and local run state. Security-sensitive
 network, filesystem, auth, callback, and permission switches are documented in
-[Configuration](docs/CONFIGURATION.md); all 93 detected environment readers are
+[Configuration](docs/CONFIGURATION.md); all 107 detected environment readers are
 linked to source in the generated
 [configuration reference](docs/reference/configuration.md).
+
+---
+
+## Extensions
+
+Core manages two — and only two — kinds of installable extension:
+
+| Kind | Name prefix | Entry-point group |
+|---|---|---|
+| Module packs | `flyto-modules-` | `flyto.modules` |
+| Plugins | `flyto-plugin-` | `flyto.plugins` |
+
+Admission is by prefix and entry-point group alone, so a new pack such as
+`flyto-modules-robotics` works the day it is published — no Core source names
+any extension, and none has to change for one.
+
+```bash
+export FLYTO_EXTENSIONS_INSTALL_ENABLED=1   # operator opt-in, off by default
+
+curl -H "Authorization: Bearer $TOKEN" localhost:8333/v1/extensions
+curl -X POST -H "Authorization: Bearer $TOKEN" \
+     -H 'Content-Type: application/json' \
+     -d '{"name": "flyto-modules-robotics"}' \
+     localhost:8333/v1/extensions/install
+```
+
+An install is only reported successful once the installed distribution is
+*proved* to declare an entry point in its kind's group; a first install that
+fails that proof is rolled back, an upgrade that fails it is left in place so
+the operator is not left with nothing. Upgrades and uninstalls report
+`restart_required`, because Python cannot un-import code already loaded.
+Failures return a stable error code and never package-manager output. See
+[API](docs/API.md#extension-management).
 
 ---
 

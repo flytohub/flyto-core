@@ -6,22 +6,18 @@ Tasks: 2.4, 2.5, 2.6
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
-from core.runtime.routing import (
-    ModuleRouter,
-    RoutingConfig,
-    RoutingResult,
-    RoutingDecision,
-    RoutingPreference,
-    ModuleRoutingOverride,
-    get_router,
-    reset_router,
-)
 from core.runtime.invoke import (
     RuntimeInvoker,
-    get_invoker,
     reset_invoker,
+)
+from core.runtime.routing import (
+    ModuleRouter,
+    ModuleRoutingOverride,
+    RoutingConfig,
+    RoutingDecision,
+    RoutingPreference,
+    reset_router,
 )
 
 
@@ -339,6 +335,7 @@ class TestPreferLegacy:
 
         assert result.decision == RoutingDecision.USE_LEGACY
         assert result.use_plugin is False
+        assert result.plugin_id == "flyto-official/database"
         assert result.fallback_available is True  # Plugin available as fallback
 
     def test_prefer_legacy_fallback_to_plugin(self, router):

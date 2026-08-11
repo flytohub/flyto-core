@@ -5,6 +5,10 @@
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
 > Counts cover what a default `pip install flyto-core` exposes. `huggingface` registers only when the matching optional dependency is installed (see the extras in `pyproject.toml`), and is excluded here so this file does not vary by developer environment.
+>
+> Modules contributed by installed `flyto.modules` plugin packages are excluded. This file documents flyto-core, and which plugins a machine happens to have installed is not a property of this source tree.
+>
+> The test fails closed: a module is listed here only when the registry recorded its owner as exactly the empty string. Any other owner — a plugin name, `null`, a falsy non-string, an absent owner key — and any row that is not a metadata mapping at all counts as plugin-owned and is left out, because a row whose provenance cannot be established is not flyto-core's to publish.
 
 ## Categories
 

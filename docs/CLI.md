@@ -86,8 +86,11 @@ flyto modules --format json --output modules.json
 ```
 
 The runtime catalog can differ by environment, installed optional dependencies,
-plugins, and policy. The checked-in [Tool Catalog](TOOL_CATALOG.md) records the
-repository's active generation environment.
+plugins, and policy. The checked-in [Tool Catalog](TOOL_CATALOG.md) does not: it
+is generated with the optionally-gated categories excluded, so it records what a
+default `pip install flyto-core` exposes rather than the environment it happened
+to be generated in. Use `flyto modules` to see what the local install actually
+resolves to.
 
 ## Plugins
 

@@ -7,6 +7,214 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Generic Core extension management. Two kinds are supported and the pair is the
+  whole contract: `flyto-modules-*` publishing into `flyto.modules`, and
+  `flyto-plugin-*` publishing into `flyto.plugins`. Admission is by prefix and
+  entry-point group, driven off one table, so a pack such as
+  `flyto-modules-robotics` is managed by the generic path the day it is
+  published — no Core source names an extension and none has to change for one.
+  A bare name is refused rather than completed, because `robotics` is ambiguous
+  between the kinds and guessing would install a package nobody asked for.
+- `GET /v1/extensions`, `GET /v1/extensions/kinds`, `POST /v1/extensions/install`
+  and `POST /v1/extensions/uninstall`. All four require the bearer token; the two
+  mutating routes additionally require `FLYTO_EXTENSIONS_INSTALL_ENABLED=1`.
+  Installing a package runs its build hooks as host code, and the token that is
+  auto-minted for local clients authorises module execution, not arbitrary code
+  installation — so it is not on its own sufficient reason to install anything.
+- Entry-point proof. pip will install any project whose name matches the prefix,
+  including a typosquat, an empty placeholder, or a package that forgot its
+  `[project.entry-points]` block; each of those previously left Core with a
+  package it would never load and a caller who was told the install succeeded.
+  An install is now reported successful only once the installed distribution is
+  read back and shown to declare at least one entry point in its kind's group.
+- Rollback of a failed *new* install. A package that installs but fails the proof
+  is uninstalled again, because the only thing on disk is something Core cannot
+  use and did not have before. A failed *upgrade* is deliberately not rolled
+  back: undoing it would uninstall the working version the operator already had,
+  turning a bad upgrade into no extension at all.
+- `restart_required` in install/uninstall responses. An upgrade replaces code the
+  interpreter has already imported and Python does not un-import, so the registry
+  refresh updates what Core reports while only a restart changes what it runs.
+  A first install sets it false; uninstall always sets it true.
+
+### Changed
+
+- Extension discovery now scans both supported prefixes rather than
+  `flyto-plugin-` alone, so module packs appear in the loader's manifests, and a
+  successful install/uninstall refreshes both the manifests and — for the kind
+  whose entry-point group the module registry reads — the module registry
+  itself. Refreshing only the manifests left `/v1/extensions` reporting a module
+  pack `/v1/modules` had never heard of. Which kind touches the registry is
+  decided by comparing entry-point groups with the registry, not by naming a
+  kind.
+- Every package-manager invocation goes through one argv-only, scrubbed-env
+  path, including the update check that previously inherited the full host
+  environment. `--no-input` and `--disable-pip-version-check` are always passed:
+  a pip that pauses for a prompt inside a request handler is a hung request.
+- Extension failures now carry a stable machine-readable code with a fixed
+  message. Package-manager stdout/stderr is logged locally and never returned —
+  it carries interpreter paths, index URLs, and sometimes credentials embedded
+  in an index URL.
+- `PluginLoader.install_plugin` / `uninstall_plugin` keep their names, bare-name
+  resolution and bool returns, and now delegate to the generic implementation
+  rather than keeping a second, weaker installer beside it.
+
+### Fixed
+
+- Runtime policy now checks the manifest of the plugin identity resolved by
+  routing, not the caller's legacy module spelling. A call such as
+  `database.scan` can resolve to `flyto-official/database`; looking up
+  `database` previously found no manifest and could omit the routed plugin's
+  `required_permissions`. Legacy-first routes also retain the plugin id so the
+  same check covers a later plugin fallback.
+- The out-of-process plugin policy gate no longer treats a manifest it cannot
+  parse as a manifest that declared nothing. `steps: "scan"` and
+  `permissions: "shell.execute"` are iterable, so the step walk read their
+  characters, matched nothing dangerous and allowed the step; a permission that
+  was not a string was stringified into something the dangerous-permission set
+  could never contain, with the same result. Shape is now checked before
+  content: a steps or permissions declaration that is a scalar, a mapping, or
+  not a sequence, a step entry that is not a step object, and a permission that
+  is not a string each deny the invocation. The caller gets the same generic
+  "capability policy could not be checked" denial used for an unreadable
+  manifest — it never names the offending value, which is plugin-supplied and
+  may not even be renderable — and the operator gets the structural reason from
+  the server log, keyed by plugin and step.
+- `PluginManager` lifecycle transitions no longer race each other.
+  - Idle reclaim measures from `time.monotonic()`, not the event loop clock it
+    compared against a `time.time()` deadline, and honours the configured
+    `idleTimeoutSeconds`; the setting was read at construction and then ignored
+    in favour of a hardcoded five minutes. A non-positive value disables
+    reclaim, and a plugin that has never been invoked is never swept.
+  - Idle reclaim calls the new `stop_plugin()`, which stops the process and
+    keeps the plugin registered so `invoke` restarts it lazily. `_check_idle`
+    previously called a `stop_plugin` that did not exist, so every sweep raised
+    `AttributeError` and no plugin was ever reclaimed.
+  - `invoke` holds a per-plugin lock across the lazy start and re-checks the
+    registry under it, so concurrent first invokes start one process rather
+    than one each, and a start that was queued behind an unload cannot
+    resurrect the plugin. `load_plugin` is serialized for the same reason.
+  - `unload_plugin` deregisters immediately, then drains accepted work before
+    stopping the process, bounded by the new `drainTimeoutSeconds` (default 30)
+    so shutdown never depends on plugin cooperation. `stop_plugin` and the idle
+    sweep refuse a plugin with work in flight.
+  - `start_health_checks`/`start_idle_checks` are idempotent and return whether
+    they started a sweeper; a second call used to overwrite the task handle and
+    leave the running task unreferenced and therefore uncancellable. A sweep
+    that raises no longer ends the loop, `shutdown` is idempotent and safe
+    against concurrent callers, and a sweeper cannot be started after it.
+  - `PluginUnhealthyError`'s cooldown is computed against the same clock the
+    deadline was set on; it previously reported roughly "seconds since the
+    epoch" as the retry-after.
+
+- A capability-manifest refresh can no longer be undone by a slower concurrent
+  build. Manifests are built outside the cache lock, so two builds can finish in
+  either order; with an unconditional store, a build that read the registry
+  before a refresh and stored after it republished the pre-refresh capability
+  surface, and nothing corrected it — `POST /v1/capabilities/refresh` appeared to
+  succeed while `GET /v1/capabilities` kept serving an installation that no
+  longer existed, under a hash that named it. `ModuleRegistry` now carries a
+  monotonic generation counter, reported by `capability_snapshot()` under the
+  same lock hold that produced the data, and the cache publishes a build only
+  when its generation is at least the cached one. The counter is process-local
+  and is deliberately absent from the document, so manifests stay byte-identical
+  across hosts with the same installed distributions.
+- A registry read is now whole at a single instant, and what it hands back is an
+  answer rather than a handle on registry state. `REGISTRY_VERSION` moves
+  1.2.0 → 1.3.0.
+  - Every public read holds `_discovery_lock` for its whole body. 1.2.0
+    serialised the *decision* to discover, but the reader released the lock
+    before it copied `_modules`/`_metadata`, so a forced pass starting in that
+    window rewrote the dicts under a read already in progress — half a registry
+    from before the rebuild and half from after, or a `RuntimeError: dictionary
+    changed size during iteration` on a bad interleave. A checkpoint carrying
+    1.2.0 was matched against a registry that was complete when the check ran;
+    one carrying 1.3.0 was matched against a registry that stood whole at a
+    single instant.
+  - `discover_plugins()` and `refresh()` return a copy of the plugin mapping on
+    every path, as `get_plugins()` already did. They returned `_plugins` itself,
+    so a caller that kept the result held a live view of process-global state:
+    it gained and lost plugins on somebody else's schedule — the same torn read,
+    smuggled out past the lock inside the return value — and a write to it
+    edited the registry's record of what is installed without calling
+    `register()` or holding the lock.
+  - `PluginInfo` is now a frozen dataclass. The copy above is shallow and shares
+    its values with the registry deliberately, which left one route to the same
+    unlocked write: editing what a plugin *says* about itself — `module_count`,
+    `version`, `entry_point` — through a value the caller was handed. Registry
+    code never mutated one either; a pass that changes a plugin's contents
+    replaces the whole entry. No caller in this repository mutates one, so this
+    is a breaking change only for external code that did.
+- `docs/TOOL_CATALOG.md` no longer varies with the plugins a machine has
+  installed. The catalog is rendered from the live `ModuleRegistry`, which any
+  distribution declaring a `flyto.modules` entry point may contribute to, so a
+  checkout with a module pack installed generated a catalog carrying that pack's
+  modules: `generate_catalog --check` passed inside the clean release container
+  and failed on a developer host over a difference nobody had made. The
+  generator now excludes rows the registry attributes to a plugin, and the
+  generated header states that its counts are flyto-core only. Module and
+  category totals are unchanged (468 / 85), which is the evidence that no
+  first-party module was dropped with them.
+- The first plugin discovery is serialised, so a concurrent reader can no longer
+  observe a half-built registry. `capabilities()`, `list_all()`,
+  `get_catalog()` and `get_snapshot()` all trigger discovery on first use, and a
+  call arriving from another thread mid-pass was answered from whatever had
+  registered so far — two threads in one process could therefore record
+  `RegistrySnapshot`s with different `module_count` and `modules_hash` for the
+  same install. Such a caller now waits for the pass and is handed the complete
+  registry. Re-entry from the discovering thread itself — a plugin's
+  `register_all` reading the catalog — is still answered from the partial state,
+  which is the only answer that cannot deadlock, and still does not start a
+  second pass. A reader asks whether a pass is running *before* whether the
+  registry is initialised, because a forced rediscovery — every `refresh()` —
+  rebuilds an already-initialised registry and never lowers that flag, so the
+  opposite order let readers past the lock and into the rebuild. `refresh()`
+  also holds the lock across its clear and rediscover so the empty gap between
+  them is not observable. Rollback, ownership and `clear()` semantics are
+  unchanged. `REGISTRY_VERSION` moves 1.1.0 → 1.2.0.
+- Plugin discovery is now a transaction over the registry, keyed on what a
+  plugin's `register_all()` actually registered rather than on what the registry
+  happens to own afterwards. Ownership metadata says who owns a row now, not
+  whether the current pass put it there, so it could not tell a module a plugin
+  still provides from one left over from an earlier pass, nor a row the plugin
+  created from one it overwrote. Three consequences are corrected:
+  - `discover_plugins(force=True)` now removes modules a plugin has stopped
+    providing. A plugin that re-registers and does not mention a module it used
+    to provide has withdrawn it; the row no longer lingers as a module nothing
+    installed still vouches for, and no longer counts toward that plugin's
+    `module_count`. The withdrawal reaches the contribution record, so the next
+    clear/discover cycle does not replay the retired module.
+  - A failed plugin load now restores rows it overwrote instead of deleting
+    them. A registration that runs before the failure is stamped with the
+    loading plugin's name, so dropping everything the plugin appeared to own
+    destroyed flyto-core's own module — or another plugin's — rather than
+    returning it to its owner. Rollback now replays each displaced row exactly
+    and deletes only ids that held nothing beforehand.
+  - The contribution record is replayed only into a registry that began the pass
+    empty, which is what `clear()` looks like from discovery. A no-op
+    `register_all()` on a live registry says nothing about what the plugin
+    provides, so a plugin that legitimately provides nothing is no longer handed
+    an earlier pass's modules.
+
+  `REGISTRY_VERSION` moves 1.3.0 → 1.4.0. Accepted 2026-08-11 on branch `main`:
+  the six pinned checks in `.flyto/coding.yaml`, the Core module-contract proof,
+  strict Indexer verification, and an independent replay of 78 registry and 25
+  catalog tests all passed. Accepted against these flyto coding implementation
+  revisions (SHA-256, not Git commit hashes):
+  - Documentation — job `job_453f3754aa2041309060b75a`, revision
+    `ebeb0ebfcab2d56bec576a944dcadd23fa197ff9726c558379df1c76eb12e341`.
+  - Source and tests — job `job_ad0baf4f580e4bc6aaac37de`, revision
+    `b391189517db77146c4ab51def48ed7ada04fb30308296480e2e083df46bf65c`.
+  - Generated catalog and tests — job `job_8d8d49019afa402a8c503aa0`, revision
+    `a08df544401cf36a54dfe4f6fc084512cb3035a9febf885442baca5cd8366f15`.
+
+  The in-process registry transaction is closed. The out-of-process
+  `PluginService` / runtime plugin lifecycle is a separate surface and remains
+  outside it, as do the DRAFT `flyto.plugin.v1` manifest and the still-uncalled
+  `RuntimeInvoker.set_plugin_manager` (`docs/specs/PLUGIN_MANIFEST_SPEC.md`).
+
 ### Documentation
 
 - `docs/specs/PLUGIN_MANIFEST_SPEC.md` — DRAFT specification of the

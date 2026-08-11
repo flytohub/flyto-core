@@ -296,6 +296,7 @@ class ModuleRouter:
                 return RoutingResult(
                     decision=RoutingDecision.USE_LEGACY,
                     use_plugin=False,
+                    plugin_id=plugin_id,
                     legacy_module_id=module_id,
                     fallback_available=fallback_enabled and plugin_available and plugin_healthy,
                     reason="Legacy preferred and available",

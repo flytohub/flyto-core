@@ -11,27 +11,33 @@ Phase 2: Dual-track routing (prefer plugin, fallback to legacy).
 
 import logging
 import time
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
-from .types import InvokeRequest, InvokeResponse, InvokeMetrics, InvokeError, InvokeStatus
-from .browser_session import get_browser_manager, BrowserSessionManager
-from .exceptions import (
-    PluginNotFoundError,
-    PluginUnhealthyError,
-    RuntimeError as PluginRuntimeError,
-)
-from .routing import (
-    ModuleRouter,
-    RoutingConfig,
-    RoutingDecision,
-    RoutingResult,
-    get_router,
-)
+from .browser_session import BrowserSessionManager, get_browser_manager
+from .exceptions import PluginNotFoundError, PluginUnhealthyError
+from .routing import ModuleRouter, RoutingDecision, RoutingResult, get_router
+from .types import InvokeRequest, InvokeResponse
 
 if TYPE_CHECKING:
     from .manager import PluginManager
 
 logger = logging.getLogger(__name__)
+
+
+class _MalformedManifestError(Exception):
+    """A manifest declaration whose *shape* cannot carry a policy answer.
+
+    Distinct from a read that throws: nothing raised, the data is simply not the
+    kind of data the gate knows how to check. ``steps: "scan"`` iterates into
+    characters, ``permissions: "shell.execute"`` iterates into letters, and a
+    permission that is not a string is not a permission — each one used to walk
+    through the gate as "declared nothing dangerous", which is the one answer a
+    manifest we cannot read must never produce.
+
+    Carries a structural label only. The offending value is plugin-supplied and
+    may not even be renderable, so it is never interpolated, logged, or returned.
+    """
 
 
 class RuntimeInvoker:
@@ -136,7 +142,102 @@ class RuntimeInvoker:
         self._plugin_manager = manager
         # Update router with available plugins
         if manager:
-            self._router.set_available_plugins(set(manager.list_plugins()))
+            self._router.set_available_plugins(self._routable_plugin_ids(manager))
+
+    @staticmethod
+    def _read_field(source: Any, *names: str, default: Any = None) -> Any:
+        """Read the first present field of ``names`` off a mapping or an object.
+
+        Runtime data crossing this module comes in two shapes and both are real:
+        ``PluginManifest.steps`` entries are plain dicts parsed straight from
+        manifest JSON, while the policy tests (and any future typed manifest)
+        hand over attribute-style objects. Reading only one shape is how the
+        gate ends up silently seeing no permissions on a real manifest.
+        """
+        if isinstance(source, Mapping):
+            for name in names:
+                if name in source:
+                    return source[name]
+            return default
+        for name in names:
+            value = getattr(source, name, None)
+            if value is not None:
+                return value
+        return default
+
+    @classmethod
+    def _plugin_id_of(cls, entry: Any) -> str:
+        """Coerce one plugin listing entry into its id string.
+
+        ``PluginManager.list_plugins()`` yields *status records* keyed
+        ``pluginId``, not ids. ``list_available_plugins()`` yields bare strings.
+        Both must reduce to the same thing before the router can hold them.
+
+        May raise: every step here runs against data a plugin supplied, and an
+        id whose ``__str__`` or ``pluginId`` property throws is a real listing
+        entry, not a programming error. Callers must treat a raise as "this one
+        entry is unusable" — see ``_routable_plugin_ids``.
+        """
+        if isinstance(entry, str):
+            return entry.strip()
+        if entry is None:
+            return ""
+        value = cls._read_field(entry, "pluginId", "plugin_id", "id", "name", default="")
+        return str(value).strip() if value else ""
+
+    @classmethod
+    def _routable_plugin_ids(cls, manager: Any) -> Set[str]:
+        """Plugin ids a manager exposes, as hashable strings the router accepts.
+
+        The previous ``set(manager.list_plugins())`` raised ``TypeError:
+        unhashable type: 'dict'`` against the real ``PluginManager``, so wiring a
+        manager in at all was impossible. Discovered plugins
+        (``list_available_plugins``) are preferred because they are already
+        plain ids and cover plugins not yet loaded; loaded status records are
+        still folded in so a manager exposing only ``list_plugins`` still routes.
+        Collected in order and de-duplicated so the result is deterministic
+        regardless of which sources a given manager implements.
+
+        Failure is per-entry, not per-manager. A listing is plugin-supplied
+        data, so one entry whose id cannot even be rendered — a ``__str__`` that
+        throws, a ``pluginId`` property that raises — must cost that entry its
+        routing slot and nothing else. Letting it out of here would abort
+        ``set_plugin_manager`` and leave the invoker holding a manager whose
+        plugins the router never learned about, which is the failure this whole
+        helper exists to prevent.
+        """
+        ids: List[str] = []
+        for source in ("list_available_plugins", "list_plugins"):
+            lister = getattr(manager, source, None)
+            if not callable(lister):
+                continue
+            try:
+                entries = lister() or []
+            except Exception as exc:  # noqa: BLE001 - one bad lister must not break wiring
+                logger.warning("Plugin manager %s() failed: %s", source, exc)
+                continue
+            try:
+                entries = list(entries)
+            except Exception as exc:  # noqa: BLE001 - an unusable listing is not a wiring failure
+                logger.warning("Plugin manager %s() is not iterable: %s", source, exc)
+                continue
+            for position, entry in enumerate(entries):
+                try:
+                    plugin_id = cls._plugin_id_of(entry)
+                except Exception as exc:  # noqa: BLE001 - one bad entry must not break wiring
+                    # Positional, because the entry is exactly the thing that
+                    # cannot be rendered — %r on it would raise again here.
+                    logger.warning(
+                        "Plugin manager %s() entry at index %d is unreadable "
+                        "and was skipped: %s",
+                        source,
+                        position,
+                        exc,
+                    )
+                    continue
+                if plugin_id and plugin_id not in ids:
+                    ids.append(plugin_id)
+        return set(ids)
 
     def _ensure_legacy_modules_loaded(self):
         """Ensure legacy module availability is set in router."""
@@ -193,21 +294,26 @@ class RuntimeInvoker:
         # Resolve legacy module ID for routing
         legacy_module_id = self._resolve_legacy_module_id(module_id, step_id)
 
+        # Get routing decision
+        routing = self._router.route(legacy_module_id)
+
         # SECURITY: the same gate every in-process module passes through at
         # BaseModule.run. Without it this path is a way around the module
         # denylist: a step naming an id the registry does not know falls
         # through to here, and a plugin claiming that id would run it in a
         # subprocess that the chokepoint never sees.
         #
-        # Applied before routing, so it covers the plugin path and the legacy
-        # fallback alike — routing decides *which* handler runs, and neither
-        # should run something policy denies.
-        denial = self._policy_denial(legacy_module_id, module_id, step_id)
+        # Routing has to happen first because it resolves a legacy spelling
+        # such as ``database.query`` to the actual plugin identity
+        # ``flyto-official/database``. Looking up the manifest under the
+        # caller's legacy spelling returns no manifest, silently drops the
+        # plugin's required_permissions, and then executes the resolved plugin.
+        # The policy still runs before either handler, and the resolved plugin
+        # id is retained even when it is only the possible fallback.
+        policy_plugin_id = routing.plugin_id or module_id
+        denial = self._policy_denial(legacy_module_id, policy_plugin_id, step_id)
         if denial:
             return self._error_response("MODULE_POLICY_DENIED", denial, start_time)
-
-        # Get routing decision
-        routing = self._router.route(legacy_module_id)
 
         logger.debug(
             f"Routing decision for {legacy_module_id}: "
@@ -321,29 +427,189 @@ class RuntimeInvoker:
         loaded. A plugin that declares none simply declares none — the module
         filter and the plugin allow/deny list still apply, so an unmanifested or
         lying plugin cannot use silence to reach a denied module id.
+
+        The plugin identity defaults to the id the caller actually asked for.
+        Blanking it on a manifest miss made every unmanifested plugin step look
+        like one of flyto-core's own modules, and ``is_plugin_allowed("")`` is
+        unconditionally true — so the allow/deny list, whose whole job is to be
+        keyed on that identity, stopped applying exactly where it mattered.
         """
         from ..module_policy import ModulePolicyError, enforce_module_policy
 
         required: Optional[list] = None
-        plugin_name = ""
+        plugin_name = str(plugin_id or "")
         manager = self._plugin_manager
         if manager is not None:
             try:
                 manifest = manager.get_manifest(plugin_id)
-            except Exception:  # noqa: BLE001 - a manifest lookup must not gate-fail open
-                manifest = None
+            except Exception as exc:  # noqa: BLE001 - a manifest lookup must not gate-fail open
+                # Fail closed and say so. Continuing with "no manifest" would
+                # decide the permission question by guessing, and the guess it
+                # makes is always "allowed".
+                logger.warning(
+                    "Manifest lookup failed for plugin %r: %s",
+                    plugin_id,
+                    exc,
+                    exc_info=True,
+                )
+                return self._manifest_denial(
+                    legacy_module_id, plugin_name, "the manifest lookup"
+                )
             if manifest is not None:
-                plugin_name = str(getattr(manifest, "id", "") or plugin_id)
-                for step in getattr(manifest, "steps", None) or []:
-                    if str(getattr(step, "id", "")) == str(step_id):
-                        required = list(getattr(step, "required_permissions", None) or [])
-                        break
+                try:
+                    plugin_name, required = self._manifest_step_policy(
+                        manifest, step_id, plugin_name
+                    )
+                except _MalformedManifestError as exc:
+                    # A declaration that is the wrong *shape*, as opposed to one
+                    # that raised while being read. Same verdict for the same
+                    # reason: permissions we cannot enumerate are permissions we
+                    # cannot check. Only the structural label is logged — the
+                    # value itself is plugin-supplied and may be unrenderable.
+                    logger.warning(
+                        "Malformed capability manifest for plugin %r step %r: %s",
+                        plugin_id,
+                        step_id,
+                        exc,
+                    )
+                    return self._manifest_denial(
+                        legacy_module_id, plugin_name, "validating the capability manifest"
+                    )
+                except Exception as exc:  # noqa: BLE001 - a bad manifest must not gate-fail open
+                    # Reading the manifest can fail on its own, after the lookup
+                    # succeeded: ``steps`` may not be iterable, a step id or a
+                    # declared permission may be an object whose ``__str__``
+                    # raises. Every one of those is plugin-supplied data, and
+                    # every one of them used to escape this method uncaught —
+                    # ``_policy_denial`` runs *before* ``invoke``'s try block, so
+                    # the exception left ``invoke`` entirely and the step was
+                    # neither allowed nor denied, just crashed, with our
+                    # traceback attached. Deny instead: a manifest we cannot read
+                    # is a manifest whose permissions we cannot check.
+                    #
+                    # ``plugin_name`` is deliberately read here and not from the
+                    # partial result — the tuple only binds on a clean return, so
+                    # a half-read manifest leaves the identity at the id the
+                    # caller asked for rather than at whatever the manifest was
+                    # mid-way through claiming.
+                    logger.warning(
+                        "Manifest field read failed for plugin %r step %r: %s",
+                        plugin_id,
+                        step_id,
+                        exc,
+                        exc_info=True,
+                    )
+                    return self._manifest_denial(
+                        legacy_module_id, plugin_name, "reading the capability manifest"
+                    )
 
         try:
             enforce_module_policy(legacy_module_id, required, plugin=plugin_name)
         except ModulePolicyError as exc:
             return str(exc)
         return ""
+
+    @staticmethod
+    def _manifest_denial(legacy_module_id: str, plugin_name: str, what_failed: str) -> str:
+        """The denial text for a manifest the gate could not evaluate.
+
+        Says *which* read failed and never why. Whatever made it fail is our
+        internal state — a store path, a connection string, a driver traceback,
+        an object repr carrying a credential — and the caller reading this
+        envelope may be the plugin author or an MCP client, so interpolating the
+        cause would turn a policy denial into a disclosure channel. The operator
+        gets the whole cause from the log, keyed by the same plugin id the
+        denial already names, which is also why the denial must keep naming it:
+        a denial that cannot identify the plugin cannot be acted on.
+        """
+        return (
+            f"Module '{legacy_module_id}' cannot be checked against "
+            f"capability policy: {what_failed} for plugin "
+            f"'{plugin_name}' failed. See the server log for the cause."
+        )
+
+    @classmethod
+    def _manifest_step_policy(
+        cls,
+        manifest: Any,
+        step_id: str,
+        fallback_name: str,
+    ) -> tuple:
+        """``(plugin_name, required_permissions)`` declared for ``step_id``.
+
+        ``required`` stays ``None`` when the manifest declares no matching step,
+        which is distinct from ``[]`` — a step that matched and declared nothing.
+
+        Shape is checked before content, and anything that is not the declared
+        shape raises ``_MalformedManifestError`` rather than being coerced. Coercion
+        is what made these fail open: ``steps: "scan"`` is iterable, so the old
+        walk read its characters, matched no step and reported "nothing
+        declared"; ``permissions: "shell.execute"`` likewise decomposed into
+        letters, none of which is a dangerous permission; and a non-string
+        permission stringified into something the dangerous set could never
+        contain. In all three the gate answered "allowed" about a declaration it
+        had not actually read.
+
+        Strings are rejected wholesale rather than wrapped into a one-element
+        list on purpose. A manifest that spells a list as a scalar is a manifest
+        whose author's intent we are guessing at, and the safe guess and the
+        convenient guess are not the same one.
+
+        May raise: every read touches plugin-supplied data. Callers must treat a
+        raise as "policy cannot be evaluated" — never as "nothing declared".
+        """
+        declared = cls._read_field(manifest, "id", default="")
+        plugin_name = (str(declared) if declared else "") or fallback_name
+
+        wanted = str(step_id)
+        for step in cls._require_sequence(
+            cls._read_field(manifest, "steps", default=None), "steps"
+        ):
+            # A step must be something a field can be read off. A bare scalar is
+            # not, and letting it through means walking a string's characters.
+            if not isinstance(step, Mapping) and not hasattr(step, "id"):
+                raise _MalformedManifestError("a step entry is not a step object")
+            if str(cls._read_field(step, "id", default="")) != wanted:
+                continue
+            permissions = cls._require_sequence(
+                cls._read_field(
+                    step,
+                    "required_permissions",
+                    "requiredPermissions",
+                    "permissions",
+                    default=None,
+                ),
+                "permissions",
+            )
+            for permission in permissions:
+                # ``enforce_module_policy`` tests each of these for membership in
+                # a set and interpolates the ungranted ones into a message the
+                # caller reads. A non-string is unhashable often enough to raise
+                # out of the gate, and renders itself into that message when it
+                # is not. Neither belongs past this boundary.
+                if not isinstance(permission, str):
+                    raise _MalformedManifestError("a declared permission is not a string")
+            return plugin_name, list(permissions)
+        return plugin_name, None
+
+    @staticmethod
+    def _require_sequence(value: Any, what: str) -> Sequence:
+        """``value`` as a real list-like, or ``_MalformedManifestError``.
+
+        ``None`` means undeclared and yields an empty sequence — silence is a
+        legitimate manifest, and the module filter and plugin allow/deny list
+        still apply to it. Everything else must be an actual sequence that is
+        not a string, bytes, or mapping: those three are iterable but iterate
+        into something other than their elements, which is exactly how a scalar
+        declaration used to be read as an empty one.
+        """
+        if value is None:
+            return ()
+        if isinstance(value, (str, bytes, bytearray, Mapping)):
+            raise _MalformedManifestError(f"{what} is a scalar, not a list")
+        if not isinstance(value, Sequence):
+            raise _MalformedManifestError(f"{what} is not a list")
+        return value
 
     async def _invoke_plugin(
         self,
@@ -478,10 +744,7 @@ class RuntimeInvoker:
 
         # Remove publisher prefix if present
         # e.g., "flyto-official/database" -> "database"
-        if "/" in plugin_id:
-            plugin_name = plugin_id.split("/")[-1]
-        else:
-            plugin_name = plugin_id
+        plugin_name = plugin_id.split("/")[-1] if "/" in plugin_id else plugin_id
 
         # Remove any "flyto-official_" or similar prefix
         # e.g., "flyto-official_database" -> "database"
