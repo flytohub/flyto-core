@@ -2,7 +2,7 @@
 
 - Date: 2026-08-12
 - Owner: Codex
-- Status: source and repository gates pass; clean-tree Indexer receipt pending commit
+- Status: complete; committed and clean-tree Indexer verified
 
 ## Scope
 
@@ -30,6 +30,7 @@ fallback is covered by the same gate.
   coverage 63.20% (floor 60%).
 - Catalog/reference generation: 468 modules / 85 categories; 955 source files /
   5,631 declarations.
-- Strict Indexer pre-commit: 18 pass, 0 warn, 1 hygiene failure solely because
-  the tracked `.flyto/coding.yaml` control file is dirty. Re-run on the clean
-  committed tree before marking this handoff complete.
+- Commit `0a353ffe5d2afa2e55bf1b834aa5bad82a177b28` contains the audited
+  change. Strict Indexer then passed **19/19** on that clean tree with no
+  warnings or failures; the pre-commit dirty-control-file hygiene finding is
+  closed.

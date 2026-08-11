@@ -43,8 +43,8 @@
 - Closed the capability/extension/runtime change set on 2026-08-12: all pinned
   checks and 2,785 non-browser/e2e tests pass. Codex also fixed a routed-plugin
   policy alias that could omit the actual handler manifest's permissions; the
-  regression pins both resolved identity and denial. Clean-tree strict Indexer
-  verification remains the final post-commit receipt.
+  regression pins both resolved identity and denial. Commit `0a353ff` passed
+  clean-tree strict Indexer verification 19/19.
 - Made plugin discovery a transaction over the registry, keyed on what each
   `register_all()` actually registered: stale modules a plugin stopped
   providing are removed, a failed load restores displaced rows to their real

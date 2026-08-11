@@ -250,10 +250,9 @@ lifecycle (**45 passed**), generated documentation, registry/plugin
 (**78 passed**), and the full non-browser/e2e suite at **2785 passed, 11
 skipped, 273 deselected**, 63.20% coverage against the 60% floor. Generated
 references report 955 source files and 5,631 declarations; the catalog remains
-468 modules across 85 categories. Strict Indexer pre-commit reported 18 passes
-and one expected hygiene failure because `.flyto/coding.yaml` is a tracked
-generated control file in the dirty working tree; a clean post-commit receipt
-is required before final closure.
+468 modules across 85 categories. After commit `0a353ff`, strict Indexer passed
+**19/19** on the clean tree with no warnings or failures, closing the one
+pre-commit hygiene finding caused by dirty `.flyto/coding.yaml`.
 
 ### 2026-08-11 — generic extension documentation closure: PARTIALLY VERIFIED
 
