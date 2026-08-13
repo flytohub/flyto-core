@@ -54,7 +54,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   typing-inspection
-typing-inspection==0.4.3
+typing-inspection==0.4.4
     # via pydantic
 yarl==1.24.5
     # via aiohttp
