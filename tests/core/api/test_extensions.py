@@ -47,8 +47,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 from starlette.testclient import TestClient
 
+from core import capability_manifest
 from core.api.routes import extensions as ext_routes
 from core.api.server import create_app
+from core.modules.registry import ModuleRegistry
+from core.modules.registry import core as registry_core
 from core.plugin import loader as loader_mod
 from core.plugin.loader import (
     EXTENSION_KINDS,
@@ -72,10 +75,14 @@ PLUGIN_PACK = "flyto-plugin-slack"
 class FakeEntryPoint:
     """Minimal stand-in for importlib.metadata.EntryPoint."""
 
-    def __init__(self, name, value, dist_name):
+    def __init__(self, name, value, dist_name, register=None):
         self.name = name
         self.value = value
         self.dist = FakeDist(dist_name)
+        self._register = register
+
+    def load(self):
+        return self._register or (lambda: None)
 
 
 class FakeDist:
@@ -828,6 +835,141 @@ class TestExtensionRoutesAuth:
 
 
 class TestExtensionRoutes:
+
+    def test_module_pack_lifecycle_reaches_module_and_capability_routes(
+        self, tmp_path, monkeypatch
+    ):
+        """A generic installed entry point reaches both discovery surfaces."""
+        from core.api import security as sec
+
+        monkeypatch.setattr(sec, "_TOKEN_DIR", tmp_path / "tokens")
+        monkeypatch.setenv(ext_routes.INSTALL_ENABLED_ENV, "1")
+        test_app = create_app()
+        client = TestClient(test_app)
+        auth = {"Authorization": f"Bearer {sec._active_token}"}
+        module_id = "testing.extension_probe"
+        capability = "extension.probe"
+        installed = {"value": False}
+
+        def register_all():
+            ModuleRegistry.register(
+                module_id,
+                object,
+                {
+                    "category": "testing",
+                    "ui_label": "Extension probe",
+                    "ui_description": "Deterministic extension discovery probe",
+                    "provides_capability": capability,
+                },
+            )
+
+        entry_point = FakeEntryPoint(
+            "extension-probe",
+            "flyto_modules_extension_probe:register_all",
+            "flyto-modules-extension-probe",
+            register_all,
+        )
+        pip = FakePip()
+
+        def fake_pip(cmd, **kwargs):
+            result = pip(cmd, **kwargs)
+            installed["value"] = cmd[3] == "install"
+            return result
+
+        registry_attrs = (
+            "_modules", "_metadata", "_plugins", "_initialized",
+            "_loading_plugin", "_discovering", "_discovery_thread",
+            "_plugin_contributions", "_core_baseline", "_pass_registered",
+            "_pass_displaced", "_pass_touched", "_cleared", "_started_empty",
+        )
+        saved_registry = {name: getattr(ModuleRegistry, name) for name in registry_attrs}
+        saved_cache = (capability_manifest._cached,
+                       capability_manifest._cached_generation)
+
+        try:
+            ModuleRegistry._modules = {}
+            ModuleRegistry._metadata = {}
+            ModuleRegistry._plugins = {}
+            ModuleRegistry._plugin_contributions = {}
+            ModuleRegistry._core_baseline = {}
+            ModuleRegistry._initialized = False
+            ModuleRegistry._loading_plugin = ""
+            ModuleRegistry._discovering = False
+            ModuleRegistry._discovery_thread = None
+            ModuleRegistry._pass_registered = None
+            ModuleRegistry._pass_displaced = {}
+            ModuleRegistry._pass_touched = None
+            ModuleRegistry._cleared = False
+            ModuleRegistry._started_empty = False
+            capability_manifest._cached = None
+            capability_manifest._cached_generation = -1
+
+            monkeypatch.setattr(loader_mod.subprocess, "run", fake_pip)
+            monkeypatch.setattr(
+                loader_mod,
+                "_iter_entry_points",
+                lambda group: [entry_point] if installed["value"] else [],
+            )
+            monkeypatch.setattr(
+                registry_core,
+                "entry_points",
+                lambda **kwargs: [entry_point] if installed["value"] else [],
+            )
+            monkeypatch.setattr(
+                PluginLoader,
+                "installed_version",
+                lambda self, name: "1.0.0" if installed["value"] else None,
+            )
+            monkeypatch.setattr(
+                PluginLoader,
+                "discover_plugins",
+                lambda self, force=False: {},
+            )
+            monkeypatch.setattr(
+                ext_routes,
+                "get_plugin_loader",
+                lambda: PluginLoader(plugins_dir=tmp_path / "plugins"),
+            )
+
+            response = client.post(
+                "/v1/extensions/install",
+                json={"name": "flyto-modules-extension-probe"},
+                headers=auth,
+            )
+            assert response.status_code == 200
+
+            modules = client.get(
+                "/v1/modules", params={"category": "testing"}, headers=auth
+            ).json()
+            assert module_id in {module["module_id"] for module in modules["modules"]}
+            manifest = client.get("/v1/capabilities", headers=auth).json()
+            assert module_id in manifest["modules"]
+            assert {"capability": capability, "providers": [module_id]} in manifest[
+                "capabilities"
+            ]
+
+            response = client.post(
+                "/v1/extensions/uninstall",
+                json={"name": "flyto-modules-extension-probe"},
+                headers=auth,
+            )
+            assert response.status_code == 200
+
+            modules_response = client.get(
+                "/v1/modules", params={"category": "testing"}, headers=auth
+            )
+            assert modules_response.status_code == 404
+            manifest = client.get("/v1/capabilities", headers=auth).json()
+            assert module_id not in manifest["modules"]
+            assert capability not in {
+                item["capability"] for item in manifest["capabilities"]
+            }
+            assert pip.subcommands == ["install", "uninstall"]
+        finally:
+            client.close()
+            for name, value in saved_registry.items():
+                setattr(ModuleRegistry, name, value)
+            capability_manifest._cached, capability_manifest._cached_generation = saved_cache
 
     def test_list_reports_both_kinds(self, client, auth):
         listing = [
