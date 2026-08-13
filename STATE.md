@@ -32,12 +32,13 @@
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- Package metadata is prepared for the **2.27.0** release. It is a minor, not a
-  patch, because the two boundary changes above refuse inputs earlier releases
-  accepted — it is not a drop-in upgrade for callers that passed absolute paths
-  outside the sandbox or connected to private hosts. `SECURITY_STATUS.md`
-  publishes all 24 advisories with the regression test covering each, generated
-  from `security/advisories.json` and verified in CI.
+- Package metadata is prepared for the **2.28.0** release. It includes the
+  plugin capability contribution point and per-plugin policy scope already on
+  `main`, plus the GHSA-gc4h-hj7x-gp5p SSRF fix. The shared IP classifier now
+  rejects every IPv4 and IPv6 unspecified-address representation before URL,
+  connect-time DNS, raw-host, and port-check callers can use it.
+  `SECURITY_STATUS.md` publishes all 25 advisories with the regression test
+  covering each, generated from `security/advisories.json` and verified in CI.
 - The preceding 2.26.12 security patch release closed the remaining browser
   file-write and SSRF gaps the 2.26.11
   hardening waves left open (`browser.download`/`screenshot`/`pdf`,

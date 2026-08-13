@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+## [2.28.0] - 2026-08-13
 
 ### Added
 
@@ -225,6 +227,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Rejected IPv4 and IPv6 unspecified addresses in the shared SSRF classifier,
+  including every textual representation of `::`. This closes
+  GHSA-gc4h-hj7x-gp5p, where `http://[::]:8080/` passed validation and reached
+  services listening on IPv6 loopback. Regression coverage exercises both the
+  address classifier and the complete URL guard.
 - Policy is now scoped per plugin. A plugin's modules are checked against
   `FLYTO_PLUGIN_GRANTS` (`plugin:permission`) rather than the process-global
   `FLYTO_GRANTED_PERMISSIONS`, so a plugin declaring a dangerous permission can
@@ -249,8 +256,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command elsewhere. Optional; unset for every existing module. Serves plugins
   arriving through the Python `flyto.modules` entry point — one binding, not a
   language-neutral plugin contract.
-
-## [Unreleased]
 
 ## [2.27.0] - 2026-08-08
 

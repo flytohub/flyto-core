@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **955 Python files**, **199,438 lines**, and **5,631 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **955 Python files**, **199,442 lines**, and **5,631 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -953,7 +953,7 @@ Inventory: **955 Python files**, **199,438 lines**, and **5,631 class/function/m
 | [`src/core/testing/snapshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/testing/snapshot.py#L1) | 478 | 23 | `dataclasses, datetime, enum, hashlib, json, logging, pathlib, typing` | Snapshot Testing |
 | [`src/core/training/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/__init__.py#L1) | 11 | 0 | `daily_practice` | Core Training Package - Stub for OSS version |
 | [`src/core/training/daily_practice.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/daily_practice.py#L1) | 56 | 6 | `typing` | Daily Practice Engine - Stub for OSS version |
-| [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1283 | 44 | `aiohttp, constants, contextlib, contextvars, fnmatch, functools, ipaddress, logging, os, re, socket, typing` | Core Utilities - Shared utility functions |
+| [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1287 | 44 | `aiohttp, constants, contextlib, contextvars, fnmatch, functools, ipaddress, logging, os, re, socket, typing` | Core Utilities - Shared utility functions |
 | [`src/core/validation/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/__init__.py#L1) | 61 | 0 | `connection, errors, index, workflow` | Flyto2 Core Validation API |
 | [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 663 | 15 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 159 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |

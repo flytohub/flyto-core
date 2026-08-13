@@ -406,6 +406,10 @@ def is_private_ip(ip_str: str) -> bool:
     except ValueError:
         # Invalid IP, treat as potentially unsafe
         return True
+    # Both IPv4 and IPv6 unspecified addresses can be routed to the local host.
+    # Check the address property so every textual representation is covered.
+    if ip.is_unspecified:
+        return True
     candidates = [ip]
     embedded = _extract_embedded_ipv4(ip)
     if embedded is not None:

@@ -10,8 +10,7 @@ reach loopback / RFC 1918 / cloud-metadata endpoints.
 
 import pytest
 
-from core.utils import is_private_ip, validate_url_ssrf, SSRFError
-
+from core.utils import SSRFError, is_private_ip, validate_url_ssrf
 
 # (address, expected is_private_ip result, description)
 TRANSITION_PRIVATE = [
@@ -34,6 +33,7 @@ TRANSITION_PUBLIC = [
 
 NATIVE_PRIVATE = ["127.0.0.1", "169.254.169.254", "10.0.0.1", "::1", "fc00::1"]
 NATIVE_PUBLIC = ["8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"]
+UNSPECIFIED_ADDRESSES = ["0.0.0.0", "::", "0:0:0:0:0:0:0:0"]
 
 
 @pytest.mark.parametrize("addr,desc", TRANSITION_PRIVATE)
@@ -57,8 +57,19 @@ def test_native_public_still_allowed(addr):
     assert is_private_ip(addr) is False
 
 
+@pytest.mark.parametrize("addr", UNSPECIFIED_ADDRESSES)
+def test_unspecified_addresses_are_blocked(addr):
+    assert is_private_ip(addr) is True
+
+
 @pytest.mark.parametrize("addr,desc", TRANSITION_PRIVATE)
 def test_validate_url_ssrf_rejects_transition_literal(addr, desc):
     # Literal-IP host on an allowed port; the guard must raise SSRFError.
     with pytest.raises(SSRFError):
         validate_url_ssrf(f"http://[{addr}]:8080/latest/meta-data/")
+
+
+@pytest.mark.parametrize("addr", ["::", "0:0:0:0:0:0:0:0"])
+def test_validate_url_ssrf_rejects_unspecified_literal(addr):
+    with pytest.raises(SSRFError):
+        validate_url_ssrf(f"http://[{addr}]:8080/")

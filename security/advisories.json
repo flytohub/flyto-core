@@ -1,5 +1,17 @@
 [
   {
+    "ghsa": "GHSA-gc4h-hj7x-gp5p",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-13",
+    "affected": "<= 2.27.0",
+    "patched": "2.28.0",
+    "summary": "SSRF guard bypass via the IPv6 unspecified address, which can reach IPv6 loopback services",
+    "regression_tests": [
+      "tests/core/test_ssrf_ipv6_transition.py::test_validate_url_ssrf_rejects_unspecified_literal"
+    ]
+  },
+  {
     "ghsa": "GHSA-v7q9-pr72-5fmv",
     "severity": "medium",
     "cve": null,
