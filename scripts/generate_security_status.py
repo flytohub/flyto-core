@@ -112,8 +112,8 @@ def render(advisories: list[dict]) -> str:
         "",
         "| Boundary | Enforced by | Coverage |",
         "| --- | --- | --- |",
-        "| Filesystem | [`test_write_sink_coverage.py`](tests/core/test_write_sink_coverage.py) | 88 modules declare a path parameter: 71 reach the guard, 17 are documented as not filesystem paths, 0 unaccounted |",
-        "| Outbound network | [`test_outbound_guard_coverage.py`](tests/core/test_outbound_guard_coverage.py) | 57 modules declare a URL/host parameter: 46 reach a guard, 11 are documented as never reaching the network, 0 unaccounted |",
+        "| Filesystem | [`test_write_sink_coverage.py`](tests/core/test_write_sink_coverage.py) | Every registered path-shaped parameter must reach the sandbox guard or carry a verified non-filesystem exemption |",
+        "| Outbound network | [`test_outbound_guard_coverage.py`](tests/core/test_outbound_guard_coverage.py) | Every registered URL/host-shaped parameter must reach an egress guard or carry a verified no-request/local-validation exemption |",
         "",
         "Exemptions must state what the parameter really addresses, and they are "
         "re-verified on every run: a module excused as \"makes no request\" fails "

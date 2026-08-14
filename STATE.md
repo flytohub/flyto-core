@@ -32,6 +32,11 @@
   gaps: sandbox-external image reads, nested test-step permission bypass,
   caller-disabled browser SSRF checks, and unguarded email attachment/SMTP/IMAP
   targets. Security coverage now includes non-stable registry entries.
+- Four older private advisories were re-verified and prepared for public
+  disclosure on 2026-08-14. Their fixes are already present in the published
+  `2.27.0` tag and PyPI artifact, so they do not expand the affected range or
+  require another runtime release: raw-host/service SSRF, verify/browser SSRF,
+  XML/spec file reads, and visual-comparison file reads/writes.
 - Two breaking changes come with that: paths outside `FLYTO_SANDBOX_DIR`
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
@@ -41,7 +46,7 @@
   `main`, plus the GHSA-gc4h-hj7x-gp5p SSRF fix. The shared IP classifier now
   rejects every IPv4 and IPv6 unspecified-address representation before URL,
   connect-time DNS, raw-host, and port-check callers can use it.
-  `SECURITY_STATUS.md` publishes all 29 advisories with the regression test
+  `SECURITY_STATUS.md` publishes all 33 advisories with the regression test
   covering each, generated from `security/advisories.json` and verified in CI.
 - The preceding 2.26.12 security patch release closed the remaining browser
   file-write and SSRF gaps the 2.26.11

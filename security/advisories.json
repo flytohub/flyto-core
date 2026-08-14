@@ -48,6 +48,61 @@
     ]
   },
   {
+    "ghsa": "GHSA-pxxj-78wv-cmf8",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.26.12",
+    "patched": "2.27.0",
+    "summary": "Unconfined file reads and writes in testing.visual.compare",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_visual_compare_rejects_diff_path_outside_sandbox",
+      "tests/core/test_reported_security_advisories.py::test_visual_compare_rejects_local_inputs_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-f6mw-65v7-mccg",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.26.12",
+    "patched": "2.27.0",
+    "summary": "Unconfined file reads in data.xml.parse and verify.spec",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_xml_parse_rejects_file_path_outside_sandbox",
+      "tests/core/test_reported_security_advisories.py::test_verify_spec_rejects_ruleset_path_outside_sandbox"
+    ]
+  },
+  {
+    "ghsa": "GHSA-h6qg-7prx-fppr",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.26.12",
+    "patched": "2.27.0",
+    "summary": "SSRF guard bypasses in verify modules and browser connect/launch",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_browser_connect_rejects_internal_cdp_endpoint",
+      "tests/core/test_reported_security_advisories.py::test_browser_launch_rejects_internal_proxy",
+      "tests/core/test_reported_security_advisories.py::test_visual_diff_screenshot_rejects_metadata_url",
+      "tests/core/test_outbound_guard_coverage.py::test_every_outbound_param_module_reaches_a_guard"
+    ]
+  },
+  {
+    "ghsa": "GHSA-xgfr-24jq-vv8h",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.26.12",
+    "patched": "2.27.0",
+    "summary": "SSRF through unvalidated raw hosts and non-HTTP service endpoints",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_cache_get_rejects_metadata_redis_url",
+      "tests/core/test_reported_security_advisories.py::test_network_ping_rejects_private_host",
+      "tests/core/test_outbound_guard_coverage.py::test_every_outbound_param_module_reaches_a_guard"
+    ]
+  },
+  {
     "ghsa": "GHSA-gc4h-hj7x-gp5p",
     "severity": "high",
     "cve": null,

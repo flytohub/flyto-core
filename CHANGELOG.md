@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Published and catalogued four historical advisories whose fixes have shipped
+  since `2.27.0`: the registry-wide raw-host/service SSRF boundary, SSRF guards
+  for `verify.*` and browser connection/proxy targets, sandbox confinement for
+  `data.xml.parse`/`verify.spec`, and sandbox confinement for
+  `testing.visual.compare`. This disclosure adds no newly affected version and
+  requires no release beyond the already-supported `2.28.1`.
+- Added direct regression coverage for both local input branches of
+  `testing.visual.compare` and for `verify.spec` ruleset confinement. The public
+  security-status generator now describes the enforced registry-wide gates
+  without embedding module counts that can become stale as the catalog grows.
+
 ## [2.28.1] - 2026-08-14
 
 ### Added

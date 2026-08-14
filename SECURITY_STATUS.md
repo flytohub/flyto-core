@@ -6,7 +6,7 @@
 
 Installing `>= 2.28.1` clears every known advisory; `2.28.1` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
 
-29 advisories have been published and fixed (6 critical, 18 high, 5 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
+33 advisories have been published and fixed (6 critical, 21 high, 6 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
 
 ## How the recurrence was stopped
 
@@ -16,8 +16,8 @@ Both boundaries now have a registry-wide coverage test that fails the build rath
 
 | Boundary | Enforced by | Coverage |
 | --- | --- | --- |
-| Filesystem | [`test_write_sink_coverage.py`](tests/core/test_write_sink_coverage.py) | 88 modules declare a path parameter: 71 reach the guard, 17 are documented as not filesystem paths, 0 unaccounted |
-| Outbound network | [`test_outbound_guard_coverage.py`](tests/core/test_outbound_guard_coverage.py) | 57 modules declare a URL/host parameter: 46 reach a guard, 11 are documented as never reaching the network, 0 unaccounted |
+| Filesystem | [`test_write_sink_coverage.py`](tests/core/test_write_sink_coverage.py) | Every registered path-shaped parameter must reach the sandbox guard or carry a verified non-filesystem exemption |
+| Outbound network | [`test_outbound_guard_coverage.py`](tests/core/test_outbound_guard_coverage.py) | Every registered URL/host-shaped parameter must reach an egress guard or carry a verified no-request/local-validation exemption |
 
 Exemptions must state what the parameter really addresses, and they are re-verified on every run: a module excused as "makes no request" fails the moment it opens a connection, and one excused for validating locally fails the moment that validation is removed.
 
@@ -56,6 +56,10 @@ Applying those audits closed roughly 30 further modules that no advisory had nam
 | [GHSA-675h-j4qg-m52x](https://github.com/flytohub/flyto-core/security/advisories/GHSA-675h-j4qg-m52x) | high | `<= 2.28.0` | `2.28.1` | [`test_nested_test_steps_enforce_dangerous_permissions`](tests/core/test_reported_security_advisories.py) |
 | [GHSA-r3jp-qf98-23v8](https://github.com/flytohub/flyto-core/security/advisories/GHSA-r3jp-qf98-23v8) | high | `<= 2.28.0` | `2.28.1` | [`test_browser_client_cannot_disable_ssrf_guard`](tests/core/test_reported_security_advisories.py) |
 | [GHSA-x2qh-79wh-6w7j](https://github.com/flytohub/flyto-core/security/advisories/GHSA-x2qh-79wh-6w7j) | high | `<= 2.28.0` | `2.28.1` | [`test_email_modules_enforce_filesystem_and_outbound_boundaries`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-pxxj-78wv-cmf8](https://github.com/flytohub/flyto-core/security/advisories/GHSA-pxxj-78wv-cmf8) | high | `<= 2.26.12` | `2.27.0` | [`test_visual_compare_rejects_diff_path_outside_sandbox`](tests/core/test_reported_security_advisories.py) [`test_visual_compare_rejects_local_inputs_outside_sandbox`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-f6mw-65v7-mccg](https://github.com/flytohub/flyto-core/security/advisories/GHSA-f6mw-65v7-mccg) | high | `<= 2.26.12` | `2.27.0` | [`test_xml_parse_rejects_file_path_outside_sandbox`](tests/core/test_reported_security_advisories.py) [`test_verify_spec_rejects_ruleset_path_outside_sandbox`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-h6qg-7prx-fppr](https://github.com/flytohub/flyto-core/security/advisories/GHSA-h6qg-7prx-fppr) | high | `<= 2.26.12` | `2.27.0` | [`test_browser_connect_rejects_internal_cdp_endpoint`](tests/core/test_reported_security_advisories.py) [`test_browser_launch_rejects_internal_proxy`](tests/core/test_reported_security_advisories.py) [`test_visual_diff_screenshot_rejects_metadata_url`](tests/core/test_reported_security_advisories.py) [`test_every_outbound_param_module_reaches_a_guard`](tests/core/test_outbound_guard_coverage.py) |
+| [GHSA-xgfr-24jq-vv8h](https://github.com/flytohub/flyto-core/security/advisories/GHSA-xgfr-24jq-vv8h) | medium | `<= 2.26.12` | `2.27.0` | [`test_cache_get_rejects_metadata_redis_url`](tests/core/test_reported_security_advisories.py) [`test_network_ping_rejects_private_host`](tests/core/test_reported_security_advisories.py) [`test_every_outbound_param_module_reaches_a_guard`](tests/core/test_outbound_guard_coverage.py) |
 
 ## Reporting
 

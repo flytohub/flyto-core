@@ -1001,6 +1001,21 @@ async def test_visual_compare_rejects_diff_path_outside_sandbox(monkeypatch, tmp
     assert victim.exists() is False
 
 
+@pytest.mark.parametrize('input_name', ['expected', 'actual'])
+def test_visual_compare_rejects_local_inputs_outside_sandbox(
+    monkeypatch, tmp_path, input_name
+):
+    """Both local PNG inputs are confined before the worker can read them."""
+    sandbox = _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / f'{input_name}.png'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_bytes(b'not-for-the-workflow')
+
+    module = importlib.import_module('core.modules.atomic.testing.visual')
+    with pytest.raises(PathTraversalError):
+        module._decode_image_input(str(secret), input_name, sandbox)
+
+
 @pytest.mark.asyncio
 async def test_xml_parse_rejects_file_path_outside_sandbox(monkeypatch, tmp_path):
     """GHSA-wc94-386q-5478 closed data.csv.read / data.yaml.parse / excel.read /
@@ -1019,6 +1034,18 @@ async def test_xml_parse_rejects_file_path_outside_sandbox(monkeypatch, tmp_path
     inside.write_text('<root><a>1</a></root>', encoding='utf-8')
     result = await _handler(module, 'xml_parse')({'params': {'file_path': str(inside)}})
     assert result['ok'] is True
+
+
+def test_verify_spec_rejects_ruleset_path_outside_sandbox(monkeypatch, tmp_path):
+    """A verify.spec ruleset is both a file read and executable module input."""
+    _sandbox(monkeypatch, tmp_path)
+    ruleset = tmp_path / 'outside' / 'ruleset.yaml'
+    ruleset.parent.mkdir(parents=True, exist_ok=True)
+    ruleset.write_text('name: hostile\nrules: []\n', encoding='utf-8')
+
+    module = importlib.import_module('core.modules.atomic.verify.spec_runner')
+    with pytest.raises(PathTraversalError):
+        module.VerifySpecModule({'ruleset_path': str(ruleset)}, {})
 
 
 def test_browser_upload_rejects_file_path_outside_sandbox(monkeypatch, tmp_path):
