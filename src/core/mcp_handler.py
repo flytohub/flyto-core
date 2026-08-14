@@ -314,12 +314,13 @@ async def execute_module(
     # (The gadget ids themselves are denied by default too, but this also covers
     # operators who deliberately allow the gadget yet not the smuggled module.)
     try:
-        smuggled = sorted(
+        nested_module_ids = sorted(
             m for m in _collect_workflow_module_ids(params)
-            if m != module_id and not _module_is_allowed(m)
+            if m != module_id
         )
     except Exception:
-        smuggled = []
+        nested_module_ids = []
+    smuggled = [m for m in nested_module_ids if not _module_is_allowed(m)]
     if smuggled:
         return {
             "ok": False,
@@ -330,6 +331,17 @@ async def execute_module(
             "blocked_by": "module_filter",
             "blocked_modules": smuggled,
         }
+
+    # Match the process-wide BaseModule.run() backstop at the transport edge.
+    # This gives callers a precise pre-flight error for nested modules that are
+    # allowed by the capability filter but still require an operator grant.
+    for nested_module_id in nested_module_ids:
+        nested_missing = _module_missing_permissions(nested_module_id)
+        if nested_missing:
+            return _denied_permissions_response(
+                nested_module_id,
+                nested_missing,
+            )
 
     try:
         from core.modules.registry import ModuleRegistry

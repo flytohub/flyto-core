@@ -10,7 +10,7 @@ backports — upgrading is the supported path.
 | 2.28.x   | :white_check_mark: |
 | < 2.28   | :x:                |
 
-The current secure release is **2.28.0**. Every advisory published against
+The current secure release is **2.28.1**. Every advisory published against
 this project is patched at or below that version, and every one has a named
 regression test that runs in CI.
 

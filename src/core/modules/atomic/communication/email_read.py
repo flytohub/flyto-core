@@ -9,11 +9,11 @@ import logging
 import os
 from email import message_from_bytes
 from email.header import decode_header
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
+from ....utils import enforce_outbound_host
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +106,7 @@ async def email_read(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError("IMAP host not configured. Set IMAP_HOST env or provide imap_host param")
     if not imap_user or not imap_password:
         raise ValueError("IMAP credentials not configured")
+    imap_host = enforce_outbound_host(imap_host, purpose='IMAP')
 
     def _decode_header_value(value):
         if value is None:

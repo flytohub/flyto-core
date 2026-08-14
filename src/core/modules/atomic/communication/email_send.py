@@ -7,15 +7,16 @@ Send emails via SMTP
 import logging
 import os
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
+from contextlib import suppress
 from email import encoders
-from typing import Any, Dict, List, Optional
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any, Dict
 
+from ....utils import enforce_outbound_host, validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,10 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='communication',
     subcategory='email',
-    tags=['email', 'smtp', 'send', 'notification', 'communication'],
+    tags=[
+        'email', 'smtp', 'send', 'notification', 'communication',
+        'ssrf_protected', 'path_restricted',
+    ],
     label='Send Email',
     label_key='modules.email.send.label',
     description='Send email via SMTP server',
@@ -112,6 +116,7 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
     # Validate SMTP config
     if not smtp_host:
         raise ValueError("SMTP host not configured. Set SMTP_HOST env or provide smtp_host param")
+    smtp_host = enforce_outbound_host(smtp_host, purpose='SMTP')
 
     # Get email parameters
     from_email = params.get('from_email') or os.getenv('SMTP_FROM_EMAIL', smtp_user)
@@ -138,12 +143,13 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
 
     # Attach files
     for file_path in attachments:
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as f:
+        safe_path = validate_path_with_env_config(file_path)
+        if os.path.exists(safe_path):
+            with open(safe_path, 'rb') as f:
                 part = MIMEBase('application', 'octet-stream')
                 part.set_payload(f.read())
                 encoders.encode_base64(part)
-                filename = os.path.basename(file_path)
+                filename = os.path.basename(safe_path)
                 part.add_header('Content-Disposition', f'attachment; filename="{filename}"')
                 msg.attach(part)
 
@@ -180,7 +186,5 @@ async def email_send(context: Dict[str, Any]) -> Dict[str, Any]:
         raise
     finally:
         if server:
-            try:
+            with suppress(Exception):
                 server.quit()
-            except Exception:
-                pass  # Ignore errors during cleanup

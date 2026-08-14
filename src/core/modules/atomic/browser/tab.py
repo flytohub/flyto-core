@@ -7,11 +7,12 @@ Create, switch, and close browser tabs.
 
 SECURITY: Includes SSRF protection for new tab URLs.
 """
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from ....utils import SSRFError, validate_url_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets, field
-from ....utils import validate_url_with_env_config, SSRFError
+from ...schema import compose, field, presets
 
 
 @register_module(
@@ -147,17 +148,18 @@ class BrowserTabModule(BaseModule):
         elif self.action == 'new':
             new_page = await context.new_page()
             if self.url:
-                # SECURITY: Validate URL for SSRF (toggleable per-node)
-                if self.params.get('ssrf_protection', True):
-                    try:
-                        validate_url_with_env_config(self.url)
-                    except SSRFError as e:
-                        await new_page.close()
-                        return {
-                            "status": "error",
-                            "error": str(e),
-                            "error_code": "SSRF_BLOCKED"
-                        }
+                # SECURITY: Outbound policy is operator-controlled. The legacy
+                # ssrf_protection parameter remains accepted for compatibility,
+                # but untrusted workflow input cannot disable this boundary.
+                try:
+                    validate_url_with_env_config(self.url)
+                except SSRFError as e:
+                    await new_page.close()
+                    return {
+                        "status": "error",
+                        "error": str(e),
+                        "error_code": "SSRF_BLOCKED"
+                    }
                 await new_page.goto(self.url)
 
             # Update browser's current page reference
@@ -197,9 +199,8 @@ class BrowserTabModule(BaseModule):
 
             # Update current page if we closed it
             remaining_pages = context.pages
-            if len(remaining_pages) > 0:
-                if page_to_close == browser._page:
-                    browser._page = remaining_pages[-1]
+            if remaining_pages and page_to_close == browser._page:
+                browser._page = remaining_pages[-1]
 
             return {
                 "status": "success",

@@ -17,27 +17,31 @@
   **Verified 2026-08-12 — see Last Verification.**
 - Both security boundaries are now closed registry-wide and enforced in CI,
   rather than patched per advisory:
-  - Filesystem — 88 modules declare a path-shaped parameter; 71 reach
-    `validate_path_with_env_config`, 17 are documented as not filesystem paths,
+  - Filesystem — 95 modules declare a path-shaped parameter; 76 reach
+    `validate_path_with_env_config`, 19 are documented as not filesystem paths,
     0 unaccounted. Enforced by `tests/core/test_write_sink_coverage.py`.
-  - Outbound network — 57 modules declare a URL/host-shaped parameter; 46 reach
-    an SSRF guard, 11 are documented as never reaching the network or as
+  - Outbound network — 72 modules declare a URL/host-shaped parameter; 56 reach
+    an SSRF guard, 16 are documented as never reaching the network or as
     validating locally, 0 unaccounted. Enforced by
     `tests/core/test_outbound_guard_coverage.py` (MRO-aware, so inherited
     guards count).
   Exemptions require a written reason and are re-verified each run. The audits
   confined roughly 30 modules that no advisory had named — see CHANGELOG
   `[Unreleased]` and the two 2026-08-08 entries in DECISIONS.md.
+- The **2.28.1** security release closes four additional reported boundary
+  gaps: sandbox-external image reads, nested test-step permission bypass,
+  caller-disabled browser SSRF checks, and unguarded email attachment/SMTP/IMAP
+  targets. Security coverage now includes non-stable registry entries.
 - Two breaking changes come with that: paths outside `FLYTO_SANDBOX_DIR`
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- Package metadata is prepared for the **2.28.0** release. It includes the
+- Package metadata is prepared for the **2.28.1** release. It includes the
   plugin capability contribution point and per-plugin policy scope already on
   `main`, plus the GHSA-gc4h-hj7x-gp5p SSRF fix. The shared IP classifier now
   rejects every IPv4 and IPv6 unspecified-address representation before URL,
   connect-time DNS, raw-host, and port-check callers can use it.
-  `SECURITY_STATUS.md` publishes all 25 advisories with the regression test
+  `SECURITY_STATUS.md` publishes all 29 advisories with the regression test
   covering each, generated from `security/advisories.json` and verified in CI.
 - The preceding 2.26.12 security patch release closed the remaining browser
   file-write and SSRF gaps the 2.26.11

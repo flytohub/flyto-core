@@ -8,11 +8,11 @@ Classify images into categories.
 import logging
 from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor, normalize_classification_result
-
+from .constants import ModuleColors, ModuleDefaults, ParamDefaults, Subcategory, TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ async def huggingface_image_classification(context: Dict[str, Any]) -> Dict[str,
     """Classify images using HuggingFace models"""
     params = context['params']
     model_id = params['model_id']
-    image_path = params['image_path']
+    image_path = validate_path_with_env_config(params['image_path'])
     top_k = params.get('top_k', ParamDefaults.TOP_K)
 
     # Execute task - handles file path vs bytes automatically

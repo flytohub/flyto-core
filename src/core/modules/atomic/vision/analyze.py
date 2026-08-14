@@ -9,11 +9,11 @@ import base64
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
             raise ImportError(
                 "httpx or aiohttp is required for vision.analyze. "
                 "Install with: pip install httpx"
-            )
+            ) from None
     else:
         use_aiohttp = False
 
@@ -195,13 +195,12 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         if use_aiohttp:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                ) as response:
-                    result = await response.json()
+            async with aiohttp.ClientSession() as session, session.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=payload
+            ) as response:
+                result = await response.json()
         else:
             async with httpx.AsyncClient(timeout=60) as client:
                 response = await client.post(
@@ -272,14 +271,12 @@ async def _prepare_image(image_input: str, detail: str) -> Dict[str, Any]:
         }
 
     # Assume it's a file path
-    file_path = Path(image_input).expanduser()
+    file_path = Path(validate_path_with_env_config(image_input))
     if not file_path.exists():
         return {'error': f'Image file not found: {image_input}'}
 
     # Read and encode file
     try:
-        if '..' in str(file_path):
-            raise Exception('Invalid file path')
         with open(file_path, 'rb') as f:
             image_data = base64.b64encode(f.read()).decode('utf-8')
 

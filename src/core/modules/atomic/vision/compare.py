@@ -9,11 +9,11 @@ import base64
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,10 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='atomic',
     subcategory='vision',
-    tags=['vision', 'compare', 'diff', 'screenshot', 'regression', 'atomic'],
+    tags=[
+        'vision', 'compare', 'diff', 'screenshot', 'regression', 'atomic',
+        'path_restricted',
+    ],
     label='Compare Images',
     label_key='modules.vision.compare.label',
     description='Compare two images and identify visual differences',
@@ -127,7 +130,9 @@ async def vision_compare(context: Dict[str, Any]) -> Dict[str, Any]:
             import aiohttp
             use_httpx = False
         except ImportError:
-            raise ImportError("httpx or aiohttp required. Install with: pip install httpx")
+            raise ImportError(
+                "httpx or aiohttp required. Install with: pip install httpx"
+            ) from None
 
     params = context['params']
     image_before = params['image_before']
@@ -212,13 +217,12 @@ Return your analysis in this JSON format:
                 )
                 result = response.json()
         else:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                ) as response:
-                    result = await response.json()
+            async with aiohttp.ClientSession() as session, session.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=payload
+            ) as response:
+                result = await response.json()
 
         if 'error' in result:
             return {
@@ -282,12 +286,9 @@ async def _load_image(image_path: str) -> Dict[str, Any]:
             }
         }
 
-    path = Path(image_path).expanduser()
+    path = Path(validate_path_with_env_config(image_path))
     if not path.exists():
         return {'error': f'File not found: {image_path}'}
-
-    if '..' in image_path:
-        return {'error': 'Invalid file path'}
 
     try:
         with open(path, 'rb') as f:

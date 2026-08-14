@@ -55,6 +55,7 @@ GUARD_SYMBOLS = (
     "ssrf_guarded_connector",
     "trusted_outbound_network_scope",
     "assert_env_credential_endpoint_allowed",
+    "guard_client_dsn",
     "is_private_ip",
     "resolve_guard_ip",
     "_guard_navigation",
@@ -98,6 +99,26 @@ NO_REQUEST_PARAMS = {
     "browser.robots": {
         "check_url": "matched against robots.txt rules; the fetch is of the current "
                      "page's own origin, not of this value"
+    },
+    "reverse.breakpoint": {
+        "url": "passed to CDP only as a filter for scripts already loaded in the "
+               "attached page; this module never requests the URL"
+    },
+    "reverse.request_breakpoint": {
+        "url": "passed to CDP only as an XHR/fetch breakpoint substring; it does "
+               "not initiate the matching request"
+    },
+    "training.practice.analyze": {
+        "url": "passed to the OSS DailyPracticeEngine stub as report input; the "
+               "module and engine make no outbound request"
+    },
+    "training.practice.execute": {
+        "url": "passed to the OSS DailyPracticeEngine stub as practice metadata; "
+               "the module and engine make no outbound request"
+    },
+    "training.practice.infer_schema": {
+        "url": "passed to the OSS DailyPracticeEngine stub as schema metadata; "
+               "the module and engine make no outbound request"
     },
     "testing.http.run_suite": {
         "base_url": "placeholder implementation; returns canned results without "
@@ -168,7 +189,11 @@ def _source_blob(module_id: str) -> str:
 
 
 def _registry_outbound_params():
-    for module_id, metadata in sorted(ModuleRegistry.get_all_metadata().items()):
+    # Security coverage must include beta/experimental modules. Runtime
+    # visibility filters are product policy, not a reason to omit a sink from
+    # CI boundary checks.
+    all_metadata = ModuleRegistry.get_all_metadata(filter_by_stability=False)
+    for module_id, metadata in sorted(all_metadata.items()):
         schema = metadata.get("params_schema") or {}
         names = sorted(n for n in schema if OUTBOUND_PARAM_RE.search(n))
         if names:

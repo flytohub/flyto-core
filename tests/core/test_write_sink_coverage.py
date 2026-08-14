@@ -41,7 +41,8 @@ from core.modules.registry.core import ModuleRegistry
 # a false positive costs one allowlist line with a reason, a false negative
 # costs an advisory.
 PATH_PARAM_RE = re.compile(
-    r"(^|_)(path|paths|file|files|dir|dirs|directory|filepath|filename|destination)$"
+    r"(^|_)(path|paths|file|files|dir|dirs|directory|filepath|filename|destination"
+    r"|attachment|attachments)$"
 )
 
 # The centralized helpers in core/utils.py. Referencing either one in a module's
@@ -81,6 +82,14 @@ NON_FILESYSTEM_PARAMS = {
                     "the two inputs are in-memory strings, not paths"
     },
     "llm.agent": {"prompt_path": "prompt template string, default '{{input}}'"},
+    "reverse.hook": {
+        "function_path": "JavaScript property path such as window.fetch, resolved "
+                         "inside the attached page rather than on the host filesystem"
+    },
+    "slack.send": {
+        "attachments": "Slack Block Kit attachment objects serialized into the "
+                       "webhook JSON payload, not local file paths"
+    },
     "path.basename": {"path": "pure string manipulation, no filesystem access"},
     "path.dirname": {"path": "pure string manipulation, no filesystem access"},
     "path.extension": {"path": "pure string manipulation, no filesystem access"},
@@ -112,7 +121,10 @@ def _path_params(metadata: dict) -> list:
 
 def _registry_path_params():
     """(module_id, [param names]) for every module declaring a path parameter."""
-    for module_id, metadata in sorted(ModuleRegistry.get_all_metadata().items()):
+    # Runtime stability visibility is product policy. Security coverage must
+    # inspect every registered module, including beta and experimental sinks.
+    all_metadata = ModuleRegistry.get_all_metadata(filter_by_stability=False)
+    for module_id, metadata in sorted(all_metadata.items()):
         names = _path_params(metadata)
         if names:
             yield module_id, names

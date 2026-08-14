@@ -8,10 +8,13 @@ Provides persistent conversation memory across sessions
 using Redis as the backend storage.
 """
 
-from typing import Any, Dict, List, Optional
+from contextlib import suppress
+from typing import Any, Dict, List
+
+from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose, field
-from ...types import NodeType, EdgeType, DataType
+from ...types import DataType, EdgeType, NodeType
 
 
 @register_module(
@@ -20,7 +23,10 @@ from ...types import NodeType, EdgeType, DataType
     version='1.0.0',
     category='ai',
     subcategory='memory',
-    tags=['ai', 'memory', 'redis', 'persistent', 'cache', 'database', 'sub-node'],
+    tags=[
+        'ai', 'memory', 'redis', 'persistent', 'cache', 'database',
+        'sub-node', 'ssrf_protected',
+    ],
     label='Redis Memory',
     label_key='modules.ai.memory.redis.label',
     description='Persistent conversation memory using Redis storage',
@@ -165,6 +171,7 @@ async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
 
     params = context['params']
     redis_url = params.get('redis_url', 'redis://localhost:6379')
+    redis_url = enforce_outbound_service_url(redis_url, purpose='Redis memory')
     key_prefix = params.get('key_prefix', 'flyto:memory:')
     session_id = params.get('session_id', '')
     ttl_seconds = params.get('ttl_seconds', 86400)
@@ -197,7 +204,7 @@ async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
     except ImportError:
         # redis package not installed, use in-memory fallback
         pass
-    except Exception as e:
+    except Exception:
         # Connection failed, use in-memory fallback
         pass
 
@@ -300,10 +307,8 @@ async def _redis_clear(memory_state: Dict) -> None:
     memory_state['messages'] = []
 
     if client:
-        try:
+        with suppress(Exception):
             await client.delete(config['memory_key'])
-        except Exception:
-            pass
 
 
 async def _redis_get_session_info(memory_state: Dict) -> Dict:

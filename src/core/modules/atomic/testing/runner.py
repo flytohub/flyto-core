@@ -120,7 +120,10 @@ async def execute_test_steps(
                 module_context["step_results"] = step_results
                 instance = module_class(params, module_context)
                 output = await asyncio.wait_for(
-                    instance.execute(),
+                    # SECURITY: BaseModule.run() is the process-wide policy
+                    # chokepoint. Calling execute() directly let nested
+                    # Warroom/test steps bypass dangerous-permission grants.
+                    instance.run(),
                     timeout=float(timeout_per_step) / 1000,
                 )
                 result["output"] = output

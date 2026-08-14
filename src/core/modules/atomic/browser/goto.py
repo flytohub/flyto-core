@@ -27,12 +27,12 @@ Example of schema presets usage - compare before/after:
         )
 """
 import logging
-import os
-from typing import Any, Dict
+from typing import Any
+
+from ....utils import SSRFError, validate_url_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_url_with_env_config, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -101,28 +101,24 @@ class BrowserGotoModule(BaseModule):
     required_permission = "browser.navigate"
 
     def _ssrf_enforced(self) -> bool:
-        """Whether the SSRF guard applies to this invocation.
+        """The SSRF guard is always enforced for workflow-supplied targets.
 
-        Cloud/worker modes ALWAYS enforce — the user cannot disable it.
-        Desktop mode allows opt-out for local development / self-hosted targets.
+        The legacy parameter remains in the schema for compatibility, but only
+        operator environment policy may allow a private destination.
         """
-        _is_cloud = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web", "cloud")
-        return _is_cloud or bool(self.params.get('ssrf_protection', True))
+        return True
 
     def _check_url(self, url: str) -> None:
-        """Apply the SSRF guard to ``url``, honouring the deployment opt-out.
+        """Apply the operator-controlled SSRF guard to ``url``.
 
         SECURITY: every URL this module navigates to must pass through here —
         not just the caller's original ``url``. Any URL the module *derives*
         (e.g. the www-toggled retry host) is attacker-influenced too.
         """
-        if not self._ssrf_enforced():
-            logger.warning("SSRF protection disabled by user for URL: %s", url[:80])
-            return
         try:
             validate_url_with_env_config(url)
         except SSRFError as e:
-            raise ValueError(f"SSRF protection: {e}")
+            raise ValueError(f"SSRF protection: {e}") from e
 
     def validate_params(self) -> None:
         if 'url' not in self.params:
@@ -238,5 +234,3 @@ class BrowserGotoModule(BaseModule):
         if '://' in url:
             return url.replace('://', '://www.', 1)
         return None
-
-

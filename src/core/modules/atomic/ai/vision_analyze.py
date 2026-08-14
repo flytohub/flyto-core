@@ -13,10 +13,15 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
+from ....utils import (
+    SSRFError,
+    enforce_outbound_url,
+    guarded_client_session,
+    validate_path_with_env_config,
+)
 from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose, field
-from ....utils import guarded_client_session, enforce_outbound_url, SSRFError
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +32,7 @@ logger = logging.getLogger(__name__)
     version='1.0.0',
     category='ai',
     subcategory='vision',
-    tags=['ai', 'vision', 'image', 'analysis', 'llm'],
+    tags=['ai', 'vision', 'image', 'analysis', 'llm', 'path_restricted'],
     label='Vision Analyze',
     label_key='modules.ai.vision.analyze.label',
     description='Analyze images using LLM vision capabilities',
@@ -215,6 +220,9 @@ async def ai_vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
             field="image_path",
         )
 
+    if image_path:
+        image_path = validate_path_with_env_config(image_path)
+
     # Resolve API key from environment if not provided
     if not api_key:
         env_vars = {
@@ -367,7 +375,7 @@ async def _call_anthropic_vision(
         try:
             enforce_outbound_url(image_url)
         except SSRFError as e:
-            raise ModuleError(f"SSRF protection blocked request: {e}")
+            raise ModuleError(f"SSRF protection blocked request: {e}") from e
         async with session.get(image_url) as img_resp:
             if img_resp.status != 200:
                 raise ModuleError(f"Failed to download image from URL: {image_url}")

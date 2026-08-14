@@ -2722,20 +2722,20 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _denied_permissions_response(module_id: str, missing: list) -> dict` | Implements `_denied_permissions_response`; linked source is authoritative. | [`src/core/mcp_handler.py:246`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L246) |
 | function | `def _collect_module_ids(obj: Any) -> set` | Collect every module id declared in a workflow, including ids smuggled inside inline workflow_source/template string payloads (flow.invoke vector). | [`src/core/mcp_handler.py:259`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L259) |
 | function | `async def execute_module(module_id: str, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None, debugger_sessions: Dict&#91;str, Any&#93;=None, session_activity: Dict&#91;str, float&#93;=None) -> dict` | Execute a single module. | [`src/core/mcp_handler.py:275`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L275) |
-| function | `def validate_params(module_id: str, params: Dict&#91;str, Any&#93;) -> dict` | Validate params and suggest corrections for common mistakes. | [`src/core/mcp_handler.py:453`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L453) |
-| method | `def validate_params._sim(mid)` | Implements `validate_params._sim`; linked source is authoritative. | [`src/core/mcp_handler.py:477`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L477) |
-| function | `def _try_alias_fix(field_name: str, params: Dict&#91;str, Any&#93;) -> Optional&#91;tuple&#93;` | Try to resolve a missing field via alias mapping. | [`src/core/mcp_handler.py:539`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L539) |
-| function | `def _suggest_param_fixes(params: Dict&#91;str, Any&#93;, schema: Dict&#91;str, Any&#93;, error_msg: str) -> Dict&#91;str, Any&#93;` | Generate correction suggestions for invalid params. | [`src/core/mcp_handler.py:556`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L556) |
-| function | `def get_module_examples(module_id: str) -> dict` | Implements `get_module_examples`; linked source is authoritative. | [`src/core/mcp_handler.py:606`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L606) |
-| function | `def list_recipes() -> dict` | List all available recipes with metadata. | [`src/core/mcp_handler.py:625`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L625) |
-| function | `async def run_recipe(recipe_name: str, args: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Load and execute a recipe, returning step-by-step results. | [`src/core/mcp_handler.py:638`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L638) |
-| function | `def _build_recipe_result(recipe_name: str, trace: Optional&#91;Any&#93;, error_msg: Optional&#91;str&#93;=None) -> dict` | Build the run_recipe response from engine trace. | [`src/core/mcp_handler.py:719`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L719) |
-| function | `def _jsonrpc_error(request_id: Any, code: int, message: str, data: Optional&#91;dict&#93;=None) -> dict` | Implements `_jsonrpc_error`; linked source is authoritative. | [`src/core/mcp_handler.py:1069`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1069) |
-| function | `def _modern_result(result: dict, *, ttl_ms: Optional&#91;int&#93;=None, cache_scope: Optional&#91;str&#93;=None) -> dict` | Add the fields required on successful MCP 2026-07-28 results. | [`src/core/mcp_handler.py:1081`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1081) |
-| function | `def _request_protocol_era(request_id: Any, method: str, params: Any) -> tuple&#91;Optional&#91;str&#93;, Optional&#91;dict&#93;&#93;` | Return the request era plus a structured error when metadata is invalid. | [`src/core/mcp_handler.py:1100`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1100) |
-| function | `def _jsonrpc_result(request_id: Any, result: dict, *, modern: bool, ttl_ms: Optional&#91;int&#93;=None, cache_scope: Optional&#91;str&#93;=None) -> dict` | Implements `_jsonrpc_result`; linked source is authoritative. | [`src/core/mcp_handler.py:1168`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1168) |
-| function | `async def _handle_tool_call(request_id: Any, params: Any, *, modern: bool, browser_sessions: Dict&#91;str, Any&#93;, debugger_sessions: Dict&#91;str, Any&#93;, session_activity: Dict&#91;str, float&#93;) -> dict` | Implements `_handle_tool_call`; linked source is authoritative. | [`src/core/mcp_handler.py:1185`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1185) |
-| function | `async def handle_jsonrpc_request(request: dict, browser_sessions: Dict&#91;str, Any&#93;, debugger_sessions: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, session_activity: Optional&#91;Dict&#91;str, float&#93;&#93;=None) -> Optional&#91;dict&#93;` | Handle a single JSON-RPC request. | [`src/core/mcp_handler.py:1268`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1268) |
+| function | `def validate_params(module_id: str, params: Dict&#91;str, Any&#93;) -> dict` | Validate params and suggest corrections for common mistakes. | [`src/core/mcp_handler.py:465`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L465) |
+| method | `def validate_params._sim(mid)` | Implements `validate_params._sim`; linked source is authoritative. | [`src/core/mcp_handler.py:489`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L489) |
+| function | `def _try_alias_fix(field_name: str, params: Dict&#91;str, Any&#93;) -> Optional&#91;tuple&#93;` | Try to resolve a missing field via alias mapping. | [`src/core/mcp_handler.py:551`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L551) |
+| function | `def _suggest_param_fixes(params: Dict&#91;str, Any&#93;, schema: Dict&#91;str, Any&#93;, error_msg: str) -> Dict&#91;str, Any&#93;` | Generate correction suggestions for invalid params. | [`src/core/mcp_handler.py:568`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L568) |
+| function | `def get_module_examples(module_id: str) -> dict` | Implements `get_module_examples`; linked source is authoritative. | [`src/core/mcp_handler.py:618`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L618) |
+| function | `def list_recipes() -> dict` | List all available recipes with metadata. | [`src/core/mcp_handler.py:637`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L637) |
+| function | `async def run_recipe(recipe_name: str, args: Dict&#91;str, Any&#93;=None, browser_sessions: Dict&#91;str, Any&#93;=None) -> dict` | Load and execute a recipe, returning step-by-step results. | [`src/core/mcp_handler.py:650`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L650) |
+| function | `def _build_recipe_result(recipe_name: str, trace: Optional&#91;Any&#93;, error_msg: Optional&#91;str&#93;=None) -> dict` | Build the run_recipe response from engine trace. | [`src/core/mcp_handler.py:731`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L731) |
+| function | `def _jsonrpc_error(request_id: Any, code: int, message: str, data: Optional&#91;dict&#93;=None) -> dict` | Implements `_jsonrpc_error`; linked source is authoritative. | [`src/core/mcp_handler.py:1081`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1081) |
+| function | `def _modern_result(result: dict, *, ttl_ms: Optional&#91;int&#93;=None, cache_scope: Optional&#91;str&#93;=None) -> dict` | Add the fields required on successful MCP 2026-07-28 results. | [`src/core/mcp_handler.py:1093`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1093) |
+| function | `def _request_protocol_era(request_id: Any, method: str, params: Any) -> tuple&#91;Optional&#91;str&#93;, Optional&#91;dict&#93;&#93;` | Return the request era plus a structured error when metadata is invalid. | [`src/core/mcp_handler.py:1112`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1112) |
+| function | `def _jsonrpc_result(request_id: Any, result: dict, *, modern: bool, ttl_ms: Optional&#91;int&#93;=None, cache_scope: Optional&#91;str&#93;=None) -> dict` | Implements `_jsonrpc_result`; linked source is authoritative. | [`src/core/mcp_handler.py:1180`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1180) |
+| function | `async def _handle_tool_call(request_id: Any, params: Any, *, modern: bool, browser_sessions: Dict&#91;str, Any&#93;, debugger_sessions: Dict&#91;str, Any&#93;, session_activity: Dict&#91;str, float&#93;) -> dict` | Implements `_handle_tool_call`; linked source is authoritative. | [`src/core/mcp_handler.py:1197`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1197) |
+| function | `async def handle_jsonrpc_request(request: dict, browser_sessions: Dict&#91;str, Any&#93;, debugger_sessions: Optional&#91;Dict&#91;str, Any&#93;&#93;=None, session_activity: Optional&#91;Dict&#91;str, float&#93;&#93;=None) -> Optional&#91;dict&#93;` | Handle a single JSON-RPC request. | [`src/core/mcp_handler.py:1280`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1280) |
 
 ## `src/core/mcp_server.py`
 
@@ -2845,11 +2845,11 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ai_memory_redis(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Redis-backed persistent memory for AI Agent. | [`src/core/modules/atomic/ai/memory_redis.py:157`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L157) |
-| function | `async def _redis_add_message(memory_state: Dict, role: str, content: str) -> None` | Add a message to Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:232`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L232) |
-| function | `async def _redis_get_messages(memory_state: Dict, limit: int=None) -> List&#91;Dict&#93;` | Get messages from Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:271`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L271) |
-| function | `async def _redis_clear(memory_state: Dict) -> None` | Clear all messages from Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:295`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L295) |
-| function | `async def _redis_get_session_info(memory_state: Dict) -> Dict` | Get session info from Redis | [`src/core/modules/atomic/ai/memory_redis.py:309`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L309) |
+| function | `async def ai_memory_redis(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Redis-backed persistent memory for AI Agent. | [`src/core/modules/atomic/ai/memory_redis.py:163`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L163) |
+| function | `async def _redis_add_message(memory_state: Dict, role: str, content: str) -> None` | Add a message to Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:239`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L239) |
+| function | `async def _redis_get_messages(memory_state: Dict, limit: int=None) -> List&#91;Dict&#93;` | Get messages from Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:278`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L278) |
+| function | `async def _redis_clear(memory_state: Dict) -> None` | Clear all messages from Redis memory | [`src/core/modules/atomic/ai/memory_redis.py:302`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L302) |
+| function | `async def _redis_get_session_info(memory_state: Dict) -> Dict` | Get session info from Redis | [`src/core/modules/atomic/ai/memory_redis.py:314`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/memory_redis.py#L314) |
 
 ## `src/core/modules/atomic/ai/memory_vector.py`
 
@@ -2883,9 +2883,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ai_vision_analyze(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Analyze images using LLM vision capabilities. | [`src/core/modules/atomic/ai/vision_analyze.py:200`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L200) |
-| function | `async def _call_openai_vision(session: aiohttp.ClientSession, api_key: str, model: str, prompt: str, max_tokens: int, detail: str, image_b64: Optional&#91;str&#93;, image_url: str, media_type: str) -> Dict&#91;str, Any&#93;` | Call OpenAI Vision API. | [`src/core/modules/atomic/ai/vision_analyze.py:271`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L271) |
-| function | `async def _call_anthropic_vision(session: aiohttp.ClientSession, api_key: str, model: str, prompt: str, max_tokens: int, image_b64: Optional&#91;str&#93;, image_url: str, media_type: str) -> Dict&#91;str, Any&#93;` | Call Anthropic Vision API. | [`src/core/modules/atomic/ai/vision_analyze.py:345`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L345) |
+| function | `async def ai_vision_analyze(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Analyze images using LLM vision capabilities. | [`src/core/modules/atomic/ai/vision_analyze.py:205`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L205) |
+| function | `async def _call_openai_vision(session: aiohttp.ClientSession, api_key: str, model: str, prompt: str, max_tokens: int, detail: str, image_b64: Optional&#91;str&#93;, image_url: str, media_type: str) -> Dict&#91;str, Any&#93;` | Call OpenAI Vision API. | [`src/core/modules/atomic/ai/vision_analyze.py:279`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L279) |
+| function | `async def _call_anthropic_vision(session: aiohttp.ClientSession, api_key: str, model: str, prompt: str, max_tokens: int, image_b64: Optional&#91;str&#93;, image_url: str, media_type: str) -> Dict&#91;str, Any&#93;` | Call Anthropic Vision API. | [`src/core/modules/atomic/ai/vision_analyze.py:353`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/ai/vision_analyze.py#L353) |
 
 ## `src/core/modules/atomic/analysis/analyze_readability.py`
 
@@ -3263,12 +3263,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | class | `class BrowserGotoModule(BaseModule)` | Navigate to URL Module | [`src/core/modules/atomic/browser/goto.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L96) |
-| method | `def BrowserGotoModule._ssrf_enforced(self) -> bool` | Whether the SSRF guard applies to this invocation. | [`src/core/modules/atomic/browser/goto.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L103) |
-| method | `def BrowserGotoModule._check_url(self, url: str) -> None` | Apply the SSRF guard to ``url``, honouring the deployment opt-out. | [`src/core/modules/atomic/browser/goto.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L112) |
-| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L127) |
-| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L150) |
-| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:189`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L189) |
-| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle www prefix. | [`src/core/modules/atomic/browser/goto.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L234) |
+| method | `def BrowserGotoModule._ssrf_enforced(self) -> bool` | The SSRF guard is always enforced for workflow-supplied targets. | [`src/core/modules/atomic/browser/goto.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L103) |
+| method | `def BrowserGotoModule._check_url(self, url: str) -> None` | Apply the operator-controlled SSRF guard to ``url``. | [`src/core/modules/atomic/browser/goto.py:111`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L111) |
+| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L123) |
+| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L146) |
+| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:185`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L185) |
+| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle www prefix. | [`src/core/modules/atomic/browser/goto.py:230`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L230) |
 
 ## `src/core/modules/atomic/browser/hover.py`
 
@@ -3505,9 +3505,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserTabModule(BaseModule)` | Manage Tabs Module | [`src/core/modules/atomic/browser/tab.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L94) |
-| method | `def BrowserTabModule.validate_params(self) -> None` | Implements `BrowserTabModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/tab.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L101) |
-| method | `async def BrowserTabModule.execute(self) -> Any` | Implements `BrowserTabModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/tab.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L115) |
+| class | `class BrowserTabModule(BaseModule)` | Manage Tabs Module | [`src/core/modules/atomic/browser/tab.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L95) |
+| method | `def BrowserTabModule.validate_params(self) -> None` | Implements `BrowserTabModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/tab.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L102) |
+| method | `async def BrowserTabModule.execute(self) -> Any` | Implements `BrowserTabModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/tab.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/tab.py#L116) |
 
 ## `src/core/modules/atomic/browser/table.py`
 
@@ -3640,15 +3640,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def email_read(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Read emails from IMAP server | [`src/core/modules/atomic/communication/email_read.py:88`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L88) |
-| method | `def email_read._decode_header_value(value)` | Implements `email_read._decode_header_value`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L110) |
-| method | `def email_read._get_body(msg)` | Implements `email_read._get_body`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L122) |
-| method | `def email_read._fetch_emails()` | Implements `email_read._fetch_emails`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L140) |
+| method | `def email_read._decode_header_value(value)` | Implements `email_read._decode_header_value`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:111`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L111) |
+| method | `def email_read._get_body(msg)` | Implements `email_read._get_body`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L123) |
+| method | `def email_read._fetch_emails()` | Implements `email_read._fetch_emails`; linked source is authoritative. | [`src/core/modules/atomic/communication/email_read.py:141`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_read.py#L141) |
 
 ## `src/core/modules/atomic/communication/email_send.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def email_send(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Send email via SMTP | [`src/core/modules/atomic/communication/email_send.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_send.py#L101) |
+| function | `async def email_send(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Send email via SMTP | [`src/core/modules/atomic/communication/email_send.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/communication/email_send.py#L105) |
 
 ## `src/core/modules/atomic/communication/slack_send.py`
 
@@ -4789,7 +4789,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def huggingface_speech_to_text(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Transcribe audio to text using HuggingFace ASR models | [`src/core/modules/atomic/huggingface/speech_to_text.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/huggingface/speech_to_text.py#L67) |
+| function | `async def huggingface_speech_to_text(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Transcribe audio to text using HuggingFace ASR models | [`src/core/modules/atomic/huggingface/speech_to_text.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/huggingface/speech_to_text.py#L70) |
 
 ## `src/core/modules/atomic/huggingface/summarization.py`
 
@@ -6520,17 +6520,17 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def vision_analyze(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Analyze image using OpenAI Vision API | [`src/core/modules/atomic/vision/analyze.py:126`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L126) |
-| function | `async def _prepare_image(image_input: str, detail: str) -> Dict&#91;str, Any&#93;` | Prepare image content for OpenAI API | [`src/core/modules/atomic/vision/analyze.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L248) |
-| function | `def _build_system_prompt(analysis_type: str, output_format: str, context: str) -> str` | Build system prompt based on analysis type | [`src/core/modules/atomic/vision/analyze.py:310`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L310) |
-| function | `def _parse_structured_output(text: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Try to parse structured data from the response | [`src/core/modules/atomic/vision/analyze.py:370`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L370) |
+| function | `async def _prepare_image(image_input: str, detail: str) -> Dict&#91;str, Any&#93;` | Prepare image content for OpenAI API | [`src/core/modules/atomic/vision/analyze.py:247`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L247) |
+| function | `def _build_system_prompt(analysis_type: str, output_format: str, context: str) -> str` | Build system prompt based on analysis type | [`src/core/modules/atomic/vision/analyze.py:307`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L307) |
+| function | `def _parse_structured_output(text: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Try to parse structured data from the response | [`src/core/modules/atomic/vision/analyze.py:367`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L367) |
 
 ## `src/core/modules/atomic/vision/compare.py`
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def vision_compare(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Compare two images using AI vision | [`src/core/modules/atomic/vision/compare.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L120) |
-| function | `async def _load_image(image_path: str) -> Dict&#91;str, Any&#93;` | Load image and prepare for API | [`src/core/modules/atomic/vision/compare.py:275`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L275) |
-| function | `def _build_comparison_prompt(comp_type: str, focus: list, ignore: list, threshold: int) -> str` | Build comparison prompt | [`src/core/modules/atomic/vision/compare.py:313`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L313) |
+| function | `async def vision_compare(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Compare two images using AI vision | [`src/core/modules/atomic/vision/compare.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L123) |
+| function | `async def _load_image(image_path: str) -> Dict&#91;str, Any&#93;` | Load image and prepare for API | [`src/core/modules/atomic/vision/compare.py:279`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L279) |
+| function | `def _build_comparison_prompt(comp_type: str, focus: list, ignore: list, threshold: int) -> str` | Build comparison prompt | [`src/core/modules/atomic/vision/compare.py:314`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/compare.py#L314) |
 
 ## `src/core/modules/atomic/warroom/discover.py`
 

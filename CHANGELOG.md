@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.28.1] - 2026-08-14
+
 ### Added
 
 - The first customer-grade `flyto.plugin.v1` manifest/adoption slice: strict
@@ -25,6 +27,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before membership, without consuming arbitrary iterables. Adoption is inert
   and provides no process or OS sandboxing. Endpoint and allowlist text use the
   same gate; stable errors never reflect hostile or secret-bearing text.
+
+### Security
+
+- Confined local image reads in `vision.analyze`, `vision.compare`, and
+  `ai.vision.analyze` to `FLYTO_SANDBOX_DIR`, closing
+  GHSA-jpmx-7xh3-vq6v.
+- Routed nested `warroom.run` test steps through the same module policy
+  chokepoint as direct execution, so modules requiring dangerous permissions
+  cannot be smuggled through scenario steps (GHSA-675h-j4qg-m52x).
+- Removed the caller-controlled browser SSRF opt-out. `browser.goto` and new
+  `browser.tab` navigations now follow the operator-controlled outbound policy
+  even when a client sends `ssrf_protection=false`
+  (GHSA-r3jp-qf98-23v8).
+- Confined `email.send` attachments and applied the shared outbound-host guard
+  to caller-selected SMTP and IMAP targets in `email.send` and `email.read`
+  (GHSA-x2qh-79wh-6w7j).
+- Extended registry-wide filesystem and outbound coverage checks to include
+  beta modules, preset-defined host fields, and list-valued attachment paths;
+  the expanded audit also closes previously hidden Redis/database target gaps
+  and verifies that reverse/training URL fields do not initiate requests.
 
 ## [2.28.0] - 2026-08-13
 

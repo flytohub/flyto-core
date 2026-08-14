@@ -8,11 +8,11 @@ Transcribe audio to text using ASR models like Whisper.
 import logging
 from typing import Any, Dict
 
+from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
-from .constants import TaskType, ModuleDefaults, ModuleColors, ParamDefaults, Subcategory
 from ._base import HuggingFaceTaskExecutor
-
+from .constants import ModuleColors, ModuleDefaults, ParamDefaults, Subcategory, TaskType
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,10 @@ _executor = HuggingFaceTaskExecutor(TaskType.AUTOMATIC_SPEECH_RECOGNITION)
     version=ModuleDefaults.VERSION,
     category=ModuleDefaults.CATEGORY,
     subcategory=Subcategory.AUDIO,
-    tags=['huggingface', 'audio', 'speech', 'transcription', 'asr', 'whisper'],
+    tags=[
+        'huggingface', 'audio', 'speech', 'transcription', 'asr', 'whisper',
+        'path_restricted',
+    ],
     label='Speech to Text',
     label_key='modules.huggingface.speech-to-text.label',
     description='Transcribe audio to text using HuggingFace models (Whisper, etc.)',
@@ -68,7 +71,7 @@ async def huggingface_speech_to_text(context: Dict[str, Any]) -> Dict[str, Any]:
     """Transcribe audio to text using HuggingFace ASR models"""
     params = context['params']
     model_id = params['model_id']
-    audio_path = params['audio_path']
+    audio_path = validate_path_with_env_config(params['audio_path'])
     language = params.get('language')
     return_timestamps = params.get('return_timestamps', ParamDefaults.RETURN_TIMESTAMPS)
 

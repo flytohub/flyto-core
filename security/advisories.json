@@ -1,5 +1,53 @@
 [
   {
+    "ghsa": "GHSA-jpmx-7xh3-vq6v",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.28.0",
+    "patched": "2.28.1",
+    "summary": "Unconfined local image reads in vision.analyze, vision.compare, and ai.vision.analyze",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_vision_modules_reject_sandbox_external_images"
+    ]
+  },
+  {
+    "ghsa": "GHSA-675h-j4qg-m52x",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.28.0",
+    "patched": "2.28.1",
+    "summary": "Dangerous-permission lock bypass via warroom.run nested module steps",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_nested_test_steps_enforce_dangerous_permissions"
+    ]
+  },
+  {
+    "ghsa": "GHSA-r3jp-qf98-23v8",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.28.0",
+    "patched": "2.28.1",
+    "summary": "Client-controllable ssrf_protection flag disables the SSRF guard in browser.goto and browser.tab",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_browser_client_cannot_disable_ssrf_guard"
+    ]
+  },
+  {
+    "ghsa": "GHSA-x2qh-79wh-6w7j",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-14",
+    "affected": "<= 2.28.0",
+    "patched": "2.28.1",
+    "summary": "Arbitrary host file read and SMTP/IMAP SSRF via unguarded email.send and email.read modules",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_email_modules_enforce_filesystem_and_outbound_boundaries"
+    ]
+  },
+  {
     "ghsa": "GHSA-gc4h-hj7x-gp5p",
     "severity": "high",
     "cve": null,

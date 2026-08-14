@@ -1244,3 +1244,216 @@ async def test_visual_diff_screenshot_rejects_metadata_url(_no_private_network):
         await module._screenshot_url(
             'http://169.254.169.254/latest/meta-data/', '/tmp/unused.png'
         )
+
+
+# ---------------------------------------------------------------------------
+# 2.28.1 reports: local vision reads, nested dangerous-permission execution,
+# caller-controlled browser SSRF opt-out, and email filesystem/network sinks.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_vision_modules_reject_sandbox_external_images(monkeypatch, tmp_path):
+    _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'camera-roll.png'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_bytes(b'not-for-the-workflow')
+
+    analyze = importlib.import_module('core.modules.atomic.vision.analyze')
+    compare = importlib.import_module('core.modules.atomic.vision.compare')
+    ai_vision = importlib.import_module('core.modules.atomic.ai.vision_analyze')
+
+    with pytest.raises(PathTraversalError):
+        await analyze._prepare_image(str(secret), 'auto')
+    with pytest.raises(PathTraversalError):
+        await compare._load_image(str(secret))
+    with pytest.raises(PathTraversalError):
+        await _handler(ai_vision, 'ai_vision_analyze')({'params': {
+            'image_path': str(secret),
+            'prompt': 'describe',
+            'provider': 'openai',
+            'api_key': 'test-only-key',
+        }})
+
+
+@pytest.mark.asyncio
+async def test_nested_test_steps_enforce_dangerous_permissions(monkeypatch):
+    monkeypatch.delenv('FLYTO_GRANTED_PERMISSIONS', raising=False)
+    stripe = importlib.import_module('core.modules.third_party.payment.stripe')
+    runner = importlib.import_module('core.modules.atomic.testing.runner')
+    reached_payment_sink = False
+
+    async def forbidden_execute(self):
+        nonlocal reached_payment_sink
+        reached_payment_sink = True
+        return {'ok': True}
+
+    monkeypatch.setattr(
+        stripe.StripeCreatePaymentModule,
+        'execute',
+        forbidden_execute,
+    )
+    steps = [{
+        'id': 'charge',
+        'module': 'payment.stripe.create_payment',
+        'params': {'api_key': 'test-only-key', 'amount': 100},
+    }]
+
+    result = await runner.execute_test_steps(steps)
+
+    assert result['ok'] is False
+    assert result['results'][0]['status'] == 'failed'
+    assert 'payment.process' in result['results'][0]['error']
+    assert reached_payment_sink is False
+
+    mcp_handler = importlib.import_module('core.mcp_handler')
+    preflight = await mcp_handler.execute_module(
+        'warroom.run',
+        {'scenarios': [{'steps': steps}]},
+    )
+    assert preflight['ok'] is False
+    assert preflight['blocked_by'] == 'required_permissions'
+    assert preflight['missing_permissions'] == ['payment.process']
+
+
+@pytest.mark.asyncio
+async def test_browser_client_cannot_disable_ssrf_guard(_no_private_network):
+    goto = importlib.import_module('core.modules.atomic.browser.goto')
+    tab = importlib.import_module('core.modules.atomic.browser.tab')
+    target = 'http://169.254.169.254/latest/meta-data/'
+
+    with pytest.raises(ValueError, match='SSRF protection'):
+        goto.BrowserGotoModule(
+            {'url': target, 'ssrf_protection': False},
+            {},
+        )
+
+    class FakePage:
+        def __init__(self):
+            self.closed = False
+            self.goto_called = False
+
+        async def close(self):
+            self.closed = True
+
+        async def goto(self, _url):
+            self.goto_called = True
+
+    new_page = FakePage()
+
+    class FakeContext:
+        pages = []
+
+        async def new_page(self):
+            return new_page
+
+    class FakeBrowser:
+        _context = FakeContext()
+        page = None
+
+    result = await tab.BrowserTabModule(
+        {'action': 'new', 'url': target, 'ssrf_protection': False},
+        {'browser': FakeBrowser()},
+    ).execute()
+
+    assert result['status'] == 'error'
+    assert result['error_code'] == 'SSRF_BLOCKED'
+    assert new_page.closed is True
+    assert new_page.goto_called is False
+
+
+@pytest.mark.asyncio
+async def test_email_modules_enforce_filesystem_and_outbound_boundaries(
+    _no_private_network,
+    monkeypatch,
+    tmp_path,
+):
+    _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'credentials.txt'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_text('secret', encoding='utf-8')
+
+    email_send = importlib.import_module(
+        'core.modules.atomic.communication.email_send'
+    )
+    email_read = importlib.import_module(
+        'core.modules.atomic.communication.email_read'
+    )
+
+    send_params = {
+        'smtp_host': 'localhost',
+        'smtp_port': 465,
+        'use_tls': False,
+        'from_email': 'from@example.com',
+        'to': 'to@example.com',
+        'subject': 'test',
+        'body': 'test',
+        'attachments': [str(secret)],
+    }
+    with pytest.raises(PathTraversalError):
+        await _handler(email_send, 'email_send')({'params': send_params})
+
+    with pytest.raises(SSRFError):
+        await _handler(email_send, 'email_send')({'params': {
+            **send_params,
+            'smtp_host': '169.254.169.254',
+            'attachments': [],
+        }})
+
+    with pytest.raises(SSRFError):
+        await _handler(email_read, 'email_read')({'params': {
+            'imap_host': '10.0.0.5',
+            'imap_user': 'test-user',
+            'imap_password': 'test-password',
+        }})
+
+
+@pytest.mark.asyncio
+async def test_expanded_beta_audit_blocks_private_redis_target(
+    _no_private_network,
+):
+    memory_redis = importlib.import_module(
+        'core.modules.atomic.ai.memory_redis'
+    )
+
+    with pytest.raises(SSRFError):
+        await _handler(memory_redis, 'ai_memory_redis')({'params': {
+            'redis_url': 'redis://169.254.169.254:6379',
+            'session_id': 'security-test',
+        }})
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('module_name', 'handler_name', 'path_key'),
+    [
+        (
+            'core.modules.atomic.huggingface.image_classification',
+            'huggingface_image_classification',
+            'image_path',
+        ),
+        (
+            'core.modules.atomic.huggingface.speech_to_text',
+            'huggingface_speech_to_text',
+            'audio_path',
+        ),
+    ],
+)
+async def test_expanded_beta_audit_confines_huggingface_file_inputs(
+    monkeypatch,
+    tmp_path,
+    module_name,
+    handler_name,
+    path_key,
+):
+    _sandbox(monkeypatch, tmp_path)
+    secret = tmp_path / 'outside' / 'private-media.bin'
+    secret.parent.mkdir(parents=True, exist_ok=True)
+    secret.write_bytes(b'private media')
+    module = importlib.import_module(module_name)
+
+    with pytest.raises(PathTraversalError):
+        await _handler(module, handler_name)({'params': {
+            'model_id': 'test-model',
+            path_key: str(secret),
+        }})

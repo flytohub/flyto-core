@@ -2,11 +2,11 @@
 
 # Security Status
 
-**Current release: `2.28.0`.** Every advisory published against this project is fixed as of `2.28.0`, and every one has a named regression test that runs in CI.
+**Current release: `2.28.1`.** Every advisory published against this project is fixed as of `2.28.1`, and every one has a named regression test that runs in CI.
 
-Installing `>= 2.28.0` clears every known advisory; `2.28.0` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
+Installing `>= 2.28.1` clears every known advisory; `2.28.1` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
 
-25 advisories have been published and fixed (6 critical, 14 high, 5 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
+29 advisories have been published and fixed (6 critical, 18 high, 5 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
 
 ## How the recurrence was stopped
 
@@ -52,6 +52,10 @@ Applying those audits closed roughly 30 further modules that no advisory had nam
 | [GHSA-v7q9-pr72-5fmv](https://github.com/flytohub/flyto-core/security/advisories/GHSA-v7q9-pr72-5fmv) | medium | `<= 2.26.11` | `2.26.12` | [`test_port_check_blocks_ipv6_transition_and_fails_closed`](tests/core/test_reported_security_advisories.py) |
 | [GHSA-v468-p4jx-7vj3](https://github.com/flytohub/flyto-core/security/advisories/GHSA-v468-p4jx-7vj3) | medium | `<= 2.26.11` | `2.26.12` | [`test_regex_match_redos_times_out_without_freezing_loop`](tests/core/test_reported_security_advisories.py) |
 | [GHSA-gc4h-hj7x-gp5p](https://github.com/flytohub/flyto-core/security/advisories/GHSA-gc4h-hj7x-gp5p) | high | `<= 2.27.0` | `2.28.0` | [`test_validate_url_ssrf_rejects_unspecified_literal`](tests/core/test_ssrf_ipv6_transition.py) |
+| [GHSA-jpmx-7xh3-vq6v](https://github.com/flytohub/flyto-core/security/advisories/GHSA-jpmx-7xh3-vq6v) | high | `<= 2.28.0` | `2.28.1` | [`test_vision_modules_reject_sandbox_external_images`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-675h-j4qg-m52x](https://github.com/flytohub/flyto-core/security/advisories/GHSA-675h-j4qg-m52x) | high | `<= 2.28.0` | `2.28.1` | [`test_nested_test_steps_enforce_dangerous_permissions`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-r3jp-qf98-23v8](https://github.com/flytohub/flyto-core/security/advisories/GHSA-r3jp-qf98-23v8) | high | `<= 2.28.0` | `2.28.1` | [`test_browser_client_cannot_disable_ssrf_guard`](tests/core/test_reported_security_advisories.py) |
+| [GHSA-x2qh-79wh-6w7j](https://github.com/flytohub/flyto-core/security/advisories/GHSA-x2qh-79wh-6w7j) | high | `<= 2.28.0` | `2.28.1` | [`test_email_modules_enforce_filesystem_and_outbound_boundaries`](tests/core/test_reported_security_advisories.py) |
 
 ## Reporting
 
