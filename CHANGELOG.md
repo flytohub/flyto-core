@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The first customer-grade `flyto.plugin.v1` manifest/adoption slice: strict
+  closed, recursively canonical and bounded validation, including typed schema
+  keywords and Unicode-safe values and keys, rejecting C1, bidi, zero-width,
+  surrogate, private-use, unassigned/noncharacter, and line/paragraph separator
+  code points before canonicalization or error projection;
+  namespace/capability/module ownership rules,
+  exact dangerous-permission and parameter-schema controls, local artifact
+  SHA-256 verification through a descriptor-bound nofollow regular-file read
+  with a race-safe portable fallback and an unraiseable hard byte cap; derived
+  endpoint/token environment names, endpoint locality checks with a small
+  unique bounded ASCII host-authority allowlist for `same_network`, and detached
+  immutable adoption results. Existing adopted IDs are prevalidated as an exact
+  list or tuple of at most 256 unique bounded control-free ASCII reverse-DNS IDs
+  before membership, without consuming arbitrary iterables. Adoption is inert
+  and provides no process or OS sandboxing. Endpoint and allowlist text use the
+  same gate; stable errors never reflect hostile or secret-bearing text.
+
 ## [2.28.0] - 2026-08-13
 
 ### Added

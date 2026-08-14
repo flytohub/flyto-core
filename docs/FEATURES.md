@@ -44,6 +44,15 @@ visible without deriving either value from the module ID.
 Use `flyto modules --format json` to inspect the active runtime where the
 workflow will execute.
 
+The separate `flyto.plugin.v1` adoption helper validates manifests and local
+artifacts without installing or running them. Its collision check accepts only
+a bounded exact list/tuple of valid unique reverse-DNS plugin IDs; it does not
+iterate caller-defined collections.
+Before canonicalization, its shared text boundary rejects Unicode controls,
+bidi/zero-width formats, surrogates, private-use, unassigned/noncharacters, and
+line/paragraph separators in values, keys, endpoints, and allowlists. Stable
+errors do not echo rejected text.
+
 ## Browser Features
 
 Browser modules cover lifecycle, navigation, tabs, frames, dialogs, cookies,
@@ -63,7 +72,7 @@ evidence but does not decide the gate.
 
 - [All 468 active module schemas](TOOL_CATALOG.md)
 - [All 483 literal module implementations](reference/registered-modules.md)
-- [All 5,631 maintained Python declarations](reference/python-api.md)
+- [All 5,652 maintained Python declarations](reference/python-api.md)
 - [All CLI parsers](reference/cli.md)
 - [All HTTP decorators](reference/http-api.md)
 - [All environment readers and packaged workflow assets](reference/configuration.md)

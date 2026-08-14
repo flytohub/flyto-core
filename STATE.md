@@ -89,10 +89,20 @@
   `PluginService` / runtime plugin lifecycle (`src/core/api/plugins/service.py`,
   `src/core/plugin/`) is a separate surface: it is outside the transaction and
   outside the coverage kernel, and remains open work. It is not the only open
-  plugin surface — the `flyto.plugin.v1` manifest is still a DRAFT
-  specification and `RuntimeInvoker.set_plugin_manager` still has no caller, so
-  a workflow step cannot reach a plugin subprocess. See
-  `docs/specs/PLUGIN_MANIFEST_SPEC.md`.
+  plugin surface — the inert `flyto.plugin.v1` manifest/adoption slice is now
+  implemented, while `RuntimeInvoker.set_plugin_manager` still has no caller, so
+  a workflow step cannot reach a plugin subprocess. Adoption starts, installs,
+  loads, downloads, and executes nothing and claims no OS sandbox. Its shared
+  pre-canonicalization text boundary rejects C1 controls, bidi/zero-width
+  formats, surrogates, private-use, unassigned/noncharacters, and line/paragraph
+  separators across values, keys, endpoints, and allowlists without reflecting
+  hostile text in errors. Its
+  `same_network` endpoint boundary requires a small explicit unique bounded
+  ASCII host-authority allowlist and performs exact no-DNS matching. See
+  `docs/specs/PLUGIN_MANIFEST_SPEC.md`. Its existing-ID collision input is also
+  closed: only an exact list or tuple of at most 256 unique bounded control-free
+  ASCII reverse-DNS IDs reaches membership; arbitrary iterables are never
+  consumed.
 - Project memory structure has been bootstrapped for repeatable workflow and
   validation handoffs.
 - The repository already contains workflow assets and CI for maintained recipe
@@ -125,7 +135,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 955 maintained Python files, 5,631
+- Source-backed documentation now covers 955 maintained Python files, 5,652
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 107 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
@@ -557,9 +567,11 @@ deployment, or hardware claim is made.
 
 Still open, tracked separately: the out-of-process `PluginService` / runtime
 plugin lifecycle. That is this change's remaining scope, not a claim that it is
-the last open plugin surface — the DRAFT `flyto.plugin.v1` manifest and the
-uncalled `RuntimeInvoker.set_plugin_manager` are documented open in
+the last open plugin surface — the then-DRAFT `flyto.plugin.v1` manifest and the
+uncalled `RuntimeInvoker.set_plugin_manager` were documented open in
 `docs/specs/PLUGIN_MANIFEST_SPEC.md` and were neither touched nor assessed here.
+The manifest/adoption part of that historical statement is superseded by the
+current-state entry above; runtime wiring remains open.
 
 ### 2026-08-11 — registry 1.3.0 return-value closure: superseded by the acceptance above
 

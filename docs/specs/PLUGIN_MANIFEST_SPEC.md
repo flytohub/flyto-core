@@ -1,9 +1,10 @@
-# Flyto2 Plugin Manifest — `flyto.plugin.v1` (DRAFT)
+# Flyto2 Plugin Manifest — `flyto.plugin.v1`
 
-Status: **draft**. Nothing in this document is implemented unless the
-[Implementation status](#implementation-status) table says so. Sections marked
-**SPECIFIED** describe behaviour that does not exist yet; do not cite them as
-though it does.
+Status: **manifest/adoption slice implemented**. Validation, local artifact
+verification, derived configuration names, and endpoint locality checks are
+implemented. Adoption remains inert: it installs, loads, starts, downloads,
+and executes nothing. Process execution and operating-system containment are
+outside this slice and this document makes no sandbox claim.
 
 This is the contract by which a plugin — written in any language — tells Flyto2
 what it can do, and by which an operator decides what it may do. flyto-core is
@@ -127,6 +128,15 @@ data. The operator's separate act of installing and running the plugin is what
 grants it authority — a distinction worth keeping because it is the honest one:
 the authority was always the operator's, and adoption should not manufacture it.
 
+The host's `existing_plugin_ids` collision input is hostile configuration too.
+It MUST be an exact built-in list or tuple containing at most 256 unique,
+bounded, control-free ASCII IDs that each satisfy the same lowercase
+reverse-DNS grammar as `plugin.id`. The complete collection is validated before
+membership. A bool, string, mapping, generator, custom `Sequence`, oversized or
+duplicate collection, or invalid/control/surrogate element fails with one
+stable secret-free error; arbitrary iterables are never consumed or
+materialized.
+
 ---
 
 ## Reaching a plugin
@@ -152,10 +162,16 @@ the publisher, closes that by construction.
 | Value | Meaning |
 |---|---|
 | `same_host` | The endpoint MUST be loopback. Refuse anything else |
-| `same_network` | The endpoint MUST match `FLYTO_PLUGIN_ENDPOINT_ALLOWED_HOSTS` |
+| `same_network` | The endpoint authority MUST exactly match one entry in the explicit, non-empty `FLYTO_PLUGIN_ENDPOINT_ALLOWED_HOSTS` configuration |
 
 `same_host` is what "only touch hardware from the machine that has it" looks like
 when it is machine-checked instead of conventional.
+
+The `same_network` allowlist is a small bounded list or tuple of unique,
+bounded, control-free ASCII host authorities. Invalid, oversized, or duplicate
+entries fail before matching. Matching canonicalizes only ASCII host case, a
+single trailing DNS dot, IP spelling, and explicit port syntax; it performs no
+DNS lookup and does not infer a port or accept suffix matches.
 
 ---
 
@@ -220,10 +236,18 @@ modules:
 
 ### Rules a validator MUST apply
 
-- **Unknown keys are refused, naming the key.** Never silently ignored. The
+- **Unknown keys are refused without reflecting the key.** Never silently ignored. The
   existing `plugin.yaml` reader silently drops `entry_point`, which is how a
   field can be documented, written by every plugin, and read by nothing.
 - `schema` is compared before any other key is parsed.
+- Manifest values and keys, configured endpoints, and endpoint allowlist entries
+  are bounded UTF-8 and reject C1 controls, bidi overrides/isolates, zero-width
+  format characters, surrogates, private-use, unassigned/noncharacters, and
+  line/paragraph separators. Rejection occurs before canonicalization and
+  unknown-key/error projection; stable errors contain no rejected text.
+- Endpoint and allowlist validation precedes optional artifact access, so
+  rejected configuration causes no file, network, install, load, or execution
+  side effect.
 - Every `modules[].module_id` MUST begin `<namespace>.`.
 - The namespace MUST NOT be one flyto-core denies (`shell`, `process`,
   `sandbox`, `database`, `git`, `k8s`, `ssh`, `docker`, `file`, `env`, `flow`,
@@ -234,6 +258,11 @@ modules:
   parameter named `url`, `host`, `endpoint`, `address`, `gateway`, `command`,
   `argv`, `token` or `secret`. A host-shaped parameter is how the address rule
   gets reintroduced one plugin at a time.
+- The supported JSON Schema subset is recursive and keyword-typed: object
+  properties and unique `required` names must agree; arrays require `items`;
+  string and numeric bounds may appear only on compatible types and their
+  minima may not exceed maxima; `enum` is a non-empty unique list; and
+  `enum`, `default`, and `const` values must match the declared type.
 - A capability MUST NOT be declared for a module that cannot perform it. The
   evidence layer matches a gap to a producer; a module claiming a capability and
   returning nothing turns "escalate to something that can do this" into
@@ -286,19 +315,20 @@ where it is *verified*.
 | `provides_capability` + `ModuleRegistry.capabilities()` | **Implemented**, verified against a real installed plugin |
 | Per-plugin grants, allow/deny, ownership stamping (in-process) | **Implemented**, 24 tests |
 | Global filter runs before the plugin dimension | **Implemented** |
-| Manifest schema and validator | **Not implemented** |
-| `artifact.digest` verification | **Not implemented** |
-| Derived endpoint/token env names | **Not implemented** |
-| `locality` enforcement | **Not implemented** |
+| Manifest schema and validator | **Implemented**, strict closed/bounded recursively canonical validation with unsafe Unicode rejected before canonicalization/error projection |
+| `artifact.digest` verification | **Implemented**, offline descriptor-bound nofollow regular-file SHA-256 verification with a race-safe fallback and hard byte cap |
+| Derived endpoint/token env names | **Implemented** |
+| `locality` enforcement | **Implemented** for configured endpoints without DNS resolution |
 | Policy gate on the out-of-process path | **Implemented**, 7 tests |
-| Registry / adoption in flyto-cloud | **Not implemented** |
+| Inert adoption result in flyto-core | **Implemented**; starts/installs/loads nothing |
+| Existing-ID collision input | **Implemented**; exact bounded list/tuple validated before safe membership |
+| Registry / lifecycle adoption in flyto-cloud | **Not implemented** |
 
 ## Open questions
 
 - **Reconciling with the existing `plugin.yaml`.** `docs/PLUGIN_SDK.md`
-  documents a different manifest and a 14-language table. Whether
-  `flyto.plugin.v1` supersedes it, or the two coexist with a converter, is not
-  decided here.
+  documents a different manifest and a 14-language table. The contracts
+  currently coexist; no implicit conversion or lifecycle connection exists.
 - **Per-plugin policy for out-of-process plugins** needs the plugin id to reach
   the gate; where that call belongs is a design decision, not a field.
 - **Namespace allocation.** Reverse-DNS ids are self-asserted until a registry

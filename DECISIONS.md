@@ -169,6 +169,41 @@ out-of-process plugin path has no `enforce_module_policy` call, and
 reach a plugin subprocess today. It is one wiring change from working and the
 same change from being a policy bypass.
 
+## 2026-08-14 - Plugin adoption is inert, strict, and offline
+
+Decision: implement only the `flyto.plugin.v1` manifest/adoption boundary in
+flyto-core. Every defined object is closed, input is copied into bounded JSON
+data before interpretation, identities and relationships are checked exactly,
+schema keywords are admitted only on compatible types, and the returned tree is
+recursively key-sorted, detached, and immutable after adoption. The shared text
+boundary applies the same UTF-8 and size rules to values, mapping keys,
+endpoints, and endpoint allowlists. It rejects C1 controls, bidi and zero-width
+formats, surrogates, private-use, unassigned/noncharacters, and line/paragraph
+separators before canonicalization or unknown-key/error projection. Errors are
+stable static messages that reflect no hostile text. A `same_network` allowlist is
+a small explicit non-empty list or tuple of unique bounded ASCII host
+authorities, validated before matching without DNS. Artifact proof reads an
+already-local regular file through one nofollow descriptor with a size bound
+that callers cannot raise above the hard cap and exact SHA-256 comparison. A
+platform without `O_NOFOLLOW` uses `lstat`/descriptor identity comparison and
+still reads only the opened descriptor. Endpoint and token environment names are derived
+only from the validated namespace; endpoint locality uses literal loopback or
+an explicit host allowlist and performs no DNS lookup. Endpoint and allowlist
+validation precedes artifact access, so rejected configuration opens no file.
+
+The set of IDs already adopted by the host crosses the same hostile caller
+boundary. It is accepted only as an exact built-in list or tuple with at most
+256 unique, bounded, control-free ASCII reverse-DNS plugin IDs. Validation
+precedes membership; mappings, generators, custom sequences, and other
+arbitrary iterables are rejected without iteration or materialization. Every
+failure of that argument uses one stable message that reflects no element.
+
+Adoption does not download, install, load, start, or execute a plugin. It does
+not connect this contract to the legacy runtime and does not claim operating
+system sandboxing. Those lifecycle and containment questions remain separate.
+This supersedes only the 2026-08-08 decision's draft status, not its authority
+analysis or warning about the unconnected runtime.
+
 ## 2026-08-08 - Policy has a plugin dimension, and it can only narrow
 
 Decision: `enforce_module_policy` takes the plugin a module arrived from, and

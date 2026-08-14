@@ -14,7 +14,7 @@
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  955 maintained Python files, 5,631 declarations, 483 literal module
+  955 maintained Python files, 5,652 declarations, 483 literal module
   registrations, 28 HTTP operations, 107 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
@@ -81,6 +81,15 @@ each physical directory there, and records the resulting ID-to-directory map.
 Later API requests can only select from that validated map; an invalid ID or a
 directory symlink that escapes the root fails closed before language detection
 or entry-point access.
+
+The separate inert `flyto.plugin.v1` adoption boundary accepts previously
+adopted IDs only as an exact list or tuple of at most 256 unique bounded ASCII
+reverse-DNS IDs. It validates that collection before membership, so arbitrary
+iterables and custom sequences cannot run code through adoption.
+Its shared text gate rejects C1 controls, bidi and zero-width formats,
+surrogates, private-use, unassigned/noncharacters, and line/paragraph separators
+before canonicalization or error projection across values, keys, endpoints, and
+allowlists. Failures use stable static text only.
 
 Provider SDKs, browsers, image/crypto/DNS features, and server frameworks are
 capability extras. Base-package import cannot assume every extra is installed;

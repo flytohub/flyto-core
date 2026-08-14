@@ -12,8 +12,8 @@
   documented open separately (see the next item).
 - Other plugin surfaces documented open in this repository, listed so the item
   above is not read as covering them. Per `docs/specs/PLUGIN_MANIFEST_SPEC.md`:
-  the `flyto.plugin.v1` manifest is a DRAFT specification, not an implemented
-  contract; `RuntimeInvoker.set_plugin_manager` has no caller anywhere, leaving
+  the `flyto.plugin.v1` manifest/adoption slice is implemented but deliberately
+  inert; `RuntimeInvoker.set_plugin_manager` has no caller anywhere, leaving
   `_plugin_manager` as `None` so a workflow step cannot reach a plugin
   subprocess; and the limits on what flyto-core can bound for a plugin running
   as its own process are recorded there rather than resolved. Neither the
@@ -39,6 +39,18 @@
 - Module parameter drift that is not reflected in examples or tests.
 
 ## Done
+
+- Implemented the first inert `flyto.plugin.v1` supply-chain/adoption slice:
+  strict bounded recursively canonical closed-schema validation, shared
+  pre-canonicalization unsafe-Unicode rejection for values, keys, endpoints,
+  and allowlists with stable non-reflective errors, offline descriptor-bound artifact digest verification
+  with a portable race-safe nofollow fallback and hard cap, derived environment
+  names, exact no-DNS locality checks with a small unique bounded ASCII
+  host-authority allowlist, immutable detached results, and focused hostile-input
+  and descriptor-race coverage. Existing-ID collision checks accept only an
+  exact list/tuple of at most 256 unique bounded control-free ASCII reverse-DNS
+  IDs, validated before membership without consuming arbitrary iterables. It does not install,
+  load, start, download, execute, or provide OS containment.
 
 - Closed the capability/extension/runtime change set on 2026-08-12: all pinned
   checks and 2,785 non-browser/e2e tests pass. Codex also fixed a routed-plugin

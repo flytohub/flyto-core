@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **955 Python files**, **199,442 lines**, and **5,631 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **955 Python files**, **200,035 lines**, and **5,652 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -922,7 +922,7 @@ Inventory: **955 Python files**, **199,442 lines**, and **5,631 class/function/m
 | [`src/core/modules/validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1) | 1132 | 31 | `ast, dataclasses, inspect, logging, re, registry, typing` | Unified Module Validator - Comprehensive validation for module registration |
 | [`src/core/plugin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/__init__.py#L1) | 46 | 0 | `manifest` | Flyto2 Plugin System |
 | [`src/core/plugin/loader.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/loader.py#L1) | 1152 | 42 | `core, dataclasses, datetime, importlib, json, logging, manifest, os, pathlib, re, subprocess, sys` | Extension (Plugin) Loader |
-| [`src/core/plugin/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/manifest.py#L1) | 381 | 18 | `dataclasses, datetime, enum, json, typing` | Plugin Manifest Schema |
+| [`src/core/plugin/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/manifest.py#L1) | 974 | 39 | `contextlib, dataclasses, datetime, enum, hashlib, ipaddress, json, os, re, stat, types, typing` | Plugin Manifest Schema |
 | [`src/core/plugin/registry.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/registry.py#L1) | 174 | 10 | `json, logging, pathlib, time, typing, urllib` | Plugin Registry |
 | [`src/core/quickstart.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/quickstart.py#L1) | 305 | 8 | `asyncio, core, json, os, pathlib, shutil, sys, time` | flyto-core Quickstart — see a data pipeline with evidence + replay in 30 seconds. |
 | [`src/core/recipe_bundles.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/recipe_bundles.py#L1) | 208 | 13 | `__future__, pathlib, re, typing, yaml` | Recipe bundle planning for Cloud and MCP consumers. |

@@ -169,6 +169,37 @@ checks:
     timeout_seconds: 300
     required: true
 
+  # Inert flyto.plugin.v1 supply-chain/adoption surface. This validates and
+  # verifies local bytes only; it never installs, loads, downloads, or runs a
+  # plugin. The focused lane includes canonical recursive schema validation,
+  # hostile mapping/key controls, Unicode unsafe-scalar rejection before error
+  # projection, descriptor-bound races, the portable nofollow fallback,
+  # endpoint/allowlist controls, the hard artifact byte ceiling, and
+  # hostile existing-plugin collections rejected before iteration/membership.
+  - name: lint_plugin_supply_chain
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "src/core/plugin/manifest.py"
+      - "tests/core/test_plugin_supply_chain.py"
+    timeout_seconds: 300
+    required: true
+
+  - name: plugin_supply_chain
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "pytest"
+      - "-p"
+      - "no:cacheprovider"
+      - "--no-cov"
+      - "-q"
+      - "tests/core/test_plugin_supply_chain.py"
+    timeout_seconds: 300
+    required: true
+
   # Deterministic proof for the extension contract: prefix/entry-point-group
   # admission, argv-and-scrubbed-env pip invocation, stable error codes with no
   # subprocess output in any response, entry-point proof, rollback of a failed

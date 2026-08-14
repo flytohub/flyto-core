@@ -7,8 +7,8 @@
 | Runtime catalog | 468 modules, 85 categories |
 | Literal module registrations | 483 |
 | Packaged recipes | 41 |
-| Maintained Python source | 955 files, 199,204 lines |
-| Python declarations | 5,631 across 808 files |
+| Maintained Python source | 955 files, 200,031 lines |
+| Python declarations | 5,652 across 808 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 28 |
 | Environment-variable names | 107 |
@@ -25,6 +25,11 @@ either value from the module ID.
   internal key are configured.
 - Eight plugin HTTP handlers are defined by a router factory but not mounted by
   the current Execution API.
+- `flyto.plugin.v1` validation and inert adoption are implemented, including a
+  prevalidated bounded built-in collection for existing-ID collision checks;
+  its shared value/key/endpoint/allowlist gate rejects unsafe Unicode before
+  canonicalization and error projection. Registry lifecycle adoption and
+  runtime execution are not implemented by it.
 - Optional provider modules depend on their SDK, credential, policy, and network
   environment; static registration is not deployment proof.
 
