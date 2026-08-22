@@ -1,5 +1,11 @@
 # Flyto2 Core Documentation
 
+Flyto2 turns AI work into verified, replayable procedures: "AI said it
+finished. Flyto2 shows the proof." `flyto-ai` understands/routes/governs new
+work, `flyto-blueprint` stores/learns/scores procedures and never executes, and
+standalone `flyto-core` validates schemas, executes/replays deterministically,
+and emits evidence. The repo-local role contract is [`flyto-product.toml`](../flyto-product.toml).
+
 ## Start Here
 
 - [Technical Whitepaper](WHITEPAPER.md): product boundary, architecture,
@@ -58,7 +64,7 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 955 maintained Python files and 5,652 declarations.
+- 955 maintained Python files and 5,653 declarations.
 - 483 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 107 environment-variable readers.

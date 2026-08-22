@@ -1,5 +1,14 @@
 # Flyto2 Core Architecture
 
+## Product Layers
+
+Flyto2 is one product with three independently usable packages. `flyto-ai`
+understands, routes, and governs new work and provider use. `flyto-blueprint`
+stores, learns from, and scores reusable procedures and never executes them.
+`flyto-core`, layer three, validates schemas, executes and replays procedures
+deterministically, and emits evidence. Core is a standalone runtime and does not
+own the first two layers or hosted product/account logic.
+
 ## Boundaries
 
 - Modules expose narrow automation actions and documented parameters.
@@ -14,7 +23,7 @@
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  955 maintained Python files, 5,652 declarations, 483 literal module
+  955 maintained Python files, 5,653 declarations, 483 literal module
   registrations, 28 HTTP operations, 107 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 

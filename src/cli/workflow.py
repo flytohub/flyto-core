@@ -4,13 +4,36 @@ CLI Workflow Utilities
 Workflow listing, selection, and parameter collection.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
 
-from .config import CLI_LINE_WIDTH, Colors, CONFIG_FILE, WORKFLOWS_DIR
+from .config import CLI_LINE_WIDTH, CONFIG_FILE, WORKFLOWS_DIR, Colors
 from .i18n import I18n
+
+WORKFLOW_SUFFIXES = frozenset({'.yaml', '.yml'})
+
+
+def sanitize_workflow_path(candidate: Path) -> Path:
+    """Return a canonical, existing YAML workflow file path."""
+    path = Path(candidate).expanduser()
+    if path.suffix.lower() not in WORKFLOW_SUFFIXES:
+        raise ValueError("Workflow path must end in .yaml or .yml")
+
+    try:
+        resolved = Path(os.path.realpath(os.fspath(path)))
+        if not resolved.exists():
+            raise ValueError("Workflow file does not exist")
+        if not resolved.is_file():
+            raise ValueError("Workflow path must be a regular file")
+    except (OSError, RuntimeError) as exc:
+        raise ValueError("Workflow file could not be resolved") from exc
+
+    if resolved.suffix.lower() not in WORKFLOW_SUFFIXES:
+        raise ValueError("Resolved workflow path must end in .yaml or .yml")
+    return resolved
 
 
 def load_config() -> Dict[str, Any]:
@@ -26,7 +49,13 @@ def list_workflows() -> List[Path]:
     if not WORKFLOWS_DIR.exists():
         return []
 
-    return list(WORKFLOWS_DIR.glob('*.yaml'))
+    workflows = []
+    for candidate in WORKFLOWS_DIR.glob('*.yaml'):
+        try:
+            workflows.append(sanitize_workflow_path(candidate))
+        except ValueError:
+            continue
+    return workflows
 
 
 def select_workflow(i18n: I18n) -> Optional[Path]:
@@ -51,10 +80,7 @@ def select_workflow(i18n: I18n) -> Optional[Path]:
         desc = workflow.get('description', {})
 
         # Get localized description
-        if isinstance(desc, dict):
-            desc_text = desc.get(i18n.lang, desc.get('en', ''))
-        else:
-            desc_text = desc
+        desc_text = desc.get(i18n.lang, desc.get('en', '')) if isinstance(desc, dict) else desc
 
         print(f"  {idx}. {Colors.OKGREEN}{name}{Colors.ENDC}")
         if desc_text:
@@ -94,10 +120,7 @@ def get_param_input(param: Dict[str, Any], i18n: I18n) -> Any:
 
     # Get description
     desc = param.get('description', {})
-    if isinstance(desc, dict):
-        desc_text = desc.get(i18n.lang, desc.get('en', ''))
-    else:
-        desc_text = desc or ''
+    desc_text = desc.get(i18n.lang, desc.get('en', '')) if isinstance(desc, dict) else desc or ''
 
     # Show parameter info
     print()

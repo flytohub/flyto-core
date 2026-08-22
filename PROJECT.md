@@ -2,14 +2,16 @@
 
 ## Mission
 
-`flyto-core` provides automation modules, recipes, browser control, and workflow
-validation used to prove Flyto2 product loops end to end.
+Flyto2 turns AI work into verified, replayable procedures. Its proof line is:
+"AI said it finished. Flyto2 shows the proof."
 
 ## Product Role
 
-Core turns product expectations into repeatable checks: browser smoke, API
-pipelines, YAML recipes, module execution, and validation workflows. It is the
-practical bridge between code changes and observable product behavior.
+Flyto2 has three independently usable packages. `flyto-ai` understands, routes,
+and governs new work and providers. `flyto-blueprint` stores, learns from, and
+scores reusable procedures but never executes them. Layer-three `flyto-core`
+validates schemas, executes and replays deterministically, and emits evidence.
+Core works standalone; it does not require AI or Blueprint for those duties.
 
 For Flyto2 Warroom, core is the deterministic verification engine: discover the
 site graph, generate replay YAML, run module-level assertions, and produce
@@ -46,6 +48,8 @@ categories, with 41 maintained built-in recipes exposed through the CLI.
 
 ## Non-Goals
 
+- Intent routing or provider governance owned by `flyto-ai`.
+- Procedure learning or scoring owned by `flyto-blueprint`.
 - Hosted account, billing, team, or marketplace business logic owned by Cloud.
 - Product UI behavior owned by Console, App, Admin, or the public websites.
 - Treating optional provider availability or LLM output as deterministic proof.
