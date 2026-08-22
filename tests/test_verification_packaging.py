@@ -5,6 +5,11 @@ from pathlib import Path
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
+REVERSE_WORKER_PACKAGE_PATHS = {
+    "core/modules/atomic/reverse/deobfuscate_worker/package.json",
+    "core/modules/atomic/reverse/deobfuscate_worker/package-lock.json",
+    "core/modules/atomic/reverse/deobfuscate_worker/worker.mjs",
+}
 VISUAL_WORKER_PACKAGE_PATHS = {
     "core/modules/atomic/testing/visual_worker/package.json",
     "core/modules/atomic/testing/visual_worker/package-lock.json",
@@ -55,8 +60,8 @@ def test_verification_image_still_excludes_markdown_bulk() -> None:
     assert _dockerignore_ignores("handoffs/2026-06-23-example.md")
 
 
-def test_built_wheel_contains_the_detachable_visual_worker(tmp_path: Path) -> None:
-    """Build the real wheel and prove the worker contract is distributable."""
+def test_built_wheel_keeps_workers_and_excludes_development_trees(tmp_path: Path) -> None:
+    """Inspect the real wheel's required workers and release-hygiene boundary."""
     subprocess.run(
         [sys.executable, "-m", "build", "--wheel", "--no-isolation", "--outdir", str(tmp_path)],
         cwd=ROOT,
@@ -71,4 +76,13 @@ def test_built_wheel_contains_the_detachable_visual_worker(tmp_path: Path) -> No
     assert len(wheels) == 1
     with ZipFile(wheels[0]) as archive:
         members = set(archive.namelist())
-    assert members >= VISUAL_WORKER_PACKAGE_PATHS
+    assert members >= REVERSE_WORKER_PACKAGE_PATHS | VISUAL_WORKER_PACKAGE_PATHS
+    forbidden = {
+        member
+        for member in members
+        if "/node_modules/" in f"/{member}"
+        or member.startswith("core/tests/")
+        or "/__pycache__/" in f"/{member}"
+        or member.endswith(".pyc")
+    }
+    assert forbidden == set()

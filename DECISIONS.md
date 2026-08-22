@@ -1,5 +1,54 @@
 # Decisions
 
+## 2026-08-22 - Local workflow paths are canonicalized at CLI selection
+
+Decision: both interactive and non-interactive local CLI selections pass
+through one boundary before any workflow read or execution. The boundary
+resolves the path, requires an existing regular file and accepts only `.yaml`
+or `.yml`. Both execution sinks pass a direct fresh boundary result to the
+runner, so a path changed or removed after its initial read fails through the
+existing invalid-workflow CLI behavior. It intentionally permits valid absolute
+paths and relative traversal outside the current directory; this is not a
+repository-root sandbox.
+
+Reason: canonicalizing the selected object closes ambiguous user-input flows at
+the CLI sinks without changing the explicit capability to run any local
+workflow the operator selected. This is defense-in-depth until evidence proves
+otherwise; it does not establish remote exploitability and creates no CVE or
+advisory.
+
+Rollback and boundary: revert the helper and its two CLI call sites, the
+focused regression test, and the matching CHANGELOG/STATE/DECISIONS entries.
+APIs, dependencies, version, module catalog, workflow semantics/content, and
+security policy are unchanged.
+
+Implementation attribution: source declaration and line movement is planned to
+regenerate, rather than hand-maintain, `docs/FEATURES.md`,
+`docs/MIGRATION_STATUS.md`, `docs/WHITEPAPER.md`, `docs/reference/cli.md`,
+`docs/reference/python-api.md`, and `docs/reference/source-modules.md`. Those
+six generated consumers are part of this boundary change and no broader
+documentation surface is attributed to it.
+
+## 2026-08-22 - Core is Flyto2's independently usable execution layer
+
+Decision: publish a repo-local `flyto.product-contract.v1` identifying
+`flyto-core` as layer three. Core owns schema validation, deterministic
+execution/replay, and evidence. `flyto-ai` owns understanding, routing, and
+intent/provider governance; `flyto-blueprint` owns reusable-procedure learning
+and scoring and never executes. Each package is independently usable.
+
+Reason: one product promise and explicit package choices prevent public copy
+from making Core sound like the whole product or making the package chain sound
+mandatory. The wheel follows the same boundary: ship runtime packages and the
+two explicitly declared worker sources, but exclude tests, dependency trees,
+caches, and bytecode. Rollback is limited to the product-contract, public-copy,
+memory, and packaging-rule changes from this decision.
+
+Boundary: this changes no API, version, catalog, dependency, workflow, or
+security policy. It does not repair or claim repair of the documented
+out-of-process plugin/runtime wiring gaps, and it makes no adoption,
+publication, CI, merge, or external-validation claim.
+
 ## 2026-08-12 - Capability policy follows the resolved handler identity
 
 Decision: route a legacy module id first, then apply capability policy before

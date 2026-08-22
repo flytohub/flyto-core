@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,652 declarations across 808 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,653 declarations across 808 files**.
 
 ## `demo.py`
 
@@ -570,10 +570,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def add_serve_parser(subparsers) -> None` | Add serve subcommand for HTTP Execution API server. | [`src/cli/main.py:52`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L52) |
-| function | `def run_serve_command(host: str='127.0.0.1', port: int=8333) -> int` | Start the HTTP Execution API server. | [`src/cli/main.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L65) |
-| function | `def add_run_parser(subparsers) -> None` | Add run subcommand for workflow execution. | [`src/cli/main.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L78) |
-| function | `def main() -> None` | Main CLI entry point | [`src/cli/main.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L99) |
+| function | `def add_serve_parser(subparsers) -> None` | Add serve subcommand for HTTP Execution API server. | [`src/cli/main.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L74) |
+| function | `def run_serve_command(host: str='127.0.0.1', port: int=8333) -> int` | Start the HTTP Execution API server. | [`src/cli/main.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L87) |
+| function | `def add_run_parser(subparsers) -> None` | Add run subcommand for workflow execution. | [`src/cli/main.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L100) |
+| function | `def main() -> None` | Main CLI entry point | [`src/cli/main.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L121) |
 
 ## `src/cli/modules.py`
 
@@ -673,11 +673,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def load_config() -> Dict&#91;str, Any&#93;` | Load global configuration | [`src/cli/workflow.py:16`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L16) |
-| function | `def list_workflows() -> List&#91;Path&#93;` | List available workflows | [`src/cli/workflow.py:24`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L24) |
-| function | `def select_workflow(i18n: I18n) -> Optional&#91;Path&#93;` | Interactive workflow selection | [`src/cli/workflow.py:32`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L32) |
-| function | `def get_param_input(param: Dict&#91;str, Any&#93;, i18n: I18n) -> Any` | Get user input for a parameter | [`src/cli/workflow.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L83) |
-| function | `def collect_params(workflow: Dict&#91;str, Any&#93;, i18n: I18n) -> Dict&#91;str, Any&#93;` | Collect parameters from user | [`src/cli/workflow.py:160`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L160) |
+| function | `def sanitize_workflow_path(candidate: Path) -> Path` | Return a canonical, existing YAML workflow file path. | [`src/cli/workflow.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L19) |
+| function | `def load_config() -> Dict&#91;str, Any&#93;` | Load global configuration | [`src/cli/workflow.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L39) |
+| function | `def list_workflows() -> List&#91;Path&#93;` | List available workflows | [`src/cli/workflow.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L47) |
+| function | `def select_workflow(i18n: I18n) -> Optional&#91;Path&#93;` | Interactive workflow selection | [`src/cli/workflow.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L61) |
+| function | `def get_param_input(param: Dict&#91;str, Any&#93;, i18n: I18n) -> Any` | Get user input for a parameter | [`src/cli/workflow.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L109) |
+| function | `def collect_params(workflow: Dict&#91;str, Any&#93;, i18n: I18n) -> Dict&#91;str, Any&#93;` | Collect parameters from user | [`src/cli/workflow.py:183`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L183) |
 
 ## `src/core/analysis/html_analyzer.py`
 

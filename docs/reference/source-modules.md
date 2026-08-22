@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **955 Python files**, **200,064 lines**, and **5,652 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **955 Python files**, **200,128 lines**, and **5,653 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -60,7 +60,7 @@ Inventory: **955 Python files**, **200,064 lines**, and **5,652 class/function/m
 | [`src/cli/i18n.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/i18n.py#L1) | 64 | 3 | `none` | CLI Internationalization Stub |
 | [`src/cli/interactive.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/interactive.py#L1) | 409 | 23 | `dataclasses, enum, os, pathlib, sys, typing` | Interactive CLI Menu System |
 | [`src/cli/learn.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/learn.py#L1) | 245 | 2 | `asyncio, config, core, json, os, pathlib, sys, time, typing` | flyto learn — AI explores a task, then compiles to a reusable recipe. |
-| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 338 | 4 | `argparse, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe, runner` | Workflow Automation Engine - Standalone CLI |
+| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 379 | 4 | `argparse, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe, runner` | Workflow Automation Engine - Standalone CLI |
 | [`src/cli/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L1) | 163 | 4 | `config, core, datetime, importlib, json, os, sys, typing` | CLI Module Listing Command |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
@@ -68,7 +68,7 @@ Inventory: **955 Python files**, **200,064 lines**, and **5,652 class/function/m
 | [`src/cli/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/runner.py#L1) | 152 | 6 | `asyncio, config, core, datetime, i18n, json, pathlib, sys, time, typing, yaml` | CLI Workflow Runner |
 | [`src/cli/template.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/template.py#L1) | 446 | 15 | `config, json, os, pathlib, sys, urllib` | CLI Template Commands |
 | [`src/cli/ui.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/ui.py#L1) | 41 | 3 | `config, i18n` | CLI User Interface |
-| [`src/cli/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L1) | 178 | 5 | `config, i18n, pathlib, typing, yaml` | CLI Workflow Utilities |
+| [`src/cli/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L1) | 201 | 6 | `config, i18n, os, pathlib, typing, yaml` | CLI Workflow Utilities |
 | [`src/core/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/__init__.py#L1) | 103 | 0 | `constants, importlib, utils` | Flyto2 Core - YAML Workflow Automation Engine |
 | [`src/core/analysis/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/analysis/__init__.py#L1) | 11 | 0 | `html_analyzer` | Core Analysis Package - Stub for OSS version |
 | [`src/core/analysis/html_analyzer.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/analysis/html_analyzer.py#L1) | 61 | 8 | `typing` | HTML Analyzer - Stub for OSS version |
