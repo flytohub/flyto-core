@@ -13,16 +13,18 @@ Usage:
 
 import argparse
 import ast
-import inspect
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+SAFE_SEGMENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 
 
 @dataclass
@@ -67,15 +69,23 @@ class ModuleMigrator:
     }
 
     def __init__(self, src_path: Path, plugins_path: Path):
-        self.src_path = src_path
-        self.plugins_path = plugins_path
-        self.modules_path = src_path / "core" / "modules" / "atomic"
+        self.src_path = Path(os.path.realpath(os.path.expanduser(str(src_path))))
+        self.plugins_path = Path(os.path.realpath(os.path.expanduser(str(plugins_path))))
+        self.modules_path = self.src_path / "core" / "modules" / "atomic"
 
     def discover_modules(self, category: Optional[str] = None) -> List[ModuleInfo]:
         """Discover all modules in a category."""
         modules = []
 
         if category:
+            if (
+                not isinstance(category, str)
+                or SAFE_SEGMENT.fullmatch(category) is None
+                or Path(category).is_absolute()
+                or "/" in category
+                or "\\" in category
+            ):
+                raise ValueError(f"category must be a single safe segment: {category!r}")
             categories = [category]
         else:
             categories = list(self.HEAVY_CATEGORIES)
@@ -131,9 +141,10 @@ class ModuleMigrator:
                                 if target.id == "module_name":
                                     if isinstance(item.value, ast.Constant):
                                         module_name = item.value.value
-                                elif target.id == "module_description":
-                                    if isinstance(item.value, ast.Constant):
-                                        module_description = item.value.value
+                                elif target.id == "module_description" and isinstance(
+                                    item.value, ast.Constant
+                                ):
+                                    module_description = item.value.value
 
                 if not module_name:
                     module_name = node.name
@@ -576,6 +587,27 @@ __all__ = [
 
     def migrate_category(self, category: str, module_ids: Optional[List[str]] = None) -> Path:
         """Migrate a category or specific modules to plugin format."""
+        if (
+            not isinstance(category, str)
+            or SAFE_SEGMENT.fullmatch(category) is None
+            or Path(category).is_absolute()
+            or "/" in category
+            or "\\" in category
+        ):
+            raise ValueError(f"category must be a single safe segment: {category!r}")
+        if module_ids:
+            for module_id in module_ids:
+                components = module_id.split(".") if isinstance(module_id, str) else []
+                if len(components) < 2 or any(
+                    SAFE_SEGMENT.fullmatch(component) is None
+                    or Path(component).is_absolute()
+                    or "/" in component
+                    or "\\" in component
+                    for component in components
+                ):
+                    raise ValueError(f"invalid module ID: {module_id!r}")
+            if any(module_id.split(".", 1)[0] != category for module_id in module_ids):
+                raise ValueError("every module ID must belong to the selected category")
         print(f"\nMigrating {category} modules...")
 
         # Discover modules
@@ -593,22 +625,69 @@ __all__ = [
 
         print(f"  Found {len(modules)} modules: {[m.action for m in modules]}")
 
-        # Create plugin directory
-        plugin_dir = self.plugins_path / f"flyto-official_{category}"
+        for module in modules:
+            if (
+                not isinstance(module.action, str)
+                or SAFE_SEGMENT.fullmatch(module.action) is None
+                or Path(module.action).is_absolute()
+                or "/" in module.action
+                or "\\" in module.action
+            ):
+                raise ValueError(
+                    f"discovered module action must be a single safe segment: "
+                    f"{module.action!r}"
+                )
+
+        # Derive and confine the complete output set before the first file write.
+        selected_plugin_dir = self.plugins_path / f"flyto-official_{category}"
+        selected_steps_dir = selected_plugin_dir / "steps"
+        output_paths = {
+            "plugin_dir": selected_plugin_dir,
+            "steps_dir": selected_steps_dir,
+            "manifest": selected_plugin_dir / "plugin.manifest.json",
+            "main": selected_plugin_dir / "main.py",
+            "init": selected_steps_dir / "__init__.py",
+            "requirements": selected_plugin_dir / "requirements.txt",
+        }
+        step_paths = {
+            module.action: selected_steps_dir / f"{module.action}.py"
+            for module in modules
+        }
+        for name, selected_path in output_paths.items():
+            canonical = Path(os.path.realpath(selected_path))
+            try:
+                canonical.relative_to(self.plugins_path)
+            except ValueError as exc:
+                raise ValueError(
+                    f"output path escapes the selected plugins root: {selected_path}"
+                ) from exc
+            output_paths[name] = canonical
+        for action, selected_path in step_paths.items():
+            canonical = Path(os.path.realpath(selected_path))
+            try:
+                canonical.relative_to(self.plugins_path)
+            except ValueError as exc:
+                raise ValueError(
+                    f"output path escapes the selected plugins root: {selected_path}"
+                ) from exc
+            step_paths[action] = canonical
+
+        # Create plugin directory using only the canonical confined paths.
+        plugin_dir = output_paths["plugin_dir"]
         plugin_dir.mkdir(parents=True, exist_ok=True)
-        steps_dir = plugin_dir / "steps"
+        steps_dir = output_paths["steps_dir"]
         steps_dir.mkdir(exist_ok=True)
 
         # Generate manifest
         manifest = self.generate_manifest(category, modules)
-        manifest_path = plugin_dir / "plugin.manifest.json"
+        manifest_path = output_paths["manifest"]
         with open(manifest_path, "w") as f:
             json.dump(manifest, f, indent=2)
         print(f"  Created {manifest_path}")
 
         # Generate main.py
         main_py = self.generate_main_py(category, modules)
-        main_path = plugin_dir / "main.py"
+        main_path = output_paths["main"]
         with open(main_path, "w") as f:
             f.write(main_py)
         print(f"  Created {main_path}")
@@ -616,21 +695,21 @@ __all__ = [
         # Generate step files
         for mod in modules:
             step_file = self.generate_step_file(mod)
-            step_path = steps_dir / f"{mod.action}.py"
+            step_path = step_paths[mod.action]
             with open(step_path, "w") as f:
                 f.write(step_file)
             print(f"  Created {step_path}")
 
         # Generate __init__.py
         init_file = self.generate_init_file(modules)
-        init_path = steps_dir / "__init__.py"
+        init_path = output_paths["init"]
         with open(init_path, "w") as f:
             f.write(init_file)
         print(f"  Created {init_path}")
 
         # Generate requirements.txt
         reqs = self.generate_requirements(category)
-        reqs_path = plugin_dir / "requirements.txt"
+        reqs_path = output_paths["requirements"]
         with open(reqs_path, "w") as f:
             f.write(reqs)
         print(f"  Created {reqs_path}")
@@ -649,10 +728,38 @@ def main():
 
     args = parser.parse_args()
 
-    # Resolve paths
+    # Resolve paths at the CLI boundary.
     base_path = Path(__file__).parent.parent
-    src_path = base_path / args.src
-    plugins_path = base_path / args.plugins
+    try:
+        selected_src = Path(os.path.expanduser(args.src))
+        selected_plugins = Path(os.path.expanduser(args.plugins))
+        src_path = Path(os.path.realpath(str(
+            selected_src if selected_src.is_absolute() else base_path / selected_src
+        )))
+        plugins_path = Path(os.path.realpath(str(
+            selected_plugins if selected_plugins.is_absolute() else base_path / selected_plugins
+        )))
+        category = args.category
+        if category and (
+            SAFE_SEGMENT.fullmatch(category) is None
+            or Path(category).is_absolute()
+            or "/" in category
+            or "\\" in category
+        ):
+            raise ValueError(f"category must be a single safe segment: {category!r}")
+        module_ids = args.modules
+        for module_id in module_ids:
+            components = module_id.split(".")
+            if len(components) < 2 or any(
+                SAFE_SEGMENT.fullmatch(component) is None
+                or Path(component).is_absolute()
+                or "/" in component
+                or "\\" in component
+                for component in components
+            ):
+                raise ValueError(f"invalid module ID: {module_id!r}")
+    except (OSError, TypeError, ValueError) as exc:
+        parser.error(str(exc))
 
     migrator = ModuleMigrator(src_path, plugins_path)
 
@@ -660,13 +767,13 @@ def main():
         # Migrate all heavy categories
         for category in ModuleMigrator.HEAVY_CATEGORIES:
             migrator.migrate_category(category)
-    elif args.category:
+    elif category:
         # Migrate entire category
-        migrator.migrate_category(args.category)
-    elif args.modules:
+        migrator.migrate_category(category)
+    elif module_ids:
         # Migrate specific modules
         by_category: Dict[str, List[str]] = {}
-        for mod_id in args.modules:
+        for mod_id in module_ids:
             parts = mod_id.split(".")
             if len(parts) >= 2:
                 cat = parts[0]

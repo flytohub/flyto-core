@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **955 Python files**, **200,128 lines**, and **5,653 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **955 Python files**, **200,243 lines**, and **5,653 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -22,7 +22,7 @@ Inventory: **955 Python files**, **200,128 lines**, and **5,653 class/function/m
 | [`scripts/batch_update_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/batch_update_connection_rules.py#L1) | 464 | 8 | `argparse, os, pathlib, re, typing` | Batch Update Connection Rules for flyto-core modules |
 | [`scripts/check_brand_identity.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_brand_identity.py#L1) | 91 | 2 | `__future__, pathlib, re, subprocess` | Enforce Flyto2 public naming and email-domain policy. |
 | [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 278 | 7 | `__future__, fnmatch, json, pathlib, re, runpy, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
-| [`scripts/export_i18n_baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/export_i18n_baseline.py#L1) | 172 | 3 | `argparse, core, json, pathlib, src, sys, typing` | export_i18n_baseline.py - Export module metadata to i18n baseline format |
+| [`scripts/export_i18n_baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/export_i18n_baseline.py#L1) | 171 | 3 | `argparse, contextlib, core, json, os, pathlib, src, sys, typing` | export_i18n_baseline.py - Export module metadata to i18n baseline format |
 | [`scripts/fix_all_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_all_connection_rules.py#L1) | 164 | 6 | `pathlib, re` | Fix ALL modules missing can_receive_from across all directories. |
 | [`scripts/fix_credential_keys.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_credential_keys.py#L1) | 152 | 3 | `os, pathlib, re` | Fix C003 warnings by adding credential_keys to modules with requires_credentials=True. |
 | [`scripts/fix_lint_warnings.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_lint_warnings.py#L1) | 179 | 6 | `os, pathlib, re, sys` | Fix lint warnings automatically. |
@@ -38,7 +38,7 @@ Inventory: **955 Python files**, **200,128 lines**, and **5,653 class/function/m
 | [`scripts/generate_catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_catalog.py#L1) | 262 | 7 | `argparse, core, os, pathlib, sys` | Generate docs/TOOL_CATALOG.md from the module registry. |
 | [`scripts/generate_reference.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_reference.py#L1) | 610 | 22 | `__future__, argparse, ast, collections, json, pathlib, re, sys, typing, yaml` | Generate exhaustive Flyto2 Core references from implementation sources. |
 | [`scripts/generate_security_status.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/generate_security_status.py#L1) | 181 | 8 | `__future__, argparse, json, pathlib` | Render SECURITY_STATUS.md from security/advisories.json. |
-| [`scripts/lint_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/lint_modules.py#L1) | 865 | 17 | `argparse, core, datetime, hashlib, importlib, json, logging, os, pathlib, pkgutil, re, sys` | lint_modules.py - Unified Module Linter |
+| [`scripts/lint_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/lint_modules.py#L1) | 874 | 17 | `argparse, core, datetime, hashlib, importlib, json, logging, os, pathlib, pkgutil, re, sys` | lint_modules.py - Unified Module Linter |
 | [`scripts/mcp_drive_demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_demo.py#L1) | 182 | 4 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core's MCP server over stdio to capture a screenshot. |
 | [`scripts/mcp_drive_login.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_drive_login.py#L1) | 202 | 6 | `json, os, pathlib, subprocess, sys, time` | Drive flyto-core MCP to log in and screenshot key pages. |
 | [`scripts/mcp_find_orgid.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_find_orgid.py#L1) | 88 | 3 | `json, os, pathlib, subprocess, sys, time` | Probe: log in, click first project card, print resulting orgId. |
@@ -50,7 +50,7 @@ Inventory: **955 Python files**, **200,128 lines**, and **5,653 class/function/m
 | [`scripts/mcp_tour_custom_picker.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_custom_picker.py#L1) | 278 | 8 | `json, os, pathlib, subprocess, sys, time` | Visual verification of the 2-level Custom feature picker. |
 | [`scripts/mcp_tour_projecttype.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_projecttype.py#L1) | 369 | 9 | `json, os, pathlib, subprocess, sys, time` | Project-type flow verification tour. |
 | [`scripts/mcp_tour_workspace.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/mcp_tour_workspace.py#L1) | 267 | 8 | `json, os, pathlib, subprocess, sys, time, urllib` | Workspace-sidebar filter verification. |
-| [`scripts/migrate_module.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/migrate_module.py#L1) | 684 | 14 | `argparse, ast, dataclasses, inspect, json, os, pathlib, sys, typing` | Module Migration Script |
+| [`scripts/migrate_module.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/migrate_module.py#L1) | 791 | 14 | `argparse, ast, dataclasses, json, os, pathlib, re, sys, typing` | Module Migration Script |
 | [`scripts/publish_core.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/publish_core.py#L1) | 188 | 10 | `argparse, os, pathlib, re, shutil, subprocess, sys` | Flyto2 Core Publishing Script Builds and publishes flyto-core to PyPI |
 | [`scripts/scrape_share.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/scrape_share.py#L1) | 87 | 0 | `json, pathlib, playwright, sys` | Render a ChatGPT share URL and dump the conversation as JSON + markdown. |
 | [`scripts/validate_all_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/validate_all_modules.py#L1) | 530 | 7 | `argparse, core, json, os, pathlib, re, src, subprocess, sys, typing` | validate_all_modules.py - Release-Gate Quality Validator |

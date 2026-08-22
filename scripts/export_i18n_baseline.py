@@ -14,7 +14,9 @@ Output:
 
 import argparse
 import json
+import os
 import sys
+from contextlib import suppress
 from pathlib import Path
 from typing import Any, Dict
 
@@ -27,25 +29,24 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 def load_all_modules() -> Dict[str, Dict[str, Any]]:
     """Load all modules by importing the module packages."""
     try:
-        from src.core.modules import atomic
+        from src.core.modules import atomic as _atomic
     except ImportError:
-        from core.modules import atomic
+        from core.modules import atomic as _atomic
+    _loaded_atomic = _atomic
 
     try:
-        from src.core.modules import composite
+        from src.core.modules import composite as _composite
     except ImportError:
-        try:
-            from core.modules import composite
-        except ImportError:
-            pass
+        with suppress(ImportError):
+            from core.modules import composite as _composite
+            _loaded_composite = _composite
 
     try:
-        from src.core.modules import third_party
+        from src.core.modules import third_party as _third_party
     except ImportError:
-        try:
-            from core.modules import third_party
-        except ImportError:
-            pass
+        with suppress(ImportError):
+            from core.modules import third_party as _third_party
+            _loaded_third_party = _third_party
 
     try:
         from src.core.modules.registry import ModuleRegistry
@@ -70,10 +71,7 @@ def export_en_baseline(metadata: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[st
     for module_id, meta in metadata.items():
         # Extract category from module_id (e.g., "browser" from "browser.click")
         parts = module_id.split(".")
-        if len(parts) >= 2:
-            category = parts[0]
-        else:
-            category = "misc"
+        category = parts[0] if len(parts) >= 2 else "misc"
 
         if category not in by_category:
             by_category[category] = {}
@@ -117,6 +115,7 @@ def main():
     )
     parser.add_argument(
         "--output-dir",
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         default="../flyto-i18n/locales/en",
         help="Output directory for locale files (default: ../flyto-i18n/locales/en)",
     )
@@ -145,7 +144,7 @@ def main():
     baseline = export_en_baseline(metadata)
 
     # Write output files
-    output_dir = Path(args.output_dir)
+    output_dir = Path(os.path.realpath(os.path.expanduser(str(args.output_dir))))
 
     if not args.dry_run:
         output_dir.mkdir(parents=True, exist_ok=True)
