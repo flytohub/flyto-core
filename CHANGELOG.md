@@ -5,10 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.29.0]
+
+The version moves because the packaged source did. `2.28.1` was already
+published when the changes below landed on `main`, so leaving the number alone
+would have meant the wheel named `2.28.1` no longer contained what this
+repository described — and the Python floor change is packaging-visible, not
+cosmetic. `scripts/check_release_drift.py` now refuses that state in CI.
+
+### Added
+
+- `scripts/check_release_drift.py`, wired into CI: if a tag `v<version>` exists,
+  the packaged source at HEAD must match it. An unreleased version passes, so
+  this asks for a correct version number rather than a release. Every package in
+  this stack had drifted this way at once; nothing caught it because every check
+  ran against the working tree, which was correct the whole time.
 
 ### Changed
 
+- `tests/test_version_identity.py` now compares the runtime versions against the
+  version declared in `pyproject.toml`, not against the metadata they are read
+  from. The original assertion compared `importlib.metadata` to itself and could
+  only fail by accident — which it did, once, when the wheel-boundary test
+  regenerated `egg-info` mid-session on a working copy whose editable install was
+  stale. The condition behind that accident is real: an editable install whose
+  metadata has fallen behind `pyproject.toml` makes every version-dependent
+  result in the suite describe a package that is not the one being edited.
 - Raised the supported Python floor from 3.9 to 3.10, because 3.9 never worked.
   `requires-python` advertised 3.9 while the base dependency `aiohttp>=3.14.3`
   requires 3.10, so pip accepted the package on 3.9 and then failed to find a

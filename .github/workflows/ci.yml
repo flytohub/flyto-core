@@ -16,7 +16,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # `fetch-tags` because the release-drift check below compares HEAD against
+      # the tag the declared version names; without tag history it cannot tell
+      # "unreleased version" from "version that already shipped other code".
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       # Pinned, not floating. The verify gate below is only reproducible if the
       # tool running it is: without a `ref` this took whatever was on the
@@ -50,6 +56,9 @@ jobs:
           pip install -e '.[dev,browser]'
           pip install './flyto-indexer[dev]'
           npm ci --ignore-scripts
+
+      - name: Check release drift
+        run: python scripts/check_release_drift.py
 
       - name: Check documentation and project memory
         run: |

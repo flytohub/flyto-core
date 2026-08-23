@@ -63,7 +63,16 @@
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- Package metadata is prepared for the **2.28.1** release. It includes the
+- The version on `main` is **2.29.0**, unreleased. It moved because the packaged
+  source moved: `2.28.1` was already on PyPI when the Python-floor change landed,
+  and a floor change is packaging-visible. `scripts/check_release_drift.py` now
+  fails CI whenever a tag `v<version>` exists and the packaged source at HEAD
+  differs from it, so a version can no longer keep naming a release that shipped
+  other code. The advisory floor is a separate number and stays **2.28.1**:
+  `>= 2.28.1` clears every published advisory, `2.29.x` is the line that
+  receives new fixes, and `security/advisories.json` is where both are derived
+  from rather than restated.
+- Package metadata was prepared for the **2.28.1** release. It includes the
   plugin capability contribution point and per-plugin policy scope already on
   `main`, plus the GHSA-gc4h-hj7x-gp5p SSRF fix. The shared IP classifier now
   rejects every IPv4 and IPv6 unspecified-address representation before URL,
@@ -169,7 +178,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 955 maintained Python files, 5,653
+- Source-backed documentation now covers 956 maintained Python files, 5,656
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 107 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

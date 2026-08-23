@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,653 declarations across 808 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,656 declarations across 809 files**.
 
 ## `demo.py`
 
@@ -127,6 +127,14 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def local_target(source: Path, raw_target: str) -> Optional&#91;Path&#93;` | Implements `local_target`; linked source is authoritative. | [`scripts/check_documentation.py:113`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L113) |
 | function | `def check_current_inventory() -> list&#91;str&#93;` | Require current prose to match generated catalog and source references. | [`scripts/check_documentation.py:121`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L121) |
 | function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_documentation.py:197`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L197) |
+
+## `scripts/check_release_drift.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def declared_version() -> str` | Implements `declared_version`; linked source is authoritative. | [`scripts/check_release_drift.py:38`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_release_drift.py#L38) |
+| function | `def _git(*args: str) -> subprocess.CompletedProcess` | Implements `_git`; linked source is authoritative. | [`scripts/check_release_drift.py:45`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_release_drift.py#L45) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_release_drift.py:51`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_release_drift.py#L51) |
 
 ## `scripts/export_i18n_baseline.py`
 

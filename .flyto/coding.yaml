@@ -240,6 +240,14 @@ checks:
 
   # Reject drift between source, API routes, CLI parsers, recipes, environment
   # readers, workflows, and the committed generated documentation.
+  # A version number that already shipped different code makes every other
+  # check here describe an artifact nobody can install. Passes while the
+  # version is unreleased, so it asks for a correct number, not a release.
+  - name: release_drift
+    argv: [".venv/bin/python", "scripts/check_release_drift.py"]
+    timeout_seconds: 60
+    required: true
+
   - name: generated_reference
     argv: [".venv/bin/python", "scripts/check_documentation.py"]
     timeout_seconds: 600
