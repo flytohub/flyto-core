@@ -124,10 +124,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Part of the test environment, not an extra audit. `tests/test_hints.py`
+      # runs its DOM assertions through a Node subprocess that requires `jsdom`
+      # from the repository-root `node_modules`; without this the suite reports
+      # 62 Node module-resolution errors that have nothing to do with the
+      # interpreter this job exists to test.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
       - name: Install package
         run: |
           python -m pip install --upgrade 'pip>=26.1.2,<26.2' 'setuptools>=83.0.0'
           pip install -e '.[dev,browser]'
+          npm ci --ignore-scripts
 
       # Same selection as the 3.11 job. Browser and e2e stay out: they need a
       # provisioned browser, and this job exists to answer "does the declared
