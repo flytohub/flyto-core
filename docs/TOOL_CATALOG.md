@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **476 modules** across **86 categories**.
+> Auto-generated from flyto-core module registry. **479 modules** across **88 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
@@ -23,6 +23,7 @@
 - [browser](#browser) (54)
 - [cache](#cache) (4)
 - [check](#check) (7)
+- [chemistry](#chemistry) (1)
 - [cloud](#cloud) (6)
 - [communication](#communication) (2)
 - [compare](#compare) (1)
@@ -56,7 +57,7 @@
 - [llm](#llm) (3)
 - [logic](#logic) (5)
 - [markdown](#markdown) (3)
-- [math](#math) (6)
+- [math](#math) (7)
 - [mcp](#mcp) (1)
 - [meta](#meta) (4)
 - [monitor](#monitor) (1)
@@ -68,6 +69,7 @@
 - [path](#path) (6)
 - [payment](#payment) (3)
 - [pdf](#pdf) (4)
+- [physics](#physics) (1)
 - [port](#port) (2)
 - [process](#process) (3)
 - [productivity](#productivity) (3)
@@ -278,6 +280,12 @@
 | `check.is_object` | Check if a value is an object | `value` any *(required)* | `is_object` (boolean), `keys` (array) |
 | `check.is_string` | Check if a value is a string | `value` any *(required)* | `is_string` (boolean), `length` (number) |
 | `check.type_of` | Get the type of a value | `value` any | `type` (string), `is_primitive` (boolean) |
+
+## chemistry
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `chemistry.ideal_dilution` | Ideal C1*V1=C2*V2 arithmetic only; no substance, compatibility, reaction, lab, medical, handling, or safety authority. | `stock_concentration` number *(required)*, `target_concentration` number *(required)*, `final_volume` number *(required)*, `concentration_unit` string *(required)*, `volume_unit` string *(required)*, `solve_mode` string *(required)* | — |
 
 ## cloud
 
@@ -619,6 +627,7 @@
 | `math.ceil` | Round number up to nearest integer | `number` number *(required)* | `result` (number), `original` (number) |
 | `math.floor` | Round number down to nearest integer | `number` number *(required)* | `result` (number), `original` (number) |
 | `math.power` | Raise number to a power | `base` number *(required)*, `exponent` number *(required)* | `result` (number), `base` (number), `exponent` (number) |
+| `math.rigid_transform_3d` | Apply a declared proper orthonormal 3x3 rotation and translation to one 3D point. | `point` array *(required)*, `rotation` array *(required)*, `translation` array *(required)*, `source_frame` string *(required)*, `target_frame` string *(required)*, `length_unit` string *(required)* | — |
 | `math.round` | Round number to specified decimal places | `number` number *(required)*, `decimals` number (default: `0`) | `result` (number), `original` (number), `decimals` (number) |
 
 ## mcp
@@ -716,6 +725,12 @@
 | `pdf.generate` | Generate PDF files from HTML content or text | `content` string *(required)*, `output_path` string *(required)*, `title` string, `author` string, `page_size` select (default: `A4`), `orientation` select (default: `portrait`), `margin` number (default: `20`), `header` string, `footer` string | `output_path` (string), `page_count` (number), `file_size_bytes` (number) |
 | `pdf.parse` | Extract text and metadata from PDF files | `path` string *(required)*, `pages` string (default: `all`), `extract_images` boolean (default: `False`), `extract_tables` boolean (default: `False`) | `text` (string), `pages` (array), `metadata` (object), `page_count` (number) |
 | `pdf.to_word` | Convert PDF files to Word documents (.docx) | `input_path` string *(required)*, `output_path` string, `preserve_formatting` boolean (default: `True`), `pages` string (default: `all`) | `output_path` (string), `page_count` (number), `file_size` (number) |
+
+## physics
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `physics.kinematics_constant_acceleration` | Compute position and velocity for a 1D constant-acceleration SI model. | `x0` number *(required)*, `v0` number *(required)*, `acceleration` number *(required)*, `time` number *(required)*, `solve_mode` string *(required)*, `position_unit` string *(required)*, `velocity_unit` string *(required)*, `acceleration_unit` string *(required)*, `time_unit` string *(required)* | — |
 
 ## port
 

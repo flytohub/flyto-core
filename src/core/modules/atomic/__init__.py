@@ -17,13 +17,16 @@ Plugin System:
 - flyto-modules-pro can extend with additional modules
 - See: pyproject.toml [project.entry-points."flyto.modules"]
 """
+# This legacy package intentionally registers through late imports and exports
+# category names that overlap builtins. Keep those established import semantics.
+# ruff: noqa: A004,E402,I001,SIM105
 
 _registered = False
 
 # All module category names (alphabetical)
 _ALL_CATEGORIES = [
     'ai', 'analysis', 'archive', 'array', 'auth',
-    'browser', 'cache', 'check', 'communication', 'compare', 'convert', 'crypto',
+    'browser', 'cache', 'check', 'chemistry', 'communication', 'compare', 'convert', 'crypto',
     'data', 'database', 'datetime', 'dns', 'docker', 'document',
     'element', 'encode', 'env', 'error',
     'file', 'flow', 'format',
@@ -34,7 +37,7 @@ _ALL_CATEGORIES = [
     'markdown', 'math', 'mcp', 'meta', 'monitor',
     'network', 'notification',
     'object', 'output',
-    'path', 'port', 'process',
+    'path', 'physics', 'port', 'process',
     'queue', 'random', 'regex', 'reverse',
     'sandbox', 'scheduler', 'set', 'shell', 'stats', 'storage', 'string',
     'template', 'testing', 'text', 'training',
@@ -80,7 +83,7 @@ register_all()
 # Re-exports for direct attribute access (modules already in sys.modules)
 from . import (  # noqa: F401
     ai, analysis, archive, array, auth,
-    browser, cache, check, communication, compare, convert, crypto,
+    browser, cache, check, chemistry, communication, compare, convert, crypto,
     data, database, datetime, dns, docker, document,
     element, encode, env, error,
     file, flow, format,
@@ -91,7 +94,7 @@ from . import (  # noqa: F401
     markdown, math, mcp, meta, monitor,
     network, notification,
     object, output,
-    path, port, process,
+    path, physics, port, process,
     queue, random, regex, reverse,
     sandbox, scheduler, set, shell, stats, storage, string,
     template, testing, text, training,

@@ -3,6 +3,8 @@
 """
 Atomic Math Operations
 """
+# Legacy category packages intentionally re-export optional modules by star.
+# ruff: noqa: F403,SIM105
 
 try:
     from .abs import *
@@ -33,5 +35,7 @@ try:
     from .round import *
 except ImportError:
     pass
+
+from .rigid_transform_3d import *
 
 __all__ = []

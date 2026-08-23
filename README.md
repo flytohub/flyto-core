@@ -13,7 +13,7 @@
 >
 > **AI said it finished. Flyto2 shows the proof.**
 >
-> **The open-source execution engine for AI agents. 476 modules, MCP-native, triggers, queue, versioning, metering.**
+> **The open-source execution engine for AI agents. 479 modules, MCP-native, triggers, queue, versioning, metering.**
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
@@ -30,6 +30,8 @@ two packages to validate and run a procedure or produce evidence. It does not
 own intent/provider governance, procedure learning/scoring, or hosted product
 and account logic.
 
+The generated public inventory contains 479 registry-backed modules; its 88 catalog categories keep that surface navigable.
+
 This repository records that boundary as `flyto.product-contract.v1` in
 [`flyto-product.toml`](flyto-product.toml).
 
@@ -45,7 +47,7 @@ the failed step." Flyto2 Core gives you a local execution engine for browser
 automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
 capture, structured extraction, and audit-ready evidence.
 
-The current public inventory is **476 registry-backed modules** across **86
+The current public inventory is **479 registry-backed modules** across **88
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
@@ -258,7 +260,7 @@ Full trace. Replay from any step. Per-step timing. Every run is debuggable.
 
 - **Open-source AI agent framework boundary**: MCP-compatible clients call reviewed flyto-core modules through schemas, not arbitrary generated production code.
 - **AI workflow automation substrate** for browser automation, API workflows, data/file operations, AI calls, notifications, verification, trace, evidence, and replay.
-- **476 registry-backed modules** across **86 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
+- **479 registry-backed modules** across **88 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
 - **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
 - **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
 - **Hardened outbound and file access** in the 2.26.x line: guarded HTTP clients prevent SSRF bypasses, and file/data writes are confined through the sandbox path guard.
@@ -413,7 +415,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 476 modules as tools.
+Your AI gets all 479 modules as tools.
 
 </details>
 

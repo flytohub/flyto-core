@@ -4,11 +4,11 @@
 
 | Surface | Measured state |
 |---|---:|
-| Runtime catalog | 476 modules, 86 categories |
-| Literal module registrations | 483 |
+| Runtime catalog | 479 modules, 88 categories |
+| Literal module registrations | 486 |
 | Packaged recipes | 41 |
-| Maintained Python source | 960 files, 200,940 lines |
-| Python declarations | 5,671 across 813 files |
+| Maintained Python source | 966 files, 201,167 lines |
+| Python declarations | 5,678 across 817 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 28 |
 | Environment-variable names | 108 |
@@ -16,6 +16,11 @@
 Catalog search and detail report each module's registry-declared
 `provides_capability` and `plugin` as the registry holds them, without deriving
 either value from the module ID.
+
+Three built-in modules form an extensible verified deterministic domain-solver
+baseline. They cover only a proper 3D point transform, SI constant-acceleration
+kinematics, and ideal dilution arithmetic. They do not claim complete domain
+coverage or physical-world validation.
 
 ## Active And Defined Surfaces
 

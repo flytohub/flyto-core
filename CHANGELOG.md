@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.0]
+
+### Added
+
+- Added an extensible verified deterministic domain-solver baseline with three
+  bounded modules: a proper 3D rigid point transform, SI-only 1D
+  constant-acceleration kinematics, and ideal dilution arithmetic. Results carry
+  canonical tamper-evident receipts; catalog and capability surfaces expose
+  source-declared semantic contracts without physical-world validation claims.
+
 ## [2.30.0]
 
 ### Added

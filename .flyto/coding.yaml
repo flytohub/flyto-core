@@ -48,6 +48,38 @@ actions:
     description: Rewrite the generated Core tool catalog from current registrations.
 
 checks:
+  # Bounded deterministic domain-solver implementation and its complete
+  # registration/catalog/manifest/transport falsification lane.
+  - name: lint_domain_solvers
+    argv:
+      - ".venv/bin/python"
+      - "-m"
+      - "ruff"
+      - "check"
+      - "src/core/modules/domain_solver.py"
+      - "src/core/modules/atomic/__init__.py"
+      - "src/core/modules/atomic/math/__init__.py"
+      - "src/core/modules/atomic/math/rigid_transform_3d.py"
+      - "src/core/modules/atomic/physics/__init__.py"
+      - "src/core/modules/atomic/physics/kinematics_constant_acceleration.py"
+      - "src/core/modules/atomic/chemistry/__init__.py"
+      - "src/core/modules/atomic/chemistry/ideal_dilution.py"
+      - "src/core/modules/registry/decorators.py"
+      - "src/core/modules/registry/metadata.py"
+      - "src/core/modules/registry/core.py"
+      - "src/core/catalog/module.py"
+      - "src/core/capability_manifest.py"
+      - "tests/core/test_domain_solvers.py"
+      - "tests/test_production_modules.py"
+      - "tests/test_public_metadata.py"
+    timeout_seconds: 300
+    required: true
+
+  - name: domain_solvers
+    argv: [".venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--no-cov", "-q", "tests/core/test_domain_solvers.py"]
+    timeout_seconds: 300
+    required: true
+
   # Project-memory scaffold contract required by CLAUDE.md/AGENTS.md.
   - name: project_memory
     argv: ["bash", "scripts/lint-project-memory.sh"]

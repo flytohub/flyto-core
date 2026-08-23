@@ -8,8 +8,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.30.0"
-description = "The open-source execution engine for AI agents. 476 modules, MCP-native, triggers, queue, versioning, metering."
+version = "2.31.0"
+description = "The open-source execution engine for AI agents. 479 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]

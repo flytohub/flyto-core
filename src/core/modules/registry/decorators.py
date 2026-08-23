@@ -6,32 +6,34 @@ Module registration decorators
 The @register_module decorator is the entry point for all module registration.
 Resolution logic lives in resolve.py, metadata construction in metadata.py.
 """
+# Import grouping preserves the public compatibility aliases below.
+# ruff: noqa: I001
 
 import inspect
-from typing import Dict, Type, Any, Optional, List
+import re
+from typing import Any, Dict, List, Optional
 
 from ..base import BaseModule
 from ..types import (
+    ExecutionEnvironment,
     ModuleLevel,
     ModuleTier,
-    UIVisibility,
-    ExecutionEnvironment,
     NodeType,
     StabilityLevel,
+    UIVisibility,
 )
 from .core import ModuleRegistry
-from .resolve import resolve_module_config
-from .metadata import build_module_metadata
-
+from .metadata import SEMANTIC_CONTRACT_FIELDS, build_module_metadata
+from .metadata import build_module_metadata as _build_module_metadata  # noqa: F401
 # Re-export for backward compatibility (internal callers that imported _resolve_tier etc.)
 from .resolve import (  # noqa: F401
-    resolve_tier as _resolve_tier,
     enrich_port_handle_metadata as _enrich_port_handle_metadata,
     resolve_can_be_start as _resolve_can_be_start,
-    resolve_timeout_ms as _resolve_timeout_ms,
+    resolve_module_config,
     resolve_module_config as _resolve_module_config,
+    resolve_tier as _resolve_tier,
+    resolve_timeout_ms as _resolve_timeout_ms,
 )
-from .metadata import build_module_metadata as _build_module_metadata  # noqa: F401
 
 
 def _validate_module_registration(
@@ -43,6 +45,7 @@ def _validate_module_registration(
     can_receive_from: Optional[List[str]],
     can_connect_to: Optional[List[str]],
     params_schema: Optional[Dict[str, Any]] = None,
+    semantics: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Validate module registration at import time.
@@ -68,6 +71,27 @@ def _validate_module_registration(
     # Reserved keyword check: __event__ cannot be used as a param name
     if params_schema and '__event__' in params_schema:
         errors.append("'__event__' is a reserved keyword and cannot be used in params_schema")
+
+    if semantics is not None:
+        allowed = frozenset(SEMANTIC_CONTRACT_FIELDS)
+        if type(semantics) is not dict or set(semantics) != allowed:
+            errors.append("'semantics' must be an exact mapping of intent_ids, affordances, effects, and handled_events")
+        else:
+            identifier = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+            total = 0
+            for field in SEMANTIC_CONTRACT_FIELDS:
+                values = semantics[field]
+                if type(values) is not list or not values or len(values) > 16:
+                    errors.append(f"semantics.{field} must be a non-empty list of at most 16 identifiers")
+                    continue
+                for value in values:
+                    if type(value) is not str or len(value) > 96 or not identifier.fullmatch(value):
+                        errors.append(f"semantics.{field} contains an unsafe identifier")
+                if all(type(value) is str for value in values) and len(set(values)) != len(values):
+                    errors.append(f"semantics.{field} contains duplicate identifiers")
+                total += len(values)
+            if total > 48:
+                errors.append("semantics contains more than 48 identifiers")
 
     if errors:
         error_msg = f"Module '{module_id}' registration failed (import-time validation):\n"
@@ -127,6 +151,7 @@ def register_module(
     # read it, instead of an operator hand-typing the capability into a
     # command. Leave unset for software modules, which need no resource chosen.
     provides_capability: Optional[str] = None,
+    semantics: Optional[Dict[str, Any]] = None,
 
     # Context requirements (for connection validation)
     requires_context: Optional[List[str]] = None,
@@ -224,7 +249,7 @@ def register_module(
     examples: Optional[List[Dict[str, Any]]] = None,
     docs_url: Optional[str] = None,
     author: Optional[str] = None,
-    license: str = "MIT",
+    license: str = "MIT",  # noqa: A002 - public decorator API
 
     # License tier requirement
     required_tier: Optional[str] = None,
@@ -288,6 +313,7 @@ def register_module(
             can_receive_from=can_receive_from,
             can_connect_to=can_connect_to,
             params_schema=params_schema,
+            semantics=semantics,
         )
 
         # Build metadata
@@ -340,6 +366,7 @@ def register_module(
             start_requires_params=start_requires_params,
             requires=requires,
             provides_capability=provides_capability,
+            semantics=semantics,
             permissions=permissions,
             examples=examples,
             docs_url=docs_url,

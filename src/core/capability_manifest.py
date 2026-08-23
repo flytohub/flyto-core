@@ -184,6 +184,7 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
     expose; see ``ModuleRegistry.capability_snapshot``.
     """
     from core.modules.registry import ModuleRegistry
+    from core.modules.registry.metadata import SEMANTIC_CONTRACT_FIELDS
 
     snapshot = ModuleRegistry.capability_snapshot()
     all_metadata = snapshot["metadata"]
@@ -196,6 +197,20 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
     capabilities = [
         {"capability": name, "providers": sorted(providers)}
         for name, providers in sorted(snapshot["capabilities"].items())
+    ]
+    semantic_contracts = [
+        {
+            "module_id": module_id,
+            "provides_capability": metadata.get("provides_capability", ""),
+            # Re-project every declared field into fresh lists. The manifest is
+            # a detached document, not a mutable view into registry metadata.
+            "semantics": {
+                field: list(metadata["semantics"][field])
+                for field in SEMANTIC_CONTRACT_FIELDS
+            },
+        }
+        for module_id, metadata in sorted(all_metadata.items())
+        if metadata.get("semantics")
     ]
 
     # Categories, counted over the same unfiltered view as `modules` so the
@@ -231,6 +246,8 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
         "modules": module_ids,
         "capability_count": len(capabilities),
         "capabilities": capabilities,
+        "semantic_contract_count": len(semantic_contracts),
+        "semantic_contracts": semantic_contracts,
         "category_count": len(categories),
         "categories": categories,
         "plugin_count": len(plugins),

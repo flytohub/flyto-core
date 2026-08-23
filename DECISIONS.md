@@ -43,6 +43,28 @@ browser. Telling an operator to install Chrome while an installed Chrome is
 available is both incorrect and leaves browser-based templates unusable. An
 explicit channel remains authoritative because silently substituting a
 different browser would change a caller-controlled compatibility contract.
+## 2026-08-23 - Domain solvers begin with three bounded deterministic contracts
+
+Decision: add exactly three dependency-free baseline providers with stable IDs:
+`math.rigid_transform_3d`, `physics.kinematics_constant_acceleration`, and
+`chemistry.ideal_dilution`. They accept only explicit bounded units and models,
+reject non-finite/boolean/ambiguous inputs, and emit one canonical receipt
+schema whose SHA-256 covers canonical nested evidence only while the envelope
+is validated separately. Chemistry is ideal
+arithmetic only and carries no substance, compatibility, reaction, laboratory,
+medical, handling, or safety authority. None of the three validates reality.
+
+Provider semantics are declared, never inferred. A declared semantic contract
+has exactly four bounded identifier-list fields and is rejected before registry
+mutation when malformed. Existing providers with no semantic contract remain
+valid. Capability entries keep their prior identity shape; deterministic
+provider-specific contracts live in a separately hashed manifest collection.
+
+Reason: a closed-loop planner needs a small honest executable baseline and
+machine-readable evidence, but broad domain claims or label-derived routing
+would make catalog prose an authority boundary. Three narrow solvers establish
+the extension contract without pretending to complete mathematics, physics, or
+chemistry.
 
 ## 2026-08-23 - The supported Python range is proven per version, not declared
 

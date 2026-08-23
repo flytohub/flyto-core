@@ -1,5 +1,5 @@
 {
-  "total": 436,
+  "total": 439,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -463,6 +463,10 @@
     },
     {
       "id": "check.type_of",
+      "version": "1.0.0"
+    },
+    {
+      "id": "chemistry.ideal_dilution",
       "version": "1.0.0"
     },
     {
@@ -1122,6 +1126,10 @@
       "version": "1.0.0"
     },
     {
+      "id": "math.rigid_transform_3d",
+      "version": "1.0.0"
+    },
+    {
       "id": "mcp.recipe",
       "version": "1.0.0"
     },
@@ -1255,6 +1263,10 @@
     },
     {
       "id": "path.normalize",
+      "version": "1.0.0"
+    },
+    {
+      "id": "physics.kinematics_constant_acceleration",
       "version": "1.0.0"
     },
     {

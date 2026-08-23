@@ -6,15 +6,22 @@ Module Metadata Builder
 Constructs the full metadata dictionary for module registration.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from ..types import (
+    ExecutionEnvironment,
     ModuleLevel,
     ModuleTier,
-    UIVisibility,
-    ExecutionEnvironment,
     NodeType,
     StabilityLevel,
+    UIVisibility,
+)
+
+SEMANTIC_CONTRACT_FIELDS = (
+    "intent_ids",
+    "affordances",
+    "effects",
+    "handled_events",
 )
 
 
@@ -76,6 +83,7 @@ def build_module_metadata(
     # Optional, and last, so every existing caller keeps working: this field
     # was added after the signature was in use by other packages.
     provides_capability: Optional[str] = None,
+    semantics: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build the full metadata dict for a module registration."""
     resolved_visibility = resolved["visibility"]
@@ -171,6 +179,16 @@ def build_module_metadata(
         # Empty for the vast majority of modules, which do software work no
         # resource needs to be chosen for.
         "provides_capability": (provides_capability or "").strip(),
+        **(
+            {
+                "semantics": {
+                    field: list(semantics[field])
+                    for field in SEMANTIC_CONTRACT_FIELDS
+                }
+            }
+            if semantics is not None
+            else {}
+        ),
         "permissions": permissions or [],
         "examples": examples or [],
         "docs_url": docs_url,

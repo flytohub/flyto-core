@@ -40,6 +40,10 @@
 
 ## Done
 
+- Added the three-module verified deterministic domain-solver baseline,
+  registration-validated semantic contracts, hashed manifest/catalog projection,
+  canonical evidence receipts, and focused known-answer/falsification coverage.
+
 - Implemented the first inert `flyto.plugin.v1` supply-chain/adoption slice:
   strict bounded recursively canonical closed-schema validation, shared
   pre-canonicalization unsafe-Unicode rejection for values, keys, endpoints,

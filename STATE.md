@@ -23,6 +23,15 @@
   template failures on machines where Chrome is installed but the Playwright
   browser cache is absent.
 
+- Core now includes an extensible verified deterministic domain-solver baseline:
+  `math.rigid_transform_3d`, `physics.kinematics_constant_acceleration`, and
+  `chemistry.ideal_dilution`. Each is dependency-free, offline, bounded to its
+  declared model and units, and returns a canonical SHA-256 receipt. This is
+  not complete mathematics, physics, or chemistry and is not physical-world,
+  laboratory, medical, handling, compatibility, reaction, or safety validation.
+  Their explicit semantic contracts are registration-validated and projected
+  through catalog/search and the hashed capability manifest without inferring
+  meaning from display metadata. Legacy providers may continue to omit semantics.
 - Local CLI workflow selection now canonicalizes both interactive and
   non-interactive paths and requires an existing regular YAML file before read
   and rechecks the same boundary directly at both execution sinks. A path that
@@ -116,7 +125,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 476 modules across 86 categories, and
+- The generated catalog currently exposes 479 modules across 88 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -199,8 +208,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 960 maintained Python files, 5,671
-  declarations, 483 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 966 maintained Python files, 5,678
+  declarations, 486 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

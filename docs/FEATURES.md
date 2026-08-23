@@ -32,9 +32,9 @@
 The public catalog is runtime-discovered, so four related counts have different
 meanings:
 
-- 476 modules are active in the checked catalog generation environment.
-- 86 categories group that active catalog.
-- 483 literal decorator registrations exist in maintained source.
+- 479 modules are active in the checked catalog generation environment.
+- 88 categories group that active catalog.
+- 486 literal decorator registrations exist in maintained source.
 - Additional modules can appear from installed plugins or optional dependencies.
 
 Catalog search and detail carry each module's registry-declared
@@ -71,8 +71,8 @@ evidence but does not decide the gate.
 ## Reference Closure
 
 - [All 476 active module schemas](TOOL_CATALOG.md)
-- [All 483 literal module implementations](reference/registered-modules.md)
-- [All 5,671 maintained Python declarations](reference/python-api.md)
+- [All 486 literal module implementations](reference/registered-modules.md)
+- [All 5,678 maintained Python declarations](reference/python-api.md)
 - [All CLI parsers](reference/cli.md)
 - [All HTTP decorators](reference/http-api.md)
 - [All environment readers and packaged workflow assets](reference/configuration.md)
