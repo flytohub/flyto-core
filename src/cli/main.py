@@ -14,8 +14,8 @@ This file has been refactored into separate modules:
 - cli/runner.py - Workflow execution
 - cli/modules.py - Module listing command
 """
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add project root to sys.path to enable 'import src.xxx'
@@ -33,20 +33,42 @@ if pythonpath_from_env:
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-import argparse
+import argparse  # noqa: E402 - bootstrap standalone source imports first
 
-import yaml
+import yaml  # noqa: E402 - bootstrap standalone source imports first
 
-from .config import Colors
-from .i18n import I18n
-from .ui import clear_screen, print_logo, select_language
-from .workflow import collect_params, load_config, select_workflow
-from .params import merge_params
-from .runner import run_workflow
-from .modules import add_modules_parser, run_modules_command
-from .plugin import add_plugin_parser, run_plugin_command
-from .recipe import run_recipe, run_recipes_list, run_replay
-from .template import add_template_parser, run_template_command
+from .config import Colors  # noqa: E402 - bootstrap standalone source imports first
+from .i18n import I18n  # noqa: E402 - bootstrap standalone source imports first
+from .modules import (  # noqa: E402 - bootstrap standalone source imports first
+    add_modules_parser,
+    run_modules_command,
+)
+from .params import merge_params  # noqa: E402 - bootstrap standalone source imports first
+from .plugin import (  # noqa: E402 - bootstrap standalone source imports first
+    add_plugin_parser,
+    run_plugin_command,
+)
+from .recipe import (  # noqa: E402 - bootstrap standalone source imports first
+    run_recipe,
+    run_recipes_list,
+    run_replay,
+)
+from .runner import run_workflow  # noqa: E402 - bootstrap standalone source imports first
+from .template import (  # noqa: E402 - bootstrap standalone source imports first
+    add_template_parser,
+    run_template_command,
+)
+from .ui import (  # noqa: E402 - bootstrap standalone source imports first
+    clear_screen,
+    print_logo,
+    select_language,
+)
+from .workflow import (  # noqa: E402 - bootstrap standalone source imports first
+    collect_params,
+    load_config,
+    sanitize_workflow_path,
+    select_workflow,
+)
 
 
 def add_serve_parser(subparsers) -> None:
@@ -70,7 +92,7 @@ def run_serve_command(host: str = '127.0.0.1', port: int = 8333) -> int:
         return 0
     except ImportError as e:
         print(f"{Colors.FAIL}Error: Missing dependencies for serve command.{Colors.ENDC}")
-        print(f"Install with: pip install flyto-core[api]")
+        print("Install with: pip install flyto-core[api]")
         print(f"Details: {e}")
         return 1
 
@@ -261,10 +283,7 @@ Examples:
         ))
 
     # Handle 'run' command (legacy .yaml paths are rewritten to 'run' above)
-    if args.command == 'run':
-        workflow_arg = args.workflow
-    else:
-        workflow_arg = None
+    workflow_arg = args.workflow if args.command == 'run' else None
 
     # Determine mode: interactive or non-interactive
     if workflow_arg:
@@ -273,10 +292,11 @@ Examples:
         i18n = I18n(lang)
         config = load_config()
 
-        workflow_path = Path(workflow_arg)
-        if not workflow_path.exists():
-            print(f"{Colors.FAIL}Error: Workflow file not found: "
-                  f"{workflow_path}{Colors.ENDC}")
+        try:
+            workflow_path = sanitize_workflow_path(Path(workflow_arg))
+        except ValueError as exc:
+            print(f"{Colors.FAIL}Error: Invalid workflow file: "
+                  f"{exc}{Colors.ENDC}")
             sys.exit(1)
 
         # Load workflow
@@ -289,7 +309,14 @@ Examples:
         params = merge_params(workflow, args)
 
         # Run workflow
-        run_workflow(workflow_path, params, config, i18n)
+        try:
+            run_workflow(
+                sanitize_workflow_path(workflow_path), params, config, i18n
+            )
+        except ValueError as exc:
+            print(f"{Colors.FAIL}Error: Invalid workflow file: "
+                  f"{exc}{Colors.ENDC}")
+            sys.exit(1)
 
     else:
         # Interactive mode
@@ -311,6 +338,13 @@ Examples:
             print(i18n.t('cli.goodbye'))
             sys.exit(0)
 
+        try:
+            workflow_path = sanitize_workflow_path(workflow_path)
+        except ValueError as exc:
+            print(f"{Colors.FAIL}Error: Invalid workflow file: "
+                  f"{exc}{Colors.ENDC}")
+            sys.exit(1)
+
         # Load workflow to get params
         print()
         print(f"{i18n.t('cli.loading_workflow')}: "
@@ -323,7 +357,14 @@ Examples:
         params = collect_params(workflow, i18n)
 
         # Run workflow
-        run_workflow(workflow_path, params, config, i18n)
+        try:
+            run_workflow(
+                sanitize_workflow_path(workflow_path), params, config, i18n
+            )
+        except ValueError as exc:
+            print(f"{Colors.FAIL}Error: Invalid workflow file: "
+                  f"{exc}{Colors.ENDC}")
+            sys.exit(1)
 
         # Goodbye
         print()

@@ -2,6 +2,28 @@
 
 ## Current State
 
+- Local CLI workflow selection now canonicalizes both interactive and
+  non-interactive paths and requires an existing regular YAML file before read
+  and rechecks the same boundary directly at both execution sinks. A path that
+  changes or disappears after its initial read exits through the existing
+  invalid-workflow CLI behavior before the runner is called. Absolute paths and
+  traversal that resolves to a valid workflow remain supported; no
+  repository-root sandbox was added. This is defense-in-depth, with no claim of
+  remote exploitability. Rollback is exactly the CLI boundary helper/call
+  sites, its focused regression test, and these CHANGELOG/STATE/DECISIONS
+  entries. APIs, dependencies, version, module catalog, workflow
+  semantics/content, and security policy did not change.
+- The repository now declares `flyto.product-contract.v1`: Flyto2 promises to
+  turn AI work into verified, replayable procedures, with Core as the standalone
+  layer-three package for schema validation, deterministic execution/replay,
+  and evidence. AI owns intent/provider governance; Blueprint owns procedure
+  learning/scoring and never executes; hosted product/account logic stays out
+  of Core.
+- Release-wheel discovery excludes `core/tests`, `node_modules`, bytecode, and
+  cache trees while explicitly retaining the reverse/deobfuscate and visual
+  worker manifests, locks, configuration, and source. Rollback is the
+  `pyproject.toml` discovery/data-rule change plus its regression and contract
+  files; no runtime API, module, version, dependency, or workflow changed.
 - Core extension management is generic and closed to two kinds:
   `flyto-modules-*` into `flyto.modules` and `flyto-plugin-*` into
   `flyto.plugins`, declared once in `EXTENSION_KINDS` and read by every other
@@ -144,7 +166,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 955 maintained Python files, 5,652
+- Source-backed documentation now covers 955 maintained Python files, 5,653
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 107 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

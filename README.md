@@ -1,7 +1,7 @@
 [![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
 [![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/9a708224-9666-46b6-8660-dad08fb16096)
 
-# Flyto2 Core - Open-Source AI Agent Framework and Workflow Automation Engine
+# Flyto2 Core — Verified, Replayable Execution
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -9,9 +9,29 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
+> **Turn AI work into verified, replayable procedures.**
+>
+> **AI said it finished. Flyto2 shows the proof.**
+>
 > **The open-source execution engine for AI agents. 468 modules, MCP-native, triggers, queue, versioning, metering.**
 >
 > **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
+
+Flyto2 is one product delivered as three independently usable packages:
+
+| Choose | When you need |
+| --- | --- |
+| `flyto-ai` | Understand, route, and govern new work and provider use. |
+| `flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them. |
+| `flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence. |
+
+`flyto-core` is a standalone execution package: it does not require the other
+two packages to validate and run a procedure or produce evidence. It does not
+own intent/provider governance, procedure learning/scoring, or hosted product
+and account logic.
+
+This repository records that boundary as `flyto.product-contract.v1` in
+[`flyto-product.toml`](flyto-product.toml).
 
 Flyto2 Core is the open-source runtime behind Flyto2. It is built for people who
 want an **AI agent framework** that actually runs work: browser automation, API

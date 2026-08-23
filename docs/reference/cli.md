@@ -8,17 +8,17 @@ The implementation defines **24 parser commands** and **46 arguments**. Recipe-s
 
 Describe a task in natural language. AI will explore using browser tools, then compile the successful path into a deterministic YAML workflow.
 
-Parser source: [`src/cli/main.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L180).
+Parser source: [`src/cli/main.py:202`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L202).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `task` | yes | `` | `` | Task description in natural language | [`src/cli/main.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L186) |
-| `--save, -s` | yes | `` | `` | Recipe name to save as | [`src/cli/main.py:187`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L187) |
-| `--provider` | no | `openai` | `` | LLM provider (default: openai) | [`src/cli/main.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L188) |
-| `--model` | no | `gpt-4o` | `` | LLM model (default: gpt-4o) | [`src/cli/main.py:189`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L189) |
-| `--api-key` | no | `` | `` | API key (default: from env) | [`src/cli/main.py:190`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L190) |
-| `--max-iterations` | no | `20` | `` | Max agent iterations | [`src/cli/main.py:191`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L191) |
-| `--variables, -v` | no | `` | `` | Template variables (key=value) | [`src/cli/main.py:192`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L192) |
+| `task` | yes | `` | `` | Task description in natural language | [`src/cli/main.py:208`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L208) |
+| `--save, -s` | yes | `` | `` | Recipe name to save as | [`src/cli/main.py:209`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L209) |
+| `--provider` | no | `openai` | `` | LLM provider (default: openai) | [`src/cli/main.py:210`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L210) |
+| `--model` | no | `gpt-4o` | `` | LLM model (default: gpt-4o) | [`src/cli/main.py:211`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L211) |
+| `--api-key` | no | `` | `` | API key (default: from env) | [`src/cli/main.py:212`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L212) |
+| `--max-iterations` | no | `20` | `` | Max agent iterations | [`src/cli/main.py:213`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L213) |
+| `--variables, -v` | no | `` | `` | Template variables (key=value) | [`src/cli/main.py:214`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L214) |
 
 ## `flyto modules`
 
@@ -102,18 +102,18 @@ Parser source: [`src/cli/plugin.py:43`](https://github.com/flytohub/flyto-core/b
 
 Execute a pre-built recipe template with arguments.
 
-Parser source: [`src/cli/main.py:160`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L160).
+Parser source: [`src/cli/main.py:182`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L182).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `recipe_name` | no | `` | `` | Recipe name | [`src/cli/main.py:165`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L165) |
-| `recipe_args` | no | `` | `` | Recipe arguments (--key value) | [`src/cli/main.py:166`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L166) |
+| `recipe_name` | no | `` | `` | Recipe name | [`src/cli/main.py:187`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L187) |
+| `recipe_args` | no | `` | `` | Recipe arguments (--key value) | [`src/cli/main.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L188) |
 
 ## `flyto recipes`
 
 Show all pre-built recipes with usage examples.
 
-Parser source: [`src/cli/main.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L155).
+Parser source: [`src/cli/main.py:177`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L177).
 
 This command has no static command-specific arguments.
 
@@ -121,38 +121,38 @@ This command has no static command-specific arguments.
 
 Re-execute a previous workflow run from a specific step, skipping earlier steps.
 
-Parser source: [`src/cli/main.py:169`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L169).
+Parser source: [`src/cli/main.py:191`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L191).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `--from-step` | yes | `` | `` | Step ID or number (1-based) to replay from | [`src/cli/main.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L174) |
-| `--run-dir` | no | `` | `` | Path to run state directory (default: .flyto-runs/latest) | [`src/cli/main.py:176`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L176) |
+| `--from-step` | yes | `` | `` | Step ID or number (1-based) to replay from | [`src/cli/main.py:196`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L196) |
+| `--run-dir` | no | `` | `` | Path to run state directory (default: .flyto-runs/latest) | [`src/cli/main.py:198`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L198) |
 
 ## `flyto run`
 
 Execute a workflow YAML file with parameters.
 
-Parser source: [`src/cli/main.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L80).
+Parser source: [`src/cli/main.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L102).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `workflow` | no | `` | `` | Path to workflow YAML file | [`src/cli/main.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L85) |
-| `--lang, -l` | no | `en` | `en, zh, ja` | Language (en, zh, ja) | [`src/cli/main.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L86) |
-| `--params, -p` | no | `` | `` | Workflow parameters as JSON string | [`src/cli/main.py:88`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L88) |
-| `--params-file` | no | `` | `` | Path to JSON/YAML file containing parameters | [`src/cli/main.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L90) |
-| `--env-file` | no | `` | `` | Path to .env file for environment variables | [`src/cli/main.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L92) |
-| `--param` | no | `` | `` | Individual parameter (format: key=value), can be used multiple times | [`src/cli/main.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L94) |
+| `workflow` | no | `` | `` | Path to workflow YAML file | [`src/cli/main.py:107`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L107) |
+| `--lang, -l` | no | `en` | `en, zh, ja` | Language (en, zh, ja) | [`src/cli/main.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L108) |
+| `--params, -p` | no | `` | `` | Workflow parameters as JSON string | [`src/cli/main.py:110`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L110) |
+| `--params-file` | no | `` | `` | Path to JSON/YAML file containing parameters | [`src/cli/main.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L112) |
+| `--env-file` | no | `` | `` | Path to .env file for environment variables | [`src/cli/main.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L114) |
+| `--param` | no | `` | `` | Individual parameter (format: key=value), can be used multiple times | [`src/cli/main.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L116) |
 
 ## `flyto serve`
 
 Start the flyto-core HTTP Execution API server.
 
-Parser source: [`src/cli/main.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L54).
+Parser source: [`src/cli/main.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L76).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `--host` | no | `127.0.0.1` | `` | Host to bind (default: 127.0.0.1) | [`src/cli/main.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L59) |
-| `--port, -p` | no | `8333` | `` | Port to listen on (default: 8333) | [`src/cli/main.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L61) |
+| `--host` | no | `127.0.0.1` | `` | Host to bind (default: 127.0.0.1) | [`src/cli/main.py:81`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L81) |
+| `--port, -p` | no | `8333` | `` | Port to listen on (default: 8333) | [`src/cli/main.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L83) |
 
 ## `flyto template`
 

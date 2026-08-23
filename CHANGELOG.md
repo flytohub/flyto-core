@@ -7,8 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Declared Core's exact Flyto2 product role in a deterministic repo-local
+  contract and aligned public/project documentation: Core is the independently
+  usable schema-validation, deterministic execution/replay, and evidence layer;
+  AI owns intent/provider governance, Blueprint owns procedure learning/scoring
+  and never executes, and hosted product/account logic remains outside Core.
+- Tightened wheel discovery so release artifacts omit `node_modules`,
+  `core/tests`, cache directories, and bytecode while retaining both declared
+  Node/TypeScript worker manifests, lockfiles, configuration, and source.
+
 ### Security
 
+- Added defense-in-depth validation at the local CLI workflow-selection
+  boundary: interactive and non-interactive selections are canonicalized and
+  must resolve to an existing regular `.yaml` or `.yml` file before Core reads
+  them, then are rechecked immediately before the execution sink. A file that
+  changes or disappears between selection and execution is rejected with the
+  existing CLI error behavior. Valid workflows remain usable by relative or
+  absolute path, including outside the current directory. This does not assert
+  remote exploitability and is not a CVE or advisory.
 - Published and catalogued four historical advisories whose fixes have shipped
   since `2.27.0`: the registry-wide raw-host/service SSRF boundary, SSRF guards
   for `verify.*` and browser connection/proxy targets, sandbox confinement for

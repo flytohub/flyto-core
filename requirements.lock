@@ -22,9 +22,9 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-idna==3.18
+idna==3.19
     # via yarl
-lxml==6.1.1
+lxml==6.1.2
     # via flyto-core (pyproject.toml)
 multidict==6.7.1
     # via
@@ -38,7 +38,7 @@ pydantic==2.13.4
     # via flyto-core (pyproject.toml)
 pydantic-core==2.46.4
     # via pydantic
-python-dotenv==1.2.2
+python-dotenv==1.2.3
     # via flyto-core (pyproject.toml)
 pyyaml==6.0.3
     # via flyto-core (pyproject.toml)

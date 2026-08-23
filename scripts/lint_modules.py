@@ -57,11 +57,12 @@ Examples:
 import argparse
 import hashlib
 import json
+import os
 import pkgutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -422,7 +423,6 @@ def discover_and_import_modules() -> List[str]:
     import importlib
 
     import_failures: List[str] = []
-    modules_path = PROJECT_ROOT / "src" / "core" / "modules"
 
     # Packages to scan
     packages_to_scan = [
@@ -438,7 +438,7 @@ def discover_and_import_modules() -> List[str]:
             package_path = Path(package.__file__).parent
 
             # Walk all submodules
-            for finder, name, is_pkg in pkgutil.walk_packages(
+            for _finder, name, _is_pkg in pkgutil.walk_packages(
                 [str(package_path)],
                 prefix=package_name + "."
             ):
@@ -447,7 +447,7 @@ def discover_and_import_modules() -> List[str]:
                 except Exception as e:
                     # Record import failures instead of silently skipping
                     import_failures.append(f"{name}: {type(e).__name__}: {e}")
-        except ImportError as e:
+        except ImportError:
             # Package doesn't exist - this is OK
             pass
         except Exception as e:
@@ -489,9 +489,9 @@ def validate_modules(
             'import_failures': [...]
         }
     """
-    from core.modules.validator import ModuleValidator
-    from core.modules.registry.validation_types import ValidationMode
     from core.modules.registry import ModuleRegistry
+    from core.modules.registry.validation_types import ValidationMode
+    from core.modules.validator import ModuleValidator
 
     validator = ModuleValidator(mode=ValidationMode(mode))
 
@@ -711,31 +711,31 @@ def main():
     )
     parser.add_argument(
         "--baseline",
-        type=str,
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         metavar="FILE",
         help="Compare against baseline file; only fail on NEW violations"
     )
     parser.add_argument(
         "--baseline-create",
-        type=str,
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         metavar="FILE",
         help="Create baseline from current violations"
     )
     parser.add_argument(
         "--baseline-update",
-        type=str,
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         metavar="FILE",
         help="Update baseline, removing fixed violations"
     )
     parser.add_argument(
         "--trend-record",
-        type=str,
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         metavar="DIR",
         help="Record results to directory for trend tracking"
     )
     parser.add_argument(
         "--trend-report",
-        type=str,
+        type=lambda value: Path(os.path.realpath(os.path.expanduser(value))),
         metavar="DIR",
         help="Show quality trend report from recorded data"
     )
@@ -744,13 +744,15 @@ def main():
 
     # Handle trend report (doesn't need module loading)
     if args.trend_report:
-        print_trend_report(Path(args.trend_report))
+        trend_report_path = Path(
+            os.path.realpath(os.path.expanduser(str(args.trend_report)))
+        )
+        print_trend_report(trend_report_path)
         sys.exit(0)
 
     # Load modules - suppress import-time warnings/logging for JSON output
-    import os
-    import warnings
     import logging
+    import warnings
 
     if args.json:
         # Suppress all import-time output for clean JSON
@@ -786,7 +788,9 @@ def main():
     # Handle baseline operations
     if args.baseline_create:
         # Create baseline from current violations
-        baseline_path = Path(args.baseline_create)
+        baseline_path = Path(
+            os.path.realpath(os.path.expanduser(str(args.baseline_create)))
+        )
         baseline_data = create_baseline_from_results(data)
         save_baseline(baseline_path, baseline_data)
 
@@ -796,7 +800,9 @@ def main():
 
     elif args.baseline_update:
         # Update existing baseline
-        baseline_path = Path(args.baseline_update)
+        baseline_path = Path(
+            os.path.realpath(os.path.expanduser(str(args.baseline_update)))
+        )
         baseline = load_baseline(baseline_path)
 
         if not baseline.get("violations"):
@@ -813,7 +819,7 @@ def main():
 
     elif args.baseline:
         # Compare against baseline
-        baseline_path = Path(args.baseline)
+        baseline_path = Path(os.path.realpath(os.path.expanduser(str(args.baseline))))
         baseline = load_baseline(baseline_path)
 
         if not baseline.get("violations") and baseline.get("created_at") is None:
@@ -855,7 +861,10 @@ def main():
 
         # Record trend data if requested
         if args.trend_record:
-            record_trend_data(Path(args.trend_record), data)
+            trend_record_path = Path(
+                os.path.realpath(os.path.expanduser(str(args.trend_record)))
+            )
+            record_trend_data(trend_record_path, data)
 
         # Exit code
         sys.exit(0 if data["summary"]["is_valid"] else 1)
