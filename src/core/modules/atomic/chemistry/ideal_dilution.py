@@ -4,7 +4,13 @@
 
 from typing import Any, Dict
 
-from ...domain_solver import exact_unit, finite_number, finite_result, receipt
+from ...domain_solver import (
+    exact_unit,
+    finite_number,
+    finite_result,
+    receipt,
+    verification_receipt_output_schema,
+)
 from ...errors import ValidationError
 from ...registry import register_module
 
@@ -20,6 +26,7 @@ from ...registry import register_module
     params_schema={name: {"type": kind, "required": True} for name, kind in {
         "stock_concentration": "number", "target_concentration": "number", "final_volume": "number",
         "concentration_unit": "string", "volume_unit": "string", "solve_mode": "string"}.items()},
+    output_schema=verification_receipt_output_schema(),
 )
 async def ideal_dilution(context: Dict[str, Any]) -> Dict[str, Any]:
     p = context["params"]

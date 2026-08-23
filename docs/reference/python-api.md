@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,678 declarations across 817 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,679 declarations across 817 files**.
 
 ## `demo.py`
 
@@ -3651,7 +3651,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def ideal_dilution(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `ideal_dilution`; linked source is authoritative. | [`src/core/modules/atomic/chemistry/ideal_dilution.py:24`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/chemistry/ideal_dilution.py#L24) |
+| function | `async def ideal_dilution(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `ideal_dilution`; linked source is authoritative. | [`src/core/modules/atomic/chemistry/ideal_dilution.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/chemistry/ideal_dilution.py#L31) |
 
 ## `src/core/modules/atomic/communication/email_read.py`
 
@@ -5208,7 +5208,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def rigid_transform_3d(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `rigid_transform_3d`; linked source is authoritative. | [`src/core/modules/atomic/math/rigid_transform_3d.py:28`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/math/rigid_transform_3d.py#L28) |
+| function | `async def rigid_transform_3d(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `rigid_transform_3d`; linked source is authoritative. | [`src/core/modules/atomic/math/rigid_transform_3d.py:36`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/math/rigid_transform_3d.py#L36) |
 
 ## `src/core/modules/atomic/math/round.py`
 
@@ -5418,7 +5418,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def kinematics(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `kinematics`; linked source is authoritative. | [`src/core/modules/atomic/physics/kinematics_constant_acceleration.py:24`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/physics/kinematics_constant_acceleration.py#L24) |
+| function | `async def kinematics(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Implements `kinematics`; linked source is authoritative. | [`src/core/modules/atomic/physics/kinematics_constant_acceleration.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/physics/kinematics_constant_acceleration.py#L31) |
 
 ## `src/core/modules/atomic/port/check.py`
 
@@ -6928,11 +6928,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def finite_number(value: Any, field: str, *, positive: bool=False) -> float` | Implements `finite_number`; linked source is authoritative. | [`src/core/modules/domain_solver.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L19) |
-| function | `def safe_text(value: Any, field: str) -> str` | Return one bounded identifier-like string suitable for evidence. | [`src/core/modules/domain_solver.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L35) |
-| function | `def finite_result(value: float, field: str) -> float` | Implements `finite_result`; linked source is authoritative. | [`src/core/modules/domain_solver.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L45) |
-| function | `def exact_unit(params: Dict&#91;str, Any&#93;, field: str, supported: str) -> str` | Implements `exact_unit`; linked source is authoritative. | [`src/core/modules/domain_solver.py:51`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L51) |
-| function | `def receipt(module_id: str, solver_version: str, equation: str, normalized_inputs: Dict&#91;str, Any&#93;, units: Dict&#91;str, str&#93;, result: Dict&#91;str, Any&#93;, assumptions: list&#91;str&#93;, validation_checks: Dict&#91;str, bool&#93;) -> Dict&#91;str, Any&#93;` | Implements `receipt`; linked source is authoritative. | [`src/core/modules/domain_solver.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L58) |
+| function | `def verification_receipt_output_schema() -> Dict&#91;str, Dict&#91;str, str&#93;&#93;` | Return a fresh schema for the public verification-receipt envelope. | [`src/core/modules/domain_solver.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L19) |
+| function | `def finite_number(value: Any, field: str, *, positive: bool=False) -> float` | Implements `finite_number`; linked source is authoritative. | [`src/core/modules/domain_solver.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L31) |
+| function | `def safe_text(value: Any, field: str) -> str` | Return one bounded identifier-like string suitable for evidence. | [`src/core/modules/domain_solver.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L47) |
+| function | `def finite_result(value: float, field: str) -> float` | Implements `finite_result`; linked source is authoritative. | [`src/core/modules/domain_solver.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L57) |
+| function | `def exact_unit(params: Dict&#91;str, Any&#93;, field: str, supported: str) -> str` | Implements `exact_unit`; linked source is authoritative. | [`src/core/modules/domain_solver.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L63) |
+| function | `def receipt(module_id: str, solver_version: str, equation: str, normalized_inputs: Dict&#91;str, Any&#93;, units: Dict&#91;str, str&#93;, result: Dict&#91;str, Any&#93;, assumptions: list&#91;str&#93;, validation_checks: Dict&#91;str, bool&#93;) -> Dict&#91;str, Any&#93;` | Implements `receipt`; linked source is authoritative. | [`src/core/modules/domain_solver.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/domain_solver.py#L70) |
 
 ## `src/core/modules/errors.py`
 

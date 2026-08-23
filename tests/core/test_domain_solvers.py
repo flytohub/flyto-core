@@ -4,6 +4,7 @@
 
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
@@ -13,6 +14,20 @@ from core.capability_manifest import build_capability_manifest, compute_manifest
 from core.catalog.module import get_module_detail, search_modules
 from core.mcp_handler import execute_module
 from core.modules.registry import ModuleRegistry
+
+SOLVER_IDS = (
+    "math.rigid_transform_3d",
+    "physics.kinematics_constant_acceleration",
+    "chemistry.ideal_dilution",
+)
+RECEIPT_FIELD_TYPES = {
+    "receipt_version": "string",
+    "success": "boolean",
+    "status": "string",
+    "evidence_id": "string",
+    "evidence_sha256": "string",
+    "evidence": "object",
+}
 
 
 def _digest(value):
@@ -103,7 +118,7 @@ async def test_ideal_dilution_known_answer_disclaimer_and_rejections():
 
 
 def test_semantics_reach_catalog_and_hashed_manifest():
-    for module_id in ("math.rigid_transform_3d", "physics.kinematics_constant_acceleration", "chemistry.ideal_dilution"):
+    for module_id in SOLVER_IDS:
         detail = get_module_detail(module_id)
         assert detail["provides_capability"]
         assert all(detail["semantics"].values())
@@ -113,6 +128,28 @@ def test_semantics_reach_catalog_and_hashed_manifest():
     assert manifest["hash"] == compute_manifest_hash(manifest)
     contracts = manifest["semantic_contracts"]
     assert any(contract["module_id"] == "chemistry.ideal_dilution" for contract in contracts)
+
+
+def test_receipt_schema_is_exact_detached_and_visible_in_catalog():
+    schemas = []
+    for module_id in SOLVER_IDS:
+        registry_schema = ModuleRegistry.get_metadata(module_id)["output_schema"]
+        detail_schema = get_module_detail(module_id)["output_schema"]
+        assert set(registry_schema) == set(RECEIPT_FIELD_TYPES)
+        assert {name: definition["type"] for name, definition in registry_schema.items()} == RECEIPT_FIELD_TYPES
+        assert all(set(definition) == {"type"} for definition in registry_schema.values())
+        assert detail_schema == registry_schema
+        schemas.append(registry_schema)
+
+    assert len({id(schema) for schema in schemas}) == len(SOLVER_IDS)
+    for field in RECEIPT_FIELD_TYPES:
+        assert len({id(schema[field]) for schema in schemas}) == len(SOLVER_IDS)
+
+    catalog = Path("docs/TOOL_CATALOG.md").read_text(encoding="utf-8")
+    expected_output = ", ".join(f"`{name}` ({kind})" for name, kind in RECEIPT_FIELD_TYPES.items())
+    for module_id in SOLVER_IDS:
+        row = next(line for line in catalog.splitlines() if line.startswith(f"| `{module_id}` |"))
+        assert expected_output in row
 
 
 def test_search_matches_composite_goal_frames_by_exact_declared_semantic_tokens():
@@ -194,3 +231,7 @@ async def test_digest_falsification_covers_nested_evidence_and_envelope_fields()
     assert _digest(value) != original_digest
     value["evidence_sha256"] = "0" * 64
     assert value["evidence_sha256"] != _digest(value)
+
+    value = await execute_module("physics.kinematics_constant_acceleration", params)
+    value["status"] = "tampered"
+    assert value["evidence_sha256"] == _digest(value)

@@ -7,8 +7,8 @@
 | Runtime catalog | 479 modules, 88 categories |
 | Literal module registrations | 486 |
 | Packaged recipes | 41 |
-| Maintained Python source | 966 files, 201,167 lines |
-| Python declarations | 5,678 across 817 files |
+| Maintained Python source | 966 files, 201,291 lines |
+| Python declarations | 5,679 across 817 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 28 |
 | Environment-variable names | 108 |
@@ -19,8 +19,14 @@ either value from the module ID.
 
 Three built-in modules form an extensible verified deterministic domain-solver
 baseline. They cover only a proper 3D point transform, SI constant-acceleration
-kinematics, and ideal dilution arithmetic. They do not claim complete domain
-coverage or physical-world validation.
+kinematics, and ideal dilution arithmetic. Each declares the same fresh
+six-field `flyto.execution-verification-receipt.v1` output schema. The
+`evidence_sha256` value covers canonical nested evidence only; the envelope is
+validated separately. It provides tamper evidence, not a signature, sensor
+attestation, or physical-world proof. These modules infer no semantics from
+labels or IDs and claim neither complete mathematics, physics, or chemistry nor
+sensor, hardware, substance identity, reaction, laboratory, medical,
+compatibility, handling, or safety authority.
 
 ## Active And Defined Surfaces
 

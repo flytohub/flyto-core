@@ -12,7 +12,7 @@ The current generated runtime catalog contains 479 modules across 88 categories
 and 41 packaged recipes. Catalog search and detail carry each module's
 registry-declared `provides_capability` and `plugin`, never a value derived from
 the module ID. Source traceability covers 966 maintained Python files,
-201,167 lines, and 5,678 class/function/method declarations. These measurements
+201,291 lines, and 5,679 class/function/method declarations. These measurements
 come from checked generators and are not hand-maintained marketing totals.
 
 ## Problem
@@ -60,6 +60,31 @@ not shipped, so a module cannot be documented and unreachable at the same time
 The [Tool Catalog](TOOL_CATALOG.md) documents every runtime-discovered module,
 parameter, and output. The [registered module source map](reference/registered-modules.md)
 connects static module IDs to implementation lines.
+
+### Bounded Domain Solvers
+
+Three dependency-free offline modules implement source-declared semantics for
+a proper 3D rigid point transform, one-dimensional constant-acceleration
+kinematics, and ideal dilution arithmetic. Semantics are never inferred from a
+label or module ID. Each publishes the exact six-field
+`flyto.execution-verification-receipt.v1` output envelope. Its
+`evidence_sha256` is SHA-256 over canonical nested `evidence` only; callers
+validate the envelope separately. The digest is tamper evidence, not a
+signature, sensor attestation, or physical-world proof.
+
+The implementations are intentionally narrower than their subject areas. They
+do not claim complete mathematics, physics, or chemistry and have no sensor,
+hardware, substance identity, reaction, laboratory, medical, compatibility,
+handling, or safety authority. Primary background references are SciPy's
+[`Rotation`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.Rotation.html)
+and [`RigidTransform`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.transform.RigidTransform.html)
+documentation and [ROS tf2](https://docs.ros.org/en/rolling/Concepts/Intermediate/About-Tf2.html)
+for rigid transforms; [OpenStax University Physics, Motion with Constant
+Acceleration](https://openstax.org/books/university-physics-volume-1/pages/3-4-motion-with-constant-acceleration)
+for the kinematics equations; and the NIH/NCI protocol's [Dilution of a Stock
+Solution](https://bio-protocol.org/exchange/minidetail?id=3654880&type=30)
+for ideal dilution arithmetic. These references explain the bounded equations;
+they do not extend the modules' authority.
 
 ## Workflow Contract
 

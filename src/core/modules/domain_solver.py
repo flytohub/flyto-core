@@ -16,6 +16,18 @@ MAX_SAFE_INTEGER = (1 << 53) - 1
 _SAFE_TEXT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,95}\Z")
 
 
+def verification_receipt_output_schema() -> Dict[str, Dict[str, str]]:
+    """Return a fresh schema for the public verification-receipt envelope."""
+    return {
+        "receipt_version": {"type": "string"},
+        "success": {"type": "boolean"},
+        "status": {"type": "string"},
+        "evidence_id": {"type": "string"},
+        "evidence_sha256": {"type": "string"},
+        "evidence": {"type": "object"},
+    }
+
+
 def finite_number(value: Any, field: str, *, positive: bool = False) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValidationError(f"{field} must be a finite number", field=field)

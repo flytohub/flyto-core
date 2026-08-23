@@ -26,9 +26,13 @@
 - Core now includes an extensible verified deterministic domain-solver baseline:
   `math.rigid_transform_3d`, `physics.kinematics_constant_acceleration`, and
   `chemistry.ideal_dilution`. Each is dependency-free, offline, bounded to its
-  declared model and units, and returns a canonical SHA-256 receipt. This is
-  not complete mathematics, physics, or chemistry and is not physical-world,
-  laboratory, medical, handling, compatibility, reaction, or safety validation.
+  declared model and units, and returns the six-field
+  `flyto.execution-verification-receipt.v1` envelope. Its `evidence_sha256` is
+  SHA-256 over canonical nested evidence only; separate envelope validation is
+  required. This tamper evidence is not a signature, sensor attestation, or
+  physical-world proof. The solvers are not complete mathematics, physics, or
+  chemistry and have no sensor, hardware, substance identity, reaction,
+  laboratory, medical, compatibility, handling, or safety authority.
   Their explicit semantic contracts are registration-validated and projected
   through catalog/search and the hashed capability manifest without inferring
   meaning from display metadata. Legacy providers may continue to omit semantics.
@@ -93,13 +97,13 @@
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- The version on `main` is **2.30.0**, unreleased. It moved because the packaged
+- The version on `main` is **2.31.0**, unreleased. It moved because the packaged
   source moved: `2.28.1` was already on PyPI when the Python-floor change landed,
   and a floor change is packaging-visible. `scripts/check_release_drift.py` now
   fails CI whenever a tag `v<version>` exists and the packaged source at HEAD
   differs from it, so a version can no longer keep naming a release that shipped
   other code. The advisory floor is a separate number and stays **2.28.1**:
-  `>= 2.28.1` clears every published advisory, `2.30.x` is the line that
+  `>= 2.28.1` clears every published advisory, `2.31.x` is the line that
   receives new fixes, and `security/advisories.json` is where both are derived
   from rather than restated.
 - Package metadata was prepared for the **2.28.1** release. It includes the
@@ -208,7 +212,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 966 maintained Python files, 5,678
+- Source-backed documentation now covers 966 maintained Python files, 5,679
   declarations, 486 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

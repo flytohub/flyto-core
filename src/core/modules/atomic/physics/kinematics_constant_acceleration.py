@@ -4,7 +4,13 @@
 
 from typing import Any, Dict
 
-from ...domain_solver import exact_unit, finite_number, finite_result, receipt
+from ...domain_solver import (
+    exact_unit,
+    finite_number,
+    finite_result,
+    receipt,
+    verification_receipt_output_schema,
+)
 from ...errors import ValidationError
 from ...registry import register_module
 
@@ -20,6 +26,7 @@ from ...registry import register_module
     params_schema={name: {"type": kind, "required": True} for name, kind in {
         "x0": "number", "v0": "number", "acceleration": "number", "time": "number", "solve_mode": "string",
         "position_unit": "string", "velocity_unit": "string", "acceleration_unit": "string", "time_unit": "string"}.items()},
+    output_schema=verification_receipt_output_schema(),
 )
 async def kinematics(context: Dict[str, Any]) -> Dict[str, Any]:
     p = context["params"]

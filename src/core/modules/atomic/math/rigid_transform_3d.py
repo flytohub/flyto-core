@@ -5,7 +5,14 @@
 import math
 from typing import Any, Dict
 
-from ...domain_solver import exact_unit, finite_number, finite_result, receipt, safe_text
+from ...domain_solver import (
+    exact_unit,
+    finite_number,
+    finite_result,
+    receipt,
+    safe_text,
+    verification_receipt_output_schema,
+)
 from ...errors import ValidationError
 from ...registry import register_module
 
@@ -24,6 +31,7 @@ TOLERANCE = 1e-12
     params_schema={name: {"type": kind, "required": True} for name, kind in {
         "point": "array", "rotation": "array", "translation": "array",
         "source_frame": "string", "target_frame": "string", "length_unit": "string"}.items()},
+    output_schema=verification_receipt_output_schema(),
 )
 async def rigid_transform_3d(context: Dict[str, Any]) -> Dict[str, Any]:
     p = context["params"]

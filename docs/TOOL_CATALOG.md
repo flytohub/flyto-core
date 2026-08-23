@@ -285,7 +285,7 @@
 
 | Module | Description | Parameters | Output |
 |--------|-------------|------------|--------|
-| `chemistry.ideal_dilution` | Ideal C1*V1=C2*V2 arithmetic only; no substance, compatibility, reaction, lab, medical, handling, or safety authority. | `stock_concentration` number *(required)*, `target_concentration` number *(required)*, `final_volume` number *(required)*, `concentration_unit` string *(required)*, `volume_unit` string *(required)*, `solve_mode` string *(required)* | — |
+| `chemistry.ideal_dilution` | Ideal C1*V1=C2*V2 arithmetic only; no substance, compatibility, reaction, lab, medical, handling, or safety authority. | `stock_concentration` number *(required)*, `target_concentration` number *(required)*, `final_volume` number *(required)*, `concentration_unit` string *(required)*, `volume_unit` string *(required)*, `solve_mode` string *(required)* | `receipt_version` (string), `success` (boolean), `status` (string), `evidence_id` (string), `evidence_sha256` (string), `evidence` (object) |
 
 ## cloud
 
@@ -627,7 +627,7 @@
 | `math.ceil` | Round number up to nearest integer | `number` number *(required)* | `result` (number), `original` (number) |
 | `math.floor` | Round number down to nearest integer | `number` number *(required)* | `result` (number), `original` (number) |
 | `math.power` | Raise number to a power | `base` number *(required)*, `exponent` number *(required)* | `result` (number), `base` (number), `exponent` (number) |
-| `math.rigid_transform_3d` | Apply a declared proper orthonormal 3x3 rotation and translation to one 3D point. | `point` array *(required)*, `rotation` array *(required)*, `translation` array *(required)*, `source_frame` string *(required)*, `target_frame` string *(required)*, `length_unit` string *(required)* | — |
+| `math.rigid_transform_3d` | Apply a declared proper orthonormal 3x3 rotation and translation to one 3D point. | `point` array *(required)*, `rotation` array *(required)*, `translation` array *(required)*, `source_frame` string *(required)*, `target_frame` string *(required)*, `length_unit` string *(required)* | `receipt_version` (string), `success` (boolean), `status` (string), `evidence_id` (string), `evidence_sha256` (string), `evidence` (object) |
 | `math.round` | Round number to specified decimal places | `number` number *(required)*, `decimals` number (default: `0`) | `result` (number), `original` (number), `decimals` (number) |
 
 ## mcp
@@ -730,7 +730,7 @@
 
 | Module | Description | Parameters | Output |
 |--------|-------------|------------|--------|
-| `physics.kinematics_constant_acceleration` | Compute position and velocity for a 1D constant-acceleration SI model. | `x0` number *(required)*, `v0` number *(required)*, `acceleration` number *(required)*, `time` number *(required)*, `solve_mode` string *(required)*, `position_unit` string *(required)*, `velocity_unit` string *(required)*, `acceleration_unit` string *(required)*, `time_unit` string *(required)* | — |
+| `physics.kinematics_constant_acceleration` | Compute position and velocity for a 1D constant-acceleration SI model. | `x0` number *(required)*, `v0` number *(required)*, `acceleration` number *(required)*, `time` number *(required)*, `solve_mode` string *(required)*, `position_unit` string *(required)*, `velocity_unit` string *(required)*, `acceleration_unit` string *(required)*, `time_unit` string *(required)* | `receipt_version` (string), `success` (boolean), `status` (string), `evidence_id` (string), `evidence_sha256` (string), `evidence` (object) |
 
 ## port
 
