@@ -34,28 +34,49 @@ from pathlib import Path
 import pytest
 
 from core.modules import atomic  # noqa: F401 — registers the module catalog
+from core.modules.integrations import jira, salesforce, slack  # noqa: F401
 from core.modules.registry.core import ModuleRegistry
 
-# Parameter names that denote an outbound network target.
+# The integration.* families are imported explicitly above because nothing else
+# in the package imports them, so they never reached this sweep — the whole
+# family shares one unguarded sink and none of it was visible here
+# (GHSA-4346-4gqg-59f9). Security coverage tracks the source tree, not whichever
+# subset a default import happens to register.
+
+# Parameter names that denote an outbound network target. `connection_string`
+# and friends are here because GHSA-9x26-9vhm-2qhw was a DSN: a whole target
+# packed into one string, named nothing like a host, and therefore invisible to
+# this sweep while the sibling that spelled its target `host` was guarded.
 OUTBOUND_PARAM_RE = re.compile(
     r"(^|_)(url|urls|uri|endpoint|endpoints|host|hostname|origin|webhook"
-    r"|callback|server|proxy)$"
+    r"|callback|server|proxy|connection_string|connection_uri|dsn"
+    r"|domain|domains)$"
 )
 
 # The guards in core/utils.py, plus the browser driver's navigation/egress
 # guards. Referencing any of them counts as reaching the boundary.
+#
+# `assert_env_credential_endpoint_allowed` is deliberately NOT in this list,
+# though it is a security check on the same parameter. It answers "may the
+# operator's key travel there", permits any public host by design, and no-ops
+# entirely when the caller supplies its own key. Counting it here is what let
+# `llm.agent` read as guarded while it fetched a caller-supplied `base_url` with
+# no SSRF check at all — GHSA-pp5w-w9c3-qfv2 and GHSA-f9q4-fp8j-r5h7, two
+# reporters on one unguarded parameter. A guard list is only as good as its
+# weakest member's actual promise.
 GUARD_SYMBOLS = (
     "validate_url_ssrf",
     "validate_url_with_env_config",
     "enforce_outbound_url",
     "enforce_outbound_host",
     "enforce_outbound_service_url",
+    "enforce_azure_endpoint",
     "guarded_aiohttp_request",
     "guarded_client_session",
     "ssrf_guarded_connector",
     "trusted_outbound_network_scope",
-    "assert_env_credential_endpoint_allowed",
     "guard_client_dsn",
+    "enforce_dsn_target",
     "is_private_ip",
     "resolve_guard_ip",
     "_guard_navigation",
@@ -76,6 +97,18 @@ OUTBOUND_CALL_RE = re.compile(
 
 # Parameters that match OUTBOUND_PARAM_RE but never become a network target.
 NO_REQUEST_PARAMS = {
+    "dns.lookup": {
+        "domain": "the name being resolved, sent as a query to the system "
+                  "resolver; this module opens no connection to the domain itself"
+    },
+    "network.whois": {
+        "domain": "an argv element for the whois client, which picks the registry "
+                  "server itself; the caller does not choose what is connected to"
+    },
+    "browser.cookies": {
+        "domain": "a cookie attribute used to scope or filter jar entries; no "
+                  "navigation or request is made to it"
+    },
     "validate.url": {
         "url": "parsed with urlparse and reported on; the module never requests it"
     },
@@ -127,11 +160,53 @@ NO_REQUEST_PARAMS = {
 }
 
 # Parameters excused for a reason that a marker in the source can attest to:
-# either the module validates locally instead of calling a shared guard, or the
-# value is handed to a third party rather than requested here. The first element
+# the module validates locally instead of calling a shared guard, the value is
+# handed to a third party rather than requested here, or the request is
+# delegated to a component that guards it and the marker attests to that
+# delegation. The first element
 # is the marker that must still be present; if it disappears, the exemption is
 # void and the test fails.
 LOCAL_VALIDATOR_PARAMS = {
+    "integration.jira.create_issue": {
+        "domain": (
+            "credentials_from_env=self.credentials_from_env",
+            "the request is delegated to BaseIntegration._request, which runs "
+            "enforce_outbound_url and the env-credential target guard on the URL "
+            "built from this domain. The marker is the provenance flag the "
+            "wrapper must pass for that credential guard to work at all; without "
+            "it the operator's token is indistinguishable from the caller's and "
+            "the exemption is void",
+        )
+    },
+    "integration.jira.search_issues": {
+        "domain": (
+            "credentials_from_env=self.credentials_from_env",
+            "same delegation to BaseIntegration._request as create_issue; the "
+            "marker is the credential-provenance flag that guard depends on",
+        )
+    },
+    "integration.salesforce.query": {
+        "instance_url": (
+            "credentials_from_env=self.credentials_from_env",
+            "the request is delegated to BaseIntegration._request, which guards "
+            "the URL built from this instance_url; the marker is the credential-"
+            "provenance flag that guard depends on",
+        )
+    },
+    "integration.salesforce.create_record": {
+        "instance_url": (
+            "credentials_from_env=self.credentials_from_env",
+            "same delegation to BaseIntegration._request as query; the marker is "
+            "the credential-provenance flag that guard depends on",
+        )
+    },
+    "integration.salesforce.update_record": {
+        "instance_url": (
+            "credentials_from_env=self.credentials_from_env",
+            "same delegation to BaseIntegration._request as query; the marker is "
+            "the credential-provenance flag that guard depends on",
+        )
+    },
     "communication.twilio.make_call": {
         "twiml_url": (
             "'Url': self.twiml_url",
@@ -158,13 +233,21 @@ LOCAL_VALIDATOR_PARAMS = {
 }
 
 
+# Captured at import, before any test can mutate the registry. Several suites
+# snapshot and restore ModuleRegistry, and the integration.* families are only
+# in the catalog because this file imported them — a coverage gate whose view of
+# the catalog depends on test ordering is not a gate.
+_CATALOG = dict(ModuleRegistry.get_all_metadata(filter_by_stability=False))
+_MODULE_CLASSES = {module_id: ModuleRegistry.get(module_id) for module_id in _CATALOG}
+
+
 def _module_sources(module_id: str):
     """Every file that can hold this module's guard: its own, plus its MRO.
 
     Mixins matter here — LLMClientMixin carries the ollama_url guard for
     agent.chain and agent.autonomous, which live in different files.
     """
-    module_class = ModuleRegistry.get(module_id)
+    module_class = _MODULE_CLASSES[module_id]
     paths, seen = [], set()
 
     for klass in module_class.__mro__:
@@ -192,8 +275,7 @@ def _registry_outbound_params():
     # Security coverage must include beta/experimental modules. Runtime
     # visibility filters are product policy, not a reason to omit a sink from
     # CI boundary checks.
-    all_metadata = ModuleRegistry.get_all_metadata(filter_by_stability=False)
-    for module_id, metadata in sorted(all_metadata.items()):
+    for module_id, metadata in sorted(_CATALOG.items()):
         schema = metadata.get("params_schema") or {}
         names = sorted(n for n in schema if OUTBOUND_PARAM_RE.search(n))
         if names:
@@ -202,7 +284,7 @@ def _registry_outbound_params():
 
 def test_registry_is_populated():
     """Guard against the suite passing vacuously on an empty registry."""
-    assert ModuleRegistry.module_count() > 300
+    assert len(_CATALOG) > 300
     assert sum(1 for _ in _registry_outbound_params()) > 40
 
 

@@ -24,7 +24,12 @@ from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility
 from ...types import NodeType, EdgeType, DataType
-from ....utils import assert_env_credential_endpoint_allowed, CredentialEndpointError
+from ....utils import (
+    assert_env_credential_endpoint_allowed,
+    CredentialEndpointError,
+    SSRFError,
+    validate_url_with_env_config,
+)
 
 from typing import List, Optional
 
@@ -317,6 +322,8 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         chat_model = _resolve_chat_model(context)
     except CredentialEndpointError as e:
         return {'ok': False, 'error': str(e), 'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'}
+    except SSRFError as e:
+        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
     if not chat_model:
         return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL'}
 
@@ -855,6 +862,23 @@ def _parse_output(content: str, response_format: str, output_schema: Optional[Di
 # ── Sub-node resolution ──────────────────────────────────────────
 
 
+def _guard_inline_base_url(base_url: Optional[str]) -> None:
+    """SSRF-validate a caller-supplied model endpoint before the agent fetches it.
+
+    ``llm.chat`` and ``ai.model`` have run this on their own ``base_url`` since
+    CVE-2026-67428; the agent did not, which is GHSA-pp5w-w9c3-qfv2 and
+    GHSA-f9q4-fp8j-r5h7. The credential guard beside it is not a substitute:
+    it exists to stop the operator's env key travelling to a caller endpoint,
+    so it permits any public host and no-ops entirely once the caller supplies
+    its own key — which is exactly the configuration both reports used.
+
+    Raises:
+        SSRFError: If the endpoint is blocked by policy.
+    """
+    if base_url:
+        validate_url_with_env_config(base_url)
+
+
 def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
     """Get ChatModel from connected ai.model sub-node, or build from inline params.
 
@@ -874,6 +898,9 @@ def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
         config = model_input.get('config', {})
         if config.get('api_key'):
             logger.info(f"Using sub-node config: {config.get('provider')}/{config.get('model')}")
+            # The backward-compat dict reaches the same builder as the inline
+            # path, so it gets the same check rather than being a way around it.
+            _guard_inline_base_url(config.get('base_url'))
             return create_chat_model(**config)
 
     # 2. From inline params (no sub-node connected)
@@ -884,6 +911,8 @@ def _resolve_chat_model(context: Dict) -> Optional[ChatModel]:
     base_url = params.get('base_url')
 
     caller_base_url = base_url
+    _guard_inline_base_url(caller_base_url)
+
     key_from_env = False
     if not api_key and provider:
         env_vars = {

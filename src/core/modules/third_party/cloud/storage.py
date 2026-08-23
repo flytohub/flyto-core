@@ -190,6 +190,13 @@ async def aws_s3_upload(context):
     """Upload file to AWS S3"""
     params = context['params']
 
+    # SECURITY: aws_s3_download confines its file_path; this side read whatever
+    # host file the caller named and streamed it to a caller-chosen bucket with
+    # caller-supplied credentials (GHSA-45hf-2fmj-q442).
+    file_path = params.get('file_path')
+    if file_path:
+        file_path = validate_path_with_env_config(file_path)
+
     try:
         import aioboto3
     except ImportError:
@@ -207,7 +214,6 @@ async def aws_s3_upload(context):
 
     bucket = params['bucket']
     key = params['key']
-    file_path = params.get('file_path')
     content = params.get('content')
 
     if not file_path and not content:

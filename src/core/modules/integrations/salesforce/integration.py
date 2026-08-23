@@ -10,9 +10,18 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ..base import PaginatedIntegration, IntegrationConfig, APIResponse
+from ..base import (
+    APIResponse,
+    IntegrationConfig,
+    PaginatedIntegration,
+    resolve_credential,
+)
 
 logger = logging.getLogger(__name__)
+
+# Salesforce's own login endpoint, used when neither the caller nor the operator
+# names an instance. Not caller-derived, so an operator token may reach it.
+DEFAULT_INSTANCE_URL = "https://login.salesforce.com"
 
 
 class SalesforceIntegration(PaginatedIntegration):
@@ -45,6 +54,7 @@ class SalesforceIntegration(PaginatedIntegration):
         refresh_token: Optional[str] = None,
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
+        credentials_from_env: bool = False,
     ):
         """
         Initialize Salesforce integration.
@@ -56,16 +66,19 @@ class SalesforceIntegration(PaginatedIntegration):
             client_id: Connected App client ID (for refresh)
             client_secret: Connected App client secret (for refresh)
         """
+        operator_instance_url = os.getenv("SALESFORCE_INSTANCE_URL")
         self.instance_url = (
             instance_url
-            or os.getenv("SALESFORCE_INSTANCE_URL")
-            or "https://login.salesforce.com"
+            or operator_instance_url
+            or DEFAULT_INSTANCE_URL
         )
         self.refresh_token = refresh_token
         self.client_id = client_id or os.getenv("SALESFORCE_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("SALESFORCE_CLIENT_SECRET")
 
-        token = access_token or os.getenv("SALESFORCE_ACCESS_TOKEN")
+        token, token_from_env = resolve_credential(
+            access_token, os.getenv("SALESFORCE_ACCESS_TOKEN")
+        )
 
         base_url = f"{self.instance_url.rstrip('/')}/services/data"
         config = IntegrationConfig(
@@ -74,6 +87,11 @@ class SalesforceIntegration(PaginatedIntegration):
             api_version=self.api_version,
             rate_limit_calls=100,
             rate_limit_period=60,
+            # `instance_url` is caller input, so an operator token may only
+            # travel to the instance the operator configured — or to this
+            # module's own default, which no caller chose.
+            credentials_from_env=(credentials_from_env or token_from_env),
+            env_credential_hosts=(operator_instance_url, DEFAULT_INSTANCE_URL),
         )
 
         super().__init__(access_token=token, config=config)

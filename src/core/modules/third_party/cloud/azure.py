@@ -10,6 +10,7 @@ from typing import Any
 from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
+from ._azure_endpoint import enforce_azure_endpoint
 
 
 @register_module(
@@ -157,6 +158,14 @@ class AzureUploadModule(BaseModule):
             self.blob_name = os.path.basename(self.file_path)
 
     async def execute(self) -> Any:
+        # SECURITY: the download twin below confines destination_path; this side
+        # read whatever host file the caller named and streamed it to a
+        # caller-chosen bucket (GHSA-45hf-2fmj-q442). Validated before the try
+        # block so the rejection surfaces as PathTraversalError rather than being
+        # rewritten into a generic upload error.
+        file_path = validate_path_with_env_config(self.file_path)
+        enforce_azure_endpoint(self.connection_string)
+
         try:
             # Import Azure library
             try:
@@ -170,11 +179,11 @@ class AzureUploadModule(BaseModule):
             import os
 
             # Check file exists
-            if not os.path.exists(self.file_path):
-                raise FileNotFoundError(f"File not found: {self.file_path}")
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
 
             # Get file size
-            file_size = os.path.getsize(self.file_path)
+            file_size = os.path.getsize(file_path)
 
             # Initialize client
             blob_service_client = BlobServiceClient.from_connection_string(
@@ -184,7 +193,7 @@ class AzureUploadModule(BaseModule):
             blob_client = container_client.get_blob_client(self.blob_name)
 
             # Upload file
-            with open(self.file_path, 'rb') as data:
+            with open(file_path, 'rb') as data:
                 content_settings = None
                 if self.content_type:
                     from azure.storage.blob import ContentSettings
@@ -332,6 +341,7 @@ class AzureDownloadModule(BaseModule):
 
     async def execute(self) -> Any:
         destination_path = validate_path_with_env_config(self.destination_path)
+        enforce_azure_endpoint(self.connection_string)
 
         try:
             # Import Azure library

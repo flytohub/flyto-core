@@ -15,7 +15,12 @@ remember. This module makes forgetting a test failure instead of an advisory:
 
 * :func:`test_every_path_param_module_reaches_the_sandbox_helper` walks the whole
   registry and fails on any module that declares a path-shaped parameter without
-  referencing the guard.
+  referencing the guard. It reads the *handler*, not the file: this check used to
+  scan whole source files, so ``cloud.aws_s3.upload`` counted as guarded because
+  ``aws_s3_download`` — a different function, further down the same file — called
+  the helper. GHSA-45hf-2fmj-q442 is exactly that pair, and the same file holds
+  the same asymmetry for Azure and GCS. A guarded twin cannot vouch for its
+  sibling any more.
 * :func:`test_allowlisted_modules_have_no_filesystem_sink` is the tripwire under
   the allowlist: an entry is only excused while the module genuinely has no
   filesystem sink, so implementing a stub or adding a write later fails here
@@ -28,6 +33,7 @@ call the guard, or write down in ``NON_FILESYSTEM_PARAMS`` why the parameter is
 not a filesystem path.
 """
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -114,6 +120,71 @@ def _module_source(module_id: str) -> Path:
     return Path(sys.modules[module_class.__module__].__file__)
 
 
+def _registered_name(module_id: str) -> str:
+    """The name of the function or class ``register_module`` was applied to."""
+    module_class = ModuleRegistry.get(module_id)
+    wrapped = getattr(module_class, "__wrapped_func__", None)
+    return wrapped.__name__ if wrapped is not None else module_class.__name__
+
+
+_DEFINITION_NODES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+
+def _definitions(source: str) -> dict:
+    """Every top-level-reachable def/class in a file, by name."""
+    return {
+        node.name: node
+        for node in ast.walk(ast.parse(source))
+        if isinstance(node, _DEFINITION_NODES)
+    }
+
+
+def _called_names(node) -> set:
+    """Names this definition calls, whether bare or through an attribute."""
+    names = set()
+    for child in ast.walk(node):
+        if not isinstance(child, ast.Call):
+            continue
+        func = child.func
+        if isinstance(func, ast.Name):
+            names.add(func.id)
+        elif isinstance(func, ast.Attribute):
+            names.add(func.attr)
+    return names
+
+
+def _reaches_guard(module_id: str) -> bool:
+    """Whether this module's own handler reaches the sandbox helper.
+
+    One hop of indirection counts, because a handler that hands the path to a
+    helper in its own file — ``_prepare_output``, ``draw_annotations`` — has
+    genuinely routed it through the guard. Two functions that merely share a
+    file have not, which is the distinction the old file-wide scan could not
+    make.
+    """
+    source = _module_source(module_id).read_text(encoding="utf-8")
+    definitions = _definitions(source)
+    node = definitions.get(_registered_name(module_id))
+    if node is None:  # unparseable shape: fall back to the file-wide answer
+        return any(symbol in source for symbol in GUARD_SYMBOLS)
+
+    reachable = [node]
+    for name in _called_names(node):
+        helper = definitions.get(name)
+        if helper is not None:
+            reachable.append(helper)
+            for nested in _called_names(helper):
+                deeper = definitions.get(nested)
+                if deeper is not None:
+                    reachable.append(deeper)
+
+    return any(
+        symbol in (ast.get_source_segment(source, reached) or "")
+        for reached in reachable
+        for symbol in GUARD_SYMBOLS
+    )
+
+
 def _path_params(metadata: dict) -> list:
     schema = metadata.get("params_schema") or {}
     return sorted(name for name in schema if PATH_PARAM_RE.search(name))
@@ -145,8 +216,7 @@ def test_every_path_param_module_reaches_the_sandbox_helper():
     offenders = []
 
     for module_id, names in _registry_path_params():
-        source = _module_source(module_id).read_text(encoding="utf-8")
-        if any(symbol in source for symbol in GUARD_SYMBOLS):
+        if _reaches_guard(module_id):
             continue
 
         excused = NON_FILESYSTEM_PARAMS.get(module_id, {})

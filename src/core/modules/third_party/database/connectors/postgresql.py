@@ -8,6 +8,7 @@ import os
 
 from ....registry import register_module
 from ....schema import compose, presets
+from ._dsn_target import enforce_dsn_target
 
 
 @register_module(
@@ -87,15 +88,23 @@ async def postgresql_query(context):
     """Execute PostgreSQL query"""
     params = context['params']
 
-    try:
-        import asyncpg
-    except ImportError:
-        raise ImportError("asyncpg package required. Install with: pip install asyncpg")
-
     # Get connection string
     conn_string = params.get('connection_string') or os.getenv('POSTGRESQL_URL')
     if not conn_string:
         raise ValueError("Connection string required: provide 'connection_string' param or set POSTGRESQL_URL env variable")
+
+    # SECURITY: a caller-supplied connection_string names a TCP target the same
+    # way `host` does in db.mysql.query, but hides it from the name-based
+    # outbound sweep — that is how GHSA-9x26-9vhm-2qhw reached internal
+    # databases and the metadata endpoint. Guarded before the driver import so
+    # a deployment without the driver installed is protected rather than
+    # accidentally safe.
+    enforce_dsn_target(conn_string, purpose='PostgreSQL')
+
+    try:
+        import asyncpg
+    except ImportError:
+        raise ImportError("asyncpg package required. Install with: pip install asyncpg")
 
     # Connect and execute query
     conn = await asyncpg.connect(conn_string)

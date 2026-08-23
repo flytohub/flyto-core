@@ -8,6 +8,7 @@ import os
 
 from ....registry import register_module
 from ....schema import compose, presets
+from ._dsn_target import enforce_dsn_target
 
 
 @register_module(
@@ -93,15 +94,23 @@ async def mongodb_find(context):
     """Query MongoDB documents"""
     params = context['params']
 
-    try:
-        from motor.motor_asyncio import AsyncIOMotorClient
-    except ImportError:
-        raise ImportError("motor package required. Install with: pip install motor")
-
     # Get connection string
     conn_string = params.get('connection_string') or os.getenv('MONGODB_URL')
     if not conn_string:
         raise ValueError("Connection string required: provide 'connection_string' param or set MONGODB_URL env variable")
+
+    # SECURITY: a caller-supplied connection_string names a TCP target the same
+    # way `host` does in db.mysql.query, but hides it from the name-based
+    # outbound sweep — that is how GHSA-9x26-9vhm-2qhw reached internal
+    # databases and the metadata endpoint. Guarded before the driver import so
+    # a deployment without the driver installed is protected rather than
+    # accidentally safe.
+    enforce_dsn_target(conn_string, purpose='MongoDB')
+
+    try:
+        from motor.motor_asyncio import AsyncIOMotorClient
+    except ImportError:
+        raise ImportError("motor package required. Install with: pip install motor")
 
     # Connect to MongoDB
     client = AsyncIOMotorClient(conn_string)

@@ -121,12 +121,14 @@ def load_ruleset(path: Union[str, Path]) -> Ruleset:
     """Load ruleset from YAML file."""
     import yaml
 
-    path = Path(path)
+    # GHSA-p34x: the '..' denylist below this line let any absolute path
+    # through, which is why save_ruleset was moved to the shared helper. The
+    # loader kept the denylist and so kept reading /etc/passwd as YAML — the
+    # guarded twin in this same file never covered it.
+    path = Path(validate_path_with_env_config(str(path)))
     if not path.exists():
         raise FileNotFoundError(f"Ruleset file not found: {path}")
 
-    if '..' in str(path):
-        raise ValueError('Invalid file path')
     with open(path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
 

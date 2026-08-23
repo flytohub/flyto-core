@@ -11,7 +11,12 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 
-from ..base import PaginatedIntegration, IntegrationConfig, APIResponse
+from ..base import (
+    APIResponse,
+    IntegrationConfig,
+    PaginatedIntegration,
+    resolve_credential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ class JiraIntegration(PaginatedIntegration):
         email: Optional[str] = None,
         api_token: Optional[str] = None,
         access_token: Optional[str] = None,  # OAuth token
+        credentials_from_env: bool = False,
     ):
         """
         Initialize Jira integration.
@@ -51,10 +57,16 @@ class JiraIntegration(PaginatedIntegration):
             email: User email for basic auth
             api_token: API token for basic auth
             access_token: OAuth access token (alternative)
+            credentials_from_env: Set by a caller that already resolved the
+                credential from the environment on this integration's behalf,
+                so the credential-endpoint guard still sees where it came from.
         """
-        self.domain = domain or os.getenv("JIRA_DOMAIN")
-        self.email = email or os.getenv("JIRA_EMAIL")
-        self.api_token = api_token or os.getenv("JIRA_API_TOKEN")
+        operator_domain = os.getenv("JIRA_DOMAIN")
+        self.domain = domain or operator_domain
+        self.email, email_from_env = resolve_credential(email, os.getenv("JIRA_EMAIL"))
+        self.api_token, token_from_env = resolve_credential(
+            api_token, os.getenv("JIRA_API_TOKEN")
+        )
 
         if not self.domain:
             raise ValueError("Jira domain required")
@@ -66,6 +78,12 @@ class JiraIntegration(PaginatedIntegration):
             api_version="3",
             rate_limit_calls=50,
             rate_limit_period=60,
+            # `domain` is caller input, so an operator credential may only
+            # travel to the domain the operator themselves configured.
+            credentials_from_env=(
+                credentials_from_env or email_from_env or token_from_env
+            ),
+            env_credential_hosts=(operator_domain,),
         )
 
         super().__init__(access_token=access_token, config=config)

@@ -14,6 +14,8 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
+from ....utils import enforce_outbound_url, guarded_client_session
+from .egress import assert_env_credential_target_allowed
 from .models import APIResponse, IntegrationConfig
 from .rate_limiter import RateLimiter
 
@@ -90,7 +92,10 @@ class BaseIntegration(ABC):
         """Ensure HTTP session exists."""
         if self._session is None or self._session.closed:
             timeout = aiohttp.ClientTimeout(total=self.config.timeout)
-            self._session = aiohttp.ClientSession(
+            # Guarded connector: the IP the SSRF check validated is the IP the
+            # request connects to, so a name that re-resolves into private space
+            # between the two cannot slip through.
+            self._session = guarded_client_session(
                 timeout=timeout,
                 headers=self._default_headers(),
             )
@@ -149,6 +154,27 @@ class BaseIntegration(ABC):
         """
         session = await self._ensure_session()
         url = self._build_url(endpoint)
+
+        # SECURITY: this one method is the outbound sink for the whole
+        # integration.* family, and the base URL under it is caller-derived —
+        # Jira's `domain`, Salesforce's `instance_url`. Unguarded it was both an
+        # SSRF primitive and, because _get_auth_header attaches the operator's
+        # credential to whatever host was named, a credential-exfiltration
+        # primitive (GHSA-4346-4gqg-59f9). Two controls, because the SSRF guard
+        # permits ordinary public hosts by design and an attacker's collector is
+        # an ordinary public host.
+        #
+        # The credential check runs first: it is a policy question about a host
+        # name, so it needs no DNS and stays decisive for a target that does not
+        # resolve — where the SSRF guard's own fail-closed answer would be right
+        # but would describe the wrong problem.
+        assert_env_credential_target_allowed(
+            url,
+            service_name=self.config.service_name,
+            operator_hosts=self.config.env_credential_hosts,
+            credentials_from_env=self.config.credentials_from_env,
+        )
+        enforce_outbound_url(url)
 
         # Apply rate limiting
         await self._rate_limiter.acquire()

@@ -14,8 +14,7 @@ import secrets
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urlencode
 
-import aiohttp
-
+from ....utils import enforce_outbound_url, guarded_client_session
 from .models import OAuthConfig, OAuthToken
 from .pkce import PKCEChallenge
 
@@ -210,7 +209,12 @@ class OAuthClient:
             logger.warning(f"Revoke URL not configured for {self.config.provider}")
             return False
 
-        async with aiohttp.ClientSession() as session:
+        # SECURITY: the same guard the rest of the integration family gained
+        # for GHSA-4346-4gqg-59f9 — a token endpoint that comes from config is
+        # still an outbound target, and this one carries a token.
+        enforce_outbound_url(self.config.revoke_url)
+
+        async with guarded_client_session() as session:
             async with session.post(
                 self.config.revoke_url,
                 data={"token": token.access_token},
@@ -224,7 +228,9 @@ class OAuthClient:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        async with aiohttp.ClientSession() as session:
+        enforce_outbound_url(self.config.token_url)
+
+        async with guarded_client_session() as session:
             async with session.post(
                 self.config.token_url,
                 data=data,

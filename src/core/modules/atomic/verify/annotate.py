@@ -181,7 +181,13 @@ class VerifyAnnotateModule(BaseModule):
     module_description = "Mark difference regions on screenshots with labels"
 
     def validate_params(self) -> None:
+        # SECURITY: draw_annotations confines output_path but opened image_path
+        # as given, and the image it reads is drawn into that output — the read
+        # half of the same asymmetry as GHSA-45hf-2fmj-q442. Validated here so
+        # the default output path is derived from the canonical location.
         self.image_path = self.params.get('image_path')
+        if self.image_path:
+            self.image_path = validate_path_with_env_config(self.image_path)
         self.annotations = self.params.get('annotations', [])
         self.output_path = self.params.get('output_path')
 

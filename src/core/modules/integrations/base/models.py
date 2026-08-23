@@ -8,7 +8,7 @@ Data classes for integration configuration and responses.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 
 @dataclass
@@ -24,6 +24,12 @@ class IntegrationConfig:
     rate_limit_period: int = 60  # seconds
     verify_ssl: bool = True
     user_agent: str = "Flyto2-Integration/1.0"
+
+    # Whether the credential this integration authenticates with came from the
+    # operator's environment, and which hosts the operator named for it. Read by
+    # assert_env_credential_target_allowed in client._request; see egress.py.
+    credentials_from_env: bool = False
+    env_credential_hosts: Tuple[Optional[str], ...] = ()
 
     def get_api_url(self, endpoint: str) -> str:
         """Build full API URL."""

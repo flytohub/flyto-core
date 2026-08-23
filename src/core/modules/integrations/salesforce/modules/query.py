@@ -11,6 +11,7 @@ from typing import Any, Dict
 
 from ....base import BaseModule
 from ....registry import register_module
+from ...base import resolve_credential
 from ..integration import SalesforceIntegration
 
 
@@ -104,15 +105,18 @@ class SalesforceQueryModule(BaseModule):
         self.instance_url = self.params["instance_url"]
         self.soql = self.params["soql"]
         self.fetch_all = self.params.get("fetch_all", False)
-        self.access_token = (
-            self.params.get("access_token")
-            or os.getenv("SALESFORCE_ACCESS_TOKEN")
+        # `instance_url` is a caller parameter; the integration refuses to
+        # carry an operator token to an instance the operator never configured,
+        # and can only do so if it is told the token's origin.
+        self.access_token, self.credentials_from_env = resolve_credential(
+            self.params.get("access_token"), os.getenv("SALESFORCE_ACCESS_TOKEN")
         )
 
     async def execute(self) -> Dict[str, Any]:
         async with SalesforceIntegration(
             instance_url=self.instance_url,
             access_token=self.access_token,
+            credentials_from_env=self.credentials_from_env,
         ) as sf:
             if self.fetch_all:
                 records = await sf.query_all(self.soql)

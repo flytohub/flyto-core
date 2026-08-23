@@ -11,6 +11,7 @@ from typing import Any, Dict
 
 from ....base import BaseModule
 from ....registry import register_module
+from ...base import resolve_credential
 from ..integration import SalesforceIntegration
 
 
@@ -92,15 +93,18 @@ class SalesforceUpdateRecordModule(BaseModule):
         self.sobject = self.params["sobject"]
         self.record_id = self.params["record_id"]
         self.data = self.params["data"]
-        self.access_token = (
-            self.params.get("access_token")
-            or os.getenv("SALESFORCE_ACCESS_TOKEN")
+        # `instance_url` is a caller parameter; the integration refuses to
+        # carry an operator token to an instance the operator never configured,
+        # and can only do so if it is told the token's origin.
+        self.access_token, self.credentials_from_env = resolve_credential(
+            self.params.get("access_token"), os.getenv("SALESFORCE_ACCESS_TOKEN")
         )
 
     async def execute(self) -> Dict[str, Any]:
         async with SalesforceIntegration(
             instance_url=self.instance_url,
             access_token=self.access_token,
+            credentials_from_env=self.credentials_from_env,
         ) as sf:
             response = await sf.update(self.sobject, self.record_id, self.data)
 

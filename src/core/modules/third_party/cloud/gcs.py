@@ -148,6 +148,13 @@ class GCSUploadModule(BaseModule):
             self.object_name = os.path.basename(self.file_path)
 
     async def execute(self) -> Any:
+        # SECURITY: the download twin below confines destination_path; this side
+        # read whatever host file the caller named and streamed it to a
+        # caller-chosen bucket (GHSA-45hf-2fmj-q442). Validated before the try
+        # block so the rejection surfaces as PathTraversalError rather than being
+        # rewritten into a generic upload error.
+        file_path = validate_path_with_env_config(self.file_path)
+
         try:
             # Import GCS library
             try:
@@ -161,11 +168,11 @@ class GCSUploadModule(BaseModule):
             import os
 
             # Check file exists
-            if not os.path.exists(self.file_path):
-                raise FileNotFoundError(f"File not found: {self.file_path}")
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
 
             # Get file size
-            file_size = os.path.getsize(self.file_path)
+            file_size = os.path.getsize(file_path)
 
             # Initialize client
             client = storage.Client()
@@ -177,7 +184,7 @@ class GCSUploadModule(BaseModule):
                 blob.content_type = self.content_type
 
             # Upload file
-            blob.upload_from_filename(self.file_path)
+            blob.upload_from_filename(file_path)
 
             # Make public if requested
             if self.public:

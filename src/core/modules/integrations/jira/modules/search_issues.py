@@ -11,6 +11,7 @@ from typing import Any, Dict
 
 from ....base import BaseModule
 from ....registry import register_module
+from ...base import resolve_credential
 from ..integration import JiraIntegration
 
 
@@ -94,14 +95,23 @@ class JiraSearchIssuesModule(BaseModule):
         self.domain = self.params["domain"]
         self.jql = self.params["jql"]
         self.max_results = self.params.get("max_results", 50)
-        self.email = self.params.get("email") or os.getenv("JIRA_EMAIL")
-        self.api_token = self.params.get("api_token") or os.getenv("JIRA_API_TOKEN")
+        self.email, email_from_env = resolve_credential(
+            self.params.get("email"), os.getenv("JIRA_EMAIL")
+        )
+        self.api_token, token_from_env = resolve_credential(
+            self.params.get("api_token"), os.getenv("JIRA_API_TOKEN")
+        )
+        # `domain` is a caller parameter; the integration refuses to carry an
+        # operator credential to a domain the operator never configured, and
+        # can only do so if it is told the credential's origin.
+        self.credentials_from_env = email_from_env or token_from_env
 
     async def execute(self) -> Dict[str, Any]:
         async with JiraIntegration(
             domain=self.domain,
             email=self.email,
             api_token=self.api_token,
+            credentials_from_env=self.credentials_from_env,
         ) as jira:
             response = await jira.search_issues(
                 jql=self.jql,

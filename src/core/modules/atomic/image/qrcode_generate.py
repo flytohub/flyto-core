@@ -30,7 +30,12 @@ def _parse_qr_params(params):
     color = _clean_param(params.get('color'), '#000000')
     background = _clean_param(params.get('background'), '#FFFFFF')
     error_correction = _clean_param(params.get('error_correction'), 'M')
+    # SECURITY: output_path is confined further down and logo_path was not,
+    # although it is opened and its pixels are embedded in the returned image —
+    # the read half of the same asymmetry as GHSA-45hf-2fmj-q442.
     logo_path = params.get('logo_path')
+    if logo_path:
+        logo_path = validate_path_with_env_config(logo_path)
     border = params.get('border')
     border = int(border) if border is not None and border != '' else 4
     version_param = params.get('version')
@@ -230,13 +235,17 @@ def _generate_png_qr(qr, output_path, color, background, size, logo_path):
 )
 async def qrcode_generate(context: Dict[str, Any]) -> Dict[str, Any]:
     """Generate QR code image"""
+    # Params are parsed — and their paths confined — before the optional
+    # dependency is imported, so a deployment without qrcode installed is
+    # protected rather than accidentally safe.
+    p = _parse_qr_params(context['params'])
+
     try:
         import qrcode
         from qrcode.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, ERROR_CORRECT_H
     except ImportError:
         raise ImportError("qrcode is required. Install with: pip install qrcode[pil]")
 
-    p = _parse_qr_params(context['params'])
     data = p['data']
     output_format = p['output_format']
     border = p['border']
