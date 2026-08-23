@@ -51,6 +51,7 @@ import copy  # noqa: E402, I001
 import functools  # noqa: E402
 import hashlib  # noqa: E402
 import logging  # noqa: E402
+import re  # noqa: E402
 import sys  # noqa: E402
 import threading  # noqa: E402
 from dataclasses import dataclass, field  # noqa: E402
@@ -406,6 +407,40 @@ class ModuleRegistry:
             module_class: Module class inheriting from BaseModule
             metadata: Module metadata (optional)
         """
+        # Provider declarations cross a package boundary here.  Absent
+        # semantics remain backwards compatible; a provider that declares
+        # either capability or semantics must supply the complete, bounded
+        # contract and may not rely on catalog inference.
+        if metadata is not None:
+            capability = metadata.get("provides_capability")
+            semantics = metadata.get("semantics")
+            semantics_declared = "semantics" in metadata
+            identifier = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+            if capability not in (None, "") and (
+                type(capability) is not str
+                or len(capability) > 96
+                or not identifier.fullmatch(capability)
+            ):
+                raise ValueError("provides_capability must be a safe bounded identifier")
+            if semantics_declared:
+                if not capability:
+                    raise ValueError("semantic contracts require provides_capability")
+                expected_fields = {"intent_ids", "affordances", "effects", "handled_events"}
+                if type(semantics) is not dict or set(semantics) != expected_fields:
+                    raise ValueError("semantic contract fields do not match the required schema")
+                total = 0
+                for field in ("intent_ids", "affordances", "effects", "handled_events"):
+                    values = semantics.get(field) if type(semantics) is dict else None
+                    if type(values) is not list or not values or len(values) > 16:
+                        raise ValueError("semantic contract fields must be non-empty bounded lists")
+                    if any(type(value) is not str or len(value) > 96 or not identifier.fullmatch(value) for value in values):
+                        raise ValueError("semantic contract identifiers must be safe and bounded")
+                    if len(values) != len(set(values)):
+                        raise ValueError("semantic contract fields must not contain duplicates")
+                    total += len(values)
+                if total > 48:
+                    raise ValueError("semantic contract exceeds the identifier bound")
+
         cls._note_pass_touch(module_id)
         if cls._pass_registered is not None:
             cls._pass_registered.add(module_id)

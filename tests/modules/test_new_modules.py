@@ -1,5 +1,5 @@
 """
-Tests for all new modules - NO MOCKS, real execution only.
+Tests for new modules using real execution with deterministic DNS/HTTP boundaries.
 
 Covers:
 - data.xml.parse / data.xml.generate
@@ -16,6 +16,8 @@ Covers:
 - ssh.exec / ssh.sftp_upload / ssh.sftp_download (registration only)
 """
 
+import asyncio
+import importlib
 import os
 import sys
 from contextlib import suppress
@@ -785,33 +787,49 @@ class TestDnsLookup:
         return get_module(self.MODULE_ID)
 
     @pytest.mark.asyncio
-    async def test_lookup_google(self, mod):
-        """DNS lookup for google.com should return A records."""
+    async def test_lookup_a_success(self, mod, monkeypatch):
+        """A lookup uses deterministic resolver output."""
+        module = importlib.import_module("core.modules.atomic.dns.lookup")
+        async def fake_lookup(domain, record_type, timeout):
+            return {'ok': True, 'data': {'domain': domain, 'record_type': record_type,
+                                         'records': ['203.0.113.10'], 'ttl': 300}}
+        monkeypatch.setattr(module, "_lookup_with_dnspython", fake_lookup)
         result = await mod({
-            'domain': 'google.com',
+            'domain': 'example.test',
             'record_type': 'A',
         }, {}).execute()
         assert result['ok'] is True
         assert len(result['data']['records']) > 0
 
     @pytest.mark.asyncio
-    async def test_lookup_mx_record(self, mod):
-        """MX lookup for google.com."""
+    async def test_lookup_mx_record(self, mod, monkeypatch):
+        """MX lookup is formatted by a deterministic resolver boundary."""
+        module = importlib.import_module("core.modules.atomic.dns.lookup")
+        async def fake_lookup(domain, record_type, timeout):
+            return {'ok': True, 'data': {'domain': domain, 'record_type': record_type,
+                                         'records': ['10 mail.example.test.'], 'ttl': 60}}
+        monkeypatch.setattr(module, "_lookup_with_dnspython", fake_lookup)
         result = await mod({
-            'domain': 'google.com',
+            'domain': 'example.test',
             'record_type': 'MX',
         }, {}).execute()
         assert result['ok'] is True
+        assert result['data']['records'] == ['10 mail.example.test.']
 
     @pytest.mark.asyncio
-    async def test_lookup_nonexistent_domain(self, mod):
-        """Lookup for nonexistent domain should handle gracefully."""
+    async def test_lookup_failure(self, mod, monkeypatch):
+        """Resolver failure is returned without public DNS."""
+        module = importlib.import_module("core.modules.atomic.dns.lookup")
+        async def fake_lookup(domain, record_type, timeout):
+            return {'ok': False, 'error': 'not found', 'error_code': 'NXDOMAIN',
+                    'data': {'domain': domain, 'record_type': record_type}}
+        monkeypatch.setattr(module, "_lookup_with_dnspython", fake_lookup)
         result = await mod({
-            'domain': 'this-domain-does-not-exist-xyz123.com',
+            'domain': 'missing.example.test',
             'record_type': 'A',
         }, {}).execute()
-        # Should either return empty records or error gracefully
-        assert result.get('ok') is False or len(result.get('data', {}).get('records', [])) == 0
+        assert result['ok'] is False
+        assert result['error_code'] == 'NXDOMAIN'
 
 
 # ============================================================================
@@ -826,50 +844,82 @@ class TestMonitorHttpCheck:
         return get_module(self.MODULE_ID)
 
     @pytest.mark.asyncio
-    async def test_check_google(self, mod):
-        """Health check google.com should be healthy."""
+    async def test_check_success(self, mod, monkeypatch):
+        """A deterministic response reports healthy."""
+        self._mock_transport(monkeypatch, status=200, body='ready')
         result = await mod({
-            'url': 'https://www.google.com',
+            'url': 'https://example.test/health',
             'method': 'GET',
             'expected_status': 200,
             'timeout_ms': 10000,
         }, {}).execute()
         assert result['ok'] is True
         assert result['data']['status'] == 'healthy'
-        assert result['data']['response_time_ms'] > 0
+        assert result['data']['response_time_ms'] >= 0
         assert result['data']['status_code'] == 200
 
     @pytest.mark.asyncio
-    async def test_check_with_ssl(self, mod):
-        """Check SSL certificate."""
+    async def test_check_with_ssl(self, mod, monkeypatch):
+        """SSL evidence is read from the mocked response."""
+        module = self._mock_transport(monkeypatch, status=200, body='ready')
+        monkeypatch.setattr(module, "_get_ssl_info", lambda response: {'valid': True, 'expires_in_days': 30})
         result = await mod({
-            'url': 'https://www.google.com',
+            'url': 'https://example.test/health',
             'check_ssl': True,
         }, {}).execute()
         assert result['ok'] is True
-        # SSL should be valid for google.com
-        if result['data'].get('ssl_valid') is not None:
-            assert result['data']['ssl_valid'] is True
+        assert result['data']['ssl_valid'] is True
+        assert result['data']['ssl_expires_in_days'] == 30
 
     @pytest.mark.asyncio
-    async def test_check_content_match(self, mod):
+    async def test_check_content_match(self, mod, monkeypatch):
         """Check response contains expected text."""
+        self._mock_transport(monkeypatch, status=200, body='service ready')
         result = await mod({
-            'url': 'https://www.google.com',
-            'contains': 'Google',
+            'url': 'https://example.test/health',
+            'contains': 'ready',
         }, {}).execute()
         assert result['ok'] is True
 
     @pytest.mark.asyncio
-    async def test_check_unreachable(self, mod):
-        """Unreachable host should return unhealthy."""
+    async def test_check_unreachable(self, mod, monkeypatch):
+        """Transport timeout deterministically returns unhealthy."""
+        self._mock_transport(monkeypatch, error=asyncio.TimeoutError())
         result = await mod({
-            'url': 'http://192.0.2.1:9999',  # RFC 5737 test address
+            'url': 'https://example.test/unreachable',
             'timeout_ms': 2000,
         }, {}).execute()
-        # Should either be ok=False or status=unhealthy
-        if result.get('ok'):
-            assert result['data']['status'] == 'unhealthy'
+        assert result['ok'] is True
+        assert result['data']['status'] == 'unhealthy'
+
+    @staticmethod
+    def _mock_transport(monkeypatch, *, status=200, body='', error=None):
+        module = importlib.import_module("core.modules.atomic.monitor.http_check")
+        monkeypatch.setattr(module, "enforce_outbound_url", lambda url: None)
+
+        class Response:
+            connection = None
+            def __init__(self):
+                self.status = status
+            async def text(self):
+                return body
+            async def __aenter__(self):
+                if error:
+                    raise error
+                return self
+            async def __aexit__(self, *args):
+                return False
+
+        class Session:
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *args):
+                return False
+            def request(self, *args, **kwargs):
+                return Response()
+
+        monkeypatch.setattr(module, "guarded_client_session", lambda **kwargs: Session())
+        return module
 
 
 # ============================================================================

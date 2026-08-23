@@ -7,12 +7,22 @@ Returns complete module information for workflow assembly.
 Only fetch when LLM has decided to use a specific module.
 """
 
-from typing import Dict, Any, Mapping, Optional, List
-
+from typing import Any, Dict, List, Mapping, Optional
 
 # Settled at registration: the module declares ``provides_capability``,
 # ``ModuleRegistry.register`` assigns ``plugin``. The catalog only forwards them.
 _IDENTITY_FIELDS = ('provides_capability', 'plugin')
+
+
+def _registry_semantics(metadata: Mapping[str, Any]) -> Dict[str, List[str]]:
+    value = metadata.get('semantics')
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        field: list(items)
+        for field in ('intent_ids', 'affordances', 'effects', 'handled_events')
+        if isinstance((items := value.get(field)), list)
+    }
 
 
 def _registry_identity(metadata: Mapping[str, Any]) -> Dict[str, str]:
@@ -130,6 +140,7 @@ def get_module_detail(module_id: str) -> Optional[Dict[str, Any]]:
 
         # Same projection search uses, so search and detail cannot disagree.
         **_registry_identity(meta),
+        'semantics': _registry_semantics(meta),
     }
 
 
@@ -171,8 +182,20 @@ def _score_module(
     - In label:              +2
     - In description:        +1
     - Partial text match:    +1.5
+    - Exact declared semantic-token coverage: +0..100
     All-words bonus:         +3
     """
+    semantics = _registry_semantics(meta)
+    declared_identifiers = {
+        value for values in semantics.values() for value in values
+    }
+    semantic_matches = sum(word in declared_identifiers for word in query_words)
+    if semantic_matches:
+        # Semantic routing is its own declared-data lane. The fixed base keeps
+        # legacy display text from outranking it; the fractional component
+        # orders providers by exact declared-token coverage for this query.
+        return 1000.0 + semantic_matches / len(query_words)
+
     mid_lower = module_id.lower()
     label = meta.get('ui_label', '').lower()
     description = meta.get('ui_description', '').lower()
@@ -263,6 +286,7 @@ def search_modules(
                 # either field, so results say more without matching or
                 # ordering differently.
                 **_registry_identity(meta),
+                'semantics': _registry_semantics(meta),
                 'score': score,
             })
 
