@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.31.0]
 
+### Security
+
+- Closed the SSRF gap between the two HTTP clients. Every `httpx.AsyncClient`
+  call site sat behind `try: import httpx / except ImportError:` with a guarded
+  aiohttp fallback, so which SSRF posture a deployment ran was decided by whether
+  another package had pulled httpx in - an environment with `openai` installed
+  took twelve unguarded call sites, one without took the guarded twin, and
+  nothing said so. `core.utils.guarded_httpx_client` is the httpx twin of
+  `guarded_client_session`: it resolves under the same policy and pins the
+  approved address into the request while preserving `Host` and TLS SNI, which
+  closes the same resolve-then-connect window `ssrf_guarded_connector` closes for
+  aiohttp. All twelve sites now use it, `httpx` is declared in the `ai` extra
+  instead of inherited, and `tests/core/test_outbound_transport_guard.py` fails
+  on any `httpx.AsyncClient(` constructed outside `core/utils.py`.
+
+- Fixed `ai.local_ollama.chat` under `FLYTO_ALLOW_REMOTE_OLLAMA=true`. The module
+  carried an outbound-guard exemption reading "restricts to loopback inline,
+  which is stricter than the shared guard" - true only while the flag was unset.
+  With the documented flag on, `validate_params` returned with no check at all
+  and `execute` opened a bare `aiohttp.ClientSession`, so a caller-supplied
+  `ollama_url` reached cloud metadata (169.254.169.254) and any RFC1918 address
+  with the response body handed back. The agent path already refused the same
+  input. The flag now widens the host under the ordinary shared guard rather than
+  removing it, Ollama's own port - and only that port - is added to the operator's
+  port policy so a real remote host stays reachable, the request goes through
+  `guarded_client_session`, and the exemption is deleted so the module is covered
+  by the ordinary rule.
+
 ### Added
 
 - Added an extensible verified deterministic domain-solver baseline with three

@@ -2,6 +2,17 @@
 
 ## Current State
 
+- Outbound HTTP enforces one policy regardless of which client is installed.
+  `guarded_httpx_client` is the httpx twin of `guarded_client_session`; all
+  twelve httpx call sites use it, `httpx` is a declared `ai` dependency instead
+  of an inherited one, and a test refuses any `httpx.AsyncClient(` outside
+  `core/utils.py`. Forty bare `aiohttp.ClientSession(` constructions remain,
+  mostly to fixed vendor endpoints, and are recorded rather than claimed safe.
+- `FLYTO_ALLOW_REMOTE_OLLAMA=true` widens `ai.local_ollama.chat` to hosts the
+  shared guard accepts instead of disabling validation. Ollama's port, and only
+  it, joins the operator port policy so the feature survives the fix; the
+  module's outbound-guard exemption is deleted.
+
 - `http.response_assert` exposes `body_matches` as an optional regex parameter.
   Registry metadata no longer turns an editor preset into a required input, so
   status-only and header-only assertions remain valid.
@@ -212,7 +223,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 966 maintained Python files, 5,681
+- Source-backed documentation now covers 966 maintained Python files, 5,685
   declarations, 486 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

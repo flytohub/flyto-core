@@ -125,12 +125,13 @@ class HttpScreenshotUploader:
     ) -> str:
         try:
             import httpx
+            from ...utils import guarded_httpx_client
 
             headers = {"Content-Type": media_type}
             if self._auth_token:
                 headers["Authorization"] = f"Bearer {self._auth_token}"
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with guarded_httpx_client(timeout=30.0) as client:
                 resp = await client.post(
                     f"{self._base_url}/api/breakpoints/{breakpoint_id}/screenshot",
                     content=data,

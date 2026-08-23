@@ -127,6 +127,7 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze image using OpenAI Vision API"""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
     except ImportError:
         try:
             import aiohttp
@@ -202,7 +203,7 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
             ) as response:
                 result = await response.json()
         else:
-            async with httpx.AsyncClient(timeout=60) as client:
+            async with guarded_httpx_client(timeout=60) as client:
                 response = await client.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers=headers,

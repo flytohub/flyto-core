@@ -154,6 +154,9 @@ DEFAULT_USER_AGENT: str = (
 DEFAULT_LLM_MAX_TOKENS: int = 2000
 DEFAULT_LLM_NUM_PREDICT: int = 2000
 OLLAMA_DEFAULT_URL: str = "http://localhost:11434"
+#: Ollama's own listening port. Named because the outbound guard has to add it
+#: to the operator's port policy for a remote Ollama host to be reachable at all.
+OLLAMA_DEFAULT_PORT: int = 11434
 OLLAMA_EMBEDDINGS_ENDPOINT: str = f"{OLLAMA_DEFAULT_URL}/api/embeddings"
 OLLAMA_GENERATE_ENDPOINT: str = f"{OLLAMA_DEFAULT_URL}/api/generate"
 

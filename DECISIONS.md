@@ -1,5 +1,48 @@
 # Decisions
 
+## 2026-08-24 - One outbound policy, whichever HTTP client is installed
+
+Decision: every HTTP client this package constructs enforces the same SSRF
+policy. `guarded_client_session` covers aiohttp; `guarded_httpx_client` covers
+httpx; a test refuses any `httpx.AsyncClient(` built outside `core/utils.py`.
+
+Why: the two were not equivalent and nothing said which one a deployment would
+get. Twelve `httpx.AsyncClient` call sites sat behind `try: import httpx /
+except ImportError:` with a guarded aiohttp fallback, and `httpx` was declared
+in no dependency group - it arrived transitively through `openai`. So installing
+an unrelated extra silently switched the package from a guarded transport to an
+unguarded one, reopening the resolve-then-connect window two published
+advisories were issued to close. The guard-coverage test could not see it: it
+matches source references to guard symbols, and the affected modules do call
+`validate_url_with_env_config`; what nothing checked was whether the socket then
+went to the address that validation approved.
+
+Consequence: httpx is an explicit dependency of the `ai` extra rather than an
+inherited one, and the guarded transport pins the approved address while
+preserving `Host` and SNI. Forty bare `aiohttp.ClientSession(` constructions
+remain in `src`, most to fixed vendor endpoints that accept no caller-supplied
+host; they are not covered by this test and are recorded as follow-up rather
+than implied to be safe.
+
+## 2026-08-24 - An operator flag widens a target, it does not remove a guard
+
+Decision: `FLYTO_ALLOW_REMOTE_OLLAMA=true` moves `ai.local_ollama.chat` from
+"loopback only" to "a host the shared outbound guard accepts". It no longer
+means "no validation".
+
+Why: the module held an outbound-guard exemption stating it was stricter than
+the shared guard. That was accurate with the flag unset and false with it set -
+the documented configuration for a remote Ollama - at which point a
+caller-supplied `ollama_url` reached cloud metadata and RFC1918 space with the
+response returned to the caller. The exemption's marker string was the text of
+the error message, so the coverage test kept passing over the branch that
+skipped the check entirely.
+
+Consequence: Ollama's own port is added to the operator's port policy, and only
+that port. A security change that made every real remote Ollama unreachable
+would not have been a fix, it would have been a removed feature reported as one.
+The exemption is deleted, so the module is now held by the ordinary rule.
+
 ## 2026-08-24 - Optional assertions stay optional in registry metadata
 
 Decision: `http.response_assert.body_matches` uses the assertion regex editor

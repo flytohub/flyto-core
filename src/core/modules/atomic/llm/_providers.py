@@ -30,6 +30,7 @@ async def call_openai_with_tools(
     """Call OpenAI API with tool support."""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
     except ImportError:
         return await _call_openai_aiohttp(messages, tools, model, temperature, api_key, base_url)
 
@@ -52,7 +53,7 @@ async def call_openai_with_tools(
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with guarded_httpx_client(timeout=120) as client:
         response = await client.post(url, headers=headers, json=payload)
         result = response.json()
 
@@ -136,6 +137,7 @@ async def call_anthropic_with_tools(
     """Call Anthropic API with tool support."""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
         use_httpx = True
     except ImportError:
         import aiohttp
@@ -200,7 +202,7 @@ async def call_anthropic_with_tools(
         payload["tools"] = anthropic_tools
 
     if use_httpx:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with guarded_httpx_client(timeout=120) as client:
             response = await client.post(url, headers=headers, json=payload)
             result = response.json()
     else:

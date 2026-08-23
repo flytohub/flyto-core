@@ -53,7 +53,8 @@ class HttpBreakpointStore:
         if self._client is None:
             try:
                 import httpx
-                self._client = httpx.AsyncClient(
+                from ...utils import guarded_httpx_client
+                self._client = guarded_httpx_client(
                     base_url=self._base_url,
                     timeout=30.0,
                     headers=self._headers(),

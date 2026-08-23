@@ -1018,6 +1018,91 @@ def ssrf_guarded_connector(**kwargs) -> "aiohttp.TCPConnector":
     return aiohttp.TCPConnector(resolver=resolver, **kwargs)
 
 
+async def _guarded_resolve(host: str, port: int) -> str:
+    """Resolve ``host`` under the SSRF policy and return one validated address.
+
+    The aiohttp side enforces this inside a resolver, so the address the guard
+    approved is the address the socket uses. httpx has no resolver hook, so the
+    equivalent has to be done here and the result pinned into the request - see
+    ``guarded_httpx_client``. Same policy, same errors, same env configuration.
+    """
+    import asyncio
+
+    cfg = get_ssrf_config()
+    restricted = cfg.get('restricted_hosts')
+    if restricted is not None and not _host_in_allowlist(host, restricted):
+        raise SSRFError(
+            f"Connect target is outside the trusted outbound scope: {host}"
+        )
+
+    loop = asyncio.get_running_loop()
+    infos = await loop.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    if not infos:
+        raise SSRFError(f"Could not resolve connect target: {host}")
+
+    addresses = [info[4][0] for info in infos]
+    for ip in addresses:
+        if _is_metadata_ip(ip):
+            raise SSRFError(
+                f"Cloud metadata endpoint blocked at connect time: {host} -> {ip}"
+            )
+    if cfg.get('allow_private', False) or _host_in_allowlist(
+        host, cfg.get('allowed_hosts')
+    ):
+        return addresses[0]
+    for ip in addresses:
+        if is_private_ip(ip):
+            raise SSRFError(
+                f"Blocked connect-time resolution (DNS-rebinding guard): {host} -> {ip}. "
+                f"Use FLYTO_ALLOWED_HOSTS for controlled private access."
+            )
+    return addresses[0]
+
+
+def guarded_httpx_client(**kwargs):
+    """``httpx.AsyncClient`` that connects only to an address the guard approved.
+
+    The httpx twin of :func:`guarded_client_session`, and it exists because the
+    two were not twins: every ``httpx.AsyncClient`` call site in this package sat
+    behind ``try: import httpx / except ImportError:`` with a guarded aiohttp
+    fallback, so which SSRF posture a deployment got was decided by whether some
+    other package had pulled httpx in. An environment with ``openai`` installed
+    ran the unguarded branch; one without ran the guarded one. Nothing said so.
+
+    httpx exposes no resolver hook, so the guard runs in the transport: resolve
+    under the policy, then rewrite the connect target to the approved address
+    while preserving the ``Host`` header and TLS SNI. That closes the same
+    resolve-then-connect window ``ssrf_guarded_connector`` closes for aiohttp,
+    rather than merely re-checking the hostname the caller supplied.
+    """
+    import httpx
+
+    if not ssrf_protection_enabled():
+        return httpx.AsyncClient(**kwargs)
+
+    class _GuardedTransport(httpx.AsyncHTTPTransport):
+        async def handle_async_request(self, request):
+            url = request.url
+            host = url.host
+            # A literal address still goes through the policy; only the
+            # resolution step is a no-op for it.
+            port = url.port or (443 if url.scheme == "https" else 80)
+            approved = await _guarded_resolve(host, port)
+            if approved != host:
+                request.url = url.copy_with(host=approved)
+                # Host header was fixed when the request was built, so it still
+                # names the original host; SNI has to be restored explicitly or
+                # TLS verification would be attempted against the bare address.
+                request.extensions = {
+                    **(request.extensions or {}),
+                    "sni_hostname": host,
+                }
+            return await super().handle_async_request(request)
+
+    kwargs.setdefault('transport', _GuardedTransport())
+    return httpx.AsyncClient(**kwargs)
+
+
 def guarded_client_session(**kwargs) -> "aiohttp.ClientSession":
     """``aiohttp.ClientSession`` pinned to the DNS-rebinding-guarded connector.
 

@@ -98,8 +98,9 @@ async def _http_post(url: str, headers: Dict, payload: Dict) -> Dict:
     """HTTP POST with httpx, aiohttp fallback. Validates response status."""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
 
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with guarded_httpx_client(timeout=120) as client:
             response = await client.post(url, headers=headers, json=payload)
             if response.status_code >= 500:
                 raise RuntimeError(f"Server error (HTTP {response.status_code}): {response.text[:200]}")

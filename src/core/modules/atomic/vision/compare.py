@@ -124,6 +124,7 @@ async def vision_compare(context: Dict[str, Any]) -> Dict[str, Any]:
     """Compare two images using AI vision"""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
         use_httpx = True
     except ImportError:
         try:
@@ -209,7 +210,7 @@ Return your analysis in this JSON format:
 
     try:
         if use_httpx:
-            async with httpx.AsyncClient(timeout=60) as client:
+            async with guarded_httpx_client(timeout=60) as client:
                 response = await client.post(
                     "https://api.openai.com/v1/chat/completions",
                     headers=headers,

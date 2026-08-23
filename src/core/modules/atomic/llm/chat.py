@@ -279,6 +279,7 @@ async def _call_openai(
     """Call OpenAI API"""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
     except ImportError:
         import aiohttp
         return await _call_openai_aiohttp(messages, model, temperature, max_tokens, api_key, base_url, response_format)
@@ -301,7 +302,7 @@ async def _call_openai(
     if response_format == 'json':
         payload["response_format"] = {"type": "json_object"}
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with guarded_httpx_client(timeout=120) as client:
         response = await client.post(url, headers=headers, json=payload)
         result = response.json()
 
@@ -377,6 +378,7 @@ async def _call_anthropic(
     """Call Anthropic Claude API"""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
         use_httpx = True
     except ImportError:
         import aiohttp
@@ -410,7 +412,7 @@ async def _call_anthropic(
         payload["system"] = system
 
     if use_httpx:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with guarded_httpx_client(timeout=120) as client:
             response = await client.post(url, headers=headers, json=payload)
             result = response.json()
     else:
@@ -441,6 +443,7 @@ async def _call_ollama(
     """Call Ollama local API"""
     try:
         import httpx
+        from ....utils import guarded_httpx_client
         use_httpx = True
     except ImportError:
         import aiohttp
@@ -461,7 +464,7 @@ async def _call_ollama(
 
     try:
         if use_httpx:
-            async with httpx.AsyncClient(timeout=120) as client:
+            async with guarded_httpx_client(timeout=120) as client:
                 response = await client.post(url, json=payload)
                 result = response.json()
         else:

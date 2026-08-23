@@ -220,10 +220,11 @@ class VerifyFigmaModule(BaseModule):
 
     async def execute(self) -> Dict[str, Any]:
         import httpx
+        from ....utils import guarded_httpx_client
 
         headers = {'X-Figma-Token': self.token}
 
-        async with httpx.AsyncClient() as client:
+        async with guarded_httpx_client() as client:
             if self.node_id:
                 # Fetch specific node
                 response = await client.get(

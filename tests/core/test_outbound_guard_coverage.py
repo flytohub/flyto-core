@@ -216,12 +216,6 @@ LOCAL_VALIDATOR_PARAMS = {
             "the marker goes and this exemption fails",
         )
     },
-    "ai.local_ollama.chat": {
-        "ollama_url": (
-            "SSRF blocked: ollama_url must be localhost",
-            "restricts to loopback inline, which is stricter than the shared guard",
-        )
-    },
     "browser.sitemap": {
         "sitemap_url": (
             "_SITEMAP_JS",

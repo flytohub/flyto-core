@@ -204,10 +204,11 @@ class BrowserProxyRotateModule(BaseModule):
             raise ValueError(f"SSRF protection blocked request: {e}")
         try:
             import httpx
+            from ....utils import guarded_httpx_client
             headers = {}
             if self.provider_token:
                 headers['Authorization'] = f'Bearer {self.provider_token}'
-            async with httpx.AsyncClient(timeout=15) as client:
+            async with guarded_httpx_client(timeout=15) as client:
                 resp = await client.get(self.provider_url, headers=headers)
                 resp.raise_for_status()
 

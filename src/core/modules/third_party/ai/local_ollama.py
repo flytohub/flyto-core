@@ -8,10 +8,15 @@ Provides local LLM support via Ollama for completely offline AI agent execution.
 import logging
 from typing import Any, Dict
 
+from ....constants import OLLAMA_DEFAULT_PORT, OLLAMA_DEFAULT_URL
+from ....utils import (
+    DEFAULT_ALLOWED_PORTS,
+    get_ssrf_config,
+    guarded_client_session,
+    validate_url_ssrf,
+)
 from ...base import BaseModule
 from ...registry import register_module
-from ....constants import OLLAMA_DEFAULT_URL
-
 
 logger = logging.getLogger(__name__)
 
@@ -198,11 +203,38 @@ class LocalOllamaChatModule(BaseModule):
                     f"SSRF blocked: ollama_url must be localhost (got {host}). "
                     "Set FLYTO_ALLOW_REMOTE_OLLAMA=true to allow remote servers."
                 )
+            # Enabling remote Ollama widens the target from loopback to "a host
+            # the operator trusts". It does not mean "any host": without this the
+            # flag turned a caller-supplied `ollama_url` into an unauthenticated
+            # request primitive against cloud metadata (169.254.169.254) and any
+            # RFC1918 address, with the response body handed back to the caller.
+            # The agent path (LLMClientMixin) already refuses that exact input;
+            # this module carried an exemption claiming it was stricter than the
+            # shared guard, which was only true while the flag was unset.
+            #
+            # Ollama's own port is added to whatever the operator's port policy
+            # allows, and only that port: the shared default is 80/443/8080/8443,
+            # so validating without it would refuse every real Ollama host and
+            # turn a security fix into a removed feature. Widening the port does
+            # not widen the host - metadata and unvetted private addresses are
+            # still refused by the same rules every other outbound module uses.
+            config = get_ssrf_config()
+            allowed_ports = set(config.get('allowed_ports') or DEFAULT_ALLOWED_PORTS)
+            allowed_ports.add(OLLAMA_DEFAULT_PORT)
+            validate_url_ssrf(
+                self.ollama_url,
+                allow_private=config.get('allow_private', False),
+                allowed_hosts=config.get('allowed_hosts'),
+                allowed_ports=allowed_ports,
+                restricted_hosts=config.get('restricted_hosts'),
+                restricted_ports=config.get('restricted_ports'),
+            )
 
     async def execute(self) -> Any:
         try:
-            import aiohttp
             import json
+
+            import aiohttp
 
             # Build messages
             messages = []
@@ -231,7 +263,9 @@ class LocalOllamaChatModule(BaseModule):
                 payload["options"]["num_predict"] = self.max_tokens
 
             # Make API call to local Ollama
-            async with aiohttp.ClientSession() as session:
+            # Guarded connector, so the address validate_url_with_env_config
+            # approved is the address the socket uses.
+            async with guarded_client_session() as session:
                 async with session.post(
                     f"{self.ollama_url}/api/chat",
                     json=payload,
