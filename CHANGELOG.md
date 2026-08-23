@@ -99,6 +99,22 @@ cosmetic. `scripts/check_release_drift.py` now refuses that state in CI.
 
 ### Changed
 
+- Legacy single-mode modules that return `ok: false` now fail the workflow step
+  instead of being recorded as successful. The existing retry and `on_error`
+  policies remain authoritative; `on_error: continue` still exposes a failure
+  result to downstream steps.
+- Browser launch now falls back from Playwright's bundled Chromium to installed
+  Chrome and Edge channels when no channel was requested. Explicit channel
+  selection remains authoritative, and the failure message no longer tells an
+  operator to install Chrome after the runtime already tried it.
+- Registered modules that omit both label-key spellings now expose the
+  deterministic fallback `modules.<module_id>.label`. Explicit translation
+  keys remain authoritative, so catalog consumers can use one resolver without
+  losing compatibility with intentional aliases.
+- `http.response_assert` now treats `body_matches` as optional registry
+  metadata. The assertion module keeps its regex editor preset without making
+  the parameter required for status-only or header-only assertions.
+
 - `tests/test_version_identity.py` now compares the runtime versions against the
   version declared in `pyproject.toml`, not against the metadata they are read
   from. The original assertion compared `importlib.metadata` to itself and could

@@ -2,6 +2,27 @@
 
 ## Current State
 
+- `http.response_assert` exposes `body_matches` as an optional regex parameter.
+  Registry metadata no longer turns an editor preset into a required input, so
+  status-only and header-only assertions remain valid.
+
+- A legacy single-mode module result with `ok: false` is now a step failure,
+  not successful data. It enters the same retry, trace, error-edge, and
+  `on_error` contract as an exception; `on_error: continue` remains the explicit
+  opt-in for preserving the failure result and continuing.
+
+- Every registered module now exposes `ui_label_key`. Declarations keep their
+  explicit `ui_label_key` or `label_key`; only missing keys derive the stable
+  `modules.<module_id>.label` convention. This makes module-label localization
+  deterministic for catalogs and canvases while preserving the English label
+  as a fallback.
+
+- Chromium browser launch now tries the bundled Playwright engine first, then
+  supported system Chrome and Edge channels when the caller did not request a
+  specific channel. An explicit channel is never replaced. This closes desktop
+  template failures on machines where Chrome is installed but the Playwright
+  browser cache is absent.
+
 - Local CLI workflow selection now canonicalizes both interactive and
   non-interactive paths and requires an existing regular YAML file before read
   and rechecks the same boundary directly at both execution sinks. A path that
@@ -63,13 +84,13 @@
   (default: the process working directory) are refused, and connections to
   private/link-local hosts need `FLYTO_ALLOWED_HOSTS` or
   `FLYTO_ALLOW_PRIVATE_NETWORK=true`. Loopback is unaffected.
-- The version on `main` is **2.29.0**, unreleased. It moved because the packaged
+- The version on `main` is **2.30.0**, unreleased. It moved because the packaged
   source moved: `2.28.1` was already on PyPI when the Python-floor change landed,
   and a floor change is packaging-visible. `scripts/check_release_drift.py` now
   fails CI whenever a tag `v<version>` exists and the packaged source at HEAD
   differs from it, so a version can no longer keep naming a release that shipped
   other code. The advisory floor is a separate number and stays **2.28.1**:
-  `>= 2.28.1` clears every published advisory, `2.29.x` is the line that
+  `>= 2.28.1` clears every published advisory, `2.30.x` is the line that
   receives new fixes, and `security/advisories.json` is where both are derived
   from rather than restated.
 - Package metadata was prepared for the **2.28.1** release. It includes the
@@ -178,9 +199,9 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 960 maintained Python files, 5,669
+- Source-backed documentation now covers 960 maintained Python files, 5,671
   declarations, 483 literal module registrations, all CLI/HTTP/environment
-  surfaces (28 static HTTP operations, 107 environment names), and all
+  surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.
 - Workflow status and evidence reads now require bearer authentication.

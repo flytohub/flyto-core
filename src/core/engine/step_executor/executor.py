@@ -555,12 +555,24 @@ class StepExecutor:
         module_instance: Any,
     ) -> Any:
         """Traditional single execution mode: ignore input_items, use params."""
-        from ...modules.items import wrap_legacy_result, items_to_legacy_context
+        from ...modules.items import (
+            ExecutionStatus,
+            items_to_legacy_context,
+            wrap_legacy_result,
+        )
 
         result = await module_instance.run()
         # Wrap legacy result for consistent handling
         if isinstance(result, dict) and 'ok' in result:
             node_result = wrap_legacy_result(result)
+            if node_result.status == ExecutionStatus.ERROR:
+                node_error = node_result.error
+                message = node_error.message if node_error else "Unknown module error"
+                code = node_error.code if node_error else "UNKNOWN"
+                raise StepExecutionError(
+                    step_id,
+                    f"Module returned failure [{code}]: {message}",
+                )
             # Return legacy format for backward compatibility
             return items_to_legacy_context(node_result)
         return result

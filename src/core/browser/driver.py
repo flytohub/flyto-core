@@ -197,20 +197,19 @@ class BrowserDriver:
             _skip_persistent = os.environ.get("DEPLOYMENT_MODE") in ("worker", "web")
 
             if self.browser_type == 'chromium':
-                launched = False
-                if not _skip_persistent:
-                    launched = await self._launch_persistent(
-                        browser_launcher, launch_args, context_kwargs,
-                        slow_mo=slow_mo, proxy=proxy, channel=channel,
-                    )
-                if not launched:
-                    launched = await self._launch_regular(
-                        browser_launcher, launch_args, context_kwargs,
-                        slow_mo=slow_mo, proxy=proxy, channel=channel,
-                    )
-                if not launched:
+                launched_channel = await self._launch_chromium(
+                    browser_launcher,
+                    launch_args,
+                    context_kwargs,
+                    slow_mo=slow_mo,
+                    proxy=proxy,
+                    channel=channel,
+                    skip_persistent=_skip_persistent,
+                )
+                if launched_channel is False:
                     raise RuntimeError(
-                        "No browser engine available. Install Google Chrome for immediate use."
+                        "No browser engine available. Install Playwright Chromium "
+                        "(`playwright install chromium`) or a supported Chrome/Edge channel."
                     )
             else:
                 launch_kwargs: Dict[str, Any] = {
@@ -561,6 +560,52 @@ class BrowserDriver:
         except Exception as e:
             logger.error("Failed to install egress guard: %s", e)
 
+    @staticmethod
+    def _chromium_channel_candidates(channel: Optional[str]) -> tuple[Optional[str], ...]:
+        """Return the ordered browser channels allowed for this launch.
+
+        An explicit channel is authoritative. Without one, prefer Playwright's
+        bundled Chromium and then try system Chrome and Edge. This lets desktop
+        installs use an already-installed browser without weakening a caller's
+        explicit browser choice.
+        """
+        if channel:
+            return (channel,)
+        return (None, "chrome", "msedge")
+
+    async def _launch_chromium(
+        self,
+        launcher,
+        args,
+        context_kwargs,
+        *,
+        slow_mo=0,
+        proxy=None,
+        channel=None,
+        skip_persistent=False,
+    ) -> Optional[str] | bool:
+        """Launch Chromium through the first available supported channel."""
+        for candidate in self._chromium_channel_candidates(channel):
+            if not skip_persistent and await self._launch_persistent(
+                launcher,
+                args,
+                context_kwargs,
+                slow_mo=slow_mo,
+                proxy=proxy,
+                channel=candidate,
+            ):
+                return candidate or "chromium"
+            if await self._launch_regular(
+                launcher,
+                args,
+                context_kwargs,
+                slow_mo=slow_mo,
+                proxy=proxy,
+                channel=candidate,
+            ):
+                return candidate or "chromium"
+        return False
+
     async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
         user_data_dir = Path.home() / '.flyto' / 'chrome-profile'
@@ -595,7 +640,7 @@ class BrowserDriver:
             )
             self._browser = None  # persistent context manages browser internally
             self._page = self._context.pages[0] if self._context.pages else await self._context.new_page()
-            logger.info("Persistent context launched (playwright-chromium)")
+            logger.info("Persistent context launched (%s)", channel or "playwright-chromium")
             return True
         except Exception as e:
             logger.warning(f"Persistent context (chromium) failed: {e}")
@@ -616,11 +661,11 @@ class BrowserDriver:
             launch_kwargs['proxy'] = {'server': proxy}
 
         try:
-            logger.info("Launching regular (playwright-chromium)...")
+            logger.info("Launching regular (%s)...", channel or "playwright-chromium")
             self._browser = await launcher.launch(**launch_kwargs)
             self._context = await self._browser.new_context(**context_kwargs)
             self._page = await self._context.new_page()
-            logger.info("Regular launch succeeded (playwright-chromium)")
+            logger.info("Regular launch succeeded (%s)", channel or "playwright-chromium")
             return True
         except Exception as e:
             logger.warning(f"Regular launch (chromium) failed: {e}")

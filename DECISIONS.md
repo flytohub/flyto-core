@@ -1,5 +1,49 @@
 # Decisions
 
+## 2026-08-24 - Optional assertions stay optional in registry metadata
+
+Decision: `http.response_assert.body_matches` uses the assertion regex editor
+preset but does not declare a required value.
+
+Reason: a parameter's editor and validation shape do not imply that every
+workflow must provide it. Status-only and header-only assertions are complete
+uses of the module and must not fail static template validation.
+
+## 2026-08-24 - Explicit module failure cannot become workflow success
+
+Decision: a legacy single-mode module result with `ok: false` raises a step
+failure before it reaches workflow context. Retry and `on_error` then decide
+whether to retry, stop, route to an error edge, or continue with an error value.
+
+Reason: normalizing `ok: false` into an error-typed node result and immediately
+converting it back to a plain dictionary let the workflow log and persist a
+successful step. That contradicted the result contract and made notification,
+network, and security failures appear complete.
+
+## 2026-08-23 - Module label keys are a total registry contract
+
+Decision: every registered module exposes `ui_label_key`. Explicit
+`ui_label_key` and legacy `label_key` declarations remain authoritative; when
+both are absent, the registry derives `modules.<module_id>.label`.
+
+Reason: a catalog consumer should not need separate code paths for modules that
+forgot translation metadata. A deterministic key lets every UI attempt the
+same locale lookup and still fall back to the registry's English label when a
+locale has not translated that key yet.
+
+## 2026-08-23 - Installed Chrome is a valid browser runtime fallback
+
+Decision: Chromium launch tries Playwright's bundled engine first and then the
+supported system `chrome` and `msedge` channels only when the caller supplied
+no explicit channel. Persistent and regular contexts use the same ordered
+candidate list; worker mode continues to skip persistent profiles.
+
+Reason: a missing Playwright browser cache does not mean the machine has no
+browser. Telling an operator to install Chrome while an installed Chrome is
+available is both incorrect and leaves browser-based templates unusable. An
+explicit channel remains authoritative because silently substituting a
+different browser would change a caller-controlled compatibility contract.
+
 ## 2026-08-23 - The supported Python range is proven per version, not declared
 
 Decision: `requires-python` is `>= 3.10`, and every version in the declared
