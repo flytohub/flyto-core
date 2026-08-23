@@ -337,7 +337,7 @@ Failures return a stable error code and never package-manager output. See
 
 ## API / Module Reference
 
-## 476 Modules, 86 Catalog Categories
+## 479 Modules, 88 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|

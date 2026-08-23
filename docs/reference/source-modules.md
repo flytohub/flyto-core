@@ -2,11 +2,11 @@
 
 # Source Module Inventory
 
-Inventory: **966 Python files**, **201,291 lines**, and **5,679 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **966 Python files**, **201,409 lines**, and **5,681 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
-| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 468 tools with one command. |
+| [`demo.py:1`](https://github.com/flytohub/flyto-core/blob/main/demo.py#L1) | 66 | 1 | `asyncio, core, logging` | 30-second demo: Give your AI 479 tools with one command. |
 | [`examples/agent_demo/planner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/planner.py#L1) | 59 | 3 | `pathlib, typing, yaml` | Simple Task Planner |
 | [`examples/agent_demo/run.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/agent_demo/run.py#L1) | 138 | 3 | `asyncio, core, json, pathlib, planner, sys, uuid, yaml` | flyto-core Agent Demo: Deterministic Browser Research |
 | [`examples/demo_video/record.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/demo_video/record.py#L1) | 413 | 6 | `asyncio, core, httpx, json, os, pathlib, rich, shutil, sys, time` | flyto-core Demo Video Script |
@@ -21,7 +21,7 @@ Inventory: **966 Python files**, **201,291 lines**, and **5,679 class/function/m
 | [`scripts/analyze_module_returns.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/analyze_module_returns.py#L1) | 410 | 9 | `argparse, ast, collections, dataclasses, os, pathlib, sys, typing` | Module Return Pattern Analyzer |
 | [`scripts/batch_update_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/batch_update_connection_rules.py#L1) | 464 | 8 | `argparse, os, pathlib, re, typing` | Batch Update Connection Rules for flyto-core modules |
 | [`scripts/check_brand_identity.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_brand_identity.py#L1) | 91 | 2 | `__future__, pathlib, re, subprocess` | Enforce Flyto2 public naming and email-domain policy. |
-| [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 278 | 7 | `__future__, fnmatch, json, pathlib, re, runpy, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
+| [`scripts/check_documentation.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L1) | 339 | 7 | `__future__, fnmatch, json, pathlib, re, runpy, subprocess, sys, typing` | Validate Flyto2 Core generated docs, ownership, and local links. |
 | [`scripts/check_release_drift.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_release_drift.py#L1) | 90 | 3 | `__future__, argparse, pathlib, subprocess, sys` | Refuse a version that already shipped different code. |
 | [`scripts/export_i18n_baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/export_i18n_baseline.py#L1) | 171 | 3 | `argparse, contextlib, core, json, os, pathlib, src, sys, typing` | export_i18n_baseline.py - Export module metadata to i18n baseline format |
 | [`scripts/fix_all_connection_rules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/fix_all_connection_rules.py#L1) | 164 | 6 | `pathlib, re` | Fix ALL modules missing can_receive_from across all directories. |

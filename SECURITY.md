@@ -2,18 +2,18 @@
 
 ## Supported Versions
 
-Security fixes land on the latest 2.30.x release. Older lines do not receive
+Security fixes land on the latest 2.31.x release. Older lines do not receive
 backports — upgrading is the supported path.
 
 | Version  | Supported          |
 | -------- | ------------------ |
-| 2.30.x   | :white_check_mark: |
-| < 2.30   | :x:                |
+| 2.31.x   | :white_check_mark: |
+| < 2.31   | :x:                |
 
-The current release is **2.30.0**. Every advisory published against this
+The current release is **2.31.0**. Every advisory published against this
 project is patched at or below **2.29.0**, and every one has a named regression
 test that runs in CI, so `>= 2.29.0` is the floor that clears all of them, while
-`2.30.x` is the line that receives new fixes. Downstream packages should pin the
+`2.31.x` is the line that receives new fixes. Downstream packages should pin the
 floor, not the current release; `security/advisories.json` is the
 machine-readable source both numbers are derived from.
 

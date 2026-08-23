@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,679 declarations across 817 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,681 declarations across 817 files**.
 
 ## `demo.py`
 
@@ -125,8 +125,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def documentation_paths(manifest: dict) -> list&#91;str&#93;` | Implements `documentation_paths`; linked source is authoritative. | [`scripts/check_documentation.py:75`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L75) |
 | function | `def owned_source_files(files: list&#91;str&#93;) -> list&#91;str&#93;` | Implements `owned_source_files`; linked source is authoritative. | [`scripts/check_documentation.py:90`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L90) |
 | function | `def local_target(source: Path, raw_target: str) -> Optional&#91;Path&#93;` | Implements `local_target`; linked source is authoritative. | [`scripts/check_documentation.py:113`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L113) |
-| function | `def check_current_inventory() -> list&#91;str&#93;` | Require current prose to match generated catalog and source references. | [`scripts/check_documentation.py:121`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L121) |
-| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_documentation.py:197`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L197) |
+| function | `def check_current_inventory() -> list&#91;str&#93;` | Require active public inventory copy to match authoritative sources exactly. | [`scripts/check_documentation.py:121`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L121) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`scripts/check_documentation.py:258`](https://github.com/flytohub/flyto-core/blob/main/scripts/check_documentation.py#L258) |
 
 ## `scripts/check_release_drift.py`
 

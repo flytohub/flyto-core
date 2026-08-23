@@ -119,11 +119,14 @@ def local_target(source: Path, raw_target: str) -> Optional[Path]:
 
 
 def check_current_inventory() -> list[str]:
-    """Require current prose to match generated catalog and source references."""
+    """Require active public inventory copy to match authoritative sources exactly."""
     facts = runpy.run_path(str(ROOT / "src" / "core" / "catalog_facts.py"))
     modules = facts["CORE_MODULE_COUNT"]
     categories = facts["CORE_CATALOG_CATEGORY_COUNT"]
     recipes = facts["BUILT_IN_RECIPE_COUNT"]
+
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    version_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
 
     registered = (ROOT / "docs" / "reference" / "registered-modules.md").read_text(
         encoding="utf-8"
@@ -136,45 +139,72 @@ def check_current_inventory() -> list[str]:
         r"\*\*(\d[\d,]*) declarations across (\d[\d,]*) files\*\*",
         python_reference,
     )
-    if not registered_match or not python_match:
+    source_reference = (ROOT / "docs" / "reference" / "source-modules.md").read_text(
+        encoding="utf-8"
+    )
+    source_match = re.search(
+        r"Inventory: \*\*(\d[\d,]*) Python files\*\*, \*\*(\d[\d,]*) lines\*\*, "
+        r"and \*\*(\d[\d,]*) class/function/method declarations\*\*",
+        source_reference,
+    )
+    configuration = (ROOT / "docs" / "reference" / "configuration.md").read_text(
+        encoding="utf-8"
+    )
+    environment_match = re.search(
+        r"Implementation sources read \*\*(\d+) environment-variable names\*\*",
+        configuration,
+    )
+    if not all(
+        (version_match, registered_match, python_match, source_match, environment_match)
+    ):
         return ["generated source references do not expose inventory facts"]
+    version = version_match.group(1)
     registrations = int(registered_match.group(1))
     declarations = int(python_match.group(1).replace(",", ""))
     declaration_files = int(python_match.group(2).replace(",", ""))
+    source_files = int(source_match.group(1).replace(",", ""))
+    source_lines = int(source_match.group(2).replace(",", ""))
+    source_declarations = int(source_match.group(3).replace(",", ""))
+    environments = int(environment_match.group(1))
+    if source_declarations != declarations:
+        return ["generated source references disagree on declaration count"]
 
     expected = {
         "README.md": [
-            f"{modules} registry-backed modules",
-            f"{categories} catalog categories",
-            f"{recipes} built-in recipes",
+            f"## {modules} Modules, {categories} Catalog Categories",
+            f"The current public inventory is **{modules} registry-backed modules** across **{categories}\ncatalog categories**",
+        ],
+        "SECURITY.md": [f"The current release is **{version}**."],
+        "PROJECT.md": [
+            f"The current registry inventory is {modules} modules across {categories} generated catalog\ncategories, with {recipes} maintained built-in recipes exposed through the CLI."
         ],
         "ARCHITECTURE.md": [
-            f"{modules}-module",
-            f"{categories}-category",
-            f"{declarations:,} declarations",
-            f"{registrations} literal module",
+            f"source of truth for the current {modules}-module, {categories}-category public inventory.",
+            f"{source_files} maintained Python files, {declarations:,} declarations, {registrations} literal module\n  registrations, 28 HTTP operations, {environments} environment names",
         ],
         "STATE.md": [
-            f"{modules} modules across {categories} categories",
-            f"{recipes} recipes",
-            f"{declarations:,}",
-            f"{registrations} literal module",
+            f"Source-backed documentation now covers {source_files} maintained Python files, {declarations:,}\n  declarations, {registrations} literal module registrations",
+            f"surfaces (28 static HTTP operations, {environments} environment names)",
         ],
         "docs/README.md": [
-            f"{modules} active runtime modules",
-            f"{recipes} packaged recipes",
-            f"{declarations:,} declarations",
-            f"{registrations} literal module",
+            f"[Tool Catalog](TOOL_CATALOG.md): all {modules} active runtime modules",
+            f"- {modules} active runtime modules across {categories} catalog categories.",
+            f"- {source_files} maintained Python files and {declarations:,} declarations.",
+            f"- {registrations} literal module registrations linked to source.",
+            f"- {environments} environment-variable readers.",
         ],
         "docs/MIGRATION_STATUS.md": [
             f"{modules} modules, {categories} categories",
             f"| Literal module registrations | {registrations} |",
             f"| Packaged recipes | {recipes} |",
+            f"| Maintained Python source | {source_files} files, {source_lines:,} lines |",
             f"{declarations:,} across {declaration_files} files",
+            f"| Environment-variable names | {environments} |",
         ],
         "docs/WHITEPAPER.md": [
             f"{modules} modules across {categories} categories",
             f"{recipes} packaged recipes",
+            f"Source traceability covers {source_files} maintained Python files,\n{source_lines:,} lines",
             f"{declarations:,} class/function/method declarations",
             f"{registrations} literal registrations",
         ],
@@ -182,7 +212,20 @@ def check_current_inventory() -> list[str]:
             f"{modules} modules are active",
             f"{categories} categories",
             f"{registrations} literal decorator registrations",
-            f"{declarations:,} maintained Python declarations",
+            f"[All {modules} active module schemas](TOOL_CATALOG.md)",
+            f"[All {registrations} literal module implementations](reference/registered-modules.md)",
+            f"[All {declarations:,} maintained Python declarations](reference/python-api.md)",
+        ],
+        "docs/OPERATIONS.md": [
+            f"generated {modules}-module/{categories}-category\nsnapshot"
+        ],
+        "docs/RECIPES.md": [
+            f"[{modules} registry-backed modules](TOOL_CATALOG.md)"
+        ],
+        "demo.py": [
+            f'"""30-second demo: Give your AI {modules} tools with one command."""',
+            f"flyto-core demo — {modules} tools for AI agents",
+            f"flyto-core: {modules} tools, zero config",
         ],
     }
     errors: list[str] = []
@@ -191,6 +234,24 @@ def check_current_inventory() -> list[str]:
         for token in tokens:
             if token not in content:
                 errors.append(f"{relative}: missing current inventory token {token!r}")
+
+    stale_patterns = (
+        r"\b(?:468|476)\s+(?:registry-backed\s+)?modules\b",
+        r"\b(?:85|86)\s+(?:generated\s+)?catalog categories\b",
+        r"\b(?:468|476)[- ]module/(?:85|86)[- ]category\b",
+        r"\b107 environment(?:-variable)? names\b",
+        r"\b2\.30\.0\b",
+    )
+    for relative in expected:
+        content = (ROOT / relative).read_text(encoding="utf-8")
+        if relative == "STATE.md":
+            content = content.split("## Last Verification", 1)[0]
+        for pattern in stale_patterns:
+            match = re.search(pattern, content)
+            if match:
+                errors.append(
+                    f"{relative}: stale active inventory text {match.group(0)!r}"
+                )
     return errors
 
 
