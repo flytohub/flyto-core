@@ -72,6 +72,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `data.json_to_csv` now resolves its default `output.csv` inside
+  `FLYTO_SANDBOX_DIR` instead of pointing at `/tmp`, and invalid inputs produce
+  typed, user-facing parameter errors without three identical retries or raw
+  `KeyError` details.
 - `integration.slack.*` reported failure as success. Slack answers HTTP 200 with
   the real outcome in the body, and the shared client derived `ok` from the
   status alone, so a rejected token produced `ok: True` with every field null.

@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,685 declarations across 817 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,686 declarations across 817 files**.
 
 ## `demo.py`
 
@@ -3797,9 +3797,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def json_to_csv(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Convert JSON to CSV | [`src/core/modules/atomic/data/json_to_csv.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L105) |
-| function | `def _flatten_dict(d: Dict, parent_key: str='', sep: str='.') -> Dict` | Flatten nested dictionary with dot notation | [`src/core/modules/atomic/data/json_to_csv.py:201`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L201) |
-| function | `def _get_value(item: Dict, key: str) -> str` | Get value from dict, handling nested keys and missing values | [`src/core/modules/atomic/data/json_to_csv.py:216`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L216) |
+| function | `async def json_to_csv(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Convert JSON to CSV | [`src/core/modules/atomic/data/json_to_csv.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L109) |
+| function | `def _resolve_output_path(path: str) -> str` | Resolve relative output paths inside the configured sandbox. | [`src/core/modules/atomic/data/json_to_csv.py:227`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L227) |
+| function | `def _flatten_dict(d: Dict, parent_key: str='', sep: str='.') -> Dict` | Flatten nested dictionary with dot notation | [`src/core/modules/atomic/data/json_to_csv.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L248) |
+| function | `def _get_value(item: Dict, key: str) -> str` | Get value from dict, handling nested keys and missing values | [`src/core/modules/atomic/data/json_to_csv.py:263`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L263) |
 
 ## `src/core/modules/atomic/data/pipeline.py`
 
@@ -6720,24 +6721,24 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BaseModule(ABC)` | Base class for all modules. | [`src/core/modules/base.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L39) |
-| method | `def BaseModule.__init__(self, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;)` | Initialize module with parameters and context. | [`src/core/modules/base.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L85) |
-| method | `def BaseModule._auto_validate_schema(self) -> None` | Validate params against registry schema if available. | [`src/core/modules/base.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L101) |
-| method | `def BaseModule.validate_params(self) -> None` | Validate input parameters. | [`src/core/modules/base.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L125) |
-| method | `async def BaseModule.execute(self) -> Any` | Execute module logic and return result. | [`src/core/modules/base.py:130`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L130) |
-| method | `async def BaseModule.execute_item(self, item: 'Item', index: int, context: 'ItemContext') -> 'Item'` | Process a single item (execution_mode="items"). | [`src/core/modules/base.py:138`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L138) |
-| method | `async def BaseModule.execute_all(self, items: List&#91;'Item'&#93;, context: 'ItemContext') -> List&#91;'Item'&#93;` | Process all items at once (execution_mode="all"). | [`src/core/modules/base.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L180) |
-| method | `async def BaseModule.run(self) -> Any` | Execute module with Phase 2 enhancements: - Timeout support - Retry logic - Error handling | [`src/core/modules/base.py:218`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L218) |
-| method | `async def BaseModule._execute_with_resilience(self, timeout: Optional&#91;int&#93;=None, retryable: bool=False, max_retries: int=DEFAULT_MAX_RETRIES) -> Any` | Execute with timeout and/or retry support. | [`src/core/modules/base.py:273`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L273) |
-| method | `def BaseModule.get_metadata(self) -> Dict&#91;str, Any&#93;` | Get module metadata. | [`src/core/modules/base.py:341`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L341) |
-| method | `def BaseModule.get_param(self, name: str, default: Any=None) -> Any` | Get a parameter value with optional default. | [`src/core/modules/base.py:355`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L355) |
-| method | `def BaseModule.require_param(self, name: str) -> Any` | Get a required parameter value. | [`src/core/modules/base.py:368`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L368) |
-| method | `def BaseModule.success(self, data: Any=None, message: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard success result. | [`src/core/modules/base.py:394`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L394) |
-| method | `def BaseModule.failure(self, code: str, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard failure result. | [`src/core/modules/base.py:416`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L416) |
-| method | `def BaseModule.validate_params_v2(self, required: Optional&#91;List&#91;str&#93;&#93;=None, types: Optional&#91;Dict&#91;str, Type&#93;&#93;=None) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Validate parameters using the new validation system. | [`src/core/modules/base.py:450`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L450) |
-| method | `def BaseModule.raise_validation_error(self, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> None` | Raise a validation error. | [`src/core/modules/base.py:499`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L499) |
-| method | `def BaseModule.raise_error(self, error_class: type, message: str, **kwargs) -> None` | Raise a module error. | [`src/core/modules/base.py:525`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L525) |
-| method | `def BaseModule.make_result(self, data: Any=None) -> ModuleResult` | Create a ModuleResult from data. | [`src/core/modules/base.py:550`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L550) |
+| class | `class BaseModule(ABC)` | Base class for all modules. | [`src/core/modules/base.py:43`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L43) |
+| method | `def BaseModule.__init__(self, params: Dict&#91;str, Any&#93;, context: Dict&#91;str, Any&#93;)` | Initialize module with parameters and context. | [`src/core/modules/base.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L89) |
+| method | `def BaseModule._auto_validate_schema(self) -> None` | Validate params against registry schema if available. | [`src/core/modules/base.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L105) |
+| method | `def BaseModule.validate_params(self) -> None` | Validate input parameters. | [`src/core/modules/base.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L129) |
+| method | `async def BaseModule.execute(self) -> Any` | Execute module logic and return result. | [`src/core/modules/base.py:134`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L134) |
+| method | `async def BaseModule.execute_item(self, item: 'Item', index: int, context: 'ItemContext') -> 'Item'` | Process a single item (execution_mode="items"). | [`src/core/modules/base.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L142) |
+| method | `async def BaseModule.execute_all(self, items: List&#91;'Item'&#93;, context: 'ItemContext') -> List&#91;'Item'&#93;` | Process all items at once (execution_mode="all"). | [`src/core/modules/base.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L184) |
+| method | `async def BaseModule.run(self) -> Any` | Execute module with Phase 2 enhancements: - Timeout support - Retry logic - Error handling | [`src/core/modules/base.py:222`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L222) |
+| method | `async def BaseModule._execute_with_resilience(self, timeout: Optional&#91;int&#93;=None, retryable: bool=False, max_retries: int=DEFAULT_MAX_RETRIES) -> Any` | Execute with timeout and/or retry support. | [`src/core/modules/base.py:277`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L277) |
+| method | `def BaseModule.get_metadata(self) -> Dict&#91;str, Any&#93;` | Get module metadata. | [`src/core/modules/base.py:356`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L356) |
+| method | `def BaseModule.get_param(self, name: str, default: Any=None) -> Any` | Get a parameter value with optional default. | [`src/core/modules/base.py:370`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L370) |
+| method | `def BaseModule.require_param(self, name: str) -> Any` | Get a required parameter value. | [`src/core/modules/base.py:383`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L383) |
+| method | `def BaseModule.success(self, data: Any=None, message: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard success result. | [`src/core/modules/base.py:409`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L409) |
+| method | `def BaseModule.failure(self, code: str, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard failure result. | [`src/core/modules/base.py:431`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L431) |
+| method | `def BaseModule.validate_params_v2(self, required: Optional&#91;List&#91;str&#93;&#93;=None, types: Optional&#91;Dict&#91;str, Type&#93;&#93;=None) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Validate parameters using the new validation system. | [`src/core/modules/base.py:465`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L465) |
+| method | `def BaseModule.raise_validation_error(self, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> None` | Raise a validation error. | [`src/core/modules/base.py:514`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L514) |
+| method | `def BaseModule.raise_error(self, error_class: type, message: str, **kwargs) -> None` | Raise a module error. | [`src/core/modules/base.py:540`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L540) |
+| method | `def BaseModule.make_result(self, data: Any=None) -> ModuleResult` | Create a ModuleResult from data. | [`src/core/modules/base.py:565`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L565) |
 
 ## `src/core/modules/builtin/__init__.py`
 

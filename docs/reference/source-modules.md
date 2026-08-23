@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **966 Python files**, **201,543 lines**, and **5,685 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **966 Python files**, **201,605 lines**, and **5,686 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -338,7 +338,7 @@ Inventory: **966 Python files**, **201,543 lines**, and **5,685 class/function/m
 | [`src/core/modules/atomic/data/dedup.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L1) | 192 | 6 | `base, hashlib, json, logging, pathlib, registry, schema, typing, utils` | Data Dedup Module — Deduplicate records by key fields |
 | [`src/core/modules/atomic/data/json_parse.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_parse.py#L1) | 92 | 1 | `errors, json, registry, schema, typing` | JSON Parse Module Parse JSON string into object |
 | [`src/core/modules/atomic/data/json_stringify.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_stringify.py#L1) | 97 | 1 | `errors, json, registry, schema, typing` | JSON Stringify Module Convert object to JSON string |
-| [`src/core/modules/atomic/data/json_to_csv.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L1) | 233 | 3 | `csv, json, logging, os, registry, schema, typing, utils` | JSON to CSV Converter Module Convert JSON data to CSV format |
+| [`src/core/modules/atomic/data/json_to_csv.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/json_to_csv.py#L1) | 280 | 4 | `csv, errors, json, logging, os, registry, schema, typing, utils` | JSON to CSV Converter Module Convert JSON data to CSV format |
 | [`src/core/modules/atomic/data/pipeline.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/pipeline.py#L1) | 533 | 17 | `base, core, operator, re, registry, schema, types, typing` | Data Pipeline Module - Chain multiple data transformations |
 | [`src/core/modules/atomic/data/text_template.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/text_template.py#L1) | 104 | 1 | `errors, registry, schema, typing` | Text Template Module Fill text template with variables |
 | [`src/core/modules/atomic/data/validate_records.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/validate_records.py#L1) | 197 | 4 | `base, logging, re, registry, schema, typing` | Data Validate Records Module — Validate and filter extracted records |
@@ -722,7 +722,7 @@ Inventory: **966 Python files**, **201,543 lines**, and **5,685 class/function/m
 | [`src/core/modules/audit/report_generator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/report_generator.py#L1) | 268 | 9 | `__future__, collections, datetime, json, os, schema_auditor, standards, typing` | Report Generator - Generate audit reports in various formats |
 | [`src/core/modules/audit/schema_auditor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/schema_auditor.py#L1) | 371 | 21 | `__future__, collections, dataclasses, registry, standards, typing` | Schema Auditor - Main audit logic for module schemas |
 | [`src/core/modules/audit/standards.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/standards.py#L1) | 239 | 1 | `enum, typing` | Quality Standards - Defines schema quality requirements |
-| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 566 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation, warnings` | Base Module Class with Phase 2 execution support and Item-based execution. |
+| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 581 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation` | Base Module Class with Phase 2 execution support and Item-based execution. |
 | [`src/core/modules/builtin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/builtin/__init__.py#L1) | 233 | 5 | `atomic, logging, registry, typing` | Builtin Modules |
 | [`src/core/modules/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/catalog.py#L1) | 388 | 10 | `copy, licensing, logging, re, typing` | Module Catalog - Public view sanitization and catalog utilities. |
 | [`src/core/modules/composite/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/__init__.py#L1) | 97 | 2 | `base, browser, data, developer, notification, test` | Composite Modules (Level 3) |

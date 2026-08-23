@@ -15,22 +15,26 @@ Design Principles:
 """
 import asyncio
 import logging
-import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Type, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type
 
 from ..constants import (
     DEFAULT_MAX_RETRIES,
     EXPONENTIAL_BACKOFF_BASE,
-    ErrorCode,
     ErrorMessages,
 )
-from .validation import ModuleError as ModuleErrorData, validate_required, validate_type, validate_all
+from .errors import (
+    InvalidTypeError,
+    InvalidValueError,
+    ModuleError,
+    ParamOutOfRangeError,
+    ValidationError,
+)
 from .result import ModuleResult
-from .errors import ModuleError, ValidationError
+from .validation import validate_required, validate_type
 
 if TYPE_CHECKING:
-    from .items import Item, ItemContext, NodeExecutionResult
+    from .items import Item, ItemContext
 
 
 logger = logging.getLogger(__name__)
@@ -202,7 +206,7 @@ class BaseModule(ABC):
                 total = sum(item.json.get(field, 0) for item in items)
                 return [Item(json={'total': total, 'count': len(items)})]
         """
-        from .items import Item, ItemContext as ItemCtx
+        from .items import ItemContext as ItemCtx
 
         # Default behavior: process items sequentially using execute_item
         results = []
@@ -304,7 +308,7 @@ class BaseModule(ABC):
                 else:
                     return await self.execute()
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as exc:
                 error_msg = ErrorMessages.format(
                     ErrorMessages.TIMEOUT_ERROR,
                     module_id=self.module_id,
@@ -312,9 +316,20 @@ class BaseModule(ABC):
                 )
                 if attempt == attempts - 1:
                     logger.error(f"{error_msg} (after {attempts} attempts)")
-                    raise TimeoutError(error_msg)
+                    raise TimeoutError(error_msg) from exc
                 logger.warning(f"{error_msg}, retrying...")
                 last_exception = TimeoutError(error_msg)
+
+            except (
+                ValidationError,
+                InvalidTypeError,
+                InvalidValueError,
+                ParamOutOfRangeError,
+            ):
+                # Parameter defects are deterministic. Retrying them only
+                # delays the same failure and obscures the actionable message
+                # behind a generic "failed after N attempts" wrapper.
+                raise
 
             except Exception as e:
                 last_exception = e

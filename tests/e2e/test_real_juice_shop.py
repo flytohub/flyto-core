@@ -12,9 +12,11 @@ doesn't fail.
 from __future__ import annotations
 
 import importlib
-import socket
+import json
 import sys
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 import pytest
 
@@ -36,12 +38,18 @@ def local_target_security_policy(monkeypatch):
 
 
 def _juice_shop_running() -> bool:
-    """Check if juice-shop container answered on :3000."""
+    """Check that port 3000 serves Juice Shop, not merely any local app."""
     try:
-        s = socket.create_connection((JUICE_HOST, JUICE_PORT), timeout=1.0)
-        s.close()
-        return True
-    except Exception:
+        url = (
+            f"http://{JUICE_HOST}:{JUICE_PORT}"
+            "/rest/admin/application-version"
+        )
+        with urlopen(url, timeout=1.0) as response:
+            if response.status != 200:
+                return False
+            payload = json.loads(response.read().decode("utf-8"))
+        return isinstance(payload, dict) and isinstance(payload.get("version"), str)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, UnicodeError):
         return False
 
 
