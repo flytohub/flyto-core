@@ -7,11 +7,11 @@ Assert and validate HTTP response properties
 
 import logging
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from ...registry import register_module
 from ...schema import compose, field, presets
-
+from ...schema.presets.assertion import REGEX_PATTERN as ASSERTION_REGEX_PATTERN
 
 logger = logging.getLogger(__name__)
 
@@ -205,8 +205,8 @@ def _assert_json_schema(params: dict, response: dict, assertions: list, errors: 
         presets.HTTP_STATUS(),
         presets.BODY_CONTAINS(),
         presets.BODY_NOT_CONTAINS(),
-        presets.REGEX_PATTERN(key='body_matches', label='Body Matches Regex',
-                              label_key='schema.field.body_matches'),
+        ASSERTION_REGEX_PATTERN(key='body_matches', label='Body Matches Regex',
+                                label_key='schema.field.body_matches'),
         presets.JSON_PATH_ASSERTIONS(),
         presets.JSON_PATH_EXISTS(),
         presets.HEADER_CONTAINS(),

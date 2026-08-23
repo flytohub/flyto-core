@@ -486,6 +486,21 @@ class TestBuildModuleMetadata:
         meta = self._build(ui_label=None, label=None)
         assert meta["ui_label"] == "test.mod"
 
+    def test_ui_label_key_falls_back_to_module_id_convention(self):
+        meta = self._build(ui_label_key=None, label_key=None)
+        assert meta["ui_label_key"] == "modules.test.mod.label"
+
+    def test_explicit_ui_label_key_remains_authoritative(self):
+        meta = self._build(
+            ui_label_key="modules.alias.label",
+            label_key="modules.legacy.label",
+        )
+        assert meta["ui_label_key"] == "modules.alias.label"
+
+    def test_legacy_label_key_remains_authoritative(self):
+        meta = self._build(label_key="modules.legacy.label")
+        assert meta["ui_label_key"] == "modules.legacy.label"
+
     def test_retryable_false_zeros_max_retries(self):
         meta = self._build(retryable=False, max_retries=5)
         assert meta["max_retries"] == 0

@@ -99,7 +99,7 @@ def build_module_metadata(
         # UI metadata (prefer new ui_* fields, fallback to legacy)
         "ui_visibility": resolved_visibility.value if isinstance(resolved_visibility, UIVisibility) else resolved_visibility,
         "ui_label": ui_label or label or module_id,
-        "ui_label_key": ui_label_key or label_key,
+        "ui_label_key": ui_label_key or label_key or f"modules.{module_id}.label",
         "ui_description": ui_description or description or "",
         "ui_description_key": ui_description_key or description_key,
         "ui_group": ui_group,

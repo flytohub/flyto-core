@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-08-24 | Runtime and module catalog convergence | `2026-08-24-runtime-and-catalog-convergence.md` | Implemented locally: browser fallback, truthful legacy failure, total label-key metadata, and optional response assertion metadata. Full suite 3,041 passed, 11 skipped, 63.36% coverage; targeted 171/171 and real installed-Chrome launch green. Owner: codex |
 | 2026-08-12 | Four-repository capability, extension and runtime closure | `2026-08-12-four-repo-closure.md` | Complete — commit `0a353ff`, strict Indexer 19/19 |
 | 2026-08-11 | Capability manifest `flyto.core.capability-manifest.v1`, `/v1/capabilities`, MCP `get_capability_manifest` | `2026-08-11-capability-manifest.md` | Superseded by 2026-08-12 closure; retained as rework history |
 | 2026-08-11 | Registry plugin-load transaction: stale removal, foreign-row rollback, empty plugins | `2026-08-11-registry-plugin-load-transaction.md` | Completed |

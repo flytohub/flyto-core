@@ -291,6 +291,37 @@ class TestTimeout:
 # ---------------------------------------------------------------------------
 
 class TestOnErrorContinue:
+    @staticmethod
+    def _register_legacy_failure_module():
+        """Register a legacy module that reports failure without raising."""
+        from core.modules.registry import ModuleRegistry, register_module
+
+        module_id = "test.legacy_false_result"
+        if not ModuleRegistry.has(module_id):
+            @register_module(
+                module_id=module_id,
+                version="1.0.0",
+                category="testing",
+                tags=["test"],
+                label="Legacy False Result",
+                description="Returns an explicit legacy failure result",
+                icon="XCircle",
+                color="#EF4444",
+                input_types=["any"],
+                output_types=["any"],
+                can_receive_from=["*"],
+                can_connect_to=["*"],
+                requires_credentials=False,
+                handles_sensitive_data=False,
+            )
+            async def legacy_false_result(ctx):
+                return {
+                    "ok": False,
+                    "error": "delivery rejected",
+                    "error_code": "DELIVERY_REJECTED",
+                }
+        return module_id
+
     async def test_on_error_continue_returns_error_dict(self):
         """When on_error='continue', a failing step returns {ok: False, error: ...}."""
         context = {}
@@ -335,6 +366,41 @@ class TestOnErrorContinue:
                 context=context,
                 resolver=resolver,
             )
+
+    async def test_legacy_ok_false_stops_instead_of_recording_success(self):
+        """An explicit legacy failure must fail the default stop policy."""
+        module_id = self._register_legacy_failure_module()
+        context = {}
+
+        with pytest.raises(StepExecutionError, match="delivery rejected"):
+            await make_executor().execute_step(
+                step_config={"id": "legacy_failure", "module": module_id, "params": {}},
+                step_index=0,
+                context=context,
+                resolver=make_resolver(context=context),
+            )
+
+        assert "legacy_failure" not in context
+
+    async def test_legacy_ok_false_respects_continue_policy(self):
+        """Continue policy may preserve an explicit failure for downstream logic."""
+        module_id = self._register_legacy_failure_module()
+        context = {}
+        result = await make_executor().execute_step(
+            step_config={
+                "id": "legacy_failure_continue",
+                "module": module_id,
+                "params": {},
+                "on_error": "continue",
+            },
+            step_index=0,
+            context=context,
+            resolver=make_resolver(context=context),
+        )
+
+        assert result["ok"] is False
+        assert "delivery rejected" in result["error"]
+        assert context["legacy_failure_continue"] == result
 
 
 # ---------------------------------------------------------------------------
