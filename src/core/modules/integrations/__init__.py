@@ -36,6 +36,15 @@ from .oauth import (
     OAuthProvider,
 )
 
+# Importing the service packages is what executes their @register_module
+# decorators. Without these three lines the Jira, Salesforce and Slack modules
+# were declared in the source, listed in the generated module reference and
+# translated into every locale, while `execute_module` answered "Module not
+# found" for all seven of them.
+from . import jira  # noqa: F401
+from . import salesforce  # noqa: F401
+from . import slack  # noqa: F401
+
 __all__ = [
     # Base classes
     "BaseIntegration",

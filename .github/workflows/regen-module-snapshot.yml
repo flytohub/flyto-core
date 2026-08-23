@@ -32,7 +32,7 @@ jobs:
           import os, json
           os.environ["FLYTO_ENV"] = "production"
           from core.modules.registry import ModuleRegistry
-          from core.modules import atomic  # trigger registration
+          import core.modules  # trigger registration of the shipped catalog
 
           modules = ModuleRegistry.get_all_metadata(filter_by_stability=True, env="production")
           prod = {

@@ -31,7 +31,7 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 
 ## Build Modules And Plugins
 
-- [Tool Catalog](TOOL_CATALOG.md): all 468 active runtime modules, parameters,
+- [Tool Catalog](TOOL_CATALOG.md): all 476 active runtime modules, parameters,
   and outputs. Catalog search and detail also report each module's
   registry-declared `provides_capability` and `plugin`, never a derived ID.
 - [Module Quick Reference](MODULE_QUICK_REFERENCE.md)
@@ -64,7 +64,7 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 960 maintained Python files and 5,667 declarations.
+- 960 maintained Python files and 5,669 declarations.
 - 483 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 107 environment-variable readers.

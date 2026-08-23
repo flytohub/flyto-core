@@ -21,7 +21,12 @@ def production_modules():
     old_env = os.environ.get("FLYTO_ENV")
     os.environ["FLYTO_ENV"] = "production"
     try:
-        from core.modules import atomic  # noqa: F401 - trigger registration
+        # Import the package the way a consumer does, not one subpackage of it.
+        # ModuleRegistry is a process-global singleton, so importing only
+        # `atomic` did not mean only atomic was registered — it meant "whatever
+        # any earlier test happened to import", and the answer changed with test
+        # ordering. The snapshot is meant to describe the shipped catalog.
+        import core.modules  # noqa: F401 - trigger registration
         from core.modules.registry import ModuleRegistry
 
         modules = ModuleRegistry.get_all_metadata(

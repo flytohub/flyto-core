@@ -204,7 +204,7 @@ class BaseIntegration(ABC):
                     rate_reset = response.headers.get("X-RateLimit-Reset")
 
                     api_response = APIResponse(
-                        ok=response.status < 400,
+                        ok=self._response_is_ok(response.status, data),
                         status=response.status,
                         data=data,
                         headers=dict(response.headers),
@@ -238,6 +238,16 @@ class BaseIntegration(ABC):
             status=0,
             error=f"Request failed after {self.config.max_retries} attempts: {last_error}",
         )
+
+    def _response_is_ok(self, status: int, data: Any) -> bool:
+        """Whether a response represents success.
+
+        Defaults to the HTTP status. Override for an API that answers HTTP 200
+        with the real outcome in the body — Slack does, so a rejected token
+        produced ``ok=True`` with every field null, which is a failure reported
+        as a success.
+        """
+        return status < 400
 
     def _extract_error(self, data: Any, status: int) -> str:
         """Extract error message from response."""

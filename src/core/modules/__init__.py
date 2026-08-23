@@ -156,6 +156,9 @@ from .third_party import cloud
 from .third_party import productivity
 from .third_party import developer
 
+# Integration modules (Jira, Salesforce, Slack)
+from . import integrations
+
 # Composite modules (coming in v1.1)
 from . import composite
 

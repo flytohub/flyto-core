@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.30.0]
+
+### Added
+
+- The `integration.*` family is registered. Seven Jira, Salesforce and Slack
+  modules were fully implemented, listed in the generated module reference,
+  named in the landing-page module catalog and translated into every locale,
+  while `execute_module` answered "Module not found" for all of them — nothing
+  imported their subpackages, so their `@register_module` decorators never ran.
+  `utility.not` was in the same state for a different reason: it lives in
+  `not.py`, and `from .not import *` is a SyntaxError because `not` is a
+  keyword, so no package `__init__` could ever have reached it. The catalog goes
+  from 468 modules across 85 categories to 476 across 86.
+- `tests/core/test_module_registration_coverage.py`, so that state cannot recur:
+  every `@register_module` in the source must be live in the registry, gated on
+  a named optional dependency whose guard is verified to still exist, or
+  recorded as deliberately not shipped — and that last entry fails the moment
+  the module goes live, so "not shipped" cannot quietly become "shipped".
+  `ai.tool_template` is the one recorded entry: it is complete in source but no
+  locale defines its label key, so registering it would put a raw translation
+  key in the node palette.
+- The same test now checks `core/catalog_facts.py` against the generated
+  catalog, the registry and the packaged recipes. Those constants are what
+  `mcp_handler`, `quickstart` and the API server tell a user the catalog holds,
+  they were hand-maintained, and nothing compared them to it — they said 468
+  while the registry held 476.
+
+### Fixed
+
+- `integration.slack.*` reported failure as success. Slack answers HTTP 200 with
+  the real outcome in the body, and the shared client derived `ok` from the
+  status alone, so a rejected token produced `ok: True` with every field null.
+  `BaseIntegration` grows a `_response_is_ok` hook for APIs that work this way
+  and Slack overrides it; the module's own `upload_file` had always read the
+  body flag, and every other call had not.
+
+### Security
+
+- Enabling `integration.*` was gated on the guards added in 2.29.0 for
+  GHSA-4346-4gqg-59f9, and those guards were verified through real MCP dispatch
+  before the family was wired: an operator credential is refused for any host
+  the operator did not configure, the metadata endpoint is refused on the
+  caller-credential path where only the SSRF guard stands, and a request to the
+  operator's own configured host still goes out.
+
 ## [2.29.0]
 
 The version moves because the packaged source did. `2.28.1` was already

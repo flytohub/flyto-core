@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **468 modules** across **85 categories**.
+> Auto-generated from flyto-core module registry. **476 modules** across **86 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
@@ -51,6 +51,7 @@
 - [hash](#hash) (2)
 - [http](#http) (7)
 - [image](#image) (9)
+- [integration](#integration) (7)
 - [k8s](#k8s) (5)
 - [llm](#llm) (3)
 - [logic](#logic) (5)
@@ -89,7 +90,7 @@
 - [text](#text) (6)
 - [training](#training) (4)
 - [ui](#ui) (1)
-- [utility](#utility) (5)
+- [utility](#utility) (6)
 - [validate](#validate) (7)
 - [verification](#verification) (4)
 - [verify](#verify) (9)
@@ -561,6 +562,18 @@
 | `image.rotate` | Rotate image by specified angle | `input_path` string *(required)*, `output_path` string *(required)*, `angle` number *(required)*, `expand` boolean (default: `True`), `fill_color` string (default: `#000000`) | `output_path` (string), `width` (integer), `height` (integer), `angle` (number) |
 | `image.watermark` | Add text or image watermark to images | `input_path` string *(required)*, `output_path` string *(required)*, `text` string, `watermark_image` string, `position` select (default: `bottom-right`), `opacity` number (default: `0.5`), `font_size` number (default: `36`) | `output_path` (string), `watermark_type` (string) |
 
+## integration
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `integration.jira.create_issue` | Create a new issue in Jira | `domain` string *(required)*, `project_key` string *(required)*, `summary` string *(required)*, `issue_type` select (default: `Task`), `description` text, `priority` select, `labels` array, `email` string, `api_token` string | `ok` (boolean), `key` (string), `id` (string), `url` (string) |
+| `integration.jira.search_issues` | Search issues using JQL query | `domain` string *(required)*, `jql` string *(required)*, `max_results` number (default: `50`), `email` string, `api_token` string | `ok` (boolean), `issues` (array), `total` (number) |
+| `integration.salesforce.create_record` | Create a new record in Salesforce | `instance_url` string *(required)*, `sobject` select *(required)*, `data` object *(required)*, `access_token` string | `ok` (boolean), `id` (string), `success` (boolean) |
+| `integration.salesforce.query` | Execute SOQL query in Salesforce | `instance_url` string *(required)*, `soql` text *(required)*, `fetch_all` boolean (default: `False`), `access_token` string | `ok` (boolean), `records` (array), `total_size` (number) |
+| `integration.salesforce.update_record` | Update an existing record in Salesforce | `instance_url` string *(required)*, `sobject` select *(required)*, `record_id` string *(required)*, `data` object *(required)*, `access_token` string | `ok` (boolean) |
+| `integration.slack.list_channels` | List channels in Slack workspace | `types` string (default: `public_channel,private_channel`), `limit` number (default: `100`), `token` string | `ok` (boolean), `channels` (array), `count` (number) |
+| `integration.slack.send_message` | Send a message to a Slack channel | `channel` string *(required)*, `text` text *(required)*, `thread_ts` string, `token` string | `ok` (boolean), `channel` (string), `ts` (string), `message` (object) |
+
 ## k8s
 
 | Module | Description | Parameters | Output |
@@ -924,6 +937,7 @@
 | `utility.datetime.now` | Get current date and time | `format` select (default: `iso`), `custom_format` string, `timezone` string (default: `UTC`) | `status` (string), `datetime` (string), `timestamp` (number), `iso` (string) |
 | `utility.delay` | Pause workflow execution for specified duration | `duration_ms` number (default: `1000`), `duration_seconds` number | `status` (string), `waited_ms` (number) |
 | `utility.hash.md5` | Calculate MD5 hash of text | `text` text *(required)*, `encoding` string (default: `utf-8`) | `status` (string), `hash` (string) |
+| `utility.not` | Logical negation operation | — | `type` (object), `properties` (any) |
 | `utility.random.number` | Generate random number in range | `min` number (default: `0`), `max` number (default: `100`), `decimals` number (default: `0`) | `status` (string), `value` (number) |
 | `utility.random.string` | Generate random string or UUID | `length` number (default: `16`), `charset` select (default: `alphanumeric`) | `status` (string), `value` (string) |
 

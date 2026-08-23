@@ -95,7 +95,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 468 modules across 85 categories, and
+- The generated catalog currently exposes 476 modules across 86 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -178,7 +178,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 960 maintained Python files, 5,667
+- Source-backed documentation now covers 960 maintained Python files, 5,669
   declarations, 483 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 107 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

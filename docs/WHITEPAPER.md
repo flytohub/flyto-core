@@ -8,11 +8,11 @@ bounded operations instead of allowing an agent to invent arbitrary production
 code for every task. The same runtime supports a terminal CLI, MCP tools, a
 local HTTP Execution API, packaged recipes, evidence capture, and replay.
 
-The current generated runtime catalog contains 468 modules across 85 categories
+The current generated runtime catalog contains 476 modules across 86 categories
 and 41 packaged recipes. Catalog search and detail carry each module's
 registry-declared `provides_capability` and `plugin`, never a value derived from
 the module ID. Source traceability covers 960 maintained Python files,
-200,838 lines, and 5,667 class/function/method declarations. These measurements
+200,883 lines, and 5,669 class/function/method declarations. These measurements
 come from checked generators and are not hand-maintained marketing totals.
 
 ## Problem
@@ -50,9 +50,12 @@ breakpoints, lineage, and metering without duplicating execution logic.
 An explicit `@register_module` declaration associates a module ID with version,
 category, connection types, parameter/output schemas, permissions, retry and
 timeout behavior, credentials, examples, and a callable. Static source contains
-483 literal registrations; runtime discovery currently publishes 468 because
+483 literal registrations; runtime discovery currently publishes 476 because
 availability, aliases, dependency gates, plugins, and policy determine the
-active set.
+active set. That difference is now itself enforced: every literal registration
+must be live, gated on a named optional dependency, or recorded as deliberately
+not shipped, so a module cannot be documented and unreachable at the same time
+(`tests/core/test_module_registration_coverage.py`).
 
 The [Tool Catalog](TOOL_CATALOG.md) documents every runtime-discovered module,
 parameter, and output. The [registered module source map](reference/registered-modules.md)

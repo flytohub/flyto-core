@@ -1,5 +1,5 @@
 {
-  "total": 428,
+  "total": 436,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -1014,6 +1014,34 @@
       "version": "1.0.0"
     },
     {
+      "id": "integration.jira.create_issue",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.jira.search_issues",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.salesforce.create_record",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.salesforce.query",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.salesforce.update_record",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.slack.list_channels",
+      "version": "1.0.0"
+    },
+    {
+      "id": "integration.slack.send_message",
+      "version": "1.0.0"
+    },
+    {
       "id": "k8s.apply",
       "version": "1.0.0"
     },
@@ -1094,6 +1122,10 @@
       "version": "1.0.0"
     },
     {
+      "id": "mcp.recipe",
+      "version": "1.0.0"
+    },
+    {
       "id": "meta.modules.generate",
       "version": "1.0.0"
     },
@@ -1107,10 +1139,6 @@
     },
     {
       "id": "meta.modules.update_docs",
-      "version": "1.0.0"
-    },
-    {
-      "id": "mcp.recipe",
       "version": "1.0.0"
     },
     {
@@ -1555,7 +1583,7 @@
     },
     {
       "id": "testing.visual.compare",
-      "version": "1.0.0"
+      "version": "2.0.0"
     },
     {
       "id": "text.char_count",
@@ -1591,6 +1619,10 @@
     },
     {
       "id": "utility.hash.md5",
+      "version": "1.0.0"
+    },
+    {
+      "id": "utility.not",
       "version": "1.0.0"
     },
     {
@@ -1679,7 +1711,7 @@
     },
     {
       "id": "verify.visual_diff",
-      "version": "1.0.0"
+      "version": "2.0.0"
     },
     {
       "id": "warroom.discover",

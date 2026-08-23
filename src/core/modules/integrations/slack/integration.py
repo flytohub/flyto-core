@@ -49,6 +49,20 @@ class SlackIntegration(BaseIntegration):
             return {"Authorization": f"Bearer {self.access_token}"}
         return {}
 
+    def _response_is_ok(self, status: int, data: Any) -> bool:
+        """Slack answers HTTP 200 and puts the outcome in the body.
+
+        `{"ok": false, "error": "invalid_auth"}` arrives as HTTP 200, so the
+        status alone reported a rejected token as a successful send. The
+        module's own `upload_file` already read the body flag; every other call
+        went through the shared client and did not.
+        """
+        if status >= 400:
+            return False
+        if isinstance(data, dict) and "ok" in data:
+            return bool(data["ok"])
+        return True
+
     async def send_message(
         self,
         channel: str,
