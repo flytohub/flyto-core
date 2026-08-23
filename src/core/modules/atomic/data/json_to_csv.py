@@ -8,12 +8,16 @@ import csv
 import json
 import logging
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict
 
+from ....utils import (
+    get_safe_path_config,
+    validate_path_safe,
+    validate_path_with_env_config,
+)
+from ...errors import InvalidTypeError, InvalidValueError, ValidationError
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_path_with_env_config
-
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +54,7 @@ logger = logging.getLogger(__name__)
     # Schema-driven params
     params_schema=compose(
         presets.INPUT_DATA(required=True),
-        presets.OUTPUT_PATH(key='output_path', default='/tmp/output.csv'),
+        presets.OUTPUT_PATH(key='output_path', default='output.csv'),
         presets.DELIMITER(default=','),
         presets.INCLUDE_HEADER(default=True),
         presets.FLATTEN_NESTED(default=True),
@@ -87,7 +91,7 @@ logger = logging.getLogger(__name__)
                     {'name': 'Alice', 'age': 30},
                     {'name': 'Bob', 'age': 25}
                 ],
-                'output_path': '/tmp/users.csv'
+                'output_path': 'users.csv'
             }
         },
         {
@@ -105,10 +109,15 @@ logger = logging.getLogger(__name__)
 async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
     """Convert JSON to CSV"""
     params = context['params']
-    input_data = params['input_data']
-    output_path = params.get('output_path', '/tmp/output.csv')
+    input_data = params.get('input_data')
+    if input_data is None:
+        raise ValidationError(
+            "Missing required parameter: input_data",
+            field="input_data",
+        )
+
+    output_path = _resolve_output_path(params.get('output_path', 'output.csv'))
     # GHSA-p34x: confine the CSV write target to FLYTO_SANDBOX_DIR.
-    output_path = validate_path_with_env_config(output_path)
     delimiter = params.get('delimiter', ',')
     include_header = params.get('include_header', True)
     flatten_nested = params.get('flatten_nested', True)
@@ -131,7 +140,10 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 input_data = json.loads(input_data)
             except json.JSONDecodeError:
-                raise ValueError(f"Invalid JSON input: {input_data[:100]}...")
+                raise InvalidValueError(
+                    "input_data must contain valid JSON",
+                    field="input_data",
+                ) from None
 
     # Ensure input is a list
     if isinstance(input_data, dict):
@@ -143,10 +155,26 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
             input_data = [input_data]
 
     if not isinstance(input_data, list):
-        raise ValueError("Input must be a JSON array or an object with a 'data' array")
+        raise InvalidTypeError(
+            "input_data must be a JSON array or an object with a data array",
+            field="input_data",
+            expected_type="array of objects",
+            actual_type=type(input_data).__name__,
+        )
 
     if not input_data:
-        raise ValueError("Input data is empty")
+        raise InvalidValueError(
+            "input_data must not be empty",
+            field="input_data",
+        )
+
+    if not all(isinstance(item, dict) for item in input_data):
+        raise InvalidTypeError(
+            "input_data must contain only JSON objects",
+            field="input_data",
+            expected_type="array of objects",
+            actual_type="array with non-object values",
+        )
 
     # Flatten nested objects if requested
     if flatten_nested:
@@ -164,11 +192,9 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
     # Create output directory if needed
     output_dir = os.path.dirname(output_path)
     if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
 
     # Write CSV
-    if '..' in output_path:
-        raise Exception('Invalid file path')
     with open(output_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f, delimiter=delimiter)
 
@@ -196,6 +222,27 @@ async def json_to_csv(context: Dict[str, Any]) -> Dict[str, Any]:
         'file_size': file_size,
         'message': f'Converted {len(input_data)} rows to CSV'
     }
+
+
+def _resolve_output_path(path: str) -> str:
+    """Resolve relative output paths inside the configured sandbox."""
+    if not isinstance(path, str) or not path.strip():
+        raise ValidationError(
+            "output_path must be a non-empty path",
+            field="output_path",
+        )
+
+    path = path.strip()
+    if os.path.isabs(path):
+        return validate_path_with_env_config(path)
+
+    config = get_safe_path_config()
+    sandbox_path = os.path.join(config['base_dir'], path)
+    return validate_path_safe(
+        sandbox_path,
+        base_dir=config['base_dir'],
+        allow_absolute=True,
+    )
 
 
 def _flatten_dict(d: Dict, parent_key: str = '', sep: str = '.') -> Dict:

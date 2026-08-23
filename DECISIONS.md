@@ -43,6 +43,17 @@ that port. A security change that made every real remote Ollama unreachable
 would not have been a fix, it would have been a removed feature reported as one.
 The exemption is deleted, so the module is now held by the ordinary rule.
 
+## 2026-08-24 - Deterministic parameter defects are not retryable
+
+Decision: module resilience immediately returns typed validation, type, value,
+and range errors. Relative output defaults are resolved inside the configured
+filesystem sandbox; an explicit absolute output remains subject to the same
+sandbox validation.
+
+Reason: retrying an unchanged invalid parameter only delays the same outcome
+and replaces an actionable error with generic retry exhaustion. A built-in
+artifact default must also work under the product's own filesystem policy.
+
 ## 2026-08-24 - Optional assertions stay optional in registry metadata
 
 Decision: `http.response_assert.body_matches` uses the assertion regex editor

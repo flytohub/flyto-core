@@ -72,7 +72,7 @@ evidence but does not decide the gate.
 
 - [All 479 active module schemas](TOOL_CATALOG.md)
 - [All 486 literal module implementations](reference/registered-modules.md)
-- [All 5,685 maintained Python declarations](reference/python-api.md)
+- [All 5,686 maintained Python declarations](reference/python-api.md)
 - [All CLI parsers](reference/cli.md)
 - [All HTTP decorators](reference/http-api.md)
 - [All environment readers and packaged workflow assets](reference/configuration.md)

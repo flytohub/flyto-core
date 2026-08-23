@@ -12,6 +12,11 @@
   shared guard accepts instead of disabling validation. Ollama's port, and only
   it, joins the operator port policy so the feature survives the fix; the
   module's outbound-guard exemption is deleted.
+- `data.json_to_csv` writes its default `output.csv` inside the configured
+  sandbox instead of naming a sandbox-external `/tmp` path. Missing, malformed,
+  empty, and structurally invalid inputs now return typed parameter errors and
+  skip resilience retries because repeating deterministic input defects cannot
+  make them succeed.
 
 - `http.response_assert` exposes `body_matches` as an optional regex parameter.
   Registry metadata no longer turns an editor preset into a required input, so
@@ -223,7 +228,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 966 maintained Python files, 5,685
+- Source-backed documentation now covers 966 maintained Python files, 5,686
   declarations, 486 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

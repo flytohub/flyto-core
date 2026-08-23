@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-08-24 | JSON-to-CSV output and input-error contract | `2026-08-24-csv-output-contract.md` | Implemented locally: sandbox-safe default output, typed parameter failures, and no deterministic retries. Focused Core 109/109; full non-browser/non-E2E 3,070 passed, 11 skipped, 63.37% coverage. Owner: codex |
 | 2026-08-24 | Runtime and module catalog convergence | `2026-08-24-runtime-and-catalog-convergence.md` | Implemented locally: browser fallback, truthful legacy failure, total label-key metadata, and optional response assertion metadata. Full suite 3,041 passed, 11 skipped, 63.36% coverage; targeted 171/171 and real installed-Chrome launch green. Owner: codex |
 | 2026-08-12 | Four-repository capability, extension and runtime closure | `2026-08-12-four-repo-closure.md` | Complete — commit `0a353ff`, strict Indexer 19/19 |
 | 2026-08-11 | Capability manifest `flyto.core.capability-manifest.v1`, `/v1/capabilities`, MCP `get_capability_manifest` | `2026-08-11-capability-manifest.md` | Superseded by 2026-08-12 closure; retained as rework history |
