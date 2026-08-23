@@ -11,9 +11,9 @@ backports — upgrading is the supported path.
 | < 2.29   | :x:                |
 
 The current release is **2.29.0**. Every advisory published against this
-project is patched at or below **2.28.1**, and every one has a named regression
-test that runs in CI, so `>= 2.28.1` is the floor that clears all of them while
-`2.29.x` is the line that receives new fixes. Downstream packages should pin the
+project is patched at or below **2.29.0**, and every one has a named regression
+test that runs in CI, so `>= 2.29.0` is the floor that clears all of them and is
+also the line that receives new fixes. Downstream packages should pin the
 floor, not the current release; `security/advisories.json` is the
 machine-readable source both numbers are derived from.
 

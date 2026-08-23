@@ -401,5 +401,71 @@
     "regression_tests": [
       "tests/core/test_ssrf_ipv6_transition.py::test_validate_url_ssrf_rejects_transition_literal"
     ]
+  },
+  {
+    "ghsa": "GHSA-4346-4gqg-59f9",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-08-23",
+    "affected": "<= 2.28.1",
+    "patched": "2.29.0",
+    "summary": "SSRF and operator-credential exfiltration via unguarded BaseIntegration._request (integration.jira.*, integration.salesforce.*)",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_08_19.py::test_integration_request_blocks_private_target",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_env_credentials_are_not_sent_to_a_caller_named_host",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_salesforce_env_token_is_not_sent_to_a_caller_named_host"
+    ]
+  },
+  {
+    "ghsa": "GHSA-45hf-2fmj-q442",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-23",
+    "affected": "<= 2.28.1",
+    "patched": "2.29.0",
+    "summary": "Arbitrary host-file read/exfil via unvalidated file_path in cloud.{aws_s3,azure,gcs}.upload modules",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_08_19.py::test_aws_s3_upload_confines_file_path",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_class_upload_modules_confine_file_path"
+    ]
+  },
+  {
+    "ghsa": "GHSA-f9q4-fp8j-r5h7",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-23",
+    "affected": "<= 2.28.1",
+    "patched": "2.29.0",
+    "summary": "SSRF in the AI Agent (llm.agent) module via unvalidated base_url",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_08_19.py::test_llm_agent_inline_base_url_is_ssrf_guarded",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_llm_agent_reports_ssrf_blocked"
+    ]
+  },
+  {
+    "ghsa": "GHSA-pp5w-w9c3-qfv2",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-23",
+    "affected": "<= 2.28.1",
+    "patched": "2.29.0",
+    "summary": "SSRF via unchecked caller-supplied base_url in llm.agent (inline model config)",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_08_19.py::test_llm_agent_inline_base_url_is_ssrf_guarded",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_llm_agent_sub_node_config_base_url_is_ssrf_guarded"
+    ]
+  },
+  {
+    "ghsa": "GHSA-9x26-9vhm-2qhw",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-08-23",
+    "affected": "<= 2.28.1",
+    "patched": "2.29.0",
+    "summary": "SSRF via caller-supplied connection_string in db.postgresql.query and db.mongodb.{find,insert}",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_08_19.py::test_client_dsn_cannot_reach_a_private_target",
+      "tests/core/test_reported_advisories_2026_08_19.py::test_mongodb_multi_host_dsn_checks_every_host"
+    ]
   }
 ]

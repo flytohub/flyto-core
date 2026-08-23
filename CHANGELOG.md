@@ -13,6 +13,37 @@ would have meant the wheel named `2.28.1` no longer contained what this
 repository described — and the Python floor change is packaging-visible, not
 cosmetic. `scripts/check_release_drift.py` now refuses that state in CI.
 
+### Security
+
+- Closes the five reports of 2026-08-18/19. Four distinct sinks —
+  GHSA-f9q4-fp8j-r5h7 and GHSA-pp5w-w9c3-qfv2 are two reporters on the same
+  parameter. `BaseIntegration._request` (GHSA-4346-4gqg-59f9) is the outbound
+  sink for the whole `integration.*` family and had neither an egress guard nor
+  any restraint on where an operator credential could travel; the three
+  `cloud.*.upload` modules (GHSA-45hf-2fmj-q442) read a caller-supplied
+  `file_path` while their download twins confined theirs; `llm.agent`
+  (GHSA-f9q4-fp8j-r5h7, GHSA-pp5w-w9c3-qfv2) fetched a caller-supplied
+  `base_url` unchecked, unlike `llm.chat` and `ai.model`; and the three `db.*`
+  connectors (GHSA-9x26-9vhm-2qhw) connected to whatever host a
+  `connection_string` named, unlike `db.mysql.query`. `FLYTO_TRUSTED_INTEGRATION_HOSTS`
+  is the new operator allowlist for the credential-target guard.
+- Both registry-wide coverage gates missed all five, so both were widened.
+  `assert_env_credential_endpoint_allowed` no longer counts as an SSRF guard —
+  it answers a different question and no-ops for a caller-supplied key, which is
+  what let `llm.agent` read as guarded. `connection_string`, `dsn` and `domain`
+  became outbound parameter names, because a DSN is a whole target packed into
+  one string. The `integration.*` families are now imported into the sweep;
+  nothing else imports them, so a family sharing one unguarded sink was
+  invisible. The filesystem sweep reads the registered handler rather than the
+  whole file, so a guarded twin can no longer vouch for its sibling — which is
+  precisely how `aws_s3_upload` passed on `aws_s3_download`'s guard.
+- Tightening that last gate found three more of the same shape that no report
+  had named, fixed here: `image.qrcode_generate` opened `logo_path` and embedded
+  its pixels in the returned image, `verify.annotate` opened `image_path` and
+  drew it into an output that was itself confined, and `load_ruleset` still
+  carried the `'..'` denylist that GHSA-p34x-fmph-9fjx had already found
+  insufficient, while its `save_ruleset` twin had moved to the shared helper.
+
 ### Added
 
 - `scripts/check_release_drift.py`, wired into CI: if a tag `v<version>` exists,

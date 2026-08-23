@@ -2,11 +2,11 @@
 
 # Security Status
 
-**Current release: `2.29.0`.** Every advisory published against this project is fixed as of `2.28.1`, and every one has a named regression test that runs in CI.
+**Current release: `2.29.0`.** Every advisory published against this project is fixed as of `2.29.0`, and every one has a named regression test that runs in CI.
 
-Installing `>= 2.28.1` clears every known advisory; `2.29.0` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
+Installing `>= 2.29.0` clears every known advisory; `2.29.0` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
 
-33 advisories have been published and fixed (6 critical, 21 high, 6 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
+38 advisories have been published and fixed (7 critical, 25 high, 6 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
 
 ## How the recurrence was stopped
 
@@ -60,6 +60,11 @@ Applying those audits closed roughly 30 further modules that no advisory had nam
 | [GHSA-f6mw-65v7-mccg](https://github.com/flytohub/flyto-core/security/advisories/GHSA-f6mw-65v7-mccg) | high | `<= 2.26.12` | `2.27.0` | [`test_xml_parse_rejects_file_path_outside_sandbox`](tests/core/test_reported_security_advisories.py) [`test_verify_spec_rejects_ruleset_path_outside_sandbox`](tests/core/test_reported_security_advisories.py) |
 | [GHSA-h6qg-7prx-fppr](https://github.com/flytohub/flyto-core/security/advisories/GHSA-h6qg-7prx-fppr) | high | `<= 2.26.12` | `2.27.0` | [`test_browser_connect_rejects_internal_cdp_endpoint`](tests/core/test_reported_security_advisories.py) [`test_browser_launch_rejects_internal_proxy`](tests/core/test_reported_security_advisories.py) [`test_visual_diff_screenshot_rejects_metadata_url`](tests/core/test_reported_security_advisories.py) [`test_every_outbound_param_module_reaches_a_guard`](tests/core/test_outbound_guard_coverage.py) |
 | [GHSA-xgfr-24jq-vv8h](https://github.com/flytohub/flyto-core/security/advisories/GHSA-xgfr-24jq-vv8h) | medium | `<= 2.26.12` | `2.27.0` | [`test_cache_get_rejects_metadata_redis_url`](tests/core/test_reported_security_advisories.py) [`test_network_ping_rejects_private_host`](tests/core/test_reported_security_advisories.py) [`test_every_outbound_param_module_reaches_a_guard`](tests/core/test_outbound_guard_coverage.py) |
+| [GHSA-4346-4gqg-59f9](https://github.com/flytohub/flyto-core/security/advisories/GHSA-4346-4gqg-59f9) | critical | `<= 2.28.1` | `2.29.0` | [`test_integration_request_blocks_private_target`](tests/core/test_reported_advisories_2026_08_19.py) [`test_env_credentials_are_not_sent_to_a_caller_named_host`](tests/core/test_reported_advisories_2026_08_19.py) [`test_salesforce_env_token_is_not_sent_to_a_caller_named_host`](tests/core/test_reported_advisories_2026_08_19.py) |
+| [GHSA-45hf-2fmj-q442](https://github.com/flytohub/flyto-core/security/advisories/GHSA-45hf-2fmj-q442) | high | `<= 2.28.1` | `2.29.0` | [`test_aws_s3_upload_confines_file_path`](tests/core/test_reported_advisories_2026_08_19.py) [`test_class_upload_modules_confine_file_path`](tests/core/test_reported_advisories_2026_08_19.py) |
+| [GHSA-f9q4-fp8j-r5h7](https://github.com/flytohub/flyto-core/security/advisories/GHSA-f9q4-fp8j-r5h7) | high | `<= 2.28.1` | `2.29.0` | [`test_llm_agent_inline_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) [`test_llm_agent_reports_ssrf_blocked`](tests/core/test_reported_advisories_2026_08_19.py) |
+| [GHSA-pp5w-w9c3-qfv2](https://github.com/flytohub/flyto-core/security/advisories/GHSA-pp5w-w9c3-qfv2) | high | `<= 2.28.1` | `2.29.0` | [`test_llm_agent_inline_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) [`test_llm_agent_sub_node_config_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) |
+| [GHSA-9x26-9vhm-2qhw](https://github.com/flytohub/flyto-core/security/advisories/GHSA-9x26-9vhm-2qhw) | high | `<= 2.28.1` | `2.29.0` | [`test_client_dsn_cannot_reach_a_private_target`](tests/core/test_reported_advisories_2026_08_19.py) [`test_mongodb_multi_host_dsn_checks_every_host`](tests/core/test_reported_advisories_2026_08_19.py) |
 
 ## Reporting
 
