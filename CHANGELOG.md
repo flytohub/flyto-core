@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Raised the supported Python floor from 3.9 to 3.10, because 3.9 never worked.
+  `requires-python` advertised 3.9 while the base dependency `aiohttp>=3.14.3`
+  requires 3.10, so pip accepted the package on 3.9 and then failed to find a
+  distribution. CI only ever ran 3.11, so no run could catch it. The classifier
+  list, the `python_version < '3.10'` branches in the build requirements and the
+  `api` extra, the Black target list, the mypy target, the plugin template and
+  the plugin manifest's default `python_version` now all say the same thing.
+  `pytest` moves to `>= 9.0.3`, the line carrying the GHSA-6w46 fix, which was
+  previously unreachable only because of the 3.9 floor.
+- Added a `compat` CI job that installs the package and runs the non-browser
+  suite on 3.10, 3.12 and 3.13. The heavy 3.11 job (documentation, brand, npm
+  audits, build, verify gate) is unchanged and still runs once: repeating it per
+  interpreter would not make it more truthful. What needed repeating was the
+  interpreter range itself, which had drifted into a claim no run tested.
+- Corrected the `register_module` / `register_composite` display fields that were
+  commented as deprecated. `label`, `label_key`, `description`,
+  `description_key`, `icon` and `color` have roughly 1540, 1530, 1780, 900, 500
+  and 500 call sites in this repository against 4 or fewer for their `ui_`
+  counterparts, nothing warns on them and nothing removes them. The resolution
+  order (`ui_label or label or module_id`) is unchanged; only the comments are,
+  so a deprecation marker here means something again.
+- Stopped tracking two captured run artifacts under `out/` and added `out/` to
+  `.gitignore` beside the existing `output/`.
+- Pinned the CI checkout of `flytohub/flyto-indexer` to an exact revision. The
+  strict full-scan verify gate is only reproducible if the tool running it is;
+  unpinned, an unrelated Indexer commit could flip this repository red or green
+  with nothing changed here.
+- Made the wheel-boundary packaging test build from a clean `build/lib`.
+  setuptools never prunes that tree, so on a working copy where `npm ci` had
+  run, the test reported the developer's build history instead of the packaging
+  rules — and passed in CI only because CI installs those `node_modules` in a
+  later step. Released wheels build on a fresh checkout and were never affected;
+  `CONTRIBUTING.md` now documents `rm -rf build dist` before a local build.
+
 - Declared Core's exact Flyto2 product role in a deterministic repo-local
   contract and aligned public/project documentation: Core is the independently
   usable schema-validation, deterministic execution/replay, and evidence layer;

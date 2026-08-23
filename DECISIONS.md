@@ -1,5 +1,27 @@
 # Decisions
 
+## 2026-08-23 - The supported Python range is proven per version, not declared
+
+Decision: `requires-python` is `>= 3.10`, and every version in the declared
+range is installed and tested by a CI job.
+
+Why: the previous `>= 3.9` was not a conservative floor, it was a false one.
+`aiohttp>=3.14.3` — a base dependency, not an extra — requires 3.10, so a 3.9
+install resolved the package and then failed with no matching distribution. The
+repository carried real 3.9 accommodation around that broken claim: a
+`python_version < '3.10'` starlette branch, a `setuptools<83` build branch, a
+Pillow floor held at 11.3.0 and a pytest floor held at 8.4.2 specifically to
+stay 3.9-compatible, and an `EntryPoint.dist` fallback in the plugin loader.
+Two of those held the project on dependency lines whose newer releases carry
+advisory fixes, so the false floor had a security cost, not just a tidiness one.
+
+Consequence: 3.9 users lose nothing, because they never had a working install.
+The `compat` job runs 3.10, 3.12 and 3.13 (3.11 is already covered by the main
+job); a future floor change has to survive that job before it can be claimed.
+The Pillow floor stays at 11.3.0 in this change and moves separately, with the
+image suite run against it — the packaging edit that unblocks it is not the
+change that should perform it.
+
 ## 2026-08-22 - Local workflow paths are canonicalized at CLI selection
 
 Decision: both interactive and non-interactive local CLI selections pass

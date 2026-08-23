@@ -159,10 +159,13 @@
   an exact host/port network scope; explicitly enabled remote calls still use
   the shared DNS-pinned, redirect-revalidating SSRF boundary and do not reflect
   provider error bodies.
-- Cryptography uses the patched 48.x line, while Python 3.10+ API and CI
-  environments select patched Starlette, pip, and setuptools floors. Python
-  3.9 keeps explicit compatibility branches for upstream lines that no longer
-  publish patched Python 3.9 releases.
+- Cryptography uses the patched 48.x line, and the supported Python floor is
+  3.10, so Starlette, pip, setuptools and pytest all sit on their patched lines
+  with no split branch. The former 3.9 branches are gone: 3.9 could not resolve
+  `aiohttp>=3.14.3` and therefore never had a working install, so the
+  compatibility they carried protected nothing while holding two dependencies
+  below their fixed releases. A `compat` CI job installs and tests 3.10, 3.12
+  and 3.13; 3.11 stays covered by the main job.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.

@@ -177,7 +177,7 @@ class PluginManifest:
     categories: List[str] = field(default_factory=list)
 
     # Runtime requirements
-    python_version: str = ">=3.9"
+    python_version: str = ">=3.10"
     dependencies: List[str] = field(default_factory=list)
 
     # Marketplace metadata
@@ -258,7 +258,7 @@ class PluginManifest:
             license=data.get("license", "MIT"),
             keywords=data.get("keywords", []),
             categories=data.get("categories", []),
-            python_version=data.get("python_version", ">=3.9"),
+            python_version=data.get("python_version", ">=3.10"),
             dependencies=data.get("dependencies", []),
             icon=data.get("icon"),
             banner=data.get("banner"),

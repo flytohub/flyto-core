@@ -117,6 +117,14 @@
 - Cloud features provide sustainable moat
 - Focus on ecosystem over feature parity
 
+## Dependency Follow-ups
+
+- Move the `image` extra's Pillow floor from `>= 11.3.0` to `>= 12.2.0` and run
+  the image module suite against it. 11.3.0 was pinned only because it was the
+  last line supporting Python 3.9; the 2026-08-23 floor change to 3.10 removed
+  that reason, and the newer line carries the advisory fixes the old comment
+  named. This is an image-module change, not a packaging edit.
+
 ## Documentation Maintenance
 
 - Keep generated source and runtime references deterministic and CI-enforced.

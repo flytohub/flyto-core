@@ -146,13 +146,23 @@ def register_module(
     ui_help: Optional[str] = None,
     ui_help_key: Optional[str] = None,
 
-    # Legacy label fields (deprecated, use ui_label instead)
+    # Bare display fields. These are NOT deprecated, whatever an older comment
+    # here claimed: they are the spelling almost every registered module
+    # actually uses (`label=` ~1540 call sites against 4 for `ui_label=`), and
+    # nothing removes or warns about them. `build_module_metadata` resolves
+    # `ui_label or label or module_id`, so the `ui_` spelling wins when both are
+    # given and this one is the ordinary way to name a module. Retiring them
+    # would be a registry-wide migration, not a rename; until such a migration
+    # is decided and dated in DECISIONS.md, do not label them deprecated -- a
+    # deprecation marker that the codebase contradicts 1500 times teaches every
+    # later reader and agent to ignore deprecation markers here.
     label: Optional[Any] = None,
     label_key: Optional[str] = None,
     description: Optional[Any] = None,
     description_key: Optional[str] = None,
 
-    # Legacy visual fields (deprecated, use ui_icon instead)
+    # Bare visual fields, resolved the same way as `label` above and equally
+    # non-deprecated: `icon=` has ~500 call sites against 2 for `ui_icon=`.
     icon: Optional[str] = None,
     color: Optional[str] = None,
 

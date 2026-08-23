@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools>=83.0.0; python_version >= '3.10'",
-    "setuptools>=77.0,<83; python_version < '3.10'",
+    # The `python_version < '3.10'` branch went with the 3.9 floor.
+    "setuptools>=83.0.0",
     "wheel",
 ]
 build-backend = "setuptools.build_meta"
@@ -39,7 +39,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -51,7 +50,13 @@ classifiers = [
     "Framework :: AsyncIO",
     "Framework :: Pydantic :: 2",
 ]
-requires-python = ">=3.9"
+# 3.10, not 3.9. The floor said 3.9 while the base dependency set could not be
+# resolved there at all: `aiohttp>=3.14.3` requires Python >= 3.10, so pip
+# accepted the package on 3.9 and then failed to find a distribution. CI only
+# ever ran 3.11, so nothing caught it. Raising the floor matches what the
+# package can actually install; the compat matrix in CI now proves each version
+# in the declared range instead of asserting it.
+requires-python = ">=3.10"
 
 dependencies = [
     "pyyaml>=6.0.3,<7",
@@ -70,8 +75,9 @@ browser = [
 ]
 api = [
     "fastapi>=0.139.0,<1",
-    "starlette>=1.3.1,<2; python_version >= '3.10'",
-    "starlette>=0.46.0,<1.3; python_version < '3.10'",
+    # The old `python_version < '3.10'` branch is gone with the 3.9 floor: it
+    # could never have been selected by a working install anyway.
+    "starlette>=1.3.1,<2",
     "uvicorn>=0.52.0,<1",
 ]
 vector = [
@@ -81,7 +87,13 @@ vector = [
 ]
 image = [
     "qrcode[pil]>=7.0,<9",
-    "Pillow>=11.3.0,<13",  # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed; 11.3.0 is the last line supporting py3.9 (12.2.0 CVEs require py3.10)
+    # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed.
+    # The 11.3.0 floor was chosen only because it was the last line supporting
+    # py3.9; with the 3.10 floor that reason is gone and >= 12.2.0 is now
+    # reachable. Left at 11.3.0 deliberately in this change: moving the major
+    # is an image-module change that needs the image suite run against it, not
+    # a packaging edit. Tracked in ROADMAP.md.
+    "Pillow>=11.3.0,<13",
 ]
 crypto = [
     "cryptography>=48.0.1,<49",
@@ -110,7 +122,7 @@ all = [
 dev = [
     "flyto-core[api]",
     "httpx2>=2.7.0,<3",
-    "pytest>=8.4.2",  # GHSA-6w46 tmpdir (dev/local-only) fully patched in 9.0.3 / py3.10; 8.4.2 is the last line supporting py3.9
+    "pytest>=9.0.3",  # GHSA-6w46 tmpdir (dev/local-only); 9.0.3 carries the fix and is reachable now that the floor is py3.10
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "Pillow>=11.3.0",
@@ -192,7 +204,7 @@ exclude = [
 
 [tool.black]
 line-length = 100
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.ruff]
 line-length = 100
@@ -214,7 +226,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true

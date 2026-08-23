@@ -22,7 +22,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Git
 - pip package manager
 
@@ -54,6 +54,21 @@ python scripts/check_documentation.py
 python scripts/check_brand_identity.py
 python -m pytest -m 'not browser and not e2e'
 ```
+
+### Building a distribution locally
+
+Delete `build/` first:
+
+```bash
+rm -rf build dist
+python -m build
+```
+
+setuptools copies sources into `build/lib` and never prunes that tree, so a
+build run after `npm ci` (or after any commit that removed a file) can package
+the workers' `node_modules` and `core/tests` from a previous build. Published
+releases are built by GitHub Actions on a fresh checkout and are not affected;
+a local build on a long-lived working tree is.
 
 ## How to Contribute
 

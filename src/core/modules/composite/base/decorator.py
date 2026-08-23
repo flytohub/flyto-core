@@ -109,7 +109,9 @@ def register_composite(
     # UI form generation
     ui_params_schema: Optional[Dict[str, Any]] = None,
 
-    # Legacy display fields (deprecated, use ui_* instead)
+    # Bare display fields. Not deprecated -- see the note in
+    # `core/modules/registry/decorators.py`. `ui_*` wins when both are given;
+    # this spelling is what nearly every registered module uses.
     label: Optional[str] = None,
     label_key: Optional[str] = None,
     description: Optional[str] = None,

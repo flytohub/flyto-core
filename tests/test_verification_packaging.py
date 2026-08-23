@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import sys
 from fnmatch import fnmatch
@@ -62,6 +63,15 @@ def test_verification_image_still_excludes_markdown_bulk() -> None:
 
 def test_built_wheel_keeps_workers_and_excludes_development_trees(tmp_path: Path) -> None:
     """Inspect the real wheel's required workers and release-hygiene boundary."""
+    # setuptools copies into `build/lib` and never prunes it, so whatever an
+    # earlier build put there is still there — including `core/tests` and the
+    # workers' `node_modules` once `npm ci` has run locally. Without this the
+    # assertions below describe the developer's build history rather than the
+    # packaging rules, and the result differs between a laptop and CI purely
+    # because CI installs those node_modules in a later step. Releases build on
+    # a fresh checkout, so the published wheel was never affected; a local
+    # `python -m build` is, which is what CONTRIBUTING.md now warns about.
+    shutil.rmtree(ROOT / "build" / "lib", ignore_errors=True)
     subprocess.run(
         [sys.executable, "-m", "build", "--wheel", "--no-isolation", "--outdir", str(tmp_path)],
         cwd=ROOT,
