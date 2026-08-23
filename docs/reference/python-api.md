@@ -8515,9 +8515,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class LocalOllamaChatModule(BaseModule)` | Local Ollama Chat Module - Completely offline LLM | [`src/core/modules/third_party/ai/local_ollama.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L175) |
-| method | `def LocalOllamaChatModule.validate_params(self) -> None` | Implements `LocalOllamaChatModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/ai/local_ollama.py:178`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L178) |
-| method | `async def LocalOllamaChatModule.execute(self) -> Any` | Implements `LocalOllamaChatModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/ai/local_ollama.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L234) |
+| class | `class LocalOllamaChatModule(BaseModule)` | Local Ollama Chat Module - Completely offline LLM | [`src/core/modules/third_party/ai/local_ollama.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L174) |
+| method | `def LocalOllamaChatModule.validate_params(self) -> None` | Implements `LocalOllamaChatModule.validate_params`; linked source is authoritative. | [`src/core/modules/third_party/ai/local_ollama.py:177`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L177) |
+| method | `async def LocalOllamaChatModule.execute(self) -> Any` | Implements `LocalOllamaChatModule.execute`; linked source is authoritative. | [`src/core/modules/third_party/ai/local_ollama.py:233`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/ai/local_ollama.py#L233) |
 
 ## `src/core/modules/third_party/ai/openai_integration.py`
 
