@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-08-24 | crypto.totp and browser launch diagnosability | `2026-08-24-crypto-totp-and-launch-diagnosis.md` | Implemented on `codex/totp-browser-flow` at `dad6ef4`: RFC 6238 module, launch failure causes surfaced, parameterised login/OTP/act/prove workflow. Full non-browser/non-E2E 3,166 passed, 11 skipped, 63.38% coverage; strict Indexer 19/19 clean. No run against a real 2FA site. Owner: claude |
 | 2026-08-24 | JSON-to-CSV output and input-error contract | `2026-08-24-csv-output-contract.md` | Implemented locally: sandbox-safe default output, typed parameter failures, and no deterministic retries. Focused Core 109/109; full non-browser/non-E2E 3,070 passed, 11 skipped, 63.37% coverage. Owner: codex |
 | 2026-08-24 | Runtime and module catalog convergence | `2026-08-24-runtime-and-catalog-convergence.md` | Implemented locally: browser fallback, truthful legacy failure, total label-key metadata, and optional response assertion metadata. Full suite 3,041 passed, 11 skipped, 63.36% coverage; targeted 171/171 and real installed-Chrome launch green. Owner: codex |
 | 2026-08-12 | Four-repository capability, extension and runtime closure | `2026-08-12-four-repo-closure.md` | Complete — commit `0a353ff`, strict Indexer 19/19 |

@@ -3764,12 +3764,12 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _decode_base32_secret(secret: str) -> bytes` | Decode an authenticator Base32 secret. | [`src/core/modules/atomic/crypto/totp.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L38) |
-| function | `def _parse_otpauth_uri(uri: str) -> Tuple&#91;str, Dict&#91;str, Any&#93;&#93;` | Split an ``otpauth://totp/...`` URI into its secret and its settings. | [`src/core/modules/atomic/crypto/totp.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L65) |
-| method | `def _parse_otpauth_uri._single(name: str) -> Optional&#91;str&#93;` | Implements `_parse_otpauth_uri._single`; linked source is authoritative. | [`src/core/modules/atomic/crypto/totp.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L84) |
-| function | `def _hotp(key: bytes, counter: int, digits: int, algorithm: str) -> str` | RFC 4226 HOTP — the counter-based primitive TOTP is built on. | [`src/core/modules/atomic/crypto/totp.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L123) |
-| function | `def _resolve_int(name: str, value: Any, minimum: int, maximum: int) -> int` | Implements `_resolve_int`; linked source is authoritative. | [`src/core/modules/atomic/crypto/totp.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L132) |
-| function | `async def crypto_totp(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate an RFC 6238 time-based one-time password. | [`src/core/modules/atomic/crypto/totp.py:313`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L313) |
+| function | `def _decode_base32_secret(secret: str) -> bytes` | Decode an authenticator Base32 secret. | [`src/core/modules/atomic/crypto/totp.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L35) |
+| function | `def _parse_otpauth_uri(uri: str) -> Tuple&#91;str, Dict&#91;str, Any&#93;&#93;` | Split an ``otpauth://totp/...`` URI into its secret and its settings. | [`src/core/modules/atomic/crypto/totp.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L62) |
+| method | `def _parse_otpauth_uri._single(name: str) -> Optional&#91;str&#93;` | Implements `_parse_otpauth_uri._single`; linked source is authoritative. | [`src/core/modules/atomic/crypto/totp.py:81`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L81) |
+| function | `def _hotp(key: bytes, counter: int, digits: int, algorithm: str) -> str` | RFC 4226 HOTP — the counter-based primitive TOTP is built on. | [`src/core/modules/atomic/crypto/totp.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L120) |
+| function | `def _resolve_int(name: str, value: Any, minimum: int, maximum: int) -> int` | Implements `_resolve_int`; linked source is authoritative. | [`src/core/modules/atomic/crypto/totp.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L129) |
+| function | `async def crypto_totp(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Generate an RFC 6238 time-based one-time password. | [`src/core/modules/atomic/crypto/totp.py:310`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L310) |
 
 ## `src/core/modules/atomic/data/csv_read.py`
 
