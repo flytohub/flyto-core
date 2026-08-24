@@ -19,7 +19,7 @@ steps:
     params:
       stealth: true
       browser_type: chromium
-      behavior: human
+      behavior: human_like
       width: 1280
       height: 900
       headless: true
@@ -118,12 +118,12 @@ steps:
     params: {}
     orderIndex: 8
 
-inputs:
-  share_url:
+params:
+  - name: share_url
     type: string
     required: true
     description: Full ChatGPT share URL (https://chatgpt.com/share/<id>)
-  share_id:
+  - name: share_id
     type: string
     required: true
     description: Just the share id — used for output filenames

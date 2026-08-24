@@ -12,8 +12,18 @@ description: >
   accepted it; this one fails unless the confirmation the site itself renders
   appears on the page.
 
-  Credentials and the authenticator secret are runtime inputs. Do not put real
-  values in this file, in defaults, or in committed run output.
+  Credentials and the authenticator secret are runtime parameters. Do not put
+  real values in this file, in defaults, or in committed run output.
+
+  A staff portal usually lives on a private network, and the SSRF guard blocks
+  private addresses, loopback, and every port outside 80/443/8080/8443. The
+  `ssrf_protection` parameter on `browser.goto` will not open it — only
+  operator environment policy will, and narrowly:
+
+      FLYTO_ALLOWED_HOSTS=hr.example.internal flyto run ...
+
+  Prefer naming the one host over `FLYTO_ALLOW_PRIVATE_NETWORK=true`, which
+  opens every private destination at once.
 steps:
   - id: start
     module: flow.start
@@ -28,7 +38,7 @@ steps:
       browser_type: chromium
       headless: true
       stealth: true
-      behavior: human
+      behavior: human_like
       width: 1280
       height: 900
     orderIndex: 1
@@ -174,107 +184,108 @@ steps:
     params: {}
     orderIndex: 17
 
-inputs:
-  login_url:
+params:
+  - name: login_url
     type: string
     required: true
-    description: Address of the sign-in page
-
-  username:
+    description: >-
+      Address of the sign-in page
+  - name: username
     type: string
     required: true
-    description: Account identifier. Supply at run time; never store it here
-
-  password:
+    description: >-
+      Account identifier. Supply at run time; never store it here
+  - name: password
     type: string
     required: true
-    description: Account password. Supply at run time; never store it here
-
-  totp_secret:
+    description: >-
+      Account password. Supply at run time; never store it here
+  - name: totp_secret
     type: string
     required: true
-    description: >
-      Base32 setup key from the authenticator, or the whole otpauth:// URI its
-      enrolment QR code encodes. Supply at run time; never store it here
-
-  username_field:
+    description: >-
+      Base32 setup key from the authenticator, or the whole otpauth:// URI
+      its enrolment QR code encodes. Supply at run time; never store it here
+  - name: username_field
     type: string
     required: true
-    description: Placeholder, label, name, or id identifying the account field
-
-  username_field_method:
+    description: >-
+      Placeholder, label, name, or id identifying the account field
+  - name: username_field_method
     type: string
     required: false
     default: placeholder
-    description: How username_field identifies the input — placeholder, label, name, id, or selector
-
-  password_field:
+    description: >-
+      How username_field identifies the input — placeholder, label, name,
+      id, or selector
+  - name: password_field
     type: string
     required: true
-    description: Placeholder, label, name, or id identifying the password field
-
-  password_field_method:
+    description: >-
+      Placeholder, label, name, or id identifying the password field
+  - name: password_field_method
     type: string
     required: false
     default: placeholder
-    description: How password_field identifies the input — placeholder, label, name, id, or selector
-
-  login_button:
+    description: >-
+      How password_field identifies the input — placeholder, label, name,
+      id, or selector
+  - name: login_button
     type: string
     required: true
-    description: Text, id, or selector identifying the sign-in control
-
-  login_button_method:
+    description: >-
+      Text, id, or selector identifying the sign-in control
+  - name: login_button_method
     type: string
     required: false
     default: button
-    description: How login_button identifies the control — text, button, id, or selector
-
-  otp_field_selector:
+    description: >-
+      How login_button identifies the control — text, button, id, or
+      selector
+  - name: otp_field_selector
     type: string
     required: false
-    default: "input[autocomplete='one-time-code'], input[name*='otp' i], input[inputmode='numeric']"
-    description: CSS selector for the one-time password input
-
-  otp_button:
+    default: input[autocomplete='one-time-code'], input[name*='otp' i], input[inputmode='numeric']
+    description: >-
+      CSS selector for the one-time password input
+  - name: otp_button
     type: string
     required: true
-    description: Text, id, or selector identifying the control that submits the code
-
-  otp_button_method:
+    description: >-
+      Text, id, or selector identifying the control that submits the code
+  - name: otp_button_method
     type: string
     required: false
     default: button
-    description: How otp_button identifies the control — text, button, id, or selector
-
-  signed_in_selector:
+    description: >-
+      How otp_button identifies the control — text, button, id, or selector
+  - name: signed_in_selector
     type: string
     required: true
-    description: >
+    description: >-
       Selector present only once sign-in has succeeded. Without it a failed
       login proceeds into the action steps and fails there instead, hiding
       which step actually broke
-
-  action_url:
+  - name: action_url
     type: string
     required: true
-    description: Address of the page carrying the action to perform
-
-  action_button_selector:
+    description: >-
+      Address of the page carrying the action to perform
+  - name: action_button_selector
     type: string
     required: true
-    description: CSS selector for the control that performs the action
-
-  confirmation_selector:
+    description: >-
+      CSS selector for the control that performs the action
+  - name: confirmation_selector
     type: string
     required: true
-    description: >
+    description: >-
       Selector for the confirmation the site renders after accepting the
       action. This is what separates "the click happened" from "the site
       recorded it"
-
-  evidence_path:
+  - name: evidence_path
     type: string
     required: false
-    default: "./out/totp_login_action.png"
-    description: Where to write the screenshot proving the confirmed state
+    default: ./out/totp_login_action.png
+    description: >-
+      Where to write the screenshot proving the confirmed state
