@@ -3,10 +3,11 @@
 """
 Browser Type Module - Type text into an input field
 """
-from typing import Any, Dict
+from typing import Any
+
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets, field
+from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
 
 
@@ -23,10 +24,10 @@ from ...schema.constants import FieldGroup
     color='#5BC0DE',
 
     # Connection types
-    input_types=['page'],
+    input_types=['page', 'string'],
     output_types=['browser', 'page'],
 
-    can_receive_from=['browser.*', 'flow.*'],
+    can_receive_from=['browser.*', 'flow.*', 'crypto.*'],
     can_connect_to=['browser.*', 'element.*', 'flow.*', 'data.*', 'string.*', 'array.*', 'object.*', 'file.*', 'ai.*', 'llm.*', 'agent.*'],
     params_schema=compose(
         field("type_method", type="select",
@@ -113,7 +114,7 @@ from ...schema.constants import FieldGroup
               label_key='modules.browser.type.param.clear.label',
               description='Clear the input field before typing',
               description_key='modules.browser.type.param.clear.description',
-              default=False,
+              default=True,
               group=FieldGroup.OPTIONS),
         presets.TIMEOUT_MS(default=30000),
     ),
@@ -209,7 +210,7 @@ class BrowserTypeModule(BaseModule):
         self.method = method
         self.text = text
         self.delay = int(self.params.get('delay') or 0)
-        self.clear = bool(self.params.get('clear'))
+        self.clear = bool(self.params.get('clear', True))
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')

@@ -31,9 +31,11 @@ ruff check scripts/generate_catalog.py scripts/generate_reference.py \
   src/core/modules/atomic/crypto/decrypt.py \
   src/core/modules/atomic/crypto/jwt_create.py \
   src/core/modules/atomic/crypto/jwt_verify.py \
+  src/core/modules/atomic/crypto/totp.py \
   src/core/modules/atomic/dns/lookup.py \
   src/core/capability_manifest.py src/core/api/routes/modules.py \
   src/core/modules/registry/core.py src/core/mcp_handler.py \
+  tests/modules/test_crypto_totp.py \
   tests/conftest.py tests/test_documentation_generators.py \
   tests/test_version_identity.py tests/core/api/test_routes.py \
   tests/core/test_capability_manifest.py tests/core/api/test_capability_surface.py \

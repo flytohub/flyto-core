@@ -1,0 +1,280 @@
+id: totp_login_action_v1
+name: TOTP Login, Act, Prove
+version: 1.0.0
+description: >
+  Sign in to a site whose second factor is a time-based one-time password,
+  perform one action behind that login, and keep an artifact proving the action
+  registered. Every site-specific string is an input, so the same workflow
+  serves any authenticator-protected portal.
+
+  The success check before the screenshot is the point of the workflow. A run
+  that clicks the button and exits reports success whether or not the site
+  accepted it; this one fails unless the confirmation the site itself renders
+  appears on the page.
+
+  Credentials and the authenticator secret are runtime inputs. Do not put real
+  values in this file, in defaults, or in committed run output.
+steps:
+  - id: start
+    module: flow.start
+    label: Start
+    params: {}
+    orderIndex: 0
+
+  - id: launch
+    module: browser.launch
+    label: Launch browser
+    params:
+      browser_type: chromium
+      headless: true
+      stealth: true
+      behavior: human
+      width: 1280
+      height: 900
+    orderIndex: 1
+
+  - id: open_login
+    module: browser.goto
+    label: Open the login page
+    params:
+      url: "{{login_url}}"
+      wait_until: networkidle
+      timeout_ms: 30000
+    orderIndex: 2
+
+  - id: fill_username
+    module: browser.type
+    label: Fill the account field
+    params:
+      type_method: "{{username_field_method}}"
+      target: "{{username_field}}"
+      text: "{{username}}"
+      clear: true
+    orderIndex: 3
+
+  - id: fill_password
+    module: browser.type
+    label: Fill the password field
+    params:
+      type_method: "{{password_field_method}}"
+      target: "{{password_field}}"
+      input_type: password
+      sensitive_text: "{{password}}"
+      clear: true
+    orderIndex: 4
+
+  - id: submit_login
+    module: browser.click
+    label: Submit the login form
+    params:
+      click_method: "{{login_button_method}}"
+      target: "{{login_button}}"
+    orderIndex: 5
+
+  - id: await_otp_field
+    module: browser.wait
+    label: Wait for the one-time password prompt
+    params:
+      selector: "{{otp_field_selector}}"
+      state: visible
+      timeout_ms: 30000
+    orderIndex: 6
+
+  - id: otp
+    module: crypto.totp
+    label: Derive the current one-time password
+    params:
+      secret: "{{totp_secret}}"
+      # Roll to the next window when this code has under 5s left, so the site
+      # is not handed a code that rotates while the form is in flight.
+      min_remaining: 5
+    orderIndex: 7
+
+  - id: fill_otp
+    module: browser.type
+    label: Enter the one-time password
+    params:
+      type_method: selector
+      selector: "{{otp_field_selector}}"
+      input_type: password
+      sensitive_text: "${otp.data.code}"
+      clear: true
+    orderIndex: 8
+
+  - id: submit_otp
+    module: browser.click
+    label: Submit the one-time password
+    params:
+      click_method: "{{otp_button_method}}"
+      target: "{{otp_button}}"
+    orderIndex: 9
+
+  - id: await_signed_in
+    module: browser.wait
+    label: Wait for the signed-in page
+    params:
+      selector: "{{signed_in_selector}}"
+      state: visible
+      timeout_ms: 30000
+    orderIndex: 10
+
+  - id: open_action_page
+    module: browser.goto
+    label: Open the page carrying the action
+    params:
+      url: "{{action_url}}"
+      wait_until: networkidle
+      timeout_ms: 30000
+    orderIndex: 11
+
+  - id: await_action_control
+    module: browser.wait
+    label: Wait for the action control
+    params:
+      selector: "{{action_button_selector}}"
+      state: visible
+      timeout_ms: 30000
+    orderIndex: 12
+
+  - id: perform_action
+    module: browser.click
+    label: Perform the action
+    params:
+      click_method: selector
+      selector: "{{action_button_selector}}"
+    orderIndex: 13
+
+  - id: await_confirmation
+    module: browser.wait
+    label: Wait for the site's own confirmation
+    params:
+      selector: "{{confirmation_selector}}"
+      state: visible
+      timeout_ms: 30000
+    orderIndex: 14
+
+  - id: read_confirmation
+    module: browser.extract
+    label: Read the confirmation text
+    params:
+      selector: "{{confirmation_selector}}"
+    orderIndex: 15
+
+  - id: evidence
+    module: browser.screenshot
+    label: Capture the confirmed state
+    params:
+      path: "{{evidence_path}}"
+      full_page: true
+    orderIndex: 16
+
+  - id: close
+    module: browser.close
+    label: Close the browser
+    params: {}
+    orderIndex: 17
+
+inputs:
+  login_url:
+    type: string
+    required: true
+    description: Address of the sign-in page
+
+  username:
+    type: string
+    required: true
+    description: Account identifier. Supply at run time; never store it here
+
+  password:
+    type: string
+    required: true
+    description: Account password. Supply at run time; never store it here
+
+  totp_secret:
+    type: string
+    required: true
+    description: >
+      Base32 setup key from the authenticator, or the whole otpauth:// URI its
+      enrolment QR code encodes. Supply at run time; never store it here
+
+  username_field:
+    type: string
+    required: true
+    description: Placeholder, label, name, or id identifying the account field
+
+  username_field_method:
+    type: string
+    required: false
+    default: placeholder
+    description: How username_field identifies the input — placeholder, label, name, id, or selector
+
+  password_field:
+    type: string
+    required: true
+    description: Placeholder, label, name, or id identifying the password field
+
+  password_field_method:
+    type: string
+    required: false
+    default: placeholder
+    description: How password_field identifies the input — placeholder, label, name, id, or selector
+
+  login_button:
+    type: string
+    required: true
+    description: Text, id, or selector identifying the sign-in control
+
+  login_button_method:
+    type: string
+    required: false
+    default: button
+    description: How login_button identifies the control — text, button, id, or selector
+
+  otp_field_selector:
+    type: string
+    required: false
+    default: "input[autocomplete='one-time-code'], input[name*='otp' i], input[inputmode='numeric']"
+    description: CSS selector for the one-time password input
+
+  otp_button:
+    type: string
+    required: true
+    description: Text, id, or selector identifying the control that submits the code
+
+  otp_button_method:
+    type: string
+    required: false
+    default: button
+    description: How otp_button identifies the control — text, button, id, or selector
+
+  signed_in_selector:
+    type: string
+    required: true
+    description: >
+      Selector present only once sign-in has succeeded. Without it a failed
+      login proceeds into the action steps and fails there instead, hiding
+      which step actually broke
+
+  action_url:
+    type: string
+    required: true
+    description: Address of the page carrying the action to perform
+
+  action_button_selector:
+    type: string
+    required: true
+    description: CSS selector for the control that performs the action
+
+  confirmation_selector:
+    type: string
+    required: true
+    description: >
+      Selector for the confirmation the site renders after accepting the
+      action. This is what separates "the click happened" from "the site
+      recorded it"
+
+  evidence_path:
+    type: string
+    required: false
+    default: "./out/totp_login_action.png"
+    description: Where to write the screenshot proving the confirmed state

@@ -2,6 +2,24 @@
 
 ## Current State
 
+- `crypto.totp` closes the one gap that kept an authenticator-protected site
+  outside flyto-core: the six digits exist only inside a browser login flow and
+  no API hands them over. A secret is accepted as the Base32 setup key in any
+  rendering an authenticator shows it in, or as the whole `otpauth://totp/`
+  enrolment URI, whose `digits`/`period`/`algorithm` are honoured. Correctness
+  is pinned to the published RFC 6238 and RFC 4226 vectors over SHA1, SHA256,
+  and SHA512, not to the implementation's own output. `min_remaining` rolls to
+  the next window rather than handing a site a code that expires in transit.
+  `workflows/totp_login_action.yaml` is the parameterised end-to-end template;
+  it fails unless the site's own confirmation renders, so a click that the site
+  never recorded cannot be reported as success.
+- A failed browser launch names its cause. Every channel and mode attempt was
+  caught so the next could run, leaving `No browser engine available` as the
+  entire diagnosis; the attempts and their reasons are now appended to the
+  error. The launch path itself is unchanged and was already working: a real
+  launch on this host succeeds through the persistent Playwright Chromium
+  context.
+
 - Outbound HTTP enforces one policy regardless of which client is installed.
   `guarded_httpx_client` is the httpx twin of `guarded_client_session`; all
   twelve httpx call sites use it, `httpx` is a declared `ai` dependency instead
@@ -145,7 +163,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 479 modules across 88 categories, and
+- The generated catalog currently exposes 480 modules across 88 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -228,8 +246,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 966 maintained Python files, 5,686
-  declarations, 486 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 967 maintained Python files, 5,694
+  declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

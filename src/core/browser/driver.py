@@ -7,17 +7,16 @@ import asyncio
 import logging
 import os
 import random
-import shutil
 import sys
-from typing import Any, Dict, List, Optional
 from pathlib import Path
-from playwright.async_api import async_playwright, Browser, Page, ElementHandle
+from typing import Any, Dict, List, Optional
+
+from playwright.async_api import Browser, ElementHandle, Page, async_playwright
 
 from ..constants import (
-    DEFAULT_VIEWPORT_WIDTH,
-    DEFAULT_VIEWPORT_HEIGHT,
     DEFAULT_BROWSER_TIMEOUT_MS,
-    DEFAULT_USER_AGENT,
+    DEFAULT_VIEWPORT_HEIGHT,
+    DEFAULT_VIEWPORT_WIDTH,
 )
 
 
@@ -101,6 +100,10 @@ class BrowserDriver:
         # Callback for egress guard violations: fn(url: str) -> None
         # Set by cloud worker to record SSRF/abuse attempts.
         self.on_egress_blocked = None
+        # Why each channel/mode combination refused to start, newest launch only.
+        # Without this the caller sees "no engine available" and cannot tell a
+        # missing download from a locked profile or a sandbox denial.
+        self._launch_failures: List[str] = []
 
     async def launch(
         self,
@@ -207,10 +210,7 @@ class BrowserDriver:
                     skip_persistent=_skip_persistent,
                 )
                 if launched_channel is False:
-                    raise RuntimeError(
-                        "No browser engine available. Install Playwright Chromium "
-                        "(`playwright install chromium`) or a supported Chrome/Edge channel."
-                    )
+                    raise RuntimeError(self._no_engine_message())
             else:
                 launch_kwargs: Dict[str, Any] = {
                     'headless': self.headless,
@@ -585,6 +585,7 @@ class BrowserDriver:
         skip_persistent=False,
     ) -> Optional[str] | bool:
         """Launch Chromium through the first available supported channel."""
+        self._launch_failures = []
         for candidate in self._chromium_channel_candidates(channel):
             if not skip_persistent and await self._launch_persistent(
                 launcher,
@@ -605,6 +606,30 @@ class BrowserDriver:
             ):
                 return candidate or "chromium"
         return False
+
+    def _record_launch_failure(self, channel, mode: str, error: Exception) -> None:
+        """Remember why one channel/mode combination refused to start."""
+        reason = str(error).strip().splitlines()
+        self._launch_failures.append(
+            f"{channel or 'playwright-chromium'} ({mode}): "
+            f"{reason[0] if reason else type(error).__name__}"
+        )
+
+    def _no_engine_message(self) -> str:
+        """Build the launch error, naming what each attempt actually reported.
+
+        Every attempt is caught so the next channel can be tried, so the
+        original exceptions are the only evidence of *why* nothing started.
+        Dropping them turns a missing download, a locked profile, and a
+        sandbox denial into the same unactionable sentence.
+        """
+        base = (
+            "No browser engine available. Install Playwright Chromium "
+            "(`playwright install chromium`) or a supported Chrome/Edge channel."
+        )
+        if not self._launch_failures:
+            return base
+        return base + " Attempts: " + "; ".join(self._launch_failures)
 
     async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
@@ -644,6 +669,7 @@ class BrowserDriver:
             return True
         except Exception as e:
             logger.warning(f"Persistent context (chromium) failed: {e}")
+            self._record_launch_failure(channel, "persistent", e)
         return False
 
     async def _launch_regular(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
@@ -669,6 +695,7 @@ class BrowserDriver:
             return True
         except Exception as e:
             logger.warning(f"Regular launch (chromium) failed: {e}")
+            self._record_launch_failure(channel, "regular", e)
         return False
 
     def _guard_navigation(self, url: str, validate_ssrf: Optional[bool]) -> None:

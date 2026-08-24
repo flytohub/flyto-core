@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **479 modules** across **88 categories**.
+> Auto-generated from flyto-core module registry. **480 modules** across **88 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
@@ -29,7 +29,7 @@
 - [compare](#compare) (1)
 - [convert](#convert) (5)
 - [core](#core) (5)
-- [crypto](#crypto) (7)
+- [crypto](#crypto) (8)
 - [data](#data) (13)
 - [database](#database) (3)
 - [datetime](#datetime) (4)
@@ -255,7 +255,7 @@
 | `browser.table` | Extract HTML tables as structured data. Auto-detects headers from thead/th. | `selector` string (default: `table`), `table_index` number (default: `0`), `max_rows` number (default: `0`), `include_html` boolean (default: `False`) | `rows` (array), `headers` (array), `count` (number), `tables_found` (number) |
 | `browser.throttle` | Per-domain rate limiting. Waits between requests to the same domain to avoid bans. | `strategy` select (default: `fixed`), `min_interval_ms` number (default: `2000`), `max_interval_ms` number (default: `15000`), `url` string (default: ``), `signal` select (default: `none`) | `domain` (string), `waited_ms` (number), `interval_ms` (number), `strategy` (string) |
 | `browser.trace` | Start/stop Chrome DevTools performance tracing (Chromium only) | `action` string *(required)*, `categories` array (default: `['devtools.timeline']`), `screenshots` boolean (default: `True`), `path` string (default: ``) | `status` (string), `tracing` (boolean), `path` (string), `size_bytes` (number) |
-| `browser.type` | Type text into an input field. Run browser.snapshot first to find the correct selector from the real page DOM. | `type_method` select (default: `placeholder`), `target` string, `selector` string, `input_type` select (default: `text`), `text` string *(required)*, `sensitive_text` string *(required)*, `delay` number (default: `0`), `clear` boolean (default: `False`), `timeout` number (default: `30000`) | `browser` (object), `status` (string), `selector` (string), `method` (string) |
+| `browser.type` | Type text into an input field. Run browser.snapshot first to find the correct selector from the real page DOM. | `type_method` select (default: `placeholder`), `target` string, `selector` string, `input_type` select (default: `text`), `text` string *(required)*, `sensitive_text` string *(required)*, `delay` number (default: `0`), `clear` boolean (default: `True`), `timeout` number (default: `30000`) | `browser` (object), `status` (string), `selector` (string), `method` (string) |
 | `browser.upload` | Upload file to file input element | `selector` string *(required)*, `file_path` string *(required)*, `timeout_ms` number (default: `30000`) | `status` (string), `filename` (string), `size` (number), `selector` (string) |
 | `browser.viewport` | Resize browser viewport to specific dimensions | `width` number *(required)*, `height` number *(required)* | `status` (string), `viewport` (object), `previous_viewport` (object) |
 | `browser.wait` | Wait for a duration or until an element appears | `duration_ms` number (default: `1000`), `selector` string, `state` select (default: `visible`), `timeout_ms` number (default: `30000`) | `status` (string), `selector` (string), `duration_ms` (number) |
@@ -342,6 +342,7 @@
 | `crypto.jwt_verify` | Verify and decode JWT tokens | `token` string *(required)*, `secret` string *(required)*, `algorithms` array (default: `['HS256']`), `verify_exp` boolean (default: `True`), `audience` string, `issuer` string | `valid` (boolean), `payload` (object), `header` (object) |
 | `crypto.random_bytes` | Generate cryptographically secure random bytes | `length` number *(required)*, `encoding` string (default: `hex`) | `bytes` (string), `length` (number) |
 | `crypto.random_string` | Generate cryptographically secure random string | `length` number *(required)*, `charset` string (default: `alphanumeric`), `uppercase` boolean (default: `False`) | `string` (string), `length` (number) |
+| `crypto.totp` | Generate a time-based one-time password (RFC 6238) | `secret` string *(required)*, `digits` number, `period` number, `algorithm` select (default: `auto`), `min_remaining` number (default: `0`), `at` number | `code` (string), `expires_in` (number), `period` (number), `digits` (number), `algorithm` (string), `issuer` (string), `account` (string) |
 
 ## data
 
