@@ -15,6 +15,14 @@ Date: 2026-08-24
   code that expires while the form carrying it is in flight.
   `otpauth://hotp/` is refused because a counter cannot be derived from a clock.
 - `src/core/modules/atomic/crypto/__init__.py` — registers it.
+- `~/.flyto/decode_authenticator_export.py` (outside every repository, mode
+  700) — converts a Google Authenticator "transfer accounts" QR into a params
+  file. That QR is `otpauth-migration://offline?data=`, a protobuf carrying
+  every account at once, which `crypto.totp` deliberately does not accept: a
+  workflow step needs one account's key, not a multi-account export. The tool
+  lists entries without printing secrets, refuses HOTP entries, and writes the
+  chosen key to a mode-600 file. Verified against a synthetic dense export
+  (version 20 QR, eight accounts) inside a full-size phone screenshot.
 - `src/core/browser/driver.py` — `_record_launch_failure` and
   `_no_engine_message`. Each channel and mode attempt is caught so the next can
   run, so the original exceptions were the only evidence of why nothing
@@ -74,12 +82,21 @@ working and was not modified.
 - `scripts/check_documentation.py` and `scripts/check_brand_identity.py` pass.
 - Audited-surface Ruff (the `docs/TESTING.md` list, extended with
   `totp.py` and `tests/modules/test_crypto_totp.py`) is clean.
-- `flyto-index verify . --full-scan --strict` — 19 pass, 0 warn, 0 fail, at
-  `dad6ef4` with a clean tree.
-- flyto-i18n `claude/crypto-totp-keys` commit `6aa18ed79` adds the 21 English
-  `modules.crypto.totp.*` keys; `scripts/validate.py --strict` reports
-  4,674 files, 0 errors, and the regenerated `dist/` diff is exactly those
-  21 keys plus each bundle's key count and version hash.
+- `flyto-index verify . --full-scan --strict` — 19 pass, 0 warn, 0 fail, on a
+  clean tree.
+- The 21 English `modules.crypto.totp.*` keys are on flyto-i18n `main`, in
+  `locales/modules/en/crypto.json` and in the built `dist/` bundles. Their
+  values survived a later Cloud sync unmangled, which matters because
+  `sync-from-core.py` would have rewritten them with the shifted label /
+  description pairing described under Follow-ups.
+- The published artifact was checked, not just the source. `flyto-core 2.31.0`
+  installed from PyPI into a clean Python 3.12 environment resolves
+  `crypto.totp`, returns the RFC 6238 value `94287082` at t=59, imports an
+  `otpauth://` URI and recovers its issuer and account, and rolls forward
+  under `min_remaining`. `_no_engine_message` is in the same wheel.
+- Edge cases probed against the shipped module: a padding-only or single-
+  character secret, a non-Base32 character, an `otpauth://` URI with an empty
+  `secret=`, and an uppercase `OTPAUTH://TOTP/` scheme all behave correctly.
 
 ## Not verified
 
@@ -95,6 +112,10 @@ working and was not modified.
   rejected before any test runs. The repo venv runs the same tests green.
 - The other fifteen locales fall back to English for the new keys.
 - Browser and E2E suites were not run.
+- A secret that decodes to fewer than 16 bytes is accepted. RFC 4226 requires
+  at least 128 bits, but real deployments vary and rejecting short keys would
+  break working setups, so a truncated paste still produces codes the site
+  will refuse rather than an error naming the cause.
 
 ## Follow-ups
 

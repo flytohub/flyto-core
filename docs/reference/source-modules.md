@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,022 lines**, and **5,694 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,032 lines**, and **5,694 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -332,7 +332,7 @@ Inventory: **967 Python files**, **202,022 lines**, and **5,694 class/function/m
 | [`src/core/modules/atomic/crypto/jwt_verify.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/jwt_verify.py#L1) | 279 | 1 | `errors, jwt, logging, registry, schema, typing` | Crypto JWT Verify Module Verify and decode JWT (JSON Web Token) tokens. |
 | [`src/core/modules/atomic/crypto/random_bytes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/random_bytes.py#L1) | 115 | 1 | `base64, errors, registry, schema, secrets, typing` | Crypto Random Bytes Module Generate cryptographically secure random bytes. |
 | [`src/core/modules/atomic/crypto/random_string.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/random_string.py#L1) | 134 | 1 | `errors, registry, schema, secrets, string, typing` | Crypto Random String Module Generate cryptographically secure random string. |
-| [`src/core/modules/atomic/crypto/totp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L1) | 384 | 6 | `asyncio, base64, binascii, errors, hashlib, hmac, registry, schema, struct, time, typing, urllib` | Crypto TOTP Module Generate RFC 6238 time-based one-time passwords from an authenticator secret. |
+| [`src/core/modules/atomic/crypto/totp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L1) | 394 | 6 | `asyncio, base64, binascii, errors, hashlib, hmac, logging, registry, schema, struct, time, typing` | Crypto TOTP Module Generate RFC 6238 time-based one-time passwords from an authenticator secret. |
 | [`src/core/modules/atomic/data/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/__init__.py#L1) | 26 | 0 | `pipeline` | Data Processing Modules |
 | [`src/core/modules/atomic/data/csv_read.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_read.py#L1) | 140 | 1 | `csv, errors, os, registry, schema, typing, utils` | CSV Read Module Read and parse CSV file into array of objects |
 | [`src/core/modules/atomic/data/csv_write.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_write.py#L1) | 135 | 1 | `csv, errors, os, registry, schema, typing, utils` | CSV Write Module Write array of objects to CSV file |
