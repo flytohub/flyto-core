@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **486 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **487 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -115,7 +115,7 @@ The AST contains **486 explicit, literal `@register_module` declarations**. This
 | `browser.table` | `1.0.0` | `browser` | `BrowserTableModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/table.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/table.py#L155) |
 | `browser.throttle` | `1.0.0` | `browser` | `BrowserThrottleModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/throttle.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/throttle.py#L89) |
 | `browser.trace` | `1.0.0` | `browser` | `BrowserTraceModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/trace.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L123) |
-| `browser.type` | `1.1.0` | `browser` | `BrowserTypeModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/type.py:152`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L152) |
+| `browser.type` | `1.1.0` | `browser` | `BrowserTypeModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/type.py:153`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L153) |
 | `browser.upload` | `1.0.0` | `browser` | `BrowserUploadModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/upload.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L70) |
 | `browser.viewport` | `1.0.0` | `browser` | `BrowserViewportModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/viewport.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/viewport.py#L100) |
 | `browser.wait` | `1.1.0` | `browser` | `BrowserWaitModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/wait.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/wait.py#L87) |
@@ -157,6 +157,7 @@ The AST contains **486 explicit, literal `@register_module` declarations**. This
 | `crypto.jwt_verify` | `1.0.0` | `crypto` | `crypto_jwt_verify` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/jwt_verify.py:143`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/jwt_verify.py#L143) |
 | `crypto.random_bytes` | `1.0.0` | `crypto` | `crypto_random_bytes` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/random_bytes.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/random_bytes.py#L87) |
 | `crypto.random_string` | `1.0.0` | `crypto` | `crypto_random_string` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/random_string.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/random_string.py#L99) |
+| `crypto.totp` | `1.0.0` | `crypto` | `crypto_totp` | no | `&#91;&#93;` | [`src/core/modules/atomic/crypto/totp.py:313`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/crypto/totp.py#L313) |
 | `data.csv.read` | `1.0.0` | `data` | `csv_read` | no | `&#91;'filesystem.read', 'filesystem.write'&#93;` | [`src/core/modules/atomic/data/csv_read.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_read.py#L102) |
 | `data.csv.write` | `1.0.0` | `data` | `csv_write` | no | `&#91;'filesystem.read', 'filesystem.write'&#93;` | [`src/core/modules/atomic/data/csv_write.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/csv_write.py#L85) |
 | `data.dedup` | `1.0.0` | `data` | `DataDedupModule` | no | `&#91;&#93;` | [`src/core/modules/atomic/data/dedup.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/data/dedup.py#L103) |

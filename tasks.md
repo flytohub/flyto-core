@@ -19,6 +19,14 @@
   as its own process are recorded there rather than resolved. Neither the
   registry 1.4.0 work nor its acceptance touched or assessed these.
 
+- Translate the 21 new `modules.crypto.totp.*` keys beyond English. They are
+  committed to flyto-i18n `locales/modules/en/crypto.json` on
+  `claude/crypto-totp-keys`; the other fifteen locales fall back to English.
+- Fix `sync-from-core.py` in flyto-i18n: it pairs each label with the following
+  field's description rather than its own, which is why
+  `modules.crypto.hmac.params.algorithm.description` currently reads "Secret key
+  for HMAC". A full sync would also add 410 unrelated keys across other
+  categories; both are untouched here.
 - Add multi-route BFS crawler for arbitrary sites.
 - Connect Warroom evidence packs into Flyto2 Cloud UI.
 - Add enterprise airgap smoke recipes for no-egress browser/API checks.

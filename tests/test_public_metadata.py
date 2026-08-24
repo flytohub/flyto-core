@@ -11,7 +11,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DESCRIPTION = (
-    "The open-source execution engine for AI agents. 479 modules, MCP-native, "
+    "The open-source execution engine for AI agents. 480 modules, MCP-native, "
     "triggers, queue, versioning, metering."
 )
 
@@ -40,7 +40,7 @@ def test_readme_citation_contract_uses_current_public_positioning() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
     assert PUBLIC_DESCRIPTION in readme
-    assert "479 registry-backed modules" in readme
+    assert "480 registry-backed modules" in readme
 
     for stale_copy in (
         "300+ atomic modules",
@@ -53,10 +53,10 @@ def test_readme_citation_contract_uses_current_public_positioning() -> None:
 @pytest.mark.parametrize(
     ("relative", "current", "stale"),
     [
-        ("README.md", "## 479 Modules, 88 Catalog Categories", "## 476 Modules, 86 Catalog Categories"),
-        ("docs/FEATURES.md", "[All 479 active module schemas]", "[All 476 active module schemas]"),
+        ("README.md", "## 480 Modules, 88 Catalog Categories", "## 476 Modules, 86 Catalog Categories"),
+        ("docs/FEATURES.md", "[All 480 active module schemas]", "[All 476 active module schemas]"),
         ("SECURITY.md", "The current release is **2.31.0**.", "The current release is **2.30.0**."),
-        ("demo.py", "flyto-core demo — 479 tools for AI agents", "flyto-core demo — 468 tools for AI agents"),
+        ("demo.py", "flyto-core demo — 480 tools for AI agents", "flyto-core demo — 468 tools for AI agents"),
     ],
 )
 def test_current_inventory_rejects_stale_active_copy(

@@ -40,4 +40,9 @@ try:
 except ImportError:
     pass
 
+try:
+    from .totp import *
+except ImportError:
+    pass
+
 __all__ = []

@@ -43,6 +43,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   canonical tamper-evident receipts; catalog and capability surfaces expose
   source-declared semantic contracts without physical-world validation claims.
 
+- Added `crypto.totp`, an RFC 6238 time-based one-time password generator built
+  on the standard library alone. A secret may be supplied as the Base32 setup
+  key an authenticator displays, in any of the renderings it displays it in
+  (lowercase, space-grouped, unpadded), or as the whole `otpauth://totp/` URI
+  its enrolment QR code encodes; the URI's `digits`, `period`, and `algorithm`
+  are honoured so an entry can be imported without transcribing its settings.
+  `min_remaining` waits out the current window when a code would rotate while
+  the form carrying it is still in flight, which is the ordinary reason an
+  otherwise correct automated sign-in is rejected. Correctness is pinned to the
+  published RFC 6238 and RFC 4226 vectors across SHA1, SHA256, and SHA512
+  rather than to the implementation's own output. This closes the last gap
+  between flyto-core and a site whose second factor lives only in a browser
+  login flow; `workflows/totp_login_action.yaml` is the end-to-end template.
+
+### Fixed
+
+- A failed browser launch now reports why. Each channel and mode is tried in
+  turn and every exception was caught so the next candidate could run, which
+  left `No browser engine available` as the whole of what a caller saw whether
+  the download was missing, the profile was locked, or the sandbox refused.
+  The attempts and their first-line reasons are appended to the error, so a
+  missing `playwright install chromium` no longer looks the same as a stale
+  `SingletonLock`.
+
 ## [2.30.0]
 
 ### Added

@@ -1,5 +1,5 @@
 {
-  "total": 439,
+  "total": 440,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -574,6 +574,10 @@
       "version": "1.0.0"
     },
     {
+      "id": "crypto.totp",
+      "version": "1.0.0"
+    },
+    {
       "id": "data.csv.read",
       "version": "1.0.0"
     },
@@ -1122,11 +1126,11 @@
       "version": "1.0.0"
     },
     {
-      "id": "math.round",
+      "id": "math.rigid_transform_3d",
       "version": "1.0.0"
     },
     {
-      "id": "math.rigid_transform_3d",
+      "id": "math.round",
       "version": "1.0.0"
     },
     {
@@ -1266,10 +1270,6 @@
       "version": "1.0.0"
     },
     {
-      "id": "physics.kinematics_constant_acceleration",
-      "version": "1.0.0"
-    },
-    {
       "id": "payment.stripe.create_payment",
       "version": "1.0.0"
     },
@@ -1295,6 +1295,10 @@
     },
     {
       "id": "pdf.to_word",
+      "version": "1.0.0"
+    },
+    {
+      "id": "physics.kinematics_constant_acceleration",
       "version": "1.0.0"
     },
     {

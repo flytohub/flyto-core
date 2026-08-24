@@ -198,6 +198,26 @@ class TestValidateConnection:
         result = validate_connection("http.get", "data.json.parse")
         assert result.valid is True
 
+    def test_vueflow_default_output_handle_is_accepted(self):
+        result = validate_connection(
+            "browser.launch",
+            "browser.goto",
+            from_port="output",
+            to_port="target",
+        )
+
+        assert result.valid is True
+
+    def test_totp_code_can_feed_a_browser_password_step(self):
+        result = validate_connection(
+            "crypto.totp",
+            "browser.type",
+            from_port="output",
+            to_port="target",
+        )
+
+        assert result.valid is True
+
     def test_same_module_id_is_valid(self):
         # Same module_id for from/to is valid (different node instances)
         result = validate_connection("http.get", "http.get")
