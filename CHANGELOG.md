@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.1]
+
+### Changed
+
+- `crypto.totp` says when `min_remaining` makes it wait. A code that would
+  expire sooner than the caller allows blocks for most of a rotation period,
+  and an unexplained pause in an automated sign-in cannot be told apart from a
+  hang. The log line names the remaining validity and the period; neither the
+  secret nor the generated code appears in it.
+
 ## [2.31.0]
 
 ### Security

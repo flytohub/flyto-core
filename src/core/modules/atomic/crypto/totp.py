@@ -9,6 +9,7 @@ import base64
 import binascii
 import hashlib
 import hmac
+import logging
 import struct
 import time
 from typing import Any, Dict, Optional, Tuple
@@ -19,6 +20,8 @@ from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
+
+logger = logging.getLogger(__name__)
 
 # RFC 6238 defaults, used when neither the caller nor an otpauth URI says otherwise.
 _DEFAULT_DIGITS = 6
@@ -360,6 +363,13 @@ async def crypto_totp(context: Dict[str, Any]) -> Dict[str, Any]:
     if min_remaining and remaining < min_remaining:
         # A code that rotates while the form is in flight is rejected by the
         # server, so wait out the rest of this window before generating.
+        # Say so: this blocks for most of a period, and an unexplained pause in
+        # an automated sign-in cannot be told apart from a hang. Neither the
+        # secret nor the code appears here.
+        logger.info(
+            "TOTP code expires in %.1fs, waiting for the next %ds window",
+            remaining, period,
+        )
         if at is None:
             await asyncio.sleep(remaining)
             now = time.time()
