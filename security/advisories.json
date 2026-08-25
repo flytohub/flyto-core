@@ -467,5 +467,17 @@
       "tests/core/test_reported_advisories_2026_08_19.py::test_client_dsn_cannot_reach_a_private_target",
       "tests/core/test_reported_advisories_2026_08_19.py::test_mongodb_multi_host_dsn_checks_every_host"
     ]
+  },
+  {
+    "ghsa": "GHSA-wmwj-g59x-c8px",
+    "severity": "critical",
+    "cve": null,
+    "published": "2026-08-25",
+    "affected": "<= 2.31.0",
+    "patched": "2.31.1",
+    "summary": "verify.spec bypasses the module allowlist and dangerous-permission gate to execute arbitrary host commands",
+    "regression_tests": [
+      "tests/core/test_reported_security_advisories.py::test_verify_spec_ruleset_cannot_run_a_denied_module"
+    ]
   }
 ]

@@ -2,11 +2,11 @@
 
 # Security Status
 
-**Current release: `2.31.1`.** Every advisory published against this project is fixed as of `2.29.0`, and every one has a named regression test that runs in CI.
+**Current release: `2.31.1`.** Every advisory published against this project is fixed as of `2.31.1`, and every one has a named regression test that runs in CI.
 
-Installing `>= 2.29.0` clears every known advisory; `2.31.1` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
+Installing `>= 2.31.1` clears every known advisory; `2.31.1` is the supported line and the one that receives fixes. See [`SECURITY.md`](SECURITY.md#supported-versions).
 
-38 advisories have been published and fixed (7 critical, 25 high, 6 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
+39 advisories have been published and fixed (8 critical, 25 high, 6 medium). They are listed here in full, oldest patch first, because the count is less informative than the pattern: almost all of them are two defects — a caller-supplied path reaching a filesystem sink, and a caller-supplied target reaching the network — found one module at a time.
 
 ## How the recurrence was stopped
 
@@ -65,6 +65,7 @@ Applying those audits closed roughly 30 further modules that no advisory had nam
 | [GHSA-f9q4-fp8j-r5h7](https://github.com/flytohub/flyto-core/security/advisories/GHSA-f9q4-fp8j-r5h7) | high | `<= 2.28.1` | `2.29.0` | [`test_llm_agent_inline_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) [`test_llm_agent_reports_ssrf_blocked`](tests/core/test_reported_advisories_2026_08_19.py) |
 | [GHSA-pp5w-w9c3-qfv2](https://github.com/flytohub/flyto-core/security/advisories/GHSA-pp5w-w9c3-qfv2) | high | `<= 2.28.1` | `2.29.0` | [`test_llm_agent_inline_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) [`test_llm_agent_sub_node_config_base_url_is_ssrf_guarded`](tests/core/test_reported_advisories_2026_08_19.py) |
 | [GHSA-9x26-9vhm-2qhw](https://github.com/flytohub/flyto-core/security/advisories/GHSA-9x26-9vhm-2qhw) | high | `<= 2.28.1` | `2.29.0` | [`test_client_dsn_cannot_reach_a_private_target`](tests/core/test_reported_advisories_2026_08_19.py) [`test_mongodb_multi_host_dsn_checks_every_host`](tests/core/test_reported_advisories_2026_08_19.py) |
+| [GHSA-wmwj-g59x-c8px](https://github.com/flytohub/flyto-core/security/advisories/GHSA-wmwj-g59x-c8px) | critical | `<= 2.31.0` | `2.31.1` | [`test_verify_spec_ruleset_cannot_run_a_denied_module`](tests/core/test_reported_security_advisories.py) |
 
 ## Reporting
 

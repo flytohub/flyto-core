@@ -332,6 +332,14 @@ class BaseModule(ABC):
                 raise
 
             except Exception as e:
+                # SECURITY: a policy denial is a deterministic authorization
+                # decision, not a transient failure. Retrying it only repeats
+                # the refusal, and repackaging it as a generic Exception hides
+                # from the caller that the module was BLOCKED rather than
+                # broken. Re-raise the typed error untouched.
+                from ..module_policy import ModulePolicyError
+                if isinstance(e, ModulePolicyError):
+                    raise
                 last_exception = e
                 if attempt == attempts - 1:
                     error_msg = ErrorMessages.format(

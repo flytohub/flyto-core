@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.31.1]
 
+### Security
+
+- Closed a module-policy bypass in `verify.spec` (GHSA-wmwj-g59x-c8px). The
+  spec runner picks its child modules out of the caller's own ruleset —
+  `rules[].source.module` / `rules[].target.module` with free-form params — and
+  dispatched them with `instance.execute()`. Both locks live in
+  `BaseModule.run()`, so a caller who had been restricted to `verify.spec`
+  (`FLYTO_MODULE_ALLOWLIST=verify.spec`, no `FLYTO_GRANTED_PERMISSIONS`) could
+  name `shell.exec` in a rule and run host commands as the service account,
+  with neither the module filter nor the `shell.execute` grant consulted. The
+  dispatcher now calls the policy-gated `run()`, a denied child raises instead
+  of being reported as an ordinary failed rule, and `POST /v1/execute` gained
+  the nested-module pre-flight the MCP transport already had, so the ruleset is
+  refused before `verify.spec` does any work. `_execute_with_resilience` no
+  longer retries or repackages a `ModulePolicyError` — a blocked module now
+  reads as blocked rather than broken. A registry-wide test fails on any future
+  code that resolves a module by a caller-supplied id and calls `execute()`
+  directly.
+
 ### Changed
 
 - `crypto.totp` says when `min_remaining` makes it wait. A code that would
