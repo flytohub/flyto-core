@@ -39,6 +39,26 @@ for p in (str(CORE_SRC), str(AI_ROOT), str(CLOUD_BACKEND)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+# These cases prove a chain that spans repositories: flyto-ai builds the test
+# from a finding, flyto-core executes it, flyto-cloud's aggregator turns the
+# step outputs into a verdict. They therefore need those checkouts beside this
+# one, which is the normal developer layout and is not what a single-repository
+# CI checkout has. Stated as a skip with the missing path named, because the
+# alternative is a FileNotFoundError from an import hook that reads as a broken
+# test rather than an absent neighbour.
+_MISSING = [str(p) for p in (AI_ROOT, CLOUD_BACKEND) if not p.exists()]
+pytestmark = [
+    pytestmark,
+    pytest.mark.skipif(
+        bool(_MISSING),
+        reason=(
+            "needs sibling checkouts that are not present: "
+            + ", ".join(_MISSING)
+            + " — clone them beside flyto-core to run this cross-repository chain"
+        ),
+    ),
+]
+
 
 # ---------------------------------------------------------------------------
 # Mock HTTP target
