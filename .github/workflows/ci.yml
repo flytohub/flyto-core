@@ -90,14 +90,8 @@ jobs:
             tests/test_version_identity.py \
             tests/core/api/test_routes.py
 
-      # e2e is in: it needs no provisioned browser, runs in ten seconds, and
-      # nothing else ran it. Only ten of its twenty-eight cases ran anywhere at
-      # all, in the publish job, which fires on a release tag — so a break in
-      # the other eighteen would have surfaced during a release. `browser` stays
-      # out: it needs a provisioned browser and roughly half of it drives live
-      # third-party sites, which is a red build that says nothing about a diff.
-      - name: Run test suite (browser excluded)
-        run: pytest -m 'not browser'
+      - name: Run non-browser test suite
+        run: pytest -m 'not browser and not e2e'
 
       - name: Audit JavaScript test runtime
         run: npm run audit
