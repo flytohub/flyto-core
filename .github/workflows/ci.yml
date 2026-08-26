@@ -90,8 +90,17 @@ jobs:
             tests/test_version_identity.py \
             tests/core/api/test_routes.py
 
-      - name: Run non-browser test suite
-        run: pytest -m 'not browser and not e2e'
+      # `not e2e` is gone from this job. It was excluding twenty-eight cases to
+      # keep two files quiet: those two need flyto-ai and flyto-cloud checked
+      # out beside this repository, which a single-repository runner does not
+      # have, and they now say so as a skip naming the missing path. Eleven
+      # cases actually run here, ten of which previously ran only in the publish
+      # job — on a release tag, so a break in them surfaced during a release.
+      # `browser` stays out: it needs a provisioned Chromium, and about half of
+      # its 247 cases drive live third-party sites, which is a red build that
+      # says nothing about the diff in front of you.
+      - name: Run test suite (browser excluded)
+        run: pytest -m 'not browser'
 
       - name: Audit JavaScript test runtime
         run: npm run audit
