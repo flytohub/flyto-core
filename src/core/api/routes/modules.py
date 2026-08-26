@@ -130,6 +130,55 @@ async def refresh_capabilities():
 
 
 # ---------------------------------------------------------------------------
+# Nested-module pre-flight (shared shape with core.mcp_handler.execute_module)
+# ---------------------------------------------------------------------------
+
+def _nested_policy_error(module_id: str, params: Dict[str, Any]) -> Optional[str]:
+    """Reason string when the request's nested module ids are denied, else None.
+
+    `_collect_module_ids` walks every `module:` declaration in the params —
+    including ids inside a verify.spec ruleset and ids smuggled into an inline
+    workflow_source/template string — so a module that dispatches children
+    cannot be used to reach a module the caller is not allowed to run.
+    """
+    # The same two helpers the MCP transport pre-flight uses, so the two
+    # boundaries cannot drift into disagreeing about what a request contains.
+    from core.mcp_handler import (
+        _collect_workflow_module_ids,
+        _module_missing_permissions,
+    )
+
+    try:
+        nested_module_ids = sorted(
+            m for m in _collect_workflow_module_ids(params) if m != module_id
+        )
+    except (AttributeError, TypeError, ValueError, RecursionError):
+        # Malformed params are the caller's problem, and the module's own
+        # validation reports them. An unreadable payload declares no nested
+        # module, and BaseModule.run() still gates whatever it does reach.
+        nested_module_ids = []
+
+    smuggled = [m for m in nested_module_ids if not module_filter.is_allowed(m)]
+    if smuggled:
+        return (
+            f"Module '{module_id}' declares nested module(s) blocked by security "
+            f"policy: {', '.join(smuggled)}"
+        )
+
+    for nested_module_id in nested_module_ids:
+        missing = _module_missing_permissions(nested_module_id)
+        if missing:
+            return (
+                f"Nested module '{nested_module_id}' requires permission(s) "
+                f"{missing} that have not been granted. These grant host code "
+                "execution or money movement and must be enabled explicitly via "
+                "FLYTO_GRANTED_PERMISSIONS."
+            )
+
+    return None
+
+
+# ---------------------------------------------------------------------------
 # POST /v1/execute
 # ---------------------------------------------------------------------------
 
@@ -141,6 +190,17 @@ async def execute_module(body: ExecuteModuleRequest, request: Request):
         return ExecuteModuleResponse(
             ok=False, error=f"Module blocked by security policy: {body.module_id}"
         )
+
+    # SECURITY (GHSA-wmwj-g59x-c8px): the top-level id is not the whole request.
+    # A nested-execution module (verify.spec rulesets, flow.invoke /
+    # template.invoke inline workflows) names its child modules inside its own
+    # params, so an allowed parent can carry a denied child. BaseModule.run() is
+    # the process-wide backstop; this boundary check matches the MCP transport
+    # (core.mcp_handler.execute_module), fails before the parent does any work,
+    # and returns the precise reason. Mirrors the same pre-flight there.
+    nested = _nested_policy_error(body.module_id, body.params)
+    if nested:
+        return ExecuteModuleResponse(ok=False, error=nested)
 
     state = request.app.state.server
     t0 = time.time()

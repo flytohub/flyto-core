@@ -8,7 +8,9 @@ module execution flows through — so a denied module cannot run no matter how i
 is reached.
 """
 
+import ast
 import os
+from pathlib import Path
 
 import pytest
 
@@ -115,3 +117,194 @@ async def test_smuggled_child_blocked_even_if_gadget_allowed(monkeypatch):
     assert result["ok"] is False
     assert result.get("blocked_by") == "module_filter", result
     assert "shell.exec" in result.get("blocked_modules", []), result
+
+
+# ---------------------------------------------------------------------------
+# GHSA-wmwj-g59x-c8px — verify.spec dynamic child dispatch
+# ---------------------------------------------------------------------------
+#
+# verify.spec chooses its child modules from the CALLER's ruleset: every rule
+# names a `source.module` / `target.module` with free-form params. That
+# dispatcher used to call the child's execute() directly, so a caller who was
+# restricted to verify.spec could name shell.exec in a ruleset and run a host
+# command — past both the module filter and the dangerous-permission grant.
+
+
+def _shell_ruleset(marker, branch: str = "source") -> dict:
+    """A ruleset whose `branch` side runs shell.exec and writes `marker`."""
+    rule = {
+        "name": "execute denied module",
+        "source": {"keys": []},
+        "target": {"keys": []},
+    }
+    rule[branch] = {
+        # `touch` passes shell.exec's own command allowlist, so the only thing
+        # that can stop the marker from appearing is the policy gate — the
+        # point of the test. A command shell.exec rejects on its own would make
+        # these pass for the wrong reason.
+        "module": "shell.exec",
+        "params": {"command": f"touch {marker}"},
+    }
+    return {"name": "policy-bypass-regression", "rules": [rule]}
+
+
+@pytest.mark.asyncio
+class TestVerifySpecNestedDispatch:
+
+    @pytest.mark.parametrize("branch", ["source", "target"])
+    async def test_denied_child_blocked_by_default(self, default_policy, tmp_path, branch):
+        # Default policy: shell.* is denied, verify.spec is not. The denied
+        # child must fail closed, and it must surface as a policy error rather
+        # than a failed verification rule.
+        marker = tmp_path / f"marker-{branch}.txt"
+        module = ModuleRegistry.get("verify.spec")(
+            {"ruleset": _shell_ruleset(marker, branch)}, {}
+        )
+        with pytest.raises(ModulePolicyError):
+            await module.run()
+        assert marker.exists() is False
+
+    async def test_denied_child_blocked_under_strict_allowlist(self, monkeypatch, tmp_path):
+        # The reported scenario: the caller is allowed exactly one module.
+        monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
+        monkeypatch.delenv("FLYTO_GRANTED_PERMISSIONS", raising=False)
+        monkeypatch.setenv("FLYTO_MODULE_ALLOWLIST", "verify.spec")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+
+        marker = tmp_path / "marker-allowlist.txt"
+        module = ModuleRegistry.get("verify.spec")(
+            {"ruleset": _shell_ruleset(marker)}, {}
+        )
+        with pytest.raises(ModulePolicyError):
+            await module.run()
+        assert marker.exists() is False
+
+    async def test_allowed_child_still_needs_the_permission_grant(self, monkeypatch, tmp_path):
+        # Even an operator who allows shell.exec by id has not granted the
+        # dangerous permission it declares. run() checks both; execute() checked
+        # neither.
+        monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
+        monkeypatch.delenv("FLYTO_GRANTED_PERMISSIONS", raising=False)
+        monkeypatch.setenv("FLYTO_MODULE_ALLOWLIST", "verify.spec,shell.exec")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+
+        marker = tmp_path / "marker-permission.txt"
+        module = ModuleRegistry.get("verify.spec")(
+            {"ruleset": _shell_ruleset(marker)}, {}
+        )
+        with pytest.raises(ModulePolicyError):
+            await module.run()
+        assert marker.exists() is False
+
+
+@pytest.mark.asyncio
+async def test_verify_spec_ruleset_rejected_at_the_mcp_boundary(default_policy, tmp_path):
+    # Defense in depth: the transport pre-flight already walks nested `module:`
+    # declarations, so the ruleset is refused before verify.spec runs at all.
+    marker = tmp_path / "marker-boundary.txt"
+    result = await execute_module("verify.spec", {"ruleset": _shell_ruleset(marker)})
+    assert result["ok"] is False
+    assert result.get("blocked_by") == "module_filter", result
+    assert "shell.exec" in result.get("blocked_modules", []), result
+    assert marker.exists() is False
+
+
+def test_rest_execute_rejects_a_denied_nested_module(monkeypatch, tmp_path):
+    # The REST route checked only the top-level module id, so verify.spec was
+    # admitted and the ruleset's shell.exec rode in with it.
+    from starlette.testclient import TestClient
+
+    import core.api.routes.modules as modules_route
+    from core.api import security as sec
+    from core.api.server import create_app
+
+    monkeypatch.delenv("FLYTO_MODULE_ALLOWLIST", raising=False)
+    monkeypatch.delenv("FLYTO_MODULE_DENYLIST", raising=False)
+    monkeypatch.delenv("FLYTO_GRANTED_PERMISSIONS", raising=False)
+    fresh = ModuleFilter()
+    monkeypatch.setattr(modules_route, "module_filter", fresh)
+    monkeypatch.setattr(module_policy, "module_filter", fresh)
+
+    marker = tmp_path / "marker-rest.txt"
+    with TestClient(create_app()) as client:
+        headers = {"Authorization": f"Bearer {sec._active_token}"}
+        direct = client.post(
+            "/v1/execute",
+            json={"module_id": "shell.exec", "params": {"command": f"printf X > {marker}"}},
+            headers=headers,
+        ).json()
+        assert direct["ok"] is False
+        assert "blocked" in (direct.get("error") or "").lower()
+
+        nested = client.post(
+            "/v1/execute",
+            json={"module_id": "verify.spec", "params": {"ruleset": _shell_ruleset(marker)}},
+            headers=headers,
+        ).json()
+
+    assert nested["ok"] is False
+    # Refused by the route's own pre-flight (before verify.spec runs at all),
+    # not only by the engine chokepoint underneath it.
+    assert "nested" in (nested.get("error") or "").lower(), nested
+    assert "shell.exec" in (nested.get("error") or "")
+    assert marker.exists() is False
+
+
+# ---------------------------------------------------------------------------
+# Registry-wide: no dynamic dispatch may call execute() directly
+# ---------------------------------------------------------------------------
+
+def _dynamic_dispatch_offenders(root: Path) -> list:
+    """Functions that resolve a module by a NON-constant id and then await
+    `<obj>.execute()` instead of the policy-gated `<obj>.run()`.
+
+    A constant id (`ModuleRegistry.get('ai.extract')`) is a fixed collaborator
+    the author chose; a variable id is whatever the caller asked for, and that
+    is the shape that turns an allowed module into a launcher for a denied one
+    (GHSA-675h-j4qg-m52x in the test/warroom runner, GHSA-wmwj-g59x-c8px in
+    verify.spec).
+    """
+    offenders = []
+    for path in sorted(root.rglob("*.py")):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except SyntaxError:  # pragma: no cover - source must parse
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            dynamic_lookup = False
+            direct_execute = False
+            for inner in ast.walk(node):
+                if isinstance(inner, ast.Call):
+                    func = inner.func
+                    name = (
+                        func.attr if isinstance(func, ast.Attribute)
+                        else func.id if isinstance(func, ast.Name)
+                        else ""
+                    )
+                    if name in {"get_module", "get"} and inner.args:
+                        target = inner.args[0]
+                        looks_like_registry = name == "get_module" or (
+                            isinstance(func, ast.Attribute)
+                            and isinstance(func.value, ast.Name)
+                            and func.value.id == "ModuleRegistry"
+                        )
+                        if looks_like_registry and not isinstance(target, ast.Constant):
+                            dynamic_lookup = True
+                    if (
+                        isinstance(func, ast.Attribute)
+                        and func.attr == "execute"
+                        and isinstance(func.value, ast.Name)
+                        and func.value.id != "self"
+                    ):
+                        direct_execute = True
+            if dynamic_lookup and direct_execute:
+                offenders.append(f"{path}:{node.lineno}:{node.name}")
+    return offenders
+
+
+def test_no_dynamic_dispatch_bypasses_the_chokepoint():
+    src = Path(__file__).resolve().parents[2] / "src" / "core"
+    assert src.is_dir(), src
+    assert _dynamic_dispatch_offenders(src) == []

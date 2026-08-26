@@ -1484,3 +1484,62 @@ async def test_expanded_beta_audit_confines_huggingface_file_inputs(
             'model_id': 'test-model',
             path_key: str(secret),
         }})
+
+
+@pytest.mark.asyncio
+async def test_verify_spec_ruleset_cannot_run_a_denied_module(monkeypatch):
+    """GHSA-wmwj-g59x-c8px.
+
+    verify.spec picks its child modules out of the caller's own ruleset and
+    used to call the child's execute() directly. Both locks live in
+    BaseModule.run(), so a caller restricted to verify.spec could name
+    shell.exec in a rule and run a host command with neither the module filter
+    nor the shell.execute grant consulted.
+    """
+    module_policy = importlib.import_module('core.module_policy')
+    registry = importlib.import_module('core.modules.registry')
+    spec_runner = importlib.import_module('core.modules.atomic.verify.spec_runner')
+
+    monkeypatch.delenv('FLYTO_GRANTED_PERMISSIONS', raising=False)
+    monkeypatch.delenv('FLYTO_MODULE_DENYLIST', raising=False)
+    # The reported configuration: exactly one module is permitted.
+    monkeypatch.setenv('FLYTO_MODULE_ALLOWLIST', 'verify.spec')
+    monkeypatch.setattr(module_policy, 'module_filter', module_policy.ModuleFilter())
+
+    reached_shell_sink = False
+
+    async def forbidden_execute(self):
+        nonlocal reached_shell_sink
+        reached_shell_sink = True
+        return {'ok': True}
+
+    monkeypatch.setattr(
+        registry.ModuleRegistry.get('shell.exec'),
+        'execute',
+        forbidden_execute,
+    )
+
+    ruleset = {
+        'name': 'policy-bypass-regression',
+        'rules': [{
+            'name': 'execute denied module',
+            'source': {
+                'module': 'shell.exec',
+                'params': {'command': 'echo CHOKEPOINT'},
+            },
+            'target': {'keys': []},
+        }],
+    }
+
+    with pytest.raises(module_policy.ModulePolicyError):
+        await spec_runner.VerifySpecModule({'ruleset': ruleset}, {}).run()
+    assert reached_shell_sink is False
+
+    # Defense in depth: the transport pre-flight walks the ruleset's nested
+    # module declarations, so the request is refused before verify.spec runs.
+    mcp_handler = importlib.import_module('core.mcp_handler')
+    preflight = await mcp_handler.execute_module('verify.spec', {'ruleset': ruleset})
+    assert preflight['ok'] is False
+    assert preflight['blocked_by'] == 'module_filter'
+    assert 'shell.exec' in preflight['blocked_modules']
+    assert reached_shell_sink is False

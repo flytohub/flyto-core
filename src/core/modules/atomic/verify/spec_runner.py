@@ -32,6 +32,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Union, Callable
 
+from ....module_policy import ModulePolicyError
 from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import get_module, register_module
@@ -94,6 +95,7 @@ async def execute_module_dynamic(module_id: str, params: Dict[str, Any], context
 
     Raises:
         ValueError: 模组不存在
+        ModulePolicyError: 模组被 capability policy 或 permission gate 拒绝
         Exception: 模组执行失败
     """
     try:
@@ -103,7 +105,19 @@ async def execute_module_dynamic(module_id: str, params: Dict[str, Any], context
 
         ctx = context or {}
         instance = module_class(params, ctx)
-        return await instance.execute()
+        # SECURITY (GHSA-wmwj-g59x-c8px): BaseModule.run() is the process-wide
+        # policy chokepoint. This dispatcher picks the child module from the
+        # caller's own ruleset, so calling execute() directly let an inline
+        # ruleset name any module — shell.exec included — and run it without
+        # the allowlist/denylist and dangerous-permission checks that the
+        # caller was restricted by. Same omission as the nested Warroom/test
+        # steps fixed in testing/runner.py.
+        return await instance.run()
+    except ModulePolicyError:
+        # A denied child is a policy decision, not a verification outcome:
+        # let it travel up so the whole verify.spec call fails closed instead
+        # of being reported as an ordinary failed rule.
+        raise
     except ValueError:
         raise
     except Exception as e:
@@ -263,6 +277,11 @@ async def run_spec_rule(rule: Dict[str, Any]) -> SpecResult:
             orphaned_in_target=orphaned,
         )
 
+    except ModulePolicyError:
+        # See execute_module_dynamic: a policy denial must not be swallowed
+        # into a per-rule error, or a blocked module would read like a normal
+        # verification failure.
+        raise
     except Exception as e:
         logger.error(f"Rule '{name}' failed: {e}")
         return SpecResult(name=name, passed=False, error=str(e))

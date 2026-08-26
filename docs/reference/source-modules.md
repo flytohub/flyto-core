@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,032 lines**, and **5,694 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,119 lines**, and **5,695 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -83,7 +83,7 @@ Inventory: **967 Python files**, **202,032 lines**, and **5,694 class/function/m
 | [`src/core/api/routes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/__init__.py#L1) | 25 | 0 | `extensions, mcp, modules, replay, workflows` | Aggregates the Core HTTP API routers that the API server mounts. |
 | [`src/core/api/routes/extensions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/extensions.py#L1) | 290 | 9 | `core, fastapi, logging, os, pydantic, security, typing` | Extension Routes |
 | [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 302 | 11 | `base64, binascii, core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
-| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 284 | 5 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
+| [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 344 | 6 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |
 | [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 218 | 4 | `contextlib, core, evidence_hooks, fastapi, json, logging, models, os, security, time, uuid` | Workflow Routes |
 | [`src/core/api/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/security.py#L1) | 209 | 10 | `core, fastapi, logging, os, pathlib, secrets, typing` | Security — CORS, Bearer Token Auth, Module Denylist/Allowlist |
@@ -706,7 +706,7 @@ Inventory: **967 Python files**, **202,032 lines**, and **5,694 class/function/m
 | [`src/core/modules/atomic/verify/report.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/report.py#L1) | 287 | 7 | `base, datetime, html, json, pathlib, registry, schema, typing, utils` | Verify Report Module - Generate verification reports |
 | [`src/core/modules/atomic/verify/ruleset.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/ruleset.py#L1) | 209 | 12 | `base, dataclasses, pathlib, registry, schema, typing, utils, yaml` | Verify Ruleset Module - Load verification rules from YAML |
 | [`src/core/modules/atomic/verify/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/runner.py#L1) | 388 | 8 | `base, capture, compare, core, figma, pathlib, registry, report, ruleset, schema, typing, utils` | Verify Run Module - Main entry point for design verification |
-| [`src/core/modules/atomic/verify/spec_runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L1) | 381 | 12 | `base, dataclasses, datetime, json, logging, pathlib, registry, schema, typing, utils, yaml` | Spec-as-Test Dynamic Runner |
+| [`src/core/modules/atomic/verify/spec_runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L1) | 400 | 12 | `base, dataclasses, datetime, json, logging, module_policy, pathlib, registry, schema, typing, utils, yaml` | Spec-as-Test Dynamic Runner |
 | [`src/core/modules/atomic/verify/visual_diff.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/visual_diff.py#L1) | 393 | 7 | `PIL, base, datetime, html, logging, os, pathlib, playwright, registry, schema, testing, typing` | Verify Visual Diff Module - End-to-end visual comparison pipeline |
 | [`src/core/modules/atomic/vision/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/__init__.py#L1) | 11 | 0 | `analyze, compare` | Vision Analysis Modules AI-powered image and screenshot analysis using Vision APIs |
 | [`src/core/modules/atomic/vision/analyze.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/vision/analyze.py#L1) | 404 | 4 | `aiohttp, base64, httpx, json, logging, os, pathlib, re, registry, schema, typing, utils` | Vision Analyze Module Analyze images/screenshots using OpenAI Vision API (GPT-4V) |
@@ -723,7 +723,7 @@ Inventory: **967 Python files**, **202,032 lines**, and **5,694 class/function/m
 | [`src/core/modules/audit/report_generator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/report_generator.py#L1) | 268 | 9 | `__future__, collections, datetime, json, os, schema_auditor, standards, typing` | Report Generator - Generate audit reports in various formats |
 | [`src/core/modules/audit/schema_auditor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/schema_auditor.py#L1) | 371 | 21 | `__future__, collections, dataclasses, registry, standards, typing` | Schema Auditor - Main audit logic for module schemas |
 | [`src/core/modules/audit/standards.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/audit/standards.py#L1) | 239 | 1 | `enum, typing` | Quality Standards - Defines schema quality requirements |
-| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 581 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation` | Base Module Class with Phase 2 execution support and Item-based execution. |
+| [`src/core/modules/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L1) | 589 | 18 | `abc, asyncio, constants, errors, items, logging, module_policy, registry, result, typing, validation` | Base Module Class with Phase 2 execution support and Item-based execution. |
 | [`src/core/modules/builtin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/builtin/__init__.py#L1) | 233 | 5 | `atomic, logging, registry, typing` | Builtin Modules |
 | [`src/core/modules/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/catalog.py#L1) | 388 | 10 | `copy, licensing, logging, re, typing` | Module Catalog - Public view sanitization and catalog utilities. |
 | [`src/core/modules/composite/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/composite/__init__.py#L1) | 97 | 2 | `base, browser, data, developer, notification, test` | Composite Modules (Level 3) |

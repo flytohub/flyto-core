@@ -2,6 +2,17 @@
 
 ## Current State
 
+- `verify.spec` can no longer be used as a launcher for a module the caller was
+  denied (GHSA-wmwj-g59x-c8px). Its rules name the child module and its params,
+  and the dispatcher called `execute()` on them — skipping `BaseModule.run()`,
+  where both the module filter and the dangerous-permission grant live. Under
+  `FLYTO_MODULE_ALLOWLIST=verify.spec` with no grants, a ruleset naming
+  `shell.exec` ran host commands. The child now goes through `run()`, a denied
+  child raises instead of being reported as a failed rule, and `POST /v1/execute`
+  applies the nested-module pre-flight the MCP transport already had. A
+  registry-wide test fails on any future dispatcher that resolves a module by a
+  caller-supplied id and calls `execute()` directly.
+
 - `crypto.totp` closes the one gap that kept an authenticator-protected site
   outside flyto-core: the six digits exist only inside a browser login flow and
   no API hands them over. A secret is accepted as the Base32 setup key in any
@@ -246,7 +257,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,694
+- Source-backed documentation now covers 967 maintained Python files, 5,695
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
@@ -355,6 +366,36 @@
 | Indexer | `flyto-index verify . --full-scan --strict --json` | Repository closure and 90-point docs budget |
 
 ## Last Verification
+
+### 2026-08-25 — verify.spec policy-gate bypass (GHSA-wmwj-g59x-c8px): VERIFIED
+
+The reporter's own proof of concept was run against the built artifact, not the
+source tree. Installed from PyPI, `flyto-core[api]==2.31.0` reproduces:
+`exploit_reproduced: true`, `marker_outside_sandbox: true`, with
+`FLYTO_MODULE_ALLOWLIST=verify.spec` and no `FLYTO_GRANTED_PERMISSIONS`.
+Installed from the wheel built here, `2.31.1` refuses the same request in all
+three reported configurations (default denylist, strict allowlist, and the
+`target` rule branch): `bypass_top_level_ok: false`,
+`marker_outside_sandbox: false`, error `Module 'verify.spec' declares nested
+module(s) blocked by security policy: shell.exec`. The negative control holds in
+every run — a direct `shell.exec` request stays blocked.
+
+Repository gates on this tree: project-memory lint PASS, documentation contract
+PASS (145 Markdown files, 1266 owned source/config files, 192 local links),
+brand PASS, release drift PASS (2.31.1 unreleased), Ruff clean on every changed
+file (the four remaining findings are pre-existing and untouched), offline suite
+**3175 passed, 11 skipped, 275 deselected**, 63.67% coverage against the 60%
+floor, `python -m build` plus `twine check` PASS on both artifacts, `npm audit`
+0 vulnerabilities, and strict Indexer `flyto-index verify . --strict --full-scan`
+20/20 PASS including the `.flyto-rules.yaml` policy check.
+
+The new regression tests were confirmed to fail on the unpatched code before the
+fix landed, so they test the defect rather than the implementation.
+
+Not verified: `flyto-index task validate` could not run against this repo — it
+drives the indexer's own interpreter, which has no `pytest-cov`, and its
+repository-wide Ruff scan includes `examples/`, which CI does not lint. The
+browser and e2e markers were not run.
 
 ### 2026-08-12 — capability, extension and runtime closure: VERIFIED
 

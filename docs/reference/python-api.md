@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,694 declarations across 818 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,695 declarations across 818 files**.
 
 ## `demo.py`
 
@@ -812,7 +812,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `async def get_module_info(module_id: str)` | Get detailed module information including params schema and examples. | [`src/core/api/routes/modules.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L83) |
 | function | `async def get_capabilities()` | Deterministic capability manifest for this installation. | [`src/core/api/routes/modules.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L98) |
 | function | `async def refresh_capabilities()` | Re-run plugin discovery and rebuild the capability manifest. | [`src/core/api/routes/modules.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L118) |
-| function | `async def execute_module(body: ExecuteModuleRequest, request: Request)` | Execute a single module. | [`src/core/api/routes/modules.py:137`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L137) |
+| function | `def _nested_policy_error(module_id: str, params: Dict&#91;str, Any&#93;) -> Optional&#91;str&#93;` | Reason string when the request's nested module ids are denied, else None. | [`src/core/api/routes/modules.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L136) |
+| function | `async def execute_module(body: ExecuteModuleRequest, request: Request)` | Execute a single module. | [`src/core/api/routes/modules.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L186) |
 
 ## `src/core/api/routes/replay.py`
 
@@ -6535,18 +6536,18 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class SpecResult` | 单条规则的验证结果 | [`src/core/modules/atomic/verify/spec_runner.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L45) |
-| method | `def SpecResult.coverage(self) -> float` | 计算覆盖率百分比 | [`src/core/modules/atomic/verify/spec_runner.py:57`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L57) |
-| method | `def SpecResult.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `SpecResult.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:68`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L68) |
-| function | `async def execute_module_dynamic(module_id: str, params: Dict&#91;str, Any&#93;, context: Optional&#91;Dict&#93;=None) -> Dict&#91;str, Any&#93;` | 动态执行任意 flyto-core 模组 | [`src/core/modules/atomic/verify/spec_runner.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L84) |
-| function | `def extract_keys(data: Any, key_field: Optional&#91;str&#93;=None) -> Set&#91;str&#93;` | 从模组输出中提取 keys | [`src/core/modules/atomic/verify/spec_runner.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L114) |
-| function | `def compare_keys(source_keys: Set&#91;str&#93;, target_keys: Set&#91;str&#93;, direction: str='bidirectional') -> tuple` | 比较两个 key 集合 | [`src/core/modules/atomic/verify/spec_runner.py:179`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L179) |
-| function | `async def run_spec_rule(rule: Dict&#91;str, Any&#93;) -> SpecResult` | 执行单条验证规则 | [`src/core/modules/atomic/verify/spec_runner.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L207) |
-| function | `async def run_spec_ruleset(ruleset: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | 执行整个 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:271`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L271) |
-| function | `def load_spec_ruleset(path: Union&#91;str, Path&#93;) -> Dict&#91;str, Any&#93;` | 从 YAML 文件加载 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:300`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L300) |
-| class | `class VerifySpecModule(BaseModule)` | 动态 Spec 验证模组 | [`src/core/modules/atomic/verify/spec_runner.py:345`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L345) |
-| method | `def VerifySpecModule.validate_params(self) -> None` | Implements `VerifySpecModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:351`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L351) |
-| method | `async def VerifySpecModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifySpecModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:367`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L367) |
+| class | `class SpecResult` | 单条规则的验证结果 | [`src/core/modules/atomic/verify/spec_runner.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L46) |
+| method | `def SpecResult.coverage(self) -> float` | 计算覆盖率百分比 | [`src/core/modules/atomic/verify/spec_runner.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L58) |
+| method | `def SpecResult.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `SpecResult.to_dict`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L69) |
+| function | `async def execute_module_dynamic(module_id: str, params: Dict&#91;str, Any&#93;, context: Optional&#91;Dict&#93;=None) -> Dict&#91;str, Any&#93;` | 动态执行任意 flyto-core 模组 | [`src/core/modules/atomic/verify/spec_runner.py:85`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L85) |
+| function | `def extract_keys(data: Any, key_field: Optional&#91;str&#93;=None) -> Set&#91;str&#93;` | 从模组输出中提取 keys | [`src/core/modules/atomic/verify/spec_runner.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L128) |
+| function | `def compare_keys(source_keys: Set&#91;str&#93;, target_keys: Set&#91;str&#93;, direction: str='bidirectional') -> tuple` | 比较两个 key 集合 | [`src/core/modules/atomic/verify/spec_runner.py:193`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L193) |
+| function | `async def run_spec_rule(rule: Dict&#91;str, Any&#93;) -> SpecResult` | 执行单条验证规则 | [`src/core/modules/atomic/verify/spec_runner.py:221`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L221) |
+| function | `async def run_spec_ruleset(ruleset: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | 执行整个 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:290`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L290) |
+| function | `def load_spec_ruleset(path: Union&#91;str, Path&#93;) -> Dict&#91;str, Any&#93;` | 从 YAML 文件加载 ruleset | [`src/core/modules/atomic/verify/spec_runner.py:319`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L319) |
+| class | `class VerifySpecModule(BaseModule)` | 动态 Spec 验证模组 | [`src/core/modules/atomic/verify/spec_runner.py:364`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L364) |
+| method | `def VerifySpecModule.validate_params(self) -> None` | Implements `VerifySpecModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:370`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L370) |
+| method | `async def VerifySpecModule.execute(self) -> Dict&#91;str, Any&#93;` | Implements `VerifySpecModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/verify/spec_runner.py:386`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/spec_runner.py#L386) |
 
 ## `src/core/modules/atomic/verify/visual_diff.py`
 
@@ -6743,15 +6744,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `async def BaseModule.execute_all(self, items: List&#91;'Item'&#93;, context: 'ItemContext') -> List&#91;'Item'&#93;` | Process all items at once (execution_mode="all"). | [`src/core/modules/base.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L184) |
 | method | `async def BaseModule.run(self) -> Any` | Execute module with Phase 2 enhancements: - Timeout support - Retry logic - Error handling | [`src/core/modules/base.py:222`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L222) |
 | method | `async def BaseModule._execute_with_resilience(self, timeout: Optional&#91;int&#93;=None, retryable: bool=False, max_retries: int=DEFAULT_MAX_RETRIES) -> Any` | Execute with timeout and/or retry support. | [`src/core/modules/base.py:277`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L277) |
-| method | `def BaseModule.get_metadata(self) -> Dict&#91;str, Any&#93;` | Get module metadata. | [`src/core/modules/base.py:356`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L356) |
-| method | `def BaseModule.get_param(self, name: str, default: Any=None) -> Any` | Get a parameter value with optional default. | [`src/core/modules/base.py:370`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L370) |
-| method | `def BaseModule.require_param(self, name: str) -> Any` | Get a required parameter value. | [`src/core/modules/base.py:383`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L383) |
-| method | `def BaseModule.success(self, data: Any=None, message: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard success result. | [`src/core/modules/base.py:409`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L409) |
-| method | `def BaseModule.failure(self, code: str, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard failure result. | [`src/core/modules/base.py:431`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L431) |
-| method | `def BaseModule.validate_params_v2(self, required: Optional&#91;List&#91;str&#93;&#93;=None, types: Optional&#91;Dict&#91;str, Type&#93;&#93;=None) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Validate parameters using the new validation system. | [`src/core/modules/base.py:465`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L465) |
-| method | `def BaseModule.raise_validation_error(self, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> None` | Raise a validation error. | [`src/core/modules/base.py:514`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L514) |
-| method | `def BaseModule.raise_error(self, error_class: type, message: str, **kwargs) -> None` | Raise a module error. | [`src/core/modules/base.py:540`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L540) |
-| method | `def BaseModule.make_result(self, data: Any=None) -> ModuleResult` | Create a ModuleResult from data. | [`src/core/modules/base.py:565`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L565) |
+| method | `def BaseModule.get_metadata(self) -> Dict&#91;str, Any&#93;` | Get module metadata. | [`src/core/modules/base.py:364`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L364) |
+| method | `def BaseModule.get_param(self, name: str, default: Any=None) -> Any` | Get a parameter value with optional default. | [`src/core/modules/base.py:378`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L378) |
+| method | `def BaseModule.require_param(self, name: str) -> Any` | Get a required parameter value. | [`src/core/modules/base.py:391`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L391) |
+| method | `def BaseModule.success(self, data: Any=None, message: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard success result. | [`src/core/modules/base.py:417`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L417) |
+| method | `def BaseModule.failure(self, code: str, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | Create a standard failure result. | [`src/core/modules/base.py:439`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L439) |
+| method | `def BaseModule.validate_params_v2(self, required: Optional&#91;List&#91;str&#93;&#93;=None, types: Optional&#91;Dict&#91;str, Type&#93;&#93;=None) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Validate parameters using the new validation system. | [`src/core/modules/base.py:473`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L473) |
+| method | `def BaseModule.raise_validation_error(self, message: str, field: Optional&#91;str&#93;=None, hint: Optional&#91;str&#93;=None) -> None` | Raise a validation error. | [`src/core/modules/base.py:522`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L522) |
+| method | `def BaseModule.raise_error(self, error_class: type, message: str, **kwargs) -> None` | Raise a module error. | [`src/core/modules/base.py:548`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L548) |
+| method | `def BaseModule.make_result(self, data: Any=None) -> ModuleResult` | Create a ModuleResult from data. | [`src/core/modules/base.py:573`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/base.py#L573) |
 
 ## `src/core/modules/builtin/__init__.py`
 
