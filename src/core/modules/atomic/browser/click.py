@@ -3,22 +3,24 @@
 """
 Browser Click Module - Click an element on the page
 """
-from typing import Any, Dict
+import asyncio
+from contextlib import suppress
+from typing import Any
+
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, field
+from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ...schema import presets
 
 
 @register_module(
     module_id='browser.click',
-    version='1.1.0',
+    version='1.1.1',
     category='browser',
     tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
     label_key='modules.browser.click.label',
-    description='Click an element on the page. Run browser.snapshot first to find the correct selector from the real page DOM.',
+    description='Click a visible element by its button/link name, page text, ID, or an advanced selector.',
     description_key='modules.browser.click.description',
     icon='MousePointerClick',
     color='#F0AD4E',
@@ -50,7 +52,7 @@ from ...schema import presets
         field("target", type="string",
               label="What to click",
               label_key="modules.browser.click.param.target.label",
-              description='e.g. "Submit", "Next Page", "Login"',
+              description='Use the visible or accessible name, e.g. "Submit", "Next Page", or "Login"',
               description_key="modules.browser.click.param.target.description",
               placeholder="Submit",
               showIf={"click_method": {"$in": ["text", "button", "id"]}},
@@ -116,7 +118,7 @@ from ...schema import presets
     examples=[
         {
             'name': 'Click by button text',
-            'params': {'click_method': 'text', 'target': 'Submit'}
+            'params': {'click_method': 'button', 'target': 'Submit'}
         },
         {
             'name': 'Click by element ID',
@@ -161,6 +163,7 @@ class BrowserClickModule(BaseModule):
                 raise ValueError("Button or link text is required")
             escaped = target.replace('"', '\\"')
             self.selector = f':is(button, a, [role="button"]):has-text("{escaped}")'
+            self.target = target
         else:  # text (default)
             if not target:
                 raise ValueError("Text content is required")
@@ -172,6 +175,44 @@ class BrowserClickModule(BaseModule):
         self.click_count = self.params.get('click_count', 1)
         self.force = self.params.get('force', False)
         self.modifiers = self.params.get('modifiers', [])
+        self.timeout = self.params.get('timeout_ms', 30000)
+
+    async def _resolve_button_or_link(self, page):
+        """Resolve a visible action by accessible role and name.
+
+        Element Picker hints use the same accessible-name sources, including
+        aria-label and an icon image's alt text. Exact names win; a contains
+        match remains as the forgiving fallback used by the old has-text path.
+        """
+        deadline = asyncio.get_running_loop().time() + (self.timeout / 1000)
+        candidates = (
+            ('button', True),
+            ('link', True),
+            ('button', False),
+            ('link', False),
+        )
+
+        while True:
+            for role, exact in candidates:
+                locator = page.get_by_role(
+                    role,
+                    name=self.target,
+                    exact=exact,
+                    include_hidden=self.force,
+                )
+                if not self.force:
+                    locator = locator.filter(visible=True)
+                if await locator.count():
+                    match = locator.first
+                    return match, f'role={role}[name={self.target!r}]'
+
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                raise RuntimeError(
+                    f'No visible button or link named {self.target!r} '
+                    f'was found within {self.timeout}ms'
+                )
+            await asyncio.sleep(min(0.1, remaining))
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
@@ -181,11 +222,11 @@ class BrowserClickModule(BaseModule):
         # Pre-action: refresh element hints to ensure we have current page state
         await browser.get_hints()
 
-        # Wait for element to be visible before clicking (unless force mode)
-        if not self.force:
-            await browser.wait(self.selector, state='visible', timeout_ms=10000)
-
         page = browser.page
+
+        # Capture before clicking so real navigation is distinguishable from
+        # an in-place SPA update after Playwright finishes the click.
+        pre_url = page.url
 
         click_options = {
             'button': self.button,
@@ -195,7 +236,18 @@ class BrowserClickModule(BaseModule):
         if self.modifiers:
             click_options['modifiers'] = self.modifiers
 
-        await page.click(self.selector, **click_options)
+        if self.method == 'button':
+            locator, self.selector = await self._resolve_button_or_link(page)
+            await locator.click(**click_options)
+        else:
+            # Wait for element to be visible before clicking (unless force mode)
+            if not self.force:
+                await browser.wait(
+                    self.selector,
+                    state='visible',
+                    timeout_ms=self.timeout,
+                )
+            await page.click(self.selector, **click_options)
 
         # Post-click: capture interactive elements of the NEW page state.
         # This ensures the next step's Element Picker sees the correct elements
@@ -205,17 +257,14 @@ class BrowserClickModule(BaseModule):
         # Wait for page to settle after click.
         # Strategy: detect real navigation vs SPA, then wait for interactive
         # elements to appear before extracting hints.
-        pre_url = page.url
-        try:
+        with suppress(Exception):
             await page.wait_for_load_state('domcontentloaded', timeout=2000)
-        except Exception:
-            pass
 
         if page.url != pre_url:
             # Real navigation: page URL changed.
             # domcontentloaded fires before JS frameworks render form elements
             # (e.g. Google Signup, React apps). Wait for interactive elements.
-            try:
+            with suppress(Exception):
                 await page.wait_for_function(
                     '''() => {
                         const els = document.querySelectorAll(
@@ -227,13 +276,11 @@ class BrowserClickModule(BaseModule):
                     }''',
                     timeout=5000,
                 )
-            except Exception:
-                pass
             # Brief extra wait for late-rendering elements (animations, lazy fields)
             await page.wait_for_timeout(300)
         else:
             # SPA navigation: URL didn't change, wait for DOM to stabilize
-            try:
+            with suppress(Exception):
                 await page.wait_for_function(
                     '''() => {
                         const els = document.querySelectorAll(
@@ -243,8 +290,6 @@ class BrowserClickModule(BaseModule):
                     }''',
                     timeout=3000,
                 )
-            except Exception:
-                pass
             # Extra brief wait for SPA animations to finish
             await page.wait_for_timeout(500)
 
@@ -263,5 +308,3 @@ class BrowserClickModule(BaseModule):
             if hints.get(key):
                 result[key] = hints[key]
         return result
-
-

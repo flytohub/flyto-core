@@ -144,6 +144,14 @@ MULTI_DROPDOWN_HTML = """
 </body></html>
 """
 
+ACTION_NAME_HTML = """
+<html><body>
+  <a href="/hidden" style="display: none">Hidden App</a>
+  <a href="/kintone"><img alt="kintone" src="kintone.png"></a>
+  <button aria-label="Create report"><svg></svg></button>
+</body></html>
+"""
+
 GOOGLE_MATERIAL_HTML = """
 <html><body>
   <div id="gender">
@@ -385,6 +393,12 @@ class TestOtherElements:
         links = result.get('links', [])
         assert len(links) >= 1
         assert links[0]['text'] == 'Help'
+
+    def test_action_hints_are_visible_and_use_accessible_names(self, js_code):
+        result = run(ACTION_NAME_HTML, js_code)
+
+        assert [link['text'] for link in result['links']] == ['kintone']
+        assert result['buttons'][0]['text'] == 'Create report'
 
     def test_text_extracted(self, js_code):
         result = run(MULTI_DROPDOWN_HTML, js_code)

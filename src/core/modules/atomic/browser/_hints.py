@@ -196,6 +196,34 @@ EXTRACT_HINTS_JS = """() => {
         return baseName;
     }
 
+    // --- Helper: resolve the name a person would use for an action ---
+    // Buttons and links are often icon-only. Their usable name may come from
+    // aria-label/labelledby or a descendant image's alt text rather than DOM
+    // text. Keep the picker name aligned with Playwright's accessible-name
+    // lookup so a suggestion is also executable by browser.click.
+    function resolveActionName(el) {
+        const ariaLabel = el.getAttribute('aria-label');
+        if (ariaLabel) return ariaLabel.trim().substring(0, 60);
+
+        const labelledBy = el.getAttribute('aria-labelledby');
+        if (labelledBy) {
+            const labelledText = labelledBy.split(/\\s+/).map(id => {
+                const ref = el.getRootNode().getElementById(id);
+                return ref ? (ref.textContent || '').trim() : '';
+            }).filter(Boolean).join(' ');
+            if (labelledText) return labelledText.substring(0, 60);
+        }
+
+        const content = (el.textContent || el.value || '').trim();
+        if (content) return content.substring(0, 60);
+
+        const image = el.querySelector && el.querySelector('img[alt]');
+        const imageAlt = image ? (image.getAttribute('alt') || '').trim() : '';
+        if (imageAlt) return imageAlt.substring(0, 60);
+
+        return resolveName(el);
+    }
+
     // --- Helper: get element position for layout ordering ---
     function getRect(el) {
         var r = el.getBoundingClientRect();
@@ -602,7 +630,7 @@ EXTRACT_HINTS_JS = """() => {
         const selector = stampSelector(el);
         if (classified.has(selector)) return;
         classified.add(selector);
-        const text = (el.textContent || el.value || '').trim().substring(0, 50);
+        const text = resolveActionName(el).substring(0, 50);
         const entry = { selector: selector, id: el.id || '', rect: getRect(el) };
         if (text) entry.text = text;
         if (el.type && el.type !== 'submit') entry.type = el.type;
@@ -614,7 +642,8 @@ EXTRACT_HINTS_JS = """() => {
     const links = [];
     deepQSA('a[href]').forEach(el => {
         if (links.length >= 20) return;
-        const text = (el.textContent || '').trim().substring(0, 60);
+        if (!isVisible(el)) return;
+        const text = resolveActionName(el).substring(0, 60);
         if (!text) return;
         const selector = stampSelector(el);
         if (classified.has(selector)) return;

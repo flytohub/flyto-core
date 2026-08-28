@@ -2,6 +2,14 @@
 
 ## Current State
 
+- `browser.click` button/link mode now executes the same semantic contract the
+  Element Picker presents: visible actions are named by accessible name,
+  including `aria-label`, `aria-labelledby`, and icon-image `alt` text. Hidden
+  links are not offered as candidates, the configured timeout is honoured, and
+  navigation is compared against the URL captured before the click. A real
+  Cloud EVTEK flow proved login, parent-side session reuse, visible-state
+  verification, and a selector-free `kintone` link click into the portal. No
+  attendance action was present or executed.
 - Nested template invocation now hands the caller's browser runtime to the child
   without transferring lifecycle ownership. The child can log in, return, and
   let the caller's next browser node observe the same authenticated page; child
@@ -268,7 +276,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,696
+- Source-backed documentation now covers 967 maintained Python files, 5,697
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
@@ -377,6 +385,22 @@
 | Indexer | `flyto-index verify . --full-scan --strict --json` | Repository closure and 90-point docs budget |
 
 ## Last Verification
+
+### 2026-08-28 — semantic browser.click closure: VERIFIED
+
+The EVTEK Cloud workflow completed nested login, authenticated visible-state
+verification, and a selector-free `kintone` link click into the portal. Its run
+artifact records terminal success and `method=button` with a link-role semantic
+locator. The flow intentionally stopped at the portal; no attendance action was
+present or executed.
+
+Repository gates on this tree: 81 focused browser-contract tests passed; the
+full offline suite passed with **3,186 passed, 11 skipped, 275 deselected** and
+63.97% coverage against the 60% floor. Documentation, brand, project-memory,
+audited Ruff, package build, Twine, Python and Node dependency audits passed.
+Strict Indexer passed **19/19** with no warnings or failures. A real local
+Playwright smoke independently proved that a visible icon-only link is offered
+and clicked by accessible name while a hidden duplicate is ignored.
 
 ### 2026-08-25 — verify.spec policy-gate bypass (GHSA-wmwj-g59x-c8px): VERIFIED
 

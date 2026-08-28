@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `browser.click` button/link mode now resolves visible accessible names instead
+  of translating Element Picker text into CSS `:has-text()`. Icon-only links,
+  ARIA-named controls, and hidden duplicate text now obey the same contract in
+  the picker and executor; configured click timeouts and post-click navigation
+  detection are also honoured.
 - Nested `template.invoke` steps now reuse the caller's authenticated browser
   without letting child cleanup close it, so the caller's next browser node can
   continue the same session.

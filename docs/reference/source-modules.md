@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,162 lines**, and **5,696 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,234 lines**, and **5,697 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -241,9 +241,9 @@ Inventory: **967 Python files**, **202,162 lines**, and **5,696 class/function/m
 | [`src/core/modules/atomic/auth/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/__init__.py#L1) | 10 | 0 | `oauth2` | Auth Modules OAuth2 token exchange and credential management |
 | [`src/core/modules/atomic/auth/oauth2.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/auth/oauth2.py#L1) | 469 | 3 | `aiohttp, asyncio, base64, json, logging, registry, schema, time, typing, urllib, utils` | OAuth2 Token Exchange Module Exchange authorization codes, refresh tokens, or client credentials for access tokens. |
 | [`src/core/modules/atomic/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/__init__.py#L1) | 74 | 0 | `challenge, click, close, connect, console, cookies, cookies_file, detect, detect_list, dialog, download, drag` | Atomic Browser Operations Browser automation modules using Playwright |
-| [`src/core/modules/atomic/browser/_hints.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L1) | 698 | 1 | `logging` | Shared interactive element hints extraction for browser modules. |
+| [`src/core/modules/atomic/browser/_hints.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L1) | 727 | 1 | `logging` | Shared interactive element hints extraction for browser modules. |
 | [`src/core/modules/atomic/browser/challenge.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/challenge.py#L1) | 350 | 3 | `asyncio, base, base64, core, logging, registry, schema, time, typing` | Browser Challenge Module — Auto-detect and handle anti-bot challenges |
-| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 267 | 3 | `base, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
+| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 310 | 4 | `asyncio, base, contextlib, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
 | [`src/core/modules/atomic/browser/close.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/close.py#L1) | 89 | 3 | `base, registry, typing` | Browser Close Module |
 | [`src/core/modules/atomic/browser/connect.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L1) | 156 | 3 | `base, core, logging, playwright, registry, schema, typing, utils` | Browser Connect Module — Connect to remote browser services |
 | [`src/core/modules/atomic/browser/console.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/console.py#L1) | 108 | 4 | `asyncio, base, registry, schema, typing` | Browser Console Module |

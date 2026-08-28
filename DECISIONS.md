@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-08-28 - Element Picker suggestions are executable semantic names
+
+Decision: button/link suggestions and `browser.click` button mode share one
+visible accessible-name contract. The picker derives names from ordinary text,
+ARIA naming, and descendant image alt text; click resolves the same name through
+button/link roles. Hidden candidates are excluded unless force mode is explicit,
+and the caller's configured timeout governs resolution.
+
+Why: a real application exposed an icon-only `kintone` link. The picker listed
+`kintone`, but click translated that suggestion into a CSS `:has-text()` query,
+which cannot see an image's accessible name and could instead bind to hidden
+duplicate text. A value offered by the editor but rejected by the executor is a
+broken product contract, not a request for the user to write a selector.
+
+Consequence: the normal path is selector-free and accessibility-aligned. CSS or
+XPath remains an explicitly advanced escape hatch, not a prerequisite for
+clicking a named action. Navigation detection also compares the page URL from
+before the click, so real navigation is no longer misclassified as an in-place
+update.
+
 ## 2026-08-28 - Nested templates borrow browser state, not browser ownership
 
 Decision: `template.invoke` passes the caller's browser runtime into the child

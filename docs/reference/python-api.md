@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,696 declarations across 818 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,697 declarations across 818 files**.
 
 ## `demo.py`
 
@@ -3090,7 +3090,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `async def extract_element_hints(page) -> dict` | Extract interactive elements from page. | [`src/core/modules/atomic/browser/_hints.py:679`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L679) |
+| function | `async def extract_element_hints(page) -> dict` | Extract interactive elements from page. | [`src/core/modules/atomic/browser/_hints.py:708`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L708) |
 
 ## `src/core/modules/atomic/browser/challenge.py`
 
@@ -3104,9 +3104,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserClickModule(BaseModule)` | Click Element Module | [`src/core/modules/atomic/browser/click.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L135) |
-| method | `def BrowserClickModule.validate_params(self) -> None` | Implements `BrowserClickModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L142) |
-| method | `async def BrowserClickModule.execute(self) -> Any` | Implements `BrowserClickModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:176`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L176) |
+| class | `class BrowserClickModule(BaseModule)` | Click Element Module | [`src/core/modules/atomic/browser/click.py:137`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L137) |
+| method | `def BrowserClickModule.validate_params(self) -> None` | Implements `BrowserClickModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:144`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L144) |
+| method | `async def BrowserClickModule._resolve_button_or_link(self, page)` | Resolve a visible action by accessible role and name. | [`src/core/modules/atomic/browser/click.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L180) |
+| method | `async def BrowserClickModule.execute(self) -> Any` | Implements `BrowserClickModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:217`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L217) |
 
 ## `src/core/modules/atomic/browser/close.py`
 
