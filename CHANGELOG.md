@@ -34,6 +34,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hang. The log line names the remaining validity and the period; neither the
   secret nor the generated code appears in it.
 
+### Fixed
+
+- Nested `template.invoke` steps now reuse the caller's authenticated browser
+  without letting child cleanup close it, so the caller's next browser node can
+  continue the same session.
+- Module-emitted error events now follow normal retry, error-edge, and
+  `on_error` behavior instead of being recorded as successful step output.
+- Visible browser waits now accept any visible selector match even when an
+  earlier duplicate in the DOM is hidden.
+- Verified with 3,210 offline tests plus 107 focused browser/template tests;
+  package build, Twine checks, and Python/Node dependency audits passed.
+
 ## [2.31.0]
 
 ### Security

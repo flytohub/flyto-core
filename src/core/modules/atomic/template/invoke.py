@@ -20,8 +20,7 @@ from typing import Any, Dict, Optional
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
-from ...types import NodeType, EdgeType, DataType
-
+from ...types import DataType, EdgeType, NodeType
 
 logger = logging.getLogger(__name__)
 
@@ -413,9 +412,12 @@ class InvokeTemplate(BaseModule):
                     logger.debug(f"Copied context key: {key}")
 
             # Mark that browser was inherited (not owned by child)
-            # This tells browser.release to NOT close the browser
+            # This tells browser.release and the inner engine cleanup to NOT
+            # close the browser. The parent may have another browser step
+            # immediately after this template invocation.
             if 'browser' in initial_context:
                 initial_context['browser_inherited'] = True
+                initial_context['keep_browser_alive'] = True
                 logger.debug("Marked browser as inherited from parent")
 
         steps = definition.get('steps', [])
@@ -463,10 +465,10 @@ class InvokeTemplate(BaseModule):
 
         # Try to import runtime components (may not be available in all environments)
         try:
+            from ...metering.tracker import get_metering_tracker
             from ...runtime.pool_router import get_pool_router
             from ...runtime.types import InvokeRequest, TenantContext
             from ...secrets.proxy import get_secrets_proxy
-            from ...metering.tracker import get_metering_tracker
         except ImportError:
             # Runtime not available, fall back to in-process execution
             logger.warning(

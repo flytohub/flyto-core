@@ -960,11 +960,25 @@ class BrowserDriver:
         try:
             logger.info(f"Waiting for element: {selector} (state: {state})")
 
-            await self._page.wait_for_selector(
-                selector,
-                state=state,
-                timeout=timeout_ms
-            )
+            if state == 'visible':
+                # ``page.wait_for_selector`` waits on the first match.  A
+                # hidden duplicate can therefore mask a later visible match
+                # (common with responsive desktop/mobile navigation).  Limit
+                # the locator to visible matches before waiting so the
+                # contract is "any matching element is visible".
+                visible_match = self._page.locator(selector).filter(
+                    visible=True
+                ).first
+                await visible_match.wait_for(
+                    state='visible',
+                    timeout=timeout_ms,
+                )
+            else:
+                await self._page.wait_for_selector(
+                    selector,
+                    state=state,
+                    timeout=timeout_ms
+                )
 
             logger.info(f"Element ready: {selector}")
 

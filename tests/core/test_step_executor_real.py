@@ -1463,39 +1463,21 @@ class TestTemplateInvokeHandling:
 
     async def test_template_invoke_strips_suffix_for_registry_lookup(self):
         """template.invoke:some-id is handled: template_id injected into params."""
-        from core.modules.registry import ModuleRegistry, register_module
-        from core.modules.base import BaseModule
+        from core.modules.atomic.template.invoke import InvokeTemplate  # noqa: F401
 
-        # Register a real template.invoke module if not present
-        TEMPLATE_INVOKE_ID = "template.invoke"
-        received_params = {}
-
-        if not ModuleRegistry.has(TEMPLATE_INVOKE_ID):
-            @register_module(
-                module_id=TEMPLATE_INVOKE_ID,
-                version="1.0.0",
-                category="template",
-                tags=["template"],
-                label="Template Invoke",
-                description="Invokes a template workflow",
-                icon="FileCode",
-                color="#9900FF",
-                input_types=["any"],
-                output_types=["any"],
-                can_receive_from=["*"],
-                can_connect_to=["*"],
-                requires_credentials=False,
-                handles_sensitive_data=False,
-            )
-            class TemplateInvokeModule(BaseModule):
-                def validate_params(self):
-                    pass
-
-                async def execute(self):
-                    received_params.update(self.params)
-                    return {"ok": True, "data": {"invoked": True}}
-
-        context = {}
+        context = {
+            "template_definitions": {
+                "my-template-123": {
+                    "steps": [
+                        {
+                            "id": "child_step",
+                            "module": "string.uppercase",
+                            "params": {"text": "invoked"},
+                        }
+                    ]
+                }
+            }
+        }
         step_config = {
             "id": "template_step",
             "module": "template.invoke:my-template-123",
@@ -1512,8 +1494,8 @@ class TestTemplateInvokeHandling:
         )
 
         assert result is not None
-        # template_id and library_id should be injected into params
-        # (captured in received_params since module reads self.params)
+        assert result["template_id"] == "my-template-123"
+        assert result["result"]["steps"]["child_step"]["data"]["result"] == "INVOKED"
         assert "template_step" in context
 
 

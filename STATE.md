@@ -2,6 +2,17 @@
 
 ## Current State
 
+- Nested template invocation now hands the caller's browser runtime to the child
+  without transferring lifecycle ownership. The child can log in, return, and
+  let the caller's next browser node observe the same authenticated page; child
+  cleanup cannot close a browser it inherited.
+- A module-emitted `__event__: error` is a step failure, not successful output.
+  It now enters the same retry, error-edge, and `on_error` contract as a raised
+  exception. This is especially important for invoked templates, where a child
+  error previously could be reported as parent success.
+- A visible browser wait succeeds when any matching element is visible. Hidden
+  duplicate text earlier in the DOM no longer masks a later visible match.
+
 - `verify.spec` can no longer be used as a launcher for a module the caller was
   denied (GHSA-wmwj-g59x-c8px). Its rules name the child module and its params,
   and the dispatcher called `execute()` on them — skipping `BaseModule.run()`,
@@ -257,7 +268,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,695
+- Source-backed documentation now covers 967 maintained Python files, 5,696
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

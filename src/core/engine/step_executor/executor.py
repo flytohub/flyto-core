@@ -379,13 +379,20 @@ class StepExecutor:
                 items=trace_items,
             )
 
+        async def execute_fn():
+            result = await self._execute_module_with_timeout(
+                step_id,
+                module_id,
+                resolved_params,
+                context,
+                timeout,
+                input_items,
+                step_trace,
+            )
+            return self._raise_for_error_event(step_id, result)
+
         try:
             if retry_config:
-                async def execute_fn():
-                    return await self._execute_module_with_timeout(
-                        step_id, module_id, resolved_params, context, timeout, input_items, step_trace
-                    )
-
                 return await execute_with_retry(
                     step_id=step_id,
                     execute_fn=execute_fn,
@@ -399,14 +406,34 @@ class StepExecutor:
                     total_steps=self._total_steps,
                 )
             else:
-                return await self._execute_module_with_timeout(
-                    step_id, module_id, resolved_params, context, timeout, input_items, step_trace
-                )
+                return await execute_fn()
 
         except StepTimeoutError as e:
             return self._handle_step_error(step_id, e, on_error)
         except StepExecutionError as e:
             return self._handle_step_error(step_id, e, on_error)
+
+    @staticmethod
+    def _raise_for_error_event(step_id: str, result: Any) -> Any:
+        """Turn an emitted error event into the engine's step-failure contract."""
+        if not isinstance(result, dict) or result.get('__event__') != 'error':
+            return result
+
+        error = result.get('__error__')
+        error = error if isinstance(error, dict) else {}
+        output_error = result.get('outputs', {}).get('error', {})
+        output_error = output_error if isinstance(output_error, dict) else {}
+        code = error.get('code') or result.get('error_code') or 'MODULE_ERROR'
+        message = (
+            error.get('message')
+            or output_error.get('message')
+            or result.get('error')
+            or 'Module emitted an error event'
+        )
+        raise StepExecutionError(
+            step_id,
+            f"Module returned error event [{code}]: {message}",
+        )
 
     async def _try_heal(
         self,

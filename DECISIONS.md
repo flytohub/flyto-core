@@ -1,5 +1,35 @@
 # Decisions
 
+## 2026-08-28 - Nested templates borrow browser state, not browser ownership
+
+Decision: `template.invoke` passes the caller's browser runtime into the child
+and marks it inherited. The child keeps that runtime alive and never assumes
+ownership of its cleanup. A module-emitted `__event__: error` raises through the
+ordinary step failure path before an invoked template can report success.
+
+Why: a login template is only useful as a reusable building block if the
+calling template's next node receives the authenticated session. Closing the
+borrowed browser in child cleanup destroys that state; accepting an emitted
+error as data makes a failed child indistinguishable from a successful one.
+
+Consequence: login can be composed as a child template while retry,
+`on_error`, error edges, run evidence, and browser lifecycle retain one coherent
+contract. The caller remains the browser owner.
+
+## 2026-08-28 - Visible selector waits mean any visible match
+
+Decision: the `visible` wait path filters the locator to visible matches before
+waiting for the first one. Other Playwright states retain their existing
+selector semantics.
+
+Why: Playwright's selector wait may bind to a hidden first match even when a
+later matching element is visible. Real pages commonly repeat navigation text
+in hidden responsive markup, so DOM order must not turn visible evidence into a
+timeout.
+
+Consequence: a visible duplicate satisfies the wait, while attached, hidden,
+and detached waits are unchanged.
+
 ## 2026-08-24 - One outbound policy, whichever HTTP client is installed
 
 Decision: every HTTP client this package constructs enforces the same SSRF

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,119 lines**, and **5,695 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,162 lines**, and **5,696 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -92,7 +92,7 @@ Inventory: **967 Python files**, **202,119 lines**, and **5,695 class/function/m
 | [`src/core/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/__init__.py#L1) | 23 | 0 | `captcha, checkpoint, driver, humanize, pool, proxy_pool, rate_limiter` | Browser Automation Package |
 | [`src/core/browser/captcha.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/captcha.py#L1) | 441 | 13 | `asyncio, json, logging, time, typing, urllib` | Captcha Solver — API-based solving via 2Captcha, CapSolver, or CaptchaAI |
 | [`src/core/browser/checkpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/checkpoint.py#L1) | 168 | 9 | `json, logging, pathlib, time, typing` | Pagination Checkpoint — Save/resume pagination state |
-| [`src/core/browser/driver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1) | 1603 | 40 | `asyncio, base64, constants, logging, modules, os, pathlib, platform, playwright, random, re, sys` | Browser Driver - Playwright wrapper for browser automation |
+| [`src/core/browser/driver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1) | 1617 | 40 | `asyncio, base64, constants, logging, modules, os, pathlib, platform, playwright, random, re, sys` | Browser Driver - Playwright wrapper for browser automation |
 | [`src/core/browser/humanize.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/humanize.py#L1) | 146 | 10 | `asyncio, logging, random` | Human-like Browser Behavior — Simulate realistic user interactions |
 | [`src/core/browser/pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/pool.py#L1) | 256 | 16 | `asyncio, driver, humanize, logging, typing` | Browser Pool — Multiple concurrent browser instances |
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
@@ -156,7 +156,7 @@ Inventory: **967 Python files**, **202,119 lines**, and **5,695 class/function/m
 | [`src/core/engine/sdk/resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/sdk/resolver.py#L1) | 505 | 19 | `context, dataclasses, json, logging, models, os, re, typing` | Variable Resolver v2 |
 | [`src/core/engine/step_executor/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/__init__.py#L1) | 56 | 1 | `context_builder, executor, foreach, hooks, retry, typing` | Step Executor Package |
 | [`src/core/engine/step_executor/context_builder.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/context_builder.py#L1) | 77 | 1 | `datetime, hooks, time, typing` | Step Context Builder |
-| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 881 | 20 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, re, retry, runtime, time` | Step Executor |
+| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 908 | 21 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, re, retry, runtime, time` | Step Executor |
 | [`src/core/engine/step_executor/foreach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/foreach.py#L1) | 92 | 1 | `exceptions, logging, trace, typing, variable_resolver` | Foreach Execution |
 | [`src/core/engine/step_executor/retry.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/retry.py#L1) | 142 | 2 | `asyncio, constants, context_builder, exceptions, hooks, logging, typing` | Retry Logic |
 | [`src/core/engine/step_executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor.py#L1) | 36 | 0 | `step_executor` | Step Executor - Single step execution with retry, timeout, and foreach support |
@@ -635,7 +635,7 @@ Inventory: **967 Python files**, **202,119 lines**, and **5,695 class/function/m
 | [`src/core/modules/atomic/string/truncate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/string/truncate.py#L1) | 160 | 1 | `errors, registry, schema, typing` | String Truncate Module Truncate a string to a maximum length. |
 | [`src/core/modules/atomic/string/uppercase.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/string/uppercase.py#L1) | 79 | 1 | `errors, registry, schema, typing` | String Uppercase Module Convert a string to uppercase |
 | [`src/core/modules/atomic/template/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/__init__.py#L1) | 12 | 0 | `invoke` | Template Modules |
-| [`src/core/modules/atomic/template/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/invoke.py#L1) | 601 | 13 | `asyncio, base, core, engine, logging, metering, re, registry, runtime, schema, secrets, time` | Invoke Template Module - Execute templates from user library |
+| [`src/core/modules/atomic/template/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/invoke.py#L1) | 603 | 13 | `asyncio, base, core, engine, logging, metering, re, registry, runtime, schema, secrets, time` | Invoke Template Module - Execute templates from user library |
 | [`src/core/modules/atomic/testing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/__init__.py#L1) | 52 | 0 | `assert_contains, assert_equal, assert_greater_than, assert_length, assert_not_null, assert_status, assert_timing, assert_true, e2e, gate, http_suite, lint` | Testing Modules |
 | [`src/core/modules/atomic/testing/assert_contains.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/assert_contains.py#L1) | 181 | 5 | `base, registry, typing` | Assert Contains Module |
 | [`src/core/modules/atomic/testing/assert_equal.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/assert_equal.py#L1) | 120 | 3 | `base, registry, typing` | Assert Equal Module |
