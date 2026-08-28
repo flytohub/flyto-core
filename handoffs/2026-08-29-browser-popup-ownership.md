@@ -3,7 +3,8 @@
 - Date: 2026-08-29
 - Owner: codex
 - Branch: `main`
-- Status: implemented and validated locally; real EVTEK workflow rerun awaits
+- Status: implemented, validated, pushed to `origin/main` at `6e0487c`, and
+  loaded by a restarted flyto-cloud. The real EVTEK workflow rerun awaits
   action-time confirmation because it transmits stored login and TOTP values.
 
 ## Problem
@@ -43,6 +44,8 @@ move the driver's current-page reference to it.
   Ruff, project-memory lint, package build, Twine validation, npm audit, and
   pip audit passed.
 - Strict Flyto2 Indexer full scan: 19 passed, 0 warnings, 0 failures.
+- flyto-cloud restarted successfully; backend health returned 200 and the
+  workflow builder reconnected to template `eYWGo53Jl7XorUf3RvED`.
 - The Indexer `task.validate` wrapper itself used repository-wide unrelated
   Ruff inputs and a pytest runtime without pytest-cov; local feedback
   `feedback-40f72b350e1bb231b52b13c3` records that runtime mismatch. The actual
@@ -50,7 +53,6 @@ move the driver's current-page reference to it.
 
 ## Next action
 
-Restart flyto-cloud so its no-reload backend imports the changed editable core.
 After the user confirms the credential-bearing run, execute template
 `eYWGo53Jl7XorUf3RvED` and verify the live preview and terminal node remain on
 the attendance page. Opening the attendance application is in scope; no actual
