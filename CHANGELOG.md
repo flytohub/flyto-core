@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `browser.click` now captures a tab or window opened by the clicked element,
+  adopts it as the current browser page, and refreshes hints from that page.
+  Live preview and following browser nodes no longer remain attached to the
+  opener, and `browser.tab(index=1)` can see the newly created page immediately.
 - `browser.click` button/link mode now resolves visible accessible names instead
   of translating Element Picker text into CSS `:has-text()`. Icon-only links,
   ARIA-named controls, and hidden duplicate text now obey the same contract in

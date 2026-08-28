@@ -280,7 +280,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,697
+- Source-backed documentation now covers 967 maintained Python files, 5,700
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
@@ -302,6 +302,11 @@
   manifest discovery. External plugin IDs cannot construct filesystem paths,
   symlink escapes are rejected, and MCP header-decoding failures return a
   stable generic error instead of exception details.
+- `browser.click` owns foreground-page transitions: a page created by the
+  click is captured before control advances, becomes the driver's current
+  page, and supplies live preview plus post-click hints. The result exposes
+  `opened_new_tab`, `tab_count`, `current_index`, and `url`; a regression test
+  proves an immediately following `browser.tab(index=1)` sees both pages.
 
 ## Release Blockers
 

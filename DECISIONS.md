@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-08-29 - A click-opened foreground page becomes workflow-owned state
+
+Decision: `browser.click` listens for a new page before dispatching the click.
+When the action opens a tab or window, the driver adopts that page as current
+before post-click settling, hint extraction, preview, or the next node. The
+result reports whether a page was adopted plus its tab index, tab count, and
+URL. `browser.tab` remains available for explicit later navigation.
+
+Why: a real portal opened an application in a visible second Chromium tab, but
+the workflow retained the opener as its current page. The live preview stayed
+on the portal and an immediately following `browser.tab(index=1)` observed only
+index 0. A browser action that changes the foreground browsing context must
+update workflow ownership atomically; asking every workflow to guess timing or
+tab indices leaves a race in the platform contract.
+
+Consequence: a normal click-to-new-tab flow continues on the opened page with
+no workflow-specific workaround. Popup detection is event-driven; explicit
+`target=_blank`, `formtarget=_blank`, and `window.open` actions receive a short
+bounded wait for delayed page creation, while ordinary same-page clicks do not.
+
 ## 2026-08-28 - Template invocation is an open input boundary
 
 Decision: static workflow validation checks the known control fields of

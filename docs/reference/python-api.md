@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,697 declarations across 818 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **5,700 declarations across 818 files**.
 
 ## `demo.py`
 
@@ -3104,10 +3104,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class BrowserClickModule(BaseModule)` | Click Element Module | [`src/core/modules/atomic/browser/click.py:137`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L137) |
-| method | `def BrowserClickModule.validate_params(self) -> None` | Implements `BrowserClickModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:144`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L144) |
-| method | `async def BrowserClickModule._resolve_button_or_link(self, page)` | Resolve a visible action by accessible role and name. | [`src/core/modules/atomic/browser/click.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L180) |
-| method | `async def BrowserClickModule.execute(self) -> Any` | Implements `BrowserClickModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:217`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L217) |
+| class | `class BrowserClickModule(BaseModule)` | Click Element Module | [`src/core/modules/atomic/browser/click.py:141`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L141) |
+| method | `def BrowserClickModule.validate_params(self) -> None` | Implements `BrowserClickModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L148) |
+| method | `async def BrowserClickModule._resolve_button_or_link(self, page)` | Resolve a visible action by accessible role and name. | [`src/core/modules/atomic/browser/click.py:184`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L184) |
+| method | `async def BrowserClickModule._expects_new_page(self, locator) -> bool` | Best-effort detection for links/forms that explicitly open a tab. | [`src/core/modules/atomic/browser/click.py:221`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L221) |
+| method | `def BrowserClickModule._new_context_page(context, known_pages)` | Return the newest page that did not exist before the click. | [`src/core/modules/atomic/browser/click.py:240`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L240) |
+| method | `async def BrowserClickModule.execute(self) -> Any` | Implements `BrowserClickModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:247`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L247) |
+| method | `def BrowserClickModule.execute._capture_new_page(new_page)` | Implements `BrowserClickModule.execute._capture_new_page`; linked source is authoritative. | [`src/core/modules/atomic/browser/click.py:261`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L261) |
 
 ## `src/core/modules/atomic/browser/close.py`
 

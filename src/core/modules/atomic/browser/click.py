@@ -15,7 +15,7 @@ from ...schema.constants import FieldGroup
 
 @register_module(
     module_id='browser.click',
-    version='1.1.1',
+    version='1.2.0',
     category='browser',
     tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
@@ -113,7 +113,11 @@ from ...schema.constants import FieldGroup
                 'description_key': 'modules.browser.click.output.status.description'},
         'selector': {'type': 'string', 'description': 'Selector that was used',
                 'description_key': 'modules.browser.click.output.selector.description'},
-        'method': {'type': 'string', 'description': 'Click method used'}
+        'method': {'type': 'string', 'description': 'Click method used'},
+        'opened_new_tab': {'type': 'boolean', 'description': 'Whether the click opened and adopted a new tab'},
+        'tab_count': {'type': 'number', 'description': 'Number of tabs after the click'},
+        'current_index': {'type': 'number', 'description': 'Current tab index after the click'},
+        'url': {'type': 'string', 'description': 'URL of the page controlled after the click'},
     },
     examples=[
         {
@@ -214,6 +218,32 @@ class BrowserClickModule(BaseModule):
                 )
             await asyncio.sleep(min(0.1, remaining))
 
+    async def _expects_new_page(self, locator) -> bool:
+        """Best-effort detection for links/forms that explicitly open a tab."""
+        if locator is None:
+            return False
+
+        for attribute in ('target', 'formtarget'):
+            with suppress(Exception):
+                value = await locator.get_attribute(attribute)
+                if value and value.lower() == '_blank':
+                    return True
+
+        with suppress(Exception):
+            onclick = await locator.get_attribute('onclick')
+            if onclick and 'window.open' in onclick.lower():
+                return True
+
+        return False
+
+    @staticmethod
+    def _new_context_page(context, known_pages):
+        """Return the newest page that did not exist before the click."""
+        return next(
+            (candidate for candidate in reversed(context.pages) if candidate not in known_pages),
+            None,
+        )
+
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
@@ -223,6 +253,16 @@ class BrowserClickModule(BaseModule):
         await browser.get_hints()
 
         page = browser.page
+        context = browser._context
+        known_pages = tuple(context.pages)
+        loop = asyncio.get_running_loop()
+        new_page_future = loop.create_future()
+
+        def _capture_new_page(new_page):
+            if new_page not in known_pages and not new_page_future.done():
+                new_page_future.set_result(new_page)
+
+        context.on('page', _capture_new_page)
 
         # Capture before clicking so real navigation is distinguishable from
         # an in-place SPA update after Playwright finishes the click.
@@ -236,23 +276,76 @@ class BrowserClickModule(BaseModule):
         if self.modifiers:
             click_options['modifiers'] = self.modifiers
 
-        if self.method == 'button':
-            locator, self.selector = await self._resolve_button_or_link(page)
-            await locator.click(**click_options)
-        else:
-            # Wait for element to be visible before clicking (unless force mode)
-            if not self.force:
-                await browser.wait(
-                    self.selector,
-                    state='visible',
-                    timeout_ms=self.timeout,
-                )
-            await page.click(self.selector, **click_options)
+        locator = None
+        try:
+            if self.method == 'button':
+                locator, self.selector = await self._resolve_button_or_link(page)
+            else:
+                # Wait for element to be visible before clicking (unless force mode)
+                if not self.force:
+                    await browser.wait(
+                        self.selector,
+                        state='visible',
+                        timeout_ms=self.timeout,
+                    )
+                with suppress(Exception):
+                    locator = page.locator(self.selector).first
+
+            expects_new_page = await self._expects_new_page(locator)
+
+            if self.method == 'button':
+                await locator.click(**click_options)
+            else:
+                await page.click(self.selector, **click_options)
+
+            # Page events raised by a click normally arrive before the click
+            # resolves. Yield once so Playwright can dispatch an event already
+            # queued on the transport. Explicit target=_blank/window.open
+            # actions receive a short bounded wait for slow page creation.
+            await asyncio.sleep(0)
+            new_page = (
+                new_page_future.result()
+                if new_page_future.done()
+                else self._new_context_page(context, known_pages)
+            )
+            if new_page is None and expects_new_page:
+                try:
+                    new_page = await asyncio.wait_for(
+                        asyncio.shield(new_page_future),
+                        timeout=min(2.0, self.timeout / 1000),
+                    )
+                except asyncio.TimeoutError:
+                    new_page = self._new_context_page(context, known_pages)
+        finally:
+            with suppress(Exception):
+                context.remove_listener('page', _capture_new_page)
+            if not new_page_future.done():
+                new_page_future.cancel()
+
+        if new_page is not None:
+            # A user click that opens a foreground tab should move both
+            # workflow control and live preview to that page. Without this,
+            # later browser.* nodes keep operating on the opener.
+            browser._page = new_page
+            page = new_page
 
         # Post-click: capture interactive elements of the NEW page state.
         # This ensures the next step's Element Picker sees the correct elements
         # (especially after click-induced navigation).
-        result = {"status": "success", "selector": self.selector, "method": self.method}
+        pages = context.pages
+        current_index = next(
+            (index for index, candidate in enumerate(pages) if candidate == page),
+            -1,
+        )
+        result = {
+            "status": "success",
+            "selector": self.selector,
+            "method": self.method,
+            "opened_new_tab": new_page is not None,
+            "tab_count": len(pages),
+            "current_index": current_index,
+            "url": page.url,
+        }
 
         # Wait for page to settle after click.
         # Strategy: detect real navigation vs SPA, then wait for interactive
@@ -307,4 +400,5 @@ class BrowserClickModule(BaseModule):
         for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
             if hints.get(key):
                 result[key] = hints[key]
+        result["url"] = page.url
         return result
