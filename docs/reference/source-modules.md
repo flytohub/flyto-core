@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,234 lines**, and **5,697 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,235 lines**, and **5,697 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -970,6 +970,6 @@ Inventory: **967 Python files**, **202,234 lines**, and **5,697 class/function/m
 | [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 663 | 15 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 159 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |
 | [`src/core/validation/index.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/index.py#L1) | 175 | 8 | `modules, threading, typing` | Connection Index |
-| [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 513 | 10 | `connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |
+| [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 514 | 10 | `connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |
 | [`src/core/verification_service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L1) | 476 | 27 | `__future__, aiohttp, asyncio, base64, core, dataclasses, fastapi, fnmatch, hashlib, hmac, json, logging` | Flyto2 deterministic verification runner service. |
 | [`src/recipes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/recipes/__init__.py#L1) | 1 | 0 | `none` | Implementation module; linked source is authoritative. |

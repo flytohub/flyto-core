@@ -19,7 +19,9 @@ own the first two layers or hosted product/account logic.
   `provides_capability` and `plugin`; neither is derived from the module ID.
 - Browser modules interact with pages but do not become product business logic.
   Nested templates may borrow the caller's browser state, but lifecycle
-  ownership remains with the caller.
+  ownership remains with the caller. `template.invoke` is an open parameter
+  boundary: its static schema owns invocation controls, while additional keys
+  are inputs governed by the child template's dynamic schema.
 - Workflow fixtures must stay separate from secret material and local-only
   machine assumptions.
 - Warroom modules infer observable site/action/API/state graphs from evidence;

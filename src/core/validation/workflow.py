@@ -7,11 +7,11 @@ Validates entire workflows.
 Used by flyto-cloud before save/execute.
 """
 
-from typing import List, Dict, Any, Optional, Set
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Set
 
-from .errors import ErrorCode
 from .connection import validate_connection
+from .errors import ErrorCode
 
 
 @dataclass
@@ -138,20 +138,25 @@ def validate_node_params(
 
     valid_keys = set(properties.keys()) if isinstance(properties, dict) else set()
 
-    # Check for unknown params
-    for param_key in params.keys():
-        if param_key not in valid_keys:
-            results.append(WorkflowError(
-                code=ErrorCode.UNKNOWN_PARAM,
-                message=f'Unknown parameter "{param_key}" in {node_id}',
-                path=f'nodes[{node_id}].params.{param_key}',
-                meta={
-                    'node_id': node_id,
-                    'module_id': module_id,
-                    'param': param_key,
-                    'valid_params': ', '.join(sorted(valid_keys)) or '(none)',
-                }
-            ))
+    # template.invoke is an open-parameter boundary by design: every key beyond
+    # its control fields is forwarded to the invoked template as an input.  The
+    # child template owns that dynamic schema, so validating those keys against
+    # the static registry entry would turn legitimate child inputs into false
+    # UNKNOWN_PARAM warnings.
+    if module_id != 'template.invoke':
+        for param_key in params:
+            if param_key not in valid_keys:
+                results.append(WorkflowError(
+                    code=ErrorCode.UNKNOWN_PARAM,
+                    message=f'Unknown parameter "{param_key}" in {node_id}',
+                    path=f'nodes[{node_id}].params.{param_key}',
+                    meta={
+                        'node_id': node_id,
+                        'module_id': module_id,
+                        'param': param_key,
+                        'valid_params': ', '.join(sorted(valid_keys)) or '(none)',
+                    }
+                ))
 
     # Track already-reported params to avoid duplicates
     reported_missing = set()
@@ -302,9 +307,6 @@ def validate_workflow(
         outgoing[source_id].append(target_id)
         incoming[target_id].append(source_id)
 
-    # Find start nodes (nodes with no incoming edges)
-    start_nodes = [nid for nid in node_ids if not incoming[nid]]
-
     # Validate start nodes
     start_errors = validate_start(nodes, edges)
     errors.extend(start_errors)
@@ -354,7 +356,7 @@ def validate_start(
 
     # Build incoming map
     node_ids = {n['id'] for n in nodes}
-    incoming: Dict[str, int] = {nid: 0 for nid in node_ids}
+    incoming: Dict[str, int] = dict.fromkeys(node_ids, 0)
 
     for edge in edges:
         target_id = edge.get('target')
@@ -435,8 +437,8 @@ def get_startable_modules() -> List[Dict[str, Any]]:
             ...
         ]
     """
-    from .index import ConnectionIndex
     from ..modules.registry import ModuleRegistry
+    from .index import ConnectionIndex
 
     index = ConnectionIndex.get_instance()
     results = []
@@ -475,19 +477,19 @@ def _detect_cycles(
             loop_nodes.add(nid)
 
     # DFS for cycle detection
-    WHITE, GRAY, BLACK = 0, 1, 2
-    color = {nid: WHITE for nid in node_ids}
+    white, gray, black = 0, 1, 2
+    color = dict.fromkeys(node_ids, white)
     path: List[str] = []
 
     def dfs(node: str) -> bool:
         """Returns True if cycle found"""
-        color[node] = GRAY
+        color[node] = gray
         path.append(node)
 
         for next_node in outgoing[node]:
             if next_node in loop_nodes:
                 continue  # Skip loop modules
-            if color[next_node] == GRAY:
+            if color[next_node] == gray:
                 # Found cycle
                 cycle_start = path.index(next_node)
                 cycle_path = path[cycle_start:] + [next_node]
@@ -498,16 +500,15 @@ def _detect_cycles(
                     meta={'cycle': cycle_path}
                 ))
                 return True
-            if color[next_node] == WHITE:
-                if dfs(next_node):
-                    return True
+            if color[next_node] == white and dfs(next_node):
+                return True
 
         path.pop()
-        color[node] = BLACK
+        color[node] = black
         return False
 
     for node in node_ids:
-        if node not in loop_nodes and color[node] == WHITE:
+        if node not in loop_nodes and color[node] == white:
             dfs(node)
 
     return errors

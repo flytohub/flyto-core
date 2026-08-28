@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ARIA-named controls, and hidden duplicate text now obey the same contract in
   the picker and executor; configured click timeouts and post-click navigation
   detection are also honoured.
+- Workflow validation now treats `template.invoke` as the open input boundary
+  it is at runtime. Child-template inputs are forwarded dynamically and no
+  longer produce false `UNKNOWN_PARAM` warnings against the invoker's four
+  static control fields.
 - Nested `template.invoke` steps now reuse the caller's authenticated browser
   without letting child cleanup close it, so the caller's next browser node can
   continue the same session.

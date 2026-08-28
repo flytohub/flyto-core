@@ -10,6 +10,10 @@
   Cloud EVTEK flow proved login, parent-side session reuse, visible-state
   verification, and a selector-free `kintone` link click into the portal. No
   attendance action was present or executed.
+- `template.invoke` validation accepts dynamic child-template inputs. The
+  invoker's registry schema describes its own control fields, while every
+  additional key belongs to the invoked template and is forwarded at runtime;
+  those keys are no longer mislabeled as unknown parameters.
 - Nested template invocation now hands the caller's browser runtime to the child
   without transferring lifecycle ownership. The child can log in, return, and
   let the caller's next browser node observe the same authenticated page; child

@@ -12,6 +12,12 @@ does not offer hidden links. Click honours `timeout_ms`, captures the pre-click
 URL before the action, and reports the semantic locator it used. Module copy
 now describes selector-free use; CSS/XPath remains advanced mode.
 
+The closing EVTEK save also exposed a separate validation mismatch:
+`template.invoke` forwards child-template inputs, but static validation compared
+them only with the invoker's control fields. Validation now treats those
+dynamic inputs as part of the child contract, so legitimate composed inputs do
+not create false `UNKNOWN_PARAM` warnings.
+
 ## Why
 
 The EVTEK login page exposed a visible icon-only application link whose name
@@ -29,11 +35,13 @@ The user-selected value therefore was not executable without hand-written CSS.
   run artifact records success with `method=button` and a link-role semantic
   locator.
 - Documentation, brand, changed-surface Ruff, and project-memory checks passed.
-- Full offline suite: 3,186 passed, 11 skipped, 275 deselected; 63.97%
+- Full offline suite: 3,187 passed, 11 skipped, 275 deselected; 63.97%
   coverage against the 60% floor.
 - Package sdist and wheel built successfully and passed Twine; Python and Node
   dependency audits found no known vulnerabilities.
 - Strict Indexer passed 19/19 with no warnings or failures.
+- Focused validation coverage proves ordinary modules still report unknown
+  parameters while `template.invoke` accepts dynamic child inputs.
 
 ## Not verified
 

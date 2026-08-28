@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-08-28 - Template invocation is an open input boundary
+
+Decision: static workflow validation checks the known control fields of
+`template.invoke` but does not report additional keys as unknown. Those keys
+are the invoked template's dynamic input contract and are forwarded unchanged
+by the runtime.
+
+Why: the base registry entry can only describe `template_id`, `library_id`,
+timeout, and output mapping. Cloud composes each user template on top of that
+entry. Comparing the composed inputs to the base entry produced a warning for
+every legitimate child input and left stale warnings after a child interface
+was corrected.
+
+Consequence: ordinary modules remain closed to unknown parameters. Invoked
+templates own validation of their dynamic inputs; the invoker still validates
+its required control fields.
+
 ## 2026-08-28 - Element Picker suggestions are executable semantic names
 
 Decision: button/link suggestions and `browser.click` button mode share one

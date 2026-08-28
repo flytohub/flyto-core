@@ -11,35 +11,45 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import pytest
 
-# -- errors.py imports --
-from core.validation.errors import ErrorCode, explain_error, ERROR_MESSAGES
+# Register all atomic modules so ModuleRegistry is populated
+from core.modules import atomic  # noqa: F401
 
 # -- connection.py imports --
 from core.validation.connection import (
-    _find_port,
     ConnectionResult,
-    validate_connection,
+    _data_types_compatible,
+    _find_port,
+    _get_module_category,
+    _matches_any_pattern,
+    _types_compatible,
+    _validate_connection_rules,
+    _validate_port_compatibility,
+    _validate_template_connection,
     get_connectable,
+    get_connectable_for_replacement,
     get_connectable_summary,
+    validate_connection,
+    validate_replacement,
 )
 
-# -- workflow.py imports --
-from core.validation.workflow import (
-    _evaluate_show_condition,
-    _is_field_active,
-    WorkflowError,
-    WorkflowResult,
-    validate_workflow,
-    validate_start,
-    get_startable_modules,
-)
+# -- errors.py imports --
+from core.validation.errors import ErrorCode, explain_error
 
 # -- index.py imports --
 from core.validation.index import ConnectionIndex
 
-# Register all atomic modules so ModuleRegistry is populated
-from core.modules import atomic  # noqa: F401
-
+# -- workflow.py imports --
+from core.validation.workflow import (
+    WorkflowError,
+    WorkflowResult,
+    _detect_cycles,
+    _evaluate_show_condition,
+    _is_field_active,
+    get_startable_modules,
+    validate_node_params,
+    validate_start,
+    validate_workflow,
+)
 
 # ============================================================
 # 1. errors.py
@@ -505,7 +515,6 @@ class TestConnectionIndex:
         assert index._built is True
 
     def test_rebuild_creates_new_instance(self):
-        old = ConnectionIndex.get_instance()
         new = ConnectionIndex.rebuild()
         # rebuild replaces the singleton
         assert ConnectionIndex.get_instance() is new
@@ -535,22 +544,6 @@ class TestConnectionIndex:
 # ============================================================
 # 5. Extended connection.py tests
 # ============================================================
-
-from core.validation.connection import (
-    _validate_template_connection,
-    _validate_connection_rules,
-    _get_module_category,
-    _validate_port_compatibility,
-    _types_compatible,
-    _data_types_compatible,
-    _matches_any_pattern,
-    get_connectable_for_replacement,
-    validate_replacement,
-)
-from core.validation.workflow import (
-    validate_node_params,
-    _detect_cycles,
-)
 
 
 class TestValidateTemplateConnection:
@@ -977,6 +970,25 @@ class TestValidateNodeParams:
         unknown = [e for e in errors if e.code == ErrorCode.UNKNOWN_PARAM]
         assert len(unknown) == 1
         assert "totally_fake_param" in unknown[0].message
+
+    def test_template_invoke_accepts_dynamic_child_inputs(self):
+        """Child-template inputs are not unknown params on the invoke boundary."""
+        from core.modules.atomic.template.invoke import InvokeTemplate  # noqa: F401
+
+        node = {
+            "id": "invoke-child",
+            "module_id": "template.invoke",
+            "params": {
+                "template_id": "child-template",
+                "library_id": "owned-child",
+                "timeout_seconds": 300,
+                "employee_id": "E-123",
+            },
+        }
+
+        errors = validate_node_params(node)
+
+        assert all(error.code != ErrorCode.UNKNOWN_PARAM for error in errors)
 
     def test_missing_required_param(self):
         """http.get requires 'url' — omitting it should raise MISSING_REQUIRED_PARAM."""
