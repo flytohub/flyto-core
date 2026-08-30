@@ -1,5 +1,23 @@
 # Decisions
 
+## 2026-08-30 - Browser mutation success is an explicit outcome contract
+
+Decision: `browser.click` treats action dispatch and browser effect as separate
+facts. The default remains backward compatible for ordinary clicks, but an
+element that explicitly declares a new page must produce one. Workflow authors
+may additionally require a new tab, URL change/substring, or selector
+visibility transition under a bounded timeout. A final state already true
+before the click is not evidence that the click caused it.
+
+Why: a click can return from Playwright while site JavaScript prevents the
+navigation or state change the workflow depends on. Reporting that as success
+makes a later step look broken and leaves the original no-op invisible.
+
+Consequence: workflows that need business evidence can fail at the action that
+did not produce it and receive pre/post URL plus observed-effect diagnostics.
+Ordinary legacy clicks can still request dispatch-only semantics, and the
+existing foreground-page adoption and `browser.tab` behavior do not change.
+
 ## 2026-08-29 - A click-opened foreground page becomes workflow-owned state
 
 Decision: `browser.click` listens for a new page before dispatching the click.

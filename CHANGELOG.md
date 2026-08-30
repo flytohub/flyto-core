@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `browser.click` now distinguishes a dispatched click from a verified page
+  effect. Workflows can require a new tab, URL transition, URL substring, or
+  selector visibility transition; explicit new-tab intent fails when no page
+  opens, and an already-satisfied final state cannot turn a no-op into success.
+  Results report verification and observed-effect evidence without changing
+  the existing page-adoption or `browser.tab` contract.
 - `browser.click` now captures a tab or window opened by the clicked element,
   adopts it as the current browser page, and refreshes hints from that page.
   Live preview and following browser nodes no longer remain attached to the

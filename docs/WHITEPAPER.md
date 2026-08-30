@@ -12,7 +12,7 @@ The current generated runtime catalog contains 480 modules across 88 categories
 and 41 packaged recipes. Catalog search and detail carry each module's
 registry-declared `provides_capability` and `plugin`, never a value derived from
 the module ID. Source traceability covers 967 maintained Python files,
-202,329 lines, and 5,700 class/function/method declarations. These measurements
+202,523 lines, and 5,704 class/function/method declarations. These measurements
 come from checked generators and are not hand-maintained marketing totals.
 
 ## Problem

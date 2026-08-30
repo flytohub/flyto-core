@@ -15,7 +15,7 @@ from ...schema.constants import FieldGroup
 
 @register_module(
     module_id='browser.click',
-    version='1.2.0',
+    version='1.3.0',
     category='browser',
     tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
@@ -104,6 +104,36 @@ from ...schema.constants import FieldGroup
               required=False,
               items={"type": "string", "enum": ["Alt", "Control", "Meta", "Shift"]},
               group=FieldGroup.ADVANCED),
+        field("expected_outcome", type="select",
+              label="Expected outcome",
+              description=(
+                  "Verify what the click must cause. Auto enforces a new tab when the "
+                  "element explicitly declares one."
+              ),
+              default="auto",
+              options=[
+                  {"value": "auto", "label": "Auto-detect from the element"},
+                  {"value": "new_tab", "label": "A new tab opens"},
+                  {"value": "url_change", "label": "The page URL changes"},
+                  {"value": "url_contains", "label": "The page URL contains text"},
+                  {"value": "selector_visible", "label": "An element becomes visible"},
+                  {"value": "selector_hidden", "label": "An element becomes hidden"},
+                  {"value": "click_only", "label": "Only confirm the click was dispatched"},
+              ],
+              group=FieldGroup.OPTIONS),
+        field("outcome_value", type="string",
+              label="Expected value",
+              description="URL text or selector used to verify the expected outcome",
+              required=False,
+              showIf={"expected_outcome": {"$in": ["url_contains", "selector_visible", "selector_hidden"]}},
+              group=FieldGroup.OPTIONS),
+        field("verification_timeout_ms", type="number",
+              label="Outcome timeout (ms)",
+              description="Maximum time to wait for the expected outcome",
+              default=5000,
+              min=1,
+              max=120000,
+              group=FieldGroup.OPTIONS),
         presets.TIMEOUT_MS(default=30000),
     ),
     output_schema={
@@ -118,6 +148,11 @@ from ...schema.constants import FieldGroup
         'tab_count': {'type': 'number', 'description': 'Number of tabs after the click'},
         'current_index': {'type': 'number', 'description': 'Current tab index after the click'},
         'url': {'type': 'string', 'description': 'URL of the page controlled after the click'},
+        'expected_outcome': {'type': 'string', 'description': 'Outcome contract applied to the click'},
+        'verification_status': {'type': 'string', 'description': 'Whether an outcome was verified'},
+        'effect_observed': {'type': 'boolean', 'description': 'Whether a visible browser effect was observed'},
+        'effects': {'type': 'array', 'description': 'Observed browser effects'},
+        'pre_url': {'type': 'string', 'description': 'URL controlled before the click'},
     },
     examples=[
         {
@@ -180,6 +215,39 @@ class BrowserClickModule(BaseModule):
         self.force = self.params.get('force', False)
         self.modifiers = self.params.get('modifiers', [])
         self.timeout = self.params.get('timeout_ms', 30000)
+        self.expected_outcome = self.params.get('expected_outcome', 'auto')
+        allowed_outcomes = {
+            'auto',
+            'new_tab',
+            'url_change',
+            'url_contains',
+            'selector_visible',
+            'selector_hidden',
+            'click_only',
+        }
+        if self.expected_outcome not in allowed_outcomes:
+            raise ValueError(f"Invalid expected outcome: {self.expected_outcome}")
+
+        raw_outcome_value = self.params.get('outcome_value', '')
+        if not isinstance(raw_outcome_value, str):
+            raise ValueError("Expected value must be a string")
+        self.outcome_value = raw_outcome_value.strip()
+        if (
+            self.expected_outcome in {'url_contains', 'selector_visible', 'selector_hidden'}
+            and not self.outcome_value
+        ):
+            raise ValueError(
+                f"Expected value is required for {self.expected_outcome}"
+            )
+
+        self.verification_timeout_ms = self.params.get('verification_timeout_ms', 5000)
+        if isinstance(self.verification_timeout_ms, bool) or not isinstance(
+            self.verification_timeout_ms,
+            (int, float),
+        ):
+            raise ValueError("Outcome timeout must be a number")
+        if not 1 <= self.verification_timeout_ms <= 120000:
+            raise ValueError("Outcome timeout must be between 1 and 120000ms")
 
     async def _resolve_button_or_link(self, page):
         """Resolve a visible action by accessible role and name.
@@ -244,13 +312,92 @@ class BrowserClickModule(BaseModule):
             None,
         )
 
+    @staticmethod
+    def _hint_effect_signature(hints):
+        """Return stable, semantic hint content for effect reporting.
+
+        Geometry is deliberately excluded: responsive layout and animation may
+        move an unchanged control and must not turn a no-op click into evidence.
+        """
+        if not isinstance(hints, dict):
+            return hints
+
+        def _stable(value):
+            if isinstance(value, dict):
+                return tuple(
+                    (key, _stable(item))
+                    for key, item in sorted(value.items())
+                    if key != 'rect'
+                )
+            if isinstance(value, list):
+                return tuple(_stable(item) for item in value)
+            return value
+
+        return _stable(hints)
+
+    async def _verify_page_outcome(self, browser, page, outcome, pre_url):
+        """Wait for an explicit non-tab outcome or raise with useful evidence."""
+        timeout_seconds = self.verification_timeout_ms / 1000
+        deadline = asyncio.get_running_loop().time() + timeout_seconds
+
+        if outcome in {'url_change', 'url_contains'}:
+            while True:
+                current_url = page.url
+                if outcome == 'url_change' and current_url != pre_url:
+                    return
+                if outcome == 'url_contains' and self.outcome_value in current_url:
+                    return
+                remaining = deadline - asyncio.get_running_loop().time()
+                if remaining <= 0:
+                    expectation = (
+                        'the page URL to change'
+                        if outcome == 'url_change'
+                        else f"the page URL to contain {self.outcome_value!r}"
+                    )
+                    raise RuntimeError(
+                        f"Click was dispatched but expected {expectation} within "
+                        f"{self.verification_timeout_ms}ms; current URL is {current_url!r}"
+                    )
+                await asyncio.sleep(min(0.05, remaining))
+
+        if outcome in {'selector_visible', 'selector_hidden'}:
+            state = 'visible' if outcome == 'selector_visible' else 'hidden'
+            try:
+                await browser.wait(
+                    self.outcome_value,
+                    state=state,
+                    timeout_ms=self.verification_timeout_ms,
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Click was dispatched but expected {self.outcome_value!r} to become "
+                    f"{state} within {self.verification_timeout_ms}ms"
+                ) from exc
+
+    async def _outcome_already_satisfied(self, page, outcome, pre_url):
+        """Reject outcome contracts that are true before the click.
+
+        A final state is only evidence of a click effect when the page was not
+        already in that state. This keeps explicit verification from silently
+        accepting a no-op.
+        """
+        if outcome == 'url_contains':
+            return self.outcome_value in pre_url
+        if outcome in {'selector_visible', 'selector_hidden'}:
+            visible_count = await page.locator(self.outcome_value).filter(
+                visible=True,
+            ).count()
+            is_visible = visible_count > 0
+            return is_visible if outcome == 'selector_visible' else not is_visible
+        return False
+
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         # Pre-action: refresh element hints to ensure we have current page state
-        await browser.get_hints()
+        pre_hints = await browser.get_hints()
 
         page = browser.page
         context = browser._context
@@ -277,7 +424,19 @@ class BrowserClickModule(BaseModule):
             click_options['modifiers'] = self.modifiers
 
         locator = None
+        new_page = None
+        effective_outcome = self.expected_outcome
         try:
+            if await self._outcome_already_satisfied(
+                page,
+                effective_outcome,
+                pre_url,
+            ):
+                raise RuntimeError(
+                    f"Expected outcome {effective_outcome!r} was already satisfied "
+                    "before the click; no click effect could be verified"
+                )
+
             if self.method == 'button':
                 locator, self.selector = await self._resolve_button_or_link(page)
             else:
@@ -308,14 +467,28 @@ class BrowserClickModule(BaseModule):
                 if new_page_future.done()
                 else self._new_context_page(context, known_pages)
             )
-            if new_page is None and expects_new_page:
+            if effective_outcome == 'auto' and expects_new_page:
+                effective_outcome = 'new_tab'
+
+            wait_for_new_page = expects_new_page or effective_outcome == 'new_tab'
+            if new_page is None and wait_for_new_page:
                 try:
                     new_page = await asyncio.wait_for(
                         asyncio.shield(new_page_future),
-                        timeout=min(2.0, self.timeout / 1000),
+                        timeout=min(
+                            self.verification_timeout_ms / 1000,
+                            self.timeout / 1000,
+                        ),
                     )
                 except asyncio.TimeoutError:
                     new_page = self._new_context_page(context, known_pages)
+
+            if effective_outcome == 'new_tab' and new_page is None:
+                raise RuntimeError(
+                    "Click was dispatched but expected a new tab within "
+                    f"{self.verification_timeout_ms}ms; tab count stayed at "
+                    f"{len(context.pages)}"
+                )
         finally:
             with suppress(Exception):
                 context.remove_listener('page', _capture_new_page)
@@ -328,6 +501,9 @@ class BrowserClickModule(BaseModule):
             # later browser.* nodes keep operating on the opener.
             browser._page = new_page
             page = new_page
+
+        if effective_outcome not in {'auto', 'click_only', 'new_tab'}:
+            await self._verify_page_outcome(browser, page, effective_outcome, pre_url)
 
         # Post-click: capture interactive elements of the NEW page state.
         # This ensures the next step's Element Picker sees the correct elements
@@ -345,6 +521,13 @@ class BrowserClickModule(BaseModule):
             "tab_count": len(pages),
             "current_index": current_index,
             "url": page.url,
+            "expected_outcome": effective_outcome,
+            "verification_status": (
+                "not_requested"
+                if effective_outcome == 'auto'
+                else "verified"
+            ),
+            "pre_url": pre_url,
         }
 
         # Wait for page to settle after click.
@@ -400,5 +583,16 @@ class BrowserClickModule(BaseModule):
         for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
             if hints.get(key):
                 result[key] = hints[key]
+        effects = []
+        if new_page is not None:
+            effects.append('new_tab')
+        if page.url != pre_url:
+            effects.append('url_change')
+        if self._hint_effect_signature(hints) != self._hint_effect_signature(pre_hints):
+            effects.append('page_content_change')
+        if effective_outcome in {'selector_visible', 'selector_hidden'}:
+            effects.append(effective_outcome)
+        result['effects'] = effects
+        result['effect_observed'] = bool(effects)
         result["url"] = page.url
         return result

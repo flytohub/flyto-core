@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **967 Python files**, **202,329 lines**, and **5,700 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **967 Python files**, **202,523 lines**, and **5,704 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -243,7 +243,7 @@ Inventory: **967 Python files**, **202,329 lines**, and **5,700 class/function/m
 | [`src/core/modules/atomic/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/__init__.py#L1) | 74 | 0 | `challenge, click, close, connect, console, cookies, cookies_file, detect, detect_list, dialog, download, drag` | Atomic Browser Operations Browser automation modules using Playwright |
 | [`src/core/modules/atomic/browser/_hints.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L1) | 727 | 1 | `logging` | Shared interactive element hints extraction for browser modules. |
 | [`src/core/modules/atomic/browser/challenge.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/challenge.py#L1) | 350 | 3 | `asyncio, base, base64, core, logging, registry, schema, time, typing` | Browser Challenge Module — Auto-detect and handle anti-bot challenges |
-| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 404 | 7 | `asyncio, base, contextlib, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
+| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 598 | 11 | `asyncio, base, contextlib, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
 | [`src/core/modules/atomic/browser/close.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/close.py#L1) | 89 | 3 | `base, registry, typing` | Browser Close Module |
 | [`src/core/modules/atomic/browser/connect.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L1) | 156 | 3 | `base, core, logging, playwright, registry, schema, typing, utils` | Browser Connect Module — Connect to remote browser services |
 | [`src/core/modules/atomic/browser/console.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/console.py#L1) | 108 | 4 | `asyncio, base, registry, schema, typing` | Browser Console Module |

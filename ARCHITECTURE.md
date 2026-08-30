@@ -18,6 +18,9 @@ own the first two layers or hosted product/account logic.
 - Catalog search and detail carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
 - Browser modules interact with pages but do not become product business logic.
+  Mutating browser actions may expose an explicit expected-outcome contract;
+  dispatch success and observed page effect remain separate facts, and a
+  pre-existing final state is not accepted as evidence caused by the action.
   Nested templates may borrow the caller's browser state, but lifecycle
   ownership remains with the caller. `template.invoke` is an open parameter
   boundary: its static schema owns invocation controls, while additional keys
@@ -27,7 +30,7 @@ own the first two layers or hosted product/account logic.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  967 maintained Python files, 5,700 declarations, 487 literal module
+  967 maintained Python files, 5,704 declarations, 487 literal module
   registrations, 28 HTTP operations, 108 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 

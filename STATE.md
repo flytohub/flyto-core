@@ -2,6 +2,14 @@
 
 ## Current State
 
+- `browser.click` 1.3.0 separates click dispatch from verified browser effect.
+  Workflows can require a new tab, URL change/substring, or selector
+  visibility transition with a bounded timeout. An explicit `_blank` or
+  `window.open` intent automatically requires a new page; no page means step
+  failure instead of false success. Explicit state contracts are rejected when
+  their final state was already true before the click. Results expose the
+  applied contract, verification status, pre/post URL, and observed effects.
+  Existing tab adoption and `browser.tab` behavior are unchanged.
 - `browser.click` button/link mode now executes the same semantic contract the
   Element Picker presents: visible actions are named by accessible name,
   including `aria-label`, `aria-labelledby`, and icon-image `alt` text. Hidden
@@ -280,7 +288,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,700
+- Source-backed documentation now covers 967 maintained Python files, 5,704
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

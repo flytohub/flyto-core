@@ -48,6 +48,11 @@
 
 ## Done
 
+- Made `browser.click` outcome-aware without changing tab ownership: explicit
+  popup intent fails when no page opens; optional URL/selector contracts verify
+  a real transition; output separates dispatch, verification, and observed
+  effects; unit and real-Chromium regressions cover false-success boundaries.
+
 - Added the three-module verified deterministic domain-solver baseline,
   registration-validated semantic contracts, hashed manifest/catalog projection,
   canonical evidence receipts, and focused known-answer/falsification coverage.
