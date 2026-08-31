@@ -4,17 +4,135 @@
 Autonomous Agent Module
 
 Self-directed AI agent with memory and goal-oriented behavior.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+One return path, one rung: ACCEPTED. The agent runs no tools -- every iteration
+is an LLM call and the only thing that leaves this process is a request to a
+provider. Reaching the return means N completions came back, which is the peer
+acknowledging its own work and is the whole of what is claimed.
+
+THE FIELD THIS MODULE MUST NOT REST A RUNG ON is `goal_achieved`. It is
+produced here:
+
+    if any(keyword in thought.lower()
+           for keyword in ['completed', 'achieved', 'finished', 'done', 'final answer']):
+
+A substring scan of prose the model wrote about itself. It is not a check that
+the goal was reached; it is not even a reliable check that the model *said* the
+goal was reached. Measured against its own keyword list:
+
+  * "I have not finished this yet"     contains "finished"  -> True
+  * "I abandoned that approach"        contains "done"      -> True
+  * "this cannot be completed"         contains "completed" -> True
+
+so the field reads True for an agent explicitly reporting failure. That is left
+as it is rather than swapped for a different heuristic -- word boundaries would
+fix "abandoned" and still not fix "not finished", and quietly replacing one
+guess with a slightly better guess is how a guess keeps its air of measurement.
+What changes is that the envelope now says exactly what the boolean is measured
+by, so nothing downstream can read it as a verified outcome. It is reported as
+`goal_achieved_is_a_substring_match`, and no rung anywhere in this file moves
+because of it.
+
+WHY MAX-ITERATIONS IS NOT INDETERMINATE HERE, though `llm.agent` makes it so.
+There, exhausting the loop leaves tools half-run and the world in a state nobody
+can describe. Here the loop only produces text: whether it ended on the keyword
+scan or on the iteration ceiling, the same fact holds either way -- N
+completions came back and nothing else happened. The uncertainty is about the
+GOAL, and the goal was never declared as a postcondition, so it is not a
+question this axis answers.
+
+The failure path raises, and no envelope can ride on a raise in this engine.
 """
 
 import logging
 from typing import Any, Dict, List
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....base import BaseModule
 from ....registry import register_module
 from .....constants import OLLAMA_DEFAULT_URL, APIEndpoints
 from .llm_client import LLMClientMixin
 
 logger = logging.getLogger(__name__)
+
+
+#: The one sentence this module owes anybody reading `goal_achieved`.
+_GOAL_FLAG_IS_A_GUESS = {
+    'kind': 'goal_achieved_is_a_substring_match',
+    'measured_by': (
+        "`any(keyword in thought.lower())` over "
+        "['completed', 'achieved', 'finished', 'done', 'final answer'] "
+        "against text the model wrote about itself"
+    ),
+    'detail': (
+        'Not a check that the goal was reached, and not a reliable check that '
+        'the model claimed it was. "I have not finished" contains "finished"; '
+        '"I abandoned that" contains "done". The flag reads True for an agent '
+        'reporting failure, so no rung rests on it and nothing downstream '
+        'should render it as a completed task.'
+    ),
+}
+
+
+def _loop_never_ran(max_iterations: Any) -> Dict[str, Any]:
+    """FAILED: zero iterations, so nobody was asked anything.
+
+    `max_iterations` is read straight off the params with no bounds check --
+    `validate_params` does `self.params.get('max_iterations', 5)` and the
+    schema's `min: 1` is never enforced, because this class does not opt into
+    `auto_validate_schema`. So `range(0)` is reachable, and it returns the
+    ordinary success shape: `result` is "", `thoughts` is [], `ok` is implicit.
+    ACCEPTED on that path would say a provider acknowledged something when no
+    request was ever built.
+    """
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'agent_loop_never_ran',
+            'max_iterations': max_iterations,
+            'measured_by': 'len(thoughts) == 0 after the reasoning loop',
+            'detail': (
+                'The iteration ceiling admitted no passes, so no completion was '
+                'requested and nothing was billed. The empty result this returns '
+                'is not an answer.'
+            ),
+        }],
+    )
+
+
+def _agent_answered(
+    *,
+    provider: str,
+    model: str,
+    iterations: int,
+    max_iterations: int,
+    goal_achieved: bool,
+) -> Dict[str, Any]:
+    """ACCEPTED: N completions came back. Nothing about the goal was evaluated."""
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'reasoning_completions_returned',
+                'provider': provider,
+                'model': model,
+                'iterations': iterations,
+                'max_iterations': max_iterations,
+                'stopped_on': 'keyword_scan' if goal_achieved else 'iteration_ceiling',
+                'measured_by': 'len() of the thoughts collected, one per _call_llm return',
+                'detail': (
+                    'Each iteration is the provider reporting on its own work. '
+                    'This agent invokes no tools, so nothing outside this process '
+                    'changed except the provider\'s billing.'
+                ),
+            },
+            _GOAL_FLAG_IS_A_GUESS,
+        ],
+    )
 
 
 @register_module(
@@ -131,8 +249,22 @@ logger = logging.getLogger(__name__)
                 'description_key': 'modules.agent.autonomous.output.thoughts.description', 'items': {'type': 'string'}},
         'iterations': {'type': 'number', 'description': 'The iterations',
                 'description_key': 'modules.agent.autonomous.output.iterations.description'},
-        'goal_achieved': {'type': 'boolean', 'description': 'The goal achieved',
-                'description_key': 'modules.agent.autonomous.output.goal_achieved.description'}
+        'goal_achieved': {'type': 'boolean',
+                'description': (
+                    'True when the last thought contained any of the words '
+                    'completed/achieved/finished/done/"final answer". A substring '
+                    "match on the model's own prose, not a check that the goal "
+                    'was reached -- "I have not finished" sets it True'
+                ),
+                'description_key': 'modules.agent.autonomous.output.goal_achieved.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far this run was followed into reality: always '
+                    '"accepted" on the return path -- N completions came back and '
+                    'this agent runs no tools, so nothing else happened. Never '
+                    'derived from goal_achieved, which is a substring match'
+                ),
+                'description_key': 'modules.agent.autonomous.output.outcome.description'}
     },
     examples=[
         {
@@ -234,7 +366,18 @@ Be concise but thorough. Focus on achieving the goal efficiently."""
                 "result": result,
                 "thoughts": thoughts,
                 "iterations": len(thoughts),
-                "goal_achieved": goal_achieved
+                "goal_achieved": goal_achieved,
+                "outcome": (
+                    _agent_answered(
+                        provider=self.llm_provider,
+                        model=self.model,
+                        iterations=len(thoughts),
+                        max_iterations=self.max_iterations,
+                        goal_achieved=goal_achieved,
+                    )
+                    if thoughts
+                    else _loop_never_ran(self.max_iterations)
+                ),
             }
 
         except Exception as e:

@@ -4,6 +4,37 @@
 Twilio Communication Integration Modules
 
 Provides SMS and voice call operations with Twilio.
+
+HOW FAR THESE TWO MODULES FOLLOW REALITY: accepted, and Twilio says so itself.
+
+A 201 from ``/Messages`` or ``/Calls`` comes back with a resource whose
+``status`` field is ``queued`` (or ``accepted``, or ``initiated`` for a call).
+Twilio is not reporting a delivered SMS or an answered phone -- it is reporting
+that it has taken the request and put it in its own queue. That is the clearest
+statement of ACCEPTED anywhere in this product: the peer acknowledged taking it,
+in the peer's own vocabulary, and the vocabulary explicitly excludes the thing a
+reader would otherwise assume.
+
+So the `status` these modules return is worth reading twice. ``queued`` is not
+``delivered``; ``initiated`` is not ``answered``. Twilio reports what actually
+happened later, asynchronously, to a status-callback URL, and neither module
+sets one or reads one. Nobody's phone has buzzed as far as this code knows.
+
+OBSERVED would need a second request -- ``GET /Messages/{sid}`` and a check that
+``status`` had moved to ``delivered`` -- and neither module makes one. Adding it
+would change what these calls cost and how long they take, which is a change to
+the modules and not to what they may report. VERIFIED is unreachable: no
+postcondition is declared and none is evaluated.
+
+WHAT CARRIES NOTHING: every failure. Both modules wrap their whole body in
+``except Exception`` and re-raise as ``RuntimeError``, so a non-2xx, a timeout
+and a `KeyError` from a reply missing ``sid`` all become a StepExecutionError
+with the payload discarded. A timed-out POST is the textbook INDETERMINATE and
+matters here more than most -- ``retryable=True`` with `max_retries` of 3 and 2
+means a retried SMS is a second SMS, and a retried call is a second phone
+ringing. Reporting it needs these modules to return a payload instead of
+raising, which is a change to their error semantics and not a declaration's
+business.
 """
 import logging
 import os
@@ -12,9 +43,61 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ....constants import APIEndpoints, EnvVars
+from ....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _twilio_accepted(*, kind: str, sid: str, status: str, to: str, http_status: int) -> Dict[str, Any]:
+    """ACCEPTED -- Twilio queued it, and told us that is what it did.
+
+    `kind` is 'message' or 'call'. The measurement is the resource Twilio
+    returned in the reply to this POST: a server-assigned sid, and a lifecycle
+    status of its own choosing. Both are Twilio reporting on Twilio's work.
+
+    The second effect exists because the first one is so easy to over-read. A
+    sid and a 201 look like proof something reached a person; what they prove is
+    that Twilio has the request. Delivery and answer are reported later to a
+    status callback that neither module sets.
+    """
+    arrival = (
+        'A queued message is not a delivered one. Twilio reports delivery '
+        'later to a status-callback URL, which this module does not set and '
+        'does not read; no handset has been reached as far as this code knows.'
+        if kind == 'message' else
+        'A queued call is not an answered one. Twilio reports the call '
+        'lifecycle later to a status-callback URL, which this module does not '
+        'set and does not read; nobody has picked up as far as this code knows.'
+    )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': f'{kind}_accepted_by_twilio',
+                'sid': sid,
+                'twilio_status': status,
+                'http_status': http_status,
+                'measured_by': (
+                    f'the sid and status Twilio returned for this {kind}, on a '
+                    f'{http_status} reply to this POST'
+                ),
+                'detail': (
+                    "Twilio acknowledged the request and gave it a sid. The "
+                    "status is Twilio's own word for how far it has got -- "
+                    "'queued', 'accepted' and 'initiated' all mean it has the "
+                    "request and has not finished with it."
+                ),
+            },
+            {
+                'kind': 'delivery_not_observed',
+                'to': to,
+                'measured_by': None,
+                'detail': arrival,
+            },
+        ],
+    )
 
 
 @register_module(
@@ -111,7 +194,16 @@ logger = logging.getLogger(__name__)
         'to': {'type': 'string', 'description': 'The to',
                 'description_key': 'modules.communication.twilio.send_sms.output.to.description'},
         'from': {'type': 'string', 'description': 'The from',
-                'description_key': 'modules.communication.twilio.send_sms.output.from.description'}
+                'description_key': 'modules.communication.twilio.send_sms.output.from.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this send was followed into reality. Always '
+                '"accepted": Twilio queued the message and assigned it a sid. '
+                'Delivery to the handset is reported later to a status callback '
+                'this module does not set'
+            ),
+            'description_key': 'modules.communication.twilio.send_sms.output.outcome.description'}
     },
     examples=[
         {
@@ -189,7 +281,14 @@ class TwilioSendSMSModule(BaseModule):
                         "sid": result['sid'],
                         "status": result['status'],
                         "to": result['to'],
-                        "from": result['from']
+                        "from": result['from'],
+                        "outcome": _twilio_accepted(
+                            kind='message',
+                            sid=result['sid'],
+                            status=result['status'],
+                            to=result['to'],
+                            http_status=response.status,
+                        ),
                     }
 
         except Exception as e:
@@ -281,7 +380,15 @@ class TwilioSendSMSModule(BaseModule):
         'sid': {'type': 'string', 'description': 'The sid'},
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'to': {'type': 'string', 'description': 'The to'},
-        'from': {'type': 'string', 'description': 'The from'}
+        'from': {'type': 'string', 'description': 'The from'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this call was followed into reality. Always '
+                '"accepted": Twilio queued the call and assigned it a sid. '
+                'Whether anyone answers is reported later to a status callback '
+                'this module does not set'
+            )}
     },
     examples=[
         {
@@ -351,7 +458,14 @@ class TwilioMakeCallModule(BaseModule):
                         "sid": result['sid'],
                         "status": result['status'],
                         "to": result['to'],
-                        "from": result['from']
+                        "from": result['from'],
+                        "outcome": _twilio_accepted(
+                            kind='call',
+                            sid=result['sid'],
+                            status=result['status'],
+                            to=result['to'],
+                            http_status=response.status,
+                        ),
                     }
 
         except Exception as e:

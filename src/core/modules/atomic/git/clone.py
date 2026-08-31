@@ -3,6 +3,45 @@
 """
 Git Clone Module
 Clone a git repository to a local path
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+`git.clone` is the one module in this group that earns OBSERVED without needing
+a baseline, and the reason is a property of git rather than a cleverness here:
+`git clone` refuses a destination that already exists and is not empty. So when
+it exits 0, whatever is at the destination was put there by this clone, and
+reading a commit object out of it is a reading of durable state that could not
+have been there before.
+
+    a commit object resolves at the destination     OBSERVED
+        `git -C destination rev-parse HEAD` walks a real object store on the
+        local disk and prints an object name. If no clone had happened there
+        would be no repository to ask, and the answer would be the module's
+        'unknown' sentinel. That is the test this contract runs on every value,
+        and this one passes it.
+
+    git exited 0 and no commit resolves             ACCEPTED
+        Cloning an EMPTY repository is a success with an unborn HEAD, and
+        `rev-parse` fails. The clone was accepted and nothing was read back.
+        Reported honestly rather than smoothed into the OBSERVED case, which
+        would have made "the remote had no commits" indistinguishable from "we
+        confirmed the history landed".
+
+    the URL or the target was refused               FAILED
+    git exited non-zero, or is not installed        FAILED
+        Definite refusals. No repository was created.
+
+    an exception escaped mid-clone                  INDETERMINATE
+        The `try` below spans the subprocess AND the read-back. An exception can
+        land after `git clone` has already written a tree, so whether anything
+        exists at the destination is exactly what is not known. This is the one
+        place in this module where a retry is not obviously safe, and collapsing
+        it into the FAILED paths would hide that.
+
+VERIFIED is not reachable and none is declared. What a caller wants verified is
+"the destination holds the history of that URL at that branch"; this module
+reads a sha and a branch name out of the clone without ever comparing them to
+the remote, so there is no predicate here that has been evaluated.
 """
 
 import asyncio
@@ -11,6 +50,7 @@ import re
 from typing import Any, Dict
 from urllib.parse import urlparse, urlunparse
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import (
     SSRFError,
     enforce_outbound_host,
@@ -147,6 +187,82 @@ def _sanitize_error(error_msg: str, token: str = None) -> str:
     return error_msg
 
 
+#: git object names in both hash algorithms git can be configured with. Used to
+#: tell a measurement apart from `_get_repo_info`'s 'unknown' sentinel, which is
+#: a string like any other and would otherwise be read as evidence.
+_OBJECT_NAME = re.compile(r'^[0-9a-f]{40}$|^[0-9a-f]{64}$')
+
+
+def _refused(kind: str, detail: str, **fields: Any) -> Dict[str, Any]:
+    """The envelope for a path where no repository was created.
+
+    FAILED on all of them. Two are refusals by this module before anything was
+    spawned, two are git itself exiting non-zero, and in every case the
+    destination is known not to hold a clone. "We cannot say" would be a weaker
+    statement than the one the code can actually make.
+    """
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[dict({'kind': kind, 'measured_by': None, 'detail': detail}, **fields)],
+    )
+
+
+def _clone_outcome(
+    *,
+    destination: str,
+    commit_hash: str,
+    branch: str,
+) -> Dict[str, Any]:
+    """The rung this clone earned; two cases, decided by the read-back.
+
+    The decision is whether `commit_hash` is an object name or the 'unknown'
+    string `_get_repo_info` substitutes when `rev-parse` fails. Those are not
+    the same kind of value and the pattern test is what keeps them apart -- a
+    sentinel that travels in a field typed 'string' is exactly how a
+    non-measurement gets read as a measurement.
+    """
+    if _OBJECT_NAME.match(commit_hash or ''):
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'git_repository_cloned',
+                'path': destination,
+                'commit': commit_hash,
+                'branch': branch,
+                'measured_by': (
+                    'git -C <destination> rev-parse HEAD, against the object '
+                    'store the clone wrote'
+                ),
+                'detail': (
+                    'A commit object resolves inside the destination, which git '
+                    'clone would have refused to write into had it already '
+                    'existed non-empty. Not a claim about completeness: nothing '
+                    'here compares the local history against the remote, and a '
+                    'shallow clone resolves a sha exactly like a full one.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'git_clone_not_read_back',
+            'path': destination,
+            'branch': branch,
+            'measured_by': None,
+            'detail': (
+                'git clone exited 0 and no commit object could be resolved at '
+                'the destination. The ordinary cause is a remote with no '
+                'commits, which clones successfully onto an unborn HEAD. The '
+                'clone was accepted; nothing about its contents was observed.'
+            ),
+        }],
+    )
+
+
 @register_module(
     module_id='git.clone',
     version='1.0.0',
@@ -203,7 +319,22 @@ def _sanitize_error(error_msg: str, token: str = None) -> str:
             'properties': {
                 'path': {'type': 'string', 'description': 'Local repository path'},
                 'branch': {'type': 'string', 'description': 'Current branch'},
-                'commit': {'type': 'string', 'description': 'HEAD commit hash'},
+                'commit': {
+                    'type': 'string',
+                    'description': (
+                        'HEAD commit hash, or the literal "unknown" when HEAD could '
+                        'not be resolved in the clone (an empty remote). Check it '
+                        'against an object-name pattern before reading it as a sha'
+                    ),
+                },
+                'outcome': {
+                    'type': 'object',
+                    'description': (
+                        'How far this clone was followed into reality: observed when a '
+                        'commit object resolved at the destination, accepted when none '
+                        'did, indeterminate when an exception escaped mid-clone'
+                    ),
+                },
             }
         }
     },
@@ -250,7 +381,16 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
         _validate_clone_url(url)
     except UnsafeCloneURL as e:
         logger.error(f"Git clone refused unsafe url: {e}")
-        return {'ok': False, 'error': f'Unsafe clone url: {e}', 'error_code': 'UNSAFE_URL'}
+        return {
+            'ok': False,
+            'error': f'Unsafe clone url: {e}',
+            'error_code': 'UNSAFE_URL',
+            'outcome': _refused(
+                'git_clone_url_refused',
+                'The clone URL was refused before git was spawned; nothing left this process.',
+                destination=destination,
+            ),
+        }
 
     # SECURITY: and where it points. _validate_clone_url bounds the transport;
     # this bounds the destination, so an internal git host or the metadata
@@ -259,7 +399,17 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
         _guard_clone_target(url)
     except SSRFError as e:
         logger.warning("Git clone blocked by SSRF guard")
-        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
+        return {
+            'ok': False,
+            'error': str(e),
+            'error_code': 'SSRF_BLOCKED',
+            'outcome': _refused(
+                'git_clone_target_refused',
+                'The clone target was refused by the outbound guard before git was '
+                'spawned; nothing left this process.',
+                destination=destination,
+            ),
+        }
 
     clone_url = _inject_token_into_url(url, token) if token and url.startswith('https://') else url
     cmd = _build_clone_cmd(clone_url, destination, branch, depth)
@@ -274,15 +424,71 @@ async def git_clone(context: Dict[str, Any]) -> Dict[str, Any]:
         if process.returncode != 0:
             error_msg = _sanitize_error(stderr.decode('utf-8', errors='replace').strip(), token)
             logger.error(f"Git clone failed: {error_msg}")
-            return {'ok': False, 'error': f'Git clone failed: {error_msg}', 'error_code': 'CLONE_FAILED'}
+            return {
+                'ok': False,
+                'error': f'Git clone failed: {error_msg}',
+                'error_code': 'CLONE_FAILED',
+                'outcome': _refused(
+                    'git_clone_rejected',
+                    'git clone exited non-zero. git removes a destination it created '
+                    'and failed to populate, so no repository was left behind.',
+                    destination=destination,
+                    exit_code=process.returncode,
+                ),
+            }
 
         current_branch, commit_hash = await _get_repo_info(destination)
         logger.info(f"Git clone: {url} -> {destination} (branch={current_branch}, commit={commit_hash[:8]})")
-        return {'ok': True, 'data': {'path': destination, 'branch': current_branch, 'commit': commit_hash}}
+        return {
+            'ok': True,
+            'data': {
+                'path': destination,
+                'branch': current_branch,
+                'commit': commit_hash,
+                'outcome': _clone_outcome(
+                    destination=destination,
+                    commit_hash=commit_hash,
+                    branch=current_branch,
+                ),
+            },
+        }
 
     except FileNotFoundError:
-        return {'ok': False, 'error': 'git command not found. Ensure git is installed.', 'error_code': 'GIT_NOT_FOUND'}
+        return {
+            'ok': False,
+            'error': 'git command not found. Ensure git is installed.',
+            'error_code': 'GIT_NOT_FOUND',
+            'outcome': _refused(
+                'git_binary_absent',
+                'The git executable could not be spawned, so nothing left this process.',
+                destination=destination,
+            ),
+        }
     except Exception as e:
         error_msg = _sanitize_error(str(e), token)
         logger.error(f"Git clone error: {error_msg}")
-        return {'ok': False, 'error': error_msg, 'error_code': 'CLONE_ERROR'}
+        # INDETERMINATE, and the only path in this module that is. The `try`
+        # spans `communicate()` AND the read-back, so an exception here can land
+        # either side of a clone that already wrote a tree. Whether anything
+        # exists at the destination is what is not known -- which also makes
+        # this the one error a caller must not blindly retry into.
+        return {
+            'ok': False,
+            'error': error_msg,
+            'error_code': 'CLONE_ERROR',
+            'outcome': envelope(
+                Outcome.INDETERMINATE,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'git_clone_raised',
+                    'destination': destination,
+                    'error': f'{type(e).__name__}: {_sanitize_error(str(e), token)}',
+                    'measured_by': None,
+                    'detail': (
+                        'An exception was raised while driving git clone. The '
+                        'destination was not inspected afterwards, so whether a '
+                        'partial or complete repository exists there is not known.'
+                    ),
+                }],
+            ),
+        }

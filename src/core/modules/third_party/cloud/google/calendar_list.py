@@ -3,12 +3,32 @@
 """
 Google Calendar List Events Module
 List upcoming events from Google Calendar using the Calendar API with OAuth2 and aiohttp.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: two rungs, decided per call.
+
+  the response carried events    OBSERVED
+      Each entry in `events` is an id, a summary and a time the service returned
+      for an event that exists in the calendar. Nothing is inferred and nothing
+      restates the caller's input. A listing changes nothing, so what is
+      observed is state rather than an effect -- the same reading
+      `database.query` gives a read that returned rows.
+
+  the response carried none      ACCEPTED
+      An empty `items` reads identically whether the window is genuinely empty,
+      `timeMin` excluded everything, or the token belongs to the wrong account.
+      `count: 0` would be unchanged had there been nothing to observe, so it is
+      not evidence and the claim stops at "the service answered".
+
+`singleEvents=true` and `maxResults` are in the query, so the count is what came
+back under that window and that cap -- never a total. The effect says so rather
+than leaving a bare integer to be read as one.
 """
 
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -77,6 +97,15 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
             },
         },
         'count': {'type': 'number', 'description': 'Number of events returned', 'description_key': 'modules.google.calendar.list_events.output.count.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this listing was followed into reality: observed when '
+                'the service returned events, accepted when it returned none -- '
+                'an empty window and a wrong account read the same'
+            ),
+            'description_key': 'modules.google.calendar.list_events.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -107,8 +136,49 @@ async def google_calendar_list_events(context: Dict[str, Any]) -> Dict[str, Any]
 
     return {
         'ok': True,
-        'data': {'events': events, 'count': len(events)},
+        'data': {
+            'events': events,
+            'count': len(events),
+            'outcome': _listing_outcome(events, time_min, time_max, max_results),
+        },
     }
+
+
+def _listing_outcome(
+    events: List[Dict[str, Any]], time_min: str, time_max: str, max_results: int
+) -> Dict[str, Any]:
+    """OBSERVED when events came back, ACCEPTED when none did."""
+    window = {'time_min': time_min, 'time_max': time_max or None, 'max_results': max_results}
+    if not events:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_events_returned',
+                'window': window,
+                'measured_by': None,
+                'detail': (
+                    'The service answered with no items. That is not an observation '
+                    'of the calendar: an empty window, a timeMin that excluded '
+                    'everything and a token for the wrong account all read the same.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'events_returned',
+            'window': window,
+            'count': len(events),
+            'measured_by': 'len() over the items the service returned',
+            'detail': (
+                'Events the service reports exist in this window. Capped by '
+                'maxResults, so the count is what came back under that cap, never a '
+                'total for the calendar.'
+            ),
+        }],
+    )
 
 
 async def _fetch_events(access_token: str, max_results: int, time_min: str, time_max: str) -> Dict[str, Any]:

@@ -3,6 +3,35 @@
 """
 AI Embed Module
 Generate embeddings from text using OpenAI or local models.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED, and no higher. Vectors coming back are the provider reporting on its
+own work: it ran a model we paid for and told us the numbers. Nothing here
+measures a consequence in the world, so there is nothing to observe. A 200 with
+a body is "the other side acknowledged taking it", which is what ACCEPTED means.
+
+Two predicates the CALLER asked for are evaluated on every response, and either
+one failing is FAILED rather than a lower rung -- `outcome.py` reserves FAILED
+for exactly this, an expectation somebody else stated that was adjudicated and
+did not hold:
+
+  * one vector per input. The caller handed `texts`; a response with a different
+    number of vectors silently misaligns every downstream index.
+  * `dimensions`, when the caller supplied it. `text-embedding-3-*` accepts the
+    parameter, and a vector of another width breaks whatever index it is written
+    into.
+
+Neither predicate can raise the rung when it holds. Both are facts about the
+shape of the peer's own answer, not about the world, and VERIFIED means a
+DECLARED postcondition held -- this module declares none, so `ceiling_for(None)`
+caps it at OBSERVED, and it has nothing to observe either.
+
+`token_count` is the provider's own billing figure, carried as an effect labelled
+as such. No line here checks it against anything.
+
+The error paths raise (`ValidationError`, `ModuleError`) rather than returning,
+so they carry no envelope: there is no result dict for one to live in.
 """
 
 import logging
@@ -11,11 +40,75 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...errors import ModuleError, ValidationError
 from ...registry import register_module
 from ...schema import compose, field
 
 logger = logging.getLogger(__name__)
+
+
+def _embedding_outcome(
+    *,
+    model: str,
+    texts_requested: int,
+    embeddings: List[Any],
+    dimensions_requested: Optional[int],
+    dimensions_returned: int,
+    token_count: Any,
+) -> Dict[str, Any]:
+    """The rung these vectors earned, and the caller contracts they were held to."""
+    returned_effect = {
+        'kind': 'embeddings_returned',
+        'model': model,
+        'count': len(embeddings),
+        'dimensions': dimensions_returned,
+        'tokens_billed_by_provider': token_count,
+        'measured_by': "len() over the vectors in the provider's response body",
+        'detail': (
+            'The provider ran an embedding model and returned the vectors. Counting '
+            'them measures the answer, not the world: it says the peer replied, not '
+            'that anything was embedded correctly or stored anywhere.'
+        ),
+    }
+
+    broken = []
+    if len(embeddings) != texts_requested:
+        broken.append({
+            'kind': 'embedding_count_unmet',
+            'predicate': 'len(embeddings) == len(texts)',
+            'expected': texts_requested,
+            'actual': len(embeddings),
+            'measured_by': "len() over the vectors in the provider's response body",
+            'detail': (
+                'The caller handed a set of texts and got a different number of '
+                'vectors back. Every position downstream is now attached to the '
+                'wrong text.'
+            ),
+        })
+    if dimensions_requested is not None and dimensions_returned != dimensions_requested:
+        broken.append({
+            'kind': 'embedding_dimensions_unmet',
+            'predicate': 'len(embeddings[0]) == dimensions',
+            'expected': dimensions_requested,
+            'actual': dimensions_returned,
+            'measured_by': 'len() over the first vector returned',
+            'detail': (
+                'The caller asked for a specific width and the vectors came back '
+                'at another. Anything indexed on the requested width will reject '
+                'or corrupt these.'
+            ),
+        })
+
+    if broken:
+        return envelope(
+            Outcome.FAILED,
+            claim_by=ClaimBy.CALLER,
+            postcondition='; '.join(effect['predicate'] for effect in broken),
+            effects=[returned_effect] + broken,
+        )
+
+    return envelope(Outcome.ACCEPTED, effects=[returned_effect])
 
 
 @register_module(
@@ -127,6 +220,16 @@ logger = logging.getLogger(__name__)
             'type': 'number',
             'description': 'Total tokens consumed',
             'description_key': 'modules.ai.embed.output.token_count.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this call was followed into reality: accepted when '
+                'vectors came back, failed when the count or the width the '
+                'caller asked for did not hold. Never higher than accepted -- '
+                'the vectors are the provider describing its own work'
+            ),
+            'description_key': 'modules.ai.embed.output.outcome.description',
         },
     },
 
@@ -253,5 +356,16 @@ async def _call_openai_embed(
                 'model': data.get('model', model),
                 'dimensions': actual_dimensions,
                 'token_count': token_count,
+                # Inside `data`: to_legacy_dict keeps `ok` and `data` and
+                # discards every sibling, so an envelope written next to them
+                # would never leave the step.
+                'outcome': _embedding_outcome(
+                    model=data.get('model', model),
+                    texts_requested=len(texts),
+                    embeddings=embeddings,
+                    dimensions_requested=dimensions,
+                    dimensions_returned=actual_dimensions,
+                    token_count=token_count,
+                ),
             },
         }

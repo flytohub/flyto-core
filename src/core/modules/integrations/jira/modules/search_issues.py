@@ -4,6 +4,28 @@
 Jira Search Issues Module
 
 Search issues using JQL query.
+
+HOW FAR THE SEARCH IS FOLLOWED
+
+ACCEPTED. Jira answered and handed back issue objects; nothing here reads
+anything a second time, and for a search there is nothing to read back -- the
+reply is the whole of what happened.
+
+TWO NUMBERS, AND THEY ANSWER DIFFERENT QUESTIONS. `len(issues)` is one page:
+`max_results` caps it, `startAt` is never advanced, and no cursor is followed.
+`total` is Jira's own count of everything the JQL matched. Reporting the first
+as if it were the second is `database.query`'s row-count trap, so both travel
+in the effect with the page size that bounded them.
+
+`total` has a second edge worth naming. It is read as `data.get("total", 0)`,
+so when a Jira response omits the field the 0 that lands in the payload is a
+literal written in this module, not a number that crossed the wire -- and 0
+matching issues and "Jira did not say" read identically afterwards. The effect
+carries `total_reported` so the two stay distinguishable.
+
+THE ERROR PATH IS FAILED, never indeterminate: a search that Jira refused
+returned no issues and altered nothing, so there is no effect left in doubt --
+only data we do not have.
 """
 
 import os
@@ -12,7 +34,9 @@ from typing import Any, Dict
 from ....base import BaseModule
 from ....registry import register_module
 from ...base import resolve_credential
+from ...outcomes import peer_answered, read_refused
 from ..integration import JiraIntegration
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 @register_module(
@@ -74,8 +98,28 @@ from ..integration import JiraIntegration
     },
     output_schema={
         "ok": {"type": "boolean", "description": "Whether the operation was successful"},
-        "issues": {"type": "array", "description": "List of matching issues"},
-        "total": {"type": "number", "description": "Total number of matching issues"},
+        "issues": {
+            "type": "array",
+            "description": (
+                "One page of matching issues, bounded by max_results. Not the "
+                "whole result set -- no paging is done here"
+            ),
+        },
+        "total": {
+            "type": "number",
+            "description": (
+                "Jira's own count of matching issues, or a literal 0 when the "
+                "response omitted the field -- see outcome.effects.total_reported"
+            ),
+        },
+        "outcome": {
+            "type": "object",
+            "description": (
+                'How far the search was followed: "accepted" when Jira answered, '
+                '"failed" when it did not. Never higher -- one request, its reply, '
+                'and nothing read back'
+            ),
+        },
     },
     author="Flyto2 Team",
     license="MIT",
@@ -136,9 +180,45 @@ class JiraSearchIssuesModule(BaseModule):
                     "ok": True,
                     "issues": issues,
                     "total": data.get("total", 0),
+                    "outcome": envelope(
+                        Outcome.ACCEPTED,
+                        claim_by=ClaimBy.NONE,
+                        effects=[
+                            peer_answered("jira", response.status),
+                            {
+                                "kind": "issues_returned",
+                                "count": len(issues),
+                                "max_results_requested": self.max_results,
+                                "total": data.get("total", 0),
+                                # False means the 0 beside it was written here,
+                                # not sent by Jira. Newer Jira Cloud search
+                                # endpoints omit `total` entirely.
+                                "total_reported": "total" in data,
+                                "measured_by": (
+                                    "len() over the issues array Jira returned, and "
+                                    "the total field of that same body"
+                                ),
+                                "detail": (
+                                    "count is ONE PAGE -- max_results bounds it, "
+                                    "startAt is never advanced, and no cursor is "
+                                    "followed -- while total is Jira's own count of "
+                                    "everything the JQL matched. When total_reported "
+                                    "is false, the total beside it is a literal 0 "
+                                    "from this module and says nothing about the "
+                                    "result set."
+                                ),
+                            },
+                        ],
+                    ),
                 }
             else:
                 return {
                     "ok": False,
                     "error": response.error,
+                    "outcome": read_refused(
+                        service="jira",
+                        status=response.status,
+                        resource="issues",
+                        error=response.error,
+                    ),
                 }

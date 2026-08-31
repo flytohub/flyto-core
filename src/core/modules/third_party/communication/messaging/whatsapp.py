@@ -3,17 +3,136 @@
 """
 WhatsApp Business API Module
 Send messages via WhatsApp Business API (Meta Cloud API).
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted, and it will not go higher.
+
+A 200 from ``/{phone_number_id}/messages`` carrying ``messages: [{"id":
+"wamid..."}]`` is Meta saying it has taken the message and queued it for
+delivery. A server-assigned id in the reply to this very request is a real
+answer from the other side -- much more than DISPATCHED, which is what the
+engine stamps on a module that reports nothing -- and it is the definition of
+ACCEPTED: the peer acknowledged taking it.
+
+DELIVERY IS SOMEWHERE ELSE ENTIRELY, and on this API that is not a technicality.
+The Cloud API reports delivery asynchronously, through webhook status callbacks
+(``sent`` -> ``delivered`` -> ``read``) that arrive later at a different
+endpoint. None of them is visible here. Worse, a message Meta accepts can be
+returned with ``message_status: held_for_quality_assessment`` -- taken, given an
+id, and deliberately not delivered. That field is recorded in the envelope when
+Meta sends it, because a consumer reading ``status: 'sent'`` beside a held
+message has been told the opposite of what happened.
+
+WHEN NO ID COMES BACK the claim is thinner and says so: a 2xx whose body
+carries no ``messages`` array leaves only the status line, and the effect names
+that instead of implying an id existed.
+
+THE ERROR PATH returns ``ok: False``, which makes `wrap_legacy_result` build an
+ERROR result and drop ``data`` on the way out of the step -- so the envelope
+there will not reach a consumer today. It is attached anyway, for the reason
+`dns.lookup` gives for the same shape: the fact is true whether or not a
+consumer exists yet. It splits on the status: a 4xx is Meta refusing by name and
+sending nothing, which is FAILED; anything else broke with the request already
+in Meta's hands, which is INDETERMINATE, and `retryable=True, max_retries=3`
+makes that distinction the difference between one message and two.
 """
 import logging
-from typing import Any
+from typing import Any, Dict
 
 import aiohttp
 
 from ....base import BaseModule
 from ....registry import register_module
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _accepted(status: int, message_id: str, message_status: Any, to: str) -> Dict[str, Any]:
+    """ACCEPTED -- Meta took the message. Delivery happens elsewhere, later.
+
+    Two shapes of the same rung. With an id, the evidence is the id Meta
+    assigned; without one, it is only the status line, and the effect says which
+    of the two this was rather than letting a reader assume the stronger one.
+    """
+    if message_id:
+        taken = {
+            'kind': 'message_accepted_by_whatsapp',
+            'status': status,
+            'message_id': message_id,
+            'measured_by': 'the wamid Meta returned in messages[0].id, on a 2xx reply',
+            'detail': (
+                'Meta acknowledged the message and assigned it an id. That is '
+                "the service's report of its own work; nothing is read back."
+            ),
+        }
+    else:
+        taken = {
+            'kind': 'message_accepted_without_id',
+            'status': status,
+            'measured_by': 'response.status alone -- the reply carried no messages[] array',
+            'detail': (
+                'Meta answered with a success code and no message id. The claim '
+                'rests on the status line only, which is weaker than the usual '
+                'path and is recorded as such rather than assumed away.'
+            ),
+        }
+
+    effects = [taken]
+
+    if message_status:
+        effects.append({
+            'kind': 'whatsapp_message_status',
+            'message_status': message_status,
+            'measured_by': 'messages[0].message_status in the reply',
+            'detail': (
+                'Meta reported this status for the message it took. '
+                "'held_for_quality_assessment' means accepted and deliberately "
+                'NOT delivered -- the payload still reports status "sent".'
+            ),
+        })
+
+    effects.append({
+        'kind': 'delivery_not_observed',
+        'to': to,
+        'measured_by': None,
+        'detail': (
+            'The Cloud API reports delivery asynchronously through webhook '
+            'status callbacks (sent -> delivered -> read) that arrive later at '
+            'a different endpoint. Nothing here sees any of them.'
+        ),
+    })
+
+    return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+def _refused(status: int, body: str) -> Dict[str, Any]:
+    """The off-ladder answer for a reply that was not a 2xx.
+
+    FAILED for a 4xx: Meta read the request, rejected it by name -- an expired
+    token, a number not on WhatsApp, a template that does not exist -- and sent
+    nothing. INDETERMINATE otherwise: a 5xx broke with the request already
+    taken, so the message may be on its way, and calling that FAILED would tell
+    a person nothing was sent when something may have been.
+    """
+    definite = 400 <= status < 500
+    return envelope(
+        Outcome.FAILED if definite else Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'message_refused_by_whatsapp' if definite else 'whatsapp_answer_inconclusive',
+            'status': status,
+            'response': body[:500],
+            'measured_by': 'response.status, against the 200/201 this module accepts',
+            'detail': (
+                'Meta answered and named a reason; no message was created.'
+                if definite else
+                'Meta did not answer with a success code, and the request was '
+                'already in its hands. Whether anything was queued for delivery '
+                'is not knowable from here.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -112,7 +231,15 @@ logger = logging.getLogger(__name__)
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the operation succeeded'},
-        'data': {'type': 'object', 'description': 'Response data with status, message_id, and to'}
+        'data': {
+            'type': 'object',
+            'description': (
+                'Response data with status, message_id, to, and outcome. '
+                '`status` reads "sent" for every accepted message, including '
+                'one Meta is holding undelivered; `outcome` carries what Meta '
+                'actually said'
+            )
+        }
     },
     examples=[
         {
@@ -208,16 +335,24 @@ class WhatsAppSendMessageModule(BaseModule):
 
                     # Extract message ID from response
                     message_id = ''
+                    message_status = None
                     messages = data.get('messages', [])
                     if messages:
                         message_id = messages[0].get('id', '')
+                        # Meta sends this when it has taken a message and is NOT
+                        # delivering it. Read here so the envelope can say so;
+                        # `status` below stays 'sent' either way.
+                        message_status = messages[0].get('message_status')
 
                     return {
                         'ok': True,
                         'data': {
                             'status': 'sent',
                             'message_id': message_id,
-                            'to': self.to
+                            'to': self.to,
+                            'outcome': _accepted(
+                                response.status, message_id, message_status, self.to
+                            ),
                         }
                     }
                 else:
@@ -226,6 +361,7 @@ class WhatsAppSendMessageModule(BaseModule):
                         'ok': False,
                         'data': {
                             'status': 'error',
-                            'message': f'Failed to send message: HTTP {response.status} - {error_text}'
+                            'message': f'Failed to send message: HTTP {response.status} - {error_text}',
+                            'outcome': _refused(response.status, error_text),
                         }
                     }

@@ -9,6 +9,38 @@ Implements a stdlib-only cron parser supporting standard 5-field expressions:
 
 Supports: *, specific values, ranges (1-5), steps (*/5), lists (1,3,5),
 and named values (MON-SUN, JAN-DEC).
+
+WHY THIS MODULE HAS NO RUNG, AND DECLARES SO
+
+`scheduler.cron_parse` is in the side-effecting population because
+`outcome.is_side_effecting` keys on the part of a module id before the first
+dot, and `scheduler` is on the list for "creates future work". This module
+creates none. It splits a string into five fields, expands them into sets of
+integers, and walks a `datetime` forward until enough matches accumulate.
+Nothing is registered with a scheduler, no timer is set, and nothing will run
+at any of the times it returns: `next_runs` is a forecast, and a caller that
+throws it away has undone the whole effect.
+
+So there is no effect to follow, and every rung would be a statement about one.
+`dispatched` -- what the engine stamps on a side-effecting module that reports
+nothing -- would be the wrong answer rather than a cautious one, because no
+instruction left this process. `observed` would be worse: there is nothing
+outside the workflow to have observed.
+
+`derives=True` is the declaration for exactly this, and it is the same answer
+`file.diff` gives for the same reason. It must be declared rather than
+inferred, because "needs no contract" and "has not been given one yet" are
+otherwise indistinguishable in the data.
+
+Two things it is worth being explicit about, since `derives` reads as a strong
+statement:
+
+  * The module reads the wall clock -- `_calculate_next_runs` starts from
+    `datetime.now(tz)` -- so the output is not a function of the parameters
+    alone. Reading a clock observes nothing and changes nothing.
+  * `is_valid` in the output is a literal `True` on the only path that reaches
+    it; an invalid expression raises instead. It is not a check whose False
+    branch anyone will ever see, and no rung rests on it.
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -345,6 +377,12 @@ def _describe_expression(expression: str) -> str:
 
     retryable=False,
     concurrent_safe=True,
+
+    # The return value IS the effect: an expression in, a forecast out, nothing
+    # scheduled and nothing outside the workflow touched. See the module
+    # docstring for why the `scheduler.` prefix does not make this
+    # side-effecting.
+    derives=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,

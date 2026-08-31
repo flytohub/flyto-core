@@ -3,13 +3,45 @@
 """
 Sandbox Execute Shell Module
 Execute a shell command with timeout and environment control.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two returns, both `ok: True`, and the envelope is the only field that separates
+them.
+
+  the shell exited                            OBSERVED
+      `proc.returncode` is the status the kernel recorded for a reaped child,
+      and stdout/stderr are the bytes the command wrote. Nothing here is
+      derivable from `command`.
+
+      OBSERVED for a non-zero exit too, and the difference from `shell.exec` is
+      worth being explicit about, because the two modules look alike.
+      `shell.exec` turns a non-zero exit into `ok: False` and therefore calls it
+      INDETERMINATE -- the comparison to zero is an inference about what the
+      caller wanted, and it is wrong for the many commands that answer with
+      exit status (`grep` exits 1 for "no match" having worked). This module
+      makes no such inference: it hands back the code and leaves `ok` True. The
+      claim is that the command ran and ended this way, which is what was
+      measured.
+
+  the timeout killed it                       INDETERMINATE
+      The command was killed part-way. Anything it had already done -- files
+      written, requests sent -- is done and is not undone by the kill, and the
+      `exit_code: -1` with empty `stdout` on that path are defaults written in
+      this file rather than readings, because `wait_for` cancels
+      `communicate()` and the pipe buffers die with it. Whether the work
+      happened is precisely what cannot be said.
+
+Validation failures (missing command, absent working directory) raise instead
+of returning, so no dict exists there to carry an envelope.
 """
 import asyncio
 import logging
 import os
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose
@@ -19,6 +51,58 @@ from ...errors import ValidationError, ModuleError
 from .safe_env import build_sandbox_env
 
 logger = logging.getLogger(__name__)
+
+
+def _exited_outcome(*, exit_code: int, stdout: str, stderr: str) -> Dict[str, Any]:
+    """The envelope for a command that ran to completion and was reaped."""
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'process_exited',
+        'exit_code': exit_code,
+        'measured_by': 'proc.returncode after communicate() returned',
+        'detail': (
+            'The status the kernel recorded for the shell. It says the command '
+            'ran and how it ended. No postcondition was evaluated, and a '
+            'non-zero status is reported, not judged.'
+        ),
+    }]
+    if stdout:
+        effects.append({
+            'kind': 'stdout',
+            'bytes': len(stdout.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stdout pipe',
+        })
+    if stderr:
+        effects.append({
+            'kind': 'stderr',
+            'bytes': len(stderr.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stderr pipe',
+        })
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+def _timed_out_outcome(*, timeout: int) -> Dict[str, Any]:
+    """The envelope for a command we killed because we stopped waiting."""
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'process_started',
+                'measured_by': 'the shell was spawned by create_subprocess_shell',
+            },
+            {
+                'kind': 'process_killed',
+                'after_seconds': timeout,
+                'measured_by': 'proc.kill() after asyncio.wait_for timed out',
+                'detail': (
+                    'Only the shell is killed. Anything it already did stands, '
+                    'and children it spawned may still be running. The exit_code '
+                    'of -1 and empty stdout in this result are defaults, not '
+                    'readings.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -112,6 +196,16 @@ logger = logging.getLogger(__name__)
             'description': 'Execution time in milliseconds',
             'description_key': 'modules.sandbox.execute_shell.output.execution_time_ms.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the execution was followed: observed when the command '
+                'exited and its status was read, indeterminate when the timeout '
+                'killed it. Both returns say ok:true, so this is the field that '
+                'tells them apart'
+            ),
+            'description_key': 'modules.sandbox.execute_shell.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -192,6 +286,7 @@ async def sandbox_execute_shell(context: Dict[str, Any]) -> Dict[str, Any]:
                     'stderr': 'Command timed out after {} seconds'.format(timeout),
                     'exit_code': -1,
                     'execution_time_ms': elapsed_ms,
+                    'outcome': _timed_out_outcome(timeout=timeout),
                 },
             }
 
@@ -213,6 +308,11 @@ async def sandbox_execute_shell(context: Dict[str, Any]) -> Dict[str, Any]:
                 'stderr': stderr,
                 'exit_code': exit_code,
                 'execution_time_ms': elapsed_ms,
+                'outcome': _exited_outcome(
+                    exit_code=exit_code,
+                    stdout=stdout,
+                    stderr=stderr,
+                ),
             },
         }
     except Exception as e:

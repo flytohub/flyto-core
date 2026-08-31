@@ -3,6 +3,33 @@
 """
 Network Port Scan Module
 Scan ports on a host to check which are open.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+A completed TCP handshake is about as direct a measurement of the world as this
+registry contains: something on the far end accepted a connection, and no
+report by a peer about itself is involved. `open_ports` is therefore evidence
+and the rung rests on it.
+
+`closed_ports` is not evidence, and the output field's name is the reason this
+needed care. Three different outcomes land in it -- a RST (the host is up and
+nothing is listening), a timeout (something dropped the packet, or the host is
+gone), and any other socket error -- and the probe used to collapse all three
+into `False` before anything could tell them apart. A scan that returns
+`open_ports: []` would then read identically whether every port was refused by
+a live host or every packet vanished into a firewall, which is precisely the
+"would this value be the same if the effect had not happened" failure this
+contract exists to stop.
+
+So the probe now reports which of the three happened, `closed_ports` keeps its
+old contents exactly, and the rung is decided from the distinction:
+
+    a port accepted a connection          OBSERVED
+    nothing accepted, something refused   OBSERVED  (the host answered)
+    nothing accepted, nothing refused     DISPATCHED (SYNs left, silence back)
+
+DISPATCHED and not INDETERMINATE for the last one: we do know the packets left,
+which is exactly what the bottom rung says and more than "we cannot tell".
 """
 import asyncio
 import logging
@@ -11,6 +38,7 @@ import time
 from typing import Any, Dict, List, Union
 
 from ....utils import enforce_outbound_host
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -21,6 +49,96 @@ logger = logging.getLogger(__name__)
 
 # Common well-known ports for default scanning
 DEFAULT_PORTS = [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 3389, 5432, 8080, 8443]
+
+#: What one TCP probe found. Three answers, because collapsing the last two
+#: into "closed" is what made a silent scan indistinguishable from a refused
+#: one. `closed_ports` in the output still contains REFUSED and SILENT alike --
+#: this distinction exists for the outcome envelope, not to reclassify results.
+PROBE_OPEN = 'open'
+PROBE_REFUSED = 'refused'
+PROBE_SILENT = 'silent'
+
+
+def _scan_outcome(
+    *,
+    host: str,
+    ports_probed: int,
+    open_count: int,
+    refused_count: int,
+    silent_count: int,
+) -> Dict[str, Any]:
+    """The rung this scan earned, and the probe counts that earned it.
+
+    OBSERVED twice, for two different observations, which is why they are
+    separate effect kinds rather than one:
+
+    * `tcp_connections_accepted` -- a listener completed a handshake. The
+      strongest thing here.
+    * `tcp_connections_refused` -- no listener, but the host sent a RST. That
+      is the host answering: it observes that the machine is up and reachable,
+      and nothing about any service on it.
+
+    DISPATCHED when neither happened. Every probe timed out or errored, so the
+    only fact is that the connection attempts left this machine. `closed_ports`
+    is still fully populated on that path and still says "closed"; the envelope
+    is where a consumer finds out that nothing confirmed it.
+    """
+    counts = {
+        'host': host,
+        'ports_probed': ports_probed,
+        'open': open_count,
+        'refused': refused_count,
+        'silent': silent_count,
+    }
+
+    if open_count > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'tcp_connections_accepted',
+                'measured_by': 'asyncio.open_connection returning a writer',
+                **counts,
+                'detail': (
+                    'At least one port completed a TCP handshake. Something on '
+                    'the far end accepted the connection; what it is was not '
+                    'asked and is not claimed.'
+                ),
+            }],
+        )
+
+    if refused_count > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'tcp_connections_refused',
+                'measured_by': 'ConnectionRefusedError from asyncio.open_connection',
+                **counts,
+                'detail': (
+                    'No port accepted a connection, but the host actively '
+                    'refused at least one. The refusal is an answer from the '
+                    'host, so its reachability is observed even though no '
+                    'service was found.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.DISPATCHED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'tcp_no_response',
+            'measured_by': None,
+            **counts,
+            'detail': (
+                'Every probe timed out or errored: connection attempts left '
+                'this machine and nothing came back. The ports listed as '
+                'closed may be closed, filtered, or on a host that is not '
+                'there at all -- this scan cannot tell those apart.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -105,6 +223,16 @@ DEFAULT_PORTS = [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 3389, 54
             'description': 'Total scan time in milliseconds',
             'description_key': 'modules.network.port_scan.output.scan_time_ms.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this scan was followed: "observed" when a port '
+                'accepted or the host refused a connection, "dispatched" when '
+                'every probe met silence -- in which case closed_ports may be '
+                'closed, filtered, or a host that is not there'
+            ),
+            'description_key': 'modules.network.port_scan.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -156,22 +284,32 @@ async def network_port_scan(context: Dict[str, Any]) -> Dict[str, Any]:
     # Scan all ports concurrently
     sem = asyncio.Semaphore(200)  # limit concurrency
 
-    async def _check_port(port: int) -> bool:
+    async def _check_port(port: int) -> str:
         async with sem:
-            return await _is_port_open(host, port, timeout)
+            return await _probe_port(host, port, timeout)
 
     tasks = [_check_port(port) for port in port_list]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     open_ports = []
     closed_ports = []
+    refused_count = 0
+    silent_count = 0
     for port, result in zip(port_list, results):
-        if isinstance(result, Exception):
+        # An exception escaping the gather is neither a refusal nor a timeout --
+        # it is the probe itself failing -- so it counts as silence, which is
+        # the answer that claims the least.
+        if isinstance(result, BaseException):
             closed_ports.append(port)
-        elif result:
+            silent_count += 1
+        elif result == PROBE_OPEN:
             open_ports.append(port)
         else:
             closed_ports.append(port)
+            if result == PROBE_REFUSED:
+                refused_count += 1
+            else:
+                silent_count += 1
 
     open_ports.sort()
     closed_ports.sort()
@@ -190,26 +328,47 @@ async def network_port_scan(context: Dict[str, Any]) -> Dict[str, Any]:
             'open_ports': open_ports,
             'closed_ports': closed_ports,
             'scan_time_ms': elapsed_ms,
+            'outcome': _scan_outcome(
+                host=host,
+                ports_probed=len(port_list),
+                open_count=len(open_ports),
+                refused_count=refused_count,
+                silent_count=silent_count,
+            ),
         },
     }
 
 
-async def _is_port_open(host: str, port: int, timeout: float) -> bool:
-    """Check if a single port is open using TCP connect."""
+async def _probe_port(host: str, port: int, timeout: float) -> str:
+    """One TCP probe: PROBE_OPEN, PROBE_REFUSED or PROBE_SILENT.
+
+    Three answers rather than a bool because a refusal and a timeout are
+    different facts about the world -- the first is the host talking to us, the
+    second is nothing at all -- and the caller cannot recover the difference
+    once they have been collapsed. ``ConnectionRefusedError`` is a subclass of
+    ``OSError``, so it must be tested first.
+    """
     try:
         _, writer = await asyncio.wait_for(
             asyncio.open_connection(host, port),
             timeout=timeout,
         )
         writer.close()
-        # Compatibility: wait_for close if available
+        # Compatibility: wait_for close if available.
+        #
+        # OSError is caught here and not by the outer handler on purpose: the
+        # handshake has already completed by this point, so a reset while
+        # tearing the connection down is not evidence that the port was shut.
+        # Letting it fall through would report an open port as silent.
         try:
             await writer.wait_closed()
-        except AttributeError:
+        except (AttributeError, OSError):
             pass
-        return True
-    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
-        return False
+        return PROBE_OPEN
+    except ConnectionRefusedError:
+        return PROBE_REFUSED
+    except (asyncio.TimeoutError, OSError):
+        return PROBE_SILENT
 
 
 def _parse_ports(ports_input: Union[str, list, None]) -> List[int]:

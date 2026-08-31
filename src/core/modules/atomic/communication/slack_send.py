@@ -3,11 +3,40 @@
 """
 Slack Send Module
 Send messages to Slack channels via webhook
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted, and it cannot go higher.
+
+An incoming webhook answers 200 when Slack has taken the message and posted it
+to the channel behind the URL. That is Slack reporting on Slack's own work --
+one status line, read off the reply to the request this module just sent -- and
+taking a peer's word for its own work is the definition of ACCEPTED. It is
+worth attaching all the same, because the alternative was never OBSERVED: it was
+DISPATCHED, which is what the engine stamps on a module that reports nothing,
+and "the instruction left us and nobody confirmed anything" is untrue of a call
+that came back 200.
+
+OBSERVED would need a second call -- `conversations.history` on the channel,
+finding the message -- and nothing here makes one. Nor is a posted message a
+read one: nobody in that channel has seen anything, and the rung is not allowed
+to imply they have.
+
+VERIFIED is unreachable: no postcondition is declared and none is evaluated, so
+`ceiling_for(None)` caps this at OBSERVED regardless.
+
+THE ERROR PATHS CARRY NOTHING, and that is a real gap rather than a decision.
+A non-200 raises RuntimeError and an SSRF-blocked URL raises ValueError; both
+become a StepExecutionError with the payload discarded, so a 404 from a revoked
+webhook and a timeout mid-POST -- the textbook INDETERMINATE, and one that
+matters because `retryable=True, max_retries=3` can post the same message twice
+-- reach a consumer as the same bare exception. Attaching an envelope there
+means returning a payload instead of raising, which is a change to this
+module's error semantics and not a declaration's business.
 """
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import guarded_client_session, enforce_outbound_url, SSRFError
@@ -59,7 +88,16 @@ logger = logging.getLogger(__name__)
             'type': 'boolean',
             'description': 'Whether message was sent successfully'
         ,
-                'description_key': 'modules.slack.send.output.sent.description'}
+                'description_key': 'modules.slack.send.output.sent.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this post was followed into reality. Always "accepted": '
+                'Slack answered 200 for the message it took. Nobody has read it, '
+                'and the channel is not read back'
+            )
+        ,
+                'description_key': 'modules.slack.send.output.outcome.description'}
     },
     examples=[
         {
@@ -127,7 +165,37 @@ async def slack_send(context: Dict[str, Any]) -> Dict[str, Any]:
                 logger.info("Slack message sent successfully")
                 return {
                     'ok': True,
-                    'sent': True
+                    'sent': True,
+                    'outcome': envelope(
+                        Outcome.ACCEPTED,
+                        claim_by=ClaimBy.NONE,
+                        effects=[
+                            {
+                                'kind': 'webhook_accepted_by_slack',
+                                'status': response.status,
+                                'channel': channel,
+                                'measured_by': (
+                                    'response.status -- the status line of the '
+                                    'reply to this POST'
+                                ),
+                                'detail': (
+                                    'Slack answered 200, which is Slack saying it '
+                                    'took the message and posted it. That is its '
+                                    'report of its own work: no channel is read '
+                                    'back anywhere in this module.'
+                                ),
+                            },
+                            {
+                                'kind': 'nobody_has_read_it',
+                                'measured_by': None,
+                                'detail': (
+                                    'A posted message is not a read one. Nothing '
+                                    'here observes a person seeing it, and this '
+                                    'rung does not imply one did.'
+                                ),
+                            },
+                        ],
+                    ),
                 }
             else:
                 text = await response.text()

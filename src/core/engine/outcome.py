@@ -264,13 +264,32 @@ def default_for(module_id: str, metadata: Optional[Dict[str, Any]] = None) -> Op
     and teach every consumer to ignore the field. What makes an undeclared
     module visible is the ratchet counting it, not the runtime decorating it.
 
-    Never VERIFIED, under any circumstance. A default that claimed it would
-    mark 149 side-effecting modules compliant overnight while verifying
+    ``derives`` reaches VERIFIED and is the ONLY thing that may, because for a
+    pure computation the return value *is* the effect — there is nothing else to
+    observe, and the postcondition is the function's own definition. It applies
+    only to modules that are not side-effecting, and that ordering is the whole
+    guard: the first version of this function checked ``derives`` before asking
+    whether the module changes anything outside the workflow, and three
+    side-effecting modules — ``file.diff``, ``scheduler.interval``,
+    ``scheduler.cron_parse`` — declared it and were stamped VERIFIED with
+    ``postcondition: None`` and ``effects: []``. A green tick with nothing
+    behind it, produced by the default that exists to prevent exactly that.
+
+    Never VERIFIED for anything that touches the world. A default that claimed
+    it would mark 200 side-effecting modules compliant overnight while verifying
     nothing, which would be the largest deliberate false green in this project.
     """
+    if is_side_effecting(module_id, metadata):
+        return Outcome.DISPATCHED
     if (metadata or {}).get("derives"):
         return Outcome.VERIFIED
-    return Outcome.DISPATCHED if is_side_effecting(module_id, metadata) else None
+    return None
+
+
+#: The postcondition a derived module's stamp carries. Not None: an envelope
+#: claiming VERIFIED with no predicate named is unreadable, and `ceiling_for`
+#: uses exactly that absence to decide a claim may not stand.
+DERIVES_POSTCONDITION = "the return value is the effect; there is nothing else to observe"
 
 
 def read_envelope(payload: Any) -> Optional[Dict[str, Any]]:

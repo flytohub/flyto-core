@@ -3,12 +3,80 @@
 """
 MongoDB Find Module
 Query documents from MongoDB collection.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+One payload-returning path, two rungs:
+
+    documents came back    OBSERVED    `len(documents)` over dicts motor decoded
+        from BSON the server sent, after `to_list` drained the cursor. Nothing
+        is inferred; each document is state read out of the database.
+    none came back         ACCEPTED    `len([]) == 0` is not an observation of
+        anything. The server answered, and the answer contains no document.
+
+The empty case is held to ACCEPTED for the same reason as in `database.query`,
+and it is worth saying why the softer reading was refused. Unlike a SQL result
+set, `collection.find` cannot be a write, so it is tempting to read an empty
+result as a positive observation that nothing matches the filter. That reading
+needs the filter to be the whole story, and it is not: `limit` is applied to
+this cursor, a projection can be malformed, and a collection or database name
+that does not exist returns an empty cursor rather than an error -- a typo in
+`params['collection']` produces exactly the payload a correct query over an
+empty collection produces. `count == 0` therefore does not distinguish "nothing
+matches" from "we asked the wrong place", and a rung that said OBSERVED would be
+asserting the first.
+
+`count` is also NOT the number of documents matching the filter. It is the
+number returned, capped by `limit` (default 100). The effect says so, because an
+integer that is silently a page size and not a total is how a workflow comes to
+believe a collection has exactly 100 documents in it.
+
+VERIFIED is unreachable and no postcondition is declared -- nothing here
+evaluates a predicate -- so `ceiling_for(None)` caps this at OBSERVED.
 """
 import os
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose, presets
 from ._dsn_target import enforce_dsn_target
+
+
+def _found_documents_outcome(count, limit):
+    """OBSERVED for documents the server sent, ACCEPTED for an empty answer."""
+    if count <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_documents_returned',
+                'backend': 'mongodb',
+                'measured_by': None,
+                'detail': (
+                    'The server answered and returned no documents. That is not '
+                    'an observation that nothing matches: a database or '
+                    'collection name that does not exist returns an empty '
+                    'cursor rather than an error, so this payload is identical '
+                    'to the one a typo in the collection name produces.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'documents_returned',
+            'backend': 'mongodb',
+            'count': count,
+            'limit': limit,
+            'measured_by': 'len() over documents motor decoded from the server',
+            'detail': (
+                'Documents RETURNED, capped by limit. Not the number of '
+                'documents matching the filter: a count equal to limit means '
+                'the page was full, not that the collection holds that many.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -58,9 +126,23 @@ from ._dsn_target import enforce_dsn_target
                 'description_key': 'modules.db.mongodb.find.output.documents.description'},
         'count': {
             'type': 'number',
-            'description': 'Number of documents returned'
+            'description': (
+                'Number of documents RETURNED, capped by limit. Not the number '
+                'matching the filter -- a count equal to limit means the page '
+                'was full, not that the collection holds that many'
+            )
         ,
-                'description_key': 'modules.db.mongodb.find.output.count.description'}
+                'description_key': 'modules.db.mongodb.find.output.count.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed: observed when documents came '
+                'back off the wire, accepted when the server answered with none. '
+                'Never higher than observed -- nothing here evaluates a '
+                'postcondition'
+            )
+        ,
+                'description_key': 'modules.db.mongodb.find.output.outcome.description'}
     },
     examples=[
         {
@@ -142,7 +224,8 @@ async def mongodb_find(context):
 
         return {
             'documents': documents,
-            'count': len(documents)
+            'count': len(documents),
+            'outcome': _found_documents_outcome(len(documents), limit),
         }
     finally:
         client.close()

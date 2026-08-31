@@ -4,13 +4,68 @@
 Browser PDF Module
 
 Generate PDF from current page.
+
+``size = stat if exists else 0``, and ``status: success`` either way — the same
+pattern `browser.download` carries, and the same fix. A 0 that came from the
+filesystem and a 0 written in this file arrived under one key, so "the PDF is
+empty" and "there is no PDF" were indistinguishable to every consumer.
+
+    the file is on disk      st_size is a real read-back      -> OBSERVED
+    the file is not there    page.pdf() returned and left
+                             nothing we can find              -> INDETERMINATE
+
+INDETERMINATE and not FAILED: no postcondition was declared about the output
+path, ``page.pdf()`` did not raise, and something outside this process may have
+moved the file. What is known is that we cannot find it.
+
+Note what OBSERVED does NOT say here. A byte count is not a page count and not a
+rendering: a PDF written from a page that failed to load is a valid, non-empty
+file of a blank page. The rung claims the file exists with that many bytes in
+it, and nothing about what is drawn inside.
 """
 from typing import Any, Dict, Optional
 from pathlib import Path
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
 from ....utils import validate_path_with_env_config
+
+
+def _pdf_outcome(*, path: str, exists: bool, size: int) -> Dict[str, Any]:
+    """The rung this PDF earned, decided by whether the file is there."""
+    if not exists:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=[{
+                'kind': 'pdf_file_missing',
+                'path': path,
+                'predicate': 'Path(path).exists()',
+                'measured_by': 'Path.exists() on the output path after page.pdf()',
+                'detail': (
+                    'page.pdf() returned without raising and nothing is at the '
+                    'output path. The 0 reported as size is a literal in this '
+                    'module, not a measurement.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'pdf_file_written',
+            'path': path,
+            'bytes_on_disk': size,
+            'measured_by': 'os.stat().st_size on the output path after page.pdf()',
+            'detail': (
+                'Size the filesystem reports for the file the browser wrote. A '
+                'byte count is not a rendering: a PDF of a blank page is a valid '
+                'non-empty file.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -62,8 +117,20 @@ from ....utils import validate_path_with_env_config
                 'description_key': 'modules.browser.pdf.output.status.description'},
         'path': {'type': 'string', 'description': 'File or resource path',
                 'description_key': 'modules.browser.pdf.output.path.description'},
-        'size': {'type': 'number', 'description': 'Size in bytes',
-                'description_key': 'modules.browser.pdf.output.size.description'}
+        'size': {'type': 'number', 'description': (
+                    'Size the filesystem reports for the written PDF. 0 when the '
+                    'file is not there at all -- see outcome, which separates '
+                    'that case from an empty file'
+                ),
+                'description_key': 'modules.browser.pdf.output.size.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this export was followed: observed when the PDF was '
+                'read back off disk, indeterminate when nothing is at the '
+                'output path'
+            ),
+            'description_key': 'modules.browser.pdf.output.outcome.description'}
     },
     examples=[
         {
@@ -148,14 +215,21 @@ class BrowserPdfModule(BaseModule):
         # Generate PDF
         await page.pdf(**pdf_options)
 
-        # Get file size
+        # Get file size. `exists` is kept rather than folded into the size:
+        # "no file" and "empty file" are different facts.
         output_path = Path(self.path)
-        size = output_path.stat().st_size if output_path.exists() else 0
+        exists = output_path.exists()
+        size = output_path.stat().st_size if exists else 0
 
         return {
             "status": "success",
             "path": str(output_path.absolute()),
             "size": size,
             "format": self.format,
-            "landscape": self.landscape
+            "landscape": self.landscape,
+            "outcome": _pdf_outcome(
+                path=str(output_path.absolute()),
+                exists=exists,
+                size=size,
+            ),
         }

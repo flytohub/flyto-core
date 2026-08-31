@@ -5,11 +5,63 @@ Verify Figma Module - Fetch design tokens from Figma API
 
 Runs locally with user's own Figma token.
 Token never leaves the user's machine.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Despite the category, this module verifies nothing. It issues one GET and
+parses the reply to that same GET. So the ceiling is ACCEPTED, for the reason
+`http.request` settled for every 2xx in this product: a body Figma composed
+about its own file is Figma's word for it. Reaching OBSERVED would take a
+second, independent look, and there is not one.
+
+What is worth the branch is the OTHER axis. This module takes a target from the
+caller -- a `node_id`, or a `node_name` -- and there are three outcomes to
+asking for one, not two:
+
+  the reply carried a node                    ACCEPTED, claim_by=caller
+  the reply carried no node for that target   FAILED, claim_by=caller
+
+FAILED and not INDETERMINATE because `engine/outcome.py` splits exactly this on
+who made the claim: the caller named the node, so a reply without it is a
+broken contract rather than a guess of ours that may be wrong.
+
+THE BUG THIS FOUND, and it is the reason the second branch exists at all. Only
+one of those two cases used to be visible. `node_name` not found already
+returned `ok: False`. But `node_id` not found did not:
+
+    nodes.get(self.node_id, {}).get('document', {})
+
+returns `{}` for an id Figma did not send back, `parse_node({})` turns that into
+`FigmaNode(id='', name='', type='')` with an empty style, and the module
+returned `ok: True` with it. A caller asking for the padding of one component
+got `{'style': {}}` and a success -- indistinguishable from a component with no
+style overrides. `{}` is the textbook value that reads the same whether the
+effect happened or not, and the rung is now decided by `bool(node.id)`: a node
+id is a value only Figma can have put there.
+
+The same shape sits on the whole-file path: `data.get('document', {})` is `{}`
+for any 200 whose body is not the shape this module expects, and that also now
+lands on FAILED rather than on an empty success.
+
+WHAT IS NOT CLAIMED, and specifically not claimed by the module named `verify`:
+`find_by_name` walking the tree and finding a node is a selector over data we
+were handed, not a check that anything we did took effect. Declaring it as a
+`postcondition=` would raise this module's ceiling to VERIFIED on every path,
+so an ACCEPTED file fetch would start carrying a predicate string it never
+evaluated. A read cannot be dressed up as a proof by declaring one.
+
+WHAT NEVER REACHES A CONSUMER: `response.raise_for_status()` and the httpx
+timeout raise out of `execute()`, so a 401, a 404 on the file, or a stalled
+connection produce an exception and no payload -- and therefore no
+INDETERMINATE envelope. Converting those raises into returns would change what
+the retry machinery sees for three separate failure kinds, which is a larger
+change than this one and is written down instead of made.
 """
 import os
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field as schema_field
@@ -159,6 +211,48 @@ def parse_node(data: Dict[str, Any]) -> FigmaNode:
     return node
 
 
+def _figma_node_read(*, target_kind: str, target: Optional[str], node: "FigmaNode") -> Dict[str, Any]:
+    """ACCEPTED -- Figma answered and its answer carried a node.
+
+    `style_fields` is recorded and does not decide anything: a real node can
+    legitimately extract to few fields. What decides the rung is `node.id`,
+    because an id is a value only the far end can have supplied.
+    """
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.CALLER if target else ClaimBy.NONE,
+        effects=[{
+            'kind': 'figma_node_read',
+            'target_kind': target_kind,
+            'target': target,
+            'node_id': node.id,
+            'node_type': node.type,
+            'style_fields': len(node.style.to_dict()),
+            'measured_by': 'a non-empty node id parsed out of the Figma reply',
+            'detail': (
+                'Figma returned a node for this request. Nothing was read back '
+                'and no design was compared against anything, so this is the '
+                'whole distance travelled.'
+            ),
+        }],
+    )
+
+
+def _figma_node_missing(*, target_kind: str, target: Optional[str], detail: str) -> Dict[str, Any]:
+    """FAILED -- the reply arrived and did not contain what the caller named."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.CALLER,
+        effects=[{
+            'kind': 'figma_node_missing',
+            'target_kind': target_kind,
+            'target': target,
+            'measured_by': 'the requested node was absent from the parsed reply',
+            'detail': detail,
+        }],
+    )
+
+
 @register_module(
     module_id='verify.figma',
     version='1.0.0',
@@ -199,6 +293,12 @@ def parse_node(data: Dict[str, Any]) -> FigmaNode:
     output_schema={
         'node': {'type': 'object', 'description': 'Figma node data'},
         'style': {'type': 'object', 'description': 'Extracted style'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the fetch was followed: "accepted" when Figma returned a node, '
+            '"failed" when its reply carried nothing for the node or file the caller '
+            'named -- including the ok=true case where node and style come back '
+            'empty. Never higher: one GET, and its own reply is all that was read'
+        )},
     },
 )
 class VerifyFigmaModule(BaseModule):
@@ -223,6 +323,15 @@ class VerifyFigmaModule(BaseModule):
         from ....utils import guarded_httpx_client
 
         headers = {'X-Figma-Token': self.token}
+
+        # What the caller named, carried through to the envelope. `node_id` wins
+        # because the branch below ignores `node_name` when both are given.
+        if self.node_id:
+            target_kind, target = 'node_id', self.node_id
+        elif self.node_name:
+            target_kind, target = 'node_name', self.node_name
+        else:
+            target_kind, target = 'file', None
 
         async with guarded_httpx_client() as client:
             if self.node_id:
@@ -258,17 +367,64 @@ class VerifyFigmaModule(BaseModule):
                     else:
                         return {
                             'ok': False,
-                            'error': f"Node not found: {self.node_name}"
+                            'error': f"Node not found: {self.node_name}",
+                            # No 'data' dict on this return, so the envelope goes
+                            # where `_apply_outcome_contract` looks when there is
+                            # none -- the top level. `wrap_legacy_result` turns an
+                            # ok=False into an ERROR and discards it, and it is
+                            # attached anyway for the reason `atomic/dns/lookup.py`
+                            # gives: the fact is true whether or not a consumer
+                            # exists yet, and waiting for one means building the
+                            # consumer against results that carry nothing.
+                            'outcome': _figma_node_missing(
+                                target_kind='node_name',
+                                target=self.node_name,
+                                detail=(
+                                    'The file was fetched and parsed, and no node in it '
+                                    'is named as the caller asked.'
+                                ),
+                            ),
                         }
 
         # Store in context for chaining
         self.context['figma_style'] = node.style
         self.context['figma_node'] = node
 
+        if not node.id:
+            # ok stays True. A missing node is not a transport failure and this
+            # module is not the place to decide a workflow should stop -- the
+            # engine reads the rung, marks the step PARTIAL and keeps going
+            # (`executor.py::_record_unconfirmed_outcome`). What changes is that
+            # `{'style': {}}` no longer reaches a consumer indistinguishable
+            # from a component that genuinely has no style overrides.
+            missing_detail = (
+                f'Figma answered, and its reply carried no node under {self.node_id!r}. '
+                'Either no such node exists in this file, or the id it came back '
+                'under is not the id it was asked for; this module cannot tell '
+                'which, and returns an empty node either way.'
+            ) if self.node_id else (
+                'Figma answered, and its reply carried no document for this file.'
+            )
+            return {
+                'ok': True,
+                'data': {
+                    'node': node.to_dict(),
+                    'style': node.style.to_dict(),
+                    'outcome': _figma_node_missing(
+                        target_kind=target_kind,
+                        target=target or self.file_id,
+                        detail=missing_detail,
+                    ),
+                },
+            }
+
         return {
             'ok': True,
             'data': {
                 'node': node.to_dict(),
                 'style': node.style.to_dict(),
+                'outcome': _figma_node_read(
+                    target_kind=target_kind, target=target, node=node,
+                ),
             }
         }

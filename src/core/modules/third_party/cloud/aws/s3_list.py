@@ -3,13 +3,34 @@
 """
 AWS S3 List Module
 List objects in an Amazon S3 bucket using boto3.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: two rungs, decided per call.
+
+  the response carried objects        OBSERVED
+      Every entry in `objects` is a key, a size and a timestamp the service put
+      in `Contents`. Nothing about them is inferred and nothing is a restatement
+      of the caller's input: this is a measurement of what is in the bucket.
+      A listing changes nothing, so what is observed here is state rather than
+      an effect -- which is the reading `database.query` already gives a read.
+
+  the response carried none           ACCEPTED
+      `len(objects) == 0` is the empty-read case, and it reads identically
+      whether the bucket is empty, the prefix matched nothing, or the caller
+      pointed at the wrong bucket entirely. It is the same shape as
+      `database.query`'s `row_count == 0` and it earns the same answer: the
+      service answered, and the answer contains no observation of any object.
+
+`truncated` is `IsTruncated` from the response -- the service's own statement
+that it stopped early -- so it travels as evidence in the effect and never
+lifts the rung.
 """
 
 import asyncio
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -81,6 +102,16 @@ logger = logging.getLogger(__name__)
         },
         'count': {'type': 'number', 'description': 'Number of objects returned', 'description_key': 'modules.aws.s3.list.output.count.description'},
         'truncated': {'type': 'boolean', 'description': 'Whether the results are truncated', 'description_key': 'modules.aws.s3.list.output.truncated.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this listing was followed into reality: observed when '
+                'the service returned objects, accepted when it returned none '
+                '-- an empty listing is the same answer for an empty bucket and '
+                'for a prefix that matched nothing'
+            ),
+            'description_key': 'modules.aws.s3.list.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -110,8 +141,53 @@ async def aws_s3_list(context: Dict[str, Any]) -> Dict[str, Any]:
     objects, truncated = await _list_objects(client, bucket, prefix, max_keys)
     return {
         'ok': True,
-        'data': {'objects': objects, 'count': len(objects), 'truncated': truncated},
+        'data': {
+            'objects': objects,
+            'count': len(objects),
+            'truncated': truncated,
+            'outcome': _listing_outcome(bucket, prefix, objects, truncated),
+        },
     }
+
+
+def _listing_outcome(
+    bucket: str, prefix: str, objects: List[Dict[str, Any]], truncated: bool
+) -> Dict[str, Any]:
+    """OBSERVED when the service returned objects, ACCEPTED when it returned none."""
+    if not objects:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_objects_returned',
+                'bucket': bucket,
+                'prefix': prefix,
+                'measured_by': None,
+                'detail': (
+                    'The service answered with an empty Contents. That is not an '
+                    'observation of the bucket: it reads the same whether the '
+                    'bucket is empty, the prefix matched nothing, or the caller '
+                    'named the wrong bucket.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'objects_returned',
+            'bucket': bucket,
+            'prefix': prefix,
+            'count': len(objects),
+            'truncated': truncated,
+            'measured_by': "len() over the Contents entries the service returned",
+            'detail': (
+                'Keys, sizes and timestamps the service reported for objects that '
+                'exist. `truncated` is the service saying it stopped early, so the '
+                'count is a floor on what matched, not a total.'
+            ),
+        }],
+    )
 
 
 def _make_s3_client(params: Dict[str, Any]):

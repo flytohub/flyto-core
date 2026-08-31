@@ -3,14 +3,53 @@
 """
 AWS S3 Download Module
 Download a file from an Amazon S3 bucket to the local filesystem using boto3.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+The effect of a download is a LOCAL file, so the evidence has to be local too.
+Three answers, decided per call from what could be measured:
+
+  local size read back, and it equals the object's length   OBSERVED
+      `os.stat(output_path).st_size` after the transfer is a measurement of the
+      world: the file that now exists on this host. `download_file` writes
+      through a temporary file and renames, so the size after it returns is the
+      size of what it put there, and the baseline is not needed. Comparing it
+      with the `ContentLength` the service reports for the same key is a
+      cross-check of one side against the other, which is why `claim_by` is
+      INFERRED -- the equality is this module's own predicate, not a caller's.
+
+  local size read back, and it does not match              INDETERMINATE
+      Not FAILED. Nobody declared a size contract, and the mismatch has an
+      innocent reading: `head_object` is a second request, so an object
+      overwritten between the GET and the HEAD reports a length that was never
+      ours. An inference of ours that may be wrong is INDETERMINATE by the
+      definition in engine/outcome.py; calling it FAILED would put a red mark on
+      a correct download.
+
+  local size could not be read                              ACCEPTED
+      The stat failed, or the service reported no ContentLength. The transfer
+      itself already returned without raising, so the bytes were acknowledged;
+      all that is lost is our ability to look.
+
+What the pre-existing `size` field is NOT: evidence of the download. It is
+`head_object(...)['ContentLength']` -- the length of the REMOTE object, which
+reads identically whether the local write happened or not. It stays in the
+payload under its old name because callers use it, and `bytes_on_disk` is the
+number the rung actually rests on.
+
+Error paths carry no envelope: every one of them raises, and a raised exception
+becomes a StepExecutionError with the payload discarded (see the same note on
+`http.request`). A timeout here is a genuine INDETERMINATE and has nowhere to
+sit until raise-paths can carry one.
 """
 
 import asyncio
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from .....utils import validate_path_with_env_config
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....errors import ModuleError, ValidationError
 from ....registry import register_module
 from ....schema import compose
@@ -18,6 +57,103 @@ from ....schema.builders import field
 from ....schema.constants import FieldGroup
 
 logger = logging.getLogger(__name__)
+
+
+def _observe_size_on_disk(path: str) -> Tuple[Optional[int], Optional[str]]:
+    """``(st_size, None)`` when the downloaded file could be read back, else ``(None, why)``.
+
+    The only line in this module that measures the world rather than reporting
+    what the service said about itself.
+    """
+    try:
+        return os.stat(path).st_size, None
+    except OSError as error:
+        return None, f"{type(error).__name__}: {error.strerror or error}"
+
+
+def _download_outcome(
+    *,
+    path: str,
+    remote_bytes: Optional[int],
+    local_bytes: Optional[int],
+    observation_error: Optional[str],
+) -> Dict[str, Any]:
+    """The rung this download earned, and the measurements that earned it."""
+    remote_effect = {
+        'kind': 'object_length_reported',
+        'bytes': remote_bytes,
+        'measured_by': "head_object(...)['ContentLength']",
+        'detail': (
+            'Length the service reports for the object. A fact about the bucket, '
+            'not about this host: it is the same number whether or not the local '
+            'file was written.'
+        ),
+    }
+
+    if local_bytes is None or remote_bytes is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                remote_effect,
+                {
+                    'kind': 'local_file_not_observed',
+                    'measured_by': None,
+                    'reason': observation_error or (
+                        'the service reported no ContentLength for this object, so '
+                        'there was nothing to compare the local file against'
+                    ),
+                    'detail': (
+                        'The transfer returned without raising and the file was not '
+                        'read back.'
+                    ),
+                },
+            ],
+        )
+
+    local_effect = {
+        'kind': 'local_file_observed',
+        'path': path,
+        'bytes_on_disk': local_bytes,
+        'measured_by': 'os.stat(output_path).st_size, after the transfer returned',
+        'detail': (
+            'Size the kernel reports for the file that now exists on this host. '
+            'Not fsync-ed: durability across power loss is not observed and is '
+            'not claimed.'
+        ),
+    }
+
+    if local_bytes == remote_bytes:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: a predicate was evaluated and it was ours. No caller
+            # asked for a byte count.
+            claim_by=ClaimBy.INFERRED,
+            effects=[remote_effect, local_effect],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            remote_effect,
+            local_effect,
+            {
+                'kind': 'object_length_disagrees',
+                'predicate': "os.stat(output_path).st_size == head_object['ContentLength']",
+                'expected_bytes': remote_bytes,
+                'actual_bytes': local_bytes,
+                'detail': (
+                    'The local file is not the length the service reports for the '
+                    'object. That may be a short write, or it may be this module\'s '
+                    'inference being wrong -- head_object is a second request, and an '
+                    'object replaced between the two would report a length that was '
+                    'never the one we downloaded. We cannot say which, so this is '
+                    'indeterminate rather than failed.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -67,8 +203,34 @@ logger = logging.getLogger(__name__)
     ),
     output_schema={
         'path': {'type': 'string', 'description': 'Local file path where the file was saved', 'description_key': 'modules.aws.s3.download.output.path.description'},
-        'size': {'type': 'number', 'description': 'File size in bytes', 'description_key': 'modules.aws.s3.download.output.size.description'},
+        'size': {
+            'type': 'number',
+            'description': (
+                'Length the service reports for the REMOTE object, from '
+                "head_object ContentLength. Not a measurement of the local file "
+                '-- see bytes_on_disk'
+            ),
+            'description_key': 'modules.aws.s3.download.output.size.description',
+        },
+        'bytes_on_disk': {
+            'type': 'number',
+            'description': (
+                'Size the filesystem reports for the downloaded file, from '
+                'os.stat. null when the file could not be read back'
+            ),
+            'description_key': 'modules.aws.s3.download.output.bytes_on_disk.description',
+        },
         'content_type': {'type': 'string', 'description': 'MIME type of the downloaded file', 'description_key': 'modules.aws.s3.download.output.content_type.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this download was followed into reality: observed when '
+                'the local file matches the length the service reports, '
+                'indeterminate when it does not, accepted when the file could '
+                'not be read back'
+            ),
+            'description_key': 'modules.aws.s3.download.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -118,10 +280,14 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
         ) from None
 
     content_type = ''
-    file_size = 0
+    # None, not 0, when the service reports no length: "no number came back" and
+    # "the object is empty" are different facts, and a 0 standing in for both
+    # would let an unreported length masquerade as a match against an empty
+    # local file.
+    remote_bytes: Optional[int] = None
 
     def _download():
-        nonlocal content_type, file_size
+        nonlocal content_type, remote_bytes
         client = boto3.client(
             's3',
             region_name=region,
@@ -138,7 +304,7 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
         # Get object metadata
         head = client.head_object(Bucket=bucket, Key=key)
         content_type = head.get('ContentType', '')
-        file_size = head.get('ContentLength', 0)
+        remote_bytes = head.get('ContentLength')
 
     loop = asyncio.get_event_loop()
     try:
@@ -147,11 +313,23 @@ async def aws_s3_download(context: Dict[str, Any]) -> Dict[str, Any]:
         error_name = type(exc).__name__
         raise ModuleError(f'S3 download failed ({error_name}): {exc}') from exc
 
+    # The one measurement of the world in this module, and the reason it can say
+    # more than `accepted`. Outside the executor: the transfer has returned, so
+    # st_size is a size and not a race.
+    local_bytes, observation_error = _observe_size_on_disk(output_path)
+
     return {
         'ok': True,
         'data': {
             'path': output_path,
-            'size': file_size,
+            'size': remote_bytes if remote_bytes is not None else 0,
+            'bytes_on_disk': local_bytes,
             'content_type': content_type,
+            'outcome': _download_outcome(
+                path=output_path,
+                remote_bytes=remote_bytes,
+                local_bytes=local_bytes,
+                observation_error=observation_error,
+            ),
         },
     }

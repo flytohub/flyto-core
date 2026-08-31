@@ -4,11 +4,33 @@
 Local Ollama Integration Module
 
 Provides local LLM support via Ollama for completely offline AI agent execution.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED. Ollama runs on the operator's own machine, which changes who is being
+paid and changes nothing about the rung: `response`, `eval_count` and
+`total_duration` are all read out of the server's own JSON, and a local peer
+describing its own work is still a peer describing its own work.
+
+Only the success path can carry an envelope. Every failure here raises
+`RuntimeError` -- a non-200, a refused connection, anything at all -- and a raise
+leaves no result dict for one to live in. That is not a gap being excused: the
+`except aiohttp.ClientError` branch, which is the one that fires when Ollama is
+not running, would be an INDETERMINATE if it returned, because a request that
+died in transport may still have reached a model that was already loading.
+Turning those raises into returns would change what the engine does with this
+step, which is a behaviour change and not an outcome declaration.
+
+Where the envelope sits: `execute()` returns a bare dict with no `ok` key, so
+`_execute_single_mode` hands it back untouched and `wrap_legacy_result` never
+runs. `_apply_outcome_contract` reads the top level of exactly that dict, so the
+envelope goes there rather than under a `data` key this module does not have.
 """
 import logging
 from typing import Any, Dict
 
 from ....constants import OLLAMA_DEFAULT_PORT, OLLAMA_DEFAULT_URL
+from ....engine.outcome import Outcome, envelope
 from ....utils import (
     DEFAULT_ALLOWED_PORTS,
     get_ssrf_config,
@@ -140,7 +162,14 @@ logger = logging.getLogger(__name__)
         'prompt_eval_count': {'type': 'number', 'description': 'Number of prompt tokens evaluated',
                 'description_key': 'modules.ai.local_ollama.chat.output.prompt_eval_count.description'},
         'eval_count': {'type': 'number', 'description': 'Number of tokens generated',
-                'description_key': 'modules.ai.local_ollama.chat.output.eval_count.description'}
+                'description_key': 'modules.ai.local_ollama.chat.output.eval_count.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far this call was followed into reality: accepted when '
+                    'the local server answered with a completion. Never higher -- '
+                    'a local model describing its own work is still the peer'
+                ),
+                'description_key': 'modules.ai.local_ollama.chat.output.outcome.description'}
     },
     examples=[
         {
@@ -290,7 +319,27 @@ class LocalOllamaChatModule(BaseModule):
                 "total_duration": result.get('total_duration', 0),
                 "load_duration": result.get('load_duration', 0),
                 "prompt_eval_count": result.get('prompt_eval_count', 0),
-                "eval_count": result.get('eval_count', 0)
+                "eval_count": result.get('eval_count', 0),
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    effects=[{
+                        'kind': 'completion_returned',
+                        'provider': 'ollama',
+                        'model': result.get('model', self.model),
+                        'response_chars': len(content or ''),
+                        'eval_count': result.get('eval_count', 0),
+                        'prompt_eval_count': result.get('prompt_eval_count', 0),
+                        'total_duration_ns': result.get('total_duration', 0),
+                        'measured_by': "the Ollama server's own JSON response body",
+                        'detail': (
+                            'The local server answered with a completion and its '
+                            'own counters. Every number here is the server '
+                            'describing its own work -- an observation of a '
+                            'completion, not of anything in the world. A 200 was '
+                            'required to get here, and that is all it establishes.'
+                        ),
+                    }],
+                ),
             }
 
         except aiohttp.ClientError as e:

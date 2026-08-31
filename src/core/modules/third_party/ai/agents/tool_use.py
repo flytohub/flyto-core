@@ -6,6 +6,43 @@ AI Agent that can call tools/functions via LLM function calling.
 
 The module returns __tool_calls__ which the workflow engine interprets
 to run other modules, enabling autonomous tool-using agents.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+This is the module in the group that actually changes things. `execute_tool`
+runs real modules with real parameters -- `file.write`, `browser.click`,
+`database.query` -- and it runs them in a loop whose length a language model
+chooses. Two return paths carry a payload:
+
+  the model stopped calling tools and answered   ACCEPTED
+      A completion came back with no tool call in it. That is the provider
+      reporting on its own work, and the answer is the model's ASSERTION that
+      the task is finished. Nothing here evaluates the assertion.
+
+  max_iterations was reached                     INDETERMINATE
+      The loop was cut off mid-task. `ok` is still True and `result` is either
+      the last assistant message or the sentence "Agent reached maximum
+      iterations (N)" -- which reads downstream exactly like an answer. It is
+      not one. Tools that already ran may have left work half-done, and nothing
+      in this module can say which, which is the definition of indeterminate.
+
+Every other exit raises -- no prompt, no tools, no API key, an unsupported
+provider, a non-200 from either API, an `aiohttp.ClientError`. An exception
+carries no envelope anywhere in this engine, so those paths are a real and
+deliberate gap rather than a claim; `StepExecutionError` is what a consumer
+sees. Worth knowing which they are, because a non-200 on iteration 7 has the
+same half-finished tools behind it that the INDETERMINATE path does, and says
+so nowhere.
+
+WHAT THE RUNG IS NOT ABOUT: the tools. Every tool result is `json.dumps`-ed
+straight into the conversation and read by nothing else; whatever outcome
+envelope a tool built is discarded here. Worse, tools invoked through
+`execute_tool` call `module_instance.run()` directly and never pass through
+`_apply_outcome_contract`, so a side-effecting tool that reports nothing does
+not even get the engine's default `dispatched` stamp. An agent whose
+`file.write` came back INDETERMINATE still reports ACCEPTED from this file.
+The `tool_outcomes_not_propagated` effect states that inside the envelope
+rather than leaving a consumer to assume the rung covers it.
 """
 
 import json
@@ -15,12 +52,123 @@ from typing import Any, Dict, List
 
 import aiohttp
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....atomic.llm._tools import execute_tool, build_tool_definitions
 from ....registry import register_module
 from ....schema import compose, field
 from ....errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+# ── Outcome ────────────────────────────────────────────────────────────────
+
+
+class _ToolTally:
+    """What the tool loop actually did, counted where it happens.
+
+    Three separate numbers because they are three separate facts. A tool that
+    raised inside `execute_tool` and a tool that returned `ok: False` are both
+    failures, but only the first one is a failure of the machinery; and neither
+    of them says anything about the tools that ran before it and succeeded.
+    """
+
+    def __init__(self) -> None:
+        self.calls = 0
+        self.raised = 0
+        self.not_ok = 0
+
+    def record(self, result: Any = None, raised: bool = False) -> None:
+        self.calls += 1
+        if raised:
+            self.raised += 1
+        elif isinstance(result, dict) and result.get('ok') is False:
+            self.not_ok += 1
+
+    def effect(self) -> Dict[str, Any]:
+        return {
+            'kind': 'tool_outcomes_not_propagated',
+            'tool_calls': self.calls,
+            'tool_calls_that_raised': self.raised,
+            'tool_calls_reporting_not_ok': self.not_ok,
+            'measured_by': (
+                "counted in the loop as each execute_tool call returned or raised"
+            ),
+            'detail': (
+                'These tools ran and changed whatever they change. Their own '
+                'outcome envelopes are serialised into the conversation and read '
+                'by nothing; they also bypass _apply_outcome_contract entirely, '
+                'so an unreporting side-effecting tool is not even stamped '
+                'dispatched. The rung above describes the completion, never what '
+                'the tools did to the world.'
+            ),
+        }
+
+
+def _agent_answered(
+    *,
+    provider: str,
+    model: str,
+    iterations: int,
+    tally: _ToolTally,
+) -> Dict[str, Any]:
+    """ACCEPTED: the model stopped calling tools. It proved nothing by stopping."""
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'final_answer_returned',
+                'provider': provider,
+                'model': model,
+                'iterations': iterations,
+                'measured_by': (
+                    "the provider's own response, which carried no tool call"
+                ),
+                'detail': (
+                    'The model produced text instead of another tool call. That '
+                    'is the model asserting the task is done -- an observation '
+                    'of a completion, not of the task. Nothing here checks it.'
+                ),
+            },
+            tally.effect(),
+        ],
+    )
+
+
+def _agent_cut_off(
+    *,
+    provider: str,
+    model: str,
+    max_iterations: int,
+    tally: _ToolTally,
+) -> Dict[str, Any]:
+    """INDETERMINATE: the loop hit its ceiling with the task still open.
+
+    FAILED would claim the work did not happen, and the tool count in the effect
+    is the evidence that some of it did. ACCEPTED would be worse: `ok` is True
+    on this path and `result` reads like an answer, so a rung that agreed with
+    it would turn "we stopped counting" into "it is done".
+    """
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'agent_hit_max_iterations',
+                'provider': provider,
+                'model': model,
+                'max_iterations': max_iterations,
+                'measured_by': None,
+                'detail': (
+                    'The loop was cut off, not finished. The model never stopped '
+                    'asking for tools. Any tool already run may have left work '
+                    'half-done and nothing here can say which.'
+                ),
+            },
+            tally.effect(),
+        ],
+    )
 
 
 @register_module(
@@ -154,6 +302,17 @@ logger = logging.getLogger(__name__)
             'description': 'Model used',
             'description_key': 'modules.agent.tool_use.output.model.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this run was followed into reality: "accepted" when the '
+                'model stopped calling tools and answered, "indeterminate" when '
+                'max_iterations cut the loop off mid-task. A claim about the '
+                'completion only -- the tools this agent ran have outcomes of '
+                'their own and this module discards every one of them'
+            ),
+            'description_key': 'modules.agent.tool_use.output.outcome.description',
+        },
     },
 
     examples=[
@@ -285,6 +444,7 @@ async def _run_openai_agent(
     """Run the tool-use loop with OpenAI."""
     openai_tools = _format_openai_tools(tools)
     all_tool_calls: List[Dict[str, Any]] = []
+    tally = _ToolTally()
 
     messages: List[Dict[str, Any]] = []
     if system_prompt:
@@ -340,6 +500,12 @@ async def _run_openai_agent(
                         'iterations': iteration,
                         'model': data.get('model', model),
                         '__tool_calls__': all_tool_calls,
+                        'outcome': _agent_answered(
+                            provider='openai',
+                            model=data.get('model', model),
+                            iterations=iteration,
+                            tally=tally,
+                        ),
                     },
                 }
 
@@ -365,8 +531,10 @@ async def _run_openai_agent(
                     tool_exec_result = await execute_tool(
                         tool_name, tool_args, context or {},
                     )
+                    tally.record(result=tool_exec_result)
                     tool_result = json.dumps(tool_exec_result, default=str)
                 except Exception as e:
+                    tally.record(raised=True)
                     logger.error(f"Tool execution error for {tool_name}: {e}")
                     tool_result = json.dumps({"error": str(e)})
 
@@ -393,6 +561,12 @@ async def _run_openai_agent(
             'iterations': max_iterations,
             'model': model,
             '__tool_calls__': all_tool_calls,
+            'outcome': _agent_cut_off(
+                provider='openai',
+                model=model,
+                max_iterations=max_iterations,
+                tally=tally,
+            ),
         },
     }
 
@@ -409,6 +583,7 @@ async def _run_anthropic_agent(
     """Run the tool-use loop with Anthropic."""
     anthropic_tools = _format_anthropic_tools(tools)
     all_tool_calls: List[Dict[str, Any]] = []
+    tally = _ToolTally()
 
     messages: List[Dict[str, Any]] = [
         {"role": "user", "content": prompt},
@@ -470,6 +645,12 @@ async def _run_anthropic_agent(
                         'iterations': iteration,
                         'model': data.get('model', model),
                         '__tool_calls__': all_tool_calls,
+                        'outcome': _agent_answered(
+                            provider='anthropic',
+                            model=data.get('model', model),
+                            iterations=iteration,
+                            tally=tally,
+                        ),
                     },
                 }
 
@@ -493,8 +674,10 @@ async def _run_anthropic_agent(
                     tool_exec_result = await execute_tool(
                         tool_name, tool_input, context or {},
                     )
+                    tally.record(result=tool_exec_result)
                     tool_content = json.dumps(tool_exec_result, default=str)
                 except Exception as e:
+                    tally.record(raised=True)
                     logger.error(f"Tool execution error for {tool_name}: {e}")
                     tool_content = json.dumps({"error": str(e)})
 
@@ -517,5 +700,11 @@ async def _run_anthropic_agent(
             'iterations': max_iterations,
             'model': model,
             '__tool_calls__': all_tool_calls,
+            'outcome': _agent_cut_off(
+                provider='anthropic',
+                model=model,
+                max_iterations=max_iterations,
+                tally=tally,
+            ),
         },
     }

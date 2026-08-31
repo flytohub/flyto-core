@@ -4,12 +4,105 @@
 Google Cloud Storage (GCS) Integration Modules
 
 Provides upload and download operations for Google Cloud Storage.
+
+HOW FAR THESE TWO MODULES FOLLOW REALITY, and why they differ
+
+The pair is not symmetric, because the evidence available to each is not.
+
+`cloud.gcs.upload` is ACCEPTED. `blob.upload_from_filename` returns None, and
+the `size` this module reports is `os.path.getsize` of the LOCAL source file
+read before the upload -- the same number whether the object reached the bucket
+whole, truncated, or not at all. It fails the test this contract turns on, so no
+rung rests on it. What the library does leave behind after a successful upload
+is the service's own account of the object it says it stored (`blob.size`,
+`blob.etag`, `blob.md5_hash`, populated from the upload response); those are
+reported as evidence and are exactly what ACCEPTED means -- taking the peer's
+word for its own work. Nothing here reads the object back.
+
+`cloud.gcs.download` is OBSERVED when the file it wrote is non-empty. The effect
+of a download is a local file, and `os.path.getsize(destination_path)` after
+`download_to_filename` measures the file that now exists on this host -- a
+measurement of the world, not of our own inputs.
+
+The zero-byte case is ACCEPTED instead, and the reason is the same one that
+demoted an empty result set in `database.query`: a size of 0 reads identically
+whether the object was empty, the destination was already an empty file, or
+nothing was written at all. A number that would be unchanged had the effect not
+happened is not evidence of it.
+
+Neither module declares a postcondition, so `ceiling_for(None)` caps both at
+OBSERVED. That ceiling never binds: the honest claims are at or below it.
 """
-from typing import Any
+from typing import Any, Dict
 
 from ....utils import validate_path_with_env_config
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
+
+
+def _peer_reported(blob: Any) -> Dict[str, Any]:
+    """What the service says it stored, read off the blob after the upload.
+
+    `getattr` with a default throughout: these are populated from the upload
+    response and an absent one is an absent fact, not an error. They are
+    reported, never compared -- comparing our own file size against the length
+    the service claims for its copy would still be reading the peer's report of
+    the peer's own work.
+    """
+    reported = {
+        'size': getattr(blob, 'size', None),
+        'etag': getattr(blob, 'etag', None),
+        'md5_hash': getattr(blob, 'md5_hash', None),
+        'generation': getattr(blob, 'generation', None),
+    }
+    return {key: value for key, value in reported.items() if value is not None}
+
+
+def _local_file_outcome(*, path: str, size: int, source: str) -> Dict[str, Any]:
+    """OBSERVED for a file with bytes in it, ACCEPTED for one without.
+
+    The split is not fussiness. `os.path.getsize` returning a positive number
+    after `download_to_filename` is a fact about this host that could not be
+    true unless something wrote those bytes. Returning 0 is not: an empty
+    object, an empty file that was already there, and a write that never
+    happened all produce it.
+    """
+    if size > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'local_file_observed',
+                'path': path,
+                'source': source,
+                'bytes_on_disk': size,
+                'measured_by': 'os.path.getsize(destination_path), after the download',
+                'detail': (
+                    'Size the filesystem reports for the file that now exists here. '
+                    'Not fsync-ed, and not compared against the object: what is '
+                    'observed is that a non-empty file was written, not that its '
+                    'contents are the ones asked for.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'local_file_empty',
+            'path': path,
+            'source': source,
+            'bytes_on_disk': 0,
+            'measured_by': None,
+            'detail': (
+                'The transfer returned without raising and the destination is zero '
+                'bytes. That is not an observation of anything: an empty object, a '
+                'pre-existing empty file and a write that never happened all read '
+                'the same here.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -101,10 +194,21 @@ from ...registry import register_module
                 'description_key': 'modules.cloud.gcs.upload.output.bucket.description'},
         'object_name': {'type': 'string', 'description': 'Object name in storage',
                 'description_key': 'modules.cloud.gcs.upload.output.object_name.description'},
-        'size': {'type': 'number', 'description': 'Size in bytes',
+        'size': {'type': 'number',
+                'description': (
+                    'Size of the LOCAL source file, read before the upload. Not '
+                    'a measurement of the object in the bucket'
+                ),
                 'description_key': 'modules.cloud.gcs.upload.output.size.description'},
         'public_url': {'type': 'string', 'description': 'Public accessible URL',
-                'description_key': 'modules.cloud.gcs.upload.output.public_url.description'}
+                'description_key': 'modules.cloud.gcs.upload.output.public_url.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far this upload was followed into reality. Always '
+                    '"accepted": the service acknowledged the transfer and the '
+                    'object is never read back'
+                ),
+                'description_key': 'modules.cloud.gcs.upload.output.outcome.description'}
     },
     examples=[
         {
@@ -199,7 +303,36 @@ class GCSUploadModule(BaseModule):
                 "bucket": self.bucket,
                 "object_name": self.object_name,
                 "size": file_size,
-                "public_url": public_url
+                "public_url": public_url,
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[
+                        {
+                            'kind': 'object_bytes_offered',
+                            'bucket': self.bucket,
+                            'object_name': self.object_name,
+                            'bytes_offered': file_size,
+                            'measured_by': 'os.path.getsize(file_path), before the upload',
+                            'detail': (
+                                'Size of the local source file. It reads identically '
+                                'whether GCS stored every byte, some of them, or none.'
+                            ),
+                        },
+                        {
+                            'kind': 'object_reported_by_service',
+                            'reported': _peer_reported(blob),
+                            'measured_by': (
+                                'blob properties populated from the upload response'
+                            ),
+                            'detail': (
+                                "The service's own account of the object it says it "
+                                'stored. No second request was made and the object was '
+                                'not read back.'
+                            ),
+                        },
+                    ],
+                ),
             }
 
         except Exception as e:
@@ -269,9 +402,23 @@ class GCSUploadModule(BaseModule):
     },
     output_schema={
         'file_path': {'type': 'string', 'description': 'The file path'},
-        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'size': {
+            'type': 'number',
+            'description': (
+                'Size of the file that now exists on this host, from '
+                'os.path.getsize after the download'
+            ),
+        },
         'bucket': {'type': 'string', 'description': 'Storage bucket name'},
-        'object_name': {'type': 'string', 'description': 'Object name in storage'}
+        'object_name': {'type': 'string', 'description': 'Object name in storage'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this download was followed into reality: observed when '
+                'the saved file is non-empty, accepted at zero bytes -- which '
+                'reads the same as a file that was never written'
+            ),
+        }
     },
     examples=[
         {
@@ -340,7 +487,12 @@ class GCSDownloadModule(BaseModule):
                 "file_path": destination_path,
                 "size": file_size,
                 "bucket": self.bucket,
-                "object_name": self.object_name
+                "object_name": self.object_name,
+                "outcome": _local_file_outcome(
+                    path=destination_path,
+                    size=file_size,
+                    source=f'gs://{self.bucket}/{self.object_name}',
+                ),
             }
 
         except Exception as e:

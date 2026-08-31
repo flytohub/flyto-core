@@ -255,7 +255,27 @@ def _apply_outcome_contract(module_instance: Any, result: Any) -> Any:
     declared = metadata.get('postcondition')
 
     # Where the envelope has to live, and where a module would have put it.
-    body = result.get('data') if isinstance(result.get('data'), dict) else result
+    #
+    # Three shapes, and the middle one used to be silently wrong. A dict `data`
+    # takes the stamp directly. A FLAT result with no `data` key is fine too:
+    # `wrap_legacy_result` sweeps its non-meta fields into the item json, which
+    # becomes `data` on the way out, so a top-level stamp arrives inside it.
+    #
+    # A result whose `data` is a LIST or a scalar is neither. This function used
+    # to fall back to the outer dict for those, which is exactly the place its
+    # own docstring says gets discarded — `to_legacy_dict` keeps `data` and
+    # nothing else — so the stamp vanished and the step reported no rung at all.
+    # Not a false green (nothing is worse than absent), but a hole the first
+    # module to return a list-shaped `data` would fall into silently.
+    data = result.get('data')
+    if isinstance(data, dict):
+        body = data
+    elif 'data' in result:
+        # A list or a scalar. There is nowhere inside it for a mapping to live,
+        # so say nothing rather than write somewhere that gets thrown away.
+        return result
+    else:
+        body = result
 
     existing = read_envelope(body)
     if existing is not None:

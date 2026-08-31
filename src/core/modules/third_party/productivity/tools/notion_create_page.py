@@ -3,6 +3,28 @@
 """
 Notion Create Page Module
 Create a new page in Notion database.
+
+HOW FAR THE CREATE IS FOLLOWED
+
+ACCEPTED. Notion answers 200 with the page object it says it just made, and
+that object carries an id, a URL and a created_time that this module could not
+have produced from its own inputs -- which is what puts it above DISPATCHED,
+the rung the engine stamps on a module that reports nothing.
+
+It is not OBSERVED, and the reason is worth stating plainly because a created
+resource is where the temptation is strongest: a 200 body is the peer reporting
+on its own work. To observe the page this module would have to GET it back and
+compare; it sends one request and reads the reply to that request, exactly like
+`http.request`, which settled this same question the same way for every 201
+Created in the product.
+
+THE ERROR PATH CARRIES NOTHING, and this is the module in the group where that
+hurts most. Any non-200 raises, so the payload is discarded and no rung
+survives. A 5xx or a timeout on a POST that creates something is the textbook
+INDETERMINATE -- the page may exist -- and a caller who retries may end up with
+two. Today that arrives as an ordinary step failure. `api.github.create_issue`
+can say it because it returns an error dict instead of raising; this module
+cannot, and changing which one it does is a decision about step semantics.
 """
 import logging
 import os
@@ -11,6 +33,7 @@ import aiohttp
 
 from ....registry import register_module
 from .....constants import APIEndpoints, EnvVars
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
@@ -90,7 +113,13 @@ logger = logging.getLogger(__name__)
         'url': {'type': 'string', 'description': 'URL to the created page',
                 'description_key': 'modules.api.notion.create_page.output.url.description'},
         'created_time': {'type': 'string', 'description': 'Page creation timestamp',
-                'description_key': 'modules.api.notion.create_page.output.created_time.description'}
+                'description_key': 'modules.api.notion.create_page.output.created_time.description'},
+        'outcome': {'type': 'object', 'description': (
+                    'How far the effect was followed. Always "accepted" on the '
+                    'path that returns: Notion says it created the page and names '
+                    'it, and nothing reads the page back. Error paths raise, so '
+                    'they carry no outcome at all'),
+                'description_key': 'modules.api.notion.create_page.output.outcome.description'}
     },
     examples=[
         {
@@ -139,10 +168,41 @@ async def notion_create_page(context):
                 error_text = await response.text()
                 raise Exception(f"Notion API error ({response.status}): {error_text}")
 
+            status = response.status
             result = await response.json()
 
     return {
         'page_id': result['id'],
         'url': result['url'],
-        'created_time': result['created_time']
+        'created_time': result['created_time'],
+        'outcome': envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                {
+                    'kind': 'notion_reply_read',
+                    'status': status,
+                    'measured_by': 'response.status on the reply to this request',
+                    'detail': (
+                        'A server received this request and chose a reply. That is '
+                        'the whole distance between dispatched and accepted, and '
+                        'the whole distance this module travels.'
+                    ),
+                },
+                {
+                    'kind': 'page_reported_created',
+                    'page_id': result['id'],
+                    'created_time': result['created_time'],
+                    'measured_by': 'id and created_time in the 200 body Notion returned',
+                    'detail': (
+                        'Notion asserting that it created a page, and naming it. '
+                        'Server-assigned, so it is more than an echo of the '
+                        'properties sent -- and still the peer reporting on its own '
+                        'work, so it is not an observation. Nothing here reads the '
+                        'page back, and nothing checks that the properties written '
+                        'are the properties requested.'
+                    ),
+                },
+            ],
+        ),
     }

@@ -3,14 +3,42 @@
 """
 Sandbox Execute JavaScript Module
 Execute JavaScript code via Node.js with timeout.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two returns, and both say `ok: True`. The envelope is the only field that tells
+them apart.
+
+  node exited                                 OBSERVED
+      `proc.returncode` is the status the kernel recorded for a reaped child,
+      and stdout/stderr are the bytes node actually wrote. None of it is
+      derivable from `code`.
+
+      OBSERVED for a non-zero exit as well. `shell.exec` calls that
+      INDETERMINATE because it turns the exit code into `ok: False` -- an
+      inference about the caller's intent. This module makes no such inference:
+      it reports the status and leaves `ok` True either way, so what is claimed
+      is only that the process ran and ended this way. An uncaught JavaScript
+      exception is exit 1 with a stack trace on stderr, and reporting that
+      faithfully is the module working, not failing.
+
+  the timeout killed it                       INDETERMINATE
+      Node was killed mid-run. `exit_code: -1` and the empty `stdout` on that
+      path are defaults written in this file, not readings: `wait_for` cancels
+      `communicate()` and the pipe buffers go with it. Whether the code
+      finished its work before the kill is exactly what we cannot say.
+
+A third path raises instead of returning -- node not installed -- so there is
+no dict to carry an envelope and nothing is claimed on it.
 """
 import asyncio
 import logging
 import os
 import tempfile
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -18,6 +46,58 @@ from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _exited_outcome(*, exit_code: int, stdout: str, stderr: str) -> Dict[str, Any]:
+    """The envelope for a node process that ran to completion and was reaped."""
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'process_exited',
+        'exit_code': exit_code,
+        'measured_by': 'proc.returncode after communicate() returned',
+        'detail': (
+            'The status the kernel recorded for the node child. It says the code '
+            'ran and how it ended; no postcondition was evaluated, so it says '
+            'nothing about whether it did the right thing.'
+        ),
+    }]
+    if stdout:
+        effects.append({
+            'kind': 'stdout',
+            'bytes': len(stdout.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stdout pipe',
+        })
+    if stderr:
+        effects.append({
+            'kind': 'stderr',
+            'bytes': len(stderr.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stderr pipe',
+        })
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+def _timed_out_outcome(*, timeout: int) -> Dict[str, Any]:
+    """The envelope for a node process we killed because we stopped waiting."""
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'process_started',
+                'measured_by': 'node was spawned by create_subprocess_exec',
+            },
+            {
+                'kind': 'process_killed',
+                'after_seconds': timeout,
+                'measured_by': 'proc.kill() after asyncio.wait_for timed out',
+                'detail': (
+                    'Whatever the script had already done, it has done -- writes '
+                    'to disk and network calls it made are not undone by the '
+                    'kill. The exit_code of -1 and empty stdout in this result '
+                    'are defaults, not readings.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -92,6 +172,16 @@ logger = logging.getLogger(__name__)
             'description': 'Execution time in milliseconds',
             'description_key': 'modules.sandbox.execute_js.output.execution_time_ms.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the execution was followed: observed when node exited '
+                'and its status was read, indeterminate when the timeout killed '
+                'it. Both returns say ok:true, so this is the field that tells '
+                'them apart'
+            ),
+            'description_key': 'modules.sandbox.execute_js.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -163,6 +253,7 @@ async def sandbox_execute_js(context: Dict[str, Any]) -> Dict[str, Any]:
                     'stderr': 'Execution timed out after {} seconds'.format(timeout),
                     'exit_code': -1,
                     'execution_time_ms': elapsed_ms,
+                    'outcome': _timed_out_outcome(timeout=timeout),
                 },
             }
 
@@ -184,6 +275,11 @@ async def sandbox_execute_js(context: Dict[str, Any]) -> Dict[str, Any]:
                 'stderr': stderr,
                 'exit_code': exit_code,
                 'execution_time_ms': elapsed_ms,
+                'outcome': _exited_outcome(
+                    exit_code=exit_code,
+                    stdout=stdout,
+                    stderr=stderr,
+                ),
             },
         }
     except ModuleError:

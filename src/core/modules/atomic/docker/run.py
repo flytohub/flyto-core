@@ -3,12 +3,45 @@
 """
 Docker Run Module
 Run a Docker container from an image
+
+WHAT `status` USED TO BE, AND WHY IT NEEDED A READ-BACK
+
+    status = 'running' if detach else 'exited'
+
+That line is `file.write`'s `bytes_written` in another costume: it is a
+restatement of a parameter the caller passed in. It reads `'running'` for a
+detached container that crashed on its first instruction, for one whose
+entrypoint does not exist, and for one the OOM killer took a millisecond after
+`docker run` returned -- all identical to the healthy case, because no syscall
+and no daemon response contributes to it.
+
+`_observe_container_state` is now the one thing here that measures the world.
+It asks the daemon for `State.Status` after the run, which no parameter of this
+module can produce. What each answer earns:
+
+  the daemon reported a state for the container      OBSERVED
+      `status` is that state -- `running`, `exited`, `created`, `restarting`,
+      `paused`, `dead`. Not an inference, and different from the old literal in
+      exactly the cases where the old literal was wrong.
+
+  no state could be read                             ACCEPTED
+      `status` falls back to the old inference and `status_observed` is False.
+      Three ordinary ways to land here, none of which is a failed run: the
+      container was `--rm` and is already gone, a non-detached run was given no
+      `--name` so there is no reference to inspect by, or the inspect itself
+      failed. `docker run` exiting 0 with a container id on stdout is still the
+      daemon reporting on its own work, which is ACCEPTED.
+
+A caveat the rung does not hide: OBSERVED is a reading at one instant. A
+container observed `running` may exit immediately afterwards, and nothing here
+declares a postcondition, so `verified` is unreachable and is not claimed.
 """
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -67,6 +100,104 @@ def _build_run_args(params: Dict[str, Any]) -> List[str]:
             args.extend([str(c) for c in command])
 
     return args
+
+
+async def _observe_container_state(reference: str) -> Tuple[Optional[str], Optional[str]]:
+    """``(state, None)`` when the daemon named a state, ``(None, why)`` when not.
+
+    Swallows every exception on purpose: this runs inside the caller's `try`,
+    whose `except Exception` turns anything loose into "Docker run failed". A
+    container that started and an observation that could not be made are two
+    different things, and conflating them would report the first as the second.
+    """
+    try:
+        process = await asyncio.create_subprocess_exec(
+            'docker', 'inspect', '--format', '{{.State.Status}}', reference,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout_bytes, stderr_bytes = await asyncio.wait_for(
+            process.communicate(),
+            timeout=10,
+        )
+    except asyncio.TimeoutError:
+        return None, 'docker inspect did not answer within 10 seconds'
+    except Exception as error:
+        return None, '%s: %s' % (type(error).__name__, error)
+
+    if process.returncode != 0:
+        detail = stderr_bytes.decode('utf-8', errors='replace').strip()
+        return None, 'docker inspect exited %s: %s' % (process.returncode, detail[:200])
+
+    state = stdout_bytes.decode('utf-8', errors='replace').strip()
+    if not state:
+        return None, 'docker inspect reported an empty state'
+    return state, None
+
+
+def _run_outcome(
+    *,
+    container_id: str,
+    reference: str,
+    observed_state: Optional[str],
+    observation_error: Optional[str],
+    inferred_status: str,
+) -> Dict[str, Any]:
+    """The rung this run earned, and the measurement that earned it."""
+    accepted_effect = {
+        'kind': 'run_command_succeeded',
+        'container_id': container_id,
+        'measured_by': 'exit status 0 from `docker run`, and its stdout',
+        'detail': (
+            'The daemon reports that it created and started the container. That '
+            'is the daemon describing its own work, not a reading of what the '
+            'container is doing now.'
+        ),
+    }
+
+    if observed_state is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                accepted_effect,
+                {
+                    'kind': 'container_state_not_observed',
+                    'measured_by': None,
+                    'reason': observation_error or (
+                        'no container reference to inspect: the run was not '
+                        'detached and no name was given'
+                    ),
+                    'inferred_status': inferred_status,
+                    'detail': (
+                        'The `status` field on this result is inferred from the '
+                        '`detach` parameter, not read from the daemon. It says '
+                        "'running' for a container that has already crashed."
+                    ),
+                },
+            ],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            accepted_effect,
+            {
+                'kind': 'container_state_observed',
+                'state': observed_state,
+                'reference': reference,
+                'measured_by': (
+                    'docker inspect --format {{.State.Status}}, after the run'
+                ),
+                'detail': (
+                    "The daemon's own state for this container, read back after "
+                    'the run returned. True at the instant of the read and not '
+                    'guaranteed afterwards.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -191,8 +322,30 @@ def _build_run_args(params: Dict[str, Any]) -> List[str]:
         },
         'status': {
             'type': 'string',
-            'description': 'Container status after run',
+            'description': (
+                'Container state read back from the daemon after the run '
+                '(running, exited, created, ...). Falls back to a guess from the '
+                'detach parameter when no read-back was possible -- see '
+                'status_observed'
+            ),
             'description_key': 'modules.docker.run.output.status.description',
+        },
+        'status_observed': {
+            'type': 'boolean',
+            'description': (
+                'True when status came from docker inspect, false when it is '
+                'inferred from the detach parameter and measures nothing'
+            ),
+            'description_key': 'modules.docker.run.output.status_observed.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the run was followed: observed when the container state '
+                'was read back from the daemon, accepted when only docker run '
+                'itself reported success'
+            ),
+            'description_key': 'modules.docker.run.output.outcome.description',
         },
     },
     examples=[
@@ -257,13 +410,34 @@ async def docker_run(context: Dict[str, Any]) -> Dict[str, Any]:
             )
 
         container_id = stdout[:12] if detach and stdout else stdout
-        status = 'running' if detach else 'exited'
+        inferred_status = 'running' if detach else 'exited'
+
+        # What we can name the container by, in order of what is actually a
+        # container reference. A detached run prints the id; a foreground run
+        # prints the CONTAINER'S OWN OUTPUT, which is not a reference to
+        # anything, so `--name` is the only handle left.
+        if detach and container_id:
+            reference = container_id
+        else:
+            reference = str(params.get('name') or '')
+
+        observed_state, observation_error = (
+            await _observe_container_state(reference) if reference else (None, None)
+        )
 
         return {
             'ok': True,
             'data': {
                 'container_id': container_id,
-                'status': status,
+                'status': observed_state or inferred_status,
+                'status_observed': observed_state is not None,
+                'outcome': _run_outcome(
+                    container_id=container_id,
+                    reference=reference,
+                    observed_state=observed_state,
+                    observation_error=observation_error,
+                    inferred_status=inferred_status,
+                ),
             },
         }
 

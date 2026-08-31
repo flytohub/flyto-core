@@ -4,6 +4,28 @@
 OpenAI Integration Modules
 
 Provides OpenAI GPT chat and DALL-E image generation.
+
+HOW FAR AN OPENAI CALL IS FOLLOWED
+
+ACCEPTED, on both modules' returning path, and for the same reason as every
+other API module here: one request, the reply to that request, no read-back.
+There is no `response.status` to point at in these two -- the SDK raises on a
+non-2xx -- so what stands in for it is the parsed object itself: the client
+handed back a completion, which it only does when the peer answered.
+
+The image module is the more interesting of the two, because it is the one
+where OBSERVED looks available and is not. It returns URLs. A URL is not an
+image: nothing here fetches one, so no byte of any generated picture has been
+seen by this process, and the effect actually claimed is "OpenAI says it made
+these and put them at these addresses". Those addresses expire. Claiming
+OBSERVED off a URL would be `file.write`'s `bytes_written` with a hostname on
+the front.
+
+ERROR PATHS CARRY NOTHING, and cannot: both `execute` bodies wrap everything in
+`except Exception -> raise RuntimeError`, so a refusal, a rate limit and a
+timeout all leave as raised exceptions and the payload is discarded. The
+timeout is the loss that matters -- it is the textbook INDETERMINATE, and a
+caller who retries it pays twice.
 """
 import logging
 import os
@@ -12,9 +34,30 @@ from typing import Any, Dict
 from ...base import BaseModule
 from ...registry import register_module
 from ....constants import EnvVars, APIEndpoints
+from ....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _sdk_answered(operation: str) -> Dict[str, Any]:
+    """What replaces a status line when an SDK, not aiohttp, made the call.
+
+    `openai.AsyncOpenAI` raises on every non-2xx, so a returned response object
+    IS the 2xx: reaching this line means a server received the request and
+    answered it. That is the distance between DISPATCHED and ACCEPTED, and it
+    is the whole distance travelled -- an SDK that parsed a reply has not
+    observed anything about the world.
+    """
+    return {
+        'kind': 'openai_reply_parsed',
+        'operation': operation,
+        'measured_by': 'the SDK returned a response object instead of raising',
+        'detail': (
+            'The client raises on any non-2xx, so a returned object means a '
+            'server answered. Nothing corroborates what it said.'
+        ),
+    }
 
 
 @register_module(
@@ -128,7 +171,16 @@ logger = logging.getLogger(__name__)
                 'total_tokens': {'type': 'number', 'description': 'The total tokens',
                 'description_key': 'modules.api.openai.chat.output.usage.properties.total_tokens.description'}
             }
-        }
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed. Always "accepted" on the path '
+                'that returns: OpenAI answered and reported its own usage, and '
+                'nothing corroborates the answer. Error paths raise, so they '
+                'carry no outcome at all'
+            ),
+            'description_key': 'modules.api.openai.chat.output.outcome.description'}
     },
     examples=[
         {
@@ -210,7 +262,50 @@ class OpenAIChatModule(BaseModule):
                     "prompt_tokens": response.usage.prompt_tokens,
                     "completion_tokens": response.usage.completion_tokens,
                     "total_tokens": response.usage.total_tokens
-                }
+                },
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[
+                        _sdk_answered('chat.completions.create'),
+                        {
+                            # Field names avoid the word the vendor uses on
+                            # purpose: `_redact_sensitive_output` blanks any key
+                            # matching `token`, so `prompt_tokens` here would
+                            # reach every hook and stored trace as '[REDACTED]'.
+                            # The unit rides as a value, where the pattern does
+                            # not look. (The module's own `usage` output above
+                            # is redacted for exactly that reason -- an existing
+                            # behaviour this envelope routes around rather than
+                            # changes.)
+                            'kind': 'model_usage_reported',
+                            'unit': 'tokens',
+                            'input_count': response.usage.prompt_tokens,
+                            'output_count': response.usage.completion_tokens,
+                            'stop': response.choices[0].finish_reason,
+                            'measured_by': 'the usage block of the completion OpenAI returned',
+                            'detail': (
+                                'OpenAI counting its own work, which is what it '
+                                'bills from. Evidence that something ran on the '
+                                'other side, and still the peer reporting on '
+                                'itself. `stop` of "length" means the answer was '
+                                'cut off and the text downstream is a fragment.'
+                            ),
+                        },
+                        {
+                            'kind': 'model_named_by_peer',
+                            'model': response.model,
+                            'measured_by': 'the model field of the completion OpenAI returned',
+                            'detail': (
+                                'Which model served the request, read from the '
+                                'reply rather than echoed from the parameters -- '
+                                'an alias resolving to a dated snapshot is the '
+                                'ordinary case, and this is the field that shows '
+                                'it.'
+                            ),
+                        },
+                    ],
+                ),
             }
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
@@ -324,7 +419,16 @@ class OpenAIChatModule(BaseModule):
                 }
             }
         },
-        'model': {'type': 'string', 'description': 'Model name or identifier'}
+        'model': {'type': 'string', 'description': 'Model name or identifier'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed. Always "accepted" on the path '
+                'that returns: OpenAI answered with URLs it says host the '
+                'images. Nothing fetches them, so no image is observed, and the '
+                '`model` output is the one requested rather than one reported'
+            )
+        }
     },
     examples=[
         {
@@ -407,7 +511,46 @@ class OpenAIImageModule(BaseModule):
 
             return {
                 "images": images,
-                "model": self.model
+                "model": self.model,
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[
+                        _sdk_answered('images.generate'),
+                        {
+                            'kind': 'image_urls_reported',
+                            'count': len(images),
+                            'measured_by': (
+                                'len() over the data array in the reply, and the url '
+                                'field of each entry'
+                            ),
+                            'detail': (
+                                'Addresses OpenAI says it put generated images at. '
+                                'Nothing here fetches one, so no byte of any image '
+                                'has been seen by this process: the count is of URLs '
+                                'in a reply, not of pictures that exist. These '
+                                'addresses also expire, so a later 404 is not '
+                                'evidence that this step was wrong.'
+                            ),
+                        },
+                        {
+                            # The same trap `file.write`'s `bytes_written` was:
+                            # a value computed from the caller's own input,
+                            # identical whether the effect happened or not. The
+                            # reply names the model; this module does not read
+                            # it, so the field is labelled an echo rather than
+                            # left looking like a peer statement.
+                            'kind': 'model_echoed_from_request',
+                            'model': self.model,
+                            'measured_by': None,
+                            'detail': (
+                                'The model this module ASKED for, copied from the '
+                                'parameters. Not read from the reply, so no rung '
+                                'rests on it.'
+                            ),
+                        },
+                    ],
+                ),
             }
         except Exception as e:
             raise RuntimeError(f"DALL-E API error: {str(e)}")

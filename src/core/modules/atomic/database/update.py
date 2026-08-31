@@ -3,17 +3,94 @@
 """
 Database Update Module
 Update data in database tables
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Unlike its sibling `database.insert`, this module was already reading a real
+number on every path -- `updated_count` has never been arithmetic on the input.
+What it lacked was a way to say so, and a way to distinguish the one case where
+the number is not a measurement:
+
+  postgresql       `int(result.split()[-1])` over the server's command tag. The
+      only statement this module issues is an UPDATE, and the postgres UPDATE
+      tag is always 'UPDATE <count>', so a number always crossed the wire here.
+      OBSERVED unconditionally, and the tag itself travels in the effect.
+
+  mysql / sqlite   `cursor.rowcount`. PEP 249 allows -1 for "the driver cannot
+      determine a count", and -1 is not a count of anything: that path is
+      ACCEPTED. A rowcount of 0 is a different fact -- the backend saying no
+      rows changed -- and stays OBSERVED. Collapsing the two would be the same
+      defect `database.query` had, where a literal 0 and a counted 0 were
+      indistinguishable downstream.
+
+One caveat is carried in the effect rather than in the rung, because it is a
+different question from how far we followed the effect: MySQL reports CHANGED
+rows for an UPDATE, not MATCHED rows, unless the connection sets
+CLIENT_FOUND_ROWS. An UPDATE that matched five rows and altered none reports 0,
+truthfully. postgres and sqlite report matched rows.
+
+VERIFIED is unreachable and no postcondition is declared: a count of changed
+rows is not a predicate evaluated against the stored values. `ceiling_for(None)`
+caps this at OBSERVED, which is where it belongs.
 """
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_sql_identifier, validate_sql_identifiers, SQLInjectionError
 
 
 logger = logging.getLogger(__name__)
+
+
+def _update_outcome(
+    *,
+    backend: str,
+    counted: bool,
+    updated_count: Any,
+    measured_by: str,
+    detail: str,
+    counts: str,
+) -> Dict[str, Any]:
+    """The rung this UPDATE earned.
+
+    `counted` is a runtime fact about this one statement, never a property of
+    the backend: the same mysql connection answers with a rowcount for one
+    statement and -1 for the next.
+
+        counted=True    a number crossed the wire            -> OBSERVED
+        counted=False   no number was reported for this one  -> ACCEPTED
+
+    `counts` names what the number is a count OF -- 'rows changed' on mysql,
+    'rows matched' elsewhere -- because an integer that means two different
+    things on two backends is worth less than one that says which it is.
+    """
+    if counted:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'rows_updated',
+                'backend': backend,
+                'count': updated_count,
+                'counts': counts,
+                'measured_by': measured_by,
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'statement_accepted',
+            'backend': backend,
+            'count_reported': False,
+            'measured_by': None,
+            'detail': detail,
+        }],
+    )
 
 
 @register_module(
@@ -60,9 +137,23 @@ logger = logging.getLogger(__name__)
     output_schema={
         'updated_count': {
             'type': 'number',
-            'description': 'Number of rows updated'
+            'description': (
+                'Number of rows the backend reported for this UPDATE: matched '
+                'rows on postgresql and sqlite, CHANGED rows on mysql. -1 on '
+                'mysql/sqlite means the driver reported no count -- see outcome'
+            )
         ,
-                'description_key': 'modules.database.update.output.updated_count.description'}
+                'description_key': 'modules.database.update.output.updated_count.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this update was followed into reality: observed when a '
+                'row count crossed the wire, accepted when the driver reported '
+                'none for this statement. Never higher than observed -- nothing '
+                'here evaluates a postcondition'
+            )
+        ,
+                'description_key': 'modules.database.update.output.outcome.description'}
     },
     examples=[
         {
@@ -183,13 +274,27 @@ async def _update_postgresql(
         values = [data[col] for col in set_columns] + [where[col] for col in where_columns]
 
         result = await conn.execute(query, *values)
+        # The only statement this module builds is an UPDATE, and the postgres
+        # UPDATE tag is always 'UPDATE <count>'. The parse is left exactly as it
+        # was -- including raising on a tag that carries no integer -- because a
+        # fabricated 0 next to a rung is worse than an error. `counted` is
+        # therefore unconditionally True on this return, and the tag rides in
+        # the effect so the claim can be checked against what the server said.
         updated_count = int(result.split()[-1])
 
         logger.info(f"Updated {updated_count} rows in {table}")
 
         return {
             'ok': True,
-            'updated_count': updated_count
+            'updated_count': updated_count,
+            'outcome': _update_outcome(
+                backend='postgresql',
+                counted=True,
+                updated_count=updated_count,
+                measured_by=f'row count parsed from the postgres command tag {result!r}',
+                detail='',
+                counts='rows matched by the WHERE clause',
+            ),
         }
     finally:
         await conn.close()
@@ -241,11 +346,28 @@ async def _update_mysql(
             updated_count = cursor.rowcount
             await conn.commit()
 
+        counted = isinstance(updated_count, int) and updated_count >= 0
+
         logger.info(f"Updated {updated_count} rows in {table}")
 
         return {
             'ok': True,
-            'updated_count': updated_count
+            'updated_count': updated_count,
+            'outcome': _update_outcome(
+                backend='mysql',
+                counted=counted,
+                updated_count=updated_count,
+                measured_by='cursor.rowcount from the MySQL OK packet',
+                detail=(
+                    f'cursor.rowcount was {updated_count!r}; MySQL reported no '
+                    'determinable row count for this statement'
+                ),
+                counts=(
+                    'rows CHANGED, not rows matched -- an UPDATE that matched '
+                    'rows and altered none reports 0 unless the connection sets '
+                    'CLIENT_FOUND_ROWS'
+                ),
+            ),
         }
     finally:
         # RELIABILITY: Properly close async MySQL connection
@@ -287,9 +409,22 @@ async def _update_sqlite(
 
     updated_count = await asyncio.to_thread(_run_update)
 
+    counted = isinstance(updated_count, int) and updated_count >= 0
+
     logger.info(f"Updated {updated_count} rows in {table}")
 
     return {
         'ok': True,
-        'updated_count': updated_count
+        'updated_count': updated_count,
+        'outcome': _update_outcome(
+            backend='sqlite',
+            counted=counted,
+            updated_count=updated_count,
+            measured_by='cursor.rowcount from sqlite3_changes()',
+            detail=(
+                f'cursor.rowcount was {updated_count!r}; sqlite reports no row '
+                'count for statements that are not DML'
+            ),
+            counts='rows matched by the WHERE clause',
+        ),
     }

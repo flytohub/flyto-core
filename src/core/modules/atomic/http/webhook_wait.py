@@ -4,6 +4,32 @@
 HTTP Webhook Wait Module
 Start a temporary HTTP server, optionally create a public tunnel via ngrok,
 and wait for an incoming webhook callback.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+This is the one module in the http group that can honestly say OBSERVED, and
+the reason is the direction of travel. Everywhere else here we send a request
+and read the peer's answer about its own work. Here somebody else's request
+arrives at a socket we opened, and the method, path, headers and body are read
+off it. Nothing is taken on anyone's word: we saw the world change.
+
+Not VERIFIED, and the gap is precise. OBSERVED is "we saw the world change, not
+that the RIGHT thing changed", and this module checks nothing about the
+payload -- no signature, no shared secret, no schema. Anything that can reach
+the port and uses the expected method sets the event.
+
+    a callback arrived        OBSERVED
+    the wait timed out        INDETERMINATE
+    the server raised         FAILED
+
+INDETERMINATE and not FAILED for the timeout, because a webhook that did not
+arrive HERE is not a webhook that was not sent: it may have gone to a stale
+tunnel, or been retried against an older URL, or -- and this one was invisible
+until now -- have arrived at this very handler with the wrong method and been
+answered 405 without ever setting the event. That last case used to leave no
+trace at all: the run reported a plain timeout while the sender had a 405 in
+its logs. `rejected_method` counts them, so the effect on the timeout path can
+say "traffic did reach this handler" when it did.
 """
 
 import asyncio
@@ -13,6 +39,7 @@ import json
 import socket
 from typing import Any, Dict, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import Visibility, FieldGroup
@@ -217,6 +244,16 @@ async def _stop_ngrok(port: int) -> None:
             'description': 'Time waited for the webhook in milliseconds',
             'description_key': 'modules.http.webhook_wait.output.duration_ms.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this wait was followed: "observed" when a callback '
+                'arrived and was read off the socket, "indeterminate" on '
+                'timeout (see effects[0].rejected_method for requests turned '
+                'away by the method filter), "failed" when the listener raised'
+            ),
+            'description_key': 'modules.http.webhook_wait.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -266,12 +303,23 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
 
     received = asyncio.Event()
     webhook_data: Dict[str, Any] = {}
+    # Requests that reached this handler and were turned away by the method
+    # filter. Counted because a 405 here is indistinguishable from silence in
+    # every other output this module produces, and the difference between
+    # "nothing arrived" and "something arrived and we rejected it" is the
+    # difference between a lost webhook and a misconfigured one.
+    rejected_method = 0
     start_time = time.time()
 
     async def handle_webhook(request: web.Request) -> web.Response:
         """Handle incoming webhook request."""
+        nonlocal rejected_method
         # Check method if specified
         if expected_method and request.method != expected_method:
+            rejected_method += 1
+            logger.warning(
+                f"Webhook rejected: expected {expected_method}, got {request.method}"
+            )
             return web.Response(
                 status=405,
                 text=json.dumps({'error': f'Expected {expected_method}, got {request.method}'}),
@@ -293,6 +341,11 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
         webhook_data['body'] = body_parsed
         webhook_data['query'] = query_params
         webhook_data['path'] = str(request.path)
+        # The length of the request body as it was read off the socket, before
+        # any JSON parsing. A real count of what arrived, unlike the parsed
+        # body, whose len() would be a number of keys.
+        webhook_data['body_bytes'] = len(body_text.encode('utf-8', errors='replace'))
+        webhook_data['remote'] = request.remote
 
         logger.info(f"Webhook received: {request.method} {request.path}")
         received.set()
@@ -341,6 +394,28 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
                 'error_code': 'TIMEOUT',
                 'webhook_url': webhook_url,
                 'duration_ms': duration_ms,
+                'outcome': envelope(
+                    Outcome.INDETERMINATE,
+                    claim_by=ClaimBy.NONE,
+                    effects=[{
+                        'kind': 'no_webhook_received',
+                        'waited_seconds': timeout_seconds,
+                        'rejected_method': rejected_method,
+                        'expected_method': expected_method or 'any',
+                        'measured_by': (
+                            'requests turned away by the method filter, counted '
+                            'in the handler'
+                        ),
+                        'detail': (
+                            'Nothing set the event within the window. Whether '
+                            'the sender sent anything is not known -- but '
+                            f'{rejected_method} request(s) did reach this '
+                            'handler and were answered 405 for using the wrong '
+                            'method, which is the likely explanation when that '
+                            'count is not zero.'
+                        ),
+                    }],
+                ),
             }
 
         duration_ms = int((time.time() - start_time) * 1000)
@@ -352,6 +427,32 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
             'body': webhook_data.get('body'),
             'query': webhook_data.get('query', {}),
             'duration_ms': duration_ms,
+            # OBSERVED: a request from outside this process arrived at a socket
+            # we opened and was read. Nobody reported this to us -- we saw it.
+            # Not VERIFIED: no signature, secret or schema is checked, so this
+            # observes that A callback arrived, never that the right one did.
+            'outcome': envelope(
+                Outcome.OBSERVED,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'webhook_received',
+                    'method': webhook_data.get('method', ''),
+                    'path': webhook_data.get('path', ''),
+                    'body_bytes': webhook_data.get('body_bytes'),
+                    'header_count': len(webhook_data.get('headers', {})),
+                    'remote': webhook_data.get('remote'),
+                    'rejected_method': rejected_method,
+                    'measured_by': (
+                        'the request read off the socket in the handler: method, '
+                        'path, and len() over the body before parsing'
+                    ),
+                    'detail': (
+                        'The sender is unauthenticated: nothing here checks a '
+                        'signature or a shared secret, so this observes that a '
+                        'callback arrived and not who sent it.'
+                    ),
+                }],
+            ),
         }
 
     except Exception as e:
@@ -362,6 +463,27 @@ async def http_webhook_wait(context: Dict[str, Any]) -> Dict[str, Any]:
             'error': str(e),
             'error_code': 'SERVER_ERROR',
             'duration_ms': duration_ms,
+            # FAILED: the execution raised. `webhook_received` records whether a
+            # callback had already been read before it did, because that is the
+            # one case where something real happened and the error is about
+            # what came after.
+            'outcome': envelope(
+                Outcome.FAILED,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'webhook_server_error',
+                    'error_type': type(e).__name__,
+                    'webhook_received': bool(webhook_data),
+                    'rejected_method': rejected_method,
+                    'measured_by': None,
+                    'detail': (
+                        'The listener could not be started or could not be '
+                        'waited on. Where webhook_received is true, a callback '
+                        'had already arrived and the failure is in what '
+                        'followed it.'
+                    ),
+                }],
+            ),
         }
 
     finally:

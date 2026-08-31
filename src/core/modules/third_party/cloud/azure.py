@@ -4,13 +4,128 @@
 Azure Blob Storage Integration Modules
 
 Provides upload and download operations for Azure Blob Storage.
+
+HOW FAR THESE TWO MODULES FOLLOW REALITY, and why they differ
+
+`cloud.azure.upload` is ACCEPTED. `upload_blob` returns the service's response
+-- an `etag` and a `last_modified` for the blob it says it now holds -- and the
+`size` this module reports is `os.path.getsize` of the local source file, read
+before a byte left the host. That number is identical whether the blob landed
+whole, truncated, or not at all, so nothing rests on it; the etag is the peer's
+own account of the peer's own work, which is precisely what ACCEPTED means. The
+response used to be discarded entirely, which left this module with nothing to
+say beyond "no exception". It is captured now.
+
+`cloud.azure.download` can say more, because it holds both halves. `readall()`
+returns the bytes in memory and the file is written with `open(..., 'wb')`,
+which truncates at open -- so the file's size afterwards is the size of what
+this module wrote, with a baseline of zero guaranteed by the mode rather than
+assumed. Comparing `os.path.getsize` against `len(payload)` is therefore a real
+read-back of a real write:
+
+    equal        OBSERVED (claim_by INFERRED -- the predicate is ours)
+    not equal    INDETERMINATE, not FAILED. Nobody declared a size contract and
+                 a short write is not the only reading; an inference of ours
+                 that may be wrong is INDETERMINATE by definition.
+    unreadable   ACCEPTED. The stat failed; the write had already returned.
+
+Note what OBSERVED does not say here: that the bytes are the blob's. Both
+numbers describe the payload this module received, so what is observed is that
+the download was written out whole -- not that the service sent the right blob.
 """
-from typing import Any
+import os
+from typing import Any, Dict, Optional, Tuple
 
 from ....utils import validate_path_with_env_config
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ._azure_endpoint import enforce_azure_endpoint
+
+
+def _size_on_disk(path: str) -> Tuple[Optional[int], Optional[str]]:
+    """``(st_size, None)`` for the file just written, or ``(None, why)``."""
+    try:
+        return os.path.getsize(path), None
+    except OSError as error:
+        return None, f'{type(error).__name__}: {error.strerror or error}'
+
+
+def _write_back_outcome(
+    *,
+    path: str,
+    payload_bytes: int,
+    size_on_disk: Optional[int],
+    observation_error: Optional[str],
+) -> Dict[str, Any]:
+    """The rung the local write earned, from the two numbers that decide it."""
+    payload_effect = {
+        'kind': 'blob_bytes_received',
+        'bytes': payload_bytes,
+        'measured_by': 'len() of the payload readall() returned',
+        'detail': (
+            'Bytes this module was handed by the service. On its own it says '
+            'nothing about the file: it is unchanged if the write went nowhere.'
+        ),
+    }
+
+    if size_on_disk is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                payload_effect,
+                {
+                    'kind': 'local_file_not_observed',
+                    'measured_by': None,
+                    'reason': observation_error,
+                    'detail': (
+                        'The file was not read back. The write returned without '
+                        'raising and was followed no further.'
+                    ),
+                },
+            ],
+        )
+
+    disk_effect = {
+        'kind': 'local_file_observed',
+        'path': path,
+        'bytes_on_disk': size_on_disk,
+        'measured_by': "os.path.getsize(destination_path), after the 'wb' handle closed",
+        'detail': (
+            "Size the filesystem reports for the file that now exists here. 'wb' "
+            'truncates at open, so the baseline is zero by the guarantee of the '
+            'mode and this size is what this module wrote. Not fsync-ed.'
+        ),
+    }
+
+    if size_on_disk == payload_bytes:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.INFERRED,
+            effects=[payload_effect, disk_effect],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            payload_effect,
+            disk_effect,
+            {
+                'kind': 'local_file_length_disagrees',
+                'predicate': 'os.path.getsize(destination_path) == len(payload)',
+                'expected_bytes': payload_bytes,
+                'actual_bytes': size_on_disk,
+                'detail': (
+                    'The file is not the length of the payload that was written to '
+                    'it. That may be a short write on a full disk, or something '
+                    'else changing the file between the write and the stat. We '
+                    'cannot say which, so this is indeterminate rather than failed.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -104,8 +219,25 @@ from ._azure_endpoint import enforce_azure_endpoint
                 'description_key': 'modules.cloud.azure.upload.output.container.description'},
         'blob_name': {'type': 'string', 'description': 'The blob name',
                 'description_key': 'modules.cloud.azure.upload.output.blob_name.description'},
-        'size': {'type': 'number', 'description': 'Size in bytes',
-                'description_key': 'modules.cloud.azure.upload.output.size.description'}
+        'size': {'type': 'number',
+                'description': (
+                    'Size of the LOCAL source file, read before the upload. Not '
+                    'a measurement of the blob'
+                ),
+                'description_key': 'modules.cloud.azure.upload.output.size.description'},
+        'etag': {'type': 'string',
+                'description': (
+                    'ETag the service returned for the blob it says it stored. '
+                    'Empty when the response carried none'
+                ),
+                'description_key': 'modules.cloud.azure.upload.output.etag.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far this upload was followed into reality. Always '
+                    '"accepted": the service acknowledged the blob and it is '
+                    'never read back'
+                ),
+                'description_key': 'modules.cloud.azure.upload.output.outcome.description'}
     },
     examples=[
         {
@@ -176,8 +308,6 @@ class AzureUploadModule(BaseModule):
                     "Install with: pip install azure-storage-blob"
                 ) from None
 
-            import os
-
             # Check file exists
             if not os.path.exists(file_path):
                 raise FileNotFoundError(f"File not found: {file_path}")
@@ -199,11 +329,18 @@ class AzureUploadModule(BaseModule):
                     from azure.storage.blob import ContentSettings
                     content_settings = ContentSettings(content_type=self.content_type)
 
-                blob_client.upload_blob(
+                # The response was thrown away here. It is the only thing the
+                # service says about this upload, so it is kept: etag and
+                # last_modified for the blob it claims to hold.
+                response = blob_client.upload_blob(
                     data,
                     overwrite=True,
                     content_settings=content_settings
                 )
+
+            reported = dict(response) if isinstance(response, dict) else {}
+            etag = str(reported.get('etag', '') or '')
+            last_modified = reported.get('last_modified')
 
             # Get URL
             url = blob_client.url
@@ -212,7 +349,41 @@ class AzureUploadModule(BaseModule):
                 "url": url,
                 "container": self.container,
                 "blob_name": self.blob_name,
-                "size": file_size
+                "size": file_size,
+                "etag": etag,
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[
+                        {
+                            'kind': 'blob_bytes_offered',
+                            'container': self.container,
+                            'blob_name': self.blob_name,
+                            'bytes_offered': file_size,
+                            'measured_by': 'os.path.getsize(file_path), before the upload',
+                            'detail': (
+                                'Size of the local source file. It reads identically '
+                                'whether Azure stored every byte, some of them, or '
+                                'none.'
+                            ),
+                        },
+                        {
+                            'kind': 'blob_reported_by_service',
+                            'etag': etag,
+                            'last_modified': (
+                                last_modified.isoformat()
+                                if hasattr(last_modified, 'isoformat')
+                                else last_modified
+                            ),
+                            'measured_by': 'the response upload_blob returned',
+                            'detail': (
+                                "The service's own account of the blob it says it "
+                                'stored. No second request was made and the blob was '
+                                'not read back.'
+                            ),
+                        },
+                    ],
+                ),
             }
 
         except Exception as e:
@@ -292,9 +463,29 @@ class AzureUploadModule(BaseModule):
     },
     output_schema={
         'file_path': {'type': 'string', 'description': 'The file path'},
-        'size': {'type': 'number', 'description': 'Size in bytes'},
+        'size': {
+            'type': 'number',
+            'description': (
+                'Size of the file that now exists on this host, from '
+                'os.path.getsize after the write. null when it could not be read '
+                'back'
+            ),
+        },
+        'bytes_received': {
+            'type': 'number',
+            'description': 'Length of the payload the service sent, before writing',
+        },
         'container': {'type': 'string', 'description': 'The container'},
-        'blob_name': {'type': 'string', 'description': 'The blob name'}
+        'blob_name': {'type': 'string', 'description': 'The blob name'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this download was followed into reality: observed when '
+                'the file written is the length of the payload received, '
+                'indeterminate when it is not, accepted when it could not be '
+                'read back'
+            ),
+        }
     },
     examples=[
         {
@@ -353,8 +544,6 @@ class AzureDownloadModule(BaseModule):
                     "Install with: pip install azure-storage-blob"
                 ) from None
 
-            import os
-
             # Ensure destination directory exists
             dest_dir = os.path.dirname(destination_path)
             if dest_dir and not os.path.exists(dest_dir):
@@ -367,18 +556,31 @@ class AzureDownloadModule(BaseModule):
             container_client = blob_service_client.get_container_client(self.container)
             blob_client = container_client.get_blob_client(self.blob_name)
 
-            # Download file
+            # Download file. The payload is held in a name rather than passed
+            # straight into write() -- `readall()` already materialises the whole
+            # blob in memory either way, so this costs nothing and it is what
+            # makes a read-back possible: without len(payload) there is no number
+            # to compare the file against.
+            payload = blob_client.download_blob().readall()
             with open(destination_path, 'wb') as download_file:
-                download_file.write(blob_client.download_blob().readall())
+                download_file.write(payload)
 
-            # Get file size
-            file_size = os.path.getsize(destination_path)
+            # Outside the `with`: the handle is closed, so the buffered bytes
+            # have reached the kernel and the size is a size, not a race.
+            file_size, observation_error = _size_on_disk(destination_path)
 
             return {
                 "file_path": destination_path,
                 "size": file_size,
+                "bytes_received": len(payload),
                 "container": self.container,
-                "blob_name": self.blob_name
+                "blob_name": self.blob_name,
+                "outcome": _write_back_outcome(
+                    path=destination_path,
+                    payload_bytes=len(payload),
+                    size_on_disk=file_size,
+                    observation_error=observation_error,
+                ),
             }
 
         except Exception as e:

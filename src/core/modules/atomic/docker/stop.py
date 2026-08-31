@@ -3,11 +3,34 @@
 """
 Docker Stop Module
 Stop a running Docker container
+
+HOW FAR THIS MODULE FOLLOWS REALITY -- ACCEPTED, on its one return path
+
+`stopped: True` is a literal written in this file. It is True on every path
+that returns at all, because every other path raises, so it carries no
+information: it would read exactly the same if nothing had stopped.
+
+What is real is the exit status. `docker stop <ref>` exits non-zero for a
+container that does not exist, and it does not return until the daemon has
+finished stopping the container -- so exit 0 is the daemon saying it did the
+work. That is "the other side acknowledged taking it", which is ACCEPTED, and
+it is where this module stops.
+
+Why not OBSERVED. Nothing here reads the container back. The obvious read-back
+is not obviously right either: `docker stop` on a `--rm` container removes it,
+so a follow-up `docker inspect` returns "No such object" -- which is
+indistinguishable from a daemon error, an inspect of the wrong reference, or a
+typo. Guessing "gone, therefore stopped" from an error string would be an
+inference dressed as a measurement, which is worse than the honest ACCEPTED
+below. The stdout echo is not a measurement either: it is the reference the
+caller passed, echoed, and `container_id` falls back to that same parameter
+when stdout is empty.
 """
 import asyncio
 import logging
 from typing import Any, Dict
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -74,8 +97,20 @@ logger = logging.getLogger(__name__)
         },
         'stopped': {
             'type': 'boolean',
-            'description': 'Whether the container was successfully stopped',
+            'description': (
+                'Always true when this module returns at all -- every other path '
+                'raises. Not a reading of the container; see outcome'
+            ),
             'description_key': 'modules.docker.stop.output.stopped.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the stop was followed: accepted, meaning the daemon '
+                'acknowledged doing the work by exiting 0. The container is not '
+                'read back, so nothing here is observed'
+            ),
+            'description_key': 'modules.docker.stop.output.outcome.description',
         },
     },
     examples=[
@@ -147,6 +182,21 @@ async def docker_stop(context: Dict[str, Any]) -> Dict[str, Any]:
             'data': {
                 'container_id': container_id,
                 'stopped': True,
+                'outcome': envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[{
+                        'kind': 'stop_command_succeeded',
+                        'container': str(container),
+                        'echoed_reference': stdout,
+                        'measured_by': 'exit status 0 from `docker stop`',
+                        'detail': (
+                            'The daemon accepted the stop and returned only when it '
+                            'had finished with the container. The container itself '
+                            'was not read back, so its state now is not observed.'
+                        ),
+                    }],
+                ),
             },
         }
 

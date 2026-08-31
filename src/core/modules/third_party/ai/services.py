@@ -3,17 +3,96 @@
 """
 AI Integration Modules
 Provides integrations with AI services like Anthropic Claude and Google Gemini
+
+HOW FAR AN LLM CALL IS FOLLOWED
+
+ACCEPTED, on the one path that returns. Both modules post once, read the reply
+to that post, and stop; there is no second request and nothing to read back --
+a completion is not a resource with an address. The strongest true statement is
+the one `http.request` makes about any 2xx: a server received this, chose a
+reply, and sent it. Reading a peer's report of its own work is taking its word
+for it, and a `usage` block is exactly that -- the vendor's count of what it did
+and what it will bill for.
+
+The effect that outlives the step is money spent and, for a caller who chains
+on it, text that will be treated as an answer. Neither is observable from here.
+
+WHAT THE ERROR PATHS CANNOT SAY, and why they are silent rather than lying.
+Both modules `raise` on a non-200 and on a malformed body, so the payload never
+survives: a raised module becomes an ERROR result and `to_legacy_dict` discards
+everything but the message. An envelope written on those paths could not be
+read by anything, which is the same wall `http.request` documents on its
+non-2xx branch. So a timeout against a model that had already begun generating
+-- the textbook INDETERMINATE, and the case where a retry pays twice -- is
+currently reported as a plain step failure. Changing that means changing what a
+failed AI step returns, which is a decision about step semantics rather than
+about reporting, so it is written down here instead of smuggled in.
 """
 import logging
 import os
+from typing import Any, Dict
 
 import aiohttp
 
 from ...registry import register_module
 from ....constants import APIEndpoints, EnvVars
+from ....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _reply_read(status: int, vendor: str) -> Dict[str, Any]:
+    """The measurement both modules share: a status line came back from the vendor.
+
+    This is the whole distance between DISPATCHED and ACCEPTED, and the whole
+    distance these modules travel. Nothing below claims the answer is correct,
+    complete, or untruncated -- only that a peer replied.
+    """
+    return {
+        'kind': 'llm_reply_read',
+        'vendor': vendor,
+        'status': status,
+        'measured_by': 'response.status on the reply to this request',
+        'detail': (
+            'A server received this request and chose a reply. Nothing here '
+            'corroborates what the reply says; there is no second request.'
+        ),
+    }
+
+
+def _usage_reported(
+    *, unit: str, input_count: Any, output_count: Any, stop: Any
+) -> Dict[str, Any]:
+    """The vendor's account of the work it did, kept labelled as an account.
+
+    Deliberately NOT named with the vendor's own word for the unit.
+    `_redact_sensitive_output` blanks any key matching `token`, so a field
+    called `input_tokens` would reach every hook and every stored trace as
+    '[REDACTED]'. The unit rides as a value instead, where that pattern does
+    not look.
+
+    `stop` is carried because it is the one field saying the answer may be
+    incomplete: 'max_tokens' / 'MAX_TOKENS' means the model was cut off
+    mid-sentence and the text downstream is a fragment. That is not a rung --
+    a truncated completion is a completion, and the peer did the work it billed
+    for -- but a consumer deciding whether to trust the text needs it.
+    """
+    return {
+        'kind': 'model_usage_reported',
+        'unit': unit,
+        'input_count': input_count,
+        'output_count': output_count,
+        'stop': stop,
+        'measured_by': 'the usage block of the body the vendor returned',
+        'detail': (
+            'The vendor counting its own work, which is what it bills from. It '
+            'is evidence that something ran on the other side -- these numbers '
+            'vary with the request and cannot be produced here -- and it is '
+            'still the peer reporting on itself, which is why the rung stops at '
+            'accepted.'
+        ),
+    }
 
 
 @register_module(
@@ -149,7 +228,16 @@ logger = logging.getLogger(__name__)
                 'output_tokens': {'type': 'number', 'description': 'The output tokens',
                 'description_key': 'modules.api.anthropic.chat.output.usage.properties.output_tokens.description'}
             }
-        }
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed. Always "accepted" on the path '
+                'that returns: Anthropic answered and reported its own usage, '
+                'and nothing here corroborates the answer. Error paths raise, so '
+                'they carry no outcome at all'
+            ),
+            'description_key': 'modules.api.anthropic.chat.output.outcome.description'}
     },
     examples=[
         {
@@ -216,6 +304,7 @@ async def anthropic_chat(context):
                 error_text = await response.text()
                 raise Exception(f"Anthropic API error ({response.status}): {error_text}")
 
+            status = response.status
             result = await response.json()
 
     # Extract response
@@ -226,7 +315,31 @@ async def anthropic_chat(context):
         'usage': {
             'input_tokens': result['usage']['input_tokens'],
             'output_tokens': result['usage']['output_tokens']
-        }
+        },
+        'outcome': envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                _reply_read(status, 'anthropic'),
+                _usage_reported(
+                    unit='tokens',
+                    input_count=result['usage']['input_tokens'],
+                    output_count=result['usage']['output_tokens'],
+                    stop=result['stop_reason'],
+                ),
+                {
+                    'kind': 'model_named_by_peer',
+                    'model': result['model'],
+                    'measured_by': 'the model field of the body Anthropic returned',
+                    'detail': (
+                        'Which model the vendor says served this request. It is '
+                        'read from the reply, not echoed from the request, so it '
+                        'can differ from the model asked for -- an alias resolving '
+                        'to a dated snapshot is the ordinary case.'
+                    ),
+                },
+            ],
+        ),
     }
 
 
@@ -332,6 +445,15 @@ async def anthropic_chat(context):
         'candidates': {
             'type': 'array',
             'description': 'All candidate responses'
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed. Always "accepted" on the path '
+                'that returns: Gemini answered and reported its own usage. Note '
+                'that the `model` output above is the model REQUESTED, echoed '
+                'from the parameters, and the outcome effects say so'
+            )
         }
     },
     examples=[
@@ -404,6 +526,7 @@ async def google_gemini_chat(context):
                 error_text = await response.text()
                 raise Exception(f"Google Gemini API error ({response.status}): {error_text}")
 
+            status = response.status
             result = await response.json()
 
     # Extract response
@@ -413,8 +536,54 @@ async def google_gemini_chat(context):
 
     text = candidates[0]['content']['parts'][0]['text']
 
+    # `usageMetadata` is absent on some Gemini responses; None is the honest
+    # value for a count that was not reported, and 0 would be a number written
+    # here rather than one that crossed the wire.
+    usage = result.get('usageMetadata') or {}
+
     return {
         'text': text,
         'model': model,
-        'candidates': candidates
+        'candidates': candidates,
+        'outcome': envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                _reply_read(status, 'google_gemini'),
+                _usage_reported(
+                    unit='tokens',
+                    input_count=usage.get('promptTokenCount'),
+                    output_count=usage.get('candidatesTokenCount'),
+                    stop=candidates[0].get('finishReason'),
+                ),
+                {
+                    'kind': 'candidates_returned',
+                    'count': len(candidates),
+                    'measured_by': 'len() over the candidates array Gemini returned',
+                    'detail': (
+                        'How many candidate completions came back. Only the first '
+                        'is read into `text`.'
+                    ),
+                },
+                {
+                    # Named so that nobody mistakes it for evidence. This is the
+                    # `file.write` mistake in miniature: the module's `model`
+                    # output is `params['model']`, the caller's own string,
+                    # identical whether Gemini answered or not. Gemini's reply
+                    # carries `modelVersion`; this module does not read it, so
+                    # the honest thing is to say the field is an echo rather
+                    # than to quietly let it look like a peer statement.
+                    'kind': 'model_echoed_from_request',
+                    'model': model,
+                    'measured_by': None,
+                    'detail': (
+                        "The model this module ASKED for, copied from the "
+                        'request. Unlike the Anthropic module beside it, nothing '
+                        'here reads which model actually served the call, so '
+                        'this field is not evidence of anything and no rung '
+                        'rests on it.'
+                    ),
+                },
+            ],
+        ),
     }

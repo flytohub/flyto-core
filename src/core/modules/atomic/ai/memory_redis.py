@@ -6,15 +6,125 @@ Persistent memory storage using Redis for AI Agent
 
 Provides persistent conversation memory across sessions
 using Redis as the backend storage.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+This is the only module in the ai/llm group that touches durable external state,
+and it has no single rung. Four answers, decided per run from what actually
+happened:
+
+  connected, and messages came back                     OBSERVED
+      `messages` are entries an earlier run wrote, sent back by the server and
+      deserialised here. Rows off the wire are an observation of those rows --
+      the same reasoning `database.query` uses, and the same limit: it observes
+      the history, not that anything was stored this time.
+
+  connected, and the list came back empty               ACCEPTED
+      `len(messages) == 0` reads identically whether the session is new, the key
+      expired under its TTL, or somebody flushed the database. A value that
+      would be unchanged if the effect had not happened is not evidence of it.
+      The PING round trip is what is left, and a PONG is the peer acknowledging.
+
+  connected, load_on_start=False                        ACCEPTED
+      Nothing was read because nothing was asked for. The PING still answered.
+
+  redis unreachable, or the read failed                 INDETERMINATE
+      Not FAILED. `outcome.py` names a severed observation channel as the
+      textbook indeterminate, and that is exactly the state: `messages` is
+      handed to the agent as `[]`, and there may be fifty messages in that key
+      that we could not read. The agent will proceed as though the conversation
+      is new. Nothing here can say whether it is.
+
+A DEFECT THIS EXPOSES RATHER THAN FIXES. Both `except` clauses below swallow the
+failure and return `ok: True` with `connected: False`, so a workflow that asked
+for persistent memory silently gets a non-persistent one -- and the fallback is
+worse than it looks, because `redis_client` is left bound whenever `from_url`
+succeeded and only `ping()` failed, so `_redis_add_message` keeps trying to write
+through a client we already know does not work. The reason is now captured
+instead of discarded, and it travels in the envelope; changing `ok` is a
+behaviour change and not an outcome declaration.
 """
 
 from contextlib import suppress
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from ....engine.outcome import Outcome, envelope
 from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose, field
 from ...types import DataType, EdgeType, NodeType
+
+
+def _memory_outcome(
+    *,
+    connected: bool,
+    loaded: bool,
+    message_count: int,
+    load_on_start: bool,
+    failure: Optional[str],
+) -> Dict[str, Any]:
+    """The rung this session load earned, decided from what answered."""
+    if failure is not None:
+        return envelope(
+            Outcome.INDETERMINATE,
+            effects=[{
+                'kind': 'memory_not_read',
+                'connected': connected,
+                'reason': failure,
+                'measured_by': None,
+                'detail': (
+                    'The stored history could not be read. `messages` is empty '
+                    'because we could not look, not because the session is new, '
+                    'and this module cannot tell those apart. Anything downstream '
+                    'that treats an empty history as "first turn" is guessing.'
+                ),
+            }],
+        )
+
+    if not load_on_start:
+        return envelope(
+            Outcome.ACCEPTED,
+            effects=[{
+                'kind': 'connection_acknowledged',
+                'measured_by': 'a PING that the server answered',
+                'detail': (
+                    'The server acknowledged the connection. load_on_start is '
+                    'off, so nothing was read and nothing about the stored '
+                    'history is claimed.'
+                ),
+            }],
+        )
+
+    if loaded and message_count > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            effects=[{
+                'kind': 'messages_read',
+                'count': message_count,
+                'measured_by': 'len() over the entries LRANGE returned from the server',
+                'detail': (
+                    'These entries were stored by an earlier run and came back off '
+                    'the wire. That observes the history that exists; it does not '
+                    'observe anything this step wrote, because this step writes '
+                    'nothing.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        effects=[{
+            'kind': 'no_messages_read',
+            'count': 0,
+            'measured_by': None,
+            'detail': (
+                'LRANGE answered with an empty list. That reads the same whether '
+                'the session is new, the key expired under its TTL, or the '
+                'database was flushed, so it is not an observation of the stored '
+                'history. What is left is that the server answered.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -134,7 +244,16 @@ from ...types import DataType, EdgeType, NodeType
         'connected': {'type': 'boolean', 'description': 'Redis connection status',
                 'description_key': 'modules.ai.memory.redis.output.connected.description'},
         'config': {'type': 'object', 'description': 'Full memory configuration',
-                'description_key': 'modules.ai.memory.redis.output.config.description'}
+                'description_key': 'modules.ai.memory.redis.output.config.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far the stored history was followed: observed when '
+                    'messages came back off the wire, accepted when the server '
+                    'answered but nothing was read, indeterminate when redis '
+                    'could not be reached and an empty history was handed over '
+                    'in its place'
+                ),
+                'description_key': 'modules.ai.memory.redis.output.outcome.description'}
     },
 
     examples=[
@@ -189,6 +308,15 @@ async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
     redis_client = None
     connected = False
     messages = []
+    # Why the store could not be read, or None when it was. Previously both
+    # handlers were a bare `pass`: the failure was discarded, `connected: False`
+    # was the only trace of it, and nothing downstream could tell "no history"
+    # from "could not look". The envelope needs that distinction, so the reason
+    # is kept rather than dropped.
+    failure = None
+    # Whether an LRANGE actually answered. Separate from `connected` because a
+    # PING can succeed and the read still fail, and those are different claims.
+    loaded = False
 
     try:
         import redis.asyncio as redis
@@ -200,13 +328,14 @@ async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
         if load_on_start:
             stored = await redis_client.lrange(memory_key, 0, -1)
             messages = [json.loads(m) for m in stored]
+            loaded = True
 
     except ImportError:
         # redis package not installed, use in-memory fallback
-        pass
-    except Exception:
+        failure = 'the redis package is not installed'
+    except Exception as e:
         # Connection failed, use in-memory fallback
-        pass
+        failure = f'{type(e).__name__}: {e}'
 
     config = {
         'memory_type': 'redis',
@@ -227,6 +356,16 @@ async def ai_memory_redis(context: Dict[str, Any]) -> Dict[str, Any]:
         'connected': connected,
         '_redis_client': redis_client,
         'config': config,
+        # A flat result with no `data` key, so the envelope goes at the top
+        # level: `wrap_legacy_result` sweeps these fields into data and
+        # `_apply_outcome_contract` reads exactly this dict.
+        'outcome': _memory_outcome(
+            connected=connected,
+            loaded=loaded,
+            message_count=len(messages),
+            load_on_start=load_on_start,
+            failure=failure,
+        ),
         '__methods__': {
             'add_message': '_redis_add_message',
             'get_messages': '_redis_get_messages',

@@ -3,6 +3,29 @@
 """
 File Diff Module
 Generate unified diff between original and modified content.
+
+WHY THIS MODULE HAS NO RUNG, AND DECLARES SO
+
+`file.diff` is in the side-effecting population only because
+`outcome.is_side_effecting` keys on the part of a module id before the first
+dot, and this one begins `file.`. It is the classifier being coarse, not this
+module doing anything. Nothing here opens a file. The `filename` parameter is a
+label pasted into the `---`/`+++` header lines; it is never resolved, never
+stat-ed, and a path that does not exist produces a perfectly good diff. Both
+operands are strings the caller passed in, `difflib` is pure, and the result
+goes back to the caller.
+
+So there is no effect to follow, and every rung on the ladder would be a
+statement about one. `dispatched` -- what the engine stamps on a side-effecting
+module that reports nothing -- would be the wrong answer rather than a cautious
+one: no instruction left this process. `observed` would be worse, since there is
+nothing outside the workflow to have observed.
+
+`derives=True` is the declaration for exactly this, and `decorators.py` explains
+why it must be declared rather than inferred: "needs no contract" and "has not
+been given one yet" are otherwise indistinguishable in the data, and a gate that
+cannot tell them apart cannot count anything. It is the same answer
+`array.sort` and `string.upper` give.
 """
 
 from typing import Any, Dict
@@ -31,6 +54,11 @@ from ...schema import compose, field
     timeout_ms=10000,
     retryable=False,
     concurrent_safe=True,
+
+    # The return value IS the effect: two caller-supplied strings in, a difflib
+    # result out, nothing outside the workflow touched. See the module
+    # docstring for why the `file.` prefix does not make this side-effecting.
+    derives=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,

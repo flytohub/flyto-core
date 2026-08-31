@@ -340,3 +340,95 @@ class TestTheCeiling:
 
         assert "outcome" not in result
         assert step_outcome(result)[0] is Outcome.INDETERMINATE
+
+
+class TestTheDefaultCannotManufactureAGreenTick:
+    """The self-contradiction an adversarial pass found in this very file.
+
+    `default_for`'s docstring said "Never VERIFIED, under any circumstance" and
+    the first line of its body returned VERIFIED for anything declaring
+    `derives`. Three modules in a side-effect category declared it — file.diff,
+    scheduler.interval, scheduler.cron_parse — and were stamped `verified` with
+    `postcondition: None` and `effects: []`: a green tick with nothing behind
+    it, produced by the default whose job is to prevent exactly that.
+    """
+
+    def test_a_side_effecting_module_cannot_reach_verified_by_declaring_derives(self):
+        from core.engine.outcome import Outcome, default_for
+
+        assert default_for("file.diff", {"derives": True}) is Outcome.DISPATCHED
+        assert default_for("scheduler.interval", {"derives": True}) is Outcome.DISPATCHED
+
+    def test_a_pure_module_still_may(self):
+        """`derives` is not wrong, it is only wrong about side-effecting code."""
+        from core.engine.outcome import Outcome, default_for
+
+        assert default_for("array.sort", {"derives": True}) is Outcome.VERIFIED
+
+    def test_no_shipped_module_is_stamped_verified_by_default(self):
+        """Over the real registry, not a constructed case.
+
+        The whole hard rule in one assertion: whatever any of the 483 modules
+        declares today, none of them gets a `verified` default it did not earn.
+        """
+        import os
+
+        os.environ.pop("FLYTO_ENV", None)
+        from core.modules import atomic  # noqa: F401
+        from core.modules.registry import ModuleRegistry
+        from core.engine.outcome import Outcome, default_for, is_side_effecting
+
+        metadata = ModuleRegistry.get_all_metadata(filter_by_stability=False)
+        wrongly_verified = sorted(
+            module_id
+            for module_id, meta in metadata.items()
+            if is_side_effecting(module_id, meta)
+            and default_for(module_id, meta) is Outcome.VERIFIED
+        )
+
+        assert not wrongly_verified, wrongly_verified
+
+
+class TestTheStampGoesWhereItSurvives:
+    """The other thing the adversarial pass found here.
+
+    `to_legacy_dict` keeps `data` and discards every sibling. The write target
+    was `data` when it is a dict and the outer result otherwise — and "otherwise"
+    includes a list-shaped `data`, which is precisely the discarded place.
+    """
+
+    @pytest.fixture
+    def stamp(self, monkeypatch):
+        from core.engine.step_executor import executor as executor_module
+        from core.modules.registry import ModuleRegistry
+
+        def run(module_id, result, **metadata):
+            monkeypatch.setattr(
+                ModuleRegistry,
+                "get_metadata",
+                staticmethod(lambda mid: metadata if mid == module_id else None),
+            )
+            instance = type("_M", (), {"module_id": module_id})()
+            return executor_module._apply_outcome_contract(instance, result)
+
+        return run
+
+    def test_a_dict_data_takes_the_stamp(self, stamp):
+        result = stamp("file.write", {"ok": True, "data": {"path": "/tmp/x"}})
+
+        assert result["data"]["outcome"]["rung"] == "dispatched"
+
+    def test_a_flat_result_takes_it_at_the_top_where_it_is_swept_into_data(self, stamp):
+        from core.modules.items import wrap_legacy_result
+
+        result = stamp("file.write", {"ok": True, "path": "/tmp/x"})
+        surviving = wrap_legacy_result(result).to_legacy_dict()
+
+        assert surviving["data"]["outcome"]["rung"] == "dispatched"
+
+    @pytest.mark.parametrize("payload", [[{"a": 1}], "a string", 7, None])
+    def test_a_data_that_cannot_hold_a_mapping_is_left_alone(self, stamp, payload):
+        """Silence, rather than a stamp written where it gets thrown away."""
+        result = stamp("file.write", {"ok": True, "data": payload})
+
+        assert "outcome" not in result

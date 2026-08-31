@@ -7,6 +7,32 @@ Execute N HTTP requests in sequence (for timing-sensitive probes) or parallel,
 capturing per-request status, body, headers, duration_ms, and label. Designed
 for pentest blueprints that need baseline + payload comparison (SQL injection,
 XSS reflected, auth bypass).
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+The envelope is PER REQUEST, not per batch, and that is forced by the shape of
+the result as much as by honesty. `data` here is a list, so
+`wrap_legacy_result` turns each entry into its own Item and every sibling key
+at the top level -- `count`, `failed_count`, `total_duration_ms` -- is already
+discarded on the way out of a step. A batch-level envelope written beside them
+could never be read. Each entry, on the other hand, survives as an item, and
+`step_executor._outcome_payloads` walks list entries, so `step_outcome` sees
+all of them and reports the weakest. A batch is exactly as confirmed as its
+least confirmed request, which is the rule that function already applies.
+
+Per request, two answers:
+
+    a status line came back    ACCEPTED
+        The peer received the probe and chose a reply. `bytes_received` here
+        IS a byte count -- this module reads `response.read()` and decodes
+        afterwards, so the count is taken over the wire payload rather than
+        over a decoded string.
+
+    no response was read       INDETERMINATE
+        A timeout, a client error or any other transport failure. Whether the
+        peer received and acted on the request is not known, so a retry may
+        repeat an effect that already happened. Never FAILED: nothing here
+        refused to send.
 """
 
 import asyncio
@@ -15,6 +41,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ...registry import register_module
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import (
     guarded_client_session,
     validate_url_with_env_config,
@@ -94,6 +121,26 @@ async def _execute_single_request(
                 "duration_ms": duration_ms,
                 "ok": 200 <= status < 300,
                 "error": None,
+                # ACCEPTED on a non-2xx as well as a 2xx. The rung answers "how
+                # far was this followed", not "did it succeed": a 500 is the
+                # peer receiving the probe and choosing a reply just as much as
+                # a 200 is, and for a pentest batch the 500 is often the point.
+                # `ok` beside it carries the success question.
+                "outcome": envelope(
+                    Outcome.ACCEPTED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[{
+                        "kind": "http_status_received",
+                        "label": label,
+                        "status": status,
+                        "reason": response.reason or "",
+                        "bytes_received": len(raw_body),
+                        "measured_by": (
+                            "response.status and len() over the bytes read off "
+                            "the wire, before decoding"
+                        ),
+                    }],
+                ),
             }
         finally:
             response.release()
@@ -110,6 +157,15 @@ async def _execute_single_request(
 
 
 def _failed_request(label, method, url, duration_ms, code, msg) -> Dict[str, Any]:
+    """One request that produced no response.
+
+    INDETERMINATE on all three codes this is called with, and the reason is the
+    one `http.request` gives: no response was read, so whether the peer
+    received and acted on the request is unknown. That is not a low rung, it is
+    a different kind of answer, and it is the one that makes re-running a batch
+    of POSTs a decision rather than a reflex. FAILED would mean "it did not
+    happen", which nothing here established.
+    """
     return {
         "label": label,
         "method": method,
@@ -122,6 +178,21 @@ def _failed_request(label, method, url, duration_ms, code, msg) -> Dict[str, Any
         "ok": False,
         "error": msg,
         "error_code": code,
+        "outcome": envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                "kind": "http_no_response",
+                "label": label,
+                "error_code": code,
+                "measured_by": None,
+                "detail": (
+                    "No response was read. Whether the peer received and acted "
+                    "on this request is not known, so a retry may repeat an "
+                    "effect that already happened."
+                ),
+            }],
+        ),
     }
 
 
@@ -208,7 +279,18 @@ def _compute_pattern_matches(
     },
     output_schema={
         'ok': {'type': 'boolean', 'description': 'Whether the batch completed (does not imply all requests succeeded)'},
-        'data': {'type': 'array', 'description': 'Per-request results: [{label, status, body, duration_ms, ok, ...}]'},
+        'data': {
+            'type': 'array',
+            'description': (
+                'Per-request results: [{label, status, body, duration_ms, ok, '
+                'outcome, ...}]. Each entry carries its own outcome envelope: '
+                '"accepted" when a status line came back (2xx or not), '
+                '"indeterminate" when no response was read. There is no '
+                'batch-level envelope -- a step is only as confirmed as its '
+                'least confirmed request, and step_outcome computes that from '
+                'these'
+            ),
+        },
         'count': {'type': 'number', 'description': 'Number of requests executed'},
         'failed_count': {'type': 'number', 'description': 'Number of requests that errored or returned non-2xx'},
         'total_duration_ms': {'type': 'number', 'description': 'Total elapsed ms across the batch'},
@@ -227,8 +309,21 @@ async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:
     params = context['params']
     requests: List[Dict[str, Any]] = params.get('requests') or []
     if not isinstance(requests, list) or not requests:
+        # FAILED, and this envelope is currently unreadable: `ok: False` makes
+        # `wrap_legacy_result` build an ERROR result and drop the payload. It
+        # is written anyway for the reason `http.request._error_result` gives --
+        # the fact is true whether or not a consumer exists yet.
         return {'ok': False, 'data': [], 'count': 0, 'failed_count': 0,
-                'total_duration_ms': 0, 'error': 'requests must be a non-empty list'}
+                'total_duration_ms': 0, 'error': 'requests must be a non-empty list',
+                'outcome': envelope(
+                    Outcome.FAILED,
+                    claim_by=ClaimBy.NONE,
+                    effects=[{
+                        'kind': 'batch_not_started',
+                        'measured_by': None,
+                        'detail': 'No requests were supplied; nothing was sent.',
+                    }],
+                )}
 
     measure_time = bool(params.get('measure_time', False))
     timeout_s = int(params.get('timeout', 30))
@@ -249,6 +344,24 @@ async def http_batch(context: Dict[str, Any]) -> Dict[str, Any]:
                     'total_duration_ms': 0,
                     'error': f'SSRF blocked request {idx}: {e}',
                     'error_code': 'SSRF_BLOCKED',
+                    # FAILED, not INDETERMINATE: the gate runs over every
+                    # request before the session is opened, so no request in
+                    # this batch was sent. Nothing reached any peer, which is
+                    # knowable rather than unknown.
+                    'outcome': envelope(
+                        Outcome.FAILED,
+                        claim_by=ClaimBy.NONE,
+                        effects=[{
+                            'kind': 'batch_refused_before_send',
+                            'blocked_index': idx,
+                            'measured_by': None,
+                            'detail': (
+                                'The SSRF gate refused a target before the '
+                                'session was opened. No request in this batch '
+                                'left this machine.'
+                            ),
+                        }],
+                    ),
                 }
 
     timeout = aiohttp.ClientTimeout(total=timeout_s)

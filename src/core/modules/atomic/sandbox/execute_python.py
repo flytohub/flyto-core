@@ -3,6 +3,34 @@
 """
 Sandbox Execute Python Module
 Execute Python code safely in a subprocess with timeout.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two returns, and both of them say `ok: True`. That is the whole reason this
+module needs an envelope: a consumer reading `ok` cannot tell them apart.
+
+  the process exited                          OBSERVED
+      `proc.returncode` is the status the kernel recorded for a child that has
+      been reaped, and stdout/stderr are the bytes it actually wrote. None of
+      it is derivable from `code`.
+
+      OBSERVED for a non-zero exit too, which is where this differs from
+      `shell.exec`. `shell.exec` calls a non-zero exit INDETERMINATE because it
+      sets `ok: False` from it -- an inference about what the caller wanted,
+      which is wrong for a `grep` that exits 1 having worked perfectly. This
+      module infers nothing: it reports the code and leaves `ok` True either
+      way, so there is no inference to be unsure about. What was observed is
+      that the process ran and ended with that status.
+
+  the timeout killed it                       INDETERMINATE
+      We stopped waiting and killed the child. It may have finished the work
+      and died mid-print; it may have done nothing. `exit_code: -1` and the
+      empty `stdout` in that return are written in this file, not measured --
+      `wait_for` cancelled `communicate()` and its buffers went with it. This
+      is the textbook indeterminate: we do not know whether it happened.
+
+The `ModuleError` path raises rather than returns, so there is no dict to carry
+an envelope. Nothing is claimed there and nothing can be.
 """
 import asyncio
 import logging
@@ -10,8 +38,9 @@ import os
 import sys
 import tempfile
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -20,6 +49,58 @@ from ...errors import ValidationError, ModuleError
 from .safe_env import build_sandbox_env
 
 logger = logging.getLogger(__name__)
+
+
+def _exited_outcome(*, exit_code: int, stdout: str, stderr: str) -> Dict[str, Any]:
+    """The envelope for a child that ran to completion and was reaped."""
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'process_exited',
+        'exit_code': exit_code,
+        'measured_by': 'proc.returncode after communicate() returned',
+        'detail': (
+            'The status the kernel recorded for the child. It says the code ran '
+            'and how it ended; it says nothing about whether it did the right '
+            'thing, and no postcondition was evaluated.'
+        ),
+    }]
+    if stdout:
+        effects.append({
+            'kind': 'stdout',
+            'bytes': len(stdout.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stdout pipe',
+        })
+    if stderr:
+        effects.append({
+            'kind': 'stderr',
+            'bytes': len(stderr.encode('utf-8', errors='replace')),
+            'measured_by': 'bytes read from the child stderr pipe',
+        })
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+def _timed_out_outcome(*, timeout: int) -> Dict[str, Any]:
+    """The envelope for a child we killed because we stopped waiting."""
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'process_started',
+                'measured_by': 'the interpreter was spawned by create_subprocess_exec',
+            },
+            {
+                'kind': 'process_killed',
+                'after_seconds': timeout,
+                'measured_by': 'proc.kill() after asyncio.wait_for timed out',
+                'detail': (
+                    'Whatever the code had already done, it has done. The '
+                    "exit_code of -1 and the empty stdout in this result are this "
+                    'module writing defaults, not readings: the pipes died with '
+                    'the cancelled communicate().'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -104,6 +185,16 @@ logger = logging.getLogger(__name__)
             'description': 'Execution time in milliseconds',
             'description_key': 'modules.sandbox.execute_python.output.execution_time_ms.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the execution was followed: observed when the process '
+                'exited and its status was read, indeterminate when the timeout '
+                'killed it. Both returns say ok:true, so this is the field that '
+                'tells them apart'
+            ),
+            'description_key': 'modules.sandbox.execute_python.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -177,6 +268,7 @@ async def sandbox_execute_python(context: Dict[str, Any]) -> Dict[str, Any]:
                     'stderr': 'Execution timed out after {} seconds'.format(timeout),
                     'exit_code': -1,
                     'execution_time_ms': elapsed_ms,
+                    'outcome': _timed_out_outcome(timeout=timeout),
                 },
             }
 
@@ -198,6 +290,11 @@ async def sandbox_execute_python(context: Dict[str, Any]) -> Dict[str, Any]:
                 'stderr': stderr,
                 'exit_code': exit_code,
                 'execution_time_ms': elapsed_ms,
+                'outcome': _exited_outcome(
+                    exit_code=exit_code,
+                    stdout=stdout,
+                    stderr=stderr,
+                ),
             },
         }
     except Exception as e:

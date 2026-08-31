@@ -3,12 +3,134 @@
 """
 Cloud Storage Integration Modules
 Provides integrations with cloud storage services like AWS S3
+
+HOW FAR THESE TWO MODULES FOLLOW REALITY
+
+Both make a second request, and that is what separates them from the boto3
+twins in `aws/`: `cloud.aws_s3.upload` calls `head_object` after the PUT, and
+`cloud.aws_s3.download` reads the bytes it was sent. A second look at the store
+is the difference between taking the service's word and measuring what is
+there, so both can reach OBSERVED where `aws.s3.upload` cannot.
+
+What is compared, on every path: a length measured on OUR side against a length
+the store reports for the same key.
+
+    upload, file    os.path.getsize(file_path)  vs head ContentLength
+    upload, content len(body)                   vs head ContentLength
+    download, file  os.stat(dest).st_size       vs head ContentLength
+    download, memory len(bytes actually read)   vs get_object ContentLength
+
+  equal              OBSERVED, claim_by INFERRED -- the predicate is ours
+  not equal          INDETERMINATE, not FAILED. Nobody declared a size
+                     contract, and there are innocent readings: head_object is a
+                     separate request, so an object replaced between the two
+                     calls reports a length that was never ours.
+  one side missing   ACCEPTED. The service took the bytes and answered; nothing
+                     could be compared.
+
+The residual gap in the upload case, stated plainly because a reader deserves
+it: an object of exactly the same length already sitting at that key would be
+indistinguishable from ours. The equality is evidence, not proof, which is why
+the claim stops at OBSERVED -- "we saw the world change, not that the right
+thing changed" -- and why `claim_by` records that the predicate was inferred
+here rather than asked for by a caller.
+
+`etag` stays what it always was: the store's own identifier for what it says it
+holds. It is reported, and no rung rests on it.
 """
 
 import os
+from typing import Any, Dict, Optional
 
 from ....utils import validate_path_with_env_config
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
+
+
+def _length_outcome(
+    *,
+    kind: str,
+    local_bytes: Optional[int],
+    local_by: str,
+    store_bytes: Optional[int],
+    store_by: str,
+    detail: str,
+) -> Dict[str, Any]:
+    """The rung a length comparison earned, and the two numbers that earned it.
+
+    One helper for four paths because the question is the same one each time:
+    does what the store reports for this key agree with what this host measured?
+    The paths differ only in where each number came from, so both provenances
+    travel in the effects rather than being flattened into a bare integer.
+    """
+    local_effect = {
+        'kind': f'{kind}_bytes_local',
+        'bytes': local_bytes,
+        # `measured_by` names the line that produced the number. Where there is
+        # no number there was no such line, so it is None and the note about why
+        # travels as `reason` -- a failure message sitting in `measured_by`
+        # would read as a measurement to anything scanning for one.
+        'measured_by': local_by if local_bytes is not None else None,
+        'reason': None if local_bytes is not None else local_by,
+        'detail': (
+            'Measured on this host. On its own it says nothing about the store: '
+            'it reads identically whether the transfer landed whole, short, or '
+            'not at all.'
+        ),
+    }
+    store_effect = {
+        'kind': f'{kind}_bytes_in_store',
+        'bytes': store_bytes,
+        'measured_by': store_by,
+        'detail': detail,
+    }
+
+    if local_bytes is None or store_bytes is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                local_effect,
+                {
+                    'kind': f'{kind}_not_compared',
+                    'measured_by': None,
+                    'detail': (
+                        'One of the two lengths was not available, so no comparison '
+                        'was made. The service acknowledged the request and it was '
+                        'followed no further.'
+                    ),
+                },
+            ],
+        )
+
+    if local_bytes == store_bytes:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.INFERRED,
+            effects=[local_effect, store_effect],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            local_effect,
+            store_effect,
+            {
+                'kind': f'{kind}_length_disagrees',
+                'predicate': 'bytes measured on this host == bytes the store reports',
+                'local_bytes': local_bytes,
+                'store_bytes': store_bytes,
+                'detail': (
+                    'The two lengths do not agree. That may be a partial transfer, '
+                    'or it may be this inference being wrong -- the metadata read is '
+                    'a separate request, and an object replaced between the two would '
+                    'report a length that was never ours. We cannot say which, so '
+                    'this is indeterminate rather than failed.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -158,7 +280,29 @@ from ...registry import register_module
             'type': 'string',
             'description': 'ETag of uploaded object'
         ,
-                'description_key': 'modules.cloud.aws_s3.upload.output.etag.description'}
+                'description_key': 'modules.cloud.aws_s3.upload.output.etag.description'},
+        'bytes_offered': {
+            'type': 'number',
+            'description': (
+                'Bytes handed to the transfer, measured on this host: the source '
+                'file size, or the length of the encoded content'
+            ),
+            'description_key': 'modules.cloud.aws_s3.upload.output.bytes_offered.description'},
+        'bytes_in_store': {
+            'type': 'number',
+            'description': (
+                'ContentLength the service reports for the object after the '
+                'upload, from head_object. null when it reported none'
+            ),
+            'description_key': 'modules.cloud.aws_s3.upload.output.bytes_in_store.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this upload was followed into reality: observed when '
+                'the object read back has the length offered, indeterminate '
+                'when it does not, accepted when nothing could be compared'
+            ),
+            'description_key': 'modules.cloud.aws_s3.upload.output.outcome.description'}
     },
     examples=[
         {
@@ -235,15 +379,25 @@ async def aws_s3_upload(context):
     async with session.client('s3') as s3:
         if file_path:
             # Upload from file
+            offered_bytes = os.path.getsize(file_path)
+            offered_by = 'os.path.getsize(file_path), before the transfer'
             await s3.upload_file(file_path, bucket, key, ExtraArgs=extra_args)
         else:
             # Upload from content
             body = content.encode('utf-8') if isinstance(content, str) else content
+            offered_bytes = len(body)
+            offered_by = 'len() of the encoded body handed to put_object'
             await s3.put_object(Bucket=bucket, Key=key, Body=body, **extra_args)
 
-        # Get object info
+        # Get object info. This is the read-back: a second request that asks the
+        # store what is at the key now, rather than trusting the reply to the
+        # write. It is what lets this module reach `observed`.
         response = await s3.head_object(Bucket=bucket, Key=key)
         etag = response.get('ETag', '').strip('"')
+        # None, not 0: "no length came back" and "the object is empty" are
+        # different facts, and a 0 standing in for both would let an unreported
+        # length pass as a match against an empty upload.
+        store_bytes = response.get('ContentLength')
 
     url = f"https://{bucket}.s3.{region}.amazonaws.com/{key}"
 
@@ -251,7 +405,22 @@ async def aws_s3_upload(context):
         'url': url,
         'bucket': bucket,
         'key': key,
-        'etag': etag
+        'etag': etag,
+        'bytes_offered': offered_bytes,
+        'bytes_in_store': store_bytes,
+        'outcome': _length_outcome(
+            kind='object',
+            local_bytes=offered_bytes,
+            local_by=offered_by,
+            store_bytes=store_bytes,
+            store_by="head_object(...)['ContentLength'], after the upload",
+            detail=(
+                'Length the store reports for the object now at this key, read back '
+                'in a separate request. An object of identical length already at the '
+                'key would be indistinguishable from ours, which is why this is '
+                'evidence and not proof.'
+            ),
+        ),
     }
 
 
@@ -356,11 +525,30 @@ async def aws_s3_upload(context):
         },
         'size': {
             'type': 'number',
-            'description': 'File size in bytes'
+            'description': (
+                'ContentLength the service reports for the remote object. Not a '
+                'measurement of what landed here -- see bytes_local'
+            )
+        },
+        'bytes_local': {
+            'type': 'number',
+            'description': (
+                'Bytes measured on this host: the saved file size from os.stat, '
+                'or the length of the body actually read into memory'
+            )
         },
         'content_type': {
             'type': 'string',
             'description': 'MIME type of the file'
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this download was followed into reality: observed when '
+                'what landed here is the length the service reports, '
+                'indeterminate when it is not, accepted when nothing could be '
+                'compared'
+            )
         }
     },
     examples=[
@@ -423,11 +611,27 @@ async def aws_s3_download(context):
 
             # Get metadata
             response = await s3.head_object(Bucket=bucket, Key=key)
+            store_bytes = response.get('ContentLength')
+
+            # The measurement of the world: the file that now exists here.
+            local_bytes, local_by = _size_on_disk(file_path)
 
             return {
                 'file_path': file_path,
-                'size': response.get('ContentLength', 0),
-                'content_type': response.get('ContentType', '')
+                'size': store_bytes if store_bytes is not None else 0,
+                'bytes_local': local_bytes,
+                'content_type': response.get('ContentType', ''),
+                'outcome': _length_outcome(
+                    kind='download',
+                    local_bytes=local_bytes,
+                    local_by=local_by,
+                    store_bytes=store_bytes,
+                    store_by="head_object(...)['ContentLength']",
+                    detail=(
+                        'Length the store reports for the object. A fact about the '
+                        'bucket, not about this host.'
+                    ),
+                ),
             }
         else:
             # Download to memory
@@ -439,5 +643,33 @@ async def aws_s3_download(context):
             return {
                 'content': content.decode('utf-8'),
                 'size': response.get('ContentLength', 0),
-                'content_type': response.get('ContentType', '')
+                # Bytes that actually crossed the wire and were read off the
+                # stream, which is not the same claim as the header's.
+                'bytes_local': len(content),
+                'content_type': response.get('ContentType', ''),
+                'outcome': _length_outcome(
+                    kind='download',
+                    local_bytes=len(content),
+                    local_by='len() of the body read off the response stream',
+                    store_bytes=response.get('ContentLength'),
+                    store_by="get_object(...)['ContentLength']",
+                    detail=(
+                        'Length the store declared for the body it was about to '
+                        'send. Comparing it with what was read is a check that the '
+                        'stream was not cut short.'
+                    ),
+                ),
             }
+
+
+def _size_on_disk(path):
+    """``(st_size, how)`` for a file that should now exist, or ``(None, how)``.
+
+    A stat that fails is not a failed download -- the transfer already returned
+    without raising. All that is lost is the ability to look, and the rung drops
+    to `accepted` to match.
+    """
+    try:
+        return os.stat(path).st_size, 'os.stat(file_path).st_size, after the transfer'
+    except OSError as error:
+        return None, f'os.stat failed: {type(error).__name__}'

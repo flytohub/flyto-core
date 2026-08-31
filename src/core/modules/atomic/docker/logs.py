@@ -3,11 +3,35 @@
 """
 Docker Logs Module
 Get container logs
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Three answers behind one return shape, and the third is the one that matters:
+
+  log lines came back                         OBSERVED
+      Bytes the container wrote, carried by the daemon's log driver. A
+      container that logged nothing cannot produce them.
+
+  the daemon answered with nothing            ACCEPTED
+      Exit 0, empty output. `lines == 0` reads identically whether the
+      container never logged, the log driver is `none`, or `--tail` cut
+      everything off. Nothing about the container was observed.
+
+  follow mode hit the timeout                 INDETERMINATE
+      `--follow` streams until killed, so the timeout is the normal end of a
+      follow. The module returns `ok: True` with empty logs on that path, which
+      a consumer reading only `ok` cannot tell from "this container has no
+      logs". It is neither: `asyncio.wait_for` cancels `communicate()`, and
+      everything the stream had read is discarded with the cancelled coroutine.
+      We do not know what the container logged, which is the definition of
+      indeterminate. (See the note at that return: the discard is a real defect
+      in follow mode, not something the rung can fix.)
 """
 import asyncio
 import logging
 from typing import Any, Dict
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -15,6 +39,62 @@ from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _logs_outcome(*, line_count: int, byte_count: int, follow_timed_out: bool) -> Dict[str, Any]:
+    """The rung this read earned, decided per call from what came back."""
+    if follow_timed_out:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                {
+                    'kind': 'log_stream_started',
+                    'measured_by': 'the `docker logs --follow` child process was spawned',
+                },
+                {
+                    'kind': 'log_stream_killed',
+                    'measured_by': None,
+                    'detail': (
+                        'The follow was killed at the timeout and whatever it had '
+                        'read was lost with the cancelled communicate(). The empty '
+                        '`logs` in this result is the absence of a reading, not a '
+                        'reading of an absence.'
+                    ),
+                },
+            ],
+        )
+
+    if line_count > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'log_lines_read',
+                'lines': line_count,
+                'bytes': byte_count,
+                'measured_by': 'bytes docker wrote to stdout/stderr, split on newlines',
+                'detail': (
+                    'Output the container produced, as the daemon stored it. '
+                    'Bounded by `tail`, so this is a window on the log and not '
+                    'the whole of it.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'daemon_answered_empty',
+            'measured_by': None,
+            'detail': (
+                'docker exited 0 and returned no log content. That reads the same '
+                'whether the container logged nothing, its log driver keeps '
+                'nothing, or `tail` excluded everything.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -97,6 +177,15 @@ logger = logging.getLogger(__name__)
             'description': 'Number of log lines returned',
             'description_key': 'modules.docker.logs.output.lines.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the read was followed: observed when log lines came '
+                'back, accepted when the daemon answered with nothing, '
+                'indeterminate when a follow was killed at the timeout'
+            ),
+            'description_key': 'modules.docker.logs.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -146,6 +235,8 @@ async def docker_logs(context: Dict[str, Any]) -> Dict[str, Any]:
     # For follow mode, use a shorter timeout so we don't hang forever
     timeout_seconds = 10 if follow else 25
 
+    follow_timed_out = False
+
     try:
         process = await asyncio.create_subprocess_exec(
             *args,
@@ -163,6 +254,15 @@ async def docker_logs(context: Dict[str, Any]) -> Dict[str, Any]:
             await process.wait()
             if follow:
                 # For follow mode, timeout is expected; collect what we have
+                #
+                # There is nothing to collect. `wait_for` cancelled
+                # `communicate()`, and the buffer it had filled died with the
+                # coroutine -- so a follow that streams for ten seconds returns
+                # exactly as much as one that streams nothing. The two empty
+                # strings below are not a reading, and `follow_timed_out`
+                # carries that into the envelope so the result stops passing for
+                # "this container has no logs".
+                follow_timed_out = True
                 stdout_bytes = b''
                 stderr_bytes = b''
             else:
@@ -192,6 +292,11 @@ async def docker_logs(context: Dict[str, Any]) -> Dict[str, Any]:
             'data': {
                 'logs': log_output,
                 'lines': line_count,
+                'outcome': _logs_outcome(
+                    line_count=line_count,
+                    byte_count=len(log_output.encode('utf-8')),
+                    follow_timed_out=follow_timed_out,
+                ),
             },
         }
 

@@ -4,11 +4,119 @@
 Browser Scroll Module
 
 Scroll page to element, position, or direction.
+
+`scrolled_to` IS NOT EVIDENCE OF A SCROLL — IN EITHER BRANCH
+
+The selector branch returns ``rect.left + window.scrollX, rect.top +
+window.scrollY``. Add the viewport-relative position of an element to the
+scroll offset and you get the element's position in the DOCUMENT, which is a
+property of the layout and is the same number before and after any scroll. It
+answers "where is this element on the page", not "did the page move".
+
+The direction branch returns ``window.scrollX/scrollY`` after the call, with
+nothing to compare it against. On a page already at its limit — and, more
+often, on ``behavior: 'smooth'``, which is the DEFAULT here and returns
+immediately while the browser animates — that reading is the position the page
+was already at. It is the same number the module would have produced with the
+``scrollBy`` deleted.
+
+What separates them is a baseline. The scroll offset is read once before the
+scroll and once after, and only the DIFFERENCE is evidence:
+
+    offsets read, and they differ        the page moved      -> OBSERVED
+    offsets read, and they are equal     nothing we can see  -> ACCEPTED
+    offsets unreadable                   nothing followed    -> ACCEPTED
+
+Equal offsets are ACCEPTED and deliberately not FAILED or INDETERMINATE-with-
+alarm: scrolling down at the bottom of a document is a correct no-op, and a
+smooth scroll that has not finished animating is a correct scroll measured too
+early. The number cannot tell those from a scroll that did nothing, so it claims
+only that the browser took the call — and the effect says which of the two
+reasons applies, because the smooth case is knowable from the parameters.
 """
 from typing import Any, Dict, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+
+
+_READ_SCROLL_OFFSET = '() => ({ x: window.scrollX, y: window.scrollY })'
+
+
+async def _read_scroll_offset(page) -> Optional[Dict[str, Any]]:
+    """The document's scroll offset, or None when the page cannot be asked."""
+    try:
+        return await page.evaluate(_READ_SCROLL_OFFSET)
+    except Exception:  # noqa: BLE001 - any failure means "cannot look"
+        return None
+
+
+def _scroll_outcome(
+    *,
+    before: Optional[Dict[str, Any]],
+    after: Optional[Dict[str, Any]],
+    smooth: bool,
+    target: str,
+) -> Dict[str, Any]:
+    """The rung this scroll earned, from the offset before and the offset after."""
+    if before is None or after is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'scroll_offset_not_observed',
+                'target': target,
+                'measured_by': None,
+                'detail': (
+                    'The scroll call returned without raising. window.scrollX/Y '
+                    'could not be read on both sides of it, so no change was '
+                    'measured.'
+                ),
+            }],
+        )
+
+    moved_x = after.get('x', 0) - before.get('x', 0)
+    moved_y = after.get('y', 0) - before.get('y', 0)
+
+    if moved_x == 0 and moved_y == 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'scroll_offset_unchanged',
+                'target': target,
+                'offset': after,
+                'measured_by': 'window.scrollX/scrollY, read before and after the scroll',
+                'detail': (
+                    'The scroll animation had not moved the page when it was '
+                    'measured: behavior="smooth" returns immediately and the '
+                    'browser scrolls afterwards.'
+                    if smooth else
+                    'The page is where it was. That reads the same whether it '
+                    'was already at the requested position, could not scroll '
+                    'further, or did not scroll at all.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'scroll_offset_changed',
+            'target': target,
+            'offset_before': before,
+            'offset_after': after,
+            'moved': {'x': moved_x, 'y': moved_y},
+            'measured_by': 'window.scrollX/scrollY, read before and after the scroll',
+            'detail': (
+                'The document scroll offset changed. That the page moved is '
+                'observed; that it moved to the right place is not claimed.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -38,8 +146,28 @@ from ...schema import compose, presets
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.scroll.output.status.description'},
-        'scrolled_to': {'type': 'object', 'description': 'The scrolled to',
-                'description_key': 'modules.browser.scroll.output.scrolled_to.description'}
+        'scrolled_to': {'type': 'object', 'description': (
+                    'For the direction form, the scroll offset after the call. '
+                    'For the selector form, the target element\'s position in '
+                    'the document -- a layout property that does not change when '
+                    'the page scrolls'
+                ),
+                'description_key': 'modules.browser.scroll.output.scrolled_to.description'},
+        'scroll_offset': {
+            'type': 'object',
+            'description': (
+                'The document scroll offset before and after the scroll, and the '
+                'difference between them. null when it could not be read'
+            ),
+            'description_key': 'modules.browser.scroll.output.scroll_offset.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this scroll was followed: observed when the document '
+                'scroll offset changed, accepted when it did not or could not be '
+                'read'
+            ),
+            'description_key': 'modules.browser.scroll.output.outcome.description'}
     },
     examples=[
         {
@@ -84,6 +212,10 @@ class BrowserScrollModule(BaseModule):
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
         page = browser.page
+
+        # The baseline. Without it, every position this module reports is a
+        # number that would read the same with the scroll deleted.
+        offset_before = await _read_scroll_offset(page)
 
         if self.selector:
             # Scroll to element
@@ -141,6 +273,28 @@ class BrowserScrollModule(BaseModule):
                 "direction": self.direction,
                 "amount": self.amount
             }
+
+        offset_after = await _read_scroll_offset(page)
+        result["scroll_offset"] = (
+            None if offset_before is None or offset_after is None
+            else {
+                "before": offset_before,
+                "after": offset_after,
+                "moved": {
+                    "x": offset_after.get('x', 0) - offset_before.get('x', 0),
+                    "y": offset_after.get('y', 0) - offset_before.get('y', 0),
+                },
+            }
+        )
+        result["outcome"] = _scroll_outcome(
+            before=offset_before,
+            after=offset_after,
+            # `behavior` only reaches the browser on the direction branch;
+            # scroll_into_view_if_needed() is synchronous and instant, so
+            # blaming an animation there would be a wrong explanation.
+            smooth=not self.selector and self.behavior == 'smooth',
+            target=self.selector if self.selector else self.direction,
+        )
 
         # Post-scroll: refresh hints — scrolling may reveal new elements
         # (infinite scroll, lazy-loaded content, viewport-dependent visibility)

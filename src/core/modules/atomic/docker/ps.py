@@ -3,12 +3,37 @@
 """
 Docker PS Module
 List Docker containers
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+`docker ps` changes nothing, so what the rung reports is the quality of the
+reading, and there are three different readings behind one `count`:
+
+  at least one container line parsed          OBSERVED
+      Each line is a JSON document the daemon wrote about a container it owns:
+      id, image, status, ports. None of it is derivable from this module's
+      parameters, and a container that does not exist cannot produce a line.
+
+  the daemon answered with no output          ACCEPTED
+      Exit 0 and empty stdout. The daemon took the question and answered it;
+      no container state crossed the wire, so there is nothing here that was
+      observed. This is the same shape as `database.query`'s empty result set.
+
+  lines came back and none of them parsed     INDETERMINATE
+      `_parse_container_line` returns `{}` for anything it cannot read and the
+      caller drops it silently, so `count == 0` is reachable with a stdout full
+      of container data. That reading is identical to the empty one above while
+      meaning the opposite, and neither ACCEPTED nor OBSERVED may rest on it.
+
+The distinction is decided per call from what was actually parsed, never from a
+per-module constant: the same daemon gives all three answers.
 """
 import asyncio
 import json
 import logging
 from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -16,6 +41,68 @@ from ...schema.constants import FieldGroup
 from ...errors import ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _ps_outcome(*, parsed: int, unreadable: int) -> Dict[str, Any]:
+    """The rung this listing earned, and the count that earned it.
+
+    `parsed` is the number of lines that became a container dict; `unreadable`
+    is the number the parser dropped. Both are counted at the point of parsing
+    rather than recomputed from the output list, so a future change to what is
+    considered a valid line moves both numbers together.
+    """
+    if parsed > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'containers_listed',
+                'count': parsed,
+                'unreadable_lines': unreadable,
+                'measured_by': (
+                    'one parsed JSON document per line of `docker ps '
+                    "--format '{{json .}}'` stdout"
+                ),
+                'detail': (
+                    'Each line describes a container the daemon holds. This is a '
+                    'reading of the daemon at one instant and nothing more: a '
+                    'container may have exited between the read and this return.'
+                ),
+            }],
+        )
+
+    if unreadable > 0:
+        return envelope(
+            Outcome.INDETERMINATE,
+            # INFERRED: no caller declared what the output should look like.
+            # The expectation that a line of `docker ps` stdout is a JSON object
+            # is this module's, and it is the one that did not hold.
+            claim_by=ClaimBy.INFERRED,
+            effects=[{
+                'kind': 'output_not_readable',
+                'unreadable_lines': unreadable,
+                'measured_by': None,
+                'detail': (
+                    'The daemon wrote lines this module could not parse, and they '
+                    'were dropped. `count` is 0 for the same reason an empty list '
+                    'is 0, so it cannot be read as "no containers".'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'daemon_answered_empty',
+            'measured_by': None,
+            'detail': (
+                'docker exited 0 and wrote nothing. The daemon took the question '
+                'and answered; no container state crossed the wire, so nothing '
+                'about any container was observed.'
+            ),
+        }],
+    )
 
 
 def _parse_container_line(line: str) -> Dict[str, Any]:
@@ -92,6 +179,15 @@ def _parse_container_line(line: str) -> Dict[str, Any]:
             'description': 'Number of containers found',
             'description_key': 'modules.docker.ps.output.count.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the reading was followed: observed when container lines '
+                'were parsed, accepted when the daemon answered with nothing, '
+                'indeterminate when output came back unreadable'
+            ),
+            'description_key': 'modules.docker.ps.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -154,6 +250,7 @@ async def docker_ps(context: Dict[str, Any]) -> Dict[str, Any]:
             )
 
         containers: List[Dict[str, Any]] = []
+        unreadable = 0
         if stdout:
             for line in stdout.splitlines():
                 line = line.strip()
@@ -162,12 +259,21 @@ async def docker_ps(context: Dict[str, Any]) -> Dict[str, Any]:
                 parsed = _parse_container_line(line)
                 if parsed:
                     containers.append(parsed)
+                else:
+                    # Counted, not just skipped. A dropped line is the one thing
+                    # that makes `count` mean something other than what it looks
+                    # like, and the rung below is decided from it.
+                    unreadable += 1
 
         return {
             'ok': True,
             'data': {
                 'containers': containers,
                 'count': len(containers),
+                'outcome': _ps_outcome(
+                    parsed=len(containers),
+                    unreadable=unreadable,
+                ),
             },
         }
 
