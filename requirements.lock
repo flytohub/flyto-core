@@ -36,13 +36,13 @@ propcache==0.5.2
     #   yarl
 pydantic==2.13.4
     # via flyto-core (pyproject.toml)
-pydantic-core==2.46.4
+pydantic-core==2.46.5
     # via pydantic
 python-dotenv==1.2.3
     # via flyto-core (pyproject.toml)
 pyyaml==6.0.3
     # via flyto-core (pyproject.toml)
-regex==2026.7.19
+regex==2026.8.31
     # via flyto-core (pyproject.toml)
 soupsieve==2.9.2
     # via beautifulsoup4
