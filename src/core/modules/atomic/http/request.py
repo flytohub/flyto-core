@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility, FieldGroup
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import (
     guarded_client_session,
     validate_url_with_env_config,
@@ -95,15 +96,124 @@ async def _read_response_body(response, response_type: str) -> Any:
 
 
 def _compute_content_length(content_length_header: Optional[str], body_content: Any) -> int:
-    """Compute content length from header or body."""
+    """Compute content length from header or body.
+
+    The header is peer-controlled on any URL a workflow does not own, and a
+    malformed one is not a number. `int(header)` used to run unguarded here, so
+    `Content-Length: not-a-number` raised ValueError out of a 200 response,
+    which the broad `except Exception` in the request loop turned into a
+    REQUEST_ERROR -- a successful request reported as a step failure, and with
+    `retry_count` set, re-sent N times. A header that does not parse is treated
+    exactly as an absent one: fall through to measuring the body. The
+    try/except is narrowed to ValueError/TypeError so nothing else is swallowed.
+    """
     if content_length_header:
-        return int(content_length_header)
+        try:
+            return int(content_length_header)
+        except (ValueError, TypeError):
+            pass
     return len(body_content if isinstance(body_content, (str, bytes)) else str(body_content))
+
+
+def _observed_effects(response, body_content: Any) -> List[Dict[str, Any]]:
+    """The two things this request actually measured, each with its provenance.
+
+    Both entries are deliberately narrower than the module's own output fields,
+    because the output fields mix measurement with relay and the ladder must not.
+
+      * `status` / `reason` are read straight off the response object
+        (`response.status`, `response.reason`). They are a real answer from the
+        other side: a server received the request, processed it far enough to
+        choose a status line, and sent one back. That is the strongest thing
+        this module knows, and it is why the rung is ACCEPTED rather than
+        DISPATCHED.
+
+      * `bytes_received` is `len(body_content)` and ONLY when `body_content` is
+        actually bytes -- i.e. `response_type='binary'`, the one path where
+        `_read_response_body` hands back the wire payload untouched. For 'text'
+        the value has already been decoded to str, so its length is characters
+        and not bytes; for 'json' it is a parsed object with no size at all. In
+        both of those cases this field is None, which is the honest answer,
+        rather than a number that would read like a byte count and is not one.
+
+      * `declared_content_length` is the server's Content-Length header. It is
+        named "declared" because that is what it is: a claim by the peer about
+        how much it intended to send, not a count of what arrived. The module's
+        own `content_length` output field (`_compute_content_length`, :98)
+        prefers this header and silently falls back to `len(str(body_content))`
+        for parsed JSON -- the length of a Python repr. That field is fine for
+        display and is not evidence, so no effect entry is built from it.
+    """
+    declared = response.headers.get('Content-Length')
+    return [
+        {
+            'effect': 'http_status_received',
+            'status': response.status,
+            'reason': response.reason or '',
+        },
+        {
+            'effect': 'response_body_read',
+            'bytes_received': (
+                len(body_content) if isinstance(body_content, (bytes, bytearray)) else None
+            ),
+            'declared_content_length': (
+                int(declared) if isinstance(declared, str) and declared.isdigit() else None
+            ),
+        },
+    ]
+
+
+# Which errors mean "we do not know", and which mean "it did not happen".
+#
+# The distinction is the whole point of the off-ladder pair, and this module is
+# where it bites hardest. A request refused before a byte left us did not happen:
+# an unresolved `${var}` in the URL and an SSRF refusal are FAILED, and retrying
+# them is pointless. A request that timed out is INDETERMINATE -- the server may
+# have taken the POST, charged the card and been slow to say so -- and retrying
+# it may do the thing twice.
+#
+# Today the engine cannot act on this: every one of these returns `ok: False`,
+# which `wrap_legacy_result` turns into ExecutionStatus.ERROR and the executor
+# raises, discarding the payload. The envelope is attached anyway, because the
+# fact is true whether or not anything currently reads it, and because the
+# alternative -- adding it later, once a consumer exists -- means the consumer
+# is built first and has nothing to read. Making a timed-out POST behave
+# differently from a refused one is a change to retry semantics and belongs with
+# the work that owns retries, not smuggled in beside a contract definition.
+_INDETERMINATE_ERROR_CODES = frozenset({'TIMEOUT', 'REQUEST_ERROR', 'CLIENT_ERROR'})
 
 
 def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -> Dict[str, Any]:
     """Build a standard error result dict."""
-    return {'ok': False, 'error': error_msg, 'error_code': error_code, 'url': url, 'duration_ms': duration_ms}
+    rung = (
+        Outcome.INDETERMINATE
+        if error_code in _INDETERMINATE_ERROR_CODES
+        else Outcome.FAILED
+    )
+    return {
+        'ok': False,
+        'error': error_msg,
+        'error_code': error_code,
+        'url': url,
+        'duration_ms': duration_ms,
+        'outcome': envelope(
+            rung,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'http_no_response',
+                'error_code': error_code,
+                'measured_by': None,
+                'detail': (
+                    'The request was refused before it was sent; nothing reached '
+                    'the peer.'
+                    if rung is Outcome.FAILED else
+                    'No response was read. Whether the peer received and acted on '
+                    'this request is not known, so a retry may repeat an effect '
+                    'that already happened.'
+                ),
+            }],
+        ),
+    }
 
 
 @register_module(
@@ -241,7 +351,17 @@ def _error_result(error_msg: str, error_code: str, url: str, duration_ms: int) -
             'type': 'number',
             'description': 'Response body size in bytes'
         ,
-                'description_key': 'modules.http.request.output.content_length.description'}
+                'description_key': 'modules.http.request.output.content_length.description'},
+        # Present on 2xx replies only; see the comment at the success return for
+        # why the non-2xx branch carries none and could not be read if it did.
+        'outcome': {
+            'type': 'object',
+            'description': (
+                "Outcome envelope. Rung 'accepted': the peer answered with a "
+                "status line. Nothing here reads the resource back, so no "
+                "change to it was observed."
+            )
+        }
     },
     examples=[
         {
@@ -377,7 +497,53 @@ async def http_request(context: Dict[str, Any]) -> Dict[str, Any]:
                         'content_type': response.headers.get('Content-Type', ''),
                         'content_length': _compute_content_length(response.headers.get('Content-Length'), body_content),
                     }
-                    if not is_ok:
+                    if is_ok:
+                        # ACCEPTED, and not one rung higher. The status line is
+                        # a real answer from the other side -- somebody received
+                        # this request and chose a reply -- which is exactly
+                        # what separates ACCEPTED from DISPATCHED and is more
+                        # than most modules in this registry can say.
+                        #
+                        # It is not OBSERVED, because OBSERVED is "we saw the
+                        # world change" and nothing here looks at the world. A
+                        # 201 Created is the server ASSERTING it created
+                        # something; a 202 Accepted says in so many words that
+                        # the processing has not happened yet; a 204 says
+                        # nothing about state at all. All three arrive on this
+                        # branch as `is_ok`. To observe the effect this module
+                        # would have to read the resource back, and it never
+                        # does -- there is no second request, no comparison,
+                        # nothing measured outside the reply to the very
+                        # message we sent. Reading a peer's report of its own
+                        # work is the definition of taking its word for it.
+                        #
+                        # The 2xx test at :427 does not lift this either. It
+                        # partitions the peer's own claim into two buckets; it
+                        # does not check the claim against anything.
+                        #
+                        # `claim_by` is NONE: no caller declared an expected
+                        # outcome and this module infers none, so there is no
+                        # expectation that could have been broken. `postcondition`
+                        # is None because none was declared and none was
+                        # evaluated -- `register_module` accepts a
+                        # `postcondition=` kwarg now, but this module passes
+                        # none and reads nothing back, so the ceiling from
+                        # `ceiling_for(None)` is OBSERVED. That ceiling never
+                        # binds here: the honest claim is a rung below it.
+                        result['outcome'] = envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=_observed_effects(response, body_content),
+                        )
+                    else:
+                        # No envelope on this branch, and that is not an
+                        # oversight. `ok: False` reaches `wrap_legacy_result`
+                        # (modules/items.py:364) which discards `data` entirely
+                        # and builds an ERROR NodeExecutionResult, so an
+                        # envelope written here could never be read by anything.
+                        # See the report accompanying this change: an HTTP 404
+                        # raises StepExecutionError today, which means the
+                        # off-ladder rungs have nowhere to sit on this module.
                         result['error'] = f"HTTP {response.status} {response.reason or ''}"
                         result['error_code'] = f"HTTP_{response.status}"
                     if attempt > 0:

@@ -221,6 +221,23 @@ def register_module(
     max_retries: int = 3,
     concurrent_safe: bool = True,
 
+    # What this module can prove about its own effect.
+    #
+    # `postcondition` is a human-readable predicate the module evaluates and
+    # reports on. Declaring one is the ONLY way a module may claim the
+    # `verified` rung of the outcome ladder, because verified is defined as
+    # "a postcondition was evaluated and it held" — with none declared there is
+    # no predicate the claim could be about, and the engine lowers it to
+    # `observed` (core/engine/outcome.py, ceiling_for).
+    #
+    # `derives` says the return value IS the effect: array.sort, string.upper,
+    # a pure computation with nothing outside the workflow to observe. It must
+    # be declared rather than inferred, because "needs no contract" and "has
+    # not been given one yet" are otherwise indistinguishable in the data, and
+    # a gate that cannot tell them apart cannot count anything.
+    postcondition: Optional[str] = None,
+    derives: bool = False,
+
     # Security settings
     requires_credentials: bool = False,
     handles_sensitive_data: bool = False,
@@ -354,6 +371,8 @@ def register_module(
             retryable=retryable,
             max_retries=max_retries,
             concurrent_safe=concurrent_safe,
+            postcondition=postcondition,
+            derives=derives,
             requires_credentials=requires_credentials,
             handles_sensitive_data=handles_sensitive_data,
             required_permissions=required_permissions,
