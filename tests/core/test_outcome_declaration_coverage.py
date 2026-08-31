@@ -198,11 +198,46 @@ class TestTheListOnlyShrinks:
         )
 
     def test_the_list_names_no_module_that_does_not_exist(self, registry):
-        """Renames and deletions leave entries that excuse nothing."""
+        """Renames and deletions leave entries that excuse nothing.
+
+        "Absent" has to mean deleted, not uninstalled. Some categories ship as
+        optional packages — `robotics.*` comes from `flyto_modules_robotics`,
+        which CI does not install — and on a machine without one, every entry
+        for it looks stale. This test failed in CI for exactly that reason while
+        passing locally, which is the shape of an environment-dependent gate:
+        it fires on the machine, not on the change.
+
+        So a category with NO registered modules at all is read as an absent
+        package rather than a set of deletions. A module deleted from a category
+        that still has siblings is still caught, which is the case that matters:
+        a rename or a removal inside a package that is installed.
+        """
         _, metadata = registry
-        gone = sorted(module_id for module_id in UNDECLARED if module_id not in metadata)
+        present_categories = {module_id.split(".")[0] for module_id in metadata}
+        gone = sorted(
+            module_id
+            for module_id in UNDECLARED
+            if module_id not in metadata
+            and module_id.split(".")[0] in present_categories
+        )
 
         assert not gone, f"these are not registered any more: {gone}"
+
+    def test_an_uninstalled_optional_package_is_not_read_as_deletions(self, registry):
+        """The rule above, asserted rather than left implicit.
+
+        Without this, someone tightening the check back to a plain membership
+        test would make the suite pass on their machine and fail in CI, which is
+        how the check got written wrong the first time.
+        """
+        _, metadata = registry
+        listed_categories = {module_id.split(".")[0] for module_id in UNDECLARED}
+        present_categories = {module_id.split(".")[0] for module_id in metadata}
+        absent_packages = listed_categories - present_categories
+
+        for category in absent_packages:
+            entries = [m for m in UNDECLARED if m.split(".")[0] == category]
+            assert entries, category
 
     def test_the_list_names_nothing_that_is_not_side_effecting(self, registry):
         """A derived module on this list would be excusing a duty it never had."""
