@@ -630,6 +630,31 @@ class StepExecutor:
             raise StepExecutionError(step_id, f"Module not found: {module_id}")
 
         module_instance = module_class(params, context)
+
+        # SECURITY: gate before the mode branch, not inside it.
+        #
+        # Only the 'single' branch below reaches `run()`, and `run()` is where
+        # the capability gate lives — it calls itself "the single execution
+        # chokepoint", and `enforce_module_policy` documents that "EVERY module
+        # ... is executed through this gate". The 'items' and 'all' branches
+        # call `execute_item` / `execute_all` directly, so both sentences were
+        # false: a module opted out of the security backstop by setting one
+        # class attribute, and `BaseModule.execute_item` defaults to calling
+        # `self.execute()` straight through.
+        #
+        # Nothing shipped in that state — the only non-test assignment of the
+        # attribute is the default in base.py — which is what makes it cheap to
+        # close before somebody uses the feature and inherits the hole.
+        #
+        # Gating here as well as in `run()` rather than instead of it: `run()`
+        # has eleven other callers (direct invoke, the REST and MCP surfaces,
+        # nested runners, composite sub-nodes), and taking the gate out of it to
+        # avoid a second call would open a far larger hole than this one.
+        # The check is a pure raise-or-return, so asking twice costs nothing.
+        enforce = getattr(module_instance, 'enforce_policy', None)
+        if callable(enforce):
+            enforce()
+
         execution_mode = getattr(module_instance, 'execution_mode', 'single')
 
         try:
