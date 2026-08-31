@@ -12,6 +12,7 @@ from abc import ABC
 from typing import Any, Dict, List
 
 from .registry import CompositeRegistry
+from ....engine.flow_control import normalize_step_settings_list
 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,12 @@ class CompositeModule(ABC):
         """
         metadata = CompositeRegistry.get_metadata(self.module_id) or {}
         steps = metadata.get('steps', self.steps)
+
+        # Boundary: same normalisation the workflow engine applies where a
+        # stored step list enters execution, so a composite's `on_error` is
+        # honoured whichever spelling its definition was saved with. Returns
+        # copies; the registered definition is not modified.
+        steps = normalize_step_settings_list(steps)
 
         if not steps:
             raise ValueError(f"No steps defined for composite: {self.module_id}")

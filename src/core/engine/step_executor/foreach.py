@@ -9,7 +9,7 @@ Step execution for each item in an array.
 import logging
 from typing import Any, Callable, Coroutine, Dict, List, Optional, TYPE_CHECKING
 
-from ..exceptions import StepExecutionError
+from ..exceptions import StepExecutionError, is_policy_refusal
 
 if TYPE_CHECKING:
     from ..variable_resolver import VariableResolver
@@ -71,7 +71,7 @@ async def execute_foreach_step(
             )
             results.append(result)
         except Exception as e:
-            if on_error == 'continue':
+            if on_error == 'continue' and not is_policy_refusal(e):
                 logger.warning(
                     f"Foreach iteration {index} failed, continuing: {str(e)}"
                 )

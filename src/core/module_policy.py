@@ -269,7 +269,13 @@ class ModulePolicyError(PermissionError):
     """Raised at the execution chokepoint when a module is blocked by policy."""
 
 
-def enforce_module_policy(module_id, required_permissions=None, plugin: str = "") -> None:
+def enforce_module_policy(
+    module_id,
+    required_permissions=None,
+    plugin: str = "",
+    *,
+    module_filter_override=None,
+) -> None:
     """Fail-closed gate, called at the single execution chokepoint (BaseModule.run).
 
     Raises ModulePolicyError if the module id is denied by the capability filter,
@@ -287,10 +293,31 @@ def enforce_module_policy(module_id, required_permissions=None, plugin: str = ""
     plugin dimension can only ever narrow. A plugin cannot name itself into
     running ``shell.exec`` — that id is denied before anything plugin-specific is
     consulted.
+
+    ``module_filter_override`` is GRANT-ONLY and must be treated as such. It lets
+    a host scope a widening — e.g. the template.invoke exemption — to one engine
+    instead of mutating the process-global ``module_filter`` and leaking that
+    authority to every concurrent execution. It is NOT a way to RESTRICT: the
+    second call site at ``src/core/runtime/invoke.py`` (legacy plugin dispatch)
+    still consults the process-global filter only, so a restriction expressed
+    solely through the override would not bind there. Restrictions belong in the
+    process-global filter (FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST), which
+    both call sites honour.
     """
     if not module_id:
         return
-    if not module_filter.is_allowed(module_id):
+    effective_filter = (
+        module_filter_override
+        if module_filter_override is not None
+        else module_filter
+    )
+    try:
+        is_allowed = effective_filter.is_allowed(module_id)
+    except Exception as exc:
+        raise ModulePolicyError(
+            "The execution-scoped module capability policy is invalid."
+        ) from exc
+    if not is_allowed:
         raise ModulePolicyError(
             f"Module '{module_id}' is blocked by the capability policy "
             "(FLYTO_MODULE_DENYLIST / FLYTO_MODULE_ALLOWLIST)."

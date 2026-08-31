@@ -242,6 +242,13 @@ class BaseModule(ABC):
         # how it was invoked. This is the backstop the nested-execution gadgets
         # used to bypass the MCP-boundary capability checks.
         from ..module_policy import enforce_module_policy
+        runtime_filter = None
+        candidate_filter = self.context.get('_module_policy_filter')
+        if (
+            getattr(type(candidate_filter), '_flyto_runtime_opaque', False) is True
+            and callable(getattr(candidate_filter, 'is_allowed', None))
+        ):
+            runtime_filter = candidate_filter
         # `plugin` is stamped at registration by the registry, so it says how
         # this module arrived rather than what it claims about itself. Empty
         # means flyto-core's own, which is what keeps the process-global grant
@@ -251,6 +258,7 @@ class BaseModule(ABC):
             self.module_id,
             metadata.get('required_permissions'),
             plugin=metadata.get('plugin', ''),
+            module_filter_override=runtime_filter,
         )
 
         timeout_ms = metadata.get('timeout_ms')
@@ -337,8 +345,15 @@ class BaseModule(ABC):
                 # the refusal, and repackaging it as a generic Exception hides
                 # from the caller that the module was BLOCKED rather than
                 # broken. Re-raise the typed error untouched.
-                from ..module_policy import ModulePolicyError
-                if isinstance(e, ModulePolicyError):
+                #
+                # The refusal may also arrive wrapped: template.invoke re-raises
+                # a child template's refusal, and by the time it reaches here it
+                # is a WorkflowExecutionError carrying the ModulePolicyError. A
+                # bare isinstance check would miss that and retry — running the
+                # whole child template, and every side effect it performed
+                # before the refused step, two more times.
+                from ..engine.exceptions import is_policy_refusal
+                if is_policy_refusal(e):
                     raise
                 last_exception = e
                 if attempt == attempts - 1:

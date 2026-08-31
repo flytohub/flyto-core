@@ -19,7 +19,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
-from ..exceptions import StepTimeoutError, StepExecutionError
+from ..exceptions import StepTimeoutError, StepExecutionError, is_policy_refusal
 from ..hooks import ExecutorHooks, HookAction
 from .context_builder import create_step_context
 from .foreach import execute_foreach_step
@@ -77,6 +77,52 @@ def _redact_sensitive_output(data: Any, depth: int = 0) -> Any:
         return [_redact_sensitive_output(item, depth + 1) for item in data]
 
     return data
+
+
+# A module can finish its work and still be unable to confirm the effect it
+# said to expect: browser.click dispatches a click on a link that declares
+# target=_blank, no tab is ever created, and the click itself never failed.
+# That is not an error — nothing to raise, nothing to retry — but it is not a
+# clean success either, and a step record that cannot tell the two apart hands
+# the caller an unobserved outcome dressed as an observed one.
+#
+# 'partial' is the status this ledger already carries for exactly that shape:
+# the step ran, its result stands and flows downstream, and part of what it
+# reported went unconfirmed. It is not a failure — ok stays true, failedSteps
+# stays 0, the workflow keeps going — so nothing that succeeded before starts
+# failing now; it just stops being indistinguishable from a verified success.
+_UNCONFIRMED_VERIFICATION = 'unverified'
+
+
+def _unconfirmed_outcome(result: Any) -> Optional[str]:
+    """Return why a step's own result says an outcome went unconfirmed.
+
+    Reads the module-reported ``verification_status`` / ``effect_observed``
+    contract. Returns None when the step confirmed what it claimed, when it
+    claimed nothing, or when it is not a dict-shaped result. A foreach step
+    returns one result per iteration, so the list form is read too — a tab
+    that never opened on iteration 7 is the same unconfirmed outcome.
+    """
+    payloads = []
+    candidates = result if isinstance(result, (list, tuple)) else [result]
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        payloads.append(candidate)
+        data = candidate.get('data')
+        if isinstance(data, dict):
+            payloads.append(data)
+
+    for payload in payloads:
+        if payload.get('verification_status') != _UNCONFIRMED_VERIFICATION:
+            continue
+        expected = payload.get('expected_outcome') or 'the expected outcome'
+        return (
+            f"Step reported success but never observed {expected!r} "
+            f"(verification_status={_UNCONFIRMED_VERIFICATION!r}, "
+            f"effect_observed={bool(payload.get('effect_observed'))})"
+        )
+    return None
 
 
 class StepExecutor:
@@ -286,6 +332,7 @@ class StepExecutor:
                 step_trace.set_output(items=items_output)
                 if step_trace.status in ("running", "pending"):
                     step_trace.complete()
+                self._record_unconfirmed_outcome(step_trace, result)
 
         except Exception as e:
             # Evolution: attempt self-heal on browser step failures
@@ -303,6 +350,8 @@ class StepExecutor:
                     logger.info(f"Step '{step_id}' healed and completed successfully")
                     if step_trace and step_trace.status in ("running", "pending", "failed"):
                         step_trace.complete()
+                    if step_trace:
+                        self._record_unconfirmed_outcome(step_trace, result)
                     return result
                 except Exception:
                     pass  # Heal retry also failed, fall through to original error
@@ -328,6 +377,27 @@ class StepExecutor:
             self._hooks.on_post_execute(post_context)
 
         return result
+
+    @staticmethod
+    def _record_unconfirmed_outcome(
+        step_trace: "StepTrace",
+        result: Any,
+    ) -> None:
+        """Record an unconfirmed outcome on an otherwise-successful step.
+
+        The step keeps its result and the workflow keeps running; only the
+        ledger entry stops claiming a verified success, so every consumer of
+        the trace (CLI run output, the MCP run_recipe response, the REST
+        execute response) can see which steps were actually observed.
+        """
+        reason = _unconfirmed_outcome(result)
+        if not reason:
+            return
+
+        from ..trace import TraceError, TraceStatus
+
+        step_trace.status = TraceStatus.PARTIAL.value
+        step_trace.error = TraceError(message=reason, code='UNVERIFIED_OUTCOME')
 
     async def _execute_single_step(
         self,
@@ -490,11 +560,16 @@ class StepExecutor:
         on_error: str
     ) -> Any:
         """Handle step execution error based on on_error strategy."""
-        if on_error == 'continue':
-            logger.warning(f"Step '{step_id}' failed but continuing: {str(error)}")
-            return {'ok': False, 'error': str(error)}
-        else:
+        if on_error != 'continue':
             raise error
+        if is_policy_refusal(error):
+            logger.error(
+                f"Step '{step_id}' was refused by the capability policy; "
+                "on_error='continue' does not apply to a refusal"
+            )
+            raise error
+        logger.warning(f"Step '{step_id}' failed but continuing: {str(error)}")
+        return {'ok': False, 'error': str(error)}
 
     async def _execute_module_with_timeout(
         self,
@@ -650,7 +725,7 @@ class StepExecutor:
                         else:
                             item_trace.complete({"value": result_item})
             except Exception as e:
-                if on_error == 'continue':
+                if on_error == 'continue' and not is_policy_refusal(e):
                     error_item = Item(
                         json={},
                         error=ItemError(message=str(e), itemIndex=i)

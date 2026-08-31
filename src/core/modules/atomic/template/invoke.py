@@ -24,6 +24,40 @@ from ...types import DataType, EdgeType, NodeType
 
 logger = logging.getLogger(__name__)
 
+_TEMPLATE_RESOLVER_CONTEXT_KEY = "_template_definition_resolver"
+_MODULE_POLICY_FILTER_CONTEXT_KEY = "_module_policy_filter"
+_TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY = "_template_invoke_depth"
+_BROWSER_PROFILE_SCOPE_CONTEXT_KEY = "_browser_profile_scope"
+_MAX_TEMPLATE_INVOKE_DEPTH = 16
+
+
+class _TemplateDefinitionResolver:
+    """Opaque runtime capability for nested template lookup.
+
+    Definitions may contain execution-resolved credentials.  Keeping the map
+    behind a module-private capability lets another ``template.invoke`` load a
+    declared descendant without exposing the entire map to workflow variable
+    resolution.
+    """
+
+    _flyto_runtime_opaque = True
+
+    def __init__(self, definitions: Dict[str, Dict[str, Any]]) -> None:
+        self.__definitions = definitions
+
+    def resolve(
+        self,
+        library_id: Optional[str],
+        template_id: Optional[str],
+    ) -> Optional[Dict[str, Any]]:
+        if library_id and library_id in self.__definitions:
+            return self.__definitions[library_id]
+        if template_id and template_id in self.__definitions:
+            return self.__definitions[template_id]
+        if not library_id and not template_id and len(self.__definitions) == 1:
+            return next(iter(self.__definitions.values()))
+        return None
+
 
 @register_module(
     module_id='template.invoke',
@@ -247,6 +281,29 @@ class InvokeTemplate(BaseModule):
             )
 
         except Exception as e:
+            # Deferred for the same reason WorkflowEngine is below: this
+            # module is registered in environments that ship without
+            # core.engine, and a module-level import would make registering
+            # template.invoke fail there rather than just invoking it.
+            from ....engine.exceptions import is_policy_refusal
+
+            if is_policy_refusal(e):
+                # Everything else a child template can do wrong is this step's
+                # error to report, and the 'error' port exists so the parent can
+                # decide what to do about it. A capability refusal is not: the
+                # child template is content the parent did not write — often
+                # bought or forked — so letting it come back as this step's error
+                # event hands the child's author the parent's error port. One
+                # `on_error: continue` on the invoking step of an intermediate
+                # template and a refusal three levels down is absorbed there,
+                # every ancestor reports success, and the operator never learns
+                # a capability control fired. Re-raising keeps the refusal a
+                # refusal all the way up, where the engine refuses to absorb it.
+                logger.error(
+                    f"Template '{self.template_id}' was refused by the capability "
+                    f"policy: {e}"
+                )
+                raise
             logger.exception(f"Error invoking template: {self.template_id}")
             return self._error_result('TEMPLATE_ERROR', str(e))
 
@@ -264,6 +321,13 @@ class InvokeTemplate(BaseModule):
         if 'template_definition' in self.context:
             logger.debug("Found 'template_definition' in context")
             return self.context['template_definition']
+
+        resolver = self.context.get(_TEMPLATE_RESOLVER_CONTEXT_KEY)
+        if isinstance(resolver, _TemplateDefinitionResolver):
+            definition = resolver.resolve(self.library_id, self.template_id)
+            if definition is not None:
+                logger.debug("Found definition through runtime resolver")
+                return definition
 
         # Check template_definitions dict (pre-loaded by ExecutionManager)
         template_definitions = self.context.get('template_definitions', {})
@@ -381,6 +445,19 @@ class InvokeTemplate(BaseModule):
         logger.debug("_execute_in_process called")
         logger.debug(f"params: {params}")
 
+        current_depth = self.context.get(_TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY, 0)
+        if (
+            isinstance(current_depth, bool)
+            or not isinstance(current_depth, int)
+            or current_depth < 0
+        ):
+            raise RuntimeError("Invalid nested template invocation depth")
+        if current_depth >= _MAX_TEMPLATE_INVOKE_DEPTH:
+            raise RuntimeError(
+                "Nested template invocation depth exceeds the safe limit "
+                f"of {_MAX_TEMPLATE_INVOKE_DEPTH}"
+            )
+
         # Import WorkflowEngine here to avoid circular imports
         try:
             from ....engine.workflow import WorkflowEngine
@@ -389,14 +466,18 @@ class InvokeTemplate(BaseModule):
             try:
                 from core.engine.workflow import WorkflowEngine
                 logger.debug("Imported WorkflowEngine from core.engine.workflow")
-            except ImportError:
-                # Fallback for environments without full engine
-                logger.warning("WorkflowEngine not available, returning mock result")
-                return {
-                    'status': 'mock',
-                    'template_id': self.template_id,
-                    'params': params
-                }
+            except ImportError as exc:
+                # A template that could not be executed has not succeeded. This
+                # used to return {'status': 'mock'} — a success-shaped result
+                # for a child that never ran, which the parent then recorded as
+                # a completed step. Raise instead: execute() turns it into this
+                # step's error event, and the engine fails the step, so an
+                # environment shipped without core.engine reports that it cannot
+                # run templates rather than silently no-opping every one of them.
+                raise RuntimeError(
+                    "WorkflowEngine is not available, so template "
+                    f"'{self.template_id}' cannot be executed"
+                ) from exc
 
         # Build initial context from parent context
         # This shares browser, credentials, and other runtime state
@@ -406,10 +487,37 @@ class InvokeTemplate(BaseModule):
             # Note: browser_owner is NOT copied - child templates should not own parent's browser
             # This enables browser.release to correctly skip closing parent's browser
             for key in ['browser', 'page', 'credentials', 'execution_id', 'user_id',
-                        'secrets', 'template_definitions', 'screenshots_dir']:
+                        'secrets', 'screenshots_dir']:
                 if key in self.context:
                     initial_context[key] = self.context[key]
                     logger.debug(f"Copied context key: {key}")
+
+            resolver = self.context.get(_TEMPLATE_RESOLVER_CONTEXT_KEY)
+            if isinstance(resolver, _TemplateDefinitionResolver):
+                initial_context[_TEMPLATE_RESOLVER_CONTEXT_KEY] = resolver
+            else:
+                definitions = self.context.get('template_definitions')
+                if isinstance(definitions, dict):
+                    initial_context[_TEMPLATE_RESOLVER_CONTEXT_KEY] = (
+                        _TemplateDefinitionResolver(definitions)
+                    )
+
+            runtime_filter = self.context.get(_MODULE_POLICY_FILTER_CONTEXT_KEY)
+            if (
+                getattr(type(runtime_filter), '_flyto_runtime_opaque', False) is True
+                and callable(getattr(runtime_filter, 'is_allowed', None))
+            ):
+                initial_context[_MODULE_POLICY_FILTER_CONTEXT_KEY] = runtime_filter
+
+            if _BROWSER_PROFILE_SCOPE_CONTEXT_KEY in self.context:
+                from ....browser.driver import BrowserProfileScope
+
+                profile_scope = self.context[_BROWSER_PROFILE_SCOPE_CONTEXT_KEY]
+                if not isinstance(profile_scope, BrowserProfileScope):
+                    raise RuntimeError("Invalid browser profile scope in template context")
+                initial_context[_BROWSER_PROFILE_SCOPE_CONTEXT_KEY] = profile_scope
+
+            initial_context[_TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY] = current_depth + 1
 
             # Mark that browser was inherited (not owned by child)
             # This tells browser.release and the inner engine cleanup to NOT

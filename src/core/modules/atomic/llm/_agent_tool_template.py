@@ -106,6 +106,23 @@ class TemplateAgentTool:
 
     async def _load_template(self, ctx: Dict) -> Optional[Dict]:
         """Load template definition from context or registry."""
+        # 0. Through the opaque runtime resolver. Inside a template.invoke child
+        #    the raw ``template_definitions`` map is deliberately NOT copied into
+        #    the context: it can carry execution-resolved credentials and a plain
+        #    dict is reachable from ${template_definitions...} variable
+        #    resolution. template.invoke hands the child this capability instead,
+        #    so an llm.agent whose tool is a template still finds its definition
+        #    when the agent is running inside a template rather than at the top
+        #    level. Checked before the raw key so both placements behave the same.
+        resolver = ctx.get("_template_definition_resolver")
+        if (
+            getattr(type(resolver), "_flyto_runtime_opaque", False) is True
+            and callable(getattr(resolver, "resolve", None))
+        ):
+            resolved = resolver.resolve(None, self._template_id)
+            if resolved is not None:
+                return resolved
+
         # 1. From pre-loaded template_definitions (set by engine)
         definitions = ctx.get("template_definitions", {})
         if self._template_id in definitions:

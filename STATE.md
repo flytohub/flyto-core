@@ -2,7 +2,22 @@
 
 ## Current State
 
-- `browser.click` 1.3.0 separates click dispatch from verified browser effect.
+- Runtime authority is execution-scoped. A host-created opaque module-policy
+  filter can narrow or add the exact stored-template composition capability for
+  one execution without changing the process-global default. Nested invocations
+  carry that same filter, stop after 16 levels, and resolve sibling definitions
+  through an opaque resolver that expressions cannot traverse or return. The
+  override is grant-only: the legacy plugin-dispatch call site still consults
+  the process-global filter, so restrictions belong there.
+- Persistent browser identity can be scoped by an opaque principal digest.
+  Each authenticated principal receives a stable owner-only profile directory
+  under `~/.flyto/chrome-profiles/`; no raw user id is used as a path component.
+  Launch never deletes Chromium's singleton lock files, so a concurrent launch
+  fails naturally instead of corrupting a live profile's login state. This
+  covers `browser.ensure` and `browser.launch`; `browser.pool`,
+  `browser.connect`, `browser.proxy_rotate` and the verify runners still use the
+  legacy shared profile.
+- `browser.click` 1.3.1 separates click dispatch from verified browser effect.
   Workflows can require a new tab, URL change/substring, or selector
   visibility transition with a bounded timeout. An explicit `_blank` or
   `window.open` intent automatically requires a new page; no page means step
@@ -10,6 +25,15 @@
   their final state was already true before the click. Results expose the
   applied contract, verification status, pre/post URL, and observed effects.
   Existing tab adoption and `browser.tab` behavior are unchanged.
+- The verification status a step reports is now read by the engine rather than
+  only recorded. When a step succeeds while saying the outcome it expected was
+  never observed — the `target="_blank"` link whose tab never opens — the step
+  executor records that step in the execution trace as `partial` with an
+  `UNVERIFIED_OUTCOME` reason, using the status the trace already carried. The
+  module result, `ok`, `failedSteps` and the workflow outcome are unchanged, so
+  nothing that passed starts failing; the `run_recipe` MCP response, the
+  `/workflows/execute` REST response and the CLI run output can now tell an
+  observed outcome from an inferred one.
 - `browser.click` button/link mode now executes the same semantic contract the
   Element Picker presents: visible actions are named by accessible name,
   including `aria-label`, `aria-labelledby`, and icon-image `alt` text. Hidden
@@ -288,7 +312,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 967 maintained Python files, 5,704
+- Source-backed documentation now covers 967 maintained Python files, 5,718
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

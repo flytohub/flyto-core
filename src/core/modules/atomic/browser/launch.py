@@ -8,12 +8,13 @@ For proxy rotation → browser.proxy_rotate
 For multiple browsers → browser.pool
 For rate limiting → browser.throttle
 """
-from typing import Any, Dict
+from typing import Any
+
+from ....utils import enforce_outbound_service_url, validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
-from ....utils import enforce_outbound_service_url, validate_path_with_env_config
 
 
 @register_module(
@@ -221,7 +222,7 @@ class BrowserLaunchModule(BaseModule):
             raise ValueError(f"behavior must be one of: {valid_behaviors}")
 
     async def execute(self) -> Any:
-        from core.browser.driver import BrowserDriver
+        from core.browser.driver import BrowserDriver, browser_profile_scope_from_context
         from core.browser.humanize import HumanBehavior
 
         # Close existing browser before launching a new one
@@ -237,6 +238,7 @@ class BrowserLaunchModule(BaseModule):
             headless=self.headless,
             viewport=self.viewport,
             browser_type=self.browser_type,
+            profile_scope=browser_profile_scope_from_context(self.context),
         )
         await driver.launch(
             proxy=self.proxy,

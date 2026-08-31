@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-08-30 - Runtime authority and browser identity are opaque run inputs
+
+Decision: module-policy overrides, sibling-template lookup, and browser profile
+identity are host-created opaque objects. They may be propagated by trusted
+runtime code but are not ordinary workflow values and cannot be dereferenced by
+expressions. Nested templates reuse the execution's policy/profile scope and
+are bounded to 16 levels. Persistent profile paths contain only a one-way
+principal digest, and launch does not remove Chromium singleton lock files.
+
+Why: process-global policy mutation leaks authority between concurrent users;
+raw template maps expose sibling source and secrets; and sharing or forcibly
+unlocking one Chrome profile can corrupt login state across executions. These
+are execution-bound capabilities, not serializable workflow data.
+
+Consequence: Cloud can enable exactly stored-template composition for one run,
+reuse a signed-in browser for the same authenticated principal, and deny reuse
+to another principal without widening Core's default policy. Runtime objects
+must be removed at persistence boundaries, and profile compatibility without a
+scope remains a legacy local-only behavior.
+
 ## 2026-08-30 - Browser mutation success is an explicit outcome contract
 
 Decision: `browser.click` treats action dispatch and browser effect as separate

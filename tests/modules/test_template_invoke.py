@@ -82,3 +82,28 @@ async def test_template_error_uses_explicit_error_connection() -> None:
     assert "success_path" not in engine.context
     assert engine.context["invoke_child"]["__event__"] == "error"
     assert engine.context["fallback"]["data"]["result"] == "RECOVERED"
+
+
+@pytest.mark.asyncio
+async def test_template_invocation_depth_is_bounded(monkeypatch) -> None:
+    import core.modules.atomic.template.invoke as invoke_module
+
+    monkeypatch.setattr(invoke_module, "_MAX_TEMPLATE_INVOKE_DEPTH", 2)
+    definition = {
+        "steps": [
+            {
+                "id": "again",
+                "module": "template.invoke:self",
+                "params": {},
+            }
+        ]
+    }
+    module = InvokeTemplate(
+        {"template_id": "self", "library_id": "self", "timeout_seconds": 1},
+        {"template_definitions": {"self": definition}},
+    )
+
+    result = await module.execute()
+
+    assert result["__event__"] == "error"
+    assert "safe limit of 2" in result["__error__"]["message"]

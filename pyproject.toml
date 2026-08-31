@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.31.1"
+version = "2.31.2"
 description = "The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = "Apache-2.0"
@@ -71,7 +71,12 @@ dependencies = [
 
 [project.optional-dependencies]
 browser = [
-    "playwright>=1.40.0,<2",
+    # 1.51.0, not 1.40.0. The floor said 1.40 while the browser driver and
+    # browser.click both call `Locator.filter(visible=True)`, which only exists
+    # from 1.51 onwards — an install that honoured the declared floor raised
+    # TypeError on the first visible-filtered wait. Every other Playwright API
+    # this package calls predates 1.40, so 1.51 is the true minimum.
+    "playwright>=1.51.0,<2",
 ]
 api = [
     "fastapi>=0.139.0,<1",

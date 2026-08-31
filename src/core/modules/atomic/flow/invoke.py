@@ -208,6 +208,21 @@ class InvokeWorkflow(BaseModule):
             )
 
         except Exception as e:
+            # Deferred like the WorkflowEngine import: this module is registered
+            # in environments that ship without core.engine.
+            from ....engine.exceptions import is_policy_refusal
+
+            if is_policy_refusal(e):
+                # Same rule as template.invoke: an invoked workflow is content
+                # this step's caller did not write, so returning a refusal on
+                # the 'error' port would hand that content's author the caller's
+                # error handling. Re-raise, and the refusal stays a refusal for
+                # every ancestor.
+                logger.error(
+                    f"Invoked workflow '{self.workflow_source}' was refused by "
+                    f"the capability policy: {e}"
+                )
+                raise
             logger.exception(f"Error invoking workflow: {self.workflow_source}")
             return self._build_invoke_error('INVOKE_ERROR', str(e))
 

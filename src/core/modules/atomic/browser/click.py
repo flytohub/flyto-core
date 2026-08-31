@@ -4,6 +4,7 @@
 Browser Click Module - Click an element on the page
 """
 import asyncio
+import logging
 from contextlib import suppress
 from typing import Any
 
@@ -12,10 +13,86 @@ from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
 
+logger = logging.getLogger(__name__)
+
+
+# A browser never decides where a click lands from the clicked element's own
+# attributes alone. Three shapes carry the decision somewhere else, and all
+# three are ordinary page markup:
+#   * a submit control inherits its <form>'s target (its own formtarget wins),
+#   * an <a href> with no target of its own inherits <base target>,
+#   * an inline handler can reach window.open through a named function.
+# Reading only the element leaves each of those looking exactly like a click
+# that promised nothing, so a tab that never opened cannot be told from one
+# that did. This resolves the effective target the way the browser does.
+_TAB_DECLARATION_JS = r"""(el) => {
+  const isBlank = (value) =>
+    typeof value === 'string' && value.trim().toLowerCase() === '_blank';
+  const opensWindow = (source) => !!source && (
+    /(?:window|self|top|globalThis)\s*\.\s*open\s*\(/.test(source)
+    || /(?:^|[^.\w$])open\s*\(/.test(source)
+  );
+
+  const tag = (el.tagName || '').toLowerCase();
+  // Only these navigate on activation, so only these can inherit a target.
+  const navigates = (tag === 'a' || tag === 'area') && el.hasAttribute('href');
+  const submits = (tag === 'button' && el.type === 'submit')
+    || (tag === 'input' && (el.type === 'submit' || el.type === 'image'));
+  const form = submits ? (el.form || (el.closest ? el.closest('form') : null)) : null;
+  const owns = (tag === 'a' || tag === 'area' || tag === 'form')
+    && el.hasAttribute('target');
+
+  // Effective target, in the browser's own precedence order. Each rung is
+  // the answer once it applies: formtarget='_self' on the button beats
+  // target='_blank' on the form it submits.
+  if (el.hasAttribute('formtarget')) {
+    if (isBlank(el.getAttribute('formtarget'))) return true;
+  } else if (owns) {
+    if (isBlank(el.getAttribute('target'))) return true;
+  } else if (form && form.hasAttribute('target')) {
+    if (isBlank(form.getAttribute('target'))) return true;
+  } else if (navigates || form) {
+    const base = el.ownerDocument.querySelector('base[target]');
+    if (base && isBlank(base.getAttribute('target'))) return true;
+  }
+
+  // A target attribute the browser ignores still declares intent, and 1.2.0
+  // reported it; keep saying so rather than silently narrowing.
+  if (isBlank(el.getAttribute('target'))) return true;
+
+  const onclick = el.getAttribute('onclick');
+  if (!onclick) return false;
+  if (opensWindow(onclick)) return true;
+
+  // 'go()' says nothing on its own; what go's body does is the declaration.
+  const view = el.ownerDocument.defaultView;
+  const called = onclick.match(/[A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*\s*\(/g) || [];
+  for (const call of called) {
+    const path = call.slice(0, call.lastIndexOf('(')).split('.').map((p) => p.trim());
+    let fn = view;
+    for (const part of path) {
+      try {
+        fn = fn == null ? null : fn[part];
+      } catch (err) {
+        fn = null;
+      }
+    }
+    if (typeof fn !== 'function') continue;
+    let source = '';
+    try {
+      source = Function.prototype.toString.call(fn);
+    } catch (err) {
+      source = '';
+    }
+    if (opensWindow(source)) return true;
+  }
+  return false;
+}"""
+
 
 @register_module(
     module_id='browser.click',
-    version='1.3.0',
+    version='1.3.1',
     category='browser',
     tags=['browser', 'interaction', 'click', 'ssrf_protected'],
     label='Click Element',
@@ -107,8 +184,8 @@ from ...schema.constants import FieldGroup
         field("expected_outcome", type="select",
               label="Expected outcome",
               description=(
-                  "Verify what the click must cause. Auto enforces a new tab when the "
-                  "element explicitly declares one."
+                  "Verify what the click must cause. Auto only reports a new tab when "
+                  "the element declares one; it never fails the click."
               ),
               default="auto",
               options=[
@@ -134,11 +211,13 @@ from ...schema.constants import FieldGroup
               min=1,
               max=120000,
               group=FieldGroup.OPTIONS),
-        presets.TIMEOUT_MS(default=30000),
+        presets.TIMEOUT_MS(key='timeout_ms', default=30000),
     ),
+    # What execute() actually returns. The browser session is a context
+    # pass-through, not a result key — ``output_types`` is where chaining is
+    # declared — and the element hints harvested after the click are half of
+    # what the next step's Element Picker reads, so they belong here too.
     output_schema={
-        'browser': {'type': 'object', 'description': 'Browser session (pass-through for chaining)',
-                'description_key': 'modules.browser.click.output.browser.description'},
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.click.output.status.description'},
         'selector': {'type': 'string', 'description': 'Selector that was used',
@@ -149,10 +228,20 @@ from ...schema.constants import FieldGroup
         'current_index': {'type': 'number', 'description': 'Current tab index after the click'},
         'url': {'type': 'string', 'description': 'URL of the page controlled after the click'},
         'expected_outcome': {'type': 'string', 'description': 'Outcome contract applied to the click'},
-        'verification_status': {'type': 'string', 'description': 'Whether an outcome was verified'},
+        'verification_status': {'type': 'string',
+                'description': 'What was checked: verified, inferred, unverified, dispatched, not_requested'},
         'effect_observed': {'type': 'boolean', 'description': 'Whether a visible browser effect was observed'},
         'effects': {'type': 'array', 'description': 'Observed browser effects'},
         'pre_url': {'type': 'string', 'description': 'URL controlled before the click'},
+        '_page_hint': {'type': 'string', 'description': 'Visible text of the page after the click (truncated)'},
+        'inputs': {'type': 'array', 'description': 'Text inputs found on the page after the click'},
+        'checkboxes': {'type': 'array', 'description': 'Checkboxes found on the page after the click'},
+        'radios': {'type': 'array', 'description': 'Radio groups found on the page after the click'},
+        'switches': {'type': 'array', 'description': 'Switch controls found on the page after the click'},
+        'selects': {'type': 'array', 'description': 'Dropdowns found on the page after the click'},
+        'buttons': {'type': 'array', 'description': 'Buttons found on the page after the click'},
+        'links': {'type': 'array', 'description': 'Links found on the page after the click'},
+        'file_inputs': {'type': 'array', 'description': 'File upload inputs found on the page after the click'},
     },
     examples=[
         {
@@ -287,9 +376,19 @@ class BrowserClickModule(BaseModule):
             await asyncio.sleep(min(0.1, remaining))
 
     async def _expects_new_page(self, locator) -> bool:
-        """Best-effort detection for links/forms that explicitly open a tab."""
+        """Best-effort detection for elements that explicitly declare a tab.
+
+        Resolved against the live document, because that is where the answer
+        lives: the owning <form>'s target, the document's <base target>, and
+        the body of a function an inline handler names are all outside the
+        clicked element. Attribute reads remain the fallback for when no DOM
+        can be reached, which is all they were ever able to see.
+        """
         if locator is None:
             return False
+
+        with suppress(Exception):
+            return bool(await locator.evaluate(_TAB_DECLARATION_JS))
 
         for attribute in ('target', 'formtarget'):
             with suppress(Exception):
@@ -335,31 +434,42 @@ class BrowserClickModule(BaseModule):
 
         return _stable(hints)
 
-    async def _verify_page_outcome(self, browser, page, outcome, pre_url):
-        """Wait for an explicit non-tab outcome or raise with useful evidence."""
-        timeout_seconds = self.verification_timeout_ms / 1000
-        deadline = asyncio.get_running_loop().time() + timeout_seconds
+    async def _outcome_holds(self, page, outcome, pre_url) -> bool:
+        """Return whether ``outcome``'s final state holds on ``page`` right now.
 
-        if outcome in {'url_change', 'url_contains'}:
-            while True:
-                current_url = page.url
-                if outcome == 'url_change' and current_url != pre_url:
-                    return
-                if outcome == 'url_contains' and self.outcome_value in current_url:
-                    return
-                remaining = deadline - asyncio.get_running_loop().time()
-                if remaining <= 0:
-                    expectation = (
-                        'the page URL to change'
-                        if outcome == 'url_change'
-                        else f"the page URL to contain {self.outcome_value!r}"
-                    )
-                    raise RuntimeError(
-                        f"Click was dispatched but expected {expectation} within "
-                        f"{self.verification_timeout_ms}ms; current URL is {current_url!r}"
-                    )
-                await asyncio.sleep(min(0.05, remaining))
+        One derivation serves the pre-click measurement and the post-click
+        wait, so the two cannot disagree about the same document.
+        """
+        if outcome == 'url_change':
+            return page.url != pre_url
+        if outcome == 'url_contains':
+            return self.outcome_value in page.url
+        if outcome in {'selector_visible', 'selector_hidden'}:
+            visible_count = await page.locator(self.outcome_value).filter(
+                visible=True,
+            ).count()
+            is_visible = visible_count > 0
+            return is_visible if outcome == 'selector_visible' else not is_visible
+        return False
 
+    async def _verify_current_page_outcome(self, browser, outcome, pre_url):
+        """Wait for an explicit non-tab outcome or raise with useful evidence.
+
+        Both branches measure ``browser.page``. The selector branch has to:
+        it delegates to ``browser.wait``, which resolves the document from
+        ``browser._page`` internally and cannot be pointed at another one. The
+        URL branch therefore reads the same attribute rather than a page passed
+        in beside it — a parameter only one branch honoured would let the two
+        drift apart the moment this call moved relative to tab adoption, with
+        the URL branch judging the opener while the selector branch silently
+        followed the popup.
+
+        The caller must still invoke this while ``browser.page`` is the
+        document ``pre_url`` was read from; the name says which document is
+        measured so that requirement is visible at the call site instead of
+        being implied by a parameter that was ignored.
+        """
+        page = browser.page
         if outcome in {'selector_visible', 'selector_hidden'}:
             state = 'visible' if outcome == 'selector_visible' else 'hidden'
             try:
@@ -373,23 +483,22 @@ class BrowserClickModule(BaseModule):
                     f"Click was dispatched but expected {self.outcome_value!r} to become "
                     f"{state} within {self.verification_timeout_ms}ms"
                 ) from exc
+            return
 
-    async def _outcome_already_satisfied(self, page, outcome, pre_url):
-        """Reject outcome contracts that are true before the click.
-
-        A final state is only evidence of a click effect when the page was not
-        already in that state. This keeps explicit verification from silently
-        accepting a no-op.
-        """
-        if outcome == 'url_contains':
-            return self.outcome_value in pre_url
-        if outcome in {'selector_visible', 'selector_hidden'}:
-            visible_count = await page.locator(self.outcome_value).filter(
-                visible=True,
-            ).count()
-            is_visible = visible_count > 0
-            return is_visible if outcome == 'selector_visible' else not is_visible
-        return False
+        deadline = asyncio.get_running_loop().time() + self.verification_timeout_ms / 1000
+        while not await self._outcome_holds(page, outcome, pre_url):
+            remaining = deadline - asyncio.get_running_loop().time()
+            if remaining <= 0:
+                expectation = (
+                    'the page URL to change'
+                    if outcome == 'url_change'
+                    else f"the page URL to contain {self.outcome_value!r}"
+                )
+                raise RuntimeError(
+                    f"Click was dispatched but expected {expectation} within "
+                    f"{self.verification_timeout_ms}ms; current URL is {page.url!r}"
+                )
+            await asyncio.sleep(min(0.05, remaining))
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
@@ -427,15 +536,13 @@ class BrowserClickModule(BaseModule):
         new_page = None
         effective_outcome = self.expected_outcome
         try:
-            if await self._outcome_already_satisfied(
+            # A state that is already true is not evidence of a click effect;
+            # record it and judge the post-state against it, but still click.
+            pre_satisfied = await self._outcome_holds(
                 page,
                 effective_outcome,
                 pre_url,
-            ):
-                raise RuntimeError(
-                    f"Expected outcome {effective_outcome!r} was already satisfied "
-                    "before the click; no click effect could be verified"
-                )
+            )
 
             if self.method == 'button':
                 locator, self.selector = await self._resolve_button_or_link(page)
@@ -447,15 +554,10 @@ class BrowserClickModule(BaseModule):
                         state='visible',
                         timeout_ms=self.timeout,
                     )
-                with suppress(Exception):
-                    locator = page.locator(self.selector).first
+                locator = page.locator(self.selector).first
 
             expects_new_page = await self._expects_new_page(locator)
-
-            if self.method == 'button':
-                await locator.click(**click_options)
-            else:
-                await page.click(self.selector, **click_options)
+            await locator.click(**click_options)
 
             # Page events raised by a click normally arrive before the click
             # resolves. Yield once so Playwright can dispatch an event already
@@ -467,43 +569,54 @@ class BrowserClickModule(BaseModule):
                 if new_page_future.done()
                 else self._new_context_page(context, known_pages)
             )
-            if effective_outcome == 'auto' and expects_new_page:
-                effective_outcome = 'new_tab'
-
-            wait_for_new_page = expects_new_page or effective_outcome == 'new_tab'
-            if new_page is None and wait_for_new_page:
+            requires_new_page = effective_outcome == 'new_tab'
+            if new_page is None and (expects_new_page or requires_new_page):
                 try:
+                    # An explicit contract may spend the caller's budget; an
+                    # inference keeps 1.2.0's short best-effort re-scan.
                     new_page = await asyncio.wait_for(
                         asyncio.shield(new_page_future),
                         timeout=min(
-                            self.verification_timeout_ms / 1000,
+                            self.verification_timeout_ms / 1000 if requires_new_page else 2.0,
                             self.timeout / 1000,
                         ),
                     )
                 except asyncio.TimeoutError:
                     new_page = self._new_context_page(context, known_pages)
 
-            if effective_outcome == 'new_tab' and new_page is None:
+            if requires_new_page and new_page is None:
                 raise RuntimeError(
                     "Click was dispatched but expected a new tab within "
                     f"{self.verification_timeout_ms}ms; tab count stayed at "
                     f"{len(context.pages)}"
                 )
+            if effective_outcome == 'auto' and expects_new_page:
+                # 'auto' only infers a tab from markup: evidence to report,
+                # never a contract. Pre-1.3.0 templates all land here.
+                effective_outcome = 'new_tab'
         finally:
             with suppress(Exception):
                 context.remove_listener('page', _capture_new_page)
             if not new_page_future.done():
                 new_page_future.cancel()
 
+        # Verify before adopting any tab, while ``page`` and ``browser.page``
+        # are still the document the contract was measured on.
+        if effective_outcome not in {'auto', 'click_only', 'new_tab'}:
+            if pre_satisfied:
+                raise RuntimeError(
+                    f"Expected outcome {effective_outcome!r} was already satisfied "
+                    "before the click; no click effect could be verified"
+                )
+            await self._verify_current_page_outcome(browser, effective_outcome, pre_url)
+
+        origin_page = page
         if new_page is not None:
             # A user click that opens a foreground tab should move both
             # workflow control and live preview to that page. Without this,
             # later browser.* nodes keep operating on the opener.
             browser._page = new_page
             page = new_page
-
-        if effective_outcome not in {'auto', 'click_only', 'new_tab'}:
-            await self._verify_page_outcome(browser, page, effective_outcome, pre_url)
 
         # Post-click: capture interactive elements of the NEW page state.
         # This ensures the next step's Element Picker sees the correct elements
@@ -513,6 +626,17 @@ class BrowserClickModule(BaseModule):
             (index for index, candidate in enumerate(pages) if candidate == page),
             -1,
         )
+        # Say exactly what was checked: 'click_only' verifies nothing beyond
+        # dispatch, and an inference is weaker than a requested contract.
+        if effective_outcome == 'auto':
+            verification_status = 'not_requested'
+        elif effective_outcome == 'click_only':
+            verification_status = 'dispatched'
+        elif self.expected_outcome == 'auto':
+            verification_status = 'inferred' if new_page is not None else 'unverified'
+        else:
+            verification_status = 'verified'
+
         result = {
             "status": "success",
             "selector": self.selector,
@@ -520,13 +644,8 @@ class BrowserClickModule(BaseModule):
             "opened_new_tab": new_page is not None,
             "tab_count": len(pages),
             "current_index": current_index,
-            "url": page.url,
             "expected_outcome": effective_outcome,
-            "verification_status": (
-                "not_requested"
-                if effective_outcome == 'auto'
-                else "verified"
-            ),
+            "verification_status": verification_status,
             "pre_url": pre_url,
         }
 
@@ -536,47 +655,29 @@ class BrowserClickModule(BaseModule):
         with suppress(Exception):
             await page.wait_for_load_state('domcontentloaded', timeout=2000)
 
-        if page.url != pre_url:
-            # Real navigation: page URL changed.
-            # domcontentloaded fires before JS frameworks render form elements
-            # (e.g. Google Signup, React apps). Wait for interactive elements.
-            with suppress(Exception):
-                await page.wait_for_function(
-                    '''() => {
-                        const els = document.querySelectorAll(
-                            'input:not([type=hidden]), textarea, select, '
-                            + '[role="combobox"], [role="listbox"], '
-                            + '[contenteditable="true"]'
-                        );
-                        return els.length > 0;
-                    }''',
-                    timeout=5000,
-                )
-            # Brief extra wait for late-rendering elements (animations, lazy fields)
-            await page.wait_for_timeout(300)
-        else:
-            # SPA navigation: URL didn't change, wait for DOM to stabilize
-            with suppress(Exception):
-                await page.wait_for_function(
-                    '''() => {
-                        const els = document.querySelectorAll(
-                            'select, [role="combobox"], [role="listbox"], input:not([type=hidden]), button'
-                        );
-                        return els.length > 0;
-                    }''',
-                    timeout=3000,
-                )
-            # Extra brief wait for SPA animations to finish
-            await page.wait_for_timeout(500)
+        # A new document (real navigation or an adopted tab) renders its form
+        # elements after domcontentloaded, so wait for them; an in-place SPA
+        # update only needs the DOM to stabilise, then settle its animations.
+        nav_happened = page.url != pre_url
+        with suppress(Exception):
+            await page.wait_for_function(
+                '(sel) => document.querySelectorAll(sel).length > 0',
+                arg=(
+                    'input:not([type=hidden]), textarea, select, '
+                    '[role="combobox"], [role="listbox"], [contenteditable="true"]'
+                    if nav_happened
+                    else 'select, [role="combobox"], [role="listbox"], '
+                         'input:not([type=hidden]), button'
+                ),
+                timeout=5000 if nav_happened else 3000,
+            )
+        await page.wait_for_timeout(300 if nav_happened else 500)
 
         # Post-click: refresh hints on the (potentially new) page
-        import logging as _logging
-        _click_log = _logging.getLogger(__name__)
-        nav_happened = page.url != pre_url
-        _click_log.info("[CLICK] post-action: nav=%s, pre=%s, now=%s", nav_happened, pre_url[:80], page.url[:80])
+        logger.info("[CLICK] post-action: nav=%s, pre=%s, now=%s", nav_happened, pre_url[:80], page.url[:80])
         await browser.invalidate_hints()
         hints = await browser.get_hints(force=True)
-        _click_log.info("[CLICK] post-hints: inputs=%d, buttons=%d", len(hints.get('inputs', [])), len(hints.get('buttons', [])))
+        logger.info("[CLICK] post-hints: inputs=%d, buttons=%d", len(hints.get('inputs', [])), len(hints.get('buttons', [])))
         browser._snapshot_since_nav = True
         if hints.get('text'):
             result["_page_hint"] = hints["text"][:800]
@@ -586,9 +687,14 @@ class BrowserClickModule(BaseModule):
         effects = []
         if new_page is not None:
             effects.append('new_tab')
-        if page.url != pre_url:
+        # Every effect is measured on the clicked document. An adopted popup
+        # is already reported as 'new_tab'; its URL is not the opener's, and
+        # neither are the hints just harvested from it.
+        if origin_page.url != pre_url:
             effects.append('url_change')
-        if self._hint_effect_signature(hints) != self._hint_effect_signature(pre_hints):
+        if new_page is None and (
+            self._hint_effect_signature(hints) != self._hint_effect_signature(pre_hints)
+        ):
             effects.append('page_content_change')
         if effective_outcome in {'selector_visible', 'selector_hidden'}:
             effects.append(effective_outcome)

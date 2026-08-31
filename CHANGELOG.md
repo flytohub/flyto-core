@@ -5,6 +5,114 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.2]
+
+### Security
+
+- Runtime authority is now an execution-scoped, opaque object rather than
+  process-global state. A host can grant exactly `template.invoke` — the
+  stored-template composition capability — for one execution by putting an
+  opaque filter in that execution's context, instead of mutating core's
+  process-wide `module_filter` and handing the same authority to every other
+  request in flight. The gate is fail-closed: a filter that raises is a
+  refusal, and only an object whose own class carries the runtime-capability
+  marker is accepted, so workflow data cannot forge one. The override is
+  grant-only — the legacy plugin-dispatch call site in
+  `src/core/runtime/invoke.py` still reads the process-global filter, so a
+  restriction expressed only through the override would not bind there.
+- Sibling template definitions no longer enter the child's expression-visible
+  context. `template.invoke` used to copy the parent's entire
+  `template_definitions` map into every child, so a child template — content
+  the parent did not write — could read every sibling's source and any
+  execution-resolved credential in it through `${template_definitions...}`.
+  The child now receives an opaque resolver that returns a declared descendant
+  and nothing else. Runtime capability objects are unreachable from `${...}`
+  by any spelling: neither dereferenced through a path nor returned by a bare
+  name.
+- Recursive template invocation is capped at 16 levels. A self-referencing
+  template used to spawn engines until the 540-second execution timeout; it
+  now fails fast with a message naming the limit. This is a depth bound, not
+  cycle detection — a cycle still recurses to the cap before failing.
+- Authenticated persistent browser profiles can be scoped to a one-way digest
+  of the host's principal. Each principal gets `~/.flyto/chrome-profiles/
+  user-<sha256>` created mode 0700, so one user's cookies and login state are
+  no longer reused for another. The scope is an opaque host-created object —
+  a forged value in the context raises rather than launching. `browser.ensure`
+  and `browser.launch` pass it through; `browser.pool`, `browser.connect`,
+  `browser.proxy_rotate` and the verify runners still share the legacy
+  `~/.flyto/chrome-profile`.
+- Chromium's `SingletonLock`, `SingletonSocket` and `SingletonCookie` are no
+  longer unlinked before a persistent launch. Deleting them stole a live
+  Chrome profile's lock and corrupted the running session's login state; a
+  second launch against a profile in use now fails on its own terms.
+- A capability refusal raised inside a child template is no longer absorbed by
+  the parent. `template.invoke` used to convert it into this step's `error`
+  event, so one `on_error: continue` on an intermediate template swallowed a
+  refusal several levels down and every ancestor reported success while a
+  security control was firing inside the run. The refusal is re-raised as a
+  refusal all the way up. `_execute_with_resilience` also recognises a refusal
+  that arrives wrapped, so a blocked child template is not retried — which
+  used to re-run every side effect the child performed before the refused
+  step.
+- A step's own `retry:` configuration no longer retries a capability refusal
+  either. `execute_with_retry` sits between the refusal and the guarded error
+  handling, so a single `shell.exec` step carrying `retry: {count: 3}` or
+  `on_error: retry` still gated the refused module four times, and a
+  `template.invoke` step with a retry config re-ran every step preceding the
+  refusal inside the child template four times. The refusal always propagated,
+  so the gate stayed fail-closed; what leaked was the replay.
+
+### Changed
+
+- `browser.click` now reports what it actually observed, and the engine records
+  it. A click on a link that declares `target="_blank"` whose tab never opens
+  still succeeds and still passes its result downstream, but the step it writes
+  to the execution trace is recorded as `partial` with an `UNVERIFIED_OUTCOME`
+  reason instead of a clean `success`. Every consumer built on that trace — the
+  `run_recipe` MCP response, the `/workflows/execute` REST response, the CLI run
+  output — can now tell an outcome that was observed from one that was only
+  inferred. Nothing that passed before now fails: `ok` stays true, `failedSteps`
+  stays 0, and no module gained a parameter.
+
+### Fixed
+
+- Steps saved with the settings panel's old camelCase keys are no longer
+  silently inert. The template builder writes `on_error` / `when` / `as`
+  today, but templates saved before that change carry `onError` / `runIf` /
+  `foreachAs`, and the engine only ever read the canonical spelling — so a
+  step saying `onError: continue` parsed without complaint and then behaved as
+  `stop`. Execution now accepts either spelling, normalised once where a
+  stored step list enters the engine, so all five settings readers agree.
+  Stored templates are not rewritten: only execution understands both
+  spellings, and the saved data keeps the shape the user saved.
+  `timeoutMs` is deliberately not aliased to `timeout` — the panel's value is
+  milliseconds and the engine's is seconds, so equating the names would
+  reinterpret a 30-second budget as 30000 seconds. That pair still needs a
+  unit conversion agreed with the frontend.
+- `browser.click` 1.3.1 no longer turns `expected_outcome: auto` into a hard
+  new-tab contract. An `auto` inference that the page did not fulfil — the
+  declared popup a site intercepts and opens in the same document — is now
+  reported as `verification_status: unverified` rather than failing a workflow
+  that worked before 1.3.0. `verification_status` is five-valued
+  (`verified` / `inferred` / `unverified` / `dispatched` / `not_requested`),
+  and url-change and content-change contracts are judged on the clicked
+  document rather than on a popup the click adopted.
+- `browser.click`'s published schema and its implementation agree on the
+  timeout key. The schema advertised `timeout` while `__init__` read
+  `timeout_ms`, so a timeout set in the editor was accepted and discarded; the
+  schema now declares `timeout_ms`, matching the six sibling browser modules.
+  The 1.3.1 `output_schema` also declares exactly the keys `execute()`
+  returns.
+- `browser.wait` treats `hidden` as the exact negation of `visible`. Both
+  states now wait on the visible-filtered locator, so a hidden duplicate can
+  no longer satisfy `hidden` while a later match is still on screen, and a
+  hidden duplicate can no longer mask a later visible match.
+- `template.invoke` no longer returns `{'status': 'mock'}` when the workflow
+  engine is unavailable. A success-shaped result for a template that never ran
+  was recorded by the parent as a completed step; it now raises, so an
+  environment shipped without `core.engine` reports that it cannot run
+  templates instead of silently no-opping every one of them.
+
 ## [2.31.1]
 
 ### Security

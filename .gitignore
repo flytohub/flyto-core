@@ -60,6 +60,9 @@ firebase-credentials.json
 
 # Node
 node_modules/
+# A trailing slash matches a directory only, so a symlink named node_modules —
+# which is how a worktree borrows the main checkout's install — stays untracked.
+node_modules
 
 # OS
 .DS_Store

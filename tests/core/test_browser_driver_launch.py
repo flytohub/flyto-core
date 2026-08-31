@@ -1,12 +1,13 @@
 """Browser launch channel fallback contract."""
 
+import stat
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
-from core.browser.driver import BrowserDriver
+from core.browser.driver import BrowserDriver, BrowserProfileScope
 
 
 def test_explicit_chromium_channel_is_authoritative():
@@ -104,6 +105,37 @@ async def test_persistent_launch_failure_is_recorded(monkeypatch, tmp_path):
 
     assert launched is False
     assert driver._launch_failures == ["playwright-chromium (persistent): profile is locked"]
+
+
+def test_profile_scope_is_stable_private_and_user_isolated(monkeypatch, tmp_path):
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    first = BrowserDriver(profile_scope=BrowserProfileScope("account-one"))
+    same = BrowserDriver(profile_scope=BrowserProfileScope("account-one"))
+    other = BrowserDriver(profile_scope=BrowserProfileScope("account-two"))
+
+    first_dir = first._persistent_profile_dir()
+    same_dir = same._persistent_profile_dir()
+    other_dir = other._persistent_profile_dir()
+
+    assert first_dir == same_dir
+    assert first_dir != other_dir
+    assert "account-one" not in str(first_dir)
+    assert stat.S_IMODE(first_dir.stat().st_mode) == 0o700
+
+
+@pytest.mark.asyncio
+async def test_persistent_launch_never_deletes_chromium_lock_files(monkeypatch, tmp_path):
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    driver = BrowserDriver(profile_scope=BrowserProfileScope("account-one"))
+    profile_dir = driver._persistent_profile_dir()
+    locks = [profile_dir / name for name in ("SingletonLock", "SingletonSocket", "SingletonCookie")]
+    for lock in locks:
+        lock.write_text("owned", encoding="utf-8")
+    context = SimpleNamespace(pages=[], new_page=AsyncMock(return_value=object()))
+    launcher = SimpleNamespace(launch_persistent_context=AsyncMock(return_value=context))
+
+    assert await driver._launch_persistent(launcher, [], {}) is True
+    assert all(lock.read_text(encoding="utf-8") == "owned" for lock in locks)
 
 
 @pytest.mark.asyncio

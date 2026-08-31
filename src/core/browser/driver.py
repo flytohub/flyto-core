@@ -4,6 +4,8 @@
 Browser Driver - Playwright wrapper for browser automation
 """
 import asyncio
+import contextlib
+import hashlib
 import logging
 import os
 import random
@@ -19,11 +21,39 @@ from ..constants import (
     DEFAULT_VIEWPORT_WIDTH,
 )
 
-
 logger = logging.getLogger(__name__)
 
 # Node.js version to auto-download when system node is unavailable
 _NODE_VERSION = '20.18.3'
+
+
+class BrowserProfileScope:
+    """Opaque stable identity for a desktop browser profile.
+
+    Workflow data cannot construct or introspect this capability.  Only the
+    trusted host creates it from its authenticated principal.
+    """
+
+    _flyto_runtime_opaque = True
+
+    def __init__(self, principal: str) -> None:
+        if not isinstance(principal, str) or not principal.strip():
+            raise ValueError("Browser profile principal must be a non-empty string")
+        digest = hashlib.sha256(principal.encode("utf-8")).hexdigest()
+        self.__directory_name = f"user-{digest}"
+
+    def _runtime_directory_name(self) -> str:
+        return self.__directory_name
+
+
+def browser_profile_scope_from_context(context: Dict[str, Any]) -> Optional[BrowserProfileScope]:
+    """Read only a trusted opaque profile scope from an engine context."""
+    candidate = context.get("_browser_profile_scope")
+    if candidate is None:
+        return None
+    if not isinstance(candidate, BrowserProfileScope):
+        raise RuntimeError("Invalid browser profile scope in execution context")
+    return candidate
 
 
 def _find_external_node() -> Optional[str]:
@@ -58,7 +88,8 @@ class BrowserDriver:
     def __init__(self,
                  headless: bool = True,
                  viewport: Optional[Dict[str, int]] = None,
-                 browser_type: str = 'chromium'):
+                 browser_type: str = 'chromium',
+                 profile_scope: Optional[BrowserProfileScope] = None):
         """
         Initialize browser driver
 
@@ -66,10 +97,16 @@ class BrowserDriver:
             headless: Run browser in headless mode
             viewport: Browser viewport size (e.g., {'width': 1920, 'height': 1080})
             browser_type: Browser type ('chromium', 'firefox', 'webkit')
+            profile_scope: Opaque host-provided identity for cookie isolation
         """
         self.headless = headless
         self.viewport = viewport or {'width': DEFAULT_VIEWPORT_WIDTH, 'height': DEFAULT_VIEWPORT_HEIGHT}
         self.browser_type = browser_type
+        if profile_scope is not None and not isinstance(profile_scope, BrowserProfileScope):
+            raise TypeError("profile_scope must be a BrowserProfileScope")
+        self._profile_directory_name = (
+            profile_scope._runtime_directory_name() if profile_scope else None
+        )
 
         # Playwright objects
         self._playwright = None
@@ -527,7 +564,7 @@ class BrowserDriver:
         if not self._context or not self._page:
             return
 
-        from ..utils import validate_url_with_env_config, SSRFError
+        from ..utils import SSRFError, validate_url_with_env_config
 
         _on_blocked = self.on_egress_blocked
 
@@ -631,19 +668,28 @@ class BrowserDriver:
             return base
         return base + " Attempts: " + "; ".join(self._launch_failures)
 
+    def _persistent_profile_dir(self) -> Path:
+        """Return a private profile directory without exposing the principal."""
+        flyto_dir = Path.home() / '.flyto'
+        flyto_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        with contextlib.suppress(OSError):
+            flyto_dir.chmod(0o700)
+        if self._profile_directory_name is None:
+            user_data_dir = flyto_dir / 'chrome-profile'
+        else:
+            profiles_dir = flyto_dir / 'chrome-profiles'
+            profiles_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            with contextlib.suppress(OSError):
+                profiles_dir.chmod(0o700)
+            user_data_dir = profiles_dir / self._profile_directory_name
+        user_data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        with contextlib.suppress(OSError):
+            user_data_dir.chmod(0o700)
+        return user_data_dir
+
     async def _launch_persistent(self, launcher, args, context_kwargs, slow_mo=0, proxy=None, channel=None):
         """Try launching with persistent context for cookie persistence (Cloudflare etc.)."""
-        user_data_dir = Path.home() / '.flyto' / 'chrome-profile'
-        user_data_dir.mkdir(parents=True, exist_ok=True)
-
-        # Clean stale lock files from previous crashed sessions
-        for lock_name in ('SingletonLock', 'SingletonSocket', 'SingletonCookie'):
-            lock_file = user_data_dir / lock_name
-            if lock_file.exists():
-                try:
-                    lock_file.unlink()
-                except OSError:
-                    pass
+        user_data_dir = self._persistent_profile_dir()
 
         persistent_kwargs = {
             **context_kwargs,
@@ -960,17 +1006,18 @@ class BrowserDriver:
         try:
             logger.info(f"Waiting for element: {selector} (state: {state})")
 
-            if state == 'visible':
+            if state in {'visible', 'hidden'}:
                 # ``page.wait_for_selector`` waits on the first match.  A
                 # hidden duplicate can therefore mask a later visible match
                 # (common with responsive desktop/mobile navigation).  Limit
-                # the locator to visible matches before waiting so the
-                # contract is "any matching element is visible".
+                # the locator to visible matches before waiting.  The two
+                # contracts are therefore exact complements: visible means at
+                # least one visible match; hidden means no visible matches.
                 visible_match = self._page.locator(selector).filter(
                     visible=True
                 ).first
                 await visible_match.wait_for(
-                    state='visible',
+                    state=state,
                     timeout=timeout_ms,
                 )
             else:

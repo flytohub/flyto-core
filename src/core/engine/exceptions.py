@@ -48,3 +48,37 @@ class VariableResolutionError(Exception):
     def __init__(self, variable: str, message: str):
         self.variable = variable
         super().__init__(f"Failed to resolve '{variable}': {message}")
+
+
+def is_policy_refusal(error) -> bool:
+    """True when `error` was raised, at any depth, by the capability gate.
+
+    A capability refusal is not a step error. ``on_error: continue``, an error
+    edge, a foreach's per-item tolerance and a parallel batch's non-stop policy
+    all exist so a workflow can carry on past something that went wrong. None of
+    them is a licence to carry on past a module the operator's policy refused to
+    run: the refusal fired precisely because the workflow was not entitled to
+    that module, and a workflow that could absorb its own refusal would report
+    success while a security control was firing inside it.
+
+    The refusal is re-wrapped on the way up — ModulePolicyError inside a
+    StepExecutionError inside a WorkflowExecutionError inside the next engine's
+    StepExecutionError, once per nesting level — so the check has to walk the
+    chain rather than look at the exception in hand.
+
+    Only the deliberate links are followed: ``original_error`` (this module's
+    own wrapping convention) and ``__cause__`` (``raise ... from``).
+    ``__context__`` is not, because it records whatever merely happened to be in
+    flight when an exception was raised; following it would let an unrelated
+    refusal handled earlier in the same frame make an ordinary failure
+    unabsorbable.
+    """
+    from ..module_policy import ModulePolicyError
+
+    seen = set()
+    while error is not None and id(error) not in seen:
+        if isinstance(error, ModulePolicyError):
+            return True
+        seen.add(id(error))
+        error = getattr(error, 'original_error', None) or error.__cause__
+    return False

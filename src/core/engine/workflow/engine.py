@@ -23,8 +23,17 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..variable_resolver import VariableResolver
 from ..hooks import ExecutorHooks, NullHooks, HookContext, HookAction
-from ..exceptions import StepTimeoutError, WorkflowExecutionError, StepExecutionError
-from ..flow_control import is_flow_control_module, is_iteration_module
+from ..exceptions import (
+    StepTimeoutError,
+    WorkflowExecutionError,
+    StepExecutionError,
+    is_policy_refusal,
+)
+from ..flow_control import (
+    is_flow_control_module,
+    is_iteration_module,
+    normalize_step_settings_list,
+)
 from ..step_executor import StepExecutor, create_step_executor
 from ..trace import ExecutionTrace, TraceCollector
 from ...constants import WorkflowStatus
@@ -326,6 +335,16 @@ class WorkflowEngine:
 
     async def _execute_steps(self, steps: List[Dict[str, Any]]):
         """Execute workflow steps with flow control support."""
+        # Boundary: this is where a stored step list enters execution. Accept
+        # the legacy camelCase execution-setting spellings here, once, so every
+        # reader below (`on_error` in the parallel batch, `when` in
+        # _should_execute_step, `timeout`/`as`/`on_error`/`retry` in the step
+        # executor and foreach) sees the canonical key without checking two
+        # spellings, and so any future reader is correct for free.
+        # This returns copies — self.workflow['steps'] is left exactly as the
+        # user saved it.
+        steps = normalize_step_settings_list(steps)
+
         start_idx = self._start_step if self._start_step is not None else 0
         end_idx = self._end_step if self._end_step is not None else len(steps) - 1
 
@@ -372,6 +391,18 @@ class WorkflowEngine:
             except Exception as e:
                 step_status = 'failed'
                 step_error = e
+
+                if is_policy_refusal(e):
+                    # An error edge is the workflow's own recovery path. A
+                    # workflow does not get to recover from a module the
+                    # capability policy refused it: routing here would let the
+                    # author of the steps hand the refusal to a no-op and have
+                    # the run report success.
+                    logger.error(
+                        f"Step '{step_id}' was refused by the capability policy; "
+                        "not routing to an error handler"
+                    )
+                    raise
 
                 # Check for error edge route before propagating
                 error_result = {'__event__': 'error', 'ok': False, 'error': str(e)}
@@ -473,7 +504,7 @@ class WorkflowEngine:
             on_error = step.get('on_error', 'stop')
 
             if isinstance(result, Exception):
-                if on_error == 'stop':
+                if on_error == 'stop' or is_policy_refusal(result):
                     should_stop = True
                     errors.append((step_id, result))
                 else:
@@ -655,6 +686,13 @@ class WorkflowEngine:
                     sub_hook_ctx.error_message = str(e)
                     self._hooks.on_post_execute(sub_hook_ctx)
 
+                    if is_policy_refusal(e):
+                        # An optional sub-node (memory, tool) is allowed to fail
+                        # without taking the step with it. It is not allowed to
+                        # be *refused* quietly: the step would then run with one
+                        # fewer capability than it declared and still report a
+                        # clean success.
+                        raise
                     if port_name == 'model':
                         raise RuntimeError(
                             f"AI Model sub-node '{source_id}' ({sub_module_id}) failed: {e}"

@@ -16,6 +16,7 @@ Design Philosophy:
     browser.release = "I'm done with the browser, close it if I own it"
 """
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
@@ -128,11 +129,12 @@ class BrowserEnsureModule(BaseModule):
             }
 
         # No browser - launch a new one
-        from core.browser.driver import BrowserDriver
+        from core.browser.driver import BrowserDriver, browser_profile_scope_from_context
 
         driver = BrowserDriver(
             headless=self.headless,
-            viewport=self.viewport
+            viewport=self.viewport,
+            profile_scope=browser_profile_scope_from_context(self.context),
         )
         await driver.launch()
 

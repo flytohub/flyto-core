@@ -5,13 +5,34 @@ Variable Resolver - Resolve ${...} expressions in workflow parameters
 
 Supports item-based execution variables per ITEM_PIPELINE_SPEC.md Section 4.3
 """
-import re
-import os
 import logging
-from typing import Any, Dict, List, Optional
+import os
+import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _is_runtime_opaque(value) -> bool:
+    """True for a host-held runtime capability that ``${...}`` must not reach.
+
+    Runtime capabilities — the template-definition resolver, an execution-scoped
+    module-policy filter, a browser profile scope — are placed in the engine
+    context so trusted code can pass them down. Workflow expressions share that
+    namespace but are untrusted data, so every path that hands a context value
+    back to an expression is filtered through this marker.
+
+    Read off the *type*, never the instance: a dict carrying a
+    ``_flyto_runtime_opaque`` key, or any value a workflow can author, is
+    ordinary data and must stay resolvable. Read it with ``getattr`` so a
+    subclass of a capability inherits the marker rather than escaping it —
+    the same spelling the three other call sites use (``BaseModule.run``,
+    ``template.invoke``'s child-context propagation, and the agent template
+    tool), so one object cannot be a capability at one boundary and plain data
+    at another.
+    """
+    return getattr(type(value), "_flyto_runtime_opaque", False) is True
 
 
 class VariableResolver:
@@ -255,6 +276,12 @@ class VariableResolver:
         step_id = parts[0]
         if step_id in self.context:
             step_output = self.context[step_id]
+            if _is_runtime_opaque(step_output):
+                # A bare ${name} returns the context value itself and
+                # never reaches get_nested_value, so the guard there
+                # does not cover it. A capability has to be out of reach
+                # by every spelling, not merely un-dereferenceable.
+                return None
             if len(parts) == 1:
                 return step_output
             else:
@@ -402,6 +429,8 @@ class VariableResolver:
         for key in path:
             if current is None:
                 return None
+            if _is_runtime_opaque(current):
+                return None
 
             # Handle dict access
             if isinstance(current, dict):
@@ -423,6 +452,8 @@ class VariableResolver:
             else:
                 return None
 
+        if _is_runtime_opaque(current):
+            return None
         return current
 
     def evaluate_condition(self, condition: str) -> bool:

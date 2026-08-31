@@ -14,13 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from core.modules import atomic  # noqa: F401 — registers modules
-
 import core.module_policy as module_policy
-from core.module_policy import ModuleFilter, ModulePolicyError, enforce_module_policy
-from core.modules.registry import ModuleRegistry
-from core.modules.atomic.file.delete import FileDeleteModule
 from core.mcp_handler import execute_module
+from core.module_policy import ModuleFilter, ModulePolicyError, enforce_module_policy
+from core.modules import atomic  # noqa: F401 — registers modules
+from core.modules.atomic.file.delete import FileDeleteModule
+from core.modules.registry import ModuleRegistry
 
 
 @pytest.fixture
@@ -49,6 +48,25 @@ class TestEnforce:
         with pytest.raises(ModulePolicyError):
             enforce_module_policy("string.uppercase", ["subprocess.execute"])
 
+    def test_execution_scoped_filter_does_not_mutate_global_policy(
+        self,
+        default_policy,
+    ):
+        class ScopedFilter:
+            _flyto_runtime_opaque = True
+
+            def is_allowed(self, module_id):
+                return module_id == "template.invoke"
+
+        enforce_module_policy(
+            "template.invoke",
+            [],
+            module_filter_override=ScopedFilter(),
+        )
+
+        with pytest.raises(ModulePolicyError):
+            enforce_module_policy("template.invoke", [])
+
 
 @pytest.mark.asyncio
 class TestRunBackstop:
@@ -76,6 +94,24 @@ class TestRunBackstop:
         mod = ModuleRegistry.get("string.uppercase")({"text": "hi"}, {})
         result = await mod.run()
         assert result["data"]["result"] == "HI"
+
+    async def test_run_uses_only_an_opaque_execution_scoped_filter(
+        self,
+        default_policy,
+    ):
+        class ScopedFilter:
+            _flyto_runtime_opaque = True
+
+            def is_allowed(self, module_id):
+                return module_id in {"template.invoke", "string.uppercase"}
+
+        mod = ModuleRegistry.get("string.uppercase")(
+            {"text": "scoped"},
+            {"_module_policy_filter": ScopedFilter()},
+        )
+        result = await mod.run()
+
+        assert result["data"]["result"] == "SCOPED"
 
 
 @pytest.mark.asyncio
@@ -308,3 +344,166 @@ def test_no_dynamic_dispatch_bypasses_the_chokepoint():
     src = Path(__file__).resolve().parents[2] / "src" / "core"
     assert src.is_dir(), src
     assert _dynamic_dispatch_offenders(src) == []
+
+
+# ---------------------------------------------------------------------------
+# A capability refusal must not be retried.
+#
+# `execute_with_retry` caught every exception and re-invoked the step. A
+# refusal is not a transient failure: policy does not change between attempts,
+# so the retries could not turn it into a success, but each one re-ran whatever
+# side effects preceded the refused module and gated it again. The refusal
+# always propagated, so the gate stayed fail-closed — what leaked was the
+# replay.
+# ---------------------------------------------------------------------------
+
+class _PolicyCallCounter:
+    """Count enforce_module_policy calls for one module id."""
+
+    def __init__(self, monkeypatch, module_id):
+        self.module_id = module_id
+        self.calls = 0
+        original = module_policy.enforce_module_policy
+
+        def counting(module_id_arg, *args, **kwargs):
+            if module_id_arg == self.module_id:
+                self.calls += 1
+            return original(module_id_arg, *args, **kwargs)
+
+        # BaseModule.run imports enforce_module_policy from the module object on
+        # every call, so patching the attribute covers the chokepoint.
+        monkeypatch.setattr(module_policy, "enforce_module_policy", counting)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "retry_settings",
+    [
+        {"retry": {"count": 3, "delay_ms": 0}},
+        {"on_error": "retry"},
+        {"on_error": "continue", "retry": {"count": 2, "delay_ms": 0}},
+    ],
+    ids=["retry-config", "on_error-retry", "retry-plus-continue"],
+)
+async def test_refused_module_is_gated_exactly_once_despite_retry(
+    monkeypatch,
+    retry_settings,
+):
+    from core.engine.exceptions import is_policy_refusal
+    from core.engine.workflow import WorkflowEngine
+
+    monkeypatch.delenv("FLYTO_MODULE_ALLOWLIST", raising=False)
+    monkeypatch.setenv("FLYTO_MODULE_DENYLIST", "string.uppercase")
+    monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+    counter = _PolicyCallCounter(monkeypatch, "string.uppercase")
+
+    step = {
+        "id": "refused",
+        "module": "string.uppercase",
+        "params": {"text": "hi"},
+        **retry_settings,
+    }
+    engine = WorkflowEngine(workflow={"steps": [step]}, initial_context={})
+
+    with pytest.raises(Exception) as exc_info:
+        await engine.execute()
+
+    # Fail-closed is the non-negotiable half: the refusal still propagates.
+    assert is_policy_refusal(exc_info.value) is True
+    # And the retry loop must not have replayed it.
+    assert counter.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_retry_still_retries_an_ordinary_failure(monkeypatch):
+    """The refusal guard must not disable retries for normal errors."""
+    from core.engine.step_executor.retry import execute_with_retry
+
+    attempts = {"n": 0}
+
+    async def flaky():
+        attempts["n"] += 1
+        if attempts["n"] < 3:
+            raise ValueError("transient")
+        return "ok"
+
+    result = await execute_with_retry(
+        step_id="flaky",
+        execute_fn=flaky,
+        retry_config={"count": 3, "delay_ms": 0},
+    )
+
+    assert result == "ok"
+    assert attempts["n"] == 3
+
+
+# ---------------------------------------------------------------------------
+# Gates that survived the mutation sweep with nothing failing.
+# ---------------------------------------------------------------------------
+
+class TestModulePolicyFilterGates:
+    def test_filter_that_raises_fails_closed(self, default_policy):
+        """A filter whose is_allowed raises must deny, never fall open."""
+
+        class BrokenFilter:
+            _flyto_runtime_opaque = True
+
+            def is_allowed(self, module_id):
+                raise RuntimeError("policy backend unavailable")
+
+        with pytest.raises(ModulePolicyError):
+            enforce_module_policy(
+                "string.uppercase",
+                [],
+                module_filter_override=BrokenFilter(),
+            )
+
+    @pytest.mark.asyncio
+    async def test_non_opaque_filter_from_workflow_data_is_ignored(
+        self,
+        default_policy,
+        monkeypatch,
+    ):
+        """Only a runtime-opaque capability may widen policy.
+
+        `_module_policy_filter` is read off the execution context, which
+        workflow-authored data can reach. A plain object that merely exposes
+        `is_allowed` must not be honoured, or authoring a step would be enough
+        to grant yourself any module.
+        """
+        monkeypatch.setenv("FLYTO_MODULE_DENYLIST", "string.uppercase")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+
+        class WorkflowSupplied:  # no _flyto_runtime_opaque marker
+            def is_allowed(self, module_id):
+                return True
+
+        mod = ModuleRegistry.get("string.uppercase")(
+            {"text": "hi"},
+            {"_module_policy_filter": WorkflowSupplied()},
+        )
+        with pytest.raises(ModulePolicyError):
+            await mod.run()
+
+    @pytest.mark.asyncio
+    async def test_marker_as_instance_key_is_not_a_capability(
+        self,
+        default_policy,
+        monkeypatch,
+    ):
+        """The marker is read off the type, so JSON-shaped data cannot forge it."""
+        monkeypatch.setenv("FLYTO_MODULE_DENYLIST", "string.uppercase")
+        monkeypatch.setattr(module_policy, "module_filter", ModuleFilter())
+
+        class MarkedDict(dict):
+            def is_allowed(self, module_id):
+                return True
+
+        forged = MarkedDict(_flyto_runtime_opaque=True)
+
+        mod = ModuleRegistry.get("string.uppercase")(
+            {"text": "hi"},
+            {"_module_policy_filter": forged},
+        )
+        with pytest.raises(ModulePolicyError):
+            await mod.run()

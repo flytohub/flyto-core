@@ -10,7 +10,7 @@ import asyncio
 import logging
 from typing import Any, Callable, Coroutine, Dict, Optional
 
-from ..exceptions import StepExecutionError, StepTimeoutError
+from ..exceptions import StepExecutionError, StepTimeoutError, is_policy_refusal
 from ..hooks import ExecutorHooks, HookAction
 from ...constants import (
     DEFAULT_MAX_RETRIES,
@@ -69,6 +69,14 @@ async def execute_with_retry(
         try:
             return await execute_fn()
         except (StepTimeoutError, StepExecutionError, Exception) as e:
+            # A capability refusal is not a retryable failure. Retrying it
+            # re-runs every side effect that ran before the refusal (the steps
+            # preceding it inside an invoked template, for instance) and gates
+            # the refused module once per attempt, while the outcome is fixed
+            # from the first attempt: policy does not change between retries.
+            # See modules/base.py and exceptions.is_policy_refusal.
+            if is_policy_refusal(e):
+                raise
             last_error = e
 
             if attempt < max_retries:
