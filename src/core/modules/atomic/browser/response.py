@@ -7,18 +7,108 @@ Listens for XHR/fetch responses matching a URL pattern,
 captures the response body (JSON, text, binary), and returns structured data.
 
 Use case: Extract data from API calls made by the page (dashboards, SPAs, feeds).
+
+`count: 0` WITH `status: "success"` IS THE WHOLE PROBLEM
+
+This module is pointed at a page and asked to come back with the API data the
+page fetched. When it comes back with nothing it returns exactly what it returns
+on a page that never made the call, on a regex that matched none of the URLs, on
+a ``resource_types`` filter that excluded them, and on a listen window that
+closed before the request went out. All four are ``{"responses": [], "count": 0,
+"status": "success"}``.
+
+    at least one response was captured   OBSERVED
+    none were                            ACCEPTED
+
+A captured response is an observation and not a small one: ``response.status``
+and ``response.headers`` are what the server sent, and ``await response.body()``
+pulls the bytes off the wire. None of that exists without the exchange having
+happened. An empty capture is `database.query`'s empty result set -- a value
+unchanged by whether the effect occurred -- and claims only that the listener
+was attached and the window ran.
+
+Bodies that failed to read are counted separately rather than silently folded
+in. ``entry['body'] = None`` with an ``error`` beside it still means the
+response's status and headers were observed; it is the payload that was not, and
+a consumer reading ``count`` alone would not know.
+
+REACHING THE END OF THE WINDOW IS NOT A TIMEOUT. ``asyncio.wait_for`` here is
+how the module holds the window open; with the default ``max_responses=0`` the
+event is never set and the ``TimeoutError`` is the normal path. It is not the
+severed-observation-channel case that `outcome.py` calls indeterminate.
 """
 import asyncio
 import json
 import logging
 import re
 from typing import Any, Dict, List
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
 
 logger = logging.getLogger(__name__)
+
+
+def _response_outcome(
+    *,
+    count: int,
+    unreadable_bodies: int,
+    url_pattern: str,
+    listened_ms: int,
+) -> Dict[str, Any]:
+    """OBSERVED for responses that came off the wire, ACCEPTED for a quiet window."""
+    if count:
+        effects = [{
+            'kind': 'responses_captured',
+            'count': count,
+            'url_pattern': url_pattern,
+            'listened_ms': listened_ms,
+            'measured_by': (
+                'len() over Playwright `response` events, each with a status '
+                'and headers the server sent'
+            ),
+            'detail': (
+                'Every entry is an exchange that happened: the status line and '
+                'headers came from the server, and the body was pulled off the '
+                'wire with response.body().'
+            ),
+        }]
+        if unreadable_bodies:
+            effects.append({
+                'kind': 'response_bodies_unreadable',
+                'count': unreadable_bodies,
+                'measured_by': 'entries whose response.body() raised',
+                'detail': (
+                    'The status and headers of these responses were observed; '
+                    'the payload was not. A body evicted from the browser cache '
+                    'before this module asked for it does this. They are counted '
+                    'here rather than folded into `count`, where they would '
+                    'read as captured data.'
+                ),
+            })
+        return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'no_responses_captured',
+            'count': 0,
+            'url_pattern': url_pattern,
+            'listened_ms': listened_ms,
+            'measured_by': None,
+            'detail': (
+                'The listener was attached for the whole window and nothing '
+                'matched. A zero reads identically whether the page never made '
+                'the call, the URL pattern matched none of them, the resource '
+                'type filter excluded them, or the window closed first -- so it '
+                'is not an observation of the network.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -61,6 +151,11 @@ logger = logging.getLogger(__name__)
     output_schema={
         'responses': {'type': 'array', 'description': 'Captured responses [{url, status, body, content_type, headers}]'},
         'count': {'type': 'number', 'description': 'Number of responses captured'},
+        'unreadable_body_count': {'type': 'number', 'description': 'Captured responses whose body could not be read'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the capture was followed: "observed" when responses came '
+            'off the wire, "accepted" when the window matched nothing'
+        )},
     },
     examples=[
         {'name': 'Capture JSON API calls', 'params': {'url_pattern': '/api/', 'wait_ms': 5000}},
@@ -142,8 +237,20 @@ class BrowserResponseModule(BaseModule):
         finally:
             page.remove_listener('response', handle_response)
 
+        # Keyed on `error`, which only the except branch writes. `body is None`
+        # would be wrong: a JSON response whose whole payload is the literal
+        # `null` parses to None and was read perfectly well.
+        unreadable = sum(1 for entry in captured if 'error' in entry)
+
         return {
             "status": "success",
             "responses": captured,
             "count": len(captured),
+            "unreadable_body_count": unreadable,
+            "outcome": _response_outcome(
+                count=len(captured),
+                unreadable_bodies=unreadable,
+                url_pattern=self.url_pattern.pattern,
+                listened_ms=self.wait_ms,
+            ),
         }

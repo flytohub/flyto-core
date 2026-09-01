@@ -11,13 +11,306 @@ Features:
 - Support field mapping with selectors
 - Clear fields before filling option
 - Submit form option
-"""
-from typing import Any, Dict, List, Optional
 
+HOW FAR A FILLED FORM IS FOLLOWED
+
+What this module reported about its own effect was ``success_count``:
+``len(filled_fields)``, appended once per key in the caller's own ``data`` dict
+for which no exception was raised. On a page where every selector resolves to a
+``<div>``, ``browser.type`` still succeeds against it and the count still reads
+"all of them". It is `file.write`'s ``bytes_written`` with a form attached.
+
+The measurement that is not that is the field's own state, read out of the live
+DOM twice -- once immediately before the fill (after the optional clear, so the
+baseline is the state the fill actually starts from) and once after. It is
+`browser.type`'s ``page.input_value`` read-back generalised to the four kinds of
+control this module writes to:
+
+    text / textarea       value LENGTH, and whether the value equals the target
+    select                selectedIndex, and whether the value equals the target
+    checkbox              checked
+    radio                 which member of the name-group is checked
+
+Never the value itself. The equality is computed inside the page and only the
+boolean crosses back, because this module fills password fields and this
+envelope is copied into a trace row and a websocket frame.
+
+Per field, the pair of readings gives one of four answers:
+
+    the reading changed                      the fill reached the page
+    unchanged, and holds the target value    the field already held it
+    unchanged, and does not hold it          nothing we can see moved
+    could not be read                        we cannot look at this control
+
+and the step's rung is the strongest thing true of the whole set:
+
+    any field changed                        OBSERVED
+    else any field unchanged and wrong       INDETERMINATE
+    else any field already correct           ACCEPTED
+    else any field filled but unreadable     ACCEPTED
+    else nothing was filled at all           INDETERMINATE
+
+"Already correct" is ACCEPTED and not OBSERVED for the one rule this contract
+runs on: a checkbox that was already ticked reads identically whether this step
+ran or not, so the reading is not evidence of the fill even though the form now
+holds what the caller asked for. "Unchanged and wrong" is INDETERMINATE rather
+than FAILED for the reason `outcome.py` separates the two -- a readonly input, a
+framework-controlled value, a selector that resolved to the wrong node and a
+fill that genuinely went nowhere all produce it, and nobody declared a contract
+about the field's value.
+
+Nothing here observes the SUBMIT. ``browser.click`` returning is not evidence a
+form posted, so a requested submit rides in the envelope as an effect whose
+``measured_by`` is None, and it never raises the rung.
+"""
+from typing import Any, Dict, List, Optional, Tuple
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
+
+
+#: Reads one control's state out of the live DOM, without letting its value out.
+#:
+#: The target value is passed IN and compared in the page; only the boolean
+#: comes back. The four shapes are deliberately different dicts rather than one
+#: normalised record, because comparing before/after is a plain ``!=`` on the
+#: whole dict and a normalised record would have to invent a null for every
+#: field that does not apply -- which is how two genuinely different states end
+#: up comparing equal.
+_READ_FIELD_STATE_JS = r"""
+([selector, expectedText, expectedChecked]) => {
+    let el = null;
+    try { el = document.querySelector(selector); } catch (e) { return null; }
+    if (!el) return null;
+
+    if (el.type === 'checkbox') {
+        return {
+            kind: 'checkbox',
+            checked: !!el.checked,
+            matches: (!!el.checked) === (!!expectedChecked),
+        };
+    }
+    if (el.type === 'radio') {
+        const group = Array.from(document.querySelectorAll('input[type="radio"]'))
+            .filter(r => r.name === el.name);
+        const checked = group.filter(r => r.checked)[0];
+        return {
+            kind: 'radio',
+            group_size: group.length,
+            checked_index: checked ? group.indexOf(checked) : -1,
+            matches: !!checked && String(checked.value) === String(expectedText),
+        };
+    }
+    if (el.tagName === 'SELECT') {
+        return {
+            kind: 'select',
+            selected_index: el.selectedIndex,
+            matches: String(el.value) === String(expectedText),
+        };
+    }
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        const v = el.value == null ? '' : String(el.value);
+        return { kind: 'text', length: v.length, matches: v === String(expectedText) };
+    }
+    if (el.isContentEditable) {
+        const v = el.textContent == null ? '' : String(el.textContent);
+        return { kind: 'contenteditable', length: v.length, matches: v === String(expectedText) };
+    }
+    return null;
+}
+"""
+
+#: How many field names a single envelope will carry. The envelope lands in a
+#: database column; a 200-field form must not make it unbounded.
+_MAX_NAMED_FIELDS = 20
+
+
+async def _read_field_state(browser, selector: str, value: Any) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """``(state, None)`` when the control could be read, ``(None, why)`` when not.
+
+    Failing here is not a failure of the fill. A control inside a shadow root, a
+    canvas-backed editor, or a selector this module built that resolves to
+    something with no value at all are all perfectly fillable by some other
+    path; all that is lost is our ability to look, and the rung is lowered to
+    match.
+    """
+    try:
+        state = await browser.evaluate(
+            _READ_FIELD_STATE_JS, [selector, str(value), bool(value)]
+        )
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+    if not isinstance(state, dict):
+        return None, "the selector matched no control this module knows how to read"
+    return state, None
+
+
+def _classify_field(before: Optional[Dict[str, Any]], after: Optional[Dict[str, Any]]) -> str:
+    """What the pair of readings says about one field. Four answers, no rung.
+
+    ``matches`` participates in the equality on purpose: replacing ``abc`` with
+    ``xyz`` leaves the length alone, and without the in-page comparison that
+    would read as an unchanged field. With it, the state moved.
+    """
+    if before is None or after is None:
+        return 'not_read'
+    if before != after:
+        return 'changed'
+    if after.get('matches') is True:
+        return 'already_correct'
+    return 'unchanged'
+
+
+def _form_outcome(
+    *,
+    measurements: List[Dict[str, Any]],
+    offered_fields: int,
+    filled_count: int,
+    failed_count: int,
+    submit_requested: bool,
+    submit_dispatched: bool,
+) -> Dict[str, Any]:
+    """The rung this fill earned, and the readings that earned it."""
+    def named(result: str) -> List[str]:
+        return [m['name'] for m in measurements if m['result'] == result][:_MAX_NAMED_FIELDS]
+
+    counts = {
+        result: sum(1 for m in measurements if m['result'] == result)
+        for result in ('changed', 'unchanged', 'already_correct', 'not_read')
+    }
+
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'fields_offered',
+        'count': offered_fields,
+        'measured_by': 'len() of the data parameter',
+        'detail': (
+            'How many keys the caller handed this module. No browser call '
+            'contributes to it: it reads identically whether every field was '
+            'filled, some were, or none were.'
+        ),
+    }]
+
+    if measurements:
+        effects.append({
+            'kind': 'field_states_observed',
+            'changed': counts['changed'],
+            'unchanged': counts['unchanged'],
+            'already_correct': counts['already_correct'],
+            'not_read': counts['not_read'],
+            'unchanged_fields': named('unchanged'),
+            'not_read_fields': named('not_read'),
+            'measured_by': (
+                'document.querySelector(selector) state, read out of the live '
+                'DOM before and after each fill'
+            ),
+            'detail': (
+                'Lengths, indices and booleans only. No field value appears '
+                'here: the target is compared inside the page and only the '
+                'result crosses back, because this module fills passwords.'
+            ),
+        })
+
+    if failed_count:
+        effects.append({
+            'kind': 'fields_not_filled',
+            'count': failed_count,
+            'detail': (
+                'The fill raised for these fields and the error is in '
+                'failed_fields. They contributed no reading either way.'
+            ),
+        })
+
+    if submit_requested:
+        effects.append({
+            'kind': 'form_submit_dispatched' if submit_dispatched else 'form_submit_not_dispatched',
+            'measured_by': None,
+            'detail': (
+                'A click was sent to the submit control and Playwright did not '
+                'raise. Nothing was read back: a click that lands is not '
+                'evidence a form posted, so this never raises the rung.'
+            ) if submit_dispatched else (
+                'A submit was requested and the click raised; the error is in '
+                'failed_fields under __submit__.'
+            ),
+        })
+
+    if counts['changed']:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: a predicate was evaluated and it was ours. No caller
+            # asked for "these controls end up holding exactly this".
+            claim_by=ClaimBy.INFERRED,
+            effects=effects,
+        )
+
+    if counts['unchanged']:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=effects + [{
+                'kind': 'field_states_unchanged',
+                'predicate': 'the field state after the fill differs from the state before it',
+                'count': counts['unchanged'],
+                'detail': (
+                    'These fields hold what they held before the fill and it is '
+                    'not what was asked for. That reads the same whether '
+                    'nothing was filled, the input is readonly, a framework '
+                    'reset it, or the selector resolved to a different node. We '
+                    'cannot say which, so this is indeterminate rather than '
+                    'failed.'
+                ),
+            }],
+        )
+
+    if counts['already_correct']:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=effects + [{
+                'kind': 'field_states_already_correct',
+                'count': counts['already_correct'],
+                'measured_by': None,
+                'detail': (
+                    'Every readable field already held the value it was being '
+                    'given, so nothing moved. The form holds what was asked '
+                    'for, but that reading is identical whether this step ran '
+                    'or not, and so it is not evidence of the fill.'
+                ),
+            }],
+        )
+
+    if counts['not_read']:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=effects + [{
+                'kind': 'field_states_not_observed',
+                'count': counts['not_read'],
+                'measured_by': None,
+                'detail': (
+                    'The fills completed and did not raise. No field could be '
+                    'read back, so nothing followed them into the page.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=effects + [{
+            'kind': 'no_field_was_filled',
+            'measured_by': None,
+            'detail': (
+                'Every field raised, and the errors are in failed_fields. Those '
+                'errors include Playwright timeouts, which say we stopped '
+                'waiting rather than that nothing happened, so this is '
+                'indeterminate rather than failed.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -124,6 +417,16 @@ from ...schema.constants import FieldGroup
             'type': 'boolean',
             'description': 'Whether form was submitted',
             'description_key': 'modules.browser.form.output.submitted.description'
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this fill was followed: observed when a field state '
+                'changed in the page, indeterminate when a readable field did '
+                'not move, accepted when the fields could not be read back or '
+                'already held the target value. The submit is never observed.'
+            ),
+            'description_key': 'modules.browser.form.output.outcome.description'
         }
     },
     examples=[
@@ -192,6 +495,7 @@ class BrowserFormModule(BaseModule):
 
         filled_fields = []
         failed_fields = []
+        measurements: List[Dict[str, Any]] = []
 
         for field_name, value in self.data.items():
             try:
@@ -211,8 +515,23 @@ class BrowserFormModule(BaseModule):
                         }
                     ''', selector)
 
+                # The baseline is read AFTER the clear, so it is the state the
+                # fill actually starts from. Reading it before would report an
+                # unchanged field for the ordinary case of rewriting a value
+                # that was already there, which is a correct fill.
+                before, before_error = await _read_field_state(browser, selector, value)
+
                 # Fill the field based on type
                 await self._fill_field(browser, selector, value)
+
+                after, after_error = await _read_field_state(browser, selector, value)
+                measurements.append({
+                    'name': field_name,
+                    'result': _classify_field(before, after),
+                    'kind': (after or before or {}).get('kind'),
+                    'reason': before_error or after_error,
+                })
+
                 filled_fields.append({
                     'name': field_name,
                     'selector': selector,
@@ -231,7 +550,8 @@ class BrowserFormModule(BaseModule):
 
         # Submit form if requested
         submitted = False
-        if self.submit and len(filled_fields) > 0:
+        submit_requested = bool(self.submit and len(filled_fields) > 0)
+        if submit_requested:
             try:
                 submit_sel = self.submit_selector or 'button[type="submit"], input[type="submit"]'
                 await browser.click(submit_sel)
@@ -251,6 +571,14 @@ class BrowserFormModule(BaseModule):
             'total_fields': len(self.data),
             'success_count': len(filled_fields),
             'fail_count': len(failed_fields),
+            'outcome': _form_outcome(
+                measurements=measurements,
+                offered_fields=len(self.data),
+                filled_count=len(filled_fields),
+                failed_count=len(failed_fields),
+                submit_requested=submit_requested,
+                submit_dispatched=submitted,
+            ),
         }
         browser._snapshot_since_nav = True
         hints = await browser.get_hints(force=True)
@@ -322,9 +650,19 @@ class BrowserFormModule(BaseModule):
             ''', [selector, should_check])
         elif element_info.get('isRadio'):
             # Handle radio button
-            await browser.evaluate('''
+            #
+            # RAW string, and it has to be. As a normal triple-quoted literal
+            # Python collapsed every `\\` to one backslash, so the JS the page
+            # received began `value.replace(/\/g, ...)` -- an escaped slash
+            # inside a regex literal, which never terminates it. Chromium
+            # answered `SyntaxError: Invalid regular expression` for EVERY radio
+            # fill this module has ever attempted; the per-field `except` below
+            # swallowed it into `failed_fields` and the step still returned
+            # `status: "success"`. Found by giving this module an outcome rung
+            # and then asking what the rung was measuring.
+            await browser.evaluate(r'''
                 ([selector, value]) => {
-                    const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\\\"');
+                    const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
                     const radio = document.querySelector(selector + '[value="' + escaped + '"]') ||
                                  document.querySelector(selector);
                     if (radio) radio.click();

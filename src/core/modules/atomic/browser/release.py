@@ -18,11 +18,36 @@ Design Philosophy:
 Pairing:
     browser.ensure  ←→  browser.release  (smart, composable)
     browser.launch  ←→  browser.close    (explicit, always close)
+
+THREE PATHS, AND ONLY ONE OF THEM CLOSES ANYTHING
+
+`browser.close` already established what a teardown may claim, and the closing
+path here is the same measurement through the same helper: hold the Playwright
+``Browser`` object across ``driver.close()`` — which sets ``driver._browser`` to
+None whether the teardown worked or timed out, so asking the driver afterwards
+would only confirm that this code ran — and ask it.
+
+    the connection is gone         OBSERVED
+    the connection is still live   INDETERMINATE
+    no Browser object to ask       ACCEPTED
+
+"Browser closed successfully" was this module's word for all three.
+``BrowserDriver.close`` wraps each of its four teardown steps in a bare
+``except`` and returns ``{'status': 'success'}`` either way, so its return has
+never distinguished them.
+
+The skipped and no_browser paths deliberately close nothing: skipped is the
+whole point of this module, and no_browser has nothing to act on. Neither
+dispatches an instruction, so neither writes an envelope — the same reasoning
+`browser.close` records for its own nothing-to-close return, and the engine's
+`dispatched` default lands on them.
 """
 from typing import Any, Dict
+
+from ....engine.outcome import envelope
 from ...base import BaseModule
 from ...registry import register_module
-from ...schema import compose, presets
+from ._session_outcome import browser_object, closed_claim, observe_disconnected
 
 
 @register_module(
@@ -82,6 +107,17 @@ from ...schema import compose, presets
             'type': 'boolean',
             'description': 'Whether this template owned the browser',
             'description_key': 'modules.browser.release.output.was_owner.description'
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the teardown was followed: observed when Playwright '
+                'reports the browser connection gone, indeterminate when it is '
+                'still live, accepted when there was no Browser object to ask. '
+                'Absent on the skipped and no_browser paths, which close '
+                'nothing.'
+            ),
+            'description_key': 'modules.browser.release.output.outcome.description'
         }
     },
     examples=[
@@ -165,8 +201,15 @@ class BrowserReleaseModule(BaseModule):
                 "browser_inherited": browser_inherited,
             }
 
+        # Held across close(): the driver drops its own reference on every path,
+        # including the ones where a teardown step timed out and was swallowed.
+        held = browser_object(browser)
+
         # Close the browser
         await browser.close()
+
+        disconnected, reason = observe_disconnected(held)
+        rung, claim_by, reading = closed_claim(disconnected=disconnected, reason=reason)
 
         # Clean up context
         self.context.pop('browser', None)
@@ -178,4 +221,5 @@ class BrowserReleaseModule(BaseModule):
             "action": "closed",
             "message": "Browser closed successfully",
             "was_owner": True,
+            "outcome": envelope(rung, claim_by=claim_by, effects=[reading]),
         }

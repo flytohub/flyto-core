@@ -22,6 +22,18 @@ from ....utils import (
 
 @register_module(
     module_id='ai.model',
+
+    # NOT `derives=True`, unlike the four ai.memory/ai.tool sub-nodes it sits
+    # beside. It was given the flag on the strength of "configuration provider,
+    # opens no sockets", and that is false for this one. With `base_url` set --
+    # a first-class parameter, not an edge case -- `create_chat_model` resolves
+    # the host, measured with sys.addaudithook:
+    #
+    #     socket.getaddrinfo ('llm.example.invalid', None, 0, 0, 0)
+    #
+    # and the module then returns ok: False. Its result depends on whether a
+    # name resolves, so it is not computed from its inputs, and suppressing its
+    # rung would hide a step that really does reach the network.
     stability="stable",
     version='1.0.0',
     category='ai',

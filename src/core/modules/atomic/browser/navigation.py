@@ -2,11 +2,116 @@
 
 """
 Browser Navigation Module - Go back, forward, or reload the page
+
+GOING BACK WITH NOWHERE TO GO REPORTED SUCCESS
+
+``page.go_back()`` returns the navigation's ``Response``, or ``None`` when there
+was no history entry to move to. This module discarded that return value and
+reported ``{"status": "success", "url": page.url}`` either way — and ``page.url``
+is unchanged when nothing happened, so both fields agreed with each other and
+with nothing else. Measured against a local server: two navigations, then
+``go_forward`` twice; the second returns ``None``, the URL does not move, and
+the old code called it a success.
+
+Two readings decide the rung, both taken from the page:
+
+    Response.status         the status of the document the browser fetched
+    page.url before/after   read either side of the call
+
+    a response object came back                   OBSERVED (with its status)
+    no response, but the URL moved                OBSERVED — a same-document
+                                                  navigation. `go_back` over a
+                                                  '#fragment' does exactly this:
+                                                  returns None, changes the URL.
+    no response and the URL did not move          INDETERMINATE
+
+The last row is INDETERMINATE rather than FAILED for the reason `outcome.py`
+separates them: nobody declared a contract here, and "there was no history
+entry" and "a same-document navigation landed back on the same URL" produce the
+identical pair of readings. For ``reload`` the URL never moves by definition, so
+only a response object lifts that action off the bottom — an about:blank reload
+returns None and is honestly indeterminate.
 """
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+
+
+def _navigation_outcome(
+    *,
+    action: str,
+    status_code: Optional[int],
+    url_before: str,
+    url_after: str,
+) -> Dict[str, Any]:
+    """The rung this history move earned, from the response and the address."""
+    # `isinstance(True, int)` is True in Python, so a bool has to be excluded
+    # explicitly or it would sail through as a status code.
+    if isinstance(status_code, int) and not isinstance(status_code, bool):
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'navigation_response',
+                'action': action,
+                'status_code': status_code,
+                'url_before': url_before,
+                'url_after': url_after,
+                'measured_by': f'Response.status returned by page.{_call_for(action)}()',
+                'detail': (
+                    'The browser fetched a document and the server answered. '
+                    'A non-2xx status is still an observation — the rung says '
+                    'how far the effect was followed, not whether we liked it.'
+                ),
+            }],
+        )
+
+    if url_after != url_before:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'same_document_navigation',
+                'action': action,
+                'url_before': url_before,
+                'url_after': url_after,
+                'measured_by': 'page.url, read before and after the call',
+                'detail': (
+                    'No response object, so no document was fetched, but the '
+                    'address the page reports has changed. That is a '
+                    'same-document navigation — moving across a #fragment '
+                    'entry does exactly this — and it happened in the browser.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[{
+            'kind': 'navigation_not_observed',
+            'action': action,
+            'url_before': url_before,
+            'url_after': url_after,
+            'measured_by': None,
+            'predicate': 'a Response came back, or page.url moved',
+            'detail': (
+                'Neither reading moved. For back and forward that is what an '
+                'empty history looks like — the call returns None and the page '
+                'stays put — and it is also what a same-document navigation '
+                'onto the same URL looks like. For reload the URL never moves '
+                'by definition, so a missing response leaves nothing to see. '
+                'This step reported plain success in all of those cases.'
+            ),
+        }],
+    )
+
+
+def _call_for(action: str) -> str:
+    return {'back': 'go_back', 'forward': 'go_forward'}.get(action, 'reload')
 
 
 @register_module(
@@ -55,6 +160,16 @@ from ...schema import compose, presets, field
                 'description_key': 'modules.browser.navigation.output.action.description'},
         'url': {'type': 'string', 'description': 'Current URL after navigation',
                 'description_key': 'modules.browser.navigation.output.url.description'},
+        'previous_url': {'type': 'string', 'description': 'URL the page reported before the call',
+                'description_key': 'modules.browser.navigation.output.previous_url.description'},
+        'status_code': {'type': 'number', 'description': 'HTTP status of the document fetched, or null when no navigation response came back',
+                'description_key': 'modules.browser.navigation.output.status_code.description'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the navigation was followed: observed when a response came '
+            'back or the URL moved, indeterminate when neither did — which is '
+            'what back or forward with no history entry looks like'
+        ),
+                'description_key': 'modules.browser.navigation.output.outcome.description'},
     },
     examples=[
         {
@@ -100,18 +215,36 @@ class BrowserNavigationModule(BaseModule):
 
         page = browser.page
 
+        # Read either side of the call. `url_before` is what makes a
+        # same-document navigation visible when no response comes back.
+        url_before = page.url
+
+        response = None
         if self.action == 'back':
-            await page.go_back(wait_until=self.wait_until, timeout=self.timeout_ms)
+            response = await page.go_back(wait_until=self.wait_until, timeout=self.timeout_ms)
         elif self.action == 'forward':
-            await page.go_forward(wait_until=self.wait_until, timeout=self.timeout_ms)
+            response = await page.go_forward(wait_until=self.wait_until, timeout=self.timeout_ms)
         elif self.action == 'reload':
-            await page.reload(wait_until=self.wait_until, timeout=self.timeout_ms)
+            response = await page.reload(wait_until=self.wait_until, timeout=self.timeout_ms)
 
         current_url = page.url
+        status_code = getattr(response, 'status', None) if response else None
 
         # Post-navigation: invalidate and refresh hints — page content changed
         await browser.invalidate_hints(clear_stamps=True)
-        result = {"status": "success", "action": self.action, "url": current_url}
+        result = {
+            "status": "success",
+            "action": self.action,
+            "url": current_url,
+            "previous_url": url_before,
+            "status_code": status_code,
+            "outcome": _navigation_outcome(
+                action=self.action,
+                status_code=status_code,
+                url_before=url_before,
+                url_after=current_url,
+            ),
+        }
         hints = await browser.get_hints(force=True)
         browser._snapshot_since_nav = True
         for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):

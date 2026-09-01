@@ -5,14 +5,88 @@ Browser Table Module — Extract HTML tables as structured data
 
 Auto-detects table headers (thead/th), iterates rows, returns array of objects.
 Handles merged cells, nested tables, and headerless tables.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+The page script returns two counts and they are not interchangeable.
+``tables_found`` is ``document.querySelectorAll(selector).length``;
+``count`` is how many rows were read out of the one table at ``table_index``.
+
+The rung rests on the ROWS, because rows are what this module produces:
+
+    at least one row was read      OBSERVED -- those cells were there
+    no rows                        ACCEPTED
+
+and the empty case keeps ``tables_found`` beside it, which is the part worth
+having. A zero row count is the `database.query` empty-read either way, but
+there are two entirely different pages behind it -- no table matched the
+selector at all, or a table matched and yielded nothing (an out-of-range
+``table_index``, a header-only table, a body built by script after this ran) --
+and the effect names which one, so the consumer is not left guessing at a bare 0.
+
+``tables_found`` was considered as the basis for the rung and rejected. It is a
+real live-DOM measurement, so a rung on it would not be dishonest exactly, but
+it would let ``table_index: 7`` against a page with one table report OBSERVED
+while returning no rows at all, and a consumer reading the rung would be told
+the extraction saw something it did not. The rung answers "did this module read
+a table"; the effect answers "was there a table to read".
 """
 import logging
-from typing import Any
+from typing import Any, Dict
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 
 logger = logging.getLogger(__name__)
+
+
+def _table_outcome(
+    *,
+    selector: str,
+    table_index: int,
+    rows: int,
+    tables_found: int,
+) -> Dict[str, Any]:
+    """The rung this extraction earned, decided by rows read."""
+    if rows <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_rows_read',
+                'selector': selector,
+                'table_index': table_index,
+                'tables_found': tables_found,
+                'measured_by': None,
+                'detail': (
+                    'No table matched the selector.' if tables_found <= 0 else
+                    'A table matched the selector and produced no rows. That '
+                    'happens for an out-of-range table_index, a header-only '
+                    'table, or a body a script fills in later.'
+                ) + (
+                    ' Either way an empty result reads the same whether the '
+                    'rows are absent or the query was pointed at the wrong '
+                    'thing, so it is not an observation of the table.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'rows_read',
+            'selector': selector,
+            'table_index': table_index,
+            'count': rows,
+            'measured_by': 'len() over the rows the page script built from td/th cells',
+        }, {
+            'kind': 'tables_matched',
+            'count': tables_found,
+            'measured_by': 'document.querySelectorAll(selector).length in the live DOM',
+        }],
+    )
 
 _TABLE_JS = r"""
 (options) => {
@@ -144,6 +218,13 @@ _TABLE_JS = r"""
         'headers':      {'type': 'array',  'description': 'Column headers detected'},
         'count':        {'type': 'number', 'description': 'Number of rows extracted'},
         'tables_found': {'type': 'number', 'description': 'Total tables matching selector'},
+        'outcome':      {'type': 'object',
+                         'description': (
+                             'How far this read was followed: "observed" when '
+                             'at least one row was read out of the live DOM, '
+                             '"accepted" when none was -- the effect then says '
+                             'whether any table matched at all.'
+                         )},
     },
     examples=[
         {'name': 'Extract first table', 'params': {}},
@@ -174,4 +255,13 @@ class BrowserTableModule(BaseModule):
             'include_html': self.include_html,
         })
 
-        return {"status": "success", **result}
+        return {
+            "status": "success",
+            **result,
+            "outcome": _table_outcome(
+                selector=self.selector,
+                table_index=self.table_index,
+                rows=result.get('count') or 0,
+                tables_found=result.get('tables_found') or 0,
+            ),
+        }

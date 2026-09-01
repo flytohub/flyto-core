@@ -4,14 +4,115 @@
 Browser Network Module
 
 Monitor and intercept network requests.
+
+THREE ACTIONS, TWO DIFFERENT KINDS OF ZERO
+
+`monitor` only watches; `block` and `intercept` change what the page receives.
+All three returned ``status: "success"`` with a count, and a count of 0 meant
+something different in each case and nothing in all of them:
+
+    monitor    OBSERVED when requests arrived -- every entry is a Playwright
+               `request` event carrying a URL, method and resource type the
+               browser reported. ACCEPTED at zero: an empty capture reads
+               identically whether the page made no requests, the regex matched
+               none of them, or the listener was on a different page object.
+               That is `database.query`'s empty result set.
+    block      OBSERVED when at least one route was aborted -- the count is of
+               `route.abort()` calls that RETURNED, on routes the browser
+               handed us. ACCEPTED at zero, for the same reason: a filter that
+               matched nothing and a route handler that never ran are the same
+               zero.
+    intercept  OBSERVED when at least one route was fulfilled with the mock.
+               ACCEPTED at zero.
+
+WHY THE COUNTERS MOVED. ``blocked_count += 1`` and the ``requests.append``
+happened BEFORE the ``await route.abort()`` they were counting, and the same
+shape stood in `intercept` around ``route.fulfill``. A route that raises on
+abort -- an already-handled route, a page torn down mid-flight -- was counted as
+blocked and reported as a URL that had been stopped. The count is the rung's
+only evidence, so it now counts calls that came back, not calls that were
+attempted. Nothing else about the handlers changed: the exception propagates out
+of the handler exactly as it did before.
+
+What OBSERVED does not say for `block`: an aborted route is not a request that
+never reached the network -- Chromium may have started it before the route
+handler ran. What is claimed is that this many routes were aborted.
 """
 import asyncio
 import re
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlsplit, urlunsplit
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+
+
+#: What each action's count is a count OF, and the line that produced it.
+_NETWORK_MEASURES = {
+    'monitor': (
+        'requests_captured',
+        'len() over Playwright `request` events the browser delivered',
+        'Each entry is a request the browser reported, with the URL, method and '
+        'resource type it reported. Watching only: nothing here changed what the '
+        'page received.',
+    ),
+    'block': (
+        'routes_aborted',
+        'count of route.abort() calls that returned, on routes the browser handed us',
+        'Each one is a route this module aborted. An aborted route is not a '
+        'request that never reached the network -- only one the page was not '
+        'given the answer to.',
+    ),
+    'intercept': (
+        'routes_fulfilled',
+        'count of route.fulfill() calls that returned, on routes the browser handed us',
+        'Each one is a route this module answered with the mock response '
+        'instead of letting it reach the network.',
+    ),
+}
+
+
+def _network_outcome(*, action: str, count: int, listened_ms: int,
+                     url_pattern: Optional[str], resource_type: Optional[str]) -> Dict[str, Any]:
+    """OBSERVED for routes and requests that arrived, ACCEPTED for a quiet window."""
+    kind, measured_by, detail = _NETWORK_MEASURES[action]
+    if count:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': kind,
+                'action': action,
+                'count': count,
+                'listened_ms': listened_ms,
+                'url_pattern': url_pattern,
+                'resource_type': resource_type,
+                'measured_by': measured_by,
+                'detail': detail,
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': f'no_{kind}',
+            'action': action,
+            'count': 0,
+            'listened_ms': listened_ms,
+            'url_pattern': url_pattern,
+            'resource_type': resource_type,
+            'measured_by': None,
+            'detail': (
+                'The handler was installed for the whole window and nothing '
+                'matched. A zero reads identically whether the page made no '
+                'requests, the filters matched none of them, or the handler was '
+                'attached to a different page object -- so it is not an '
+                'observation of the network.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -98,7 +199,13 @@ from ...schema import compose, presets, field
         'requests': {'type': 'array', 'description': 'Captured network requests',
                 'description_key': 'modules.browser.network.output.requests.description'},
         'blocked_count': {'type': 'number', 'description': 'The blocked count',
-                'description_key': 'modules.browser.network.output.blocked_count.description'}
+                'description_key': 'modules.browser.network.output.blocked_count.description'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the effect was followed: "observed" when requests were '
+            'captured or routes were aborted or fulfilled, "accepted" when '
+            'nothing matched during the window'
+        ),
+                'description_key': 'modules.browser.network.output.outcome.description'}
     },
     examples=[
         {
@@ -212,7 +319,8 @@ class BrowserNetworkModule(BaseModule):
             return {
                 "status": "success",
                 "requests": requests,
-                "count": len(requests)
+                "count": len(requests),
+                "outcome": self._outcome(len(requests)),
             }
 
         elif self.action == 'block':
@@ -220,12 +328,14 @@ class BrowserNetworkModule(BaseModule):
                 nonlocal blocked_count
                 request = route.request
                 if self._matches_filter(request):
-                    blocked_count += 1
-                    requests.append({
-                        'url': self._safe_url(request.url),
-                        'blocked': True
-                    })
+                    # Abort FIRST, then count. The counter is the only evidence
+                    # this action has, and a route that raises on abort was not
+                    # blocked -- counting it before the await reported a URL as
+                    # stopped when nothing had stopped it.
+                    url = self._safe_url(request.url)
                     await route.abort()
+                    blocked_count += 1
+                    requests.append({'url': url, 'blocked': True})
                 else:
                     await route.continue_()
 
@@ -239,22 +349,22 @@ class BrowserNetworkModule(BaseModule):
             return {
                 "status": "success",
                 "requests": requests,
-                "blocked_count": blocked_count
+                "blocked_count": blocked_count,
+                "outcome": self._outcome(blocked_count),
             }
 
         elif self.action == 'intercept':
             async def handle_route(route):
                 request = route.request
                 if self._matches_filter(request):
-                    requests.append({
-                        'url': self._safe_url(request.url),
-                        'intercepted': True
-                    })
+                    # Fulfil FIRST, then count -- see the block branch above.
+                    url = self._safe_url(request.url)
                     await route.fulfill(
                         status=self.mock_response.get('status', 200),
                         content_type=self.mock_response.get('content_type', 'application/json'),
                         body=self.mock_response.get('body', '{}')
                     )
+                    requests.append({'url': url, 'intercepted': True})
                 else:
                     await route.continue_()
 
@@ -268,5 +378,15 @@ class BrowserNetworkModule(BaseModule):
             return {
                 "status": "success",
                 "requests": requests,
-                "intercepted_count": len(requests)
+                "intercepted_count": len(requests),
+                "outcome": self._outcome(len(requests)),
             }
+
+    def _outcome(self, count: int) -> Dict[str, Any]:
+        return _network_outcome(
+            action=self.action,
+            count=count,
+            listened_ms=self.timeout,
+            url_pattern=self.url_pattern,
+            resource_type=self.resource_type,
+        )

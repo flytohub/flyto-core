@@ -256,33 +256,65 @@ def ceiling_for(declared_postcondition: Optional[str]) -> Outcome:
 def default_for(module_id: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[Outcome]:
     """What a module that reported nothing is taken to have reached.
 
-    DISPATCHED for anything side-effecting: the instruction left us and nobody
-    confirmed anything, which is the truth about a module that says nothing.
+    None for a module declaring ``derives``: it is not on the ladder at all.
+    The ladder measures how far an effect was followed into the world, and a
+    module that computes its output from its inputs has no such distance to
+    travel — the return value *is* the whole of what happened. That is the same
+    answer `string.uppercase` gets, and for the same reason.
+
+    ``derives`` is checked FIRST, ahead of the category, because the two are not
+    the same kind of statement. `is_side_effecting` reads the text before the
+    first dot: it is a heuristic over 483 modules, and a good one, but it is
+    guessing. ``derives`` is a declaration the module's author wrote about the
+    module in front of them. Where they disagree, the specific knowledge wins
+    over the general guess — and seven modules are in exactly that
+    disagreement, counted against the live registry rather than estimated:
+    `file.diff`, `scheduler.interval` and `scheduler.cron_parse` declared it and
+    were overruled, and four of the six `ai.*` sub-nodes are configuration
+    providers wired to `llm.agent` over a RESOURCE edge that reach nothing.
+    All seven were being stamped `dispatched`, which is not a conservative
+    reading of what they did — it is a false one. No instruction left us. There
+    is nobody who could confirm anything, because nothing was sent.
+
+    FOUR of the six, not all six, and the two exceptions are the reason this is
+    a per-module declaration rather than a rule about sub-nodes.
+    `ai.memory.redis` connects to Redis and reports its own rung.  `ai.model`
+    resolves the host whenever `base_url` is set, measured with an audit hook,
+    and returns `ok: False` when the name does not resolve — a result that
+    depends on the network is not computed from its inputs. Both keep the
+    `dispatched` default. A rule keyed on `NodeType.AI_SUB_NODE` would have
+    silenced both.
+
+    NONE, AND NEVER VERIFIED. This function used to return VERIFIED for
+    ``derives``, guarded only by asking about side effects first, and that guard
+    was doing real work: three side-effecting modules declared ``derives`` and
+    an earlier ordering stamped them `verified` with ``postcondition: None`` and
+    ``effects: []`` — a green tick with nothing behind it, produced by the
+    default whose job is to prevent exactly that. Reordering made the hazard
+    unreachable but left it in the building. It is gone now, because it
+    contradicted `ceiling_for` outright: VERIFIED is *defined* there as "a
+    postcondition was evaluated and it held", so granting it to a module whose
+    ``postcondition`` is None is not a policy overreach but a category error —
+    there is no predicate the claim could be about. A boolean flag is not a
+    postcondition, and the highest rung, the only one that renders as success,
+    is not something a default may hand out.
+
+    So the change can only ever lower a claim: VERIFIED became None, and for
+    those seven modules DISPATCHED became None. Nothing anywhere gains a rung.
+
+    DISPATCHED for anything side-effecting that declared nothing: the
+    instruction left us and nobody confirmed anything, which is the truth about
+    a module that says nothing.
 
     None for everything else — deliberately not a rung. Stamping the other 334
     modules would put an envelope on every string concatenation in the product
     and teach every consumer to ignore the field. What makes an undeclared
     module visible is the ratchet counting it, not the runtime decorating it.
-
-    ``derives`` reaches VERIFIED and is the ONLY thing that may, because for a
-    pure computation the return value *is* the effect — there is nothing else to
-    observe, and the postcondition is the function's own definition. It applies
-    only to modules that are not side-effecting, and that ordering is the whole
-    guard: the first version of this function checked ``derives`` before asking
-    whether the module changes anything outside the workflow, and three
-    side-effecting modules — ``file.diff``, ``scheduler.interval``,
-    ``scheduler.cron_parse`` — declared it and were stamped VERIFIED with
-    ``postcondition: None`` and ``effects: []``. A green tick with nothing
-    behind it, produced by the default that exists to prevent exactly that.
-
-    Never VERIFIED for anything that touches the world. A default that claimed
-    it would mark 200 side-effecting modules compliant overnight while verifying
-    nothing, which would be the largest deliberate false green in this project.
     """
+    if (metadata or {}).get("derives"):
+        return None
     if is_side_effecting(module_id, metadata):
         return Outcome.DISPATCHED
-    if (metadata or {}).get("derives"):
-        return Outcome.VERIFIED
     return None
 
 

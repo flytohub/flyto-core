@@ -7,13 +7,231 @@ Emulate mobile devices, tablets, and custom viewports.
 Uses Playwright's device descriptors and viewport settings.
 
 Works across all browsers (Chromium, Firefox, WebKit).
+
+THE RETURN VALUE WAS THE `settings` DICT THIS FILE HAD JUST BUILT
+
+``{"device": ..., "viewport": settings['viewport'], "user_agent":
+settings['user_agent'], "is_mobile": ..., "device_scale_factor": ...}`` — every
+one of those keys is read out of the dict assembled twenty lines earlier from a
+preset table and the caller's overrides. Not one of them came from the browser.
+It is `browser.viewport`'s trap with five fields instead of two: the payload is
+byte-identical whether Chromium adopted the emulation or ignored it entirely.
+
+The question this module has to answer is not "what did we send" but WHAT DOES
+THE PAGE REPORT ABOUT ITSELF — that is the whole product. A site fingerprints
+`navigator.userAgent`, `window.devicePixelRatio` and `navigator.maxTouchPoints`,
+so those three are both the effect and the measurement, read back out of the
+page after the emulation is applied:
+
+    read back, and all three agree with what was requested   OBSERVED
+    read back, and at least one disagrees                    INDETERMINATE
+    the page could not be asked                              ACCEPTED
+
+A partial agreement is INDETERMINATE and not OBSERVED, which is the one place
+this differs from `browser.type`. There, a changed field proves the keystrokes
+landed. Here the agreeing properties routinely agree for free — a desktop preset
+asks for ``device_scale_factor=1`` and ``has_touch=False``, which is what a
+plain Chromium already reports — so "two of three match" is not evidence that
+this call did anything. Only the full set is.
+
+WHY `window.innerWidth` IS NOT IN THE PREDICATE, measured rather than assumed.
+It is the obvious candidate and it is wrong. Under ``is_mobile=True`` Chromium
+reports the LAYOUT viewport, not the emulated device width, and a page with no
+``<meta name=viewport>`` gets the 980px fallback:
+
+    new_context(viewport={'width': 390, 'height': 844}, is_mobile=True)
+    -> window.innerWidth == 980        (about:blank, and a page without the meta)
+    -> window.innerWidth == 1560       (the same page at device_scale_factor 3)
+
+Putting that in the predicate would mark every correct phone emulation
+INDETERMINATE — the `browser.hover` failure exactly. The reading is still
+carried in the effect, because it is a true fact about the page; it is simply
+not the thing that decides the rung. `browser.viewport` may compare against
+``innerWidth`` because it never touches ``is_mobile``.
+
+WHAT THE READ-BACK CAUGHT. ``_emulate_via_cdp`` — the persistent-context path —
+sent three ``Emulation.*`` overrides and then detached the CDP session in a
+``finally``. Detaching a session REVERTS every override it installed. Measured
+on the Chromium this repo drives:
+
+    setUserAgentOverride + setDeviceMetricsOverride, then evaluate
+        -> ua 'FAKE-UA/9.9', devicePixelRatio 3, maxTouchPoints 1
+    cdp.detach(), then evaluate
+        -> ua 'Mozilla/5.0 (Macintosh...HeadlessChrome/151', dpr 1, maxTouch 0
+
+So in persistent-context mode this module applied nothing but the raw viewport
+size, returned ``status: "success"`` and the full echoed settings, and every
+request went out with the real Chromium fingerprint — the one thing a caller
+runs device emulation to avoid. The session is now kept attached for the life of
+the emulation and detached only when a later call replaces it.
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ....utils import enforce_outbound_url
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+
+
+#: What the page says about itself. Every field here is answered by the document,
+#: not by Playwright's record of what it was asked for: ``page.viewport_size``
+#: replays the argument it was handed and is therefore not in this script.
+_READ_EMULATION = """() => ({
+    user_agent: navigator.userAgent,
+    device_scale_factor: window.devicePixelRatio,
+    max_touch_points: navigator.maxTouchPoints,
+    inner_width: window.innerWidth,
+    inner_height: window.innerHeight
+})"""
+
+
+async def _read_emulation(page) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """``(reading, None)`` when the page could be asked, ``(None, why)`` when not.
+
+    Failing here is not a failure of the emulation: a page that closed, a
+    navigation in flight, or a context torn down underneath us all land in the
+    except. All that is lost is our ability to look.
+    """
+    try:
+        return await page.evaluate(_READ_EMULATION), None
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+
+
+def _emulate_outcome(
+    *,
+    settings: Dict[str, Any],
+    reading: Optional[Dict[str, Any]],
+    read_error: Optional[str],
+) -> Dict[str, Any]:
+    """The rung this emulation earned, from what the page reports about itself."""
+    requested_effect = {
+        'kind': 'emulation_requested',
+        'user_agent': settings['user_agent'],
+        'device_scale_factor': settings['device_scale_factor'],
+        'has_touch': settings['has_touch'],
+        'is_mobile': settings['is_mobile'],
+        'viewport': dict(settings['viewport']),
+        'measured_by': None,
+        'detail': (
+            'The settings dict this module built from the preset table and the '
+            'caller overrides. No browser call contributes to it: it reads '
+            'identically whether the emulation was adopted or ignored.'
+        ),
+    }
+
+    if reading is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                requested_effect,
+                {
+                    'kind': 'emulation_not_observed',
+                    'measured_by': None,
+                    'reason': read_error or 'the page could not be evaluated',
+                    'detail': (
+                        'Playwright accepted the emulation and did not raise. '
+                        'The page was not asked what it now reports, so nothing '
+                        'followed the settings into the browser.'
+                    ),
+                },
+            ],
+        )
+
+    reported_touch = bool(reading.get('max_touch_points') or 0)
+    agreement = {
+        'user_agent': reading.get('user_agent') == settings['user_agent'],
+        'device_scale_factor': _close(
+            reading.get('device_scale_factor'), settings['device_scale_factor']
+        ),
+        'has_touch': reported_touch == bool(settings['has_touch']),
+    }
+    disagreed = sorted(name for name, held in agreement.items() if not held)
+
+    observed_effect = {
+        'kind': 'emulation_reported_by_page',
+        'user_agent': reading.get('user_agent'),
+        'device_scale_factor': reading.get('device_scale_factor'),
+        'max_touch_points': reading.get('max_touch_points'),
+        'agreement': agreement,
+        'measured_by': (
+            'page.evaluate of navigator.userAgent, window.devicePixelRatio and '
+            'navigator.maxTouchPoints, read after the emulation was applied'
+        ),
+        'detail': (
+            'What the document says about itself, which is what a site '
+            'fingerprints. These three are the predicate.'
+        ),
+    }
+
+    layout_effect = {
+        'kind': 'layout_viewport_reported',
+        'inner_width': reading.get('inner_width'),
+        'inner_height': reading.get('inner_height'),
+        'requested_width': settings['viewport']['width'],
+        'requested_height': settings['viewport']['height'],
+        'measured_by': 'page.evaluate of window.innerWidth / window.innerHeight',
+        'detail': (
+            'Reported, never compared. Under is_mobile these are the LAYOUT '
+            'viewport -- a page with no viewport meta tag reports 980 for a '
+            'device emulated at 390 -- so an equality here would mark every '
+            'correct phone emulation as unconfirmed.'
+        ),
+    }
+
+    if not disagreed:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: the predicate is ours. No caller asked for "the page must
+            # report exactly this user agent".
+            claim_by=ClaimBy.INFERRED,
+            effects=[requested_effect, observed_effect, layout_effect],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            requested_effect,
+            observed_effect,
+            layout_effect,
+            {
+                'kind': 'emulation_not_reflected',
+                'predicate': (
+                    'the page reports the requested user agent, device scale '
+                    'factor and touch support'
+                ),
+                'disagreed': disagreed,
+                'detail': (
+                    'At least one emulated property is not what the page '
+                    'reports. The properties that do agree may agree for free -- '
+                    'a desktop preset asks for the scale factor and touch '
+                    'support a plain Chromium already has -- so a partial match '
+                    'is not evidence this call changed anything. Indeterminate '
+                    'rather than failed: no postcondition was declared, the '
+                    "comparison is this module's own, and a browser that "
+                    'refuses an override is not the same as a broken one.'
+                ),
+            },
+        ],
+    )
+
+
+def _close(reported: Any, requested: Any) -> bool:
+    """Float-tolerant equality for ``devicePixelRatio``.
+
+    The preset table carries 2.625 and 2.75; those survive the CDP round trip
+    exactly today, but an exact ``==`` between a JS number and a Python float is
+    the kind of thing that starts failing on a browser upgrade and reads as a
+    broken emulation rather than as a rounding difference.
+    """
+    try:
+        return abs(float(reported) - float(requested)) < 1e-6
+    except (TypeError, ValueError):
+        return False
 
 
 # Device presets based on Playwright's device descriptors
@@ -289,6 +507,16 @@ DEVICE_PRESETS = {
             'description': 'Whether mobile mode is enabled',
             'description_key': 'modules.browser.emulate.output.is_mobile.description'
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the emulation was followed: observed when the page '
+                'reports the requested user agent, device scale factor and '
+                'touch support, indeterminate when any of them differs, '
+                'accepted when the page could not be asked'
+            ),
+            'description_key': 'modules.browser.emulate.output.outcome.description'
+        },
     },
     examples=[
         {
@@ -421,6 +649,8 @@ class BrowserEmulateModule(BaseModule):
             browser._context = new_context
             browser._page = new_page
 
+            reading, read_error = await _read_emulation(new_page)
+
             return {
                 "status": "success",
                 "device": self.device,
@@ -430,6 +660,9 @@ class BrowserEmulateModule(BaseModule):
                 "has_touch": settings['has_touch'],
                 "device_scale_factor": settings['device_scale_factor'],
                 "url": new_page.url,
+                "outcome": _emulate_outcome(
+                    settings=settings, reading=reading, read_error=read_error,
+                ),
             }
 
         except Exception as e:
@@ -439,33 +672,51 @@ class BrowserEmulateModule(BaseModule):
             raise RuntimeError(f"Failed to apply device emulation: {str(e)}") from e
 
     async def _emulate_via_cdp(self, browser, settings, current_url):
-        """Apply device emulation via CDP for persistent context mode."""
+        """Apply device emulation via CDP for persistent context mode.
+
+        The CDP session is deliberately NOT detached. ``Emulation.*`` overrides
+        live on the session that installed them, and detaching reverts every one
+        of them -- which is what the ``finally: await cdp.detach()`` that used to
+        stand here did, immediately, on every call. See the module docstring for
+        the measurement. A later emulation detaches the session it is replacing,
+        so at most one is held per driver.
+        """
         page = browser._page
 
         # Set viewport size (Playwright API)
         await page.set_viewport_size(settings['viewport'])
 
+        # Replace the previous emulation before installing this one: detaching
+        # afterwards would revert the overrides we are about to send.
+        previous = getattr(browser, '_emulation_cdp', None)
+        if previous is not None:
+            try:
+                await previous.detach()
+            except Exception:  # noqa: BLE001 - a dead session is already gone
+                pass
+            browser._emulation_cdp = None
+
         # Use CDP session for user agent, touch, and device metrics
         cdp = await page.context.new_cdp_session(page)
-        try:
-            await cdp.send('Emulation.setUserAgentOverride', {
-                'userAgent': settings['user_agent'],
-            })
-            await cdp.send('Emulation.setTouchEmulationEnabled', {
-                'enabled': settings['has_touch'],
-            })
-            await cdp.send('Emulation.setDeviceMetricsOverride', {
-                'width': settings['viewport']['width'],
-                'height': settings['viewport']['height'],
-                'deviceScaleFactor': settings['device_scale_factor'],
-                'mobile': settings['is_mobile'],
-            })
-        finally:
-            await cdp.detach()
+        browser._emulation_cdp = cdp
+        await cdp.send('Emulation.setUserAgentOverride', {
+            'userAgent': settings['user_agent'],
+        })
+        await cdp.send('Emulation.setTouchEmulationEnabled', {
+            'enabled': settings['has_touch'],
+        })
+        await cdp.send('Emulation.setDeviceMetricsOverride', {
+            'width': settings['viewport']['width'],
+            'height': settings['viewport']['height'],
+            'deviceScaleFactor': settings['device_scale_factor'],
+            'mobile': settings['is_mobile'],
+        })
 
         # Reload to apply user agent change
         if current_url and current_url != 'about:blank':
             await page.reload()
+
+        reading, read_error = await _read_emulation(page)
 
         return {
             "status": "success",
@@ -476,4 +727,7 @@ class BrowserEmulateModule(BaseModule):
             "has_touch": settings['has_touch'],
             "device_scale_factor": settings['device_scale_factor'],
             "url": page.url,
+            "outcome": _emulate_outcome(
+                settings=settings, reading=reading, read_error=read_error,
+            ),
         }

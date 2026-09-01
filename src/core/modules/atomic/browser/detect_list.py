@@ -18,11 +18,93 @@ The algorithm:
 2. Score each group by: item count × structure consistency × content richness
 3. Pick the best group
 4. Auto-extract fields from each item: first link (title+url), first image, text
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+``content_found`` is the field a rung would most obviously be hung on, and it is
+the wrong one. It is ``items.length >= minItems`` -- a THRESHOLD, decided by a
+parameter the caller passed in. A page holding two real, correctly detected
+articles reports ``content_found: false`` under the default ``min_items: 3``,
+and a rung taken from that boolean would call two observed elements nothing at
+all. The threshold is a policy about whether the result is useful; it is not a
+measurement of the page.
+
+``count`` is. It is ``len()`` over elements the page script pulled out of the
+live DOM, either from the caller's selector or from the winning auto-detected
+sibling group:
+
+    at least one item was detected     OBSERVED -- those elements were there
+    none                               ACCEPTED
+
+The empty case is the `database.query` empty-read: zero items reads identically
+whether the page has no repeating structure, the custom selector was wrong, or
+the content had not rendered. ``content_found`` and ``candidates_evaluated``
+ride in the effect, so a consumer can still see that a real detection fell short
+of the caller's threshold -- which is a different fact from finding nothing.
+
+WHAT IS NOT CLAIMED: that the detected group is the RIGHT group. Auto-detection
+scores candidates by item count, structural consistency and content richness and
+takes the top one; the elements are real, the choice among them is a heuristic.
+OBSERVED is "we saw the world change. Not that the right thing changed", which
+is exactly the distinction this module needs.
 """
-from typing import Any
+from typing import Any, Dict
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+
+
+def _detect_list_outcome(
+    *,
+    items: int,
+    auto_detected: bool,
+    content_found: bool,
+    min_items: int,
+    candidates_evaluated: Any,
+) -> Dict[str, Any]:
+    """The rung this detection earned, from items detected -- never from the threshold."""
+    if items <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_items_detected',
+                'auto_detected': auto_detected,
+                'candidates_evaluated': candidates_evaluated,
+                'measured_by': None,
+                'detail': (
+                    'The page answered and no element was detected. An empty '
+                    'result reads the same whether the page has no repeating '
+                    'structure, the selector was wrong, or the content had not '
+                    'rendered, so it is not an observation of the page.'
+                ),
+            }],
+        )
+    effects = [{
+        'kind': 'items_detected',
+        'count': items,
+        'auto_detected': auto_detected,
+        'measured_by': (
+            'len() over the elements the page script collected from the live '
+            'DOM for the selected group'
+        ),
+    }]
+    if not content_found:
+        effects.append({
+            'kind': 'below_caller_threshold',
+            'count': items,
+            'min_items': min_items,
+            'measured_by': None,
+            'detail': (
+                'Real elements were detected, and fewer of them than the '
+                'caller asked for. content_found is items >= min_items, a '
+                'threshold rather than a measurement, so it does not lower '
+                'the rung: what was seen was seen.'
+            ),
+        })
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
 
 _DETECT_LIST_JS = r"""
 (options) => {
@@ -369,6 +451,14 @@ _DETECT_LIST_JS = r"""
         'auto_detected': {'type': 'boolean', 'description': 'Whether items were auto-detected or from user selector'},
         'content_found': {'type': 'boolean', 'description': 'Whether enough items were found'},
         'consistency':  {'type': 'number',  'description': 'Structural consistency score (0-1)'},
+        'outcome':      {'type': 'object',
+                         'description': (
+                             'How far this detection was followed: "observed" '
+                             'when at least one element was detected in the '
+                             'live DOM, "accepted" when none was. Decided from '
+                             'the item count, never from content_found, which '
+                             'is a caller threshold rather than a measurement.'
+                         )},
     },
     examples=[
         {
@@ -419,4 +509,11 @@ class BrowserDetectListModule(BaseModule):
         return {
             "status": "success" if result.get('content_found') else "no_list",
             **result,
+            "outcome": _detect_list_outcome(
+                items=result.get('count') or 0,
+                auto_detected=bool(result.get('auto_detected')),
+                content_found=bool(result.get('content_found')),
+                min_items=self.min_items,
+                candidates_evaluated=result.get('candidates_evaluated'),
+            ),
         }

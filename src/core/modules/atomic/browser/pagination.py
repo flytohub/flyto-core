@@ -7,11 +7,48 @@ Single responsibility: navigate pages + extract items.
 For rate limiting → browser.throttle (place before this node in workflow)
 For proxy rotation → browser.proxy_rotate
 For concurrent scraping → browser.pool + flow.loop
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+``total_items`` is ``len(all_items)`` and it is NOT a measurement of this run.
+``all_items`` starts as ``checkpoint.load_items()`` -- a JSON file some earlier
+run wrote -- and this run's extractions are appended to it. A resumed run that
+reaches a dead page on its first iteration returns ``total_items: 400`` having
+observed nothing at all, and every one of those 400 items would be there if this
+run had never executed. That is `file.write`'s ``bytes_written`` with a
+checkpoint file behind it, and it is the reason this module needed the question
+asked of it rather than a rung picked to match the others.
+
+So the count the rung rests on is ``len(all_items) - restored_count``, where
+``restored_count`` is measured once, immediately after the checkpoint is loaded
+and before the loop can add to it. It is the number of items this run pulled out
+of live pages:
+
+    this run extracted items          OBSERVED -- those elements were there
+    it extracted none, no error       ACCEPTED
+    it extracted none, and it broke   INDETERMINATE
+
+The restored items are not discarded and not hidden: they travel as their own
+effect, marked ``measured_by: None``, so a consumer reading the envelope can see
+that the returned array is part observation and part replay.
+
+AN ERROR WITH ITEMS IN HAND stays OBSERVED. The items that came out of live
+pages came out of live pages, and an exception on page 7 does not un-see pages 1
+through 6; what is unknown is only how much more there was, and no rung on this
+ladder claims completeness. The incompleteness rides in the effect. An error
+with NO items is the other thing entirely -- we cannot say whether the pages had
+content -- and INDETERMINATE is exactly `outcome.py`'s answer for that.
+
+WHAT IS NEVER CLAIMED: that pagination reached the end. ``stopped_reason:
+'no_more'`` means a next-page control could not be found or clicked, which is
+what a last page looks like AND what a renamed CSS class looks like. It is
+reported as a fact about this module's navigation, not as a fact about the site.
 """
 import asyncio
 import logging
 from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
@@ -20,6 +57,102 @@ from ...errors import ModuleError
 from ....utils import validate_path_with_env_config, PathTraversalError
 
 logger = logging.getLogger(__name__)
+
+
+def _pagination_outcome(
+    *,
+    extracted_this_run: int,
+    restored_from_checkpoint: int,
+    pages_this_run: int,
+    stopped_reason: str,
+    item_selector: str,
+) -> Dict[str, Any]:
+    """The rung this run earned, from what IT extracted -- never from the total."""
+    broke = stopped_reason.startswith('error:')
+    restored_effect = {
+        'kind': 'items_restored_from_checkpoint',
+        'count': restored_from_checkpoint,
+        'measured_by': None,
+        'detail': (
+            'Read out of a checkpoint file an earlier run wrote. These are in '
+            'the returned array and are not evidence of anything this run saw: '
+            'they would be identical if this run had extracted nothing.'
+        ),
+    }
+
+    if extracted_this_run > 0:
+        effects: List[Dict[str, Any]] = [{
+            'kind': 'items_extracted',
+            'count': extracted_this_run,
+            'pages': pages_this_run,
+            'item_selector': item_selector,
+            'measured_by': (
+                'len() over the items the in-page script collected from '
+                'document.querySelectorAll(item_selector), summed across the '
+                'pages this run visited, with any checkpoint items subtracted'
+            ),
+        }]
+        if restored_from_checkpoint:
+            effects.append(restored_effect)
+        if broke:
+            effects.append({
+                'kind': 'pagination_incomplete',
+                'stopped_reason': stopped_reason,
+                'measured_by': None,
+                'detail': (
+                    'The loop stopped on an exception. The items already '
+                    'extracted were still extracted; how many more pages there '
+                    'were is not known. No rung on this ladder claims '
+                    'completeness, so the count stands and the gap is named.'
+                ),
+            })
+        else:
+            effects.append({
+                'kind': 'pagination_stopped',
+                'stopped_reason': stopped_reason,
+                'measured_by': None,
+                'detail': (
+                    'Why this module stopped advancing. "no_more" means no '
+                    'next-page control could be found or clicked, which is '
+                    'what a last page looks like and also what a renamed CSS '
+                    'class looks like. It is not a claim that the site ended.'
+                ),
+            })
+        return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+    if broke:
+        effects = [{
+            'kind': 'extraction_failed',
+            'stopped_reason': stopped_reason,
+            'pages': pages_this_run,
+            'measured_by': None,
+            'detail': (
+                'This run extracted nothing and stopped on an exception. '
+                'Whether the pages held items is not known -- the extraction '
+                'never completed -- so this is indeterminate rather than an '
+                'empty result.'
+            ),
+        }]
+        if restored_from_checkpoint:
+            effects.append(restored_effect)
+        return envelope(Outcome.INDETERMINATE, claim_by=ClaimBy.NONE, effects=effects)
+
+    effects = [{
+        'kind': 'no_items_extracted',
+        'stopped_reason': stopped_reason,
+        'pages': pages_this_run,
+        'item_selector': item_selector,
+        'measured_by': None,
+        'detail': (
+            'The pages answered and no element matched. An empty extraction '
+            'reads the same whether the pages are empty, the selector is '
+            'wrong, or the content had not rendered, so it is not an '
+            'observation of the site.'
+        ),
+    }]
+    if restored_from_checkpoint:
+        effects.append(restored_effect)
+    return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=effects)
 
 
 @register_module(
@@ -232,6 +365,16 @@ logger = logging.getLogger(__name__)
             'type': 'boolean',
             'description': 'Whether execution resumed from a checkpoint',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this run was followed: "observed" when THIS run '
+                'extracted items from live pages, "accepted" when it extracted '
+                'none, "indeterminate" when it extracted none and stopped on '
+                'an exception. Items restored from a checkpoint are counted '
+                'separately and never earn a rung.'
+            ),
+        },
     },
     examples=[
         {
@@ -321,6 +464,8 @@ class BrowserPaginationModule(BaseModule):
         pages_processed = 0
         total_retries = 0
         resumed = False
+        restored_count = 0
+        restored_pages = 0
 
         if self.checkpoint_path:
             # SECURITY: confine the checkpoint write to FLYTO_SANDBOX_DIR
@@ -339,6 +484,11 @@ class BrowserPaginationModule(BaseModule):
                 pages_processed = state.get('pages_processed', 0)
                 total_retries = state.get('retries_used', 0)
                 resumed = True
+                # Measured here and nowhere else: the loop below appends to
+                # `all_items`, so this is the last moment at which "how much of
+                # the answer did this run not observe" can be read at all.
+                restored_count = len(all_items)
+                restored_pages = pages_processed
                 logger.info(
                     f"Resuming from checkpoint: page {pages_processed}, "
                     f"{len(all_items)} items"
@@ -448,6 +598,13 @@ class BrowserPaginationModule(BaseModule):
             checkpoint.clear()
 
         is_error = stopped_reason.startswith('error:')
+        # `max_items` does `all_items = all_items[:max_items]`, which keeps the
+        # front -- the checkpoint -- and drops the tail, which is this run's
+        # work. A resume whose checkpoint alone already exceeds `max_items`
+        # therefore lands with fewer items than it started with, and the
+        # subtraction goes negative. Clamping at zero means such a run reports
+        # nothing observed, which is the truth about it.
+        extracted_this_run = max(len(all_items) - restored_count, 0)
         return {
             'status': 'error' if is_error and pages_processed == 0 else 'success',
             'items': all_items,
@@ -456,6 +613,13 @@ class BrowserPaginationModule(BaseModule):
             'stopped_reason': stopped_reason,
             'retries_used': total_retries,
             'resumed': resumed,
+            'outcome': _pagination_outcome(
+                extracted_this_run=extracted_this_run,
+                restored_from_checkpoint=restored_count,
+                pages_this_run=max(pages_processed - restored_pages, 0),
+                stopped_reason=stopped_reason,
+                item_selector=self.item_selector,
+            ),
         }
 
     # ── Extraction with Retry ────────────────────────────────────

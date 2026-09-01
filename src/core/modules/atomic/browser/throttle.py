@@ -9,17 +9,108 @@ request to that domain.
 
 Respects robots.txt crawl-delay when available.
 Prevents getting banned by hitting sites too fast.
+
+THE EFFECT IS ELAPSED TIME, SO THE CLOCK IS THE MEASUREMENT
+
+Three of the four numbers this module returns are the caller's own parameters
+coming back around: ``strategy`` is ``self.strategy``, ``interval_ms`` is
+``limiter.current_delay_ms`` which under the default ``fixed`` strategy is
+exactly ``min_interval_ms``, and ``domain`` is parsed out of the URL that was
+handed in. The fourth is not:
+
+    t0 = time.monotonic(); await limiter.wait()
+    waited_ms = round((time.monotonic() - t0) * 1000)
+
+A monotonic clock read on both sides of the wait. It cannot be non-zero without
+time having actually passed inside this process, and no parameter can inflate
+it. That is the whole effect of this module, measured.
+
+    the clock shows time elapsed    OBSERVED
+    it shows none                   ACCEPTED
+
+The zero case is ACCEPTED rather than OBSERVED, and it is not a technicality --
+it is the failure this module has. ``RateLimiter`` keeps its per-domain state in
+``self.context['_throttle_<domain>']``, so a context that is not carried between
+steps hands every call a brand-new limiter, whose ``_last_request_time`` starts
+at 0.0, whose first ``wait()`` therefore computes an elapsed of "since the
+machine booted", and which sleeps for nothing. The old payload for that is
+``{"status": "success", "waited_ms": 0, "interval_ms": 2000}``: a green tick, a
+configured interval, and a crawler going out at full speed. A first call to a
+domain legitimately waits zero too, and the two are indistinguishable from here
+-- which is exactly why zero claims nothing.
+
+Nothing on this ladder is about politeness. A measured wait says this process
+slept; whether the site was happy about the rate is not a thing this module can
+see.
 """
 import asyncio
 import logging
 import time
 from typing import Any, Dict
 from urllib.parse import urlparse
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 
 logger = logging.getLogger(__name__)
+
+
+def _throttle_outcome(
+    *, domain: str, waited_ms: int, interval_ms: Any, strategy: str, reused_limiter: bool
+) -> Dict[str, Any]:
+    """OBSERVED when the clock moved, ACCEPTED when it did not."""
+    requested_effect = {
+        'kind': 'interval_requested',
+        'domain': domain,
+        'interval_ms': interval_ms,
+        'strategy': strategy,
+        'measured_by': None,
+        'detail': (
+            'The limiter\'s configured delay. Under the default fixed strategy '
+            'it is the min_interval_ms parameter unchanged, and it is the same '
+            'number whether the wait happened or not.'
+        ),
+    }
+
+    if waited_ms > 0:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[requested_effect, {
+                'kind': 'wait_elapsed',
+                'domain': domain,
+                'waited_ms': waited_ms,
+                'measured_by': 'time.monotonic() read before and after limiter.wait()',
+                'detail': (
+                    'Wall-clock time that passed inside this process. It cannot '
+                    'be non-zero without the sleep having happened. It says this '
+                    'process waited -- not that the site was reached politely, '
+                    'which is not something this module can see.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[requested_effect, {
+            'kind': 'no_wait_elapsed',
+            'domain': domain,
+            'waited_ms': 0,
+            'reused_limiter': reused_limiter,
+            'measured_by': 'time.monotonic() read before and after limiter.wait()',
+            'detail': (
+                'The limiter was consulted and asked for no wait. A first '
+                'request to a domain legitimately waits zero -- and so does '
+                'every request when the execution context is not carried '
+                'between steps, because each call then builds a fresh limiter '
+                'with no history. The two are indistinguishable from here, so '
+                'a zero claims only that the limiter answered.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -77,6 +168,12 @@ logger = logging.getLogger(__name__)
         'waited_ms':   {'type': 'number', 'description': 'Actual milliseconds waited (0 if no wait needed)'},
         'interval_ms': {'type': 'number', 'description': 'Current effective interval'},
         'strategy':    {'type': 'string', 'description': 'Active strategy'},
+        'reused_limiter': {'type': 'boolean', 'description': 'Whether a limiter with history for this domain survived from an earlier step'},
+        'outcome':     {'type': 'object', 'description': (
+            'How far the effect was followed: "observed" when the monotonic '
+            'clock shows time elapsed, "accepted" when the limiter asked for '
+            'no wait'
+        )},
     },
     examples=[
         {'name': 'Fixed 2s delay', 'params': {'min_interval_ms': 2000}},
@@ -115,7 +212,11 @@ class BrowserThrottleModule(BaseModule):
 
         limiter_key = f'_throttle_{domain}'
         limiter = self.context.get(limiter_key)
-        if not limiter or not isinstance(limiter, RateLimiter):
+        # Whether a limiter with history was found decides whether a waited_ms
+        # of 0 means "first request to this domain" or "no state survived the
+        # last step". The envelope carries it; neither is claimed as the other.
+        reused_limiter = bool(limiter) and isinstance(limiter, RateLimiter)
+        if not reused_limiter:
             limiter = RateLimiter(
                 strategy=self.strategy,
                 min_delay_ms=self.min_interval_ms,
@@ -146,4 +247,12 @@ class BrowserThrottleModule(BaseModule):
             "waited_ms": waited_ms,
             "interval_ms": limiter.current_delay_ms,
             "strategy": self.strategy,
+            "reused_limiter": reused_limiter,
+            "outcome": _throttle_outcome(
+                domain=domain,
+                waited_ms=waited_ms,
+                interval_ms=limiter.current_delay_ms,
+                strategy=self.strategy,
+                reused_limiter=reused_limiter,
+            ),
         }

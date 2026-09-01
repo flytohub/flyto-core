@@ -15,17 +15,241 @@ Finds elements using cascading strategies:
 
 Returns the best match with confidence score.
 Optionally performs an action (click / type) on the found element.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+``confidence`` is the number this module reports about itself, and it is not
+evidence of anything. It is a constant looked up from ``_build_strategies`` --
+100 for a CSS selector, 95 for role+text, 78 for contains-text -- or, on the
+fuzzy path, a bigram score this module computed. It says which strategy won, not
+that the strategy was right, and it reads the same on a page where the match is
+perfect and on one where it is a coincidence. No rung rests on it.
+
+What does measure something is ``_get_element_info``: it runs
+``el.getBoundingClientRect()`` and reads tag, id, role and href off a node in the
+live DOM. A populated ``info`` cannot come from a page that has no such node.
+
+    an element matched         OBSERVED -- that node was there
+    nothing matched            ACCEPTED
+
+The empty case is the `database.query` empty-read, and here it is worth stating
+precisely because this module tries so hard: exhausting ten strategies and
+polling until the deadline still ends in "we did not find it", which reads the
+same whether the element is absent, is in a frame not walked, is invisible, or
+is named something none of the alternatives guessed.
+
+THEN THE ACTION, which is a second effect and lowers what the step may claim,
+because finding a button is not clicking it:
+
+    action='none'    OBSERVED         nothing was done, the match stands
+    action='click'   ACCEPTED         Playwright took the click and did not
+                                      raise; nothing was read back afterwards,
+                                      so the element is observed and the click
+                                      is not. The rung is the weaker of the two,
+                                      because that is what the step delivered.
+    action='type'    read back         `locator.fill()` REPLACES the value, so
+                                      the field is read before and after and the
+                                      rung follows the change, the way
+                                      `browser.type` does it: matches what was
+                                      typed OBSERVED, changed to something else
+                                      OBSERVED (an input mask is not a failure),
+                                      unchanged INDETERMINATE, unreadable
+                                      ACCEPTED.
+
+The unchanged case is INDETERMINATE and not FAILED for `browser.type`'s reason:
+nobody declared a contract about the field's value, and a readonly input, a
+canvas-backed editor or a match on the wrong node all produce it.
+
+Character counts only in the envelope, never the value. This module fills text
+into arbitrary fields, and a password read back into a trace row would be a
+worse defect than any this file fixes.
 """
 import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
 
 logger = logging.getLogger(__name__)
+
+
+async def _read_field_value(locator) -> Tuple[Optional[str], Optional[str]]:
+    """``(value, None)`` when the field could be read, ``(None, why)`` when not.
+
+    Failing here is not a failure of the fill. ``input_value`` raises for a
+    contenteditable, a shadow-DOM editor, or any node that is not an
+    input/textarea/select -- all of which ``fill`` handles. All that is lost is
+    our ability to look, and the rung is lowered to match.
+    """
+    try:
+        return await locator.input_value(timeout=2000), None
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+
+
+def _matched_effect(strategy: str, confidence: Any, info: Dict[str, Any]) -> Dict[str, Any]:
+    """The element reading, with the number that is NOT a reading named as such."""
+    return {
+        'kind': 'element_matched',
+        'strategy': strategy,
+        'tag': info.get('tag'),
+        'visible': info.get('visible'),
+        'measured_by': (
+            'el.getBoundingClientRect() and tag/role/href read off a node in '
+            'the live DOM by _get_element_info'
+        ),
+        'confidence': confidence,
+        'confidence_detail': (
+            'A constant this module assigned to the winning strategy, or its '
+            'own bigram score. It reports which strategy matched, not that the '
+            'match is correct, and no rung rests on it.'
+        ),
+    }
+
+
+def _detect_outcome(
+    *,
+    found: bool,
+    strategy: str = '',
+    confidence: Any = None,
+    info: Optional[Dict[str, Any]] = None,
+    action: str = 'none',
+    strategies_tried: int = 0,
+    candidates: int = 0,
+    typed_characters: int = 0,
+    baseline: Optional[str] = None,
+    after: Optional[str] = None,
+    expected: Optional[str] = None,
+    read_error: Optional[str] = None,
+) -> Dict[str, Any]:
+    """The rung this detection -- and any action on it -- earned."""
+    if not found:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_element_matched',
+                'strategies_tried': strategies_tried,
+                'candidates_scored': candidates,
+                'measured_by': None,
+                'detail': (
+                    'Every strategy was tried until the deadline and nothing '
+                    'matched. That reads the same whether the element is '
+                    'absent, is invisible, lives in a frame this search did '
+                    'not enter, or is named something none of the alternatives '
+                    'guessed, so it is not an observation of the page.'
+                ),
+            }],
+        )
+
+    matched = _matched_effect(strategy, confidence, info or {})
+
+    if action == 'none':
+        return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=[matched])
+
+    if action == 'click':
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[matched, {
+                'kind': 'click_dispatched',
+                'measured_by': None,
+                'detail': (
+                    'Playwright accepted the click and did not raise. Nothing '
+                    'was read back afterwards, so the element is observed and '
+                    'the click is not; the step is only as confirmed as its '
+                    'least confirmed part.'
+                ),
+            }],
+        )
+
+    # action == 'type'
+    offered = {
+        'kind': 'text_offered',
+        'characters': typed_characters,
+        'measured_by': 'len() of the action_value parameter',
+        'detail': (
+            'Length of the string handed to this module. No browser call '
+            'contributes to it: it reads identically whether the field '
+            'received every character, some of them, or none.'
+        ),
+    }
+
+    if baseline is None or after is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[matched, offered, {
+                'kind': 'field_value_not_observed',
+                'measured_by': None,
+                'reason': read_error or 'the field value could not be read back',
+                'detail': (
+                    'Playwright accepted the fill and did not raise. The field '
+                    'was not read back, so nothing followed the text into the '
+                    'page.'
+                ),
+            }],
+        )
+
+    observed = {
+        'kind': 'field_value_observed',
+        'characters_before': len(baseline),
+        'characters_after': len(after),
+        'matches_expected': after == expected,
+        'measured_by': 'locator.input_value(), read before and after the fill',
+        'detail': (
+            'Character counts only. The value itself is deliberately absent: '
+            'this envelope is copied into a trace row and a websocket frame, '
+            'and this module fills arbitrary fields.'
+        ),
+    }
+
+    if after == expected:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.INFERRED,
+            effects=[matched, offered, observed],
+        )
+
+    if after != baseline:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.INFERRED,
+            effects=[matched, offered, observed, {
+                'kind': 'field_value_differs',
+                'predicate': 'input_value(after) == action_value',
+                'expected_characters': len(expected or ''),
+                'actual_characters': len(after),
+                'detail': (
+                    'The field changed, so the text reached the page, but it '
+                    'does not hold exactly what was filled. An input mask, a '
+                    'maxlength, or a framework-controlled value all do this to '
+                    'a correct fill. The change is observed; that the right '
+                    'thing changed is not claimed.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[matched, offered, observed, {
+            'kind': 'field_value_unchanged',
+            'predicate': 'input_value(after) != input_value(before)',
+            'detail': (
+                'The field holds what it held before the fill. That reads the '
+                'same whether nothing was filled, the input is readonly, the '
+                'page reset it, or the match resolved to a different element. '
+                'We cannot say which, so this is indeterminate rather than '
+                'failed.'
+            ),
+        }],
+    )
 
 # ---------- JS: fuzzy + proximity fallback matcher ----------
 # Only runs when all Playwright locator strategies fail.
@@ -283,6 +507,16 @@ FUZZY_DETECT_JS = """(config) => {
                        'description': 'Top alternative matches (for debugging)'},
         'action_result': {'type': 'string',
                           'description': 'Result of performed action (if any)'},
+        'outcome': {'type': 'object',
+                    'description': (
+                        'How far this detection was followed: "observed" when '
+                        'an element was read out of the live DOM (and, for '
+                        'action=type, the field value changed), "accepted" '
+                        'when nothing matched or a click was dispatched '
+                        'without a read-back, "indeterminate" when a fill left '
+                        'the field unchanged. Never rests on "confidence", '
+                        'which is a constant this module assigned itself.'
+                    )},
     },
     examples=[
         {
@@ -384,6 +618,7 @@ class BrowserDetectModule(BaseModule):
             }
 
             # Perform action if requested
+            baseline = after = read_error = None
             if self.action == 'click':
                 await match['locator'].click()
                 result['action_result'] = 'clicked'
@@ -393,8 +628,28 @@ class BrowserDetectModule(BaseModule):
                 except Exception:
                     pass
             elif self.action == 'type':
+                # Read before and after: `fill` replaces the value, so the only
+                # way to tell a fill that landed from one that went nowhere is
+                # to have both readings. Failing to read either lowers the rung
+                # rather than failing the step.
+                baseline, baseline_error = await _read_field_value(match['locator'])
                 await match['locator'].fill(self.action_value)
                 result['action_result'] = 'typed'
+                after, after_error = await _read_field_value(match['locator'])
+                read_error = baseline_error or after_error
+
+            result['outcome'] = _detect_outcome(
+                found=True,
+                strategy=match['strategy'],
+                confidence=match['confidence'],
+                info=match['info'],
+                action=self.action,
+                typed_characters=len(self.action_value),
+                baseline=baseline,
+                after=after,
+                expected=self.action_value,
+                read_error=read_error,
+            )
 
             # Add extra candidates for debugging
             if js_candidates:
@@ -405,6 +660,13 @@ class BrowserDetectModule(BaseModule):
                 "found": False,
                 "strategies_tried": len(strategies) + (1 if self.match_mode in ('fuzzy', 'best') else 0),
                 "candidates": js_candidates[:5],
+                "outcome": _detect_outcome(
+                    found=False,
+                    strategies_tried=len(strategies) + (
+                        1 if self.match_mode in ('fuzzy', 'best') else 0
+                    ),
+                    candidates=len(js_candidates),
+                ),
             }
 
         # Post-action hints for Element Picker

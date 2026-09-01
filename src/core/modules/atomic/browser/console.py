@@ -4,12 +4,78 @@
 Browser Console Module
 
 Captures browser console logs (errors, warnings, info, etc.)
+
+AN EMPTY CAPTURE AND A SUCCESSFUL ONE LOOKED THE SAME
+
+``{"status": "success", "messages": [], "count": 0}`` is what this module
+returns after listening to a page that logged nothing -- and it is also what it
+returns after listening to the wrong page object, after the level filter
+excluded every message, and after a listener that was attached to a page that
+navigated out from under it. Four different facts, one payload, and a green
+tick on all of them.
+
+The rung splits them the way `database.query` splits an empty result set:
+
+    messages arrived   OBSERVED. Each entry is a `console` event the browser
+                       delivered from the page, with the text and source
+                       location the renderer supplied. It cannot exist without
+                       the page having logged it.
+    none arrived       ACCEPTED. The listener was attached and the wait ran to
+                       completion; the zero is not a measurement of the page.
+
+The full-duration sleep is NOT a timeout and the result is not indeterminate
+because of it. ``timeout`` here names the listening window this module is asked
+to hold open -- reaching the end of it is the module working, not an answer
+going missing.
 """
 from typing import Any, Dict, List
 import asyncio
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
+
+
+def _console_outcome(*, count: int, level: str, listened_ms: int) -> Dict[str, Any]:
+    """OBSERVED for messages that arrived, ACCEPTED for a window that stayed quiet."""
+    if count:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'console_messages_captured',
+                'count': count,
+                'level': level,
+                'listened_ms': listened_ms,
+                'measured_by': (
+                    'len() over Playwright `console` events the browser '
+                    'delivered from the page'
+                ),
+                'detail': (
+                    'Each entry carries text and a source location the renderer '
+                    'supplied. It says the page logged these; it says nothing '
+                    'about anything the page did not log.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'no_console_messages',
+            'level': level,
+            'listened_ms': listened_ms,
+            'measured_by': None,
+            'detail': (
+                'The listener was attached for the whole window and nothing '
+                'arrived. A zero here reads identically whether the page logged '
+                'nothing, the level filter excluded everything, or the listener '
+                'was on a different page object than the one being driven -- so '
+                'it is not an observation of the page.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -41,7 +107,12 @@ from ...schema import compose, presets
         'messages': {'type': 'array', 'description': 'The messages',
                 'description_key': 'modules.browser.console.output.messages.description'},
         'count': {'type': 'number', 'description': 'Number of items',
-                'description_key': 'modules.browser.console.output.count.description'}
+                'description_key': 'modules.browser.console.output.count.description'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the capture was followed: "observed" when console messages '
+            'arrived from the page, "accepted" when the window stayed quiet'
+        ),
+                'description_key': 'modules.browser.console.output.outcome.description'}
     },
     examples=[
         {
@@ -104,5 +175,8 @@ class BrowserConsoleModule(BaseModule):
         return {
             "status": "success",
             "messages": messages,
-            "count": len(messages)
+            "count": len(messages),
+            "outcome": _console_outcome(
+                count=len(messages), level=self.level, listened_ms=self.timeout,
+            ),
         }
