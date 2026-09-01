@@ -363,3 +363,58 @@ class TestDerivesMeansWhatItSays:
             "innocent, narrow _EFFECT_NAMES and say why."
         )
 
+
+class TestVerifiedIsAlwaysBackedByADeclaration:
+    """The rung that renders as success, guarded at the source.
+
+    `_apply_outcome_contract` lowers a `verified` claim from a module that
+    declared no postcondition -- but only where it can find the envelope, which
+    is inside `data`, or a flat result with no `data` key at all. A module whose
+    `data` is a LIST or a scalar writes its envelope beside `data` instead, and
+    that shape returns early: no default stamp and, more to the point here, no
+    cap. `step_outcome` reads the envelope from the outer position perfectly
+    well, so the place a rung is READ from is wider than the place it is CAPPED.
+
+    Nothing exploits that today, and it was measured rather than assumed: the
+    only three modules whose source can produce VERIFIED are `file.edit`,
+    `scheduler.delay` and `http.response_assert`, and all three declare a
+    postcondition, so their ceiling is VERIFIED and the cap would be a no-op on
+    them anyway. This test is what keeps that true. It asks the question at the
+    source, where the return shape cannot get in the way: a module that can say
+    `verified` has declared what it verified.
+
+    The alternative was widening the cap to the outer position. That is a real
+    fix and a bigger one -- it changes what the engine writes for every
+    list-shaped result -- and it should be done deliberately rather than as a
+    footnote to a module sweep. This closes the hole from the other end in the
+    meantime, and it closes it earlier: a module failing this test cannot ship
+    the claim at all, whatever shape it returns.
+    """
+
+    def test_a_module_that_can_claim_verified_declares_a_postcondition(self, registry):
+        ModuleRegistry, metadata = registry
+
+        offenders = []
+        for module_id in sorted(metadata):
+            module_class = ModuleRegistry.get(module_id)
+            if module_class is None:
+                continue
+            try:
+                source_path = inspect.getsourcefile(module_class)
+                with open(source_path, encoding="utf-8") as handle:
+                    source = handle.read()
+            except (OSError, TypeError):
+                continue
+            if "Outcome.VERIFIED" not in source:
+                continue
+            if not metadata[module_id].get("postcondition"):
+                offenders.append(module_id)
+
+        assert not offenders, (
+            f"these modules can emit `verified` but declare no postcondition: "
+            f"{offenders}. `verified` means a postcondition was evaluated and "
+            "held, so there has to be one to name -- and for a result whose "
+            "`data` is a list or a scalar nothing downstream will lower the "
+            "claim for you. Declare it on the decorator, or claim `observed`."
+        )
+
