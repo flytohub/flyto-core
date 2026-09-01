@@ -88,47 +88,9 @@ UNDECLARED = {
     "ai.memory.vector",
     "ai.model",
     "ai.tool",
-    "browser.challenge",
     "browser.click",
-    "browser.connect",
-    "browser.console",
-    "browser.cookies_file",
-    "browser.detect",
-    "browser.detect_list",
-    "browser.dialog",
-    "browser.drag",
-    "browser.emulate",
-    "browser.ensure",
-    "browser.extract",
-    "browser.extract_nested",
-    "browser.find",
-    "browser.form",
-    "browser.frame",
-    "browser.geolocation",
     "browser.hover",
-    "browser.interact",
-    "browser.launch",
-    "browser.login",
-    "browser.navigation",
-    "browser.network",
-    "browser.pages",
-    "browser.pagination",
-    "browser.performance",
-    "browser.pool",
     "browser.press",
-    "browser.proxy_rotate",
-    "browser.readability",
-    "browser.record",
-    "browser.release",
-    "browser.response",
-    "browser.robots",
-    "browser.sitemap",
-    "browser.snapshot",
-    "browser.tab",
-    "browser.table",
-    "browser.throttle",
-    "browser.trace",
-    "browser.wait",
     "k8s.apply",
     "k8s.describe",
     "k8s.get_pods",
@@ -151,6 +113,23 @@ UNDECLARED = {
     # envelope at all. See the handoff notes: the fix belongs in
     # flyto-modules-robotics, and it is a metadata question before it is an
     # outcome question.
+    #
+    # The robotics pass confirmed all of that by running the three modules and
+    # wrote the evidence into `tests/modules/test_robotics_outcome.py`, which
+    # also measures the one-line fix: with `requires_credentials=False`,
+    # `default_for` returns None for all three on today's code. It adds two
+    # findings this note did not have. The refusal path -- parameters that never
+    # became a plan, payload nothing but an error string -- is stamped
+    # `dispatched` too, which for `robotics.stop` reads as a safe stop having
+    # been sent by a step that could not say to which robot. And that payload
+    # carries no `ok` key, so `_execute_single_mode` returns it raw and the step
+    # completes GREEN with an `error` field in it.
+    #
+    # No rung was invented for them, deliberately. `indeterminate` is the one
+    # that fits the shape and it is reserved: on a robot it means a move that
+    # timed out and may still be running, and spending it on "nothing was ever
+    # sent" folds those two together for whoever decides to walk in front of the
+    # machine.
     "robotics.move",
     "robotics.stop",
     "robotics.turn",

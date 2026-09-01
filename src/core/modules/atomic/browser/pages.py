@@ -9,11 +9,87 @@ Lists all open browser pages with detailed information:
 - Whether it's the current active page
 
 Works across all browsers (Chromium, Firefox, WebKit).
+
+WHAT A LISTING OBSERVED DEPENDS ON WHAT IT ASKED
+
+This is an extraction module, and the brief for one is that the things it found
+in the live browser are the things it observed. But it has two modes and they do
+not measure the same amount:
+
+    include_details=True    every page is asked for its title, which is a
+                            protocol round trip into that page. A page that
+                            answers is a page that exists right now.  OBSERVED
+    include_details=False   only len(context.pages) and object identity are
+                            read. That list is Playwright's, kept up to date
+                            from target events, and a page that crashed a
+                            moment ago is still in it.                ACCEPTED
+    no pages at all         the `database.query` empty read: zero reads the
+                            same whether the browser has no pages or this is
+                            the wrong context.                        ACCEPTED
+
+The rung is therefore decided per call, from what this run actually did, rather
+than fixed per module — the same reason `database.query` decides its rung from
+whether a row count crossed the wire on that particular statement.
 """
 from typing import Any, Dict, List
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+
+
+def _pages_outcome(*, page_count: int, round_tripped: bool) -> Dict[str, Any]:
+    """The rung this listing earned, from how deeply it looked."""
+    if page_count <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_pages_listed',
+                'measured_by': None,
+                'detail': (
+                    'The context reports no pages. An empty listing is not an '
+                    'observation of the browser: it reads the same whether '
+                    'there are no pages or this is not the context the caller '
+                    'meant.'
+                ),
+            }],
+        )
+
+    if not round_tripped:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'pages_counted',
+                'count': page_count,
+                'measured_by': 'len(BrowserContext.pages)',
+                'detail': (
+                    'include_details was false, so nothing was asked of any '
+                    'page. This count comes from the list Playwright maintains '
+                    "from the browser's target events — accurate as of the last "
+                    'event, and unchanged for a page that has since crashed.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'pages_read',
+            'count': page_count,
+            'measured_by': (
+                'page.title() round-tripped to each page, with page.url and '
+                'page.viewport_size read from it'
+            ),
+            'detail': (
+                'Every page listed answered a protocol call. What is observed '
+                'is the pages that exist, not that any particular one should.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -75,6 +151,15 @@ from ...schema import compose, field
             'type': 'number',
             'description': 'Index of the current active page',
             'description_key': 'modules.browser.pages.output.current_index.description'
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this listing looked: observed when every page was '
+                'round-tripped for its title, accepted when only the page count '
+                'was read or the context reports none'
+            ),
+            'description_key': 'modules.browser.pages.output.outcome.description'
         },
     },
     examples=[
@@ -164,4 +249,10 @@ class BrowserPagesModule(BaseModule):
             "pages": page_list,
             "count": len(page_list),
             "current_index": current_index,
+            "outcome": _pages_outcome(
+                page_count=len(page_list),
+                # page.title() above is a protocol round trip; without it this
+                # module never speaks to a page at all.
+                round_tripped=bool(self.include_details),
+            ),
         }

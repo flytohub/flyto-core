@@ -1,10 +1,46 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Browser Automation Modules
+Browser Press Module - Press a keyboard key
 
-Provides browser automation capabilities using Playwright.
-All modules use i18n keys for multi-language support.
+WHY THIS MODULE REPORTS NO OUTCOME
+
+A keypress has no effect of its own. What it changes is decided entirely by what
+had focus and by what the page's own handlers do with the event, and this module
+knows neither -- it does not even take a selector. There is no field to read
+back, because there is no field.
+
+The one candidate that is a page reading rather than a restatement of the
+parameter is ``document.activeElement``. Measured on the Chromium this
+repository drives, with a real page and a real ``keyboard.press``:
+
+    Tab                                     BODY -> INPUT#a      moves
+    Tab again                               INPUT#a -> INPUT#b   moves
+    Enter, with nothing focused             BODY -> BODY         unchanged
+    Enter, with a text input focused        INPUT#a -> INPUT#a   unchanged
+    Escape, with a text input focused       INPUT#a -> INPUT#a   unchanged
+    Enter, with a button focused            BUTTON -> BUTTON     unchanged
+        ...and the button's click handler ran and rewrote the page
+
+That last line is the whole argument. The press did the most consequential thing
+a press can do -- it fired a handler that changed the document -- and
+``activeElement`` did not move a millimetre. `Enter` and `Escape` are the two
+keys in this module's own examples, and a rung resting on activeElement would
+mark every correct one of them INDETERMINATE while reporting OBSERVED for `Tab`,
+the one press that changes nothing anybody cares about.
+
+That is `browser.hover`'s withdrawn ``:hover`` predicate in a different costume:
+a signal that reads false for the cases that matter. So this module keeps the
+engine's default `dispatched`, which is the honest description of a key that
+left us with nobody confirming anything. The measurement is pinned as a test
+rather than left as prose, in
+``tests/modules/test_browser_actions_outcome.py::TestPressHasNothingToRead``.
+
+What would earn a rung: a selector to press INTO, so the same
+``page.input_value`` read-back `browser.type` uses would apply -- or a
+caller-supplied assertion about the page afterwards, evaluated here as a
+declared postcondition. Both are changes to this module's parameters before they
+are changes to its reporting.
 """
 from typing import Any, Dict
 from ...base import BaseModule

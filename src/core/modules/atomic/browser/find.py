@@ -4,12 +4,78 @@
 browser.find - Find elements in page
 
 This is an atomic operation. Only responsible for finding and returning element ID list
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+``count`` here is the honest kind of number and it is worth saying why, because
+the shape that is NOT honest is one line away. The ids in ``element_ids`` are
+UUIDs this process minted -- ``registry.register_many`` hands out one per handle
+-- so counting the ids would be counting our own bookkeeping. It happens to
+equal the number of handles today, but a count of things we generated is
+`file.write`'s ``bytes_written`` in a new costume, and it would keep reporting
+happily if the registry ever deduplicated, capped or dropped an entry.
+
+So the rung rests on ``len(elements)``, the handles ``_query_selector_all``
+built from nodes in the live document, measured before anything is registered:
+
+    at least one element matched      OBSERVED -- those nodes were there
+    nothing matched                   ACCEPTED
+
+The empty case is the `database.query` empty-read. Zero matches reads
+identically whether the page had none, the selector was wrong, or the content
+had not rendered, so it claims only that the page answered the query. The two
+counts are both carried, so a divergence between handles found and ids issued
+is visible in the effect rather than hidden inside a single number.
 """
-from typing import Any
+from typing import Any, Dict
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ..element_registry import get_element_registry
+
+
+def _find_outcome(*, selector: str, elements_matched: int, ids_issued: int) -> Dict[str, Any]:
+    """The rung this query earned, from the handles rather than from the ids."""
+    if elements_matched <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_elements_matched',
+                'selector': selector,
+                'measured_by': None,
+                'detail': (
+                    'The page answered the query and no node matched. An empty '
+                    'match set reads the same whether the content is absent, '
+                    'the selector is wrong, or the page had not rendered yet, '
+                    'so it is not an observation of the page.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'elements_matched',
+            'selector': selector,
+            'count': elements_matched,
+            'measured_by': (
+                'len() over the ElementHandles _query_selector_all returned '
+                'from the live DOM, before registration'
+            ),
+        }, {
+            'kind': 'element_ids_issued',
+            'count': ids_issued,
+            'measured_by': 'len() over the UUIDs the element registry minted',
+            'detail': (
+                'Bookkeeping of this process, not a measurement of the page. '
+                'Carried beside the match count so that the two diverging is '
+                'visible rather than folded into one number.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -52,7 +118,16 @@ from ..element_registry import get_element_registry
         'count': {'type': 'number', 'description': 'Number of items',
                 'description_key': 'modules.browser.find.output.count.description'},
         'element_ids': {'type': 'array', 'description': 'The element ids',
-                'description_key': 'modules.browser.find.output.element_ids.description'}
+                'description_key': 'modules.browser.find.output.element_ids.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this query was followed: "observed" when the selector '
+                'resolved to at least one node in the live DOM, "accepted" '
+                'when it matched nothing. Decided from the element handles, '
+                'never from the ids this process minted.'
+            ),
+            'description_key': 'modules.browser.find.output.outcome.description'}
     },
     examples=[{
         'title': 'Find search results',
@@ -110,6 +185,10 @@ class BrowserFindModule(BaseModule):
         if self.limit is not None:
             elements = elements[:self.limit]
 
+        # Measured here, from the handles, and before registration: the rung
+        # must not rest on a count of ids this process generated.
+        elements_matched = len(elements)
+
         # Get element registry from context (context-aware, not global singleton)
         registry = get_element_registry(self.context)
 
@@ -119,5 +198,10 @@ class BrowserFindModule(BaseModule):
         return {
             "status": "success",
             "count": len(element_ids),
-            "element_ids": element_ids
+            "element_ids": element_ids,
+            "outcome": _find_outcome(
+                selector=self.selector,
+                elements_matched=elements_matched,
+                ids_issued=len(element_ids),
+            ),
         }

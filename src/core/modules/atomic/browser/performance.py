@@ -7,13 +7,111 @@ Collects Web Vitals (LCP, FCP, CLS, TTFB) and other performance metrics
 using the Performance API via JavaScript injection.
 
 Works across all browsers (Chromium, Firefox, WebKit).
+
+THE NUMBERS ARE REAL. `status: "success"` WAS NOT.
+
+Unusually for this sweep, what this module reports about its own effect is a
+measurement and not an echo. ``navEntry.responseStart``, ``fcpEntry.startTime``,
+the ``layout-shift`` entries — the browser computed each of those while the page
+loaded, and no parameter of this module contributes to any of them. What was
+missing is a way for a consumer to tell that apart from the two payloads that
+carry no measurement at all and were shaped identically:
+
+    metrics came back                    OBSERVED
+    the filter left nothing              ACCEPTED
+    page.evaluate raised                 FAILED
+
+The middle case is `database.query`'s empty read. ``{}`` is what a caller gets
+when the requested metric names are ones this page has no entry for -- an LCP on
+a page with no contentful paint, a ``fid`` with no user input, ``jsHeapUsed``
+outside Chrome. It reads the same whether the page had nothing to report or the
+evaluation returned junk, so it claims only that the page answered.
+
+The last case is the one that mattered most. ``except Exception`` returned
+``{"status": "error", "metrics": {}}`` -- indistinguishable from a filtered-out
+empty result to anything reading `metrics`, and a `status` string is not
+something the outcome contract can read. FAILED is correct and is not a matter
+of policy: `outcome.py` defines it as "the execution itself raised", and this is
+the branch that catches the raise.
+
+WHAT OBSERVED DOES NOT SAY. These are the page's own numbers about the page as
+it currently stands. A metric absent from the returned dict is absent because
+the browser had no entry for it, which is not the same as zero, and this module
+does not invent one -- `_calculate_ratings` correspondingly rates only the keys
+that are present.
 """
 from typing import Any, Dict, List, Optional
 import asyncio
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+
+
+def _metrics_outcome(*, metrics: Dict[str, Any], requested: List[str]) -> Dict[str, Any]:
+    """OBSERVED for numbers the browser produced, ACCEPTED for an empty answer."""
+    names = sorted(metrics)
+    if names:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'performance_metrics_read',
+                'count': len(names),
+                'metrics': names,
+                'requested': list(requested),
+                'measured_by': (
+                    'page.evaluate of the Performance API -- PerformanceNavigation'
+                    'Timing, paint, layout-shift and first-input entries the '
+                    'browser recorded during the page load'
+                ),
+                'detail': (
+                    'Timings the browser computed. No parameter of this module '
+                    'contributes to them. A metric missing from this list is '
+                    'missing because the browser had no entry for it, which is '
+                    'not the same as zero.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'no_performance_metrics',
+            'requested': list(requested),
+            'measured_by': None,
+            'detail': (
+                'The page answered and there is nothing in the answer. That '
+                'reads the same whether this page has no entry for the '
+                'requested metrics -- an LCP with no contentful paint, a fid '
+                'with no user input -- or the evaluation returned something '
+                'unusable, so it is not an observation of the page.'
+            ),
+        }],
+    )
+
+
+def _metrics_failed_outcome(*, error: str, requested: List[str]) -> Dict[str, Any]:
+    """FAILED for the branch that catches the raise."""
+    return envelope(
+        Outcome.FAILED,
+        # CALLER: metrics were asked for and none were collected. This is not an
+        # inference that may be wrong -- an exception was caught here.
+        claim_by=ClaimBy.CALLER,
+        effects=[{
+            'kind': 'performance_collection_raised',
+            'requested': list(requested),
+            'error': error[:300],
+            'measured_by': 'the exception raised out of page.evaluate',
+            'detail': (
+                'Collection raised and the empty metrics dict beside this is a '
+                'literal in the module. Without this, an error and a page with '
+                'nothing to report were the same payload.'
+            ),
+        }],
+    )
 
 
 # JavaScript to collect performance metrics
@@ -251,6 +349,15 @@ GET_OBSERVER_METRICS_SCRIPT = """
             'description': 'Collected performance metrics',
             'description_key': 'modules.browser.performance.output.metrics.description'
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the collection was followed: "observed" when the '
+                'browser returned metrics, "accepted" when the answer was '
+                'empty, "failed" when collection raised'
+            ),
+            'description_key': 'modules.browser.performance.output.outcome.description'
+        },
     },
     examples=[
         {
@@ -362,13 +469,19 @@ class BrowserPerformanceModule(BaseModule):
                 "metrics": metrics,
                 "ratings": ratings,
                 "url": page.url,
+                "outcome": _metrics_outcome(
+                    metrics=metrics, requested=self.metrics_filter,
+                ),
             }
 
         except Exception as e:
             return {
                 "status": "error",
                 "error": str(e),
-                "metrics": {}
+                "metrics": {},
+                "outcome": _metrics_failed_outcome(
+                    error=str(e), requested=self.metrics_filter,
+                ),
             }
 
     def _calculate_ratings(self, metrics: Dict[str, Any]) -> Dict[str, str]:

@@ -10,11 +10,128 @@ Extracts the main article content from any webpage:
 - Customizable: override selectors, add clean rules, adjust thresholds
 
 Works like Firefox Reader Mode but as a workflow module.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+There are two content sources here wearing the same output fields, and the whole
+point of this module's envelope is that they do not earn the same rung.
+
+THE HEURISTIC PATH reads the live DOM. ``content`` is text nodes joined out of
+the element the scorer picked; ``len(content)`` is 0 for a page that has none
+and cannot be produced by one that does not. Characters read is the measurement:
+
+    the heuristic returned characters      OBSERVED -- that text was on the page
+    it returned nothing                    ACCEPTED
+
+The empty case is the `database.query` empty-read: an empty extraction reads
+identically whether the page has no article, the scorer picked the wrong node,
+or a single-page app had not rendered yet.
+
+NOT ``content_found``, which is what a rung would naturally be hung on and is
+the wrong field. It is ``content.length >= min_content_length`` -- a THRESHOLD,
+and the threshold is a caller parameter. Text really read off the page does not
+stop having been read because it came in under 80 characters. The boolean rides
+in the effect instead, where a consumer can see that a real extraction was
+judged too short.
+
+THE AI FALLBACK PATH does not read the article at all. It reads
+``document.body.innerText``, hands it to a model, and returns what the model
+wrote. The characters in ``content`` are then a model's output, and counting
+them measures the model, not the page. That path is ACCEPTED however long the
+answer is: the page text was really fetched, and the article this module claims
+to have extracted from it is a reconstruction that can be wrong in ways nothing
+here checks. Marking it OBSERVED would put the same rung on a DOM read and on a
+generated paraphrase, which is precisely the collapse this contract exists to
+stop.
+
+WHAT IS NEVER CLAIMED, on either path: that the extracted region is the right
+one. Scoring by text density and semantic tags picks a node; the text is real,
+the choice is a heuristic. OBSERVED is "we saw the world change. Not that the
+right thing changed".
 """
 from typing import Any, Dict, List, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+
+
+def _readability_outcome(
+    *,
+    method: str,
+    content_characters: int,
+    word_count: Any,
+    content_found: bool,
+    min_content_length: Any,
+) -> Dict[str, Any]:
+    """The rung this extraction earned, and which source produced the characters."""
+    if method == 'ai':
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'content_generated',
+                'extraction_method': 'ai',
+                'characters': content_characters,
+                'word_count': word_count,
+                'measured_by': None,
+                'detail': (
+                    'These characters were written by a language model from '
+                    'document.body.innerText, not read out of the article. The '
+                    'page text was really fetched; that the model reproduced '
+                    'the article faithfully is not measured here and is not '
+                    'claimed. len() over a generated string measures the '
+                    'model, not the page.'
+                ),
+            }],
+        )
+
+    if content_characters <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_content_extracted',
+                'extraction_method': method,
+                'measured_by': None,
+                'detail': (
+                    'The page answered and the heuristic came back empty. That '
+                    'reads the same whether the page has no article, the '
+                    'scorer picked the wrong node, or the content had not '
+                    'rendered, so it is not an observation of the page.'
+                ),
+            }],
+        )
+
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'content_extracted',
+        'extraction_method': method,
+        'characters': content_characters,
+        'word_count': word_count,
+        'measured_by': (
+            'len() over the text the in-page heuristic joined out of the live '
+            'DOM node it selected'
+        ),
+        'detail': (
+            'The text was on the page. That the selected node is the right '
+            'one is a scoring heuristic and is not part of this claim.'
+        ),
+    }]
+    if not content_found:
+        effects.append({
+            'kind': 'below_caller_threshold',
+            'characters': content_characters,
+            'min_content_length': min_content_length,
+            'measured_by': None,
+            'detail': (
+                'Real text was read, and less of it than the caller asked for. '
+                'content_found is len(content) >= min_content_length, a '
+                'threshold rather than a measurement, so it does not lower the '
+                'rung: what was read was read.'
+            ),
+        })
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
 
 
 # ---------------------------------------------------------------------------
@@ -479,6 +596,14 @@ _EXTRACT_JS = r"""
         'language':      {'type': 'string',  'description': 'Page language code'},
         'url':           {'type': 'string',  'description': 'Page URL'},
         'content_found': {'type': 'boolean', 'description': 'Whether meaningful content was detected'},
+        'outcome':       {'type': 'object',
+                          'description': (
+                              'How far this extraction was followed: "observed" '
+                              'when the in-page heuristic read characters out '
+                              'of the live DOM, "accepted" when it read none '
+                              'or when the content came from the AI fallback, '
+                              'which generates rather than reads.'
+                          )},
     },
     examples=[
         {
@@ -565,6 +690,13 @@ class BrowserReadabilityModule(BaseModule):
         return {
             "status": "success" if result.get('content_found') else "no_content",
             **result,
+            "outcome": _readability_outcome(
+                method=result.get('extraction_method') or 'heuristic',
+                content_characters=len(result.get('content') or ''),
+                word_count=result.get('word_count'),
+                content_found=bool(result.get('content_found')),
+                min_content_length=self.min_content_length,
+            ),
         }
 
     async def _ai_extract(self, page, heuristic_result: dict) -> dict:

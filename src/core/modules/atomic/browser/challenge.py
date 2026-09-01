@@ -12,15 +12,151 @@ Strategy:
   5. Persistent context saves cookies → challenge only needs to be solved ONCE per site
 
 Works with browser.interact breakpoint system for manual fallback.
+
+HOW FAR A CLEARED CHALLENGE IS FOLLOWED
+
+This module is unusual in the browser set: it barely acts, and it reads the live
+page twice. That makes the before/after pair the whole story.
+
+``_CHALLENGE_PATTERNS_JS`` reads ``document.title``, the URL and the first 500
+characters of ``innerText`` out of the page. ``_CHECK_RESOLVED_JS`` reads the
+title again and the body length. Both are the page's own state; neither restates
+a parameter. So when detection says "this is a Cloudflare interstitial" and the
+later check says "the title no longer matches and the body has real content in
+it", two readings of the same page disagree, and the disagreement happened in
+the browser.
+
+    a challenge was detected, and the page later cleared      OBSERVED
+    no challenge was detected at all                          ACCEPTED
+    a challenge was detected and the page never cleared       INDETERMINATE
+
+The rung is INFERRED throughout, and it is worth saying why rather than leaving
+it in the enum: "cleared" is a heuristic this file wrote -- title-does-not-match
+AND ``innerText.length > 100``. A challenge page that renders a long body under
+an unfamiliar title reads as cleared, and a real page under 100 characters reads
+as blocked. It is an observation of the page, not a verification of access, and
+no `postcondition=` is declared because there is no predicate here anybody
+promised.
+
+ACCEPTED for "no challenge detected" is the `database.query` empty-read rule:
+finding no matches reads identically whether the page truly had none or the
+pattern list simply does not cover this site's interstitial, and this pattern
+list is a hand-written five-case guess at an adversarial, changing target. The
+module returning ``no_challenge`` is not evidence that the page is clean.
+
+The last line is the one that changes what a consumer sees. ``status:
+"human_resolved"`` was returned on two branches that differ in exactly the thing
+a caller cares about -- one where ``_CHECK_RESOLVED_JS`` said the page had
+cleared and one where it said it had not -- and the second is the more common
+outcome of a human approving a breakpoint too early. The status is left alone,
+because consumers switch on it; a ``page_changed`` field and the envelope now
+carry the difference the status lost.
 """
 import logging
-from typing import Any
+from typing import Any, Dict, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 from ...schema.constants import FieldGroup
 
 logger = logging.getLogger(__name__)
+
+
+#: What cleared the page, for the record. The rung does not depend on it -- a
+#: page that cleared, cleared -- but which route got there is the difference
+#: between an automation that runs unattended and one that needs a person.
+_ROUTE_DETAIL = {
+    'auto_wait': 'the module waited and the page cleared on its own',
+    'api_solver': 'a third-party solver was called and the page then cleared',
+    'human': 'a human was shown the page and approved the breakpoint',
+    'no_human_fallback': 'human fallback was switched off, so nothing else was tried',
+}
+
+
+def _no_challenge_outcome(title: Optional[str]) -> Dict[str, Any]:
+    """Detection ran against the live page and matched none of its patterns."""
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'no_challenge_pattern_matched',
+            'title': title,
+            'measured_by': None,
+            'detail': (
+                'The live page was read and matched none of the five patterns '
+                'this file knows. An empty match reads the same whether the '
+                'page really has no interstitial or this site\'s interstitial '
+                'is simply not in the list, so it is not evidence the page is '
+                'clean. Nothing was done to the page either way.'
+            ),
+        }],
+    )
+
+
+def _challenge_outcome(
+    *,
+    challenge_type: str,
+    resolved: bool,
+    route: str,
+    wait_seconds: float,
+) -> Dict[str, Any]:
+    """The rung a detected challenge earned, from the second reading of the page."""
+    detection_effect = {
+        'kind': 'challenge_detected',
+        'challenge_type': challenge_type,
+        'measured_by': 'document.title, location.href and body innerText, read from the live page',
+        'detail': (
+            'The page matched a known interstitial pattern before anything was '
+            'tried. This reading is what the later one is compared against.'
+        ),
+    }
+
+    if resolved:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: "cleared" is this file's own heuristic, not a contract
+            # anybody declared. See the module docstring.
+            claim_by=ClaimBy.INFERRED,
+            effects=[detection_effect, {
+                'kind': 'challenge_page_cleared',
+                'route': route,
+                'wait_seconds': wait_seconds,
+                'measured_by': (
+                    'document.title and body innerText length, re-read from the '
+                    'same live page after the wait'
+                ),
+                'detail': (
+                    f'Two readings of the same page disagree: {_ROUTE_DETAIL.get(route, route)}, '
+                    'and the title no longer matches an interstitial while the '
+                    'body now carries more than 100 characters. That is the '
+                    'page having changed, not access having been verified.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[detection_effect, {
+            'kind': 'challenge_page_did_not_clear',
+            'route': route,
+            'wait_seconds': wait_seconds,
+            'predicate': 'the title stops matching an interstitial and the body exceeds 100 characters',
+            'measured_by': (
+                'document.title and body innerText length, re-read from the '
+                'same live page after the wait'
+            ),
+            'detail': (
+                'The second reading looks like the first one. That reads the '
+                'same whether the challenge is still blocking us, the site '
+                'replaced it with a different wall, or the page cleared into '
+                'something under 100 characters. We cannot say which, so this '
+                'is indeterminate rather than failed.'
+            ),
+        }],
+    )
 
 # Known challenge page patterns (title, URL, or body content)
 _CHALLENGE_PATTERNS_JS = r"""
@@ -147,6 +283,12 @@ _CHECK_RESOLVED_JS = r"""
         'challenge_type':   {'type': 'string',  'description': 'Type of challenge detected (cloudflare, hcaptcha, recaptcha, generic_verify, none)'},
         'wait_seconds':     {'type': 'number',  'description': 'How long it took to resolve'},
         'required_human':   {'type': 'boolean', 'description': 'Whether human intervention was needed'},
+        'page_changed':     {'type': 'boolean', 'description': 'Whether the page stopped reading as an interstitial. False on the human_resolved branch where a person approved but the page did not clear.'},
+        'outcome':          {'type': 'object',  'description': (
+            'How far the effect was followed: observed when a detected '
+            'challenge page later read as cleared, indeterminate when it did '
+            'not, accepted when no challenge pattern matched in the first place.'
+        )},
     },
     examples=[
         {'name': 'Default (15s auto-wait, then ask human)', 'params': {}},
@@ -194,6 +336,8 @@ class BrowserChallengeModule(BaseModule):
                 "challenge_type": "none",
                 "wait_seconds": 0,
                 "required_human": False,
+                "page_changed": False,
+                "outcome": _no_challenge_outcome(detection.get('title')),
             }
 
         challenge_type = detection['challenges'][0]['type'] if detection['challenges'] else 'unknown'
@@ -219,6 +363,11 @@ class BrowserChallengeModule(BaseModule):
                 "challenge_type": challenge_type,
                 "wait_seconds": elapsed,
                 "required_human": False,
+                "page_changed": True,
+                "outcome": _challenge_outcome(
+                    challenge_type=challenge_type, resolved=True,
+                    route='auto_wait', wait_seconds=elapsed,
+                ),
             }
 
         # Step 3: API-based captcha solving
@@ -244,6 +393,11 @@ class BrowserChallengeModule(BaseModule):
                             "required_human": False,
                             "solver_provider": self.captcha_provider,
                             "solver_time": solve_result.get('solve_time', 0),
+                            "page_changed": True,
+                            "outcome": _challenge_outcome(
+                                challenge_type=challenge_type, resolved=True,
+                                route='api_solver', wait_seconds=elapsed,
+                            ),
                         }
                     else:
                         logger.warning("API solved but page didn't change, falling through...")
@@ -260,6 +414,11 @@ class BrowserChallengeModule(BaseModule):
                 "challenge_type": challenge_type,
                 "wait_seconds": elapsed,
                 "required_human": False,
+                "page_changed": False,
+                "outcome": _challenge_outcome(
+                    challenge_type=challenge_type, resolved=False,
+                    route='no_human_fallback', wait_seconds=elapsed,
+                ),
             }
 
         logger.info("Auto-wait failed. Requesting human intervention...")
@@ -307,20 +466,28 @@ class BrowserChallengeModule(BaseModule):
 
                 if resolved:
                     logger.info("Challenge solved by human in %ss", elapsed)
-                    return {
-                        "status": "human_resolved",
-                        "challenge_type": challenge_type,
-                        "wait_seconds": elapsed,
-                        "required_human": True,
-                    }
                 else:
-                    # Human approved but page didn't change — might need retry
-                    return {
-                        "status": "human_resolved",
-                        "challenge_type": challenge_type,
-                        "wait_seconds": elapsed,
-                        "required_human": True,
-                    }
+                    # Human approved but page didn't change — might need retry.
+                    logger.warning(
+                        "Human approved the challenge breakpoint but the page "
+                        "still reads as an interstitial after %ss", elapsed
+                    )
+                # `status` is deliberately the same on both branches: consumers
+                # switch on it and narrowing it here would break them. What the
+                # two branches disagree about -- whether the page actually
+                # changed -- now travels in `page_changed` and in the rung,
+                # instead of being lost.
+                return {
+                    "status": "human_resolved",
+                    "challenge_type": challenge_type,
+                    "wait_seconds": elapsed,
+                    "required_human": True,
+                    "page_changed": bool(resolved),
+                    "outcome": _challenge_outcome(
+                        challenge_type=challenge_type, resolved=bool(resolved),
+                        route='human', wait_seconds=elapsed,
+                    ),
+                }
             else:
                 elapsed = round(time.monotonic() - t0, 1)
                 return {
@@ -328,6 +495,11 @@ class BrowserChallengeModule(BaseModule):
                     "challenge_type": challenge_type,
                     "wait_seconds": elapsed,
                     "required_human": True,
+                    "page_changed": False,
+                    "outcome": _challenge_outcome(
+                        challenge_type=challenge_type, resolved=False,
+                        route='human', wait_seconds=elapsed,
+                    ),
                 }
 
         except ImportError:
@@ -345,6 +517,11 @@ class BrowserChallengeModule(BaseModule):
                 "challenge_type": challenge_type,
                 "wait_seconds": elapsed,
                 "required_human": resolved,
+                "page_changed": bool(resolved),
+                "outcome": _challenge_outcome(
+                    challenge_type=challenge_type, resolved=bool(resolved),
+                    route='human', wait_seconds=elapsed,
+                ),
             }
 
 

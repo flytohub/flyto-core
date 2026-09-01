@@ -7,14 +7,88 @@ Extracts hierarchical data: comment threads, nested replies,
 folder trees, category hierarchies, threaded discussions.
 
 Define parent selector + children selector → returns tree structure.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two numbers come back from the page and they answer different questions.
+``count`` is how many ROOT items survived the "is this nested inside another
+match" filter; ``total_nodes`` is the JS ``count`` variable, incremented once
+per node ``extractNode`` actually walked, at every depth.
+
+The rung rests on ``total_nodes``, not on ``count``. A tree whose roots were all
+filtered out is not the same page as a tree with nothing in it, and a limit that
+stops the walk part-way leaves ``count`` describing a subset of what was seen.
+``total_nodes`` is the count of nodes this run touched in the live DOM, so it is
+the number that changes when the page does:
+
+    at least one node was walked      OBSERVED -- those nodes were there
+    nothing was walked                ACCEPTED
+
+The empty case is the `database.query` empty-read: zero nodes reads identically
+whether the page has no such structure, ``root_selector`` is wrong, or the
+content had not rendered. Both counts ride in the effect, because a run with 40
+nodes and 1 root and a run with 40 nodes and 40 roots are different results and
+one integer cannot say which happened.
+
+WHAT IS NOT CLAIMED: that the tree's SHAPE is right. ``children`` is assembled
+by two different strategies -- an explicit ``children_selector`` container, or a
+``:scope > * > root`` guess when none is given -- and neither is checked against
+anything. The nodes were seen; that they were assembled into the correct
+hierarchy is an inference of the page script's, and OBSERVED is defined as "we
+saw the world change. Not that the right thing changed".
 """
 import logging
-from typing import Any
+from typing import Any, Dict
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
 
 logger = logging.getLogger(__name__)
+
+
+def _nested_outcome(*, root_selector: str, roots: int, total_nodes: int) -> Dict[str, Any]:
+    """The rung this walk earned, decided by nodes visited rather than by roots."""
+    if total_nodes <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_nodes_walked',
+                'root_selector': root_selector,
+                'measured_by': None,
+                'detail': (
+                    'The page answered and no node matched the root selector. '
+                    'An empty walk reads the same whether the structure is '
+                    'absent, the selector is wrong, or the content had not '
+                    'rendered, so it is not an observation of the page.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'nodes_walked',
+            'root_selector': root_selector,
+            'count': total_nodes,
+            'measured_by': (
+                'the in-page counter incremented once per node extractNode '
+                'walked over document.querySelectorAll(root_selector)'
+            ),
+        }, {
+            'kind': 'root_items_returned',
+            'count': roots,
+            'measured_by': 'len() over the nodes that were not inside another match',
+            'detail': (
+                'A subset of the nodes walked. The hierarchy they were '
+                'assembled into is this page script\'s inference and is not '
+                'checked against anything, so the shape of the tree is not '
+                'part of what was observed.'
+            ),
+        }],
+    )
 
 _NESTED_JS = r"""
 (options) => {
@@ -168,6 +242,13 @@ _NESTED_JS = r"""
         'items':       {'type': 'array',  'description': 'Tree structure [{...fields, children: [{...}]}]'},
         'count':       {'type': 'number', 'description': 'Number of root items'},
         'total_nodes': {'type': 'number', 'description': 'Total nodes across all depths'},
+        'outcome':     {'type': 'object',
+                        'description': (
+                            'How far this read was followed: "observed" when at '
+                            'least one node was walked in the live DOM, '
+                            '"accepted" when none was. The shape of the tree is '
+                            'not part of the claim.'
+                        )},
     },
     examples=[
         {'name': 'Extract comment thread', 'params': {
@@ -206,4 +287,12 @@ class BrowserExtractNestedModule(BaseModule):
             'limit': self.limit,
         })
 
-        return {"status": "success", **result}
+        return {
+            "status": "success",
+            **result,
+            "outcome": _nested_outcome(
+                root_selector=self.root_selector,
+                roots=result.get('count') or 0,
+                total_nodes=result.get('total_nodes') or 0,
+            ),
+        }

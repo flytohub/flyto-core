@@ -6,18 +6,203 @@ Browser Interact Module — Human-in-the-loop browser interaction
 Snapshots the current page, extracts interactive elements with positions,
 presents them to the user via a breakpoint dialog, then executes the
 user's chosen action (click/select/type) on the actual page.
+
+HOW FAR A HUMAN-CHOSEN ACTION IS FOLLOWED
+
+Every one of this module's three exits reported ``status`` and the action's own
+parameters back, and nothing else -- so the ``rejected`` and ``timeout`` exits
+took the engine's default stamp of `dispatched`, which is the one thing that is
+certainly untrue about them. Nothing was dispatched on those paths. The
+breakpoint was declined or it expired, ``_execute_action`` was never called, and
+the step touched the page not at all.
+
+What makes those two exits worse than merely undeclared is that this module
+hands a LIVE browser to a person for as long as they want it. After a decline or
+an expiry the page is in whatever state the human left it in, which is genuinely
+unknown to us -- so `indeterminate` is not a hedge here, it is the fact.
+
+On the approved path the rung follows what the chosen action left behind:
+
+    type / select, the field's value changed        OBSERVED
+    type / select, the field's value did not        INDETERMINATE
+    type / select, the field could not be read      ACCEPTED
+    click / toggle                                  ACCEPTED
+    the action raised, and it was a timeout         INDETERMINATE
+    the action raised for any other reason          FAILED
+
+``page.input_value`` is the read-back, the same one `browser.type` earns its
+rung with, and Playwright answers it for ``<select>`` as well as for inputs and
+textareas -- so the native-dropdown branch of ``select`` is measured by the same
+line as ``type``. The custom-dropdown branch is two clicks and is measured by
+nothing.
+
+ACCEPTED and not OBSERVED for click and toggle: Playwright waited for the
+element to be attached, visible, stable and hittable and the browser
+acknowledged the input event, which is "the other side acknowledged taking it.
+Not that it ran" almost word for word. Nothing was read back afterwards, and
+what a click does to a page is exactly what this module cannot know in advance.
 """
 import base64
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ...types import NodeType, EdgeType, DataType
 
 logger = logging.getLogger(__name__)
+
+#: The two actions whose effect lands somewhere `page.input_value` can read.
+_READ_BACK_ACTIONS = ('type', 'select')
+
+
+async def _read_input_value(page, selector: str) -> Tuple[Optional[str], Optional[str]]:
+    """``(value, None)`` when the control could be read, ``(None, why)`` when not.
+
+    Failing here is not a failure of the action. ``input_value`` raises for a
+    contenteditable, a custom dropdown, or anything that is not an
+    input/textarea/select -- all of which this module can legitimately be asked
+    to act on. All that is lost is our ability to look.
+    """
+    try:
+        return await page.input_value(selector, timeout=2000), None
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+
+
+def _interact_outcome(
+    *,
+    resolution: str,
+    action: str = '',
+    action_error: Optional[str] = None,
+    action_timed_out: bool = False,
+    value_before: Optional[str] = None,
+    value_after: Optional[str] = None,
+    read_error: Optional[str] = None,
+) -> Dict[str, Any]:
+    """The rung this interaction earned, and the reading that earned it."""
+    if resolution != 'approved':
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_action_dispatched',
+                'resolution': resolution,
+                'measured_by': None,
+                'detail': (
+                    'The breakpoint was not approved, so this step sent nothing '
+                    'to the page. It is indeterminate rather than a rung '
+                    'because this module hands a live browser to a person: '
+                    'after a decline or an expiry the page is in whatever state '
+                    'they left it, and we did not look.'
+                ),
+            }],
+        )
+
+    chosen = {
+        'kind': 'action_chosen_by_a_person',
+        'action': action,
+        'measured_by': 'the breakpoint resolution a human submitted',
+        'detail': (
+            'Which action ran was decided outside this process and came back '
+            'across the breakpoint. It is not an echo of a parameter -- but it '
+            'says what was asked for, not what the page did with it.'
+        ),
+    }
+
+    if action_error:
+        if action_timed_out:
+            return envelope(
+                Outcome.INDETERMINATE,
+                claim_by=ClaimBy.NONE,
+                effects=[chosen, {
+                    'kind': 'action_timed_out',
+                    'reason': action_error,
+                    'detail': (
+                        'Playwright stopped waiting for the element to become '
+                        'actionable. We know we gave up; we do not know that '
+                        'nothing reached the page.'
+                    ),
+                }],
+            )
+        return envelope(
+            Outcome.FAILED,
+            claim_by=ClaimBy.NONE,
+            effects=[chosen, {
+                'kind': 'action_raised',
+                'reason': action_error,
+                'detail': 'The execution itself raised, which is not a rung.',
+            }],
+        )
+
+    if action not in _READ_BACK_ACTIONS:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[chosen, {
+                'kind': 'input_event_acknowledged',
+                'measured_by': None,
+                'detail': (
+                    'Playwright found the element actionable and the browser '
+                    'took the input event. Nothing was read back: what a click '
+                    'does to a page is the thing this module cannot know.'
+                ),
+            }],
+        )
+
+    if value_before is None or value_after is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[chosen, {
+                'kind': 'field_value_not_observed',
+                'measured_by': None,
+                'reason': read_error or 'the field value could not be read back',
+                'detail': (
+                    'The action completed and did not raise. The control was '
+                    'not readable -- a custom dropdown, a contenteditable -- so '
+                    'nothing followed it into the page.'
+                ),
+            }],
+        )
+
+    observed = {
+        'kind': 'field_value_observed',
+        'characters_before': len(value_before),
+        'characters_after': len(value_after),
+        'measured_by': 'page.input_value(selector), read before and after the action',
+        'detail': (
+            'Character counts only. This module is driven by whatever a person '
+            'typed into a dialog, and the envelope is copied into a trace row.'
+        ),
+    }
+
+    if value_after != value_before:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: that the value moved BECAUSE of this action is ours to
+            # infer. Nobody declared what the field should end up holding.
+            claim_by=ClaimBy.INFERRED,
+            effects=[chosen, observed],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[chosen, observed, {
+            'kind': 'field_value_unchanged',
+            'predicate': 'input_value(after) != input_value(before)',
+            'detail': (
+                'The control holds what it held before. That reads the same '
+                'whether the action went nowhere, the field was readonly, the '
+                'page reset it, or the person asked for the value it already '
+                'had. We cannot say which.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -114,6 +299,18 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Page URL at time of interaction',
             'description_key': 'modules.browser.interact.output.url.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the chosen action was followed: observed when a '
+                'type/select changed the field value, accepted for a click or '
+                'toggle the browser took, failed when the action raised, and '
+                'indeterminate when the breakpoint was declined or expired -- '
+                'nothing was dispatched then, and the page is in whatever '
+                'state the person left it.'
+            ),
+            'description_key': 'modules.browser.interact.output.outcome.description',
         },
     },
     examples=[
@@ -269,11 +466,27 @@ class BrowserInteractModule(BaseModule):
             if re.search(r'[{}<>]|javascript:|eval\(|Function\(', selector):
                 raise RuntimeError("Selector contains disallowed characters")
 
+            # The read-back pair, taken around the action rather than after it.
+            # `input_value` answers for input, textarea and select, which is
+            # every control `type` and the native branch of `select` touch.
+            value_before, read_error = (None, None)
+            if action in _READ_BACK_ACTIONS:
+                value_before, read_error = await _read_input_value(page, selector)
+
+            action_error = None
+            action_timed_out = False
             try:
                 action_result = await self._execute_action(page, browser, action, selector, value)
             except Exception as e:
                 logger.warning("browser.interact action failed: %s %s → %s", action, selector, e)
                 action_result = {'action_status': 'error', 'error': str(e)}
+                action_error = f"{type(e).__name__}: {str(e).splitlines()[0][:160]}"
+                # A timeout says we stopped waiting, not that nothing happened.
+                action_timed_out = 'Timeout' in type(e).__name__
+
+            value_after, read_error_after = (None, None)
+            if action in _READ_BACK_ACTIONS and action_error is None:
+                value_after, read_error_after = await _read_input_value(page, selector)
 
             output_data = {
                 'status': 'success',
@@ -283,6 +496,15 @@ class BrowserInteractModule(BaseModule):
                 'url': page_url,
                 'wait_duration_ms': wait_ms,
                 **action_result,
+                'outcome': _interact_outcome(
+                    resolution='approved',
+                    action=action,
+                    action_error=action_error,
+                    action_timed_out=action_timed_out,
+                    value_before=value_before,
+                    value_after=value_after,
+                    read_error=read_error or read_error_after,
+                ),
             }
 
             # Refresh hints after action (page may have changed)
@@ -314,6 +536,7 @@ class BrowserInteractModule(BaseModule):
                 'value': '',
                 'url': page_url,
                 'wait_duration_ms': wait_ms,
+                'outcome': _interact_outcome(resolution=event),
             }
 
             return {

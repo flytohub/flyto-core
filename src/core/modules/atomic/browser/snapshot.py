@@ -9,14 +9,190 @@ Capture DOM snapshots in various formats:
 - Text: Plain text content
 
 Works across all browsers, with MHTML limited to Chromium.
-"""
-from pathlib import Path
-from typing import Any
 
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two effects, and this module used to report an echo for the second one.
+
+The CAPTURE is real. ``size_bytes`` is ``len()`` over the bytes the browser
+handed back from ``page.content()``, ``page.inner_text('body')`` or the CDP
+``Page.captureSnapshot`` call. No parameter contributes to it: point this module
+at an empty document and it is 0. A non-zero capture is an observation of the
+page.
+
+The WRITE was not. When ``path`` is set the module wrote the file and returned
+``str(path.absolute())`` -- the path it had been HANDED, byte-identical whether
+the file exists, is empty, or was truncated by a full disk. That is
+`file.write`'s ``bytes_written`` in the shape `browser.screenshot` had it in.
+The fix is `file.write`'s fix: ``os.stat`` after the handle closed, compared
+against the byte count that went in.
+
+    nothing captured                          ACCEPTED
+    captured, returned inline                 OBSERVED (the capture)
+    captured, written, size on disk matches   OBSERVED (the capture and the file)
+    captured, written, size disagrees         INDETERMINATE
+    captured, written, could not stat         ACCEPTED
+
+The disagreement is INDETERMINATE rather than FAILED for `file.write`'s reason:
+nobody declared a size contract, the equality is this module's own inference,
+and an inference of ours that may be wrong is exactly what `outcome.py` splits
+off from a broken caller contract.
+
+THE MHTML REFUSAL is the one FAILED here, and the only claim in this file made
+by the caller rather than by us: ``format='mhtml'`` on a non-Chromium browser
+cannot happen, we know it cannot, and no snapshot was taken. Note that this
+branch returns ``status: 'error'`` with no ``ok`` key, so `wrap_legacy_result`
+is never reached and the step still completes; before this envelope existed, a
+refused snapshot was indistinguishable from a successful one anywhere but in
+the payload. The rung is now what makes it visible.
+"""
+import os
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
+
+
+def _observe_size_on_disk(path: str) -> Tuple[Optional[int], Optional[str]]:
+    """``(st_size, None)`` when the file could be read back, ``(None, why)`` when not.
+
+    A failure here is not a failure of the capture. The bytes were already in
+    hand and the write already returned; all that is lost is our ability to
+    look, and the rung is lowered to match.
+    """
+    try:
+        return os.stat(path).st_size, None
+    except OSError as error:
+        return None, f"{type(error).__name__}: {error.strerror or error}"
+
+
+def _snapshot_outcome(
+    *,
+    fmt: str,
+    captured_bytes: int,
+    path: Optional[str] = None,
+    size_on_disk: Optional[int] = None,
+    stat_error: Optional[str] = None,
+) -> Dict[str, Any]:
+    """The rung this snapshot earned, and the readings that earned it."""
+    captured_effect = {
+        'kind': 'content_captured',
+        'format': fmt,
+        'bytes': captured_bytes,
+        'measured_by': 'len() over the bytes the browser returned for this page',
+        'detail': (
+            'The size of what came BACK from the browser, not of anything '
+            'passed in. An empty document produces 0 here.'
+        ),
+    }
+
+    if captured_bytes <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_content_captured',
+                'format': fmt,
+                'measured_by': None,
+                'detail': (
+                    'The browser answered with nothing. An empty capture reads '
+                    'the same whether the document is empty, the selector '
+                    'resolved to an empty node, or the page had not rendered, '
+                    'so it is not an observation of the page.'
+                ),
+            }],
+        )
+
+    if path is None:
+        return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=[captured_effect])
+
+    if size_on_disk is None:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                captured_effect,
+                {
+                    'kind': 'file_size_not_observed',
+                    'path': path,
+                    'measured_by': None,
+                    'reason': stat_error or 'the file could not be read back',
+                    'detail': (
+                        'The write returned without raising and the file was '
+                        'not read back, so nothing followed the bytes onto '
+                        'disk. The path in the result is the one this module '
+                        'was handed, not evidence of anything.'
+                    ),
+                },
+            ],
+        )
+
+    file_effect = {
+        'kind': 'file_size_observed',
+        'path': path,
+        'bytes_on_disk': size_on_disk,
+        'measured_by': 'os.stat(path).st_size, after the file handle closed',
+        'detail': (
+            'Size the kernel reports for the file that now exists. Not '
+            'fsync-ed: durability across power loss is not observed.'
+        ),
+    }
+
+    if size_on_disk == captured_bytes:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: a predicate was evaluated and it was ours. No caller
+            # asked for "the file is exactly as large as the capture".
+            claim_by=ClaimBy.INFERRED,
+            effects=[captured_effect, file_effect],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            captured_effect,
+            file_effect,
+            {
+                'kind': 'file_size_disagrees',
+                'predicate': 'os.stat(path).st_size == len(captured bytes)',
+                'expected_bytes': captured_bytes,
+                'actual_bytes': size_on_disk,
+                'detail': (
+                    'The file is not the size of the capture. That may be a '
+                    'short write, or it may be this module\'s inference being '
+                    'wrong -- newline translation makes a correct write land '
+                    'at a different length. We cannot say which, so this is '
+                    'indeterminate rather than failed.'
+                ),
+            },
+        ],
+    )
+
+
+def _mhtml_unsupported_outcome(browser_type: str) -> Dict[str, Any]:
+    """FAILED, and by the caller's claim: they asked for a format this browser has not."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.CALLER,
+        effects=[{
+            'kind': 'snapshot_refused',
+            'format': 'mhtml',
+            'browser_type': browser_type,
+            'measured_by': 'browser.browser_type, compared against the format requested',
+            'detail': (
+                'MHTML is captured through the Chromium DevTools protocol and '
+                'this session is not Chromium. No snapshot was taken and none '
+                'could have been: this is failed rather than indeterminate '
+                'because the caller named the format and we know it did not '
+                'happen.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -91,6 +267,17 @@ from ...schema import compose, field, presets
             'description': 'Content size in bytes',
             'description_key': 'modules.browser.snapshot.output.size_bytes.description'
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this snapshot was followed: "observed" when the '
+                'browser returned bytes (and, when a path was given, the file '
+                'on disk is that size), "indeterminate" when the file size '
+                'disagrees, "accepted" when nothing was captured or the file '
+                'could not be read back, "failed" when MHTML was refused.'
+            ),
+            'description_key': 'modules.browser.snapshot.output.outcome.description'
+        },
     },
     examples=[
         {
@@ -145,7 +332,8 @@ class BrowserSnapshotModule(BaseModule):
             return {
                 "status": "error",
                 "error": f"MHTML format only supported on Chromium, got: {browser.browser_type}",
-                "error_code": "CHROMIUM_ONLY"
+                "error_code": "CHROMIUM_ONLY",
+                "outcome": _mhtml_unsupported_outcome(browser.browser_type),
             }
 
         # Capture content based on format
@@ -174,7 +362,8 @@ class BrowserSnapshotModule(BaseModule):
                 if hints.get(key):
                     result[key] = hints[key]
 
-        result["size_bytes"] = len(content.encode('utf-8') if isinstance(content, str) else content)
+        captured_bytes = len(content.encode('utf-8') if isinstance(content, str) else content)
+        result["size_bytes"] = captured_bytes
 
         # Save to file or return content
         if self.output_path:
@@ -187,7 +376,21 @@ class BrowserSnapshotModule(BaseModule):
                 path.write_text(content, encoding='utf-8')
 
             result["path"] = str(path.absolute())
+            # The only line here that measures the filesystem. `write_text`
+            # returning is an acknowledgement of receipt; the file that now
+            # exists is a different question, and this is the one that asks it.
+            size_on_disk, stat_error = _observe_size_on_disk(result["path"])
+            result["outcome"] = _snapshot_outcome(
+                fmt=self.format,
+                captured_bytes=captured_bytes,
+                path=result["path"],
+                size_on_disk=size_on_disk,
+                stat_error=stat_error,
+            )
         else:
+            result["outcome"] = _snapshot_outcome(
+                fmt=self.format, captured_bytes=captured_bytes,
+            )
             # For MHTML (bytes), encode to base64 for JSON compatibility
             if isinstance(content, bytes):
                 import base64

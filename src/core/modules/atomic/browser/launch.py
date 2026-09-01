@@ -7,14 +7,44 @@ Single responsibility: launch ONE browser with its configuration.
 For proxy rotation → browser.proxy_rotate
 For multiple browsers → browser.pool
 For rate limiting → browser.throttle
+
+WHAT "BROWSER LAUNCHED SUCCESSFULLY" WAS MADE OF
+
+Every field this module returned came back out of its own parameters:
+``browser_type`` is the string the caller selected, ``headless`` is the boolean
+it was handed (or the env var), ``viewport`` is the dict it built in
+``validate_params``, ``behavior`` is the profile name it validated, and the
+message is a literal. A step that started nothing and a step that started
+Chromium produce byte-identical output as long as ``driver.launch()`` returns.
+
+The value that is not that is ``Browser.version``: a string the launched process
+sent us through the DevTools handshake. See ``_session_outcome`` for why that
+one is evidence and ``Browser.is_connected()`` is not.
+
+    the process reported its version   OBSERVED
+    no Browser object to ask           ACCEPTED
+
+There is one thing this module knows and still throws away, and it is worth
+naming because the version string is what makes it visible.
+``BrowserDriver._launch_chromium`` RETURNS the channel it actually started —
+``"chromium"``, ``"chrome"`` or ``"msedge"``, falling through
+``(None, "chrome", "msedge")`` when the caller pinned none — and
+``BrowserDriver.launch`` discards it, testing the value only for ``is False``.
+So a workflow that asked for the bundled build and got system Chrome is told
+``browser_type: 'chromium'`` by this module and ``browser_type: 'chromium'`` by
+the driver. Nothing here can fix that without changing the driver, which this
+pass does not touch; what it can do is report the version the process gave,
+which is the one field that differs between those two binaries.
 """
 from typing import Any
 
+from ....engine.outcome import envelope
 from ....utils import enforce_outbound_service_url, validate_path_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup, Visibility
+from ._session_outcome import read_engine, started_claim
 
 
 @register_module(
@@ -167,6 +197,16 @@ from ...schema.constants import FieldGroup, Visibility
                 'description_key': 'modules.browser.launch.output.viewport.description'},
         'behavior': {'type': 'string', 'description': 'Active behavior profile',
                 'description_key': 'modules.browser.launch.output.behavior.description'},
+        'engine_version': {'type': 'string', 'description': 'Version string the launched browser process reported, or null when it could not be read',
+                'description_key': 'modules.browser.launch.output.engine_version.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this launch was followed: observed when the browser '
+                'process reported its own version, accepted when there was no '
+                'Browser object to ask'
+            ),
+            'description_key': 'modules.browser.launch.output.outcome.description'},
     },
     examples=[
         {'name': 'Launch headless browser', 'params': {'headless': True}},
@@ -257,6 +297,15 @@ class BrowserLaunchModule(BaseModule):
         self.context['browser'] = driver
         self.context['browser_headless'] = self.headless
 
+        # Read out of the process this step started, not out of its parameters.
+        engine, version, reason = read_engine(driver)
+        rung, claim_by, reading = started_claim(
+            engine=engine,
+            version=version,
+            requested_engine=self.browser_type,
+            reason=reason,
+        )
+
         return {
             "status": "success",
             "message": "Browser launched successfully",
@@ -264,4 +313,6 @@ class BrowserLaunchModule(BaseModule):
             "headless": self.headless,
             "viewport": self.viewport,
             "behavior": self.behavior,
+            "engine_version": version,
+            "outcome": envelope(rung, claim_by=claim_by, effects=[reading]),
         }

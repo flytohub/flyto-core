@@ -4,11 +4,213 @@
 Browser Drag Module
 
 Drag and drop elements.
+
+HOW FAR A DRAG IS FOLLOWED
+
+What this module reported about its own effect was ``from`` and ``to``: the
+coordinates it computed from the two bounding boxes and then handed to
+``mouse.move``. They are arithmetic on our own inputs. They are pixel-identical
+whether the page has a drag handler at all, and this module very often lands on
+a page that does not -- synthetic mouse events do not start a native HTML5
+drag-and-drop in Chromium, so on any page using the HTML5 DnD API these four
+mouse calls do precisely nothing while ``status: "success"`` and a pair of
+plausible coordinates come back.
+
+Three readings of the page separate those two worlds, all taken after
+``mouse.up`` and each compared against the same reading taken before
+``mouse.down``:
+
+    the source element's bounding box moved      the page moved it
+    the source element left the layout           the page removed or hid it
+    the drop target's childElementCount changed  the page reparented something
+
+Any one of them is a change in the page that our arithmetic cannot produce, so
+any one of them earns OBSERVED. None of them earns INDETERMINATE, not FAILED:
+a correct drop onto a file dropzone moves nothing and reparents nothing, so an
+unchanged page reads the same as a drag that never started. It is claim_by
+INFERRED because nobody declared what this drag was supposed to do to the page.
+
+This is the measurement `browser.hover` did not have. ``:hover`` read false for
+every hover including the correct ones, so a rung resting on it would have been
+a permanent false alarm; these three read TRUE for a working mousedown-based
+drag -- pinned against real Chromium in the tests -- and false for a drag that
+went nowhere, which is the distinction a rung is for.
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+
+
+#: How far a bounding box may move before we call it a move. Sub-pixel drift
+#: from a re-layout is not a drop, and comparing floats for equality would make
+#: every such wobble look like one.
+_MOVED_PX = 0.5
+
+
+def _box_moved(before: Optional[Dict[str, Any]], after: Optional[Dict[str, Any]]) -> bool:
+    if not before or not after:
+        return False
+    return (
+        abs(after['x'] - before['x']) > _MOVED_PX
+        or abs(after['y'] - before['y']) > _MOVED_PX
+    )
+
+
+async def _read_box(locator) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """``(box, None)`` when the element could be measured, ``(None, why)`` when not.
+
+    The box is converted to DOCUMENT coordinates before it is returned, and that
+    conversion is the whole correctness of the rung above it.
+
+    ``bounding_box()`` is viewport-relative -- Playwright's own docstring says
+    "Scrolling affects the returned bounding box" -- and a synthetic
+    mouse-down-move-up makes Chromium autoscroll on its own. So on any page tall
+    enough to scroll, the box moved whether or not the drag did. Measured
+    against real Chromium on a page with no JavaScript at all, no drag handler
+    and no drop handler:
+
+        before: viewport y=100    document y=100  scrollY=0
+        after : viewport y=-3180  document y=100  scrollY=3280
+
+    The element did not move in the document, nothing was reparented, and the
+    module reported that it had seen the world change. That is `file.write`'s
+    byte count wearing a fourth set of clothes: a value that reads identically
+    when the effect did not happen.
+
+    Adding the scroll offset removes the browser's own scrolling from the
+    measurement, so what is left is the element's position on the page, which is
+    what a drag is supposed to change.
+
+    A returned ``None`` box and a raised read stay deliberately different
+    answers. ``bounding_box()`` returning None means the element resolved and
+    has no box -- it was removed from the layout, which IS the change we are
+    looking for. A raise means we could not look, which is not.
+    """
+    try:
+        box = await locator.bounding_box(timeout=2000)
+        if box is None:
+            return None, None
+        scroll = await locator.evaluate(
+            "() => ({x: window.scrollX, y: window.scrollY})", timeout=2000
+        )
+        return (
+            {
+                **box,
+                'x': box['x'] + scroll['x'],
+                'y': box['y'] + scroll['y'],
+                'viewport_x': box['x'],
+                'viewport_y': box['y'],
+            },
+            None,
+        )
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+
+
+async def _read_child_count(locator) -> Tuple[Optional[int], Optional[str]]:
+    """The drop target's child count, or why it could not be read."""
+    try:
+        count = await locator.evaluate("el => el.childElementCount", timeout=2000)
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+    return (count, None) if isinstance(count, int) else (None, "childElementCount was not a number")
+
+
+def _drag_outcome(
+    *,
+    source_box_before: Optional[Dict[str, Any]],
+    source_box_after: Optional[Dict[str, Any]],
+    source_read_error: Optional[str],
+    target_children_before: Optional[int],
+    target_children_after: Optional[int],
+    target_read_error: Optional[str],
+) -> Dict[str, Any]:
+    """The rung this drag earned, and the readings that earned it."""
+    moved = _box_moved(source_box_before, source_box_after)
+    left_layout = source_box_before is not None and source_box_after is None and not source_read_error
+    reparented = (
+        target_children_before is not None
+        and target_children_after is not None
+        and target_children_before != target_children_after
+    )
+    read_anything_after = (
+        source_box_after is not None
+        or left_layout
+        or target_children_after is not None
+    )
+
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'pointer_path_offered',
+        'measured_by': 'arithmetic on the two bounding boxes this module read before the drag',
+        'detail': (
+            'The from/to coordinates are computed from our own inputs. They are '
+            'identical whether the page has a drag handler or not, so nothing '
+            'in the rung rests on them.'
+        ),
+    }, {
+        'kind': 'source_box_observed' if source_box_after is not None or left_layout else 'source_box_not_observed',
+        'moved': moved,
+        'left_layout': left_layout,
+        'measured_by': (
+            None if source_read_error
+            else 'locator.bounding_box() on the source, read before mouse.down and after mouse.up'
+        ),
+        'reason': source_read_error,
+    }, {
+        'kind': 'target_children_observed' if target_children_after is not None else 'target_children_not_observed',
+        'before': target_children_before,
+        'after': target_children_after,
+        'measured_by': (
+            None if target_read_error
+            else 'element.childElementCount on the drop target, read before mouse.down and after mouse.up'
+        ),
+        'reason': target_read_error,
+    }]
+
+    if moved or left_layout or reparented:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: that OUR pointer path caused the page to move this is
+            # our inference. No caller declared what the drop should do.
+            claim_by=ClaimBy.INFERRED,
+            effects=effects,
+        )
+
+    if read_anything_after:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=effects + [{
+                'kind': 'page_unchanged_by_the_drag',
+                'predicate': 'the source box moved, the source left the layout, or the target gained or lost a child',
+                'detail': (
+                    'Everything we can see about the source and the target is '
+                    'where it was. That reads the same whether the page has no '
+                    'mouse-drag handler, uses the HTML5 drag-and-drop API that '
+                    'synthetic mouse events do not trigger, or accepted the drop '
+                    'without moving anything -- a file dropzone does exactly '
+                    'that. We cannot say which, so this is indeterminate rather '
+                    'than failed.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=effects + [{
+            'kind': 'nothing_could_be_read_back',
+            'measured_by': None,
+            'detail': (
+                'The four mouse calls were acknowledged by the browser and did '
+                'not raise. Neither the source nor the target could be read '
+                'afterwards, so nothing followed the pointer into the page.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -56,7 +258,13 @@ from ...schema import compose, presets, field
         'source': {'type': 'string', 'description': 'The source',
                 'description_key': 'modules.browser.drag.output.source.description'},
         'target': {'type': 'string', 'description': 'The target',
-                'description_key': 'modules.browser.drag.output.target.description'}
+                'description_key': 'modules.browser.drag.output.target.description'},
+        'outcome': {'type': 'object', 'description': (
+            'How far this drag was followed: observed when the source moved, '
+            'left the layout, or the target gained or lost a child; '
+            'indeterminate when nothing we can see changed; accepted when '
+            'neither element could be read back.'
+        ), 'description_key': 'modules.browser.drag.output.outcome.description'}
     },
     examples=[
         {
@@ -136,16 +344,37 @@ class BrowserDragModule(BaseModule):
             target_x = target_box['x'] + target_box['width'] / 2
             target_y = target_box['y'] + target_box['height'] / 2
 
+        # The drop target's shape BEFORE the pointer goes anywhere.
+        children_before, target_read_error = await _read_child_count(target_locator)
+
+        # The source's position BEFORE, in the same coordinate space the after
+        # reading uses. `source_box` above is viewport-relative because that is
+        # what the mouse needs; comparing it against a document-space after
+        # reading would measure the scroll rather than remove it, which is the
+        # same defect in the opposite direction.
+        source_box_before, source_read_error_before = await _read_box(source_locator)
+
         # Perform drag and drop (mouse is Page-only)
         await real_page.mouse.move(source_x, source_y)
         await real_page.mouse.down()
         await real_page.mouse.move(target_x, target_y, steps=10)
         await real_page.mouse.up()
 
+        source_box_after, source_read_error = await _read_box(source_locator)
+        children_after, target_read_error_after = await _read_child_count(target_locator)
+
         return {
             "status": "success",
             "source": self.source,
             "target": self.target,
             "from": {"x": source_x, "y": source_y},
-            "to": {"x": target_x, "y": target_y}
+            "to": {"x": target_x, "y": target_y},
+            "outcome": _drag_outcome(
+                source_box_before=source_box_before,
+                source_box_after=source_box_after,
+                source_read_error=source_read_error_before or source_read_error,
+                target_children_before=children_before,
+                target_children_after=children_after,
+                target_read_error=target_read_error or target_read_error_after,
+            ),
         }

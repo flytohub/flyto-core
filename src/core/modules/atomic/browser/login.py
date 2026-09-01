@@ -9,9 +9,65 @@ Handles common login flows:
 - Wait for post-login redirect
 - Verify login success
 - Cookie persistence via persistent context
+
+HOW FAR A LOGIN IS FOLLOWED
+
+The module already computed a boolean called ``logged_in`` and returned it with
+``status: "success"`` beside it, which is the shape this contract exists to
+break up: one field that mixes "the step ran" with "the thing happened", and no
+way to tell which of four different measurements produced it.
+
+There are two real readings here and they are not the same kind of thing.
+
+  ``page.url`` before and after the submit. A URL that moved is a change in the
+  browser we did not write down ourselves -- it came from the page. That the
+  move was caused by OUR submit is an inference of ours, so it travels as
+  ``claim_by=inferred``.
+
+  ``success_indicator`` -- a predicate the CALLER supplied. Either a CSS
+  selector queried against the live DOM, or a fragment matched against the URL.
+  This one is a contract: the caller said what "logged in" means here, so when
+  it does not hold the answer is `failed` rather than `indeterminate`, exactly
+  as `outcome.py` splits those two.
+
+The caller's predicate is now read TWICE -- once before the form is filled and
+once after -- and that read-before is the whole reason the rung can be trusted.
+A ``success_indicator`` of ``/home`` on a page already at ``/home``, or a
+``.dashboard`` element that was on the page the whole time, satisfies the
+predicate without this step having done anything. Under the one rule this
+contract runs on -- would this value be the same if the effect had not happened
+-- a predicate that already held is not evidence, and it is reported as
+`accepted` with the reason attached instead of as a green tick.
+
+    caller's predicate holds, and did not hold before      OBSERVED (caller)
+    caller's predicate holds, but held before too          OBSERVED if the URL
+                                                           moved, else ACCEPTED
+    caller's predicate does not hold                       FAILED (caller)
+    no predicate declared, the URL moved                   OBSERVED (inferred)
+    no predicate declared, the URL did not move            INDETERMINATE
+    an MFA prompt appeared and nobody completed it         INDETERMINATE
+
+VERIFIED is not claimed and no `postcondition=` is declared, even though this is
+the one module in the browser group that evaluates a caller-supplied predicate
+and so could reach for it. The predicate is too weak for the word: "an element
+matching `.dashboard` exists" is satisfied by a login page that renders the
+shell before authenticating, and `logged_in` is the single field a person reads
+to decide whether an automation may proceed to spend money. `ceiling_for(None)`
+therefore caps this module at OBSERVED, which is the right ceiling and not an
+accident of the plumbing. The envelope's own ``postcondition`` field still names
+the caller's predicate whenever one was given -- that field says which predicate
+was EVALUATED, and dropping it would lose the only record of what the caller
+meant by "logged in" -- while the metadata stays undeclared, which is what the
+ratchet counts and what keeps VERIFIED out of reach.
+
+The last URL-only case is INDETERMINATE rather than FAILED because a
+single-page-application login changes no URL at all, and marking every correct
+SPA login red would be the same defect in the other direction.
 """
 import logging
-from typing import Any
+from typing import Any, Dict, List, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
@@ -78,6 +134,211 @@ async (options) => {
 """
 
 
+def _indicator_is_a_url_pattern(indicator: str) -> bool:
+    """The branch the module already used to decide how to read the indicator."""
+    return indicator.startswith('/') or indicator.startswith('http')
+
+
+async def _evaluate_success_indicator(page, indicator: str, url: str) -> Optional[bool]:
+    """Whether the caller's predicate holds right now, or None if we could not ask.
+
+    None is a third answer and not a false: a selector that raises leaves us
+    unable to evaluate the contract at all, which is `indeterminate`, while a
+    selector that matches nothing is the contract not holding, which is
+    `failed`. Collapsing them would turn every malformed selector into a failed
+    login.
+    """
+    if not indicator:
+        return None
+    if _indicator_is_a_url_pattern(indicator):
+        return indicator in url
+    try:
+        return await page.query_selector(indicator) is not None
+    except Exception:  # noqa: BLE001 - any failure means "cannot ask"
+        return None
+
+
+def _mfa_unresolved_outcome(*, url_changed: bool) -> Dict[str, Any]:
+    """An MFA prompt appeared and nobody completed it inside the window.
+
+    Not FAILED. The credentials may well have been accepted -- the prompt is
+    what a site shows when they were -- and the session may be half-established.
+    What we know is that we stopped waiting, which is the definition of the
+    answer that is not a rung.
+    """
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[{
+            'kind': 'mfa_prompt_unresolved',
+            'url_changed': url_changed,
+            'measured_by': 'a text and input-attribute scan of the page after the submit',
+            'detail': (
+                'The page looks like an MFA prompt and the breakpoint was not '
+                'approved. The password may have been accepted -- that is when '
+                'sites show this page -- so nothing here says the login failed, '
+                'only that we stopped waiting.'
+            ),
+        }],
+    )
+
+
+def _login_outcome(
+    *,
+    url_before: str,
+    url_after: str,
+    indicator: str,
+    indicator_before: Optional[bool],
+    indicator_after: Optional[bool],
+    mfa_detected: bool,
+) -> Dict[str, Any]:
+    """The rung this login attempt earned, and the readings that earned it."""
+    url_changed = url_after != url_before
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'page_url_moved' if url_changed else 'page_url_unchanged',
+        'changed': url_changed,
+        'measured_by': 'page.url, read before the form was filled and after the submit settled',
+        'detail': (
+            'The browser is showing a different address than it was before the '
+            'credentials went in. That the submit caused it is our inference.'
+        ) if url_changed else (
+            'The browser is showing the same address it was before. A '
+            'single-page-application login does exactly this, and so does a '
+            'submit that went nowhere.'
+        ),
+    }]
+
+    if mfa_detected:
+        effects.append({
+            'kind': 'mfa_prompt_completed',
+            'measured_by': 'a text and input-attribute scan of the page after the submit',
+            'detail': 'An MFA prompt was detected and a human approved the breakpoint.',
+        })
+
+    if not indicator:
+        no_contract = {
+            'kind': 'no_success_indicator_declared',
+            'measured_by': None,
+            'detail': (
+                'The caller named nothing that would mean "logged in", so there '
+                'is no contract to break and the URL reading is the only '
+                'evidence there is.'
+            ),
+        }
+        if url_changed:
+            return envelope(
+                Outcome.OBSERVED, claim_by=ClaimBy.INFERRED, effects=effects + [no_contract]
+            )
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=effects + [no_contract, {
+                'kind': 'nothing_observed_to_change',
+                'predicate': 'page.url after the submit differs from page.url before it',
+                'detail': (
+                    'Nothing we can see moved. That reads the same whether the '
+                    'credentials were rejected, the submit never fired, or the '
+                    'site logged us in without navigating. We cannot say which.'
+                ),
+            }],
+        )
+
+    read_as = 'url fragment' if _indicator_is_a_url_pattern(indicator) else 'CSS selector'
+    predicate = (
+        f'success_indicator {indicator!r} appears in page.url after the login attempt'
+        if read_as == 'url fragment' else
+        f'an element matching success_indicator {indicator!r} is present after the login attempt'
+    )
+    contract = {
+        'kind': 'success_indicator_evaluated',
+        'read_as': read_as,
+        'held_before': indicator_before,
+        'held_after': indicator_after,
+        'measured_by': (
+            'the caller\'s success_indicator, matched against page.url before '
+            'and after the login attempt'
+            if read_as == 'url fragment' else
+            'page.query_selector(success_indicator), run before and after the login attempt'
+        ),
+    }
+    effects = effects + [contract]
+
+    if indicator_after is None:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.CALLER,
+            postcondition=predicate,
+            effects=effects + [{
+                'kind': 'success_indicator_not_evaluable',
+                'detail': (
+                    'The caller declared a contract and we could not evaluate '
+                    'it -- the selector raised. Nothing here says the login '
+                    'failed; it says we could not check.'
+                ),
+            }],
+        )
+
+    if indicator_after is False:
+        return envelope(
+            Outcome.FAILED,
+            # CALLER: the caller said what "logged in" means here and it does
+            # not hold. A contract was broken, which is failed and not
+            # indeterminate -- see the two-axis argument in outcome.py.
+            claim_by=ClaimBy.CALLER,
+            postcondition=predicate,
+            effects=effects + [{
+                'kind': 'success_indicator_absent',
+                'detail': (
+                    'The thing the caller named as proof of a successful login '
+                    'is not there after the attempt settled.'
+                ),
+            }],
+        )
+
+    if indicator_before is False:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.CALLER,
+            postcondition=predicate,
+            effects=effects + [{
+                'kind': 'success_indicator_appeared',
+                'detail': (
+                    'It was not there before the credentials went in and it is '
+                    'there now. The page gained the thing the caller named.'
+                ),
+            }],
+        )
+
+    already_there = {
+        'kind': 'success_indicator_was_already_present',
+        'detail': (
+            'The caller\'s predicate holds, and it held before this step ran '
+            'too -- an already-authenticated session, or a shell the site '
+            'renders either way. That reading would be identical had this step '
+            'done nothing, so on its own it is not evidence of a login.'
+        ) if indicator_before else (
+            'The caller\'s predicate holds now. Whether it held beforehand '
+            'could not be evaluated, so it is not known to be evidence of this '
+            'step.'
+        ),
+    }
+
+    if url_changed:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.CALLER,
+            postcondition=predicate,
+            effects=effects + [already_there],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.CALLER,
+        postcondition=predicate,
+        effects=effects + [already_there],
+    )
+
+
 @register_module(
     module_id='browser.login',
     version='1.0.0',
@@ -129,6 +390,13 @@ async (options) => {
         'url_after':    {'type': 'string',  'description': 'URL after login attempt'},
         'url_changed':  {'type': 'boolean', 'description': 'Whether URL changed after login'},
         'fields_found': {'type': 'object',  'description': 'Which form fields were auto-detected'},
+        'outcome':      {'type': 'object',  'description': (
+            'How far this login was followed: observed when the page gained the '
+            'caller\'s success_indicator or the URL moved, failed when a '
+            'declared success_indicator is absent, accepted when the indicator '
+            'was already satisfied before the attempt, indeterminate when '
+            'nothing was declared and nothing moved.'
+        )},
     },
     examples=[
         {'name': 'Auto-detect login form', 'params': {'username': 'team@flyto2.com', 'password': 'secret'}},
@@ -177,6 +445,14 @@ class BrowserLoginModule(BaseModule):
             raise RuntimeError("Could not find username/email input field on page")
         if not detection['password_found']:
             raise RuntimeError("Could not find password input field on page")
+
+        # The caller's predicate, read BEFORE anything is typed. Without this
+        # reading a `success_indicator` that was already satisfied -- a URL we
+        # were already on, an element the site renders logged-in or not -- would
+        # be reported as proof of a login that may never have happened.
+        indicator_before = await _evaluate_success_indicator(
+            page, self.success_indicator, url_before
+        )
 
         # Step 2: Fill form
         if user_sel:
@@ -279,9 +555,12 @@ class BrowserLoginModule(BaseModule):
                         "status": "mfa_timeout",
                         "logged_in": False,
                         "url_after": page.url,
-                        "url_changed": url_changed,
+                        "url_changed": page.url != url_before,
                         "mfa_detected": True,
                         "fields_found": detection,
+                        "outcome": _mfa_unresolved_outcome(
+                            url_changed=page.url != url_before
+                        ),
                     }
 
                 # After user completed MFA, wait for navigation
@@ -290,21 +569,26 @@ class BrowserLoginModule(BaseModule):
                 except Exception:
                     pass
                 url_after = page.url
+                # Recomputed: `url_changed` was measured before the MFA
+                # breakpoint, and the navigation that MFA completion causes
+                # happens after it. Left stale, this field reported "the URL did
+                # not change" on precisely the flows where it always does.
+                url_changed = url_after != url_before
             except ImportError:
                 logger.warning("Breakpoint manager unavailable, MFA cannot be completed automatically")
 
         # Step 6: Verify login
         logged_in = url_after != url_before  # Basic heuristic
 
-        if self.success_indicator:
-            if self.success_indicator.startswith('/') or self.success_indicator.startswith('http'):
-                logged_in = self.success_indicator in url_after
-            else:
-                try:
-                    el = await page.query_selector(self.success_indicator)
-                    logged_in = el is not None
-                except Exception:
-                    pass
+        # The same predicate, read again now. `None` means it could not be
+        # evaluated at all, in which case the heuristic above stands -- which is
+        # what this module did before, kept deliberately so the rung is the only
+        # thing that changed.
+        indicator_after = await _evaluate_success_indicator(
+            page, self.success_indicator, url_after
+        )
+        if self.success_indicator and indicator_after is not None:
+            logged_in = indicator_after
 
         # Post-login: refresh hints for Element Picker (page likely changed)
         result = {
@@ -314,6 +598,14 @@ class BrowserLoginModule(BaseModule):
             "url_changed": url_changed,
             "mfa_detected": mfa_detected,
             "fields_found": detection,
+            "outcome": _login_outcome(
+                url_before=url_before,
+                url_after=url_after,
+                indicator=self.success_indicator,
+                indicator_before=indicator_before,
+                indicator_after=indicator_after,
+                mfa_detected=mfa_detected,
+            ),
         }
         browser._snapshot_since_nav = True
         hints = await browser.get_hints(force=True)

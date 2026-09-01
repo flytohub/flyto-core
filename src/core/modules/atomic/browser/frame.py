@@ -10,11 +10,122 @@ evaluate, etc.) automatically operate within the frame because browser._page
 is set to the Frame object (Playwright Frame shares the same API as Page).
 
 Use action="exit" to return to the main page context.
+
+WHAT ENTERING A FRAME CHANGES, AND WHAT IT DOES NOT
+
+Nothing outside this process. ``browser._page = frame`` rebinds an attribute;
+the page is untouched. So the rung here is not about a change to the world — it
+is the extraction rule: this module went looking for a frame in the live page
+and either found one or did not.
+
+    the frame was located and reports itself attached   OBSERVED
+    the frame was located and reports itself DETACHED   INDETERMINATE
+    no frame matched                                    raises; no envelope
+
+What was located is real in all three lookup modes: ``page.frames`` is the frame
+tree Playwright maintains from the browser's own frame lifecycle events, and the
+selector mode additionally waits for the element in the DOM and resolves
+``content_frame()`` through it. ``frame.url`` and ``frame.name`` come back from
+that tree, not from the parameters — ask for ``name='inner'`` and the URL that
+comes back is the document the browser actually has in it.
+
+The detached case is INDETERMINATE and not FAILED because the lookup did
+succeed: a frame that was in the tree when we asked and has since been removed
+reads the same as one that is about to be re-attached by the page's own script.
+Subsequent modules will act on it and may well be fine.
+
+`exit` writes no envelope. It restores an attribute this module saved and
+touches nothing else — no instruction is issued, and the ladder has no rung that
+means "nothing was dispatched". `list` is the same extraction as the `enter`
+lookup and says so.
 """
 from typing import Any, Dict, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets, field
+
+
+def _frames_listed_outcome(count: int) -> Dict[str, Any]:
+    """Listing frames is an extraction. A page always has at least its main
+    frame, so the empty case is unreachable in practice and still handled."""
+    if count <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_frames_listed',
+                'measured_by': None,
+                'detail': (
+                    'The page reports no frames at all, not even a main frame. '
+                    'An empty listing is not an observation of the page.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'frames_listed',
+            'count': count,
+            'measured_by': (
+                "page.frames — the frame tree Playwright maintains from the "
+                "browser's frame lifecycle events, with each frame's url and "
+                'name read from it'
+            ),
+        }],
+    )
+
+
+def _frame_entered_outcome(
+    *, how: str, frame_url: str, frame_name: str, detached: Optional[bool]
+) -> Dict[str, Any]:
+    """The rung entering a frame earned, from the frame the browser handed back."""
+    located = {
+        'kind': 'frame_located',
+        'found_by': how,
+        'frame_url': frame_url,
+        'frame_name': frame_name,
+        'measured_by': (
+            'the frame object the browser reported, with its url and name read '
+            'from it'
+            if how != 'selector' else
+            'page.wait_for_selector() then ElementHandle.content_frame(), with '
+            "the frame's url and name read from the frame it returned"
+        ),
+    }
+
+    if detached:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=[{
+                **located,
+                'predicate': 'not Frame.is_detached()',
+                'detail': (
+                    'The frame was found in the tree and reports itself '
+                    'detached. Every module after this one will act inside it. '
+                    'A frame torn down after the lookup and one about to be '
+                    're-attached by the page read alike, so this is '
+                    'indeterminate rather than failed.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            **located,
+            'detail': (
+                'A frame matching the request exists in the page and is '
+                'attached. What changed is only which object subsequent modules '
+                'address — nothing on the page moved, and nothing here claims '
+                'it did.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -79,7 +190,13 @@ from ...schema import compose, presets, field
         'frame_name': {'type': 'string', 'description': 'The frame name',
                 'description_key': 'modules.browser.frame.output.frame_name.description'},
         'frames': {'type': 'array', 'description': 'List of frames',
-                'description_key': 'modules.browser.frame.output.frames.description'}
+                'description_key': 'modules.browser.frame.output.frames.description'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the lookup went: observed when a frame was located in the '
+            'live page and reports itself attached, indeterminate when it '
+            'reports itself detached. Absent on exit, which dispatches nothing.'
+        ),
+                'description_key': 'modules.browser.frame.output.outcome.description'}
     },
     examples=[
         {
@@ -126,7 +243,9 @@ class BrowserFrameModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Exit frame: restore original page context
+        # Exit frame: restore original page context. No envelope on either
+        # branch — this restores an attribute and issues no instruction, and no
+        # rung on the ladder means "nothing was dispatched".
         if self.action == 'exit':
             original_page = self.context.get('_original_page')
             if original_page:
@@ -159,11 +278,13 @@ class BrowserFrameModule(BaseModule):
             return {
                 "status": "success",
                 "frames": frames,
-                "count": len(frames)
+                "count": len(frames),
+                "outcome": _frames_listed_outcome(len(frames)),
             }
 
         # Find and switch to frame
         frame = None
+        how = 'selector' if self.selector else ('name' if self.name else 'url')
 
         if self.selector:
             # Get frame by selector
@@ -201,8 +322,19 @@ class BrowserFrameModule(BaseModule):
         # Also keep in context for backward compatibility
         self.context['current_frame'] = frame
 
+        try:
+            detached = frame.is_detached()
+        except Exception:  # noqa: BLE001 - any failure means "cannot look"
+            detached = None
+
         return {
             "status": "success",
             "frame_url": frame.url,
-            "frame_name": frame.name or "(unnamed)"
+            "frame_name": frame.name or "(unnamed)",
+            "outcome": _frame_entered_outcome(
+                how=how,
+                frame_url=frame.url,
+                frame_name=frame.name or "(unnamed)",
+                detached=detached,
+            ),
         }
