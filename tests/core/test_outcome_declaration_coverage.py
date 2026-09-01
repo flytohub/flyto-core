@@ -83,11 +83,16 @@ def _carries_contract(ModuleRegistry, module_id, metadata):
 #: Generated once from the registry on the day this landed; every later change
 #: to it should be a deletion.
 UNDECLARED = {
-    # The five `ai.*` sub-nodes that were here are gone: they now declare
+    # Four `ai.*` sub-nodes that were here are gone: they now declare
     # `derives=True`, which `default_for` reads as "not on the ladder". They
     # were never going to earn a rung -- they are configuration providers that
-    # open no sockets -- so the way off this list was to stop the engine
-    # claiming they had dispatched something. See DERIVES_DECLARED below.
+    # reach nothing -- so the way off this list was to stop the engine claiming
+    # they had dispatched something. See DERIVES_DECLARED below.
+    #
+    # `ai.model` stays, and it is the one that makes the list worth having: it
+    # was given the same flag on the same reasoning, and it turned out to
+    # resolve the host whenever `base_url` is set.
+    "ai.model",
     "browser.click",
     "browser.hover",
     "browser.press",
@@ -265,12 +270,17 @@ class TestThePopulationIsWhatItClaims:
 DERIVES_DECLARED = {
     # Configuration providers wired to `llm.agent` over a RESOURCE edge. They
     # assemble a dict and hand it over; the module that spends the money is
-    # `llm.agent` itself. `ai.memory.redis` is deliberately NOT here: it really
-    # does connect, and it reports its own envelope.
+    # `llm.agent` itself.
+    #
+    # Four of the six `ai_sub_node` modules, not all six, and the two absences
+    # are the point. `ai.memory.redis` really does connect, and reports its own
+    # envelope. `ai.model` resolves the host whenever `base_url` is set --
+    # measured with sys.addaudithook, `socket.getaddrinfo` fires and the module
+    # returns ok: False when the name does not resolve -- so its result is not
+    # computed from its inputs. Both keep the `dispatched` default.
     "ai.memory",
     "ai.memory.entity",
     "ai.memory.vector",
-    "ai.model",
     "ai.tool",
     # In side-effecting categories by prefix, doing nothing external in fact:
     # a diff between two strings, and two cron/interval calculators that

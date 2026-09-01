@@ -205,11 +205,14 @@ def _element_state_outcome(
                 **measured,
                 'predicate': f'max(count {" or ".join(sides)}) > 0',
                 'detail': (
-                    f'The selector matched no nodes, and state={state!r} is '
-                    'true of every element that was never there, so the wait '
-                    'was satisfied without the page doing anything. A '
-                    'misspelled selector reaches here, and so does a correct '
-                    'one for an element that legitimately never appeared.'
+                    f'No reading that could witness a real node found one, and '
+                    f'state={state!r} is true of every element that was never '
+                    'there, so nothing here distinguishes a page that acted '
+                    'from a page that had nothing to act on. A misspelled '
+                    'selector reaches this, and so does a correct one for an '
+                    'element that legitimately never appeared. What is NOT '
+                    'claimed is that the page did nothing: this says only that '
+                    'we cannot tell, which is what the rung means.'
                 ),
             }],
         )

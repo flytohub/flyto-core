@@ -267,14 +267,23 @@ def default_for(module_id: str, metadata: Optional[Dict[str, Any]] = None) -> Op
     first dot: it is a heuristic over 483 modules, and a good one, but it is
     guessing. ``derives`` is a declaration the module's author wrote about the
     module in front of them. Where they disagree, the specific knowledge wins
-    over the general guess — and nine modules are in exactly that disagreement:
+    over the general guess — and seven modules are in exactly that
+    disagreement, counted against the live registry rather than estimated:
     `file.diff`, `scheduler.interval` and `scheduler.cron_parse` declared it and
-    were overruled, and the six `ai.*` sub-nodes are configuration providers
-    wired to `llm.agent` over a RESOURCE edge, which between them open zero
-    sockets. All nine were being stamped `dispatched`, which is not a
-    conservative reading of what they did — it is a false one. No instruction
-    left us. There is nobody who could confirm anything, because nothing was
-    sent.
+    were overruled, and four of the six `ai.*` sub-nodes are configuration
+    providers wired to `llm.agent` over a RESOURCE edge that reach nothing.
+    All seven were being stamped `dispatched`, which is not a conservative
+    reading of what they did — it is a false one. No instruction left us. There
+    is nobody who could confirm anything, because nothing was sent.
+
+    FOUR of the six, not all six, and the two exceptions are the reason this is
+    a per-module declaration rather than a rule about sub-nodes.
+    `ai.memory.redis` connects to Redis and reports its own rung.  `ai.model`
+    resolves the host whenever `base_url` is set, measured with an audit hook,
+    and returns `ok: False` when the name does not resolve — a result that
+    depends on the network is not computed from its inputs. Both keep the
+    `dispatched` default. A rule keyed on `NodeType.AI_SUB_NODE` would have
+    silenced both.
 
     NONE, AND NEVER VERIFIED. This function used to return VERIFIED for
     ``derives``, guarded only by asking about side effects first, and that guard
@@ -291,7 +300,7 @@ def default_for(module_id: str, metadata: Optional[Dict[str, Any]] = None) -> Op
     is not something a default may hand out.
 
     So the change can only ever lower a claim: VERIFIED became None, and for
-    those nine modules DISPATCHED became None. Nothing anywhere gains a rung.
+    those seven modules DISPATCHED became None. Nothing anywhere gains a rung.
 
     DISPATCHED for anything side-effecting that declared nothing: the
     instruction left us and nobody confirmed anything, which is the truth about

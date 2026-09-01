@@ -640,12 +640,37 @@ class TestFormAgainstARealPage:
         assert effect_named(envelope_of(result), "form_submit_dispatched")["measured_by"] is None
 
     async def test_no_password_reaches_the_envelope(self, at_page):
-        """This module fills password fields into a dict that becomes a trace row."""
+        """This module fills password fields into a dict that becomes a trace row.
+
+        The field is made readonly first, and that is the whole point. The only
+        envelope fields carrying names from the caller's `data` are
+        `unchanged_fields` and `not_read_fields`; a password that fills
+        successfully leaves both empty, so the assertion below used to hold no
+        matter what those lists would have contained -- it could not fail
+        through the one channel it exists to watch. A readonly field puts the
+        name in `unchanged_fields`, and the assertion on that list is what stops
+        this from going quiet again.
+        """
         ctx = await at_page("/form")
+        await ctx["browser"].real_page.evaluate(
+            "() => document.querySelector('#password').setAttribute('readonly', '')"
+        )
+        # Assembled rather than written as one literal: a long,
+        # random-looking string sitting next to the word `secret` is
+        # what a credential scanner exists to catch, and a scanner that
+        # stayed quiet about a fixture would be no use on a real key. The
+        # value only has to be distinctive enough that finding it inside
+        # the envelope would prove a leak.
         secret = "-".join(("fixture", "not", "a", "real", "password"))
+
         result = await run_module("browser.form", {"data": {"password": secret}}, ctx)
-        assert rung_of(result) == Outcome.OBSERVED.value
-        assert secret not in repr(envelope_of(result))
+
+        envelope = envelope_of(result)
+        states = effect_named(envelope, "field_states_observed")
+        assert states["unchanged_fields"] == ["password"], (
+            "the name-carrying channel is empty, so this test proves nothing"
+        )
+        assert secret not in repr(envelope)
 
 
 # ===========================================================================
@@ -1406,6 +1431,7 @@ class TestNobodyReachedForVerified:
 # browser.wait -- against a real page, where a typo used to count as evidence
 # ===========================================================================
 
+@pytest.mark.browser
 class TestWaitAgainstARealPage:
     """`hidden` and `detached` are true of a selector that matches nothing.
 

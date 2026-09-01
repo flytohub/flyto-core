@@ -83,6 +83,16 @@ ensure_modules_loaded()
 #: The five this pass was asked to judge.
 GROUP = ("ai.memory", "ai.memory.entity", "ai.memory.vector", "ai.model", "ai.tool")
 
+#: The four of GROUP that really are pure configuration providers, and so
+#: declare `derives=True` and are stamped nothing at all.
+#:
+#: `ai.model` is deliberately not among them. It was given the same flag on the
+#: same reasoning, and an audit hook caught it resolving the host whenever
+#: `base_url` is set -- `socket.getaddrinfo`, followed by `ok: False` when the
+#: name does not resolve. A result that depends on the network is not computed
+#: from its inputs, so it keeps the `dispatched` default.
+DERIVING = ("ai.memory", "ai.memory.entity", "ai.memory.vector", "ai.tool")
+
 SRC_ROOT = Path(__file__).parent.parent.parent / "src" / "core"
 
 
@@ -115,44 +125,49 @@ def source_files_mentioning(needle):
 # ===========================================================================
 
 
-class TestTheGroupClaimsNothingAndIsStampedDispatched:
+class TestTheGroupClaimsNothingOfItsOwn:
     """The state this pass deliberately left in place.
 
     Not a placeholder: if any of the five later attaches an envelope, this fails
     and the person who attached it has to come back to this file and say which
     measurement earned it. That is the whole reason a refusal is written down
     rather than simply not done.
+
+    The class was called ...AndIsStampedDispatched while that was true of all
+    five. Four of them are stamped nothing now, and `ai.model` is the one still
+    stamped `dispatched` -- for a measured reason rather than for want of
+    looking.
     """
 
     @pytest.mark.parametrize("module_id", GROUP)
-    def test_the_engine_default_is_dispatched(self, module_id):
+    def test_the_engine_default_matches_what_the_module_actually_reaches(self, module_id):
         metadata = ModuleRegistry.get_metadata(module_id) or {}
         assert is_side_effecting(module_id, metadata), (
             f"{module_id} left the outcome population; the coverage list entry "
             "for it is now stale"
         )
-        assert default_for(module_id, metadata) is None, (
-            "a config builder that dispatches nothing must be stamped nothing; "
-            "this is what `derives=True` on these five buys."
+        expected = None if module_id in DERIVING else Outcome.DISPATCHED
+        assert default_for(module_id, metadata) is expected, (
+            "a config builder that dispatches nothing must be stamped nothing, "
+            "and a module that resolves a hostname must not be."
         )
 
     @pytest.mark.parametrize("module_id", GROUP)
     def test_no_postcondition_is_declared(self, module_id):
         """`verified` is unreachable for all five, and must stay that way.
 
-        Nothing in this group evaluates a predicate about an effect, because
-        nothing in this group has an effect. A `postcondition=` appearing on one
-        of these decorators without a read-back behind it would move the lie one
-        level up, exactly as `database.query`'s docstring puts it.
+        Nothing in this group evaluates a predicate about an effect. A
+        `postcondition=` appearing on one of these decorators without a
+        read-back behind it would move the lie one level up, exactly as
+        `database.query`'s docstring puts it.
         """
         metadata = ModuleRegistry.get_metadata(module_id) or {}
         assert metadata.get("postcondition") is None
-        # `derives=True` IS declared on all five now, and is the fix rather than
-        # the trap it was when this test was written: it could reach VERIFIED
-        # then, and reaches no rung at all today, so it is no longer a route to
-        # the green tick this test exists to block. `postcondition` is that
-        # route, and it stays shut.
-        assert metadata.get("derives") is True
+        # `derives=True` is the fix rather than the trap it was when this test
+        # was written: it could reach VERIFIED then, and reaches no rung at all
+        # today, so it is no longer a route to the green tick this test blocks.
+        # `postcondition` is that route, and it stays shut for all five.
+        assert metadata.get("derives") is (module_id in DERIVING)
 
     @pytest.mark.asyncio
     async def test_none_of_them_attaches_an_envelope_of_its_own(self):
