@@ -1277,6 +1277,108 @@ async def test_visual_diff_screenshot_rejects_metadata_url(_no_private_network):
         )
 
 
+@pytest.mark.asyncio
+async def test_verify_capture_never_navigates_to_an_internal_url(_no_private_network):
+    """The guard is only worth what its POSITION is worth.
+
+    `verify.capture` drives a bare Playwright page, so `enforce_outbound_url`
+    is the only boundary -- `BrowserDriver.goto`'s `_guard_navigation` is not
+    on this path and neither is the cloud egress guard. The two other tests
+    that touch these modules check that the guard SYMBOL appears in the source,
+    which stays true if the call is moved below `page.goto` or deleted while
+    the import remains. Both of those are the bug, not the fix.
+
+    So this asserts the navigation never happened, not merely that something
+    raised. `goto` is recorded rather than stubbed out silently: if the guard
+    moves after it, `seen` is non-empty and this fails with the URL that leaked.
+    """
+    module = importlib.import_module('core.modules.atomic.verify.capture')
+    seen = []
+
+    class _Page:
+        async def set_viewport_size(self, *a, **k):
+            return None
+
+        async def goto(self, url, **k):
+            seen.append(url)
+
+        async def close(self):
+            return None
+
+    class _Driver:
+        async def launch(self, *a, **k):
+            return None
+
+        async def new_page(self):
+            return _Page()
+
+        async def close(self):
+            return None
+
+    instance = module.VerifyCaptureModule(
+        {'url': 'http://169.254.169.254/latest/meta-data/', 'selector': 'body'},
+        {'browser': _Driver()},
+    )
+    with pytest.raises(SSRFError):
+        await instance.execute()
+
+    assert seen == [], f"the page was navigated before the guard ran: {seen}"
+
+
+@pytest.mark.asyncio
+async def test_verify_run_rejects_an_internal_url(_no_private_network, monkeypatch):
+    """The sibling of the above, and the module the audit found untested.
+
+    Nothing in tests/ constructed `VerifyRunModule` with an internal address,
+    so its guard rested entirely on a source-text sweep. `verify.run` reaches
+    the network only by delegating to `verify.capture`, which builds its own
+    driver, so the driver is replaced here -- a real browser is not the subject
+    and launching one would make this test about Chromium.
+    """
+    driver_module = importlib.import_module('core.browser.driver')
+    runner = importlib.import_module('core.modules.atomic.verify.runner')
+    navigated = []
+
+    class _Page:
+        async def set_viewport_size(self, *a, **k):
+            return None
+
+        async def goto(self, url, **k):
+            navigated.append(url)
+
+        async def close(self):
+            return None
+
+    class _Driver:
+        def __init__(self, *a, **k):
+            pass
+
+        async def launch(self, *a, **k):
+            return None
+
+        async def new_page(self):
+            return _Page()
+
+        async def close(self):
+            return None
+
+    # `verify.capture` imports BrowserDriver inside the function, so the patch
+    # has to land on the driver module rather than on the importer.
+    monkeypatch.setattr(driver_module, 'BrowserDriver', _Driver)
+
+    instance = runner.VerifyRunModule(
+        {
+            'url': 'http://169.254.169.254/latest/meta-data/',
+            'selectors': {'body': {'exists': True}},
+        },
+        {},
+    )
+    with pytest.raises(SSRFError):
+        await instance.execute()
+
+    assert navigated == [], f"the page was navigated before the guard ran: {navigated}"
+
+
 # ---------------------------------------------------------------------------
 # 2.28.1 reports: local vision reads, nested dangerous-permission execution,
 # caller-controlled browser SSRF opt-out, and email filesystem/network sinks.
