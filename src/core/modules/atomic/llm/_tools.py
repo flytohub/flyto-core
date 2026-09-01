@@ -177,9 +177,41 @@ async def execute_tool(tool_name: str, arguments: Dict, parent_context: Dict) ->
         }
 
 
+
+#: What the `outcome:` line on a tool result means. Without this the word is
+#: one the model has never been given a meaning for -- it was already reaching
+#: the context window inside the serialized envelope, unlabeled and undefined.
+#:
+#: The operative sentence is the one about `indeterminate`. A model that reads
+#: it as failure will retry, and the whole reason the rung exists is that some
+#: effects must not be retried blind: the request was already in the other
+#: side's hands when the connection broke, and retrying may do it twice.
+OUTCOME_VOCABULARY = """\
+Some tool results begin with an `outcome:` line. It says how far the effect was
+followed into the world, and it is not the same question as whether the call
+returned:
+
+  verified       a stated condition was checked afterwards and held
+  observed       a change was read back, but nothing was promised in advance
+  accepted       the other side acknowledged it; nothing was read back
+  dispatched     an instruction left us and NOBODY confirmed anything
+  failed         it did not succeed
+  indeterminate  it may or may not have happened
+
+Only `verified` means the effect is confirmed. Never tell the user something is
+done on the strength of `dispatched` alone.
+
+`indeterminate` is the one that changes what you do next. It does not mean
+failure. Do not retry the same call to "make sure" -- if the effect did happen,
+retrying repeats it, and for a message, a payment or a write that is a second
+one. Read the world back instead, with a different tool if you have one, and
+say plainly that you could not confirm it if you still cannot."""
+
+
 def build_agent_system_prompt(base_prompt: str, tools: List[Dict]) -> str:
     """Build the system prompt for the agent."""
     prompt = base_prompt + "\n\n"
+    prompt += OUTCOME_VOCABULARY + "\n\n"
 
     if tools:
         prompt += "You have access to the following tools:\n\n"

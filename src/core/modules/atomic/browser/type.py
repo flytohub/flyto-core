@@ -63,6 +63,25 @@ async def _read_field_value(page, selector: str) -> Tuple[Optional[str], Optiona
         return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
 
 
+#: What VERIFIED means for this module, and the only branch that may claim it.
+#:
+#: The read-back goes through a DIFFERENT CHANNEL than the write: the keystrokes
+#: go through the keyboard, and `page.input_value` asks the page what the field
+#: now holds. That is what makes it evidence rather than an echo -- the value
+#: would not read back correct if the keystrokes had not landed.
+#:
+#: MEASURED CAVEAT, and the reason the sentence says what it says: with
+#: `clear=False` the keystrokes go to the caret, which is at position 0, so a
+#: field that already held something ends up PREPENDED, not appended. The
+#: predicate is `baseline + text` and it correctly does NOT hold in that case --
+#: that run lands on the `field_value_differs` branch at OBSERVED, which is the
+#: honest answer: the page changed, and it does not hold what was typed.
+POSTCONDITION = (
+    'the field, read back through input_value after the keystrokes, holds '
+    'exactly the value it held before them with the text appended'
+)
+
+
 def _type_outcome(
     *,
     baseline: Optional[str],
@@ -117,11 +136,12 @@ def _type_outcome(
 
     if after == expected:
         return envelope(
-            Outcome.OBSERVED,
+            Outcome.VERIFIED,
             # INFERRED: a predicate was evaluated and it was ours. No caller
             # asked for "the field ends up holding exactly what I typed".
             claim_by=ClaimBy.INFERRED,
             effects=[offered_effect, observed_effect],
+            postcondition=POSTCONDITION,
         )
 
     if after != baseline:
@@ -170,6 +190,7 @@ def _type_outcome(
 
 @register_module(
     module_id='browser.type',
+    postcondition=POSTCONDITION,
     version='1.1.0',
     category='browser',
     tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],

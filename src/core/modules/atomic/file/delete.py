@@ -76,12 +76,58 @@ from ...registry import register_module
 from ...schema import compose, presets
 
 
+#: What VERIFIED means here, and the only branch that may claim it: an unlink
+#: was issued AND the name no longer resolves.
+#:
+#: The no-op case is deliberately not covered by it. A path that was already
+#: absent before this call also ends with the name gone, but this call did not
+#: make it so -- that branch evaluated the state of the world, not the effect of
+#: this step, and it stays at OBSERVED with `postcondition: None`.
+#:
+#: `lexists`, not `exists`, and the difference is the whole predicate: a
+#: dangling symlink is a name that is still there, and `exists` would report it
+#: gone because it follows the link to a target that is not.
+#:
+#: "RESOLVED" is load-bearing and not padding. The sandbox check needs a
+#: canonical path -- resolving is what stops a link pointing out of
+#: FLYTO_SANDBOX_DIR -- so a symlink handed to this module deletes what it
+#: points AT, and the link itself survives, now dangling. Measured:
+#:
+#:     file.delete(link)  ->  verified
+#:     target exists: False   link exists: True
+#:
+#: The claim is true of the path the module acted on, and the effect names that
+#: path rather than the one the caller typed. Saying only "the path" would let a
+#: caller who passed a link read this as a promise about the link.
+POSTCONDITION = (
+    'the resolved path, re-tested with lexists after the unlink, does not resolve'
+)
+
+
 def _delete_outcome(*, path: str, unlink_issued: bool, still_present: bool) -> Dict[str, Any]:
     """The rung this delete earned, from one `lexists` after the fact.
 
     The same measurement decides all four cases; `unlink_issued` only changes
     what the effect is called, never how hard the evidence is looked at.
     """
+    if not still_present and unlink_issued:
+        return envelope(
+            Outcome.VERIFIED,
+            claim_by=ClaimBy.INFERRED,
+            effects=[{
+                'kind': 'name_removed',
+                'path': path,
+                'unlink_issued': True,
+                'measured_by': 'os.path.lexists(path), re-tested after the unlink',
+                'detail': (
+                    'The same syscall family that unlink acts on, asked again '
+                    'about the same name. `lexists` and not `exists` because a '
+                    'dangling symlink is a name that is still there.'
+                ),
+            }],
+            postcondition=POSTCONDITION,
+        )
+
     if not still_present:
         return envelope(
             Outcome.OBSERVED,
@@ -134,6 +180,7 @@ def _delete_outcome(*, path: str, unlink_issued: bool, still_present: bool) -> D
 
 @register_module(
     module_id='file.delete',
+    postcondition=POSTCONDITION,
     version='1.0.0',
     category='file',
     subcategory='operations',

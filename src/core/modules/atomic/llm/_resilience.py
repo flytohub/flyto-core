@@ -214,3 +214,64 @@ BROWSER_POLICIES = """
 - If a site shows CAPTCHA or blocks you, skip it and move to the next source.
 - Do NOT call browser.launch if a browser is already running — use browser.goto directly.
 """.strip()
+
+#: What the model is told about how far a tool's effect was followed.
+#:
+#: One line, prepended to the tool result, and the position is the whole point.
+#: `truncate_tool_result` is a raw slice at the tail, and the envelope is
+#: normally the LAST key in `data` -- measured, on a file.read over 8000 chars
+#: the string "rung" is simply absent from what the model sees. The ladder
+#: disappeared exactly on the large results where a model is least able to
+#: check for itself.
+#:
+#: Short on purpose. This rides on every tool call and is paid for in tokens on
+#: every subsequent turn of the conversation.
+_RUNG_LINES = {
+    'verified': 'outcome: verified — a postcondition was evaluated and held.',
+    'observed': 'outcome: observed — a change in the world was read back, but no '
+                'postcondition was declared. Treat as likely, not certain.',
+    'accepted': 'outcome: accepted — the other side acknowledged the request. '
+                'Nothing was read back.',
+    'dispatched': 'outcome: dispatched — an instruction left us and nobody '
+                  'confirmed anything. Do not report this as done.',
+    'failed': 'outcome: failed — this did not succeed.',
+    'indeterminate': 'outcome: indeterminate — the effect may or may not have '
+                     'happened. Do NOT assume it did, and do NOT simply retry: '
+                     'a retry may repeat it. Re-observe first.',
+}
+
+
+def rung_line(result) -> str:
+    """The outcome line for a tool result, or '' when there is no rung.
+
+    Deliberately empty for a result with no envelope. Most of the registry is
+    pure computation, and a line saying "no outcome" on every string operation
+    would cost tokens on every turn and teach the model to skip the field on
+    the turns that matter.
+    """
+    try:
+        from ....engine.step_executor.executor import step_outcome
+        from ....engine.outcome import Outcome, read_envelope
+    except Exception:  # noqa: BLE001 - never let this break a tool call
+        return ''
+
+    try:
+        found = step_outcome(result)
+    except Exception:  # noqa: BLE001
+        return ''
+    if found is None:
+        return ''
+
+    rung, _claim_by, _expected = found
+    line = _RUNG_LINES.get(rung.value)
+    if line is None:
+        return ''
+
+    if rung is Outcome.VERIFIED:
+        body = result.get('data') if isinstance(result, dict) else None
+        body = body if isinstance(body, dict) else result
+        envelope = read_envelope(body) if isinstance(body, dict) else None
+        declared = (envelope or {}).get('postcondition')
+        if declared:
+            line = '%s (%s)' % (line, declared)
+    return line + '\n'

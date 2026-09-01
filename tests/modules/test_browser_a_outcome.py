@@ -271,14 +271,48 @@ class TestGotoAgainstARealServer:
 # ===========================================================================
 
 class TestRungType:
-    def test_the_field_holding_baseline_plus_text_is_observed(self):
+    def test_the_field_holding_baseline_plus_text_is_verified(self):
+        """The predicate this module declares, evaluated and holding.
+
+        INFERRED even at VERIFIED: the predicate is this module's own
+        declaration, not something a caller passed in, so the holding and the
+        failing case stay attributable to one author. `file.edit` uses the same
+        value for the same reason.
+        """
         found = type_module._type_outcome(
             baseline="", after="hello", typed_characters=5,
             expected="hello", read_error=None,
         )
-        assert found["rung"] == Outcome.OBSERVED.value
+        assert found["rung"] == Outcome.VERIFIED.value
         assert found["claim_by"] == ClaimBy.INFERRED.value
+        assert found["postcondition"] == type_module.POSTCONDITION
         assert effect_named(found, "field_value_observed")["matches_expected"] is True
+
+    def test_only_the_holding_branch_carries_the_postcondition(self):
+        """The other three evaluated it and it did NOT hold, or never ran it.
+
+        A predicate sentence on those would be the engine-side overreach in
+        module form: `postcondition` names what held, so a branch where nothing
+        held must leave it empty.
+        """
+        mask = type_module._type_outcome(
+            baseline="", after="he", typed_characters=5,
+            expected="hello", read_error=None,
+        )
+        unchanged = type_module._type_outcome(
+            baseline="x", after="x", typed_characters=5,
+            expected="xhello", read_error=None,
+        )
+        unread = type_module._type_outcome(
+            baseline=None, after=None, typed_characters=5,
+            expected=None, read_error="detached",
+        )
+
+        assert mask["rung"] == Outcome.OBSERVED.value
+        assert unchanged["rung"] == Outcome.INDETERMINATE.value
+        assert unread["rung"] == Outcome.ACCEPTED.value
+        for found in (mask, unchanged, unread):
+            assert found["postcondition"] is None
 
     def test_a_field_that_changed_to_something_else_is_still_observed(self):
         """An input mask reformatting a correct type. The world changed."""
@@ -318,13 +352,22 @@ class TestRungType:
 
 @pytest.mark.browser
 class TestTypeAgainstARealPage:
-    async def test_typing_into_an_input_is_observed(self, loaded_ctx):
+    async def test_typing_into_an_input_is_verified(self, loaded_ctx):
+        """The read-back holds, so this is the one branch that may say VERIFIED.
+
+        It goes through a different channel than the write -- keyboard out,
+        `page.input_value` back -- which is what makes it evidence rather than
+        an echo of the parameter.
+        """
         result = await run_module(
             "browser.type",
             {"type_method": "id", "target": "text-field", "text": "hello"},
             loaded_ctx,
         )
-        assert rung_of(result) == Outcome.OBSERVED.value
+        assert rung_of(result) == Outcome.VERIFIED.value
+        assert envelope_of(result)["postcondition"], (
+            "a VERIFIED claim has to name the predicate that held"
+        )
         # Independent of anything the module reported.
         page = loaded_ctx["browser"].real_page
         assert await page.input_value("#text-field") == "hello"
@@ -363,7 +406,7 @@ class TestTypeAgainstARealPage:
             {"type_method": "id", "target": "text-field", "text": "same", "clear": True},
             loaded_ctx,
         )
-        assert rung_of(result) == Outcome.OBSERVED.value
+        assert rung_of(result) == Outcome.VERIFIED.value
 
     async def test_the_claim_falls_when_the_measurement_is_blinded(self, loaded_ctx, monkeypatch):
         """Stage 1: with no read-back, the honest floor is ACCEPTED."""
@@ -1091,16 +1134,26 @@ class TestHoverHasNoObservableSignal:
 # ===========================================================================
 
 class TestNobodyReachedForVerified:
-    """VERIFIED means a postcondition was evaluated and held. None was declared.
+    """VERIFIED means a postcondition was evaluated and held.
 
     The ceiling is enforced by `_apply_outcome_contract`, so a module claiming
-    VERIFIED here would be silently lowered rather than caught. This asserts the
-    intent directly: no module in this group declares a postcondition, and none
-    of them writes the word.
+    VERIFIED without declaring one would be silently lowered rather than
+    caught. This asserts the intent directly for the twelve that declare
+    nothing: no postcondition on the decorator, and the word nowhere in the
+    source.
+
+    `browser.type` is the exception, and it is named here rather than deleted
+    from the list, because the list is the argument. It reads the field back
+    through `page.input_value` -- a different channel from the keyboard it
+    wrote with -- and compares against `baseline + text` exactly. That is a
+    predicate that was evaluated and held, which is what the rung means.
+    The other twelve still have nothing of the kind, and this guard is what
+    stops one of them acquiring the word without acquiring the read-back.
     """
 
+    #: The twelve with no read-back to declare anything about.
     DECLARED = [
-        "browser.goto", "browser.type", "browser.select", "browser.upload",
+        "browser.goto", "browser.select", "browser.upload",
         "browser.scroll", "browser.download", "browser.screenshot",
         "browser.pdf", "browser.viewport", "browser.evaluate", "browser.close",
         "browser.storage", "browser.cookies",
@@ -1121,10 +1174,28 @@ class TestNobodyReachedForVerified:
 
     @pytest.mark.parametrize(
         "module",
-        [goto_module, type_module, select_module, upload_module, scroll_module,
+        [goto_module, select_module, upload_module, scroll_module,
          download_module, screenshot_module, pdf_module, viewport_module,
          evaluate_module, close_module, storage_module, cookies_module],
     )
     def test_no_module_source_mentions_the_verified_rung(self, module):
         source = Path(module.__file__).read_text(encoding="utf-8")
         assert "Outcome.VERIFIED" not in source
+
+    def test_the_one_that_does_declare_names_its_read_back(self):
+        """The other side of the list above, so removing the guard is deliberate.
+
+        `browser.type` may claim VERIFIED, and what entitles it to is a
+        postcondition naming the reading that earns it. If the declaration ever
+        goes away while `Outcome.VERIFIED` stays in the source, the engine
+        silently lowers the claim and nothing else notices; this notices.
+        """
+        metadata = ModuleRegistry.get_metadata("browser.type")
+        declared = metadata.get("postcondition")
+
+        assert declared, "browser.type claims VERIFIED and must say what it verified"
+        assert "input_value" in declared, (
+            "the postcondition has to name the reading that earns it"
+        )
+        assert ceiling_for(declared) is Outcome.VERIFIED
+        assert "Outcome.VERIFIED" in Path(type_module.__file__).read_text(encoding="utf-8")

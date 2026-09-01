@@ -132,9 +132,10 @@ class VerifyRunModule(BaseModule):
 
         # Step 1: Load ruleset if provided
         if self.ruleset_path:
-            ruleset_module = VerifyRulesetModule()
-            ruleset_module.params = {'path': self.ruleset_path}
-            ruleset_module.context = {}
+            ruleset_module = VerifyRulesetModule(
+                {'path': self.ruleset_path},
+                {},
+            )
             ruleset_module.validate_params()
             ruleset_result = await ruleset_module.execute()
 
@@ -160,13 +161,14 @@ class VerifyRunModule(BaseModule):
             for rule in rules:
                 if rule.figma_node:
                     try:
-                        figma_module = VerifyFigmaModule()
-                        figma_module.params = {
-                            'file_id': self.figma_file_id,
-                            'node_name': rule.figma_node,
-                            'token': self.figma_token,
-                        }
-                        figma_module.context = {}
+                        figma_module = VerifyFigmaModule(
+                            {
+                                'file_id': self.figma_file_id,
+                                'node_name': rule.figma_node,
+                                'token': self.figma_token,
+                            },
+                            {},
+                        )
                         figma_module.validate_params()
                         figma_result = await figma_module.execute()
 
@@ -179,14 +181,15 @@ class VerifyRunModule(BaseModule):
         # Step 3: Capture and compare each rule
         for rule in rules:
             # Capture browser styles
-            capture_module = VerifyCaptureModule()
-            capture_module.params = {
-                'url': self.url,
-                'selector': rule.selector,
-                'viewport_width': self.viewport_width,
-                'viewport_height': self.viewport_height,
-            }
-            capture_module.context = {}
+            capture_module = VerifyCaptureModule(
+                {
+                    'url': self.url,
+                    'selector': rule.selector,
+                    'viewport_width': self.viewport_width,
+                    'viewport_height': self.viewport_height,
+                },
+                {},
+            )
             capture_module.validate_params()
             capture_result = await capture_module.execute()
 
@@ -216,17 +219,18 @@ class VerifyRunModule(BaseModule):
 
             # Compare if we have expected styles
             if expected:
-                compare_module = VerifyCompareModule()
-                compare_module.params = {
-                    'actual': captured_element,
-                    'expected': expected,
-                    'selector': rule.selector,
-                    'check_typography': rule.check_typography,
-                    'check_colors': rule.check_colors,
-                    'check_spacing': rule.check_spacing,
-                    'check_sizing': rule.check_sizing,
-                }
-                compare_module.context = {}
+                compare_module = VerifyCompareModule(
+                    {
+                        'actual': captured_element,
+                        'expected': expected,
+                        'selector': rule.selector,
+                        'check_typography': rule.check_typography,
+                        'check_colors': rule.check_colors,
+                        'check_spacing': rule.check_spacing,
+                        'check_sizing': rule.check_sizing,
+                    },
+                    {},
+                )
                 compare_module.validate_params()
                 compare_result = await compare_module.execute()
 
@@ -274,16 +278,17 @@ class VerifyRunModule(BaseModule):
                 await driver.close()
 
         # Step 5: Generate report
-        report_module = VerifyReportModule()
-        report_module.params = {
-            'results': results,
-            'name': 'verify-report',
-            'url': self.url,
-            'format': self.report_format,
-            'output_dir': str(self.output_dir),
-            'screenshots': screenshots,
-        }
-        report_module.context = {}
+        report_module = VerifyReportModule(
+            {
+                'results': results,
+                'name': 'verify-report',
+                'url': self.url,
+                'format': self.report_format,
+                'output_dir': str(self.output_dir),
+                'screenshots': screenshots,
+            },
+            {},
+        )
         report_module.validate_params()
         report_result = await report_module.execute()
 
@@ -335,14 +340,15 @@ class VerifyRunner:
         expected_styles: Dict[str, Dict] = None,
     ) -> Dict[str, Any]:
         """Quick verification with selectors."""
-        module = VerifyRunModule()
-        module.params = {
-            'url': url,
-            'selectors': selectors,
-            'expected_styles': expected_styles or {},
-            'output_dir': self.output_dir,
-        }
-        module.context = {}
+        module = VerifyRunModule(
+            {
+                'url': url,
+                'selectors': selectors,
+                'expected_styles': expected_styles or {},
+                'output_dir': self.output_dir,
+            },
+            {},
+        )
         module.validate_params()
         return await module.execute()
 
@@ -353,14 +359,15 @@ class VerifyRunner:
         report_format: str = "html",
     ) -> Dict[str, Any]:
         """Full verification with YAML ruleset."""
-        module = VerifyRunModule()
-        module.params = {
-            'url': url,
-            'ruleset_path': ruleset_path,
-            'output_dir': self.output_dir,
-            'report_format': report_format,
-        }
-        module.context = {}
+        module = VerifyRunModule(
+            {
+                'url': url,
+                'ruleset_path': ruleset_path,
+                'output_dir': self.output_dir,
+                'report_format': report_format,
+            },
+            {},
+        )
         module.validate_params()
         return await module.execute()
 
@@ -373,16 +380,17 @@ class VerifyRunner:
         expected_styles: Dict[str, Dict] = None,
     ) -> Dict[str, Any]:
         """Verification with Figma design comparison."""
-        module = VerifyRunModule()
-        module.params = {
-            'url': url,
-            'selectors': selectors,
-            'figma_file_id': figma_file_id,
-            'figma_mapping': figma_mapping,
-            'figma_token': self.figma_token,
-            'expected_styles': expected_styles or {},
-            'output_dir': self.output_dir,
-        }
-        module.context = {}
+        module = VerifyRunModule(
+            {
+                'url': url,
+                'selectors': selectors,
+                'figma_file_id': figma_file_id,
+                'figma_mapping': figma_mapping,
+                'figma_token': self.figma_token,
+                'expected_styles': expected_styles or {},
+                'output_dir': self.output_dir,
+            },
+            {},
+        )
         module.validate_params()
         return await module.execute()

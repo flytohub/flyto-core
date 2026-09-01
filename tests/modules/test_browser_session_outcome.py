@@ -63,7 +63,13 @@ import core.modules.atomic.browser.pages as pages_module
 import core.modules.atomic.browser.pool as pool_module
 import core.modules.atomic.browser.tab as tab_module
 import core.modules.atomic.browser.wait as wait_module
-from core.engine.outcome import ClaimBy, Outcome, envelope, read_envelope
+from core.engine.outcome import (
+    ClaimBy,
+    Outcome,
+    envelope,
+    envelope_from_exception,
+    read_envelope,
+)
 from core.modules import atomic  # noqa: F401 - registers every module
 from core.modules.registry import ModuleRegistry
 from core.utils import SSRFError
@@ -991,20 +997,60 @@ class TestWaitAgainstARealBrowser:
         )
         assert rung_of(result) == Outcome.OBSERVED.value
 
-    async def test_a_wait_that_times_out_raises_and_carries_no_envelope(
+    async def test_a_wait_that_times_out_still_raises_but_carries_its_rung(
         self, browser_ctx, http_site
     ):
-        """The gap this module's docstring records, asserted rather than
-        described: a timeout is INDETERMINATE by the contract and reaches a
-        consumer as an execution error, because a raise has no return value to
-        hang an envelope on."""
+        """The gap this module's docstring recorded, now closed.
+
+        This test used to assert the gap itself -- that a timeout reaches a
+        consumer as a bare execution error, because a raise has no return value
+        to hang an envelope on. The rung is INDETERMINATE by the contract: we
+        do not know whether the element ever reached the state, only that it
+        had not by the deadline. Reporting that as a definite failure is wrong
+        in its own direction, the way a false green is wrong in the other.
+
+        `OutcomeError` carries it out through the exception. The step still
+        FAILS -- nothing here makes a timeout succeed -- but the rung now
+        travels with it, so a host can tell "it did not happen" from "we cannot
+        say whether it happened".
+        """
         await browser_ctx["browser"].real_page.goto(http_site + "/")
-        with pytest.raises(RuntimeError):
+
+        with pytest.raises(Exception) as caught:
             await run_module(
                 "browser.wait",
                 {"selector": "#nothing-here", "state": "visible", "timeout_ms": 300},
                 browser_ctx,
             )
+
+        carried = envelope_from_exception(caught.value)
+        assert carried is not None, "the timeout lost its rung on the way out"
+        assert carried["rung"] == Outcome.INDETERMINATE.value
+        effect = next(
+            e for e in carried["effects"] if e["kind"] == "element_wait_timed_out"
+        )
+        assert effect["selector"] == "#nothing-here"
+        assert effect["timeout_ms"] == 300
+
+    async def test_a_wait_that_fails_for_any_other_reason_carries_nothing(
+        self, browser_ctx
+    ):
+        """The opt-in boundary, which is the whole safety of the channel.
+
+        Only the timeout branch opts in. A closed page, a malformed selector,
+        no browser at all: those raise what they always raised, carry no
+        envelope, and read as FAILED. Inferring a rung from an arbitrary
+        exception would turn every crash into "we cannot say", which invites
+        retrying something that genuinely broke.
+        """
+        with pytest.raises(Exception) as caught:
+            await run_module(
+                "browser.wait",
+                {"selector": "#anything", "state": "visible", "timeout_ms": 300},
+                {},  # no browser in context
+            )
+
+        assert envelope_from_exception(caught.value) is None
 
     async def test_the_elapsed_time_is_a_clock_reading_and_not_the_parameter(
         self, browser_ctx

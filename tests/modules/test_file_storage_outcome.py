@@ -494,7 +494,13 @@ class TestFileMove:
 
 class TestFileDelete:
     @pytest.mark.asyncio
-    async def test_a_removed_name_is_observed(self, sandboxed_tmp_path):
+    async def test_a_removed_name_is_verified(self, sandboxed_tmp_path):
+        """An unlink was issued and the name no longer resolves: both halves.
+
+        The no-op case below is the reason both are required -- a path that was
+        already absent also ends with the name gone, and this call did not make
+        it so.
+        """
         target = sandboxed_tmp_path / "gone.txt"
         target.write_text("x")
 
@@ -503,7 +509,8 @@ class TestFileDelete:
         assert not target.exists()
         assert result["deleted"] is True
         found = envelope_of(result)
-        assert found["rung"] == Outcome.OBSERVED.value
+        assert found["rung"] == Outcome.VERIFIED.value
+        assert found["postcondition"], "a VERIFIED claim must name what held"
         assert effect_named(found, "name_removed")["unlink_issued"] is True
 
     @pytest.mark.asyncio
@@ -591,7 +598,12 @@ class TestFileDelete:
 
         assert not target.exists()
         assert os.path.lexists(link)  # the link survives, now dangling
-        assert envelope_of(result)["rung"] == Outcome.OBSERVED.value
+        found = envelope_of(result)
+        # VERIFIED of the RESOLVED path, which is what the postcondition says
+        # and what the effect records -- not of the name the caller passed.
+        assert found["rung"] == Outcome.VERIFIED.value
+        assert "resolved path" in found["postcondition"]
+        assert effect_named(found, "name_removed")["path"] == str(target)
 
 
 # ===========================================================================

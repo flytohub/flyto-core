@@ -79,7 +79,7 @@ from ._interfaces import ChatModel, AgentTool, ChatResponse, ToolCallRequest
 from ._chat_models import create_chat_model
 from ._agent_tool import ModuleAgentTool
 from ._resilience import (
-    truncate_tool_result, SnapshotGuard, CircuitBreaker,
+    truncate_tool_result, rung_line, SnapshotGuard, CircuitBreaker,
     is_transient_error, is_session_dead,
     scan_for_injection, BROWSER_POLICIES,
 )
@@ -696,7 +696,7 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                                 )
                                 snapshot_guard.on_tool_call("browser.snapshot")
                                 # Inject snapshot result as context for the LLM
-                                snap_content = truncate_tool_result(snap_result)
+                                snap_content = rung_line(snap_result) + truncate_tool_result(snap_result)
                                 messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": f"auto_snap_{iteration}", "type": "function", "function": {"name": "browser--snapshot", "arguments": "{\"format\":\"text\"}"}}]})
                                 messages.append({"role": "tool", "tool_call_id": f"auto_snap_{iteration}", "content": snap_content})
                             except Exception as snap_err:
@@ -746,7 +746,7 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                     await notify('agent:tool_result', {'tool': tc.name, 'iteration': iteration + 1, 'ok': tool_ok})
 
                 # Truncate + injection scan before adding to messages
-                tool_content = truncate_tool_result(tool_result)
+                tool_content = rung_line(tool_result) + truncate_tool_result(tool_result)
                 injection_warning = scan_for_injection(tool_content)
                 if injection_warning:
                     tool_content = injection_warning + "\n\n" + tool_content
@@ -968,7 +968,7 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             if notify:
                 await notify('agent:tool_result', {'tool': tool_name, 'iteration': iteration + 1, 'ok': tool_ok})
 
-            observation = truncate_tool_result(tool_result)
+            observation = rung_line(tool_result) + truncate_tool_result(tool_result)
             messages.append({"role": "assistant", "content": content})
             messages.append({"role": "user", "content": f"Observation: {observation}"})
         else:
