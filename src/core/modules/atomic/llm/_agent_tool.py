@@ -201,7 +201,7 @@ class ModuleAgentTool:
                 module_id = alt
 
         if not registry.has(module_id):
-            return {"ok": False, "error": f"Tool module not found: {module_id}"}
+            return _stamp_tool_outcome(None, {"ok": False, "error": f"Tool module not found: {module_id}"})
 
         try:
             module_class = registry.get(module_id)
@@ -220,8 +220,95 @@ class ModuleAgentTool:
 
             module_instance = module_class(arguments, tool_context)
             result = await module_instance.run()
-            return result
+            return _stamp_tool_outcome(module_instance, result)
 
         except Exception as e:
             logger.error(f"Tool execution error ({module_id}): {e}")
-            return {"ok": False, "error": str(e)}
+            return _stamp_tool_outcome(None, {"ok": False, "error": str(e)})
+
+def _stamp_tool_outcome(module_instance, result):
+    """Give a tool result the same rung a step result would carry.
+
+    A module invoked as an agent tool never touches the step executor -- this
+    file builds the class and calls `run()` directly -- so
+    `_apply_outcome_contract` had never run on one. Measured by spying on it:
+    same module, same params, TOOL path 0 calls, STEP path 1 call. The visible
+    consequence is a differential: a module that writes its own envelope
+    reaches the model with a rung by accident, because the envelope rides
+    inside `data` and the whole dict is serialized; a module that reports
+    nothing reaches it with no rung at all, where a step would have said
+    `dispatched`.
+
+    NOT `_apply_outcome_contract` DIRECTLY, and this is the whole care in this
+    function. Run over the `ok: False` results this path already produces, that
+    function stamps `dispatched` on every one of them:
+
+        module not found          -> dispatched
+        capability policy block   -> dispatched
+        path traversal guard      -> dispatched
+        parameter validation      -> dispatched
+
+    Nothing was dispatched in any of those. The module was never reached. On
+    the step path the same stamp is harmless because `wrap_legacy_result`
+    raises immediately afterwards and the result is discarded; here there is no
+    raise, so the stamp is what the model reads. `dispatched` means an
+    instruction left us, and telling a model that about a call the policy
+    refused is the same class of false claim the ladder exists to stop -- with
+    the engine, not a module, as its author.
+
+    So: a module's own envelope is kept and capped. A failure that never ran
+    gets FAILED. Only a result that neither failed nor said anything falls
+    through to the default.
+    """
+    from ....engine.outcome import (
+        ClaimBy,
+        ENVELOPE_KEY,
+        Outcome,
+        cap,
+        ceiling_for,
+        default_for,
+        envelope,
+        read_envelope,
+    )
+
+    if not isinstance(result, dict):
+        return result
+
+    body = result.get('data')
+    body = body if isinstance(body, dict) else result
+
+    module_id = getattr(module_instance, 'module_id', '') or ''
+    declared = None
+    if module_id:
+        from ...registry import ModuleRegistry
+        declared = (ModuleRegistry.get_metadata(module_id) or {}).get('postcondition')
+
+    existing = read_envelope(body)
+    if existing is not None:
+        capped = cap(existing['rung'], ceiling_for(declared))
+        if capped.value != existing['rung']:
+            body[ENVELOPE_KEY] = dict(existing, rung=capped.value, postcondition=declared)
+        return result
+
+    if result.get('ok') is False:
+        body[ENVELOPE_KEY] = envelope(
+            Outcome.FAILED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'tool_call_failed',
+                'error': str(result.get('error', ''))[:300],
+                'measured_by': 'the tool call returned ok: False',
+                'detail': (
+                    'The call did not succeed. Whether anything reached the '
+                    'world before it failed is not claimed here -- only that '
+                    'this call did not report success.'
+                ),
+            }],
+        )
+        return result
+
+    if module_id:
+        stamped = default_for(module_id, ModuleRegistry.get_metadata(module_id) or {})
+        if stamped is not None:
+            body[ENVELOPE_KEY] = envelope(stamped, claim_by=ClaimBy.NONE, effects=[])
+    return result
