@@ -59,53 +59,112 @@ def _box_moved(before: Optional[Dict[str, Any]], after: Optional[Dict[str, Any]]
     )
 
 
+#: The element's position in the LAYOUT, with every scroll that could be hiding
+#: under it added back.
+#:
+#: `getBoundingClientRect()` is viewport-relative, so scrolling anything moves
+#: it. The first attempt at this added `window.scrollX/Y`, which fixes exactly
+#: one of the three ways a page scrolls and breaks a fourth case outright.
+#: Measured on pages containing no script at all, where the truth is always
+#: "the element did not move":
+#:
+#:     page shape                      raw rect   +window.scroll   this
+#:     window scrolls (long page)      MOVED      ok               ok
+#:     app shell, an overflow:auto     MOVED      MOVED            ok
+#:       pane scrolls, window cannot
+#:     position:fixed source           ok         MOVED            ok
+#:     a drag that really moves it     MOVED      MOVED            MOVED
+#:
+#: The middle row is the ordinary kanban/app-shell layout, and window.scrollY is
+#: 0 throughout it, so the correction adds nothing while the pane scrolls 3920px
+#: underneath. The third row is worse: the raw reading was already right --
+#: a fixed element does not move when the page scrolls -- and adding the scroll
+#: INVENTED a 4280px displacement.
+#:
+#: So walk every ancestor and add its own scroll offset back. In standards mode
+#: `documentElement.scrollTop` IS the window scroll, so the walk covers that case
+#: too and must not add it again. A `position:fixed` element is anchored to the
+#: viewport and no ancestor's scrolling moves it, so it accumulates nothing --
+#: and the walk stops at a fixed ancestor for the same reason.
+#:
+#: A CSS transform still registers, which is what keeps this honest in the other
+#: direction: `getBoundingClientRect()` includes transforms, and a drag
+#: implemented as `transform: translate(...)` -- the common one -- moves the rect
+#: without changing any layout offset. Reading `offsetTop` instead would have
+#: been scroll-proof and blind to those.
+_LAYOUT_POSITION_JS = """(el) => {
+  const r = el.getBoundingClientRect();
+  let x = r.x, y = r.y;
+  if (getComputedStyle(el).position !== 'fixed') {
+    let n = el.parentElement, anchored = false;
+    while (n && !anchored) {
+      x += n.scrollLeft;
+      y += n.scrollTop;
+      if (getComputedStyle(n).position === 'fixed') anchored = true;
+      n = n.parentElement;
+    }
+  }
+  return {x: x, y: y};
+}"""
+
+
 async def _read_box(locator) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """``(box, None)`` when the element could be measured, ``(None, why)`` when not.
 
-    The box is converted to DOCUMENT coordinates before it is returned, and that
-    conversion is the whole correctness of the rung above it.
+    The ``x``/``y`` returned are the element's position in the LAYOUT, not in
+    the viewport, and that conversion is the whole correctness of the rung above
+    it. ``_LAYOUT_POSITION_JS`` carries the measurement that forced its exact
+    shape; the short version is that `bounding_box()` is viewport-relative --
+    Playwright's own docstring says "Scrolling affects the returned bounding
+    box" -- while a synthetic mouse-down-move-up makes Chromium autoscroll on
+    its own, so the raw box moves whether or not the drag did, and correcting
+    only for `window.scroll` fixes one page shape while breaking another.
 
-    ``bounding_box()`` is viewport-relative -- Playwright's own docstring says
-    "Scrolling affects the returned bounding box" -- and a synthetic
-    mouse-down-move-up makes Chromium autoscroll on its own. So on any page tall
-    enough to scroll, the box moved whether or not the drag did. Measured
-    against real Chromium on a page with no JavaScript at all, no drag handler
-    and no drop handler:
+    ``width`` and ``height`` come straight from the box. ``viewport_x`` and
+    ``viewport_y`` are kept alongside because they are what a person sees in a
+    screenshot, and they are deliberately NOT what the rung is computed from.
 
-        before: viewport y=100    document y=100  scrollY=0
-        after : viewport y=-3180  document y=100  scrollY=3280
-
-    The element did not move in the document, nothing was reparented, and the
-    module reported that it had seen the world change. That is `file.write`'s
-    byte count wearing a fourth set of clothes: a value that reads identically
-    when the effect did not happen.
-
-    Adding the scroll offset removes the browser's own scrolling from the
-    measurement, so what is left is the element's position on the page, which is
-    what a drag is supposed to change.
-
-    A returned ``None`` box and a raised read stay deliberately different
-    answers. ``bounding_box()`` returning None means the element resolved and
-    has no box -- it was removed from the layout, which IS the change we are
-    looking for. A raise means we could not look, which is not.
+    A missing box and a raised read are different answers, and neither of them
+    is how a deleted element arrives. ``bounding_box()`` returning None means
+    the element resolved and has no box -- ``display:none``, still in the DOM.
+    A node the page REMOVED does not come back as None at all: the locator no
+    longer resolves and the call RAISES, which is why the removal case is read
+    by counting nodes in ``_count_nodes`` rather than inferred from a failure
+    here. A raise on its own still means only "we could not look".
     """
     try:
         box = await locator.bounding_box(timeout=2000)
         if box is None:
             return None, None
-        scroll = await locator.evaluate(
-            "() => ({x: window.scrollX, y: window.scrollY})", timeout=2000
-        )
+        layout = await locator.evaluate(_LAYOUT_POSITION_JS, timeout=2000)
         return (
             {
                 **box,
-                'x': box['x'] + scroll['x'],
-                'y': box['y'] + scroll['y'],
+                'x': layout['x'],
+                'y': layout['y'],
                 'viewport_x': box['x'],
                 'viewport_y': box['y'],
             },
             None,
         )
+    except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
+        return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
+
+
+async def _count_nodes(locator) -> Tuple[Optional[int], Optional[str]]:
+    """How many nodes the selector matches, or why we could not count them.
+
+    This exists because `bounding_box()` cannot answer the question. On a node
+    the page has REMOVED it does not return None -- it raises TimeoutError,
+    because the locator no longer resolves to anything -- and a raise is
+    indistinguishable from "we could not look". So the single clearest outcome
+    a drag can have, the page deleting what was dragged, arrived as an
+    unreadable box and was reported `indeterminate` with an effect named
+    `page_unchanged_by_the_drag`. Counting is the reading that separates gone
+    from unreadable.
+    """
+    try:
+        return await locator.count(), None
     except Exception as error:  # noqa: BLE001 - any failure means "cannot look"
         return None, f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
 
@@ -124,13 +183,24 @@ def _drag_outcome(
     source_box_before: Optional[Dict[str, Any]],
     source_box_after: Optional[Dict[str, Any]],
     source_read_error: Optional[str],
+    source_nodes_after: Optional[int] = None,
     target_children_before: Optional[int],
     target_children_after: Optional[int],
     target_read_error: Optional[str],
 ) -> Dict[str, Any]:
     """The rung this drag earned, and the readings that earned it."""
     moved = _box_moved(source_box_before, source_box_after)
-    left_layout = source_box_before is not None and source_box_after is None and not source_read_error
+    # Two ways an element can leave the layout, and only one of them used to
+    # count. `source_nodes_after == 0` is the page having REMOVED it -- a
+    # drag-to-trash, the least ambiguous effect in this module -- and it is read
+    # by counting, because the box read raises for exactly that case. The second
+    # is a node still in the DOM with no box at all (`display:none`), where the
+    # box read does return None and can be trusted.
+    removed_from_dom = source_nodes_after == 0
+    left_layout = source_box_before is not None and (
+        removed_from_dom
+        or (source_box_after is None and not source_read_error)
+    )
     reparented = (
         target_children_before is not None
         and target_children_after is not None
@@ -158,7 +228,8 @@ def _drag_outcome(
             None if source_read_error
             else 'locator.bounding_box() on the source, read before mouse.down and after mouse.up'
         ),
-        'reason': source_read_error,
+        'reason': None if removed_from_dom else source_read_error,
+        'source_nodes_after': source_nodes_after,
     }, {
         'kind': 'target_children_observed' if target_children_after is not None else 'target_children_not_observed',
         'before': target_children_before,
@@ -361,6 +432,7 @@ class BrowserDragModule(BaseModule):
         await real_page.mouse.up()
 
         source_box_after, source_read_error = await _read_box(source_locator)
+        source_nodes_after, _source_count_error = await _count_nodes(source_locator)
         children_after, target_read_error_after = await _read_child_count(target_locator)
 
         return {
@@ -373,6 +445,7 @@ class BrowserDragModule(BaseModule):
                 source_box_before=source_box_before,
                 source_box_after=source_box_after,
                 source_read_error=source_read_error_before or source_read_error,
+                source_nodes_after=source_nodes_after,
                 target_children_before=children_before,
                 target_children_after=children_after,
                 target_read_error=target_read_error or target_read_error_after,

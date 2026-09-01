@@ -268,6 +268,70 @@ WAIT_STATES_HTML = """
 </body></html>
 """
 
+# Three page shapes where a scroll can masquerade as a drag, and one where a
+# drag really happens. Between them they defeat every simpler reading: the raw
+# viewport rect fails the first two, and the rect plus `window.scroll` fails the
+# first and the third. None of the three dead pages contains a single <script>.
+#
+# An ordinary app shell: the window CANNOT scroll, the content pane does.
+# window.scrollY stays 0 throughout while the pane travels ~3900px.
+# Drag-to-trash: the drop handler DELETES the source. The least ambiguous
+# effect this module can have, and the one it used to miss entirely.
+DRAG_TRASH_HTML = """
+<html><body style="margin:0">
+<div id="src" style="position:absolute;left:10px;top:20px;width:60px;height:40px;background:#c00">X</div>
+<div id="trash" style="position:absolute;left:200px;top:20px;width:120px;height:120px;background:#eee"></div>
+<script>
+ var s = document.querySelector('#src'), t = document.querySelector('#trash'), dragging = false;
+ s.addEventListener('mousedown', function () { dragging = true; });
+ t.addEventListener('mouseup', function () { if (dragging) { s.remove(); } dragging = false; });
+</script>
+</body></html>
+"""
+
+DRAG_DEAD_SHELL_HTML = """
+<!doctype html><html><head><style>
+html,body{margin:0;padding:0;height:100%;overflow:hidden}
+#pane{position:absolute;left:0;top:0;right:0;bottom:0;overflow:auto}
+#src{position:absolute;left:10px;top:120px;width:60px;height:40px;background:#c00}
+#dst{position:absolute;left:220px;top:2400px;width:160px;height:160px;background:#eee}
+#filler{height:5000px}
+</style></head><body>
+<div id="pane"><div id="src">CARD</div><div id="dst">DROP</div><div id="filler"></div></div>
+</body></html>
+"""
+
+# A position:fixed source. Its viewport rect is ALREADY scroll-invariant, so
+# adding the window scroll to it invents a displacement out of nothing -- this
+# page is here because a fix broke it, not because the original did.
+DRAG_DEAD_FIXED_HTML = """
+<html><body style="margin:0">
+<div id="src" style="position:fixed;left:10px;top:100px;width:40px;height:40px;background:#c00"></div>
+<div id="dst" style="position:absolute;left:200px;top:3000px;width:120px;height:120px;background:#eee"></div>
+<div style="height:5000px"></div>
+</body></html>
+"""
+
+# The positive control: a page that really does move the element, and scrolls
+# while doing it. Whatever the reading is, it has to still say MOVED here.
+DRAG_MOVES_HTML = """
+<html><body style="margin:0">
+<div id="src" style="position:absolute;left:10px;top:100px;width:40px;height:40px;background:#c00"></div>
+<div id="dst" style="position:absolute;left:200px;top:2000px;width:120px;height:120px;background:#eee"></div>
+<div style="height:4000px"></div>
+<script>
+ var s = document.querySelector('#src'), dragging = false;
+ s.addEventListener('mousedown', function () { dragging = true; });
+ document.addEventListener('mousemove', function (e) {
+   if (!dragging) { return; }
+   s.style.left = (e.pageX - 20) + 'px';
+   s.style.top = (e.pageY - 20) + 'px';
+ });
+ document.addEventListener('mouseup', function () { dragging = false; });
+</script>
+</body></html>
+"""
+
 DRAG_DEAD_TALL_HTML = """
 <html><body style="margin:0">
 <div id="src" style="position:absolute;left:10px;top:100px;width:40px;height:40px;background:#c00"></div>
@@ -309,9 +373,13 @@ PAGES = {
     "/challenge-clears": CHALLENGE_CLEARS_HTML,
     "/challenge-stuck": CHALLENGE_STUCK_HTML,
     "/plain": PLAIN_HTML,
-    "/drag-live": DRAG_LIVE_HTML,
+    "/drag-moves": DRAG_MOVES_HTML,
+    "/drag-trash": DRAG_TRASH_HTML,
     "/drag-dead": DRAG_DEAD_HTML,
     "/drag-dead-tall": DRAG_DEAD_TALL_HTML,
+    "/drag-dead-shell": DRAG_DEAD_SHELL_HTML,
+    "/drag-dead-fixed": DRAG_DEAD_FIXED_HTML,
+    "/drag-live": DRAG_LIVE_HTML,
     "/wait-states": WAIT_STATES_HTML,
     "/press": PRESS_HTML,
     "/dialog": DIALOG_HTML,
@@ -982,6 +1050,97 @@ class TestDragAgainstARealPage:
         assert after_doc == before_doc, "the element moved in the document; fixture is wrong"
         assert result["status"] == "success"
         assert rung_of(result) == Outcome.INDETERMINATE.value
+
+
+    async def test_a_source_the_page_deleted_is_observed(self, at_page):
+        """The clearest effect a drag can have, previously reported as nothing.
+
+        `bounding_box()` on a node the page has removed does not return None --
+        it RAISES, because the locator no longer resolves -- and a raise reads
+        as "we could not look", which is not evidence. So a drag-to-trash that
+        demonstrably destroyed the source came back `indeterminate`, carrying an
+        effect named `page_unchanged_by_the_drag` on a page that had just
+        deleted the element. Counting the nodes is what separates gone from
+        unreadable.
+        """
+        ctx = await at_page("/drag-trash")
+        page = ctx["browser"].real_page
+        assert await page.locator("#src").count() == 1
+
+        result = await run_module("browser.drag", {"source": "#src", "target": "#trash"}, ctx)
+
+        assert await page.locator("#src").count() == 0, "the page did not delete it"
+        assert rung_of(result) == Outcome.OBSERVED.value
+        effect = effect_named(envelope_of(result), "source_box_observed")
+        assert effect["left_layout"] is True
+        assert effect["source_nodes_after"] == 0
+        assert effect["reason"] is None, "a deleted node is not an unreadable one"
+
+    async def test_a_scrolling_pane_is_not_a_drag(self, at_page):
+        """The ordinary app shell, and the case window.scrollY cannot see.
+
+        html and body are `overflow:hidden`; the content pane scrolls instead.
+        Chromium's drag autoscroll moves the pane ~3900px while window.scrollY
+        stays 0 for the whole run, so correcting by the window scroll adds
+        exactly nothing and the pane's travel reads as movement. Measured on
+        this page, which has no script in it at all, the rung was `observed`.
+        """
+        ctx = await at_page("/drag-dead-shell")
+        page = ctx["browser"].real_page
+        before = await page.evaluate(
+            "() => ({top: document.querySelector('#src').offsetTop,"
+            "        pane: document.querySelector('#pane').scrollTop,"
+            "        win: scrollY, scripts: document.scripts.length})"
+        )
+        assert before["scripts"] == 0
+
+        result = await run_module("browser.drag", {"source": "#src", "target": "#dst"}, ctx)
+
+        after = await page.evaluate(
+            "() => ({top: document.querySelector('#src').offsetTop,"
+            "        pane: document.querySelector('#pane').scrollTop,"
+            "        win: scrollY})"
+        )
+        assert after["pane"] > 1000, "the pane did not scroll; the fixture is inert"
+        assert after["win"] == 0, "the window scrolled; this is no longer the pane case"
+        assert after["top"] == before["top"], "the element moved; the fixture is wrong"
+        assert rung_of(result) == Outcome.INDETERMINATE.value
+
+    async def test_a_fixed_source_does_not_move_when_the_page_scrolls(self, at_page):
+        """A reading that was right before a fix, and wrong after it.
+
+        A `position:fixed` element is anchored to the viewport, so its rect is
+        already scroll-invariant and the raw reading correctly said "did not
+        move". Adding the window scroll to it manufactured a displacement of
+        several thousand pixels on a page with no script. A correction that
+        invents movement is worse than the reading it replaced.
+        """
+        ctx = await at_page("/drag-dead-fixed")
+        page = ctx["browser"].real_page
+
+        result = await run_module("browser.drag", {"source": "#src", "target": "#dst"}, ctx)
+
+        assert await page.evaluate("() => scrollY") > 1000, "the page did not scroll"
+        assert rung_of(result) == Outcome.INDETERMINATE.value
+
+    async def test_a_drag_that_really_moves_the_element_is_still_observed(self, at_page):
+        """The positive control the other three exist to protect.
+
+        Every fixture above is a page where nothing happened, so a reading that
+        simply never reported movement would satisfy all of them. This one
+        moves the element for real, on a page that scrolls while it does, and
+        the rung has to notice.
+        """
+        ctx = await at_page("/drag-moves")
+        page = ctx["browser"].real_page
+        before = await page.evaluate("() => document.querySelector('#src').offsetTop")
+
+        result = await run_module("browser.drag", {"source": "#src", "target": "#dst"}, ctx)
+
+        after = await page.evaluate("() => document.querySelector('#src').offsetTop")
+        assert after != before, "the page did not move the element; fixture is broken"
+        assert rung_of(result) == Outcome.OBSERVED.value
+
 
 
 # ===========================================================================
