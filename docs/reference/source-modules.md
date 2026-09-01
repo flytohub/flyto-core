@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **971 Python files**, **230,699 lines**, and **6,033 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **971 Python files**, **230,879 lines**, and **6,035 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -487,14 +487,14 @@ Inventory: **971 Python files**, **230,699 lines**, and **6,033 class/function/m
 | [`src/core/modules/atomic/k8s/logs.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/k8s/logs.py#L1) | 149 | 3 | `asyncio, errors, logging, registry, schema, typing` | Kubernetes Logs Module Retrieve logs from a Kubernetes pod |
 | [`src/core/modules/atomic/k8s/scale.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/k8s/scale.py#L1) | 150 | 3 | `asyncio, errors, logging, registry, schema, typing` | Kubernetes Scale Module Scale a Kubernetes deployment to a specified number of replicas |
 | [`src/core/modules/atomic/llm/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/__init__.py#L1) | 12 | 0 | `agent, chat, code_fix` | LLM Interaction Modules AI model interaction for code generation, analysis, and autonomous operations |
-| [`src/core/modules/atomic/llm/_agent_tool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L1) | 227 | 10 | `_interfaces, json, logging, registry, typing` | AgentTool Implementation |
+| [`src/core/modules/atomic/llm/_agent_tool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L1) | 314 | 11 | `_interfaces, engine, json, logging, registry, typing` | AgentTool Implementation |
 | [`src/core/modules/atomic/llm/_agent_tool_template.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool_template.py#L1) | 199 | 9 | `_interfaces, asyncio, engine, json, logging, typing` | TemplateAgentTool — Wraps a flyto template as an AI Agent tool. |
 | [`src/core/modules/atomic/llm/_chat_models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_chat_models.py#L1) | 339 | 15 | `_interfaces, aiohttp, httpx, json, logging, typing, utils` | ChatModel Implementations |
 | [`src/core/modules/atomic/llm/_interfaces.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_interfaces.py#L1) | 118 | 12 | `__future__, dataclasses, typing` | AI Agent Protocol Interfaces |
 | [`src/core/modules/atomic/llm/_prompt.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_prompt.py#L1) | 183 | 7 | `core, json, logging, re, typing` | Prompt resolution helpers for LLM Agent module. |
 | [`src/core/modules/atomic/llm/_providers.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_providers.py#L1) | 243 | 4 | `aiohttp, httpx, json, logging, typing, utils` | LLM provider API call implementations for Agent module. |
-| [`src/core/modules/atomic/llm/_resilience.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L1) | 216 | 13 | `json, logging, re, typing` | Agent Resilience Layer |
-| [`src/core/modules/atomic/llm/_tools.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L1) | 205 | 6 | `json, logging, registry, typing` | Tool building and execution helpers for LLM Agent module. |
+| [`src/core/modules/atomic/llm/_resilience.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L1) | 277 | 14 | `engine, json, logging, re, typing` | Agent Resilience Layer |
+| [`src/core/modules/atomic/llm/_tools.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L1) | 237 | 6 | `json, logging, registry, typing` | Tool building and execution helpers for LLM Agent module. |
 | [`src/core/modules/atomic/llm/agent.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/agent.py#L1) | 1295 | 16 | `_agent_tool, _chat_models, _interfaces, _prompt, _resilience, _tools, asyncio, core, engine, json, logging, os` | AI Agent Module Autonomous agent that can use tools (other modules) to complete tasks. |
 | [`src/core/modules/atomic/llm/chat.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/chat.py#L1) | 771 | 10 | `aiohttp, engine, httpx, json, logging, os, re, registry, schema, typing, utils` | LLM Chat Module Interact with LLM APIs for code generation, analysis, and decision making |
 | [`src/core/modules/atomic/llm/code_fix.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/code_fix.py#L1) | 663 | 9 | `chat, difflib, engine, json, logging, os, pathlib, re, registry, schema, typing, utils` | LLM Code Fix Module AI-powered automatic code fixes based on issues and feedback |

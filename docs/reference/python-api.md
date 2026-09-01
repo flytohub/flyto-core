@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,033 declarations across 822 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,035 declarations across 822 files**.
 
 ## `demo.py`
 
@@ -5212,6 +5212,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ModuleAgentTool.description(self) -> str` | Implements `ModuleAgentTool.description`; linked source is authoritative. | [`src/core/modules/atomic/llm/_agent_tool.py:162`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L162) |
 | method | `def ModuleAgentTool.to_tool_call_request(self) -> ToolCallRequest` | Build tool definition for LLM function calling. | [`src/core/modules/atomic/llm/_agent_tool.py:168`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L168) |
 | method | `async def ModuleAgentTool.invoke(self, arguments: Dict&#91;str, Any&#93;, agent_context: Optional&#91;Dict&#91;str, Any&#93;&#93;=None) -> Dict&#91;str, Any&#93;` | Execute the wrapped module with given arguments. | [`src/core/modules/atomic/llm/_agent_tool.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L180) |
+| function | `def _stamp_tool_outcome(module_instance, result)` | Give a tool result the same rung a step result would carry. | [`src/core/modules/atomic/llm/_agent_tool.py:229`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_agent_tool.py#L229) |
 
 ## `src/core/modules/atomic/llm/_agent_tool_template.py`
 
@@ -5302,6 +5303,7 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def CircuitBreaker.record_result(self, module_id: str, success: bool, error: str='') -> None` | Record tool result for circuit breaker tracking. | [`src/core/modules/atomic/llm/_resilience.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L150) |
 | method | `def CircuitBreaker.reset(self) -> None` | Reset all breakers. | [`src/core/modules/atomic/llm/_resilience.py:166`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L166) |
 | function | `def scan_for_injection(text: str) -> Optional&#91;str&#93;` | Scan tool result for prompt injection patterns. | [`src/core/modules/atomic/llm/_resilience.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L175) |
+| function | `def rung_line(result) -> str` | The outcome line for a tool result, or '' when there is no rung. | [`src/core/modules/atomic/llm/_resilience.py:244`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_resilience.py#L244) |
 
 ## `src/core/modules/atomic/llm/_tools.py`
 
@@ -5311,8 +5313,8 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _schema_to_json_schema(params_schema: List&#91;Dict&#93;) -> Dict` | Convert flyto params schema to JSON Schema for OpenAI. | [`src/core/modules/atomic/llm/_tools.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L61) |
 | function | `def _map_type(flyto_type: str) -> str` | Map flyto types to JSON Schema types. | [`src/core/modules/atomic/llm/_tools.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L112) |
 | function | `async def execute_tool(tool_name: str, arguments: Dict, parent_context: Dict) -> Dict` | Execute a tool (module) and return results. | [`src/core/modules/atomic/llm/_tools.py:126`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L126) |
-| function | `def build_agent_system_prompt(base_prompt: str, tools: List&#91;Dict&#93;) -> str` | Build the system prompt for the agent. | [`src/core/modules/atomic/llm/_tools.py:180`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L180) |
-| function | `def build_task_prompt(task: str, context: Dict) -> str` | Build the task prompt with context. | [`src/core/modules/atomic/llm/_tools.py:196`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L196) |
+| function | `def build_agent_system_prompt(base_prompt: str, tools: List&#91;Dict&#93;) -> str` | Build the system prompt for the agent. | [`src/core/modules/atomic/llm/_tools.py:211`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L211) |
+| function | `def build_task_prompt(task: str, context: Dict) -> str` | Build the task prompt with context. | [`src/core/modules/atomic/llm/_tools.py:228`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/llm/_tools.py#L228) |
 
 ## `src/core/modules/atomic/llm/agent.py`
 
