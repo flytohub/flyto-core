@@ -42,7 +42,7 @@ python-dotenv==1.2.3
     # via flyto-core (pyproject.toml)
 pyyaml==6.0.3
     # via flyto-core (pyproject.toml)
-regex==2026.8.31
+regex==2026.9.3
     # via flyto-core (pyproject.toml)
 soupsieve==2.9.2
     # via beautifulsoup4
