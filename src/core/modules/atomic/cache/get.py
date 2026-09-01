@@ -3,12 +3,43 @@
 """
 Cache Get Module
 Get a value from an in-memory or Redis cache.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+A lookup has two answers and they are not the same kind of answer, so they do
+not get the same rung.
+
+  a value came back                                   OBSERVED
+      The value in `data['value']` is the one the store held. It was not
+      computed here, not defaulted here, and there is no branch that invents
+      it: it came out of `_memory_cache` through the TTL-respecting read path,
+      or off the wire from Redis. That is a measurement of the store's
+      contents, which is what OBSERVED means.
+
+  nothing came back                                   ACCEPTED
+      `hit=False` is the same reading whether the key was never written, was
+      written and has expired, was written to a different process's copy of
+      `_memory_cache`, or was written to a Redis at a different `redis_url`.
+      A value that reads identically across "the data is not there" and "we
+      are not looking where the data is" is not evidence about the data. What
+      it does establish is that a store answered the lookup, and that is
+      exactly ACCEPTED.
+
+This is the same split `database.query._returned_rows` makes for a query that
+returns no result set, and for the same reason.
+
+WHAT `hit` DOES NOT DISTINGUISH, and why the rung cannot fix it: the `memory`
+backend is a module-level dict, so it is per-process. Two workers do not share
+it, and a `cache.set` on one is a permanent miss on the other. The rung reports
+what this process's store said; it cannot report that the caller pointed at the
+wrong store.
 """
 import json
 import logging
 import time
 from typing import Any, Dict, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose
@@ -21,6 +52,50 @@ logger = logging.getLogger(__name__)
 # Module-level in-memory cache storage
 # Structure: {key: {'value': any, 'expires_at': float or None}}
 _memory_cache: Dict[str, Dict[str, Any]] = {}
+
+
+def _lookup_outcome(backend: str, hit: bool) -> Dict[str, Any]:
+    """The rung a single cache lookup earned, and the reading that earned it.
+
+    Kept as a free function, and pure, so the decision can be tested without a
+    Redis and without reaching into module state -- the same separation
+    ``file.write._write_outcome`` keeps.
+    """
+    if hit:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'cached_value_returned',
+                'backend': backend,
+                'measured_by': (
+                    'the value the store returned for this key -- from '
+                    '_memory_cache through the TTL check, or from the Redis '
+                    'GET reply'
+                ),
+                'detail': (
+                    'A stored value crossed back to us. It says the key is '
+                    'present in the store this module read; it says nothing '
+                    'about how it got there or when it expires.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'cache_miss',
+            'backend': backend,
+            'measured_by': None,
+            'detail': (
+                'The store answered and returned nothing. A miss reads '
+                'identically whether the key was never set, was set and has '
+                'expired, or was set somewhere this module is not looking -- '
+                'the memory backend is per-process. Nothing about the data '
+                'was observed.'
+            ),
+        }],
+    )
 
 
 def _cache_get(key: str) -> Optional[Any]:
@@ -124,6 +199,15 @@ def _cache_has(key: str) -> bool:
             'description': 'The backend used',
             'description_key': 'modules.cache.get.output.backend.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the lookup was followed: "observed" when a stored '
+                'value came back, "accepted" on a miss -- a miss does not '
+                'distinguish absent data from the wrong store'
+            ),
+            'description_key': 'modules.cache.get.output.outcome.description',
+        },
     },
     timeout_ms=10000,
 )
@@ -153,6 +237,7 @@ async def cache_get(context: Dict[str, Any]) -> Dict[str, Any]:
                 'value': value,
                 'hit': hit,
                 'backend': 'memory',
+                'outcome': _lookup_outcome('memory', hit),
             }
         }
 
@@ -178,6 +263,7 @@ async def cache_get(context: Dict[str, Any]) -> Dict[str, Any]:
                             'value': None,
                             'hit': False,
                             'backend': 'redis',
+                            'outcome': _lookup_outcome('redis', False),
                         }
                     }
 
@@ -196,6 +282,7 @@ async def cache_get(context: Dict[str, Any]) -> Dict[str, Any]:
                         'value': value,
                         'hit': True,
                         'backend': 'redis',
+                        'outcome': _lookup_outcome('redis', True),
                     }
                 }
             finally:

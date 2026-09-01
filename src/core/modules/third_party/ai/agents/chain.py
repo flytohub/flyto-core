@@ -4,17 +4,88 @@
 Chain Agent Module
 
 Sequential AI processing chain with multiple steps.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+One return path, one rung: ACCEPTED. Every step in the chain is one LLM call
+and every LLM call is the provider describing its own work, so the highest
+honest claim is that the provider answered -- N times, once per step.
+
+  the whole chain ran                            ACCEPTED
+      Reaching the return means `_call_llm` came back without raising for each
+      of the N steps. That is real evidence the calls happened, and it is
+      evidence of nothing else. No step's output is validated, parsed or
+      checked against its prompt; a chain step that asked for JSON and got an
+      apology is indistinguishable here from one that worked.
+
+`steps_completed` is deliberately NOT the thing the rung rests on, even though
+it is a count of real completions. On this return path it is always
+`len(chain_steps)`, because a partial chain raises instead of returning -- so it
+is the caller's own input read back, and the test this contract is built on
+("would this value be the same if the effect had not happened?") says it is not
+evidence. The count of completions that came back non-empty is a different
+number and is carried separately for exactly that reason.
+
+THE FAILURE PATH CARRIES NOTHING, and that is a gap worth naming rather than
+papering over. `except Exception -> raise RuntimeError` means a chain that died
+on step 5 of 7 has already paid for four completions, and the exception that
+reaches the executor says so nowhere. An envelope cannot ride on a raise in this
+engine; making that path reportable would mean changing what this module returns
+on failure, which is a bigger change than an outcome contract should smuggle in.
 """
 
 import logging
 from typing import Any, Dict, List
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....base import BaseModule
 from ....registry import register_module
 from .....constants import OLLAMA_DEFAULT_URL, APIEndpoints
 from .llm_client import LLMClientMixin
 
 logger = logging.getLogger(__name__)
+
+
+def _chain_completed(
+    *,
+    provider: str,
+    model: str,
+    steps_requested: int,
+    completions: List[Any],
+) -> Dict[str, Any]:
+    """ACCEPTED: the provider answered once per step, and that is the whole claim."""
+    non_empty = sum(1 for output in completions if isinstance(output, str) and output.strip())
+    effects = [{
+        'kind': 'chain_completions_returned',
+        'provider': provider,
+        'model': model,
+        'steps_requested': steps_requested,
+        'completions_returned': len(completions),
+        'completions_with_text': non_empty,
+        'measured_by': (
+            'one _call_llm return per step, counted in the loop; '
+            'completions_with_text is len() over the ones that were non-blank strings'
+        ),
+        'detail': (
+            'Each step is the provider reporting on its own work. Nothing here '
+            'evaluates whether any step did what its prompt asked -- a step that '
+            'was told to return JSON and returned an apology looks the same.'
+        ),
+    }]
+    if non_empty < len(completions):
+        effects.append({
+            'kind': 'chain_step_returned_no_text',
+            'blank_completions': len(completions) - non_empty,
+            'measured_by': 'the same loop count, inverted',
+            'detail': (
+                'At least one step came back empty or non-textual. The provider '
+                'still answered, which is why this stays accepted, but the '
+                'result flowing downstream from a blank step is a blank, and a '
+                'blank substituted into the next step\'s {previous} placeholder '
+                'is what the chain was built on.'
+            ),
+        })
+    return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=effects)
 
 
 @register_module(
@@ -116,7 +187,15 @@ logger = logging.getLogger(__name__)
         'intermediate_results': {'type': 'array', 'description': 'Results from each step in the chain',
                 'description_key': 'modules.agent.chain.output.intermediate_results.description', 'items': {'type': 'string'}},
         'steps_completed': {'type': 'number', 'description': 'The steps completed',
-                'description_key': 'modules.agent.chain.output.steps_completed.description'}
+                'description_key': 'modules.agent.chain.output.steps_completed.description'},
+        'outcome': {'type': 'object',
+                'description': (
+                    'How far this chain was followed into reality: always '
+                    '"accepted" on the return path -- the provider answered once '
+                    'per step and nothing here evaluates any answer. The failure '
+                    'path raises and carries no envelope at all'
+                ),
+                'description_key': 'modules.agent.chain.output.outcome.description'}
     },
     examples=[
         {
@@ -189,7 +268,13 @@ class ChainAgentModule(LLMClientMixin, BaseModule):
             return {
                 "result": result,
                 "intermediate_results": intermediate_results,
-                "steps_completed": len(intermediate_results)
+                "steps_completed": len(intermediate_results),
+                "outcome": _chain_completed(
+                    provider=self.llm_provider,
+                    model=self.model,
+                    steps_requested=len(self.chain_steps),
+                    completions=intermediate_results,
+                ),
             }
 
         except Exception as e:

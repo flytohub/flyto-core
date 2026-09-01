@@ -5,12 +5,62 @@ LLM Chat Module
 Interact with LLM APIs for code generation, analysis, and decision making
 
 SECURITY: Includes SSRF protection for custom base URLs.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED is the ceiling of the happy path, and the reason is the whole point of
+putting a rung on an LLM call at all. A completion coming back IS an observation
+of a completion. It is not an observation of anything in the world. The provider
+ran a model, charged for it, and told us what it produced -- every number in the
+answer (`tokens_used`, `finish_reason`, the text itself) is the peer reporting on
+its own work, which is the textbook definition of "the other side acknowledged
+taking it". Nothing here measures a consequence of the text.
+
+`tokens_used` deserves naming, because it is the `bytes_written` of this module:
+it is the number the provider decided to bill, read out of the provider's own
+JSON. It is not a measurement we made, and no branch here checks it against
+anything. It travels as an effect labelled with what it is rather than as
+evidence for a rung.
+
+The interesting rungs are off the ladder:
+
+  a guard refused before the request                    FAILED
+      SSRF, the env-credential endpoint check, a missing key, an unknown
+      provider. All four return above the first `await`, so no bytes left this
+      process and no money was spent. "Definitely nothing happened" and "we
+      cannot say" are different answers and only the first one is true here.
+
+  the provider answered with an error object            FAILED
+      The request arrived and the peer gave a definite negative. We are not
+      guessing.
+
+  the transport failed, or anything raised              INDETERMINATE
+      A timeout, a reset connection, a body we could not parse. The request may
+      have been delivered, the completion may have run, the account may have
+      been billed. Nothing here can tell, and `outcome.py` names exactly this
+      case: an observation channel that was severed is indeterminate, never
+      failed.
+
+  response_format='json' and nothing parsed             FAILED, claim_by=CALLER
+      The one predicate in this module that somebody other than us asked for.
+      `response_format` is a caller-supplied contract -- "give me JSON" -- and
+      `_parse_json_response` evaluates it on every response. When it comes back
+      None the caller's contract broke, which `outcome.py` splits from our own
+      inferences being wrong: a caller's expectation that failed is FAILED.
+
+      The reverse does NOT climb: a response that parses is still only ACCEPTED,
+      never VERIFIED. VERIFIED means a declared postcondition was evaluated and
+      held, and "the peer's own answer is syntactically JSON" is a fact about
+      the peer's answer, not about the world. This module declares no
+      postcondition and must not; `ceiling_for(None)` caps it at OBSERVED
+      anyway, and it has nothing to observe.
 """
 
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import (
@@ -23,6 +73,153 @@ from ....utils import (
 
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# The four answers this module is entitled to give, and what earns each.
+# ---------------------------------------------------------------------------
+
+
+def _refused_before_dispatch(reason: str) -> Dict[str, Any]:
+    """FAILED, and specifically not INDETERMINATE.
+
+    Every caller of this sits above the first `await` on a network client, so
+    nothing was sent, nothing ran and nobody was billed -- and we know that
+    rather than infer it. `effects` is empty because nothing about the world
+    changed; `claim_by` is NONE because no expectation was adjudicated, the
+    request was refused before one could be.
+    """
+    return envelope(
+        Outcome.FAILED,
+        effects=[{
+            'kind': 'request_not_sent',
+            'reason': reason,
+            'measured_by': 'a guard that returned before any request was built',
+            'detail': (
+                'The request never left this process. No completion was '
+                'requested and no tokens were billed.'
+            ),
+        }],
+    )
+
+
+def _provider_refused(provider: str, message: str) -> Dict[str, Any]:
+    """FAILED: the request arrived and the peer said no, in its own words."""
+    return envelope(
+        Outcome.FAILED,
+        effects=[{
+            'kind': 'provider_error',
+            'provider': provider,
+            'message': message,
+            'measured_by': "the provider's own JSON error object",
+            'detail': (
+                'The provider answered and the answer was an error. There is no '
+                'completion. Whether the attempt was billable is the provider\'s '
+                'decision and is not reported here.'
+            ),
+        }],
+    )
+
+
+def _no_answer(provider: str, error: Any) -> Dict[str, Any]:
+    """INDETERMINATE: the textbook one, and it must not be argued down.
+
+    A timeout or a transport error severs the observation channel while the
+    request may already have been delivered. FAILED would assert the completion
+    did not happen; nothing evaluated that. DISPATCHED would assert we know less
+    than we do -- we know an attempt was made.
+    """
+    return envelope(
+        Outcome.INDETERMINATE,
+        effects=[{
+            'kind': 'no_answer_from_provider',
+            'provider': provider,
+            'error_type': type(error).__name__ if isinstance(error, BaseException) else None,
+            'error': str(error),
+            'measured_by': None,
+            'detail': (
+                'The request was attempted and no usable answer came back. It may '
+                'never have arrived, it may have run and been billed, or the '
+                'answer may have been lost on the way home. Nothing here can tell '
+                'which.'
+            ),
+        }],
+    )
+
+
+def _completion_outcome(
+    *,
+    provider: str,
+    model: str,
+    response_text: str,
+    tokens_used: Any,
+    finish_reason: Any,
+    response_format: str,
+    parsed: Any,
+) -> Dict[str, Any]:
+    """The rung a returned completion earned, which is ACCEPTED or worse."""
+    effects = [{
+        'kind': 'completion_returned',
+        'provider': provider,
+        'model': model,
+        'response_chars': len(response_text or ''),
+        'tokens_billed_by_provider': tokens_used,
+        'finish_reason': finish_reason,
+        'measured_by': "the provider's own JSON response body",
+        'detail': (
+            'A completion came back and the provider reported its own token '
+            'usage. Both are the peer describing its own work: this is an '
+            'observation of a completion, not of anything in the world. Nothing '
+            'here checks that the text is correct, that the token count is the '
+            'work actually done, or that any effect followed from it.'
+        ),
+    }]
+
+    # Not a rung change. `length` is the provider telling us it stopped early,
+    # which leaves the text a fragment -- worth carrying beside the answer, and
+    # the most common reason a `json` response fails to parse below.
+    if finish_reason == 'length':
+        effects.append({
+            'kind': 'completion_truncated',
+            'finish_reason': finish_reason,
+            'measured_by': "the provider's finish_reason field",
+            'detail': (
+                'The provider stopped at the token limit rather than at the end '
+                'of its answer. The text is a fragment.'
+            ),
+        })
+
+    if response_format == 'json' and parsed is None:
+        return envelope(
+            Outcome.FAILED,
+            claim_by=ClaimBy.CALLER,
+            postcondition="response_format='json': the response parses as JSON",
+            effects=effects + [{
+                'kind': 'response_format_unmet',
+                'requested_format': response_format,
+                'measured_by': '_parse_json_response(response_text) is None',
+                'detail': (
+                    'The caller asked for JSON and none of the three parses '
+                    '(direct, fenced block, first brace-delimited object) '
+                    'succeeded. `response` still carries the raw text; `parsed` '
+                    'is null.'
+                ),
+            }],
+        )
+
+    if response_format == 'json':
+        effects.append({
+            'kind': 'response_format_met',
+            'requested_format': response_format,
+            'measured_by': '_parse_json_response(response_text) returned a value',
+            'detail': (
+                'The caller\'s format contract held. This does not raise the '
+                'rung: it is a fact about the shape of the peer\'s own answer, '
+                'not about anything in the world.'
+            ),
+        })
+
+    return envelope(Outcome.ACCEPTED, effects=effects)
 
 
 @register_module(
@@ -103,7 +300,17 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Why the response ended'
         ,
-                'description_key': 'modules.llm.chat.output.finish_reason.description'}
+                'description_key': 'modules.llm.chat.output.finish_reason.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this call was followed into reality: accepted when a '
+                'completion came back, failed when a guard refused before the '
+                'request or the provider answered with an error, indeterminate '
+                'when nothing came back. Never higher than accepted -- a '
+                'completion is an observation of a completion, not of the world'
+            ),
+            'description_key': 'modules.llm.chat.output.outcome.description'}
     },
     examples=[
         {
@@ -160,7 +367,8 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
             return {
                 'ok': False,
                 'error': str(e),
-                'error_code': 'SSRF_BLOCKED'
+                'error_code': 'SSRF_BLOCKED',
+                'outcome': _refused_before_dispatch('SSRF_BLOCKED'),
             }
 
     # Get API key from environment if not provided
@@ -185,14 +393,16 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': str(e),
-            'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'
+            'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT',
+            'outcome': _refused_before_dispatch('ENV_KEY_UNTRUSTED_ENDPOINT'),
         }
 
     if provider != 'ollama' and not api_key:
         return {
             'ok': False,
             'error': f'API key not provided for {provider}',
-            'error_code': 'MISSING_API_KEY'
+            'error_code': 'MISSING_API_KEY',
+            'outcome': _refused_before_dispatch('MISSING_API_KEY'),
         }
 
     # Inject context into prompt
@@ -234,10 +444,15 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
             return {
                 'ok': False,
                 'error': f'Unknown provider: {provider}',
-                'error_code': 'INVALID_PROVIDER'
+                'error_code': 'INVALID_PROVIDER',
+                'outcome': _refused_before_dispatch('INVALID_PROVIDER'),
             }
 
         if not result.get('ok'):
+            # The provider helpers build their own envelope, because only they
+            # know whether the peer refused (FAILED) or never answered
+            # (INDETERMINATE). Passing the result through keeps that distinction
+            # instead of flattening both into one guess made out here.
             return result
 
         response_text = result['response']
@@ -247,23 +462,40 @@ async def llm_chat(context: Dict[str, Any]) -> Dict[str, Any]:
         if response_format == 'json':
             parsed = _parse_json_response(response_text)
 
-        logger.info(f"LLM chat completed: {result.get('tokens_used', 0)} tokens")
+        tokens_used = result.get('tokens_used', 0)
+        finish_reason = result.get('finish_reason', 'stop')
+
+        logger.info(f"LLM chat completed: {tokens_used} tokens")
 
         return {
             'ok': True,
             'response': response_text,
             'parsed': parsed,
             'model': model,
-            'tokens_used': result.get('tokens_used', 0),
-            'finish_reason': result.get('finish_reason', 'stop')
+            'tokens_used': tokens_used,
+            'finish_reason': finish_reason,
+            'outcome': _completion_outcome(
+                provider=provider,
+                model=model,
+                response_text=response_text,
+                tokens_used=tokens_used,
+                finish_reason=finish_reason,
+                response_format=response_format,
+                parsed=parsed,
+            ),
         }
 
     except Exception as e:
         logger.error(f"LLM chat failed: {e}")
+        # Everything reachable from here is downstream of a request having been
+        # built and handed to a client: a transport error, a timeout, or a
+        # response body whose shape we could not read. In none of those cases do
+        # we know whether the completion ran.
         return {
             'ok': False,
             'error': str(e),
-            'error_code': 'API_ERROR'
+            'error_code': 'API_ERROR',
+            'outcome': _no_answer(provider, e),
         }
 
 
@@ -307,7 +539,12 @@ async def _call_openai(
         result = response.json()
 
     if 'error' in result:
-        return {'ok': False, 'error': result['error'].get('message', 'Unknown error')}
+        message = result['error'].get('message', 'Unknown error')
+        return {
+            'ok': False,
+            'error': message,
+            'outcome': _provider_refused('openai', message),
+        }
 
     return {
         'ok': True,
@@ -354,7 +591,12 @@ async def _call_openai_aiohttp(
             result = await response.json()
 
     if 'error' in result:
-        return {'ok': False, 'error': result['error'].get('message', 'Unknown error')}
+        message = result['error'].get('message', 'Unknown error')
+        return {
+            'ok': False,
+            'error': message,
+            'outcome': _provider_refused('openai', message),
+        }
 
     return {
         'ok': True,
@@ -423,7 +665,12 @@ async def _call_anthropic(
                 result = await response.json()
 
     if 'error' in result:
-        return {'ok': False, 'error': result['error'].get('message', 'Unknown error')}
+        message = result['error'].get('message', 'Unknown error')
+        return {
+            'ok': False,
+            'error': message,
+            'outcome': _provider_refused('anthropic', message),
+        }
 
     return {
         'ok': True,
@@ -482,7 +729,16 @@ async def _call_ollama(
         }
 
     except Exception as e:
-        return {'ok': False, 'error': f'Ollama error: {e}'}
+        # Ollama is the one provider whose transport failure is swallowed into a
+        # result rather than raised, so the INDETERMINATE has to be built here.
+        # `llm_chat` returns this dict verbatim and would otherwise attach the
+        # FAILED it uses for a peer that answered -- which would be a claim that
+        # the local model definitely did not run.
+        return {
+            'ok': False,
+            'error': f'Ollama error: {e}',
+            'outcome': _no_answer('ollama', e),
+        }
 
 
 def _parse_json_response(text: str) -> Optional[Any]:

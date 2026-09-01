@@ -3,13 +3,38 @@
 """
 Google Gmail Search Module
 Search Gmail messages using the Gmail API with OAuth2 access token and aiohttp.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: two rungs, and the rung is not decided by
+the number this module reports.
+
+  the search returned message ids    OBSERVED
+      Ids came back from the mailbox. Those ids are a measurement of what is
+      there -- the service naming messages that match -- and they are the fact
+      the rung rests on.
+
+  the search returned none           ACCEPTED
+      An empty result reads identically whether the mailbox holds nothing
+      matching, the query was malformed into matching nothing, or the token
+      belongs to a different account. The empty-read case, answered the way
+      `database.query` answers it: the service replied, and the reply contains
+      no observation of any message.
+
+WHY NOT `len(messages)`, the number in the payload. This module makes a second
+request per id, and `_fetch_message_metadata` returns None on any non-200 --
+logging a warning and dropping that message from the list. So `total` can be
+smaller than what matched, or even 0 while the mailbox plainly contains matches,
+and a rung read off it would report ACCEPTED for a search that observed twelve
+messages and merely failed to describe them. The two counts are separated in the
+payload (`total` and `matched_ids`) and the shortfall is carried in its own
+effect, so a consumer can see an incomplete read instead of a small one.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....errors import ModuleError, ValidationError
 from ....registry import register_module
 from ....schema import compose
@@ -74,7 +99,31 @@ GMAIL_MESSAGES_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
                 },
             },
         },
-        'total': {'type': 'number', 'description': 'Total number of messages returned', 'description_key': 'modules.google.gmail.search.output.total.description'},
+        'total': {
+            'type': 'number',
+            'description': (
+                'Number of messages in the list above: those whose metadata was '
+                'fetched successfully. Can be lower than matched_ids'
+            ),
+            'description_key': 'modules.google.gmail.search.output.total.description',
+        },
+        'matched_ids': {
+            'type': 'number',
+            'description': (
+                'Number of message ids the search itself returned, before the '
+                'per-message metadata fetch that can drop some of them'
+            ),
+            'description_key': 'modules.google.gmail.search.output.matched_ids.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this search was followed into reality: observed when the '
+                'search returned ids, accepted when it returned none. Decided '
+                'from the ids, not from the messages that could be described'
+            ),
+            'description_key': 'modules.google.gmail.search.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -102,18 +151,77 @@ async def google_gmail_search(context: Dict[str, Any]) -> Dict[str, Any]:
     if not query:
         raise ValidationError('Search query is required', field='query')
 
-    messages = await _search_messages(access_token, query, max_results)
+    messages, matched_ids = await _search_messages(access_token, query, max_results)
 
     return {
         'ok': True,
-        'data': {'messages': messages, 'total': len(messages)},
+        'data': {
+            'messages': messages,
+            'total': len(messages),
+            'matched_ids': matched_ids,
+            'outcome': _search_outcome(query, matched_ids, len(messages)),
+        },
     }
 
 
-async def _search_messages(access_token: str, query: str, max_results: int) -> List[Dict[str, Any]]:
-    """Search Gmail and fetch message metadata."""
+def _search_outcome(query: str, matched_ids: int, described: int) -> Dict[str, Any]:
+    """OBSERVED when the search named messages, ACCEPTED when it named none."""
+    if matched_ids <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_messages_matched',
+                'query': query,
+                'measured_by': None,
+                'detail': (
+                    'The service answered with no message ids. That is not an '
+                    'observation of the mailbox: nothing matching, a query that '
+                    'matched nothing, and a token for the wrong account all read '
+                    'the same.'
+                ),
+            }],
+        )
+
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'messages_matched',
+        'query': query,
+        'count': matched_ids,
+        'measured_by': 'len() over the message ids the search returned',
+        'detail': (
+            'Ids the service returned for messages that match. Capped by '
+            'maxResults, so this is what came back under that cap, not a total.'
+        ),
+    }]
+
+    if described < matched_ids:
+        effects.append({
+            'kind': 'message_metadata_incomplete',
+            'matched_ids': matched_ids,
+            'described': described,
+            'measured_by': 'ids returned by the search, minus messages in the payload',
+            'detail': (
+                'Some per-message metadata fetches did not return 200 and those '
+                'messages were dropped from the list. The search observed them; '
+                'this module could not describe them.'
+            ),
+        })
+
+    return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+async def _search_messages(
+    access_token: str, query: str, max_results: int
+) -> Tuple[List[Dict[str, Any]], int]:
+    """Search Gmail and fetch message metadata.
+
+    Returns the described messages AND how many ids the search returned. The
+    second number used to be discarded inside this function, which is what made
+    a dropped metadata fetch invisible to every caller.
+    """
     headers = {'Authorization': f'Bearer {access_token}'}
     messages: List[Dict[str, Any]] = []
+    matched_ids = 0
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -130,14 +238,16 @@ async def _search_messages(access_token: str, query: str, max_results: int) -> L
                 search_data = await resp.json()
 
             # Step 2: Fetch details for each message
-            for msg_ref in search_data.get('messages', []):
+            message_refs = search_data.get('messages', []) or []
+            matched_ids = len(message_refs)
+            for msg_ref in message_refs:
                 msg = await _fetch_message_metadata(session, headers, msg_ref['id'])
                 if msg:
                     messages.append(msg)
     except aiohttp.ClientError as exc:
         raise ModuleError(f'Gmail API request failed: {exc}') from exc
 
-    return messages
+    return messages, matched_ids
 
 
 async def _fetch_message_metadata(session, headers: dict, msg_id: str) -> Optional[Dict[str, Any]]:

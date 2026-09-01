@@ -3,6 +3,35 @@
 """
 GitHub API Integration Modules
 Work with GitHub repositories, issues, pull requests, etc.
+
+HOW FAR A GITHUB CALL IS FOLLOWED
+
+Every module in this file sends one HTTPS request and reads the reply to that
+same request. Not one of them reads anything back afterwards, so the ceiling on
+every successful path here is ACCEPTED. `response.status` is GitHub reporting on
+GitHub's own work, and reading a peer's report of its own work is the definition
+of taking its word for it. `http.request` settled the identical question the
+identical way (`atomic/http/request.py`, the `is_ok` branch), and a 201 Created
+is the case it names out loud: the number in the body is the server ASSERTING it
+created something. To reach OBSERVED one of these modules would have to issue a
+second request and compare; none does, and adding one is a change to what these
+modules cost and when they rate-limit, not a change to what they report.
+
+ACCEPTED is still worth attaching, because the alternative is not OBSERVED, it
+is DISPATCHED -- what the engine stamps on a module that reports nothing, and
+what these five said until now. "The instruction left us and nobody confirmed
+anything" is untrue of a call that came back 200 with a parsed body.
+
+THE ERROR PATHS ARE THE OTHER HALF, and on this file they matter more than the
+happy one. These five modules do not raise on a non-2xx: they return
+``{'status': 'error', 'message': ...}`` with no ``ok`` key, which
+``_execute_single_mode`` passes straight through, so a 404 on ``get_repo`` is
+recorded as a step that SUCCEEDED and flows downstream as one. The envelope is
+now the only field on that path that says otherwise. It does not fix the
+underlying shape -- see the report accompanying this change; returning
+``ok: False`` would make the payload vanish into an ERROR result and take the
+envelope with it, which is a decision about step semantics and not about
+reporting.
 """
 import logging
 import os
@@ -13,9 +42,101 @@ import aiohttp
 from ...base import BaseModule
 from ...registry import register_module
 from ....constants import APIEndpoints, EnvVars
+from ....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _peer_answered(status: int) -> Dict[str, Any]:
+    """The one thing every path in this file measures: a status line came back.
+
+    This is the whole distance between DISPATCHED and ACCEPTED. A server
+    received the request, processed it far enough to choose a reply, and sent
+    one. It is not an observation of GitHub's state -- nothing in this file
+    looks at anything except the answer to the message it just sent.
+    """
+    return {
+        'kind': 'github_reply_read',
+        'status': status,
+        'measured_by': 'response.status -- the status line of the reply to this request',
+        'detail': (
+            'A server received this request and chose a reply. That is what '
+            'separates accepted from dispatched, and it is all it separates: '
+            'no GitHub state is read back anywhere in this module.'
+        ),
+    }
+
+
+def _read_refused(status: int, resource: str) -> Dict[str, Any]:
+    """FAILED -- a read that came back non-2xx returned nothing and changed nothing.
+
+    FAILED rather than INDETERMINATE, and the second axis in `engine/outcome.py`
+    is what decides it: INDETERMINATE is for when we cannot say. Here we can. A
+    GET that GitHub refused altered nothing on either side, so there is no
+    effect left in doubt -- only data we do not have. `http.request` uses FAILED
+    for the same shape of definite non-happening.
+    """
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            _peer_answered(status),
+            {
+                'kind': 'github_read_refused',
+                'resource': resource,
+                'measured_by': 'response.status, against the 200 this module can read',
+                'detail': (
+                    'GitHub answered and returned no {0}. A read changes nothing, '
+                    'so nothing is left uncertain: this did not happen. The module '
+                    'still returns a payload the engine records as a successful '
+                    'step; this rung is the only field on it that disagrees.'
+                ).format(resource),
+            },
+        ],
+    )
+
+
+def _mutation_unconfirmed(status: int, resource: str) -> Dict[str, Any]:
+    """The off-ladder answer for a create that did not come back 201.
+
+    The same split `http.request` makes between a refused request and a timed
+    out one, moved from the transport to the status line:
+
+        4xx   GitHub read the request, rejected it by name, and created
+              nothing. Definite, so FAILED.
+        5xx   GitHub broke while handling a POST it had already taken off the
+              wire. The resource may exist. INDETERMINATE -- and this is why
+              ``retryable=False`` on both creating modules is right: a retry
+              after a 500 can create the thing twice.
+        2xx   a success code this module does not recognise (it tests for
+              exactly 201). The peer took the request and this module parsed
+              nothing, so whether the resource exists is not known here.
+
+    Calling the 5xx case FAILED would be the more comfortable answer and the
+    wrong one: it would tell a person nothing was created when something may
+    have been, which is the failure mode a workflow author cannot recover from.
+    """
+    definite = 400 <= status < 500
+    return envelope(
+        Outcome.FAILED if definite else Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            _peer_answered(status),
+            {
+                'kind': 'github_create_rejected' if definite else 'github_create_unconfirmed',
+                'resource': resource,
+                'measured_by': 'response.status, against the 201 this module can read',
+                'detail': (
+                    'GitHub rejected the request by name and created no {0}.'
+                    if definite else
+                    'GitHub took this request off the wire and did not confirm '
+                    'what it did with it, so the {0} may or may not exist. A '
+                    'retry may create a second one.'
+                ).format(resource),
+            },
+        ],
+    )
 
 
 def _github_headers(token=None):
@@ -122,7 +243,13 @@ def _simplify_repos(data):
         'forks': {'type': 'number', 'description': 'Number of forks',
                 'description_key': 'modules.api.github.get_repo.output.forks.description'},
         'url': {'type': 'string', 'description': 'URL address',
-                'description_key': 'modules.api.github.get_repo.output.url.description'}
+                'description_key': 'modules.api.github.get_repo.output.url.description'},
+        'outcome': {'type': 'object', 'description': (
+                    'How far the effect was followed: "accepted" when GitHub '
+                    'answered 200 with a repository body, "failed" when it '
+                    'answered anything else. Never higher -- nothing reads GitHub '
+                    'state back'),
+                'description_key': 'modules.api.github.get_repo.output.outcome.description'}
     },
     examples=[
         {
@@ -177,13 +304,34 @@ class GitHubGetRepoModule(BaseModule):
                         'description': data.get('description'),
                         'stars': data.get('stargazers_count'),
                         'forks': data.get('forks_count'),
-                        'url': data.get('html_url')
+                        'url': data.get('html_url'),
+                        'outcome': envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=[
+                                _peer_answered(response.status),
+                                {
+                                    'kind': 'repository_described_by_peer',
+                                    'full_name': data.get('full_name'),
+                                    'measured_by': (
+                                        'full_name in the JSON body GitHub returned'
+                                    ),
+                                    'detail': (
+                                        "GitHub's own description of a repository it "
+                                        'holds. Nothing corroborates it: this module '
+                                        'sends one request and reads its reply, so the '
+                                        'evidence is exactly what the peer chose to say.'
+                                    ),
+                                },
+                            ],
+                        ),
                     }
                 else:
                     error_text = await response.text()
                     return {
                         'status': 'error',
-                        'message': f'Failed to fetch repository: HTTP {response.status} - {error_text}'
+                        'message': f'Failed to fetch repository: HTTP {response.status} - {error_text}',
+                        'outcome': _read_refused(response.status, 'repository'),
                     }
 
 
@@ -268,7 +416,11 @@ class GitHubGetRepoModule(BaseModule):
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'issues': {'type': 'array', 'description': 'The issues'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the effect was followed: "accepted" when GitHub answered '
+            '200, "failed" when it answered anything else. `count` is the size '
+            'of one page of the reply, not a total')}
     },
     examples=[
         {
@@ -316,9 +468,42 @@ class GitHubListIssuesModule(BaseModule):
                 if response.status == 200:
                     data = await response.json()
                     issues = _simplify_issues(data)
-                    return {'status': 'success', 'issues': issues, 'count': len(issues)}
+                    return {
+                        'status': 'success',
+                        'issues': issues,
+                        'count': len(issues),
+                        'outcome': envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=[
+                                _peer_answered(response.status),
+                                {
+                                    'kind': 'issues_returned',
+                                    'count': len(issues),
+                                    'measured_by': (
+                                        'len() over the JSON array GitHub returned'
+                                    ),
+                                    'detail': (
+                                        'How many issue objects came back in THIS '
+                                        'reply, which is not how many the repository '
+                                        'has: per_page caps it at `limit` and only the '
+                                        'first page is requested, so a count equal to '
+                                        'the limit means "at least this many". A count '
+                                        'of 0 is the peer saying it matched nothing, '
+                                        'and is no weaker evidence than any other '
+                                        'number -- the rung rests on the reply, not on '
+                                        'the count.'
+                                    ),
+                                },
+                            ],
+                        ),
+                    }
                 error_text = await response.text()
-                return {'status': 'error', 'message': f'Failed to fetch issues: HTTP {response.status} - {error_text}'}
+                return {
+                    'status': 'error',
+                    'message': f'Failed to fetch issues: HTTP {response.status} - {error_text}',
+                    'outcome': _read_refused(response.status, 'issues'),
+                }
 
 
 @register_module(
@@ -406,7 +591,11 @@ class GitHubListIssuesModule(BaseModule):
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'issue': {'type': 'object', 'description': 'Issue information'},
         'number': {'type': 'number', 'description': 'Issue or PR number'},
-        'url': {'type': 'string', 'description': 'URL address'}
+        'url': {'type': 'string', 'description': 'URL address'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the effect was followed: "accepted" on a 201 (GitHub says '
+            'it created the issue; nothing reads it back), "failed" on a 4xx '
+            '(refused, nothing created), "indeterminate" on a 5xx (it may exist)')}
     },
     examples=[
         {
@@ -479,13 +668,40 @@ class GitHubCreateIssueModule(BaseModule):
                         'status': 'success',
                         'issue': data,
                         'number': data.get('number'),
-                        'url': data.get('html_url')
+                        'url': data.get('html_url'),
+                        'outcome': envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=[
+                                _peer_answered(response.status),
+                                {
+                                    'kind': 'issue_reported_created',
+                                    'number': data.get('number'),
+                                    'url': data.get('html_url'),
+                                    'measured_by': (
+                                        'number and html_url in the 201 body GitHub '
+                                        'returned'
+                                    ),
+                                    'detail': (
+                                        'GitHub asserting that it created an issue, and '
+                                        'naming it. The number is not a value this '
+                                        'module could have produced from its own '
+                                        'inputs, which is why this is accepted rather '
+                                        'than dispatched. It is still the peer '
+                                        'reporting on its own work, which is why it is '
+                                        'not observed: reading the issue back would be '
+                                        'an observation and no second request is made.'
+                                    ),
+                                },
+                            ],
+                        ),
                     }
                 else:
                     error_text = await response.text()
                     return {
                         'status': 'error',
-                        'message': f'Failed to create issue: HTTP {response.status} - {error_text}'
+                        'message': f'Failed to create issue: HTTP {response.status} - {error_text}',
+                        'outcome': _mutation_unconfirmed(response.status, 'issue'),
                     }
 
 
@@ -582,7 +798,11 @@ class GitHubCreateIssueModule(BaseModule):
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'pr': {'type': 'object', 'description': 'Pull request information'},
         'number': {'type': 'number', 'description': 'Pull request number'},
-        'url': {'type': 'string', 'description': 'Pull request URL'}
+        'url': {'type': 'string', 'description': 'Pull request URL'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the effect was followed: "accepted" on a 201 (GitHub says '
+            'it opened the PR; nothing reads it back), "failed" on a 4xx '
+            '(refused, nothing created), "indeterminate" on a 5xx (it may exist)')}
     },
     examples=[
         {
@@ -655,13 +875,39 @@ class GitHubCreatePRModule(BaseModule):
                         'status': 'success',
                         'pr': data,
                         'number': data.get('number'),
-                        'url': data.get('html_url')
+                        'url': data.get('html_url'),
+                        'outcome': envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=[
+                                _peer_answered(response.status),
+                                {
+                                    'kind': 'pull_request_reported_created',
+                                    'number': data.get('number'),
+                                    'url': data.get('html_url'),
+                                    'measured_by': (
+                                        'number and html_url in the 201 body GitHub '
+                                        'returned'
+                                    ),
+                                    'detail': (
+                                        'GitHub asserting that it opened a pull request '
+                                        'and naming it. Server-assigned, so it is more '
+                                        'than an echo of the inputs -- and still the '
+                                        'peer reporting its own work, so it is not an '
+                                        'observation. Note what is NOT claimed at any '
+                                        'rung: that the branches merge, that CI ran, or '
+                                        'that anyone can merge it.'
+                                    ),
+                                },
+                            ],
+                        ),
                     }
                 else:
                     error_text = await response.text()
                     return {
                         'status': 'error',
-                        'message': f'Failed to create pull request: HTTP {response.status} - {error_text}'
+                        'message': f'Failed to create pull request: HTTP {response.status} - {error_text}',
+                        'outcome': _mutation_unconfirmed(response.status, 'pull request'),
                     }
 
 
@@ -748,7 +994,11 @@ class GitHubCreatePRModule(BaseModule):
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'repos': {'type': 'array', 'description': 'List of repositories'},
-        'count': {'type': 'number', 'description': 'Number of repositories returned'}
+        'count': {'type': 'number', 'description': 'Number of repositories returned'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the effect was followed: "accepted" when GitHub answered '
+            '200, "failed" when it answered anything else. `count` is the size '
+            'of one page of the reply, not a total')}
     },
     examples=[
         {
@@ -810,6 +1060,35 @@ class GitHubListReposModule(BaseModule):
                 if response.status == 200:
                     data = await response.json()
                     repos = _simplify_repos(data)
-                    return {'status': 'success', 'repos': repos, 'count': len(repos)}
+                    return {
+                        'status': 'success',
+                        'repos': repos,
+                        'count': len(repos),
+                        'outcome': envelope(
+                            Outcome.ACCEPTED,
+                            claim_by=ClaimBy.NONE,
+                            effects=[
+                                _peer_answered(response.status),
+                                {
+                                    'kind': 'repositories_returned',
+                                    'count': len(repos),
+                                    'measured_by': (
+                                        'len() over the JSON array GitHub returned'
+                                    ),
+                                    'detail': (
+                                        'How many repository objects came back in THIS '
+                                        'reply. One page only: per_page caps it at '
+                                        '`limit` (max 100) and no pagination follows, '
+                                        'so this is not "how many repositories the '
+                                        'owner has".'
+                                    ),
+                                },
+                            ],
+                        ),
+                    }
                 error_text = await response.text()
-                return {'status': 'error', 'message': f'Failed to list repositories: HTTP {response.status} - {error_text}'}
+                return {
+                    'status': 'error',
+                    'message': f'Failed to list repositories: HTTP {response.status} - {error_text}',
+                    'outcome': _read_refused(response.status, 'repositories'),
+                }

@@ -4,6 +4,33 @@
 HTTP Paginate Module
 Automatically iterate through paginated API endpoints and collect all results.
 Supports cursor-based, offset-based, page-number, and Link header pagination.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED on the success path, for `http.request`'s reason and one of its own.
+
+The peer's reason: every page is a reply to a message we sent, and reading a
+peer's answer is taking its word. That applies even though the collected items
+look like content rather than a status report -- the strategy may run any HTTP
+method, and the cursor example in this very file POSTs, so "the pages are just
+a read of the resource" is not something this module is entitled to assume.
+
+Its own reason: `pages_fetched` counts responses whose BODY PARSED AS JSON, and
+nothing here ever looks at a status code. A 500 that returns
+`{"error": "..."}` is counted as a fetched page, contributes zero items,
+terminates the loop and produces `ok: True`. The count is honest about what it
+counted -- a response arrived and parsed -- and the effect says so in those
+words, because "pages fetched" read as "pages of data collected" would be the
+false green here.
+
+    ok, at least one page parsed        ACCEPTED
+    ok, no page parsed                  DISPATCHED
+    SSRF refusal, unknown strategy      FAILED         nothing was sent
+    timeout, client error, anything     INDETERMINATE  a request may have landed
+
+`items` on a failing path is whatever was collected before the failure and is
+kept, so the envelope carries `pages_fetched` beside the rung: a run that
+timed out after nine pages is INDETERMINATE about the tenth, not about the nine.
 """
 
 import asyncio
@@ -12,12 +39,92 @@ import time
 from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import guarded_client_session, SSRFError, validate_url_with_env_config
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
 
 logger = logging.getLogger(__name__)
+
+
+#: Error codes for which nothing left this machine. Everything else that ends a
+#: pagination run happened with a request in flight, which is a different
+#: answer and not a lower one -- see `_paginate_outcome`.
+_REFUSED_BEFORE_SEND = frozenset({'SSRF_BLOCKED', 'INVALID_STRATEGY'})
+
+
+def _paginate_outcome(
+    *, ok: bool, pages_fetched: int, total_items: int, error_code: str
+) -> Dict[str, Any]:
+    """The rung for one pagination run, decided per return.
+
+    The success split is on `pages_fetched` and not on `total_items`: an API
+    that answers with an empty first page has still answered, and demoting that
+    to DISPATCHED would confuse "the peer said there is nothing" with "nobody
+    said anything". Zero pages means the loop never completed a request.
+
+    SSRF_BLOCKED is FAILED on both of the paths that raise it -- the base URL
+    check before the session opens, and the Link-header hop revalidation -- and
+    on both, the request that was refused never left. Pages already fetched are
+    reported in the effect rather than lifting the rung: the run as a whole
+    ended in a refusal.
+    """
+    measured = {
+        'kind': 'pages_fetched',
+        'pages_fetched': pages_fetched,
+        'items_collected': total_items,
+        'measured_by': 'count of responses whose body parsed as JSON',
+        'detail': (
+            'A page counts as fetched when a response arrived and its body '
+            'parsed as JSON. No status code is inspected anywhere in this '
+            'module, so a 4xx or 5xx whose body is JSON is counted here and '
+            'contributes whatever items its body happened to hold.'
+        ),
+    }
+
+    if ok:
+        if pages_fetched > 0:
+            return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=[measured])
+        return envelope(
+            Outcome.DISPATCHED,
+            claim_by=ClaimBy.NONE,
+            effects=[dict(
+                measured,
+                detail='No response was parsed, so nothing confirmed anything.',
+            )],
+        )
+
+    if error_code in _REFUSED_BEFORE_SEND:
+        return envelope(
+            Outcome.FAILED,
+            claim_by=ClaimBy.NONE,
+            effects=[dict(
+                measured,
+                kind='pagination_refused_before_send',
+                error_code=error_code,
+                detail=(
+                    'The run ended in a refusal to send: the request that was '
+                    'blocked never left this machine. Any pages counted above '
+                    'were fetched before it.'
+                ),
+            )],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[dict(
+            measured,
+            kind='pagination_interrupted',
+            error_code=error_code,
+            detail=(
+                'The run ended with a request in flight. Whether the peer '
+                'received and acted on that request is not known; the pages '
+                'counted above were parsed before it.'
+            ),
+        )],
+    )
 
 
 def _make_result(
@@ -28,13 +135,26 @@ def _make_result(
     error: str = '',
     error_code: str = '',
 ) -> Dict[str, Any]:
-    """Build a standardised paginate result dict."""
+    """Build a standardised paginate result dict.
+
+    Every return in this module goes through here, which is why the envelope is
+    built here too: a rung attached at four of the seven call sites is the
+    failure mode this contract is about, and a consumer reading
+    ``data['outcome']`` would KeyError on precisely the results somebody needed
+    to look at.
+    """
     result: Dict[str, Any] = {
         'ok': ok,
         'items': all_items,
         'total_items': len(all_items),
         'pages_fetched': pages_fetched,
         'duration_ms': int((time.time() - start_time) * 1000),
+        'outcome': _paginate_outcome(
+            ok=ok,
+            pages_fetched=pages_fetched,
+            total_items=len(all_items),
+            error_code=error_code,
+        ),
     }
     if not ok:
         result['error'] = error
@@ -418,6 +538,16 @@ _STRATEGY_DISPATCH = {
             'type': 'number',
             'description': 'Total duration in milliseconds',
             'description_key': 'modules.http.paginate.output.duration_ms.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this run was followed: "accepted" when pages came '
+                'back, "dispatched" when none did, "failed" when a request was '
+                'refused before sending, "indeterminate" when the run ended '
+                'with a request in flight. Present on every return'
+            ),
+            'description_key': 'modules.http.paginate.output.outcome.description',
         },
     },
     examples=[

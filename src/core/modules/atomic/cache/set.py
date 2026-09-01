@@ -3,12 +3,53 @@
 """
 Cache Set Module
 Set a value in an in-memory or Redis cache with optional TTL.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+`stored: True` was, and still is, a literal written in this file. It is the
+`file.write` mistake exactly: it reads `True` whether the value went into the
+store or the assignment never ran, so it cannot be what any rung rests on. The
+two backends therefore earn different rungs, from different evidence.
+
+  memory, and the key reads back as ours                 OBSERVED
+      After the assignment the module calls `_cache_get(key)` -- the same
+      TTL-respecting path `cache.get` uses -- and checks that what comes back
+      is the object it stored. If the assignment had not happened, that read
+      returns `None` or somebody else's value, so the reading is not a
+      restatement of the input. What it establishes is the thing a caller
+      actually wants: a subsequent `cache.get` for this key would hit.
+
+  memory, and it does not read back as ours              INDETERMINATE
+      Not FAILED. Nobody declared a read-back contract; the predicate is this
+      module's own, and a concurrent writer replacing the key between the
+      store and the read is an ordinary correct race, not a broken promise.
+      `outcome.py` splits on exactly this -- a caller's broken contract is
+      FAILED, an inference of ours that may be wrong is INDETERMINATE.
+
+  redis, and the client returned an OK                   ACCEPTED
+      The SET reply is the peer reporting on its own work, which is taking its
+      word -- the same standing as a 2xx. No value is read back, so nothing
+      here measures the store. Deliberately not raised by adding a GET: a
+      second round trip would change what this module costs and still could
+      not attribute what it read to this write.
+
+  redis, and the client returned no OK                   INDETERMINATE
+      redis-py answers `True` for a plain SET. Anything else means we cannot
+      say whether the value landed.
+
+WHAT IS NOT OBSERVED, on either backend: expiry. The TTL is passed to the store
+and never watched, so "this value will still be here in `ttl` seconds" and
+"this value will be gone after `ttl` seconds" are both unproven. And the
+`memory` backend is a module-level dict, so a value stored here is invisible to
+every other worker process -- durable only in the sense that it outlives the
+step, not the process.
 """
 import json
 import logging
 import time
 from typing import Any, Dict
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import enforce_outbound_service_url
 from ...registry import register_module
 from ...schema import compose
@@ -19,7 +60,116 @@ from ...errors import ValidationError, ModuleError
 logger = logging.getLogger(__name__)
 
 # Import shared memory cache storage
-from .get import _memory_cache
+from .get import _memory_cache, _cache_get
+
+
+#: The claim `stored: True` makes on its own, recorded beside every rung so the
+#: gap between the flag and the evidence stays visible rather than implied.
+_STORED_FLAG_EFFECT = {
+    'kind': 'store_call_returned',
+    'measured_by': None,
+    'detail': (
+        "The `stored` output is a literal True written in this module, not a "
+        "reading of the store. It is identical whether the value landed or "
+        "not; see the sibling effect for what was actually measured."
+    ),
+}
+
+
+def _memory_store_outcome(*, ttl: int, readback_is_ours: bool, readback_present: bool) -> Dict[str, Any]:
+    """The rung a memory-backend store earned, from the read-back that follows it.
+
+    Pure, and free of module state, so the decision is testable without
+    touching `_memory_cache` -- the separation `file.write._write_outcome`
+    keeps for the same reason.
+    """
+    if readback_is_ours:
+        return envelope(
+            Outcome.OBSERVED,
+            # INFERRED: a predicate was evaluated and it was ours. No caller
+            # asked for a read-back; recording who did keeps the matching and
+            # the mismatching case attributable to the same author.
+            claim_by=ClaimBy.INFERRED,
+            effects=[
+                _STORED_FLAG_EFFECT,
+                {
+                    'kind': 'cache_key_read_back',
+                    'backend': 'memory',
+                    'ttl_seconds': ttl,
+                    'measured_by': (
+                        '_cache_get(key) after the assignment -- the same '
+                        'TTL-respecting path cache.get uses -- compared by '
+                        'identity with the value handed in'
+                    ),
+                    'detail': (
+                        'The key resolves to the object stored, so a later '
+                        'cache.get would hit. Expiry is not observed: the TTL '
+                        'was handed to the store and never watched.'
+                    ),
+                },
+            ],
+        )
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            _STORED_FLAG_EFFECT,
+            {
+                'kind': 'cache_key_read_back_disagrees',
+                'backend': 'memory',
+                'ttl_seconds': ttl,
+                'predicate': '_cache_get(key) is the value handed to this module',
+                'key_present_after': readback_present,
+                'detail': (
+                    'The key did not read back as the value stored. A '
+                    'concurrent writer replacing the key is an ordinary race '
+                    'and this module cannot tell that apart from a store that '
+                    'dropped the write, so this is indeterminate rather than '
+                    'failed.'
+                ),
+            },
+        ],
+    )
+
+
+def _redis_store_outcome(*, ttl: int, reply: Any) -> Dict[str, Any]:
+    """The rung a Redis-backend store earned, from the SET reply alone."""
+    if reply:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                _STORED_FLAG_EFFECT,
+                {
+                    'kind': 'redis_set_acknowledged',
+                    'backend': 'redis',
+                    'ttl_seconds': ttl,
+                    'measured_by': 'the reply redis-py returned for SET',
+                    'detail': (
+                        'The server acknowledged taking the write. Nothing was '
+                        'read back, so no line here measures the store: this is '
+                        'the peer reporting on its own work.'
+                    ),
+                },
+            ],
+        )
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.INFERRED,
+        effects=[
+            _STORED_FLAG_EFFECT,
+            {
+                'kind': 'redis_set_not_acknowledged',
+                'backend': 'redis',
+                'ttl_seconds': ttl,
+                'reply': repr(reply),
+                'detail': (
+                    'A plain SET answers True. Without that acknowledgement we '
+                    'cannot say whether the value was stored.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -112,7 +262,11 @@ from .get import _memory_cache
         },
         'stored': {
             'type': 'boolean',
-            'description': 'Whether the value was stored successfully',
+            'description': (
+                'A literal True written by this module when the store call '
+                'returned without raising. Not a reading of the store -- see '
+                'outcome for what was measured'
+            ),
             'description_key': 'modules.cache.set.output.stored.description',
         },
         'ttl': {
@@ -124,6 +278,24 @@ from .get import _memory_cache
             'type': 'string',
             'description': 'The backend used',
             'description_key': 'modules.cache.set.output.backend.description',
+        },
+        'read_back': {
+            'type': 'boolean',
+            'description': (
+                'memory backend only: whether the key read back as the value '
+                'stored. null on the redis backend, which reads nothing back'
+            ),
+            'description_key': 'modules.cache.set.output.read_back.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the write was followed: "observed" when the key read '
+                'back as ours, "accepted" when Redis acknowledged and nothing '
+                'was read back, "indeterminate" when neither held. Expiry is '
+                'never observed'
+            ),
+            'description_key': 'modules.cache.set.output.outcome.description',
         },
     },
     timeout_ms=10000,
@@ -157,6 +329,13 @@ async def cache_set(context: Dict[str, Any]) -> Dict[str, Any]:
             'expires_at': expires_at,
         }
 
+        # The only line in this branch that measures the store rather than
+        # restating the input. Identity, not equality: the memory backend keeps
+        # the object handed in, so `is` is the strongest available check and it
+        # catches a racing writer that stored an equal-but-different value.
+        read_back_value = _cache_get(key)
+        read_back_is_ours = read_back_value is value
+
         return {
             'ok': True,
             'data': {
@@ -164,6 +343,12 @@ async def cache_set(context: Dict[str, Any]) -> Dict[str, Any]:
                 'stored': True,
                 'ttl': ttl,
                 'backend': 'memory',
+                'read_back': read_back_is_ours,
+                'outcome': _memory_store_outcome(
+                    ttl=ttl,
+                    readback_is_ours=read_back_is_ours,
+                    readback_present=read_back_value is not None,
+                ),
             }
         }
 
@@ -181,9 +366,9 @@ async def cache_set(context: Dict[str, Any]) -> Dict[str, Any]:
             try:
                 serialized = json.dumps(value)
                 if ttl > 0:
-                    await client.set(key, serialized, ex=ttl)
+                    reply = await client.set(key, serialized, ex=ttl)
                 else:
-                    await client.set(key, serialized)
+                    reply = await client.set(key, serialized)
 
                 return {
                     'ok': True,
@@ -192,6 +377,8 @@ async def cache_set(context: Dict[str, Any]) -> Dict[str, Any]:
                         'stored': True,
                         'ttl': ttl,
                         'backend': 'redis',
+                        'read_back': None,
+                        'outcome': _redis_store_outcome(ttl=ttl, reply=reply),
                     }
                 }
             finally:

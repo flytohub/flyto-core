@@ -20,6 +20,18 @@ import time
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from ..exceptions import StepTimeoutError, StepExecutionError, is_policy_refusal
+from ..outcome import (
+    ENVELOPE_KEY,
+    ClaimBy,
+    Outcome,
+    cap,
+    ceiling_for,
+    default_for,
+    envelope,
+    is_on_ladder,
+    read_envelope,
+    rung_index,
+)
 from ..hooks import ExecutorHooks, HookAction
 from .context_builder import create_step_context
 from .foreach import execute_foreach_step
@@ -93,17 +105,44 @@ def _redact_sensitive_output(data: Any, depth: int = 0) -> Any:
 # failing now; it just stops being indistinguishable from a verified success.
 _UNCONFIRMED_VERIFICATION = 'unverified'
 
+# browser.click's five string literals, mapped onto the ladder. It is the only
+# module of 483 that reports an outcome, and it predates the ladder, so its
+# vocabulary is translated here rather than rewritten there — one module's
+# private words becoming the engine's shared ones is exactly the migration this
+# table exists to make reversible.
+#
+#   not_requested  nothing was expected and nothing was checked
+#   dispatched     'click_only': verifies nothing beyond dispatch
+#   inferred       the module guessed an expectation from markup and saw it
+#   unverified     the module guessed, and did not see it
+#   verified       the caller asked, and _verify_current_page_outcome held
+#
+# `unverified` becomes INDETERMINATE, not FAILED, and that is the point of the
+# second axis: the expectation was the module's own inference, so a tab that
+# never opened may mean the click was fine and the guess was wrong. A caller who
+# asks explicitly and does not get it never reaches here at all — click.py:587
+# and :611 raise.
+_LEGACY_VERIFICATION_RUNGS = {
+    'not_requested': (Outcome.DISPATCHED, ClaimBy.NONE),
+    'dispatched': (Outcome.DISPATCHED, ClaimBy.NONE),
+    'inferred': (Outcome.OBSERVED, ClaimBy.INFERRED),
+    _UNCONFIRMED_VERIFICATION: (Outcome.INDETERMINATE, ClaimBy.INFERRED),
+    'verified': (Outcome.VERIFIED, ClaimBy.CALLER),
+}
 
-def _unconfirmed_outcome(result: Any) -> Optional[str]:
-    """Return why a step's own result says an outcome went unconfirmed.
 
-    Reads the module-reported ``verification_status`` / ``effect_observed``
-    contract. Returns None when the step confirmed what it claimed, when it
-    claimed nothing, or when it is not a dict-shaped result. A foreach step
-    returns one result per iteration, so the list form is read too — a tab
-    that never opened on iteration 7 is the same unconfirmed outcome.
+def _outcome_payloads(result: Any) -> List[Dict[str, Any]]:
+    """Every dict in a step result that could be carrying an outcome.
+
+    Four places, and the last two are the hole this closes. A foreach step
+    returns one result per iteration, so the list form is read. A module in
+    ``execution_mode`` 'items' or 'all' returns an aggregate — ``{ok, data,
+    items, items_full}`` — whose ``data`` is a *list*, so the old walk's
+    ``isinstance(data, dict)`` skipped it and the per-item outcomes underneath
+    were never seen at all. A module could report every one of its items
+    unobserved and the step recorded a clean success.
     """
-    payloads = []
+    payloads: List[Dict[str, Any]] = []
     candidates = result if isinstance(result, (list, tuple)) else [result]
     for candidate in candidates:
         if not isinstance(candidate, dict):
@@ -112,17 +151,206 @@ def _unconfirmed_outcome(result: Any) -> Optional[str]:
         data = candidate.get('data')
         if isinstance(data, dict):
             payloads.append(data)
+        elif isinstance(data, (list, tuple)):
+            payloads.extend(entry for entry in data if isinstance(entry, dict))
+        for key in ('items', 'items_full'):
+            entries = candidate.get(key)
+            if not isinstance(entries, (list, tuple)):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                payloads.append(entry)
+                nested = entry.get('json')
+                if isinstance(nested, dict):
+                    payloads.append(nested)
+    return payloads
 
-    for payload in payloads:
-        if payload.get('verification_status') != _UNCONFIRMED_VERIFICATION:
-            continue
-        expected = payload.get('expected_outcome') or 'the expected outcome'
+
+def _payload_outcome(payload: Dict[str, Any]) -> Optional[tuple]:
+    """(rung, claim_by, expected) for one payload, or None if it says nothing."""
+    found = read_envelope(payload)
+    if found is not None:
         return (
-            f"Step reported success but never observed {expected!r} "
-            f"(verification_status={_UNCONFIRMED_VERIFICATION!r}, "
-            f"effect_observed={bool(payload.get('effect_observed'))})"
+            Outcome(found['rung']),
+            found.get('claim_by') or ClaimBy.NONE.value,
+            found.get('postcondition') or payload.get('expected_outcome'),
         )
+    legacy = payload.get('verification_status')
+    if legacy in _LEGACY_VERIFICATION_RUNGS:
+        rung, claim_by = _LEGACY_VERIFICATION_RUNGS[legacy]
+        return rung, claim_by.value, payload.get('expected_outcome')
     return None
+
+
+def step_outcome(result: Any) -> Optional[tuple]:
+    """The weakest outcome anything in this step's result reported.
+
+    Weakest, because a step is only as confirmed as its least confirmed part:
+    nine rows written and one unobserved is not a verified step. Off-ladder
+    answers win outright over any rung — `failed` and `indeterminate` are not
+    low rungs to be averaged away, they are the answer.
+
+    Returns None when nothing in the result reported an outcome at all, which
+    is still the overwhelming majority of steps and must stay distinguishable
+    from a module that reported `dispatched`.
+    """
+    reported = [
+        found
+        for found in (_payload_outcome(payload) for payload in _outcome_payloads(result))
+        if found is not None
+    ]
+    if not reported:
+        return None
+
+    off_ladder = [found for found in reported if not is_on_ladder(found[0])]
+    if off_ladder:
+        # FAILED before INDETERMINATE: a broken contract is a stronger
+        # statement than "we could not tell", and a step carrying both is
+        # reported as the one somebody has to act on.
+        failed = [found for found in off_ladder if found[0] is Outcome.FAILED]
+        return failed[0] if failed else off_ladder[0]
+
+    return min(reported, key=lambda found: rung_index(found[0]))
+
+
+def _apply_outcome_contract(module_instance: Any, result: Any) -> Any:
+    """Stamp the default rung, and lower a claim the declaration cannot support.
+
+    The one place where the module's declaration, the module's own claim and the
+    surviving ``data`` dict are all in scope. It runs before
+    ``wrap_legacy_result``, because ``to_legacy_dict`` keeps only ``data`` and an
+    envelope written anywhere else is discarded on the way out of the step.
+
+    Two things happen here and only here:
+
+    * A side-effecting module that reported nothing is stamped ``dispatched``.
+      That is the truth about it — the instruction left us and nobody confirmed
+      anything — and it is what makes the gap visible instead of absent. The
+      other 334 modules are stamped with nothing at all: putting an envelope on
+      every string concatenation would teach every consumer to ignore the field,
+      and what makes an undeclared module visible is the ratchet counting it.
+
+    * A claim of ``verified`` from a module that declared no postcondition is
+      lowered to ``observed``. Not a policy: ``verified`` *means* a postcondition
+      was evaluated and held, so with none declared there is no predicate the
+      claim could be about. ``cap`` leaves ``failed`` and ``indeterminate``
+      alone — a module that failed did fail, and no ceiling makes that an
+      ``accepted``.
+
+    Never upward. Nothing here can raise a rung a module claimed, because every
+    reason to do so would be an inference by the engine about an effect only the
+    module can see.
+    """
+    if not isinstance(result, dict):
+        return result
+
+    module_id = getattr(module_instance, 'module_id', '') or ''
+    if not module_id:
+        return result
+
+    from ...modules.registry import ModuleRegistry
+
+    metadata = ModuleRegistry.get_metadata(module_id) or {}
+    declared = metadata.get('postcondition')
+
+    # Where the envelope has to live, and where a module would have put it.
+    #
+    # Three shapes, and the middle one used to be silently wrong. A dict `data`
+    # takes the stamp directly. A FLAT result with no `data` key is fine too:
+    # `wrap_legacy_result` sweeps its non-meta fields into the item json, which
+    # becomes `data` on the way out, so a top-level stamp arrives inside it.
+    #
+    # A result whose `data` is a LIST or a scalar is neither. This function used
+    # to fall back to the outer dict for those, which is exactly the place its
+    # own docstring says gets discarded — `to_legacy_dict` keeps `data` and
+    # nothing else — so the stamp vanished and the step reported no rung at all.
+    # Not a false green (nothing is worse than absent), but a hole the first
+    # module to return a list-shaped `data` would fall into silently.
+    data = result.get('data')
+    if isinstance(data, dict):
+        body = data
+    elif 'data' in result:
+        # A list or a scalar. There is nowhere inside it for a mapping to live,
+        # so say nothing rather than write somewhere that gets thrown away.
+        return result
+    else:
+        body = result
+
+    existing = read_envelope(body)
+    if existing is not None:
+        capped = cap(existing['rung'], ceiling_for(declared))
+        if capped.value != existing['rung']:
+            body[ENVELOPE_KEY] = dict(
+                existing,
+                rung=capped.value,
+                postcondition=declared,
+            )
+        elif declared and not existing.get('postcondition'):
+            body[ENVELOPE_KEY] = dict(existing, postcondition=declared)
+        return result
+
+    # "Reported nothing" has to mean the same thing here as it does to the
+    # reader, or the default silently overwrites a real answer. browser.click
+    # reports through the legacy `verification_status` field and carries no
+    # envelope, so a check that asked only `read_envelope` found none, stamped
+    # `dispatched` beside it, and `_payload_outcome` — which prefers an envelope
+    # — then returned the stamp instead of the module's own `indeterminate`. The
+    # one module that already had a contract was the one the contract erased.
+    if any(_payload_outcome(payload) is not None for payload in _outcome_payloads(result)):
+        return result
+
+    stamped = default_for(module_id, metadata)
+    if stamped is None:
+        return result
+    body[ENVELOPE_KEY] = envelope(stamped, postcondition=declared)
+    return result
+
+
+def _unconfirmed_outcome(result: Any) -> Optional[str]:
+    """Why this step's ledger entry must stop claiming a confirmed effect.
+
+    Off-ladder answers only — FAILED and INDETERMINATE — which is precisely the
+    set that degraded the step's status before this change, when the single
+    value `unverified` meant them both at once. What is new is only how much of
+    the result is read: an outcome buried in a per-item aggregate now reaches
+    this function, where it used to be invisible.
+
+    Deliberately NOT firing on DISPATCHED, ACCEPTED or OBSERVED, even though the
+    contract says only `verified` may be rendered as success. Those three are
+    the ordinary state of almost every step in the product today, and marking
+    them `partial` here would turn nearly every run amber before a single
+    consumer knows how to render the distinction — which would make `partial`
+    meaningless for the second time, having just been given a second meaning by
+    `TraceStatus.PARTIAL` already carrying "some items failed".
+
+    The rung travels instead: `step_outcome` exposes it, and the consumers that
+    decide what a person sees are the next piece of work, not a side effect of
+    this one. Making an unobserved step *look* unobserved is the point of the
+    contract; doing it before anything can say what it means is how a good
+    signal gets switched off.
+    """
+    found = step_outcome(result)
+    if found is None:
+        return None
+    rung, claim_by, expected = found
+    if is_on_ladder(rung):
+        return None
+    subject = repr(expected) if expected else 'the expected effect'
+    # "never observed X" is kept verbatim from the sentence this replaced. It
+    # is what a person actually reads, seven tests pin it, and it is true --
+    # the rung and the claimant are additions to it, not a replacement for it.
+    # FAILED gets its own verb because "never observed" would understate it: a
+    # postcondition the caller asked for was evaluated and did not hold.
+    said = (
+        f"{subject} did not hold"
+        if rung is Outcome.FAILED
+        else f"never observed {subject}"
+    )
+    return (
+        f"Step reported success but {said} "
+        f"(outcome={rung.value!r}, claimed by {claim_by})"
+    )
 
 
 class StepExecutor:
@@ -630,6 +858,31 @@ class StepExecutor:
             raise StepExecutionError(step_id, f"Module not found: {module_id}")
 
         module_instance = module_class(params, context)
+
+        # SECURITY: gate before the mode branch, not inside it.
+        #
+        # Only the 'single' branch below reaches `run()`, and `run()` is where
+        # the capability gate lives — it calls itself "the single execution
+        # chokepoint", and `enforce_module_policy` documents that "EVERY module
+        # ... is executed through this gate". The 'items' and 'all' branches
+        # call `execute_item` / `execute_all` directly, so both sentences were
+        # false: a module opted out of the security backstop by setting one
+        # class attribute, and `BaseModule.execute_item` defaults to calling
+        # `self.execute()` straight through.
+        #
+        # Nothing shipped in that state — the only non-test assignment of the
+        # attribute is the default in base.py — which is what makes it cheap to
+        # close before somebody uses the feature and inherits the hole.
+        #
+        # Gating here as well as in `run()` rather than instead of it: `run()`
+        # has eleven other callers (direct invoke, the REST and MCP surfaces,
+        # nested runners, composite sub-nodes), and taking the gate out of it to
+        # avoid a second call would open a far larger hole than this one.
+        # The check is a pure raise-or-return, so asking twice costs nothing.
+        enforce = getattr(module_instance, 'enforce_policy', None)
+        if callable(enforce):
+            enforce()
+
         execution_mode = getattr(module_instance, 'execution_mode', 'single')
 
         try:
@@ -664,6 +917,7 @@ class StepExecutor:
         )
 
         result = await module_instance.run()
+        result = _apply_outcome_contract(module_instance, result)
         # Wrap legacy result for consistent handling
         if isinstance(result, dict) and 'ok' in result:
             node_result = wrap_legacy_result(result)

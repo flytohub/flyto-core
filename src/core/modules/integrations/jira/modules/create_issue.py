@@ -4,6 +4,32 @@
 Jira Create Issue Module
 
 Create a new issue in Jira.
+
+HOW FAR THE CREATE IS FOLLOWED
+
+ACCEPTED on the path that returns a key. Jira answers the POST with an issue
+object carrying a `key` and an `id` that this module could not have produced
+from its own inputs -- server-assigned, so more than an echo of the summary
+that was sent, which is what puts it above DISPATCHED.
+
+It is not OBSERVED, and a created issue is where that temptation is strongest:
+a 201 body is the peer reporting on its own work. To observe the issue this
+module would have to GET it back and compare. It sends one request and reads
+the reply to that request, exactly like `api.github.create_issue`, which
+settled the identical question the identical way.
+
+Two things in the payload are NOT evidence and are named as such in the
+effects. `url` is built here out of the caller's own `domain` and whatever key
+came back -- an f-string, not a measurement; it is a well-formed URL even when
+`key` is None. And nothing checks that the fields Jira stored are the fields
+requested: priority, labels and issue type are sent and never read back.
+
+THE ERROR PATH now says which kind of failure it was. A 4xx is Jira refusing by
+name and creating nothing (FAILED); a 5xx or no reply at all leaves an issue
+that may exist (INDETERMINATE). `retryable=False` on this module is right for
+exactly that reason, and it is only half the story: `BaseIntegration._request`
+retries the POST itself up to `max_retries` times on a transport error, so
+`status == 0` can mean up to three issues, not one.
 """
 
 import os
@@ -12,7 +38,9 @@ from typing import Any, Dict
 from ....base import BaseModule
 from ....registry import register_module
 from ...base import resolve_credential
+from ...outcomes import mutation_unconfirmed, peer_answered
 from ..integration import JiraIntegration
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 @register_module(
@@ -103,7 +131,23 @@ from ..integration import JiraIntegration
         "ok": {"type": "boolean", "description": "Whether the operation was successful"},
         "key": {"type": "string", "description": "Issue key (e.g., PROJ-123)"},
         "id": {"type": "string", "description": "Issue ID"},
-        "url": {"type": "string", "description": "Issue URL"},
+        "url": {
+            "type": "string",
+            "description": (
+                "Issue URL, built here from the domain parameter and the returned "
+                "key. Not a value Jira sent, and well-formed even when no key came "
+                "back"
+            ),
+        },
+        "outcome": {
+            "type": "object",
+            "description": (
+                'How far the create was followed: "accepted" when Jira answered '
+                'with a key it assigned, "failed" when Jira refused by name, '
+                '"indeterminate" when a 5xx or no reply left an issue that may '
+                'exist. Never higher -- the issue is never read back'
+            ),
+        },
     },
     examples=[
         {
@@ -171,14 +215,68 @@ class JiraCreateIssueModule(BaseModule):
 
             if response.ok:
                 data = response.data
+                key = data.get("key")
                 return {
                     "ok": True,
-                    "key": data.get("key"),
+                    "key": key,
                     "id": data.get("id"),
-                    "url": f"https://{self.domain}/browse/{data.get('key')}",
+                    "url": f"https://{self.domain}/browse/{key}",
+                    "outcome": envelope(
+                        Outcome.ACCEPTED,
+                        claim_by=ClaimBy.NONE,
+                        effects=[
+                            peer_answered("jira", response.status),
+                            {
+                                "kind": "issue_reported_created",
+                                "key": key,
+                                "id": data.get("id"),
+                                # Whether the two identifiers were actually
+                                # there. A `key` of None is what `data.get`
+                                # returns for a 2xx body that named nothing,
+                                # and it reads the same as a real key to
+                                # anything that only checks the rung.
+                                "key_reported": "key" in data,
+                                "id_reported": "id" in data,
+                                "measured_by": (
+                                    "key and id in the body Jira returned to this POST"
+                                ),
+                                "detail": (
+                                    "Jira asserting that it created an issue, and "
+                                    "naming it. Server-assigned, so more than an echo "
+                                    "of the summary sent -- and still the peer "
+                                    "reporting on its own work, so it is not an "
+                                    "observation. Nothing reads the issue back, and "
+                                    "nothing checks that the priority, labels and "
+                                    "issue type stored are the ones requested."
+                                ),
+                            },
+                            {
+                                "kind": "issue_url_constructed",
+                                "measured_by": None,
+                                "detail": (
+                                    "The url beside this is an f-string over the "
+                                    "caller's own domain parameter and whatever key "
+                                    "came back. No request was made to it and nothing "
+                                    "confirms it resolves; it is well-formed even when "
+                                    "key is None."
+                                ),
+                            },
+                        ],
+                    ),
                 }
             else:
                 return {
                     "ok": False,
                     "error": response.error,
+                    "outcome": mutation_unconfirmed(
+                        service="jira",
+                        status=response.status,
+                        operation="issue_create",
+                        error=response.error,
+                        retry_note=(
+                            "This module sets retryable=False so the engine will not "
+                            "re-run it, but BaseIntegration._request already retried "
+                            "the POST itself, so more than one issue may exist."
+                        ),
+                    ),
                 }

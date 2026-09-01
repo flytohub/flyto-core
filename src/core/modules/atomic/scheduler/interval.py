@@ -3,6 +3,32 @@
 """
 Scheduler Interval Module
 Calculate interval timing and next occurrences.
+
+WHY THIS MODULE HAS NO RUNG, AND DECLARES SO
+
+`scheduler.interval` is in the side-effecting population because
+`outcome.is_side_effecting` keys on the part of a module id before the first
+dot, and `scheduler` is on the list for "creates future work". This module
+creates none. It adds three numbers, adds a `timedelta` to a start time five
+times, and returns the ISO strings. Nothing is registered, nothing is enqueued,
+no timer is set, and deleting the result deletes the effect: the `next_runs`
+are a forecast, and nothing in this process or any other will act on them.
+
+So there is no effect to follow, and every rung would be a statement about one.
+`dispatched` -- what the engine stamps on a side-effecting module that reports
+nothing -- would be the wrong answer rather than a cautious one, because no
+instruction left this process. `observed` would be worse: there is nothing
+outside the workflow to have observed.
+
+`derives=True` is the declaration for exactly this, and it is the same answer
+`file.diff` gives for the same reason. It must be declared rather than
+inferred, because "needs no contract" and "has not been given one yet" are
+otherwise indistinguishable in the data.
+
+The one impurity, named so the next reader can weigh it rather than discover
+it: with no `start_time` the module reads the wall clock, so the output is not
+a function of the parameters alone. Reading a clock observes nothing and
+changes nothing; the return value is still the whole of the effect.
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -61,6 +87,12 @@ def _human_readable_interval(total_seconds: int) -> str:
 
     retryable=False,
     concurrent_safe=True,
+
+    # The return value IS the effect: numbers in, forecast datetimes out,
+    # nothing scheduled and nothing outside the workflow touched. See the
+    # module docstring for why the `scheduler.` prefix does not make this
+    # side-effecting.
+    derives=True,
 
     requires_credentials=False,
     handles_sensitive_data=False,

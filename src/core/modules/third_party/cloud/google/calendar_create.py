@@ -3,11 +3,35 @@
 """
 Google Calendar Create Event Module
 Create a new event in Google Calendar using the Calendar API with OAuth2 and aiohttp.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted.
+
+The response to a successful POST is the created event resource -- an id, an
+`htmlLink`, the start and end the service settled on. It is tempting to read
+that as an observation, because it is so much richer than a bare 201: the
+service is describing the thing it made, field by field.
+
+It is still the service describing its own work. OBSERVED means "we saw the
+world change", and nothing here goes back to look: there is no GET of the event
+afterwards, no listing that contains it, no second request of any kind. The
+echo in the response body and the row in the calendar are the same claim from
+the same source, made once.
+
+Worth keeping in view because the payload invites the opposite reading: `start`
+and `end` are read from the RESPONSE rather than from the request, so a
+timezone the service normalised differently shows up here. That is the service
+reporting what it stored -- useful, and still its own account.
+
+Timeouts share the gap `google.gmail.send` documents: `asyncio.TimeoutError` is
+not an `aiohttp.ClientError`, so it escapes the handler, and a raise cannot
+carry an envelope. A timed-out create is INDETERMINATE and, with
+`retryable=True`, a retry can create the event twice.
 """
 
 import logging
 from typing import Any, Dict, List
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -81,6 +105,15 @@ CALENDAR_EVENTS_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/
         'start': {'type': 'string', 'description': 'Event start time', 'description_key': 'modules.google.calendar.create_event.output.start.description'},
         'end': {'type': 'string', 'description': 'Event end time', 'description_key': 'modules.google.calendar.create_event.output.end.description'},
         'html_link': {'type': 'string', 'description': 'Link to view the event in Google Calendar', 'description_key': 'modules.google.calendar.create_event.output.html_link.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this create was followed into reality. Always '
+                '"accepted": the response is the service describing the event it '
+                'says it made, and the event is never read back'
+            ),
+            'description_key': 'modules.google.calendar.create_event.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -117,14 +150,34 @@ async def google_calendar_create_event(context: Dict[str, Any]) -> Dict[str, Any
 
     start_info = resp_data.get('start', {})
     end_info = resp_data.get('end', {})
+    event_id = resp_data.get('id', '')
     return {
         'ok': True,
         'data': {
-            'event_id': resp_data.get('id', ''),
+            'event_id': event_id,
             'summary': resp_data.get('summary', ''),
             'start': start_info.get('dateTime', start_info.get('date', '')),
             'end': end_info.get('dateTime', end_info.get('date', '')),
             'html_link': resp_data.get('htmlLink', ''),
+            'outcome': envelope(
+                Outcome.ACCEPTED,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'event_accepted_by_calendar',
+                    'event_id': event_id,
+                    'status': resp_data.get('status'),
+                    'measured_by': (
+                        'HTTP 200 from the events POST, with the event resource it '
+                        'returned'
+                    ),
+                    'detail': (
+                        'The response is the service describing the event it says it '
+                        'created, including the start and end it settled on. No '
+                        'second request reads the event back, so this is the '
+                        "service's account of its own work."
+                    ),
+                }],
+            ),
         },
     }
 

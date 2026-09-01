@@ -84,6 +84,13 @@ def build_module_metadata(
     # was added after the signature was in use by other packages.
     provides_capability: Optional[str] = None,
     semantics: Optional[Dict[str, Any]] = None,
+
+    # Outcome contract (core/engine/outcome.py). Defaulted, and at the end of
+    # the signature for that reason: `register_module` defaults them too, and a
+    # builder that demands what its only caller always supplies would break
+    # every test helper that constructs metadata directly.
+    postcondition: Optional[str] = None,
+    derives: bool = False,
 ) -> Dict[str, Any]:
     """Build the full metadata dict for a module registration."""
     resolved_visibility = resolved["visibility"]
@@ -147,6 +154,10 @@ def build_module_metadata(
         # If retryable=False, max_retries should be 0 (consistency fix)
         "max_retries": max_retries if retryable else 0,
         "concurrent_safe": concurrent_safe,
+
+        # Outcome contract (see core/engine/outcome.py)
+        "postcondition": postcondition,
+        "derives": derives,
 
         # Security settings
         "requires_credentials": requires_credentials,

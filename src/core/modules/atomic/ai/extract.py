@@ -3,6 +3,32 @@
 """
 AI Extract Module
 Extract structured data from text using LLM.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED on both provider paths, and the gap worth naming is the `schema`
+parameter. The caller supplies a JSON schema, the schema is pasted into the
+prompt, and the model is ASKED to honour it. Nothing in this module then checks
+that it did: `_parse_json_response` establishes that the text is JSON and stops
+there. `extracted` can be `{}`, can carry none of the requested properties, and
+can carry values of the wrong type, and every one of those returns here as a
+success today.
+
+So the envelope says ACCEPTED -- the provider answered, and that is all -- and
+carries an effect that states in as many words that the schema was not
+evaluated. A rung resting on "the caller asked for a schema and we sent the
+schema" would be the same defect as `bytes_written`: unchanged whether the model
+honoured it or ignored it entirely.
+
+FAILED is not used for a schema miss for the same reason: nothing here evaluates
+that predicate, and claiming a contract was adjudicated when it was not is the
+mirror image of claiming one held. Making the absence visible is the honest
+move, and it is what would let somebody add real validation later and earn a
+rung for it.
+
+The failure paths raise `ModuleError` (a non-200 from either provider, or a
+response that is not JSON at all), so they carry no envelope -- there is no
+result dict for one to live in.
 """
 
 import json
@@ -13,11 +39,52 @@ from typing import Any, Dict
 
 import aiohttp
 
+from ....engine.outcome import Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, field
 from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _extraction_outcome(
+    *,
+    provider: str,
+    model: str,
+    extracted: Any,
+    raw_response: str,
+) -> Dict[str, Any]:
+    """ACCEPTED: the provider answered. What it answered was not adjudicated."""
+    return envelope(
+        Outcome.ACCEPTED,
+        effects=[
+            {
+                'kind': 'completion_returned',
+                'provider': provider,
+                'model': model,
+                'response_chars': len(raw_response or ''),
+                'measured_by': "the provider's own JSON response body",
+                'detail': (
+                    'A completion came back and parsed as JSON. That is the peer '
+                    'describing its own work -- an observation of a completion, '
+                    'not of anything in the world.'
+                ),
+            },
+            {
+                'kind': 'schema_not_evaluated',
+                'extracted_keys': (
+                    sorted(extracted.keys()) if isinstance(extracted, dict) else None
+                ),
+                'measured_by': None,
+                'detail': (
+                    'The requested schema was sent to the model as an instruction '
+                    'and never checked against the answer. `extracted` is whatever '
+                    'JSON came back: it may be missing every requested property, '
+                    'or carry values of the wrong type. Nothing here can tell.'
+                ),
+            },
+        ],
+    )
 
 
 @register_module(
@@ -145,6 +212,16 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Raw LLM response text',
             'description_key': 'modules.ai.extract.output.raw_response.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this call was followed into reality: always accepted on '
+                'a returned completion. The requested schema is an instruction to '
+                'the model and is never checked against the answer, which the '
+                'schema_not_evaluated effect records rather than hides'
+            ),
+            'description_key': 'modules.ai.extract.output.outcome.description',
         },
     },
 
@@ -338,6 +415,15 @@ async def _call_openai_extract(
                 'extracted': extracted,
                 'model': data.get('model', model),
                 'raw_response': raw_response,
+                # Inside `data`: to_legacy_dict keeps `ok` and `data` and drops
+                # every sibling, so an envelope anywhere else never leaves the
+                # step.
+                'outcome': _extraction_outcome(
+                    provider='openai',
+                    model=data.get('model', model),
+                    extracted=extracted,
+                    raw_response=raw_response,
+                ),
             },
         }
 
@@ -392,5 +478,14 @@ async def _call_anthropic_extract(
                 'extracted': extracted,
                 'model': data.get('model', model),
                 'raw_response': raw_response,
+                # Inside `data`: to_legacy_dict keeps `ok` and `data` and drops
+                # every sibling, so an envelope anywhere else never leaves the
+                # step.
+                'outcome': _extraction_outcome(
+                    provider='anthropic',
+                    model=data.get('model', model),
+                    extracted=extracted,
+                    raw_response=raw_response,
+                ),
             },
         }

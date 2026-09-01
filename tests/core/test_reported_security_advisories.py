@@ -613,8 +613,12 @@ async def test_port_check_allows_public_literal(monkeypatch):
     monkeypatch.delenv('FLYTO_ALLOW_PORT_SCAN', raising=False)
     module = importlib.import_module('core.modules.atomic.port.check')
 
+    # (is_open, verdict) since the outcome ladder landed: the second element is
+    # what lets the module say whether a "closed" was measured or assumed.
+    # 'refused' keeps this stub standing in for a host that answered, which is
+    # what this test needs -- it is about the SSRF guard, not about the probe.
     async def _closed(host, port, timeout):
-        return False
+        return False, 'refused'
 
     monkeypatch.setattr(module, '_check_port_async', _closed)
     result = await module.port_check(

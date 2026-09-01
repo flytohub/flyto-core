@@ -3,14 +3,39 @@
 """
 Network Traceroute Module
 Trace the route packets take to reach a destination host.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+A hop with an address in it is a router that answered: it received a probe with
+an expired TTL and sent back an ICMP time-exceeded carrying its own source
+address. Nothing in that is a report by a peer about its own work, so an
+identified hop is a measurement of the world and the rung rests on it.
+
+A hop of `*` is the opposite -- the absence of an answer -- and the parser
+records those as hops too, with `ip: '*'`. So `total_hops` counts PARSED LINES,
+not routers found and emphatically not "hops to reach the destination" as the
+output schema has always claimed: a trace that dies at hop 3 and prints 27 rows
+of asterisks still reports `total_hops: 30`. The envelope reports
+`hops_identified` beside it so the difference is visible in the data rather
+than only in this paragraph.
+
+    at least one hop carries an address    OBSERVED
+    hops parsed, every one of them `*`     DISPATCHED
+    nothing parsed at all                  INDETERMINATE
+
+The last one matters because the module returns `ok: True` regardless. An empty
+`hops` list and `total_hops: 0` are what this module initialises to, so they
+read identically whether the trace found nothing or its output was in a form
+these regexes do not cover.
 """
 import asyncio
 import logging
 import platform
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ....utils import enforce_outbound_host
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -18,6 +43,84 @@ from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _traceroute_outcome(
+    *,
+    host: str,
+    hops: List[Dict[str, Any]],
+    exit_code: Optional[int],
+    stderr_excerpt: str,
+) -> Dict[str, Any]:
+    """The rung this trace earned, and what was counted to earn it.
+
+    The count that decides it is `hops_identified` -- rows whose `ip` is not
+    the `'*'` placeholder this module writes for a hop that never answered.
+    `len(hops)` cannot decide it: an all-asterisk trace has a long `hops` list
+    and zero information in it.
+
+    Nothing here observes that the destination was reached. Doing so would mean
+    resolving the target and comparing it with the last identified hop, and the
+    module does neither, so no rung is claimed about arrival.
+    """
+    identified = [hop for hop in hops if hop.get('ip') and hop.get('ip') != '*']
+    counts = {
+        'host': host,
+        'hops_parsed': len(hops),
+        'hops_identified': len(identified),
+        'exit_code': exit_code,
+    }
+
+    if identified:
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'route_hops_identified',
+                'measured_by': 'addresses parsed out of traceroute stdout',
+                **counts,
+                'last_identified_hop': identified[-1].get('ip'),
+                'detail': (
+                    'At least one router answered with its own address. This '
+                    'observes part of the path; it does not observe that the '
+                    'destination was reached -- nothing here compares the last '
+                    'hop with the target.'
+                ),
+            }],
+        )
+
+    if hops:
+        return envelope(
+            Outcome.DISPATCHED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'route_hops_all_silent',
+                'measured_by': 'addresses parsed out of traceroute stdout',
+                **counts,
+                'detail': (
+                    'Probes were sent for every hop and not one router '
+                    'identified itself. The instruction left us; nobody '
+                    'confirmed anything.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'traceroute_output_not_parsed',
+            'measured_by': None,
+            **counts,
+            'stderr_excerpt': stderr_excerpt,
+            'detail': (
+                'No hop line was recognised in the output, so hops: [] and '
+                'total_hops: 0 are this module initialising rather than a '
+                'result. The trace may have run and printed a form these '
+                'patterns do not cover.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -95,8 +198,25 @@ logger = logging.getLogger(__name__)
         },
         'total_hops': {
             'type': 'number',
-            'description': 'Total number of hops to reach destination',
+            'description': (
+                'Number of hop lines parsed from the output. This counts rows, '
+                'including hops that never answered and appear as "*" -- it is '
+                'not the number of hops needed to reach the destination, and a '
+                'trace that never arrives still fills it up to max_hops. See '
+                'outcome.effects[0].hops_identified for how many of them '
+                'carried an address'
+            ),
             'description_key': 'modules.network.traceroute.output.total_hops.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this trace was followed: "observed" when at least one '
+                'router answered with its address, "dispatched" when every hop '
+                'was silent, "indeterminate" when no hop line could be parsed '
+                'and the empty hops list is a default rather than a result'
+            ),
+            'description_key': 'modules.network.traceroute.output.outcome.description',
         },
     },
     examples=[
@@ -149,6 +269,9 @@ async def network_traceroute(context: Dict[str, Any]) -> Dict[str, Any]:
             timeout=overall_timeout,
         )
         stdout = stdout_bytes.decode('utf-8', errors='replace')
+        stderr = stderr_bytes.decode('utf-8', errors='replace')
+        # After communicate() the child has exited, so returncode is settled.
+        exit_code = proc.returncode
     except asyncio.TimeoutError:
         raise ModuleError("Traceroute command timed out")
     except FileNotFoundError:
@@ -169,6 +292,12 @@ async def network_traceroute(context: Dict[str, Any]) -> Dict[str, Any]:
             'host': host,
             'hops': hops,
             'total_hops': total_hops,
+            'outcome': _traceroute_outcome(
+                host=host,
+                hops=hops,
+                exit_code=exit_code,
+                stderr_excerpt=stderr.strip()[:200],
+            ),
         },
     }
 

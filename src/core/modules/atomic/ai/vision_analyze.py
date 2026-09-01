@@ -3,6 +3,27 @@
 """
 AI Vision Analyze Module
 Analyze images using LLM vision capabilities (OpenAI GPT-4V or Anthropic Claude).
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+ACCEPTED on both providers. `analysis` is a description a model produced of an
+image we sent it; it is the peer reporting on its own work. This module is the
+one in the group where the temptation to call that OBSERVED is strongest --
+"vision", "analyze", the model is literally looking at something -- and it is
+still wrong. What was observed is a completion. Nothing here compares the
+description to the image, and a model that hallucinates a button that is not
+there returns down exactly this path.
+
+The one measurement of anything outside the model lives on the anthropic
+image_url branch, and it is about the INPUT, not the effect: the image was
+fetched, and `image_bytes` is the length of the body that arrived. It rides in
+an effect labelled as an input measurement so that nobody mistakes it for
+evidence about the analysis.
+
+Every failure path raises `ModuleError` or `ValidationError` -- a missing key, a
+path outside the sandbox, a non-200 from either API, an SSRF refusal on the image
+URL -- so none of them carries an envelope: there is no result dict for one to
+live in.
 """
 
 import base64
@@ -13,6 +34,7 @@ from typing import Any, Dict, Optional
 
 import aiohttp
 
+from ....engine.outcome import Outcome, envelope
 from ....utils import (
     SSRFError,
     enforce_outbound_url,
@@ -24,6 +46,47 @@ from ...registry import register_module
 from ...schema import compose, field
 
 logger = logging.getLogger(__name__)
+
+
+def _analysis_outcome(
+    *,
+    provider: str,
+    model: str,
+    analysis: str,
+    tokens_used: Any,
+    image_source: str,
+    image_bytes: Optional[int] = None,
+) -> Dict[str, Any]:
+    """ACCEPTED: a description came back. It was not checked against the image."""
+    effects = [{
+        'kind': 'analysis_returned',
+        'provider': provider,
+        'model': model,
+        'analysis_chars': len(analysis or ''),
+        'tokens_billed_by_provider': tokens_used,
+        'measured_by': "the provider's own JSON response body",
+        'detail': (
+            'The model returned a description and the provider reported its own '
+            'token usage. Both describe the peer\'s work. Nothing here compares '
+            'the description with the image, so a confident description of '
+            'something that is not in the picture reaches the caller unmarked.'
+        ),
+    }]
+
+    if image_bytes is not None:
+        effects.append({
+            'kind': 'image_fetched',
+            'source': image_source,
+            'image_bytes': image_bytes,
+            'measured_by': 'len() over the downloaded image body',
+            'detail': (
+                'A measurement of the INPUT, not of the effect: this many bytes '
+                'arrived from the image URL before the request was built. It says '
+                'nothing about the analysis.'
+            ),
+        })
+
+    return envelope(Outcome.ACCEPTED, effects=effects)
 
 
 @register_module(
@@ -174,6 +237,16 @@ logger = logging.getLogger(__name__)
             'type': 'number',
             'description': 'Total tokens consumed',
             'description_key': 'modules.ai.vision.analyze.output.tokens_used.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this call was followed into reality: always accepted on '
+                'a returned analysis. Nothing compares the description with the '
+                'image, so "vision" here is still only the peer describing its '
+                'own work'
+            ),
+            'description_key': 'modules.ai.vision.analyze.output.outcome.description',
         },
     },
 
@@ -338,14 +411,25 @@ async def _call_openai_vision(
 
         choice = data['choices'][0]
         usage = data.get('usage', {})
+        analysis = choice['message']['content']
+        tokens_used = usage.get('total_tokens', 0)
 
         return {
             'ok': True,
             'data': {
-                'analysis': choice['message']['content'],
+                'analysis': analysis,
                 'model': data.get('model', model),
                 'provider': 'openai',
-                'tokens_used': usage.get('total_tokens', 0),
+                'tokens_used': tokens_used,
+                # Inside `data`: to_legacy_dict keeps `ok` and `data` and drops
+                # every sibling.
+                'outcome': _analysis_outcome(
+                    provider='openai',
+                    model=data.get('model', model),
+                    analysis=analysis,
+                    tokens_used=tokens_used,
+                    image_source='base64' if image_b64 else 'url',
+                ),
             },
         }
 
@@ -361,6 +445,10 @@ async def _call_anthropic_vision(
     media_type: str,
 ) -> Dict[str, Any]:
     """Call Anthropic Vision API."""
+    # None unless the image came off the network below, which is the only branch
+    # here that measures anything outside this process.
+    downloaded_bytes: Optional[int] = None
+
     # Build image source
     if image_b64:
         image_source = {
@@ -380,6 +468,7 @@ async def _call_anthropic_vision(
             if img_resp.status != 200:
                 raise ModuleError(f"Failed to download image from URL: {image_url}")
             img_data = await img_resp.read()
+            downloaded_bytes = len(img_data)
             content_type = img_resp.headers.get('Content-Type', media_type)
             image_source = {
                 "type": "base64",
@@ -440,5 +529,13 @@ async def _call_anthropic_vision(
                 'model': data.get('model', model),
                 'provider': 'anthropic',
                 'tokens_used': tokens_used,
+                'outcome': _analysis_outcome(
+                    provider='anthropic',
+                    model=data.get('model', model),
+                    analysis=analysis,
+                    tokens_used=tokens_used,
+                    image_source='base64' if image_b64 else 'url',
+                    image_bytes=downloaded_bytes,
+                ),
             },
         }

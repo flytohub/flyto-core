@@ -3,19 +3,167 @@
 """
 Email Notification Module
 Send emails via SMTP.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two questions, and this module used to answer neither. It catches every
+exception and returns ``{'status': 'error', 'sent': False, ...}`` with no ``ok``
+key, which ``_execute_single_mode`` passes straight through -- so a rejected
+login and a delivered message were both recorded as steps that SUCCEEDED, and
+the only thing separating them was a boolean nobody downstream is obliged to
+read.
+
+THE HAPPY PATH IS ACCEPTED, and there is a measurement behind it that this
+module also used to throw away. `smtplib.SMTP.send_message` returns normally
+only after the server has answered the final ``.`` of DATA with a 250, and what
+it RETURNS is the map of addresses the server refused at ``RCPT TO`` -- empty
+when it took them all. That map is the relay reporting on receipt, in its own
+words. Custody, not arrival: a later bounce, a spam filter, a full quota and
+greylisting all happen after this call returns, and none of them is visible from
+here. So ACCEPTED, never OBSERVED, and never VERIFIED -- no postcondition is
+declared and none is evaluated.
+
+THE ERROR PATH SPLITS ON ONE QUESTION: had the message been handed over yet?
+
+    before send_message      Nothing left this process. A DNS failure, a refused
+                             connection, a rejected login, a bad MIME part --
+                             the mail does not exist anywhere. FAILED.
+    a named SMTP refusal     The server rejected the envelope or the data by
+                             name: every recipient refused, the sender refused,
+                             DATA rejected. Definite, so FAILED.
+    anything else, after     A disconnect or a timeout with the message already
+                             on the wire. It may have been delivered.
+                             INDETERMINATE -- and this is the one that matters,
+                             because `retryable=True, max_retries=2` means a
+                             timed-out send is retried and a mail that did go
+                             out goes out again.
+
+Calling that last case FAILED would be the comfortable answer and the wrong one:
+it tells a person nothing was sent when something may have been, which is the
+failure mode a workflow author cannot recover from.
 """
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any
+from typing import Any, Dict, List
 
 from ....base import BaseModule
 from .....utils import enforce_outbound_host
 from ....registry import register_module
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+#: SMTP errors that name what the server refused, and refuse the whole message.
+#: Each one means the server read something and said no to it, so nothing was
+#: delivered and nothing is left in doubt. `SMTPRecipientsRefused` is raised only
+#: when EVERY recipient was refused; a partial refusal returns normally and is
+#: handled on the accepted path.
+_DEFINITE_REFUSALS = (
+    smtplib.SMTPRecipientsRefused,
+    smtplib.SMTPSenderRefused,
+    smtplib.SMTPDataError,
+    smtplib.SMTPHeloError,
+    smtplib.SMTPAuthenticationError,
+    smtplib.SMTPConnectError,
+    smtplib.SMTPNotSupportedError,
+)
+
+
+def _refusal_detail(refused: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The refusal map from `send_message`, flattened into effect-sized records."""
+    records = []
+    for address, response in refused.items():
+        code, message = (response if isinstance(response, tuple) else (None, response))
+        if isinstance(message, bytes):
+            message = message.decode('utf-8', errors='replace')
+        records.append({'recipient': address, 'code': code, 'response': message})
+    return records
+
+
+def _accepted(to_email: str, refused: Dict[str, Any]) -> Dict[str, Any]:
+    """ACCEPTED -- the relay took custody, per recipient.
+
+    The measurement is the refusal map `send_message` returned, which exists
+    only because the server answered. A non-empty map beside a ``status:
+    'success'`` is a real state: the message was taken for the other addresses
+    and these ones will never receive it.
+    """
+    effects: List[Dict[str, Any]] = [{
+        'kind': 'smtp_message_accepted',
+        'to': to_email,
+        'measured_by': (
+            'smtplib.SMTP.send_message returned after the server answered 250 '
+            'to DATA, naming no refusal for this address'
+            if not refused else
+            'smtplib.SMTP.send_message returned; its refusal map is not empty'
+        ),
+        'detail': (
+            'The relay acknowledged taking the message. That is the relay '
+            'reporting on its own work; no mailbox is read here.'
+        ),
+    }]
+
+    if refused:
+        effects.append({
+            'kind': 'smtp_recipients_refused',
+            'refused': _refusal_detail(refused),
+            'count': len(refused),
+            'measured_by': 'smtplib.SMTP.send_message return value, per recipient',
+            'detail': (
+                'The server refused these addresses at RCPT TO and took the '
+                'message for any others. This step reports success; these '
+                'people will not receive it.'
+            ),
+        })
+
+    effects.append({
+        'kind': 'delivery_not_observed',
+        'to': to_email,
+        'measured_by': None,
+        'detail': (
+            'Acceptance by a relay is not arrival. A later bounce, a spam '
+            'filter, a full quota and greylisting all happen after this call '
+            'returns and none of them is visible from here.'
+        ),
+    })
+
+    return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=effects)
+
+
+def _send_failed(error: BaseException, *, handed_over: bool) -> Dict[str, Any]:
+    """The off-ladder answer, decided by how far the message had got.
+
+    Not FAILED for everything, which is what a bare ``except Exception`` invites.
+    The question the ladder asks here is the retry question, and the answer is
+    the difference between a mail that never existed and a mail that may already
+    be in somebody's inbox.
+    """
+    definite = (not handed_over) or isinstance(error, _DEFINITE_REFUSALS)
+    return envelope(
+        Outcome.FAILED if definite else Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'smtp_send_refused' if definite else 'smtp_send_inconclusive',
+            'error_type': type(error).__name__,
+            'error': str(error),
+            'handed_over': handed_over,
+            'measured_by': (
+                'the exception raised before smtplib.SMTP.send_message was called'
+                if not handed_over else
+                'the exception type raised by smtplib, against the refusals that name a stage'
+            ),
+            'detail': (
+                'The message was never handed to a server, or the server '
+                'refused it by name. It does not exist anywhere.'
+                if definite else
+                'The message was already on the wire when this failed. It may '
+                'have been delivered; a retry may deliver it a second time.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -129,7 +277,24 @@ logger = logging.getLogger(__name__)
         'sent': {'type': 'boolean', 'description': 'Whether notification was sent',
                 'description_key': 'modules.notification.email.send.output.sent.description'},
         'message': {'type': 'string', 'description': 'Result message describing the outcome',
-                'description_key': 'modules.notification.email.send.output.message.description'}
+                'description_key': 'modules.notification.email.send.output.message.description'},
+        'refused_recipients': {
+            'type': 'array',
+            'description': (
+                'Addresses the server refused at RCPT TO, each with the code and '
+                'sentence it gave. Empty on an ordinary send; a non-empty list '
+                'alongside sent=true means these people will not receive it'
+            ),
+            'description_key': 'modules.notification.email.send.output.refused_recipients.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this send was followed: "accepted" when the relay took '
+                'custody, "failed" when the message was never handed over or was '
+                'refused by name, "indeterminate" when it broke with the message '
+                'already on the wire'
+            ),
+            'description_key': 'modules.notification.email.send.output.outcome.description'}
     },
     examples=[
         {
@@ -175,6 +340,12 @@ class EmailSendModule(BaseModule):
         self.html = self.params.get('html', False)
 
     async def execute(self) -> Any:
+        # The one bit of state the error path needs: everything before this
+        # becomes True is a failure of a message that never existed, and
+        # everything after it may be a message already delivered. Without it a
+        # bare `except Exception` has no way to tell the two apart, which is
+        # what made every failure here look equally final.
+        handed_over = False
         try:
             # Create message
             msg = MIMEMultipart('alternative')
@@ -192,17 +363,31 @@ class EmailSendModule(BaseModule):
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
                 server.login(self.username, self.password)
-                server.send_message(msg)
+                handed_over = True
+                # The return value is the point, not the side effect: smtplib
+                # gives back the addresses the server refused at RCPT TO, and
+                # returns at all only after a 250 for DATA.
+                refused = server.send_message(msg) or {}
+
+            if refused:
+                logger.warning(
+                    "SMTP server refused %s while accepting the message: %s",
+                    sorted(refused), self.to_email,
+                )
 
             return {
                 'status': 'success',
                 'sent': True,
-                'message': f'Email sent successfully to {self.to_email}'
+                'message': f'Email sent successfully to {self.to_email}',
+                'refused_recipients': _refusal_detail(refused),
+                'outcome': _accepted(self.to_email, refused),
             }
 
         except Exception as e:
             return {
                 'status': 'error',
                 'sent': False,
-                'message': f'Failed to send email: {str(e)}'
+                'message': f'Failed to send email: {str(e)}',
+                'refused_recipients': [],
+                'outcome': _send_failed(e, handed_over=handed_over),
             }

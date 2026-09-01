@@ -219,29 +219,36 @@ class BaseModule(ABC):
                 results.append(result)
         return results
 
-    async def run(self) -> Any:
-        """
-        Execute module with Phase 2 enhancements:
-        - Timeout support
-        - Retry logic
-        - Error handling
+    def enforce_policy(self, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """SECURITY: the capability gate, as a step of its own.
 
-        Returns:
-            Module execution result
+        Every module — including those reached via flow.invoke / template.invoke
+        / flow.subflow / foreach / composite sub-nodes / agent-chosen tools —
+        must pass through here, so a denied or insufficiently-permitted module
+        fails closed regardless of how it was invoked. This is the backstop the
+        nested-execution gadgets used to bypass the MCP-boundary capability
+        checks.
+
+        It lives here, rather than inline in ``run()``, because ``run()`` was
+        not in fact the only way a module body is reached. ``StepExecutor``
+        dispatches on the ``execution_mode`` class attribute and calls
+        ``execute_item`` / ``execute_all`` directly for ``"items"`` and
+        ``"all"`` — never ``run()``, and so never this gate. The default
+        ``execute_item`` calls ``self.execute()`` straight through, which made
+        the security backstop opt-out-able by setting one class attribute and
+        overriding nothing. One method, called from both places, is what makes
+        the sentence above true rather than aspirational.
+
+        Calling it twice is free: ``enforce_module_policy`` is a pure
+        raise-or-return check with no state of its own.
         """
         # Defer import to avoid circular dependency
         from .registry import ModuleRegistry
-
-        # Get module metadata for Phase 2 settings
-        metadata = ModuleRegistry.get_metadata(self.module_id) or {}
-
-        # SECURITY: single execution chokepoint. Every module — including those
-        # reached via flow.invoke / template.invoke / flow.subflow / foreach /
-        # composite sub-nodes / agent-chosen tools — runs through here, so a
-        # denied or insufficiently-permitted module fails closed regardless of
-        # how it was invoked. This is the backstop the nested-execution gadgets
-        # used to bypass the MCP-boundary capability checks.
         from ..module_policy import enforce_module_policy
+
+        if metadata is None:
+            metadata = ModuleRegistry.get_metadata(self.module_id) or {}
+
         runtime_filter = None
         candidate_filter = self.context.get('_module_policy_filter')
         if (
@@ -260,6 +267,24 @@ class BaseModule(ABC):
             plugin=metadata.get('plugin', ''),
             module_filter_override=runtime_filter,
         )
+
+    async def run(self) -> Any:
+        """
+        Execute module with Phase 2 enhancements:
+        - Timeout support
+        - Retry logic
+        - Error handling
+
+        Returns:
+            Module execution result
+        """
+        # Defer import to avoid circular dependency
+        from .registry import ModuleRegistry
+
+        # Get module metadata for Phase 2 settings
+        metadata = ModuleRegistry.get_metadata(self.module_id) or {}
+
+        self.enforce_policy(metadata)
 
         timeout_ms = metadata.get('timeout_ms')
         timeout = timeout_ms / 1000.0 if timeout_ms else None

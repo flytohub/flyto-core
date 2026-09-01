@@ -3,12 +3,33 @@
 """
 Docker Inspect Module
 Inspect a Docker container's detailed configuration and state
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two rungs, and the thing that separates them is whether the document the daemon
+returned was about a container at all.
+
+  the document carries a `State` object        OBSERVED
+      `State.Status`, `State.Running`, `State.Pid`, `StartedAt` and the network
+      addresses are the daemon's reading of a container it is running. Nothing
+      in the payload is derivable from the `container` parameter, and a
+      container that does not exist makes `docker inspect` exit non-zero.
+
+  the document carries no `State`              ACCEPTED
+      `docker inspect` resolves images, networks and volumes too, and it does
+      so silently: `docker inspect nginx:latest` returns an image document,
+      exits 0, and `_extract_inspect_data` then reports `status: ''`,
+      `running: False`, `pid: 0` and `exit_code: 0` -- four values written in
+      this file, none of them read from anything. They are byte-identical to
+      what a stopped container would produce. A rung may not rest on them, so
+      the claim falls to "the daemon answered", which is all that happened.
 """
 import asyncio
 import json
 import logging
 from typing import Any, Dict
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose
 from ...schema.builders import field
@@ -16,6 +37,50 @@ from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
 
 logger = logging.getLogger(__name__)
+
+
+def _inspect_outcome(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """The rung this inspection earned, from what the daemon actually sent.
+
+    The test is `isinstance(raw.get('State'), dict)` and not "the container
+    looks running", because the question is whether a reading happened at all,
+    not what it said. A container that is `exited` was observed just as much as
+    one that is `running`; an image document was not observed at all.
+    """
+    state = raw.get('State')
+    if isinstance(state, dict):
+        return envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'container_state_read',
+                'status': state.get('Status', ''),
+                'running': state.get('Running', False),
+                'pid': state.get('Pid', 0),
+                'measured_by': 'State object in the `docker inspect` document',
+                'detail': (
+                    "The daemon's reading of this container at the moment it "
+                    'answered. It is not a claim that the container is still in '
+                    'that state now, and nothing here was checked against a '
+                    'postcondition.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'inspected_object_is_not_a_container',
+            'measured_by': None,
+            'detail': (
+                'docker exited 0 and returned a document with no State object -- '
+                'an image, network or volume resolves through `docker inspect` '
+                'the same way a container does. Every field under `state` in this '
+                "result is this module's default, not a reading."
+            ),
+        }],
+    )
 
 
 def _extract_inspect_data(raw: Dict[str, Any]) -> Dict[str, Any]:
@@ -168,6 +233,15 @@ def _extract_inspect_data(raw: Dict[str, Any]) -> Dict[str, Any]:
             'description': 'Container configuration (env, cmd, labels, etc.)',
             'description_key': 'modules.docker.inspect_container.output.config.description',
         },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the reading was followed: observed when the daemon '
+                'returned a container State object, accepted when it returned a '
+                'document without one (an image, network or volume)'
+            ),
+            'description_key': 'modules.docker.inspect_container.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -233,6 +307,7 @@ async def docker_inspect_container(context: Dict[str, Any]) -> Dict[str, Any]:
 
         raw = inspect_data[0]
         result = _extract_inspect_data(raw)
+        result['outcome'] = _inspect_outcome(raw)
 
         return {
             'ok': True,

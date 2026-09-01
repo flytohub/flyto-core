@@ -3,6 +3,43 @@
 """
 Vision Analyze Module
 Analyze images/screenshots using OpenAI Vision API (GPT-4V)
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+The ceiling here is ACCEPTED, and no path in this file can move it. A vision
+model returning prose about a screenshot is the provider describing its own
+work; nothing in this module measures anything about the world the screenshot
+came from. Five return paths, four answers:
+
+  a completion came back                        ACCEPTED
+      `analysis` is text OpenAI generated. That the call happened is the only
+      fact in it. Whether the model actually looked at the image, described the
+      image we sent rather than a plausible one, or is right about any of it --
+      none of that is evaluated here, and `analysis_type='bug_detection'`
+      returning "no bugs found" is a sentence, not a clean test run.
+
+  no API key, or the image could not be read    FAILED
+      Both return above the request. Nothing was sent, nothing was billed, and
+      that is known rather than inferred.
+
+  OpenAI answered with an error object          FAILED
+      The provider gave a definite negative. No completion was produced. This
+      is not INDETERMINATE: the uncertainty a timeout has is exactly the thing
+      an error body removes.
+
+  the request raised                            FAILED or INDETERMINATE
+      Split by `_outcomes.classify_request_failure`, which claims FAILED only
+      when the connection is known never to have come up, and INDETERMINATE for
+      everything else -- a read timeout may well have been received, processed
+      and billed. See that module for why the default leans that way.
+
+WHY `tokens_used` DOES NOT EARN OBSERVED. It is the provider's own accounting
+of the provider's own work, which is the definition of taking the peer's word.
+It is also, on the path where `usage` is missing from the response, a literal
+`0` written in this file -- the same shape as `file.write`'s `bytes_written`,
+where a number that reads identically whether the effect happened or not was
+mistaken for evidence of it. The envelope says which of the two it is on every
+success, instead of putting one integer where two facts belong.
 """
 
 import base64
@@ -11,11 +48,123 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
+from ._outcomes import classify_request_failure
 
 logger = logging.getLogger(__name__)
+
+
+# ── Outcome ────────────────────────────────────────────────────────────────
+#
+# The envelopes below ride on `ok: False` returns as well as the success one.
+# `wrap_legacy_result` turns `ok: False` into an ERROR result and `to_legacy_dict`
+# then keeps only the message and the code, so today those envelopes are dropped
+# on the way out of the step -- the same trade `dns.lookup` and
+# `http.request._error_result` describe. They are attached anyway: the fact is
+# true whether or not a consumer exists yet, and writing them only once one does
+# means the consumer is built against error results that carry nothing.
+
+
+def _never_sent(reason: str, detail: str) -> Dict[str, Any]:
+    """FAILED: a guard returned above the request, so no call was made."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'vision_request_not_sent',
+            'reason': reason,
+            'measured_by': 'a guard that returned before the HTTP request',
+            'detail': detail,
+        }],
+    )
+
+
+def _provider_refused(message: str) -> Dict[str, Any]:
+    """FAILED: OpenAI answered, and the answer was an error object."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'vision_provider_error',
+            'provider': 'openai',
+            'provider_message': message,
+            'measured_by': "the 'error' object in the provider's own response body",
+            'detail': (
+                'The provider answered and declined. No completion was '
+                'produced. Definite, not uncertain -- which is why this is '
+                'failed and a timeout is not.'
+            ),
+        }],
+    )
+
+
+def _request_raised(error: BaseException) -> Dict[str, Any]:
+    """FAILED or INDETERMINATE, decided by how far the request got."""
+    rung, why = classify_request_failure(error)
+    return envelope(
+        rung,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'vision_request_raised',
+            'provider': 'openai',
+            'error_type': type(error).__name__,
+            'measured_by': None,
+            'detail': why,
+        }],
+    )
+
+
+def _completion_returned(
+    *,
+    model: str,
+    analysis_chars: int,
+    reported_tokens: Optional[int],
+) -> Dict[str, Any]:
+    """ACCEPTED: text came back. Text coming back is not evidence about the image.
+
+    `reported_tokens` is None when the response carried no `usage` block. The
+    module still puts a 0 in `tokens_used` for compatibility, so the envelope is
+    the only place the difference between "the provider billed zero" and "the
+    provider said nothing about billing" survives.
+    """
+    effects: list = [{
+        'kind': 'vision_completion_returned',
+        'provider': 'openai',
+        'model': model,
+        'analysis_chars': analysis_chars,
+        'measured_by': "len() of the text in the provider's response body",
+        'detail': (
+            'A completion came back, which is the provider reporting on its own '
+            'work. Nothing here evaluates whether the description matches the '
+            'image, or whether the model looked at the image at all. A '
+            'bug_detection run reporting no bugs is prose, not a passing test.'
+        ),
+    }]
+    if reported_tokens is None:
+        effects.append({
+            'kind': 'vision_tokens_not_reported',
+            'measured_by': None,
+            'detail': (
+                "The response carried no 'usage' block, so the tokens_used of 0 "
+                'in the payload is a literal written in this module and not a '
+                'number the provider sent. It reads identically whether nothing '
+                'was billed or nothing was said.'
+            ),
+        })
+    else:
+        effects.append({
+            'kind': 'vision_tokens_billed_by_provider',
+            'total_tokens': reported_tokens,
+            'measured_by': "usage.total_tokens in the provider's response body",
+            'detail': (
+                "The provider's own accounting of its own work. Real, and still "
+                'the peer describing itself rather than us observing anything.'
+            ),
+        })
+    return envelope(Outcome.ACCEPTED, claim_by=ClaimBy.NONE, effects=effects)
 
 
 @register_module(
@@ -86,9 +235,24 @@ logger = logging.getLogger(__name__)
 },
         'tokens_used': {
             'type': 'number',
-            'description': 'Total tokens used'
+            'description': (
+                'Total tokens the provider reported for this call, or 0 when the '
+                "response carried no 'usage' block -- see outcome.effects for "
+                'which of the two a given 0 is'
+            )
         ,
-                'description_key': 'modules.vision.analyze.output.tokens_used.description'}
+                'description_key': 'modules.vision.analyze.output.tokens_used.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this analysis was followed into reality: never higher '
+                'than "accepted", because a completion is the provider describing '
+                'its own work and nothing here evaluates the image. "failed" when '
+                'a guard returned before the request or the provider refused, '
+                '"indeterminate" when the call raised after it was on the wire'
+            )
+        ,
+                'description_key': 'modules.vision.analyze.output.outcome.description'}
     },
     examples=[
         {
@@ -155,7 +319,11 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': 'OpenAI API key not provided. Set OPENAI_API_KEY env var or pass api_key param',
-            'error_code': 'MISSING_API_KEY'
+            'error_code': 'MISSING_API_KEY',
+            'outcome': _never_sent(
+                'MISSING_API_KEY',
+                'No credential was available, so no request was built.',
+            ),
         }
 
     # Prepare image data
@@ -164,7 +332,11 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': image_content['error'],
-            'error_code': 'IMAGE_ERROR'
+            'error_code': 'IMAGE_ERROR',
+            'outcome': _never_sent(
+                'IMAGE_ERROR',
+                'The image could not be read or encoded, so no request was built.',
+            ),
         }
 
     # Build system prompt based on analysis type
@@ -212,14 +384,20 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
                 result = response.json()
 
         if 'error' in result:
+            provider_message = result['error'].get('message', 'Unknown OpenAI error')
             return {
                 'ok': False,
-                'error': result['error'].get('message', 'Unknown OpenAI error'),
-                'error_code': 'OPENAI_ERROR'
+                'error': provider_message,
+                'error_code': 'OPENAI_ERROR',
+                'outcome': _provider_refused(provider_message),
             }
 
         analysis_text = result['choices'][0]['message']['content']
-        tokens_used = result.get('usage', {}).get('total_tokens', 0)
+        # Read before defaulting, so the envelope can tell "the provider billed
+        # zero" from "the provider said nothing about billing". `tokens_used`
+        # below keeps the 0 the output schema has always promised.
+        reported_tokens = result.get('usage', {}).get('total_tokens')
+        tokens_used = reported_tokens if reported_tokens is not None else 0
 
         # Parse structured output if requested
         structured_data = None
@@ -233,7 +411,12 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
             'analysis': analysis_text,
             'structured': structured_data,
             'model': model,
-            'tokens_used': tokens_used
+            'tokens_used': tokens_used,
+            'outcome': _completion_returned(
+                model=model,
+                analysis_chars=len(analysis_text or ''),
+                reported_tokens=reported_tokens,
+            ),
         }
 
     except Exception as e:
@@ -241,7 +424,8 @@ async def vision_analyze(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': str(e),
-            'error_code': 'API_ERROR'
+            'error_code': 'API_ERROR',
+            'outcome': _request_raised(e),
         }
 
 

@@ -4,14 +4,85 @@
 Browser Download Module
 
 Download file from browser.
+
+THE MISSING FILE THAT REPORTED SUCCESS
+
+``size = path.stat().st_size if path.exists() else 0`` and then
+``"status": "success"`` unconditionally. When the save produced no file, this
+module reported success with a size of 0 — and 0 is also the honest size of a
+genuinely empty download, so no consumer could tell the two apart. The literal
+written in this file and the number read off the filesystem arrived under the
+same key.
+
+The rung splits them, from the same `exists()` this module already called:
+
+    the file is on disk      st_size is a real read-back      -> OBSERVED
+    the file is not there    save_as() returned and left
+                             nothing we can find              -> INDETERMINATE
+
+INDETERMINATE, not FAILED: nobody declared a postcondition about the saved path,
+``save_as`` did not raise, and the file may have been moved or removed by
+something else between the save and the stat. We cannot say the download failed
+— only that we cannot find what it wrote. That is the textbook use of the second
+axis in `outcome.py`.
+
+A zero-byte file that EXISTS is OBSERVED, and correctly so: the browser wrote a
+file at that path, and its emptiness is a fact about the download rather than a
+gap in our looking.
 """
 from typing import Any, Dict, Optional
 from pathlib import Path
 import asyncio
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 from ....utils import validate_path_with_env_config
+
+
+def _download_outcome(
+    *,
+    save_path: str,
+    exists: bool,
+    size: int,
+    suggested_filename: Optional[str],
+) -> Dict[str, Any]:
+    """The rung this download earned, decided by whether the file is there."""
+    if not exists:
+        return envelope(
+            Outcome.INDETERMINATE,
+            claim_by=ClaimBy.INFERRED,
+            effects=[{
+                'kind': 'saved_file_missing',
+                'path': save_path,
+                'suggested_filename': suggested_filename,
+                'predicate': 'Path(save_path).exists()',
+                'measured_by': 'Path.exists() on the save path after save_as()',
+                'detail': (
+                    'The browser reported a download and save_as() returned '
+                    'without raising, but nothing is at the save path. The 0 '
+                    'reported as size is a literal in this module, not a '
+                    'measurement.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'file_saved',
+            'path': save_path,
+            'bytes_on_disk': size,
+            'suggested_filename': suggested_filename,
+            'measured_by': 'os.stat().st_size on the save path after save_as()',
+            'detail': (
+                'Size the filesystem reports for the file the browser wrote. Not '
+                'fsync-ed, and nothing here checks the bytes against what the '
+                'server intended to send.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -44,8 +115,20 @@ from ....utils import validate_path_with_env_config
                 'description_key': 'modules.browser.download.output.path.description'},
         'filename': {'type': 'string', 'description': 'Name of the file',
                 'description_key': 'modules.browser.download.output.filename.description'},
-        'size': {'type': 'number', 'description': 'Size in bytes',
-                'description_key': 'modules.browser.download.output.size.description'}
+        'size': {'type': 'number', 'description': (
+                    'Size the filesystem reports for the saved file. 0 when the '
+                    'file is not there at all -- see outcome, which separates '
+                    'that case from an empty download'
+                ),
+                'description_key': 'modules.browser.download.output.size.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this download was followed: observed when the saved '
+                'file was read back off disk, indeterminate when nothing is at '
+                'the save path'
+            ),
+            'description_key': 'modules.browser.download.output.outcome.description'}
     },
     examples=[
         {
@@ -113,14 +196,23 @@ class BrowserDownloadModule(BaseModule):
         # Save the file
         await download.save_as(self.save_path)
 
-        # Get file info
+        # Get file info. `exists` is kept rather than folded into the size,
+        # because "no file" and "empty file" are different facts and the size
+        # alone cannot carry both.
         path = Path(self.save_path)
-        size = path.stat().st_size if path.exists() else 0
+        exists = path.exists()
+        size = path.stat().st_size if exists else 0
 
         return {
             "status": "success",
             "path": str(path.absolute()),
             "filename": path.name,
             "size": size,
-            "suggested_filename": download.suggested_filename
+            "suggested_filename": download.suggested_filename,
+            "outcome": _download_outcome(
+                save_path=str(path.absolute()),
+                exists=exists,
+                size=size,
+                suggested_filename=download.suggested_filename,
+            ),
         }

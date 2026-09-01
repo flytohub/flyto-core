@@ -3,13 +3,36 @@
 """
 AWS S3 Delete Module
 Delete an object from an Amazon S3 bucket using boto3.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted.
+
+`DeleteObject` answers 204 No Content whether the key existed or not -- S3
+deletes are idempotent by design and a delete of a key that was never there is
+a success. So `deleted: True` in the payload is a literal written in this file,
+not a finding: it is the same `True` for a key that held a gigabyte and for a
+typo that matched nothing. It fails the test this contract turns on -- would
+this value be unchanged had the effect not happened? -- and no rung may rest
+on it.
+
+What the call does establish is that the service received the instruction and
+answered without raising, which is ACCEPTED and is genuinely more than
+`dispatched`. On a versioned bucket the response also carries `VersionId` and
+`x-amz-delete-marker`; those are recorded in the effect as what they are, the
+peer reporting on its own work.
+
+OBSERVED would need a read-back -- a `head_object` on the same key expecting a
+404 -- and that is a second request, an extra permission and a different cost,
+so it is a decision for whoever owns delete semantics, not something a
+declaration should smuggle in. `deleted` is left in place because callers read
+it, with its schema description corrected to say what it actually reports.
 """
 
 import asyncio
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -64,7 +87,24 @@ logger = logging.getLogger(__name__)
     output_schema={
         'bucket': {'type': 'string', 'description': 'S3 bucket name', 'description_key': 'modules.aws.s3.delete.output.bucket.description'},
         'key': {'type': 'string', 'description': 'Deleted object key', 'description_key': 'modules.aws.s3.delete.output.key.description'},
-        'deleted': {'type': 'boolean', 'description': 'Whether the object was deleted successfully', 'description_key': 'modules.aws.s3.delete.output.deleted.description'},
+        'deleted': {
+            'type': 'boolean',
+            'description': (
+                'Always true when the call returned. S3 answers 204 for a key '
+                'that did not exist, so this reports that the delete was '
+                'accepted, not that anything was removed'
+            ),
+            'description_key': 'modules.aws.s3.delete.output.deleted.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this delete was followed into reality. Always '
+                '"accepted": the service acknowledged the instruction and the '
+                'key is never read back'
+            ),
+            'description_key': 'modules.aws.s3.delete.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -91,11 +131,34 @@ async def aws_s3_delete(context: Dict[str, Any]) -> Dict[str, Any]:
         raise ValidationError('Object key is required', field='key')
 
     client = _make_s3_client(params)
-    await _delete_object(client, bucket, key)
+    response = await _delete_object(client, bucket, key)
 
     return {
         'ok': True,
-        'data': {'bucket': bucket, 'key': key, 'deleted': True},
+        'data': {
+            'bucket': bucket,
+            'key': key,
+            'deleted': True,
+            'outcome': envelope(
+                Outcome.ACCEPTED,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'delete_acknowledged',
+                    'bucket': bucket,
+                    'key': key,
+                    # Present only on a versioned bucket. Reported as the peer's
+                    # own account of what it did, which is what ACCEPTED means.
+                    'version_id': response.get('VersionId'),
+                    'delete_marker': response.get('DeleteMarker'),
+                    'measured_by': 'boto3 delete_object returned without raising',
+                    'detail': (
+                        'S3 answers 204 for a key that did not exist, so this says '
+                        'the instruction was taken -- not that an object was '
+                        'removed. The key is not read back.'
+                    ),
+                }],
+            ),
+        },
     }
 
 
@@ -124,14 +187,21 @@ def _make_s3_client(params: Dict[str, Any]):
     )
 
 
-async def _delete_object(client, bucket: str, key: str):
-    """Run delete_object in executor."""
-    def _run():
-        client.delete_object(Bucket=bucket, Key=key)
+async def _delete_object(client, bucket: str, key: str) -> Dict[str, Any]:
+    """Run delete_object in executor and return the service's response.
+
+    The response used to be discarded. It is kept now because on a versioned
+    bucket it is the only thing the service says about this delete at all --
+    `VersionId` and `DeleteMarker` -- and an envelope that reported nothing
+    would be an envelope with less in it than the call already had.
+    """
+    def _run() -> Optional[Dict[str, Any]]:
+        return client.delete_object(Bucket=bucket, Key=key)
 
     loop = asyncio.get_event_loop()
     try:
-        await loop.run_in_executor(None, _run)
+        response = await loop.run_in_executor(None, _run)
     except Exception as exc:
         error_name = type(exc).__name__
         raise ModuleError(f'S3 delete failed ({error_name}): {exc}')
+    return response if isinstance(response, dict) else {}

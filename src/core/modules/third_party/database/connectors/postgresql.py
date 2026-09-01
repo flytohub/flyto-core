@@ -3,12 +3,76 @@
 """
 PostgreSQL Database Module
 Execute SQL queries on PostgreSQL database.
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+One payload-returning path, two rungs, decided by whether anything came back:
+
+    rows came back      OBSERVED    `len(result_rows)` over Records asyncpg
+        materialised from bytes the server sent. Nothing is inferred.
+    no rows came back   ACCEPTED    `len([]) == 0` reads identically whether the
+        statement matched nothing, changed five rows and returned no result set,
+        or was discarded entirely. A value that would be unchanged if the effect
+        had not happened is not evidence of it.
+
+The empty case matters more here than it looks, because `conn.fetch` is how this
+module runs everything it is given, writes included: an `INSERT INTO t VALUES
+(1)` through this module comes back with `rows: []` and `row_count: 0` and is a
+committed write, and a `SELECT` matching nothing comes back byte-identical and
+changed nothing. The rung does not distinguish those two -- it says of both that
+we have no observation, which is the truth. Claiming OBSERVED would say we
+watched the world change on a payload that contains no evidence either way.
+
+`conn.execute`'s command tag WOULD carry a count for a write, and this module
+does not use it -- `fetch` is the only call here, and its return value is the
+result set. That is why the ceiling on the empty path is ACCEPTED and not lower
+or higher: the server answered, and the answer says nothing about the data.
+
+Unlike its mysql sibling, this module has no rollback bug. asyncpg runs
+statements outside an explicit transaction in autocommit mode, so a write
+through `fetch` is durable when `fetch` returns.
+
+VERIFIED is unreachable and no postcondition is declared -- nothing here
+evaluates a predicate -- so `ceiling_for(None)` caps this at OBSERVED.
 """
 import os
 
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose, presets
 from ._dsn_target import enforce_dsn_target
+
+
+def _returned_rows_outcome(row_count):
+    """OBSERVED for rows the server sent, ACCEPTED for an empty answer."""
+    if row_count <= 0:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_rows_returned',
+                'backend': 'postgresql',
+                'measured_by': None,
+                'detail': (
+                    'The server answered and returned no rows. That is not an '
+                    'observation of the data: a statement that returns no '
+                    'result set reads the same here whether it changed '
+                    'everything or nothing. This module runs whatever SQL it is '
+                    'given through conn.fetch, so that includes every write it '
+                    'has ever run.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'rows_returned',
+            'backend': 'postgresql',
+            'count': row_count,
+            'measured_by': 'len() over Records asyncpg returned from the server',
+        }],
+    )
 
 
 @register_module(
@@ -54,14 +118,28 @@ from ._dsn_target import enforce_dsn_target
                 'description_key': 'modules.db.postgresql.query.output.rows.description'},
         'row_count': {
             'type': 'number',
-            'description': 'Number of rows returned'
+            'description': (
+                'Number of rows RETURNED, never rows affected. A statement that '
+                'returns no result set reports 0 here whether it changed every '
+                'row or none -- see outcome'
+            )
         ,
                 'description_key': 'modules.db.postgresql.query.output.row_count.description'},
         'columns': {
             'type': 'array',
             'description': 'Column names in result set'
         ,
-                'description_key': 'modules.db.postgresql.query.output.columns.description'}
+                'description_key': 'modules.db.postgresql.query.output.columns.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the effect was followed: observed when rows came back '
+                'off the wire, accepted when the server answered with none. '
+                'Never higher than observed -- nothing here evaluates a '
+                'postcondition'
+            )
+        ,
+                'description_key': 'modules.db.postgresql.query.output.outcome.description'}
     },
     examples=[
         {
@@ -119,7 +197,8 @@ async def postgresql_query(context):
         return {
             'rows': result_rows,
             'row_count': len(result_rows),
-            'columns': columns
+            'columns': columns,
+            'outcome': _returned_rows_outcome(len(result_rows)),
         }
     finally:
         await conn.close()

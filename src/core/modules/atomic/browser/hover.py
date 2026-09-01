@@ -2,6 +2,36 @@
 
 """
 Browser Hover Module - Hover mouse over an element
+
+WHY THIS MODULE REPORTS NO OUTCOME
+
+It was given one and the measurement had to be taken back out. The candidate was
+``el.matches(':hover')`` -- the CSS hover state, which the engine computes from
+its own hit-testing rather than from what Playwright asked for, and which would
+have been a genuine observation of the browser rather than a restatement of the
+request.
+
+Measured on the Chromium this repository drives (headless, via
+``page.hover()`` and again via a bare ``page.mouse.move()``, on a real
+navigation rather than ``set_content``):
+
+    document.querySelectorAll(':hover')  ->  []
+
+Empty. Not "the wrong element" -- nothing at all, not even ``html``. Headless
+Chromium does not enter the hover state for a synthesised pointer move here, so
+the predicate reads false for every hover, including the ones that worked
+perfectly.
+
+Shipping it would have produced INDETERMINATE on every successful hover in this
+product: a permanent false alarm, on a signal that says nothing about the hover.
+A rung the code cannot support is worse than no rung, and this is the case the
+rule is about -- so `browser.hover` keeps the engine's default `dispatched`
+until there is a measurement that answers.
+
+What would earn one: an assertion the CALLER supplies about the page after the
+hover ("this menu is now visible"), evaluated here as a declared postcondition.
+That is a contract someone asked for, not an inference of ours, and it is a
+change to this module's parameters rather than to its reporting.
 """
 from typing import Any, Dict
 from ...base import BaseModule

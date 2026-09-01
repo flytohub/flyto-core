@@ -3,16 +3,178 @@
 """
 UI Evaluate Module
 Comprehensive UI quality evaluation with scoring across multiple dimensions
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+This module makes no network call of its own. It builds a prompt, hands it to
+`vision.analyze`, and parses what comes back. Every rung below is therefore a
+statement about a *delegation boundary*, and the ceiling is set by that and not
+by the OpenAI API:
+
+  the nested call returned ok=True             ACCEPTED
+      The other side acknowledged taking it. That is the definition of the rung
+      and it is the exact shape of what happened: `vision.analyze` reported
+      success on its own work, and this module read a `tokens_used` count the
+      provider put in its reply. Reaching OBSERVED would mean this module
+      measured something about the world, and the only thing it measures is
+      another module's return dict.
+
+      `overall_score` and `passed` are emphatically NOT evidence and cannot
+      raise this. `_parse_evaluation` falls back to `result['overall_score'] = 0`
+      when it can find no number in the text, so `passed=False` is produced
+      identically by a model that scored the screenshot badly and by a reply
+      this module could not parse at all. That is the `file.write`
+      `bytes_written` shape -- a value unchanged by whether the effect happened
+      -- and it is why the rung rests on the reply having arrived, not on what
+      the reply said.
+
+  no API key                                   FAILED, and nothing was sent
+      Returned before `vision.analyze` is even imported. Without an envelope
+      the engine stamps `dispatched` here, which would claim an instruction
+      left this machine when none did.
+
+  the nested call raised                       INDETERMINATE
+      `vision_analyze(...)` is called inside a bare `except Exception`. That
+      handler spans the HTTP POST as well as everything around it, so a request
+      may have been sent, billed and answered before something downstream of it
+      raised. "We do not know" is the honest answer and the expensive one to
+      get wrong: a retry buys a second completion.
+
+  the nested call returned ok=False            it depends, and it is asked
+      This module returns that dict through unchanged, so the rung is derived
+      from the `error_code` the nested module set: a missing key or an
+      unreadable image means nothing was sent (FAILED); an error named by
+      OpenAI in its reply means the provider refused (FAILED); anything else,
+      including the nested module's own catch-all, means we cannot say
+      (INDETERMINATE). If `vision.analyze` ever grows an envelope of its own,
+      that envelope is passed through untouched instead -- it is the module
+      that made the call and its answer outranks an inference made out here.
+
+VERIFIED is unreachable and no postcondition is declared. The thing worth
+verifying about a UI evaluation is whether the score reflects the screenshot,
+and no predicate in this file, or any file it calls, evaluates that.
 """
 
 import logging
 import os
 from typing import Any, Dict, List, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope, read_envelope
 from ...registry import register_module
 
 
 logger = logging.getLogger(__name__)
+
+
+#: What `vision.analyze` sets `error_code` to, and how far each one got.
+#: Read rather than guessed: `atomic/vision/analyze.py` returns MISSING_API_KEY
+#: and IMAGE_ERROR before it builds a request, OPENAI_ERROR after reading an
+#: `error` member out of a reply it received, and API_ERROR from a bare
+#: `except Exception` wrapped around the POST itself.
+_NESTED_ERROR_RUNGS = {
+    'MISSING_API_KEY': (Outcome.FAILED, 'no request was built: the nested call had no API key'),
+    'IMAGE_ERROR': (Outcome.FAILED, 'no request was built: the screenshot could not be read'),
+    'OPENAI_ERROR': (Outcome.FAILED, 'the provider answered and named an error in its reply'),
+}
+
+
+def _evaluation_accepted(*, usage_units: Any, analysis_chars: int) -> Dict[str, Any]:
+    """ACCEPTED -- the nested vision call reported success and returned a reply.
+
+    Both numbers here are recorded and neither decides the rung. The usage count
+    is the provider's own accounting of work it says it did; `analysis_chars` is
+    the length of the text that reached us. A zero in either is a real state of
+    this path -- `vision.analyze` returns ok=True with whatever
+    `result['choices'][0]['message']['content']` held -- so they are reported as
+    facts about the reply, not as evidence of an evaluation.
+
+    The field is `provider_usage_units` and not `tokens_used`, which is what
+    `vision.analyze` calls the same number, because
+    `_redact_sensitive_output` (`step_executor/executor.py:44`) blanks any key
+    containing `token` before results reach a hook. Under the nested module's
+    name the evidence for this rung would arrive as '[REDACTED]'.
+    """
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'vision_call_acknowledged',
+            'provider_usage_units': usage_units,
+            'analysis_chars': analysis_chars,
+            'measured_by': "vision.analyze returned ok=True; usage count from the provider's usage block",
+            'detail': (
+                'The nested vision call reported success and handed back text. '
+                'This module made no request of its own and read nothing back, '
+                'so nothing above accepted is available to it.'
+            ),
+        }],
+    )
+
+
+def _evaluation_not_sent(reason: str) -> Dict[str, Any]:
+    """FAILED -- returned before anything was called, let alone sent."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'request_not_sent',
+            'reason': reason,
+            'measured_by': 'returned before vision.analyze was invoked',
+            'detail': 'No vision call was made. No provider was contacted.',
+        }],
+    )
+
+
+def _evaluation_uncertain(*, reason: str, detail: str) -> Dict[str, Any]:
+    """INDETERMINATE -- the call may have been made, billed and answered."""
+    return envelope(
+        Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'vision_call_unconfirmed',
+            'reason': reason,
+            'measured_by': None,
+            'detail': detail,
+        }],
+    )
+
+
+def _nested_failure_outcome(result: Dict[str, Any]) -> Dict[str, Any]:
+    """The rung for a failure this module did not produce and cannot see into.
+
+    Preference order, and the order is the point: the envelope the nested
+    module built beats anything inferred out here, because it was the code that
+    made the call. Only when there is none does the documented `error_code`
+    decide, and only when that is unrecognised does this fall to
+    INDETERMINATE -- which is what an unknown failure of a paid API call is.
+    """
+    existing = read_envelope(result)
+    if existing is not None:
+        return existing
+
+    code = result.get('error_code')
+    known = _NESTED_ERROR_RUNGS.get(code)
+    if known is not None:
+        rung, detail = known
+        return envelope(
+            rung,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'vision_call_failed',
+                'error_code': code,
+                'measured_by': "error_code returned by vision.analyze",
+                'detail': detail,
+            }],
+        )
+
+    return _evaluation_uncertain(
+        reason=f'vision.analyze failed with error_code={code!r}',
+        detail=(
+            'The nested call reported a failure this module cannot place. Its '
+            'catch-all handler wraps the POST itself, so the request may have '
+            'been sent, billed and answered before something raised.'
+        ),
+    )
 
 
 @register_module(
@@ -183,7 +345,19 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Executive summary of evaluation'
         ,
-                'description_key': 'modules.ui.evaluate.output.summary.description'}
+                'description_key': 'modules.ui.evaluate.output.summary.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the evaluation was followed: "accepted" when the nested '
+                'vision call reported success, "failed" when nothing was sent or '
+                'the provider named a refusal, "indeterminate" when the call may '
+                'have been made and billed without an answer reaching us. Never '
+                'higher: passed and overall_score are this module output, not '
+                'evidence about it'
+            )
+        ,
+                'description_key': 'modules.ui.evaluate.output.outcome.description'}
     },
     examples=[
         {
@@ -213,9 +387,18 @@ logger = logging.getLogger(__name__)
 )
 async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:
     """Comprehensive UI quality evaluation"""
-    # Import vision.analyze to reuse the image handling
-    from .._import_helper import get_vision_analyze
-
+    # REMOVED: `from .._import_helper import get_vision_analyze`.
+    #
+    # `core.modules.atomic._import_helper` does not exist -- not in this
+    # package, not anywhere in src/ -- so this line raised ModuleNotFoundError
+    # on the first statement of the function body, on every call, and this
+    # module could never run at all. The symbol was never used either: the real
+    # import is `from ..vision.analyze import vision_analyze` further down,
+    # inside the try. Deleting a dead import that made the module unreachable
+    # is the whole fix.
+    #
+    # Found by writing the outcome tests below: every path this file can take
+    # was unreachable, so no rung it claimed could ever have been observed.
     params = context['params']
     screenshot = params['screenshot']
     app_type = params.get('app_type', 'web_app')
@@ -232,7 +415,8 @@ async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': 'OpenAI API key not provided',
-            'error_code': 'MISSING_API_KEY'
+            'error_code': 'MISSING_API_KEY',
+            'outcome': _evaluation_not_sent('no OpenAI API key was configured'),
         }
 
     # Build comprehensive evaluation prompt
@@ -260,10 +444,32 @@ async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': f'Failed to run vision analysis: {e}',
-            'error_code': 'ANALYSIS_ERROR'
+            'error_code': 'ANALYSIS_ERROR',
+            # This handler covers the import AND the call. An ImportError never
+            # sent anything; anything raised out of vision_analyze may have been
+            # raised after the POST completed. One rung has to cover both, and
+            # the honest one is the weaker.
+            'outcome': _evaluation_uncertain(
+                reason=f'{type(e).__name__} raised around the vision call',
+                detail=(
+                    'The nested call raised. This handler spans importing the module '
+                    'and running it, so whether a request was sent, billed and '
+                    'answered before the raise is not knowable from here.'
+                ),
+            ),
         }
 
     if not result.get('ok'):
+        # Returned through unchanged apart from the rung -- this module is the
+        # only place the failure is visible to a consumer, and a failure that
+        # says nothing about how far it got is the gap this contract exists to
+        # close. Mutating the nested dict is safe: it is this call's own return
+        # value and nothing else holds a reference to it.
+        # Assigned rather than setdefault-ed: `_nested_failure_outcome` returns
+        # the nested envelope untouched when there is a well-formed one, so the
+        # only thing this overwrites is a key that is not an envelope -- which
+        # `read_envelope` would refuse to read anyway.
+        result['outcome'] = _nested_failure_outcome(result)
         return result
 
     # Parse the analysis into structured evaluation
@@ -287,7 +493,11 @@ async def ui_evaluate(context: Dict[str, Any]) -> Dict[str, Any]:
         'issues': evaluation.get('issues', []),
         'recommendations': evaluation.get('recommendations', []),
         'summary': evaluation.get('summary', analysis[:500]),
-        'raw_analysis': analysis
+        'raw_analysis': analysis,
+        'outcome': _evaluation_accepted(
+            usage_units=result.get('tokens_used'),
+            analysis_chars=len(analysis),
+        ),
     }
 
 

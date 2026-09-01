@@ -4,17 +4,128 @@
 Search API Modules
 
 Google Search, SerpAPI, and Tavily integration modules.
+
+HOW FAR THESE THREE FOLLOW REALITY
+
+The same three answers in all three modules, because all three do the same
+thing: send one request to a search API and read the reply to that same
+request.
+
+  the API answered 200                       ACCEPTED
+      A server received the query, ran it, and chose a reply. The results in
+      that reply are the peer describing its own work, which is what
+      `http.request` settled for every 2xx in this product and what all
+      thirteen `api.*` modules claim (`tests/modules/test_api_outcome.py`).
+      Nothing here reads anything back, so there is no rung above it.
+
+      The number of results is recorded in the effect and is deliberately NOT
+      allowed to raise the rung to OBSERVED, which is where `database.query`
+      draws the same line from the other side: `len(rows)` earns OBSERVED there
+      because the rows ARE the state a SELECT went to look at, while a search
+      API's `organic_results` array is a document the vendor composed about a
+      query it ran for us. A count of items in a reply is not a measurement of
+      the world; it is a measurement of the reply.
+
+  the API answered non-2xx                   FAILED
+      A read that was refused returned no data and changed nothing on either
+      side, which is `integrations/outcomes.py::read_refused`'s reasoning and
+      applies unchanged: nothing about the world is in doubt, only data we do
+      not have.
+
+  no API key configured                      FAILED, and nothing was sent
+      Worth its own envelope precisely because of what happens without one:
+      `default_for` stamps a module that reports nothing as `dispatched` -- "the
+      instruction left us" -- and for a module that returned a setup guide
+      without opening a socket, that default is false in the direction that
+      matters. These three returns also carry no `ok` key, so the engine records
+      the step as a SUCCESS and a setup guide flows downstream in the shape of
+      a search result. The rung is what tells a consumer otherwise.
+
+WHAT IS MISSING, and is not papered over: none of the three wraps its request
+in a try/except, so a timeout or a transport error escapes as an exception and
+no payload -- and therefore no INDETERMINATE envelope -- ever reaches a
+consumer. For a read that is a smaller loss than it would be for a write:
+nothing is left half-done at the far end. Adding a handler here would change
+the retry semantics of three modules for a rung that only says "we do not
+know", so it is written down rather than done.
 """
 
 import os
-from typing import Any
+from typing import Any, Dict, Optional
 
 import aiohttp
 
 from .....constants import APIEndpoints, EnvVars
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....base import BaseModule
 from ....registry import register_module
 from ....schema import compose, presets
+
+
+def _search_answered(*, service: str, status: int, result_count: int) -> Dict[str, Any]:
+    """ACCEPTED -- the search API ran the query and sent back what it found.
+
+    `result_count` rides in the effect, labelled as a count of the items the
+    vendor put in this reply, so that a consumer reading `count: 0` can see
+    which question that zero answers. It answers "how many results did this
+    reply carry", never "how many exist" and never "was the query correct" --
+    a renamed response key would produce the same 0 as a query that genuinely
+    matched nothing, which is exactly why it does not decide the rung.
+    """
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'search_reply_read',
+            'service': service,
+            'status': status,
+            'results_in_reply': result_count,
+            'measured_by': 'HTTP status of the reply, and len() over the results array in it',
+            'detail': (
+                'A search API answered this query. The results are the vendor '
+                'reporting on work it did for us; nothing was read back and '
+                'nothing was verified, so this is the whole distance travelled.'
+            ),
+        }],
+    )
+
+
+def _search_refused(*, service: str, status: int, message: Optional[str] = None) -> Dict[str, Any]:
+    """FAILED -- the API answered, and its answer was a refusal.
+
+    FAILED rather than INDETERMINATE: a search alters nothing at either end, so
+    a refusal leaves no effect in doubt. There is only data we do not have.
+    """
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'search_refused',
+            'service': service,
+            'status': status,
+            'message': message,
+            'measured_by': 'HTTP status of the reply',
+            'detail': 'The API refused this query and returned no results.',
+        }],
+    )
+
+
+def _search_not_sent(*, service: str, missing: str) -> Dict[str, Any]:
+    """FAILED -- no credentials, so no request was built and none was sent."""
+    return envelope(
+        Outcome.FAILED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'request_not_sent',
+            'service': service,
+            'missing': missing,
+            'measured_by': 'os.getenv returned nothing before any session was opened',
+            'detail': (
+                'No request was issued: the credentials this module needs are not '
+                'configured. The API was never contacted.'
+            ),
+        }],
+    )
 
 
 def _google_search_setup_error():
@@ -34,7 +145,11 @@ def _google_search_setup_error():
                 f"Set environment variables: {EnvVars.GOOGLE_API_KEY} and "
                 f"{EnvVars.GOOGLE_SEARCH_ENGINE_ID}"
             ),
-        }
+        },
+        "outcome": _search_not_sent(
+            service='google',
+            missing=f'{EnvVars.GOOGLE_API_KEY} and/or {EnvVars.GOOGLE_SEARCH_ENGINE_ID}',
+        ),
     }
 
 
@@ -78,7 +193,13 @@ def _parse_search_results(items):
         'count': {'type': 'number', 'description': 'Number of items',
                 'description_key': 'modules.core.api.google_search.output.count.description'},
         'total_results': {'type': 'number', 'optional': True, 'description': 'Total number of search results available',
-                'description_key': 'modules.core.api.google_search.output.total_results.description'}
+                'description_key': 'modules.core.api.google_search.output.total_results.description'},
+        'outcome': {'type': 'object', 'description': (
+                    'How far the search was followed: "accepted" when the API answered, '
+                    '"failed" when it refused or when no API key was configured and no '
+                    'request was sent. Never higher: the results are the vendor reporting '
+                    'on its own work'),
+                'description_key': 'modules.core.api.google_search.output.outcome.description'}
     },
     examples=[{
         'title': 'Search Python tutorials',
@@ -118,11 +239,21 @@ class GoogleSearchAPIModule(BaseModule):
         ):
             if response.status != 200:
                 error_data = await response.json()
-                return {"status": "error", "message": f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"}
+                message = f"API error: {error_data.get('error', {}).get('message', 'Unknown error')}"
+                return {
+                    "status": "error",
+                    "message": message,
+                    "outcome": _search_refused(
+                        service='google', status=response.status, message=message,
+                    ),
+                }
             data = await response.json()
             results = _parse_search_results(data.get('items', []))
             return {"status": "success", "data": results, "count": len(results),
-                    "total_results": data.get('searchInformation', {}).get('totalResults', 0)}
+                    "total_results": data.get('searchInformation', {}).get('totalResults', 0),
+                    "outcome": _search_answered(
+                        service='google', status=response.status, result_count=len(results),
+                    )}
 
 
 @register_module(
@@ -156,7 +287,12 @@ class GoogleSearchAPIModule(BaseModule):
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'data': {'type': 'array', 'description': 'Output data from the operation'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the search was followed: "accepted" when the API answered, '
+            '"failed" when it refused or when no API key was configured and no '
+            'request was sent. Never higher: the results are the vendor reporting '
+            'on its own work')}
     },
     examples=[{
         'title': 'Search with SerpAPI',
@@ -193,7 +329,8 @@ class SerpAPISearchModule(BaseModule):
                     "step2": "Register account (Free 100 searches per month)",
                     "step3": "Get API Key",
                     "step4": f"Set environment variable: {EnvVars.SERPAPI_KEY}"
-                }
+                },
+                "outcome": _search_not_sent(service='serpapi', missing=EnvVars.SERPAPI_KEY),
             }
 
         params = {
@@ -211,7 +348,8 @@ class SerpAPISearchModule(BaseModule):
             if response.status != 200:
                 return {
                     "status": "error",
-                    "message": f"API error: HTTP {response.status}"
+                    "message": f"API error: HTTP {response.status}",
+                    "outcome": _search_refused(service='serpapi', status=response.status),
                 }
 
             data = await response.json()
@@ -227,7 +365,10 @@ class SerpAPISearchModule(BaseModule):
             return {
                 "status": "success",
                 "data": results,
-                "count": len(results)
+                "count": len(results),
+                "outcome": _search_answered(
+                    service='serpapi', status=response.status, result_count=len(results),
+                ),
             }
 
 
@@ -262,7 +403,12 @@ class SerpAPISearchModule(BaseModule):
     output_schema={
         'status': {'type': 'string', 'description': 'Operation status (success/error)'},
         'data': {'type': 'array', 'description': 'Output data from the operation'},
-        'count': {'type': 'number', 'description': 'Number of items'}
+        'count': {'type': 'number', 'description': 'Number of items'},
+        'outcome': {'type': 'object', 'description': (
+            'How far the search was followed: "accepted" when the API answered, '
+            '"failed" when it refused or when no API key was configured and no '
+            'request was sent. Never higher: the results are the vendor reporting '
+            'on its own work')}
     },
     examples=[{
         'title': 'Search with Tavily',
@@ -299,7 +445,8 @@ class TavilySearchModule(BaseModule):
                     "step2": "Create an account",
                     "step3": "Get API Key",
                     "step4": f"Set environment variable: {EnvVars.TAVILY_API_KEY}"
-                }
+                },
+                "outcome": _search_not_sent(service='tavily', missing=EnvVars.TAVILY_API_KEY),
             }
 
         payload = {
@@ -321,7 +468,8 @@ class TavilySearchModule(BaseModule):
             if response.status != 200:
                 return {
                     "status": "error",
-                    "message": f"API error: HTTP {response.status}"
+                    "message": f"API error: HTTP {response.status}",
+                    "outcome": _search_refused(service='tavily', status=response.status),
                 }
 
             data = await response.json()
@@ -337,5 +485,8 @@ class TavilySearchModule(BaseModule):
             return {
                 "status": "success",
                 "data": results,
-                "count": len(results)
+                "count": len(results),
+                "outcome": _search_answered(
+                    service='tavily', status=response.status, result_count=len(results),
+                ),
             }

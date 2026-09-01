@@ -13,6 +13,45 @@ n8n-style architecture:
 Prompt source:
 - manual: Define task in params
 - auto: Take from previous node with path resolution
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+The agent is the module where "it said it was done" is most likely to be
+mistaken for "it is done", so the ceiling is ACCEPTED and the reasons are worth
+being explicit about.
+
+  the model produced a final answer                     ACCEPTED
+      A completion came back. That is the peer reporting on its own work. The
+      answer is the model's ASSERTION that the task is complete, and this module
+      evaluates nothing about it: not the format, not the content, and above all
+      not the state of anything the tools touched.
+
+  max_iterations was reached                            INDETERMINATE
+      The loop was cut off mid-task. `ok` is True and `result` is the sentence
+      "Agent reached maximum iterations without completing the task." -- which
+      reads downstream exactly like an answer. It is not one, and tools that
+      already ran may have left work half-done. Nothing here can say what was
+      completed, which is the definition of indeterminate.
+
+  the LLM call timed out or failed                      INDETERMINATE
+      Both loops return this AFTER an arbitrary number of tool calls have
+      already executed. The unfinished LLM call is the least of it: the browser
+      may be logged in, the file may be written, the row may be inserted. The
+      effect carries the tool-call count precisely because the failure of the
+      last step says nothing about the first N.
+
+  a guard refused before the loop                       FAILED
+      Recursion depth, no task, SSRF, the env-credential endpoint check, no
+      model. All of them return before the first `chat()`, so nothing was
+      requested, no tool ran, and we know it rather than infer it.
+
+WHAT THE RUNG DOES NOT COVER, and this is the important sentence: the tools. Each
+tool runs through the executor and gets an outcome envelope of its own, and this
+module throws every one of them away -- `_summarize_tool_result` keeps a string
+for the steps log and nothing else. So an agent whose `file.write` reported
+INDETERMINATE still returns ACCEPTED here, because ACCEPTED is a claim about the
+completion and not about the tool. The `tool_outcomes_not_propagated` effect says
+so in the envelope rather than leaving a consumer to assume otherwise.
 """
 
 import json
@@ -20,6 +59,7 @@ import logging
 import os
 from typing import Any, Dict
 
+from ....engine.outcome import Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import Visibility
@@ -48,6 +88,110 @@ logger = logging.getLogger(__name__)
 
 MAX_ITERATIONS = 30
 MAX_AGENT_DEPTH = 3
+
+
+# ── Outcome ─────────────────────────────────────────────────────
+
+
+def _refused_before_the_loop(reason: str) -> Dict[str, Any]:
+    """FAILED: returned above the first `chat()`, so nothing ran at all."""
+    return envelope(
+        Outcome.FAILED,
+        effects=[{
+            'kind': 'agent_not_started',
+            'reason': reason,
+            'measured_by': 'a guard that returned before the first LLM call',
+            'detail': (
+                'No completion was requested and no tool was invoked. Nothing '
+                'about the world changed.'
+            ),
+        }],
+    )
+
+
+def _tools_effect(tool_calls: int, tool_errors: int) -> Dict[str, Any]:
+    """What the tools did, and the fact that this module did not look.
+
+    Present on every loop answer, including the failures, because a run that
+    ended badly is exactly the one where somebody needs to know that eleven
+    tools already executed.
+    """
+    return {
+        'kind': 'tool_outcomes_not_propagated',
+        'tool_calls': tool_calls,
+        'tool_calls_reporting_error': tool_errors,
+        'measured_by': (
+            "counted in the loop from each tool result's own ok/error fields"
+        ),
+        'detail': (
+            'Each tool carries an outcome envelope of its own and this module '
+            'discards all of them -- only a truncated string reaches the steps '
+            'log. The rung above is about the completion, never about what the '
+            'tools did to the world. A tool that reported indeterminate is '
+            'invisible here.'
+        ),
+    }
+
+
+def _agent_completed(
+    *,
+    iterations: int,
+    tool_calls: int,
+    tool_errors: int,
+    total_tokens: int,
+) -> Dict[str, Any]:
+    """ACCEPTED: the model answered. It did not prove anything by answering."""
+    return envelope(
+        Outcome.ACCEPTED,
+        effects=[
+            {
+                'kind': 'final_answer_returned',
+                'iterations': iterations,
+                'tokens_billed_by_provider': total_tokens,
+                'measured_by': "the provider's own response, which contained no tool call",
+                'detail': (
+                    'The model stopped calling tools and produced text. That is '
+                    'the model asserting the task is done -- an observation of a '
+                    'completion, not of the task. Nothing here checks the claim.'
+                ),
+            },
+            _tools_effect(tool_calls, tool_errors),
+        ],
+    )
+
+
+def _agent_cut_off(
+    *,
+    kind: str,
+    detail: str,
+    iterations: int,
+    tool_calls: int,
+    tool_errors: int,
+    total_tokens: int,
+    error: Any = None,
+) -> Dict[str, Any]:
+    """INDETERMINATE: the loop stopped without an answer, mid-effect.
+
+    Shared by the timeout, the LLM error and the max-iterations exhaustion.
+    FAILED would claim the work did not happen, and the tool count in the effect
+    is the evidence that some of it did.
+    """
+    stopped = {
+        'kind': kind,
+        'iterations': iterations,
+        'tokens_billed_by_provider': total_tokens,
+        'measured_by': None,
+        'detail': detail,
+    }
+    if error is not None:
+        stopped['error_type'] = (
+            type(error).__name__ if isinstance(error, BaseException) else None
+        )
+        stopped['error'] = str(error)
+    return envelope(
+        Outcome.INDETERMINATE,
+        effects=[stopped, _tools_effect(tool_calls, tool_errors)],
+    )
 
 
 @register_module(
@@ -244,7 +388,17 @@ MAX_AGENT_DEPTH = 3
         'tool_calls': {'type': 'number', 'description': 'Number of tools called',
                        'description_key': 'modules.llm.agent.output.tool_calls.description'},
         'tokens_used': {'type': 'number', 'description': 'Total tokens consumed',
-                        'description_key': 'modules.llm.agent.output.tokens_used.description'}
+                        'description_key': 'modules.llm.agent.output.tokens_used.description'},
+        'outcome': {'type': 'object',
+                    'description': (
+                        'How far this run was followed into reality: accepted when '
+                        'the model produced a final answer, indeterminate when the '
+                        'loop was cut off by a timeout, an error or max_iterations, '
+                        'failed when a guard refused before the first call. It is a '
+                        'claim about the completion, never about what the tools did '
+                        '-- their own outcomes are discarded by this module'
+                    ),
+                    'description_key': 'modules.llm.agent.output.outcome.description'}
     },
     examples=[
         {
@@ -287,7 +441,8 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': f'Agent recursion depth exceeded (max {MAX_AGENT_DEPTH} levels).',
-            'error_code': 'RECURSION_LIMIT'
+            'error_code': 'RECURSION_LIMIT',
+            'outcome': _refused_before_the_loop('RECURSION_LIMIT'),
         }
     context['_agent_depth'] = agent_depth + 1
 
@@ -311,7 +466,8 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
         max_input_size=max_input_size,
     )
     if not task:
-        return {'ok': False, 'error': 'No task prompt provided.', 'error_code': 'MISSING_TASK'}
+        return {'ok': False, 'error': 'No task prompt provided.', 'error_code': 'MISSING_TASK',
+                'outcome': _refused_before_the_loop('MISSING_TASK')}
 
     main_input = context.get('inputs', {}).get('input')
     if main_input is not None:
@@ -321,11 +477,14 @@ async def llm_agent(context: Dict[str, Any]) -> Dict[str, Any]:
     try:
         chat_model = _resolve_chat_model(context)
     except CredentialEndpointError as e:
-        return {'ok': False, 'error': str(e), 'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT'}
+        return {'ok': False, 'error': str(e), 'error_code': 'ENV_KEY_UNTRUSTED_ENDPOINT',
+                'outcome': _refused_before_the_loop('ENV_KEY_UNTRUSTED_ENDPOINT')}
     except SSRFError as e:
-        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED'}
+        return {'ok': False, 'error': str(e), 'error_code': 'SSRF_BLOCKED',
+                'outcome': _refused_before_the_loop('SSRF_BLOCKED')}
     if not chat_model:
-        return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL'}
+        return {'ok': False, 'error': 'No AI Model configured. Set provider/model/api_key in params, or connect an ai.model sub-node.', 'error_code': 'MISSING_MODEL',
+                'outcome': _refused_before_the_loop('MISSING_MODEL')}
 
     conversation_history = _resolve_memory(context)
     tools = _resolve_tools(context)
@@ -428,6 +587,11 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
     # Resilience guards (ported from flyto-ai)
     snapshot_guard = SnapshotGuard()
     circuit = CircuitBreaker()
+    # Counted for the outcome envelope: how many tool results came back saying
+    # they had failed. Not a rung on its own -- an agent recovering from a bad
+    # tool call is ordinary -- but the number a person needs when the loop
+    # ends without an answer.
+    tool_errors = 0
 
     for iteration in range(max_iterations):
         logger.info(f"Agent iteration {iteration + 1}/{max_iterations}")
@@ -441,8 +605,21 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                 chat_model.chat(messages, tools=tool_defs if tool_defs else None, tool_choice="auto" if tool_defs else None),
                 timeout=120,
             )
-        except asyncio.TimeoutError:
-            return {'ok': False, 'error': 'LLM call timed out after 120s', 'error_code': 'LLM_TIMEOUT'}
+        except asyncio.TimeoutError as e:
+            return {
+                'ok': False, 'error': 'LLM call timed out after 120s',
+                'error_code': 'LLM_TIMEOUT',
+                'outcome': _agent_cut_off(
+                    kind='llm_call_timed_out',
+                    detail=(
+                        'The model did not answer within 120s and the loop stopped. '
+                        'Whether that call ran and was billed is unknown, and the '
+                        'tool calls already made are not undone.'
+                    ),
+                    iterations=iteration + 1, tool_calls=tool_call_count,
+                    tool_errors=tool_errors, total_tokens=total_tokens, error=e,
+                ),
+            }
         except Exception as e:
             error_msg = str(e)
             # Retry once on transient LLM errors (rate limit, network)
@@ -455,9 +632,36 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                         timeout=120,
                     )
                 except Exception as e2:
-                    return {'ok': False, 'error': f'LLM call failed after retry: {e2}', 'error_code': 'LLM_ERROR'}
+                    return {
+                        'ok': False, 'error': f'LLM call failed after retry: {e2}',
+                        'error_code': 'LLM_ERROR',
+                        'outcome': _agent_cut_off(
+                            kind='llm_call_failed',
+                            detail=(
+                                'The model call failed twice and the loop stopped. '
+                                'Either attempt may have run and been billed, and '
+                                'the tool calls already made are not undone.'
+                            ),
+                            iterations=iteration + 1, tool_calls=tool_call_count,
+                            tool_errors=tool_errors, total_tokens=total_tokens,
+                            error=e2,
+                        ),
+                    }
             else:
-                return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
+                return {
+                    'ok': False, 'error': f'LLM call failed: {e}',
+                    'error_code': 'LLM_ERROR',
+                    'outcome': _agent_cut_off(
+                        kind='llm_call_failed',
+                        detail=(
+                            'The model call failed and the loop stopped. Whether it '
+                            'ran and was billed is unknown, and the tool calls '
+                            'already made are not undone.'
+                        ),
+                        iterations=iteration + 1, tool_calls=tool_call_count,
+                        tool_errors=tool_errors, total_tokens=total_tokens, error=e,
+                    ),
+                }
 
         total_tokens += response.tokens_used
         total_input_tokens += response.input_tokens
@@ -527,6 +731,8 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
 
                 # Update guards
                 tool_ok = isinstance(tool_result, dict) and tool_result.get('ok', True) and 'error' not in tool_result
+                if not tool_ok:
+                    tool_errors += 1
                 snapshot_guard.on_tool_call(tool_module_id)
                 circuit.record_result(tool_module_id, tool_ok, str(tool_result.get('error', '')) if isinstance(tool_result, dict) else '')
 
@@ -572,6 +778,14 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'input_tokens': total_input_tokens,
                     'output_tokens': total_output_tokens,
                     'cached_input_tokens': total_cached_input_tokens,
+                    # Inside `data`: to_legacy_dict keeps `ok` and `data` and
+                    # discards every sibling.
+                    'outcome': _agent_completed(
+                        iterations=iteration + 1,
+                        tool_calls=tool_call_count,
+                        tool_errors=tool_errors,
+                        total_tokens=total_tokens,
+                    ),
                 },
             }
 
@@ -592,6 +806,20 @@ async def _run_tools_loop(chat_model, messages, tools, tool_defs, tool_map,
             'input_tokens': total_input_tokens,
             'output_tokens': total_output_tokens,
             'cached_input_tokens': total_cached_input_tokens,
+            # `ok` stays True and `result` is a sentence that reads like an
+            # answer. The rung is what stops it being taken for one.
+            'outcome': _agent_cut_off(
+                kind='max_iterations_reached',
+                detail=(
+                    'The loop hit max_iterations and was cut off. `result` is a '
+                    'placeholder sentence, not an answer, and whatever the tools '
+                    'had already half-done is left as it was.'
+                ),
+                iterations=max_iterations,
+                tool_calls=tool_call_count,
+                tool_errors=tool_errors,
+                total_tokens=total_tokens,
+            ),
         },
     }
 
@@ -616,6 +844,7 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
     total_output_tokens = 0
     total_cached_input_tokens = 0
     tool_call_count = 0
+    tool_errors = 0
     snapshot_guard = SnapshotGuard()
     circuit = CircuitBreaker()
 
@@ -627,10 +856,36 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
 
         try:
             response = await asyncio.wait_for(chat_model.chat(messages), timeout=120)
-        except asyncio.TimeoutError:
-            return {'ok': False, 'error': 'LLM call timed out after 120s', 'error_code': 'LLM_TIMEOUT'}
+        except asyncio.TimeoutError as e:
+            return {
+                'ok': False, 'error': 'LLM call timed out after 120s',
+                'error_code': 'LLM_TIMEOUT',
+                'outcome': _agent_cut_off(
+                    kind='llm_call_timed_out',
+                    detail=(
+                        'The model did not answer within 120s and the loop stopped. '
+                        'Whether that call ran and was billed is unknown, and the '
+                        'tool calls already made are not undone.'
+                    ),
+                    iterations=iteration + 1, tool_calls=tool_call_count,
+                    tool_errors=tool_errors, total_tokens=total_tokens, error=e,
+                ),
+            }
         except Exception as e:
-            return {'ok': False, 'error': f'LLM call failed: {e}', 'error_code': 'LLM_ERROR'}
+            return {
+                'ok': False, 'error': f'LLM call failed: {e}',
+                'error_code': 'LLM_ERROR',
+                'outcome': _agent_cut_off(
+                    kind='llm_call_failed',
+                    detail=(
+                        'The model call failed and the loop stopped. Whether it ran '
+                        'and was billed is unknown, and the tool calls already made '
+                        'are not undone.'
+                    ),
+                    iterations=iteration + 1, tool_calls=tool_call_count,
+                    tool_errors=tool_errors, total_tokens=total_tokens, error=e,
+                ),
+            }
 
         total_tokens += response.tokens_used
         total_input_tokens += response.input_tokens
@@ -662,6 +917,14 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'input_tokens': total_input_tokens,
                     'output_tokens': total_output_tokens,
                     'cached_input_tokens': total_cached_input_tokens,
+                    # Inside `data`: to_legacy_dict keeps `ok` and `data` and
+                    # discards every sibling.
+                    'outcome': _agent_completed(
+                        iterations=iteration + 1,
+                        tool_calls=tool_call_count,
+                        tool_errors=tool_errors,
+                        total_tokens=total_tokens,
+                    ),
                 },
             }
 
@@ -691,6 +954,8 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                     tool_result = {'ok': False, 'error': f'Tool not found: {tool_name}'}
 
             tool_ok = isinstance(tool_result, dict) and tool_result.get('ok', True) and 'error' not in tool_result
+            if not tool_ok:
+                tool_errors += 1
             snapshot_guard.on_tool_call(tool_module_id)
             circuit.record_result(tool_module_id, tool_ok, str(tool_result.get('error', '')) if isinstance(tool_result, dict) else '')
 
@@ -727,6 +992,14 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
                     'input_tokens': total_input_tokens,
                     'output_tokens': total_output_tokens,
                     'cached_input_tokens': total_cached_input_tokens,
+                    # Inside `data`: to_legacy_dict keeps `ok` and `data` and
+                    # discards every sibling.
+                    'outcome': _agent_completed(
+                        iterations=iteration + 1,
+                        tool_calls=tool_call_count,
+                        tool_errors=tool_errors,
+                        total_tokens=total_tokens,
+                    ),
                 },
             }
 
@@ -747,6 +1020,20 @@ async def _run_react_loop(chat_model, messages, tools, tool_defs, tool_map,
             'input_tokens': total_input_tokens,
             'output_tokens': total_output_tokens,
             'cached_input_tokens': total_cached_input_tokens,
+            # `ok` stays True and `result` is a sentence that reads like an
+            # answer. The rung is what stops it being taken for one.
+            'outcome': _agent_cut_off(
+                kind='max_iterations_reached',
+                detail=(
+                    'The loop hit max_iterations and was cut off. `result` is a '
+                    'placeholder sentence, not an answer, and whatever the tools '
+                    'had already half-done is left as it was.'
+                ),
+                iterations=max_iterations,
+                tool_calls=tool_call_count,
+                tool_errors=tool_errors,
+                total_tokens=total_tokens,
+            ),
         },
     }
 

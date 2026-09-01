@@ -88,7 +88,12 @@ async def test_tavily_search_uses_bearer_auth_and_normalizes_results(monkeypatch
             {"keyword": "Flyto2 agent workflows", "limit": 50}, {}
         ).execute()
 
-    assert result == {
+    # `outcome` is compared separately: this assertion is about the payload
+    # shape, and the rung that now rides beside it has its own file
+    # (tests/modules/test_core_auth_ui_verify_outcome.py). Keeping the equality
+    # exact for everything else is the point of writing it this way.
+    assert result["outcome"]["rung"] == "accepted"
+    assert {k: v for k, v in result.items() if k != "outcome"} == {
         "status": "success",
         "data": [
             {
@@ -123,4 +128,8 @@ async def test_tavily_search_reports_http_error(monkeypatch):
     ):
         result = await TavilySearchModule({"keyword": "Flyto2"}, {}).execute()
 
-    assert result == {"status": "error", "message": "API error: HTTP 429"}
+    assert result["outcome"]["rung"] == "failed"
+    assert {k: v for k, v in result.items() if k != "outcome"} == {
+        "status": "error",
+        "message": "API error: HTTP 429",
+    }

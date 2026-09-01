@@ -3,6 +3,34 @@
 """
 Process List Module
 List all running background processes
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+Two answers, and what separates them is whether anything outside this Python
+process was asked a question.
+
+  at least one process was probed             OBSERVED
+      `os.kill(pid, 0)` is a real syscall against the OS process table, and a
+      `returncode` that is already set means the event loop's child watcher
+      reaped that child and read its exit status. Both are readings of the
+      world, and `running` / `stopped` are counted from them.
+
+  nothing was probed                          DISPATCHED
+      With `include_status` false, or a registry holding no process objects,
+      this module reads `_process_registry` -- a dict in this interpreter's own
+      memory, written by `process.start` and never reconciled with the OS.
+      Every field returned then (`pid`, `name`, `command`, `started_at`) is our
+      own bookkeeping repeated back, and `status` is the literal 'unknown'. A
+      count of 0 there means "our dict is empty", which is not a statement
+      about any machine.
+
+      DISPATCHED rather than ACCEPTED, deliberately: nobody acknowledged
+      anything, and it is the rung the engine stamps on a module that reports
+      nothing at all -- which is precisely what this path has to say.
+
+A limit on the OBSERVED worth stating: pids are reused. `os.kill(pid, 0)`
+succeeding says a process with that number exists, not that it is the one
+`process.start` spawned, and it succeeds for a zombie that has already exited.
 """
 
 import asyncio
@@ -10,6 +38,7 @@ import logging
 import os
 from typing import Any, Dict, List
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...registry import register_module
 from ...schema import compose, presets
 from .start import get_process_registry
@@ -77,7 +106,15 @@ logger = logging.getLogger(__name__)
             'type': 'number',
             'description': 'Number of stopped processes'
         ,
-                'description_key': 'modules.process.list.output.stopped.description'}
+                'description_key': 'modules.process.list.output.stopped.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the listing was followed: observed when process state '
+                'was probed against the OS, dispatched when only the in-memory '
+                'registry was read'
+            ),
+            'description_key': 'modules.process.list.output.outcome.description'}
     },
     examples=[
         {
@@ -106,6 +143,9 @@ async def process_list(context: Dict[str, Any]) -> Dict[str, Any]:
     processes: List[Dict[str, Any]] = []
     running_count = 0
     stopped_count = 0
+    # How many entries had their state read from something other than our own
+    # dict. Counted where the reading happens, so it cannot drift from it.
+    probed_count = 0
 
     for proc_id, info in registry.items():
         # Apply name filter
@@ -116,6 +156,7 @@ async def process_list(context: Dict[str, Any]) -> Dict[str, Any]:
         status = 'unknown'
 
         if include_status and process:
+            probed_count += 1
             if process.returncode is None:
                 # Check if actually running
                 try:
@@ -147,10 +188,48 @@ async def process_list(context: Dict[str, Any]) -> Dict[str, Any]:
 
     logger.info(f"Listed {len(processes)} processes ({running_count} running)")
 
+    if probed_count:
+        outcome = envelope(
+            Outcome.OBSERVED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'process_state_probed',
+                'probed': probed_count,
+                'running': running_count,
+                'stopped': stopped_count,
+                'measured_by': (
+                    'os.kill(pid, 0) against the OS process table, or a '
+                    'returncode already reaped by the event loop'
+                ),
+                'detail': (
+                    'A pid that answers is not certainly the process we started '
+                    '-- pids are reused, and a zombie answers too. A pid that '
+                    'raises PermissionError is counted as stopped here although '
+                    'it means the opposite: the process exists and is not ours.'
+                ),
+            }],
+        )
+    else:
+        outcome = envelope(
+            Outcome.DISPATCHED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'registry_read_only',
+                'entries': len(processes),
+                'measured_by': None,
+                'detail': (
+                    'No process was probed, so nothing outside this interpreter '
+                    'was consulted. These entries are the in-memory registry '
+                    'repeated back, and their status is the literal "unknown".'
+                ),
+            }],
+        )
+
     return {
         'ok': True,
         'processes': processes,
         'count': len(processes),
         'running': running_count,
-        'stopped': stopped_count
+        'stopped': stopped_count,
+        'outcome': outcome,
     }

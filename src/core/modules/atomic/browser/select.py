@@ -4,12 +4,98 @@
 Browser Select Module
 
 Select option from dropdown element.
+
+TWO CODE PATHS, TWO DIFFERENT AMOUNTS OF EVIDENCE
+
+`selected` looks like one output. It is produced by two functions that measure
+opposite amounts, and a single rung for this module would have to be wrong about
+one of them:
+
+  native <select>   `_select_native` returns whatever `page.select_option()`
+                    returned, and Playwright builds that list inside the page
+                    from the option elements that are `selected` AFTER the
+                    change. It is a read-back. A non-empty list is a fact the
+                    browser reported about the DOM.        -> OBSERVED
+
+  custom dropdown   `_select_custom` ends with `return [str(self.target)]` —
+                    the caller's own parameter, formatted. It is identical
+                    whether the option was applied, the click landed on a
+                    neighbour, or the widget silently reverted. Nothing reads
+                    the widget back.                       -> ACCEPTED
+
+That is the same shape as `file.write`'s `bytes_written`, and it is invisible in
+the output because both paths fill the same key with the same-looking strings.
+The envelope is where the difference becomes legible: `selected_measured` says
+whether the list came from the page or from the parameters, so a consumer never
+has to know which branch ran to know what the list is worth.
+
+The empty-list case is ACCEPTED for the reason `database.query` gives for an
+empty result set: a list of length zero reads the same whether nothing matched
+or nothing was applied, so it cannot be evidence of the effect.
 """
 from typing import Any, Dict, List, Optional
+
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+
+
+def _select_outcome(*, native: bool, selected: List[Any], selector: str) -> Dict[str, Any]:
+    """The rung this selection earned, decided by which branch produced `selected`."""
+    if not native:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'custom_dropdown_option_clicked',
+                'selector': selector,
+                'selected_measured': False,
+                'measured_by': None,
+                'detail': (
+                    'A custom (non-native) dropdown. The option element was '
+                    'found and clicked without raising, and the returned '
+                    '`selected` list is the requested target echoed back, not a '
+                    'read-back of the widget: it is identical whether the '
+                    'selection stuck or not.'
+                ),
+            }],
+        )
+
+    if not selected:
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'no_option_reported_selected',
+                'selector': selector,
+                'selected_measured': True,
+                'measured_by': None,
+                'detail': (
+                    'select_option() returned an empty list. The browser took '
+                    'the call and reported no option as selected, which reads '
+                    'the same whether the change was applied and reverted or '
+                    'never applied at all.'
+                ),
+            }],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'options_selected',
+            'selector': selector,
+            'count': len(selected),
+            'values': [str(value) for value in selected],
+            'selected_measured': True,
+            'measured_by': (
+                'the list select_option() built in the page from the option '
+                'elements that are selected after the change'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -77,7 +163,16 @@ from ...schema.constants import FieldGroup
         'selected': {'type': 'array', 'description': 'The selected',
                 'description_key': 'modules.browser.select.output.selected.description'},
         'selector': {'type': 'string', 'description': 'CSS selector that was used',
-                'description_key': 'modules.browser.select.output.selector.description'}
+                'description_key': 'modules.browser.select.output.selector.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this selection was followed: observed for a native '
+                '<select>, where the selected list is read back from the DOM; '
+                'accepted for a custom dropdown, where it is the requested '
+                'target echoed back'
+            ),
+            'description_key': 'modules.browser.select.output.outcome.description'}
     },
     examples=[
         {
@@ -288,6 +383,11 @@ class BrowserSelectModule(BaseModule):
             "selector": self.selector,
             "method": self.method,
             "kind": kind,
+            "outcome": _select_outcome(
+                native=bool(is_native),
+                selected=list(selected or []),
+                selector=self.selector,
+            ),
         }
         # Post-action: refresh hints (select may change available options)
         browser._snapshot_since_nav = True

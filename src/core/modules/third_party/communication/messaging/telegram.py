@@ -3,19 +3,116 @@
 """
 Telegram Notification Module
 Send notifications via Telegram Bot API.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted, and it will not go higher.
+
+`sendMessage` answers ``{"ok": true, "result": {"message_id": N, ...}}`` when
+Telegram has created the message in the chat. That is a real answer from the
+other side, with a server-assigned id in it -- far more than DISPATCHED, which
+is what the engine stamps on a module that reports nothing -- and it is exactly
+ACCEPTED: the peer acknowledged taking it.
+
+It is tempting to call a message_id an observation, and it is not one. It is
+Telegram reporting on Telegram's own work, in the reply to the request this
+module just sent. Nothing here calls `getUpdates`, re-reads the chat, or looks
+at anything except the answer to its own POST. Above all, nobody has READ the
+message: a chat_id that is a dead channel, a bot removed from a group, a user
+who has muted it -- none of those is visible from a message_id, and this rung
+does not pretend otherwise.
+
+THE ERROR PATH IS THE OTHER HALF and it does not raise: an ``ok: false`` reply
+returns ``{'status': 'error', 'sent': False, ...}`` with no ``ok`` key, which
+``_execute_single_mode`` passes straight through, so "chat not found" is
+recorded as a step that SUCCEEDED. The envelope is the only field that
+disagrees, and it splits on Telegram's own ``error_code``:
+
+    4xx    Telegram read the request and refused it by name -- 400 chat not
+           found, 403 bot was blocked, 429 too many requests. Nothing was sent
+           and nothing is in doubt: FAILED.
+    5xx    Telegram broke with the request already in its hands. The message
+           may exist in the chat. INDETERMINATE -- and `retryable=True,
+           max_retries=3` means a retry after one can post it twice.
+
+WHAT CARRIES NOTHING: a transport failure. There is no HTTP status check at
+all, so a non-JSON error page makes `response.json()` raise, and the 30s client
+timeout raises `asyncio.TimeoutError`; both escape uncaught and become a
+StepExecutionError with the payload discarded. A timed-out send is the textbook
+INDETERMINATE and it cannot be reported from here without changing this
+module's error semantics, which is not a declaration's business.
 """
 import logging
 import os
-from typing import Any
+from typing import Any, Dict
 
 import aiohttp
 
 from ....base import BaseModule
 from ....registry import register_module
 from .....constants import EnvVars
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
+
+
+def _accepted(message_id: Any, chat_id: Any) -> Dict[str, Any]:
+    """ACCEPTED -- Telegram acknowledged the message and assigned it an id."""
+    return envelope(
+        Outcome.ACCEPTED,
+        claim_by=ClaimBy.NONE,
+        effects=[
+            {
+                'kind': 'message_accepted_by_telegram',
+                'message_id': message_id,
+                'chat_id': chat_id,
+                'measured_by': "the ok:true reply to this sendMessage, and the message_id in it",
+                'detail': (
+                    'Telegram acknowledged the message and gave it an id. That '
+                    "is the service's report of its own work: nothing here "
+                    're-reads the chat.'
+                ),
+            },
+            {
+                'kind': 'nobody_has_read_it',
+                'chat_id': chat_id,
+                'measured_by': None,
+                'detail': (
+                    'A message id says the message exists, not that a person '
+                    'saw it. A muted chat, a bot removed from a group and a '
+                    'dead channel all look identical from here.'
+                ),
+            },
+        ],
+    )
+
+
+def _refused(error_code: Any, description: str) -> Dict[str, Any]:
+    """The off-ladder answer for ``ok: false``, split on Telegram's error_code.
+
+    FAILED where Telegram named a reason in the 4xx range: it read the request,
+    refused it, and created nothing. INDETERMINATE for a 5xx, or for a reply
+    with no usable code at all -- Telegram broke with the request already in
+    its hands, so the message may be in the chat, and saying FAILED there would
+    tell a person nothing was sent when something may have been.
+    """
+    definite = isinstance(error_code, int) and 400 <= error_code < 500
+    return envelope(
+        Outcome.FAILED if definite else Outcome.INDETERMINATE,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'message_refused_by_telegram' if definite else 'telegram_answer_inconclusive',
+            'error_code': error_code,
+            'description': description,
+            'measured_by': "the ok:false reply to this sendMessage, and its error_code",
+            'detail': (
+                'Telegram answered and named a reason; no message was created.'
+                if definite else
+                'Telegram did not accept the message and did not name a client '
+                'error for it. The request was already in its hands, so whether '
+                'anything reached the chat is not knowable from here.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -91,7 +188,17 @@ logger = logging.getLogger(__name__)
         'message_id': {'type': 'number', 'description': 'Message identifier',
                 'description_key': 'modules.notification.telegram.send_message.output.message_id.description'},
         'message': {'type': 'string', 'description': 'Result message describing the outcome',
-                'description_key': 'modules.notification.telegram.send_message.output.message.description'}
+                'description_key': 'modules.notification.telegram.send_message.output.message.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this send was followed: "accepted" when Telegram '
+                'acknowledged the message and assigned it an id, "failed" when '
+                'it refused with a 4xx error_code, "indeterminate" when it '
+                'broke with the request already in its hands. Never higher than '
+                'accepted -- nobody has read anything'
+            ),
+            'description_key': 'modules.notification.telegram.send_message.output.outcome.description'}
     },
     examples=[
         {
@@ -167,11 +274,17 @@ class TelegramSendMessageModule(BaseModule):
                         'status': 'success',
                         'sent': True,
                         'message_id': data['result']['message_id'],
-                        'message': 'Message sent to Telegram successfully'
+                        'message': 'Message sent to Telegram successfully',
+                        'outcome': _accepted(
+                            (data.get('result') or {}).get('message_id'),
+                            self.chat_id,
+                        ),
                     }
                 else:
+                    description = data.get('description', 'Unknown error')
                     return {
                         'status': 'error',
                         'sent': False,
-                        'message': f"Failed to send message: {data.get('description', 'Unknown error')}"
+                        'message': f"Failed to send message: {description}",
+                        'outcome': _refused(data.get('error_code'), description),
                     }

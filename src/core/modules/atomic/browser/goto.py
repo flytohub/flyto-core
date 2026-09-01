@@ -27,14 +27,88 @@ Example of schema presets usage - compare before/after:
         )
 """
 import logging
-from typing import Any
+from typing import Any, Dict, Optional
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import SSRFError, validate_url_with_env_config
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# HOW FAR A NAVIGATION IS FOLLOWED
+#
+# The tempting evidence is the URL, and it is the wrong one. `out['url']` is
+# `result.get('url', self.url)`: on the fallback it is the caller's own input,
+# and even when the driver supplies it, `page.url` is the URL the browser was
+# ASKED for on an error page — Chrome keeps the requested URL in the address bar
+# for ERR_NAME_NOT_RESOLVED and friends. Re-navigating to the page you are
+# already on returns that same string whether or not anything happened. It fails
+# the test: unchanged if the effect had not happened.
+#
+# `status_code` does not. It is `response.status` off the navigation response
+# object, and Playwright hands back a response object only when a document
+# response was actually received for THIS navigation — None for a same-document
+# (hash) navigation, and None on the ERR_HTTP_RESPONSE_CODE_FAILURE recovery
+# path below, where the driver catches the raise and looks at the address bar
+# instead. A number here means a server answered this request.
+#
+# So the rung is decided by whether a status crossed the wire, never by whether
+# the page "looks right":
+#
+#   status_code is an int   a document response arrived   -> OBSERVED
+#   status_code is None     nothing measured the load     -> ACCEPTED
+#
+# A 404 or a 500 is still OBSERVED. The rung says how far we followed the
+# effect, not whether the caller liked the answer; the code travels in the
+# effect so a consumer can decide that for itself. Nothing here evaluates a
+# postcondition, so VERIFIED is unreachable and is not reached for.
+# ---------------------------------------------------------------------------
+def _navigation_outcome(
+    *,
+    final_url: str,
+    status_code: Optional[int],
+    warning: Optional[str] = None,
+) -> Dict[str, Any]:
+    """The rung this navigation earned, and the measurement that earned it."""
+    if isinstance(status_code, bool) or not isinstance(status_code, int):
+        return envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[{
+                'kind': 'navigation_not_measured',
+                'final_url': final_url,
+                'measured_by': None,
+                'reason': warning or (
+                    'the navigation returned no response object, so no status '
+                    'code was received for this request'
+                ),
+                'detail': (
+                    'The browser accepted the navigation and did not raise. The '
+                    'final URL is not evidence on its own: an error page keeps '
+                    'the requested URL, and re-navigating to the current page '
+                    'reads identically whether or not anything loaded.'
+                ),
+            }],
+        )
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.NONE,
+        effects=[{
+            'kind': 'navigation_response',
+            'status_code': status_code,
+            'final_url': final_url,
+            'measured_by': 'response.status from the navigation response, and page.url after it settled',
+            'detail': (
+                'A document response was received for this navigation. The '
+                'status is the server\'s, not a judgement of it: 4xx and 5xx '
+                'are observed just as 200 is.'
+            ),
+        }],
+    )
 
 
 @register_module(
@@ -79,7 +153,23 @@ logger = logging.getLogger(__name__)
         'status': {'type': 'string', 'description': 'Operation status (success/error)',
                 'description_key': 'modules.browser.goto.output.status.description'},
         'url': {'type': 'string', 'description': 'URL address',
-                'description_key': 'modules.browser.goto.output.url.description'}
+                'description_key': 'modules.browser.goto.output.url.description'},
+        'status_code': {
+            'type': 'number',
+            'description': (
+                'HTTP status of the document response for this navigation, or '
+                'null when no response object was received (same-document '
+                'navigation, or an error the driver recovered from)'
+            ),
+            'description_key': 'modules.browser.goto.output.status_code.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this navigation was followed: observed when a status '
+                'code came back for the request, accepted when the browser took '
+                'the navigation and nothing measured the load'
+            ),
+            'description_key': 'modules.browser.goto.output.outcome.description'}
     },
     examples=[
         {
@@ -164,7 +254,18 @@ class BrowserGotoModule(BaseModule):
                 if alt is not None:
                     return alt
 
-            out = {"status": "success", "url": result.get('url', self.url)}
+            final_url = result.get('url', self.url)
+            status_code = result.get('status_code')
+            out = {
+                "status": "success",
+                "url": final_url,
+                "status_code": status_code,
+                "outcome": _navigation_outcome(
+                    final_url=final_url,
+                    status_code=status_code,
+                    warning=result.get('warning'),
+                ),
+            }
             # Capture interactive elements for Element Picker UI
             browser._snapshot_since_nav = True
             hints = await browser.get_hints(force=True)
@@ -215,7 +316,18 @@ class BrowserGotoModule(BaseModule):
             # Only accept if the toggle actually fixed it
             if not result.get('warning'):
                 logger.info("goto: www toggle succeeded → %s", result.get('url', alt_url))
-                out = {"status": "success", "url": result.get('url', alt_url)}
+                final_url = result.get('url', alt_url)
+                status_code = result.get('status_code')
+                out = {
+                    "status": "success",
+                    "url": final_url,
+                    "status_code": status_code,
+                    "outcome": _navigation_outcome(
+                        final_url=final_url,
+                        status_code=status_code,
+                        warning=result.get('warning'),
+                    ),
+                }
                 hints = await browser.get_hints(force=True)
                 for key in ('inputs', 'checkboxes', 'radios', 'switches', 'buttons', 'links', 'selects', 'file_inputs'):
                     if hints.get(key):

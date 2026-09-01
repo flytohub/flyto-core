@@ -3,20 +3,221 @@
 """
 LLM Code Fix Module
 AI-powered automatic code fixes based on issues and feedback
+
+HOW FAR THIS MODULE FOLLOWS REALITY
+
+This is the only module in the ai/llm group that changes anything outside a
+provider's billing record: with `fix_mode='apply'` it writes model-generated code
+over the caller's source files. So the rung is about the WRITES, not about the
+completion, and the two halves are deliberately not averaged:
+
+  fix_mode='suggest' (the default) or 'dry_run'         ACCEPTED
+      A completion came back and nothing was written. `fixes` is text the model
+      produced; `applied` under dry_run is a list of fixes that WOULD apply,
+      computed in memory. Nothing on disk changed and nothing claims it did.
+
+  fix_mode='apply', every write read back and matched   OBSERVED
+      Each file is read back after `write_text` closes and compared against the
+      exact string that was written. That is a measurement of the file that now
+      exists, not of the string we handed over -- the distinction `file.write`
+      exists to make. `len(applied)` on its own is NOT that: it counts how many
+      times `write_text` returned without raising, which is identical whether the
+      bytes landed or the disk filled up mid-write.
+
+  fix_mode='apply', a write could not be read back      INDETERMINATE
+      or came back different. INDETERMINATE and not FAILED, for the reason
+      `outcome.py` gives: nobody declared this equality, it is this module's own
+      inference, and a concurrent writer or an editor with the file open makes it
+      false without our write having gone wrong. `claim_by=INFERRED` records
+      whose judgement it was.
+
+  a guard refused before the model was called           FAILED
+      A missing API key, or no source file inside the sandbox. Both return above
+      the call, so nothing was requested and nothing was written.
+
+  the LLM call itself failed                            passed through
+      `llm_chat` builds its own envelope and knows things this module does not --
+      whether the provider refused (FAILED) or never answered (INDETERMINATE).
+      Its result is returned verbatim so that distinction survives.
+
+WHY NOT VERIFIED, when a read-back is a postcondition that held. Because the
+predicate that held is "the bytes we wrote are the bytes on disk", and the thing
+the caller actually wanted is "the issue is fixed". Nothing here compiles, lints
+or runs anything. Declaring `postcondition=` on the decorator would let this
+module claim the rung that renders as done, for a file full of model output that
+has never been executed. That is the largest available false green in this
+module and the read-back does not earn it.
+
+One path deliberately carries no envelope: `issues` empty returns before
+anything is requested or written, and the engine's default stamp is the honest
+answer for it. There is nothing more than the floor to say about a step that did
+nothing, and inventing an effect to describe the absence of one would be noise.
 """
 
 import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
+from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import validate_path_with_env_config
 from ...registry import register_module
 from ...schema import compose, presets
 
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# The only lines in this module that measure the world.
+#
+# `write_text` returning is an acknowledgement from the OS that it took the
+# string. Reading the file back afterwards is a different fact, and it is the
+# one that separates ACCEPTED from OBSERVED here exactly as `os.stat` does in
+# `file.write`.
+#
+# Content rather than size, on purpose. `write_text(..., encoding='utf-8')`
+# translates '\n' to os.linesep on the way out and `read_text` translates it
+# back on the way in, so the round trip is exact on every platform while a byte
+# count is not -- on Windows the file is legitimately longer than
+# `len(new_content.encode('utf-8'))`, which would make a correct write look like
+# a short one.
+#
+# What it does NOT establish: durability (no fsync), and nothing whatsoever
+# about whether the code now in the file is correct.
+# ---------------------------------------------------------------------------
+def _read_back(path: Path, expected: str) -> Tuple[Optional[bool], Optional[str]]:
+    """``(matches, None)`` when the file could be read, ``(None, why)`` when not.
+
+    A failure here is not a failure of the write: `write_text` already returned.
+    All that is lost is our ability to look, and the rung drops to match.
+    """
+    try:
+        return path.read_text(encoding='utf-8') == expected, None
+    except (OSError, UnicodeError) as error:
+        reason = getattr(error, 'strerror', None) or str(error)
+        return None, f"{type(error).__name__}: {reason}"
+
+
+def _refused_before_dispatch(reason: str) -> Dict[str, Any]:
+    """FAILED: the guard returned above the model call and above every write."""
+    return envelope(
+        Outcome.FAILED,
+        effects=[{
+            'kind': 'nothing_requested_or_written',
+            'reason': reason,
+            'measured_by': 'a guard that returned before the LLM call',
+            'detail': (
+                'No completion was requested and no file was touched. Nothing '
+                'happened, and we know that rather than infer it.'
+            ),
+        }],
+    )
+
+
+def _fix_outcome(
+    *,
+    fix_mode: str,
+    fixes_generated: int,
+    writes: List[Dict[str, Any]],
+    backups_written: int,
+) -> Dict[str, Any]:
+    """The rung the WRITES earned. The completion only ever earns ACCEPTED.
+
+    `writes` is one entry per file `write_text` was called on, each carrying
+    either a read-back verdict or the error that stopped it. An empty list means
+    no write was attempted -- the normal, correct state of 'suggest' and
+    'dry_run', not a degraded one.
+    """
+    completion_effect = {
+        'kind': 'fixes_generated',
+        'count': fixes_generated,
+        'measured_by': 'len() over the fixes parsed out of the model response',
+        'detail': (
+            'How many fixes the model proposed. A count of the answer, not of '
+            'anything on disk: nothing here checks that a fix is correct, or '
+            'even that it is valid code.'
+        ),
+    }
+
+    if not writes:
+        return envelope(
+            Outcome.ACCEPTED,
+            effects=[
+                completion_effect,
+                {
+                    'kind': 'no_files_written',
+                    'fix_mode': fix_mode,
+                    'measured_by': None,
+                    'detail': (
+                        f"fix_mode={fix_mode!r} attempted no write. Under "
+                        "'dry_run' the `applied` list is what WOULD be applied, "
+                        "computed in memory; under 'suggest' the fixes are text "
+                        "for a person to read. Under 'apply' it means no fix "
+                        "named a file that had been read, so nothing reached "
+                        "write_text at all."
+                    ),
+                },
+            ],
+        )
+
+    matched = [entry for entry in writes if entry['matches'] is True]
+    unconfirmed = [entry for entry in writes if entry['matches'] is not True]
+
+    written_effect = {
+        'kind': 'files_written',
+        'writes_attempted': len(writes),
+        'read_back_matching': len(matched),
+        'backups_written': backups_written,
+        'files': writes,
+        'measured_by': (
+            'path.read_text(encoding="utf-8") after write_text returned, '
+            'compared with the exact string written'
+        ),
+        'detail': (
+            'Each file that write_text returned for was read back and compared '
+            'with what was written. That measures the file which now exists -- '
+            'unlike len(applied), which counts calls that did not raise and is '
+            'the same number whether the bytes landed or not. It does not '
+            'measure durability (nothing fsyncs) and says nothing about whether '
+            'the code is correct: nothing here compiles, lints or runs it.'
+        ),
+    }
+
+    if unconfirmed:
+        return envelope(
+            Outcome.INDETERMINATE,
+            # INFERRED, not CALLER: nobody asked for this equality. It is this
+            # module's own predicate, and an editor or a concurrent writer makes
+            # it false without our write having gone wrong -- which is the split
+            # `outcome.py` draws between FAILED and INDETERMINATE.
+            claim_by=ClaimBy.INFERRED,
+            effects=[
+                completion_effect,
+                written_effect,
+                {
+                    'kind': 'write_not_confirmed',
+                    'predicate': 'path.read_text() == the content written',
+                    'count': len(unconfirmed),
+                    'files': unconfirmed,
+                    'detail': (
+                        'At least one file could not be read back, came back '
+                        'different from what was written, or raised on the way '
+                        'out. The last of those is not "unchanged": write_text '
+                        'truncates at open, so a write that raised part-way '
+                        'leaves a damaged file behind. We cannot say which '
+                        'happened, so this is indeterminate rather than failed.'
+                    ),
+                },
+            ],
+        )
+
+    return envelope(
+        Outcome.OBSERVED,
+        claim_by=ClaimBy.INFERRED,
+        effects=[completion_effect, written_effect],
+    )
 
 
 @register_module(
@@ -86,7 +287,17 @@ logger = logging.getLogger(__name__)
             'type': 'string',
             'description': 'Summary of fixes'
         ,
-                'description_key': 'modules.llm.code_fix.output.summary.description'}
+                'description_key': 'modules.llm.code_fix.output.summary.description'},
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far the WRITES were followed: observed when every applied '
+                'file was read back and matched what was written, indeterminate '
+                'when one could not be, accepted when nothing was written '
+                '(suggest / dry_run). Never verified -- nothing here compiles, '
+                'lints or runs the code it wrote'
+            ),
+            'description_key': 'modules.llm.code_fix.output.outcome.description'}
     },
     examples=[
         {
@@ -128,10 +339,14 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': 'OpenAI API key not provided',
-            'error_code': 'MISSING_API_KEY'
+            'error_code': 'MISSING_API_KEY',
+            'outcome': _refused_before_dispatch('MISSING_API_KEY'),
         }
 
     if not issues:
+        # No envelope on purpose. Nothing was requested and nothing was written,
+        # and the engine's default stamp is the honest floor for that. See the
+        # module docstring.
         return {
             'ok': True,
             'fixes': [],
@@ -166,17 +381,30 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
         return {
             'ok': False,
             'error': 'No source files could be read',
-            'error_code': 'NO_FILES'
+            'error_code': 'NO_FILES',
+            'outcome': _refused_before_dispatch('NO_FILES'),
         }
 
     # Build prompt for LLM
     prompt = _build_fix_prompt(issues, file_contents, additional_context)
 
     # Call LLM
+    #
+    # BUG FIX, found by giving this module an outcome rung and then asking what
+    # the rung was measuring. `@register_module` replaces a function-style
+    # module with a `FunctionModuleWrapper` CLASS whose constructor is
+    # `(params, context)`, so `llm.chat`'s exported name is a class and not the
+    # coroutine. The previous call passed it a single `{'params': ...}` dict,
+    # which raised `TypeError: __init__() missing 1 required positional
+    # argument: 'context'` on every invocation -- caught two lines below and
+    # returned as `LLM_ERROR`. This module could not generate a fix at all: with
+    # issues to fix and files it could read, the only reachable answer was that
+    # error. Instantiating the wrapper the way the engine does is what makes
+    # every path past this point live, including the writes.
     try:
         from .chat import llm_chat
-        llm_result = await llm_chat({
-            'params': {
+        llm_result = await llm_chat(
+            {
                 'prompt': prompt,
                 'system_prompt': _get_system_prompt(),
                 'model': model,
@@ -184,16 +412,37 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
                 'max_tokens': 4000,
                 'response_format': 'json',
                 'temperature': 0.3  # Lower for more consistent code
-            }
-        })
+            },
+            {},
+        ).execute()
     except Exception as e:
+        # `llm_chat` catches its own transport failures, so anything arriving
+        # here broke somewhere we cannot place. The request may or may not have
+        # been sent; nothing was written either way.
         return {
             'ok': False,
             'error': f'LLM call failed: {e}',
-            'error_code': 'LLM_ERROR'
+            'error_code': 'LLM_ERROR',
+            'outcome': envelope(
+                Outcome.INDETERMINATE,
+                effects=[{
+                    'kind': 'llm_call_raised',
+                    'error_type': type(e).__name__,
+                    'error': str(e),
+                    'measured_by': None,
+                    'detail': (
+                        'The call to llm.chat raised rather than returning. '
+                        'Whether a completion was requested and billed cannot be '
+                        'told from here. No file was written.'
+                    ),
+                }],
+            ),
         }
 
     if not llm_result.get('ok'):
+        # Returned verbatim, envelope included: llm.chat knows whether the
+        # provider refused (FAILED) or never answered (INDETERMINATE), and
+        # rebuilding a rung out here would flatten that into a guess.
         return llm_result
 
     # Parse fixes
@@ -205,11 +454,17 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
             'fixes': [],
             'applied': [],
             'failed': [],
-            'summary': 'No fixes could be generated'
+            'summary': 'No fixes could be generated',
+            'outcome': _fix_outcome(
+                fix_mode=fix_mode, fixes_generated=0, writes=[], backups_written=0,
+            ),
         }
 
     applied = []
     failed = []
+    # One entry per file `write_text` returned for, with the read-back verdict.
+    writes: List[Dict[str, Any]] = []
+    backups_written = 0
 
     # Apply fixes if requested
     if fix_mode in ['apply', 'dry_run']:
@@ -238,14 +493,36 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
                 if backup:
                     backup_path = path.with_suffix(path.suffix + '.bak')
                     backup_path.write_text(original_content, encoding='utf-8')
+                    backups_written += 1
 
                 # Write fix
                 try:
                     path.write_text(new_content, encoding='utf-8')
+                except Exception as e:
+                    # A raised write is NOT a file left alone. `write_text`
+                    # opens with 'w', which truncates before the first byte is
+                    # written, so a failure part-way through leaves a truncated
+                    # or half-written file behind. It goes in `writes` with
+                    # `matches: None` for exactly that reason -- the rung has to
+                    # come out indeterminate, not accepted.
+                    failed.append({**fix, 'error': str(e)})
+                    writes.append({
+                        'file': file_path,
+                        'matches': None,
+                        'write_error': str(e),
+                    })
+                else:
+                    # The handle is closed, so this reads the file that now
+                    # exists rather than racing the one being written.
+                    matches, read_error = _read_back(path, new_content)
+                    writes.append({
+                        'file': file_path,
+                        'matches': matches,
+                        'read_back_error': read_error,
+                    })
+                    fix['read_back_matches'] = matches
                     applied.append(fix)
                     logger.info("Applied fix to source file")
-                except Exception as e:
-                    failed.append({**fix, 'error': str(e)})
             else:
                 # dry_run
                 applied.append(fix)
@@ -265,7 +542,13 @@ async def llm_code_fix(context: Dict[str, Any]) -> Dict[str, Any]:
         'fixes': fixes,
         'applied': applied,
         'failed': failed,
-        'summary': summary
+        'summary': summary,
+        'outcome': _fix_outcome(
+            fix_mode=fix_mode,
+            fixes_generated=len(fixes),
+            writes=writes,
+            backups_written=backups_written,
+        ),
     }
 
 

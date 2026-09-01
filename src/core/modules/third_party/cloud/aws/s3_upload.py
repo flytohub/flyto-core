@@ -3,6 +3,33 @@
 """
 AWS S3 Upload Module
 Upload a local file to an Amazon S3 bucket using boto3.
+
+HOW FAR THIS MODULE FOLLOWS REALITY: accepted, and no further.
+
+`boto3`'s `upload_file` returns `None`. It raises on a failed transfer and is
+silent on a successful one, so the single fact this module has when it comes
+back is "the SDK finished without raising" -- the peer took the bytes and said
+so. That is exactly ACCEPTED: the other side acknowledged taking it.
+
+What is NOT evidence, and is the reason this stops one rung below its twin
+`aws.s3.download`:
+
+  * `size` is `os.path.getsize(file_path)` read from the LOCAL source file
+    before a byte left this host. It is the same number if the object never
+    reached the bucket, if it landed truncated, or if it landed at a different
+    key entirely. Under the test this contract exists for -- would this value be
+    unchanged had the effect not happened? -- it is unchanged, so nothing may
+    rest on it. It travels as `bytes_offered`, named for what it is.
+
+  * `url` is an f-string built from two caller parameters. It is not a link the
+    service returned and it is not proof anything is at the other end of it.
+
+OBSERVED would need a read-back: a `head_object` against the same key after the
+transfer, whose `ContentLength` could be compared with the bytes offered.
+`cloud.aws_s3.upload` already makes that call and does earn OBSERVED from it;
+this module makes no second request, and adding one here is a change to what an
+upload costs, which belongs to whoever owns that decision rather than to a
+contract declaration. Until then this says `accepted`, which is true.
 """
 
 import asyncio
@@ -11,6 +38,7 @@ import os
 from typing import Any, Dict
 
 from .....utils import validate_path_with_env_config
+from .....engine.outcome import ClaimBy, Outcome, envelope
 from ....registry import register_module
 from ....schema import compose
 from ....schema.builders import field
@@ -73,7 +101,23 @@ logger = logging.getLogger(__name__)
         'bucket': {'type': 'string', 'description': 'S3 bucket name', 'description_key': 'modules.aws.s3.upload.output.bucket.description'},
         'key': {'type': 'string', 'description': 'S3 object key', 'description_key': 'modules.aws.s3.upload.output.key.description'},
         'url': {'type': 'string', 'description': 'Public URL of the uploaded object', 'description_key': 'modules.aws.s3.upload.output.url.description'},
-        'size': {'type': 'number', 'description': 'File size in bytes', 'description_key': 'modules.aws.s3.upload.output.size.description'},
+        'size': {
+            'type': 'number',
+            'description': (
+                'Size of the LOCAL source file, from os.path.getsize before the '
+                'transfer. Not a measurement of the object in the bucket'
+            ),
+            'description_key': 'modules.aws.s3.upload.output.size.description',
+        },
+        'outcome': {
+            'type': 'object',
+            'description': (
+                'How far this upload was followed into reality. Always '
+                '"accepted": boto3 returning without raising is the peer '
+                'acknowledging the bytes, and nothing here reads the object back'
+            ),
+            'description_key': 'modules.aws.s3.upload.output.outcome.description',
+        },
     },
     examples=[
         {
@@ -160,5 +204,35 @@ async def aws_s3_upload(context: Dict[str, Any]) -> Dict[str, Any]:
             'key': key,
             'url': url,
             'size': file_size,
+            'outcome': envelope(
+                Outcome.ACCEPTED,
+                # NONE: no caller declared an expected outcome and this module
+                # infers none, so there is no expectation that could have been
+                # broken and no author to attribute one to.
+                claim_by=ClaimBy.NONE,
+                effects=[
+                    {
+                        'kind': 'object_bytes_offered',
+                        'bucket': bucket,
+                        'key': key,
+                        'bytes_offered': file_size,
+                        'measured_by': 'os.path.getsize(file_path), before the transfer',
+                        'detail': (
+                            'Size of the local source file. Says nothing about the '
+                            'object in the bucket: it reads identically whether S3 '
+                            'stored every byte, some of them, or none.'
+                        ),
+                    },
+                    {
+                        'kind': 'object_not_read_back',
+                        'measured_by': None,
+                        'detail': (
+                            'boto3 upload_file returns None and this module issues no '
+                            'head_object. The transfer was acknowledged by the service '
+                            'and followed no further.'
+                        ),
+                    },
+                ],
+            ),
         },
     }

@@ -3,6 +3,22 @@
 """
 Notion Query Database Module
 Query pages from Notion database with filters and sorting.
+
+HOW FAR THE QUERY IS FOLLOWED
+
+ACCEPTED. Notion answered and handed back page objects; nothing here reads
+anything a second time, and for a query there is nothing to read back -- the
+reply is the whole of what happened. `count` is `len()` over the array Notion
+sent, which is the one number in this module that no line of it invented.
+
+What `count` is NOT is the size of the result set. `page_size` caps it at 100,
+one page is requested, and no cursor is followed, so `has_more: true` means the
+number beside it is a page and not a total. That distinction is carried in the
+effect rather than left for a reader of the integer to guess -- the same trap as
+`database.query`'s row count, which counts rows RETURNED and never rows matched.
+
+The error path raises, so it carries no rung; for a read that is the smaller
+loss, since a refused query changed nothing and leaves nothing in doubt.
 """
 import logging
 import os
@@ -11,6 +27,7 @@ import aiohttp
 
 from ....registry import register_module
 from .....constants import APIEndpoints, EnvVars
+from .....engine.outcome import ClaimBy, Outcome, envelope
 
 
 logger = logging.getLogger(__name__)
@@ -101,7 +118,12 @@ logger = logging.getLogger(__name__)
         'count': {'type': 'number', 'description': 'Number of results returned',
                 'description_key': 'modules.api.notion.query_database.output.count.description'},
         'has_more': {'type': 'boolean', 'description': 'Whether there are more results',
-                'description_key': 'modules.api.notion.query_database.output.has_more.description'}
+                'description_key': 'modules.api.notion.query_database.output.has_more.description'},
+        'outcome': {'type': 'object', 'description': (
+                    'How far the effect was followed. Always "accepted" on the '
+                    'path that returns: Notion answered with one page of results. '
+                    '`count` is the size of that page, not of the result set'),
+                'description_key': 'modules.api.notion.query_database.output.outcome.description'}
     },
     examples=[
         {
@@ -154,10 +176,42 @@ async def notion_query_database(context):
                 error_text = await response.text()
                 raise Exception(f"Notion API error ({response.status}): {error_text}")
 
+            status = response.status
             result = await response.json()
+
+    has_more = result.get('has_more', False)
 
     return {
         'results': result['results'],
         'count': len(result['results']),
-        'has_more': result.get('has_more', False)
+        'has_more': has_more,
+        'outcome': envelope(
+            Outcome.ACCEPTED,
+            claim_by=ClaimBy.NONE,
+            effects=[
+                {
+                    'kind': 'notion_reply_read',
+                    'status': status,
+                    'measured_by': 'response.status on the reply to this request',
+                    'detail': (
+                        'A server received this request and chose a reply. Nothing '
+                        'here corroborates it; there is no second request.'
+                    ),
+                },
+                {
+                    'kind': 'pages_returned',
+                    'count': len(result['results']),
+                    'has_more': has_more,
+                    'measured_by': 'len() over the results array Notion returned',
+                    'detail': (
+                        'How many page objects came back in THIS reply. With '
+                        'has_more true it is one page of a longer answer, not a '
+                        'total: page_size caps it at 100 and no cursor is '
+                        'followed. A count of 0 is the peer saying it matched '
+                        'nothing here, and the rung rests on the reply rather '
+                        'than on the count.'
+                    ),
+                },
+            ],
+        ),
     }
