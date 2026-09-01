@@ -261,11 +261,19 @@ class TestTheDefaultRule:
 
         assert result["data"]["outcome"]["rung"] == "dispatched"
 
-    def test_a_declared_derives_module_is_verified(self, stamp):
-        """Its return value IS its effect — but it has to say so."""
+    def test_a_declared_derives_module_is_not_stamped_at_all(self, stamp):
+        """Its return value IS its effect, so there is no distance to report.
+
+        This asserted `verified` while `derives` was the one thing a default
+        could reach it by. The ladder measures how far an effect was followed
+        into the world; a pure computation has no such distance, and saying
+        "verified" about it claims a postcondition was evaluated when the
+        module declared none. No envelope is the honest answer, and it is the
+        same one every other non-side-effecting module already gets.
+        """
         result = stamp("array.sort", {"ok": True, "data": {}}, derives=True)
 
-        assert result["data"]["outcome"]["rung"] == "verified"
+        assert "outcome" not in result["data"]
 
 
 class TestTheCeiling:
@@ -353,17 +361,37 @@ class TestTheDefaultCannotManufactureAGreenTick:
     it, produced by the default whose job is to prevent exactly that.
     """
 
-    def test_a_side_effecting_module_cannot_reach_verified_by_declaring_derives(self):
-        from core.engine.outcome import Outcome, default_for
+    def test_declaring_derives_reaches_no_rung_at_all(self):
+        """The hazard is gone rather than unreachable.
 
-        assert default_for("file.diff", {"derives": True}) is Outcome.DISPATCHED
-        assert default_for("scheduler.interval", {"derives": True}) is Outcome.DISPATCHED
+        Ordering alone made VERIFIED unreachable, which fixed the symptom and
+        left the mechanism in the building. It also contradicted `ceiling_for`,
+        where VERIFIED is *defined* as "a postcondition was evaluated and it
+        held" -- so handing it to a module whose `postcondition` is None was
+        never a policy overreach, it was a category error. A boolean flag is
+        not a predicate.
+        """
+        from core.engine.outcome import default_for
 
-    def test_a_pure_module_still_may(self):
-        """`derives` is not wrong, it is only wrong about side-effecting code."""
-        from core.engine.outcome import Outcome, default_for
+        assert default_for("file.diff", {"derives": True}) is None
+        assert default_for("scheduler.interval", {"derives": True}) is None
+        assert default_for("array.sort", {"derives": True}) is None
 
-        assert default_for("array.sort", {"derives": True}) is Outcome.VERIFIED
+    def test_a_module_that_derives_is_not_reported_as_having_dispatched(self):
+        """The other half, and the reason the ordering changed.
+
+        `derives` now outranks the category, because the two are different kinds
+        of statement: `is_side_effecting` reads the text before the first dot
+        and is guessing, while `derives` is a declaration about the module in
+        front of the author. Eight modules were in that disagreement and all
+        eight were being told on: `dispatched` says an instruction left us, and
+        for a diff between two strings none did.
+        """
+        from core.engine.outcome import Outcome, default_for, is_side_effecting
+
+        assert is_side_effecting("file.diff", {})
+        assert default_for("file.diff", {}) is Outcome.DISPATCHED
+        assert default_for("file.diff", {"derives": True}) is None
 
     def test_no_shipped_module_is_stamped_verified_by_default(self):
         """Over the real registry, not a constructed case.

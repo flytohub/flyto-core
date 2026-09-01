@@ -17,13 +17,19 @@ had not happened -- and the answer is yes for every field, because there is no
 effect. That is `browser.viewport`'s echoed parameters and `browser.storage`'s
 literal `True`, five times over.
 
-They are in the outcome population only because `is_side_effecting` keys on the
+They were in the outcome population only because `is_side_effecting` keys on the
 category prefix and `ai` is in `SIDE_EFFECT_CATEGORIES` -- correctly, for
-`ai.embed` and `llm.chat`, which do spend money. So `default_for` stamps all five
-`dispatched`, one rung above what happened: no instruction left us. That is the
-same shape the coverage list already records for `robotics.*`, and the same
-conclusion -- the honest envelope for a config builder is no envelope at all,
-and correcting the stamp is a metadata question, not an outcome question.
+`ai.embed` and `llm.chat`, which do spend money. So `default_for` stamped all
+five `dispatched`, one rung above what happened: no instruction left us.
+
+THAT HAS SINCE BEEN CORRECTED, and this file's conclusion is what corrected it.
+The fix was the metadata question this docstring named: all five now declare
+`derives=True`, which `default_for` reads as "not on the ladder" and stamps
+nothing for -- the honest envelope for a config builder being no envelope at
+all. `ai.memory.redis` deliberately does not declare it; it really does connect,
+and it reports its own rung. The tests below still assert these five are in the
+side-effecting *population*, because they are: the category heuristic has not
+changed and should not, or `ai.embed` would fall out of it with them.
 
 WHAT THE MEASUREMENTS ACTUALLY FOUND, which is the part worth keeping:
 
@@ -125,7 +131,10 @@ class TestTheGroupClaimsNothingAndIsStampedDispatched:
             f"{module_id} left the outcome population; the coverage list entry "
             "for it is now stale"
         )
-        assert default_for(module_id, metadata) is Outcome.DISPATCHED
+        assert default_for(module_id, metadata) is None, (
+            "a config builder that dispatches nothing must be stamped nothing; "
+            "this is what `derives=True` on these five buys."
+        )
 
     @pytest.mark.parametrize("module_id", GROUP)
     def test_no_postcondition_is_declared(self, module_id):
@@ -138,7 +147,12 @@ class TestTheGroupClaimsNothingAndIsStampedDispatched:
         """
         metadata = ModuleRegistry.get_metadata(module_id) or {}
         assert metadata.get("postcondition") is None
-        assert not metadata.get("derives")
+        # `derives=True` IS declared on all five now, and is the fix rather than
+        # the trap it was when this test was written: it could reach VERIFIED
+        # then, and reaches no rung at all today, so it is no longer a route to
+        # the green tick this test exists to block. `postcondition` is that
+        # route, and it stays shut.
+        assert metadata.get("derives") is True
 
     @pytest.mark.asyncio
     async def test_none_of_them_attaches_an_envelope_of_its_own(self):
@@ -162,6 +176,18 @@ class TestTheGroupClaimsNothingAndIsStampedDispatched:
 # ===========================================================================
 # ai.memory -- the ONE RULE, applied to a module that has no store to read.
 # ===========================================================================
+
+
+def where(mentions):
+    """The files a scan landed in, without the line numbers.
+
+    `source_files_mentioning` returns "path:line", and pinning the line makes
+    every one of these tests fail the moment anything is inserted above the
+    site -- which is exactly what adding a nine-line comment to five decorators
+    did. The claim being defended is "this name is touched in these files, this
+    many times", and none of that is the line number.
+    """
+    return [mention.split(":")[0] for mention in mentions]
 
 
 class TestBufferMemoryIsAnEchoOfItsOwnParameter:
@@ -206,7 +232,7 @@ class TestBufferMemoryIsAnEchoOfItsOwnParameter:
         step and a rung becomes a real question.
         """
         mentions = source_files_mentioning("memory_messages")
-        assert mentions == ["modules/atomic/ai/memory.py:163"], (
+        assert where(mentions) == ["modules/atomic/ai/memory.py"], (
             f"memory_messages is now touched in more than one place: {mentions}"
         )
 
@@ -259,7 +285,7 @@ class TestEntityMemoryReturnsALiteral:
 
     def test_nothing_in_src_ever_writes_the_key_it_reads(self):
         mentions = source_files_mentioning("_entity_store")
-        assert mentions == ["modules/atomic/ai/memory_entity.py:171"], (
+        assert where(mentions) == ["modules/atomic/ai/memory_entity.py"], (
             f"_entity_store is now touched in more than one place: {mentions}"
         )
 
@@ -311,7 +337,7 @@ class TestVectorMemoryOpensNoChannel:
 
     def test_nothing_in_src_ever_writes_the_key_it_reads(self):
         mentions = source_files_mentioning("_vector_store")
-        assert mentions == ["modules/atomic/ai/memory_vector.py:170"], (
+        assert where(mentions) == ["modules/atomic/ai/memory_vector.py"], (
             f"_vector_store is now touched in more than one place: {mentions}"
         )
 
@@ -527,11 +553,11 @@ class TestTheWriteHalfOfEveryMemoryModuleIsUnreachable:
 
     def test_nothing_consumes_the_methods_dict(self):
         mentions = source_files_mentioning("__methods__")
-        assert mentions == [
-            "modules/atomic/ai/memory.py:187",
-            "modules/atomic/ai/memory_entity.py:195",
-            "modules/atomic/ai/memory_redis.py:369",
-            "modules/atomic/ai/memory_vector.py:194",
+        assert where(mentions) == [
+            "modules/atomic/ai/memory.py",
+            "modules/atomic/ai/memory_entity.py",
+            "modules/atomic/ai/memory_redis.py",
+            "modules/atomic/ai/memory_vector.py",
         ], f"__methods__ now has a reader or another producer: {mentions}"
 
     def test_the_agent_reads_history_and_never_writes_it(self):

@@ -352,21 +352,35 @@ class TestOneFlagIsTheWholeReason:
 
     @pytest.mark.parametrize("module_id", GROUP)
     def test_the_fix_must_not_arrive_as_a_derives_flag(self, module_id):
-        """The other way to make the stamp go away, and it is a trap.
+        """The other way to make the stamp go away, and it is still the wrong one.
 
-        `derives=True` reads plausible -- the plan IS the return value of a pure
-        computation -- and `default_for` would stamp VERIFIED, the one rung a
-        surface may render as success. "Move Robot: verified", on a step that
-        contacted no robot. The guard in `default_for` is ordering alone: it
-        asks about side effects first, so `derives` only bites once
-        `requires_credentials` is already gone, and then it bites hard.
+        This test was written when `derives=True` reached VERIFIED -- the one
+        rung a surface may render as success. "Move Robot: verified", on a step
+        that contacted no robot, and the only guard was that `default_for`
+        asked about side effects first, so the flag bit only once
+        `requires_credentials` was gone, and then it bit hard.
+
+        That hazard is gone: `derives` reaches no rung at all now, so setting it
+        here would produce None, the same answer as the honest fix above. The
+        flag is no longer dangerous in kind. It is still wrong in fact, and the
+        reason has outlived the mechanism: `derives` is a claim that a module
+        computes its output from its inputs and reaches nothing outside the
+        workflow. It is true of these three *today*, and it is a claim about the
+        module rather than about this release -- the day one of them really does
+        drive a robot, `requires_credentials` describes it and `derives` lies
+        about it. Fix the flag that is wrong, not the one that reads convenient.
+
+        `tests/core/test_outcome_declaration_coverage.py::DERIVES_DECLARED` is
+        where that argument has to be made and lost: anything declaring the flag
+        and not written down there turns it red, robotics included, since these
+        modules are in the registry whenever the optional package is installed.
         """
         metadata = ModuleRegistry.get_metadata(module_id) or {}
 
         assert not metadata.get("derives")
         assert default_for(
             module_id, {**metadata, "requires_credentials": False, "derives": True}
-        ) is Outcome.VERIFIED
+        ) is None
 
     @pytest.mark.parametrize("module_id", GROUP)
     def test_no_postcondition_is_declared(self, module_id):

@@ -83,11 +83,11 @@ def _carries_contract(ModuleRegistry, module_id, metadata):
 #: Generated once from the registry on the day this landed; every later change
 #: to it should be a deletion.
 UNDECLARED = {
-    "ai.memory",
-    "ai.memory.entity",
-    "ai.memory.vector",
-    "ai.model",
-    "ai.tool",
+    # The five `ai.*` sub-nodes that were here are gone: they now declare
+    # `derives=True`, which `default_for` reads as "not on the ladder". They
+    # were never going to earn a rung -- they are configuration providers that
+    # open no sockets -- so the way off this list was to stop the engine
+    # claiming they had dispatched something. See DERIVES_DECLARED below.
     "browser.click",
     "browser.hover",
     "browser.press",
@@ -251,3 +251,115 @@ class TestThePopulationIsWhatItClaims:
     def test_requires_credentials_is_enough_on_its_own(self):
         """The half of the rule that is not the category prefix."""
         assert is_side_effecting("anything.at_all", {"requires_credentials": True})
+
+
+#: Every module declaring ``derives=True``, which since the rung rewrite means
+#: "not on the outcome ladder at all" -- `default_for` stamps nothing for these.
+#: That is the right answer for a pure computation and a dangerous one for
+#: anything else, so the set is written down rather than trusted.
+#:
+#: This list is not a ratchet in the shrinking sense: `derives` is a claim, not a
+#: deficiency, and it is fine for it to grow. What is not fine is for it to grow
+#: quietly. Adding a module here is asserting that it opens no sockets, reads no
+#: files and writes no durable state -- and the test below goes looking.
+DERIVES_DECLARED = {
+    # Configuration providers wired to `llm.agent` over a RESOURCE edge. They
+    # assemble a dict and hand it over; the module that spends the money is
+    # `llm.agent` itself. `ai.memory.redis` is deliberately NOT here: it really
+    # does connect, and it reports its own envelope.
+    "ai.memory",
+    "ai.memory.entity",
+    "ai.memory.vector",
+    "ai.model",
+    "ai.tool",
+    # In side-effecting categories by prefix, doing nothing external in fact:
+    # a diff between two strings, and two cron/interval calculators that
+    # schedule nothing. All three declared this before `default_for` honoured
+    # it, and were stamped `dispatched` for an instruction that never left.
+    "file.diff",
+    "scheduler.cron_parse",
+    "scheduler.interval",
+}
+
+#: Cheap evidence against the claim each entry above is making. Not a proof of
+#: purity -- nothing short of running them is -- but any of these names being
+#: *used* in a file that claims to compute from its inputs is worth a human
+#: looking.
+#:
+#: These are matched against the parsed syntax tree, never against the file's
+#: text. The first version of this test scanned the source as a string and
+#: failed on all five ai sub-nodes, because the comment explaining why each one
+#: derives contains the phrase "opens no sockets". A guard that reads prose
+#: catches the documentation instead of the code.
+_EFFECT_NAMES = frozenset({
+    "open", "socket", "requests", "httpx", "aiofiles", "subprocess",
+    "urllib", "aiohttp", "shutil", "tempfile", "sqlite3", "pathlib",
+})
+
+
+def _names_used(source: str) -> set:
+    """Every identifier the code actually references, ignoring all text."""
+    tree = ast.parse(source)
+    used = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name):
+            used.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            used.add(node.attr)
+        elif isinstance(node, ast.Import):
+            used.update(alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            used.add(node.module.split(".")[0])
+            used.update(alias.name for alias in node.names)
+    return used
+
+
+class TestDerivesMeansWhatItSays:
+    """`derives=True` suppresses the rung, so it has to be hard to add.
+
+    Before the rewrite this flag reached VERIFIED and the guard against abusing
+    it was that `default_for` asked about side effects first -- so on a module
+    in a side-effecting category the flag did nothing at all, and three modules
+    that had honestly declared it were overruled and stamped `dispatched`.
+    Honouring the flag fixes those three, and creates this hazard in exchange:
+    a module that really does dispatch can now silence its rung with one line.
+    These two tests are the price of that.
+    """
+
+    def test_the_set_of_modules_claiming_to_derive_is_the_one_written_down(self, registry):
+        _, metadata = registry
+        declared = {
+            module_id
+            for module_id, meta in metadata.items()
+            if meta.get("derives")
+        }
+        # Entries for modules that ship in an optional package are not absences.
+        expected = {m for m in DERIVES_DECLARED if m in metadata}
+
+        assert declared == expected, (
+            "the `derives=True` set moved. Added: "
+            f"{sorted(declared - expected)}; removed: {sorted(expected - declared)}. "
+            "Adding one means no outcome envelope is stamped for that module "
+            "ever again -- say why in the commit and add it to DERIVES_DECLARED."
+        )
+
+    @pytest.mark.parametrize("module_id", sorted(DERIVES_DECLARED))
+    def test_a_module_claiming_to_derive_shows_no_sign_of_reaching_out(
+        self, module_id, registry
+    ):
+        ModuleRegistry, metadata = registry
+        if module_id not in metadata:
+            pytest.skip(f"{module_id} ships in an optional package")
+
+        module_class = ModuleRegistry.get(module_id)
+        source_path = inspect.getsourcefile(module_class)
+        with open(source_path, encoding="utf-8") as handle:
+            found = sorted(_names_used(handle.read()) & _EFFECT_NAMES)
+
+        assert not found, (
+            f"{module_id} declares derives=True -- so nothing it does is ever "
+            f"stamped on the ladder -- but {source_path} uses {found}. "
+            "Either the claim is stale or the name is innocent here; if it is "
+            "innocent, narrow _EFFECT_NAMES and say why."
+        )
+

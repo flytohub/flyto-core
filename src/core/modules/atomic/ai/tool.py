@@ -16,6 +16,15 @@ from ...types import NodeType, EdgeType, DataType
 
 @register_module(
     module_id='ai.tool',
+
+    # Not on the outcome ladder: this is a configuration provider wired to
+    # `llm.agent` over a RESOURCE edge, and it opens no sockets, reads no files
+    # and writes no durable state. Every field it returns is either a parameter
+    # the caller handed in or a literal from this file, so there is no effect to
+    # follow anywhere. Without this the `ai.` prefix put it in the side-effecting
+    # population -- correctly, for `ai.embed` and `llm.chat`, which spend money --
+    # and it was stamped `dispatched`, claiming an instruction had left us.
+    derives=True,
     stability="stable",
     version='1.0.0',
     category='ai',
