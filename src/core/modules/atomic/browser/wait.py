@@ -82,18 +82,21 @@ returned early shows up as a shortfall.
     elapsed >= the duration asked for   OBSERVED (of the clock, not the page)
     elapsed fell short                  INDETERMINATE
 
-THE TIMEOUT PATH IS NOT HERE, AND THAT IS A GAP WORTH NAMING. A wait that times
-out is INDETERMINATE by this contract — we do not know whether the thing we were
-waiting for happened — but ``BrowserDriver.wait`` raises RuntimeError on
-timeout and a raise carries no return value, so there is no envelope to attach
-it to. It reaches a consumer as an execution error, which reads as FAILED. The
-fix is not in this module: an envelope would have to ride on the exception, and
-that is an engine-level channel this module cannot invent.
+THE TIMEOUT PATH IS HERE NOW. A wait that times out is INDETERMINATE by
+this contract -- we do not know whether the thing we were waiting for
+happened, only that it had not by the deadline -- and for a long time it
+had nowhere to say so: `BrowserDriver.wait` raised, and a raise carries no
+return value, so it reached every consumer as FAILED. This paragraph used
+to say that the fix was not in this module, and it was right; the engine
+grew `OutcomeError`, a raise that carries a rung, and the driver grew
+`BrowserWaitTimeout` so a timeout is distinguishable from a page that was
+simply gone. This module now opts in on that one branch and no other.
 """
 import time
 from typing import Any, Dict, Optional, Tuple
 
-from ....engine.outcome import ClaimBy, Outcome, envelope
+from ....browser.driver import BrowserWaitTimeout
+from ....engine.outcome import ClaimBy, Outcome, OutcomeError, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
@@ -331,8 +334,8 @@ def _duration_outcome(*, requested_ms: float, elapsed_ms: float) -> Dict[str, An
         'outcome': {'type': 'object', 'description': (
             'How far the wait was followed: observed when the element state '
             'held in the live DOM, or when the clock confirmed the requested '
-            'time passed; indeterminate when the sleep came up short. A wait '
-            'that times out raises and carries no envelope.'
+            'time passed; indeterminate when the sleep came up short, and '
+            'indeterminate when an element wait times out.'
         ),
                 'description_key': 'modules.browser.wait.output.outcome.description'}
     },
@@ -391,9 +394,39 @@ class BrowserWaitModule(BaseModule):
             if needs_witness:
                 count_before, count_error = await _count_matches(browser.page, self.selector)
 
-            # A timeout raises out of here. See the module docstring: that path
-            # is INDETERMINATE by this contract and has nowhere to say so.
-            await browser.wait(self.selector, state=self.state, timeout_ms=self.timeout)
+            try:
+                await browser.wait(self.selector, state=self.state, timeout_ms=self.timeout)
+            except BrowserWaitTimeout as error:
+                # The one path this module could not report on until the engine
+                # grew a channel for it. The predicate had not held by the
+                # deadline; whether it ever held, we do not know. That is
+                # INDETERMINATE by this contract, and it is emphatically not
+                # FAILED -- which is what every consumer saw for as long as the
+                # only way out of here was a bare raise.
+                #
+                # Only this branch opts in. No browser in context, a malformed
+                # selector, a closed page: all still raise what they raised, with
+                # no envelope, and read as FAILED. That is the opt-in boundary,
+                # and it is drawn narrowly on purpose.
+                raise OutcomeError(
+                    str(error),
+                    rung=Outcome.INDETERMINATE,
+                    claim_by=ClaimBy.NONE,
+                    effects=[{
+                        'kind': 'element_wait_timed_out',
+                        'selector': self.selector,
+                        'state': self.state,
+                        'timeout_ms': self.timeout,
+                        'measured_by': (
+                            'Playwright reported a timeout; the predicate never '
+                            'held within the deadline'
+                        ),
+                        'detail': (
+                            'We do not know whether the element ever reached '
+                            'this state -- only that it had not by the deadline.'
+                        ),
+                    }],
+                ) from error
 
             if needs_witness:
                 count_after, after_error = await _count_matches(browser.page, self.selector)

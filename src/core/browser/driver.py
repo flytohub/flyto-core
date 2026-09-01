@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from playwright.async_api import Browser, ElementHandle, Page, async_playwright
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from ..constants import (
     DEFAULT_BROWSER_TIMEOUT_MS,
@@ -71,6 +72,19 @@ def _find_external_node() -> Optional[str]:
         return str(flyto_node)
 
     return None
+
+
+class BrowserWaitTimeout(RuntimeError):
+    """A wait whose predicate had not held by the deadline.
+
+    A subclass of RuntimeError so every existing `except RuntimeError` around a
+    wait keeps catching it, and a distinct type so a caller that cares can tell
+    "it had not happened yet" from "we could not look". `browser.wait` is the
+    caller that cares: by the outcome contract a timeout is INDETERMINATE, not
+    FAILED, and without a type to catch, the module had nothing to branch on
+    except Playwright's private error path -- in a driver that is supposed to
+    keep Playwright's details on this side of the boundary.
+    """
 
 
 class BrowserDriver:
@@ -1035,6 +1049,20 @@ class BrowserDriver:
                 'state': state
             }
 
+        except PlaywrightTimeoutError as e:
+            # A timeout is a DIFFERENT ANSWER from a failure, and flattening the
+            # two is what kept `browser.wait` from ever reporting honestly. The
+            # predicate did not hold within the deadline; whether it ever held
+            # is unknown. Everything else caught below -- a closed page, a
+            # malformed selector, no browser -- is a genuine failure.
+            #
+            # Clause order is load-bearing: PlaywrightTimeoutError is an
+            # Exception, so the catch-all beneath would swallow it if this came
+            # second.
+            logger.error(f"Wait timed out: {str(e)}")
+            raise BrowserWaitTimeout(
+                f"Timed out waiting for {selector} (state: {state})"
+            ) from e
         except Exception as e:
             logger.error(f"Wait failed: {str(e)}")
             raise RuntimeError(f"Failed to wait for {selector}: {str(e)}") from e

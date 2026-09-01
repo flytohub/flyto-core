@@ -17,7 +17,7 @@ import asyncio
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from ..exceptions import StepTimeoutError, StepExecutionError, is_policy_refusal
 from ..outcome import (
@@ -27,6 +27,7 @@ from ..outcome import (
     cap,
     ceiling_for,
     default_for,
+    envelope_from_exception,
     envelope,
     is_on_ladder,
     read_envelope,
@@ -214,6 +215,49 @@ def step_outcome(result: Any) -> Optional[tuple]:
     return min(reported, key=lambda found: rung_index(found[0]))
 
 
+def _declared_failure(payload: Any) -> Optional[Tuple[str, str]]:
+    """A payload that says it failed in a shape that cannot mean anything else.
+
+    `wrap_legacy_result` is the only path from a module's failure to a step's,
+    and it is gated on an `ok` key that 158 of the 483 modules never return. So
+    a module without one could say `status: "error"`, carry an `error_code` and
+    an error message, and the step completed green with the error inside it.
+    Six modules do exactly that with no envelope either -- element.attribute,
+    element.query, element.text and the three robotics modules -- and all six
+    were reproduced completing GREEN.
+
+    Two clauses, and the third one people reach for is a bug:
+
+    * `error_code`, a non-empty string. Measured over all 483 modules, zero
+      return it on a success-shaped path.
+    * `status` equal to "error" COMPARED AS A STRING. The string comparison is
+      what keeps `http.request` and `auth.oauth2` out of this -- they put an
+      integer HTTP status under that key -- and `port.check`, whose status is
+      'open' or 'closed'.
+    * NOT a bare `error` key. `reverse.sourcemap` returns
+      `{'status': 'success', 'content': None, 'error': ...}` on a step that did
+      its job: error-as-data. Failing that would be a new false red.
+
+    Yields to an envelope, so a module that said what it meant keeps saying it:
+    `_raise_for_declared_failure` is the authority wherever one exists, and it
+    is the reason a Slack 5xx stays INDETERMINATE instead of being sniffed into
+    a failure here.
+    """
+    if not isinstance(payload, dict) or 'ok' in payload:
+        return None                      # wrap_legacy_result owns this one
+    if read_envelope(payload) is not None:
+        return None                      # the module said what it meant
+
+    code = payload.get('error_code')
+    status = payload.get('status')
+    message = payload.get('error') or payload.get('message')
+    if isinstance(code, str) and code:
+        return code, str(message or code)
+    if isinstance(status, str) and status.lower() == 'error':
+        return 'MODULE_ERROR', str(message or "module reported status='error'")
+    return None
+
+
 def _apply_outcome_contract(module_instance: Any, result: Any) -> Any:
     """Stamp the default rung, and lower a claim the declaration cannot support.
 
@@ -286,7 +330,32 @@ def _apply_outcome_contract(module_instance: Any, result: Any) -> Any:
                 rung=capped.value,
                 postcondition=declared,
             )
-        elif declared and not existing.get('postcondition'):
+        elif (
+            declared
+            and not existing.get('postcondition')
+            and existing['rung'] == Outcome.VERIFIED.value
+        ):
+            # Only onto a VERIFIED claim, because that is the only rung the
+            # field means anything on: `postcondition` names the predicate that
+            # was evaluated AND HELD, and below VERIFIED nothing held.
+            #
+            # Without the rung check this stamped the declared sentence onto
+            # every envelope of a declaring module that had not named one --
+            # including the ones that deliberately name none. Measured on
+            # `http.response_assert` with no assertions supplied, which returns
+            # ACCEPTED and `postcondition: None` precisely because there was
+            # nothing to evaluate:
+            #
+            #   module wrote  postcondition: None
+            #   engine wrote  "every assertion supplied by the caller was
+            #                  evaluated against the response object supplied
+            #                  by the caller, and all of them held"
+            #
+            # Zero assertions were supplied and none were evaluated. That
+            # sentence is manufactured by the engine, about a predicate the
+            # module went out of its way not to claim, and it is the exact
+            # shape of overreach this contract exists to stop -- with the
+            # engine, rather than a module, as the author of the lie.
             body[ENVELOPE_KEY] = dict(existing, postcondition=declared)
         return result
 
@@ -687,7 +756,8 @@ class StepExecutor:
                 input_items,
                 step_trace,
             )
-            return self._raise_for_error_event(step_id, result)
+            result = self._raise_for_error_event(step_id, result)
+            return self._raise_for_declared_failure(step_id, result)
 
         try:
             if retry_config:
@@ -710,6 +780,44 @@ class StepExecutor:
             return self._handle_step_error(step_id, e, on_error)
         except StepExecutionError as e:
             return self._handle_step_error(step_id, e, on_error)
+
+    @staticmethod
+    def _raise_for_declared_failure(step_id: str, result: Any) -> Any:
+        """Honour a module that said, in its own envelope, that it failed.
+
+        Sixteen modules write `rung: "failed"` and the engine used to discard
+        it. Nothing else could act on it either: `wrap_legacy_result` is the
+        only path from a module's failure to a step's failure and it is gated
+        on an `ok` key that 158 of the 483 modules never return, so for a third
+        of the registry a declared failure had no way of failing anything.
+        Measured end to end on the shipped recipe `scrape-to-slack.yaml` with a
+        revoked webhook: Slack answered 404, `notification.slack` correctly
+        reported `rung: failed`, and the step completed GREEN.
+
+        This adds nothing to the module's claim. `read_envelope` validates the
+        rung against the enum, and `engine/outcome.py` DEFINES failed as "a
+        postcondition was evaluated and did not hold, or the execution itself
+        raised". The engine simply stops throwing the answer away.
+
+        INDETERMINATE deliberately does not raise, and the asymmetry is the
+        whole point. `notification.slack` is the worked example: a 4xx is
+        FAILED because Slack rejected the message, while a 5xx is INDETERMINATE
+        because the POST was already in Slack's hands and we cannot say whether
+        it landed. Raising there would let `on_error: retry` post the message a
+        second time. Retrying a failure is safe; retrying an indeterminate
+        write may do it twice.
+        """
+        found = step_outcome(result)
+        if found is None or found[0] is not Outcome.FAILED:
+            return result
+
+        _rung, claim_by, expected = found
+        subject = repr(expected) if expected else 'the expected effect'
+        raise StepExecutionError(
+            step_id,
+            f"Module reported outcome 'failed': {subject} did not hold "
+            f"(claimed by {claim_by})",
+        )
 
     @staticmethod
     def _raise_for_error_event(step_id: str, result: Any) -> Any:
@@ -797,7 +905,39 @@ class StepExecutor:
             )
             raise error
         logger.warning(f"Step '{step_id}' failed but continuing: {str(error)}")
-        return {'ok': False, 'error': str(error)}
+        # The absorbed error needs a rung, or absorbing it erases it. Measured
+        # before this line existed: a step that RAISED, under
+        # `on_error: continue`, reached the cloud as
+        # `status='success', rung=None, proved=True` -- a step that crashed,
+        # drawn as a proved success. `on_error: continue` is a licence to carry
+        # on past something that went wrong, not a licence to forget that it did.
+        #
+        # The asymmetry with the raise path is deliberate: absorbing a PLAIN
+        # exception yields FAILED, not indeterminate. The step raised and nobody
+        # said otherwise. A module that opted in with `OutcomeError` keeps the
+        # rung it chose -- that is the only way `indeterminate` gets in here.
+        #
+        # Top level, not under a `data` key: `_outcome_payloads` reads the outer
+        # dict, so `step_outcome` finds it through the ordinary result path.
+        carried = envelope_from_exception(error)
+        return {
+            'ok': False,
+            'error': str(error),
+            ENVELOPE_KEY: carried if carried is not None else envelope(
+                Outcome.FAILED,
+                claim_by=ClaimBy.NONE,
+                effects=[{
+                    'kind': 'step_raised',
+                    'error': str(error)[:300],
+                    'error_type': type(error).__name__,
+                    'measured_by': 'the exception that reached on_error=continue',
+                    'detail': (
+                        'The step raised and the workflow was told to carry on. '
+                        'Carrying on is not evidence that anything worked.'
+                    ),
+                }],
+            ),
+        }
 
     async def _execute_module_with_timeout(
         self,
@@ -931,6 +1071,14 @@ class StepExecutor:
                 )
             # Return legacy format for backward compatibility
             return items_to_legacy_context(node_result)
+
+        found = _declared_failure(result)
+        if found is not None:
+            code, message = found
+            raise StepExecutionError(
+                step_id,
+                f"Module returned failure [{code}]: {message}",
+            )
         return result
 
     async def _execute_items_mode(

@@ -74,12 +74,12 @@ def create_step_context(
         hook_context.error_type = type(error).__name__
         hook_context.error_message = str(error)
 
-    _carry_the_outcome(hook_context, result)
+    _carry_the_outcome(hook_context, result, error)
 
     return hook_context
 
 
-def _carry_the_outcome(hook_context: HookContext, result) -> None:
+def _carry_the_outcome(hook_context: HookContext, result, error=None) -> None:
     """Put the step's rung where a host can read it.
 
     Without this the ladder stops at core's own edge. ``verification_status``
@@ -97,22 +97,52 @@ def _carry_the_outcome(hook_context: HookContext, result) -> None:
     the existing machinery has never once fired there.
 
     Written on both the pre- and post-execute contexts; on the pre-execute one
-    ``result`` is None and the key is simply absent, which is the honest state
-    for a step that has not run.
+    both ``result`` and ``error`` are None and the key is simply absent, which
+    is the honest state for a step that has not run.
+
+    AND ON THE RAISE PATH, which is where the ladder used to stop dead. A step
+    that raised has no return value, so there was nothing to read a rung out of
+    and every raise arrived at a host as an execution error -- including the
+    ones the contract calls INDETERMINATE. A wait that timed out is the case
+    that named this gap: we do not know whether the thing we were waiting for
+    happened, only that it had not by the deadline, and reporting that as a
+    definite failure is as wrong in its direction as a false green is in its
+    own. Now a module that raises `OutcomeError` carries its rung out with it.
+
+    Result first, deliberately. A context carrying BOTH a result and an error
+    is describing what the module returned, not what something later raised
+    about it.
     """
-    if result is None:
-        return
     # Local import: this module is on the import path of every engine start-up
     # and `outcome` pulls in nothing, but the executor's own import of it is the
     # one that establishes ordering.
     from .executor import step_outcome
+    from ..outcome import envelope_from_exception
 
-    found = step_outcome(result)
-    if found is None:
+    found = None
+    if result is not None:
+        found = step_outcome(result)
+        if found is not None:
+            rung, claim_by, postcondition = found
+            hook_context.metadata['outcome'] = {
+                'rung': rung.value,
+                'claim_by': claim_by,
+                'postcondition': postcondition,
+            }
+            return
+
+    if error is None:
         return
-    rung, claim_by, postcondition = found
+
+    # Opt-in only. A module that raised anything else still has no rung here,
+    # and reads as FAILED exactly as it did before: inferring a rung from an
+    # arbitrary exception would turn every crash in the product into "we cannot
+    # say", which invites retrying something that genuinely broke.
+    carried = envelope_from_exception(error)
+    if carried is None:
+        return
     hook_context.metadata['outcome'] = {
-        'rung': rung.value,
-        'claim_by': claim_by,
-        'postcondition': postcondition,
+        'rung': carried['rung'],
+        'claim_by': carried['claim_by'],
+        'postcondition': carried['postcondition'],
     }

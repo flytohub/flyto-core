@@ -341,3 +341,81 @@ def read_envelope(payload: Any) -> Optional[Dict[str, Any]]:
     except ValueError:
         return None
     return found
+
+class OutcomeError(Exception):
+    """A raise that carries a rung, for the effects a return value cannot reach.
+
+    Some outcomes are only knowable on the way out through an exception. The
+    canonical one is a wait that timed out: by this contract that is
+    INDETERMINATE -- we do not know whether the thing we were waiting for ever
+    happened, only that it had not by the deadline -- but the driver raises,
+    and a raise carries no return value, so it arrived at every consumer as
+    FAILED. `browser.wait`'s module docstring named that gap for months
+    precisely because it could not be closed from inside a module.
+
+    OPT-IN, AND THAT IS THE DESIGN. A module that raises anything else keeps
+    reading as FAILED, unchanged. The alternative -- inferring a rung from the
+    shape of an arbitrary exception -- would quietly turn every crash in the
+    product into "we cannot say", which is far worse than the bug being fixed
+    here: a failure that reads as unknowable is an invitation to retry
+    something that genuinely broke.
+
+    ONLY THE OFF-LADDER RUNGS. The constructor refuses `dispatched`,
+    `accepted`, `observed` and `verified`. Those four say how far an effect was
+    followed into the world, and an exception on the way out is not a reading
+    of the world; a raise that claimed `observed` would be claiming to have
+    seen something while unwinding from not having seen it.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        rung: "Outcome",
+        claim_by: "ClaimBy" = None,
+        effects: Optional[List[Dict[str, Any]]] = None,
+        postcondition: Optional[str] = None,
+    ) -> None:
+        super().__init__(message)
+        rung = Outcome(rung)
+        if rung in LADDER:
+            raise ValueError(
+                f"a raise may not claim {rung.value!r}: the ladder rungs are "
+                "readings of the world, and an exception is not one. Only "
+                f"{Outcome.FAILED.value!r} and {Outcome.INDETERMINATE.value!r} "
+                "may be raised."
+            )
+        self.outcome_envelope = envelope(
+            rung,
+            claim_by=claim_by if claim_by is not None else ClaimBy.NONE,
+            effects=effects or [],
+            postcondition=postcondition,
+        )
+
+
+def envelope_from_exception(error: Any) -> Optional[Dict[str, Any]]:
+    """The envelope an `OutcomeError` carries, found at any depth, or None.
+
+    An exception is re-wrapped on the way up -- OutcomeError inside a
+    StepExecutionError, once per nesting level -- so this walks the chain
+    rather than looking at the exception in hand.
+
+    Only the deliberate links are followed: ``original_error`` (this codebase's
+    own wrapping convention) and ``__cause__`` (``raise ... from``).
+    ``__context__`` is NOT followed, for the reason `is_policy_refusal` already
+    documents: it records whatever merely happened to be in flight when an
+    exception was raised, so following it would let an unrelated OutcomeError
+    handled earlier in the same frame put a rung on a failure that has nothing
+    to do with it.
+    """
+    seen = set()
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        found = getattr(error, 'outcome_envelope', None)
+        if isinstance(found, dict):
+            validated = read_envelope({ENVELOPE_KEY: found})
+            if validated is not None:
+                return validated
+        error = getattr(error, 'original_error', None) or getattr(error, '__cause__', None)
+    return None
+
