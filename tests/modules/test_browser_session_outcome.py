@@ -592,7 +592,10 @@ class TestRungWait:
 
     @pytest.mark.parametrize(
         "state,counts",
-        [("hidden", {"count_after": 0}), ("detached", {"count_before": 0})],
+        [
+            ("hidden", {"count_before": 0, "count_after": 0}),
+            ("detached", {"count_before": 0, "count_after": 0}),
+        ],
     )
     def test_a_state_no_element_ever_had_is_indeterminate(self, state, counts):
         """The typo case. `#nosuchthing state=hidden` returned in 7.3ms, and
@@ -603,20 +606,35 @@ class TestRungWait:
         assert found["claim_by"] == ClaimBy.INFERRED.value
         assert effect_named(found, "element_state_observed")["matching_nodes"] == 0
 
-    @pytest.mark.parametrize(
-        "state,wrong_side",
-        [("hidden", {"count_before": 1}), ("detached", {"count_after": 1})],
-    )
-    def test_the_count_from_the_wrong_side_of_the_wait_rescues_nothing(self, state, wrong_side):
-        """The asymmetry is forced, not stylistic, so it is pinned.
+    def test_a_detachment_is_not_inferred_from_a_node_that_appeared_afterwards(self):
+        """`detached` accepts the before-count ONLY, and that is load-bearing.
 
-        After a satisfied `detached` wait the count is 0 whether the node was
-        removed or never existed; during a satisfied `hidden` one the node is
-        still in the DOM. Reading the other side proves nothing, and anyone
-        collapsing this to a single count reading turns this test red.
+        A selector matching nothing satisfies a `detached` wait immediately. If
+        a node matching it then appears, an after-count would read 1 and call
+        that a detachment nobody watched. The asymmetry with `hidden` is not
+        stylistic: collapsing the two to one rule turns this red.
         """
-        found = wait_module._element_state_outcome(selector="#x", state=state, **wrong_side)
+        found = wait_module._element_state_outcome(
+            selector="#x", state="detached", count_before=0, count_after=1
+        )
         assert found["rung"] == Outcome.INDETERMINATE.value
+
+    def test_a_hidden_state_reached_by_removal_is_observed(self):
+        """The other side of that coin, and a bug this file used to encode.
+
+        A wait for something to disappear is satisfied two honest ways: the node
+        stays in the DOM and turns invisible, or the page removes it outright.
+        The after-count sees only the first. Reading it alone marked the second
+        `indeterminate` -- measured against Chromium on five nodes deleted by a
+        timer, with the wait satisfied by the deletion. Had the page not removed
+        them the count would still read 5 and the wait would have timed out, so
+        the before/after pair is evidence and the rung says so.
+        """
+        found = wait_module._element_state_outcome(
+            selector="#x", state="hidden", count_before=5, count_after=0
+        )
+        assert found["rung"] == Outcome.OBSERVED.value
+        assert effect_named(found, "element_state_observed")["matching_nodes"] == 5
 
     @pytest.mark.parametrize("state", ["hidden", "detached"])
     def test_a_count_that_could_not_be_read_claims_less(self, state):

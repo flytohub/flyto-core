@@ -248,11 +248,20 @@ WAIT_STATES_HTML = """
 <div id="real">here</div>
 <div id="gone" style="display:none">hidden but present</div>
 <div id="doomed">going away</div>
+<div class="crowd">a</div><div class="crowd">b</div><div class="crowd">c</div>
+<div class="crowd">d</div><div class="crowd">e</div>
 <script>
   function doomLater() {
     setTimeout(function () {
       var el = document.querySelector('#doomed');
       if (el) { el.remove(); }
+    }, 500);
+  }
+  // The other honest way a wait for "hidden" is satisfied: not display:none,
+  // but the nodes being taken out of the page entirely.
+  function clearCrowdLater() {
+    setTimeout(function () {
+      document.querySelectorAll('.crowd').forEach(function (n) { n.remove(); });
     }, 500);
   }
 </script>
@@ -1303,6 +1312,31 @@ class TestWaitAgainstARealPage:
 
         assert rung_of(result) == Outcome.INDETERMINATE.value
         assert effect_named(envelope_of(result), "element_state_observed")["matching_nodes"] == 0
+
+    async def test_a_hidden_wait_satisfied_by_removal_is_observed(self, at_page):
+        """Five real nodes, deleted while we watch. The page did change.
+
+        Counting only after the wait read 0 here and called it INDETERMINATE --
+        the same answer a misspelled selector gets, for a run that was entirely
+        correct. The before-count is what separates them, and without the page
+        removing anything the wait would have timed out instead of returning.
+        """
+        ctx = await at_page("/wait-states")
+        page = ctx["browser"].real_page
+        assert await page.locator(".crowd").count() == 5
+        await page.evaluate("clearCrowdLater()")
+
+        result = await run_module(
+            "browser.wait",
+            {"selector": ".crowd", "state": "hidden", "timeout_ms": 5000},
+            ctx,
+        )
+
+        assert rung_of(result) == Outcome.OBSERVED.value
+        effect = effect_named(envelope_of(result), "element_state_observed")
+        assert effect["matching_nodes"] == 5
+        assert effect["counts"] == {"before": 5, "after": 0}
+        assert await page.locator(".crowd").count() == 0
 
     async def test_a_present_element_still_observes_normally(self, at_page):
         """`visible` needs no count and must not have acquired one."""

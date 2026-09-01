@@ -43,20 +43,35 @@ by a typo.
 
 `visible` and `attached` cannot be satisfied that way; the fourth line above is
 the proof, and it is why they need no extra reading. For the other two the
-module counts matching nodes and asks which world it is in:
+module counts matching nodes on both sides of the wait and asks whether any
+reading that could witness a real node found one:
 
-    hidden      counted AFTER   a node exists and is not visible    OBSERVED
-                                nothing matched at all              INDETERMINATE
-    detached    counted BEFORE  it was there, and now it is not     OBSERVED
-                                it was never there                  INDETERMINATE
+    hidden      before or after   a node exists and is not visible   OBSERVED
+                                  the page removed the nodes         OBSERVED
+                                  nothing matched on either side     INDETERMINATE
+    detached    before only       it was there, and now it is not    OBSERVED
+                                  it was never there                 INDETERMINATE
 
-The count is read on the opposite side of the wait for each, and that asymmetry
-is forced: after a successful `detached` wait the count is 0 whether the node
-was removed or never existed, so only the before-reading separates them; for
-`hidden` the node is still in the DOM when the state holds, so only the
-after-reading does. INDETERMINATE, not FAILED — a caller who waits for an
-element that is legitimately absent has not done anything wrong, we simply
-cannot say we watched the page do it.
+`hidden` accepts either reading because a wait for something to disappear is
+satisfied two honest ways. The node can stay in the DOM with `display:none`,
+which the after-count sees; or the page can REMOVE it, which the after-count
+cannot see and the before-count can. Counting only afterwards called that second
+one `indeterminate` — measured on five nodes and a timer that deletes them, with
+the wait satisfied by the deletion itself. That is browser.hover's withdrawn
+predicate in a third costume: a correct run marked unknowable. Had the page not
+removed them the count would still read 5 and the wait would have timed out, so
+the pair is evidence.
+
+`detached` accepts only the before-count, and that asymmetry is forced twice
+over. After a satisfied `detached` wait the count is 0 whether the node was
+removed or never existed, so the before-reading is the only one that separates
+them — and accepting the after-count would be actively wrong, because a selector
+matching nothing satisfies the wait immediately, and a node appearing afterwards
+would then read as a detachment nobody watched.
+
+INDETERMINATE, not FAILED — a caller who waits for an element that is
+legitimately absent has not done anything wrong, we simply cannot say we watched
+the page do it.
 
 The duration path never touches the browser, so nothing about the page is
 claimed for it. What it can measure is its own effect — that time passed — and
@@ -91,10 +106,24 @@ from ...schema.constants import FieldGroup
 #: has the measurement.
 _VACUOUSLY_TRUE_STATES = frozenset({'hidden', 'detached'})
 
-#: Which side of the wait carries the existence witness for each of those. See
-#: the docstring: after a `detached` wait the count is 0 either way, and during a
-#: `hidden` one the node is still there to be counted.
-_WITNESS_SIDE = {'hidden': 'after', 'detached': 'before'}
+#: Which readings can witness that a real node was involved, per state.
+#:
+#: `hidden` accepts EITHER side. A node still in the DOM and not visible is
+#: counted after; a node the page REMOVED while we watched is counted before and
+#: is gone after -- and that removal is a genuine observation, not an absence.
+#: Measured: five nodes, a timer that removes them all, `state=hidden` satisfied
+#: by the removal. Reading only the after-count called that `indeterminate`,
+#: which is the browser.hover mistake -- a correct run marked unknowable. Had
+#: the page not removed them the count would still read 5 and the wait would
+#: have timed out, so the pair IS evidence.
+#:
+#: `detached` accepts only the before-count, and that asymmetry is not
+#: cosmetic. After a satisfied `detached` wait the count is 0 whether the node
+#: was removed or never existed, so the before-reading is the only one that
+#: separates them -- and accepting the after-count would be worse than useless:
+#: a selector that matched nothing (satisfying the wait vacuously) and then
+#: matched a node that appeared later would read as a detachment we never saw.
+_WITNESS_SIDES = {'hidden': ('before', 'after'), 'detached': ('before',)}
 
 
 async def _count_matches(page, selector: str) -> Tuple[Optional[int], Optional[str]]:
@@ -135,15 +164,21 @@ def _element_state_outcome(
     if state not in _VACUOUSLY_TRUE_STATES:
         return envelope(Outcome.OBSERVED, claim_by=ClaimBy.NONE, effects=[measured])
 
-    side = _WITNESS_SIDE[state]
-    witness = count_after if side == 'after' else count_before
+    sides = _WITNESS_SIDES[state]
+    counts = {'before': count_before, 'after': count_after}
+    readable = {side: counts[side] for side in sides if counts[side] is not None}
+    # The largest count any accepted reading saw. Zero everywhere is the typo
+    # case; anything above it means a real node was there to have a state.
+    witness = max(readable.values()) if readable else None
     measured = {
         **measured,
         'matching_nodes': witness,
-        'counted': side,
+        'counted': '/'.join(sides),
+        'counts': {side: counts[side] for side in sides},
         'measured_by': (
-            f'{measured["measured_by"]}; and locator.count() {side} it, because '
-            f'a selector matching nothing satisfies state={state!r} on its own'
+            f'{measured["measured_by"]}; and locator.count() '
+            f'{" and ".join(sides)} it, because a selector matching nothing '
+            f'satisfies state={state!r} on its own'
         ),
     }
 
@@ -168,7 +203,7 @@ def _element_state_outcome(
             claim_by=ClaimBy.INFERRED,
             effects=[{
                 **measured,
-                'predicate': f'count({side}) > 0',
+                'predicate': f'max(count {" or ".join(sides)}) > 0',
                 'detail': (
                     f'The selector matched no nodes, and state={state!r} is '
                     'true of every element that was never there, so the wait '
