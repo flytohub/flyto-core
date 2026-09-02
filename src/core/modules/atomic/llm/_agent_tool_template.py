@@ -144,18 +144,52 @@ class TemplateAgentTool:
         ctx: Dict,
     ) -> Dict[str, Any]:
         """Execute template via WorkflowEngine."""
-        from ...engine.workflow.engine import WorkflowEngine
+        from ....engine.workflow.engine import WorkflowEngine
+        from ..template.invoke import (
+            _MAX_TEMPLATE_INVOKE_DEPTH,
+            _TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY,
+        )
 
-        # Build workflow definition from template
-        workflow = {
-            "nodes": definition.get("nodes", []),
-            "edges": definition.get("edges", []),
-        }
+        # `steps`, not `nodes`/`edges`. A template definition holds steps --
+        # `template.invoke` builds `workflow={'steps': steps}` from the same
+        # shape -- and the engine answers "No steps defined in workflow" to
+        # anything else. This was unreachable behind the import error above, so
+        # the wrong shape had never once run.
+        steps = definition.get("steps", [])
+        if not steps:
+            return {
+                "ok": False,
+                "error": f"Template has no steps: {self._template_id}",
+            }
+        workflow = {"steps": steps}
+
+        # The recursion cap `template.invoke` enforces, enforced here too. A
+        # template whose agent has that same template as a tool recurses, and
+        # this path had no bound at all: it would spawn engines until the
+        # execution timeout. The counter travels in the child context under the
+        # same key, so a mixed chain -- template.invoke calling an agent whose
+        # tool is a template -- is counted once per level rather than resetting.
+        current_depth = ctx.get(_TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY, 0)
+        if (
+            isinstance(current_depth, bool)
+            or not isinstance(current_depth, int)
+            or current_depth < 0
+        ):
+            return {"ok": False, "error": "Invalid nested template invocation depth"}
+        if current_depth >= _MAX_TEMPLATE_INVOKE_DEPTH:
+            return {
+                "ok": False,
+                "error": (
+                    "Nested template invocation depth exceeds the safe limit "
+                    f"of {_MAX_TEMPLATE_INVOKE_DEPTH}"
+                ),
+            }
 
         # Build initial context — inherit from agent
         initial_context = {
             "execution_id": ctx.get("execution_id"),
             "_agent_depth": ctx.get("_agent_depth", 0),
+            _TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY: current_depth + 1,
         }
 
         # Pass through browser/page context
