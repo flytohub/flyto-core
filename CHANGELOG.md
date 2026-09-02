@@ -64,6 +64,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every module now reports how far its effect was followed, on one shared
+  vocabulary. `dispatched -> accepted -> observed -> verified` is ordered, and
+  `failed` / `indeterminate` sit off it; only `verified` may be drawn as
+  success, because it means a postcondition was evaluated and held. 200 of the
+  483 modules are side-effecting and a ratchet counts the ones still reporting
+  nothing, so the gap is visible rather than absent. A rung must name the line
+  that measured it, and the rule that decides every one of them is: would this
+  value read the same if the effect had NOT happened? If yes, it is not
+  evidence.
+- `failed` and `indeterminate` are deliberately different answers, and the
+  difference is operational rather than cosmetic. A notification that Slack
+  rejected with a 4xx is FAILED; the same call answered with a 5xx is
+  INDETERMINATE, because the POST was already in Slack's hands and nobody can
+  say whether it landed. Retrying a failure is safe; retrying an indeterminate
+  write may do it twice, which for a message or a payment is a second one.
+- A module may now report a rung from a raise. `OutcomeError` carries an
+  envelope out through an exception, and `browser.wait` uses it: a wait that
+  times out is INDETERMINATE by this contract -- we do not know whether the
+  thing happened, only that it had not by the deadline -- and it had previously
+  reached every consumer as a definite failure. Opt-in and off-ladder only; a
+  module raising anything else still reads as FAILED.
+- An LLM agent is told the rung of every tool it calls, as a labelled line
+  ahead of the result rather than a field inside it, and the agent's system
+  prompt now defines the vocabulary. The line's position is what makes it
+  useful: tool results are truncated at 8000 characters from the tail and the
+  envelope is normally the last key, so on a large result the rung had been
+  vanishing exactly where a model is least able to check for itself. The
+  instruction that matters is on `indeterminate` -- do not assume it happened,
+  and do not retry to make sure.
+
+
 - `browser.click` now reports what it actually observed, and the engine records
   it. A click on a link that declares `target="_blank"` whose tab never opens
   still succeeds and still passes its result downstream, but the step it writes
@@ -75,6 +106,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stays 0, and no module gained a parameter.
 
 ### Fixed
+
+- A module that reported its own failure could not fail a step. Sixteen modules
+  write `rung: "failed"` into their result and the engine discarded it, because
+  the only path from a module's failure to a step's is gated on an `ok` key that
+  158 of the 483 modules never return. Reproduced on the shipped recipe
+  `scrape-to-slack.yaml` with a revoked webhook: Slack answered 404, the module
+  reported the failure correctly, and the step completed green.
+- An error-shaped result with no `ok` key was passed through raw. Six modules
+  return one, and all six completed green carrying their own error text. A
+  result is now failed when it carries a non-empty `error_code`, or a `status`
+  equal to the string `"error"` -- compared as a string, which is what keeps
+  `http.request`'s integer status and `port.check`'s `open`/`closed` out of it.
+  A bare `error` key is deliberately not enough: `reverse.sourcemap` returns one
+  as data on a step that did its job.
+- `on_error: continue` absorbed the evidence along with the error. A step that
+  raised reached a host as `status='success'` with no rung and `proved=True` --
+  a step that crashed, drawn as a proved success. The absorbed result now
+  carries `failed`, or whatever rung the module opted into.
+- The engine wrote a postcondition a module had gone out of its way not to
+  claim. A declared postcondition was stamped onto any envelope of that module
+  carrying none, including the ones that deliberately carry none:
+  `http.response_assert` called with no assertions returned `postcondition:
+  None` and the engine replaced it with "every assertion supplied by the caller
+  was evaluated ... and all of them held". It is now stamped only onto a
+  `verified` claim, the one rung the field means anything on.
+- `browser.drag` reported that it had seen the page change when only the
+  browser had scrolled. Movement was measured with `bounding_box()`, which is
+  viewport-relative, while a synthetic drag makes Chromium autoscroll -- so on
+  an app-shell layout with a scrolling content pane, a 40px card "moved" 3920
+  pixels on a page with no drag handler and no script at all. It now measures
+  layout position with every ancestor's scroll added back, which also fixes a
+  `position:fixed` source, an iframe, and a drag inside a scrollable container.
+  Separately, a drag that DELETED its source was reported as nothing at all:
+  `bounding_box()` raises rather than returning None for a removed node, so the
+  clearest possible effect read as "we could not look".
+- `browser.wait` treated a misspelled selector as an observation. `hidden` and
+  `detached` are both true of a selector that matches nothing, and a typo
+  satisfied the wait in 7ms while the real element took 1502ms to time out --
+  the typo was the faster path to a green tick. Both states now require an
+  existence witness. A page that REMOVES the nodes still counts as observed,
+  which the first version of this fix got wrong.
+- `verify.run` could not run at all. Its child modules were built with the
+  pre-`BaseModule` constructor style, so all eight call sites raised TypeError
+  and the module failed at the registry.
+- The agent's sub-workflow tool had never executed once. Its WorkflowEngine
+  import was one level short and resolved to a module that does not exist, and
+  a blanket `except Exception` presented the ModuleNotFoundError to the model as
+  an ordinary template failure. Behind it the workflow was built with `nodes`
+  and `edges` rather than `steps`, and behind that there was no recursion bound
+  -- a template whose agent had that template as a tool would spawn engines
+  until the execution timeout. It now shares `template.invoke`'s cap of 16.
+
 
 - Steps saved with the settings panel's old camelCase keys are no longer
   silently inert. The template builder writes `on_error` / `when` / `as`
