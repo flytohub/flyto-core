@@ -95,7 +95,7 @@ simply gone. This module now opts in on that one branch and no other.
 import time
 from typing import Any, Dict, Optional, Tuple
 
-from ....browser.driver import BrowserWaitTimeout
+from ....engine.exceptions import BrowserWaitTimeout
 from ....engine.outcome import ClaimBy, Outcome, OutcomeError, envelope
 from ...base import BaseModule
 from ...registry import register_module

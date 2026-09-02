@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional
 from playwright.async_api import Browser, ElementHandle, Page, async_playwright
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
+from ..engine.exceptions import BrowserWaitTimeout
+
 from ..constants import (
     DEFAULT_BROWSER_TIMEOUT_MS,
     DEFAULT_VIEWPORT_HEIGHT,
@@ -72,19 +74,6 @@ def _find_external_node() -> Optional[str]:
         return str(flyto_node)
 
     return None
-
-
-class BrowserWaitTimeout(RuntimeError):
-    """A wait whose predicate had not held by the deadline.
-
-    A subclass of RuntimeError so every existing `except RuntimeError` around a
-    wait keeps catching it, and a distinct type so a caller that cares can tell
-    "it had not happened yet" from "we could not look". `browser.wait` is the
-    caller that cares: by the outcome contract a timeout is INDETERMINATE, not
-    FAILED, and without a type to catch, the module had nothing to branch on
-    except Playwright's private error path -- in a driver that is supposed to
-    keep Playwright's details on this side of the boundary.
-    """
 
 
 class BrowserDriver:

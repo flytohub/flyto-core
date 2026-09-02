@@ -82,3 +82,26 @@ def is_policy_refusal(error) -> bool:
         seen.add(id(error))
         error = getattr(error, 'original_error', None) or error.__cause__
     return False
+
+class BrowserWaitTimeout(RuntimeError):
+    """A wait whose predicate had not held by the deadline.
+
+    A subclass of RuntimeError so every existing `except RuntimeError` around a
+    wait keeps catching it, and a distinct type so a caller that cares can tell
+    "it had not happened yet" from "we could not look". `browser.wait` is the
+    caller that cares: by the outcome contract a timeout is INDETERMINATE, not
+    FAILED.
+
+    IT LIVES HERE, NOT BESIDE THE DRIVER THAT RAISES IT, and that is a
+    packaging constraint rather than a taste. `core/browser/driver.py` imports
+    playwright at module level, and playwright is an optional extra -- so a
+    module that imported this type from there made playwright a hard
+    requirement for importing the registry at all. Measured on the built wheel:
+
+        core/modules/atomic/browser/wait.py -> core/browser/__init__.py
+        -> core/browser/driver.py -> ModuleNotFoundError: No module named 'playwright'
+
+    `import core.modules` failed outright in a base install, which is what the
+    release pipeline's import test exists to catch. This module imports nothing
+    beyond the standard library, so both sides can name the type.
+    """
