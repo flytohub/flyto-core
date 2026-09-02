@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **971 Python files**, **230,913 lines**, and **6,035 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **971 Python files**, **230,925 lines**, and **6,035 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -92,7 +92,7 @@ Inventory: **971 Python files**, **230,913 lines**, and **6,035 class/function/m
 | [`src/core/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/__init__.py#L1) | 23 | 0 | `captcha, checkpoint, driver, humanize, pool, proxy_pool, rate_limiter` | Browser Automation Package |
 | [`src/core/browser/captcha.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/captcha.py#L1) | 441 | 13 | `asyncio, json, logging, time, typing, urllib` | Captcha Solver — API-based solving via 2Captcha, CapSolver, or CaptchaAI |
 | [`src/core/browser/checkpoint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/checkpoint.py#L1) | 168 | 9 | `json, logging, pathlib, time, typing` | Pagination Checkpoint — Save/resume pagination state |
-| [`src/core/browser/driver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1) | 1692 | 46 | `asyncio, base64, constants, contextlib, hashlib, logging, modules, os, pathlib, platform, playwright, random` | Browser Driver - Playwright wrapper for browser automation |
+| [`src/core/browser/driver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L1) | 1681 | 45 | `asyncio, base64, constants, contextlib, engine, hashlib, logging, modules, os, pathlib, platform, playwright` | Browser Driver - Playwright wrapper for browser automation |
 | [`src/core/browser/humanize.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/humanize.py#L1) | 146 | 10 | `asyncio, logging, random` | Human-like Browser Behavior — Simulate realistic user interactions |
 | [`src/core/browser/pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/pool.py#L1) | 256 | 16 | `asyncio, driver, humanize, logging, typing` | Browser Pool — Multiple concurrent browser instances |
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
@@ -125,7 +125,7 @@ Inventory: **971 Python files**, **230,913 lines**, and **6,035 class/function/m
 | [`src/core/engine/evolution/compiler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/evolution/compiler.py#L1) | 273 | 12 | `json, logging, time, typing, yaml` | Workflow Compiler — AI explores, then compiles to deterministic YAML. |
 | [`src/core/engine/evolution/healer.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/evolution/healer.py#L1) | 236 | 7 | `_interfaces_compat, json, logging, memory, re, typing` | Step Healer — Auto-fix failed workflow steps using AI. |
 | [`src/core/engine/evolution/memory.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/evolution/memory.py#L1) | 132 | 11 | `json, logging, os, pathlib, time, typing` | Evolution Memory — JSON-file persistence for workflow patches and stats. |
-| [`src/core/engine/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/exceptions.py#L1) | 84 | 11 | `module_policy` | Workflow Engine Exceptions |
+| [`src/core/engine/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/exceptions.py#L1) | 107 | 12 | `module_policy` | Workflow Engine Exceptions |
 | [`src/core/engine/flow_control.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L1) | 259 | 8 | `typing` | Flow Control Module Detection and Constants |
 | [`src/core/engine/guards/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/guards/__init__.py#L1) | 25 | 0 | `timeout` | Execution Guards |
 | [`src/core/engine/guards/timeout.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/guards/timeout.py#L1) | 303 | 15 | `asyncio, dataclasses, hooks, time, typing` | Execution Timeout Guard |
@@ -297,7 +297,7 @@ Inventory: **971 Python files**, **230,913 lines**, and **6,035 class/function/m
 | [`src/core/modules/atomic/browser/type.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L1) | 473 | 5 | `base, engine, registry, schema, typing` | Browser Type Module - Type text into an input field |
 | [`src/core/modules/atomic/browser/upload.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L1) | 281 | 5 | `base, engine, pathlib, registry, schema, typing, utils` | Browser Upload Module |
 | [`src/core/modules/atomic/browser/viewport.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/viewport.py#L1) | 323 | 5 | `base, engine, registry, schema, typing` | Browser Viewport Module - Resize browser viewport |
-| [`src/core/modules/atomic/browser/wait.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/wait.py#L1) | 474 | 6 | `asyncio, base, browser, engine, registry, schema, time, typing` | Browser Wait Module - Wait for a duration or until an element appears |
+| [`src/core/modules/atomic/browser/wait.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/wait.py#L1) | 474 | 6 | `asyncio, base, engine, registry, schema, time, typing` | Browser Wait Module - Wait for a duration or until an element appears |
 | [`src/core/modules/atomic/cache/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/__init__.py#L1) | 27 | 0 | `clear, delete, get, set` | Atomic Cache Operations |
 | [`src/core/modules/atomic/cache/clear.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/clear.py#L1) | 406 | 3 | `engine, errors, fnmatch, get, logging, redis, registry, schema, typing, utils` | Cache Clear Module Clear all cache entries, optionally filtered by a glob pattern. |
 | [`src/core/modules/atomic/cache/delete.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/delete.py#L1) | 359 | 3 | `engine, errors, get, logging, redis, registry, schema, typing, utils` | Cache Delete Module Delete a cache entry by key. |
