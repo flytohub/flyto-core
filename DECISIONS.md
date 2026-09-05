@@ -1,5 +1,16 @@
 # Decisions
 
+## 2026-09-06 - MCP requirements follow effective conditional fields
+
+Decision: MCP parameter preflight and correction hints reuse the workflow
+validator's field-visibility rules. Schema defaults are combined with explicit
+caller values before required fields are selected, without mutating the caller
+input; the effective values also reach module-specific validation.
+
+Why: a real browser text-input task was incorrectly blocked because the MCP
+preflight required both text and password fields despite their mutually
+exclusive visibility conditions. The schema and browser module were correct.
+
 ## 2026-08-30 - Runtime authority and browser identity are opaque run inputs
 
 Decision: module-policy overrides, sibling-template lookup, and browser profile

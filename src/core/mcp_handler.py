@@ -462,6 +462,21 @@ async def execute_module(
         return {"ok": False, "error": str(e)}
 
 
+def _active_required_params(params: Dict[str, Any], schema: Dict[str, Any]) -> tuple:
+    """Resolve defaults and conditional requirements without changing caller input."""
+    from core.validation.workflow import _is_field_active
+
+    effective = {
+        name: field['default'] for name, field in schema.items() if 'default' in field
+    }
+    effective.update(params)
+    required = {
+        name: field for name, field in schema.items()
+        if field.get('required', False) and _is_field_active(field, effective)
+    }
+    return effective, required
+
+
 def validate_params(module_id: str, params: Dict[str, Any]) -> dict:
     """Validate params and suggest corrections for common mistakes.
 
@@ -501,12 +516,11 @@ def validate_params(module_id: str, params: Dict[str, Any]) -> dict:
 
         schema = meta.get('params_schema', {})
 
-        # Level 1: Schema-based validation (always runs)
+        effective_params, required = _active_required_params(params, schema)
+
+        # Level 1: only active fields are required under the effective defaults.
         if schema:
-            missing = []
-            for field_name, field_meta in schema.items():
-                if field_meta.get('required', False) and field_name not in params:
-                    missing.append(field_name)
+            missing = [name for name in required if name not in effective_params]
 
             if missing:
                 errors = ["Missing required parameter: {}".format(f) for f in missing]
@@ -520,7 +534,7 @@ def validate_params(module_id: str, params: Dict[str, Any]) -> dict:
         module_class = ModuleRegistry.get(module_id)
         if module_class:
             try:
-                module_instance = module_class(params, {})
+                module_instance = module_class(effective_params, {})
                 module_instance.validate_params()
             except Exception as e:
                 error_msg = str(e)
@@ -579,7 +593,7 @@ def _suggest_param_fixes(
     if not schema:
         return {}
 
-    required = {k: v for k, v in schema.items() if v.get('required', False)}
+    _, required = _active_required_params(params, schema)
     corrected = dict(params)
     hints = []
     was_corrected = False

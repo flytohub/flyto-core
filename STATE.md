@@ -2,6 +2,11 @@
 
 ## Current State
 
+- MCP parameter validation and repair hints honor conditional field visibility
+  using schema defaults plus explicit caller values. Ordinary browser text
+  input does not require the inactive password field; active required fields
+  and module-specific validation remain enforced.
+
 - Runtime authority is execution-scoped. A host-created opaque module-policy
   filter can narrow or add the exact stored-template composition capability for
   one execution without changing the process-global default. Nested invocations
@@ -312,7 +317,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 971 maintained Python files, 6,035
+- Source-backed documentation now covers 971 maintained Python files, 6,036
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
