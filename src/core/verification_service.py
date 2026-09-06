@@ -10,8 +10,8 @@ flyto-core workflow, and returns/callbacks deterministic evidence.
 
 from __future__ import annotations
 
-import base64
 import asyncio
+import base64
 import fnmatch
 import hashlib
 import hmac
@@ -30,9 +30,9 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from core.utils import (
-    validate_url_with_env_config,
     SSRFError,
     ssrf_protection_enabled,
+    validate_url_with_env_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -296,8 +296,8 @@ async def execute_verification(body: VerificationRunRequest) -> VerificationExec
         pack = extract_evidence_pack(result)
         execution.evidence_pack = pack or {
             "schema_version": "warroom.evidence_pack.v1",
-            "verdict": "pass" if result.get("status") == "completed" else "fail",
-            "scores": {"p0": 0, "p1": 0, "replay_reliability": 1.0},
+            "verdict": "blocked",
+            "blockers": ["missing_verification_evidence"],
             "run": result,
             "artifacts": {
                 "target_url": target_url,
@@ -307,7 +307,7 @@ async def execute_verification(body: VerificationRunRequest) -> VerificationExec
         }
         execution.artifacts = build_artifacts(execution.evidence_pack)
         execution.findings_count, execution.critical_count = count_findings(execution.evidence_pack)
-        execution.verdict = str(execution.evidence_pack.get("verdict") or "pass")
+        execution.verdict = str(execution.evidence_pack.get("verdict") or "blocked")
         execution.status = "complete"
     except Exception as exc:  # pragma: no cover - defensive service boundary
         logger.exception("verification execution failed")
@@ -408,7 +408,7 @@ async def run_and_callback(body: VerificationRunRequest) -> VerificationExecutio
 
 def create_app():
     try:
-        from fastapi import FastAPI, Depends, Header, HTTPException
+        from fastapi import Depends, FastAPI, Header, HTTPException
     except ImportError as exc:  # pragma: no cover - optional runtime dependency
         raise RuntimeError("flyto-core[api] is required to run flyto-verification") from exc
 
@@ -462,6 +462,9 @@ def create_app():
             "graph_contract": GRAPH_CONTRACT,
         }
 
+    from core.verification.service import mount_suite_routes
+
+    mount_suite_routes(app, require_run_auth)
     return app
 
 

@@ -14,6 +14,10 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [CLI](CLI.md): supported commands and operational behavior.
 - [HTTP And MCP API](API.md): routes, authentication, errors, and mount status.
 - [Configuration](CONFIGURATION.md): extras, policy, environment, and local state.
+- [Product Verification](verification/platform-research.md): suite lifecycle,
+  adapter scope, packaging and evidence contracts.
+- [Verification Acceptance](verification/acceptance.md): controlled cross-layer
+  execution evidence and remaining release gates.
 
 ## Build Workflows
 
@@ -65,7 +69,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 480 active runtime modules across 88 catalog categories.
-- 971 maintained Python files and 6,035 declarations.
+- 976 maintained Python files and 6,073 declarations.
 - 487 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.
