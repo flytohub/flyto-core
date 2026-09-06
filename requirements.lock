@@ -24,7 +24,7 @@ frozenlist==1.8.0
     #   aiosignal
 idna==3.19
     # via yarl
-lxml==6.1.2
+lxml==6.1.3
     # via flyto-core (pyproject.toml)
 multidict==6.7.1
     # via
