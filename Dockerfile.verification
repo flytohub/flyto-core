@@ -5,7 +5,8 @@ WORKDIR /build
 
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-COPY pyproject.toml README.md LICENSE NOTICE ./
+COPY pyproject.toml README.md ./
+COPY LICENSE NOTICE ./
 COPY src/ src/
 
 RUN pip wheel --no-cache-dir --wheel-dir /wheels .[verification]

@@ -39,7 +39,7 @@ async def run_step(step: Step, phase: str, attempt: int, context: dict, call: Ad
         receipt['assertions'] = [evaluate(a, observation) for a in step.assertions]
         receipt['observation'] = observation
         receipt['outcome'] = verdict([a['outcome'] for a in receipt['assertions']])
-    except TimeoutError:
+    except asyncio.TimeoutError:
         receipt.update(outcome='timeout', reason='step_deadline_exceeded')
     except BlockedError:
         receipt.update(outcome='blocked', reason='operation_outside_environment_contract')
@@ -67,7 +67,7 @@ async def interruptible_step(step, phase, attempt, context, call, remaining, can
                 await operation
             if cancellation in done:
                 raise asyncio.CancelledError()
-            raise TimeoutError()
+            raise asyncio.TimeoutError()
         return await operation
     finally:
         cancellation.cancel()
@@ -120,7 +120,7 @@ async def execute_suite(suite: Suite, environment: dict, call: AdapterCall, *,
                                 break
                         if execution_outcome != 'pass':
                             break
-                except TimeoutError:
+                except asyncio.TimeoutError:
                     execution_outcome = 'timeout'
                 except asyncio.CancelledError:
                     execution_outcome = 'cancelled'
