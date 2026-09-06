@@ -55,7 +55,11 @@ def test_readme_citation_contract_uses_current_public_positioning() -> None:
     [
         ("README.md", "## 480 Modules, 88 Catalog Categories", "## 476 Modules, 86 Catalog Categories"),
         ("docs/FEATURES.md", "[All 480 active module schemas]", "[All 476 active module schemas]"),
-        ("SECURITY.md", "The current release is **2.31.2**.", "The current release is **2.31.1**."),
+        (
+            "SECURITY.md",
+            f"The current release is **{_project_value('version')}**.",
+            "The current release is **0.0.0**.",
+        ),
         ("demo.py", "flyto-core demo — 480 tools for AI agents", "flyto-core demo — 468 tools for AI agents"),
     ],
 )
