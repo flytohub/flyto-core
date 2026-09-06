@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **971 Python files**, **230,925 lines**, and **6,035 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **976 Python files**, **231,535 lines**, and **6,073 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -975,5 +975,10 @@ Inventory: **971 Python files**, **230,925 lines**, and **6,035 class/function/m
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 159 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |
 | [`src/core/validation/index.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/index.py#L1) | 175 | 8 | `modules, threading, typing` | Connection Index |
 | [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 514 | 10 | `connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |
-| [`src/core/verification_service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L1) | 476 | 27 | `__future__, aiohttp, asyncio, base64, core, dataclasses, fastapi, fnmatch, hashlib, hmac, json, logging` | Flyto2 deterministic verification runner service. |
+| [`src/core/verification/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/__init__.py#L1) | 1 | 0 | `none` | Versioned adapter contracts for the existing deterministic verification runner. |
+| [`src/core/verification/adapters.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L1) | 224 | 11 | `__future__, asyncio, asyncpg, contracts, core, dataclasses, ipaddress, json, playwright, re, runtime, ssl` | HTTP, PostgreSQL and Chromium adapters for operator-provisioned connections. |
+| [`src/core/verification/contracts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L1) | 100 | 10 | `__future__, hashlib, json, pydantic, typing` | Bounded, executable test definitions; credentials never belong in this model. |
+| [`src/core/verification/runtime.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L1) | 145 | 6 | `__future__, asyncio, contextlib, contracts, datetime, time, typing, uuid` | Deterministic suite execution with attempt-local evidence and bounded cleanup. |
+| [`src/core/verification/service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L1) | 137 | 11 | `__future__, adapters, asyncio, contracts, fastapi, importlib, pathlib, playwright, pydantic, runtime, time, typing` | Suite execution routes mounted on the existing authenticated runner app. |
+| [`src/core/verification_service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L1) | 479 | 27 | `__future__, aiohttp, asyncio, base64, core, dataclasses, fastapi, fnmatch, hashlib, hmac, json, logging` | Flyto2 deterministic verification runner service. |
 | [`src/recipes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/recipes/__init__.py#L1) | 1 | 0 | `none` | Implementation module; linked source is authoritative. |

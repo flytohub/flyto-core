@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,035 declarations across 822 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,073 declarations across 826 files**.
 
 ## `demo.py`
 
@@ -10117,6 +10117,64 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _detect_cycles(node_ids: Set&#91;str&#93;, outgoing: Dict&#91;str, List&#91;str&#93;&#93;, node_map: Dict&#91;str, Dict&#91;str, Any&#93;&#93;) -> List&#91;WorkflowError&#93;` | Detect cycles in the workflow graph using DFS | [`src/core/validation/workflow.py:461`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L461) |
 | method | `def _detect_cycles.dfs(node: str) -> bool` | Returns True if cycle found | [`src/core/validation/workflow.py:484`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L484) |
 
+## `src/core/verification/adapters.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class Connection` | Defines the Connection runtime contract. | [`src/core/verification/adapters.py:29`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L29) |
+| function | `def substitute(value, context)` | Implements `substitute`; linked source is authoritative. | [`src/core/verification/adapters.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L38) |
+| function | `def redact(value, secrets=())` | Implements `redact`; linked source is authoritative. | [`src/core/verification/adapters.py:50`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L50) |
+| function | `def database_connection_options(connection: Connection) -> dict` | Bind credentials to an approved literal address without a second DNS lookup. | [`src/core/verification/adapters.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L64) |
+| class | `class Adapters` | One runner invocation owns all browser contexts and connection bindings. | [`src/core/verification/adapters.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L99) |
+| method | `def Adapters.__init__(self, connections: dict&#91;str, Connection&#93;)` | Implements `Adapters.__init__`; linked source is authoritative. | [`src/core/verification/adapters.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L101) |
+| method | `async def Adapters.__call__(self, step: Step, context: dict) -> dict` | Implements `Adapters.__call__`; linked source is authoritative. | [`src/core/verification/adapters.py:104`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L104) |
+| method | `async def Adapters.http(self, connection: Connection, params: dict, url: str) -> dict` | Implements `Adapters.http`; linked source is authoritative. | [`src/core/verification/adapters.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L129) |
+| method | `async def Adapters.postgres(self, connection: Connection, params: dict, step: Step) -> dict` | Implements `Adapters.postgres`; linked source is authoritative. | [`src/core/verification/adapters.py:151`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L151) |
+| method | `async def Adapters.web(self, connection: Connection, params: dict, url: str, step: Step) -> dict` | Implements `Adapters.web`; linked source is authoritative. | [`src/core/verification/adapters.py:174`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L174) |
+| method | `async def Adapters.web.guard(route)` | Implements `Adapters.web.guard`; linked source is authoritative. | [`src/core/verification/adapters.py:192`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/adapters.py#L192) |
+
+## `src/core/verification/contracts.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class Contract(BaseModel)` | Defines the Contract runtime contract. | [`src/core/verification/contracts.py:14`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L14) |
+| class | `class Assertion(Contract)` | Defines the Assertion runtime contract. | [`src/core/verification/contracts.py:18`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L18) |
+| class | `class Step(Contract)` | Defines the Step runtime contract. | [`src/core/verification/contracts.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L25) |
+| class | `class Case(Contract)` | Defines the Case runtime contract. | [`src/core/verification/contracts.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L34) |
+| method | `def Case.unique_steps(self)` | Implements `Case.unique_steps`; linked source is authoritative. | [`src/core/verification/contracts.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L47) |
+| class | `class Suite(Contract)` | Defines the Suite runtime contract. | [`src/core/verification/contracts.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L56) |
+| method | `def Suite.ordered_dependencies(self)` | Implements `Suite.ordered_dependencies`; linked source is authoritative. | [`src/core/verification/contracts.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L65) |
+| function | `def digest(value: Any) -> str` | Implements `digest`; linked source is authoritative. | [`src/core/verification/contracts.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L76) |
+| function | `def observe(data: Any, path: str) -> tuple&#91;bool, Any&#93;` | Resolve an explicit JSON pointer without expression evaluation. | [`src/core/verification/contracts.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L80) |
+| function | `def evaluate(assertion: Assertion, observation: dict) -> dict` | Implements `evaluate`; linked source is authoritative. | [`src/core/verification/contracts.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/contracts.py#L93) |
+
+## `src/core/verification/runtime.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class BlockedError(Exception)` | The operation cannot execute inside the approved environment. | [`src/core/verification/runtime.py:16`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L16) |
+| function | `def now() -> str` | Implements `now`; linked source is authoritative. | [`src/core/verification/runtime.py:20`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L20) |
+| function | `def verdict(outcomes: list&#91;str&#93;) -> str` | Implements `verdict`; linked source is authoritative. | [`src/core/verification/runtime.py:24`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L24) |
+| function | `async def run_step(step: Step, phase: str, attempt: int, context: dict, call: AdapterCall) -> dict` | Implements `run_step`; linked source is authoritative. | [`src/core/verification/runtime.py:33`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L33) |
+| function | `async def interruptible_step(step, phase, attempt, context, call, remaining, cancel)` | Implements `interruptible_step`; linked source is authoritative. | [`src/core/verification/runtime.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L58) |
+| function | `async def execute_suite(suite: Suite, environment: dict, call: AdapterCall, *, run_id: str \| None=None, cancel: asyncio.Event \| None=None, progress: Callable&#91;&#91;dict&#93;, None&#93; \| None=None) -> dict` | Every run gets a fresh result graph, including not-run cases and teardown evidence. | [`src/core/verification/runtime.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/runtime.py#L76) |
+
+## `src/core/verification/service.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def prune_records(records, *, reserve=False)` | Implements `prune_records`; linked source is authoritative. | [`src/core/verification/service.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L26) |
+| function | `async def adapter_readiness()` | Implements `adapter_readiness`; linked source is authoritative. | [`src/core/verification/service.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L35) |
+| function | `def failed_result(body, partial)` | Implements `failed_result`; linked source is authoritative. | [`src/core/verification/service.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L47) |
+| class | `class SuiteRunRequest(Contract)` | Defines the SuiteRunRequest runtime contract. | [`src/core/verification/service.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L61) |
+| function | `def mount_suite_routes(app, authenticate)` | Implements `mount_suite_routes`; linked source is authoritative. | [`src/core/verification/service.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L70) |
+| method | `def mount_suite_routes.owned(run_id, org_id, project_id)` | Implements `mount_suite_routes.owned`; linked source is authoritative. | [`src/core/verification/service.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L74) |
+| method | `async def mount_suite_routes.capabilities()` | Implements `mount_suite_routes.capabilities`; linked source is authoritative. | [`src/core/verification/service.py:82`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L82) |
+| method | `async def mount_suite_routes.submit(body: SuiteRunRequest)` | Implements `mount_suite_routes.submit`; linked source is authoritative. | [`src/core/verification/service.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L93) |
+| method | `async def mount_suite_routes.submit.work()` | Implements `mount_suite_routes.submit.work`; linked source is authoritative. | [`src/core/verification/service.py:112`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L112) |
+| method | `async def mount_suite_routes.read(run_id: str, org_id: str, project_id: str)` | Implements `mount_suite_routes.read`; linked source is authoritative. | [`src/core/verification/service.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L127) |
+| method | `async def mount_suite_routes.cancel(run_id: str, org_id: str, project_id: str)` | Implements `mount_suite_routes.cancel`; linked source is authoritative. | [`src/core/verification/service.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/service.py#L132) |
+
 ## `src/core/verification_service.py`
 
 | Kind | Signature | Responsibility | Source |
@@ -10147,4 +10205,4 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `async def create_app.health()` | Implements `create_app.health`; linked source is authoritative. | [`src/core/verification_service.py:443`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L443) |
 | method | `async def create_app.run(body: VerificationRunRequest, _: None=Depends(require_run_auth))` | Implements `create_app.run`; linked source is authoritative. | [`src/core/verification_service.py:447`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L447) |
 | method | `async def create_app.run._execute_with_fixed_id() -> None` | Implements `create_app.run._execute_with_fixed_id`; linked source is authoritative. | [`src/core/verification_service.py:451`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L451) |
-| function | `def main(host: str='127.0.0.1', port: int=8344) -> None` | Implements `main`; linked source is authoritative. | [`src/core/verification_service.py:468`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L468) |
+| function | `def main(host: str='127.0.0.1', port: int=8344) -> None` | Implements `main`; linked source is authoritative. | [`src/core/verification_service.py:471`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification_service.py#L471) |

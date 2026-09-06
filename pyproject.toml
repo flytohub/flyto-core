@@ -128,8 +128,12 @@ jsast = [
 cloud = [
     "flyto-core[browser,image]",
 ]
+verification = [
+    "flyto-core[browser,api]",
+    "asyncpg>=0.31.0,<0.32",
+]
 all = [
-    "flyto-core[browser,api,vector,telegram,image,crypto,dns,ai,jsast]",
+    "flyto-core[browser,api,vector,telegram,image,crypto,dns,ai,jsast,verification]",
 ]
 dev = [
     "flyto-core[api]",
