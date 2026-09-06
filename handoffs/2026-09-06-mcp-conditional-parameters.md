@@ -30,6 +30,12 @@ the module schema nor caller parameters are changed.
 
 ## Local activation
 
+The consolidation branch declares unreleased 2.31.3. Exact-head release-drift
+validation correctly rejected the original fix commit while it still declared
+the already published 2.31.2. This metadata correction creates no release tag
+and publishes no package. Downstream source pins retain the original runtime
+fix and the version correction together.
+
 The existing Cloud runtime's installed Core 2.31.2 matches all 905 other Core
 Python source files in this checkout; mcp_handler.py is the only changed runtime
 file. The host may prepend this checkout's src directory to its own process

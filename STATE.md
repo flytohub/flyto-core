@@ -2,6 +2,10 @@
 
 ## Current State
 
+- Core 2.31.3 is unreleased. The conditional MCP parameter fix changes packaged
+  source beyond the published 2.31.2 artifact; source consumers must pin the
+  verified commit until an explicitly authorized release is published.
+
 - MCP parameter validation and repair hints honor conditional field visibility
   using schema defaults plus explicit caller values. Ordinary browser text
   input does not require the inactive password field; active required fields
