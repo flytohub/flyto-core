@@ -6,6 +6,11 @@ A Python execution engine for AI agents. It runs browser and API work as
 explicit steps, records what every step did, and replays from the step that
 failed — instead of re-running the whole job.
 
+The current public inventory is **480 registry-backed modules** across **88
+catalog categories**, including triggers, queue modules, workflow versioning,
+metering hooks, browser automation, API calls, data transforms, verification,
+files, and crypto.
+
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -219,6 +224,34 @@ asyncio.run(main())
 
 ---
 
+## 480 Modules, 88 Catalog Categories
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
+| `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
+| `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
+| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
+| `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
+| `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
+| `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
+| `testing.*` | 10 | assertions, scenarios, E2E steps, reports |
+| `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
+| `verify.*` | 9 | evidence, visual diff, rulesets, annotations |
+| `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
+| `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
+| `test.*` | 8 | API, browser, and visual checks |
+| `check.*` | 7 | validation and guard checks |
+| `crypto.*` | 7 | AES encrypt/decrypt, JWT create/verify, hashes |
+| `http.*` | 7 | get, request, batch, paginate, session |
+| `validate.*` | 7 | email, url, json, phone, credit card |
+| 66 more prefixes | 221 | Docker, archive, math, k8s, network, PDF, AWS, cache, git |
+
+See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
+
+---
+
 ## Engine Features
 
 - **Execution Trace** — structured record of every step: input, output, timing, status
@@ -246,9 +279,9 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 |---|---|
 | Run one of the other built-in recipes | [docs/RECIPES.md](docs/RECIPES.md) |
 | Browse every module and parameter | [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md) |
-| See the module categories at a glance | [docs/MODULE_CATEGORIES.md](docs/MODULE_CATEGORIES.md) |
+| See the module categories at a glance | [480 Modules, 88 Catalog Categories](#480-modules-88-catalog-categories) |
 | Configure network, filesystem, auth, and permission switches | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
-| Install a module pack or plugin | [docs/EXTENSIONS.md](docs/EXTENSIONS.md) |
+| Install a module pack or plugin | [docs/PLUGIN_SDK.md](docs/PLUGIN_SDK.md) |
 | Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
 | Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
 | Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
