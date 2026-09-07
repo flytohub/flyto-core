@@ -1,7 +1,15 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
-[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/9a708224-9666-46b6-8660-dad08fb16096)
+# Flyto2 Core
 
-# Flyto2 Core — Verified, Replayable Execution
+**AI said it finished. Flyto2 shows the proof.**
+
+A Python execution engine for AI agents. It runs browser and API work as
+explicit steps, records what every step did, and replays from the step that
+failed — instead of re-running the whole job.
+
+The current public inventory is **480 registry-backed modules** across **88
+catalog categories**, including triggers, queue modules, workflow versioning,
+metering hooks, browser automation, API calls, data transforms, verification,
+files, and crypto.
 
 [![PyPI version](https://img.shields.io/pypi/v/flyto-core.svg)](https://pypi.org/project/flyto-core/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -9,57 +17,15 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-> **Turn AI work into verified, replayable procedures.**
->
-> **AI said it finished. Flyto2 shows the proof.**
->
-> **The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering.**
->
-> **[flyto2.com](https://flyto2.com)** · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
+[flyto2.com](https://flyto2.com) · [Cloud Automation](https://flyto2.com/cloud/) · [Documentation](https://docs.flyto2.com) · [MCP Docs](https://docs.flyto2.com/mcp/) · [YouTube](https://www.youtube.com/@Flyto2)
 
-Flyto2 is one product delivered as three independently usable packages:
+<p align="center">
+  <img src="demo/flyto-core-demo.gif" alt="flyto-core demo: API pipeline → replay → browser automation" width="720">
+</p>
 
-| Choose | When you need |
-| --- | --- |
-| `flyto-ai` | Understand, route, and govern new work and provider use. |
-| `flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them. |
-| `flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence. |
+---
 
-`flyto-core` is a standalone execution package: it does not require the other
-two packages to validate and run a procedure or produce evidence. It does not
-own intent/provider governance, procedure learning/scoring, or hosted product
-and account logic.
-
-The generated public inventory contains 480 registry-backed modules; its 88 catalog categories keep that surface navigable.
-
-This repository records that boundary as `flyto.product-contract.v1` in
-[`flyto-product.toml`](flyto-product.toml).
-
-Flyto2 Core is the open-source runtime behind Flyto2. It is built for people who
-want an **AI agent framework** that actually runs work: browser automation, API
-integration, web scraping, MCP server automation, replayable YAML recipes,
-evidence capture, and deterministic tools that agents can call without
-inventing unreviewed code.
-
-Use it when the question is simple but the job is annoying: "open this page,
-capture the proof, extract the data, check performance, and let me retry only
-the failed step." Flyto2 Core gives you a local execution engine for browser
-automation, workflow replay, AI-agent tool calls, Web Vitals checks, screenshot
-capture, structured extraction, and audit-ready evidence.
-
-The current public inventory is **480 registry-backed modules** across **88
-catalog categories**, including triggers, queue modules, workflow versioning,
-metering hooks, browser automation, API calls, data transforms, verification,
-files, and crypto.
-
-Good fit if you searched for:
-
-- open source AI agent framework for production workflows
-- Python AI workflow automation with Playwright
-- MCP server automation with trace and replay
-- browser automation that can resume from a failed step
-
-### Try in 30 seconds
+## Try it in 30 seconds
 
 ```bash
 pip install flyto-core[browser] && playwright install chromium
@@ -85,10 +51,6 @@ flyto recipe competitor-intel --url https://github.com/pricing
 
 Screenshots captured. Performance metrics extracted. JSON report saved. **Every step traced.**
 
-<p align="center">
-  <img src="demo/flyto-core-demo.gif" alt="flyto-core demo: API pipeline → replay → browser automation" width="720">
-</p>
-
 ---
 
 ## What happens when step 8 fails?
@@ -100,6 +62,18 @@ flyto replay --from-step 8
 ```
 
 Steps 1–7 are instant. Only step 8 re-executes. Full context preserved.
+
+---
+
+## How is this different?
+
+| | Playwright / Selenium | Shell scripts | flyto-core |
+|-|----------------------|---------------|------------|
+| Step 8 fails | Re-run everything | Re-run everything | `flyto replay --from-step 8` |
+| What happened at step 3? | Add print(), re-run | Add echo, re-run | Full trace: input, output, timing |
+| Browser + API + file I/O | Write glue code | 3 languages | All built-in |
+| Share with team | "Clone my repo" | "Clone my repo" | `pip install flyto-core` |
+| Run in CI | Wrap in pytest/bash | Fragile | `flyto run workflow.yaml` |
 
 ---
 
@@ -130,250 +104,40 @@ playwright install chromium        # one-time browser setup
 
 ---
 
-## The 85-line problem
+## Write Your Own Workflows
 
-Here's what competitive pricing analysis looks like in Python:
-
-<table>
-<tr>
-<td width="50%">
-
-**Python** — 85 lines
-
-```python
-import asyncio, json, time
-from playwright.async_api import async_playwright
-
-async def main():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        await page.goto("https://competitor.com/pricing")
-
-        # Extract pricing
-        prices = await page.evaluate("""() => {
-            const cards = document.querySelectorAll(
-              '[class*="price"]'
-            );
-            return Array.from(cards).map(
-              c => c.textContent.trim()
-            );
-        }""")
-
-        # Desktop screenshot
-        await page.screenshot(
-            path="desktop.png", full_page=True
-        )
-
-        # Mobile
-        await page.set_viewport_size(
-            {"width": 390, "height": 844}
-        )
-        await page.screenshot(
-            path="mobile.png", full_page=True
-        )
-
-        # Performance
-        perf = await page.evaluate("""() => {
-            const nav = performance
-              .getEntriesByType('navigation')[0];
-            return {
-              ttfb: nav.responseStart,
-              loaded: nav.loadEventEnd
-            };
-        }""")
-
-        # Save report
-        report = {
-            "prices": prices,
-            "performance": perf,
-        }
-        with open("report.json", "w") as f:
-            json.dump(report, f, indent=2)
-
-        await browser.close()
-
-asyncio.run(main())
-```
-
-</td>
-<td width="50%">
-
-**flyto-core** — 12 steps
+Recipes are just YAML files. Write your own:
 
 ```yaml
-name: Competitor Intel
+name: price-monitor
 steps:
-  - id: launch
+  - id: open
     module: browser.launch
-  - id: navigate
+    params: { headless: true }
+
+  - id: page
     module: browser.goto
-    params: { url: "{{url}}" }
+    params: { url: "https://competitor.com/pricing" }
+
   - id: prices
     module: browser.evaluate
     params:
       script: |
-        JSON.stringify([
-          ...document.querySelectorAll(
-            '[class*="price"]'
-          )
-        ].map(e => e.textContent.trim()))
-  - id: desktop_shot
-    module: browser.screenshot
-    params: { path: desktop.png, full_page: true }
-  - id: mobile
-    module: browser.viewport
-    params: { width: 390, height: 844 }
-  - id: mobile_shot
-    module: browser.screenshot
-    params: { path: mobile.png, full_page: true }
-  - id: perf
-    module: browser.performance
+        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
+
   - id: save
     module: file.write
-    params:
-      path: report.json
-      content: "${prices.result}"
+    params: { path: "prices.json", content: "${prices.result}" }
+
   - id: close
     module: browser.close
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
-No trace. No replay. No timing. If step 5 fails, re-run everything.
-
-</td>
-<td>
-
-Full trace. Replay from any step. Per-step timing. Every run is debuggable.
-
-</td>
-</tr>
-</table>
-
----
-
-## Current Platform Snapshot
-
-- **Open-source AI agent framework boundary**: MCP-compatible clients call reviewed flyto-core modules through schemas, not arbitrary generated production code.
-- **AI workflow automation substrate** for browser automation, API workflows, data/file operations, AI calls, notifications, verification, trace, evidence, and replay.
-- **480 registry-backed modules** across **88 catalog categories**. `docs/TOOL_CATALOG.md` is generated from `ModuleRegistry`, not hand-counted.
-- **41 built-in recipes** for audit, browser automation, data/image work, DevOps, integrations, and deterministic verification.
-- **Deterministic verification modules** (`verification.*` with `warroom.*` compatibility aliases) support site graph discovery, replay scenario generation, run evidence, and report packs.
-- **Hardened outbound and file access** in the 2.26.x line: guarded HTTP clients prevent SSRF bypasses, and file/data writes are confined through the sandbox path guard.
-- **Replayable browser and workflow execution** remains the core contract: every step can produce trace data, evidence snapshots, and targeted replay from the failing point.
-
-## Public Naming Contract
-
-- Use **Flyto2** for the product and company-facing brand. Do not use a
-  shortened legacy spelling in public docs, examples, or SEO copy.
-- Use `flyto2.com`, `docs.flyto2.com`, and `blog.flyto2.com` as the public citation surfaces.
-- Public example contact addresses should use registered `@flyto2.com` mailboxes such as `support@flyto2.com`, `security@flyto2.com`, `privacy@flyto2.com`, `sales@flyto2.com`, `team@flyto2.com`, `dev@flyto2.com`, `alerts@flyto2.com`, `oncall@flyto2.com`, `reports@flyto2.com`, `noreply@flyto2.com`, `dmarc@flyto2.com`, `conduct@flyto2.com`, `admin@flyto2.com`, `pentest@flyto2.com`, `hello@flyto2.com`, and `info@flyto2.com`.
-- Public docs, blog, and landing pages should cite the current core facts above instead of stale module counts.
-
-## Engine Features
-
-- **Execution Trace** — structured record of every step: input, output, timing, status
-- **Replay** — re-execute from any step with the original (or modified) context
-- **Breakpoints** — pause execution at any step, inspect state, resume
-- **Evidence Snapshots** — full state before and after each step boundary
-- **Data Lineage** — track data flow across steps, build dependency graphs
-- **Timeout Guard** — configurable workflow-level and per-step timeout protection
-
-## Architecture
-
-CLI, MCP, HTTP, Python, and packaged recipes converge on the same workflow
-engine, module registry, policy, trace, evidence, and replay boundaries. Start
-with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
-[Architecture Map](docs/architecture-map.md) and exhaustive
-[source reference](docs/reference/README.md) for implementation detail.
-
-## Configuration
-
-Core is configured through package extras, CLI arguments, workflow parameters,
-module policy, environment variables, and local run state. Security-sensitive
-network, filesystem, auth, callback, and permission switches are documented in
-[Configuration](docs/CONFIGURATION.md); all 107 detected environment readers are
-linked to source in the generated
-[configuration reference](docs/reference/configuration.md).
-
----
-
-## Extensions
-
-Core manages two — and only two — kinds of installable extension:
-
-| Kind | Name prefix | Entry-point group |
-|---|---|---|
-| Module packs | `flyto-modules-` | `flyto.modules` |
-| Plugins | `flyto-plugin-` | `flyto.plugins` |
-
-Admission is by prefix and entry-point group alone, so a new pack such as
-`flyto-modules-robotics` works the day it is published — no Core source names
-any extension, and none has to change for one.
-
 ```bash
-export FLYTO_EXTENSIONS_INSTALL_ENABLED=1   # operator opt-in, off by default
-
-curl -H "Authorization: Bearer $TOKEN" localhost:8333/v1/extensions
-curl -X POST -H "Authorization: Bearer $TOKEN" \
-     -H 'Content-Type: application/json' \
-     -d '{"name": "flyto-modules-robotics"}' \
-     localhost:8333/v1/extensions/install
+flyto run price-monitor.yaml
 ```
 
-An install is only reported successful once the installed distribution is
-*proved* to declare an entry point in its kind's group; a first install that
-fails that proof is rolled back, an upgrade that fails it is left in place so
-the operator is not left with nothing. Upgrades and uninstalls report
-`restart_required`, because Python cannot un-import code already loaded.
-Failures return a stable error code and never package-manager output. See
-[API](docs/API.md#extension-management).
-
----
-
-## API / Module Reference
-
-## 480 Modules, 88 Catalog Categories
-
-| Category | Count | Examples |
-|----------|-------|----------|
-| `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
-| `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
-| `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
-| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
-| `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
-| `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
-| `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
-| `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
-| `testing.*` | 10 | assertions, scenarios, E2E steps, reports |
-| `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
-| `verify.*` | 9 | evidence, visual diff, rulesets, annotations |
-| `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
-| `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
-| `test.*` | 8 | API, browser, and visual checks |
-| `check.*` | 7 | validation and guard checks |
-| `crypto.*` | 7 | AES encrypt/decrypt, JWT create/verify, hashes |
-| `http.*` | 7 | get, request, batch, paginate, session |
-| `validate.*` | 7 | email, url, json, phone, credit card |
-| 66 more prefixes | 221 | Docker, archive, math, k8s, network, PDF, AWS, cache, git |
-
-See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
-
----
-
-## How is this different?
-
-| | Playwright / Selenium | Shell scripts | flyto-core |
-|-|----------------------|---------------|------------|
-| Step 8 fails | Re-run everything | Re-run everything | `flyto replay --from-step 8` |
-| What happened at step 3? | Add print(), re-run | Add echo, re-run | Full trace: input, output, timing |
-| Browser + API + file I/O | Write glue code | 3 languages | All built-in |
-| Share with team | "Clone my repo" | "Clone my repo" | `pip install flyto-core` |
-| Run in CI | Wrap in pytest/bash | Fragile | `flyto run workflow.yaml` |
+Every run produces an execution trace and state snapshots. If step 3 fails, replay from step 3 — no re-running the whole thing.
 
 ---
 
@@ -460,119 +224,75 @@ asyncio.run(main())
 
 ---
 
-## 41 Built-in Recipes
+## 480 Modules, 88 Catalog Categories
 
-No code required — every recipe is a YAML workflow template:
+| Category | Count | Examples |
+|----------|-------|----------|
+| `browser.*` | 54 | launch, goto, click, evaluate, screenshot, performance, challenge |
+| `flow.*` | 24 | switch, loop, branch, parallel, retry, circuit breaker, rate limit |
+| `array.*` | 15 | filter, sort, map, reduce, unique, chunk, flatten |
+| `api.*` | 13 | OpenAI, Anthropic, Gemini, Notion, Slack, Telegram |
+| `data.*` | 13 | JSON, YAML, CSV, XML parse/generate/convert |
+| `string.*` | 11 | reverse, uppercase, split, replace, trim, slugify, template |
+| `ai.*` | 10 | chat, model calls, vision, embeddings, moderation |
+| `object.*` | 10 | keys, values, merge, pick, omit, get, set, flatten |
+| `testing.*` | 10 | assertions, scenarios, E2E steps, reports |
+| `image.*` | 9 | resize, convert, crop, rotate, watermark, OCR, compress |
+| `verify.*` | 9 | evidence, visual diff, rulesets, annotations |
+| `file.*` | 8 | read, write, copy, move, delete, exists, edit, diff |
+| `stats.*` | 8 | mean, median, percentile, correlation, standard deviation |
+| `test.*` | 8 | API, browser, and visual checks |
+| `check.*` | 7 | validation and guard checks |
+| `crypto.*` | 7 | AES encrypt/decrypt, JWT create/verify, hashes |
+| `http.*` | 7 | get, request, batch, paginate, session |
+| `validate.*` | 7 | email, url, json, phone, credit card |
+| 66 more prefixes | 221 | Docker, archive, math, k8s, network, PDF, AWS, cache, git |
 
-```bash
-flyto recipes                  # List all recipes
-
-# Audit & Testing
-flyto recipe full-audit       --url https://example.com
-flyto recipe competitor-intel --url https://github.com/pricing
-flyto recipe site-audit       --url https://example.com
-flyto recipe web-perf         --url https://example.com
-flyto recipe flyto2-ui-login-smoke --login_url https://myapp.com/login --page_url https://myapp.com/projects --username team@flyto2.com --password "$FLYTO_TEST_PASSWORD"
-flyto recipe form-fill        --url https://myapp.com/form --data '{"email":"dev@flyto2.com"}'
-
-# Browser Automation
-flyto recipe screenshot        --url https://example.com
-flyto recipe responsive-report --url https://example.com
-flyto recipe page-to-pdf       --url https://example.com
-flyto recipe visual-snapshot   --url https://example.com
-flyto recipe webpage-archive   --url https://example.com
-flyto recipe scrape-page       --url https://example.com --selector h1
-flyto recipe scrape-links      --url https://example.com
-flyto recipe scrape-table      --url https://en.wikipedia.org/wiki/YAML --selector .wikitable
-flyto recipe stock-price       --symbol AAPL
-
-# Data & Image
-flyto recipe ocr               --input scan.png
-flyto recipe csv-to-json       --input data.csv
-flyto recipe image-resize      --input photo.jpg --width 800
-flyto recipe image-convert     --input photo.png --format webp
-
-# Network & DevOps
-flyto recipe port-scan         --host example.com
-flyto recipe whois             --domain example.com
-flyto recipe monitor-site      --url https://myapp.com
-flyto recipe docker-ps
-flyto recipe git-changelog
-
-# Integrations
-flyto recipe scrape-to-slack   --url https://example.com --selector h1 --webhook $SLACK_URL
-flyto recipe github-issue      --url https://example.com --owner me --repo my-app --title "Bug" --token $GITHUB_TOKEN
-```
-
-Each recipe is a YAML workflow template. Run `flyto recipe <name> --help` for full options.
-See **[docs/RECIPES.md](docs/RECIPES.md)** for full documentation.
+See the **[Full Module Catalog](docs/TOOL_CATALOG.md)** for every module, parameter, and description.
 
 ---
 
-## Write Your Own Workflows
+## Engine Features
 
-Recipes are just YAML files. Write your own:
-
-```yaml
-name: price-monitor
-steps:
-  - id: open
-    module: browser.launch
-    params: { headless: true }
-
-  - id: page
-    module: browser.goto
-    params: { url: "https://competitor.com/pricing" }
-
-  - id: prices
-    module: browser.evaluate
-    params:
-      script: |
-        JSON.stringify([...document.querySelectorAll('.price')].map(e => e.textContent))
-
-  - id: save
-    module: file.write
-    params: { path: "prices.json", content: "${prices.result}" }
-
-  - id: close
-    module: browser.close
-```
-
-```bash
-flyto run price-monitor.yaml
-```
-
-Every run produces an execution trace and state snapshots. If step 3 fails, replay from step 3 — no re-running the whole thing.
+- **Execution Trace** — structured record of every step: input, output, timing, status
+- **Replay** — re-execute from any step with the original (or modified) context
+- **Breakpoints** — pause execution at any step, inspect state, resume
+- **Evidence Snapshots** — full state before and after each step boundary
+- **Data Lineage** — track data flow across steps, build dependency graphs
+- **Timeout Guard** — configurable workflow-level and per-step timeout protection
 
 ---
 
-## For Module Authors
+## Architecture
 
-```python
-from core.modules.registry import register_module
-from core.modules.schema import compose, presets
+CLI, MCP, HTTP, Python, and packaged recipes converge on the same workflow
+engine, module registry, policy, trace, evidence, and replay boundaries. Start
+with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
+[Architecture Map](docs/architecture-map.md) and exhaustive
+[source reference](docs/reference/README.md) for implementation detail.
 
-@register_module(
-    module_id='string.reverse',
-    version='1.0.0',
-    category='string',
-    label='Reverse String',
-    description='Reverse the characters in a string',
-    params_schema=compose(presets.INPUT_TEXT(required=True)),
-    output_schema={'result': {'type': 'string', 'description': 'Reversed string'}},
-)
-async def string_reverse(context):
-    text = str(context['params']['text'])
-    return {'ok': True, 'data': {'result': text[::-1]}}
-```
+---
 
-See **[Module Specification](docs/MODULE_SPECIFICATION.md)** for the complete guide.
+## Where to go next
+
+| You want to | Go to |
+|---|---|
+| Run one of the other built-in recipes | [docs/RECIPES.md](docs/RECIPES.md) |
+| Browse every module and parameter | [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md) |
+| See the module categories at a glance | [480 Modules, 88 Catalog Categories](#480-modules-88-catalog-categories) |
+| Configure network, filesystem, auth, and permission switches | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
+| Install a module pack or plugin | [docs/PLUGIN_SDK.md](docs/PLUGIN_SDK.md) |
+| Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
+| Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
+| Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
 
 ---
 
 ## Contributing
 
 We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guidelines.
+
+---
 
 ## Testing
 
@@ -581,6 +301,8 @@ python -m pytest
 python -m ruff check .
 flyto recipe full-audit --url https://example.com
 ```
+
+---
 
 ## Security
 
@@ -597,6 +319,11 @@ caller-supplied path must reach the filesystem sandbox helper, and every module
 taking a caller-supplied URL or host must reach an SSRF guard — so coverage is a
 CI property rather than a convention.
 
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flytohub-flyto-core-badge.png)](https://mseep.ai/app/flytohub-flyto-core)
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/9a708224-9666-46b6-8660-dad08fb16096)
+
+---
+
 ## License
 
 [Apache License 2.0](LICENSE) — free for personal and commercial use.
@@ -605,6 +332,12 @@ CI property rather than a convention.
 
 **[Cloud Automation](https://flyto2.com/cloud/)** · **[Pricing](https://flyto2.com/pricing/)** · **[flyto2.com](https://flyto2.com)**
 
+---
+
 ## Hosted deployment
 
 A hosted deployment is available on [Frontier AI](https://fronteir.ai/mcp/flytohub-flyto-core).
+
+---
+
+<sub>Also known as: open source AI agent framework for production workflows · Python AI workflow automation with Playwright · MCP server automation with trace and replay · browser automation that can resume from a failed step</sub>
