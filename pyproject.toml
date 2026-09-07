@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flyto-core"
-version = "2.31.3"
+version = "2.32.0"
 description = "The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering."
 readme = "README.md"
 license = "Apache-2.0"
@@ -128,8 +128,12 @@ jsast = [
 cloud = [
     "flyto-core[browser,image]",
 ]
+verification = [
+    "flyto-core[browser,api]",
+    "asyncpg>=0.31.0,<0.32",
+]
 all = [
-    "flyto-core[browser,api,vector,telegram,image,crypto,dns,ai,jsast]",
+    "flyto-core[browser,api,vector,telegram,image,crypto,dns,ai,jsast,verification]",
 ]
 dev = [
     "flyto-core[api]",

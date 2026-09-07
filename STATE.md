@@ -2,14 +2,26 @@
 
 ## Current State
 
-- Core 2.31.3 is unreleased. The conditional MCP parameter fix changes packaged
-  source beyond the published 2.31.2 artifact; source consumers must pin the
-  verified commit until an explicitly authorized release is published.
-
 - MCP parameter validation and repair hints honor conditional field visibility
   using schema defaults plus explicit caller values. Ordinary browser text
   input does not require the inactive password field; active required fields
   and module-specific validation remain enforced.
+- Product Verification now has versioned suite/case/assertion contracts and
+  authenticated, tenant-scoped runner endpoints. Runs preserve every attempt,
+  enforce deadlines, perform cleanup on cancellation and report explicit
+  blocked/error/not-run outcomes when evidence is unavailable. The bounded
+  runner registry is process-local; Engine owns durable terminal evidence.
+- The `verification` extra and verification service image include PostgreSQL.
+  Database credentials bind to an approved literal address and port; remote
+  TLS verifies the certificate, queries are provisioned and transactions are
+  read-only. HTTP and isolated Chromium share the existing outbound guard.
+- Local verification adapter, lifecycle and network-boundary tests passed.
+  Full non-browser pytest passed 4,708 tests with 65.66% coverage; all 32 focused
+  verification tests and the strict indexer gate passed. Real Engine/Code/Core
+  browser acceptance covers runs, replay, downloads, immutable editor saves,
+  assertion failure, cancellation, and sentinel-preserving cleanup. Package
+  publication and deployed acceptance remain pending. See
+  `docs/verification/acceptance.md`.
 
 - Runtime authority is execution-scoped. A host-created opaque module-policy
   filter can narrow or add the exact stored-template composition capability for
@@ -321,7 +333,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 971 maintained Python files, 6,036
+- Source-backed documentation now covers 976 maintained Python files, 6,074
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

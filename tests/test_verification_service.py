@@ -10,6 +10,24 @@ from core.verification_service import (
 )
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("result", [{"status": "completed"}, {"status": "failed"}])
+async def test_workflow_completion_without_assertion_evidence_is_blocked(monkeypatch, result):
+    from core.engine import WorkflowEngine
+
+    async def execute(_self):
+        return result
+
+    monkeypatch.setattr(WorkflowEngine, "execute", execute)
+    execution = await execute_verification(VerificationRunRequest(
+        workflowYaml="name: no evidence\nsteps: []\n",
+    ))
+    assert execution.verdict == "blocked"
+    assert execution.evidence_pack["blockers"] == ["missing_verification_evidence"]
+
+
+
+
 def test_verification_scope_allows_only_engine_computed_hosts():
     assert target_allowed("https://app.flyto2.com/projects", ["https://app.flyto2.com"])
     assert target_allowed("https://app.flyto2.com/projects", ["app.flyto2.com"])
