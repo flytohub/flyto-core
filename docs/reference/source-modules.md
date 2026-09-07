@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **976 Python files**, **231,535 lines**, and **6,073 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **976 Python files**, **231,549 lines**, and **6,074 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -190,7 +190,7 @@ Inventory: **976 Python files**, **231,535 lines**, and **6,073 class/function/m
 | [`src/core/enterprise/state_machine/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/__init__.py#L1) | 569 | 28 | `dataclasses, datetime, enum, typing` | State Machine - Long-Running Workflow Support |
 | [`src/core/enterprise/state_machine/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/state_machine/engine.py#L1) | 603 | 37 | `abc, asyncio, core, datetime, logging, re, typing, uuid` | State Machine Engine - Complete Implementation |
 | [`src/core/licensing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/licensing/__init__.py#L1) | 184 | 16 | `enum, typing` | Flyto2 Licensing - Type Definitions and Abstract Interface |
-| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1356 | 30 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
+| [`src/core/mcp_handler.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_handler.py#L1) | 1370 | 31 | `cli, core, importlib, json, pathlib, typing, uuid` | Flyto2 Core MCP Handler — transport-independent MCP logic. |
 | [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 132 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
 | [`src/core/metering/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/__init__.py#L1) | 23 | 0 | `tracker` | Metering Module |
 | [`src/core/metering/tracker.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L1) | 311 | 15 | `dataclasses, enum, logging, secrets, time, typing` | Metering Tracker |
