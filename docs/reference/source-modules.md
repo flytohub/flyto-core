@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **976 Python files**, **231,563 lines**, and **6,074 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **977 Python files**, **231,617 lines**, and **6,078 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -284,7 +284,7 @@ Inventory: **976 Python files**, **231,563 lines**, and **6,074 class/function/m
 | [`src/core/modules/atomic/browser/release.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/release.py#L1) | 225 | 3 | `_session_outcome, base, engine, registry, typing` | Browser Release Module - Smart browser session cleanup |
 | [`src/core/modules/atomic/browser/response.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/response.py#L1) | 256 | 5 | `asyncio, base, engine, json, logging, re, registry, schema, typing` | Browser Response Module — Capture network response bodies |
 | [`src/core/modules/atomic/browser/robots.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/robots.py#L1) | 343 | 4 | `base, engine, logging, re, registry, schema, typing, urllib` | Browser Robots Module — robots.txt compliance + sitemap discovery |
-| [`src/core/modules/atomic/browser/screenshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L1) | 283 | 6 | `base, engine, os, registry, schema, typing, utils` | Browser Screenshot Module - Take a screenshot of the current page |
+| [`src/core/modules/atomic/browser/screenshot.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L1) | 298 | 7 | `base, engine, os, preflight, registry, schema, typing, utils` | Browser Screenshot Module - Take a screenshot of the current page |
 | [`src/core/modules/atomic/browser/scroll.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/scroll.py#L1) | 305 | 5 | `base, engine, registry, schema, typing` | Browser Scroll Module |
 | [`src/core/modules/atomic/browser/select.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/select.py#L1) | 398 | 8 | `base, engine, registry, schema, typing` | Browser Select Module |
 | [`src/core/modules/atomic/browser/sitemap.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/sitemap.py#L1) | 343 | 4 | `base, engine, logging, registry, schema, typing` | Browser Sitemap Module — Parse sitemap.xml and extract URLs |
@@ -793,6 +793,7 @@ Inventory: **976 Python files**, **231,563 lines**, and **6,074 class/function/m
 | [`src/core/modules/integrations/slack/modules/send_message.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/integrations/slack/modules/send_message.py#L1) | 221 | 3 | `base, engine, integration, os, outcomes, registry, typing` | Slack Send Message Module |
 | [`src/core/modules/items.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/items.py#L1) | 527 | 34 | `dataclasses, datetime, enum, typing` | Item-Based Execution Data Structures. |
 | [`src/core/modules/lint.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/lint.py#L1) | 476 | 24 | `dataclasses, enum, logging, re, registry, typing` | Module Metadata Lint - Registry-driven validation. |
+| [`src/core/modules/preflight.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/preflight.py#L1) | 39 | 3 | `registry, typing` | Explicit module checks for values known before execution begins. |
 | [`src/core/modules/quality/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/__init__.py#L1) | 112 | 0 | `baseline, constants, engine, fixer, policy, report, types` | flyto-core Module Quality System |
 | [`src/core/modules/quality/baseline.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/baseline.py#L1) | 150 | 10 | `dataclasses, datetime, json, pathlib, typing` | Baseline |
 | [`src/core/modules/quality/constants.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/constants.py#L1) | 191 | 0 | `typing` | Validation Constants |

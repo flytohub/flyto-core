@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-09-20 - Parameter preflight is explicit and does not execute
+
+Decision: hosts can call `preflight_module_params(module_id, params)` with
+already resolved values. The registry supplies a class without constructing
+it; only an explicit static `preflight_params` hook runs. The first opt-in is
+screenshot's existing path validator. Missing values are not defaulted, and
+schema formats or metadata tags never imply a policy check.
+
+Why: detecting an invalid final screenshot path only after earlier workflow
+actions invites unnecessary repeated effects. Admission can reject known
+path defects without executing any part of the workflow.
+
+Consequence: the API does not authorize a module or promise complete validity.
+Hosts omit unresolved runtime references. Execution still validates all
+parameters and current host settings. A preflight refusal carries only a
+safe field/code and fixed message, without the original exception context.
+
 ## 2026-09-06 - MCP requirements follow effective conditional fields
 
 Decision: MCP parameter preflight and correction hints reuse the workflow
