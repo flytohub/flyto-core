@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.31.3] - Unreleased
 
+### Added
+
+- An explicit module-parameter preflight API lets hosts reject known invalid
+  screenshot paths before workflow actions begin. It uses the existing path
+  policy without construction, execution, defaults, or parameter rewriting;
+  runtime validation remains authoritative. Errors omit sensitive values.
+- Existing optional environment settings are documented with runtime defaults
+  or blank credentials; this does not configure or enable a service.
+
 ### Fixed
 
 - `browser.goto` preserves IPv4 and IPv6 destinations when navigation fails

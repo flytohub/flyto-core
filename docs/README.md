@@ -65,7 +65,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 480 active runtime modules across 88 catalog categories.
-- 971 maintained Python files and 6,036 declarations.
+- 972 maintained Python files and 6,040 declarations.
 - 487 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.

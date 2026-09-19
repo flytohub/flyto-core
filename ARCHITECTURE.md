@@ -12,6 +12,12 @@ own the first two layers or hosted product/account logic.
 ## Boundaries
 
 - Modules expose narrow automation actions and documented parameters.
+- Hosts can call `core.modules.preflight.preflight_module_params` for known,
+  resolved values before admission. Only explicit static module hooks run;
+  they do not construct modules, execute actions, supply defaults, or rewrite
+  parameters. Screenshot opts into its existing path validator. This is not
+  authorization or complete validation: unresolved values and all runtime
+  schema, policy, and path checks remain enforced during execution.
 - Recipes compose modules into repeatable workflows.
 - `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
   source of truth for the current 480-module, 88-category public inventory.
@@ -30,7 +36,7 @@ own the first two layers or hosted product/account logic.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  971 maintained Python files, 6,036 declarations, 487 literal module
+  972 maintained Python files, 6,040 declarations, 487 literal module
   registrations, 28 HTTP operations, 108 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
