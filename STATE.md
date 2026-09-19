@@ -2,6 +2,10 @@
 
 ## Current State
 
+- The README preserves the shared product contract and package responsibilities
+  alongside the current first-screen positioning and canonical registry
+  description. Existing public-metadata and contract regressions enforce both.
+
 - Dependency-lock verification retains existing compatible pins; intentional
   upgrades require `scripts/lock-deps.sh --upgrade`. Lock headers no longer
   vary with the supported Python minor version. `.env.example` documents

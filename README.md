@@ -271,6 +271,18 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 [Architecture Map](docs/architecture-map.md) and exhaustive
 [source reference](docs/reference/README.md) for implementation detail.
 
+The shared [product contract](flyto-product.toml), `flyto.product-contract.v1`,
+defines the Flyto2 promise: Turn AI work into verified, replayable procedures.
+
+| Package | Responsibility |
+|---|---|
+| `flyto-ai` | Understand, route, and govern new work and provider use. |
+| `flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them. |
+| `flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence. |
+
+`flyto-core` is a standalone execution package; it does not require the other
+packages to execute a workflow or produce evidence.
+
 ---
 
 ## Where to go next
