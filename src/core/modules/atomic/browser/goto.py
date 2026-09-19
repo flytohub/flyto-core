@@ -27,7 +27,9 @@ Example of schema presets usage - compare before/after:
         )
 """
 import logging
+from ipaddress import ip_address
 from typing import Any, Dict, Optional
+from urllib.parse import urlsplit
 
 from ....engine.outcome import ClaimBy, Outcome, envelope
 from ....utils import SSRFError, validate_url_with_env_config
@@ -340,7 +342,19 @@ class BrowserGotoModule(BaseModule):
 
     @staticmethod
     def _toggle_www(url: str):
-        """Toggle www prefix."""
+        """Toggle a hostname prefix; an IP literal has no www alternative."""
+        try:
+            host = urlsplit(url).hostname
+        except ValueError:
+            return None
+        if not host:
+            return None
+        try:
+            ip_address(host)
+        except ValueError:
+            pass
+        else:
+            return None
         if '://www.' in url:
             return url.replace('://www.', '://', 1)
         if '://' in url:

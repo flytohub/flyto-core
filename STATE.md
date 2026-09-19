@@ -2,6 +2,12 @@
 
 ## Current State
 
+- `browser.goto` no longer derives `www` alternatives for IPv4 or IPv6
+  destinations. A connection failure retains the original error; an HTTP
+  warning retains its original observation. Normal domain retry and SSRF
+  revalidation are unchanged. This is a navigation correction, not a new
+  task-level network sandbox.
+
 - Core 2.31.3 is unreleased. The conditional MCP parameter fix changes packaged
   source beyond the published 2.31.2 artifact; source consumers must pin the
   verified commit until an explicitly authorized release is published.

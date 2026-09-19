@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.31.3] - Unreleased
+
+### Fixed
+
+- `browser.goto` preserves IPv4 and IPv6 destinations when navigation fails
+  instead of retrying a derived `www` hostname. Normal domain fallback still
+  revalidates the alternative through the SSRF guard. No new network authority
+  or workflow parameter is introduced.
+
 ## [2.31.2]
 
 ### Security

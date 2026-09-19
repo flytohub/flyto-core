@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **971 Python files**, **230,939 lines**, and **6,036 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **971 Python files**, **230,953 lines**, and **6,036 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -265,7 +265,7 @@ Inventory: **971 Python files**, **230,939 lines**, and **6,036 class/function/m
 | [`src/core/modules/atomic/browser/form.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/form.py#L1) | 678 | 10 | `asyncio, base, engine, registry, schema, typing` | Browser Form Module - Smart form filling |
 | [`src/core/modules/atomic/browser/frame.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/frame.py#L1) | 340 | 5 | `base, engine, re, registry, schema, typing` | Browser Frame Module |
 | [`src/core/modules/atomic/browser/geolocation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/geolocation.py#L1) | 337 | 6 | `base, engine, registry, schema, typing` | Browser Geolocation Module |
-| [`src/core/modules/atomic/browser/goto.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L1) | 348 | 8 | `base, engine, logging, registry, schema, typing, utils` | Browser Automation Modules |
+| [`src/core/modules/atomic/browser/goto.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L1) | 362 | 8 | `base, engine, ipaddress, logging, registry, schema, typing, urllib, utils` | Browser Automation Modules |
 | [`src/core/modules/atomic/browser/hover.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/hover.py#L1) | 124 | 3 | `base, registry, schema, typing` | Browser Hover Module - Hover mouse over an element |
 | [`src/core/modules/atomic/browser/interact.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/interact.py#L1) | 588 | 6 | `base, base64, datetime, engine, logging, re, registry, schema, types, typing` | Browser Interact Module — Human-in-the-loop browser interaction |
 | [`src/core/modules/atomic/browser/launch.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L1) | 318 | 3 | `_session_outcome, base, core, engine, os, registry, schema, typing, utils` | Browser Launch Module - Launch a single browser instance |
