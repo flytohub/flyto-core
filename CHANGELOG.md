@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Dependency-lock regeneration now preserves compatible pinned versions by
+  default and requires `--upgrade` for intentional updates. Existing optional
+  runtime environment settings are declared without service credentials.
 - `browser.goto` preserves IPv4 and IPv6 destinations when navigation fails
   instead of retrying a derived `www` hostname. Normal domain fallback still
   revalidates the alternative through the SSRF guard. No new network authority

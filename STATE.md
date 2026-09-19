@@ -2,6 +2,12 @@
 
 ## Current State
 
+- Dependency-lock verification retains existing compatible pins; intentional
+  upgrades require `scripts/lock-deps.sh --upgrade`. Lock headers no longer
+  vary with the supported Python minor version. `.env.example` documents
+  existing optional service/connector settings with blank credentials and
+  runtime defaults; no service is enabled by this maintenance change.
+
 - `browser.goto` no longer derives `www` alternatives for IPv4 or IPv6
   destinations. A connection failure retains the original error; an HTTP
   warning retains its original observation. Normal domain retry and SSRF
