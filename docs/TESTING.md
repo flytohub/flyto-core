@@ -17,6 +17,14 @@
 
 ## Normal Local Closure
 
+Lock generation retains compatible versions already recorded in
+`requirements.lock`. CI checks reproducibility and audits those exact versions;
+it does not upgrade dependencies as a side effect of verification. For an
+intentional dependency update, run `PYTHON=.venv/bin/python bash
+scripts/lock-deps.sh --upgrade`, review the changed versions, and rerun the gates.
+The lock omits an interpreter-version header so supported Python minor versions
+do not produce a metadata-only diff.
+
 ```bash
 .venv/bin/python scripts/check_documentation.py
 .venv/bin/python scripts/check_brand_identity.py

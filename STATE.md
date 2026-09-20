@@ -2,6 +2,28 @@
 
 ## Current State
 
+- The README preserves the shared product contract and package responsibilities
+  alongside the current first-screen positioning and canonical registry
+  description. Existing public-metadata and contract regressions enforce both.
+
+- Dependency-lock verification retains existing compatible pins; intentional
+  upgrades require `scripts/lock-deps.sh --upgrade`. Lock headers no longer
+  vary with the supported Python minor version. `.env.example` documents
+  existing optional service/connector settings with blank credentials and
+  runtime defaults; no service is enabled by this maintenance change.
+
+- Hosts can preflight explicitly opted-in module parameters before execution
+  without module construction or effects. Screenshot's supplied path uses the
+  same validator as execution; omitted or empty paths are not defaulted, and
+  rejection exposes only a safe field/code without sensitive error context.
+  Runtime checks remain authoritative and revalidate current host settings.
+
+- `browser.goto` no longer derives `www` alternatives for IPv4 or IPv6
+  destinations. A connection failure retains the original error; an HTTP
+  warning retains its original observation. Normal domain retry and SSRF
+  revalidation are unchanged. This is a navigation correction, not a new
+  task-level network sandbox.
+
 - MCP parameter validation and repair hints honor conditional field visibility
   using schema defaults plus explicit caller values. Ordinary browser text
   input does not require the inactive password field; active required fields
@@ -333,7 +355,7 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 976 maintained Python files, 6,074
+- Source-backed documentation now covers 977 maintained Python files, 6,078
   declarations, 487 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
