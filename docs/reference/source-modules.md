@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **976 Python files**, **231,549 lines**, and **6,074 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **978 Python files**, **231,712 lines**, and **6,078 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -303,6 +303,8 @@ Inventory: **976 Python files**, **231,549 lines**, and **6,074 class/function/m
 | [`src/core/modules/atomic/cache/delete.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/delete.py#L1) | 359 | 3 | `engine, errors, get, logging, redis, registry, schema, typing, utils` | Cache Delete Module Delete a cache entry by key. |
 | [`src/core/modules/atomic/cache/get.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L1) | 299 | 4 | `engine, errors, json, logging, redis, registry, schema, time, typing, utils` | Cache Get Module Get a value from an in-memory or Redis cache. |
 | [`src/core/modules/atomic/cache/set.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L1) | 395 | 3 | `engine, errors, get, json, logging, redis, registry, schema, time, typing, utils` | Cache Set Module Set a value in an in-memory or Redis cache with optional TTL. |
+| [`src/core/modules/atomic/capability/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/__init__.py#L1) | 7 | 0 | `invoke` | Host-provided capability invocation modules. |
+| [`src/core/modules/atomic/capability/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L1) | 156 | 4 | `__future__, base, collections, math, registry, schema, typing` | Invoke one host-provided capability through an opaque runtime dispatcher. |
 | [`src/core/modules/atomic/check/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/__init__.py#L1) | 43 | 0 | `is_array, is_empty, is_null, is_number, is_object, is_string, type_of` | Atomic Check Operations Type and value checking utilities. |
 | [`src/core/modules/atomic/check/is_array.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/is_array.py#L1) | 79 | 1 | `registry, schema, typing` | Check Is Array Module Check if a value is an array. |
 | [`src/core/modules/atomic/check/is_empty.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/is_empty.py#L1) | 102 | 1 | `registry, schema, typing` | Check Is Empty Module Check if a value is empty. |

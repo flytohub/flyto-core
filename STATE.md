@@ -1,5 +1,21 @@
 # Flyto2 Core State
 
+## Capability invocation runtime (2026-09-21)
+
+Flyto2 Core now includes the generic `capability.invoke` atomic primitive. It
+executes only through an execution-scoped opaque dispatcher injected by the
+trusted host; workflow data cannot construct that authority. The module accepts
+one commanded resource, one canonical capability id, and bounded JSON-scalar
+arguments, and fails closed when the runtime capability is absent or the host
+refuses the call. Device-, ROS-, fleet-, and vendor-specific transports remain
+outside Core.
+
+Focused Core registration and module coverage passed 145 tests with one existing
+skip. Physical-device policy, capability approval, resource selection, adapter
+loading, and evidence verification remain Cloud/host responsibilities; Core is
+still the single deterministic workflow executor rather than a robotics control
+plane.
+
 ## Current State
 
 - MCP parameter validation and repair hints honor conditional field visibility
@@ -250,7 +266,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 480 modules across 88 categories, and
+- The generated catalog currently exposes 481 modules across 89 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -333,8 +349,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 976 maintained Python files, 6,074
-  declarations, 487 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 978 maintained Python files, 6,078
+  declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

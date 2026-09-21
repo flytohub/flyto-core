@@ -224,6 +224,20 @@ asyncio.run(main())
 
 ---
 
+## API
+
+Flyto2 Core exposes the same deterministic runtime through several supported interfaces rather than separate execution engines:
+
+- **Python** — import the module registry and workflow engine directly.
+- **YAML workflows** — compose registered modules into replayable procedures.
+- **Execution API** — use the authenticated `/v1/*` HTTP routes for local integrations.
+- **MCP** — expose the registry through stdio or Streamable HTTP to AI clients.
+- **Module contract** — every executable action is defined by registry metadata and a bounded parameter schema; host-only primitives such as `capability.invoke` additionally require opaque runtime authority and cannot be activated by serialized workflow data alone.
+
+Generated source-linked references are available in [Python API Reference](docs/reference/python-api.md), [Registered Modules](docs/reference/registered-modules.md), and the [Full Module Catalog](docs/TOOL_CATALOG.md).
+
+---
+
 ## 480 Modules, 88 Catalog Categories
 
 | Category | Count | Examples |

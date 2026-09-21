@@ -1,5 +1,23 @@
 # Decisions
 
+## 2026-09-21 - External equipment remains a host capability, not a Core protocol
+
+Decision: Core exposes one generic `capability.invoke` atomic module. Its only
+execution authority is an opaque, host-created runtime object; serialized
+workflow parameters may name a resource, capability and bounded arguments but
+cannot create or widen that authority. Core does not contain ROS 2, Open-RMF,
+vendor SDK, equipment discovery, approval, routing, or safety-policy logic.
+
+Reason: Flyto2 needs new robots and equipment to plug into the same workflow
+engine without adding a parallel robotics executor or a brand-specific module
+for every device. Keeping transport and approval on the host/Cloud side lets
+Core remain deterministic and independently usable while still making the final
+actuation an ordinary audited workflow step.
+
+Consequence: hosts must bind the opaque dispatcher to the exact capability
+allowlist approved for the job and must reject calls outside that authority.
+Core fails closed when no trusted dispatcher exists.
+
 ## 2026-09-06 - MCP requirements follow effective conditional fields
 
 Decision: MCP parameter preflight and correction hints reuse the workflow

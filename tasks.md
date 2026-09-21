@@ -48,6 +48,8 @@
 
 ## Done
 
+- Added `capability.invoke`, the generic Flyto2 Core primitive for an execution-scoped opaque external capability dispatcher. Device protocols stay outside Core; focused registry/atomic coverage passed 145 tests with one existing skip.
+
 - Made `browser.click` outcome-aware without changing tab ownership: explicit
   popup intent fails when no page opens; optional URL/selector contracts verify
   a real transition; output separates dispatch, verification, and observed

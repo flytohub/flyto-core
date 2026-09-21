@@ -26,7 +26,7 @@ _registered = False
 # All module category names (alphabetical)
 _ALL_CATEGORIES = [
     'ai', 'analysis', 'archive', 'array', 'auth',
-    'browser', 'cache', 'check', 'chemistry', 'communication', 'compare', 'convert', 'crypto',
+    'browser', 'cache', 'capability', 'check', 'chemistry', 'communication', 'compare', 'convert', 'crypto',
     'data', 'database', 'datetime', 'dns', 'docker', 'document',
     'element', 'encode', 'env', 'error',
     'file', 'flow', 'format',
@@ -83,7 +83,7 @@ register_all()
 # Re-exports for direct attribute access (modules already in sys.modules)
 from . import (  # noqa: F401
     ai, analysis, archive, array, auth,
-    browser, cache, check, chemistry, communication, compare, convert, crypto,
+    browser, cache, capability, check, chemistry, communication, compare, convert, crypto,
     data, database, datetime, dns, docker, document,
     element, encode, env, error,
     file, flow, format,

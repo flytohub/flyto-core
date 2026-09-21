@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.31.2]
 
+### Added
+
+- Added `capability.invoke`, a generic atomic module that lets a trusted host expose an execution-scoped external capability to an ordinary Flyto2 workflow without embedding any robot, fleet, or vendor protocol in Core. It accepts a bounded resource/capability request, refuses when the opaque host authority is absent, and leaves approval, routing, device safety and evidence to the control plane and adapter host.
+
 ### Security
 
 - Runtime authority is now an execution-scoped, opaque object rather than

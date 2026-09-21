@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **480 modules** across **88 categories**.
+> Auto-generated from flyto-core module registry. **481 modules** across **89 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
@@ -22,6 +22,7 @@
 - [aws](#aws) (4)
 - [browser](#browser) (54)
 - [cache](#cache) (4)
+- [capability](#capability) (1)
 - [check](#check) (7)
 - [chemistry](#chemistry) (1)
 - [cloud](#cloud) (6)
@@ -268,6 +269,12 @@
 | `cache.delete` | Delete a cache entry by key | `key` string *(required)*, `backend` string (default: `memory`), `redis_url` string (default: `redis://localhost:6379`) | `key` (string), `deleted` (boolean), `backend` (string), `present_after` (boolean), `outcome` (object) |
 | `cache.get` | Get a value from cache by key | `key` string *(required)*, `backend` string (default: `memory`), `redis_url` string (default: `redis://localhost:6379`) | `key` (string), `value` (any), `hit` (boolean), `backend` (string), `outcome` (object) |
 | `cache.set` | Set a value in cache with optional TTL | `key` string *(required)*, `value` string *(required)*, `ttl` number (default: `0`), `backend` string (default: `memory`), `redis_url` string (default: `redis://localhost:6379`) | `key` (string), `stored` (boolean), `ttl` (number), `backend` (string), `read_back` (boolean), `outcome` (object) |
+
+## capability
+
+| Module | Description | Parameters | Output |
+|--------|-------------|------------|--------|
+| `capability.invoke` | Invoke one approved host-provided capability through the execution-scoped runtime adapter. | `resource_id` string *(required)*, `capability_id` string *(required)*, `arguments` object (default: `{}`) | — |
 
 ## check
 
