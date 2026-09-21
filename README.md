@@ -6,7 +6,7 @@ A Python execution engine for AI agents. It runs browser and API work as
 explicit steps, records what every step did, and replays from the step that
 failed — instead of re-running the whole job.
 
-The current public inventory is **481 registry-backed modules** across **88
+The current public inventory is **481 registry-backed modules** across **89
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
