@@ -25,7 +25,7 @@ own the first two layers or hosted product/account logic.
   opaque execution-scoped authority. Core never discovers, approves, routes, or
   chooses equipment and contains no ROS/vendor transport.
 - `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
-  source of truth for the current 480-module, 88-category public inventory.
+  source of truth for the current 481-module, 89-category public inventory.
 - Catalog search and detail carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
 - Browser modules interact with pages but do not become product business logic.

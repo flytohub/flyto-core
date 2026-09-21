@@ -298,7 +298,7 @@ contract was made explicit.
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 480 modules across 88 categories, and
+- The generated catalog currently exposes 481 modules across 89 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.

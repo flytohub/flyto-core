@@ -6,7 +6,7 @@ A Python execution engine for AI agents. It runs browser and API work as
 explicit steps, records what every step did, and replays from the step that
 failed — instead of re-running the whole job.
 
-The current public inventory is **480 registry-backed modules** across **88
+The current public inventory is **481 registry-backed modules** across **88
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
@@ -179,7 +179,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 480 modules as tools.
+Your AI gets all 481 modules as tools.
 
 </details>
 
@@ -246,7 +246,7 @@ Host-injected runtime capabilities are deliberately different from configuration
 
 ---
 
-## 480 Modules, 88 Catalog Categories
+## 481 Modules, 89 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|
@@ -313,14 +313,14 @@ packages to execute a workflow or produce evidence.
 |---|---|
 | Run one of the other built-in recipes | [docs/RECIPES.md](docs/RECIPES.md) |
 | Browse every module and parameter | [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md) |
-| See the module categories at a glance | [480 Modules, 88 Catalog Categories](#480-modules-88-catalog-categories) |
+| See the module categories at a glance | [481 Modules, 89 Catalog Categories](#481-modules-89-catalog-categories) |
 | Configure network, filesystem, auth, and permission switches | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | Install a module pack or plugin | [docs/PLUGIN_SDK.md](docs/PLUGIN_SDK.md) |
 | Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
 | Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
 | Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
 
-The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering.
+The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 481 modules, MCP-native, triggers, queue, versioning, metering.
 
 ---
 

@@ -4,7 +4,7 @@
 
 | Surface | Measured state |
 |---|---:|
-| Runtime catalog | 480 modules, 88 categories |
+| Runtime catalog | 481 modules, 89 categories |
 | Literal module registrations | 488 |
 | Packaged recipes | 41 |
 | Maintained Python source | 979 files, 231,780 lines |
