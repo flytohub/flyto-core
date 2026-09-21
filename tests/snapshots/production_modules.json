@@ -1,5 +1,5 @@
 {
-  "total": 444,
+  "total": 441,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -1383,18 +1383,6 @@
     },
     {
       "id": "regex.test",
-      "version": "1.0.0"
-    },
-    {
-      "id": "robotics.move",
-      "version": "1.0.0"
-    },
-    {
-      "id": "robotics.stop",
-      "version": "1.0.0"
-    },
-    {
-      "id": "robotics.turn",
       "version": "1.0.0"
     },
     {
