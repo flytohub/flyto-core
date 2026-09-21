@@ -1027,19 +1027,23 @@ class StepExecutor:
 
         try:
             if execution_mode == 'items':
-                return await self._execute_items_mode(
+                result = await self._execute_items_mode(
                     step_id, module_instance, params, input_items, step_trace
                 )
             elif execution_mode == 'all':
-                return await self._execute_all_mode(
+                result = await self._execute_all_mode(
                     step_id, module_instance, input_items
                 )
             else:
                 if execution_mode != 'single':
                     logger.warning(f"Unknown execution_mode '{execution_mode}', using single")
-                return await self._execute_single_mode(
+                result = await self._execute_single_mode(
                     step_id, module_instance
                 )
+
+            from ..capability_dispatch import consume_capability_request
+
+            return await consume_capability_request(result, context)
 
         except Exception as e:
             raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
