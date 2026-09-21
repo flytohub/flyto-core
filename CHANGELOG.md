@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Align the optional robotics consumer/verifier with
+  `flyto.capability-request.v1`: commanded resources are no longer interpreted
+  as execution hosts, and the old Pi-runner / robot-local plan verification is
+  retired.
+
+## [2.32.1] - 2026-09-20
+
+### Added
+
+- An explicit module-parameter preflight API lets hosts reject known invalid
+  screenshot paths before workflow actions begin. It uses the existing path
+  policy without construction, execution, defaults, or parameter rewriting;
+  runtime validation remains authoritative. Errors omit sensitive values.
+- Existing optional environment settings are documented with runtime defaults
+  or blank credentials; this does not configure or enable a service.
+
+### Fixed
+
+- Dependency-lock regeneration now preserves compatible pinned versions by
+  default and requires `--upgrade` for intentional updates. Existing optional
+  runtime environment settings are declared without service credentials.
+- `browser.goto` preserves IPv4 and IPv6 destinations when navigation fails
+  instead of retrying a derived `www` hostname. Normal domain fallback still
+  revalidates the alternative through the SSRF guard. No new network authority
+  or workflow parameter is introduced.
+
 ## [2.31.2]
 
 ### Added

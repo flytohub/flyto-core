@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,078 declarations across 827 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,082 declarations across 828 files**.
 
 ## `demo.py`
 
@@ -3384,14 +3384,14 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _navigation_outcome(*, final_url: str, status_code: Optional&#91;int&#93;, warning: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | The rung this navigation earned, and the measurement that earned it. | [`src/core/modules/atomic/browser/goto.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L70) |
-| class | `class BrowserGotoModule(BaseModule)` | Navigate to URL Module | [`src/core/modules/atomic/browser/goto.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L186) |
-| method | `def BrowserGotoModule._ssrf_enforced(self) -> bool` | The SSRF guard is always enforced for workflow-supplied targets. | [`src/core/modules/atomic/browser/goto.py:193`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L193) |
-| method | `def BrowserGotoModule._check_url(self, url: str) -> None` | Apply the operator-controlled SSRF guard to ``url``. | [`src/core/modules/atomic/browser/goto.py:201`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L201) |
-| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:213`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L213) |
-| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:236`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L236) |
-| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:286`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L286) |
-| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle www prefix. | [`src/core/modules/atomic/browser/goto.py:342`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L342) |
+| function | `def _navigation_outcome(*, final_url: str, status_code: Optional&#91;int&#93;, warning: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | The rung this navigation earned, and the measurement that earned it. | [`src/core/modules/atomic/browser/goto.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L72) |
+| class | `class BrowserGotoModule(BaseModule)` | Navigate to URL Module | [`src/core/modules/atomic/browser/goto.py:188`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L188) |
+| method | `def BrowserGotoModule._ssrf_enforced(self) -> bool` | The SSRF guard is always enforced for workflow-supplied targets. | [`src/core/modules/atomic/browser/goto.py:195`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L195) |
+| method | `def BrowserGotoModule._check_url(self, url: str) -> None` | Apply the operator-controlled SSRF guard to ``url``. | [`src/core/modules/atomic/browser/goto.py:203`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L203) |
+| method | `def BrowserGotoModule.validate_params(self) -> None` | Implements `BrowserGotoModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:215`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L215) |
+| method | `async def BrowserGotoModule.execute(self) -> Any` | Implements `BrowserGotoModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/goto.py:238`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L238) |
+| method | `async def BrowserGotoModule._try_www_toggle(self, browser) -> Any` | Try navigating with toggled www prefix. | [`src/core/modules/atomic/browser/goto.py:288`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L288) |
+| method | `def BrowserGotoModule._toggle_www(url: str)` | Toggle a hostname prefix; an IP literal has no www alternative. | [`src/core/modules/atomic/browser/goto.py:344`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/goto.py#L344) |
 
 ## `src/core/modules/atomic/browser/hover.py`
 
@@ -3600,12 +3600,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _decoded_length(encoded: Optional&#91;str&#93;) -> Optional&#91;int&#93;` | Byte count of a base64 payload, without materialising the bytes. | [`src/core/modules/atomic/browser/screenshot.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L46) |
-| function | `def _observe_file_on_disk(path: str) -> Tuple&#91;Optional&#91;int&#93;, Optional&#91;str&#93;&#93;` | ``(st_size, None)`` when the image could be read back, ``(None, why)`` when not. | [`src/core/modules/atomic/browser/screenshot.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L58) |
-| function | `def _screenshot_outcome(*, path: Optional&#91;str&#93;, bytes_on_disk: Optional&#91;int&#93;, stat_error: Optional&#91;str&#93;, image_bytes: Optional&#91;int&#93;) -> Dict&#91;str, Any&#93;` | The rung this capture earned, and the measurement that earned it. | [`src/core/modules/atomic/browser/screenshot.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L66) |
-| class | `class BrowserScreenshotModule(BaseModule)` | Screenshot Module | [`src/core/modules/atomic/browser/screenshot.py:207`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L207) |
-| method | `def BrowserScreenshotModule.validate_params(self) -> None` | Implements `BrowserScreenshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:214`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L214) |
-| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:223`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L223) |
+| function | `def _decoded_length(encoded: Optional&#91;str&#93;) -> Optional&#91;int&#93;` | Byte count of a base64 payload, without materialising the bytes. | [`src/core/modules/atomic/browser/screenshot.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L47) |
+| function | `def _observe_file_on_disk(path: str) -> Tuple&#91;Optional&#91;int&#93;, Optional&#91;str&#93;&#93;` | ``(st_size, None)`` when the image could be read back, ``(None, why)`` when not. | [`src/core/modules/atomic/browser/screenshot.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L59) |
+| function | `def _screenshot_outcome(*, path: Optional&#91;str&#93;, bytes_on_disk: Optional&#91;int&#93;, stat_error: Optional&#91;str&#93;, image_bytes: Optional&#91;int&#93;) -> Dict&#91;str, Any&#93;` | The rung this capture earned, and the measurement that earned it. | [`src/core/modules/atomic/browser/screenshot.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L67) |
+| class | `class BrowserScreenshotModule(BaseModule)` | Screenshot Module | [`src/core/modules/atomic/browser/screenshot.py:208`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L208) |
+| method | `def BrowserScreenshotModule.preflight_params(params: Mapping&#91;str, Any&#93;) -> None` | Check only a supplied path, using the unchanged runtime policy. | [`src/core/modules/atomic/browser/screenshot.py:216`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L216) |
+| method | `def BrowserScreenshotModule.validate_params(self) -> None` | Implements `BrowserScreenshotModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:231`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L231) |
+| method | `async def BrowserScreenshotModule.execute(self) -> Any` | Implements `BrowserScreenshotModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/browser/screenshot.py:240`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/screenshot.py#L240) |
 
 ## `src/core/modules/atomic/browser/scroll.py`
 
@@ -7651,6 +7652,14 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def lint_module(module_id: str, metadata: Dict&#91;str, Any&#93;) -> LintReport` | Run all lint rules on a single module. | [`src/core/modules/lint.py:416`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/lint.py#L416) |
 | function | `def lint_all_modules(registry_metadata: Dict&#91;str, Dict&#91;str, Any&#93;&#93;, severity_filter: Optional&#91;Severity&#93;=None) -> LintReport` | Run all lint rules on all registered modules. | [`src/core/modules/lint.py:438`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/lint.py#L438) |
 | function | `def lint_from_registry(severity_filter: Optional&#91;Severity&#93;=None) -> LintReport` | Convenience function to lint all modules from the registry. | [`src/core/modules/lint.py:463`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/lint.py#L463) |
+
+## `src/core/modules/preflight.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class ModulePreflightError(ValueError)` | Safe admission failure without parameter values or host paths. | [`src/core/modules/preflight.py:16`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/preflight.py#L16) |
+| method | `def ModulePreflightError.__init__(self, *, field: str, code: str)` | Implements `ModulePreflightError.__init__`; linked source is authoritative. | [`src/core/modules/preflight.py:19`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/preflight.py#L19) |
+| function | `def preflight_module_params(module_id: str, params: Mapping&#91;str, Any&#93;) -> None` | Check supplied, resolved values using an explicitly declared pure hook. | [`src/core/modules/preflight.py:25`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/preflight.py#L25) |
 
 ## `src/core/modules/quality/baseline.py`
 

@@ -1,22 +1,53 @@
 # Decisions
 
-## 2026-09-21 - External equipment remains a host capability, not a Core protocol
+## 2026-09-21 - Robotics authoring modules have no Core execution rung
 
-Decision: Core exposes one generic `capability.invoke` atomic module. Its only
-execution authority is an opaque, host-created runtime object; serialized
-workflow parameters may name a resource, capability and bounded arguments but
-cannot create or widen that authority. Core does not contain ROS 2, Open-RMF,
-vendor SDK, equipment discovery, approval, routing, or safety-policy logic.
+Decision: the optional robotics extension is consumed as an authoring plugin.
+Its Move/Turn/Stop nodes emit `flyto.capability-request.v1` for commanded
+resources and do not dispatch physical work from Core. Core therefore assigns
+no default side-effect outcome rung to those nodes.
 
-Reason: Flyto2 needs new robots and equipment to plug into the same workflow
-engine without adding a parallel robotics executor or a brand-specific module
-for every device. Keeping transport and approval on the host/Cloud side lets
-Core remain deterministic and independently usable while still making the final
-actuation an ordinary audited workflow step.
+Why: execution placement and commanded equipment are separate authority axes.
+An external adapter may later execute the approved capability and return
+observable evidence; the authoring node itself cannot claim dispatch,
+acceptance, observation, or verification.
 
-Consequence: hosts must bind the opaque dispatcher to the exact capability
-allowlist approved for the job and must reject calls outside that authority.
-Core fails closed when no trusted dispatcher exists.
+## 2026-09-21 - External equipment execution is one opaque Core capability
+
+Decision: Core exposes one generic `capability.invoke` atomic module as the
+execution-side consumer for a capability request after Cloud/AI Space has
+approved and routed it. Serialized workflow parameters may name a commanded
+resource, canonical capability, and bounded scalar arguments, but the module's
+only execution authority is an opaque host-created runtime dispatcher.
+
+Reason: Flyto2 needs new robots and equipment to use the same deterministic
+workflow engine without adding a parallel robotics executor or a brand-specific
+Core module for every device. The optional robotics authoring modules on main
+remain non-actuating request producers; transport and device policy remain on
+the host/control-plane side.
+
+Consequence: hosts must scope the opaque dispatcher to the exact resource and
+capability allowlist approved for that job. Core fails closed when no trusted
+dispatcher exists. Core does not contain ROS 2, Open-RMF, vendor SDK, equipment
+discovery, approval, routing, or physical safety-policy logic.
+
+
+## 2026-09-20 - Parameter preflight is explicit and does not execute
+
+Decision: hosts can call `preflight_module_params(module_id, params)` with
+already resolved values. The registry supplies a class without constructing
+it; only an explicit static `preflight_params` hook runs. The first opt-in is
+screenshot's existing path validator. Missing values are not defaulted, and
+schema formats or metadata tags never imply a policy check.
+
+Why: detecting an invalid final screenshot path only after earlier workflow
+actions invites unnecessary repeated effects. Admission can reject known
+path defects without executing any part of the workflow.
+
+Consequence: the API does not authorize a module or promise complete validity.
+Hosts omit unresolved runtime references. Execution still validates all
+parameters and current host settings. A preflight refusal carries only a
+safe field/code and fixed message, without the original exception context.
 
 ## 2026-09-06 - MCP requirements follow effective conditional fields
 

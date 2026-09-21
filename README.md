@@ -238,6 +238,14 @@ Generated source-linked references are available in [Python API Reference](docs/
 
 ---
 
+## Configuration
+
+Flyto2 Core runs with safe defaults. Optional providers, browsers, verification services, and connectors are enabled explicitly through package extras and documented environment variables; secrets stay in runtime environment/credential stores rather than workflow YAML. Start from [`.env.example`](.env.example) for supported settings and see [Operations](docs/OPERATIONS.md) for runtime/deployment guidance.
+
+Host-injected runtime capabilities are deliberately different from configuration: a workflow cannot enable `capability.invoke` by setting an environment variable or serialized parameter. The trusted host must inject the execution-scoped opaque authority for that run.
+
+---
+
 ## 480 Modules, 88 Catalog Categories
 
 | Category | Count | Examples |
@@ -285,6 +293,18 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 [Architecture Map](docs/architecture-map.md) and exhaustive
 [source reference](docs/reference/README.md) for implementation detail.
 
+The shared [product contract](flyto-product.toml), `flyto.product-contract.v1`,
+defines the Flyto2 promise: Turn AI work into verified, replayable procedures.
+
+| Package | Responsibility |
+|---|---|
+| `flyto-ai` | Understand, route, and govern new work and provider use. |
+| `flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them. |
+| `flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence. |
+
+`flyto-core` is a standalone execution package; it does not require the other
+packages to execute a workflow or produce evidence.
+
 ---
 
 ## Where to go next
@@ -299,6 +319,8 @@ with the [Technical Whitepaper](docs/WHITEPAPER.md), then use the
 | Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
 | Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
 | Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
+
+The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering.
 
 ---
 

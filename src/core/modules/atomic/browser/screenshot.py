@@ -34,13 +34,14 @@ blank page, an error page, or a cookie banner is the same number of honest
 bytes as a screenshot of the thing the caller wanted.
 """
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple
 
 from ....engine.outcome import ClaimBy, Outcome, envelope
+from ....utils import validate_path_with_env_config
 from ...base import BaseModule
+from ...preflight import ModulePreflightError
 from ...registry import register_module
 from ...schema import compose, presets
-from ....utils import validate_path_with_env_config
 
 
 def _decoded_length(encoded: Optional[str]) -> Optional[int]:
@@ -211,6 +212,22 @@ class BrowserScreenshotModule(BaseModule):
     module_description = "Take a screenshot of the current page"
     required_permission = "browser.screenshot"
 
+    @staticmethod
+    def preflight_params(params: Mapping[str, Any]) -> None:
+        """Check only a supplied path, using the unchanged runtime policy."""
+        raw_path = params.get('path')
+        if not raw_path:
+            return
+        rejected = False
+        try:
+            validate_path_with_env_config(raw_path)
+        except (TypeError, ValueError):
+            rejected = True
+        if rejected:
+            # Raise outside the handler so no sensitive original exception is
+            # attached as context, even if a host serializes the exception.
+            raise ModulePreflightError(field='path', code='path_not_allowed')
+
     def validate_params(self) -> None:
         # SECURITY: confine the image write to FLYTO_SANDBOX_DIR — the path is
         # caller-controlled and the rendered page decides the bytes.
@@ -279,5 +296,3 @@ class BrowserScreenshotModule(BaseModule):
                     image_bytes=None,
                 ),
             }
-
-

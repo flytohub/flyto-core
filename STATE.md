@@ -2,21 +2,53 @@
 
 ## Capability invocation runtime (2026-09-21)
 
-Flyto2 Core now includes the generic `capability.invoke` atomic primitive. It
-executes only through an execution-scoped opaque dispatcher injected by the
-trusted host; workflow data cannot construct that authority. The module accepts
-one commanded resource, one canonical capability id, and bounded JSON-scalar
-arguments, and fails closed when the runtime capability is absent or the host
-refuses the call. Device-, ROS-, fleet-, and vendor-specific transports remain
-outside Core.
+Flyto2 Core includes the generic `capability.invoke` atomic primitive as the
+execution-side consumer of approved external capability requests. It executes
+only through an execution-scoped opaque dispatcher injected by the trusted host;
+workflow data cannot construct that authority. The module accepts one commanded
+resource, one canonical capability id, and bounded JSON-scalar arguments, and
+fails closed when the runtime capability is absent or the host refuses the call.
 
-Focused Core registration and module coverage passed 145 tests with one existing
-skip. Physical-device policy, capability approval, resource selection, adapter
-loading, and evidence verification remain Cloud/host responsibilities; Core is
-still the single deterministic workflow executor rather than a robotics control
-plane.
+This complements the optional robotics authoring modules now on main: those
+modules produce `flyto.capability-request.v1` and perform no physical effect;
+`capability.invoke` is the later canonical workflow step used only after the
+control plane has approved/routed a request and the host has bound exact runtime
+authority. ROS, fleet, vendor transport, equipment discovery, approval and
+resource selection remain outside Core.
+
+Focused Core registration/module coverage passed 145 tests with one existing
+skip. Strict Flyto2 Indexer verification passes 18/18 after the README API
+contract was made explicit.
 
 ## Current State
+
+- Optional robotics modules are verified as authoring-only producers of
+  `flyto.capability-request.v1`: the commanded `resource_id` is equipment,
+  not an execution host; no gateway/Pi-runner plan is accepted as the current
+  contract, and these modules carry no Core outcome rung because they perform no
+  effect themselves.
+
+- The README preserves the shared product contract and package responsibilities
+  alongside the current first-screen positioning and canonical registry
+  description. Existing public-metadata and contract regressions enforce both.
+
+- Dependency-lock verification retains existing compatible pins; intentional
+  upgrades require `scripts/lock-deps.sh --upgrade`. Lock headers no longer
+  vary with the supported Python minor version. `.env.example` documents
+  existing optional service/connector settings with blank credentials and
+  runtime defaults; no service is enabled by this maintenance change.
+
+- Hosts can preflight explicitly opted-in module parameters before execution
+  without module construction or effects. Screenshot's supplied path uses the
+  same validator as execution; omitted or empty paths are not defaulted, and
+  rejection exposes only a safe field/code without sensitive error context.
+  Runtime checks remain authoritative and revalidate current host settings.
+
+- `browser.goto` no longer derives `www` alternatives for IPv4 or IPv6
+  destinations. A connection failure retains the original error; an HTTP
+  warning retains its original observation. Normal domain retry and SSRF
+  revalidation are unchanged. This is a navigation correction, not a new
+  task-level network sandbox.
 
 - MCP parameter validation and repair hints honor conditional field visibility
   using schema defaults plus explicit caller values. Ordinary browser text
@@ -266,7 +298,7 @@ plane.
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 481 modules across 89 categories, and
+- The generated catalog currently exposes 480 modules across 88 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -349,7 +381,7 @@ plane.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 978 maintained Python files, 6,078
+- Source-backed documentation now covers 979 maintained Python files, 6,082
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
