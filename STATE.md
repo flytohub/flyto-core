@@ -2,6 +2,12 @@
 
 ## Current State
 
+- Optional robotics modules are verified as authoring-only producers of
+  `flyto.capability-request.v1`: the commanded `resource_id` is equipment,
+  not an execution host; no gateway/Pi-runner plan is accepted as the current
+  contract, and these modules carry no Core outcome rung because they perform no
+  effect themselves.
+
 - The README preserves the shared product contract and package responsibilities
   alongside the current first-screen positioning and canonical registry
   description. Existing public-metadata and contract regressions enforce both.

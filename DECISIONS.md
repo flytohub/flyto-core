@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-09-21 - Robotics authoring modules have no Core execution rung
+
+Decision: the optional robotics extension is consumed as an authoring plugin.
+Its Move/Turn/Stop nodes emit `flyto.capability-request.v1` for commanded
+resources and do not dispatch physical work from Core. Core therefore assigns
+no default side-effect outcome rung to those nodes.
+
+Why: execution placement and commanded equipment are separate authority axes.
+An external adapter may later execute the approved capability and return
+observable evidence; the authoring node itself cannot claim dispatch,
+acceptance, observation, or verification.
+
+
 ## 2026-09-20 - Parameter preflight is explicit and does not execute
 
 Decision: hosts can call `preflight_module_params(module_id, params)` with
