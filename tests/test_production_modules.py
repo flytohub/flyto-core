@@ -34,7 +34,8 @@ def production_modules():
             env="production"
         )
         yield {k: v for k, v in modules.items()
-               if (not k.startswith('test.') or k.startswith('test.assert'))
+               if not v.get('plugin')
+               and (not k.startswith('test.') or k.startswith('test.assert'))
                and '.express_' not in k}
     finally:
         if old_env is None:

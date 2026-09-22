@@ -1,5 +1,5 @@
 {
-  "total": 440,
+  "total": 441,
   "modules": [
     {
       "id": "agent.autonomous",
@@ -435,6 +435,10 @@
     },
     {
       "id": "cache.set",
+      "version": "1.0.0"
+    },
+    {
+      "id": "capability.invoke",
       "version": "1.0.0"
     },
     {

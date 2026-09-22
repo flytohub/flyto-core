@@ -19,8 +19,13 @@ own the first two layers or hosted product/account logic.
   authorization or complete validation: unresolved values and all runtime
   schema, policy, and path checks remain enforced during execution.
 - Recipes compose modules into repeatable workflows.
+- External equipment authoring and execution remain distinct. Optional robotics
+  modules may emit `flyto.capability-request.v1` without executing it; a later
+  `capability.invoke` step may consume one only when the trusted host injects
+  opaque execution-scoped authority. Core never discovers, approves, routes, or
+  chooses equipment and contains no ROS/vendor transport.
 - `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
-  source of truth for the current 480-module, 88-category public inventory.
+  source of truth for the current 481-module, 89-category public inventory.
 - Catalog search and detail carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
 - Browser modules interact with pages but do not become product business logic.
@@ -36,7 +41,7 @@ own the first two layers or hosted product/account logic.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  977 maintained Python files, 6,078 declarations, 487 literal module
+  979 maintained Python files, 6,082 declarations, 488 literal module
   registrations, 28 HTTP operations, 108 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
@@ -67,10 +72,15 @@ routes until an authenticated application explicitly mounts them.
 
 1. A recipe or caller selects modules and parameters.
 2. Module validation checks the required input shape.
-3. Execution returns structured results, artifacts, screenshots, or assertions.
-4. Product-loop checks feed CI, release evidence, or manual audit work.
-5. Failing steps identify the product contract that needs repair.
-6. Warroom evidence packs can be consumed by release gates or Cloud UI without
+3. Authoring-only robotics modules may produce a canonical capability request;
+   they do not claim physical execution.
+4. For `capability.invoke`, the workflow carries only a canonical
+   resource/capability request and bounded arguments; a trusted host must inject
+   the opaque execution authority.
+5. Execution returns structured results, artifacts, screenshots, or assertions.
+6. Product-loop checks feed CI, release evidence, or manual audit work.
+7. Failing steps identify the product contract that needs repair.
+8. Warroom evidence packs can be consumed by release gates or Cloud UI without
    storing runtime credentials.
 
 ## Deployment / Edition

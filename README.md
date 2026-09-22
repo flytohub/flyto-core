@@ -6,7 +6,7 @@ A Python execution engine for AI agents. It runs browser and API work as
 explicit steps, records what every step did, and replays from the step that
 failed — instead of re-running the whole job.
 
-The current public inventory is **480 registry-backed modules** across **88
+The current public inventory is **481 registry-backed modules** across **89
 catalog categories**, including triggers, queue modules, workflow versioning,
 metering hooks, browser automation, API calls, data transforms, verification,
 files, and crypto.
@@ -179,7 +179,7 @@ Or add to your MCP config:
 }
 ```
 
-Your AI gets all 480 modules as tools.
+Your AI gets all 481 modules as tools.
 
 </details>
 
@@ -224,7 +224,29 @@ asyncio.run(main())
 
 ---
 
-## 480 Modules, 88 Catalog Categories
+## API
+
+Flyto2 Core exposes the same deterministic runtime through several supported interfaces rather than separate execution engines:
+
+- **Python** — import the module registry and workflow engine directly.
+- **YAML workflows** — compose registered modules into replayable procedures.
+- **Execution API** — use the authenticated `/v1/*` HTTP routes for local integrations.
+- **MCP** — expose the registry through stdio or Streamable HTTP to AI clients.
+- **Module contract** — every executable action is defined by registry metadata and a bounded parameter schema; host-only primitives such as `capability.invoke` additionally require opaque runtime authority and cannot be activated by serialized workflow data alone.
+
+Generated source-linked references are available in [Python API Reference](docs/reference/python-api.md), [Registered Modules](docs/reference/registered-modules.md), and the [Full Module Catalog](docs/TOOL_CATALOG.md).
+
+---
+
+## Configuration
+
+Flyto2 Core runs with safe defaults. Optional providers, browsers, verification services, and connectors are enabled explicitly through package extras and documented environment variables; secrets stay in runtime environment/credential stores rather than workflow YAML. Start from [`.env.example`](.env.example) for supported settings and see [Operations](docs/OPERATIONS.md) for runtime/deployment guidance.
+
+Host-injected runtime capabilities are deliberately different from configuration: a workflow cannot enable `capability.invoke` by setting an environment variable or serialized parameter. The trusted host must inject the execution-scoped opaque authority for that run.
+
+---
+
+## 481 Modules, 89 Catalog Categories
 
 | Category | Count | Examples |
 |----------|-------|----------|
@@ -291,14 +313,14 @@ packages to execute a workflow or produce evidence.
 |---|---|
 | Run one of the other built-in recipes | [docs/RECIPES.md](docs/RECIPES.md) |
 | Browse every module and parameter | [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md) |
-| See the module categories at a glance | [480 Modules, 88 Catalog Categories](#480-modules-88-catalog-categories) |
+| See the module categories at a glance | [481 Modules, 89 Catalog Categories](#481-modules-89-catalog-categories) |
 | Configure network, filesystem, auth, and permission switches | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
 | Install a module pack or plugin | [docs/PLUGIN_SDK.md](docs/PLUGIN_SDK.md) |
 | Write your own module | [docs/MODULE_SPECIFICATION.md](docs/MODULE_SPECIFICATION.md) |
 | Understand why the engine is shaped this way | [docs/WHY.md](docs/WHY.md) |
 | Read the product boundary between the three packages | [ARCHITECTURE.md](ARCHITECTURE.md) |
 
-The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 480 modules, MCP-native, triggers, queue, versioning, metering.
+The canonical PyPI and MCP registry description is: The open-source execution engine for AI agents. 481 modules, MCP-native, triggers, queue, versioning, metering.
 
 ---
 

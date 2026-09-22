@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,078 declarations across 827 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,082 declarations across 828 files**.
 
 ## `demo.py`
 
@@ -3782,6 +3782,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def _memory_store_outcome(*, ttl: int, readback_is_ours: bool, readback_present: bool) -> Dict&#91;str, Any&#93;` | The rung a memory-backend store earned, from the read-back that follows it. | [`src/core/modules/atomic/cache/set.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L79) |
 | function | `def _redis_store_outcome(*, ttl: int, reply: Any) -> Dict&#91;str, Any&#93;` | The rung a Redis-backend store earned, from the SET reply alone. | [`src/core/modules/atomic/cache/set.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L135) |
 | function | `async def cache_set(context: Dict&#91;str, Any&#93;) -> Dict&#91;str, Any&#93;` | Set a value in cache with optional TTL. | [`src/core/modules/atomic/cache/set.py:303`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L303) |
+
+## `src/core/modules/atomic/capability/invoke.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _bounded_scalar(value: Any) -> bool` | Implements `_bounded_scalar`; linked source is authoritative. | [`src/core/modules/atomic/capability/invoke.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L27) |
+| class | `class CapabilityInvokeModule(BaseModule)` | Bridge a canonical workflow step to the host's opaque adapter authority. | [`src/core/modules/atomic/capability/invoke.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L90) |
+| method | `def CapabilityInvokeModule.validate_params(self) -> None` | Implements `CapabilityInvokeModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/capability/invoke.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L95) |
+| method | `async def CapabilityInvokeModule.execute(self) -> Any` | Implements `CapabilityInvokeModule.execute`; linked source is authoritative. | [`src/core/modules/atomic/capability/invoke.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L114) |
 
 ## `src/core/modules/atomic/check/is_array.py`
 

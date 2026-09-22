@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **487 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **488 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -123,6 +123,7 @@ The AST contains **487 explicit, literal `@register_module` declarations**. This
 | `cache.delete` | `1.0.0` | `cache` | `cache_delete` | no | `&#91;&#93;` | [`src/core/modules/atomic/cache/delete.py:285`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/delete.py#L285) |
 | `cache.get` | `1.0.0` | `cache` | `cache_get` | no | `&#91;&#93;` | [`src/core/modules/atomic/cache/get.py:214`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/get.py#L214) |
 | `cache.set` | `1.0.0` | `cache` | `cache_set` | no | `&#91;&#93;` | [`src/core/modules/atomic/cache/set.py:303`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/cache/set.py#L303) |
+| `capability.invoke` | `1.0.0` | `capability` | `CapabilityInvokeModule` | no | `&#91;&#93;` | [`src/core/modules/atomic/capability/invoke.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/capability/invoke.py#L90) |
 | `check.is_array` | `1.0.0` | `check` | `check_is_array` | no | `&#91;&#93;` | [`src/core/modules/atomic/check/is_array.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/is_array.py#L65) |
 | `check.is_empty` | `1.0.0` | `check` | `check_is_empty` | no | `&#91;&#93;` | [`src/core/modules/atomic/check/is_empty.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/is_empty.py#L75) |
 | `check.is_null` | `1.0.0` | `check` | `check_is_null` | no | `&#91;&#93;` | [`src/core/modules/atomic/check/is_null.py:60`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/check/is_null.py#L60) |

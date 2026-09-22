@@ -1,5 +1,25 @@
 # Flyto2 Core State
 
+## Capability invocation runtime (2026-09-21)
+
+Flyto2 Core includes the generic `capability.invoke` atomic primitive as the
+execution-side consumer of approved external capability requests. It executes
+only through an execution-scoped opaque dispatcher injected by the trusted host;
+workflow data cannot construct that authority. The module accepts one commanded
+resource, one canonical capability id, and bounded JSON-scalar arguments, and
+fails closed when the runtime capability is absent or the host refuses the call.
+
+This complements the optional robotics authoring modules now on main: those
+modules produce `flyto.capability-request.v1` and perform no physical effect;
+`capability.invoke` is the later canonical workflow step used only after the
+control plane has approved/routed a request and the host has bound exact runtime
+authority. ROS, fleet, vendor transport, equipment discovery, approval and
+resource selection remain outside Core.
+
+Focused Core registration/module coverage passed 145 tests with one existing
+skip. Strict Flyto2 Indexer verification passes 18/18 after the README API
+contract was made explicit.
+
 ## Current State
 
 - Optional robotics modules are verified as authoring-only producers of
@@ -278,7 +298,7 @@
   redacted site graph, generate replay scenarios, execute module assertions, and
   emit JSON/Markdown evidence packs. LLM review is disabled by default and
   advisory only.
-- The generated catalog currently exposes 480 modules across 88 categories, and
+- The generated catalog currently exposes 481 modules across 89 categories, and
   the bundled recipe inventory contains 41 recipes.
 - Catalog search and detail results carry each module's registry-declared
   `provides_capability` and `plugin`; neither is derived from the module ID.
@@ -361,8 +381,8 @@
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 977 maintained Python files, 6,078
-  declarations, 487 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 979 maintained Python files, 6,082
+  declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

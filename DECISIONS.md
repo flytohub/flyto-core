@@ -12,6 +12,25 @@ An external adapter may later execute the approved capability and return
 observable evidence; the authoring node itself cannot claim dispatch,
 acceptance, observation, or verification.
 
+## 2026-09-21 - External equipment execution is one opaque Core capability
+
+Decision: Core exposes one generic `capability.invoke` atomic module as the
+execution-side consumer for a capability request after Cloud/AI Space has
+approved and routed it. Serialized workflow parameters may name a commanded
+resource, canonical capability, and bounded scalar arguments, but the module's
+only execution authority is an opaque host-created runtime dispatcher.
+
+Reason: Flyto2 needs new robots and equipment to use the same deterministic
+workflow engine without adding a parallel robotics executor or a brand-specific
+Core module for every device. The optional robotics authoring modules on main
+remain non-actuating request producers; transport and device policy remain on
+the host/control-plane side.
+
+Consequence: hosts must scope the opaque dispatcher to the exact resource and
+capability allowlist approved for that job. Core fails closed when no trusted
+dispatcher exists. Core does not contain ROS 2, Open-RMF, vendor SDK, equipment
+discovery, approval, routing, or physical safety-policy logic.
+
 
 ## 2026-09-20 - Parameter preflight is explicit and does not execute
 
