@@ -10,7 +10,7 @@ equipment. `capability.invoke` still consumes only an opaque, execution-scoped
 dispatcher. The HTTP workflow boundary can now receive that dispatcher from a
 trusted local execution host without serializing authority into workflow data.
 
-Runtime supplies three host-only headers to local Core:
+A trusted local execution host supplies three host-only headers to Core. Flyto2 Runtime is one optional host implementation, not a requirement:
 
 - `X-Flyto-Host-Capability-Endpoint`
 - `X-Flyto-Host-Capability-Token`
@@ -21,7 +21,7 @@ The proxy never follows redirects, uses the random bearer supplied by the local
 host, caps responses, and exposes itself to workflow execution only through
 `_flyto_runtime_external_capability_dispatcher`.
 
-Opaque runtime authority is recursively stripped from hook variables,
+Opaque host authority is recursively stripped from hook variables,
 checkpoints, workflow output and runtime state projections so it cannot leak
 into traces, evidence or API responses.
 

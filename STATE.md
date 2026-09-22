@@ -2,7 +2,7 @@
 
 ## Host capability proxy closure (2026-09-22)
 
-The local Core HTTP workflow boundary now composes with Flyto2 Runtime's assignment-scoped adapter host. Runtime authority arrives only through authenticated host headers, is restricted to a literal loopback endpoint, is represented inside Core by an opaque proxy, and is stripped from all serializable evidence/state surfaces. Core continues to own deterministic workflow execution only; equipment discovery, approval, scheduling and transport remain outside Core.
+The local Core HTTP workflow boundary now composes with any trusted assignment-scoped execution host. Host authority arrives only through authenticated headers, is restricted to a literal loopback endpoint, is represented inside Core by an opaque proxy, and is stripped from all serializable evidence/state surfaces. Flyto2 Runtime is one optional host implementation. Core continues to own deterministic workflow execution only; equipment discovery, approval, scheduling and transport remain outside Core.
 
 
 ## Capability invocation runtime (2026-09-21)
