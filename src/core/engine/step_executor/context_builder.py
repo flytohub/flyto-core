@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from ..hooks import HookContext
+from ..variable_resolver import strip_runtime_opaque
 
 
 def create_step_context(
@@ -61,7 +62,7 @@ def create_step_context(
         total_steps=total_steps,
         module_id=module_id,
         params=step_params,
-        variables=context.copy(),
+        variables=strip_runtime_opaque(context),
         started_at=datetime.fromtimestamp(step_start_time) if step_start_time else None,
         elapsed_ms=elapsed_ms,
         result=result,
@@ -116,8 +117,8 @@ def _carry_the_outcome(hook_context: HookContext, result, error=None) -> None:
     # Local import: this module is on the import path of every engine start-up
     # and `outcome` pulls in nothing, but the executor's own import of it is the
     # one that establishes ordering.
-    from .executor import step_outcome
     from ..outcome import envelope_from_exception
+    from .executor import step_outcome
 
     found = None
     if result is not None:

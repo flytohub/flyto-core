@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-09-22 - Host capability authority crosses HTTP only as opaque local runtime state
+
+Decision: the Core workflow API may accept execution-host capability authority only from authenticated host headers naming a literal `127.0.0.1` endpoint and bounded bearer token. The resulting proxy is `_flyto_runtime_opaque`, never workflow data, never followed through redirects, and is removed from every persistence/evidence projection. `capability.invoke` remains the only workflow primitive that consumes it.
+
+Reason: moving equipment execution out of Cloud must preserve Core as the single deterministic engine without turning adapter authority into a serializable parameter or leaking it through traces/checkpoints.
+
+
 ## 2026-09-21 - Robotics authoring modules have no Core execution rung
 
 Decision: the optional robotics extension is consumed as an authoring plugin.

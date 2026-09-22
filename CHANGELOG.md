@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — host capability proxy
+
+- Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
+- Refuse redirects and non-literal-loopback host capability endpoints, bound response size/time, and recursively strip opaque runtime authority from hooks, checkpoints, workflow outputs and state projections.
+
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
