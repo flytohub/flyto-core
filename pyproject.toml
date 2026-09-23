@@ -91,7 +91,7 @@ vector = [
     "requests>=2.34.2,<3",
 ]
 image = [
-    "qrcode[pil]>=7.0,<9",
+    "qrcode[pil]>=8.2,<9",
     # GHSA-3f63 (ACE, 10.2.0) + GHSA-44wm (buffer overflow, 10.3.0) fixed.
     # The 11.3.0 floor was chosen only because it was the last line supporting
     # py3.9; with the 3.10 floor that reason is gone and >= 12.2.0 is now
