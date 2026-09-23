@@ -138,7 +138,7 @@ all = [
 dev = [
     "flyto-core[api]",
     "httpx2>=2.7.0,<3",
-    "pytest>=9.0.3",  # GHSA-6w46 tmpdir (dev/local-only); 9.0.3 carries the fix and is reachable now that the floor is py3.10
+    "pytest>=9.1.1",  # GHSA-6w46 tmpdir (dev/local-only); 9.0.3 carries the fix and is reachable now that the floor is py3.10
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "Pillow>=11.3.0",
