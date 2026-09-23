@@ -35,6 +35,45 @@ def _is_runtime_opaque(value) -> bool:
     return getattr(type(value), "_flyto_runtime_opaque", False) is True
 
 
+_RUNTIME_OPAQUE_REMOVED = object()
+
+
+def strip_runtime_opaque(value):
+    """Return a persistence-safe copy with host runtime capabilities removed.
+
+    Runtime capabilities are trusted in-process authority, not workflow data.
+    They must never enter API responses, checkpoints, traces, hook evidence, or
+    any other serializable surface. Mapping entries and sequence members whose
+    value is opaque are omitted rather than stringified or replaced with a
+    marker that could be mistaken for ordinary workflow data.
+    """
+
+    if _is_runtime_opaque(value):
+        return _RUNTIME_OPAQUE_REMOVED
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, item in value.items():
+            candidate = strip_runtime_opaque(item)
+            if candidate is not _RUNTIME_OPAQUE_REMOVED:
+                cleaned[key] = candidate
+        return cleaned
+    if isinstance(value, list):
+        cleaned = []
+        for item in value:
+            candidate = strip_runtime_opaque(item)
+            if candidate is not _RUNTIME_OPAQUE_REMOVED:
+                cleaned.append(candidate)
+        return cleaned
+    if isinstance(value, tuple):
+        cleaned = []
+        for item in value:
+            candidate = strip_runtime_opaque(item)
+            if candidate is not _RUNTIME_OPAQUE_REMOVED:
+                cleaned.append(candidate)
+        return tuple(cleaned)
+    return value
+
+
 class VariableResolver:
     """
     Resolve variable expressions in workflow parameters

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **979 Python files**, **231,780 lines**, and **6,082 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **980 Python files**, **231,960 lines**, and **6,091 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -76,6 +76,7 @@ Inventory: **979 Python files**, **231,780 lines**, and **6,082 class/function/m
 | [`src/core/api/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/__init__.py#L1) | 26 | 0 | `plugins, server` | Core API Module |
 | [`src/core/api/__main__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/__main__.py#L1) | 8 | 0 | `server` | Allow running as: python -m core.api |
 | [`src/core/api/evidence_hooks.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/evidence_hooks.py#L1) | 160 | 12 | `asyncio, core, datetime, json, logging, time, typing` | API Evidence Hooks |
+| [`src/core/api/host_capability.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/host_capability.py#L1) | 112 | 8 | `__future__, asyncio, collections, json, typing, urllib` | Execution-scoped proxy to a trusted host capability dispatcher. |
 | [`src/core/api/models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/models.py#L1) | 98 | 10 | `pydantic, typing` | HTTP API Request/Response Models |
 | [`src/core/api/plugins/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/__init__.py#L1) | 16 | 0 | `routes, service` | Plugin API Module |
 | [`src/core/api/plugins/routes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/routes.py#L1) | 228 | 14 | `fastapi, logging, pydantic, service, typing` | Plugin API Routes |
@@ -85,7 +86,7 @@ Inventory: **979 Python files**, **231,780 lines**, and **6,082 class/function/m
 | [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 302 | 11 | `base64, binascii, core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
 | [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 344 | 6 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |
-| [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 218 | 4 | `contextlib, core, evidence_hooks, fastapi, json, logging, models, os, security, time, uuid` | Workflow Routes |
+| [`src/core/api/routes/workflows.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/workflows.py#L1) | 249 | 4 | `contextlib, core, evidence_hooks, fastapi, host_capability, json, logging, models, os, security, time, uuid` | Workflow Routes |
 | [`src/core/api/security.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/security.py#L1) | 209 | 10 | `core, fastapi, logging, os, pathlib, secrets, typing` | Security — CORS, Bearer Token Auth, Module Denylist/Allowlist |
 | [`src/core/api/server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/server.py#L1) | 173 | 6 | `asyncio, contextlib, core, fastapi, importlib, logging, pathlib, routes, security, state, typing, uvicorn` | flyto-core HTTP Execution API Server |
 | [`src/core/api/state.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/state.py#L1) | 41 | 3 | `core, logging, pathlib, typing` | Server State |
@@ -156,7 +157,7 @@ Inventory: **979 Python files**, **231,780 lines**, and **6,082 class/function/m
 | [`src/core/engine/sdk/models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/sdk/models.py#L1) | 394 | 32 | `dataclasses, datetime, enum, typing` | SDK Data Models |
 | [`src/core/engine/sdk/resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/sdk/resolver.py#L1) | 505 | 19 | `context, dataclasses, json, logging, models, os, re, typing` | Variable Resolver v2 |
 | [`src/core/engine/step_executor/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/__init__.py#L1) | 56 | 1 | `context_builder, executor, foreach, hooks, retry, typing` | Step Executor Package |
-| [`src/core/engine/step_executor/context_builder.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/context_builder.py#L1) | 148 | 2 | `datetime, executor, hooks, outcome, time, typing` | Step Context Builder |
+| [`src/core/engine/step_executor/context_builder.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/context_builder.py#L1) | 149 | 2 | `datetime, executor, hooks, outcome, time, typing, variable_resolver` | Step Context Builder |
 | [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 1385 | 29 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, outcome, re, retry, runtime` | Step Executor |
 | [`src/core/engine/step_executor/foreach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/foreach.py#L1) | 92 | 1 | `exceptions, logging, trace, typing, variable_resolver` | Foreach Execution |
 | [`src/core/engine/step_executor/retry.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/retry.py#L1) | 150 | 2 | `asyncio, constants, context_builder, exceptions, hooks, logging, typing` | Retry Logic |
@@ -166,12 +167,12 @@ Inventory: **979 Python files**, **231,780 lines**, and **6,082 class/function/m
 | [`src/core/engine/triggers/base.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/triggers/base.py#L1) | 153 | 12 | `dataclasses, datetime, enum, logging, typing, uuid` | Trigger Framework — Base models and abstract trigger manager. |
 | [`src/core/engine/triggers/cron.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/triggers/cron.py#L1) | 489 | 14 | `asyncio, base, core, dataclasses, datetime, logging, typing, uuid` | Cron Trigger Manager — schedule-driven workflow triggers. |
 | [`src/core/engine/triggers/webhook.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/triggers/webhook.py#L1) | 325 | 8 | `base, core, dataclasses, datetime, hashlib, hmac, logging, typing, uuid` | Webhook Trigger Manager — HTTP webhook-driven workflow triggers. |
-| [`src/core/engine/variable_resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/variable_resolver.py#L1) | 503 | 16 | `core, datetime, logging, os, re, typing` | Variable Resolver - Resolve ${...} expressions in workflow parameters |
+| [`src/core/engine/variable_resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/variable_resolver.py#L1) | 542 | 17 | `core, datetime, logging, os, re, typing` | Variable Resolver - Resolve ${...} expressions in workflow parameters |
 | [`src/core/engine/versioning/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/versioning/__init__.py#L1) | 13 | 0 | `core` | Implementation module; linked source is authoritative. |
 | [`src/core/engine/versioning/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/versioning/manager.py#L1) | 336 | 15 | `__future__, core, dataclasses, datetime, typing, uuid` | Workflow Versioning Manager. |
 | [`src/core/engine/workflow/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/__init__.py#L1) | 19 | 0 | `debug, engine, output, routing` | Workflow Engine Module |
 | [`src/core/engine/workflow/debug.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/debug.py#L1) | 180 | 18 | `logging, typing` | Workflow Debug Control |
-| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 880 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, routing` | Workflow Engine |
+| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 877 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, routing` | Workflow Engine |
 | [`src/core/engine/workflow/output.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/output.py#L1) | 122 | 4 | `datetime, typing, variable_resolver` | Workflow Output Collection |
 | [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 547 | 19 | `flow_control, logging, typing` | Workflow Routing |
 | [`src/core/enterprise/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/__init__.py#L1) | 160 | 0 | `ai_native, idp, mining, orchestrator, queue, rpa, state_machine` | Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities |

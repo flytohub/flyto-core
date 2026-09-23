@@ -21,26 +21,20 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ..variable_resolver import VariableResolver
-from ..hooks import ExecutorHooks, NullHooks, HookContext, HookAction
-from ..exceptions import (
-    StepTimeoutError,
-    WorkflowExecutionError,
-    StepExecutionError,
-    is_policy_refusal,
-)
+from ...constants import WorkflowStatus
+from ..exceptions import StepExecutionError, WorkflowExecutionError, is_policy_refusal
 from ..flow_control import (
     is_flow_control_module,
     is_iteration_module,
     normalize_step_settings_list,
 )
+from ..hooks import ExecutorHooks, HookAction, HookContext, NullHooks
 from ..step_executor import StepExecutor, create_step_executor
 from ..trace import ExecutionTrace, TraceCollector
-from ...constants import WorkflowStatus
-
-from .routing import WorkflowRouter
+from ..variable_resolver import VariableResolver, strip_runtime_opaque
 from .debug import DebugController
 from .output import OutputCollector
+from .routing import WorkflowRouter
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +199,7 @@ class WorkflowEngine:
             workflow_id=self.workflow_id,
             workflow_name=self.workflow_name,
             total_steps=self._total_steps,
-            variables=self.context.copy(),
+            variables=strip_runtime_opaque(self.context),
             started_at=datetime.fromtimestamp(self.start_time) if self.start_time else None,
             elapsed_ms=elapsed_ms,
         )
@@ -420,7 +414,7 @@ class WorkflowEngine:
                 await self._save_checkpoint(current_idx, step_id, step_status, step_error)
 
             if next_idx > end_idx + 1:
-                logger.info(f"Flow control jumped beyond end_step, stopping")
+                logger.info("Flow control jumped beyond end_step, stopping")
                 break
 
             current_idx = next_idx
@@ -454,7 +448,7 @@ class WorkflowEngine:
                 step_id, current_idx, self._start_step
             )
             if should_pause:
-                logger.warning(f"Pause requested but no pause_callback configured")
+                logger.warning("Pause requested but no pause_callback configured")
 
     async def _save_checkpoint(
         self,
@@ -472,7 +466,7 @@ class WorkflowEngine:
                 'step_index': step_index,
                 'step_id': step_id,
                 'status': status,
-                'context': self.context.copy(),
+                'context': strip_runtime_opaque(self.context),
                 'params': self.params.copy(),
                 'error': str(error) if error else None,
                 'error_type': type(error).__name__ if error else None,
@@ -555,9 +549,12 @@ class WorkflowEngine:
                 if event == 'iterate':
                     if not self._loop_stack or self._loop_stack[-1] != current_idx:
                         self._loop_stack.append(current_idx)
-                elif event == 'done':
-                    if self._loop_stack and self._loop_stack[-1] == current_idx:
-                        self._loop_stack.pop()
+                elif (
+                    event == 'done'
+                    and self._loop_stack
+                    and self._loop_stack[-1] == current_idx
+                ):
+                    self._loop_stack.pop()
 
             return next_idx
 
@@ -744,7 +741,7 @@ class WorkflowEngine:
         }
         return self._output.collect(
             output_template=output_template,
-            context=self.context,
+            context=strip_runtime_opaque(self.context),
             params=self.params,
             workflow_metadata=workflow_metadata,
             status=self.status,
@@ -853,7 +850,7 @@ class WorkflowEngine:
             'is_cancelled': debug_state['is_cancelled'],
             'step_mode': debug_state['step_mode'],
             'breakpoints': debug_state['breakpoints'],
-            'context': self.context.copy(),
+            'context': strip_runtime_opaque(self.context),
             'params': self.params.copy(),
             'start_time': self.start_time,
             'execution_log': self.execution_log.copy(),

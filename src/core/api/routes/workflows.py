@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from ..evidence_hooks import APIEvidenceHooks
+from ..host_capability import HostCapabilityProxy, validate_host_capability_endpoint
 from ..models import RunWorkflowRequest, StepEvidenceResponse, WorkflowRunResponse
 from ..security import module_filter, require_auth
 
@@ -58,11 +59,41 @@ async def run_workflow(body: RunWorkflowRequest, request: Request):
         if body.enable_evidence:
             hooks = APIEvidenceHooks(state.evidence_store, execution_id)
 
+        initial_context = None
+        host_endpoint = request.headers.get("X-Flyto-Host-Capability-Endpoint")
+        host_token = request.headers.get("X-Flyto-Host-Capability-Token")
+        host_timeout = request.headers.get("X-Flyto-Host-Capability-Timeout")
+        if host_endpoint is not None or host_token is not None or host_timeout is not None:
+            if not host_endpoint or not host_token:
+                raise ValueError(
+                    "host capability dispatch requires endpoint and token headers"
+                )
+            endpoint = validate_host_capability_endpoint(host_endpoint)
+            if not 32 <= len(host_token) <= 512:
+                raise ValueError("host capability token length is invalid")
+            timeout_seconds = 65.0
+            if host_timeout:
+                timeout_seconds = float(host_timeout)
+                if not 1.0 <= timeout_seconds <= 300.0:
+                    raise ValueError("host capability timeout is out of bounds")
+            from core.modules.atomic.capability.invoke import (
+                RUNTIME_DISPATCHER_CONTEXT_KEY,
+            )
+
+            initial_context = {
+                RUNTIME_DISPATCHER_CONTEXT_KEY: HostCapabilityProxy(
+                    endpoint=endpoint,
+                    token=host_token,
+                    timeout_seconds=timeout_seconds,
+                )
+            }
+
         engine = WorkflowEngine(
             workflow=body.workflow,
             params=body.params or {},
             hooks=hooks,
             enable_trace=body.enable_trace,
+            initial_context=initial_context,
         )
 
         state.running_workflows[execution_id] = engine
