@@ -106,9 +106,14 @@ async def _http_post(url: str, headers: Dict, payload: Dict) -> Dict:
                 raise RuntimeError(f"Server error (HTTP {response.status_code}): {response.text[:200]}")
             return response.json()
     except ImportError:
-        import aiohttp
+        # SECURITY (GHSA-8j62-f337-86xw): this is the branch a base install
+        # (no httpx) runs. It opened a plain session, so the base_url checked at
+        # build time was resolved again at connect time and a rebinding host
+        # could land the Bearer header on an internal address. Both branches
+        # now connect only to an address the SSRF guard approved.
+        from ....utils import guarded_client_session
 
-        async with aiohttp.ClientSession() as session:
+        async with guarded_client_session() as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 if response.status >= 500:
                     text = await response.text()

@@ -278,6 +278,11 @@ class VerifyVisualDiffModule(BaseModule):
 
         if not self.reference_url:
             raise ValueError("reference_url is required")
+        # SECURITY (GHSA-59pf-mh94-r7vv): a non-URL reference is a local file
+        # read, so it gets the same sandbox confinement as output_dir. Only the
+        # URL branch was guarded (egress); the image branch opened any host path.
+        if not self.reference_url.startswith(('http://', 'https://')):
+            self.reference_url = validate_path_with_env_config(self.reference_url)
         if not self.dev_url:
             raise ValueError("dev_url is required")
         if not 320 <= self.viewport_width <= 7680:

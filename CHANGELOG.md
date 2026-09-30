@@ -1,11 +1,5 @@
 # Changelog
 
-## Unreleased — host capability proxy
-
-- Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
-- Refuse redirects and non-literal-loopback host capability endpoints, bound response size/time, and recursively strip opaque runtime authority from hooks, checkpoints, workflow outputs and state projections.
-
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -13,8 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.33.0] - 2026-09-30
+
+### Security
+
+Six reported advisories, each with a regression test in
+`tests/core/test_reported_advisories_2026_09.py` that fails on 2.32.1.
+
+- **GHSA-hc4c-6x9g-5fq3** — the SSRF guard now decodes Teredo
+  (`2001:0000::/32`) addresses and range-checks the embedded client IPv4, so the
+  Teredo form of `169.254.169.254` is refused by the pre-request check and the
+  connect-time resolver alike. IPv4-translated (`::ffff:0:a.b.c.d`) and ISATAP
+  interface identifiers are decoded in the same helper. A Teredo address with a
+  public client stays reachable. The `database.*` DSN guard now uses the same
+  decoder instead of its own NAT64/mapped-only copy, so its answer no longer
+  depends on the interpreter's `ipaddress` version.
+- **GHSA-m5gf-24gv-m9g8** — the verification service's evidence callback posts
+  the runner secret through the connect-time guarded session, so the address the
+  destination check approved is the one connected to, and it no longer follows
+  redirects: a 30x from the callback target now fails the callback instead of
+  carrying `X-Internal-Key` to a new origin.
+- **GHSA-8j62-f337-86xw** — the aiohttp fallback of `llm.agent` / `ai.model`
+  (the branch a base install without `httpx` runs) and the deprecated
+  `_providers` helpers connect through the guarded session, matching the httpx
+  branch. A new test pins every remaining plain `aiohttp.ClientSession` to a file
+  whose hosts are fixed vendor endpoints.
+- **GHSA-cqv6-3m5f-qvw2** — `env.set` is on the default module denylist, and
+  when an operator enables it, `previous_value` is disclosed only for a name the
+  `env.get` / `${env.*}` policy allows (`FLYTO_ENV_VAR_ALLOWLIST`); otherwise it
+  is `null`. **Operator-visible:** workflows that call `env.set` now need it
+  allowed explicitly (`FLYTO_MODULE_ALLOWLIST` or a `FLYTO_MODULE_DENYLIST`
+  without it). The write itself also changes process-wide settings read live,
+  such as `FLYTO_ALLOWED_HOSTS`, which is why it is denied rather than only
+  redacted.
+- **GHSA-59pf-mh94-r7vv** — `verify.visual_diff` confines a local
+  `reference_url` image to `FLYTO_SANDBOX_DIR`, like its `output_dir`; URL
+  references are still governed by the egress guard.
+- **GHSA-6r7h-3hcc-jwpr** — `huggingface.*` refuses a `model_id` that is not a
+  Hub repository id (`name` or `org/name`) before a token-bound
+  `InferenceClient` exists. A URL `model_id` (a dedicated Inference Endpoint) is
+  sent `HF_TOKEN` only when its host is on `FLYTO_TRUSTED_LLM_HOSTS` and it
+  passes the SSRF guard.
+
+### Added
+
+- Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
+- Refuse redirects and non-literal-loopback host capability endpoints, bound response size/time, and recursively strip opaque runtime authority from hooks, checkpoints, workflow outputs and state projections.
+
 ### Changed
 
+- Dependency floors raised: `pydantic>=2.13.5` (runtime); `fastapi>=0.141.1`
+  and `uvicorn>=0.53.0` (`api`); `qrcode[pil]>=8.2` (`image`);
+  `PyJWT>=2.14.0` (`crypto`, `dev`); `tree-sitter-javascript>=0.25.0`
+  (`jsast`, `dev`); `build` and `httpx2` (`dev`).
 - Align the optional robotics consumer/verifier with
   `flyto.capability-request.v1`: commanded resources are no longer interpreted
   as execution hosts, and the old Pi-runner / robot-local plan verification is

@@ -1,5 +1,22 @@
 # Flyto2 Core State
 
+## 2.33.0 security release (2026-09-30)
+
+Six reported advisories are fixed in 2.33.0: GHSA-hc4c-6x9g-5fq3 (Teredo and
+other unlisted IPv6 transition forms passed the SSRF guard), GHSA-m5gf-24gv-m9g8
+(verification callback re-resolved the host at connect time and followed
+redirects with the runner secret), GHSA-8j62-f337-86xw (`llm` aiohttp fallback
+without a connect-time guard), GHSA-cqv6-3m5f-qvw2 (`env.set` disclosed any
+host variable as `previous_value`), GHSA-59pf-mh94-r7vv (`verify.visual_diff`
+read a local reference image from anywhere) and GHSA-6r7h-3hcc-jwpr
+(`huggingface.*` sent `HF_TOKEN` to a caller-supplied `model_id` URL). Each has
+a regression test in `tests/core/test_reported_advisories_2026_09.py`, and each
+reporter PoC reproduces on the published 2.32.1 package.
+
+Operator-visible: `env.set` is now on the default module denylist. The
+remaining plain `aiohttp.ClientSession` constructions are pinned to files whose
+hosts are fixed vendor endpoints; a new one elsewhere fails the suite.
+
 ## Host capability proxy closure (2026-09-22)
 
 The local Core HTTP workflow boundary now composes with any trusted assignment-scoped execution host. Host authority arrives only through authenticated headers, is restricted to a literal loopback endpoint, is represented inside Core by an opaque proxy, and is stripped from all serializable evidence/state surfaces. Flyto2 Runtime is one optional host implementation. Core continues to own deterministic workflow execution only; equipment discovery, approval, scheduling and transport remain outside Core.
@@ -386,7 +403,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 980 maintained Python files, 6,091
+- Source-backed documentation now covers 980 maintained Python files, 6,092
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
