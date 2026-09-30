@@ -115,7 +115,7 @@ ai = [
     # which SSRF posture it got, was decided by a dependency of a
     # dependency. Both paths are guarded now; this makes the client an explicit
     # choice instead of an accident.
-    "httpx>=0.27,<1",
+    "httpx>=0.28.1,<1",
 ]
 telegram = [
     "python-telegram-bot>=22.8,<23",
