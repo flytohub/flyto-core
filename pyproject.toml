@@ -83,7 +83,7 @@ api = [
     # The old `python_version < '3.10'` branch is gone with the 3.9 floor: it
     # could never have been selected by a working install anyway.
     "starlette>=1.3.1,<2",
-    "uvicorn>=0.52.0,<1",
+    "uvicorn>=0.53.0,<1",
 ]
 vector = [
     "qdrant-client>=1.9.0,<2",
