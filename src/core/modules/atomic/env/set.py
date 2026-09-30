@@ -13,6 +13,7 @@ from ...schema import compose
 from ...schema.builders import field
 from ...schema.constants import FieldGroup
 from ...errors import ValidationError, ModuleError
+from ....module_policy import is_env_var_allowed
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,10 @@ logger = logging.getLogger(__name__)
         },
         'previous_value': {
             'type': 'string',
-            'description': 'Previous value (null if not previously set)',
+            'description': (
+                'Previous value (null if not previously set, or if env reads '
+                'are not permitted by policy for this name)'
+            ),
             'description_key': 'modules.env.set.output.previous_value.description',
         },
     },
@@ -106,8 +110,11 @@ async def env_set(context: Dict[str, Any]) -> Dict[str, Any]:
     if value is None:
         raise ValidationError("Missing required parameter: value", field="value")
 
-    # Capture previous value before setting
-    previous_value = os.environ.get(name)
+    # SECURITY (GHSA-cqv6-3m5f-qvw2): the prior value is a read of an
+    # arbitrary host variable, which is exactly what `env.get` is denied for.
+    # It is disclosed only under the policy that governs `env.get` and
+    # ${env.*}; otherwise it is withheld, and the write still happens.
+    previous_value = os.environ.get(name) if is_env_var_allowed(name) else None
 
     os.environ[name] = str(value)
 

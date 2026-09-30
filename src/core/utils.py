@@ -364,11 +364,17 @@ class SSRFError(ValueError):
 def _extract_embedded_ipv4(ip):
     """Return the IPv4 address embedded in an IPv6 transition address, else None.
 
-    Covers IPv4-mapped (``::ffff:a.b.c.d``), IPv4-compatible (``::a.b.c.d``),
-    6to4 (``2002::/16``) and NAT64 (well-known ``64:ff9b::/96`` and local-use
-    ``64:ff9b:1::/48``). These all carry an IPv4 endpoint that a 6to4/NAT64-enabled
-    kernel routes to, so the embedded IPv4 must be range-checked too — not only the
-    outer IPv6 form, which is not a member of any RFC 1918 / loopback range.
+    Covers IPv4-mapped (``::ffff:a.b.c.d``), IPv4-translated (SIIT,
+    ``::ffff:0:a.b.c.d``), IPv4-compatible (``::a.b.c.d``), 6to4 (``2002::/16``),
+    Teredo (``2001:0000::/32``), NAT64 (well-known ``64:ff9b::/96`` and local-use
+    ``64:ff9b:1::/48``) and ISATAP interface identifiers (``...:0:5efe:a.b.c.d``).
+    These all carry an IPv4 endpoint that a tunnel/translator-enabled kernel routes
+    to, so the embedded IPv4 must be range-checked too — not only the outer IPv6
+    form, which is not a member of any RFC 1918 / loopback range.
+
+    Teredo was missing until GHSA-hc4c-6x9g-5fq3: the helper decoded five of the
+    six standard transition forms, so the Teredo encoding of 169.254.169.254
+    passed every guard that depends on this function.
     """
     if ip.version != 6:
         return None
@@ -376,12 +382,23 @@ def _extract_embedded_ipv4(ip):
         return ip.ipv4_mapped
     if ip.sixtofour is not None:                 # 2002::/16
         return ip.sixtofour
+    if ip.teredo is not None:                    # 2001:0000::/32
+        # (server, client); the client address is the reachable endpoint and
+        # the stdlib has already undone its bit-inversion obfuscation.
+        return ip.teredo[1]
     raw = int(ip).to_bytes(16, 'big')
     # NAT64 well-known prefix 64:ff9b::/96 and local-use 64:ff9b:1::/48
     if raw[:2] == b'\x00\x64' and (raw[2:4] == b'\xff\x9b' or raw[2:6] == b'\xff\x9b\x00\x01'):
         return ipaddress.IPv4Address(raw[-4:])
+    # IPv4-translated (SIIT, RFC 2765) ::ffff:0:a.b.c.d
+    if raw[:8] == bytes(8) and raw[8:12] == b'\xff\xff\x00\x00':
+        return ipaddress.IPv4Address(raw[-4:])
     # IPv4-compatible ::a.b.c.d (deprecated), excluding :: and ::1
     if raw[:12] == bytes(12) and raw[12:] not in (bytes(4), b'\x00\x00\x00\x01'):
+        return ipaddress.IPv4Address(raw[-4:])
+    # ISATAP interface identifier (RFC 5214) under any prefix: 0:5efe or
+    # 200:5efe (universal/local bit set) followed by the tunnel endpoint.
+    if raw[8:12] in (b'\x00\x00\x5e\xfe', b'\x02\x00\x5e\xfe'):
         return ipaddress.IPv4Address(raw[-4:])
     return None
 
@@ -390,8 +407,9 @@ def is_private_ip(ip_str: str) -> bool:
     """
     Check if an IP address is in a private/internal range.
 
-    Also unwraps IPv6 transition forms (IPv4-mapped, IPv4-compatible, 6to4,
-    NAT64) and range-checks the embedded IPv4, so e.g. ``::ffff:127.0.0.1`` or
+    Also unwraps IPv6 transition forms (IPv4-mapped, IPv4-translated,
+    IPv4-compatible, 6to4, Teredo, NAT64, ISATAP) and range-checks the embedded
+    IPv4, so e.g. ``::ffff:127.0.0.1`` or
     ``64:ff9b::a9fe:a9fe`` (NAT64 encoding of 169.254.169.254) are treated as
     private/internal.
 

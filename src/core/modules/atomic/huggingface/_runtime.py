@@ -13,9 +13,16 @@ import asyncio
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+
+from ....utils import (
+    CredentialEndpointError,
+    assert_env_credential_endpoint_allowed,
+    enforce_outbound_url,
+)
 
 from .constants import (
     INSTALLED_MODELS_PATH,
@@ -204,6 +211,50 @@ async def run_local_pipeline(
     return await asyncio.to_thread(_run)
 
 
+# A Hub repository id: an optional namespace and a name, each ASCII letters,
+# digits, '-', '_' and '.', as huggingface_hub's own validator allows.
+_HUB_REPO_ID = re.compile(
+    r'(?:[A-Za-z0-9][A-Za-z0-9._-]{0,95}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,95}'
+)
+
+
+def guard_inference_target(model_id: Any) -> str:
+    """Refuse a model_id that would carry the operator's HF_TOKEN elsewhere.
+
+    SECURITY (GHSA-6r7h-3hcc-jwpr): ``InferenceClient`` treats a URL passed as
+    ``model`` as the inference endpoint and attaches the bearer token to it, so
+    a caller-supplied ``model_id`` of ``https://attacker.example/`` received the
+    operator's token. The token always comes from the environment, so this is
+    the same boundary ``assert_env_credential_endpoint_allowed`` enforces for
+    LLM ``base_url``: a Hub repository id goes to Hugging Face; a URL is sent
+    the token only when its host is on FLYTO_TRUSTED_LLM_HOSTS and it passes the
+    SSRF guard; anything else is refused before a client is built.
+    """
+    if not isinstance(model_id, str) or not model_id:
+        raise ValueError("model_id must be a Hugging Face repository id")
+    if '://' in model_id:
+        try:
+            assert_env_credential_endpoint_allowed(model_id, key_from_env=True)
+        except CredentialEndpointError:
+            raise CredentialEndpointError(
+                "Refusing to send HF_TOKEN to a custom inference endpoint "
+                f"('{model_id}'). Use a Hub repository id such as "
+                "'org/model', or add the host to FLYTO_TRUSTED_LLM_HOSTS."
+            ) from None
+        enforce_outbound_url(model_id)
+        return model_id
+    if (
+        not _HUB_REPO_ID.fullmatch(model_id)
+        or '..' in model_id
+        or '--' in model_id
+    ):
+        raise ValueError(
+            f"model_id '{model_id}' is not a Hugging Face repository id "
+            "(expected 'name' or 'org/name')"
+        )
+    return model_id
+
+
 async def run_inference_api(
     model_id: str,
     inputs: Any,
@@ -231,6 +282,9 @@ async def run_inference_api(
     if not hf_token:
         raise ValueError(ErrorMessages.HF_TOKEN_REQUIRED)
 
+    # Before the token-bound client exists: every task module reaches the
+    # Inference API through this function, so this is the one sink to guard.
+    guard_inference_target(model_id)
     client = InferenceClient(token=hf_token)
 
     # Look up the API method from the mapping

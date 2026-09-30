@@ -72,6 +72,23 @@ architecture:
         glob: "src/core/modules/atomic/browser/goto.py"
     source: "GHSA-662f-hr85-mg6c (browser.goto www-toggle SSRF bypass) 2026-08-05"
 
+  - rule: "A request to a caller-chosen host must connect through core.utils.guarded_client_session, not a plain aiohttp.ClientSession: the build-time URL check resolves once and a plain session resolves again at connect time (DNS rebinding). Registry-wide pin: tests/core/test_reported_advisories_2026_09.py::test_plain_aiohttp_sessions_exist_only_for_fixed_vendor_hosts"
+    grep_deny:
+      - pattern: 'aiohttp\.ClientSession\('
+        glob: "src/core/modules/atomic/llm/*.py"
+      - pattern: 'aiohttp\.ClientSession\('
+        glob: "src/core/verification_service.py"
+    source: "GHSA-8j62-f337-86xw / GHSA-m5gf-24gv-m9g8 (connect-time SSRF guard) 2026-09-30"
+
+  - rule: "env.set must not return a host variable's prior value unless the env.get / ${env.*} policy (is_env_var_allowed) permits reading that name"
+    grep_deny:
+      - pattern: 'previous_value = os\.environ\.get\(name\)$'
+        glob: "src/core/modules/atomic/env/set.py"
+    source: "GHSA-cqv6-3m5f-qvw2 (env.set previous_value disclosure) 2026-09-30"
+
+  - rule: "A local verify.visual_diff reference_url and a huggingface model_id must be confined before use (sandbox path guard; Hub repository id or FLYTO_TRUSTED_LLM_HOSTS endpoint) — no automated check (the fixes are guard calls, not removable single-line literals); see tests/core/test_reported_advisories_2026_09.py"
+    source: "GHSA-59pf-mh94-r7vv / GHSA-6r7h-3hcc-jwpr 2026-09-30"
+
 style:
   - rule: "Use specific exception types instead of bare 'except Exception' in the control kernel"
     grep_deny:
