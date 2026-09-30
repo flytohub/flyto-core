@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-09-30 | Six reported advisories and the 2.33.0 release | `2026-09-30-security-advisories-2.33.0.md` | Fixed on `claude/security-advisories-2.33.0`: GHSA-hc4c, m5gf, 8j62, cqv6, 59pf, 6r7h. Reporter PoCs reproduce on PyPI 2.32.1 and are blocked by the 2.33.0 wheel; clean-venv suite 4822 passed / 0 failed; CI-pinned strict Indexer 19/19. `task validate` failed for environmental reasons (recorded). Owner: claude |
 | 2026-09-22 | Host capability proxy closure | `2026-09-22-host-capability-proxy.md` | Local Runtime can inject execution-scoped capability authority into Core without serializing it into workflow data. Literal-loopback, bearer, no-redirect and opaque-context persistence boundaries verified; strict Indexer 18/18. Owner: ChatGPT |
 | 2026-09-21 | Generic external capability invocation runtime | `2026-09-21-capability-invoke-runtime.md` | Candidate: `capability.invoke` keeps device protocols outside Core and requires opaque host authority. Focused registry/atomic verification 145 passed / 1 skipped. Coordinating Cloud pin and final CI remain before release. Owner: ChatGPT |
 | 2026-09-06 | MCP conditional parameter validation | `2026-09-06-mcp-conditional-parameters.md` | Corrects the real AI Space text-input blocker by honoring conditional fields and schema defaults. Focused real Core validation evidence and release gate outcomes are recorded in the handoff. Owner: codex |
