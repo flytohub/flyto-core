@@ -14,7 +14,7 @@ there is no third kind, and no per-extension special case anywhere in this file:
 
 Everything downstream (naming, install, entry-point proof, registry refresh) is
 driven off the ``EXTENSION_KINDS`` table, so a new module pack such as
-``flyto-modules-robotics`` is managed by the generic path the day it is
+``flyto-modules-example`` is managed by the generic path the day it is
 published: nothing here names it, and nothing here has to change for it.
 
 The loader uses Python's entry_points mechanism to discover extensions
@@ -24,8 +24,8 @@ the appropriate entry point configuration.
 Usage:
     loader = PluginLoader()
     plugins = loader.discover_plugins()
-    loader.install_extension("flyto-modules-robotics")
-    loader.uninstall_extension("flyto-modules-robotics")
+    loader.install_extension("flyto-modules-example")
+    loader.uninstall_extension("flyto-modules-example")
 
     # Historical plugin-only API, preserved:
     loader.install_plugin("flyto-plugin-slack")
@@ -124,8 +124,8 @@ EXTENSION_ERROR_MESSAGES: Dict[str, str] = {
 def classify_extension(name: str) -> Optional[ExtensionKind]:
     """The kind ``name`` belongs to, or None if Core will not manage it.
 
-    Matching is done on the PEP 503 normalised name so ``Flyto_Modules_Robotics``
-    and ``flyto-modules-robotics`` classify identically — pip treats them as one
+    Matching is done on the PEP 503 normalised name so ``Flyto_Modules_Example``
+    and ``flyto-modules-example`` classify identically — pip treats them as one
     project, and a gate that disagreed with pip about that would be a gate with a
     bypass rather than a gate.
     """
@@ -364,7 +364,7 @@ class PluginLoader:
                 # Keyed *and named* by the PEP 503 normalised name, never by the
                 # spelling the distribution happens to declare. pip, the
                 # entry-point proof and every caller-supplied name already
-                # normalise; a record filed under "Flyto_Modules_Robotics" sits
+                # normalise; a record filed under "Flyto_Modules_Example" sits
                 # under a key no lookup in this class ever forms again, so an
                 # uninstall would leave it behind and the API would keep
                 # reporting a pack that is no longer on disk. The name is
@@ -653,7 +653,7 @@ class PluginLoader:
                 continue
             # Python 3.9: no ep.dist. Fall back to the module root the entry
             # point resolves through, which is the convention module packs
-            # follow (flyto-modules-robotics -> flyto_modules_robotics.*).
+            # follow (flyto-modules-example -> flyto_modules_example.*).
             value = str(getattr(ep, "value", ""))
             if value.split(":")[0].split(".")[0] == module_root:
                 found.append(str(getattr(ep, "name", "")))
@@ -765,7 +765,7 @@ class PluginLoader:
         that takes it.
 
         Every id this returns is the PEP 503 normalised name, whatever spelling
-        the caller used. A client that installs ``Flyto_Modules_Robotics`` and
+        the caller used. A client that installs ``Flyto_Modules_Example`` and
         reads ``name`` back off the result gets the same id ``list_extensions``
         reports and the same id ``uninstall_extension`` matches on — one name
         for one package, across every surface.
@@ -904,7 +904,7 @@ class PluginLoader:
         ``uninstall_extension`` is the entry point that takes it.
 
         As with install, every id returned is the PEP 503 normalised name, so
-        uninstalling ``Flyto_Modules_Robotics`` reports the same id the listing
+        uninstalling ``Flyto_Modules_Example`` reports the same id the listing
         used for it.
         """
         key = normalize_extension_name(name)

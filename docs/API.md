@@ -86,7 +86,7 @@ Core manages exactly two extension shapes, and the pair is the whole contract:
 | `plugins` | `flyto-plugin-` | `flyto.plugins` |
 
 Nothing is special-cased per extension. A module pack such as
-`flyto-modules-robotics` is admitted on its prefix and served by the same code
+`flyto-modules-example` is admitted on its prefix and served by the same code
 path as every other pack; no Core source names it.
 
 `GET /v1/extensions/kinds` serves that table from the same object the installer

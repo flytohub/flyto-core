@@ -253,7 +253,7 @@ contract was made explicit.
   `flyto-modules-*` into `flyto.modules` and `flyto-plugin-*` into
   `flyto.plugins`, declared once in `EXTENSION_KINDS` and read by every other
   decision. No Core source names an individual extension, so a pack such as
-  `flyto-modules-robotics` is managed by the generic path with no Core change.
+  `flyto-modules-example` is managed by the generic path with no Core change.
   Served at `/v1/extensions` (bearer token on all four routes; the two mutating
   routes additionally require `FLYTO_EXTENSIONS_INSTALL_ENABLED=1`). An install
   is reported successful only after entry-point proof; a failed **new** install

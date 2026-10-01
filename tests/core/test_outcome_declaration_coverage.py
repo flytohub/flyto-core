@@ -101,43 +101,6 @@ UNDECLARED = {
     "k8s.get_pods",
     "k8s.logs",
     "k8s.scale",
-    # These three are registered from an installed extension package,
-    # `flyto_modules_robotics`, and their source is not in this repository --
-    # `inspect.getsourcefile` for them points into flyto-modules-robotics. They
-    # stay listed here because that is where the population is measured, but
-    # they cannot be fixed from this tree.
-    #
-    # They also do not need what the other entries need. A robotics step
-    # *declares* motion and never performs it: `execute` builds a plan, returns
-    # it as the job payload the robot's own runner reads, and sets
-    # `dispatched: False` in so many words. Nothing leaves this machine. They
-    # are in this population only because `requires_credentials=True` puts them
-    # there -- the `robotics` category prefix is not in SIDE_EFFECT_CATEGORIES.
-    # So `default_for` currently stamps them `dispatched`, which is one rung
-    # above what happened, and the honest envelope for a plan builder is no
-    # envelope at all. See the handoff notes: the fix belongs in
-    # flyto-modules-robotics, and it is a metadata question before it is an
-    # outcome question.
-    #
-    # The robotics pass confirmed all of that by running the three modules and
-    # wrote the evidence into `tests/modules/test_robotics_outcome.py`, which
-    # also measures the one-line fix: with `requires_credentials=False`,
-    # `default_for` returns None for all three on today's code. It adds two
-    # findings this note did not have. The refusal path -- parameters that never
-    # became a plan, payload nothing but an error string -- is stamped
-    # `dispatched` too, which for `robotics.stop` reads as a safe stop having
-    # been sent by a step that could not say to which robot. And that payload
-    # carries no `ok` key, so `_execute_single_mode` returns it raw and the step
-    # completes GREEN with an `error` field in it.
-    #
-    # No rung was invented for them, deliberately. `indeterminate` is the one
-    # that fits the shape and it is reserved: on a robot it means a move that
-    # timed out and may still be running, and spending it on "nothing was ever
-    # sent" folds those two together for whoever decides to walk in front of the
-    # machine.
-    "robotics.move",
-    "robotics.stop",
-    "robotics.turn",
 }
 
 
@@ -185,9 +148,8 @@ class TestTheListOnlyShrinks:
         """Renames and deletions leave entries that excuse nothing.
 
         "Absent" has to mean deleted, not uninstalled. Some categories ship as
-        optional packages — `robotics.*` comes from `flyto_modules_robotics`,
-        which CI does not install — and on a machine without one, every entry
-        for it looks stale. This test failed in CI for exactly that reason while
+        optional extension packages that CI does not install, and on a machine
+        without one, every entry for it looks stale. This test failed in CI for exactly that reason while
         passing locally, which is the shape of an environment-dependent gate:
         it fires on the machine, not on the change.
 

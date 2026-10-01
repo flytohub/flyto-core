@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **980 Python files**, **232,065 lines**, and **6,092 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **980 Python files**, **232,066 lines**, and **6,092 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -82,7 +82,7 @@ Inventory: **980 Python files**, **232,065 lines**, and **6,092 class/function/m
 | [`src/core/api/plugins/routes.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/routes.py#L1) | 228 | 14 | `fastapi, logging, pydantic, service, typing` | Plugin API Routes |
 | [`src/core/api/plugins/service.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/plugins/service.py#L1) | 464 | 17 | `dataclasses, hashlib, json, logging, pathlib, runtime, typing` | Plugin Service |
 | [`src/core/api/routes/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/__init__.py#L1) | 25 | 0 | `extensions, mcp, modules, replay, workflows` | Aggregates the Core HTTP API routers that the API server mounts. |
-| [`src/core/api/routes/extensions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/extensions.py#L1) | 290 | 9 | `core, fastapi, logging, os, pydantic, security, typing` | Extension Routes |
+| [`src/core/api/routes/extensions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/extensions.py#L1) | 291 | 9 | `core, fastapi, logging, os, pydantic, security, typing` | Extension Routes |
 | [`src/core/api/routes/mcp.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/mcp.py#L1) | 302 | 11 | `base64, binascii, core, fastapi, json, secrets, security, typing` | MCP Streamable HTTP Transport |
 | [`src/core/api/routes/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/modules.py#L1) | 344 | 6 | `core, fastapi, models, security, time, typing, uuid` | Module Routes |
 | [`src/core/api/routes/replay.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/api/routes/replay.py#L1) | 115 | 2 | `core, fastapi, logging, models, security` | Replay Routes |

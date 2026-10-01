@@ -13,9 +13,10 @@ GET  /v1/extensions/kinds     — The supported kinds, as data (auth)
 POST /v1/extensions/install   — Install/upgrade one extension (auth + opt-in)
 POST /v1/extensions/uninstall — Uninstall one extension (auth + opt-in)
 
-Nothing here names a particular extension. ``flyto-modules-robotics`` is managed
-by the same code path as any other module pack, on the strength of its prefix
-and its entry-point group alone — there is no per-extension branch to add.
+Nothing here names a particular extension. A pack such as
+``flyto-modules-example`` is managed by the same code path as any other module
+pack, on the strength of its prefix and its entry-point group alone — there is
+no per-extension branch to add.
 
 Security posture
 ----------------
@@ -160,8 +161,8 @@ class InstallExtensionRequest(BaseModel):
     """Install/upgrade request.
 
     ``name`` must be the full prefixed distribution name. A bare name is not
-    completed for the caller: ``robotics`` is ambiguous between
-    ``flyto-modules-robotics`` and ``flyto-plugin-robotics``, and guessing would
+    completed for the caller: ``example`` is ambiguous between
+    ``flyto-modules-example`` and ``flyto-plugin-example``, and guessing would
     install a different package than the one the caller asked for.
     """
 

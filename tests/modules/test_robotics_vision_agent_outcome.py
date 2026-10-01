@@ -1,8 +1,8 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
-"""What robotics, vision and agent modules may claim, and the line that earns it.
+"""What vision and agent modules may claim, and the line that earns it.
 
-Three families, one temptation each, and the tests are grouped by the temptation
+Two families, one temptation each, and the tests are grouped by the temptation
 rather than by the module:
 
 * `TestAModelsOpinionIsNeverAMeasurement` -- vision.compare returns
@@ -19,9 +19,6 @@ rather than by the module:
   that reads like an answer when max_iterations runs out, after N real tools
   have already changed real things. That path is `indeterminate` and the tool
   count travels with it.
-
-* `TestRoboticsDeclaresAndDoesNotDispatch` -- the one finding that could not be
-  fixed from this repository, pinned so it cannot quietly stop being true.
 
 Every provider call is stubbed. Not for speed: a test that needs an API key is a
 test that stops running, and these are the assertions that have to survive the
@@ -677,56 +674,3 @@ class TestNothingInThisGroupObservesAnything:
         """The ceiling above means nothing if the ladder stops agreeing."""
         assert rung_index(Outcome.ACCEPTED) < rung_index(Outcome.OBSERVED)
         assert LADDER[-1] is Outcome.VERIFIED
-
-
-# ===========================================================================
-# robotics.*  --  the finding this repository cannot fix
-# ===========================================================================
-
-
-class TestRoboticsDeclaresAndDoesNotDispatch:
-    """A step that builds a plan is stamped `dispatched` by the engine default.
-
-    `robotics.move` is registered from the installed `flyto_modules_robotics`
-    package, so it is out of this tree's reach. It is pinned here anyway,
-    because the contradiction is sharp enough to be worth catching if anyone
-    changes either side: the module's own payload says `dispatched: False` in so
-    many words, and `default_for` -- reached only via `requires_credentials`,
-    since `robotics` is not in SIDE_EFFECT_CATEGORIES -- stamps `dispatched`
-    beside it.
-    """
-
-    @pytest.fixture(autouse=True)
-    def _skip_without_the_extension(self):
-        # `has`, not `get`: `ModuleRegistry.get` RAISES ValueError for a module
-        # it does not hold (`registry/core.py:675`) and never returns None, so
-        # the guard written against a None fired as an ERROR instead of a skip
-        # whenever the registry did not hold `robotics.move` -- which is what
-        # `tests/core/test_plugin_policy_scope.py` leaves behind when it runs
-        # first in the same process.
-        if not ModuleRegistry.has("robotics.move"):
-            pytest.skip("flyto_modules_robotics is not installed")
-
-    def test_the_module_says_it_did_not_dispatch(self):
-        module = ModuleRegistry.get("robotics.move")
-        payload = asyncio.run(
-            module({"distance_m": 0.5}, {"resource_id": "robot-1"}).execute()
-        )
-        assert payload["dispatched"] is False
-        assert read_envelope(payload) is None, (
-            "robotics.move now reports an outcome of its own; take it off "
-            "UNDECLARED and delete this test."
-        )
-
-    def test_the_engine_stamps_a_rung_the_step_did_not_reach(self):
-        from core.engine.step_executor.executor import _apply_outcome_contract
-
-        module = ModuleRegistry.get("robotics.move")
-        instance = module({"distance_m": 0.5}, {"resource_id": "robot-1"})
-        stamped = _apply_outcome_contract(instance, asyncio.run(instance.execute()))
-
-        assert stamped["dispatched"] is False
-        assert stamped["outcome"]["rung"] == Outcome.DISPATCHED.value, (
-            "The default changed. If robotics steps now get no rung, that is the "
-            "fix this test was written to wait for -- delete it."
-        )
