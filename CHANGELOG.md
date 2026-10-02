@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `scripts/verify-robotics-registration.sh` and the optional
+  `robotics.move` / `robotics.turn` / `robotics.stop` outcome tests. They
+  exercised `flyto-modules-robotics`, which is retired: it was a client for a
+  Flyto2 gateway on the robot, and motion now reaches equipment through an
+  external adapter. Extension management is unchanged; examples that named
+  the package now use `flyto-modules-example`.
+
 ## [2.33.0] - 2026-09-30
 
 ### Security
