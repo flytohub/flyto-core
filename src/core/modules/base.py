@@ -125,6 +125,21 @@ class BaseModule(ABC):
                 f"Schema validation failed for {self.module_id}: {messages}"
             )
 
+    @classmethod
+    def sensitive_params(cls, params: Dict[str, Any]) -> frozenset:
+        """Parameter names whose values must not be persisted for these params.
+
+        The schema's ``secret`` fields and password-like names are already
+        covered by the engine (``core.engine.redaction.redact_step_params``).
+        Override this when sensitivity depends on the other parameters -- a
+        free-text field that carries a password when another field says so.
+        It is a classmethod on purpose: it is asked before the module runs,
+        so it may only read the parameters, never the page or the network.
+        A module that learns more at runtime reports it in its result under
+        ``SENSITIVE_PARAMS_KEY``.
+        """
+        return frozenset()
+
     @abstractmethod
     def validate_params(self) -> None:
         """Validate input parameters. Raise ValueError if invalid."""

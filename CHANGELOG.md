@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.36.1] - 2026-10-04
+
 ### Fixed
 
 - Capability host: the deadline is enforced by the host as well as the
@@ -15,6 +17,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adapter cannot leave a resource actuating. Calls on one host are
   serialized (emergency stop is not), and an actuating call that fails for
   returning no declared artifact is safe-stopped like any other failure.
+- `browser.type` with `type_method: label` resolves explicit associations:
+  `<label for=id>` to the field with that id, and `aria-labelledby`, in
+  addition to a wrapping label, `aria-label` and the sibling heuristics. Exact
+  label text ranks before a label that only contains it ("Password" before
+  "Confirm password"). A label pointing at a non-field is ignored.
+- A step whose failure `on_error: continue` absorbed is reported to the
+  post-execute hook with its error, and its trace step is `error`. The
+  workflow still continues; hosts that decide success on `context.error` no
+  longer log it as succeeded.
+- Step parameters handed to hooks and written into the trace are redacted:
+  credential-like names (`password`, `api_key`, `access_token`,
+  `sensitive_text`, ...), schema fields declared `secret` or
+  `format: password`, fields a module marks sensitive for the given params
+  (`BaseModule.sensitive_params`; `browser.type` marks `text` when
+  `input_type` is password or the target/selector names a credential), and
+  fields a module reports at runtime under `_sensitive_params`
+  (`browser.type` reports an `<input type=password>` it typed into). Empty
+  values, booleans and bare `{{...}}` / `${...}` references stay visible. The
+  module still receives the plaintext.
+- Element hints no longer carry a password field's value: it reads
+  `[REDACTED]` when filled, and a password input's value is no longer used as
+  its accessible-name fallback.
 
 ## [2.36.0] - 2026-10-04
 

@@ -1,5 +1,13 @@
 # Flyto2 Core State
 
+## browser.type label association and step-record integrity, 2.36.1 (2026-10-04)
+
+`browser.type` label lookup resolves `label[for]` and `aria-labelledby`.
+Failures absorbed by `on_error: continue` reach the post-execute hook as
+errors and fail their trace step. Hook and trace step params are redacted by
+name, schema `secret`, module-declared and runtime-reported sensitivity;
+element hints mask password values. Not tagged or released.
+
 ## Capability host and contract optional keys, 2.36.0 candidate (2026-10-04)
 
 `flyto run --capability-host ADAPTER_ID --resource ID [--allow IDS]
@@ -431,7 +439,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 985 maintained Python files, 6,186
+- Source-backed documentation now covers 985 maintained Python files, 6,199
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
