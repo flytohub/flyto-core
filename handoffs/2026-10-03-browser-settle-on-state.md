@@ -60,9 +60,39 @@ Status: Implemented locally, not pushed or released
   click test asserts `settle_dom` answered `unchanged` and the click took under
   0.25 s. All six new cases fail on the first commit's `src/`.
 
+## Second review follow-up (third commit)
+
+- Requests are no longer tracked inside the page. `RequestTracker` in
+  `_settle.py` reads fetch/XHR from Playwright `request` / `requestfinished` /
+  `requestfailed` events (navigation requests and other resource types
+  excluded, limited to the clicked document's frame for clicks). Clients that
+  captured `fetch` or `XMLHttpRequest.prototype.send` at load are now seen,
+  and `fetch` / XHR natives are never replaced (stealth). `settle_dom` waits
+  for the click's requests, runs the quiet window from when they finished, and
+  waits in turn for follow-up requests their handlers start, all within the
+  1 s cap.
+- `browser.login` attaches a `RequestTracker` before the submit.
+  `_settle_answered_page` waits for those requests before its 500 ms quiet
+  window, so an SPA that hides its form while a slow API runs is read after
+  the API answered and the route was pushed (was `logged_in=False` at 0.57 s).
+  Without a success indicator, a new `requests_settled` answer (requests done,
+  then 500 ms DOM quiet) ends a rejected login whose wording matches no error
+  selector, instead of waiting the full `wait_ms`.
+- `browser.click` stops a DOM watch that no `settle_dom` consumed (the click
+  adopted a new tab or raised) in `execute`'s `finally`, via `stop_dom_watch`.
+- `browser.select` (label method) also ends when the trigger shows the chosen
+  label.
+- Tests: nine new cases (29 total): captured fetch and captured XHR clicks,
+  watch cleanup after a new tab and after a raise, the SPA hidden-form login,
+  the unknown-wording rejection, a navigation-aborted request not holding the
+  login, the trigger-shows-choice select, and a fake-event `RequestTracker`
+  test that resolves on `requestfinished`/`requestfailed` with no clock. Eight
+  of them fail on the second commit's `src/`; the aborted-request case is a
+  guard and passes on both.
+
 ## Verified
 
-- New tests: 20/20, three consecutive runs (14/14 at the first commit). They patch `Page/Frame.wait_for_timeout`
+- New tests: 29/29, three consecutive runs at the third commit (20/20 at the second, 14/14 at the first). They patch `Page/Frame.wait_for_timeout`
   and non-zero `asyncio.sleep` from browser modules to raise. Against the
   unmodified modules they fail (fixed `wait_for_timeout(500/300/3000)`, the
   5 s `networkidle` timeout and detect's 0.5 s sleep).
@@ -107,9 +137,16 @@ Status: Implemented locally, not pushed or released
 - `browser.login` without a `success_indicator` now spends one 500 ms quiet
   window on the landed page after a redirect (the time `networkidle` used to
   imply). A landed page that keeps mutating ends at `wait_ms`.
-- `browser.click` temporarily wraps `setTimeout`, `clearTimeout`, `fetch` and
-  `XMLHttpRequest.prototype.send` between the click and its settle; a page
-  that captured one of them in that window keeps a pass-through wrapper.
+- `browser.click` temporarily wraps `setTimeout` and `clearTimeout` (not
+  `fetch` or XHR) between the click and its settle; a page that captured one
+  of them in that window keeps a pass-through wrapper. A debounce that
+  captured `setTimeout` at load (lodash `debounce`) is not observed: a click
+  whose only effect is such a timer, with no request or mutation before it
+  fires, is reported as unchanged. Declare `expected_outcome` for those.
+- A login on a page that keeps a fetch/XHR long-poll running after the submit,
+  answered by a URL change or vanished password field without a success
+  indicator, now waits up to `wait_ms` for that request (as `networkidle`
+  did on `origin/main`).
 - A click that navigates from a timer longer than 1 s, or after a request
   slower than the 1 s settle cap, is still reported before the navigation;
   declare `expected_outcome` for those.

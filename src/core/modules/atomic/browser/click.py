@@ -12,7 +12,14 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ._settle import first_state, install_dom_watch, settle_dom, settle_new_document
+from ._settle import (
+    RequestTracker,
+    first_state,
+    install_dom_watch,
+    settle_dom,
+    settle_new_document,
+    stop_dom_watch,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +117,10 @@ class _NavigationSignals:
             ('request', self._on_request),
             ('requestfailed', self._on_request_failed),
         )
+
+    def request_tracker(self) -> RequestTracker:
+        """Fetch/XHR traffic of the clicked document, observed on the same page."""
+        return RequestTracker(self._page, frame_filter=self._is_target)
 
     def _is_target(self, frame) -> bool:
         # Inside a frame context the clicked document is that frame;
@@ -594,12 +605,23 @@ class BrowserClickModule(BaseModule):
 
         signals = _NavigationSignals(browser)
         signals.attach()
+        # Requests are read from network events, not from the page: a client
+        # that captured fetch at load would bypass any in-page wrapper.
+        requests = signals.request_tracker().attach()
+        # The page whose DOM watch no settle_dom has consumed yet. A click
+        # that raises, or adopts a new tab, never settles the opener, and its
+        # watch (observer and timer wrapper) must not outlive the click.
+        self._unsettled_watch_page = None
         try:
-            return await self._click_and_settle(browser, signals)
+            return await self._click_and_settle(browser, signals, requests)
         finally:
+            requests.detach()
             signals.detach()
+            if self._unsettled_watch_page is not None:
+                await stop_dom_watch(self._unsettled_watch_page)
+                self._unsettled_watch_page = None
 
-    async def _click_and_settle(self, browser, signals) -> Any:
+    async def _click_and_settle(self, browser, signals, requests) -> Any:
         # Pre-action: refresh element hints to ensure we have current page state
         pre_hints = await browser.get_hints()
 
@@ -658,7 +680,8 @@ class BrowserClickModule(BaseModule):
             expects_new_page = await self._expects_new_page(locator)
             # Counted from just before the click, so the settle step can tell
             # a click that changed nothing from one that is still rendering.
-            await install_dom_watch(page)
+            if await install_dom_watch(page):
+                self._unsettled_watch_page = page
             await locator.click(**click_options)
 
             # Page events raised by a click normally arrive before the click
@@ -788,7 +811,11 @@ class BrowserClickModule(BaseModule):
 
         await _await_requested_commit()
         navigated_before_settle = main_navigation.is_set()
-        settled = 'new_document' if new_page is not None else await settle_dom(page)
+        if new_page is not None:
+            settled = 'new_document'
+        else:
+            self._unsettled_watch_page = None
+            settled = await settle_dom(page, requests=requests)
         if settled not in ('new_document', 'error'):
             # A navigation started by the click's own timer or response
             # handler begins while settle_dom is waiting on that work.

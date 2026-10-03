@@ -347,19 +347,24 @@ class BrowserSelectModule(BaseModule):
                 # Last resort: fire click event via JS (bypasses all Playwright checks)
                 await target_el.dispatch_event('click')
 
-        # Step 5: Wait for the dropdown to close -- the chosen option going
-        # hidden or detached, or the trigger reporting aria-expanded="false".
-        # A list that stays open (multi-select) is capped at 1 s, and the step
-        # never fails over this wait.
-        await first_state(
-            {
-                'option_hidden': target_el.wait_for(state='hidden', timeout=1000),
-                'collapsed': page.locator(self.selector).first.and_(
-                    page.locator('[aria-expanded="false"]')
-                ).wait_for(state='attached', timeout=1000),
-            },
-            timeout_ms=1000,
-        )
+        # Step 5: Wait for the dropdown to answer -- the chosen option going
+        # hidden or detached, the trigger reporting aria-expanded="false", or
+        # (selecting by label) the trigger now showing the chosen label, which
+        # is how a list that neither hides nor sets ARIA state confirms the
+        # pick. A list that stays open (multi-select) is capped at 1 s, and the
+        # step never fails over this wait.
+        trigger = page.locator(self.selector).first
+        waits = {
+            'option_hidden': target_el.wait_for(state='hidden', timeout=1000),
+            'collapsed': trigger.and_(
+                page.locator('[aria-expanded="false"]')
+            ).wait_for(state='attached', timeout=1000),
+        }
+        if self.method == 'label' and str(self.target).strip():
+            waits['trigger_shows_choice'] = trigger.and_(
+                page.locator(self.selector).filter(has_text=str(self.target))
+            ).wait_for(state='attached', timeout=1000)
+        await first_state(waits, timeout_ms=1000)
 
         return [str(self.target)]
 

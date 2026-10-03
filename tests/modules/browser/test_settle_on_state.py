@@ -186,8 +186,104 @@ setInterval(function () { document.getElementById('clock').textContent = String(
 </script></body></html>
 """
 
+# Clients that captured fetch or XHR at load, as ky, ofetch and Apollo do. An
+# in-page wrapper installed at click time never sees their requests.
+CAPTURED_CLIENT_HTML = """
+<html><body>
+<button id="fetch" type="button">Load via fetch</button>
+<button id="xhr" type="button">Load via XHR</button>
+<script>
+const capturedFetch = window.fetch.bind(window);
+const capturedSend = XMLHttpRequest.prototype.send;
+function render(label) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = label;
+  document.body.appendChild(b);
+}
+document.getElementById('fetch').addEventListener('click', function () {
+  capturedFetch('/api/slow3').then(function (r) { return r.text(); })
+    .then(function () { render('Next via fetch'); });
+});
+document.getElementById('xhr').addEventListener('click', function () {
+  const x = new XMLHttpRequest();
+  x.open('GET', '/api/slow3');
+  x.onload = function () { render('Next via XHR'); };
+  capturedSend.call(x);
+});
+</script></body></html>
+"""
+
+# An SPA login: the form is hidden the moment it posts, the API answers after
+# 900 ms -- longer than any DOM-quiet window -- and only then is the route
+# pushed. A password field going away is not the answer here.
+SPA_LOGIN_HTML = """
+<html><body>%s<p id="busy" hidden>Signing in</p><script>
+document.getElementById('lf').addEventListener('submit', function (e) {
+  e.preventDefault();
+  document.getElementById('lf').style.display = 'none';
+  document.getElementById('busy').hidden = false;
+  fetch('/api/login').then(function (r) { return r.text(); }).then(function () {
+    history.pushState({}, '', '/dashboard');
+    document.body.innerHTML = '<h1>Dashboard</h1>';
+  });
+});
+</script></body></html>
+""" % LOGIN_FORM
+
+# A rejected SPA login whose message matches no known error selector.
+SPA_LOGIN_REJECTED_HTML = """
+<html><body>%s<div id="note"></div><script>
+document.getElementById('lf').addEventListener('submit', function (e) {
+  e.preventDefault();
+  fetch('/api/slow3').then(function (r) { return r.text(); }).then(function () {
+    document.getElementById('note').textContent = 'Those details did not match';
+  });
+});
+</script></body></html>
+""" % LOGIN_FORM
+
+# A login that navigates while its own request is still in flight; the
+# replaced document aborts it, and the abort must not hold the settle.
+LOGIN_ABORTS_REQUEST_HTML = """
+<html><body>%s<script>
+document.getElementById('lf').addEventListener('submit', function (e) {
+  e.preventDefault();
+  fetch('/api/hang').catch(function () {});
+  setTimeout(function () { location.href = '/home'; }, 50);
+});
+</script></body></html>
+""" % LOGIN_FORM
+
+# A custom dropdown that confirms the pick only by showing it on the trigger:
+# the list stays visible and no ARIA state changes.
+SELECT_SHOWS_CHOICE_HTML = """
+<html><body>
+<div id="trigger" tabindex="0">Choose</div>
+<ul id="list">
+  <li role="option">Basic</li>
+  <li role="option">Team</li>
+</ul>
+<script>
+document.getElementById('list').addEventListener('click', function (e) {
+  document.getElementById('trigger').textContent = e.target.textContent;
+});
+</script></body></html>
+"""
+
+# A link that opens a new tab, so the click never settles the opener.
+NEW_TAB_HTML = """
+<html><body><a id="pop" href="/home" target="_blank">Open help</a></body></html>
+"""
+
 PAGES = {
     '/static': STATIC_HTML,
+    '/captured-client': CAPTURED_CLIENT_HTML,
+    '/spa-login': SPA_LOGIN_HTML,
+    '/spa-login-rejected': SPA_LOGIN_REJECTED_HTML,
+    '/login-aborts': LOGIN_ABORTS_REQUEST_HTML,
+    '/select-shows-choice': SELECT_SHOWS_CHOICE_HTML,
+    '/new-tab': NEW_TAB_HTML,
     '/login-redirect': LOGIN_REDIRECT_HTML,
     '/login-never-idle': LOGIN_NEVER_IDLE_HTML,
     '/ghost-tab': GHOST_TAB_SAME_TAB_NAV_HTML,
@@ -203,7 +299,7 @@ PAGES = {
 }
 
 # Answered after this delay, so a click that fetches is still waiting on it.
-SLOW_PATHS = {'/api/slow': 0.2}
+SLOW_PATHS = {'/api/slow': 0.2, '/api/slow3': 0.3, '/api/login': 0.9, '/api/hang': 3.0}
 
 
 class _Handler(http.server.BaseHTTPRequestHandler):
@@ -365,6 +461,75 @@ async def test_select_returns_when_the_dropdown_closes_not_after_a_pause(at):
 
 
 @pytest.mark.browser
+async def test_select_returns_when_the_trigger_shows_the_choice(at, no_fixed_waits):
+    ctx = await at('/select-shows-choice')
+    started = time.monotonic()
+    await _run(
+        'browser.select',
+        {'selector': '#trigger', 'select_method': 'label', 'target': 'Team'},
+        ctx,
+    )
+    elapsed = time.monotonic() - started
+
+    page = ctx['browser'].real_page
+    assert await page.text_content('#trigger') == 'Team'
+    # The list never closes; the trigger showing the pick ended the wait,
+    # not the 1 s cap.
+    assert elapsed < 0.8, f'select took {elapsed:.3f}s'
+
+
+async def test_request_tracker_goes_idle_on_the_finishing_event_not_a_timer():
+    from core.modules.atomic.browser._settle import RequestTracker
+
+    class _Request:
+        def __init__(self, resource_type='fetch', navigation=False, frame='main'):
+            self.resource_type = resource_type
+            self._navigation = navigation
+            self.frame = frame
+
+        def is_navigation_request(self):
+            return self._navigation
+
+    class _Page:
+        def __init__(self):
+            self.listeners = {}
+
+        def on(self, name, fn):
+            self.listeners.setdefault(name, []).append(fn)
+
+        def remove_listener(self, name, fn):
+            self.listeners[name].remove(fn)
+
+        def emit(self, name, request):
+            for fn in list(self.listeners.get(name, [])):
+                fn(request)
+
+    page = _Page()
+    tracker = RequestTracker(page, frame_filter=lambda frame: frame == 'main').attach()
+    api, follow_up = _Request(), _Request('xhr')
+    for ignored in (
+        _Request('image'), _Request('document', navigation=True), _Request(frame='ad'),
+    ):
+        page.emit('request', ignored)
+    assert not tracker.busy and tracker.seen == 0
+
+    page.emit('request', api)
+    page.emit('request', follow_up)
+    waiter = asyncio.ensure_future(tracker.wait_idle(60_000))
+    await asyncio.sleep(0)
+    page.emit('requestfinished', api)
+    await asyncio.sleep(0)
+    assert not waiter.done()  # one request is still the action's work
+    page.emit('requestfailed', follow_up)
+    # Resolved by the event itself: no clock advanced in between.
+    assert await asyncio.wait_for(waiter, timeout=0.05) is True
+    assert tracker.seen == 2 and not tracker.busy
+
+    tracker.detach()
+    assert all(not fns for fns in page.listeners.values())
+
+
+@pytest.mark.browser
 async def test_form_throttle_is_opt_in_and_skips_the_last_field(at, monkeypatch):
     ctx = await at('/static')
     real_sleep = asyncio.sleep
@@ -457,6 +622,78 @@ async def test_click_waits_for_the_request_it_started_and_the_route_after_it(
     )
 
 
+_NATIVE_PROBE = """() => ({
+  fetch: window.fetch.toString().includes('[native code]'),
+  send: XMLHttpRequest.prototype.send.toString().includes('[native code]'),
+})"""
+
+
+@pytest.mark.browser
+@pytest.mark.parametrize('label', ['Load via fetch', 'Load via XHR'])
+async def test_click_waits_for_a_request_from_a_client_that_captured_it_at_load(
+    at, no_fixed_waits, monkeypatch, label,
+):
+    import core.modules.atomic.browser.click as click_module
+
+    ctx = await at('/captured-client')
+    page = ctx['browser'].real_page
+    natives_during_click = []
+    real_settle_dom = click_module.settle_dom
+
+    async def _spy(target, **kwargs):
+        # Requests are read from network events; nothing in the page is
+        # replaced to see them, so fingerprinting scripts see natives.
+        natives_during_click.append(await page.evaluate(_NATIVE_PROBE))
+        return await real_settle_dom(target, **kwargs)
+
+    monkeypatch.setattr(click_module, 'settle_dom', _spy)
+    started = time.monotonic()
+    result = await _run('browser.click', {'click_method': 'button', 'target': label}, ctx)
+    elapsed = time.monotonic() - started
+
+    rendered = label.replace('Load', 'Next')
+    assert 'page_content_change' in result['effects']
+    assert any(b.get('text') == rendered for b in result.get('buttons', []))
+    assert natives_during_click == [{'fetch': True, 'send': True}]
+    # The response lands at 300 ms; the settle ended on it, not at a cap.
+    assert 0.3 <= elapsed < 0.95, f'click took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_click_that_adopts_a_new_tab_leaves_no_watch_on_the_opener(
+    at, no_fixed_waits,
+):
+    ctx = await at('/new-tab')
+    opener = ctx['browser'].real_page
+    result = await _run('browser.click', {'click_method': 'button', 'target': 'Open help'}, ctx)
+
+    assert result['opened_new_tab'] is True
+    assert await opener.evaluate(
+        "() => window.__flytoSettle === undefined"
+        " && window.setTimeout.toString().includes('[native code]')"
+    )
+
+
+@pytest.mark.browser
+async def test_click_that_raises_leaves_no_watch_on_the_page(at, no_fixed_waits):
+    ctx = await at('/static')
+    with pytest.raises(RuntimeError):
+        await _run(
+            'browser.click',
+            {
+                'click_method': 'button', 'target': 'Noop',
+                'expected_outcome': 'url_change', 'verification_timeout_ms': 300,
+            },
+            ctx,
+        )
+
+    page = ctx['browser'].real_page
+    assert await page.evaluate(
+        "() => window.__flytoSettle === undefined"
+        " && window.setTimeout.toString().includes('[native code]')"
+    )
+
+
 async def test_resolver_waits_again_when_the_match_rerenders_before_it_is_counted():
     from core.modules.atomic.browser.click import BrowserClickModule
 
@@ -524,6 +761,63 @@ async def test_login_returns_when_the_redirect_lands(at, no_fixed_waits):
     assert result['url_after'].endswith('/home')
     # The redirect fires at 200 ms; nothing else holds the module back.
     assert elapsed < 1.5, f'login took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_login_waits_for_the_spa_api_behind_a_hidden_form(at, no_fixed_waits):
+    ctx = await at('/spa-login')
+    started = time.monotonic()
+    result = await _run(
+        'browser.login',
+        {'username': 'someone', 'password': 'secret', 'wait_ms': 5000},
+        ctx,
+    )
+    elapsed = time.monotonic() - started
+
+    # The password field vanished at once; the API answering and the route
+    # it pushed are what the module read.
+    assert result['logged_in'] is True
+    assert result['url_after'].endswith('/dashboard')
+    # 900 ms of API plus one 500 ms quiet window, far short of wait_ms.
+    assert 0.9 <= elapsed < 2.5, f'login took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_login_rejected_with_unknown_wording_returns_when_its_request_settles(
+    at, no_fixed_waits,
+):
+    ctx = await at('/spa-login-rejected')
+    started = time.monotonic()
+    result = await _run(
+        'browser.login',
+        {'username': 'someone', 'password': 'wrong', 'wait_ms': 5000},
+        ctx,
+    )
+    elapsed = time.monotonic() - started
+
+    assert result['logged_in'] is False
+    assert result['url_changed'] is False
+    # The request finished at 300 ms and the page went quiet; wait_ms (5 s)
+    # was not what ended it.
+    assert elapsed < 2.0, f'login took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_login_settle_is_not_held_by_a_request_the_navigation_aborted(
+    at, no_fixed_waits,
+):
+    ctx = await at('/login-aborts')
+    started = time.monotonic()
+    result = await _run(
+        'browser.login',
+        {'username': 'someone', 'password': 'secret', 'wait_ms': 5000},
+        ctx,
+    )
+    elapsed = time.monotonic() - started
+
+    assert result['url_after'].endswith('/home')
+    # /api/hang answers after 3 s; the navigation aborted it.
+    assert elapsed < 2.0, f'login took {elapsed:.3f}s'
 
 
 @pytest.mark.browser

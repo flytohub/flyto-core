@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keeps its previous upper bound and now ends as soon as the page reports the
   state it was waiting for.
   - `browser.click` no longer pauses a fixed 300/500 ms after every click. An
-    in-place click waits only while the DOM is still changing or while a short
-    timer or fetch/XHR the click itself started is outstanding, and returns at
-    once when neither happened, so an onclick that navigates from a timer or
-    routes after a response is reported on its result; a navigation waits for its own commit and
+    in-place click waits only while the DOM is still changing, while a short
+    timer the click started is outstanding, or while a fetch/XHR it started is
+    in flight (read from Playwright network events, so clients that captured
+    `fetch` at load are seen and nothing in the page is replaced), and returns
+    at once when none of that happened, so an onclick that navigates from a
+    timer or routes after a response is reported on its result; a navigation waits for its own commit and
     `domcontentloaded`, then for any interactive element or a still, loaded
     page. A click whose markup declares a new tab but navigates the same tab
     ends on that navigation instead of waiting out 2 s. Button/link resolution
@@ -29,8 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     URL change or a vanished password field it follows JS redirect hops and
     waits for the landed page to load and go quiet for 500 ms (or for an MFA
     input to appear) before checking for MFA, so a prompt drawn after load
-    still reaches the human approval step.
-  - `browser.select` waits for the custom dropdown to close (capped at 1 s);
+    still reaches the human approval step. Fetch/XHR calls the submit starts
+    are part of the answer: an SPA that hides its form while its API runs is
+    read after the API answered, and without a success indicator those
+    requests finishing with the DOM quiet afterwards ends the wait, so a
+    rejection worded in a way no error selector knows returns then.
+  - `browser.select` waits for the custom dropdown to close, or (by label) for
+    the trigger to show the chosen label (capped at 1 s);
     `browser.interact` clicks the option when it is visible.
   - `browser.form`: `delay_between_fields_ms` defaults to 0 and never pauses
     after the last field.

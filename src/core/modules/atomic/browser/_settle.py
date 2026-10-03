@@ -9,7 +9,8 @@ upper bound. None of them sleeps for a fixed interval: a page that is already
 settled costs one round trip, not a guessed pause.
 """
 import asyncio
-from typing import Awaitable, Mapping, Optional
+from contextlib import suppress
+from typing import Awaitable, Callable, Mapping, Optional
 
 # Installed right before an action. It counts mutations from that moment so the
 # matching ``settle_dom`` can tell "the action changed nothing" (return at once)
@@ -17,22 +18,23 @@ from typing import Awaitable, Mapping, Optional
 # lives on ``window``, so a navigation discards it and ``settle_dom`` learns that
 # the document itself was replaced.
 #
-# Work the action starts but has not finished is state too: a short timer (up
-# to 1 s) or a fetch/XHR issued while the watch is tracking. An onclick that
-# navigates from ``setTimeout`` or after a fetch mutates nothing at first, so
-# without this the click would be reported as changing nothing. Tracking stops
-# when ``settle_dom`` starts; a timer chain or poller the page keeps running
-# afterwards is not the action's work. The page's own functions are restored
-# when the watch is stopped.
+# A short timer (up to 1 s) the action starts is state too: an onclick that
+# navigates from ``setTimeout`` mutates nothing at first, so without this the
+# click would be reported as changing nothing. Only ``window.setTimeout`` as
+# looked up at call time is seen; a debounce that captured the function at
+# load (lodash and friends) is invisible here and is not waited for. Requests
+# are deliberately NOT tracked in the page: a client that captured ``fetch``
+# would bypass any wrapper, and replacing natives is visible to fingerprinting
+# scripts. ``RequestTracker`` observes them from Playwright's network events
+# instead. Tracking stops when ``settle_dom`` starts; a timer chain the page
+# keeps running afterwards is not the action's work. The page's own functions
+# are restored when the watch is stopped.
 _INSTALL_DOM_WATCH_JS = r"""() => {
   const previous = window.__flytoSettle;
   if (previous && previous.stop) previous.stop();
   const root = document.documentElement || document;
   const nativeSetTimeout = window.setTimeout;
   const nativeClearTimeout = window.clearTimeout;
-  const nativeFetch = window.fetch;
-  const xhrProto = window.XMLHttpRequest && window.XMLHttpRequest.prototype;
-  const nativeSend = xhrProto && xhrProto.send;
   const timers = new Set();
   const watch = {
     count: 0, last: 0, activity: 0, pending: 0, tracking: true,
@@ -48,9 +50,9 @@ _INSTALL_DOM_WATCH_JS = r"""() => {
   watch.observer.observe(root, {
     subtree: true, childList: true, attributes: true, characterData: true,
   });
-  // A finished piece of tracked work. Its mutations are still queued as
-  // observer records at this point, so they are absorbed before anyone asks
-  // whether the action changed anything.
+  // A finished timer. Its mutations are still queued as observer records at
+  // this point, so they are absorbed before anyone asks whether the action
+  // changed anything.
   const finished = (wasActivity) => {
     watch.pending = Math.max(0, watch.pending - 1);
     const records = watch.observer.takeRecords();
@@ -58,9 +60,6 @@ _INSTALL_DOM_WATCH_JS = r"""() => {
     if (wasActivity) watch.activity = performance.now();
     if (watch.onSettle) watch.onSettle();
   };
-  // Response handlers run as microtasks after the request settles; a
-  // macrotask later they have run, including a router push they make.
-  const afterHandlers = () => nativeSetTimeout.call(window, () => finished(true), 0);
   const trackedSetTimeout = function (handler, delay, ...args) {
     if (!watch.tracking || typeof handler !== 'function' || (Number(delay) || 0) > 1000) {
       return nativeSetTimeout.call(window, handler, delay, ...args);
@@ -78,50 +77,44 @@ _INSTALL_DOM_WATCH_JS = r"""() => {
     if (timers.delete(id)) finished(false);
     return nativeClearTimeout.call(window, id);
   };
-  const trackedFetch = nativeFetch && function (...args) {
-    const request = nativeFetch.apply(window, args);
-    if (watch.tracking) {
-      watch.pending += 1;
-      request.then(afterHandlers, afterHandlers);
-    }
-    return request;
-  };
-  const trackedSend = nativeSend && function (...args) {
-    if (watch.tracking) {
-      watch.pending += 1;
-      this.addEventListener('loadend', afterHandlers, { once: true });
-    }
-    return nativeSend.apply(this, args);
-  };
   window.setTimeout = trackedSetTimeout;
   window.clearTimeout = trackedClearTimeout;
-  if (trackedFetch) window.fetch = trackedFetch;
-  if (trackedSend) xhrProto.send = trackedSend;
   watch.stop = () => {
     watch.tracking = false;
     watch.observer.disconnect();
     if (window.setTimeout === trackedSetTimeout) window.setTimeout = nativeSetTimeout;
     if (window.clearTimeout === trackedClearTimeout) window.clearTimeout = nativeClearTimeout;
-    if (trackedFetch && window.fetch === trackedFetch) window.fetch = nativeFetch;
-    if (trackedSend && xhrProto.send === trackedSend) xhrProto.send = nativeSend;
   };
   window.__flytoSettle = watch;
   return true;
 }"""
 
+# Stops a watch that no ``settle_dom`` will consume (the click adopted a new
+# tab, or raised), so the page gets its natives back and the observer goes.
+_STOP_DOM_WATCH_JS = r"""() => {
+  const watch = window.__flytoSettle;
+  if (!watch) return false;
+  if (watch.stop) watch.stop();
+  delete window.__flytoSettle;
+  return true;
+}"""
+
 # Resolves 'unchanged' immediately when nothing mutated since the watch was
-# installed and no tracked work is outstanding, 'settled' once the DOM has been
-# quiet for ``quietMs`` after the last mutation or finished piece of work,
-# 'capped' at ``capMs``, or 'new_document' when the watch is gone (the page
-# navigated). While tracked work is outstanding no quiet timer runs: the work
-# finishing is what re-arms it, so a timer only exists while something is
-# actually happening.
-_SETTLE_DOM_JS = r"""([quietMs, capMs]) => new Promise((resolve) => {
+# installed, no tracked timer is outstanding and the caller saw no request of
+# the action's (``sawWork``); 'settled' once the DOM has been quiet for
+# ``quietMs`` after the last mutation or finished piece of work; 'capped' at
+# ``capMs``; or 'new_document' when the watch is gone (the page navigated).
+# ``sawWork`` counts as activity at the moment of the call: the caller has just
+# watched the action's requests finish, and their response handlers render
+# from here. While a timer is outstanding no quiet timer runs: the timer
+# firing is what re-arms it.
+_SETTLE_DOM_JS = r"""([quietMs, capMs, sawWork]) => new Promise((resolve) => {
   const watch = window.__flytoSettle;
   if (!watch || !watch.observer) { resolve('new_document'); return; }
   watch.tracking = false;
   const pending = watch.observer.takeRecords();
   if (pending.length) { watch.count += pending.length; watch.last = performance.now(); }
+  if (sawWork) watch.activity = performance.now();
   let quietTimer = null;
   let capTimer = null;
   const finish = (reason) => {
@@ -214,6 +207,90 @@ INTERACTIVE_SELECTOR = (
 )
 
 
+# Requests an action starts to fetch data. Navigation requests are left to the
+# navigation waits, and streams a page holds open for good (EventSource,
+# WebSocket) are other resource types, so they never hold a settle.
+_ACTION_REQUEST_TYPES = frozenset({'fetch', 'xhr'})
+
+
+class RequestTracker:
+    """The fetch/XHR requests a page has in flight, read from Playwright's network events.
+
+    Observed outside the page, so a client that captured ``fetch`` or
+    ``XMLHttpRequest`` at load (ky, ofetch, Apollo's HttpLink) is seen exactly
+    like one that did not, and nothing in the page is replaced. Only requests
+    that start after ``attach`` count; one already in flight is not the
+    action's. ``frame_filter`` limits the count to the acted-on document's
+    frames, so a third-party iframe's traffic does not hold the settle.
+    """
+
+    def __init__(self, page, frame_filter: Optional[Callable[[object], bool]] = None):
+        self._page = page
+        self._frame_filter = frame_filter
+        self._inflight = set()
+        self._idle = asyncio.Event()
+        self._idle.set()
+        self._started = asyncio.Event()
+        self.seen = 0
+        self._listeners = (
+            ('request', self._on_request),
+            ('requestfinished', self._on_done),
+            ('requestfailed', self._on_done),
+        )
+
+    @property
+    def busy(self) -> bool:
+        return bool(self._inflight)
+
+    def _on_request(self, request) -> None:
+        with suppress(Exception):
+            if request.resource_type not in _ACTION_REQUEST_TYPES:
+                return
+            if request.is_navigation_request():
+                return
+            if self._frame_filter is not None and not self._frame_filter(request.frame):
+                return
+            self._inflight.add(request)
+            self.seen += 1
+            self._idle.clear()
+            self._started.set()
+
+    def _on_done(self, request) -> None:
+        if request in self._inflight:
+            self._inflight.discard(request)
+            if not self._inflight:
+                self._idle.set()
+
+    def forget_inflight(self) -> None:
+        """Drop requests a replaced document can no longer answer."""
+        self._inflight.clear()
+        self._idle.set()
+
+    def attach(self) -> 'RequestTracker':
+        for event_name, listener in self._listeners:
+            self._page.on(event_name, listener)
+        return self
+
+    def detach(self) -> None:
+        for event_name, listener in self._listeners:
+            with suppress(Exception):
+                self._page.remove_listener(event_name, listener)
+
+    async def wait_idle(self, timeout_ms: float) -> bool:
+        """True once nothing tracked is in flight; False at ``timeout_ms``."""
+        if not self._inflight:
+            return True
+        try:
+            await asyncio.wait_for(self._idle.wait(), timeout=max(0.0, timeout_ms) / 1000)
+            return True
+        except asyncio.TimeoutError:
+            return False
+
+    async def wait_started(self) -> None:
+        """Resolve once the first tracked request has started."""
+        await self._started.wait()
+
+
 async def install_dom_watch(page) -> bool:
     """Start counting DOM mutations on ``page``; False when that is impossible."""
     try:
@@ -222,19 +299,78 @@ async def install_dom_watch(page) -> bool:
         return False
 
 
-async def settle_dom(page, *, quiet_ms: int = 100, cap_ms: int = 1000) -> str:
+async def stop_dom_watch(page) -> None:
+    """Remove a watch no ``settle_dom`` will consume; never raises."""
+    with suppress(Exception):
+        await page.evaluate(_STOP_DOM_WATCH_JS)
+
+
+async def settle_dom(
+    page,
+    *,
+    requests: Optional[RequestTracker] = None,
+    quiet_ms: int = 100,
+    cap_ms: int = 1000,
+) -> str:
     """Wait until the DOM stops changing after ``install_dom_watch``.
 
     Returns at once with 'unchanged' when the action mutated nothing and left
-    no timer or request of its own outstanding; work it did start is waited
-    for (within ``cap_ms``) before the quiet window runs. The answer
-    'new_document' means the watch did not survive, i.e. the page
-    navigated, and 'error' means the page could not be asked at all.
+    no timer or request of its own outstanding. Requests it started (seen by
+    ``requests``) are waited for first, then the quiet window runs from the
+    moment they finished, because their response handlers render from there;
+    a follow-up request those handlers issue is waited for in turn. Everything
+    is bounded by ``cap_ms``. The answer 'new_document' means the watch did
+    not survive, i.e. the page navigated, and 'error' means the page could not
+    be asked at all.
     """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+
+    def remaining_ms() -> int:
+        return max(1, int((deadline - loop.time()) * 1000))
+
+    saw_requests = False
+    if requests is not None:
+        saw_requests = requests.seen > 0
+        await requests.wait_idle(remaining_ms())
     try:
-        return await page.evaluate(_SETTLE_DOM_JS, [quiet_ms, cap_ms])
+        answer = await page.evaluate(_SETTLE_DOM_JS, [quiet_ms, remaining_ms(), saw_requests])
+        # A request the handlers started meanwhile is the same action's work.
+        while (
+            requests is not None
+            and answer in ('settled', 'unchanged')
+            and requests.busy
+            and loop.time() < deadline
+        ):
+            await requests.wait_idle(remaining_ms())
+            await page.evaluate(_DOM_QUIET_JS, [quiet_ms, remaining_ms()])
+            answer = 'settled'
+        return answer
     except Exception:  # noqa: BLE001 - mid-navigation contexts are destroyed
         return 'error'
+
+
+async def settle_requests_and_document(
+    page, requests: Optional[RequestTracker], *, quiet_ms: int, cap_ms: float,
+) -> str:
+    """Wait for tracked requests to finish, then for the document to load and go quiet.
+
+    A request started during the quiet window sends the wait back to the
+    requests, so a response that renders after a slow API is read, not the
+    page before it. ``cap_ms`` bounds the whole loop.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+    while True:
+        remaining_ms = (deadline - loop.time()) * 1000
+        if remaining_ms <= 0:
+            return 'capped'
+        if requests is not None and not await requests.wait_idle(remaining_ms):
+            return 'capped'
+        remaining_ms = max(1, int((deadline - loop.time()) * 1000))
+        answer = await settle_document(page, quiet_ms=quiet_ms, cap_ms=remaining_ms)
+        if requests is None or not requests.busy:
+            return answer
 
 
 async def settle_new_document(page, *, cap_ms: int = 5000) -> Optional[str]:
