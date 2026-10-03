@@ -52,7 +52,7 @@ stay the only HTTP path. Desktop does not switch to this host.
 
 ## Verified
 
-- `pytest -m "not browser"` (Python 3.11): 5025 passed, 192 skipped, 65 failed on the first run; all 65 were environmental (63 `tests/test_hints.py` needing `jsdom` before `npm ci`, plus `tests/test_version_identity.py` reading stale editable metadata before reinstall) and pass after `npm ci` + reinstall (66/66 in those two files).
+- `pytest -m "not browser"` (Python 3.11, after rebase onto 2.35.1): 5101 passed, 192 skipped, 0 failed. The first CI run failed one test (`tests/cli/test_workflow_path_boundary.py`: a stub `run_workflow` without the new keyword arguments); fixed by passing host arguments only when `--capability-host` is given, so a plain run calls `run_workflow` exactly as before.
 - `tests/core/test_capability_host.py` (36) and
   `tests/core/test_capability_contract_optional_fields.py` with the existing
   contract tests (226 together) pass under Python 3.11.
