@@ -61,6 +61,18 @@ def _save_results(
     return output_file
 
 
+def _finish_capability_host(
+    host: Any,
+    evidence_path: Any,
+    workflow_path: Path,
+    config: Dict[str, Any],
+) -> Path:
+    """Write the capability host's call records and print one line per call."""
+    from .capability_host import write_capability_evidence
+
+    return write_capability_evidence(host, evidence_path, workflow_path, config)
+
+
 def _handle_execution_error(
     exec_error: Exception,
     engine: Any,
@@ -99,9 +111,16 @@ def run_workflow(
     workflow_path: Path,
     params: Dict[str, Any],
     config: Dict[str, Any],
-    i18n: I18n
+    i18n: I18n,
+    capability_host: Any = None,
+    capability_evidence: Any = None,
 ) -> None:
-    """Run a workflow"""
+    """Run a workflow.
+
+    ``capability_host`` (a :class:`core.capability_host.CapabilityHost`) is
+    injected as the run's capability dispatcher; its call records are written
+    to ``capability_evidence`` (or the output directory) when the run ends.
+    """
     print()
     print("=" * CLI_LINE_WIDTH)
     print(Colors.BOLD + i18n.t('cli.starting_workflow') + Colors.ENDC)
@@ -123,7 +142,11 @@ def run_workflow(
         print(f"{i18n.t('cli.error_occurred')}: {str(e)}")
         sys.exit(1)
 
-    engine = WorkflowEngine(workflow, params)
+    engine = WorkflowEngine(
+        workflow,
+        params,
+        initial_context=capability_host.context() if capability_host is not None else None,
+    )
     current_step = [0]
 
     async def run_workflow_async():
@@ -133,9 +156,23 @@ def run_workflow(
 
     try:
         asyncio.run(run_workflow_async())
+    except KeyboardInterrupt:
+        if capability_host is not None:
+            # Interrupting a run that may be actuating stops the resource.
+            print(f"\n{Colors.WARNING}Interrupted: "
+                  f"{capability_host.stop_now()}{Colors.ENDC}")
+        raise
     except Exception as exec_error:
+        if capability_host is not None:
+            _finish_capability_host(capability_host, capability_evidence, workflow_path, config)
         _handle_execution_error(exec_error, engine, total_steps, i18n)
         return  # _handle_execution_error calls sys.exit, but be explicit
+    finally:
+        if capability_host is not None:
+            capability_host.close()
+
+    if capability_host is not None:
+        _finish_capability_host(capability_host, capability_evidence, workflow_path, config)
 
     # Show success for each completed step
     execution_log = engine.execution_log

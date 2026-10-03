@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.36.0] - 2026-10-04
+
+### Added
+
+- Generic capability host, `core.capability_host.CapabilityHost`, so a
+  capability pack and its adapter run with flyto-core alone:
+  `flyto run WORKFLOW --capability-host ADAPTER_ID --resource RESOURCE_ID
+  [--allow IDS] [--yes-physical] [--capability-evidence PATH]`. The adapter is
+  resolved by exact name from the `flyto2.external_adapters` entry-point group
+  and injected at the existing dispatcher context key, so pack steps and
+  `capability.invoke` reach it unchanged. Policy comes from each capability's
+  contract: actuating (or contract-less, or ambiguously contracted)
+  capabilities run only when `--allow` names them; a `role: safe_stop`
+  capability always runs, with no prompt; a non-simulation deployment needs
+  `--yes-physical` or a typed `yes` at an interactive prompt, and is refused
+  with no terminal. Timeout or failure triggers `cancel` and `safe_stop`;
+  Ctrl-C triggers `safe_stop`. Adapter outcomes and evidence are recorded
+  verbatim (refusals stay refusals), contract evidence is judged with `judge`
+  (contract phase `settled` = adapter phase `post_stop`), and each call is
+  written as a `flyto.capability-host.v1` record. See
+  `docs/CAPABILITY_HOST.md`.
+- Capability contract optional keys, each present in the normalized contract
+  only when declared (existing contracts and manifest hashes are unchanged):
+  `role` (`safe_stop`; must be uncancellable, idempotent and need no safe stop
+  of its own), `artifacts` (declared output kinds with media types and a
+  `max_bytes` cap up to 20 MiB), `recovery` (substitute capability ids, an
+  optional observation name and planner guidance text) and
+  `expected_duration_ms` (deadline budget, up to one hour).
+  `core.capability_contract.OPTIONAL_FIELDS` lets a provider feature-detect
+  them before sending them to a core whose closed schema predates them.
+
 ## [2.35.1] - 2026-10-04
 
 ### Added

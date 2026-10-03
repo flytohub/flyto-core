@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **982 Python files**, **233,652 lines**, and **6,144 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **985 Python files**, **234,605 lines**, and **6,184 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -57,16 +57,17 @@ Inventory: **982 Python files**, **233,652 lines**, and **6,144 class/function/m
 | [`scripts/validate_all_modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/validate_all_modules.py#L1) | 530 | 7 | `argparse, core, json, os, pathlib, re, src, subprocess, sys, typing` | validate_all_modules.py - Release-Gate Quality Validator |
 | [`scripts/validate_schemas.py:1`](https://github.com/flytohub/flyto-core/blob/main/scripts/validate_schemas.py#L1) | 299 | 5 | `argparse, collections, json, pathlib, src, sys, traceback, typing` | validate_schemas.py - Module Schema Completeness Validator |
 | [`src/cli/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/__init__.py#L1) | 10 | 0 | `core, main` | Workflow Engine CLI Package |
+| [`src/cli/capability_host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/capability_host.py#L1) | 93 | 4 | `config, core, datetime, json, pathlib, sys, typing` | CLI glue for ``flyto run --capability-host``. |
 | [`src/cli/config.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/config.py#L1) | 42 | 1 | `pathlib` | CLI Configuration |
 | [`src/cli/i18n.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/i18n.py#L1) | 64 | 3 | `none` | CLI Internationalization Stub |
 | [`src/cli/interactive.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/interactive.py#L1) | 409 | 23 | `dataclasses, enum, os, pathlib, sys, typing` | Interactive CLI Menu System |
 | [`src/cli/learn.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/learn.py#L1) | 245 | 2 | `asyncio, config, core, json, os, pathlib, sys, time, typing` | flyto learn — AI explores a task, then compiles to a reusable recipe. |
-| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 379 | 4 | `argparse, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe, runner` | Workflow Automation Engine - Standalone CLI |
+| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 405 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe` | Workflow Automation Engine - Standalone CLI |
 | [`src/cli/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L1) | 163 | 4 | `config, core, datetime, importlib, json, os, sys, typing` | CLI Module Listing Command |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
 | [`src/cli/recipe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L1) | 624 | 20 | `asyncio, config, core, json, os, pathlib, sys, time, typing, yaml` | CLI Recipe Runner |
-| [`src/cli/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/runner.py#L1) | 152 | 6 | `asyncio, config, core, datetime, i18n, json, pathlib, sys, time, typing, yaml` | CLI Workflow Runner |
+| [`src/cli/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/runner.py#L1) | 189 | 7 | `asyncio, capability_host, config, core, datetime, i18n, json, pathlib, sys, time, typing, yaml` | CLI Workflow Runner |
 | [`src/cli/template.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/template.py#L1) | 446 | 15 | `config, json, os, pathlib, sys, urllib` | CLI Template Commands |
 | [`src/cli/ui.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/ui.py#L1) | 41 | 3 | `config, i18n` | CLI User Interface |
 | [`src/cli/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/workflow.py#L1) | 201 | 6 | `config, i18n, os, pathlib, typing, yaml` | CLI Workflow Utilities |
@@ -99,7 +100,9 @@ Inventory: **982 Python files**, **233,652 lines**, and **6,144 class/function/m
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
-| [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 502 | 14 | `__future__, json, math, re, typing` | Capability contract — ``flyto.capability-contract.v1``. |
+| [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 614 | 17 | `__future__, json, math, re, typing` | Capability contract — ``flyto.capability-contract.v1``. |
+| [`src/core/capability_host/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/__init__.py#L1) | 42 | 0 | `host` | Generic capability host: run an installed capability pack with flyto-core alone. |
+| [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 643 | 32 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
 | [`src/core/capability_manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L1) | 430 | 6 | `__future__, copy, core, hashlib, json, threading, typing` | Capability Manifest — ``flyto.core.capability-manifest.v1`` |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |

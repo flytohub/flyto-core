@@ -1,5 +1,24 @@
 # Decisions
 
+## 2026-10-04 - A capability pack runs with flyto-core alone, under contract policy
+
+Decision: Core ships a generic capability host (`core.capability_host`,
+`flyto run --capability-host`) that resolves an adapter from
+`flyto2.external_adapters` and enforces each capability's contract: an allow
+list for actuating capabilities (a missing or ambiguous contract counts as
+actuating), physical-deployment confirmation that fails closed without a
+terminal, safe stop on timeout/failure/interrupt, and contract-driven deadlines
+and observation phases. The contract gains optional `role`, `artifacts`,
+`recovery` and `expected_duration_ms`, emitted only when declared.
+
+Rationale: a host should not need provider knowledge (which capability stops,
+which returns a picture, how long navigation takes) to drive a pack, and a
+pack should be provable without Flyto2 Desktop. The host holds no thresholds:
+refuse-never-clamp floors stay in the adapter, and the host passes adapter
+refusals through unchanged. Verdicts are recorded beside the outcome rather
+than replacing it, so the host never claims more than the adapter reported.
+Desktop keeps its own dispatcher; the HTTP API does not create a host.
+
 ## 2026-10-04 - A provider plugs in with one decorator carrying a capability contract
 
 Decision: `register_module(..., contract=...)` carries a closed, validated

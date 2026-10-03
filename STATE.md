@@ -1,5 +1,15 @@
 # Flyto2 Core State
 
+## Capability host and contract optional keys, 2.36.0 candidate (2026-10-04)
+
+`flyto run --capability-host ADAPTER_ID --resource ID [--allow IDS]
+[--yes-physical]` runs capability-pack steps through an installed
+`flyto2.external_adapters` adapter with Core alone (`core.capability_host`).
+Contracts accept optional `role`, `artifacts`, `recovery` and
+`expected_duration_ms`. Tested against a fake adapter only; no real adapter
+(flyto-robotics) or pack declaring the new keys has been run against it here.
+Desktop does not use this host. Not tagged or released.
+
 ## Capability manifest plugin entries, 2.35.1 (2026-10-04)
 
 Capability manifest `plugins[]` entries carry `module_ids` (sorted, from the
@@ -421,7 +431,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 982 maintained Python files, 6,144
+- Source-backed documentation now covers 985 maintained Python files, 6,183
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
