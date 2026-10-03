@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.35.1] - 2026-10-04
+
+### Added
+
+- Capability manifest `plugins[]` entries gain `module_ids` — the sorted ids the
+  plugin owns, the same answer as `ModuleRegistry.get_plugin_modules` but read
+  from the manifest's single registry snapshot — and `description` when the
+  pack declares one.
+- A pack declares its description with an optional module-level
+  `PACK_DESCRIPTION` string beside its `register_all`. It is read, never
+  called; anything that is not a non-empty string reads as no description.
+  `PluginInfo` gains `description` (default `""`), also in `to_dict()`.
+- Additive only: a manifest with no plugins keeps its exact document and hash.
+  MCP `get_module_info` already reports `plugin` (owner) and `contract`; this
+  release pins that with a test.
+
 ## [2.35.0] - 2026-10-04
 
 ### Added
