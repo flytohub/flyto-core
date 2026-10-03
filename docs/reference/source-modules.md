@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **985 Python files**, **234,605 lines**, and **6,184 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **985 Python files**, **234,613 lines**, and **6,184 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -62,7 +62,7 @@ Inventory: **985 Python files**, **234,605 lines**, and **6,184 class/function/m
 | [`src/cli/i18n.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/i18n.py#L1) | 64 | 3 | `none` | CLI Internationalization Stub |
 | [`src/cli/interactive.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/interactive.py#L1) | 409 | 23 | `dataclasses, enum, os, pathlib, sys, typing` | Interactive CLI Menu System |
 | [`src/cli/learn.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/learn.py#L1) | 245 | 2 | `asyncio, config, core, json, os, pathlib, sys, time, typing` | flyto learn — AI explores a task, then compiles to a reusable recipe. |
-| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 405 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe` | Workflow Automation Engine - Standalone CLI |
+| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 413 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe` | Workflow Automation Engine - Standalone CLI |
 | [`src/cli/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L1) | 163 | 4 | `config, core, datetime, importlib, json, os, sys, typing` | CLI Module Listing Command |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
