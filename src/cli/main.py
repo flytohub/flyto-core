@@ -332,12 +332,20 @@ Examples:
                   f"need --capability-host{Colors.ENDC}")
             sys.exit(2)
 
+        # A plain run calls run_workflow exactly as before; the host
+        # arguments are passed only when a capability host was requested.
+        host_kwargs = {}
+        if host is not None:
+            host_kwargs = {
+                'capability_host': host,
+                'capability_evidence': getattr(args, 'capability_evidence', None),
+            }
+
         # Run workflow
         try:
             run_workflow(
                 sanitize_workflow_path(workflow_path), params, config, i18n,
-                capability_host=host,
-                capability_evidence=getattr(args, 'capability_evidence', None),
+                **host_kwargs,
             )
         except ValueError as exc:
             print(f"{Colors.FAIL}Error: Invalid workflow file: "
