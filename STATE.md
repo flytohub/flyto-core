@@ -1,5 +1,18 @@
 # Flyto2 Core State
 
+## Language-neutral module packs, 2.37.0 candidate (2026-10-04)
+
+`flyto.pack.v1` (`core.pack`): a pack manifest is the registry row
+`@register_module` produces, as JSON. `install_pack` installs an
+out-of-process pack (`subprocess-jsonrpc` or `http`) after checking its tree
+digest and ed25519 publisher signature offline, registers its modules under
+the pack id through the decorator and registry transaction, wires the pack
+`PluginManager` into the `RuntimeInvoker`, and returns a provenance record.
+`flyto pack manifest` exports a Python pack's rows; the real
+flyto-modules-robotics pack exports 7 modules with 7 contracts. Example Node.js
+pack in `examples/packs/node-greeter/` runs end to end in tests. flyto-cloud
+does not call `install_pack` yet. Not tagged or released.
+
 ## browser.type label association and step-record integrity, 2.36.1 (2026-10-04)
 
 `browser.type` label lookup resolves `label[for]` and `aria-labelledby`.
@@ -439,7 +452,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 985 maintained Python files, 6,199
+- Source-backed documentation now covers 991 maintained Python files, 6,284
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

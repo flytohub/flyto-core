@@ -47,9 +47,14 @@ this spec covers both.
   live in the worker.
 - `StepExecutor` falls through to `get_invoker().invoke(...)` for a module id the
   registry does not know.
-- **`RuntimeInvoker.set_plugin_manager` has no caller anywhere.** The invoker's
-  `_plugin_manager` is therefore `None`, and `_invoke_plugin` raises
-  `PluginNotFoundError`. A workflow step cannot reach a plugin subprocess today.
+- **`RuntimeInvoker.set_plugin_manager` had no caller** until 2.37.0, so the
+  invoker's `_plugin_manager` was `None` and `_invoke_plugin` raised
+  `PluginNotFoundError`. Since 2.37.0, installing a `flyto.pack.v1`
+  `subprocess-jsonrpc` pack ([spec](PACK_MANIFEST_SPEC.md)) registers it with a
+  `PluginManager` and wires that manager into the invoker; the pack's modules
+  are registry rows whose implementation calls the plugin subprocess. A
+  `plugin.yaml` plugin discovered by a host's own `PluginManager` is still not
+  wired unless that host calls `set_plugin_manager` itself.
 - `enforce_module_policy` did not appear anywhere in `core/runtime/` or in the
   step executor. **Fixed 2026-08-08:** `RuntimeInvoker.invoke` now gates on the
   resolved module id before routing, so the plugin path and the legacy fallback
@@ -326,6 +331,9 @@ where it is *verified*.
 
 ## Open questions
 
+- **Relation to `flyto.pack.v1`.** The registry-row manifest that out-of-process
+  packs install from is [`flyto.pack.v1`](PACK_MANIFEST_SPEC.md); this
+  document's adoption contract is unchanged.
 - **Reconciling with the existing `plugin.yaml`.** `docs/PLUGIN_SDK.md`
   documents a different manifest and a 14-language table. The contracts
   currently coexist; no implicit conversion or lifecycle connection exists.

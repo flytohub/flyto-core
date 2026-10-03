@@ -598,6 +598,61 @@ verdict = judge(spec, {"distance_m": 0.10},
 assert verdict["usable"]
 ```
 
+## Other languages
+
+`@register_module` is how a contract is written **in Python**. It is not the
+platform spec. The spec is the registry row the decorator produces — module
+id, display fields, `params_schema`, connection rules and this contract —
+and since 2.37.0 that row has a language-neutral form,
+[`flyto.pack.v1`](specs/PACK_MANIFEST_SPEC.md). Any program that emits the
+same rows is loaded into the same registry and is indistinguishable from a
+Python pack to the catalog, the capability manifest, MCP search, workflows and
+a capability host.
+
+See what a Python pack's decorators produce:
+
+```bash
+flyto pack manifest robotics                      # an installed flyto.modules entry point
+flyto pack manifest acme_building:register_all --version 1.0.0
+```
+
+Write the same thing in Node.js (`examples/packs/node-greeter/`):
+
+```js
+const { definePack, registerModule, main } = require('./flyto');
+
+definePack({ id: 'com.example.greeter', version: '0.1.0', namespaces: ['greeter'] });
+
+registerModule({
+  module_id: 'greeter.greet',
+  label: 'Greet',
+  params_schema: { name: { type: 'string', label: 'Name', required: true } },
+  provides_capability: 'greeter.greet',
+  contract: { actuates: false, safety_class: 'read_only', requires_safe_stop: false,
+              cancellable: true, idempotent: true },
+  handler: async ({ name }) => ({ greeting: `Hello, ${name}!` }),
+});
+
+main();   // `node index.js --manifest` prints flyto.pack.v1; `node index.js` serves JSON-RPC
+```
+
+The field names are the decorator's keyword names, and the validator applies
+the decorator's defaults, so the Node row and the Python row for the same
+module normalize to identical JSON (asserted in
+`tests/core/pack/test_node_example_pack.py`). The contract inside is validated
+by the same `validate_contract`, including the finite `min`/`max` rule for an
+actuating contract's numeric parameters.
+
+A host installs such a pack with `core.pack.host.install_pack(dir,
+trusted_keys=...)`: the tree digest and ed25519 publisher signature are
+checked offline, the modules are registered under the pack id as owner (so
+`FLYTO_PLUGIN_GRANTS` and the allow/deny lists apply to it), and calls go over
+JSON-RPC on stdio (`subprocess-jsonrpc`) or to a host-configured loopback or
+allow-listed endpoint (`http`). The pack process receives parameters and
+identifiers only — never the execution context. An ERP connector, an OpenRMF
+fleet adapter or any third-party program is a pack this way; a robot keeps
+running stock software and only its host-side adapter is a pack.
+
 ## Running a contract without Desktop
 
 [`CAPABILITY_HOST.md`](CAPABILITY_HOST.md) describes `flyto run

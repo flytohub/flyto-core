@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **985 Python files**, **235,030 lines**, and **6,199 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -62,8 +62,9 @@ Inventory: **985 Python files**, **235,030 lines**, and **6,199 class/function/m
 | [`src/cli/i18n.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/i18n.py#L1) | 64 | 3 | `none` | CLI Internationalization Stub |
 | [`src/cli/interactive.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/interactive.py#L1) | 409 | 23 | `dataclasses, enum, os, pathlib, sys, typing` | Interactive CLI Menu System |
 | [`src/cli/learn.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/learn.py#L1) | 245 | 2 | `asyncio, config, core, json, os, pathlib, sys, time, typing` | flyto learn — AI explores a task, then compiles to a reusable recipe. |
-| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 413 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, params, pathlib, plugin, recipe` | Workflow Automation Engine - Standalone CLI |
+| [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 422 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, pack, params, pathlib, plugin` | Workflow Automation Engine - Standalone CLI |
 | [`src/cli/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L1) | 163 | 4 | `config, core, datetime, importlib, json, os, sys, typing` | CLI Module Listing Command |
+| [`src/cli/pack.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L1) | 178 | 8 | `core, cryptography, json, os, pathlib, sys` | Pack CLI Commands — the language-neutral ``flyto.pack.v1`` contract. |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
 | [`src/cli/recipe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L1) | 624 | 20 | `asyncio, config, core, json, os, pathlib, sys, time, typing, yaml` | CLI Recipe Runner |
@@ -824,7 +825,7 @@ Inventory: **985 Python files**, **235,030 lines**, and **6,199 class/function/m
 | [`src/core/modules/quality/types.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/types.py#L1) | 263 | 29 | `dataclasses, enum, typing` | Validation Types |
 | [`src/core/modules/registry/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/__init__.py#L1) | 121 | 2 | `catalog, core, decorators, express, metadata, ports, quality_validator, resolve, validation_types` | Module Registry - Registration and Management |
 | [`src/core/modules/registry/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L1) | 310 | 16 | `core, datetime, json, logging, pathlib, typing, utils` | Module Catalog Manager - Export, Search, and Sync |
-| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 1737 | 45 | `base, capability_contract, connection_rules, constants, copy, dataclasses, datetime, functools, hashlib, importlib, logging, re` | Module Registry - Core Registration and Lookup |
+| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 1817 | 47 | `base, capability_contract, connection_rules, constants, copy, dataclasses, datetime, functools, hashlib, importlib, logging, re` | Module Registry - Core Registration and Lookup |
 | [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 431 | 8 | `base, capability_contract, core, inspect, metadata, quality_validator, re, resolve, types, typing` | Module registration decorators |
 | [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 224 | 1 | `capability_contract, types, typing` | Module Metadata Builder |
 | [`src/core/modules/registry/ports.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/ports.py#L1) | 116 | 2 | `re, typing` | Dynamic port generation utilities |
@@ -945,6 +946,11 @@ Inventory: **985 Python files**, **235,030 lines**, and **6,199 class/function/m
 | [`src/core/modules/types/visibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/types/visibility.py#L1) | 96 | 1 | `enums, typing` | UI Visibility Configuration |
 | [`src/core/modules/validation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validation.py#L1) | 831 | 35 | `constants, dataclasses, re, typing` | Module Validation Utilities |
 | [`src/core/modules/validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1) | 1132 | 31 | `ast, dataclasses, inspect, logging, re, registry, typing` | Unified Module Validator - Comprehensive validation for module registration |
+| [`src/core/pack/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/__init__.py#L1) | 36 | 0 | `manifest` | Language-neutral module packs — ``flyto.pack.v1``. |
+| [`src/core/pack/export.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/export.py#L1) | 165 | 7 | `__future__, copy, importlib, manifest, modules, typing` | Export a Python pack's ``@register_module`` rows as a ``flyto.pack.v1`` manifest. |
+| [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 554 | 35 | `__future__, asyncio, dataclasses, datetime, json, logging, manifest, modules, os, pathlib, plugin, runtime` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
+| [`src/core/pack/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/manifest.py#L1) | 542 | 21 | `__future__, capability_contract, copy, hashlib, json, os, pathlib, plugin, re, stat, typing, unicodedata` | Module pack manifest — ``flyto.pack.v1``. |
+| [`src/core/pack/signature.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/signature.py#L1) | 196 | 8 | `__future__, base64, binascii, cryptography, json, manifest, os, pathlib, re, typing` | Publisher signatures for ``flyto.pack.v1`` — ed25519, offline. |
 | [`src/core/plugin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/__init__.py#L1) | 46 | 0 | `manifest` | Flyto2 Plugin System |
 | [`src/core/plugin/loader.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/loader.py#L1) | 1152 | 42 | `core, dataclasses, datetime, importlib, json, logging, manifest, os, pathlib, re, subprocess, sys` | Extension (Plugin) Loader |
 | [`src/core/plugin/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/manifest.py#L1) | 974 | 39 | `contextlib, dataclasses, datetime, enum, hashlib, ipaddress, json, os, re, stat, types, typing` | Plugin Manifest Schema |
@@ -956,9 +962,9 @@ Inventory: **985 Python files**, **235,030 lines**, and **6,199 class/function/m
 | [`src/core/runtime/config.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/config.py#L1) | 409 | 31 | `dataclasses, logging, os, pathlib, typing, yaml` | Runtime Configuration |
 | [`src/core/runtime/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/exceptions.py#L1) | 291 | 33 | `typing` | Runtime Exceptions |
 | [`src/core/runtime/health.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/health.py#L1) | 296 | 20 | `asyncio, dataclasses, enum, logging, time, typing` | Plugin Health Check System |
-| [`src/core/runtime/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/invoke.py#L1) | 900 | 26 | `browser_session, collections, exceptions, logging, manager, module_policy, modules, routing, time, types, typing` | Runtime Invoker |
+| [`src/core/runtime/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/invoke.py#L1) | 940 | 28 | `browser_session, collections, exceptions, logging, manager, module_policy, modules, routing, time, types, typing` | Runtime Invoker |
 | [`src/core/runtime/languages.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/languages.py#L1) | 482 | 10 | `dataclasses, exceptions, glob, logging, os, pathlib, shutil, stat, typing` | Multi-Language Runtime Support |
-| [`src/core/runtime/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/manager.py#L1) | 922 | 32 | `asyncio, contextlib, dataclasses, exceptions, json, languages, logging, pathlib, process, re, time, typing` | Plugin Manager |
+| [`src/core/runtime/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/manager.py#L1) | 982 | 34 | `asyncio, contextlib, dataclasses, exceptions, json, languages, logging, pathlib, process, re, time, typing` | Plugin Manager |
 | [`src/core/runtime/pool_router.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/pool_router.py#L1) | 456 | 17 | `asyncio, dataclasses, enum, logging, manager, pathlib, types, typing` | Pool Router for Multi-Tenant Isolation |
 | [`src/core/runtime/process.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/process.py#L1) | 574 | 20 | `asyncio, dataclasses, enum, exceptions, json, languages, logging, os, pathlib, protocol, signal, time` | Plugin Process Management |
 | [`src/core/runtime/protocol.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/protocol.py#L1) | 720 | 39 | `dataclasses, json, logging, pydantic, re, typing` | JSON-RPC Protocol Implementation |

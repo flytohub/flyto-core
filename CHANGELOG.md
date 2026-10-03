@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.37.0] - 2026-10-04
+
+### Added
+
+- Language-neutral module packs, `flyto.pack.v1` (`core.pack`,
+  `docs/specs/PACK_MANIFEST_SPEC.md`). A pack manifest is the registry row
+  `@register_module` produces, as JSON: decorator field names and defaults, the
+  `flyto.capability-contract.v1` contract, pack id, namespaces, runtime binding
+  and a tree digest. `validate_pack_manifest` normalizes it, so the same module
+  declared in Python and in Node.js yields identical rows.
+- `core.pack.host.install_pack(dir, trusted_keys=..., require_signature=True,
+  provenance_dir=None)` installs an out-of-process pack (`subprocess-jsonrpc`
+  over the existing plugin JSON-RPC protocol, or `http` to a host-configured,
+  locality-checked endpoint). It verifies the tree digest and an ed25519
+  publisher signature offline, registers each module through
+  `@register_module` inside a registry transaction owned by the pack id (so
+  pack modules appear in the catalog, the capability manifest and MCP search
+  exactly like Python modules, and per-plugin policy applies), and returns a
+  `flyto.pack-provenance.v1` record. `uninstall_pack`, `installed_packs`.
+  Packs survive forced rediscovery.
+- `flyto pack manifest|digest|keygen|sign|verify` CLI. `flyto pack manifest
+  <entry-point|module:register_all>` prints the manifest a Python pack's
+  decorators produce.
+- `ModuleRegistry.install_external_pack` / `uninstall_external_pack`: load an
+  entry-point-shaped pack through the same transactional path as a
+  `flyto.modules` entry point.
+- `PluginManager.register_pack` / `unregister_pack`;
+  `RuntimeInvoker.invoke_plugin_step` and `plugin_manager`.
+- Example Node.js pack with a dependency-free `registerModule` helper:
+  `examples/packs/node-greeter/`.
+
+### Fixed
+
+- `RuntimeInvoker.set_plugin_manager` now has a caller: installing a
+  subprocess pack wires its `PluginManager` into the invoker, so the plugin
+  route is reachable.
+- Plugin ids may contain single dots (reverse-DNS pack ids); `..` is still
+  refused.
+
 ## [2.36.1] - 2026-10-04
 
 ### Fixed
