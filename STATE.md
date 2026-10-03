@@ -1,5 +1,12 @@
 # Flyto2 Core State
 
+## Capability manifest plugin entries, 2.35.1 (2026-10-04)
+
+Capability manifest `plugins[]` entries carry `module_ids` (sorted, from the
+same registry snapshot) and, when the pack declares a module-level
+`PACK_DESCRIPTION` beside `register_all`, `description`. `PluginInfo` gains
+`description`. A manifest without plugins is unchanged. Not tagged or released.
+
 ## Capability contract, 2.35.0 candidate (2026-10-04)
 
 `register_module` accepts `contract=` (`flyto.capability-contract.v1`), validated
@@ -414,7 +421,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 982 maintained Python files, 6,143
+- Source-backed documentation now covers 982 maintained Python files, 6,144
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

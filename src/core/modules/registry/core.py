@@ -100,6 +100,10 @@ class PluginInfo:
     module_count: int
     loaded_at: datetime = field(default_factory=datetime.now)
     entry_point: str = ""
+    # The pack's own one-line summary, read from an optional module-level
+    # ``PACK_DESCRIPTION`` string beside its ``register_all`` (see
+    # ``_pack_description``). Empty when the pack declares none.
+    description: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -107,8 +111,30 @@ class PluginInfo:
             "version": self.version,
             "module_count": self.module_count,
             "loaded_at": self.loaded_at.isoformat(),
-            "entry_point": self.entry_point
+            "entry_point": self.entry_point,
+            "description": self.description,
         }
+
+
+def _pack_description(register_func: Any) -> str:
+    """The ``PACK_DESCRIPTION`` a pack declares beside its ``register_all``.
+
+    A pack describes itself with an optional module-level string in the module
+    that defines the entry point callable::
+
+        PACK_DESCRIPTION = "Building lifts and stock control"
+
+        def register_all():
+            ...
+
+    It is read, never called: a constant cannot run code, fail halfway, or
+    differ between two reads, so it adds nothing to what a plugin load can do.
+    Anything that is not a non-empty string reads as "declares nothing".
+    """
+    module_name = getattr(register_func, "__module__", None)
+    module = sys.modules.get(module_name) if isinstance(module_name, str) else None
+    value = getattr(module, "PACK_DESCRIPTION", None) if module is not None else None
+    return value.strip() if isinstance(value, str) else ""
 
 
 @dataclass
@@ -1227,6 +1253,7 @@ class ModuleRegistry:
                 version=pkg_version,
                 module_count=len(owned),
                 entry_point=value,
+                description=_pack_description(register_func),
             )
             cls._bump_generation()
 

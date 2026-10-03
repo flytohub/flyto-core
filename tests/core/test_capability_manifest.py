@@ -1391,3 +1391,125 @@ def test_snapshot_ignores_the_stability_filter(registry, installed):
 
     manifest = build_capability_manifest()
     assert "exp.thing" in manifest["modules"]
+
+
+# ---------------------------------------------------------------------------
+# Plugin entries: module ids and the pack's own description (2.35.1)
+# ---------------------------------------------------------------------------
+
+
+def _pack(monkeypatch, module_name, description, *specs):
+    """A `register_all` defined in a module that may declare PACK_DESCRIPTION."""
+    import sys
+    import types
+
+    module = types.ModuleType(module_name)
+    if description is not _NO_DESCRIPTION:
+        module.PACK_DESCRIPTION = description
+    monkeypatch.setitem(sys.modules, module_name, module)
+    register_all = _registers(*specs)
+    register_all.__module__ = module_name
+    return register_all
+
+
+_NO_DESCRIPTION = object()
+
+
+def test_plugin_entry_lists_its_module_ids_sorted(registry, installed):
+    """`module_ids` is the plugin's owned ids, sorted, matching the registry."""
+    installed(
+        _EntryPoint("p", _registers(("p.zeta", "z.cap"), ("p.alpha", "a.cap"))),
+        _EntryPoint("q", _registers(("q.only", "q.cap"))),
+    )
+    manifest = build_capability_manifest()
+
+    by_id = {plugin["id"]: plugin for plugin in manifest["plugins"]}
+    assert by_id["p"]["module_ids"] == ["p.alpha", "p.zeta"]
+    assert by_id["q"]["module_ids"] == ["q.only"]
+    for plugin_id, plugin in by_id.items():
+        assert plugin["module_ids"] == sorted(
+            ModuleRegistry.get_plugin_modules(plugin_id)
+        )
+        assert plugin["module_count"] == len(plugin["module_ids"])
+
+
+def test_plugin_entry_without_description_keeps_its_keys(registry, installed):
+    """A pack that declares nothing gets no `description` key at all."""
+    installed(_EntryPoint("p", _registers(("p.a", "one"))))
+    (plugin,) = build_capability_manifest()["plugins"]
+    assert set(plugin) == {"id", "version", "module_count", "module_ids"}
+
+
+def test_pack_description_reaches_the_manifest(registry, installed, monkeypatch):
+    """A module-level PACK_DESCRIPTION beside register_all is reported, stripped."""
+    installed(
+        _EntryPoint(
+            "described",
+            _pack(monkeypatch, "fake_described_pack", "  Lifts and stock  ",
+                  ("described.lift", "lift.move")),
+        ),
+    )
+    (plugin,) = build_capability_manifest()["plugins"]
+    assert plugin["description"] == "Lifts and stock"
+    assert ModuleRegistry.get_plugins()["described"].description == "Lifts and stock"
+    assert ModuleRegistry.get_plugins()["described"].to_dict()["description"] == (
+        "Lifts and stock"
+    )
+
+
+@pytest.mark.parametrize("value", ["", "   ", 42, None, ["x"]])
+def test_non_string_or_blank_pack_description_reads_as_none(
+    registry, installed, monkeypatch, value
+):
+    installed(
+        _EntryPoint(
+            "odd", _pack(monkeypatch, "fake_odd_pack", value, ("odd.a", "odd.cap"))
+        ),
+    )
+    (plugin,) = build_capability_manifest()["plugins"]
+    assert "description" not in plugin
+
+
+def test_description_changes_the_hash_only_when_declared(
+    registry, installed, monkeypatch
+):
+    installed(
+        _EntryPoint(
+            "p", _pack(monkeypatch, "fake_plain_pack", _NO_DESCRIPTION, ("p.a", "one"))
+        )
+    )
+    plain = build_capability_manifest()
+    installed(
+        _EntryPoint(
+            "p", _pack(monkeypatch, "fake_plain_pack", "Described", ("p.a", "one"))
+        )
+    )
+    described = build_capability_manifest()
+    assert plain["hash"] != described["hash"]
+    assert described["plugins"][0]["description"] == "Described"
+
+
+def test_manifest_without_plugins_has_the_pre_2_35_1_shape(registry, installed):
+    """No plugins: the document has the same keys, an empty list, and its hash
+    is the hash of exactly that body — nothing new was added to it."""
+    installed()
+    manifest = build_capability_manifest()
+    assert manifest["plugins"] == []
+    assert manifest["plugin_count"] == 0
+    assert set(manifest) == {
+        "schema", "registry_version", "core_version", "module_count", "modules",
+        "capability_count", "capabilities", "semantic_contract_count",
+        "semantic_contracts", "category_count", "categories", "plugin_count",
+        "plugins", "hash",
+    }
+    assert manifest["hash"] == compute_manifest_hash(manifest)
+
+
+def test_mcp_module_info_reports_owner_and_contract(registry, installed):
+    """MCP get_module_info carries `plugin` (owner) and `contract`."""
+    from core.mcp_handler import get_module_info
+
+    installed(_EntryPoint("owner_pack", _registers(("owner_pack.read", "x.read"))))
+    info = get_module_info("owner_pack.read")
+    assert info["plugin"] == "owner_pack"
+    assert "contract" in info and info["contract"] is None

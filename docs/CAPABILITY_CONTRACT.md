@@ -383,7 +383,7 @@ plugin is rolled back: none of its modules remain registered.
 ```toml
 [project]
 name = "acme-building"
-dependencies = ["flyto-core>=2.35.0"]
+dependencies = ["flyto-core>=2.35.1"]
 
 [project.entry-points."flyto.modules"]
 acme_building = "acme_building:register_all"
@@ -392,10 +392,38 @@ acme_building = "acme_building:register_all"
 `acme_building/__init__.py`:
 
 ```python
+# Optional: one line describing the pack, shown beside its modules.
+PACK_DESCRIPTION = "Building lifts and stock control"
+
+
 def register_all():
     # Importing the modules runs their @register_module decorators.
     from . import lift, inventory  # noqa: F401
 ```
+
+`PACK_DESCRIPTION` is an optional module-level string in the module that
+defines the entry point callable. Core reads it (never calls anything) when the
+plugin loads; a value that is not a non-empty string counts as no description.
+It is reported as `PluginInfo.description` and, when present, as `description`
+on the pack's entry in the capability manifest:
+
+```json
+"plugins": [
+  {
+    "id": "acme_building",
+    "version": "1.0.0",
+    "module_count": 2,
+    "module_ids": ["acme.inventory.adjust", "acme.lift.move_to_floor"],
+    "description": "Building lifts and stock control"
+  }
+]
+```
+
+`module_ids` (sorted) lists every module the pack owns — what
+`ModuleRegistry.get_plugin_modules` answers — so a host can show a pack as one
+resource without reverse-mapping module ids. Each module's owner is also its
+`plugin` field in catalog detail and MCP `get_module_info`, beside its
+`contract`. An installation without plugins keeps the same manifest and hash.
 
 ### A lift
 
