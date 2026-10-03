@@ -29,6 +29,7 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import tempfile
 import threading
 import urllib.error
@@ -51,6 +52,7 @@ from .manifest import (
     manifest_sha256,
     pack_tree_digest,
     read_pack_manifest,
+    stage_pack_tree,
 )
 from .signature import read_signature, verify_manifest_signature
 
@@ -107,9 +109,14 @@ class _InstalledPack:
     provenance: PackProvenance
     transport: Any
     manifest: Dict[str, Any] = field(repr=False, default_factory=dict)
+    # The host-private copy a subprocess pack runs from (None for http).
+    staged_dir: Optional[Path] = None
 
 
 _LOCK = threading.Lock()
+# Serializes install_pack end to end, so two installs of one id cannot both
+# pass the "already installed" check and leave one transport orphaned.
+_INSTALL_LOCK = threading.RLock()
 _INSTALLED: Dict[str, _InstalledPack] = {}
 _MANAGER: Any = None
 
@@ -370,15 +377,18 @@ class _PackEntryPoint:
         self.value = f"{PACK_SCHEMA}:{self.name}"
         self.pack_version = manifest["pack"]["version"]
         self.pack_description = manifest["pack"].get("description", "")
+        self.pack_namespaces = tuple(manifest["pack"]["namespaces"])
         self._rows = [dict(row) for row in manifest["modules"]]
 
     def load(self):
         rows = self._rows
         pack_id = self.name
+        namespaces = self.pack_namespaces
 
         def register_all() -> None:
             from ..modules.registry import ModuleRegistry, register_module
 
+            _check_namespaces(ModuleRegistry, pack_id, namespaces)
             for row in rows:
                 module_id = row["module_id"]
                 if ModuleRegistry.has(module_id):
@@ -388,8 +398,57 @@ class _PackEntryPoint:
                         # get to replace flyto-core's module or another pack's.
                         raise ValueError(f"module id '{module_id}' is already registered by another owner")
                 register_module(**_decorator_kwargs(row))(_proxy_class(pack_id, row))
+            _check_capability_contracts(ModuleRegistry, pack_id, rows)
 
         return register_all
+
+
+def _owner(metadata: Optional[Mapping[str, Any]]) -> str:
+    return str((metadata or {}).get("plugin") or "")
+
+
+def _check_namespaces(registry: Any, pack_id: str, namespaces: Tuple[str, ...]) -> None:
+    """Refuse a namespace another owner already holds.
+
+    The static deny list cannot name every namespace flyto-core ships
+    (``capability`` is where ``capability.invoke`` lives) and cannot know the
+    namespaces of installed Python packs at all. A namespace is held by
+    whoever has a module in it, and by any other external pack that declared
+    it — even one with no module there yet — so a third-party pack can neither
+    publish ``capability.*`` beside the capability host nor add look-alike
+    steps to another vendor's namespace.
+    """
+    wanted = set(namespaces)
+    for module_id, metadata in list(registry._metadata.items()):
+        if module_id.split(".", 1)[0] in wanted and _owner(metadata) != pack_id:
+            raise ValueError("pack namespace is already held by another owner")
+    for name, other in list(registry._external_packs.items()):
+        if name != pack_id and wanted & set(getattr(other, "pack_namespaces", ())):
+            raise ValueError("pack namespace is already declared by another pack")
+
+
+def _check_capability_contracts(registry: Any, pack_id: str, rows: List[Dict[str, Any]]) -> None:
+    """Refuse a capability whose meaning another owner already declared.
+
+    The capability host resolves a capability's contract from every provider
+    and fails closed when they disagree. A pack that declared an existing
+    capability with a different contract — or with none — would therefore
+    turn another vendor's ``role: safe_stop`` into an ambiguous, refused call:
+    a stop that no longer stops. A second provider of the same capability is
+    normal (two fleets can both stop a base), so it is allowed when its
+    contract is exactly the one already declared.
+    """
+    for row in rows:
+        capability = row.get("provides_capability") or ""
+        if not capability:
+            continue
+        mine = (registry._metadata.get(row["module_id"]) or {}).get("contract")
+        for metadata in list(registry._metadata.values()):
+            declared = str((metadata or {}).get("provides_capability") or "").strip()
+            if declared != capability or _owner(metadata) == pack_id:
+                continue
+            if metadata.get("contract") != mine:
+                raise ValueError("capability is already declared by another owner with a different contract")
 
 
 # ---------------------------------------------------------------------------
@@ -436,9 +495,29 @@ def install_pack(
     the host opts out, and a signed one must verify against ``trusted_keys``.
     A signature that is present is always verified, even when not required.
 
+    A subprocess pack runs from a host-private copy of its attested files,
+    made in the same pass that computes the digest, so changing the source
+    directory after install cannot change the code that is spawned later.
+
     Raises ``PackManifestError`` on any refusal; the registry, the plugin
     manager and the installed set are then unchanged.
     """
+    with _INSTALL_LOCK:
+        return _install_pack(
+            pack_dir,
+            trusted_keys=trusted_keys,
+            require_signature=require_signature,
+            provenance_dir=provenance_dir,
+        )
+
+
+def _install_pack(
+    pack_dir: os.PathLike[str] | str,
+    *,
+    trusted_keys: Optional[Mapping[str, Any]],
+    require_signature: bool,
+    provenance_dir: Optional[os.PathLike[str] | str],
+) -> PackProvenance:
     try:
         root = Path(pack_dir).resolve(strict=True)
     except OSError:
@@ -452,10 +531,6 @@ def install_pack(
         )
     _check_min_host(manifest)
 
-    artifact_digest = manifest.get("artifact", {}).get("digest")
-    if artifact_digest is not None and pack_tree_digest(root) != artifact_digest:
-        raise PackManifestError("DIGEST_MISMATCH", "pack files do not match artifact.digest")
-
     signature_doc = read_signature(root)
     signature: Optional[Dict[str, str]] = None
     if signature_doc is not None:
@@ -468,6 +543,37 @@ def install_pack(
         # Replacing a running pack in place would leave its old process
         # serving the old code under the new manifest; upgrade is explicit.
         raise PackManifestError("ALREADY_INSTALLED", "pack is already installed; uninstall it first")
+
+    artifact_digest = manifest.get("artifact", {}).get("digest")
+    staged: Optional[Path] = None
+    try:
+        if runtime["binding"] == "subprocess-jsonrpc":
+            staged = Path(tempfile.mkdtemp(prefix="flyto-pack-")).resolve(strict=True)
+            actual = stage_pack_tree(root, staged)
+        else:
+            actual = pack_tree_digest(root)
+        if artifact_digest is not None and actual != artifact_digest:
+            raise PackManifestError("DIGEST_MISMATCH", "pack files do not match artifact.digest")
+        return _register_pack(manifest, root, staged, artifact_digest, signature, provenance_dir)
+    except BaseException:
+        installed = _INSTALLED.get(pack_id)
+        # A failure after the pack went live (writing provenance) leaves it
+        # installed, so its copy stays; any earlier refusal removes the copy.
+        if staged is not None and (installed is None or installed.staged_dir != staged):
+            shutil.rmtree(staged, ignore_errors=True)
+        raise
+
+
+def _register_pack(
+    manifest: Dict[str, Any],
+    root: Path,
+    staged: Optional[Path],
+    artifact_digest: Optional[str],
+    signature: Optional[Dict[str, str]],
+    provenance_dir: Optional[os.PathLike[str] | str],
+) -> PackProvenance:
+    runtime = manifest["runtime"]
+    pack_id = manifest["pack"]["id"]
     timeout_ms = runtime["request_timeout_ms"]
     manager = None
     if runtime["binding"] == "subprocess-jsonrpc":
@@ -475,7 +581,7 @@ def install_pack(
         try:
             manager.register_pack(
                 pack_id,
-                root,
+                staged,
                 version=manifest["pack"]["version"],
                 language=runtime["language"],
                 entry=runtime["entry"],
@@ -495,7 +601,9 @@ def install_pack(
 
     from ..modules.registry import ModuleRegistry
 
-    _INSTALLED[pack_id] = _InstalledPack(provenance=None, transport=transport, manifest=manifest)  # type: ignore[arg-type]
+    _INSTALLED[pack_id] = _InstalledPack(
+        provenance=None, transport=transport, manifest=manifest, staged_dir=staged  # type: ignore[arg-type]
+    )
     try:
         ModuleRegistry.install_external_pack(_PackEntryPoint(manifest))
     except ValueError:
@@ -545,7 +653,11 @@ async def uninstall_pack(pack_id: str) -> List[str]:
     removed = ModuleRegistry.uninstall_external_pack(pack_id)
     installed = _INSTALLED.pop(pack_id, None)
     if installed is not None:
-        await installed.transport.close()
+        try:
+            await installed.transport.close()
+        finally:
+            if installed.staged_dir is not None:
+                shutil.rmtree(installed.staged_dir, ignore_errors=True)
     return removed
 
 
