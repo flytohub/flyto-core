@@ -214,7 +214,8 @@ EXTRACT_HINTS_JS = """() => {
             if (labelledText) return labelledText.substring(0, 60);
         }
 
-        const content = (el.textContent || el.value || '').trim();
+        const isSecret = (el.type || '').toLowerCase() === 'password';
+        const content = (el.textContent || (isSecret ? '' : el.value) || '').trim();
         if (content) return content.substring(0, 60);
 
         const image = el.querySelector && el.querySelector('img[alt]');
@@ -276,7 +277,12 @@ EXTRACT_HINTS_JS = """() => {
                 label: label,
                 type: type,
                 placeholder: (el.placeholder || '').substring(0, 50),
-                value: (el.value || '').substring(0, 50),
+                // A password field's value is the password. Hints are copied
+                // into step results, step logs and websocket frames, so it is
+                // reported as present or absent and never as itself.
+                value: type === 'password'
+                    ? (el.value ? '[REDACTED]' : '')
+                    : (el.value || '').substring(0, 50),
                 rect: getRect(el),
             });
         }

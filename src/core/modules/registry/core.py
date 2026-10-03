@@ -731,6 +731,26 @@ class ModuleRegistry:
 
     @classmethod
     @_synchronized
+    def secret_param_names(cls, module_id: str) -> frozenset:
+        """Parameter names this module's schema declares secret.
+
+        A field is secret when its schema says ``secret: True`` or
+        ``format: 'password'``. Read from the stored row without the localising
+        copy ``get_metadata`` makes, because the step executor asks this for
+        every step it hands to a hook. Unknown modules declare nothing.
+        """
+        cls._ensure_discovered()
+        schema = (cls._metadata.get(module_id) or {}).get('params_schema')
+        if not isinstance(schema, dict):
+            return frozenset()
+        return frozenset(
+            name for name, spec in schema.items()
+            if isinstance(spec, dict)
+            and (spec.get('secret') is True or spec.get('format') == 'password')
+        )
+
+    @classmethod
+    @_synchronized
     def module_count(cls) -> int:
         """Get number of registered modules"""
         cls._ensure_discovered()

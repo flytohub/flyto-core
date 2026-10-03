@@ -34,6 +34,7 @@ from ..outcome import (
     rung_index,
 )
 from ..hooks import ExecutorHooks, HookAction
+from ..redaction import redact_step_params, runtime_sensitive_params
 from .context_builder import create_step_context
 from .foreach import execute_foreach_step
 from .retry import execute_with_retry
@@ -461,6 +462,9 @@ class StepExecutor:
         self._total_steps = total_steps
         self._evolution = evolution
         self._recipe_id = recipe_id
+        # Exceptions `_handle_step_error` absorbed under on_error='continue',
+        # by step id, so `execute_step` can still report the step as failed.
+        self._absorbed_errors: Dict[str, Exception] = {}
 
     def _create_step_context(
         self,
@@ -472,6 +476,7 @@ class StepExecutor:
         attempt: int = 1,
         max_attempts: int = 1,
         step_start_time: Optional[float] = None,
+        sensitive_params: Any = (),
     ):
         """Create hook context for step-level events."""
         return create_step_context(
@@ -486,6 +491,7 @@ class StepExecutor:
             attempt=attempt,
             max_attempts=max_attempts,
             step_start_time=step_start_time,
+            sensitive_params=sensitive_params,
         )
 
     async def execute_step(
@@ -531,7 +537,10 @@ class StepExecutor:
                 step_trace = trace_collector.start_step(step_id, step_index, module_id)
                 params_raw = step_config.get('params', {})
                 resolved_params = resolver.resolve(params_raw)
-                step_trace.set_input(params=resolved_params, params_raw=params_raw)
+                step_trace.set_input(
+                    params=redact_step_params(module_id, resolved_params),
+                    params_raw=redact_step_params(module_id, params_raw),
+                )
                 items_output = []
                 if isinstance(pinned_output, dict):
                     items = pinned_output.get('items', [])
@@ -627,9 +636,13 @@ class StepExecutor:
                     elif result.get('data'):
                         items_output = [[result.get('data')]]
                 step_trace.set_output(items=items_output)
-                if step_trace.status in ("running", "pending"):
-                    step_trace.complete()
-                self._record_unconfirmed_outcome(step_trace, result)
+                absorbed = self._absorbed_failure(step_id, result, pop=False)
+                if absorbed is not None:
+                    step_trace.fail(absorbed)
+                else:
+                    if step_trace.status in ("running", "pending"):
+                        step_trace.complete()
+                    self._record_unconfirmed_outcome(step_trace, result)
 
         except Exception as e:
             # Evolution: attempt self-heal on browser step failures
@@ -663,17 +676,53 @@ class StepExecutor:
             # Call post-execute hook
             # SECURITY: Redact sensitive data before passing to hooks
             redacted_result = _redact_sensitive_output(result) if result else result
+            found_sensitive = runtime_sensitive_params(result)
+            if found_sensitive and step_trace and step_trace.input is not None:
+                step_trace.input.params = redact_step_params(
+                    module_id, step_trace.input.params, found_sensitive,
+                )
+                step_trace.input.paramsRaw = redact_step_params(
+                    module_id, step_trace.input.paramsRaw, found_sensitive,
+                )
+            # A failure absorbed by on_error='continue' is still a failure.
+            # The workflow carries on -- that is what the step asked for --
+            # but the hooks are where a host records the step, and handing
+            # them `error=None` with `{ok: False}` inside the result is how a
+            # login step that never found its password field was logged as
+            # `step_succeeded`. Every host decides success on `context.error`.
+            absorbed = self._absorbed_failure(step_id, result, pop=True)
             post_context = self._create_step_context(
                 step_config,
                 step_index,
                 context,
                 result=redacted_result,
-                error=error,
+                error=error if error is not None else absorbed,
                 step_start_time=step_start_time,
+                sensitive_params=found_sensitive,
             )
             self._hooks.on_post_execute(post_context)
 
         return result
+
+    def _absorbed_failure(
+        self,
+        step_id: str,
+        result: Any,
+        pop: bool,
+    ) -> Optional[Exception]:
+        """The exception on_error='continue' absorbed, when it is the result.
+
+        Only when the step's own result is the absorbed-failure dict: a
+        foreach step whose single item failed under continue returns a list,
+        and that aggregate is not this step's failure to report.
+        """
+        absorbed = (
+            self._absorbed_errors.pop(step_id, None) if pop
+            else self._absorbed_errors.get(step_id)
+        )
+        if isinstance(result, dict) and result.get('ok') is False:
+            return absorbed
+        return None
 
     @staticmethod
     def _record_unconfirmed_outcome(
@@ -740,9 +789,11 @@ class StepExecutor:
             trace_items = None
             if input_items is not None:
                 trace_items = [item.json for item in input_items]
+            # The trace is returned to callers and persisted. Resolved params
+            # hold the secret itself once `${env.X}` has been substituted.
             step_trace.set_input(
-                params=resolved_params,
-                params_raw=step_params,
+                params=redact_step_params(module_id, resolved_params),
+                params_raw=redact_step_params(module_id, step_params),
                 items=trace_items,
             )
 
@@ -905,6 +956,7 @@ class StepExecutor:
             )
             raise error
         logger.warning(f"Step '{step_id}' failed but continuing: {str(error)}")
+        self._absorbed_errors[step_id] = error
         # The absorbed error needs a rung, or absorbing it erases it. Measured
         # before this line existed: a step that RAISED, under
         # `on_error: continue`, reached the cloud as

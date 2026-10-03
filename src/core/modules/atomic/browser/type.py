@@ -40,13 +40,112 @@ Sensitive values never enter the envelope. The effects carry character COUNTS
 and a boolean, never the value; a password read back and shipped into a trace
 row would be a worse defect than the one this file is fixing.
 """
-from typing import Any, Dict, Optional, Tuple
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
 from ....engine.outcome import ClaimBy, Outcome, envelope
+from ....engine.redaction import SENSITIVE_PARAMS_KEY
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+
+#: Words in a field's target or selector that mean the typed text is a secret.
+#: Domain-neutral on purpose: these name credentials, not any one site.
+_SENSITIVE_FIELD_HINT = re.compile(
+    r'(?i)(password|passwd|passphrase|passcode|pwd|secret|token|credential|'
+    r'api[_ -]?key|private[_ -]?key|\bpin\b|\botp\b|one[_ -]?time)',
+)
+
+#: Elements a label can point at and that accept keystrokes.
+_TYPEABLE = (
+    'input:not([type=hidden]):not([type=button]):not([type=submit])'
+    ':not([type=reset]):not([type=checkbox]):not([type=radio])'
+    ':not([type=image]):not([type=file]), textarea, select,'
+    ' [contenteditable=""], [contenteditable="true"], [role=textbox]'
+)
+
+#: Finds the fields a visible label names through an explicit association --
+#: ``<label for=id>`` or ``aria-labelledby`` -- which the structural selectors
+#: (label containing the input, label followed by it) cannot see: a label and
+#: its input in different containers is the ordinary markup of most form
+#: frameworks. Text matching mirrors Playwright's ``:has-text``: whitespace
+#: collapsed, case-insensitive, substring; exact matches are ranked first.
+#: Returns attribute values only. The selector is built in Python, with
+#: escaping, from those values.
+_ASSOCIATED_FIELDS_JS = """
+([target, typeable]) => {
+  const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+  const want = norm(target);
+  if (!want) return [];
+  const rank = (text) => {
+    const t = norm(text);
+    return t === want ? 0 : (t.includes(want) ? 1 : 2);
+  };
+  const textOf = (el) => (el ? (el.innerText || el.textContent || '') : '');
+  const found = [];
+  for (const label of document.querySelectorAll('label[for]')) {
+    const r = rank(textOf(label));
+    const field = r < 2 ? document.getElementById(label.htmlFor) : null;
+    if (field && field.matches(typeable)) {
+      found.push({kind: 'label_for', attr: 'id', value: field.id, rank: r});
+    }
+  }
+  for (const field of document.querySelectorAll('[aria-labelledby]')) {
+    if (!field.matches(typeable)) continue;
+    const ids = (field.getAttribute('aria-labelledby') || '').split(/\\s+/).filter(Boolean);
+    const text = ids.map((id) => textOf(document.getElementById(id))).join(' ');
+    const r = rank(text);
+    if (r < 2) {
+      found.push({kind: 'aria_labelledby', attr: 'aria-labelledby',
+                  value: field.getAttribute('aria-labelledby'), rank: r});
+    }
+  }
+  found.sort((a, b) => a.rank - b.rank);
+  return found;
+}
+"""
+
+
+def _css_attr_selector(attr: str, value: str) -> str:
+    """``[attr="value"]`` with the value escaped for a CSS string."""
+    escaped = value.replace('\\', '\\\\').replace('"', '\\"')
+    return f'[{attr}="{escaped}"]'
+
+
+async def _associated_label_selectors(page, target: str) -> List[str]:
+    """Selectors for fields the label text names via ``for`` / ``aria-labelledby``.
+
+    Best effort: a page that refuses evaluation yields nothing here and the
+    structural selectors are still tried.
+    """
+    try:
+        found = await page.evaluate(_ASSOCIATED_FIELDS_JS, [target, _TYPEABLE])
+    except Exception:  # noqa: BLE001 - see docstring
+        return []
+    selectors: List[str] = []
+    for item in found or []:
+        if not isinstance(item, dict) or not item.get('value'):
+            continue
+        selector = _css_attr_selector(str(item.get('attr')), str(item['value']))
+        if selector not in selectors:
+            selectors.append(selector)
+    return selectors
+
+
+async def _is_password_field(page, selector: str) -> bool:
+    """Whether the resolved field is an ``<input type=password>``.
+
+    Asked of the page, not the parameters: a selector like ``#pw`` says
+    nothing, and the step log must not learn the password because of it.
+    """
+    try:
+        return bool(await page.locator(selector).first.evaluate(
+            "(el) => (el.getAttribute('type') || '').toLowerCase() === 'password'",
+            timeout=2000,
+        ))
+    except Exception:  # noqa: BLE001 - cannot tell is not "it is not one"
+        return False
 
 
 async def _read_field_value(page, selector: str) -> Tuple[Optional[str], Optional[str]]:
@@ -191,7 +290,7 @@ def _type_outcome(
 @register_module(
     module_id='browser.type',
     postcondition=POSTCONDITION,
-    version='1.1.0',
+    version='1.2.0',
     category='browser',
     tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],
     label='Type Text',
@@ -343,6 +442,26 @@ class BrowserTypeModule(BaseModule):
     module_description = "Type text into an input field"
     required_permission = "browser.automation"
 
+    @classmethod
+    def sensitive_params(cls, params: Dict[str, Any]) -> frozenset:
+        """``text`` carries a credential when the step says so or names one.
+
+        ``sensitive_text`` is already secret in the schema. ``text`` is the
+        free-text field, and it holds a password whenever ``input_type`` is
+        password or the field being typed into is named like a credential --
+        a login step built with ``type_method: label, target: Password``
+        and the default ``input_type: text`` is the case that leaked.
+        """
+        if not isinstance(params, dict):
+            return frozenset()
+        if str(params.get('input_type') or '').lower() == 'password':
+            return frozenset({'text'})
+        for key in ('target', 'selector'):
+            value = params.get(key)
+            if isinstance(value, str) and _SENSITIVE_FIELD_HINT.search(value):
+                return frozenset({'text'})
+        return frozenset()
+
     def validate_params(self) -> None:
         method = self.params.get('type_method', 'placeholder')
         raw_selector = self.params.get('selector', '').strip()
@@ -371,15 +490,18 @@ class BrowserTypeModule(BaseModule):
         elif method == 'label':
             if not target:
                 raise ValueError("Label text is required")
-            # Two strategies tried in order during execute():
-            # 1. label element containing text → find input inside/after it
-            # 2. input with aria-label attribute
+            # Tried in order during execute(), explicit associations first:
+            # 1. a label wrapping the input
+            # 2. label[for=id] -> #id, and aria-labelledby (resolved on the
+            #    page, inserted here by execute())
+            # 3. aria-label on the field itself
+            # 4. structural guesses: the input right after / after the label
             self._label_selectors = [
                 f'label:has-text("{escaped}") >> input',
-                f'label:has-text("{escaped}") + input',
-                f'label:has-text("{escaped}") ~ input',
                 f'input[aria-label="{escaped}"]',
                 f'textarea[aria-label="{escaped}"]',
+                f'label:has-text("{escaped}") + input',
+                f'label:has-text("{escaped}") ~ input',
             ]
             self.selector = self._label_selectors[0]  # default, may be overridden in execute
         else:  # placeholder (default)
@@ -407,7 +529,13 @@ class BrowserTypeModule(BaseModule):
         if hasattr(self, '_label_selectors'):
             page = browser.page
             found = False
-            for sel in self._label_selectors:
+            associated = await _associated_label_selectors(
+                page, self.params.get('target', '').strip(),
+            )
+            candidates = (
+                self._label_selectors[:1] + associated + self._label_selectors[1:]
+            )
+            for sel in candidates:
                 try:
                     count = await page.locator(sel).count()
                     if count > 0:
@@ -419,7 +547,8 @@ class BrowserTypeModule(BaseModule):
             if not found:
                 raise RuntimeError(
                     f"Could not find input field with label \"{self.params.get('target')}\". "
-                    f"Tried: label>>input, label+input, label~input, aria-label"
+                    f"Tried: label>>input, label[for], aria-labelledby, aria-label, "
+                    f"label+input, label~input"
                 )
 
         # Wait for element to be visible before interacting
@@ -442,10 +571,17 @@ class BrowserTypeModule(BaseModule):
 
         after, after_error = await _read_field_value(browser.page, self.selector)
 
-        # Mask sensitive text in return value
-        is_sensitive = self.input_type == 'password' or any(
-            kw in self.selector.lower()
-            for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential']
+        # Mask sensitive text in return value. The page is asked too: a field
+        # that turns out to be <input type=password> is a password field
+        # whatever the parameters called it.
+        is_password_field = await _is_password_field(browser.page, self.selector)
+        is_sensitive = (
+            is_password_field
+            or bool(self.sensitive_params(self.params))
+            or any(
+                kw in self.selector.lower()
+                for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential']
+            )
         )
         result = {
             "status": "success",
@@ -462,6 +598,10 @@ class BrowserTypeModule(BaseModule):
                 read_error=baseline_error or after_error,
             ),
         }
+        if is_sensitive:
+            # Tells the engine to redact these parameters wherever it records
+            # this step (hooks, trace), including what it learned only now.
+            result[SENSITIVE_PARAMS_KEY] = ['text', 'sensitive_text']
         # Post-action: refresh hints (typing may trigger dynamic UI changes)
         hints = await browser.get_hints(force=True)
         browser._snapshot_since_nav = True
