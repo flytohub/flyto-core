@@ -73,7 +73,7 @@ from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
-from ._settle import first_state
+from ._settle import first_state, settle_document
 
 logger = logging.getLogger(__name__)
 
@@ -240,16 +240,65 @@ async def _await_login_answer(
         ).first.wait_for(state='attached', timeout=cap_ms)
 
     loop = asyncio.get_running_loop()
-    started = loop.time()
+    deadline = loop.time() + cap_ms / 1000
     answer = await first_state(waits, timeout_ms=cap_ms)
-    # A navigation that answered has committed; let its document parse before
-    # anything is read from it. Bounded by what is left of the cap.
-    remaining_ms = cap_ms - (loop.time() - started) * 1000
-    if remaining_ms > 0:
-        # Reading a half-loaded page is still a reading; never fail over it.
+    remaining_ms = (deadline - loop.time()) * 1000
+    if answer in _ANSWERS_THAT_LEAVE_THE_PAGE_RENDERING and remaining_ms > 0:
+        await _settle_answered_page(
+            page, cap_ms=remaining_ms, watch_mfa=not mfa_pending,
+        )
+    elif remaining_ms > 0:
+        # A navigation that answered has committed; let its document parse
+        # before anything is read from it. Reading a half-loaded page is
+        # still a reading; never fail over it.
         with suppress(Exception):
             await page.wait_for_load_state('domcontentloaded', timeout=remaining_ms)
     return answer
+
+
+# A URL that moved or a password field that went away says the page answered,
+# not what it answered with. The document that replaced the form may still be
+# hopping (a JS SSO redirect) or rendering (an MFA prompt drawn after load).
+_ANSWERS_THAT_LEAVE_THE_PAGE_RENDERING = frozenset({'url_changed', 'password_gone', 'mfa_cleared'})
+
+# The quiet window that ends the settle of an answered page. It matches the
+# 500 ms networkidle used to imply, so a prompt a page draws from a timer
+# shortly after load is still seen; it only elapses on a page whose DOM has
+# stopped changing, and a rendered MFA prompt ends the settle at once.
+_ANSWER_QUIET_MS = 500
+
+
+async def _settle_answered_page(page, *, cap_ms: float, watch_mfa: bool) -> Optional[str]:
+    """Let the page a login answer landed on finish arriving before it is read.
+
+    Ends when that document has loaded and gone quiet, or the moment an MFA
+    prompt is visible on it. A further navigation (a JS redirect hop) restarts
+    the wait on the next document. ``cap_ms`` bounds the whole chain.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+    while True:
+        remaining_ms = (deadline - loop.time()) * 1000
+        if remaining_ms <= 0:
+            return None
+        current_url = page.url
+        waits = {
+            'quiet': settle_document(
+                page, quiet_ms=_ANSWER_QUIET_MS, cap_ms=int(remaining_ms),
+            ),
+            'navigated': page.wait_for_url(
+                lambda url, origin=current_url: url != origin,
+                wait_until='commit',
+                timeout=remaining_ms,
+            ),
+        }
+        if watch_mfa:
+            waits['mfa_prompt'] = page.locator(_MFA_INPUT_SELECTOR).filter(
+                visible=True,
+            ).first.wait_for(state='attached', timeout=remaining_ms)
+        settled = await first_state(waits, timeout_ms=remaining_ms)
+        if settled != 'navigated':
+            return settled
 
 
 def _mfa_unresolved_outcome(*, url_changed: bool) -> Dict[str, Any]:

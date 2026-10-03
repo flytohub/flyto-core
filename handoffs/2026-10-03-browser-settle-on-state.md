@@ -40,9 +40,29 @@ Status: Implemented locally, not pushed or released
   `tests/modules/test_browser_click_semantics.py` fakes gained `or_`,
   `wait_for`, `wait_for_url`, `on`/`remove_listener`, `evaluate`.
 
+## Review follow-up (second commit)
+
+- `browser.login`: after a `url_changed` / `password_gone` / `mfa_cleared`
+  answer, `_settle_answered_page` follows JS redirect hops and waits for the
+  landed document to load and go 500 ms DOM-quiet, or for a visible MFA input,
+  capped by what is left of `wait_ms`. Fixes the regression where an OTP input
+  rendered after load was missed (`mfa_detected=False`, `logged_in=True`).
+- `install_dom_watch` also tracks timers (<= 1 s) and fetch/XHR started while
+  the click is dispatched; `settle_dom` waits for them before its quiet window,
+  and restores the page's own functions when done. A click that navigates
+  from a timer or routes after a response now reports that navigation.
+  `_click_and_settle` re-checks for a requested navigation after the settle.
+- `next_mutation` coalesces wakes (50 ms quiet or 250 ms batch), so detect on
+  a constantly mutating page runs about timeout / 250 ms passes.
+- `_resolve_button_or_link` re-waits the union for the rest of its budget when
+  the match re-rendered before the preference pass counted it.
+- Tests: six new cases in `test_settle_on_state.py` (20 total); the no-change
+  click test asserts `settle_dom` answered `unchanged` and the click took under
+  0.25 s. All six new cases fail on the first commit's `src/`.
+
 ## Verified
 
-- New tests: 14/14, three consecutive runs. They patch `Page/Frame.wait_for_timeout`
+- New tests: 20/20, three consecutive runs (14/14 at the first commit). They patch `Page/Frame.wait_for_timeout`
   and non-zero `asyncio.sleep` from browser modules to raise. Against the
   unmodified modules they fail (fixed `wait_for_timeout(500/300/3000)`, the
   5 s `networkidle` timeout and detect's 0.5 s sleep).
@@ -83,4 +103,13 @@ Status: Implemented locally, not pushed or released
   password, MFA or error change) now waits the full `wait_ms`; before,
   `networkidle` could return after about 0.5 s on a quiet page.
 - `browser.detect` on a page that mutates constantly re-runs a detection pass
-  per mutation batch instead of every 500 ms, still capped by `timeout`.
+  at most every 250 ms instead of every 500 ms, still capped by `timeout`.
+- `browser.login` without a `success_indicator` now spends one 500 ms quiet
+  window on the landed page after a redirect (the time `networkidle` used to
+  imply). A landed page that keeps mutating ends at `wait_ms`.
+- `browser.click` temporarily wraps `setTimeout`, `clearTimeout`, `fetch` and
+  `XMLHttpRequest.prototype.send` between the click and its settle; a page
+  that captured one of them in that window keeps a pass-through wrapper.
+- A click that navigates from a timer longer than 1 s, or after a request
+  slower than the 1 s settle cap, is still reported before the navigation;
+  declare `expected_outcome` for those.

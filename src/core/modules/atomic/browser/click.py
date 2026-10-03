@@ -423,27 +423,31 @@ class BrowserClickModule(BaseModule):
         for role, exact in candidates:
             locator = _candidate(role, exact)
             combined = locator if combined is None else combined.or_(locator)
-        try:
-            await combined.first.wait_for(
-                state='attached' if self.force else 'visible',
-                timeout=max(1, self.timeout),
-            )
-        except Exception as exc:
-            raise RuntimeError(
-                f'No visible button or link named {self.target!r} '
-                f'was found within {self.timeout}ms'
-            ) from exc
-
         # The union only says that something matched; the preference order
-        # (exact before contains, button before link) is decided here.
-        for role, exact in candidates:
-            locator = _candidate(role, exact)
-            if await locator.count():
-                return locator.first, f'role={role}[name={self.target!r}]'
-        raise RuntimeError(
-            f'No visible button or link named {self.target!r} '
-            f'was found within {self.timeout}ms'
-        )
+        # (exact before contains, button before link) is decided after it.
+        # A match that re-renders or detaches between the two (a framework
+        # re-render) sends the wait back to the union for the rest of the
+        # budget rather than failing on the first empty pass.
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + max(1, self.timeout) / 1000
+        while True:
+            remaining_ms = (deadline - loop.time()) * 1000
+            try:
+                if remaining_ms <= 0:
+                    raise TimeoutError
+                await combined.first.wait_for(
+                    state='attached' if self.force else 'visible',
+                    timeout=max(1, remaining_ms),
+                )
+            except Exception as exc:
+                raise RuntimeError(
+                    f'No visible button or link named {self.target!r} '
+                    f'was found within {self.timeout}ms'
+                ) from exc
+            for role, exact in candidates:
+                locator = _candidate(role, exact)
+                if await locator.count():
+                    return locator.first, f'role={role}[name={self.target!r}]'
 
     async def _expects_new_page(self, locator) -> bool:
         """Best-effort detection for elements that explicitly declare a tab.
@@ -765,21 +769,32 @@ class BrowserClickModule(BaseModule):
         # A navigation the click requested is awaited until it commits (or
         # fails); a new document (navigation or adopted tab) then waits for
         # its own domcontentloaded and for anything interactive to render. An
-        # in-place update waits only while the DOM is still changing, and a
-        # click that changed nothing returns at once.
-        if (
-            new_page is None
-            and navigation_requested.is_set()
-            and not main_navigation.is_set()
-        ):
-            await first_state(
-                {
-                    'navigated': main_navigation.wait(),
-                    'failed': navigation_failed.wait(),
-                },
-                timeout_ms=5000,
-            )
+        # in-place update waits only while the DOM is still changing or while
+        # a timer or request the click started is outstanding, and a click
+        # that did neither returns at once.
+        async def _await_requested_commit():
+            if (
+                new_page is None
+                and navigation_requested.is_set()
+                and not main_navigation.is_set()
+            ):
+                await first_state(
+                    {
+                        'navigated': main_navigation.wait(),
+                        'failed': navigation_failed.wait(),
+                    },
+                    timeout_ms=5000,
+                )
+
+        await _await_requested_commit()
+        navigated_before_settle = main_navigation.is_set()
         settled = 'new_document' if new_page is not None else await settle_dom(page)
+        if settled not in ('new_document', 'error'):
+            # A navigation started by the click's own timer or response
+            # handler begins while settle_dom is waiting on that work.
+            await _await_requested_commit()
+            if main_navigation.is_set() and not navigated_before_settle:
+                settled = 'new_document'
         if settled in ('new_document', 'error'):
             with suppress(Exception):
                 await page.wait_for_load_state('domcontentloaded', timeout=2000)

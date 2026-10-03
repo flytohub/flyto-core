@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   keeps its previous upper bound and now ends as soon as the page reports the
   state it was waiting for.
   - `browser.click` no longer pauses a fixed 300/500 ms after every click. An
-    in-place click waits only while the DOM is still changing (and returns at
-    once when nothing changed); a navigation waits for its own commit and
+    in-place click waits only while the DOM is still changing or while a short
+    timer or fetch/XHR the click itself started is outstanding, and returns at
+    once when neither happened, so an onclick that navigates from a timer or
+    routes after a response is reported on its result; a navigation waits for its own commit and
     `domcontentloaded`, then for any interactive element or a still, loaded
     page. A click whose markup declares a new tab but navigates the same tab
     ends on that navigation instead of waiting out 2 s. Button/link resolution
@@ -23,13 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `browser.login` waits for the page's answer — the success indicator, a URL
     change, the password field going away, an MFA prompt or an error message —
     instead of `networkidle` plus a fixed 3 s fallback; `wait_ms` is only the
-    cap. A submit that changes nothing now waits the full `wait_ms`.
+    cap. A submit that changes nothing now waits the full `wait_ms`. After a
+    URL change or a vanished password field it follows JS redirect hops and
+    waits for the landed page to load and go quiet for 500 ms (or for an MFA
+    input to appear) before checking for MFA, so a prompt drawn after load
+    still reaches the human approval step.
   - `browser.select` waits for the custom dropdown to close (capped at 1 s);
     `browser.interact` clicks the option when it is visible.
   - `browser.form`: `delay_between_fields_ms` defaults to 0 and never pauses
     after the last field.
-  - `browser.detect` re-runs on a strategy's element appearing or a DOM
-    mutation instead of every 500 ms; `browser.dialog` (including `listen`)
+  - `browser.detect` re-runs on a strategy's element appearing or a batch of
+    DOM mutations (at most one wake per 250 ms on a page that never stops
+    mutating) instead of every 500 ms; `browser.dialog` (including `listen`)
     returns on the dialog event.
   - A duration-only `browser.wait` still sleeps, but logs a warning and returns
     `advice`; `validate_workflow` reports it as a `DURATION_ONLY_WAIT` warning.

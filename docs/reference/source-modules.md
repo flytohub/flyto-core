@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **981 Python files**, **232,641 lines**, and **6,112 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **981 Python files**, **232,814 lines**, and **6,114 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -245,9 +245,9 @@ Inventory: **981 Python files**, **232,641 lines**, and **6,112 class/function/m
 | [`src/core/modules/atomic/browser/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/__init__.py#L1) | 74 | 0 | `challenge, click, close, connect, console, cookies, cookies_file, detect, detect_list, dialog, download, drag` | Atomic Browser Operations Browser automation modules using Playwright |
 | [`src/core/modules/atomic/browser/_hints.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_hints.py#L1) | 727 | 1 | `logging` | Shared interactive element hints extraction for browser modules. |
 | [`src/core/modules/atomic/browser/_session_outcome.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_session_outcome.py#L1) | 244 | 5 | `engine, typing` | What a browser SESSION module can honestly say it measured. |
-| [`src/core/modules/atomic/browser/_settle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_settle.py#L1) | 205 | 6 | `asyncio, typing` | Shared page-state waits for browser modules. |
+| [`src/core/modules/atomic/browser/_settle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/_settle.py#L1) | 314 | 6 | `asyncio, typing` | Shared page-state waits for browser modules. |
 | [`src/core/modules/atomic/browser/challenge.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/challenge.py#L1) | 527 | 5 | `asyncio, base, base64, core, engine, logging, registry, schema, time, typing` | Browser Challenge Module — Auto-detect and handle anti-bot challenges |
-| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 817 | 22 | `_settle, asyncio, base, contextlib, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
+| [`src/core/modules/atomic/browser/click.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/click.py#L1) | 832 | 23 | `_settle, asyncio, base, contextlib, logging, registry, schema, typing` | Browser Click Module - Click an element on the page |
 | [`src/core/modules/atomic/browser/close.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/close.py#L1) | 215 | 5 | `base, engine, registry, typing` | Browser Close Module |
 | [`src/core/modules/atomic/browser/connect.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/connect.py#L1) | 322 | 4 | `base, core, engine, logging, playwright, registry, schema, typing, utils` | Browser Connect Module — Connect to remote browser services |
 | [`src/core/modules/atomic/browser/console.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/console.py#L1) | 182 | 5 | `asyncio, base, engine, registry, schema, typing` | Browser Console Module |
@@ -271,7 +271,7 @@ Inventory: **981 Python files**, **232,641 lines**, and **6,112 class/function/m
 | [`src/core/modules/atomic/browser/hover.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/hover.py#L1) | 124 | 3 | `base, registry, schema, typing` | Browser Hover Module - Hover mouse over an element |
 | [`src/core/modules/atomic/browser/interact.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/interact.py#L1) | 594 | 6 | `base, base64, datetime, engine, logging, re, registry, schema, types, typing` | Browser Interact Module — Human-in-the-loop browser interaction |
 | [`src/core/modules/atomic/browser/launch.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/launch.py#L1) | 318 | 3 | `_session_outcome, base, core, engine, os, registry, schema, typing, utils` | Browser Launch Module - Launch a single browser instance |
-| [`src/core/modules/atomic/browser/login.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/login.py#L1) | 735 | 9 | `_settle, asyncio, base, base64, contextlib, engine, logging, registry, schema, typing` | Browser Login Module — Automated website authentication |
+| [`src/core/modules/atomic/browser/login.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/login.py#L1) | 784 | 10 | `_settle, asyncio, base, base64, contextlib, engine, logging, registry, schema, typing` | Browser Login Module — Automated website authentication |
 | [`src/core/modules/atomic/browser/navigation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/navigation.py#L1) | 253 | 5 | `base, engine, registry, schema, typing` | Browser Navigation Module - Go back, forward, or reload the page |
 | [`src/core/modules/atomic/browser/network.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/network.py#L1) | 392 | 11 | `asyncio, base, engine, re, registry, schema, typing, urllib` | Browser Network Module |
 | [`src/core/modules/atomic/browser/pages.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/pages.py#L1) | 258 | 4 | `base, engine, registry, schema, typing` | Browser Pages Module - List all browser pages/tabs |

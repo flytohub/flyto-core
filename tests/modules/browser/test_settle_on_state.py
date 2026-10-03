@@ -114,6 +114,78 @@ setTimeout(function () {
 </script></body></html>
 """
 
+# The login redirects; the MFA page draws its OTP input 300 ms after load,
+# the way an async-rendered prompt does. Nothing is in the DOM at load.
+LOGIN_TO_MFA_HTML = """
+<html><body>%s<script>
+document.getElementById('lf').addEventListener('submit', function (e) {
+  e.preventDefault();
+  location.href = '/mfa';
+});
+</script></body></html>
+""" % LOGIN_FORM
+
+# Same, but through an intermediate JS hop, as SSO logins do.
+LOGIN_VIA_HOP_HTML = """
+<html><body>%s<script>
+document.getElementById('lf').addEventListener('submit', function (e) {
+  e.preventDefault();
+  location.href = '/hop';
+});
+</script></body></html>
+""" % LOGIN_FORM
+
+HOP_HTML = """
+<html><body><p>Signing you in</p><script>
+setTimeout(function () { location.replace('/mfa'); }, 100);
+</script></body></html>
+"""
+
+MFA_LATE_HTML = """
+<html><body><p id="msg"></p><script>
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    var i = document.createElement('input');
+    i.name = 'otp';
+    i.autocomplete = 'one-time-code';
+    document.body.appendChild(i);
+  }, 300);
+});
+</script></body></html>
+"""
+
+# A click whose handler navigates from a timer, mutating nothing first.
+DELAYED_NAV_HTML = """
+<html><body>
+<button id="go" type="button"
+  onclick="setTimeout(function () { location.href = '/home'; }, 150)">Continue</button>
+</body></html>
+"""
+
+# A click whose handler fetches and then routes in place, as an SPA does.
+FETCH_THEN_ROUTE_HTML = """
+<html><body>
+<button id="save" type="button">Save</button>
+<script>
+document.getElementById('save').addEventListener('click', function () {
+  fetch('/api/slow').then(function (r) { return r.text(); }).then(function () {
+    history.pushState({}, '', '/routed');
+    var h = document.createElement('h1');
+    h.textContent = 'Saved';
+    document.body.appendChild(h);
+  });
+});
+</script></body></html>
+"""
+
+# Mutates on every animation-like tick, forever.
+TICKING_HTML = """
+<html><body><p id="clock">0</p><script>
+var n = 0;
+setInterval(function () { document.getElementById('clock').textContent = String(++n); }, 16);
+</script></body></html>
+"""
+
 PAGES = {
     '/static': STATIC_HTML,
     '/login-redirect': LOGIN_REDIRECT_HTML,
@@ -121,7 +193,17 @@ PAGES = {
     '/ghost-tab': GHOST_TAB_SAME_TAB_NAV_HTML,
     '/home': HOME_HTML,
     '/detect-late': DETECT_LATE_HTML,
+    '/login-mfa': LOGIN_TO_MFA_HTML,
+    '/login-hop': LOGIN_VIA_HOP_HTML,
+    '/hop': HOP_HTML,
+    '/mfa': MFA_LATE_HTML,
+    '/delayed-nav': DELAYED_NAV_HTML,
+    '/fetch-then-route': FETCH_THEN_ROUTE_HTML,
+    '/ticking': TICKING_HTML,
 }
+
+# Answered after this delay, so a click that fetches is still waiting on it.
+SLOW_PATHS = {'/api/slow': 0.2}
 
 
 class _Handler(http.server.BaseHTTPRequestHandler):
@@ -129,6 +211,9 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
+        delay = SLOW_PATHS.get(self.path.split('?')[0])
+        if delay:
+            time.sleep(delay)
         body = PAGES.get(self.path.split('?')[0], '<html><body>ok</body></html>').encode()
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
@@ -307,8 +392,18 @@ async def test_form_throttle_is_opt_in_and_skips_the_last_field(at, monkeypatch)
 
 @pytest.mark.browser
 async def test_click_with_no_dom_change_returns_without_the_old_settle_pause(
-    at, no_fixed_waits,
+    at, no_fixed_waits, monkeypatch,
 ):
+    import core.modules.atomic.browser.click as click_module
+
+    answers = []
+    real_settle_dom = click_module.settle_dom
+
+    async def _spy(page, **kwargs):
+        answers.append(await real_settle_dom(page, **kwargs))
+        return answers[-1]
+
+    monkeypatch.setattr(click_module, 'settle_dom', _spy)
     ctx = await at('/static')
     # Warm up so the measurement is the click, not the first hint harvest.
     await _run('browser.click', {'click_method': 'button', 'target': 'Noop'}, ctx)
@@ -318,8 +413,96 @@ async def test_click_with_no_dom_change_returns_without_the_old_settle_pause(
     elapsed = time.monotonic() - started
 
     assert result['effects'] == []
-    # The old path always added a fixed 0.5 s after an in-place click.
-    assert elapsed < 0.4, f'click took {elapsed:.3f}s'
+    # The page itself said nothing changed; that answer is what ended it.
+    assert answers == ['unchanged', 'unchanged']
+    # The old path added a fixed 0.5 s (0.3 s after a navigation). The whole
+    # click, hint harvests included, fits well inside even the shorter one.
+    assert elapsed < 0.25, f'click took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_click_waits_for_the_navigation_its_own_timer_starts(at, no_fixed_waits):
+    ctx = await at('/delayed-nav')
+    result = await _run(
+        'browser.click', {'click_method': 'button', 'target': 'Continue'}, ctx,
+    )
+
+    # The handler only scheduled the navigation; the pending timer was the
+    # state that kept the click open, and the navigation it made is reported.
+    assert result['url'].endswith('/home')
+    assert 'url_change' in result['effects']
+    assert any(link.get('text') == 'Back' for link in result.get('links', []))
+
+
+@pytest.mark.browser
+async def test_click_waits_for_the_request_it_started_and_the_route_after_it(
+    at, no_fixed_waits,
+):
+    ctx = await at('/fetch-then-route')
+    started = time.monotonic()
+    result = await _run('browser.click', {'click_method': 'button', 'target': 'Save'}, ctx)
+    elapsed = time.monotonic() - started
+
+    assert result['url'].endswith('/routed')
+    assert 'url_change' in result['effects']
+    assert 'Saved' in result.get('_page_hint', '')
+    # The response lands at 200 ms; the 1 s settle cap was not what ended it.
+    assert elapsed < 0.9, f'click took {elapsed:.3f}s'
+    # The page's own functions are back once the click has settled.
+    page = ctx['browser'].real_page
+    assert await page.evaluate(
+        "() => window.setTimeout.toString().includes('[native code]')"
+        " && window.fetch.toString().includes('[native code]')"
+        " && XMLHttpRequest.prototype.send.toString().includes('[native code]')"
+    )
+
+
+async def test_resolver_waits_again_when_the_match_rerenders_before_it_is_counted():
+    from core.modules.atomic.browser.click import BrowserClickModule
+
+    # The union matches, then the element re-renders: the first preference
+    # pass counts nothing, the next union wait sees the new node.
+    state = {'union_waits': 0, 'rendered': False}
+
+    class _Locator:
+        def __init__(self, exact):
+            self.exact = exact
+
+        def filter(self, **_):
+            return self
+
+        def or_(self, _other):
+            return _Union()
+
+        async def count(self):
+            return 1 if state['rendered'] and self.exact else 0
+
+        @property
+        def first(self):
+            return self
+
+    class _Union(_Locator):
+        def __init__(self):
+            super().__init__(True)
+
+        async def wait_for(self, **_):
+            state['union_waits'] += 1
+            # Detached during the first pass, attached again by the second.
+            state['rendered'] = state['union_waits'] > 1
+
+    class _Page:
+        def get_by_role(self, role, name, exact, include_hidden):
+            return _Locator(exact)
+
+    module = BrowserClickModule.__new__(BrowserClickModule)
+    module.target = 'Save'
+    module.force = False
+    module.timeout = 2000
+
+    locator, selector = await module._resolve_button_or_link(_Page())
+
+    assert state['union_waits'] == 2
+    assert selector == "role=button[name='Save']"
 
 
 # ---------------------------------------------------------------------------
@@ -366,6 +549,48 @@ async def test_login_on_a_never_idle_page_returns_at_the_success_indicator(
     assert elapsed < 2.0, f'login took {elapsed:.3f}s'
 
 
+@pytest.mark.browser
+@pytest.mark.parametrize('path', ['/login-mfa', '/login-hop'])
+async def test_login_sees_an_mfa_prompt_drawn_after_the_redirect_loads(
+    at, no_fixed_waits, monkeypatch, path,
+):
+    import core.engine.breakpoints as breakpoints
+    from core.engine.breakpoints import BreakpointStatus
+
+    raised = []
+
+    class _Manager:
+        async def create_breakpoint(self, **kwargs):
+            raised.append(kwargs['context_snapshot']['url'])
+
+            class _Request:
+                breakpoint_id = 'bp'
+            return _Request()
+
+        async def wait_for_resolution(self, breakpoint_id, check_timeout=False):
+            class _Answer:
+                status = BreakpointStatus.REJECTED
+            return _Answer()
+
+    monkeypatch.setattr(breakpoints, 'get_breakpoint_manager', lambda: _Manager())
+    ctx = await at(path)
+    started = time.monotonic()
+    result = await _run(
+        'browser.login',
+        {'username': 'someone', 'password': 'secret', 'wait_ms': 5000},
+        ctx,
+    )
+    elapsed = time.monotonic() - started
+
+    # The prompt is rendered after the MFA document loaded (and, for the hop,
+    # after a second JS navigation). It must still reach the human approval.
+    assert result['mfa_detected'] is True
+    assert result['logged_in'] is False
+    assert raised and raised[0].endswith('/mfa')
+    # Ended by the prompt appearing, not by the 5 s cap.
+    assert elapsed < 2.5, f'login took {elapsed:.3f}s'
+
+
 # ---------------------------------------------------------------------------
 # (d) A declared tab that navigates the same tab ends on that navigation
 # ---------------------------------------------------------------------------
@@ -405,6 +630,33 @@ async def test_detect_returns_as_the_element_appears(at, no_fixed_waits):
     # The element appears at 600 ms. A 500 ms poll found it at 1000 ms at
     # the earliest; the page's own mutation wakes the next pass at once.
     assert 0.55 < elapsed < 0.95, f'detect took {elapsed:.3f}s'
+
+
+@pytest.mark.browser
+async def test_detect_on_a_constantly_mutating_page_coalesces_its_wakes(
+    at, no_fixed_waits, monkeypatch,
+):
+    from core.modules.atomic.browser.detect import BrowserDetectModule
+
+    passes = []
+    real_run = BrowserDetectModule._run_detection
+
+    async def _counted(self, *args, **kwargs):
+        passes.append(time.monotonic())
+        return await real_run(self, *args, **kwargs)
+
+    monkeypatch.setattr(BrowserDetectModule, '_run_detection', _counted)
+    ctx = await at('/ticking')
+    result = await _run(
+        'browser.detect',
+        {'text': 'Nowhere to be found', 'role': 'button', 'timeout': 1500},
+        ctx,
+    )
+
+    assert result['found'] is False
+    # The clock mutates every 16 ms (~90 times here). Wakes are batched to at
+    # most one per 250 ms, so the pass count stays near timeout / 250.
+    assert len(passes) <= 10, f'{len(passes)} detection passes'
 
 
 # ---------------------------------------------------------------------------
