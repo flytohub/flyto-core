@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **991 Python files**, **237,074 lines**, and **6,288 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -153,7 +153,7 @@ Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/m
 | [`src/core/engine/queue/backend.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/queue/backend.py#L1) | 208 | 19 | `__future__, abc, dataclasses, datetime, enum, json, typing` | Queue Backend Interface — pluggable queue backend abstraction. |
 | [`src/core/engine/queue/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/queue/manager.py#L1) | 331 | 16 | `asyncio, core, dataclasses, datetime, enum, heapq, logging, typing, uuid` | Execution Queue Manager — priority-based workflow execution queue. |
 | [`src/core/engine/queue/memory_backend.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/queue/memory_backend.py#L1) | 220 | 14 | `__future__, asyncio, backend, collections, datetime, heapq, logging, typing` | Memory Queue Backend — in-process priority queue. |
-| [`src/core/engine/redaction.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/redaction.py#L1) | 258 | 10 | `modules, re, typing` | Secret redaction for execution traces, outputs, and persisted evidence. |
+| [`src/core/engine/redaction.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/redaction.py#L1) | 356 | 14 | `copy, modules, re, typing` | Secret redaction for execution traces, outputs, and persisted evidence. |
 | [`src/core/engine/replay/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/replay/__init__.py#L1) | 28 | 0 | `manager, models` | Replay Module |
 | [`src/core/engine/replay/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/replay/manager.py#L1) | 584 | 14 | `copy, datetime, json, logging, models, pathlib, typing, uuid` | Replay Manager |
 | [`src/core/engine/replay/models.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/replay/models.py#L1) | 86 | 4 | `dataclasses, enum, typing` | Replay Models |
@@ -163,7 +163,7 @@ Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/m
 | [`src/core/engine/sdk/resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/sdk/resolver.py#L1) | 505 | 19 | `context, dataclasses, json, logging, models, os, re, typing` | Variable Resolver v2 |
 | [`src/core/engine/step_executor/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/__init__.py#L1) | 56 | 1 | `context_builder, executor, foreach, hooks, retry, typing` | Step Executor Package |
 | [`src/core/engine/step_executor/context_builder.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/context_builder.py#L1) | 160 | 2 | `datetime, executor, hooks, outcome, redaction, time, typing, variable_resolver` | Step Context Builder |
-| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 1437 | 30 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, outcome, re, redaction, retry` | Step Executor |
+| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 1450 | 30 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, outcome, re, redaction, retry` | Step Executor |
 | [`src/core/engine/step_executor/foreach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/foreach.py#L1) | 92 | 1 | `exceptions, logging, trace, typing, variable_resolver` | Foreach Execution |
 | [`src/core/engine/step_executor/retry.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/retry.py#L1) | 150 | 2 | `asyncio, constants, context_builder, exceptions, hooks, logging, typing` | Retry Logic |
 | [`src/core/engine/step_executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor.py#L1) | 36 | 0 | `step_executor` | Step Executor - Single step execution with retry, timeout, and foreach support |
@@ -177,7 +177,7 @@ Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/m
 | [`src/core/engine/versioning/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/versioning/manager.py#L1) | 336 | 15 | `__future__, core, dataclasses, datetime, typing, uuid` | Workflow Versioning Manager. |
 | [`src/core/engine/workflow/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/__init__.py#L1) | 19 | 0 | `debug, engine, output, routing` | Workflow Engine Module |
 | [`src/core/engine/workflow/debug.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/debug.py#L1) | 180 | 18 | `logging, typing` | Workflow Debug Control |
-| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 877 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, routing` | Workflow Engine |
+| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 889 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, redaction` | Workflow Engine |
 | [`src/core/engine/workflow/output.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/output.py#L1) | 122 | 4 | `datetime, typing, variable_resolver` | Workflow Output Collection |
 | [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 547 | 19 | `flow_control, logging, typing` | Workflow Routing |
 | [`src/core/enterprise/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/__init__.py#L1) | 160 | 0 | `ai_native, idp, mining, orchestrator, queue, rpa, state_machine` | Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities |
@@ -301,7 +301,7 @@ Inventory: **991 Python files**, **236,890 lines**, and **6,284 class/function/m
 | [`src/core/modules/atomic/browser/table.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/table.py#L1) | 267 | 4 | `base, engine, logging, registry, schema, typing` | Browser Table Module — Extract HTML tables as structured data |
 | [`src/core/modules/atomic/browser/throttle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/throttle.py#L1) | 258 | 4 | `asyncio, base, core, engine, logging, registry, schema, time, typing, urllib` | Browser Throttle Module — Per-domain rate limiting |
 | [`src/core/modules/atomic/browser/trace.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L1) | 441 | 9 | `base, base64, engine, os, pathlib, registry, schema, tempfile, typing, utils` | Browser Trace Module - Performance tracing using CDP |
-| [`src/core/modules/atomic/browser/type.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L1) | 613 | 9 | `base, engine, re, registry, schema, typing` | Browser Type Module - Type text into an input field |
+| [`src/core/modules/atomic/browser/type.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L1) | 674 | 9 | `base, engine, re, registry, schema, typing` | Browser Type Module - Type text into an input field |
 | [`src/core/modules/atomic/browser/upload.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L1) | 281 | 5 | `base, engine, pathlib, registry, schema, typing, utils` | Browser Upload Module |
 | [`src/core/modules/atomic/browser/viewport.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/viewport.py#L1) | 323 | 5 | `base, engine, registry, schema, typing` | Browser Viewport Module - Resize browser viewport |
 | [`src/core/modules/atomic/browser/wait.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/wait.py#L1) | 496 | 6 | `asyncio, base, engine, logging, registry, schema, time, typing` | Browser Wait Module - Wait for a duration or until an element appears |

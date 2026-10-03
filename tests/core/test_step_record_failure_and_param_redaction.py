@@ -277,3 +277,132 @@ class TestRedactStepParams:
     def test_template_invoke_suffix_is_looked_up_as_template_invoke(self):
         out = redact_step_params("template.invoke:abc", {"password": SECRET})
         assert out["password"] == "[REDACTED]"
+
+
+class ResolvesReferences(ExecutorHooks):
+    """A host's pre-execute hook: rewrites credential references in place.
+
+    Mirrors the shape Cloud's credential resolver uses -- a mapping
+    ``{"type": "secretRef", "credential_name": ...}`` replaced by the value --
+    which only works if what the hook rewrites reaches the module.
+    """
+
+    def __init__(self):
+        self.seen = []
+
+    def on_pre_execute(self, context):
+        self.seen.append(context.params)
+
+        def walk(value):
+            if isinstance(value, dict):
+                if value.get("type") == "secretRef":
+                    return f"resolved:{value.get('credential_name')}"
+                for key in list(value):
+                    value[key] = walk(value[key])
+            elif isinstance(value, list):
+                for index, item in enumerate(value):
+                    value[index] = walk(item)
+            return value
+
+        walk(context.params)
+        return HookResult.continue_execution()
+
+
+async def _echo_params(ctx):
+    return {"status": "success", "got": dict(ctx["params"])}
+
+
+class TestPreExecuteHookRewritesReachTheModule:
+    """Regression: 2.36.1 handed hooks a redacted copy and dropped their edits.
+
+    A host that resolves credential references in ``on_pre_execute`` then
+    passed the unresolved reference to the module -- every credential-backed
+    step ran without its credential.
+    """
+
+    async def test_resolved_references_reach_the_module(self):
+        module_id = _register("test.record.echo_params_ref", _echo_params)
+        step = {"id": "s", "module": module_id, "params": {
+            "value": {"type": "secretRef", "credential_name": "api"},
+            "api_key": {"type": "secretRef", "credential_name": "api"},
+            "headers": {"Authorization": {"type": "secretRef", "credential_name": "tok"}},
+            "items": [{"type": "secretRef", "credential_name": "x"}],
+            "password": "literal-not-a-ref",
+            "url": "https://example.test",
+        }}
+        hooks = ResolvesReferences()
+        result, _ = await run(step, hooks=hooks)
+        got = result["got"]
+        assert got["value"] == "resolved:api"
+        assert got["api_key"] == "resolved:api"
+        assert got["headers"] == {"Authorization": "resolved:tok"}
+        assert got["items"] == ["resolved:x"]
+        # What the hook saw as [REDACTED] never overwrites the real value.
+        assert got["password"] == "literal-not-a-ref"
+        assert got["url"] == "https://example.test"
+
+    async def test_the_hook_sees_references_not_secrets(self):
+        module_id = _register("test.record.echo_params_ref", _echo_params)
+        hooks = ResolvesReferences()
+        step = {"id": "s", "module": module_id, "params": {
+            "api_key": {"type": "secretRef", "credential_name": "api"},
+            "password": SECRET,
+        }}
+        await run(step, hooks=hooks)
+        assert SECRET not in repr(hooks.seen)
+
+    async def test_a_hook_that_changes_nothing_changes_nothing(self):
+        module_id = _register("test.record.echo_params_ref", _echo_params)
+        step = {"id": "s", "module": module_id, "params": {"password": SECRET, "n": 1}}
+        result, _ = await run(step)
+        got = {k: v for k, v in result["got"].items() if not k.startswith("$")}
+        assert got == {"password": SECRET, "n": 1}
+        assert step["params"] == {"password": SECRET, "n": 1}
+
+
+class TestNameRuleCoversHeadersAndCamelCase:
+    @pytest.mark.parametrize("name", [
+        "Authorization", "Cookie", "accessToken", "refreshToken", "idToken",
+        "authToken", "clientSecret", "x-api-key",
+    ])
+    def test_credential_names(self, name):
+        assert is_sensitive_param_name(name)
+
+    @pytest.mark.parametrize("name", [
+        "maxTokens", "max_tokens", "credential_name", "secret_id", "api_key_ref",
+        "author", "session_id", "tokenizer",
+    ])
+    def test_labels_and_lookalikes_stay_visible(self, name):
+        assert not is_sensitive_param_name(name)
+
+    def test_a_header_value_is_redacted_for_hooks(self):
+        redacted = redact_step_params("http.request", {
+            "headers": {"Authorization": f"Bearer {SECRET}", "Accept": "json"},
+        })
+        assert redacted["headers"] == {"Authorization": "[REDACTED]", "Accept": "json"}
+
+    def test_a_list_under_a_credential_name_is_redacted(self):
+        assert redact_step_params("x.y", {"api_keys": [SECRET]})["api_keys"] == "[REDACTED]"
+
+
+class TestResourceSubNodeHooks:
+    """A resource sub-node (an ``ai.model`` carrying ``api_key``) reaches the
+    same hooks as a step; it used to hand them its raw params."""
+
+    async def test_sub_node_params_are_redacted_and_rewrites_kept(self):
+        from core.engine.workflow.engine import WorkflowEngine
+
+        module_id = _register("test.record.echo_params_ref", _echo_params)
+        hooks = ResolvesReferences()
+        engine = WorkflowEngine({"steps": []}, hooks=hooks)
+        engine._router._step_map = {"model": {"id": "model", "module": module_id, "params": {
+            "api_key": SECRET,
+            "token": {"type": "secretRef", "credential_name": "tok"},
+        }}}
+        engine._router._resource_edges = {"agent": {"model": ["model"]}}
+        await engine._execute_resource_sub_nodes("agent")
+
+        assert SECRET not in repr(hooks.seen)
+        got = engine.context["inputs"]["model"]["got"]
+        assert got["api_key"] == SECRET
+        assert got["token"] == "resolved:tok"

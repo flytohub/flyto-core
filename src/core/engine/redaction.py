@@ -162,7 +162,7 @@ SENSITIVE_PARAMS_KEY = '_sensitive_params'
 
 _SENSITIVE_PARAM_NAME = re.compile(
     r'(?i)(password|passwd|passphrase|passcode|pwd|secret|credential|'
-    r'private[_-]?key|api[_-]?key|access[_-]?key|bearer|'
+    r'private[_-]?key|api[_-]?key|access[_-]?key|bearer|authorization|cookie|'
     r'(?:^|[_-])sensitive[_-]|'
     r'(?:^|[_-])token(?:$|[_-]))',
 )
@@ -170,9 +170,28 @@ _SENSITIVE_PARAM_NAME = re.compile(
 _BARE_REFERENCE = re.compile(r'^\s*(?:\{\{[^{}]+\}\}|\$\{[^{}]+\})\s*$')
 
 
+#: A lower-to-upper case step, so camelCase names split like snake_case ones:
+#: ``accessToken`` is read as ``access_Token`` and ``maxTokens`` stays clear.
+_CAMEL_STEP = re.compile(r'(?<=[a-z0-9])(?=[A-Z])')
+
+#: A name that ends by saying what it is ABOUT a credential -- which one, what
+#: kind -- holds a label, not the secret: ``credential_name``, ``secret_id``,
+#: ``api_key_ref``, ``password_type``. A host's credential reference is built
+#: from exactly these, and its resolver must be able to read them.
+_NAMES_NOT_HOLDS = re.compile(r'(?i)[_-](name|id|ref|type|kind|label)$')
+
+
 def is_sensitive_param_name(name: Any) -> bool:
-    """True when a parameter's name alone marks its value as a credential."""
-    return bool(_SENSITIVE_PARAM_NAME.search(str(name)))
+    """True when a parameter's name alone marks its value as a credential.
+
+    ``accessToken``, ``refreshToken`` and an ``Authorization`` or ``Cookie``
+    header are credentials as much as ``access_token`` is; the token rule
+    needs a word boundary, which camelCase spells as a capital letter.
+    """
+    split = _CAMEL_STEP.sub('_', str(name))
+    if _NAMES_NOT_HOLDS.search(split):
+        return False
+    return bool(_SENSITIVE_PARAM_NAME.search(split))
 
 
 def _declared_sensitive(module_id: Any, params: dict) -> frozenset:
@@ -232,13 +251,27 @@ def redact_step_params(
     named = set(_declared_sensitive(module_id, params))
     named.update(str(name) for name in (extra or ()))
     return {
-        key: (
-            value if _keep_visible(value)
-            else _REDACT_TOKEN if (key in named or is_sensitive_param_name(key))
-            else _redact_nested_params(value, 1)
+        key: _redact_param_value(
+            value, key in named or is_sensitive_param_name(key), 1,
         )
         for key, value in params.items()
     }
+
+
+def _redact_param_value(value: Any, sensitive: bool, depth: int) -> Any:
+    """One parameter value, redacted when its name (or its module) says so.
+
+    A mapping under a sensitive name is walked, not blanked: a credential is a
+    scalar, and the mapping that sits where one is expected is a reference to
+    it -- a host's ``{"type": "secretRef", "credential_name": ...}`` that its
+    pre-execute hook resolves. Blanking it would leave that hook nothing to
+    resolve. Its own credential-named keys are still redacted by the walk.
+    """
+    if _keep_visible(value):
+        return value
+    if sensitive and not isinstance(value, dict):
+        return _REDACT_TOKEN
+    return _redact_nested_params(value, depth)
 
 
 def _redact_nested_params(data: Any, depth: int) -> Any:
@@ -246,13 +279,78 @@ def _redact_nested_params(data: Any, depth: int) -> Any:
         return data
     if isinstance(data, dict):
         return {
-            key: (
-                value if _keep_visible(value)
-                else _REDACT_TOKEN if is_sensitive_param_name(key)
-                else _redact_nested_params(value, depth + 1)
+            key: _redact_param_value(
+                value, is_sensitive_param_name(key), depth + 1,
             )
             for key, value in data.items()
         }
     if isinstance(data, list):
         return [_redact_nested_params(item, depth + 1) for item in data]
     return data
+
+
+# ---------------------------------------------------------------------------
+# Pre-execute hooks that rewrite parameters
+# ---------------------------------------------------------------------------
+#
+# A pre-execute hook may rewrite ``context.params`` in place -- that is how a
+# host resolves a credential reference into the value the module needs, and
+# it is documented on ``ExecutorHooks.on_pre_execute``. When hooks were handed
+# the live parameters that rewrite reached the module by aliasing. Hooks are
+# now handed a redacted copy, so the engine carries the hook's changes back
+# itself: exactly the leaves the hook changed, so a value the copy shows as
+# ``[REDACTED]`` never overwrites the real one.
+
+_UNSET = object()
+
+
+def snapshot_hook_params(params: Any) -> Any:
+    """A deep copy of hook params, taken before the hooks run."""
+    import copy
+
+    try:
+        return copy.deepcopy(params)
+    except Exception:  # noqa: BLE001 - an uncopyable value cannot be compared
+        return _UNSET
+
+
+def apply_hook_param_changes(live: Any, before: Any, after: Any) -> None:
+    """Write into ``live`` every change a hook made from ``before`` to ``after``.
+
+    ``before`` is the snapshot of the copy the hooks were given, ``after`` is
+    that copy once they returned (or whatever they assigned in its place).
+    """
+    if before is _UNSET or not isinstance(live, dict):
+        return
+    if not isinstance(after, dict) or not isinstance(before, dict):
+        return
+    _merge_changes(live, before, after, 0)
+
+
+def _merge_changes(live: dict, before: dict, after: dict, depth: int) -> None:
+    if depth > 12:
+        return
+    for key, new in after.items():
+        old = before.get(key, _UNSET)
+        if old is not _UNSET and type(old) is type(new) and old == new:
+            continue
+        current = live.get(key, _UNSET)
+        if isinstance(new, dict) and isinstance(old, dict) and isinstance(current, dict):
+            _merge_changes(current, old, new, depth + 1)
+        elif (
+            isinstance(new, list) and isinstance(old, list)
+            and isinstance(current, list)
+            and len(new) == len(old) == len(current)
+        ):
+            for index, (o, n) in enumerate(zip(old, new, strict=True)):
+                if type(o) is type(n) and o == n:
+                    continue
+                if isinstance(o, dict) and isinstance(n, dict) and isinstance(current[index], dict):
+                    _merge_changes(current[index], o, n, depth + 1)
+                else:
+                    current[index] = n
+        else:
+            live[key] = new
+    for key in before:
+        if key not in after:
+            live.pop(key, None)
