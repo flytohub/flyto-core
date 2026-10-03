@@ -43,6 +43,10 @@ from .modules import (  # noqa: E402 - bootstrap standalone source imports first
     add_modules_parser,
     run_modules_command,
 )
+from .pack import (  # noqa: E402 - bootstrap standalone source imports first
+    add_pack_parser,
+    run_pack_command,
+)
 from .params import merge_params  # noqa: E402 - bootstrap standalone source imports first
 from .plugin import (  # noqa: E402 - bootstrap standalone source imports first
     add_plugin_parser,
@@ -185,6 +189,7 @@ Examples:
     add_run_parser(subparsers)
     add_modules_parser(subparsers)
     add_plugin_parser(subparsers)
+    add_pack_parser(subparsers)
     add_serve_parser(subparsers)
     add_template_parser(subparsers)
 
@@ -231,7 +236,7 @@ Examples:
     # Legacy mode: rewrite `flyto workflow.yaml` → `flyto run workflow.yaml`
     # so argparse routes it through the run subparser correctly.
     if len(sys.argv) > 1 and sys.argv[1] not in (
-        'run', 'modules', 'plugin', 'serve', 'template',
+        'run', 'modules', 'plugin', 'pack', 'serve', 'template',
         'recipes', 'recipe', 'replay', 'learn', '-h', '--help'
     ) and (sys.argv[1].endswith('.yaml') or sys.argv[1].endswith('.yml')):
         sys.argv.insert(1, 'run')
@@ -256,6 +261,10 @@ Examples:
     # Handle 'plugin' command
     if args.command == 'plugin':
         sys.exit(run_plugin_command(args))
+
+    # Handle 'pack' command
+    if args.command == 'pack':
+        sys.exit(run_pack_command(args))
 
     # Handle 'recipes' command (list all)
     if args.command == 'recipes':

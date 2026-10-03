@@ -27,6 +27,9 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [YAML Workflow Specification](YAML_WORKFLOW_SPEC.md): workflow schema.
 - [DSL](DSL.md): expressions, data references, and control flow.
 - [Item Pipeline Specification](specs/ITEM_PIPELINE_SPEC.md): item semantics.
+- [Module Pack Manifest](specs/PACK_MANIFEST_SPEC.md): `flyto.pack.v1`, the
+  language-neutral registry row; out-of-process pack install with tree digest
+  and ed25519 publisher signature; `flyto pack` CLI.
 - [Plugin Manifest Specification](specs/PLUGIN_MANIFEST_SPEC.md): the implemented
   inert language-neutral manifest/adoption slice, its bounded existing-ID
   collision input, pre-canonicalization Unicode safety boundary, stable
@@ -75,7 +78,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 481 active runtime modules across 89 catalog categories.
-- 985 maintained Python files and 6,199 declarations.
+- 991 maintained Python files and 6,284 declarations.
 - 488 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.

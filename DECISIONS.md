@@ -1,5 +1,42 @@
 # Decisions
 
+## 2026-10-04 - A module pack is the registry row as JSON (`flyto.pack.v1`)
+
+Decision: define a new schema, `flyto.pack.v1`, rather than extend
+`flyto.plugin.v1`. A pack manifest is the `ModuleRegistry` row written as
+JSON — the `@register_module` keyword names, the decorator's defaults applied
+by the validator, a `flyto.capability-contract.v1` contract validated by the
+same `validate_contract` — plus the pack id, namespaces, runtime binding
+(`subprocess-jsonrpc`, `http`, `inprocess-python`) and a tree digest.
+Out-of-process packs install through `core.pack.host.install_pack`, which
+verifies the digest and an ed25519 publisher signature against a host-supplied
+key set (required by default, offline), then registers one `@register_module`
+row per module inside a `ModuleRegistry` load transaction owned by the pack id.
+Subprocess packs are registered with a `PluginManager` that is wired into the
+`RuntimeInvoker`. Python packs export their manifest with
+`flyto pack manifest`.
+
+Rationale: `flyto.plugin.v1` is an inert adoption contract whose parameter
+schema is a closed JSON-Schema subset and whose shape (required evidence and
+capability lists, artifact kind, support URL) describes adoption, not the
+registry. Mapping a decorator's parameter mapping into that subset and
+back is lossy (labels, placeholders, options, UI hints), so a decorator export
+could not round-trip and a Node row could not be compared with a Python row.
+Making the manifest the row itself means one validator, identical normalized
+JSON from any authoring language, and no translation layer to drift.
+Registering through the decorator and the registry transaction, instead of a
+side table, is what makes a foreign module appear in the catalog, the
+capability manifest and MCP with no special case, and puts it behind the same
+ownership stamping and per-plugin policy as a Python plugin. The signature
+covers the normalized manifest, which carries the artifact digest, so it
+attests to the code that runs and not only to the declaration; formatting
+does not invalidate it. The foreign process gets parameters and identifiers
+only, because the execution context holds secrets and host authority.
+
+Not decided here: an operating-system sandbox, a pack registry or key
+distribution, and flyto-cloud calling `install_pack` (its worker still
+discovers `plugin.yaml` plugins only).
+
 ## 2026-10-04 - A capability pack runs with flyto-core alone, under contract policy
 
 Decision: Core ships a generic capability host (`core.capability_host`,

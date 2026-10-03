@@ -343,6 +343,13 @@ class ModuleRegistry:
     # answers a different question — which modules the plugin still provides —
     # and an id the plugin only deleted must not count as one it provides.
     _pass_touched: Optional[Set[str]] = None
+    # Packs installed from a ``flyto.pack.v1`` manifest rather than a
+    # ``flyto.modules`` entry point (see ``install_external_pack``), keyed by
+    # pack id. Each value quacks like an entry point — ``name``, ``value``,
+    # ``load()`` — so discovery loads it through exactly the same transactional
+    # path, with the same ownership stamping, and a forced rediscovery keeps
+    # it instead of forgetting it as uninstalled.
+    _external_packs: Dict[str, Any] = {}
     # Set by clear(), consumed by the next discovery pass. Replay is a repair
     # for a cleared registry, so the condition has to be "clear() happened", not
     # "the registry is empty": a registry emptied deliberately, by unregistering
@@ -1128,7 +1135,7 @@ class ModuleRegistry:
         cls._discovering = True
         cls._discovery_thread = threading.get_ident()
         try:
-            eps = _iter_entry_points()
+            eps = _iter_entry_points() + list(cls._external_packs.values())
 
             # Whether this pass follows a clear(), which is the cycle the
             # contribution record exists to rebuild. Read by _load_plugin, so it
@@ -1179,8 +1186,10 @@ class ModuleRegistry:
         return cls._plugins.copy()
 
     @classmethod
-    def _load_plugin(cls, ep: Any) -> None:
+    def _load_plugin(cls, ep: Any) -> bool:
         """Load one entry point, or leave it exactly as it was.
+
+        Returns True when the load completed and False when it was rolled back.
 
         Failure is the interesting case. A plugin that raises halfway through
         ``register_all`` has published a set of modules it never meant to
@@ -1263,23 +1272,31 @@ class ModuleRegistry:
                     # would be replayed back into existence by the next clear().
                     cls._plugin_contributions[name] = cls._capture(owned)
 
-            try:
-                pkg_version = get_version(value.split(':')[0].split('.')[0])
-            except Exception:
-                pkg_version = "unknown"
+            # A pack installed from a manifest states its own version and
+            # description; an entry point's come from its distribution.
+            pkg_version = getattr(ep, "pack_version", None)
+            if not isinstance(pkg_version, str) or not pkg_version:
+                try:
+                    pkg_version = get_version(value.split(':')[0].split('.')[0])
+                except Exception:
+                    pkg_version = "unknown"
+            description = getattr(ep, "pack_description", None)
+            if not isinstance(description, str):
+                description = _pack_description(register_func)
 
             cls._plugins[name] = PluginInfo(
                 name=name,
                 version=pkg_version,
                 module_count=len(owned),
                 entry_point=value,
-                description=_pack_description(register_func),
+                description=description.strip(),
             )
             cls._bump_generation()
 
             logger.info(
                 f"Plugin loaded: {name} ({len(owned)} modules, v{pkg_version})"
             )
+            return True
 
         except Exception as e:
             cls._loading_plugin = ""
@@ -1310,6 +1327,69 @@ class ModuleRegistry:
             cls._plugins.update(prior_plugins)
             cls._bump_generation()
             logger.error(f"Failed to load plugin {name}: {e}")
+            return False
+
+    @classmethod
+    def install_external_pack(cls, ep: Any) -> PluginInfo:
+        """Load a pack that did not arrive through a ``flyto.modules`` entry point.
+
+        ``ep`` is entry-point shaped (``name``, ``value``, ``load()`` returning
+        a ``register_all`` callable, optional ``pack_version`` and
+        ``pack_description``). It is loaded by ``_load_plugin`` — the same
+        transaction an installed Python package goes through — so its modules
+        are stamped with ``name`` as their owner, a failing ``register_all`` is
+        rolled back exactly, and it is remembered for every later discovery
+        pass. Installing the same name again replaces the earlier load.
+
+        Refuses a name an installed entry point already uses: two owners with
+        one name would merge their policy grants.
+
+        Raises ``ValueError`` when the name collides or the load was rolled
+        back; the registry is then exactly as it was.
+        """
+        name = getattr(ep, "name", "") or ""
+        if not name:
+            raise ValueError("an external pack needs a name")
+        with cls._discovery_lock:
+            cls._ensure_discovered()
+            if name in {getattr(e, "name", "") for e in _iter_entry_points()}:
+                raise ValueError(
+                    f"pack id '{name}' is already used by an installed flyto.modules entry point"
+                )
+            previous = cls._external_packs.get(name)
+            cls._external_packs[name] = ep
+            cls._discovering = True
+            cls._discovery_thread = threading.get_ident()
+            try:
+                loaded = cls._load_plugin(ep)
+            finally:
+                cls._loading_plugin = ""
+                cls._discovering = False
+                cls._discovery_thread = None
+            if not loaded:
+                if previous is None:
+                    cls._external_packs.pop(name, None)
+                else:
+                    cls._external_packs[name] = previous
+                raise ValueError(f"pack '{name}' failed to register; the registry is unchanged")
+            return cls._plugins[name]
+
+    @classmethod
+    def uninstall_external_pack(cls, name: str) -> List[str]:
+        """Remove a pack installed by ``install_external_pack``.
+
+        Returns the module ids that were removed. Unknown names remove nothing.
+        """
+        with cls._discovery_lock:
+            if cls._external_packs.pop(name, None) is None:
+                return []
+            removed = cls._owned_by(name)
+            for module_id in removed:
+                cls.unregister(module_id)
+            cls._plugins.pop(name, None)
+            cls._plugin_contributions.pop(name, None)
+            cls._bump_generation()
+            return sorted(removed)
 
     @classmethod
     def _forget_uninstalled_plugins(cls, present: Any) -> None:
