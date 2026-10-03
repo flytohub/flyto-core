@@ -59,8 +59,8 @@ is the registry row itself. The out-of-process runtime had a never-called
   `flyto pack manifest flyto_modules_robotics:register_all --pack-id robotics
   --version 1.0.0`: 7 modules, 7 contracts, validates.
 - Clean venv (`pip install -e '.[dev,browser]'`, Python 3.12) full
-  `pytest -m 'not browser and not e2e'`: 5169 passed, 174 skipped, 0 failed,
-  coverage 67.81%.
+  `pytest -m 'not browser and not e2e'` (rebased on 2.36.1, 46d3e27): 5223 passed, 174 skipped, 0 failed,
+  coverage 68.22%.
 - `python -m build` + `twine check`: PASSED; wheel contains `core/pack/*`,
   `cli/pack.py`.
 - `check_documentation` (after `generate_reference`), `check_brand_identity`,
