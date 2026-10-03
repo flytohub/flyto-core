@@ -1,5 +1,16 @@
 # Flyto2 Core State
 
+## Pre-execute hook rewrites and label ranking, 2.37.1 (2026-10-04)
+
+Pre-execute hooks again change what the module receives: hooks see the
+redacted copy, and the engine writes back exactly the leaves they changed
+(2.36.1 dropped them, so Cloud's credential resolver passed unresolved
+references to modules). Resource sub-node hooks get redacted params too. The
+param name rule covers `Authorization`, `Cookie` and camelCase tokens, and
+leaves `*_name`/`*_id`/`*_ref` labels visible. `browser.type` 1.2.1 ranks every
+label association on the page in one list (exact, then visible, then kind).
+Not tagged or released.
+
 ## Language-neutral module packs, 2.37.0 candidate (2026-10-04)
 
 `flyto.pack.v1` (`core.pack`): a pack manifest is the registry row
@@ -452,7 +463,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 991 maintained Python files, 6,292
+- Source-backed documentation now covers 991 maintained Python files, 6,296
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

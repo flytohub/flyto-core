@@ -24,6 +24,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A second provider with an identical contract is still allowed.
 - Concurrent `install_pack` calls for one pack id install it once.
 
+## [2.37.1] - 2026-10-04
+
+### Fixed
+
+- Pre-execute hooks that rewrite `context.params` reach the module again.
+  2.36.1 (and 2.37.0) handed hooks a redacted copy and discarded what they changed, so a
+  host that resolves credential references in `on_pre_execute` (Cloud's
+  `secretRef` / `${secrets.NAME}` resolver) passed the unresolved reference to
+  the module. The engine now writes back exactly the leaves a hook changed; a
+  value the copy showed as `[REDACTED]` never overwrites the real one. A
+  mapping under a credential name (a reference object) is walked instead of
+  blanked, so the hook can still read it.
+- Resource sub-nodes (an `ai.model` carrying `api_key`) hand hooks redacted
+  params, with the same write-back.
+- The step-param name rule redacts `Authorization` and `Cookie` headers and
+  camelCase tokens (`accessToken`, `refreshToken`, `idToken`), and leaves
+  labels about a credential visible (`credential_name`, `secret_id`,
+  `api_key_ref`), which a reference resolver must read.
+- `browser.type` 1.2.1, `type_method: label`: every field the label text
+  names -- wrapping label, `label[for]`, `aria-labelledby`, `aria-label` -- is
+  ranked on the page in one list: exact text first, visible before hidden.
+  2.36.1 still tried a wrapping label's partial match first, so "Password"
+  filled a "Show password" checkbox or a "Confirm password" field, and a
+  partial `label[for]` ("Password hint") beat an exact `aria-label`. The
+  structural fallbacks only pick fields that accept text.
+
 ## [2.37.0] - 2026-10-04
 
 ### Added

@@ -65,14 +65,26 @@ _TYPEABLE = (
     ' [contenteditable=""], [contenteditable="true"], [role=textbox]'
 )
 
-#: Finds the fields a visible label names through an explicit association --
-#: ``<label for=id>`` or ``aria-labelledby`` -- which the structural selectors
-#: (label containing the input, label followed by it) cannot see: a label and
-#: its input in different containers is the ordinary markup of most form
-#: frameworks. Text matching mirrors Playwright's ``:has-text``: whitespace
-#: collapsed, case-insensitive, substring; exact matches are ranked first.
-#: Returns attribute values only. The selector is built in Python, with
-#: escaping, from those values.
+#: An ``<input>`` that accepts text: the structural fallbacks must not pick a
+#: checkbox ("Show password") or a button sitting next to the label.
+_TYPEABLE_INPUT = (
+    'input:not([type=hidden]):not([type=button]):not([type=submit])'
+    ':not([type=reset]):not([type=checkbox]):not([type=radio])'
+    ':not([type=image]):not([type=file])'
+)
+
+#: Ranks every typeable field a label text names, whatever the markup: a
+#: ``<label>`` wrapping it or pointing at it with ``for`` (``label.control``),
+#: ``aria-labelledby``, and ``aria-label``. Ranked as one list -- exact text
+#: before partial, visible before hidden, then label, labelledby, aria-label,
+#: then document order -- so "Password" never lands in "Confirm password", a
+#: "Show password" checkbox, or a "Password hint" text box ahead of the field
+#: actually labelled "Password". Text matching mirrors Playwright's
+#: ``:has-text``: whitespace collapsed, case-insensitive, substring. A label's
+#: own text excludes the controls inside it (a ``<select>``'s options).
+#: Returns ``{attr, value}`` for the first of id, aria-labelledby, name or
+#: aria-label that is unique on the page, else a structural ``path``
+#: (tag names and ``:nth-of-type`` only); the selector is built in Python.
 _ASSOCIATED_FIELDS_JS = """
 ([target, typeable]) => {
   const norm = (s) => (s || '').replace(/\\s+/g, ' ').trim().toLowerCase();
@@ -83,26 +95,65 @@ _ASSOCIATED_FIELDS_JS = """
     return t === want ? 0 : (t.includes(want) ? 1 : 2);
   };
   const textOf = (el) => (el ? (el.innerText || el.textContent || '') : '');
-  const found = [];
-  for (const label of document.querySelectorAll('label[for]')) {
-    const r = rank(textOf(label));
-    const field = r < 2 ? document.getElementById(label.htmlFor) : null;
-    if (field && field.matches(typeable)) {
-      found.push({kind: 'label_for', attr: 'id', value: field.id, rank: r});
+  const labelText = (label) => {
+    const copy = label.cloneNode(true);
+    copy.querySelectorAll('input, textarea, select, button').forEach((c) => c.remove());
+    return copy.textContent || '';
+  };
+  const visible = (el) => {
+    if (typeof el.checkVisibility === 'function') {
+      return el.checkVisibility({visibilityProperty: true});
     }
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  };
+  const best = new Map();
+  const add = (field, text, kind) => {
+    if (!field || !field.matches || !field.matches(typeable)) return;
+    const r = rank(text);
+    if (r > 1) return;
+    const prev = best.get(field);
+    if (!prev || r < prev.rank || (r === prev.rank && kind < prev.kind)) {
+      best.set(field, {rank: r, kind});
+    }
+  };
+  for (const label of document.querySelectorAll('label')) {
+    const field = label.control
+      || (label.htmlFor ? document.getElementById(label.htmlFor) : null);
+    add(field, labelText(label), 0);
   }
   for (const field of document.querySelectorAll('[aria-labelledby]')) {
-    if (!field.matches(typeable)) continue;
     const ids = (field.getAttribute('aria-labelledby') || '').split(/\\s+/).filter(Boolean);
-    const text = ids.map((id) => textOf(document.getElementById(id))).join(' ');
-    const r = rank(text);
-    if (r < 2) {
-      found.push({kind: 'aria_labelledby', attr: 'aria-labelledby',
-                  value: field.getAttribute('aria-labelledby'), rank: r});
-    }
+    add(field, ids.map((id) => textOf(document.getElementById(id))).join(' '), 1);
   }
-  found.sort((a, b) => a.rank - b.rank);
-  return found;
+  for (const field of document.querySelectorAll('[aria-label]')) {
+    add(field, field.getAttribute('aria-label'), 2);
+  }
+  const pathOf = (el) => {
+    const parts = [];
+    for (let node = el; node && node.nodeType === 1; node = node.parentElement) {
+      const tag = node.tagName.toLowerCase();
+      let nth = 1;
+      for (let sib = node.previousElementSibling; sib; sib = sib.previousElementSibling) {
+        if (sib.tagName === node.tagName) nth += 1;
+      }
+      parts.unshift(node.parentElement ? `${tag}:nth-of-type(${nth})` : tag);
+    }
+    return parts.join(' > ');
+  };
+  const entries = [...best.entries()].map(([el, info]) => ({el, ...info, shown: visible(el)}));
+  entries.sort((a, b) => (a.rank - b.rank)
+    || ((b.shown ? 1 : 0) - (a.shown ? 1 : 0))
+    || (a.kind - b.kind)
+    || ((a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1));
+  const unique = (attr, value) => [...document.querySelectorAll(`[${attr}]`)]
+    .filter((n) => n.getAttribute(attr) === value).length === 1;
+  return entries.map(({el}) => {
+    for (const attr of ['id', 'aria-labelledby', 'name', 'aria-label']) {
+      const value = el.getAttribute(attr);
+      if (value && unique(attr, value)) return {attr, value};
+    }
+    return {path: pathOf(el)};
+  });
 }
 """
 
@@ -113,11 +164,16 @@ def _css_attr_selector(attr: str, value: str) -> str:
     return f'[{attr}="{escaped}"]'
 
 
+_UNIQUE_ATTRS = frozenset({'id', 'name', 'aria-labelledby', 'aria-label'})
+
+_STRUCTURAL_PATH = re.compile(r'^[a-z][a-z0-9-]*(?::nth-of-type\(\d+\))?(?: > [a-z][a-z0-9-]*:nth-of-type\(\d+\))*$')
+
+
 async def _associated_label_selectors(page, target: str) -> List[str]:
-    """Selectors for fields the label text names via ``for`` / ``aria-labelledby``.
+    """Selectors for the fields a label text names, best match first.
 
     Best effort: a page that refuses evaluation yields nothing here and the
-    structural selectors are still tried.
+    static selectors are still tried.
     """
     try:
         found = await page.evaluate(_ASSOCIATED_FIELDS_JS, [target, _TYPEABLE])
@@ -125,9 +181,14 @@ async def _associated_label_selectors(page, target: str) -> List[str]:
         return []
     selectors: List[str] = []
     for item in found or []:
-        if not isinstance(item, dict) or not item.get('value'):
+        if not isinstance(item, dict):
             continue
-        selector = _css_attr_selector(str(item.get('attr')), str(item['value']))
+        if item.get('attr') in _UNIQUE_ATTRS and item.get('value'):
+            selector = _css_attr_selector(str(item['attr']), str(item['value']))
+        elif isinstance(item.get('path'), str) and _STRUCTURAL_PATH.match(item['path']):
+            selector = f"css={item['path']}"
+        else:
+            continue
         if selector not in selectors:
             selectors.append(selector)
     return selectors
@@ -290,7 +351,7 @@ def _type_outcome(
 @register_module(
     module_id='browser.type',
     postcondition=POSTCONDITION,
-    version='1.2.0',
+    version='1.2.1',
     category='browser',
     tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],
     label='Type Text',
@@ -490,18 +551,20 @@ class BrowserTypeModule(BaseModule):
         elif method == 'label':
             if not target:
                 raise ValueError("Label text is required")
-            # Tried in order during execute(), explicit associations first:
-            # 1. a label wrapping the input
-            # 2. label[for=id] -> #id, and aria-labelledby (resolved on the
-            #    page, inserted here by execute())
-            # 3. aria-label on the field itself
-            # 4. structural guesses: the input right after / after the label
+            # Tried in order during execute():
+            # 1. every field the label text names -- a wrapping label,
+            #    label[for], aria-labelledby, aria-label -- ranked on the page
+            #    (exact before partial, visible before hidden) and inserted
+            #    here by execute()
+            # 2. static fallbacks when the page cannot be evaluated or names
+            #    nothing: aria-label, then the structural guesses, which only
+            #    ever pick a field that accepts text
             self._label_selectors = [
-                f'label:has-text("{escaped}") >> input',
                 f'input[aria-label="{escaped}"]',
                 f'textarea[aria-label="{escaped}"]',
-                f'label:has-text("{escaped}") + input',
-                f'label:has-text("{escaped}") ~ input',
+                f'label:has-text("{escaped}") >> {_TYPEABLE_INPUT}',
+                f'label:has-text("{escaped}") + {_TYPEABLE_INPUT}',
+                f'label:has-text("{escaped}") ~ {_TYPEABLE_INPUT}',
             ]
             self.selector = self._label_selectors[0]  # default, may be overridden in execute
         else:  # placeholder (default)
@@ -525,16 +588,14 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Label method: try multiple selector strategies (label>>input, label+input, aria-label)
+        # Label method: the page ranks what the label names; static fallbacks after
         if hasattr(self, '_label_selectors'):
             page = browser.page
             found = False
             associated = await _associated_label_selectors(
                 page, self.params.get('target', '').strip(),
             )
-            candidates = (
-                self._label_selectors[:1] + associated + self._label_selectors[1:]
-            )
+            candidates = associated + self._label_selectors
             for sel in candidates:
                 try:
                     count = await page.locator(sel).count()
@@ -547,7 +608,7 @@ class BrowserTypeModule(BaseModule):
             if not found:
                 raise RuntimeError(
                     f"Could not find input field with label \"{self.params.get('target')}\". "
-                    f"Tried: label>>input, label[for], aria-labelledby, aria-label, "
+                    f"Tried: label (wrapping or label[for]), aria-labelledby, aria-label, "
                     f"label+input, label~input"
                 )
 
