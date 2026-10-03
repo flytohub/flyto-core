@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.34.0] - 2026-10-03
+
 ### Changed
 
 - Browser modules settle on page state instead of fixed sleeps. Every wait
