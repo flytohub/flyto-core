@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `install_pack` runs a `subprocess-jsonrpc` pack from a host-private copy of
+  its attested files, made in the same pass that computes the tree digest.
+  Before, the digest and signature were checked against the source directory
+  but the process was spawned lazily from that same directory, so a file
+  changed after install ran unverified.
+- A pack can no longer declare a namespace another owner holds (a registered
+  module in it, or another external pack that declared it), so it cannot
+  publish `capability.*` beside `capability.invoke` or add steps to another
+  vendor's namespace.
+- A pack can no longer declare a capability another owner already provides
+  with a different contract (or none). That made the capability host resolve
+  the capability as ambiguous and refuse it, including a `role: safe_stop`.
+  A second provider with an identical contract is still allowed.
+- Concurrent `install_pack` calls for one pack id install it once.
+
 ## [2.37.1] - 2026-10-04
 
 ### Fixed

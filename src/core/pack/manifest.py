@@ -60,6 +60,7 @@ __all__ = [
     "manifest_sha256",
     "read_pack_manifest",
     "pack_tree_digest",
+    "stage_pack_tree",
 ]
 
 PACK_SCHEMA = "flyto.pack.v1"
@@ -500,22 +501,19 @@ def _reject_duplicates(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
     return result
 
 
-def pack_tree_digest(pack_dir: os.PathLike[str] | str) -> str:
-    """``sha256:<hex>`` over every file in the pack except its manifest and signature.
+def _iter_pack_files(root: Path):
+    """Yield ``(posix relative path, bytes, mode)`` for every attested file.
 
-    The digest is SHA-256 over sorted lines ``<posix relative path> NUL <file
-    sha256 hex> NUL <size> LF``. A symlink anywhere in the tree, a special
-    file, or a tree beyond the file/byte bounds fails closed: the thing
-    attested must be exactly the set of regular files that will run.
+    The manifest and signature are skipped. A symlink anywhere in the tree, a
+    special file, or a tree beyond the file/byte bounds fails closed.
     """
-    root = Path(pack_dir)
     try:
         root_info = os.lstat(root)
     except OSError:
         _fail("PACK_UNREADABLE", "pack directory is missing or unreadable")
     if not stat.S_ISDIR(root_info.st_mode):
         _fail("PACK_UNREADABLE", "pack path must be a real directory")
-    entries: List[Tuple[str, str, int]] = []
+    count = 0
     total = 0
     for current, dirnames, filenames in os.walk(root, followlinks=False):
         for name in list(dirnames):
@@ -531,12 +529,61 @@ def pack_tree_digest(pack_dir: os.PathLike[str] | str) -> str:
                 _fail("PACK_SYMLINK", "pack contains a symbolic link")
             if not stat.S_ISREG(info.st_mode):
                 _fail("PACK_INVALID", "pack contains a special file")
-            if len(entries) >= MAX_TREE_FILES:
+            if count >= MAX_TREE_FILES:
                 _fail("PACK_TOO_LARGE", "pack exceeds the file count limit")
             data = _read_regular_file(full, MAX_TREE_BYTES - total)
+            count += 1
             total += len(data)
-            entries.append((rel, hashlib.sha256(data).hexdigest(), len(data)))
+            yield rel, data, info.st_mode
+
+
+def _digest_of(entries: List[Tuple[str, str, int]]) -> str:
     hasher = hashlib.sha256()
     for rel, digest, size in sorted(entries):
         hasher.update(f"{rel}\x00{digest}\x00{size}\n".encode("utf-8"))
     return "sha256:" + hasher.hexdigest()
+
+
+def pack_tree_digest(pack_dir: os.PathLike[str] | str) -> str:
+    """``sha256:<hex>`` over every file in the pack except its manifest and signature.
+
+    The digest is SHA-256 over sorted lines ``<posix relative path> NUL <file
+    sha256 hex> NUL <size> LF``. A symlink anywhere in the tree, a special
+    file, or a tree beyond the file/byte bounds fails closed: the thing
+    attested must be exactly the set of regular files that will run.
+    """
+    return _digest_of(
+        [(rel, hashlib.sha256(data).hexdigest(), len(data)) for rel, data, _ in _iter_pack_files(Path(pack_dir))]
+    )
+
+
+def stage_pack_tree(pack_dir: os.PathLike[str] | str, dest: os.PathLike[str] | str) -> str:
+    """Copy the attested files into ``dest`` and return the digest of the copy.
+
+    Each file is read once; the bytes written are the bytes hashed. A host
+    that runs the pack from ``dest`` therefore runs exactly what the returned
+    digest names, however the source directory changes afterwards — closing
+    the gap between "the digest and signature were checked" and "the process
+    was started", which for a lazily spawned pack can be hours.
+
+    ``dest`` must be an existing, empty, host-private directory. Directories
+    are created owner-only; files are written owner read-only, keeping the
+    owner execute bit when the source had one (a native entry needs it).
+    """
+    target_root = Path(dest)
+    entries: List[Tuple[str, str, int]] = []
+    for rel, data, mode in _iter_pack_files(Path(pack_dir)):
+        target = target_root.joinpath(*rel.split("/"))
+        target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
+        fd = os.open(target, flags, 0o600)
+        try:
+            view = memoryview(data)
+            while view:
+                written = os.write(fd, view)
+                view = view[written:]
+        finally:
+            os.close(fd)
+        os.chmod(target, 0o500 if mode & stat.S_IXUSR else 0o400)
+        entries.append((rel, hashlib.sha256(data).hexdigest(), len(data)))
+    return _digest_of(entries)

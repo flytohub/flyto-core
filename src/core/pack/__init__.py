@@ -20,6 +20,7 @@ from .manifest import (
     manifest_sha256,
     pack_tree_digest,
     read_pack_manifest,
+    stage_pack_tree,
     validate_pack_manifest,
 )
 
@@ -31,6 +32,7 @@ __all__ = [
     "canonical_bytes",
     "manifest_sha256",
     "pack_tree_digest",
+    "stage_pack_tree",
     "read_pack_manifest",
     "validate_pack_manifest",
 ]

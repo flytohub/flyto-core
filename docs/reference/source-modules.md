@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **991 Python files**, **237,074 lines**, and **6,288 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **991 Python files**, **237,235 lines**, and **6,296 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -946,10 +946,10 @@ Inventory: **991 Python files**, **237,074 lines**, and **6,288 class/function/m
 | [`src/core/modules/types/visibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/types/visibility.py#L1) | 96 | 1 | `enums, typing` | UI Visibility Configuration |
 | [`src/core/modules/validation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validation.py#L1) | 831 | 35 | `constants, dataclasses, re, typing` | Module Validation Utilities |
 | [`src/core/modules/validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1) | 1132 | 31 | `ast, dataclasses, inspect, logging, re, registry, typing` | Unified Module Validator - Comprehensive validation for module registration |
-| [`src/core/pack/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/__init__.py#L1) | 36 | 0 | `manifest` | Language-neutral module packs — ``flyto.pack.v1``. |
+| [`src/core/pack/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/__init__.py#L1) | 38 | 0 | `manifest` | Language-neutral module packs — ``flyto.pack.v1``. |
 | [`src/core/pack/export.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/export.py#L1) | 165 | 7 | `__future__, copy, importlib, manifest, modules, typing` | Export a Python pack's ``@register_module`` rows as a ``flyto.pack.v1`` manifest. |
-| [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 554 | 35 | `__future__, asyncio, dataclasses, datetime, json, logging, manifest, modules, os, pathlib, plugin, runtime` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
-| [`src/core/pack/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/manifest.py#L1) | 542 | 21 | `__future__, capability_contract, copy, hashlib, json, os, pathlib, plugin, re, stat, typing, unicodedata` | Module pack manifest — ``flyto.pack.v1``. |
+| [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 666 | 40 | `__future__, asyncio, dataclasses, datetime, json, logging, manifest, modules, os, pathlib, plugin, runtime` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
+| [`src/core/pack/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/manifest.py#L1) | 589 | 24 | `__future__, capability_contract, copy, hashlib, json, os, pathlib, plugin, re, stat, typing, unicodedata` | Module pack manifest — ``flyto.pack.v1``. |
 | [`src/core/pack/signature.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/signature.py#L1) | 196 | 8 | `__future__, base64, binascii, cryptography, json, manifest, os, pathlib, re, typing` | Publisher signatures for ``flyto.pack.v1`` — ed25519, offline. |
 | [`src/core/plugin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/__init__.py#L1) | 46 | 0 | `manifest` | Flyto2 Plugin System |
 | [`src/core/plugin/loader.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/loader.py#L1) | 1152 | 42 | `core, dataclasses, datetime, importlib, json, logging, manifest, os, pathlib, re, subprocess, sys` | Extension (Plugin) Loader |

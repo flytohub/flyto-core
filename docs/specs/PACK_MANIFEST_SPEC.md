@@ -178,12 +178,36 @@ provenance = install_pack(
 ```
 
 Order: read and normalize the manifest → refuse a non-loadable binding →
-`min_host` → recompute and compare the tree digest → verify the signature →
-register the runtime → register the modules in one `ModuleRegistry`
-transaction owned by `pack.id` (any failure, including a module id another
-owner already holds, rolls the whole pack back) → wire the invoker → record
-provenance. Every refusal raises `PackManifestError` and leaves the registry,
-the plugin manager and the installed set unchanged.
+`min_host` → verify the signature → refuse an id already installed → copy the
+attested files into a host-private directory (`subprocess-jsonrpc` only) and
+compare the digest of that copy with `artifact.digest` (`http` packs digest
+the source in place) → register the runtime against the copy → register the
+modules in one `ModuleRegistry` transaction owned by `pack.id` → wire the
+invoker → record provenance. Every refusal raises `PackManifestError` and
+leaves the registry, the plugin manager, the installed set and the staging
+area unchanged. Installs are serialized; two concurrent installs of one id
+install it once.
+
+A subprocess pack's process is spawned lazily, on its first call, and is
+respawned after a crash. It always runs from the private copy, whose bytes are
+the bytes the digest was computed over, so editing or replacing the source
+directory after install cannot change the code that runs. `uninstall_pack`
+removes the copy.
+
+The registry transaction refuses, and rolls the whole pack back, when:
+
+- a module id is already held by another owner (flyto-core, a Python pack, or
+  another external pack);
+- a declared namespace is already held by another owner — any registered
+  module in it whose owner is not this pack, or another installed external
+  pack that declared it. The static reserved list cannot name every namespace
+  flyto-core ships (`capability`, `vision`, ...) nor any Python pack's, so this
+  is checked against the live registry;
+- a module declares a `provides_capability` that another owner already
+  provides with a different contract, or with none. The capability host fails
+  closed when providers disagree, so a differing declaration would turn an
+  existing `role: safe_stop` capability into a refused call. A second provider
+  whose contract is identical is allowed.
 
 The provenance record (`flyto.pack-provenance.v1`) holds the pack id and
 version, binding, normalized-manifest SHA-256, artifact digest, signature key
