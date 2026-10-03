@@ -395,8 +395,12 @@ def _form_outcome(
             type='number',
             label='Delay Between Fields (ms)',
             label_key='modules.browser.form.params.delay_between_fields_ms.label',
-            description='Delay between filling each field (for more human-like behavior)',
-            default=100,
+            description=(
+                'Optional pause between filling fields, for sites that throttle '
+                'input. 0 (default) fills each field as soon as the previous one '
+                'is confirmed.'
+            ),
+            default=0,
             min=0,
             max=5000,
             group=FieldGroup.ADVANCED,
@@ -478,7 +482,7 @@ class BrowserFormModule(BaseModule):
         self.clear_before_fill = self.params.get('clear_before_fill', True)
         self.submit = self.params.get('submit', False)
         self.submit_selector = self.params.get('submit_selector')
-        self.delay_between_fields_ms = self.params.get('delay_between_fields_ms', 100)
+        self.delay_between_fields_ms = self.params.get('delay_between_fields_ms', 0)
 
         if not isinstance(self.data, dict):
             raise ValueError("data must be an object")
@@ -497,7 +501,8 @@ class BrowserFormModule(BaseModule):
         failed_fields = []
         measurements: List[Dict[str, Any]] = []
 
-        for field_name, value in self.data.items():
+        field_count = len(self.data)
+        for position, (field_name, value) in enumerate(self.data.items(), start=1):
             try:
                 # Get selector for this field
                 selector = self._get_field_selector(field_name)
@@ -538,8 +543,8 @@ class BrowserFormModule(BaseModule):
                     'value': value if not self._is_sensitive(field_name) else '***'
                 })
 
-                # Delay between fields
-                if self.delay_between_fields_ms > 0:
+                # Opt-in throttle between fields; nothing follows the last one.
+                if self.delay_between_fields_ms > 0 and position < field_count:
                     await asyncio.sleep(self.delay_between_fields_ms / 1000)
 
             except Exception as e:

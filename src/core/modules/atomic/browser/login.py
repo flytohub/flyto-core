@@ -64,15 +64,33 @@ The last URL-only case is INDETERMINATE rather than FAILED because a
 single-page-application login changes no URL at all, and marking every correct
 SPA login red would be the same defect in the other direction.
 """
+import asyncio
 import logging
+from contextlib import suppress
 from typing import Any, Dict, List, Optional
 
 from ....engine.outcome import ClaimBy, Outcome, envelope
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field
+from ._settle import RequestTracker, first_state, settle_requests_and_document
 
 logger = logging.getLogger(__name__)
+
+# The inputs an MFA step renders. Mirrors the strict input list of the MFA
+# scan below, so the wait and the scan agree on what an MFA prompt is.
+_MFA_INPUT_SELECTOR = (
+    'input[name*="otp" i], input[name*="2fa" i], input[name*="mfa" i], '
+    'input[name*="totp" i], input[autocomplete="one-time-code"], '
+    'input[inputmode="numeric"][maxlength="6"], input[inputmode="numeric"][maxlength="4"]'
+)
+
+# Where sites report a rejected login. Only an error that was not visible
+# before the submit counts as the page's answer.
+_LOGIN_ERROR_SELECTOR = (
+    '[role="alert"], .error, .error-message, .alert-danger, .alert-error, '
+    '.invalid-feedback, .form-error, .login-error'
+)
 
 _LOGIN_JS = r"""
 async (options) => {
@@ -156,6 +174,164 @@ async def _evaluate_success_indicator(page, indicator: str, url: str) -> Optiona
         return await page.query_selector(indicator) is not None
     except Exception:  # noqa: BLE001 - any failure means "cannot ask"
         return None
+
+
+async def _visible_count(page, selector: str) -> Optional[int]:
+    try:
+        return await page.locator(selector).filter(visible=True).count()
+    except Exception:  # noqa: BLE001 - an unreadable page simply has no baseline
+        return None
+
+
+async def _await_login_answer(
+    page,
+    *,
+    url_before: str,
+    indicator: str,
+    indicator_pending: bool,
+    password_selector: str,
+    errors_visible_before: Optional[int],
+    mfa_visible_before: Optional[int],
+    mfa_pending: bool,
+    cap_ms: int,
+    requests: Optional[RequestTracker] = None,
+) -> Optional[str]:
+    """Wait for the first page state that answers a login attempt.
+
+    The page answers by satisfying the caller's ``success_indicator``, by
+    navigating, by dropping the password field, by rendering an MFA prompt
+    (or, once MFA is pending, clearing it), or by showing an error. ``cap_ms``
+    only bounds a page that does none of these; nothing here waits for the
+    network to go idle, which some pages never do.
+
+    A pending indicator (declared, readable, not yet holding) is the caller's
+    definition of success, so a bare URL change or a vanished password field
+    does not end the wait on its own: an intermediate SSO hop moves the URL
+    long before the indicator renders. Without one, those are the answer.
+
+    ``requests`` holds the fetch/XHR calls the submit started. They are the
+    login's own work: a single-page app hides its form the moment it posts,
+    so the answer is only read once they have finished and the page has
+    gone quiet. Without an indicator, those requests finishing with the DOM
+    quiet afterwards is itself an answer, so a rejected login whose error
+    text no selector recognises is read then rather than at ``cap_ms``.
+    """
+    waits = {}
+    if indicator_pending:
+        if _indicator_is_a_url_pattern(indicator):
+            waits['indicator'] = page.wait_for_url(
+                lambda url: indicator in url, wait_until='commit', timeout=cap_ms,
+            )
+        else:
+            waits['indicator'] = page.wait_for_selector(
+                indicator, state='attached', timeout=cap_ms,
+            )
+    else:
+        waits['url_changed'] = page.wait_for_url(
+            lambda url: url != url_before, wait_until='commit', timeout=cap_ms,
+        )
+        if not mfa_pending:
+            waits['password_gone'] = page.locator(
+                password_selector or 'input[type="password"]'
+            ).first.wait_for(state='hidden', timeout=cap_ms)
+    mfa_inputs = page.locator(_MFA_INPUT_SELECTOR)
+    if mfa_pending:
+        waits['mfa_cleared'] = mfa_inputs.first.wait_for(state='hidden', timeout=cap_ms)
+    elif mfa_visible_before == 0:
+        waits['mfa_prompt'] = mfa_inputs.filter(visible=True).first.wait_for(
+            state='attached', timeout=cap_ms,
+        )
+    if requests is not None and not indicator_pending:
+        waits['requests_settled'] = _requests_answered(page, requests, cap_ms=cap_ms)
+    # An error or MFA input already on screen is not the page's answer.
+    if errors_visible_before == 0:
+        waits['error_shown'] = page.locator(_LOGIN_ERROR_SELECTOR).filter(
+            visible=True,
+        ).first.wait_for(state='attached', timeout=cap_ms)
+
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+    answer = await first_state(waits, timeout_ms=cap_ms)
+    remaining_ms = (deadline - loop.time()) * 1000
+    if answer in _ANSWERS_THAT_LEAVE_THE_PAGE_RENDERING and remaining_ms > 0:
+        await _settle_answered_page(
+            page, cap_ms=remaining_ms, watch_mfa=not mfa_pending, requests=requests,
+        )
+    elif remaining_ms > 0:
+        # A navigation that answered has committed; let its document parse
+        # before anything is read from it. Reading a half-loaded page is
+        # still a reading; never fail over it.
+        with suppress(Exception):
+            await page.wait_for_load_state('domcontentloaded', timeout=remaining_ms)
+    return answer
+
+
+# A URL that moved or a password field that went away says the page answered,
+# not what it answered with. The document that replaced the form may still be
+# hopping (a JS SSO redirect) or rendering (an MFA prompt drawn after load).
+_ANSWERS_THAT_LEAVE_THE_PAGE_RENDERING = frozenset({'url_changed', 'password_gone', 'mfa_cleared'})
+
+# The quiet window that ends the settle of an answered page. It matches the
+# 500 ms networkidle used to imply, so a prompt a page draws from a timer
+# shortly after load is still seen; it only elapses on a page whose DOM has
+# stopped changing, and a rendered MFA prompt ends the settle at once.
+_ANSWER_QUIET_MS = 500
+
+
+async def _requests_answered(page, requests: RequestTracker, *, cap_ms: float) -> str:
+    """Resolve once the submit's requests have all finished and the DOM went quiet.
+
+    Never resolves for a submit that started no request: a page that does
+    nothing observable has not answered.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+    await asyncio.wait_for(requests.wait_started(), timeout=cap_ms / 1000)
+    return await settle_requests_and_document(
+        page, requests, quiet_ms=_ANSWER_QUIET_MS,
+        cap_ms=max(1.0, (deadline - loop.time()) * 1000),
+    )
+
+
+async def _settle_answered_page(
+    page,
+    *,
+    cap_ms: float,
+    watch_mfa: bool,
+    requests: Optional[RequestTracker] = None,
+) -> Optional[str]:
+    """Let the page a login answer landed on finish arriving before it is read.
+
+    Ends when the submit's requests have finished and that document has
+    loaded and gone quiet, or the moment an MFA prompt is visible on it. A
+    further navigation (a JS redirect hop, or the route an SPA pushes once its
+    API answered) restarts the wait on the next document. ``cap_ms`` bounds
+    the whole chain.
+    """
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + cap_ms / 1000
+    while True:
+        remaining_ms = (deadline - loop.time()) * 1000
+        if remaining_ms <= 0:
+            return None
+        current_url = page.url
+        waits = {
+            'quiet': settle_requests_and_document(
+                page, requests, quiet_ms=_ANSWER_QUIET_MS, cap_ms=remaining_ms,
+            ),
+            'navigated': page.wait_for_url(
+                lambda url, origin=current_url: url != origin,
+                wait_until='commit',
+                timeout=remaining_ms,
+            ),
+        }
+        if watch_mfa:
+            waits['mfa_prompt'] = page.locator(_MFA_INPUT_SELECTOR).filter(
+                visible=True,
+            ).first.wait_for(state='attached', timeout=remaining_ms)
+        settled = await first_state(waits, timeout_ms=remaining_ms)
+        if settled != 'navigated':
+            return settled
 
 
 def _mfa_unresolved_outcome(*, url_changed: bool) -> Dict[str, Any]:
@@ -469,26 +645,48 @@ class BrowserLoginModule(BaseModule):
         else:
             await page.fill('input[type="password"]', self.password)
 
+        # Baselines for the error and MFA signals: what is already on screen
+        # is not the page's answer to this submit.
+        errors_visible_before = await _visible_count(page, _LOGIN_ERROR_SELECTOR)
+        mfa_visible_before = await _visible_count(page, _MFA_INPUT_SELECTOR)
+
         # Step 3: Submit
         submit_sel = self.submit_selector
         if not submit_sel and detection['submit_found']:
             # Use auto-detected submit
             submit_sel = 'button[type="submit"], input[type="submit"], form button'
 
-        if submit_sel:
-            try:
-                await page.click(submit_sel, timeout=5000)
-            except Exception:
-                # Fallback: press Enter
-                await page.press('input[type="password"]', 'Enter')
-        else:
-            await page.press('input[type="password"]', 'Enter')
-
-        # Step 4: Wait for navigation
+        # The submit's own fetch/XHR calls, read from network events so a
+        # client that captured fetch at load is seen too.
+        requests = RequestTracker(getattr(browser, 'real_page', None) or page).attach()
         try:
-            await page.wait_for_load_state('networkidle', timeout=self.wait_ms)
-        except Exception:
-            await page.wait_for_timeout(min(self.wait_ms, 3000))
+            if submit_sel:
+                try:
+                    await page.click(submit_sel, timeout=5000)
+                except Exception:
+                    # Fallback: press Enter
+                    await page.press('input[type="password"]', 'Enter')
+            else:
+                await page.press('input[type="password"]', 'Enter')
+
+            # Step 4: Wait for the page to answer the submit. wait_ms is only
+            # the upper bound for a page that never answers.
+            answer = await _await_login_answer(
+                page,
+                url_before=url_before,
+                indicator=self.success_indicator,
+                # Already holding or unreadable: it cannot signal this submit.
+                indicator_pending=bool(self.success_indicator) and indicator_before is False,
+                password_selector=pass_sel,
+                errors_visible_before=errors_visible_before,
+                mfa_visible_before=mfa_visible_before,
+                mfa_pending=False,
+                cap_ms=self.wait_ms,
+                requests=requests,
+            )
+        finally:
+            requests.detach()
+        logger.debug("Login answered by %s", answer or 'nothing within wait_ms')
 
         # Step 5: Detect MFA / 2FA prompt
         url_after = page.url
@@ -518,7 +716,7 @@ class BrowserLoginModule(BaseModule):
             logger.info("MFA/2FA prompt detected, requesting user interaction")
             # Fall back to breakpoint so user can complete MFA manually
             try:
-                from ....engine.breakpoints import get_breakpoint_manager, ApprovalMode
+                from ....engine.breakpoints import ApprovalMode, get_breakpoint_manager
                 manager = get_breakpoint_manager()
 
                 screenshot_b64 = ''
@@ -563,11 +761,22 @@ class BrowserLoginModule(BaseModule):
                         ),
                     }
 
-                # After user completed MFA, wait for navigation
-                try:
-                    await page.wait_for_load_state('networkidle', timeout=5000)
-                except Exception:
-                    pass
+                # After the user completed MFA, wait for the page to answer:
+                # the same race as the submit, with the prompt clearing as
+                # one more answer. 5 s stays the upper bound.
+                await _await_login_answer(
+                    page,
+                    url_before=url_after,
+                    indicator=self.success_indicator,
+                    indicator_pending=bool(self.success_indicator),
+                    password_selector=pass_sel,
+                    errors_visible_before=await _visible_count(
+                        page, _LOGIN_ERROR_SELECTOR
+                    ),
+                    mfa_visible_before=None,
+                    mfa_pending=True,
+                    cap_ms=5000,
+                )
                 url_after = page.url
                 # Recomputed: `url_changed` was measured before the MFA
                 # breakpoint, and the navigation that MFA completion causes

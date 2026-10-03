@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.34.0] - 2026-10-03
+
+### Changed
+
+- Browser modules settle on page state instead of fixed sleeps. Every wait
+  keeps its previous upper bound and now ends as soon as the page reports the
+  state it was waiting for.
+  - `browser.click` no longer pauses a fixed 300/500 ms after every click. An
+    in-place click waits only while the DOM is still changing, while a short
+    timer the click started is outstanding, or while a fetch/XHR it started is
+    in flight (read from Playwright network events, so clients that captured
+    `fetch` at load are seen and nothing in the page is replaced), and returns
+    at once when none of that happened, so an onclick that navigates from a
+    timer or routes after a response is reported on its result; a navigation waits for its own commit and
+    `domcontentloaded`, then for any interactive element or a still, loaded
+    page. A click whose markup declares a new tab but navigates the same tab
+    ends on that navigation instead of waiting out 2 s. Button/link resolution
+    and URL outcomes use auto-waiting locators and `wait_for_url` instead of
+    100 ms / 50 ms polls.
+  - `browser.login` waits for the page's answer — the success indicator, a URL
+    change, the password field going away, an MFA prompt or an error message —
+    instead of `networkidle` plus a fixed 3 s fallback; `wait_ms` is only the
+    cap. A submit that changes nothing now waits the full `wait_ms`. After a
+    URL change or a vanished password field it follows JS redirect hops and
+    waits for the landed page to load and go quiet for 500 ms (or for an MFA
+    input to appear) before checking for MFA, so a prompt drawn after load
+    still reaches the human approval step. Fetch/XHR calls the submit starts
+    are part of the answer: an SPA that hides its form while its API runs is
+    read after the API answered, and without a success indicator those
+    requests finishing with the DOM quiet afterwards ends the wait, so a
+    rejection worded in a way no error selector knows returns then.
+  - `browser.select` waits for the custom dropdown to close, or (by label) for
+    the trigger to show the chosen label (capped at 1 s);
+    `browser.interact` clicks the option when it is visible.
+  - `browser.form`: `delay_between_fields_ms` defaults to 0 and never pauses
+    after the last field.
+  - `browser.detect` re-runs on a strategy's element appearing or a batch of
+    DOM mutations (at most one wake per 250 ms on a page that never stops
+    mutating) instead of every 500 ms; `browser.dialog` (including `listen`)
+    returns on the dialog event.
+  - A duration-only `browser.wait` still sleeps, but logs a warning and returns
+    `advice`; `validate_workflow` reports it as a `DURATION_ONLY_WAIT` warning.
+
 ## [2.33.0] - 2026-09-30
 
 ### Security
