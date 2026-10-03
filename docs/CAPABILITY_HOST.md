@@ -76,7 +76,11 @@ minimum, a speed limit) belong to the adapter that owns the equipment.
    that names the capability, resource and arguments. With no terminal and no
    flag, the call is refused. The stop never waits for a prompt.
 5. **Deadline.** `expected_duration_ms` from the contract, else the module's
-   `timeout_ms`, else 60 s; clamped to 1 s .. 1 h.
+   `timeout_ms`, else 60 s; clamped to 1 s .. 1 h. The adapter should honour
+   it, and the host enforces it as well: a call that has not returned 5 s
+   after its deadline is recorded as `timeout` with `"host_watchdog": true`
+   and safe-stopped (the adapter thread is abandoned, not killed). Calls on
+   one host run one at a time; `emergency_stop()` never waits for them.
 6. **Observation.** The phases are the union of the contract's evidence
    `phases`. `before` is observed before the call. After a completed call, or
    an actuating call that ended `timeout`, `failed` or `cancelled`, `after` is
@@ -84,7 +88,8 @@ minimum, a speed limit) belong to the adapter that owns the equipment.
    is the adapter phase `post_stop`; the adapter API keeps that name because
    released hosts call it.
 7. **Safe stop.** A `timeout` or `failed` outcome (including an adapter that
-   raises, or returns an unknown outcome) is followed by `cancel(call_id)` and
+   raises, returns an unknown outcome, or hangs past its deadline, and an
+   actuating call failed for returning no declared artifact) is followed by `cancel(call_id)` and
    `safe_stop()`, and the record says what each returned.
 8. **Pass-through.** The adapter's outcome, detail and evidence are recorded
    verbatim. A refusal stays a refusal, and the host never rewrites arguments,

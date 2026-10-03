@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Capability host: the deadline is enforced by the host as well as the
+  adapter. An adapter call that has not returned 5 s after its deadline is
+  recorded as `timeout` and followed by `cancel` and `safe_stop`, so a hung
+  adapter cannot leave a resource actuating. Calls on one host are
+  serialized (emergency stop is not), and an actuating call that fails for
+  returning no declared artifact is safe-stopped like any other failure.
+
 ## [2.36.0] - 2026-10-04
 
 ### Added
