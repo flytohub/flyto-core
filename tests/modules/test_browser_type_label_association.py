@@ -118,12 +118,12 @@ class TestLabelAssociation:
                 page_ctx,
             )
 
-    async def test_a_wrapping_label_still_resolves_first(self, page_ctx):
+    async def test_a_wrapping_label_still_resolves(self, page_ctx):
         result = await run_type(
             {"type_method": "label", "target": "Wrapped", "text": "w"},
             page_ctx,
         )
-        assert result["selector"] == 'label:has-text("Wrapped") >> input'
+        assert result["selector"] == '[id="wrapped"]'
         page = page_ctx["browser"].real_page
         assert await page.input_value("#wrapped") == "w"
 
@@ -185,3 +185,66 @@ class TestStaticSensitivity:
     ])
     def test_ordinary_fields_do_not(self, params):
         assert ModuleRegistry.get("browser.type").sensitive_params(params) == frozenset()
+
+
+AMBIGUOUS_PAGES = {
+    # A "Show password" checkbox wrapped in its label used to win: the
+    # wrapping-label selector ran first and filled a checkbox.
+    "show_password_checkbox": """
+      <label for="pw">Password</label><div><input id="pw" type="password"></div>
+      <label><input id="show" type="checkbox"> Show password</label>""",
+    # A wrapping "Confirm password" label ahead of the real field took the
+    # password: partial text matched before the exact label[for] one.
+    "wrapped_confirm_first": """
+      <label>Confirm password <input id="c" type="password"></label>
+      <label for="pw">Password</label><div><input id="pw" type="password"></div>""",
+    # A partial label[for] match ("Password hint", a plain text box) ranked
+    # above the exact aria-label: the password landed in a visible field.
+    "aria_exact_beats_partial_for": """
+      <label for="h">Password hint</label><input id="h" type="text">
+      <input id="pw" aria-label="Password" type="password">""",
+    # The same form twice, the first copy hidden (mobile/desktop variants).
+    "hidden_duplicate_first": """
+      <div style="display:none"><label for="pw-m">Password</label><input id="pw-m" type="password"></div>
+      <label for="pw">Password</label><input id="pw" type="password">""",
+    # A wrapping label with no id or name on the field: a structural path.
+    "wrapped_without_attributes": """
+      <div><label>Hint <input type="text"></label></div>
+      <div><label>Password <input type="password"></label></div>""",
+}
+
+
+@pytest.fixture
+async def driver():
+    drv = await _launch_driver()
+    try:
+        yield drv
+    finally:
+        with contextlib.suppress(Exception):
+            await drv.close()
+
+
+class TestTheExactVisibleFieldWins:
+    @pytest.mark.parametrize("name", sorted(AMBIGUOUS_PAGES))
+    async def test_password_lands_in_the_field_labelled_password(self, driver, name):
+        page = driver.real_page
+        await page.set_content(f"<!doctype html><html><body>{AMBIGUOUS_PAGES[name]}</body></html>")
+        await run_type(
+            {"type_method": "label", "target": "Password", "text": "hunter2-not-real"},
+            {"browser": driver},
+        )
+        values = await page.evaluate(
+            "() => [...document.querySelectorAll('input')].map((e) =>"
+            " [e.closest('label') ? e.closest('label').textContent.trim() : (e.id || ''),"
+            "  e.type === 'checkbox' ? String(e.checked) : e.value])"
+        )
+        typed = [label for label, value in values if value == "hunter2-not-real"]
+        assert len(typed) == 1, values
+        target = await page.evaluate(
+            "() => { const e = [...document.querySelectorAll('input')]"
+            ".find((n) => n.value === 'hunter2-not-real');"
+            " return [e.type, e.id, e.closest('label') ? e.closest('label').textContent.trim() : '',"
+            " e.getAttribute('aria-label') || ''] }"
+        )
+        assert target[0] == "password"
+        assert target[1] in ("pw", "") and (target[1] == "pw" or target[2] == "Password")

@@ -34,7 +34,12 @@ from ..outcome import (
     rung_index,
 )
 from ..hooks import ExecutorHooks, HookAction
-from ..redaction import redact_step_params, runtime_sensitive_params
+from ..redaction import (
+    apply_hook_param_changes,
+    redact_step_params,
+    runtime_sensitive_params,
+    snapshot_hook_params,
+)
 from .context_builder import create_step_context
 from .foreach import execute_foreach_step
 from .retry import execute_with_retry
@@ -583,7 +588,15 @@ class StepExecutor:
         pre_context = self._create_step_context(
             step_config, step_index, context, step_start_time=step_start_time
         )
+        # Hooks see a redacted copy; what they rewrite in it (a host resolving
+        # a credential reference) still has to reach the module.
+        params_before_hooks = snapshot_hook_params(pre_context.params)
         pre_result = self._hooks.on_pre_execute(pre_context)
+        live_params = step_config.get('params')
+        if isinstance(live_params, dict):
+            apply_hook_param_changes(
+                live_params, params_before_hooks, pre_context.params,
+            )
 
         if pre_result.action == HookAction.SKIP:
             logger.info(f"Skipping step '{step_id}' (hook requested skip)")

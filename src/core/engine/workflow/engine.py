@@ -29,6 +29,11 @@ from ..flow_control import (
     normalize_step_settings_list,
 )
 from ..hooks import ExecutorHooks, HookAction, HookContext, NullHooks
+from ..redaction import (
+    apply_hook_param_changes,
+    redact_step_params,
+    snapshot_hook_params,
+)
 from ..step_executor import StepExecutor, create_step_executor
 from ..trace import ExecutionTrace, TraceCollector
 from ..variable_resolver import VariableResolver, strip_runtime_opaque
@@ -653,13 +658,20 @@ class WorkflowEngine:
                     continue
 
                 # Notify hooks that sub-node is starting (for execution state tracking)
+                # Redacted like any step's params (an ai.model sub-node
+                # carries `api_key`); hook rewrites still reach the module.
+                live_sub_params = source_step.get('params', {})
                 sub_hook_ctx = HookContext(
                     workflow_id=self.context.get('workflow_id', ''),
                     step_id=source_id,
                     module_id=sub_module_id,
-                    params=source_step.get('params', {}),
+                    params=redact_step_params(sub_module_id, live_sub_params),
                 )
+                sub_params_before = snapshot_hook_params(sub_hook_ctx.params)
                 self._hooks.on_pre_execute(sub_hook_ctx)
+                apply_hook_param_changes(
+                    live_sub_params, sub_params_before, sub_hook_ctx.params,
+                )
 
                 try:
                     sub_params = source_step.get('params', {})
