@@ -26,7 +26,10 @@ context under ``_flyto_runtime_external_capability_dispatcher`` (the key
   contract phase ``settled`` is the adapter phase ``post_stop`` (the adapter
   API keeps its name because released hosts call it);
 * a call that ends ``timeout`` or ``failed`` is followed by ``cancel`` and the
-  adapter's ``safe_stop``;
+  adapter's ``safe_stop``. The deadline is enforced by the host too: an
+  adapter call that has not returned by the deadline plus a short grace is
+  recorded as ``timeout`` and safe-stopped, so a hung adapter cannot keep a
+  resource moving. Calls on one host run one at a time;
 * the adapter's outcome, detail and evidence are recorded verbatim. A refusal
   stays a refusal: the host never rewrites arguments, so an adapter's
   refuse-never-clamp bounds (a clearance floor, a speed limit) pass through
@@ -103,6 +106,9 @@ _ADAPTER_PHASE = {"before": "before", "after": "after", "settled": "post_stop"}
 _DEFAULT_DEADLINE_SECONDS = 60.0
 _MIN_DEADLINE_SECONDS = 1.0
 _MAX_DEADLINE_SECONDS = 3600.0
+# How long past its deadline an adapter call may run before the host's own
+# watchdog declares it timed out and safe-stops the resource.
+_DEFAULT_DEADLINE_GRACE_SECONDS = 5.0
 _MAX_ALLOW = 64
 _MAX_ID = 128
 _DETAIL_MAX = 500
@@ -309,6 +315,7 @@ class CapabilityHost:
         run_id: Optional[str] = None,
         settle_seconds: float = 1.0,
         default_deadline_seconds: float = _DEFAULT_DEADLINE_SECONDS,
+        deadline_grace_seconds: float = _DEFAULT_DEADLINE_GRACE_SECONDS,
         artifact_dir: Optional[Path] = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
@@ -326,11 +333,14 @@ class CapabilityHost:
         self.run_id = str(run_id or f"run-{time.time_ns()}")
         self._settle_seconds = max(0.0, float(settle_seconds))
         self._default_deadline = float(default_deadline_seconds)
+        self._deadline_grace = max(0.0, float(deadline_grace_seconds))
         self._artifact_dir = Path(artifact_dir) if artifact_dir is not None else None
         self._sleep = sleep
         self._adapter: Any = None
         self._ordinal = 0
         self._lock = threading.Lock()
+        # One commanded resource, one call at a time. stop_now() never takes it.
+        self._call_lock = threading.Lock()
         self._records: List[Dict[str, Any]] = []
 
     # -- injection --------------------------------------------------------
@@ -521,7 +531,8 @@ class CapabilityHost:
             "started_at": time.time(),
         }
         try:
-            self._run_call(record, resource_id, capability_id, arguments, call_id)
+            with self._call_lock:
+                self._run_call(record, resource_id, capability_id, arguments, call_id)
         finally:
             record["finished_at"] = time.time()
             with self._lock:
@@ -559,18 +570,16 @@ class CapabilityHost:
         if "before" in phases:
             bundles["before"] = self._observe(adapter, "before", call_id)
 
-        try:
-            result = adapter.invoke(
-                CallRequest(
-                    call_id=call_id,
-                    capability_id=capability_id,
-                    arguments=dict(arguments),
-                    deadline_seconds=deadline,
-                )
-            )
-            outcome, detail, evidence = _outcome_of(result)
-        except Exception as error:  # noqa: BLE001 - an adapter crash is a failed call
-            outcome, detail, evidence = OUTCOME_FAILED, f"adapter raised {type(error).__name__}", {}
+        outcome, detail, evidence = self._invoke_with_watchdog(
+            adapter,
+            CallRequest(
+                call_id=call_id,
+                capability_id=capability_id,
+                arguments=dict(arguments),
+                deadline_seconds=deadline,
+            ),
+            record,
+        )
         record["outcome"] = outcome
         record["detail"] = detail
         # Verbatim: the host adds nothing to, and removes nothing from, what
@@ -590,6 +599,11 @@ class CapabilityHost:
             if not kept:
                 record["outcome"] = OUTCOME_FAILED
                 record["detail"] = "the adapter returned no artifact the contract declares"
+                if facts.get("actuates"):
+                    # A failed actuating call is always followed by a safe stop.
+                    safety = self._safety_stop(adapter, call_id)
+                    record["safety_recovery"] = safety
+                    record["detail"] += "; " + safety
                 return
 
         # Observe after a completed call, and after an actuating call that
@@ -612,6 +626,37 @@ class CapabilityHost:
             "verified": all(item["usable"] for item in verdicts) if verdicts else None,
             "verdicts": verdicts,
         }
+
+    def _invoke_with_watchdog(
+        self, adapter: Any, request: CallRequest, record: Dict[str, Any]
+    ) -> Tuple[str, str, Dict[str, Any]]:
+        """Run ``adapter.invoke`` and hold it to the deadline from the host side.
+
+        The adapter is expected to honour ``request.deadline_seconds`` itself.
+        If it has not returned by then plus the grace period, the call is
+        recorded as ``timeout`` (the caller then cancels and safe-stops it);
+        the abandoned adapter thread is left to finish on its own.
+        """
+        box: Dict[str, Any] = {}
+
+        def run() -> None:
+            try:
+                box["result"] = _outcome_of(adapter.invoke(request))
+            except Exception as error:  # noqa: BLE001 - an adapter crash is a failed call
+                box["result"] = (OUTCOME_FAILED, f"adapter raised {type(error).__name__}", {})
+
+        worker = threading.Thread(target=run, name=f"capability-call-{request.call_id}", daemon=True)
+        worker.start()
+        worker.join(request.deadline_seconds + self._deadline_grace)
+        if "result" in box:
+            return box["result"]
+        record["host_watchdog"] = True
+        return (
+            OUTCOME_TIMEOUT,
+            f"adapter did not return within {request.deadline_seconds:g} s "
+            f"(+{self._deadline_grace:g} s grace)",
+            {},
+        )
 
     async def invoke(self, request: Mapping[str, Any]) -> Dict[str, Any]:
         """Dispatch one ``{resource_id, capability_id, arguments}`` request."""

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **985 Python files**, **234,613 lines**, and **6,184 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **985 Python files**, **234,658 lines**, and **6,186 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -102,7 +102,7 @@ Inventory: **985 Python files**, **234,613 lines**, and **6,184 class/function/m
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
 | [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 614 | 17 | `__future__, json, math, re, typing` | Capability contract — ``flyto.capability-contract.v1``. |
 | [`src/core/capability_host/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/__init__.py#L1) | 42 | 0 | `host` | Generic capability host: run an installed capability pack with flyto-core alone. |
-| [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 643 | 32 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
+| [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 688 | 34 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
 | [`src/core/capability_manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L1) | 430 | 6 | `__future__, copy, core, hashlib, json, threading, typing` | Capability Manifest — ``flyto.core.capability-manifest.v1`` |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |

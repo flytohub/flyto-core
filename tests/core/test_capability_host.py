@@ -357,6 +357,77 @@ def test_an_adapter_crash_is_a_failure_followed_by_safe_stop():
     assert ("safe_stop",) in adapter.calls
 
 
+def test_a_hung_adapter_is_timed_out_by_the_host_and_safe_stopped():
+    import threading
+    import time as _time
+
+    release = threading.Event()
+    adapter = FakeAdapter(RESOURCE)
+
+    def hang(request):
+        adapter.requests.append(request)
+        release.wait(10)
+        return Result(request.call_id, "completed")
+
+    adapter.invoke = hang
+    hung_advance = dict(ADVANCE)
+    hung_advance.pop("expected_duration_ms")
+    CONTRACTS["thing.hung"] = (hung_advance, 1_000, "declared")
+    try:
+        host, _ = make_host(adapter, allow=["thing.hung"], deadline_grace_seconds=0.2)
+        started = _time.monotonic()
+        record = call(host, "thing.hung", {"distance_m": 0.5})
+        elapsed = _time.monotonic() - started
+    finally:
+        release.set()
+        del CONTRACTS["thing.hung"]
+    assert elapsed < 5
+    assert record["outcome"] == "timeout" and record["host_watchdog"] is True
+    assert record["safety_recovery"] == "cancel=cancelled, safe_stop=completed"
+    assert ("safe_stop",) in adapter.calls
+
+
+def test_calls_on_one_host_run_one_at_a_time():
+    import threading
+    import time as _time
+
+    adapter = FakeAdapter(RESOURCE)
+    active = {"now": 0, "peak": 0}
+    guard = threading.Lock()
+
+    def slow(request):
+        with guard:
+            active["now"] += 1
+            active["peak"] = max(active["peak"], active["now"])
+        _time.sleep(0.05)
+        with guard:
+            active["now"] -= 1
+        return Result(request.call_id, "completed")
+
+    adapter.invoke = slow
+    host, _ = make_host(adapter)
+
+    async def both():
+        request = {"resource_id": RESOURCE, "capability_id": "thing.read", "arguments": {}}
+        return await asyncio.gather(host.invoke(request), host.invoke(request))
+
+    records = asyncio.run(both())
+    assert [r["outcome"] for r in records] == ["completed", "completed"]
+    assert active["peak"] == 1
+
+
+def test_an_actuating_call_failed_for_missing_artifacts_is_safe_stopped():
+    capture_moving = dict(CAPTURE, actuates=True, safety_class="movement", requires_safe_stop=True)
+    CONTRACTS["thing.sweep"] = (capture_moving, None, "declared")
+    try:
+        host, adapter = make_host(FakeAdapter(RESOURCE, evidence={}), allow=["thing.sweep"])
+        record = call(host, "thing.sweep")
+    finally:
+        del CONTRACTS["thing.sweep"]
+    assert record["outcome"] == "failed"
+    assert record["safety_recovery"] == "cancel=cancelled, safe_stop=completed"
+
+
 def test_an_unknown_outcome_is_a_failure():
     host, adapter = make_host(FakeAdapter(RESOURCE, outcome="ok"))
     record = call(host, "thing.read")
