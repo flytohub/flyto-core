@@ -134,13 +134,23 @@ def get_module_detail(module_id: str) -> Optional[Dict[str, Any]]:
         'examples': meta.get('examples', []),
 
         # Execution hints
-        'timeout': meta.get('timeout'),
+        # The registry stores `timeout_ms` (resolve_timeout_ms); `timeout`
+        # used to read a key no row has and was always None. Both are kept:
+        # `timeout` in seconds for existing readers, `timeout_ms` exact.
+        'timeout': (
+            meta['timeout_ms'] / 1000
+            if isinstance(meta.get('timeout_ms'), (int, float)) else None
+        ),
+        'timeout_ms': meta.get('timeout_ms'),
         'retryable': meta.get('retryable', False),
         'requires_credentials': meta.get('requires_credentials', False),
 
         # Same projection search uses, so search and detail cannot disagree.
         **_registry_identity(meta),
         'semantics': _registry_semantics(meta),
+        # The declared capability contract (flyto.capability-contract.v1), or
+        # None when the module declares none.
+        'contract': meta.get('contract'),
     }
 
 

@@ -8,6 +8,7 @@ Constructs the full metadata dictionary for module registration.
 
 from typing import Any, Dict, List, Optional
 
+from ...capability_contract import validate_contract
 from ..types import (
     ExecutionEnvironment,
     ModuleLevel,
@@ -91,6 +92,12 @@ def build_module_metadata(
     # every test helper that constructs metadata directly.
     postcondition: Optional[str] = None,
     derives: bool = False,
+
+    # Capability contract (core/capability_contract.py). Defaulted and last for
+    # the same reason as the fields above. Stored only when declared, in its
+    # validated, normalized form, so a module without one has exactly the
+    # metadata shape it had before contracts existed.
+    contract: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build the full metadata dict for a module registration."""
     resolved_visibility = resolved["visibility"]
@@ -198,6 +205,11 @@ def build_module_metadata(
                 }
             }
             if semantics is not None
+            else {}
+        ),
+        **(
+            {"contract": validate_contract(contract, params_schema)}
+            if contract is not None
             else {}
         ),
         "permissions": permissions or [],

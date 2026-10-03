@@ -1,5 +1,16 @@
 # Flyto2 Core State
 
+## Capability contract, 2.35.0 candidate (2026-10-04)
+
+`register_module` accepts `contract=` (`flyto.capability-contract.v1`), validated
+at registration by the decorator and `ModuleRegistry.register`; an invalid
+contract in a plugin rolls the plugin back. Contracts reach catalog detail and,
+only when at least one is declared, the capability manifest's `contracts` key.
+`core.capability_contract.judge` is the reference evidence arithmetic, specified
+in `docs/CAPABILITY_CONTRACT.md`. No first-party module declares a contract yet;
+flyto-modules-robotics and flyto-cloud are the intended consumers. Not tagged or
+released.
+
 ## 2.33.0 security release (2026-09-30)
 
 Six reported advisories are fixed in 2.33.0: GHSA-hc4c-6x9g-5fq3 (Teredo and
@@ -403,7 +414,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 981 maintained Python files, 6,129
+- Source-backed documentation now covers 982 maintained Python files, 6,143
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

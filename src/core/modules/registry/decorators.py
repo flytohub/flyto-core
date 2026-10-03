@@ -13,6 +13,7 @@ import inspect
 import re
 from typing import Any, Dict, List, Optional
 
+from ...capability_contract import validate_contract
 from ..base import BaseModule
 from ..types import (
     ExecutionEnvironment,
@@ -46,6 +47,8 @@ def _validate_module_registration(
     can_connect_to: Optional[List[str]],
     params_schema: Optional[Dict[str, Any]] = None,
     semantics: Optional[Dict[str, Any]] = None,
+    contract: Optional[Dict[str, Any]] = None,
+    provides_capability: Optional[str] = None,
 ) -> None:
     """
     Validate module registration at import time.
@@ -92,6 +95,14 @@ def _validate_module_registration(
                 total += len(values)
             if total > 48:
                 errors.append("semantics contains more than 48 identifiers")
+
+    if contract is not None:
+        if not (provides_capability or "").strip():
+            errors.append("'contract' requires 'provides_capability' - a contract describes a capability")
+        try:
+            validate_contract(contract, params_schema)
+        except ValueError as exc:
+            errors.append(f"invalid capability contract: {exc}")
 
     if errors:
         error_msg = f"Module '{module_id}' registration failed (import-time validation):\n"
@@ -274,6 +285,12 @@ def register_module(
 
     # UI Display Tier
     tier: Optional[ModuleTier] = None,
+
+    # Capability contract (core/capability_contract.py, docs/CAPABILITY_CONTRACT.md):
+    # what this capability does to the world, declared as data a host enforces
+    # without provider-specific code. Requires `provides_capability`. Last in
+    # the signature so no existing positional call can shift.
+    contract: Optional[Dict[str, Any]] = None,
 ):
     """
     Module registration decorator.
@@ -331,6 +348,8 @@ def register_module(
             can_connect_to=can_connect_to,
             params_schema=params_schema,
             semantics=semantics,
+            contract=contract,
+            provides_capability=provides_capability,
         )
 
         # Build metadata
@@ -393,6 +412,7 @@ def register_module(
             license_str=license,
             required_tier=required_tier,
             required_feature=required_feature,
+            contract=contract,
         )
 
         # Quality Validation (P0 - hard fail on errors)
