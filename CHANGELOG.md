@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Browser modules settle on page state instead of fixed sleeps. Every wait
+  keeps its previous upper bound and now ends as soon as the page reports the
+  state it was waiting for.
+  - `browser.click` no longer pauses a fixed 300/500 ms after every click. An
+    in-place click waits only while the DOM is still changing (and returns at
+    once when nothing changed); a navigation waits for its own commit and
+    `domcontentloaded`, then for any interactive element or a still, loaded
+    page. A click whose markup declares a new tab but navigates the same tab
+    ends on that navigation instead of waiting out 2 s. Button/link resolution
+    and URL outcomes use auto-waiting locators and `wait_for_url` instead of
+    100 ms / 50 ms polls.
+  - `browser.login` waits for the page's answer — the success indicator, a URL
+    change, the password field going away, an MFA prompt or an error message —
+    instead of `networkidle` plus a fixed 3 s fallback; `wait_ms` is only the
+    cap. A submit that changes nothing now waits the full `wait_ms`.
+  - `browser.select` waits for the custom dropdown to close (capped at 1 s);
+    `browser.interact` clicks the option when it is visible.
+  - `browser.form`: `delay_between_fields_ms` defaults to 0 and never pauses
+    after the last field.
+  - `browser.detect` re-runs on a strategy's element appearing or a DOM
+    mutation instead of every 500 ms; `browser.dialog` (including `listen`)
+    returns on the dialog event.
+  - A duration-only `browser.wait` still sleeps, but logs a warning and returns
+    `advice`; `validate_workflow` reports it as a `DURATION_ONLY_WAIT` warning.
+
 ## [2.33.0] - 2026-09-30
 
 ### Security

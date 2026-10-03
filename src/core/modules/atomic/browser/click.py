@@ -12,6 +12,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+from ._settle import first_state, install_dom_watch, settle_dom, settle_new_document
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,60 @@ _TAB_DECLARATION_JS = r"""(el) => {
   }
   return false;
 }"""
+
+
+class _NavigationSignals:
+    """Navigation state of the clicked document, observed from page events.
+
+    A navigation the click requested, its commit, and its failure are what end
+    the post-click waits for a same-tab result. The listeners stay attached
+    for the whole click, settle included, and are always removed.
+    """
+
+    def __init__(self, browser):
+        self._target = browser.page
+        self._page = getattr(browser, 'real_page', None) or self._target
+        self.navigated = asyncio.Event()
+        self.requested = asyncio.Event()
+        self.failed = asyncio.Event()
+        self._listeners = (
+            ('framenavigated', self._on_navigated),
+            ('request', self._on_request),
+            ('requestfailed', self._on_request_failed),
+        )
+
+    def _is_target(self, frame) -> bool:
+        # Inside a frame context the clicked document is that frame;
+        # otherwise it is the page's main frame.
+        if self._target is not self._page:
+            return frame is self._target
+        return getattr(frame, 'parent_frame', None) is None
+
+    def _is_target_navigation(self, request) -> bool:
+        with suppress(Exception):
+            return bool(request.is_navigation_request()) and self._is_target(request.frame)
+        return False
+
+    def _on_navigated(self, frame):
+        if self._is_target(frame):
+            self.navigated.set()
+
+    def _on_request(self, request):
+        if self._is_target_navigation(request):
+            self.requested.set()
+
+    def _on_request_failed(self, request):
+        if self._is_target_navigation(request):
+            self.failed.set()
+
+    def attach(self):
+        for event_name, listener in self._listeners:
+            self._page.on(event_name, listener)
+
+    def detach(self):
+        for event_name, listener in self._listeners:
+            with suppress(Exception):
+                self._page.remove_listener(event_name, listener)
 
 
 @register_module(
@@ -345,7 +400,6 @@ class BrowserClickModule(BaseModule):
         aria-label and an icon image's alt text. Exact names win; a contains
         match remains as the forgiving fallback used by the old has-text path.
         """
-        deadline = asyncio.get_running_loop().time() + (self.timeout / 1000)
         candidates = (
             ('button', True),
             ('link', True),
@@ -353,27 +407,43 @@ class BrowserClickModule(BaseModule):
             ('link', False),
         )
 
-        while True:
-            for role, exact in candidates:
-                locator = page.get_by_role(
-                    role,
-                    name=self.target,
-                    exact=exact,
-                    include_hidden=self.force,
-                )
-                if not self.force:
-                    locator = locator.filter(visible=True)
-                if await locator.count():
-                    match = locator.first
-                    return match, f'role={role}[name={self.target!r}]'
+        def _candidate(role, exact):
+            locator = page.get_by_role(
+                role,
+                name=self.target,
+                exact=exact,
+                include_hidden=self.force,
+            )
+            return locator if self.force else locator.filter(visible=True)
 
-            remaining = deadline - asyncio.get_running_loop().time()
-            if remaining <= 0:
-                raise RuntimeError(
-                    f'No visible button or link named {self.target!r} '
-                    f'was found within {self.timeout}ms'
-                )
-            await asyncio.sleep(min(0.1, remaining))
+        # One auto-waiting locator over every candidate: Playwright resolves
+        # it the moment any of them matches, so a late-rendered action is
+        # clicked as soon as it exists instead of on the next poll tick.
+        combined = None
+        for role, exact in candidates:
+            locator = _candidate(role, exact)
+            combined = locator if combined is None else combined.or_(locator)
+        try:
+            await combined.first.wait_for(
+                state='attached' if self.force else 'visible',
+                timeout=max(1, self.timeout),
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f'No visible button or link named {self.target!r} '
+                f'was found within {self.timeout}ms'
+            ) from exc
+
+        # The union only says that something matched; the preference order
+        # (exact before contains, button before link) is decided here.
+        for role, exact in candidates:
+            locator = _candidate(role, exact)
+            if await locator.count():
+                return locator.first, f'role={role}[name={self.target!r}]'
+        raise RuntimeError(
+            f'No visible button or link named {self.target!r} '
+            f'was found within {self.timeout}ms'
+        )
 
     async def _expects_new_page(self, locator) -> bool:
         """Best-effort detection for elements that explicitly declare a tab.
@@ -485,28 +555,53 @@ class BrowserClickModule(BaseModule):
                 ) from exc
             return
 
-        deadline = asyncio.get_running_loop().time() + self.verification_timeout_ms / 1000
-        while not await self._outcome_holds(page, outcome, pre_url):
-            remaining = deadline - asyncio.get_running_loop().time()
-            if remaining <= 0:
-                expectation = (
-                    'the page URL to change'
-                    if outcome == 'url_change'
-                    else f"the page URL to contain {self.outcome_value!r}"
-                )
-                raise RuntimeError(
-                    f"Click was dispatched but expected {expectation} within "
-                    f"{self.verification_timeout_ms}ms; current URL is {page.url!r}"
-                )
-            await asyncio.sleep(min(0.05, remaining))
+        if await self._outcome_holds(page, outcome, pre_url):
+            return
+        if outcome == 'url_change':
+            matches = lambda url: url != pre_url  # noqa: E731
+        else:
+            matches = lambda url: self.outcome_value in url  # noqa: E731
+        try:
+            # Resolved by the navigation itself (same-document ones included);
+            # 'commit' keeps the old meaning of "the URL changed" without also
+            # waiting for the new document's load event.
+            await page.wait_for_url(
+                matches,
+                wait_until='commit',
+                timeout=self.verification_timeout_ms,
+            )
+        except Exception as exc:
+            if await self._outcome_holds(page, outcome, pre_url):
+                return
+            expectation = (
+                'the page URL to change'
+                if outcome == 'url_change'
+                else f"the page URL to contain {self.outcome_value!r}"
+            )
+            raise RuntimeError(
+                f"Click was dispatched but expected {expectation} within "
+                f"{self.verification_timeout_ms}ms; current URL is {page.url!r}"
+            ) from exc
 
     async def execute(self) -> Any:
         browser = self.context.get('browser')
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
+        signals = _NavigationSignals(browser)
+        signals.attach()
+        try:
+            return await self._click_and_settle(browser, signals)
+        finally:
+            signals.detach()
+
+    async def _click_and_settle(self, browser, signals) -> Any:
         # Pre-action: refresh element hints to ensure we have current page state
         pre_hints = await browser.get_hints()
+
+        main_navigation = signals.navigated
+        navigation_requested = signals.requested
+        navigation_failed = signals.failed
 
         page = browser.page
         context = browser._context
@@ -557,6 +652,9 @@ class BrowserClickModule(BaseModule):
                 locator = page.locator(self.selector).first
 
             expects_new_page = await self._expects_new_page(locator)
+            # Counted from just before the click, so the settle step can tell
+            # a click that changed nothing from one that is still rendering.
+            await install_dom_watch(page)
             await locator.click(**click_options)
 
             # Page events raised by a click normally arrive before the click
@@ -571,18 +669,32 @@ class BrowserClickModule(BaseModule):
             )
             requires_new_page = effective_outcome == 'new_tab'
             if new_page is None and (expects_new_page or requires_new_page):
+                # An explicit contract may spend the caller's budget; an
+                # inference keeps 1.2.0's short best-effort re-scan, and a
+                # same-tab navigation ends it at once: the markup promised a
+                # tab, the page navigated in place instead.
+                budget = min(
+                    self.verification_timeout_ms / 1000 if requires_new_page else 2.0,
+                    self.timeout / 1000,
+                )
+                waits = [new_page_future]
+                if not requires_new_page:
+                    waits += [
+                        asyncio.ensure_future(main_navigation.wait()),
+                        asyncio.ensure_future(navigation_requested.wait()),
+                    ]
                 try:
-                    # An explicit contract may spend the caller's budget; an
-                    # inference keeps 1.2.0's short best-effort re-scan.
-                    new_page = await asyncio.wait_for(
-                        asyncio.shield(new_page_future),
-                        timeout=min(
-                            self.verification_timeout_ms / 1000 if requires_new_page else 2.0,
-                            self.timeout / 1000,
-                        ),
+                    await asyncio.wait(
+                        waits, timeout=budget, return_when=asyncio.FIRST_COMPLETED,
                     )
-                except asyncio.TimeoutError:
-                    new_page = self._new_context_page(context, known_pages)
+                finally:
+                    for wait in waits[1:]:
+                        wait.cancel()
+                new_page = (
+                    new_page_future.result()
+                    if new_page_future.done() and not new_page_future.cancelled()
+                    else self._new_context_page(context, known_pages)
+                )
 
             if requires_new_page and new_page is None:
                 raise RuntimeError(
@@ -649,29 +761,30 @@ class BrowserClickModule(BaseModule):
             "pre_url": pre_url,
         }
 
-        # Wait for page to settle after click.
-        # Strategy: detect real navigation vs SPA, then wait for interactive
-        # elements to appear before extracting hints.
-        with suppress(Exception):
-            await page.wait_for_load_state('domcontentloaded', timeout=2000)
-
-        # A new document (real navigation or an adopted tab) renders its form
-        # elements after domcontentloaded, so wait for them; an in-place SPA
-        # update only needs the DOM to stabilise, then settle its animations.
-        nav_happened = page.url != pre_url
-        with suppress(Exception):
-            await page.wait_for_function(
-                '(sel) => document.querySelectorAll(sel).length > 0',
-                arg=(
-                    'input:not([type=hidden]), textarea, select, '
-                    '[role="combobox"], [role="listbox"], [contenteditable="true"]'
-                    if nav_happened
-                    else 'select, [role="combobox"], [role="listbox"], '
-                         'input:not([type=hidden]), button'
-                ),
-                timeout=5000 if nav_happened else 3000,
+        # Settle on page state before harvesting hints for the next step.
+        # A navigation the click requested is awaited until it commits (or
+        # fails); a new document (navigation or adopted tab) then waits for
+        # its own domcontentloaded and for anything interactive to render. An
+        # in-place update waits only while the DOM is still changing, and a
+        # click that changed nothing returns at once.
+        if (
+            new_page is None
+            and navigation_requested.is_set()
+            and not main_navigation.is_set()
+        ):
+            await first_state(
+                {
+                    'navigated': main_navigation.wait(),
+                    'failed': navigation_failed.wait(),
+                },
+                timeout_ms=5000,
             )
-        await page.wait_for_timeout(300 if nav_happened else 500)
+        settled = 'new_document' if new_page is not None else await settle_dom(page)
+        if settled in ('new_document', 'error'):
+            with suppress(Exception):
+                await page.wait_for_load_state('domcontentloaded', timeout=2000)
+            await settle_new_document(page, cap_ms=5000)
+        nav_happened = page.url != pre_url
 
         # Post-click: refresh hints on the (potentially new) page
         logger.info("[CLICK] post-action: nav=%s, pre=%s, now=%s", nav_happened, pre_url[:80], page.url[:80])

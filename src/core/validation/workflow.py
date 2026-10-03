@@ -208,6 +208,33 @@ def validate_node_params(
     return results
 
 
+def _duration_only_waits(nodes: List[Dict[str, Any]]) -> List[WorkflowError]:
+    """Flag browser.wait nodes that sleep instead of waiting on page state.
+
+    A warning, never an error: an explicit pause stays valid, but a page
+    almost always exposes the state the pause is guessing at, and a fixed
+    sleep costs its whole duration on every run.
+    """
+    results: List[WorkflowError] = []
+    for node in nodes:
+        if node.get('module_id') != 'browser.wait':
+            continue
+        params = node.get('params') or {}
+        if str(params.get('selector') or '').strip():
+            continue
+        node_id = node.get('id', 'unknown')
+        results.append(WorkflowError(
+            code=ErrorCode.DURATION_ONLY_WAIT,
+            message=(
+                f'{node_id} waits a fixed duration; wait on a selector state '
+                'instead'
+            ),
+            path=f'nodes[{node_id}].params',
+            meta={'node_id': node_id, 'module_id': 'browser.wait'},
+        ))
+    return results
+
+
 def validate_workflow(
     nodes: List[Dict[str, Any]],
     edges: List[Dict[str, Any]],
@@ -222,6 +249,7 @@ def validate_workflow(
     - Start nodes are valid
     - Required parameters are set
     - Unknown params are flagged as warnings
+    - Duration-only browser.wait nodes are flagged as warnings
     - No cycles (except in loop modules)
 
     Args:
@@ -323,6 +351,8 @@ def validate_workflow(
                     warnings.append(err)
                 else:
                     errors.append(err)
+
+    warnings.extend(_duration_only_waits(nodes))
 
     # Check for cycles (simple DFS)
     cycle_errors = _detect_cycles(node_ids, outgoing, node_map)

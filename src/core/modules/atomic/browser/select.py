@@ -40,6 +40,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+from ._settle import first_state
 
 
 def _select_outcome(*, native: bool, selected: List[Any], selector: str) -> Dict[str, Any]:
@@ -346,8 +347,19 @@ class BrowserSelectModule(BaseModule):
                 # Last resort: fire click event via JS (bypasses all Playwright checks)
                 await target_el.dispatch_event('click')
 
-        # Step 5: Brief wait for dropdown to close
-        await page.wait_for_timeout(200)
+        # Step 5: Wait for the dropdown to close -- the chosen option going
+        # hidden or detached, or the trigger reporting aria-expanded="false".
+        # A list that stays open (multi-select) is capped at 1 s, and the step
+        # never fails over this wait.
+        await first_state(
+            {
+                'option_hidden': target_el.wait_for(state='hidden', timeout=1000),
+                'collapsed': page.locator(self.selector).first.and_(
+                    page.locator('[aria-expanded="false"]')
+                ).wait_for(state='attached', timeout=1000),
+            },
+            timeout_ms=1000,
+        )
 
         return [str(self.target)]
 

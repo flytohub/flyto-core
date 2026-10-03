@@ -573,11 +573,17 @@ class BrowserInteractModule(BaseModule):
             if is_native:
                 await page.select_option(selector, value=value, timeout=10000)
             else:
-                # Custom dropdown: click trigger, then click option
+                # Custom dropdown: click trigger, then click the option as
+                # soon as it is visible. value is the option selector.
                 await page.click(selector, timeout=10000)
-                await page.wait_for_timeout(300)
-                # value is the option selector for custom dropdowns
-                await page.click(value, timeout=5000)
+                option = page.locator(value).first
+                try:
+                    await option.wait_for(state='visible', timeout=5000)
+                    await option.click(timeout=5000)
+                except Exception:
+                    # Option lists animated with transforms can read as not
+                    # visible to Playwright; escalate as browser.select does.
+                    await option.click(force=True, timeout=3000)
             return {'action_status': 'selected', 'selected_value': value}
 
         elif action == 'toggle':
