@@ -116,6 +116,21 @@ def add_run_parser(subparsers) -> None:
     run_parser.add_argument('--param', action='append',
                             help='Individual parameter (format: key=value), '
                                  'can be used multiple times')
+    host = run_parser.add_argument_group(
+        'capability host',
+        'Run installed capability-pack steps through an installed adapter '
+        '(entry-point group flyto2.external_adapters) with flyto-core alone.')
+    host.add_argument('--capability-host', metavar='ADAPTER_ID',
+                      help='Adapter entry-point name that executes capability calls')
+    host.add_argument('--resource', metavar='RESOURCE_ID',
+                      help='Commanded resource id the adapter is built for')
+    host.add_argument('--allow', action='append', default=[], metavar='CAPABILITY_IDS',
+                      help='Actuating capability ids this run may execute '
+                           '(comma-separated, repeatable). Others are refused.')
+    host.add_argument('--yes-physical', action='store_true',
+                      help='Confirm actuation on a physical deployment without a prompt')
+    host.add_argument('--capability-evidence', metavar='PATH',
+                      help='Where to write the call records (JSON)')
 
 
 def main() -> None:
@@ -308,10 +323,29 @@ Examples:
         # Merge parameters from all sources
         params = merge_params(workflow, args)
 
+        host = None
+        if getattr(args, 'capability_host', None):
+            from .capability_host import build_capability_host
+            host = build_capability_host(args)
+        elif getattr(args, 'resource', None) or getattr(args, 'allow', None) or getattr(args, 'yes_physical', False):
+            print(f"{Colors.FAIL}Error: --resource, --allow and --yes-physical "
+                  f"need --capability-host{Colors.ENDC}")
+            sys.exit(2)
+
+        # A plain run calls run_workflow exactly as before; the host
+        # arguments are passed only when a capability host was requested.
+        host_kwargs = {}
+        if host is not None:
+            host_kwargs = {
+                'capability_host': host,
+                'capability_evidence': getattr(args, 'capability_evidence', None),
+            }
+
         # Run workflow
         try:
             run_workflow(
-                sanitize_workflow_path(workflow_path), params, config, i18n
+                sanitize_workflow_path(workflow_path), params, config, i18n,
+                **host_kwargs,
             )
         except ValueError as exc:
             print(f"{Colors.FAIL}Error: Invalid workflow file: "

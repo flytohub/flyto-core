@@ -58,6 +58,10 @@ The key set is closed at every level: an unknown key is an error, not ignored.
 | `effects` | list of identifiers | no (default `[]`) | 0..16 effect identifiers, no duplicates. |
 | `requires` | list of identifiers | no (default `[]`) | 0..16 precondition identifiers, no duplicates. |
 | `evidence` | list of evidence specs | no (default `[]`) | 0..8 evidence specs, below. |
+| `role` | string | no (2.36.0) | `safe_stop`: this capability stops the resource. See [Optional keys](#optional-keys-2360). |
+| `artifacts` | list | no (2.36.0) | Output artifacts a completed call returns. |
+| `recovery` | mapping | no (2.36.0) | Capabilities a planner may use instead after a failure, and guidance text. |
+| `expected_duration_ms` | integer | no (2.36.0) | The call's deadline budget, 1..3,600,000 ms. |
 
 Booleans must be real `bool`s (`1` and `"true"` are rejected). Identifiers use
 the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
@@ -75,6 +79,37 @@ the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
 | `tolerance` | yes | Non-empty mapping with `absolute` and/or `relative`, each finite and ≥ 0. An absent one is normalized to `0`. |
 | `settle` | no | `{"max_drift": number ≥ 0}`; requires `settled` in `phases`. |
 
+### Optional keys (2.36.0)
+
+These four keys let a host stop carrying provider knowledge: which capability
+stops a resource, which ones return a picture or a file, what to try after a
+failure, and how long a call may run. Each appears in the normalized contract
+**only when declared**, so a contract without them normalizes, and the manifest
+hashes, exactly as on 2.35.
+
+| Key | Rule |
+| --- | --- |
+| `role` | One of `safe_stop`. A `safe_stop` contract must be `cancellable: false`, `requires_safe_stop: false` and `idempotent: true`: the stop is not cancelled, needs no stop of its own and is safe to repeat. A host runs it immediately, with no approval queue or confirmation. |
+| `artifacts` | 1..8 declarations `{"kind": identifier, "media_types": [...], "max_bytes": int}`. `kind` is unique; `media_types` holds 1..8 distinct lower-case `type/subtype` strings with no parameters; `max_bytes` is an integer in 1..20,971,520 (20 MiB). |
+| `recovery` | `{"capabilities": [identifier, ...], "observe": identifier, "guidance": text}`. `capabilities` (1..8, distinct) is required: capability ids a planner may use as substitutes after this one fails. `observe` names an observation the adapter reports to explain the failure (e.g. `recovery_context`). `guidance` is at most 500 characters of planner-facing text. |
+| `expected_duration_ms` | Integer in 1..3,600,000. The deadline a host gives the call. When absent, a host uses the module's `timeout_ms`, then its own default. |
+
+Booleans are rejected where an integer is required (`max_bytes`,
+`expected_duration_ms`), as everywhere else in the schema.
+
+**Artifact transport.** A call that produces declared artifacts reports them in
+its adapter result evidence as
+`"artifacts": [{"kind": ..., "media_type": ..., "data_base64": ...}]`. A host
+keeps an artifact only when its `kind` is declared, its `media_type` is one the
+declaration lists and its decoded size is within `max_bytes`; a completed call
+of a contract that declares artifacts but returned none that pass is a failed
+call.
+
+**Feature detection.** The schema is closed, so a 2.35 core rejects these keys.
+A provider that must load on both lines sends them only when
+`"role" in core.capability_contract.OPTIONAL_FIELDS` (the frozenset exists from
+2.36.0).
+
 ### Parameter bounds
 
 Bounds are not a contract field: they are `params_schema` `min` / `max` (plus
@@ -91,8 +126,9 @@ capability manifest.
 `validate_contract(contract, params_schema)` returns the normalized form, built
 from fresh containers: it always carries `schema`, `effects`, `requires`,
 `evidence`, every tolerance carries both `absolute` and `relative`, and every
-`expect.argument` carries its `scale` (default `1`). The registry stores this
-form, so every consumer reads one shape.
+`expect.argument` carries its `scale` (default `1`). The optional `role`,
+`artifacts`, `recovery` and `expected_duration_ms` appear only when declared.
+The registry stores this form, so every consumer reads one shape.
 
 ## Where a contract is published
 
@@ -561,6 +597,12 @@ verdict = judge(spec, {"distance_m": 0.10},
                  "settled": {"x": 0.11, "y": 0, "yaw": 0}})
 assert verdict["usable"]
 ```
+
+## Running a contract without Desktop
+
+[`CAPABILITY_HOST.md`](CAPABILITY_HOST.md) describes `flyto run
+--capability-host`, a generic host in Core that enforces these contracts for
+a run started from the command line.
 
 ## Relation to the outcome ladder
 

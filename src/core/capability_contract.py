@@ -49,6 +49,10 @@ __all__ = [
     "PHASES",
     "MEASURE_OPS",
     "ANGLE_OPS",
+    "ROLES",
+    "OPTIONAL_FIELDS",
+    "EXPECTED_DURATION_MS_MAX",
+    "ARTIFACT_MAX_BYTES",
     "validate_contract",
     "validate_evidence",
     "judge",
@@ -77,7 +81,13 @@ _IDENTIFIER_MAX = 96
 
 _REQUIRED_BOOLEANS = ("actuates", "requires_safe_stop", "cancellable", "idempotent")
 _REQUIRED_KEYS = frozenset((*_REQUIRED_BOOLEANS, "safety_class"))
-_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence"))
+#: Optional keys added in flyto-core 2.36.0. A provider that must also load on
+#: an older core (whose closed schema rejects them) feature-detects them with
+#: ``"role" in core.capability_contract.OPTIONAL_FIELDS`` before sending them.
+#: Each appears in the normalized contract only when declared, so a contract
+#: that declares none of them normalizes, and hashes, exactly as on 2.35.
+OPTIONAL_FIELDS = frozenset(("role", "artifacts", "recovery", "expected_duration_ms"))
+_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence")) | OPTIONAL_FIELDS
 _IDENTIFIER_LISTS = ("effects", "requires")
 _IDENTIFIER_LIST_MAX = 16
 _EVIDENCE_MAX = 8
@@ -90,6 +100,27 @@ _TOLERANCE_KEYS = frozenset(("absolute", "relative"))
 _SETTLE_KEYS = frozenset(("max_drift",))
 
 _NUMERIC_PARAM_TYPES = frozenset(("number", "integer"))
+
+#: Roles a capability may play for a host. ``safe_stop`` marks the capability
+#: that stops the resource: a host issues it (or the adapter's own safe stop)
+#: without approval queues, and it must itself be uncancellable, idempotent and
+#: need no further safe stop.
+ROLES = ("safe_stop",)
+
+#: Upper bound of ``expected_duration_ms`` (one hour).
+EXPECTED_DURATION_MS_MAX = 3_600_000
+
+#: Upper bound of an artifact's declared ``max_bytes`` (20 MiB).
+ARTIFACT_MAX_BYTES = 20 * 1024 * 1024
+_ARTIFACTS_MAX = 8
+_ARTIFACT_KEYS = frozenset(("kind", "media_types", "max_bytes"))
+_MEDIA_TYPES_MAX = 8
+# type/subtype, lower case, no parameters: what a host compares, not a header.
+_MEDIA_TYPE = re.compile(r"^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$")
+_RECOVERY_REQUIRED = frozenset(("capabilities",))
+_RECOVERY_OPTIONAL = frozenset(("observe", "guidance"))
+_RECOVERY_CAPABILITIES_MAX = 8
+_GUIDANCE_MAX = 500
 
 _TWO_PI = 2.0 * math.pi
 
@@ -289,12 +320,92 @@ def _check_params_schema(params_schema: Any, actuates: bool) -> Mapping[str, Any
     return params_schema
 
 
+def _check_artifacts(value: Any) -> List[Dict[str, Any]]:
+    where = "contract.artifacts"
+    if type(value) is not list or not 1 <= len(value) <= _ARTIFACTS_MAX:
+        raise ValueError(f"{where} must be a list of 1..{_ARTIFACTS_MAX} artifact declarations")
+    normalized: List[Dict[str, Any]] = []
+    for index, item in enumerate(value):
+        here = f"{where}[{index}]"
+        if type(item) is not dict:
+            raise ValueError(f"{here} must be a mapping")
+        _check_keys(item, _ARTIFACT_KEYS, frozenset(), here)
+        kind = _check_identifier(item["kind"], f"{here}.kind")
+        media_types = item["media_types"]
+        if type(media_types) is not list or not 1 <= len(media_types) <= _MEDIA_TYPES_MAX:
+            raise ValueError(f"{here}.media_types must be a list of 1..{_MEDIA_TYPES_MAX} media types")
+        for position, media_type in enumerate(media_types):
+            if type(media_type) is not str or not _MEDIA_TYPE.fullmatch(media_type):
+                raise ValueError(
+                    f"{here}.media_types[{position}] must be a lower-case type/subtype media type"
+                )
+        if len(set(media_types)) != len(media_types):
+            raise ValueError(f"{here}.media_types contains duplicates")
+        max_bytes = item["max_bytes"]
+        if type(max_bytes) is not int or not 1 <= max_bytes <= ARTIFACT_MAX_BYTES:
+            raise ValueError(f"{here}.max_bytes must be an integer in 1..{ARTIFACT_MAX_BYTES}")
+        normalized.append({"kind": kind, "media_types": list(media_types), "max_bytes": max_bytes})
+    kinds = [item["kind"] for item in normalized]
+    if len(set(kinds)) != len(kinds):
+        raise ValueError(f"{where} declares the same kind twice")
+    return normalized
+
+
+def _check_recovery(value: Any) -> Dict[str, Any]:
+    where = "contract.recovery"
+    if type(value) is not dict:
+        raise ValueError(f"{where} must be a mapping")
+    _check_keys(value, _RECOVERY_REQUIRED, _RECOVERY_OPTIONAL, where)
+    normalized: Dict[str, Any] = {
+        "capabilities": _check_identifier_list(
+            value["capabilities"], f"{where}.capabilities", 1, _RECOVERY_CAPABILITIES_MAX
+        )
+    }
+    if "observe" in value:
+        normalized["observe"] = _check_identifier(value["observe"], f"{where}.observe")
+    if "guidance" in value:
+        guidance = value["guidance"]
+        if type(guidance) is not str or not guidance.strip() or len(guidance) > _GUIDANCE_MAX:
+            raise ValueError(f"{where}.guidance must be non-empty text of at most {_GUIDANCE_MAX} characters")
+        normalized["guidance"] = guidance
+    return normalized
+
+
+def _check_optional_fields(contract: Mapping[str, Any], normalized: Dict[str, Any]) -> None:
+    """Validate the 2.36.0 optional keys into ``normalized``, only when declared."""
+    if "role" in contract:
+        role = contract["role"]
+        if type(role) is not str or role not in ROLES:
+            raise ValueError(f"contract.role must be one of {', '.join(ROLES)}")
+        if role == "safe_stop" and (
+            normalized["cancellable"] or normalized["requires_safe_stop"] or not normalized["idempotent"]
+        ):
+            raise ValueError(
+                "contract.role safe_stop requires cancellable: false, "
+                "requires_safe_stop: false and idempotent: true"
+            )
+        normalized["role"] = role
+    if "artifacts" in contract:
+        normalized["artifacts"] = _check_artifacts(contract["artifacts"])
+    if "recovery" in contract:
+        normalized["recovery"] = _check_recovery(contract["recovery"])
+    if "expected_duration_ms" in contract:
+        duration = contract["expected_duration_ms"]
+        if type(duration) is not int or not 1 <= duration <= EXPECTED_DURATION_MS_MAX:
+            raise ValueError(
+                f"contract.expected_duration_ms must be an integer in 1..{EXPECTED_DURATION_MS_MAX}"
+            )
+        normalized["expected_duration_ms"] = duration
+
+
 def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     """Validate a capability contract and return its normalized form.
 
     The returned dict is built from fresh plain containers (nothing aliases
     the caller's objects) and always carries ``schema``, ``effects``,
-    ``requires`` and ``evidence``, so every consumer reads one shape.
+    ``requires`` and ``evidence``, so every consumer reads one shape. The
+    optional ``role``, ``artifacts``, ``recovery`` and ``expected_duration_ms``
+    appear only when declared.
 
     Raises:
         ValueError: with a message naming the offending key on any violation.
@@ -338,6 +449,7 @@ def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] 
         validate_evidence(item, schema, f"contract.evidence[{index}]")
         for index, item in enumerate(evidence)
     ]
+    _check_optional_fields(contract, normalized)
     return normalized
 
 
