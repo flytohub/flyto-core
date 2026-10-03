@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-10-04 - A provider plugs in with one decorator carrying a capability contract
+
+Decision: `register_module(..., contract=...)` carries a closed, validated
+`flyto.capability-contract.v1` describing a capability's actuation, safety
+class, safe-stop, cancellation, idempotency, effects, preconditions and the
+evidence that proves it. Parameter bounds stay in `params_schema` `min`/`max`
+and are mandatory for numeric parameters of an actuating contract. Core owns
+the schema and the pure evidence arithmetic (`core.capability_contract.judge`);
+hosts read contracts as data from catalog detail or the manifest `contracts`
+key and re-implement the arithmetic from `docs/CAPABILITY_CONTRACT.md`.
+
+Reason: hosts must contain no provider-specific code. Without a declared
+contract every new device or connector needed a row of host vocabulary
+(safety class, bounds, verification constants), which is exactly the
+provider-specific code the platform must not accumulate. The manifest key is
+conditional so an installation without contracts keeps its exact hash.
+
 ## 2026-09-22 - Host capability authority crosses HTTP only as opaque local host state
 
 Decision: the Core workflow API may accept execution-host capability authority only from authenticated host headers naming a literal `127.0.0.1` endpoint and bounded bearer token. The resulting proxy is marked opaque, never workflow data, never followed through redirects, and is removed from every persistence/evidence projection. `capability.invoke` remains the only workflow primitive that consumes it. The host may be the built-in AI Space executor, optional Flyto2 Runtime, or another compatible implementation.

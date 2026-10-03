@@ -18,6 +18,8 @@ Determinism is the contract. The document contains:
 * categories with counts, sorted;
 * the id, version, and module count of every plugin that registered modules;
 * the registry contract version and the flyto-core package version;
+* when any module declares one, ``contracts``: the capability contract
+  (``flyto.capability-contract.v1``) and parameter schema per capability id;
 * a SHA-256 over the canonical form of all of the above.
 
 It deliberately contains **no** timestamps, filesystem paths, hostnames,
@@ -213,6 +215,24 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
         if metadata.get("semantics")
     ]
 
+    # Capability contracts, keyed by capability id. The registry stores only
+    # contracts it validated and normalized (ModuleRegistry.register), so they
+    # are copied, not re-judged. If two modules contract the same capability,
+    # the lowest module id wins and the choice is deterministic; the full
+    # provider list is still under `capabilities`.
+    contracts: Dict[str, Any] = {}
+    for module_id, metadata in sorted(all_metadata.items()):
+        contract = (metadata or {}).get("contract")
+        capability = (metadata or {}).get("provides_capability") or ""
+        if contract is None or not capability or capability in contracts:
+            continue
+        params_schema = metadata.get("params_schema") or {}
+        contracts[capability] = {
+            "module_id": module_id,
+            "contract": deepcopy(contract),
+            "params_schema": deepcopy(params_schema),
+        }
+
     # Categories, counted over the same unfiltered view as `modules` so the
     # counts always sum to `module_count`. Plugin-contributed categories are
     # included exactly like built-in ones — the registry does not distinguish
@@ -253,6 +273,12 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
         "plugin_count": len(plugins),
         "plugins": plugins,
     }
+    # Additive and conditional: an installation where no module declares a
+    # contract produces exactly the document (and hash) it produced before
+    # contracts existed, so hosts comparing hashes across versions still agree.
+    if contracts:
+        manifest["contract_count"] = len(contracts)
+        manifest["contracts"] = contracts
     manifest["hash"] = compute_manifest_hash(manifest)
     return manifest, snapshot["generation"]
 

@@ -59,6 +59,7 @@ from datetime import datetime  # noqa: E402
 from importlib.metadata import entry_points, version as get_version  # noqa: E402
 from typing import Any, Dict, List, Optional, Set, Tuple, Type  # noqa: E402
 
+from ...capability_contract import validate_contract  # noqa: E402
 from ...constants import ErrorMessages  # noqa: E402
 from ..base import BaseModule  # noqa: E402
 from ..types import (  # noqa: E402
@@ -441,6 +442,17 @@ class ModuleRegistry:
                 if total > 48:
                     raise ValueError("semantic contract exceeds the identifier bound")
 
+        # The capability contract is validated here too, not only in the
+        # decorator: a plugin may call register() with hand-built metadata, and
+        # a host enforces whatever the stored row says. Absent → no change.
+        normalized_contract = None
+        if metadata is not None and "contract" in metadata:
+            if not metadata.get("provides_capability"):
+                raise ValueError("capability contracts require provides_capability")
+            normalized_contract = validate_contract(
+                metadata.get("contract"), metadata.get("params_schema")
+            )
+
         cls._note_pass_touch(module_id)
         if cls._pass_registered is not None:
             cls._pass_registered.add(module_id)
@@ -474,6 +486,10 @@ class ModuleRegistry:
             # Enforcement reads the stored row, so a permission grown after
             # registration — or an owner rewritten — is one nobody vouched for.
             metadata = copy.deepcopy(dict(metadata))
+            if normalized_contract is not None:
+                # Fresh containers built by the validator: the stored contract
+                # is the validated one, never an alias to caller state.
+                metadata['contract'] = normalized_contract
             # Ensure required fields
             metadata.setdefault('module_id', module_id)
             metadata.setdefault('version', '1.0.0')

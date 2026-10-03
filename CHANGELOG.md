@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.35.0] - 2026-10-04
+
+### Added
+
+- Capability contract `flyto.capability-contract.v1`. `register_module` takes an
+  optional `contract=` that declares, as data, what a capability does to the
+  world: `actuates`, `safety_class` (`read_only` / `controlled` / `movement` /
+  `dangerous`), `requires_safe_stop`, `cancellable`, `idempotent`, bounded
+  `effects` / `requires` identifiers, and up to eight `evidence` specs a host
+  can verify from before/after/settled observations. Any provider — a device,
+  an ERP connector, a lift — plugs in through `@register_module` alone, and a
+  host enforces the contract with no provider-specific code.
+  - The schema is closed and validated at registration in both the decorator
+    and `ModuleRegistry.register`; a plugin whose contract is invalid is rolled
+    back whole. Declaring a contract requires `provides_capability`, and every
+    numeric parameter of an actuating contract must declare `min` and `max`.
+  - `core.capability_contract` exposes `validate_contract`, the pure
+    `judge(evidence_spec, arguments, observations)` and `wrap_angle`. The
+    arithmetic is specified in `docs/CAPABILITY_CONTRACT.md` so hosts that
+    cannot import Core reproduce identical verdicts. Measures are `distance`,
+    `along` (signed travel projected onto the starting heading), `delta`,
+    `angle_delta` and `abs_angle_delta`, taken from `before` to the last
+    declared phase; `expect.argument` takes an optional `scale` (e.g. `-1` for
+    a retreat), and angle errors are wrapped into (-pi, pi].
+  - The capability manifest gains `contracts` (and `contract_count`) keyed by
+    capability id, only when at least one module declares a contract: an
+    installation without contracts keeps the exact manifest and hash it had.
+  - Catalog detail reports `contract` (`None` when absent).
+
+### Fixed
+
+- Catalog detail `timeout` read a metadata key no module row has and was
+  always `None`. It now derives (in seconds) from the stored `timeout_ms`, which
+  detail also reports.
+
 ## [2.34.0] - 2026-10-03
 
 ### Changed

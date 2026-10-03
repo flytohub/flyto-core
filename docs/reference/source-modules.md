@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **981 Python files**, **233,022 lines**, and **6,129 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **982 Python files**, **233,608 lines**, and **6,143 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -99,10 +99,11 @@ Inventory: **981 Python files**, **233,022 lines**, and **6,129 class/function/m
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
-| [`src/core/capability_manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L1) | 387 | 6 | `__future__, copy, core, hashlib, json, threading, typing` | Capability Manifest — ``flyto.core.capability-manifest.v1`` |
+| [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 502 | 14 | `__future__, json, math, re, typing` | Capability contract — ``flyto.capability-contract.v1``. |
+| [`src/core/capability_manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L1) | 413 | 6 | `__future__, copy, core, hashlib, json, threading, typing` | Capability Manifest — ``flyto.core.capability-manifest.v1`` |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
-| [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 345 | 7 | `modules, typing` | Catalog Module Detail API |
+| [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 355 | 7 | `modules, typing` | Catalog Module Detail API |
 | [`src/core/catalog/outline.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/outline.py#L1) | 196 | 2 | `modules, typing` | Catalog Outline API |
 | [`src/core/catalog_facts.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog_facts.py#L1) | 8 | 0 | `none` | Public catalog facts shared by user-facing help text. |
 | [`src/core/constants.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/constants.py#L1) | 605 | 22 | `typing, urllib` | Core Constants - Centralized configuration values |
@@ -820,9 +821,9 @@ Inventory: **981 Python files**, **233,022 lines**, and **6,129 class/function/m
 | [`src/core/modules/quality/types.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/quality/types.py#L1) | 263 | 29 | `dataclasses, enum, typing` | Validation Types |
 | [`src/core/modules/registry/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/__init__.py#L1) | 121 | 2 | `catalog, core, decorators, express, metadata, ports, quality_validator, resolve, validation_types` | Module Registry - Registration and Management |
 | [`src/core/modules/registry/catalog.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/catalog.py#L1) | 310 | 16 | `core, datetime, json, logging, pathlib, typing, utils` | Module Catalog Manager - Export, Search, and Sync |
-| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 1674 | 43 | `base, connection_rules, constants, copy, dataclasses, datetime, functools, hashlib, importlib, logging, re, sys` | Module Registry - Core Registration and Lookup |
-| [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 411 | 8 | `base, core, inspect, metadata, quality_validator, re, resolve, types, typing` | Module registration decorators |
-| [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 212 | 1 | `types, typing` | Module Metadata Builder |
+| [`src/core/modules/registry/core.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/core.py#L1) | 1690 | 43 | `base, capability_contract, connection_rules, constants, copy, dataclasses, datetime, functools, hashlib, importlib, logging, re` | Module Registry - Core Registration and Lookup |
+| [`src/core/modules/registry/decorators.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/decorators.py#L1) | 431 | 8 | `base, capability_contract, core, inspect, metadata, quality_validator, re, resolve, types, typing` | Module registration decorators |
+| [`src/core/modules/registry/metadata.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/metadata.py#L1) | 224 | 1 | `capability_contract, types, typing` | Module Metadata Builder |
 | [`src/core/modules/registry/ports.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/ports.py#L1) | 116 | 2 | `re, typing` | Dynamic port generation utilities |
 | [`src/core/modules/registry/quality_validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/quality_validator.py#L1) | 697 | 25 | `ast, dataclasses, inspect, logging, re, rule_config, typing, validation_types` | Module Quality Validator - Code quality checks integrated with @register_module |
 | [`src/core/modules/registry/resolve.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/registry/resolve.py#L1) | 292 | 5 | `connection_rules, logging, types, typing, warnings` | Module Configuration Resolution |

@@ -43,6 +43,9 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [Writing Modules](WRITING_MODULES.md)
 - [Register Module Guide](REGISTER_MODULE_GUIDE.md)
 - [Plugin SDK](PLUGIN_SDK.md)
+- [Capability Contract](CAPABILITY_CONTRACT.md): `flyto.capability-contract.v1`,
+  the closed schema a provider declares on `@register_module`, and the exact
+  evidence arithmetic hosts must reproduce.
 - [Module Publishing](MODULE_PUBLISHING_GUIDE.md)
 
 ## Architecture And Security
@@ -69,7 +72,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 481 active runtime modules across 89 catalog categories.
-- 981 maintained Python files and 6,129 declarations.
+- 982 maintained Python files and 6,143 declarations.
 - 488 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.
