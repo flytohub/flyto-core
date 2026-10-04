@@ -43,6 +43,7 @@ from .record import *
 
 # Higher-level browser operations (v2)
 from .form import *
+from .fill_form import *
 from .pagination import *
 from .interact import *
 from .readability import *

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Fill form fixture</title></head>
+<body>
+  <!-- A search bar outside the form, labelled like a form field: the form's
+       own visible field must win, and the filter must stay untouched. -->
+  <div class="filters">
+    <select aria-label="Result filter"><option>All</option><option>Completed</option></select>
+  </div>
+
+  <form id="record-form">
+    <div class="field"><label for="f-task-id">Task ID *</label><input id="f-task-id" name="taskId" required></div>
+
+    <div class="field"><label for="f-result">Result *</label>
+      <select id="f-result" name="result" required>
+        <option value="COMPLETED">Completed</option>
+        <option value="DELIVERED">Delivered</option>
+        <option value="FAILED">Failed</option>
+      </select>
+    </div>
+
+    <div class="field"><label for="f-distance">Distance moved (cm)</label><input id="f-distance" name="distance" type="number" min="0" step="0.1"></div>
+
+    <!-- "Location" is a substring of "Location notes": the exact label wins. -->
+    <div class="field"><label for="f-location-notes">Location notes</label><input id="f-location-notes" name="locationNotes"></div>
+    <div class="field"><label for="f-location">Location</label><input id="f-location" name="location"></div>
+
+    <!-- Adjacency only: no for/id, the label is the input's previous sibling. -->
+    <div class="field"><label>Operator</label><input name="operator"></div>
+
+    <div class="field"><label for="f-date">Date</label><input id="f-date" name="date" type="date"></div>
+
+    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" name="notes"></textarea></div>
+
+    <div class="field"><label><input type="checkbox" name="notify" id="f-notify"> Notify supervisor</label></div>
+
+    <fieldset>
+      <legend>Priority</legend>
+      <label><input type="radio" name="priority" value="low" checked> Low</label>
+      <label><input type="radio" name="priority" value="high"> High</label>
+    </fieldset>
+
+    <div class="field"><label for="f-code">Access code</label><input id="f-code" name="code" type="password"></div>
+
+    <div class="field"><label for="f-photo">Photo</label><input id="f-photo" name="photo" type="file"></div>
+
+    <div id="late-slot"></div>
+
+    <button type="button" id="cancel">Cancel</button>
+    <button type="submit">Save record</button>
+  </form>
+  <div id="receipt" hidden></div>
+
+  <script>
+    document.querySelector('#record-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const photo = form.get('photo');
+      // Rendered after a short async gap, the way a page waits for its API.
+      setTimeout(() => {
+        const receipt = document.querySelector('#receipt');
+        receipt.textContent = [
+          'Saved REC-1',
+          'task=' + form.get('taskId'),
+          'result=' + form.get('result'),
+          'distance=' + form.get('distance'),
+          'location=' + form.get('location'),
+          'operator=' + form.get('operator'),
+          'date=' + form.get('date'),
+          'notes=' + form.get('notes'),
+          'notify=' + (form.get('notify') ? 'yes' : 'no'),
+          'priority=' + form.get('priority'),
+          'photo=' + (photo && photo.name ? photo.name : ''),
+        ].join(' | ');
+        receipt.hidden = false;
+        document.querySelector('#record-form').remove();
+      }, 300);
+    });
+    // A field the page adds after load, as a form still rendering would.
+    window.addLateField = () => setTimeout(() => {
+      document.querySelector('#late-slot').innerHTML =
+        '<label for="f-late">Late field</label><input id="f-late" name="late">';
+    }, 400);
+  </script>
+</body>
+</html>

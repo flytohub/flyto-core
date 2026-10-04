@@ -10,6 +10,16 @@ reported success 0.63 m short of its goal is now provably not an arrival
 `tests/core/vectors/`). Additive: existing contracts normalize and hash as on
 2.37. Not tagged or released.
 
+## Whole-form filling in one call, 2.38.0 (2026-10-04)
+
+`browser.fill_form` fills, uploads and submits a whole form in one module call,
+so an agent needs one round-trip for a form instead of one per field. Fields
+resolve by visible label through the resolver `browser.type` uses (moved to
+`browser/_label_resolve.py`, behaviour unchanged) or by selector; all targets
+are resolved before the first write, and a missing one fills nothing. Real
+Chromium tests in `tests/modules/test_browser_fill_form.py` (marked
+`browser`). Not tagged or released to PyPI.
+
 ## Pre-execute hook rewrites and label ranking, 2.37.1 (2026-10-04)
 
 Pre-execute hooks again change what the module receives: hooks see the
@@ -473,8 +483,8 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 991 maintained Python files, 6,299
-  declarations, 488 literal module registrations, all CLI/HTTP/environment
+- Source-backed documentation now covers 993 maintained Python files, 6,323
+  declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

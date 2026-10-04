@@ -960,7 +960,11 @@ TOOLS = [
             "  browser.find → locate elements by selector, get their properties. "
             "  browser.wait → wait for element/condition before acting: pass selector + state. "
             "  A duration-only browser.wait sleeps a fixed time and only guesses at page state; avoid it. "
-            "- INTERACTION: browser.click, browser.type, browser.select, browser.scroll, browser.form. "
+            "- FORMS: read the form ONCE (browser.snapshot), then call browser.fill_form ONCE with "
+            "  every field, upload and the submit: fields are found by their visible label text. "
+            "  Do not fill a form one browser.type/select/upload/click call per field: each call is a "
+            "  full round-trip. fill_form fills nothing if any field is missing and says which. "
+            "- INTERACTION: browser.click, browser.type, browser.select, browser.scroll. "
             "- SCREENSHOT: Use ONLY for visual/style verification (CSS comparison, layout regression, design matching). "
             "  Do NOT use screenshot to read text or find elements — use browser.extract or browser.evaluate instead. "
             "- LIFECYCLE: browser.launch → browser.goto → [actions] → browser.close. "
@@ -976,7 +980,7 @@ TOOLS = [
                         "browser.launch, browser.goto, browser.click, browser.type, "
                         "browser.extract (read DOM elements), browser.evaluate (run JS), "
                         "browser.snapshot (DOM dump), browser.screenshot (visual only), "
-                        "browser.wait, browser.find, browser.form, "
+                        "browser.wait, browser.find, browser.fill_form (whole form in one call), "
                         "browser.select, browser.scroll, browser.close"
                     ),
                 },
@@ -989,6 +993,10 @@ TOOLS = [
                         "browser.snapshot: {} or {\"format\": \"text\"} — "
                         "browser.type: {\"selector\": \"#id\", \"text\": \"value\"} — "
                         "browser.click: {\"selector\": \"button.cls\"} — "
+                        "browser.fill_form: {\"fields\": [{\"label\": \"Visible label\", \"value\": \"text\"}, "
+                        "{\"label\": \"Status\", \"value\": \"option text\"}, {\"label\": \"Agree\", \"value\": true}], "
+                        "\"uploads\": [{\"label\": \"Photo\", \"path\": \"/abs/file.png\"}], "
+                        "\"submit\": {\"label\": \"Submit\"}, \"confirm\": {\"text\": \"Saved\"}} — "
                         "browser.screenshot: {\"path\": \"/tmp/shot.png\"} — "
                         "For other modules call get_module_info first."
                     ),
