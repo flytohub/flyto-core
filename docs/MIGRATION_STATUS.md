@@ -7,8 +7,8 @@
 | Runtime catalog | 481 modules, 89 categories |
 | Literal module registrations | 488 |
 | Packaged recipes | 41 |
-| Maintained Python source | 991 files, 237,235 lines |
-| Python declarations | 6,296 across 838 files |
+| Maintained Python source | 991 files, 237,329 lines |
+| Python declarations | 6,299 across 838 files |
 | Static CLI parsers | Generated in `reference/cli.md` |
 | Static HTTP operations | 28 |
 | Environment-variable names | 108 |

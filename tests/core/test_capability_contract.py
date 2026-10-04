@@ -155,7 +155,9 @@ def test_vocabulary_is_the_published_one():
     assert CONTRACT_SCHEMA == "flyto.capability-contract.v1"
     assert SAFETY_CLASSES == ("read_only", "controlled", "movement", "dangerous")
     assert PHASES == ("before", "after", "settled")
-    assert MEASURE_OPS == ("distance", "along", "delta", "angle_delta", "abs_angle_delta")
+    assert MEASURE_OPS == (
+        "distance", "along", "delta", "angle_delta", "abs_angle_delta", "distance_to", "angle_to"
+    )
 
 
 def test_a_full_contract_normalizes_to_one_shape():

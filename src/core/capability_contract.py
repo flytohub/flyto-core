@@ -49,6 +49,7 @@ __all__ = [
     "PHASES",
     "MEASURE_OPS",
     "ANGLE_OPS",
+    "ABSOLUTE_OPS",
     "ROLES",
     "OPTIONAL_FIELDS",
     "EXPECTED_DURATION_MS_MAX",
@@ -69,10 +70,16 @@ SAFETY_CLASSES = ("read_only", "controlled", "movement", "dangerous")
 PHASES = ("before", "after", "settled")
 
 #: Measurement operators understood by :func:`judge`.
-MEASURE_OPS = ("distance", "along", "delta", "angle_delta", "abs_angle_delta")
+MEASURE_OPS = ("distance", "along", "delta", "angle_delta", "abs_angle_delta", "distance_to", "angle_to")
 
 #: Operators whose measured quantity is an angle in radians.
-ANGLE_OPS = ("angle_delta", "abs_angle_delta")
+ANGLE_OPS = ("angle_delta", "abs_angle_delta", "angle_to")
+
+#: Operators (2.38.0) that compare the last declared phase with an absolute
+#: target taken from the call's arguments, instead of a change between phases.
+#: "The robot ended at map (x, y)" or "the car ended on floor N" is an end
+#: state, which no relative measure can prove.
+ABSOLUTE_OPS = ("distance_to", "angle_to")
 
 # The bounded identifier grammar the registry already uses for capability ids
 # and semantic identifiers.
@@ -95,7 +102,7 @@ _EVIDENCE_MAX = 8
 _EVIDENCE_REQUIRED = frozenset(("kind", "observe", "phases", "measure", "expect", "tolerance"))
 _EVIDENCE_OPTIONAL = frozenset(("settle",))
 _MEASURE_KEYS = frozenset(("op", "fields"))
-_MEASURE_OPTIONAL = frozenset(("heading_field",))
+_MEASURE_OPTIONAL = frozenset(("heading_field", "frame"))
 _TOLERANCE_KEYS = frozenset(("absolute", "relative"))
 _SETTLE_KEYS = frozenset(("max_drift",))
 
@@ -178,6 +185,60 @@ def _check_non_negative(value: Any, where: str) -> float:
     return value
 
 
+def _check_numeric_argument(argument: Any, params_schema: Optional[Mapping[str, Any]], where: str) -> str:
+    """A parameter name that ``params_schema`` (when given) declares as a number."""
+    if type(argument) is not str or not argument:
+        raise ValueError(f"{where} must be a parameter name")
+    if params_schema is not None:
+        definition = params_schema.get(argument)
+        if type(definition) is not dict:
+            raise ValueError(f"{where} {argument!r} is not a key in params_schema")
+        if definition.get("type") not in _NUMERIC_PARAM_TYPES:
+            raise ValueError(f"{where} {argument!r} must name a number or integer parameter")
+    return argument
+
+
+def _check_absolute_expect(
+    expect: Any,
+    op: str,
+    fields: List[str],
+    params_schema: Optional[Mapping[str, Any]],
+    where: str,
+) -> Dict[str, Any]:
+    """The target of an absolute op, read from the call's arguments.
+
+    ``distance_to`` takes ``{"arguments": {field: parameter, ...}}`` naming a
+    parameter for every measured field. ``angle_to`` takes ``{"argument":
+    parameter}``, plus ``"optional": true`` when the call may leave the target
+    out (the check then has nothing to compare and holds).
+    """
+    if op == "distance_to":
+        if type(expect) is not dict or set(expect) != {"arguments"}:
+            raise ValueError(f"{where}.expect must be {{'arguments': {{field: parameter, ...}}}} for op distance_to")
+        targets = expect["arguments"]
+        if type(targets) is not dict or set(targets) != set(fields):
+            raise ValueError(f"{where}.expect.arguments must name a parameter for exactly the measured fields")
+        return {
+            "arguments": {
+                field: _check_numeric_argument(targets[field], params_schema, f"{where}.expect.arguments.{field}")
+                for field in fields
+            }
+        }
+    # angle_to
+    if type(expect) is not dict or set(expect) not in ({"argument"}, {"argument", "optional"}):
+        raise ValueError(f"{where}.expect must be {{'argument': parameter[, 'optional': bool]}} for op angle_to")
+    argument = _check_numeric_argument(expect["argument"], params_schema, f"{where}.expect.argument")
+    optional = expect.get("optional", False)
+    if type(optional) is not bool:
+        raise ValueError(f"{where}.expect.optional must be a bool")
+    normalized: Dict[str, Any] = {"argument": argument}
+    if optional:
+        if params_schema is not None and params_schema[argument].get("required") is True:
+            raise ValueError(f"{where}.expect.optional contradicts required parameter {argument!r}")
+        normalized["optional"] = True
+    return normalized
+
+
 def validate_evidence(
     evidence: Any,
     params_schema: Optional[Mapping[str, Any]] = None,
@@ -204,8 +265,6 @@ def validate_evidence(
         raise ValueError(f"{where}.phases contains duplicates")
     if list(phases) != [phase for phase in PHASES if phase in phases]:
         raise ValueError(f"{where}.phases must be ordered before, after, settled")
-    if "before" not in phases or "after" not in phases:
-        raise ValueError(f"{where}.phases must include before and after")
 
     measure = evidence["measure"]
     if type(measure) is not dict:
@@ -214,6 +273,14 @@ def validate_evidence(
     op = measure["op"]
     if type(op) is not str or op not in MEASURE_OPS:
         raise ValueError(f"{where}.measure.op must be one of {', '.join(MEASURE_OPS)}")
+    absolute = op in ABSOLUTE_OPS
+    if absolute:
+        # An absolute target is compared with the last declared phase alone;
+        # `before` is allowed but never read.
+        if "after" not in phases:
+            raise ValueError(f"{where}.phases must include after")
+    elif "before" not in phases or "after" not in phases:
+        raise ValueError(f"{where}.phases must include before and after")
     fields = _check_identifier_list(measure["fields"], f"{where}.measure.fields", 1, 3)
     normalized_measure: Dict[str, Any] = {"op": op, "fields": fields}
     if op == "along":
@@ -228,11 +295,16 @@ def validate_evidence(
     else:
         if "heading_field" in measure:
             raise ValueError(f"{where}.measure.heading_field is only allowed with op along")
-        if op != "distance" and len(fields) != 1:
+        if op not in ("distance", "distance_to") and len(fields) != 1:
             raise ValueError(f"{where}.measure.op {op} takes exactly one field")
+    if "frame" in measure:
+        normalized_measure["frame"] = _check_identifier(measure["frame"], f"{where}.measure.frame")
 
     expect = evidence["expect"]
-    if (
+    normalized_expect: Dict[str, Any]
+    if absolute:
+        normalized_expect = _check_absolute_expect(expect, op, fields, params_schema, where)
+    elif (
         type(expect) is not dict
         or set(expect) not in ({"argument"}, {"argument", "scale"}, {"value"})
     ):
@@ -240,22 +312,12 @@ def validate_evidence(
             f"{where}.expect must be exactly one of {{'argument': name[, 'scale': number]}} "
             "or {'value': number}"
         )
-    if "argument" in expect:
-        argument = expect["argument"]
-        if type(argument) is not str or not argument:
-            raise ValueError(f"{where}.expect.argument must be a parameter name")
-        if params_schema is not None:
-            definition = params_schema.get(argument)
-            if type(definition) is not dict:
-                raise ValueError(f"{where}.expect.argument {argument!r} is not a key in params_schema")
-            if definition.get("type") not in _NUMERIC_PARAM_TYPES:
-                raise ValueError(
-                    f"{where}.expect.argument {argument!r} must name a number or integer parameter"
-                )
+    elif "argument" in expect:
+        argument = _check_numeric_argument(expect["argument"], params_schema, f"{where}.expect.argument")
         scale = expect.get("scale", 1)
         if not _is_number(scale) or scale == 0:
             raise ValueError(f"{where}.expect.scale must be a finite non-zero number")
-        normalized_expect: Dict[str, Any] = {"argument": argument, "scale": scale}
+        normalized_expect = {"argument": argument, "scale": scale}
     else:
         value = expect["value"]
         if not _is_number(value):
@@ -270,6 +332,10 @@ def validate_evidence(
         key: _check_non_negative(tolerance.get(key, 0), f"{where}.tolerance.{key}")
         for key in ("absolute", "relative")
     }
+    if absolute and normalized_tolerance["relative"] != 0:
+        # The target is a place, not an amount: there is nothing for a
+        # fraction to be a fraction of.
+        raise ValueError(f"{where}.tolerance.relative must be 0 for op {op}; use absolute")
 
     normalized: Dict[str, Any] = {
         "kind": kind,
@@ -496,14 +562,20 @@ def _measure(measure: Mapping[str, Any], start: Mapping[str, float], end: Mappin
 def _drift(measure: Mapping[str, Any], after: Mapping[str, float], settled: Mapping[str, float]) -> float:
     """How far the observation still moved between ``after`` and ``settled``.
 
-    Always a magnitude: euclidean over the fields for ``distance`` and
-    ``along``, ``|delta|`` for ``delta``, ``|wrap(delta)|`` for angle ops.
+    Always a magnitude: euclidean over the fields for ``distance``,
+    ``along`` and ``distance_to``, ``|delta|`` for ``delta``,
+    ``|wrap(delta)|`` for angle ops (``angle_to`` included).
     """
     op, fields = measure["op"], measure["fields"]
-    if op in ("distance", "along"):
+    if op in ("distance", "along", "distance_to"):
         return _euclidean(fields, after, settled)
     difference = settled[fields[0]] - after[fields[0]]
     return abs(wrap_angle(difference)) if op in ANGLE_OPS else abs(difference)
+
+
+def _not_given(arguments: Any, name: str) -> bool:
+    """The call left this argument out (absent, or an explicit null)."""
+    return isinstance(arguments, Mapping) and arguments.get(name) is None
 
 
 def _verdict(
@@ -535,7 +607,8 @@ def judge(
         evidence_spec: one item of a contract's ``evidence`` list.
         arguments: the arguments the capability was invoked with.
         observations: ``{"before": {...}, "after": {...}, "settled": {...}}``,
-            each phase a mapping of field name to number.
+            each phase a mapping of field name to number (and ``frame``, a
+            string, when the spec's measure names one).
 
     Returns:
         ``{"usable", "measured", "expected", "allowed", "settle_drift",
@@ -554,14 +627,22 @@ def judge(
     measure = spec["measure"]
     op = measure["op"]
     fields = measure["fields"]
+    expect = spec["expect"]
+
+    if op == "angle_to" and expect.get("optional") and _not_given(arguments, expect["argument"]):
+        # The caller asked for no target, so there is nothing to compare.
+        return _verdict(True, f"argument {expect['argument']!r} was not given; no target to check")
 
     if not isinstance(observations, Mapping):
         return _verdict(False, "observations must be a mapping of phases")
+    frame = measure.get("frame")
     phases: Dict[str, Dict[str, float]] = {}
     for phase in spec["phases"]:
         values = observations.get(phase)
         if not isinstance(values, Mapping):
             return _verdict(False, f"phase {phase!r} was not observed")
+        if frame is not None and values.get("frame") != frame:
+            return _verdict(False, f"phase {phase!r} is not in frame {frame!r}")
         needed = list(fields)
         if phase == "before" and "heading_field" in measure:
             needed.append(measure["heading_field"])
@@ -571,24 +652,37 @@ def judge(
                 return _verdict(False, f"phase {phase!r} has no finite numeric field {field!r}")
         phases[phase] = {field: float(values[field]) for field in needed}
 
-    expect = spec["expect"]
-    if "argument" in expect:
+    # Measured on the last declared phase: `settled` when the spec lists it,
+    # otherwise `after`. A relative op measures from `before` to it.
+    last = spec["phases"][-1]
+    if op == "distance_to":
+        target: Dict[str, float] = {}
+        for field in fields:
+            name = expect["arguments"][field]
+            raw = arguments.get(name) if isinstance(arguments, Mapping) else None
+            if not _is_number(raw):
+                return _verdict(False, f"argument {name!r} is missing or not a finite number")
+            target[field] = float(raw)
+        measured = _euclidean(fields, target, phases[last])
+        expected = 0.0
+    elif "argument" in expect:
         raw = arguments.get(expect["argument"]) if isinstance(arguments, Mapping) else None
         if not _is_number(raw):
             return _verdict(False, f"argument {expect['argument']!r} is missing or not a finite number")
-        expected = float(expect["scale"]) * float(raw)
-        if op == "abs_angle_delta":
-            expected = abs(expected)
+        if op == "angle_to":
+            measured = phases[last][fields[0]]
+            expected = float(raw)
+        else:
+            expected = float(expect["scale"]) * float(raw)
+            if op == "abs_angle_delta":
+                expected = abs(expected)
+            measured = _measure(measure, phases["before"], phases[last])
     else:
         expected = float(expect["value"])
+        measured = _measure(measure, phases["before"], phases[last])
 
     tolerance = spec["tolerance"]
     allowed = max(float(tolerance["absolute"]), float(tolerance["relative"]) * abs(expected))
-
-    # Measured from `before` to the last declared phase: `settled` when the
-    # spec lists it, otherwise `after`.
-    last = spec["phases"][-1]
-    measured = _measure(measure, phases["before"], phases[last])
     error = abs(wrap_angle(measured - expected)) if op in ANGLE_OPS else abs(measured - expected)
 
     settle_drift: Optional[float] = None

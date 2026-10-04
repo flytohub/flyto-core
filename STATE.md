@@ -1,5 +1,15 @@
 # Flyto2 Core State
 
+## Absolute-target contract evidence, 2.38.0 (2026-10-04)
+
+`flyto.capability-contract.v1` gains `distance_to` and `angle_to`, which judge
+the last declared phase against a target in the call's arguments, and an
+optional `measure.frame` every observed phase must match. A navigation that
+reported success 0.63 m short of its goal is now provably not an arrival
+(`tests/core/test_capability_contract_absolute_targets.py`, parity vectors in
+`tests/core/vectors/`). Additive: existing contracts normalize and hash as on
+2.37. Not tagged or released.
+
 ## Pre-execute hook rewrites and label ranking, 2.37.1 (2026-10-04)
 
 Pre-execute hooks again change what the module receives: hooks see the
@@ -463,7 +473,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 991 maintained Python files, 6,296
+- Source-backed documentation now covers 991 maintained Python files, 6,299
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
