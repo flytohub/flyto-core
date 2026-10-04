@@ -1,0 +1,1022 @@
+{
+  "schema": "flyto.capability-contract.v1",
+  "about": "Judge vectors for the absolute-target ops distance_to and angle_to (flyto-core 2.38.0). A host that re-implements judge must reproduce every verdict exactly: usable and reason as given, numbers equal as IEEE-754 doubles.",
+  "cases": [
+    {
+      "name": "a reported success 0.63 short of the target is not arrival",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.196,
+        "y": -0.005,
+        "yaw_radians": 0.0028
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.566,
+          "y": -0.005,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.566,
+          "y": -0.005,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 0.63,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.63, expected 0, error 0.63 exceeds allowed 0.3"
+      }
+    },
+    {
+      "name": "arrived inside the goal tolerance",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 1.02,
+          "y": 0.11,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 1.02,
+          "y": 0.11,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": 0.11180339887498948,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.111803 within 0.3 of expected 0"
+      }
+    },
+    {
+      "name": "the boundary is inclusive",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.3,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.3,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": 0.3,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.3 within 0.3 of expected 0"
+      }
+    },
+    {
+      "name": "just outside the boundary",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.3001,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.3001,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 0.3001,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.3001, expected 0, error 0.3001 exceeds allowed 0.3"
+      }
+    },
+    {
+      "name": "measured on settled, not after",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 2.0,
+        "y": 1.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 2.0,
+          "y": 1.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 2.5,
+          "y": 1.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 0.5,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.5, expected 0, error 0.5 exceeds allowed 0.3"
+      }
+    },
+    {
+      "name": "odometry is not the map frame",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "odom",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "odom",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "phase 'after' is not in frame 'map'"
+      }
+    },
+    {
+      "name": "an observation without a frame is not in the map frame",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "x": 1.0,
+          "y": 0.0
+        },
+        "settled": {
+          "x": 1.0,
+          "y": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "phase 'after' is not in frame 'map'"
+      }
+    },
+    {
+      "name": "the settled phase is required",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "phase 'settled' was not observed"
+      }
+    },
+    {
+      "name": "a missing target coordinate is unusable",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'y' is missing or not a finite number"
+      }
+    },
+    {
+      "name": "a boolean target coordinate is unusable",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": true
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'y' is missing or not a finite number"
+      }
+    },
+    {
+      "name": "before is not required when not declared",
+      "spec": {
+        "kind": "arrival",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": -3.0,
+        "y": 4.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": -3.1,
+          "y": 4.05,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": -3.1,
+          "y": 4.05,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": 0.11180339887498948,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 0.111803 within 0.3 of expected 0"
+      }
+    },
+    {
+      "name": "no heading asked: nothing to check",
+      "spec": {
+        "kind": "arrival.heading",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians",
+          "optional": true
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 2.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 2.0
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'yaw_radians' was not given; no target to check"
+      }
+    },
+    {
+      "name": "an explicit null heading is not asked",
+      "spec": {
+        "kind": "arrival.heading",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians",
+          "optional": true
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0,
+        "yaw_radians": null
+      },
+      "observations": {},
+      "verdict": {
+        "usable": true,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'yaw_radians' was not given; no target to check"
+      }
+    },
+    {
+      "name": "heading across plus or minus pi",
+      "spec": {
+        "kind": "arrival.heading",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians",
+          "optional": true
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "yaw_radians": 3.1
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": -3.1
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": -3.1
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": -3.1,
+        "expected": 3.1,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured -3.1 within 0.3 of expected 3.1"
+      }
+    },
+    {
+      "name": "heading off by half a radian",
+      "spec": {
+        "kind": "arrival.heading",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians",
+          "optional": true
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "yaw_radians": 1.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 1.5
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 1.5
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 1.5,
+        "expected": 1.0,
+        "allowed": 0.3,
+        "settle_drift": null,
+        "reason": "measured 1.5, expected 1, error 0.5 exceeds allowed 0.3"
+      }
+    },
+    {
+      "name": "a non-numeric heading is unusable",
+      "spec": {
+        "kind": "arrival.heading",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians",
+          "optional": true
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {
+        "yaw_radians": "north"
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'yaw_radians' is missing or not a finite number"
+      }
+    },
+    {
+      "name": "a required heading that is missing is unusable",
+      "spec": {
+        "kind": "arrival.heading.required",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "angle_to",
+          "fields": [
+            "yaw"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "argument": "yaw_radians"
+        },
+        "tolerance": {
+          "absolute": 0.3
+        }
+      },
+      "arguments": {},
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": null,
+        "expected": null,
+        "allowed": null,
+        "settle_drift": null,
+        "reason": "argument 'yaw_radians' is missing or not a finite number"
+      }
+    },
+    {
+      "name": "still moving once arrived",
+      "spec": {
+        "kind": "arrival.settled",
+        "observe": "map_pose",
+        "phases": [
+          "after",
+          "settled"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "x",
+            "y"
+          ],
+          "frame": "map"
+        },
+        "expect": {
+          "arguments": {
+            "x": "x",
+            "y": "y"
+          }
+        },
+        "tolerance": {
+          "absolute": 0.3
+        },
+        "settle": {
+          "max_drift": 0.02
+        }
+      },
+      "arguments": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "observations": {
+        "after": {
+          "frame": "map",
+          "x": 0.95,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "settled": {
+          "frame": "map",
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 0.0,
+        "expected": 0.0,
+        "allowed": 0.3,
+        "settle_drift": 0.050000000000000044,
+        "reason": "drifted 0.05 after stopping, exceeds max_drift 0.02"
+      }
+    },
+    {
+      "name": "a lift on the asked floor",
+      "spec": {
+        "kind": "floor.reached",
+        "observe": "car",
+        "phases": [
+          "before",
+          "after"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "floor"
+          ]
+        },
+        "expect": {
+          "arguments": {
+            "floor": "floor"
+          }
+        },
+        "tolerance": {
+          "absolute": 0
+        }
+      },
+      "arguments": {
+        "floor": 7
+      },
+      "observations": {
+        "before": {
+          "floor": 2
+        },
+        "after": {
+          "floor": 7
+        }
+      },
+      "verdict": {
+        "usable": true,
+        "measured": 0.0,
+        "expected": 0.0,
+        "allowed": 0.0,
+        "settle_drift": null,
+        "reason": "measured 0 within 0 of expected 0"
+      }
+    },
+    {
+      "name": "a lift one floor short",
+      "spec": {
+        "kind": "floor.reached",
+        "observe": "car",
+        "phases": [
+          "before",
+          "after"
+        ],
+        "measure": {
+          "op": "distance_to",
+          "fields": [
+            "floor"
+          ]
+        },
+        "expect": {
+          "arguments": {
+            "floor": "floor"
+          }
+        },
+        "tolerance": {
+          "absolute": 0
+        }
+      },
+      "arguments": {
+        "floor": 7
+      },
+      "observations": {
+        "before": {
+          "floor": 2
+        },
+        "after": {
+          "floor": 6
+        }
+      },
+      "verdict": {
+        "usable": false,
+        "measured": 1.0,
+        "expected": 0.0,
+        "allowed": 0.0,
+        "settle_drift": null,
+        "reason": "measured 1, expected 0, error 1 exceeds allowed 0"
+      }
+    }
+  ]
+}

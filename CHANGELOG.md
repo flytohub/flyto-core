@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Capability contract evidence can prove an absolute end state. Two measure
+  ops, `distance_to` (1..3 fields, `expect.arguments` maps each field to a
+  numeric parameter) and `angle_to` (one field, `expect.argument`, optionally
+  `optional: true` when the call may omit the target), compare the last
+  declared phase with a target taken from the call's own arguments. Before,
+  every measure compared two phases, so a provider that reported success while
+  it stopped short of the asked place was believed. Absolute ops require
+  `after` (not `before`) and `tolerance.relative` 0.
+- `measure.frame`: when declared, every observed phase must carry that `frame`
+  or the verdict is unusable, so a map coordinate is never compared with an
+  odometry pose.
+- `ABSOLUTE_OPS`; `"distance_to" in MEASURE_OPS` is the feature test for a
+  provider that also loads on 2.37. Contracts using neither normalize and hash
+  as before.
+- `tests/core/vectors/capability_contract_absolute_targets.json`: judge
+  vectors a re-implementing host must reproduce exactly.
 - `browser.fill_form` 1.0.0 fills a whole form in one call: text, textarea,
   number, date, select, radio, checkbox and file uploads, each found by its
   visible label (the same resolver `browser.type` uses, now shared in

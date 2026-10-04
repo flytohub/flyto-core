@@ -10,7 +10,7 @@ registry and enforces and verifies it generically, so the host contains no
 provider-specific code.
 
 Implementation: [`src/core/capability_contract.py`](../src/core/capability_contract.py)
-(`validate_contract`, `judge`, `wrap_angle`). Registration wiring:
+(`validate_contract`, `judge`, `wrap_angle`; `MEASURE_OPS`, `ABSOLUTE_OPS`). Registration wiring:
 [`decorators.py`](../src/core/modules/registry/decorators.py),
 [`metadata.py`](../src/core/modules/registry/metadata.py),
 [`core.py`](../src/core/modules/registry/core.py) (`ModuleRegistry.register`).
@@ -73,11 +73,53 @@ the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
 | --- | --- | --- |
 | `kind` | yes | Identifier: the evidence kind produced (e.g. `displacement`). |
 | `observe` | yes | Identifier: which observation the provider reports (e.g. `pose`). |
-| `phases` | yes | Non-empty, duplicate-free, ordered subset of `before`, `after`, `settled`; must include `before` and `after`. |
-| `measure` | yes | `{"op": ..., "fields": [...]}`. `op` is `distance` (1..3 fields), `along` (exactly 2 position fields plus `heading_field`), or `delta`, `angle_delta`, `abs_angle_delta` (exactly 1 field). Fields are identifiers, no duplicates. `heading_field` (an identifier, not one of `fields`) is required for `along` and forbidden for every other op. |
-| `expect` | yes | Exactly one of `{"argument": name}` / `{"argument": name, "scale": number}` (a `number`/`integer` key of `params_schema`; `scale` finite, non-zero, default `1`) or `{"value": number}`. `scale` is not allowed with `value`. |
-| `tolerance` | yes | Non-empty mapping with `absolute` and/or `relative`, each finite and ≥ 0. An absent one is normalized to `0`. |
+| `phases` | yes | Non-empty, duplicate-free, ordered subset of `before`, `after`, `settled`; must include `before` and `after`. An absolute op (`distance_to`, `angle_to`) must include `after`; `before` is optional for it. |
+| `measure` | yes | `{"op": ..., "fields": [...]}`. `op` is `distance` or `distance_to` (1..3 fields), `along` (exactly 2 position fields plus `heading_field`), or `delta`, `angle_delta`, `abs_angle_delta`, `angle_to` (exactly 1 field). Fields are identifiers, no duplicates. `heading_field` (an identifier, not one of `fields`) is required for `along` and forbidden for every other op. Optional `frame` (2.38.0, an identifier): every observed phase must carry that `frame`. |
+| `expect` | yes | For the relative ops, exactly one of `{"argument": name}` / `{"argument": name, "scale": number}` (a `number`/`integer` key of `params_schema`; `scale` finite, non-zero, default `1`) or `{"value": number}`; `scale` is not allowed with `value`. For the absolute ops, see [Absolute targets](#absolute-targets-2380). |
+| `tolerance` | yes | Non-empty mapping with `absolute` and/or `relative`, each finite and ≥ 0. An absent one is normalized to `0`. An absolute op requires `relative` to be `0` (or absent). |
 | `settle` | no | `{"max_drift": number ≥ 0}`; requires `settled` in `phases`. |
+
+### Absolute targets (2.38.0)
+
+Every other op measures a *change between two phases*. That cannot prove an
+end state: "it is now at the place it was sent to", "the car is on the floor it
+was asked for". A provider that reports success while it stopped short is
+believed by any relative measure of how far it went. The two absolute ops
+compare the **last declared phase alone** with a target taken from the call's
+own arguments:
+
+| `op` | `fields` | `expect` |
+| --- | --- | --- |
+| `distance_to` | 1..3 | `{"arguments": {field: parameter, ...}}` — one parameter name per measured field, exactly the measured fields, each a `number`/`integer` key of `params_schema`. No `scale`, no `value`. |
+| `angle_to` | exactly 1 | `{"argument": parameter}`, or `{"argument": parameter, "optional": true}` when the call may leave the target out. `optional` must be a `bool`; `optional: true` on a parameter `params_schema` marks `required: true` is rejected. No `scale`, no `value`. |
+
+Their `tolerance.relative` must be `0`: the target is a place, not an amount,
+so there is nothing for a fraction to be a fraction of. Name the reference
+frame the arguments are written in with `measure.frame`, so an observation in
+another frame (a drifting odometry pose against a map coordinate) is never
+compared with it.
+
+A navigation that must end within 0.30 m of the asked map point, and facing the
+asked heading when one is asked:
+
+```json
+[{"kind": "arrival", "observe": "map_pose", "phases": ["after", "settled"],
+  "measure": {"op": "distance_to", "fields": ["x", "y"], "frame": "map"},
+  "expect": {"arguments": {"x": "x", "y": "y"}},
+  "tolerance": {"absolute": 0.30}},
+ {"kind": "arrival.heading", "observe": "map_pose", "phases": ["after", "settled"],
+  "measure": {"op": "angle_to", "fields": ["yaw"], "frame": "map"},
+  "expect": {"argument": "yaw_radians", "optional": true},
+  "tolerance": {"absolute": 0.30}}]
+```
+
+Normalized: `frame` appears only when declared, `expect.optional` only when
+`true`, and the tolerance carries `relative: 0`. A contract that uses neither op
+nor `frame` normalizes, and hashes, exactly as on 2.37.
+
+**Feature detection.** A 2.37 core rejects these ops and the `frame` key. A
+provider that must also load there declares this evidence only when
+`"distance_to" in core.capability_contract.MEASURE_OPS`.
 
 ### Optional keys (2.36.0)
 
@@ -164,7 +206,8 @@ Input:
 - `evidence_spec` — one item of `contract["evidence"]`.
 - `arguments` — the arguments the capability was invoked with.
 - `observations` — `{"before": {...}, "after": {...}, "settled": {...}}`, each
-  phase a mapping of field name to number. Extra phases and fields are ignored.
+  phase a mapping of field name to number, plus a string `frame` when the
+  spec's measure names one. Extra phases and fields are ignored.
 
 Output: `{"usable", "measured", "expected", "allowed", "settle_drift", "reason"}`.
 
@@ -200,21 +243,41 @@ ended; always a magnitude:
 | `delta` | `abs(settled[f₁] − after[f₁])` |
 | `angle_delta`, `abs_angle_delta` | `abs(wrap(settled[f₁] − after[f₁]))` |
 
+For the absolute ops `D` is the same: euclidean over `fields` for
+`distance_to`, `abs(wrap(settled[f₁] − after[f₁]))` for `angle_to`.
+
 Then, with `last` the last phase listed in `phases` (`settled` when listed,
 otherwise `after`):
 
 ```
-measured = M(before, last)
-expected = scale · arguments[expect.argument]          if expect.argument, and op ≠ abs_angle_delta
+measured = M(before, last)                             relative ops
+         = sqrt( Σᵢ (last[fᵢ] − tᵢ)² ),                op = distance_to,
+             tᵢ = arguments[expect.arguments[fᵢ]]
+         = last[f₁]                                    op = angle_to
+expected = scale · arguments[expect.argument]          if expect.argument, op relative, op ≠ abs_angle_delta
          = abs(scale · arguments[expect.argument])     if expect.argument, and op = abs_angle_delta
-         = expect.value                                otherwise
+         = expect.value                                if expect.value
+         = 0                                           op = distance_to
+         = arguments[expect.argument]                  op = angle_to
 allowed  = max(tolerance.absolute, tolerance.relative · abs(expected))
-error    = abs(wrap(measured − expected))              if op is angle_delta or abs_angle_delta
+           (= tolerance.absolute for the absolute ops, whose relative is 0)
+error    = abs(wrap(measured − expected))              if op is angle_delta, abs_angle_delta or angle_to
          = abs(measured − expected)                    otherwise
 settle_drift = D(after, settled)                       if the spec declares settle, else None
 
 usable = error ≤ allowed  and  (settle_drift is None or settle_drift ≤ settle.max_drift)
 ```
+
+An absolute op never reads `before`, even when `phases` lists it (a listed
+phase must still be observed). `distance_to` reports `expected = 0`: the
+distance it wanted from the target.
+
+**An omitted optional target.** For `angle_to` with `expect.optional: true`,
+when `arguments` is a mapping and `arguments[expect.argument]` is absent or
+`null`, the verdict is decided **before anything else is checked**:
+`usable: true`, `measured`/`expected`/`allowed`/`settle_drift` `None`, reason
+`argument '<name>' was not given; no target to check`. A present but
+non-numeric value is not an omission; it is rule 5 below.
 
 The measured quantity runs from `before` to the **last** declared phase, not to
 `after`: the effect that counts is the one that is still there once the
@@ -233,11 +296,20 @@ These are never exceptions; they are `usable: false` with a reason, and
 2. A phase listed in the spec's `phases` is absent or not a mapping — every
    declared phase is required, so a spec with `settle` (which needs `settled`
    in `phases`) is unusable without a `settled` observation.
-3. A measured field is absent, not a number, a `bool`, or not finite (for
+3. The spec's measure names a `frame` and that phase's `frame` is not equal to
+   it (absent counts as different). Reason: `phase '<p>' is not in frame '<f>'`.
+   Rules 2–4 run phase by phase, in `phases` order.
+4. A measured field is absent, not a number, a `bool`, or not finite (for
    `along`, this includes `heading_field` in the `before` phase; it is not read
    from any other phase).
-4. `expect.argument` is absent from `arguments`, not a number, a `bool`, or not
-   finite.
+5. `expect.argument` — or, for `distance_to`, one of `expect.arguments`, checked
+   in `fields` order — is absent from `arguments`, not a number, a `bool`, or
+   not finite. Reason: `argument '<name>' is missing or not a finite number`.
+
+The exact reason strings are part of the contract: every verdict in
+[`tests/core/vectors/capability_contract_absolute_targets.json`](../tests/core/vectors/capability_contract_absolute_targets.json)
+(spec, arguments, observations and the full verdict) must be reproduced by a
+re-implementation. Numbers in a `reason` are formatted with Python's `.6g`.
 
 A malformed `evidence_spec` itself raises `ValueError` — it is a programming
 error, not an observation.
@@ -372,6 +444,29 @@ allowed  = max(0.1, 0.2 · 3.0)              = 0.6
 error    = |wrap(−3.083185 − (−3.0))|       = 0.083185  ≤ 0.6   ✓
 ```
 
+### Worked example: a reported arrival that stopped short (`distance_to`)
+
+The navigation spec from [Absolute targets](#absolute-targets-2380). The call
+asked for `{"x": 1.196, "y": -0.005, "yaw_radians": 0.0028}`; the provider
+reported success, and its map pose after and once settled was
+`(x 0.566, y −0.005, yaw 0.01)`.
+
+```
+arrival:          measured = sqrt((0.566 − 1.196)² + (−0.005 − (−0.005))²) = 0.63
+                  expected = 0,  allowed = 0.30,  error = 0.63 > 0.30   → usable = false
+arrival.heading:  measured = 0.01,  expected = 0.0028
+                  error = |wrap(0.01 − 0.0028)| = 0.0072 ≤ 0.30          → usable = true
+```
+
+The heading held, which proves nothing about the place: the call is not
+verified. Asked without `yaw_radians`, the heading item is `usable: true` with
+`measured: None` (no target to check), and the position item alone decides.
+
+A lift that must end on the asked floor uses the same op in one dimension:
+`{"op": "distance_to", "fields": ["floor"]}`, `{"arguments": {"floor":
+"floor"}}`, `tolerance.absolute 0`. Asked floor 7, observed 6 after: measured
+`1`, unusable.
+
 ### A "must not change" check (`heading.hold`)
 
 An expectation of `value: 0` with an absolute tolerance says a quantity must
@@ -402,6 +497,10 @@ chosen so its verdicts equal Flyto2 Cloud's earlier built-in motion check:
 - `motion.rotate`: signed `angle_delta` over `["yaw"]`, `expect.argument:
   yaw_radians`, tolerance `absolute 0.1, relative 0.2`; plus a position-drift
   item (`distance`, expected 0, absolute 0.05).
+- `motion.navigate` (with a 2.38.0 core): `distance_to` over `["x", "y"]` in
+  frame `map`, observed as `map_pose`, after and settled; plus `angle_to` over
+  `["yaw"]` with an optional `yaw_radians`. Tolerances follow the robot's own
+  navigation goal checker plus a small margin.
 
 These are a provider's choices, not Core vocabulary: Core knows only the
 operators.
@@ -491,14 +590,27 @@ async def move_to_floor(context):
     ...
 ```
 
-The lift declares no evidence, and that is a limit of v1 worth knowing: every
-v1 measure is a *change between two phases* compared with one argument or
-constant. "The car ended on floor N" is an absolute end state, and the change
-from the starting floor is not an argument the caller supplied. The host still
-gets everything else from this contract — the safety class, safe-stop and
-cancellation rules, idempotency, and the refuse-never-clamp bound `0 ≤ floor ≤ 40`.
-A lift that takes a relative move (`floors`, bounded `−40..40`) can prove it
-with `{"measure": {"op": "delta", "fields": ["floor"]}, "expect": {"argument": "floors"}}`.
+The lift above declares no evidence; before 2.38.0 it could not, because
+every measure was a *change between two phases* and "the car ended on floor N"
+is an absolute end state. Since 2.38.0 it proves it with an absolute target
+(see [Absolute targets](#absolute-targets-2380)):
+
+```python
+        "evidence": [{
+            "kind": "floor.reached",
+            "observe": "car",           # the controller reports {"floor": n}
+            "phases": ["after"],
+            "measure": {"op": "distance_to", "fields": ["floor"]},
+            "expect": {"arguments": {"floor": "floor"}},
+            "tolerance": {"absolute": 0},
+        }],
+```
+
+The host also gets everything else from this contract — the safety class,
+safe-stop and cancellation rules, idempotency, and the refuse-never-clamp bound
+`0 ≤ floor ≤ 40`. A lift that takes a relative move (`floors`, bounded
+`−40..40`) proves it with `{"measure": {"op": "delta", "fields": ["floor"]},
+"expect": {"argument": "floors"}}`.
 
 ### An inventory update
 
