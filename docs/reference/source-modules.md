@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **993 Python files**, **238,224 lines**, and **6,320 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **993 Python files**, **238,232 lines**, and **6,320 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -269,7 +269,7 @@ Inventory: **993 Python files**, **238,224 lines**, and **6,320 class/function/m
 | [`src/core/modules/atomic/browser/evaluate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/evaluate.py#L1) | 167 | 4 | `base, engine, registry, schema, typing` | Browser Evaluate Module |
 | [`src/core/modules/atomic/browser/extract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/extract.py#L1) | 347 | 5 | `base, engine, registry, schema, typing` | Browser Automation Modules |
 | [`src/core/modules/atomic/browser/extract_nested.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/extract_nested.py#L1) | 298 | 4 | `base, engine, logging, registry, schema, typing` | Browser Extract Nested Module — Extract tree/nested data structures |
-| [`src/core/modules/atomic/browser/fill_form.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/fill_form.py#L1) | 934 | 23 | `_label_resolve, _settle, asyncio, base, contextlib, engine, logging, pathlib, registry, schema, typing, utils` | Browser Fill Form Module - fill, upload and submit a whole form in one call |
+| [`src/core/modules/atomic/browser/fill_form.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/fill_form.py#L1) | 942 | 23 | `_label_resolve, _settle, asyncio, base, contextlib, engine, logging, pathlib, registry, schema, typing, utils` | Browser Fill Form Module - fill, upload and submit a whole form in one call |
 | [`src/core/modules/atomic/browser/find.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/find.py#L1) | 207 | 4 | `base, element_registry, engine, registry, schema, typing` | browser.find - Find elements in page |
 | [`src/core/modules/atomic/browser/form.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/form.py#L1) | 683 | 10 | `asyncio, base, engine, registry, schema, typing` | Browser Form Module - Smart form filling |
 | [`src/core/modules/atomic/browser/frame.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/frame.py#L1) | 340 | 5 | `base, engine, re, registry, schema, typing` | Browser Frame Module |
