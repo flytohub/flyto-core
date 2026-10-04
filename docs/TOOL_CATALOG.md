@@ -1,6 +1,6 @@
 # Tool Catalog
 
-> Auto-generated from flyto-core module registry. **481 modules** across **89 categories**.
+> Auto-generated from flyto-core module registry. **482 modules** across **89 categories**.
 >
 > Generated from the active `ModuleRegistry`; do not edit manually.
 >
@@ -20,7 +20,7 @@
 - [array](#array) (15)
 - [auth](#auth) (1)
 - [aws](#aws) (4)
-- [browser](#browser) (54)
+- [browser](#browser) (55)
 - [cache](#cache) (4)
 - [capability](#capability) (1)
 - [check](#check) (7)
@@ -223,6 +223,7 @@
 | `browser.evaluate` | Execute JavaScript code in page context | `script` string *(required)*, `args` array | `status` (string), `result` (any), `outcome` (object) |
 | `browser.extract` | Extract structured data from the page. Run browser.snapshot first to find the correct selector from the real page DOM. | `selector` string *(required)*, `limit` number, `fields` object | `status` (string), `data` (array), `count` (number), `outcome` (object) |
 | `browser.extract_nested` | Extract tree/nested data (comments, threads, folders). Returns hierarchical structure with children. | `root_selector` string *(required)*, `children_selector` string (default: ``), `fields` object (default: `{}`), `max_depth` number (default: `10`), `limit` number (default: `0`) | `items` (array), `count` (number), `total_nodes` (number), `outcome` (object) |
+| `browser.fill_form` | Fill every field of a form in ONE call: text, textarea, number, date, select, radio, checkbox and file uploads, found by their visible label text (or a CSS selector), then optionally submit and wait for a confirmation. Read the page once (browser.snapshot), then call this once with all fields instead of one browser.type/select/upload/click per field. Every field is located before anything is typed; if any is missing it returns ok=false with the list and fills nothing. | `fields` array, `uploads` array, `submit` object, `confirm` object, `field_timeout_ms` number (default: `5000`), `resolve_wait_ms` number (default: `3000`) | `ok` (boolean), `fields` (array), `uploads` (array), `missing` (array), `invalid` (array), `submitted` (boolean), `confirmed` (boolean), `readback` (string), `url` (string), `outcome` (object) |
 | `browser.find` | Find elements in page and return element ID list. Run browser.snapshot first to find the correct selector from the real page DOM. | `selector` string *(required)*, `limit` number | `status` (string), `count` (number), `element_ids` (array), `outcome` (object) |
 | `browser.form` | Smart form filling with automatic field detection. Run browser.snapshot first to find the correct selectors from the real page DOM. | `form_selector` string, `data` object *(required)*, `field_mapping` object, `clear_before_fill` boolean (default: `True`), `submit` boolean (default: `False`), `submit_selector` string, `delay_between_fields_ms` number (default: `0`) | `filled_fields` (array), `failed_fields` (array), `submitted` (boolean), `outcome` (object) |
 | `browser.frame` | Switch to iframe or frame context | `selector` string, `name` string, `url` string, `action` string (default: `enter`), `timeout` number (default: `30000`) | `status` (string), `frame_url` (string), `frame_name` (string), `frames` (array), `outcome` (object) |

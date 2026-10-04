@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.38.0] - 2026-10-04
+
+### Added
+
+- `browser.fill_form` 1.0.0 fills a whole form in one call: text, textarea,
+  number, date, select, radio, checkbox and file uploads, each found by its
+  visible label (the same resolver `browser.type` uses, now shared in
+  `browser/_label_resolve.py`) or by a CSS selector, then optionally submits
+  and waits for a caller-named confirmation, returning per-field read-back and
+  the confirmation text. Every field, upload and the submit control are
+  resolved before anything is written: a missing one returns `ok: false` with
+  the list and fills nothing; a failed fill or a form that reports invalid
+  controls is not submitted. Password fields, credential-named labels and
+  `sensitive_value` are never echoed and are redacted from step records.
+  Declares a `flyto.capability-contract.v1` contract: `controlled`, not
+  `actuates` (an external write, consequence level 3, graded like the
+  `browser.type` calls it replaces rather than as a real-world actuation),
+  not idempotent, effect `external.record.changed`. The `execute_module` tool
+  description now tells agents to read a form once and fill it with one
+  `browser.fill_form` call instead of one call per field.
+
 ### Security
 
 - `install_pack` runs a `subprocess-jsonrpc` pack from a host-private copy of

@@ -2,7 +2,7 @@
 
 # Registered Module Source Map
 
-The AST contains **488 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
+The AST contains **489 explicit, literal `@register_module` declarations**. This static count can exceed the public runtime catalog because discovery, compatibility aliases, dependency availability, and policy gates select the active set. Runtime-discovered totals and every parameter/output contract remain in [Tool Catalog](../TOOL_CATALOG.md); this map proves implementation ownership.
 
 | Module ID | Version | Category | Callable | Credentials | Permissions | Source |
 |---|---|---|---|---|---|---|
@@ -82,6 +82,7 @@ The AST contains **488 explicit, literal `@register_module` declarations**. This
 | `browser.evaluate` | `1.0.0` | `browser` | `BrowserEvaluateModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/evaluate.py:132`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/evaluate.py#L132) |
 | `browser.extract` | `1.0.0` | `browser` | `BrowserExtractModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/extract.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/extract.py#L186) |
 | `browser.extract_nested` | `1.0.0` | `browser` | `BrowserExtractNestedModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/extract_nested.py:264`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/extract_nested.py#L264) |
+| `browser.fill_form` | `1.0.0` | `browser` | `BrowserFillFormModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/fill_form.py:470`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/fill_form.py#L470) |
 | `browser.find` | `1.0.0` | `browser` | `BrowserFindModule` | no | `&#91;'browser.read', 'browser.write'&#93;` | [`src/core/modules/atomic/browser/find.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/find.py#L142) |
 | `browser.form` | `1.0.0` | `browser` | `BrowserFormModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/form.py:466`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/form.py#L466) |
 | `browser.frame` | `1.1.0` | `browser` | `BrowserFrameModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/frame.py:224`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/frame.py#L224) |
@@ -115,7 +116,7 @@ The AST contains **488 explicit, literal `@register_module` declarations**. This
 | `browser.table` | `1.0.0` | `browser` | `BrowserTableModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/table.py:236`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/table.py#L236) |
 | `browser.throttle` | `1.0.0` | `browser` | `BrowserThrottleModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/throttle.py:186`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/throttle.py#L186) |
 | `browser.trace` | `1.0.0` | `browser` | `BrowserTraceModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/trace.py:270`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/trace.py#L270) |
-| `browser.type` | `1.2.1` | `browser` | `BrowserTypeModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/type.py:499`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L499) |
+| `browser.type` | `1.2.1` | `browser` | `BrowserTypeModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/type.py:346`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/type.py#L346) |
 | `browser.upload` | `1.0.0` | `browser` | `BrowserUploadModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/upload.py:220`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/upload.py#L220) |
 | `browser.viewport` | `1.0.0` | `browser` | `BrowserViewportModule` | no | `&#91;'browser.automation'&#93;` | [`src/core/modules/atomic/browser/viewport.py:268`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/viewport.py#L268) |
 | `browser.wait` | `1.1.0` | `browser` | `BrowserWaitModule` | no | `&#91;'browser.read'&#93;` | [`src/core/modules/atomic/browser/wait.py:369`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/browser/wait.py#L369) |
