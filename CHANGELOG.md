@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.39.0] - 2026-10-07
+
+### Added
+
+- Capability contract `recovery` blocks may declare recovery semantics: `on`
+  (stop-reason families `obstruction`, `no_passage`, `stopped_short`),
+  `alternatives` (1..8 semantic roles, in order of preference), `preserves`
+  (`destination` / `target`), `resource_scope` (`same_resource` only) and
+  `fills` (1..8 roles the capability itself fills). A host builds a way round
+  from roles instead of a table of capability ids. Roles match
+  `RECOVERY_ROLE_PATTERN`; unknown keys, including any bound, are refused, and
+  `on`, `alternatives` and `resource_scope` are declared together.
+- `RECOVERY_FIELDS`, `RECOVERY_STOP_FAMILIES`, `RECOVERY_PRESERVES`,
+  `RECOVERY_RESOURCE_SCOPES`, `RECOVERY_ROLE_PATTERN`, `RECOVERY_ROLES_MAX`.
+  `"fills" in RECOVERY_FIELDS` is the feature test for a provider that also
+  loads on 2.38.
+- `tests/core/vectors/capability_contract_recovery_semantics.json`: blocks a
+  re-implementing host must admit and refuse.
+
+### Changed
+
+- `recovery.capabilities` is optional. A block must still declare at least one
+  of `capabilities`, `alternatives` or `fills`; `observe` or `guidance` alone is
+  refused. Blocks valid on 2.38 normalize and hash unchanged.
+
 ## [2.38.0] - 2026-10-04
 
 ### Added
