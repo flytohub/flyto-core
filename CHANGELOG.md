@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of `capabilities`, `alternatives` or `fills`; `observe` or `guidance` alone is
   refused. Blocks valid on 2.38 normalize and hash unchanged.
 
+### Security
+
+- `requirements.lock`: `multidict` 6.7.1 -> 6.9.1 (CVE-2026-104874, reported
+  by `pip-audit` against the base-runtime lock; transitive via `aiohttp`).
+
 ## [2.38.0] - 2026-10-04
 
 ### Added
