@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `requirements.lock`: `multidict` 6.7.1 -> 6.9.1 (CVE-2026-104874, reported
   by `pip-audit` against the base-runtime lock; transitive via `aiohttp`).
+- `package-lock.json` (JavaScript test runtime only): `source-map-js` 1.2.1 ->
+  1.2.2 (GHSA-68fv-2mgg-jv7q).
 
 ## [2.38.0] - 2026-10-04
 
