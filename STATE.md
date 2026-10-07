@@ -1,5 +1,15 @@
 # Flyto2 Core State
 
+## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
+
+A contract's `recovery` block may declare `on` / `alternatives` / `preserves` /
+`resource_scope` / `fills`, so a host builds a way round from semantic roles
+instead of a table of capability ids; `capabilities` is optional
+(`tests/core/test_capability_contract_recovery_semantics.py`, vectors in
+`tests/core/vectors/`). Additive: blocks valid on 2.38 normalize and hash
+unchanged. Core validates shape only; whether a declaration is trusted is the
+host's review. Not tagged or released to PyPI.
+
 ## Absolute-target contract evidence, 2.38.0 (2026-10-04)
 
 `flyto.capability-contract.v1` gains `distance_to` and `angle_to`, which judge
@@ -483,7 +493,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 993 maintained Python files, 6,323
+- Source-backed documentation now covers 993 maintained Python files, 6,327
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

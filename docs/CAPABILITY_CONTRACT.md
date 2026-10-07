@@ -133,7 +133,7 @@ hashes, exactly as on 2.35.
 | --- | --- |
 | `role` | One of `safe_stop`. A `safe_stop` contract must be `cancellable: false`, `requires_safe_stop: false` and `idempotent: true`: the stop is not cancelled, needs no stop of its own and is safe to repeat. A host runs it immediately, with no approval queue or confirmation. |
 | `artifacts` | 1..8 declarations `{"kind": identifier, "media_types": [...], "max_bytes": int}`. `kind` is unique; `media_types` holds 1..8 distinct lower-case `type/subtype` strings with no parameters; `max_bytes` is an integer in 1..20,971,520 (20 MiB). |
-| `recovery` | `{"capabilities": [identifier, ...], "observe": identifier, "guidance": text}`. `capabilities` (1..8, distinct) is required: capability ids a planner may use as substitutes after this one fails. `observe` names an observation the adapter reports to explain the failure (e.g. `recovery_context`). `guidance` is at most 500 characters of planner-facing text. |
+| `recovery` | The host's recovery report `{"capabilities": [identifier, ...], "observe": identifier, "guidance": text}`, the recovery semantics (2.39.0, below), or both. `capabilities` (1..8, distinct): capability ids a planner may use as substitutes after this one fails; required before 2.39.0, optional since. `observe` names an observation the adapter reports to explain the failure (e.g. `recovery_context`). `guidance` is at most 500 characters of planner-facing text. The block must declare at least one of `capabilities`, `alternatives` or `fills`. |
 | `expected_duration_ms` | Integer in 1..3,600,000. The deadline a host gives the call. When absent, a host uses the module's `timeout_ms`, then its own default. |
 
 Booleans are rejected where an integer is required (`max_bytes`,
@@ -151,6 +151,50 @@ call.
 A provider that must load on both lines sends them only when
 `"role" in core.capability_contract.OPTIONAL_FIELDS` (the frozenset exists from
 2.36.0).
+
+### Recovery semantics (2.39.0)
+
+A `recovery` block may also state what a stopped call may be worked round
+with, as meaning rather than capability ids. A host matches roles across the
+contracts the stopped resource holds, so a provider adds a way round without
+the host naming any of its capabilities. Every key is optional and appears in
+the normalized block only when declared; unknown keys are refused.
+
+| Key | Rule |
+| --- | --- |
+| `on` | 1..3 distinct stop-reason families from `RECOVERY_STOP_FAMILIES`: `obstruction` (something stood in the way), `no_passage` (no way through to the requested end state), `stopped_short` (the call ended before delivering the requested amount). |
+| `alternatives` | 1..8 distinct semantic roles, in order of preference (the order is kept). A role matches `RECOVERY_ROLE_PATTERN` (`^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most 96 characters). It names a meaning, never a capability id. |
+| `preserves` | 1..2 distinct of `destination`, `target`: what the way round must still reach. |
+| `resource_scope` | `same_resource`, the only value: a way round runs on the resource whose call stopped. |
+| `fills` | 1..8 distinct roles this capability itself fills. |
+
+Coherence: `on` and `alternatives` are declared together, and with them
+`resource_scope`; `preserves` and `resource_scope` describe a way round and are
+refused without `alternatives`. A block may declare only `fills`. There is no
+key for bounds (how many steps a way round takes, how many times a call is
+worked round): those belong to the host, and a block that tries to state one
+is refused as an unknown key.
+
+```json
+{"recovery": {
+  "on": ["obstruction"],
+  "alternatives": ["reorient", "reposition", "travel_to"],
+  "preserves": ["destination"],
+  "resource_scope": "same_resource",
+  "fills": ["reposition"]
+}}
+```
+
+Admitting a declaration is not trusting it. Core only checks its shape; a host
+decides whether a declared way round is used (for example, only once its exact
+definition has been reviewed). `tests/core/vectors/capability_contract_recovery_semantics.json`
+lists blocks a re-implementing host must admit and refuse.
+
+**Feature detection.** A 2.38 core requires `capabilities` and refuses the
+semantic keys. A provider that must also load there sends them only when
+`"fills" in core.capability_contract.RECOVERY_FIELDS` (the frozenset exists
+from 2.39.0), and otherwise drops them (and the whole block when nothing else
+is left).
 
 ### Parameter bounds
 

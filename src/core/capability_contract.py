@@ -54,6 +54,12 @@ __all__ = [
     "OPTIONAL_FIELDS",
     "EXPECTED_DURATION_MS_MAX",
     "ARTIFACT_MAX_BYTES",
+    "RECOVERY_FIELDS",
+    "RECOVERY_STOP_FAMILIES",
+    "RECOVERY_PRESERVES",
+    "RECOVERY_RESOURCE_SCOPES",
+    "RECOVERY_ROLE_PATTERN",
+    "RECOVERY_ROLES_MAX",
     "validate_contract",
     "validate_evidence",
     "judge",
@@ -124,10 +130,35 @@ _ARTIFACT_KEYS = frozenset(("kind", "media_types", "max_bytes"))
 _MEDIA_TYPES_MAX = 8
 # type/subtype, lower case, no parameters: what a host compares, not a header.
 _MEDIA_TYPE = re.compile(r"^[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,63}$")
-_RECOVERY_REQUIRED = frozenset(("capabilities",))
-_RECOVERY_OPTIONAL = frozenset(("observe", "guidance"))
+# The host's recovery report (2.36.0): substitutes, the observation that
+# explains a failure, and planner-facing text.
+_RECOVERY_REPORT_KEYS = frozenset(("capabilities", "observe", "guidance"))
 _RECOVERY_CAPABILITIES_MAX = 8
 _GUIDANCE_MAX = 500
+
+#: Stop-reason families a recovery declaration may answer (2.39.0).
+#: ``obstruction``: something stood in the way of the call. ``no_passage``: no
+#: way through to the requested end state exists. ``stopped_short``: the call
+#: ended before it delivered the requested amount.
+RECOVERY_STOP_FAMILIES = ("obstruction", "no_passage", "stopped_short")
+#: What a way round must still reach (2.39.0).
+RECOVERY_PRESERVES = ("destination", "target")
+#: Where a way round may run (2.39.0): only the resource whose call stopped.
+RECOVERY_RESOURCE_SCOPES = ("same_resource",)
+#: Grammar of a semantic role named in ``alternatives`` and ``fills``. A role
+#: is a meaning ("reposition"), never a capability id, so it shares the
+#: identifier grammar but is checked under its own name.
+RECOVERY_ROLE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+#: At most this many roles in ``alternatives`` and in ``fills``.
+RECOVERY_ROLES_MAX = 8
+# The recovery semantics (2.39.0): what a stopped call may be worked round
+# with, stated as roles, and which roles this capability itself fills.
+_RECOVERY_SEMANTIC_KEYS = frozenset(("on", "alternatives", "preserves", "resource_scope", "fills"))
+#: Every key a ``recovery`` block may hold. A provider that must also load on
+#: an older core (whose closed schema rejects the semantic keys and requires
+#: ``capabilities``) feature-detects them with
+#: ``"fills" in core.capability_contract.RECOVERY_FIELDS`` (exists from 2.39.0).
+RECOVERY_FIELDS = _RECOVERY_REPORT_KEYS | _RECOVERY_SEMANTIC_KEYS
 
 _TWO_PI = 2.0 * math.pi
 
@@ -417,16 +448,38 @@ def _check_artifacts(value: Any) -> List[Dict[str, Any]]:
     return normalized
 
 
-def _check_recovery(value: Any) -> Dict[str, Any]:
-    where = "contract.recovery"
-    if type(value) is not dict:
-        raise ValueError(f"{where} must be a mapping")
-    _check_keys(value, _RECOVERY_REQUIRED, _RECOVERY_OPTIONAL, where)
-    normalized: Dict[str, Any] = {
-        "capabilities": _check_identifier_list(
+def _check_roles(value: Any, where: str) -> List[str]:
+    if type(value) is not list:
+        raise ValueError(f"{where} must be a list of roles")
+    if not 1 <= len(value) <= RECOVERY_ROLES_MAX:
+        raise ValueError(f"{where} must hold 1..{RECOVERY_ROLES_MAX} roles, got {len(value)}")
+    for index, item in enumerate(value):
+        if type(item) is not str or len(item) > _IDENTIFIER_MAX or not RECOVERY_ROLE_PATTERN.fullmatch(item):
+            raise ValueError(
+                f"{where}[{index}] must be a role of at most {_IDENTIFIER_MAX} characters "
+                f"matching {RECOVERY_ROLE_PATTERN.pattern}"
+            )
+    if len(set(value)) != len(value):
+        raise ValueError(f"{where} names a role twice")
+    return list(value)
+
+
+def _check_closed_list(value: Any, allowed: tuple, where: str) -> List[str]:
+    if type(value) is not list or not 1 <= len(value) <= len(allowed):
+        raise ValueError(f"{where} must be a list of 1..{len(allowed)} of {', '.join(allowed)}")
+    if any(type(item) is not str or item not in allowed for item in value):
+        raise ValueError(f"{where} may name only {', '.join(allowed)}")
+    if len(set(value)) != len(value):
+        raise ValueError(f"{where} contains duplicates")
+    return list(value)
+
+
+def _check_recovery_report(value: Mapping[str, Any], where: str, normalized: Dict[str, Any]) -> None:
+    """The host's recovery report keys (2.36.0), into ``normalized`` when declared."""
+    if "capabilities" in value:
+        normalized["capabilities"] = _check_identifier_list(
             value["capabilities"], f"{where}.capabilities", 1, _RECOVERY_CAPABILITIES_MAX
         )
-    }
     if "observe" in value:
         normalized["observe"] = _check_identifier(value["observe"], f"{where}.observe")
     if "guidance" in value:
@@ -434,6 +487,54 @@ def _check_recovery(value: Any) -> Dict[str, Any]:
         if type(guidance) is not str or not guidance.strip() or len(guidance) > _GUIDANCE_MAX:
             raise ValueError(f"{where}.guidance must be non-empty text of at most {_GUIDANCE_MAX} characters")
         normalized["guidance"] = guidance
+
+
+def _check_recovery_semantics(value: Mapping[str, Any], where: str, normalized: Dict[str, Any]) -> None:
+    """The recovery semantics (2.39.0), into ``normalized`` when declared.
+
+    A way round is declared whole or not at all: ``on`` and ``alternatives``
+    come together, and with them ``resource_scope``; ``preserves`` and
+    ``resource_scope`` describe a way round and mean nothing without one.
+    """
+    if "on" in value:
+        normalized["on"] = _check_closed_list(value["on"], RECOVERY_STOP_FAMILIES, f"{where}.on")
+    if "alternatives" in value:
+        normalized["alternatives"] = _check_roles(value["alternatives"], f"{where}.alternatives")
+    if "preserves" in value:
+        normalized["preserves"] = _check_closed_list(value["preserves"], RECOVERY_PRESERVES, f"{where}.preserves")
+    if "resource_scope" in value:
+        scope = value["resource_scope"]
+        if type(scope) is not str or scope not in RECOVERY_RESOURCE_SCOPES:
+            raise ValueError(f"{where}.resource_scope must be one of {', '.join(RECOVERY_RESOURCE_SCOPES)}")
+        normalized["resource_scope"] = scope
+    if "fills" in value:
+        normalized["fills"] = _check_roles(value["fills"], f"{where}.fills")
+    recovers = "alternatives" in normalized
+    if ("on" in normalized) != recovers:
+        raise ValueError(f"{where}.on and {where}.alternatives are declared together")
+    if recovers and "resource_scope" not in normalized:
+        raise ValueError(f"{where}.alternatives requires {where}.resource_scope")
+    if not recovers and ("preserves" in normalized or "resource_scope" in normalized):
+        raise ValueError(f"{where}.preserves and {where}.resource_scope describe a way round; declare its alternatives")
+
+
+def _check_recovery(value: Any) -> Dict[str, Any]:
+    """The ``recovery`` block: the host's report, the recovery semantics, or both.
+
+    Every key is optional, but the block must state something a host can act
+    on: substitute ``capabilities``, a way round (``alternatives``), or roles
+    the capability ``fills``. Keys appear in the normalized block only when
+    declared, so a 2.36 block normalizes and hashes exactly as before.
+    """
+    where = "contract.recovery"
+    if type(value) is not dict:
+        raise ValueError(f"{where} must be a mapping")
+    _check_keys(value, frozenset(), RECOVERY_FIELDS, where)
+    normalized: Dict[str, Any] = {}
+    _check_recovery_report(value, where, normalized)
+    _check_recovery_semantics(value, where, normalized)
+    if not {"capabilities", "alternatives", "fills"} & set(normalized):
+        raise ValueError(f"{where} must declare capabilities, alternatives or fills")
     return normalized
 
 
