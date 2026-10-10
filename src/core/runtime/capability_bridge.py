@@ -114,6 +114,7 @@ class CapabilityInvocation(BaseModel):
         max_length=128,
         pattern=r"^[A-Za-z0-9._:-]+$",
     )
+    workspace_id: Optional[str] = Field(default=None, min_length=1)
     trace_id: Optional[str] = Field(default=None, max_length=128)
     requested_at: str
     input: Dict[str, Any] = Field(default_factory=dict)
@@ -211,6 +212,7 @@ class FlytoRuntimeCapabilityClient:
         revision: int = 1,
         operation_id: Optional[str] = None,
         invocation_id: Optional[str] = None,
+        workspace_id: Optional[str] = None,
         trace_id: Optional[str] = None,
     ) -> CapabilityResult:
         """Invoke one Runtime capability without automatically waiting."""
@@ -220,6 +222,7 @@ class FlytoRuntimeCapabilityClient:
             capability=capability,
             revision=revision,
             operation_id=operation_id or f"core-op-{uuid4().hex}",
+            workspace_id=workspace_id,
             trace_id=trace_id,
             requested_at=_utc_now(),
             input=dict(input_data),
@@ -252,6 +255,7 @@ class FlytoRuntimeCapabilityClient:
         revision: int = 1,
         operation_id: Optional[str] = None,
         invocation_id: Optional[str] = None,
+        workspace_id: Optional[str] = None,
         trace_id: Optional[str] = None,
         max_wait_cycles: int = MAX_ACCEPTED_WAIT_CYCLES,
     ) -> CapabilityResult:
@@ -264,6 +268,7 @@ class FlytoRuntimeCapabilityClient:
             capability=capability,
             revision=revision,
             operation_id=operation_id or f"core-op-{uuid4().hex}",
+            workspace_id=workspace_id,
             trace_id=trace_id,
             requested_at=_utc_now(),
             input=dict(input_data),
@@ -353,6 +358,7 @@ def _follow_up_invocation(
         capability=follow_up.capability,
         revision=1,
         operation_id=f"followup-{digest}",
+        workspace_id=original.workspace_id,
         trace_id=original.trace_id,
         requested_at=_utc_now(),
         input=dict(follow_up.input),

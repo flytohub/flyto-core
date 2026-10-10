@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **994 Python files**, **238,808 lines**, and **6,351 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **994 Python files**, **238,814 lines**, and **6,351 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -961,7 +961,7 @@ Inventory: **994 Python files**, **238,808 lines**, and **6,351 class/function/m
 | [`src/core/recipe_bundles.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/recipe_bundles.py#L1) | 208 | 13 | `__future__, pathlib, re, typing, yaml` | Recipe bundle planning for Cloud and MCP consumers. |
 | [`src/core/runtime/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/__init__.py#L1) | 241 | 0 | `browser_session, config, exceptions, health, invoke, languages, manager, pool_router, process, protocol, routing, transformer` | Plugin Runtime Module |
 | [`src/core/runtime/browser_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/browser_session.py#L1) | 629 | 24 | `asyncio, dataclasses, exceptions, logging, playwright, secrets, time, typing, uuid` | Browser Session Management |
-| [`src/core/runtime/capability_bridge.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/capability_bridge.py#L1) | 381 | 24 | `__future__, aiohttp, datetime, hashlib, pathlib, pydantic, typing, urllib, uuid` | Optional client for a local Flyto2 Runtime capability bridge. |
+| [`src/core/runtime/capability_bridge.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/capability_bridge.py#L1) | 387 | 24 | `__future__, aiohttp, datetime, hashlib, pathlib, pydantic, typing, urllib, uuid` | Optional client for a local Flyto2 Runtime capability bridge. |
 | [`src/core/runtime/config.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/config.py#L1) | 409 | 31 | `dataclasses, logging, os, pathlib, typing, yaml` | Runtime Configuration |
 | [`src/core/runtime/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/exceptions.py#L1) | 291 | 33 | `typing` | Runtime Exceptions |
 | [`src/core/runtime/health.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/runtime/health.py#L1) | 296 | 20 | `asyncio, dataclasses, enum, logging, time, typing` | Plugin Health Check System |

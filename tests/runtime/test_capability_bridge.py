@@ -138,6 +138,7 @@ async def test_manifest_and_nested_accepted_followups_close_over_wire_contract()
                 },
                 operation_id="core-operation-agent-1",
                 invocation_id="core-invocation-agent-1",
+                workspace_id="ws_test",
             )
         assert result.status == "success"
         assert result.output["response"] == "done"
@@ -148,6 +149,7 @@ async def test_manifest_and_nested_accepted_followups_close_over_wire_contract()
             "agent.delegate",
         ]
         assert handler.calls[0]["operation_id"] == handler.calls[3]["operation_id"]
+        assert all(call["workspace_id"] == "ws_test" for call in handler.calls)
     finally:
         await runner.cleanup()
 
