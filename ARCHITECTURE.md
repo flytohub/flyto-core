@@ -41,7 +41,7 @@ own the first two layers or hosted product/account logic.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  993 maintained Python files, 6,327 declarations, 489 literal module
+  994 maintained Python files, 6,351 declarations, 489 literal module
   registrations, 28 HTTP operations, 108 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 
