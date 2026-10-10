@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-09-30 | Optional Flyto2 Runtime execution bridge client | `2026-09-30-runtime-capability-bridge-client.md` | Core remains standalone while an explicit loopback client consumes `flyto2.execution.v1`; nested accepted follow-up and original operation-id replay are covered. Owner: ChatGPT |
 | 2026-09-22 | Host capability proxy closure | `2026-09-22-host-capability-proxy.md` | Local Runtime can inject execution-scoped capability authority into Core without serializing it into workflow data. Literal-loopback, bearer, no-redirect and opaque-context persistence boundaries verified; strict Indexer 18/18. Owner: ChatGPT |
 | 2026-09-21 | Generic external capability invocation runtime | `2026-09-21-capability-invoke-runtime.md` | Candidate: `capability.invoke` keeps device protocols outside Core and requires opaque host authority. Focused registry/atomic verification 145 passed / 1 skipped. Coordinating Cloud pin and final CI remain before release. Owner: ChatGPT |
 | 2026-09-06 | MCP conditional parameter validation | `2026-09-06-mcp-conditional-parameters.md` | Corrects the real AI Space text-input blocker by honoring conditional fields and schema defaults. Focused real Core validation evidence and release gate outcomes are recorded in the handoff. Owner: codex |

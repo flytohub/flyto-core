@@ -1,5 +1,22 @@
 # Decisions
 
+## 2026-09-30 - Core consumes Flyto2 Runtime only through the execution wire contract
+
+Decision: `flyto-core` may optionally call a separately installed Flyto2 Runtime
+through the explicit `core.runtime.capability_bridge` client. The client speaks
+only `flyto2.execution.v1` over the Runtime-owned authenticated loopback bridge,
+requires the endpoint/token to be supplied by the caller, and follows durable
+`accepted` operation handles while preserving the original `operation_id`. It
+does not auto-discover Runtime, register a workflow module, load Runtime provider
+SDKs, or make Runtime a Core dependency.
+
+Reason: Core and Runtime must remain independently installable while still
+composing without an implementation dependency cycle. This boundary is distinct
+from the host-neutral equipment `HostCapabilityProxy`, whose workflow-facing
+contract is `resource_id + capability_id + arguments` rather than machine/coding
+execution envelopes.
+
+
 ## 2026-09-22 - Host capability authority crosses HTTP only as opaque local host state
 
 Decision: the Core workflow API may accept execution-host capability authority only from authenticated host headers naming a literal `127.0.0.1` endpoint and bounded bearer token. The resulting proxy is marked opaque, never workflow data, never followed through redirects, and is removed from every persistence/evidence projection. `capability.invoke` remains the only workflow primitive that consumes it. The host may be the built-in AI Space executor, optional Flyto2 Runtime, or another compatible implementation.

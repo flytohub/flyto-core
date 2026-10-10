@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — optional Flyto2 Runtime composition client
+
+- Added `core.runtime.capability_bridge.FlytoRuntimeCapabilityClient` for
+  explicit same-machine composition with an independently installed Flyto2
+  Runtime using the provider-neutral `flyto2.execution.v1` contract.
+- Added live manifest discovery plus bounded resolution of nested `accepted`
+  operation follow-ups while preserving the original durable `operation_id`.
+- Kept the existing workflow `HostCapabilityProxy`/`capability.invoke` equipment
+  boundary unchanged and separate from Runtime machine/coding capabilities.
+
+
 ## Unreleased — host capability proxy
 
 - Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
