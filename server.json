@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.flytohub/flyto-core",
   "title": "Flyto2 Core",
-  "description": "The open-source execution engine for AI agents. 481 modules, MCP-native, triggers, queue, versioning, metering.",
+  "description": "The open-source execution engine for AI agents. 482 modules, MCP-native, triggers, queue, versioning, metering.",
   "repository": {
     "url": "https://github.com/flytohub/flyto-core",
     "source": "github"
   },
-  "version": "2.32.1",
+  "version": "2.39.0",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "flyto-core",
-      "version": "2.32.1",
+      "version": "2.39.0",
       "runtimeHint": "pip",
       "transport": {
         "type": "stdio"

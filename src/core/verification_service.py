@@ -25,12 +25,12 @@ from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlparse
 
-import aiohttp
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from core.utils import (
     SSRFError,
+    guarded_client_session,
     ssrf_protection_enabled,
     validate_url_with_env_config,
 )
@@ -389,11 +389,19 @@ async def post_callback(callback_url: str, payload: Mapping[str, Any]) -> None:
     internal_key = os.environ.get("FLYTO_RUNNER_SECRET") or os.environ.get("FLYTO_VERIFICATION_SECRET")
     if internal_key:
         headers[INTERNAL_KEY_HEADER] = internal_key
-    async with aiohttp.ClientSession() as session, session.post(
+    # SECURITY (GHSA-m5gf-24gv-m9g8): the destination check above resolves the
+    # host once and returns; a plain session resolved it again at connect time,
+    # so a low-TTL record could answer public for the check and internal for
+    # the socket that carries the runner secret. The guarded session validates
+    # the address it actually connects to. Redirects are not followed: the
+    # internal key is a custom header that aiohttp carries to a new origin, and
+    # the engine never redirects its callback, so a 30x fails the call below.
+    async with guarded_client_session() as session, session.post(
         callback_url,
         json=payload,
         headers=headers,
         timeout=30,
+        allow_redirects=False,
     ) as response:
         if response.status >= 300:
             text = await response.text()

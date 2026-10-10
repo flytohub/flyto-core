@@ -43,6 +43,10 @@ from .modules import (  # noqa: E402 - bootstrap standalone source imports first
     add_modules_parser,
     run_modules_command,
 )
+from .pack import (  # noqa: E402 - bootstrap standalone source imports first
+    add_pack_parser,
+    run_pack_command,
+)
 from .params import merge_params  # noqa: E402 - bootstrap standalone source imports first
 from .plugin import (  # noqa: E402 - bootstrap standalone source imports first
     add_plugin_parser,
@@ -116,6 +120,21 @@ def add_run_parser(subparsers) -> None:
     run_parser.add_argument('--param', action='append',
                             help='Individual parameter (format: key=value), '
                                  'can be used multiple times')
+    host = run_parser.add_argument_group(
+        'capability host',
+        'Run installed capability-pack steps through an installed adapter '
+        '(entry-point group flyto2.external_adapters) with flyto-core alone.')
+    host.add_argument('--capability-host', metavar='ADAPTER_ID',
+                      help='Adapter entry-point name that executes capability calls')
+    host.add_argument('--resource', metavar='RESOURCE_ID',
+                      help='Commanded resource id the adapter is built for')
+    host.add_argument('--allow', action='append', default=[], metavar='CAPABILITY_IDS',
+                      help='Actuating capability ids this run may execute '
+                           '(comma-separated, repeatable). Others are refused.')
+    host.add_argument('--yes-physical', action='store_true',
+                      help='Confirm actuation on a physical deployment without a prompt')
+    host.add_argument('--capability-evidence', metavar='PATH',
+                      help='Where to write the call records (JSON)')
 
 
 def main() -> None:
@@ -170,6 +189,7 @@ Examples:
     add_run_parser(subparsers)
     add_modules_parser(subparsers)
     add_plugin_parser(subparsers)
+    add_pack_parser(subparsers)
     add_serve_parser(subparsers)
     add_template_parser(subparsers)
 
@@ -216,7 +236,7 @@ Examples:
     # Legacy mode: rewrite `flyto workflow.yaml` → `flyto run workflow.yaml`
     # so argparse routes it through the run subparser correctly.
     if len(sys.argv) > 1 and sys.argv[1] not in (
-        'run', 'modules', 'plugin', 'serve', 'template',
+        'run', 'modules', 'plugin', 'pack', 'serve', 'template',
         'recipes', 'recipe', 'replay', 'learn', '-h', '--help'
     ) and (sys.argv[1].endswith('.yaml') or sys.argv[1].endswith('.yml')):
         sys.argv.insert(1, 'run')
@@ -241,6 +261,10 @@ Examples:
     # Handle 'plugin' command
     if args.command == 'plugin':
         sys.exit(run_plugin_command(args))
+
+    # Handle 'pack' command
+    if args.command == 'pack':
+        sys.exit(run_pack_command(args))
 
     # Handle 'recipes' command (list all)
     if args.command == 'recipes':
@@ -308,10 +332,29 @@ Examples:
         # Merge parameters from all sources
         params = merge_params(workflow, args)
 
+        host = None
+        if getattr(args, 'capability_host', None):
+            from .capability_host import build_capability_host
+            host = build_capability_host(args)
+        elif getattr(args, 'resource', None) or getattr(args, 'allow', None) or getattr(args, 'yes_physical', False):
+            print(f"{Colors.FAIL}Error: --resource, --allow and --yes-physical "
+                  f"need --capability-host{Colors.ENDC}")
+            sys.exit(2)
+
+        # A plain run calls run_workflow exactly as before; the host
+        # arguments are passed only when a capability host was requested.
+        host_kwargs = {}
+        if host is not None:
+            host_kwargs = {
+                'capability_host': host,
+                'capability_evidence': getattr(args, 'capability_evidence', None),
+            }
+
         # Run workflow
         try:
             run_workflow(
-                sanitize_workflow_path(workflow_path), params, config, i18n
+                sanitize_workflow_path(workflow_path), params, config, i18n,
+                **host_kwargs,
             )
         except ValueError as exc:
             print(f"{Colors.FAIL}Error: Invalid workflow file: "

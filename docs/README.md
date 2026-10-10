@@ -29,6 +29,9 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [YAML Workflow Specification](YAML_WORKFLOW_SPEC.md): workflow schema.
 - [DSL](DSL.md): expressions, data references, and control flow.
 - [Item Pipeline Specification](specs/ITEM_PIPELINE_SPEC.md): item semantics.
+- [Module Pack Manifest](specs/PACK_MANIFEST_SPEC.md): `flyto.pack.v1`, the
+  language-neutral registry row; out-of-process pack install with tree digest
+  and ed25519 publisher signature; `flyto pack` CLI.
 - [Plugin Manifest Specification](specs/PLUGIN_MANIFEST_SPEC.md): the implemented
   inert language-neutral manifest/adoption slice, its bounded existing-ID
   collision input, pre-canonicalization Unicode safety boundary, stable
@@ -37,7 +40,7 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 
 ## Build Modules And Plugins
 
-- [Tool Catalog](TOOL_CATALOG.md): all 481 active runtime modules, parameters,
+- [Tool Catalog](TOOL_CATALOG.md): all 482 active runtime modules, parameters,
   and outputs. Catalog search and detail also report each module's
   registry-declared `provides_capability` and `plugin`, never a derived ID.
 - [Module Quick Reference](MODULE_QUICK_REFERENCE.md)
@@ -45,6 +48,12 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [Writing Modules](WRITING_MODULES.md)
 - [Register Module Guide](REGISTER_MODULE_GUIDE.md)
 - [Plugin SDK](PLUGIN_SDK.md)
+- [Capability Contract](CAPABILITY_CONTRACT.md): `flyto.capability-contract.v1`,
+  the closed schema a provider declares on `@register_module`, and the exact
+  evidence arithmetic hosts must reproduce.
+- [Capability Host](CAPABILITY_HOST.md): `flyto run --capability-host`, the
+  generic host that runs a capability pack's steps through an installed
+  adapter under contract policy.
 - [Module Publishing](MODULE_PUBLISHING_GUIDE.md)
 
 ## Architecture And Security
@@ -70,9 +79,9 @@ Architecture decisions and subsystem detail live in [`architecture/`](architectu
 The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
-- 481 active runtime modules across 89 catalog categories.
-- 981 maintained Python files and 6,095 declarations.
-- 488 literal module registrations linked to source.
+- 482 active runtime modules across 89 catalog categories.
+- 994 maintained Python files and 6,331 declarations.
+- 489 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.
 - every packaged recipe, bundle, and maintained workflow YAML.

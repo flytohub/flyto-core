@@ -1,0 +1,31 @@
+{
+  "about": "Recovery blocks (flyto-core 2.39.0). A host that reads recovery semantics without importing Core must admit every 'admitted' block and refuse every 'refused' one. Normalized form equals the input for every admitted block.",
+  "admitted": [
+    {
+      "name": "way round that also fills a role",
+      "recovery": {
+        "on": ["obstruction"],
+        "alternatives": ["reorient", "reposition", "travel_to"],
+        "preserves": ["destination"],
+        "resource_scope": "same_resource",
+        "fills": ["reposition"]
+      }
+    },
+    {"name": "fills reposition", "recovery": {"fills": ["reposition"]}},
+    {"name": "fills reorient", "recovery": {"fills": ["reorient"]}},
+    {"name": "fills travel_to", "recovery": {"fills": ["travel_to"]}},
+    {
+      "name": "host report beside a fills declaration",
+      "recovery": {"capabilities": ["queue.retry-later"], "observe": "recovery_context", "guidance": "Retry later.", "fills": ["reposition"]}
+    },
+    {"name": "host report only (2.36)", "recovery": {"capabilities": ["queue.cancel"]}}
+  ],
+  "refused": [
+    {"name": "bound declared", "recovery": {"fills": ["reposition"], "max_steps": 4}},
+    {"name": "other resource", "recovery": {"on": ["obstruction"], "alternatives": ["reposition"], "resource_scope": "any_resource"}},
+    {"name": "unknown family", "recovery": {"on": ["weather"], "alternatives": ["reposition"], "resource_scope": "same_resource"}},
+    {"name": "alternatives without on", "recovery": {"alternatives": ["reposition"], "resource_scope": "same_resource"}},
+    {"name": "preserves without a way round", "recovery": {"fills": ["reposition"], "preserves": ["target"]}},
+    {"name": "nothing declared", "recovery": {"guidance": "wait"}}
+  ]
+}

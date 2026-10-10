@@ -10,8 +10,6 @@
 
 - Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
 - Refuse redirects and non-literal-loopback host capability endpoints, bound response size/time, and recursively strip opaque runtime authority from hooks, checkpoints, workflow outputs and state projections.
-
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -19,8 +17,368 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.39.0] - 2026-10-07
+
+### Added
+
+- Capability contract `recovery` blocks may declare recovery semantics: `on`
+  (stop-reason families `obstruction`, `no_passage`, `stopped_short`),
+  `alternatives` (1..8 semantic roles, in order of preference), `preserves`
+  (`destination` / `target`), `resource_scope` (`same_resource` only) and
+  `fills` (1..8 roles the capability itself fills). A host builds a way round
+  from roles instead of a table of capability ids. Roles match
+  `RECOVERY_ROLE_PATTERN`; unknown keys, including any bound, are refused, and
+  `on`, `alternatives` and `resource_scope` are declared together.
+- `RECOVERY_FIELDS`, `RECOVERY_STOP_FAMILIES`, `RECOVERY_PRESERVES`,
+  `RECOVERY_RESOURCE_SCOPES`, `RECOVERY_ROLE_PATTERN`, `RECOVERY_ROLES_MAX`.
+  `"fills" in RECOVERY_FIELDS` is the feature test for a provider that also
+  loads on 2.38.
+- `tests/core/vectors/capability_contract_recovery_semantics.json`: blocks a
+  re-implementing host must admit and refuse.
+
 ### Changed
 
+- `recovery.capabilities` is optional. A block must still declare at least one
+  of `capabilities`, `alternatives` or `fills`; `observe` or `guidance` alone is
+  refused. Blocks valid on 2.38 normalize and hash unchanged.
+
+### Security
+
+- `requirements.lock`: `multidict` 6.7.1 -> 6.9.1 (CVE-2026-104874, reported
+  by `pip-audit` against the base-runtime lock; transitive via `aiohttp`).
+- `package-lock.json` (JavaScript test runtime only): `source-map-js` 1.2.1 ->
+  1.2.2 (GHSA-68fv-2mgg-jv7q).
+
+## [2.38.0] - 2026-10-04
+
+### Added
+
+- Capability contract evidence can prove an absolute end state. Two measure
+  ops, `distance_to` (1..3 fields, `expect.arguments` maps each field to a
+  numeric parameter) and `angle_to` (one field, `expect.argument`, optionally
+  `optional: true` when the call may omit the target), compare the last
+  declared phase with a target taken from the call's own arguments. Before,
+  every measure compared two phases, so a provider that reported success while
+  it stopped short of the asked place was believed. Absolute ops require
+  `after` (not `before`) and `tolerance.relative` 0.
+- `measure.frame`: when declared, every observed phase must carry that `frame`
+  or the verdict is unusable, so a map coordinate is never compared with an
+  odometry pose.
+- `ABSOLUTE_OPS`; `"distance_to" in MEASURE_OPS` is the feature test for a
+  provider that also loads on 2.37. Contracts using neither normalize and hash
+  as before.
+- `tests/core/vectors/capability_contract_absolute_targets.json`: judge
+  vectors a re-implementing host must reproduce exactly.
+- `browser.fill_form` 1.0.0 fills a whole form in one call: text, textarea,
+  number, date, select, radio, checkbox and file uploads, each found by its
+  visible label (the same resolver `browser.type` uses, now shared in
+  `browser/_label_resolve.py`) or by a CSS selector, then optionally submits
+  and waits for a caller-named confirmation, returning per-field read-back and
+  the confirmation text. Every field, upload and the submit control are
+  resolved before anything is written: a missing one returns `ok: false` with
+  the list and fills nothing; a failed fill or a form that reports invalid
+  controls is not submitted. Password fields, credential-named labels and
+  `sensitive_value` are never echoed and are redacted from step records.
+  Declares a `flyto.capability-contract.v1` contract: `controlled`, not
+  `actuates` (an external write, consequence level 3, graded like the
+  `browser.type` calls it replaces rather than as a real-world actuation),
+  not idempotent, effect `external.record.changed`. The `execute_module` tool
+  description now tells agents to read a form once and fill it with one
+  `browser.fill_form` call instead of one call per field.
+
+### Security
+
+- `install_pack` runs a `subprocess-jsonrpc` pack from a host-private copy of
+  its attested files, made in the same pass that computes the tree digest.
+  Before, the digest and signature were checked against the source directory
+  but the process was spawned lazily from that same directory, so a file
+  changed after install ran unverified.
+- A pack can no longer declare a namespace another owner holds (a registered
+  module in it, or another external pack that declared it), so it cannot
+  publish `capability.*` beside `capability.invoke` or add steps to another
+  vendor's namespace.
+- A pack can no longer declare a capability another owner already provides
+  with a different contract (or none). That made the capability host resolve
+  the capability as ambiguous and refuse it, including a `role: safe_stop`.
+  A second provider with an identical contract is still allowed.
+- Concurrent `install_pack` calls for one pack id install it once.
+
+## [2.37.1] - 2026-10-04
+
+### Fixed
+
+- Pre-execute hooks that rewrite `context.params` reach the module again.
+  2.36.1 (and 2.37.0) handed hooks a redacted copy and discarded what they changed, so a
+  host that resolves credential references in `on_pre_execute` (Cloud's
+  `secretRef` / `${secrets.NAME}` resolver) passed the unresolved reference to
+  the module. The engine now writes back exactly the leaves a hook changed; a
+  value the copy showed as `[REDACTED]` never overwrites the real one. A
+  mapping under a credential name (a reference object) is walked instead of
+  blanked, so the hook can still read it.
+- Resource sub-nodes (an `ai.model` carrying `api_key`) hand hooks redacted
+  params, with the same write-back.
+- The step-param name rule redacts `Authorization` and `Cookie` headers and
+  camelCase tokens (`accessToken`, `refreshToken`, `idToken`), and leaves
+  labels about a credential visible (`credential_name`, `secret_id`,
+  `api_key_ref`), which a reference resolver must read.
+- `browser.type` 1.2.1, `type_method: label`: every field the label text
+  names -- wrapping label, `label[for]`, `aria-labelledby`, `aria-label` -- is
+  ranked on the page in one list: exact text first, visible before hidden.
+  2.36.1 still tried a wrapping label's partial match first, so "Password"
+  filled a "Show password" checkbox or a "Confirm password" field, and a
+  partial `label[for]` ("Password hint") beat an exact `aria-label`. The
+  structural fallbacks only pick fields that accept text.
+
+## [2.37.0] - 2026-10-04
+
+### Added
+
+- Language-neutral module packs, `flyto.pack.v1` (`core.pack`,
+  `docs/specs/PACK_MANIFEST_SPEC.md`). A pack manifest is the registry row
+  `@register_module` produces, as JSON: decorator field names and defaults, the
+  `flyto.capability-contract.v1` contract, pack id, namespaces, runtime binding
+  and a tree digest. `validate_pack_manifest` normalizes it, so the same module
+  declared in Python and in Node.js yields identical rows.
+- `core.pack.host.install_pack(dir, trusted_keys=..., require_signature=True,
+  provenance_dir=None)` installs an out-of-process pack (`subprocess-jsonrpc`
+  over the existing plugin JSON-RPC protocol, or `http` to a host-configured,
+  locality-checked endpoint). It verifies the tree digest and an ed25519
+  publisher signature offline, registers each module through
+  `@register_module` inside a registry transaction owned by the pack id (so
+  pack modules appear in the catalog, the capability manifest and MCP search
+  exactly like Python modules, and per-plugin policy applies), and returns a
+  `flyto.pack-provenance.v1` record. `uninstall_pack`, `installed_packs`.
+  Packs survive forced rediscovery.
+- `flyto pack manifest|digest|keygen|sign|verify` CLI. `flyto pack manifest
+  <entry-point|module:register_all>` prints the manifest a Python pack's
+  decorators produce.
+- `ModuleRegistry.install_external_pack` / `uninstall_external_pack`: load an
+  entry-point-shaped pack through the same transactional path as a
+  `flyto.modules` entry point.
+- `PluginManager.register_pack` / `unregister_pack`;
+  `RuntimeInvoker.invoke_plugin_step` and `plugin_manager`.
+- Example Node.js pack with a dependency-free `registerModule` helper:
+  `examples/packs/node-greeter/`.
+
+### Fixed
+
+- `RuntimeInvoker.set_plugin_manager` now has a caller: installing a
+  subprocess pack wires its `PluginManager` into the invoker, so the plugin
+  route is reachable.
+- Plugin ids may contain single dots (reverse-DNS pack ids); `..` is still
+  refused.
+
+## [2.36.1] - 2026-10-04
+
+### Fixed
+
+- Capability host: the deadline is enforced by the host as well as the
+  adapter. An adapter call that has not returned 5 s after its deadline is
+  recorded as `timeout` and followed by `cancel` and `safe_stop`, so a hung
+  adapter cannot leave a resource actuating. Calls on one host are
+  serialized (emergency stop is not), and an actuating call that fails for
+  returning no declared artifact is safe-stopped like any other failure.
+- `browser.type` with `type_method: label` resolves explicit associations:
+  `<label for=id>` to the field with that id, and `aria-labelledby`, in
+  addition to a wrapping label, `aria-label` and the sibling heuristics. Exact
+  label text ranks before a label that only contains it ("Password" before
+  "Confirm password"). A label pointing at a non-field is ignored.
+- A step whose failure `on_error: continue` absorbed is reported to the
+  post-execute hook with its error, and its trace step is `error`. The
+  workflow still continues; hosts that decide success on `context.error` no
+  longer log it as succeeded.
+- Step parameters handed to hooks and written into the trace are redacted:
+  credential-like names (`password`, `api_key`, `access_token`,
+  `sensitive_text`, ...), schema fields declared `secret` or
+  `format: password`, fields a module marks sensitive for the given params
+  (`BaseModule.sensitive_params`; `browser.type` marks `text` when
+  `input_type` is password or the target/selector names a credential), and
+  fields a module reports at runtime under `_sensitive_params`
+  (`browser.type` reports an `<input type=password>` it typed into). Empty
+  values, booleans and bare `{{...}}` / `${...}` references stay visible. The
+  module still receives the plaintext.
+- Element hints no longer carry a password field's value: it reads
+  `[REDACTED]` when filled, and a password input's value is no longer used as
+  its accessible-name fallback.
+
+## [2.36.0] - 2026-10-04
+
+### Added
+
+- Generic capability host, `core.capability_host.CapabilityHost`, so a
+  capability pack and its adapter run with flyto-core alone:
+  `flyto run WORKFLOW --capability-host ADAPTER_ID --resource RESOURCE_ID
+  [--allow IDS] [--yes-physical] [--capability-evidence PATH]`. The adapter is
+  resolved by exact name from the `flyto2.external_adapters` entry-point group
+  and injected at the existing dispatcher context key, so pack steps and
+  `capability.invoke` reach it unchanged. Policy comes from each capability's
+  contract: actuating (or contract-less, or ambiguously contracted)
+  capabilities run only when `--allow` names them; a `role: safe_stop`
+  capability always runs, with no prompt; a non-simulation deployment needs
+  `--yes-physical` or a typed `yes` at an interactive prompt, and is refused
+  with no terminal. Timeout or failure triggers `cancel` and `safe_stop`;
+  Ctrl-C triggers `safe_stop`. Adapter outcomes and evidence are recorded
+  verbatim (refusals stay refusals), contract evidence is judged with `judge`
+  (contract phase `settled` = adapter phase `post_stop`), and each call is
+  written as a `flyto.capability-host.v1` record. See
+  `docs/CAPABILITY_HOST.md`.
+- Capability contract optional keys, each present in the normalized contract
+  only when declared (existing contracts and manifest hashes are unchanged):
+  `role` (`safe_stop`; must be uncancellable, idempotent and need no safe stop
+  of its own), `artifacts` (declared output kinds with media types and a
+  `max_bytes` cap up to 20 MiB), `recovery` (substitute capability ids, an
+  optional observation name and planner guidance text) and
+  `expected_duration_ms` (deadline budget, up to one hour).
+  `core.capability_contract.OPTIONAL_FIELDS` lets a provider feature-detect
+  them before sending them to a core whose closed schema predates them.
+
+## [2.35.1] - 2026-10-04
+
+### Added
+
+- Capability manifest `plugins[]` entries gain `module_ids` — the sorted ids the
+  plugin owns, the same answer as `ModuleRegistry.get_plugin_modules` but read
+  from the manifest's single registry snapshot — and `description` when the
+  pack declares one.
+- A pack declares its description with an optional module-level
+  `PACK_DESCRIPTION` string beside its `register_all`. It is read, never
+  called; anything that is not a non-empty string reads as no description.
+  `PluginInfo` gains `description` (default `""`), also in `to_dict()`.
+- Additive only: a manifest with no plugins keeps its exact document and hash.
+  MCP `get_module_info` already reports `plugin` (owner) and `contract`; this
+  release pins that with a test.
+
+## [2.35.0] - 2026-10-04
+
+### Added
+
+- Capability contract `flyto.capability-contract.v1`. `register_module` takes an
+  optional `contract=` that declares, as data, what a capability does to the
+  world: `actuates`, `safety_class` (`read_only` / `controlled` / `movement` /
+  `dangerous`), `requires_safe_stop`, `cancellable`, `idempotent`, bounded
+  `effects` / `requires` identifiers, and up to eight `evidence` specs a host
+  can verify from before/after/settled observations. Any provider — a device,
+  an ERP connector, a lift — plugs in through `@register_module` alone, and a
+  host enforces the contract with no provider-specific code.
+  - The schema is closed and validated at registration in both the decorator
+    and `ModuleRegistry.register`; a plugin whose contract is invalid is rolled
+    back whole. Declaring a contract requires `provides_capability`, and every
+    numeric parameter of an actuating contract must declare `min` and `max`.
+  - `core.capability_contract` exposes `validate_contract`, the pure
+    `judge(evidence_spec, arguments, observations)` and `wrap_angle`. The
+    arithmetic is specified in `docs/CAPABILITY_CONTRACT.md` so hosts that
+    cannot import Core reproduce identical verdicts. Measures are `distance`,
+    `along` (signed travel projected onto the starting heading), `delta`,
+    `angle_delta` and `abs_angle_delta`, taken from `before` to the last
+    declared phase; `expect.argument` takes an optional `scale` (e.g. `-1` for
+    a retreat), and angle errors are wrapped into (-pi, pi].
+  - The capability manifest gains `contracts` (and `contract_count`) keyed by
+    capability id, only when at least one module declares a contract: an
+    installation without contracts keeps the exact manifest and hash it had.
+  - Catalog detail reports `contract` (`None` when absent).
+
+### Fixed
+
+- Catalog detail `timeout` read a metadata key no module row has and was
+  always `None`. It now derives (in seconds) from the stored `timeout_ms`, which
+  detail also reports.
+
+## [2.34.0] - 2026-10-03
+
+### Changed
+
+- Browser modules settle on page state instead of fixed sleeps. Every wait
+  keeps its previous upper bound and now ends as soon as the page reports the
+  state it was waiting for.
+  - `browser.click` no longer pauses a fixed 300/500 ms after every click. An
+    in-place click waits only while the DOM is still changing, while a short
+    timer the click started is outstanding, or while a fetch/XHR it started is
+    in flight (read from Playwright network events, so clients that captured
+    `fetch` at load are seen and nothing in the page is replaced), and returns
+    at once when none of that happened, so an onclick that navigates from a
+    timer or routes after a response is reported on its result; a navigation waits for its own commit and
+    `domcontentloaded`, then for any interactive element or a still, loaded
+    page. A click whose markup declares a new tab but navigates the same tab
+    ends on that navigation instead of waiting out 2 s. Button/link resolution
+    and URL outcomes use auto-waiting locators and `wait_for_url` instead of
+    100 ms / 50 ms polls.
+  - `browser.login` waits for the page's answer — the success indicator, a URL
+    change, the password field going away, an MFA prompt or an error message —
+    instead of `networkidle` plus a fixed 3 s fallback; `wait_ms` is only the
+    cap. A submit that changes nothing now waits the full `wait_ms`. After a
+    URL change or a vanished password field it follows JS redirect hops and
+    waits for the landed page to load and go quiet for 500 ms (or for an MFA
+    input to appear) before checking for MFA, so a prompt drawn after load
+    still reaches the human approval step. Fetch/XHR calls the submit starts
+    are part of the answer: an SPA that hides its form while its API runs is
+    read after the API answered, and without a success indicator those
+    requests finishing with the DOM quiet afterwards ends the wait, so a
+    rejection worded in a way no error selector knows returns then.
+  - `browser.select` waits for the custom dropdown to close, or (by label) for
+    the trigger to show the chosen label (capped at 1 s);
+    `browser.interact` clicks the option when it is visible.
+  - `browser.form`: `delay_between_fields_ms` defaults to 0 and never pauses
+    after the last field.
+  - `browser.detect` re-runs on a strategy's element appearing or a batch of
+    DOM mutations (at most one wake per 250 ms on a page that never stops
+    mutating) instead of every 500 ms; `browser.dialog` (including `listen`)
+    returns on the dialog event.
+  - A duration-only `browser.wait` still sleeps, but logs a warning and returns
+    `advice`; `validate_workflow` reports it as a `DURATION_ONLY_WAIT` warning.
+
+## [2.33.0] - 2026-09-30
+
+### Security
+
+Six reported advisories, each with a regression test in
+`tests/core/test_reported_advisories_2026_09.py` that fails on 2.32.1.
+
+- **GHSA-hc4c-6x9g-5fq3** — the SSRF guard now decodes Teredo
+  (`2001:0000::/32`) addresses and range-checks the embedded client IPv4, so the
+  Teredo form of `169.254.169.254` is refused by the pre-request check and the
+  connect-time resolver alike. IPv4-translated (`::ffff:0:a.b.c.d`) and ISATAP
+  interface identifiers are decoded in the same helper. A Teredo address with a
+  public client stays reachable. The `database.*` DSN guard now uses the same
+  decoder instead of its own NAT64/mapped-only copy, so its answer no longer
+  depends on the interpreter's `ipaddress` version.
+- **GHSA-m5gf-24gv-m9g8** — the verification service's evidence callback posts
+  the runner secret through the connect-time guarded session, so the address the
+  destination check approved is the one connected to, and it no longer follows
+  redirects: a 30x from the callback target now fails the callback instead of
+  carrying `X-Internal-Key` to a new origin.
+- **GHSA-8j62-f337-86xw** — the aiohttp fallback of `llm.agent` / `ai.model`
+  (the branch a base install without `httpx` runs) and the deprecated
+  `_providers` helpers connect through the guarded session, matching the httpx
+  branch. A new test pins every remaining plain `aiohttp.ClientSession` to a file
+  whose hosts are fixed vendor endpoints.
+- **GHSA-cqv6-3m5f-qvw2** — `env.set` is on the default module denylist, and
+  when an operator enables it, `previous_value` is disclosed only for a name the
+  `env.get` / `${env.*}` policy allows (`FLYTO_ENV_VAR_ALLOWLIST`); otherwise it
+  is `null`. **Operator-visible:** workflows that call `env.set` now need it
+  allowed explicitly (`FLYTO_MODULE_ALLOWLIST` or a `FLYTO_MODULE_DENYLIST`
+  without it). The write itself also changes process-wide settings read live,
+  such as `FLYTO_ALLOWED_HOSTS`, which is why it is denied rather than only
+  redacted.
+- **GHSA-59pf-mh94-r7vv** — `verify.visual_diff` confines a local
+  `reference_url` image to `FLYTO_SANDBOX_DIR`, like its `output_dir`; URL
+  references are still governed by the egress guard.
+- **GHSA-6r7h-3hcc-jwpr** — `huggingface.*` refuses a `model_id` that is not a
+  Hub repository id (`name` or `org/name`) before a token-bound
+  `InferenceClient` exists. A URL `model_id` (a dedicated Inference Endpoint) is
+  sent `HF_TOKEN` only when its host is on `FLYTO_TRUSTED_LLM_HOSTS` and it
+  passes the SSRF guard.
+
+### Added
+
+- Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
+- Refuse redirects and non-literal-loopback host capability endpoints, bound response size/time, and recursively strip opaque runtime authority from hooks, checkpoints, workflow outputs and state projections.
+
+### Changed
+
+- Dependency floors raised: `pydantic>=2.13.5` (runtime); `fastapi>=0.141.1`
+  and `uvicorn>=0.53.0` (`api`); `qrcode[pil]>=8.2` (`image`);
+  `PyJWT>=2.14.0` (`crypto`, `dev`); `tree-sitter-javascript>=0.25.0`
+  (`jsast`, `dev`); `build` and `httpx2` (`dev`).
 - Align the optional robotics consumer/verifier with
   `flyto.capability-request.v1`: commanded resources are no longer interpreted
   as execution hosts, and the old Pi-runner / robot-local plan verification is

@@ -4,10 +4,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    # 0 disables version-update PRs. Every merge freed a slot under the old
+    # limit of 10 and Dependabot refilled it at once, so merging never drained
+    # the queue. Security updates are a separate repository setting and are
+    # not affected by this line.
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
-      - "security"
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]

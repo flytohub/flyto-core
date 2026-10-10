@@ -72,6 +72,11 @@ class RuntimeInvoker:
         self._browser_manager = browser_manager
         self._legacy_modules_loaded = False
 
+    @property
+    def plugin_manager(self) -> Optional["PluginManager"]:
+        """The plugin manager wired in with ``set_plugin_manager``, if any."""
+        return self._plugin_manager
+
     def set_browser_manager(self, manager: BrowserSessionManager):
         """Set the browser session manager."""
         self._browser_manager = manager
@@ -642,6 +647,41 @@ class RuntimeInvoker:
             timeout_ms=timeout_ms,
         )
 
+        return result
+
+    async def invoke_plugin_step(
+        self,
+        plugin_id: str,
+        step_id: str,
+        input_data: Dict[str, Any],
+        context: Dict[str, Any],
+        timeout_ms: int = 0,
+        manager: Optional["PluginManager"] = None,
+    ) -> Dict[str, Any]:
+        """Invoke one step of an out-of-process plugin, skipping routing.
+
+        For callers that already *are* the routing decision: a module that a
+        ``flyto.pack.v1`` subprocess pack registered in ``ModuleRegistry``. Its
+        policy gate has already run in ``BaseModule.run`` with the pack as the
+        stamped owner, and routing it again would resolve the module id back to
+        the very registry row that is calling — so this goes straight to the
+        plugin manager.
+
+        ``manager`` defaults to the one wired in with ``set_plugin_manager``.
+        A pack passes its own so a host that later wires a different manager
+        does not strand the pack's modules.
+        """
+        target = manager or self._plugin_manager
+        if target is None:
+            raise PluginNotFoundError(plugin_id, step_id)
+        result = await target.invoke(
+            plugin_id=plugin_id,
+            step=step_id,
+            input_data=input_data,
+            config={},
+            context=context,
+            timeout_ms=timeout_ms or None,
+        )
         return result
 
     async def _invoke_legacy(

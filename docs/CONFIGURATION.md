@@ -41,7 +41,7 @@ with `scripts/lock-deps.sh`; it does not claim to lock every optional provider.
 | `FLYTO_MODULE_ALLOWLIST` | Only modules matching these patterns may execute |
 | `FLYTO_MODULE_DENYLIST` | Deny matching modules when no allowlist overrides it |
 | `FLYTO_GRANTED_PERMISSIONS` | Runtime permission grants |
-| `FLYTO_ENV_VAR_ALLOWLIST` | Environment names visible to modules |
+| `FLYTO_ENV_VAR_ALLOWLIST` | Environment names visible to modules (`${env.*}`, and `env.set`'s `previous_value` when `env.get` is denied) |
 | `FLYTO_ALLOWED_HOSTS` | Allowed private/localhost destinations |
 | `FLYTO_HTTP_ALLOWED_PORTS` | Allowed destination ports |
 | `FLYTO_ALLOW_PRIVATE_NETWORK` | Explicit private-network opt-in |
@@ -85,7 +85,8 @@ where the platform supports POSIX modes.
 
 Policy is applied before module execution and again at execution boundaries.
 Allowlist is authoritative when present; otherwise denylist patterns apply.
-The default denylist blocks high-risk shell/process surfaces. A transport must
+The default denylist blocks high-risk shell/process surfaces and host
+environment access (`env.get`, `env.set`, `env.load_dotenv`). A transport must
 not bypass this shared policy by invoking a module registry directly.
 
 ## Recipes And Workflow Assets

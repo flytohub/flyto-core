@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from ..hooks import HookContext
+from ..redaction import redact_step_params
 from ..variable_resolver import strip_runtime_opaque
 
 
@@ -26,6 +27,7 @@ def create_step_context(
     attempt: int = 1,
     max_attempts: int = 1,
     step_start_time: Optional[float] = None,
+    sensitive_params: Any = (),
 ) -> HookContext:
     """
     Create hook context for step-level events.
@@ -42,6 +44,15 @@ def create_step_context(
         attempt: Current retry attempt number
         max_attempts: Total retry attempts allowed
         step_start_time: When step execution started
+        sensitive_params: Parameter names the module reported sensitive at
+            runtime, redacted on top of what the name, schema and module
+            class already mark
+
+    ``params`` on the returned context is a redacted copy. Hooks are where a
+    host persists a step (a step log, a database row, a websocket frame), and
+    a password typed into a login form has no business in any of them. The
+    executor resolves its own copy of the parameters for the module, so no
+    hook ever needed the plaintext.
 
     Returns:
         HookContext for hook callbacks
@@ -61,7 +72,7 @@ def create_step_context(
         step_index=step_index,
         total_steps=total_steps,
         module_id=module_id,
-        params=step_params,
+        params=redact_step_params(module_id, step_params, sensitive_params),
         variables=strip_runtime_opaque(context),
         started_at=datetime.fromtimestamp(step_start_time) if step_start_time else None,
         elapsed_ms=elapsed_ms,

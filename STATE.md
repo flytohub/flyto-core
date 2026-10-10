@@ -8,6 +8,113 @@ and a graph fingerprint, not workflow execution or robot completion.
 Standalone task planning, approval, lifecycle and physical equipment
 verification are not complete.
 
+## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
+
+A contract's `recovery` block may declare `on` / `alternatives` / `preserves` /
+`resource_scope` / `fills`, so a host builds a way round from semantic roles
+instead of a table of capability ids; `capabilities` is optional
+(`tests/core/test_capability_contract_recovery_semantics.py`, vectors in
+`tests/core/vectors/`). Additive: blocks valid on 2.38 normalize and hash
+unchanged. Core validates shape only; whether a declaration is trusted is the
+host's review. Not tagged or released to PyPI.
+
+## Absolute-target contract evidence, 2.38.0 (2026-10-04)
+
+`flyto.capability-contract.v1` gains `distance_to` and `angle_to`, which judge
+the last declared phase against a target in the call's arguments, and an
+optional `measure.frame` every observed phase must match. A navigation that
+reported success 0.63 m short of its goal is now provably not an arrival
+(`tests/core/test_capability_contract_absolute_targets.py`, parity vectors in
+`tests/core/vectors/`). Additive: existing contracts normalize and hash as on
+2.37. Not tagged or released.
+
+## Whole-form filling in one call, 2.38.0 (2026-10-04)
+
+`browser.fill_form` fills, uploads and submits a whole form in one module call,
+so an agent needs one round-trip for a form instead of one per field. Fields
+resolve by visible label through the resolver `browser.type` uses (moved to
+`browser/_label_resolve.py`, behaviour unchanged) or by selector; all targets
+are resolved before the first write, and a missing one fills nothing. Real
+Chromium tests in `tests/modules/test_browser_fill_form.py` (marked
+`browser`). Not tagged or released to PyPI.
+
+## Pre-execute hook rewrites and label ranking, 2.37.1 (2026-10-04)
+
+Pre-execute hooks again change what the module receives: hooks see the
+redacted copy, and the engine writes back exactly the leaves they changed
+(2.36.1 dropped them, so Cloud's credential resolver passed unresolved
+references to modules). Resource sub-node hooks get redacted params too. The
+param name rule covers `Authorization`, `Cookie` and camelCase tokens, and
+leaves `*_name`/`*_id`/`*_ref` labels visible. `browser.type` 1.2.1 ranks every
+label association on the page in one list (exact, then visible, then kind).
+Not tagged or released.
+
+## Language-neutral module packs, 2.37.0 candidate (2026-10-04)
+
+`flyto.pack.v1` (`core.pack`): a pack manifest is the registry row
+`@register_module` produces, as JSON. `install_pack` installs an
+out-of-process pack (`subprocess-jsonrpc` or `http`) after checking its tree
+digest and ed25519 publisher signature offline, registers its modules under
+the pack id through the decorator and registry transaction, wires the pack
+`PluginManager` into the `RuntimeInvoker`, and returns a provenance record.
+`flyto pack manifest` exports a Python pack's rows; the real
+flyto-modules-robotics pack exports 7 modules with 7 contracts. Example Node.js
+pack in `examples/packs/node-greeter/` runs end to end in tests. flyto-cloud
+does not call `install_pack` yet. Not tagged or released.
+
+## browser.type label association and step-record integrity, 2.36.1 (2026-10-04)
+
+`browser.type` label lookup resolves `label[for]` and `aria-labelledby`.
+Failures absorbed by `on_error: continue` reach the post-execute hook as
+errors and fail their trace step. Hook and trace step params are redacted by
+name, schema `secret`, module-declared and runtime-reported sensitivity;
+element hints mask password values. Not tagged or released.
+
+## Capability host and contract optional keys, 2.36.0 candidate (2026-10-04)
+
+`flyto run --capability-host ADAPTER_ID --resource ID [--allow IDS]
+[--yes-physical]` runs capability-pack steps through an installed
+`flyto2.external_adapters` adapter with Core alone (`core.capability_host`).
+Contracts accept optional `role`, `artifacts`, `recovery` and
+`expected_duration_ms`. Tested against a fake adapter only; no real adapter
+(flyto-robotics) or pack declaring the new keys has been run against it here.
+Desktop does not use this host. Not tagged or released.
+
+## Capability manifest plugin entries, 2.35.1 (2026-10-04)
+
+Capability manifest `plugins[]` entries carry `module_ids` (sorted, from the
+same registry snapshot) and, when the pack declares a module-level
+`PACK_DESCRIPTION` beside `register_all`, `description`. `PluginInfo` gains
+`description`. A manifest without plugins is unchanged. Not tagged or released.
+
+## Capability contract, 2.35.0 candidate (2026-10-04)
+
+`register_module` accepts `contract=` (`flyto.capability-contract.v1`), validated
+at registration by the decorator and `ModuleRegistry.register`; an invalid
+contract in a plugin rolls the plugin back. Contracts reach catalog detail and,
+only when at least one is declared, the capability manifest's `contracts` key.
+`core.capability_contract.judge` is the reference evidence arithmetic, specified
+in `docs/CAPABILITY_CONTRACT.md`. No first-party module declares a contract yet;
+flyto-modules-robotics and flyto-cloud are the intended consumers. Not tagged or
+released.
+
+## 2.33.0 security release (2026-09-30)
+
+Six reported advisories are fixed in 2.33.0: GHSA-hc4c-6x9g-5fq3 (Teredo and
+other unlisted IPv6 transition forms passed the SSRF guard), GHSA-m5gf-24gv-m9g8
+(verification callback re-resolved the host at connect time and followed
+redirects with the runner secret), GHSA-8j62-f337-86xw (`llm` aiohttp fallback
+without a connect-time guard), GHSA-cqv6-3m5f-qvw2 (`env.set` disclosed any
+host variable as `previous_value`), GHSA-59pf-mh94-r7vv (`verify.visual_diff`
+read a local reference image from anywhere) and GHSA-6r7h-3hcc-jwpr
+(`huggingface.*` sent `HF_TOKEN` to a caller-supplied `model_id` URL). Each has
+a regression test in `tests/core/test_reported_advisories_2026_09.py`, and each
+reporter PoC reproduces on the published 2.32.1 package.
+
+Operator-visible: `env.set` is now on the default module denylist. The
+remaining plain `aiohttp.ClientSession` constructions are pinned to files whose
+hosts are fixed vendor endpoints; a new one elsewhere fails the suite.
+
 ## Host capability proxy closure (2026-09-22)
 
 The local Core HTTP workflow boundary now composes with any trusted assignment-scoped execution host. Host authority arrives only through authenticated headers, is restricted to a literal loopback endpoint, is represented inside Core by an opaque proxy, and is stripped from all serializable evidence/state surfaces. Flyto2 Runtime is one optional host implementation. Core continues to own deterministic workflow execution only; equipment discovery, approval, scheduling and transport remain outside Core.
@@ -396,6 +503,9 @@ contract was made explicit.
   overlays remain covered by catalog, contract, and integration suites.
 - Source-backed documentation now covers 981 maintained Python files, 6,095
   declarations, 488 literal module registrations, all CLI/HTTP/environment
+
+- Source-backed documentation now covers 994 maintained Python files, 6,331
+  declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
   broken local links, stale naming, and mailbox violations.

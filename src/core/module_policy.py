@@ -54,6 +54,9 @@ _DEFAULT_DENYLIST = [
     "docker.exec",
     "file.delete",      # path not validated — arbitrary host file deletion
     "env.get",          # reads ANY host env var (API keys/DSNs) = secret exfil
+    "env.set",          # returned the prior value (same read, GHSA-cqv6-3m5f-qvw2) and
+                        # rewrites process-wide policy read live (FLYTO_ALLOWED_HOSTS,
+                        # FLYTO_ENV_VAR_ALLOWLIST, ...) for every request in flight
     "env.load_dotenv",  # loads a .env file from disk into workflow variables
     # Nested-execution gadgets: these run arbitrary child workflows/modules from
     # an inline workflow_source/template payload. Denied by default so they can't

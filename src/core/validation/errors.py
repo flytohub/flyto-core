@@ -37,6 +37,8 @@ class ErrorCode:
     INVALID_PARAM_VALUE = 'INVALID_PARAM_VALUE'
     INVALID_PARAM_TYPE = 'INVALID_PARAM_TYPE'
     UNKNOWN_PARAM = 'UNKNOWN_PARAM'
+    # Warning only: a wait that sleeps instead of waiting on page state.
+    DURATION_ONLY_WAIT = 'DURATION_ONLY_WAIT'
 
     # Module errors
     MODULE_NOT_FOUND = 'MODULE_NOT_FOUND'
@@ -107,6 +109,10 @@ ERROR_MESSAGES = {
     ErrorCode.UNKNOWN_PARAM: {
         'en': 'Unknown parameter "{param}" in {node_id}. Valid params: {valid_params}',
         'zh-TW': '{node_id} 中的參數 "{param}" 不存在。有效參數: {valid_params}',
+    },
+    ErrorCode.DURATION_ONLY_WAIT: {
+        'en': '{node_id} waits a fixed duration; wait on a selector state instead',
+        'zh-TW': '{node_id} 固定等待一段時間；請改為等待元素狀態 (selector)',
     },
 
     # Module

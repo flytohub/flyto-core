@@ -16,8 +16,12 @@ Determinism is the contract. The document contains:
 * module ids, sorted;
 * capabilities with their providers, sorted;
 * categories with counts, sorted;
-* the id, version, and module count of every plugin that registered modules;
+* the id, version, module count and sorted module ids of every plugin that
+  registered modules, plus its ``description`` when the pack declares a
+  ``PACK_DESCRIPTION``;
 * the registry contract version and the flyto-core package version;
+* when any module declares one, ``contracts``: the capability contract
+  (``flyto.capability-contract.v1``) and parameter schema per capability id;
 * a SHA-256 over the canonical form of all of the above.
 
 It deliberately contains **no** timestamps, filesystem paths, hostnames,
@@ -213,6 +217,24 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
         if metadata.get("semantics")
     ]
 
+    # Capability contracts, keyed by capability id. The registry stores only
+    # contracts it validated and normalized (ModuleRegistry.register), so they
+    # are copied, not re-judged. If two modules contract the same capability,
+    # the lowest module id wins and the choice is deterministic; the full
+    # provider list is still under `capabilities`.
+    contracts: Dict[str, Any] = {}
+    for module_id, metadata in sorted(all_metadata.items()):
+        contract = (metadata or {}).get("contract")
+        capability = (metadata or {}).get("provides_capability") or ""
+        if contract is None or not capability or capability in contracts:
+            continue
+        params_schema = metadata.get("params_schema") or {}
+        contracts[capability] = {
+            "module_id": module_id,
+            "contract": deepcopy(contract),
+            "params_schema": deepcopy(params_schema),
+        }
+
     # Categories, counted over the same unfiltered view as `modules` so the
     # counts always sum to `module_count`. Plugin-contributed categories are
     # included exactly like built-in ones — the registry does not distinguish
@@ -229,14 +251,29 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
     # Plugins. `PluginInfo.loaded_at` is a wall-clock timestamp and
     # `entry_point` is an import path; both are omitted so the document stays
     # reproducible and free of host-shaped detail.
-    plugins = [
-        {
+    #
+    # `module_ids` is what `ModuleRegistry.get_plugin_modules` answers — the
+    # ids whose metadata names the plugin as owner — but read from the same
+    # snapshot as everything else here, so a refresh landing between two reads
+    # cannot attach one registry's module list to another registry's plugin.
+    # `description` is the pack's optional `PACK_DESCRIPTION`, present only
+    # when it declares one.
+    owned: Dict[str, list] = {}
+    for module_id, metadata in all_metadata.items():
+        owner = (metadata or {}).get("plugin") or ""
+        if owner:
+            owned.setdefault(owner, []).append(module_id)
+    plugins = []
+    for name, info in sorted(snapshot["plugins"].items()):
+        entry: Dict[str, Any] = {
             "id": name,
             "version": info.version,
             "module_count": info.module_count,
+            "module_ids": sorted(owned.get(name, [])),
         }
-        for name, info in sorted(snapshot["plugins"].items())
-    ]
+        if info.description:
+            entry["description"] = info.description
+        plugins.append(entry)
 
     manifest: Dict[str, Any] = {
         "schema": MANIFEST_SCHEMA,
@@ -253,6 +290,12 @@ def _build_with_generation() -> tuple[Dict[str, Any], int]:
         "plugin_count": len(plugins),
         "plugins": plugins,
     }
+    # Additive and conditional: an installation where no module declares a
+    # contract produces exactly the document (and hash) it produced before
+    # contracts existed, so hosts comparing hashes across versions still agree.
+    if contracts:
+        manifest["contract_count"] = len(contracts)
+        manifest["contracts"] = contracts
     manifest["hash"] = compute_manifest_hash(manifest)
     return manifest, snapshot["generation"]
 

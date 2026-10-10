@@ -39,6 +39,36 @@ class _Locator:
     def first(self):
         return self
 
+    def or_(self, other):
+        return _Union([self, other])
+
+    async def wait_for(self, state='visible', timeout=None):
+        await _Union([self]).wait_for(state=state, timeout=timeout)
+
+
+class _Union:
+    """``locator.or_(...)``: auto-waiting is judged on the match set right now.
+
+    A fake page never changes on its own, so a union that matches nothing
+    times out exactly as Playwright would once the deadline passed.
+    """
+
+    def __init__(self, parts):
+        self.parts = parts
+
+    def or_(self, other):
+        return _Union([*self.parts, other])
+
+    @property
+    def first(self):
+        return self
+
+    async def wait_for(self, state='visible', timeout=None):
+        for part in self.parts:
+            if await part.count():
+                return
+        raise TimeoutError(f'Timeout {timeout}ms exceeded waiting for {state}')
+
 
 class _VisibleOnly:
     """What ``locator.filter(visible=True)`` narrows a match set down to."""
@@ -53,6 +83,9 @@ class _VisibleOnly:
     def first(self):
         return self._locator
 
+    def or_(self, other):
+        return _Union([self, other])
+
 
 class _Page:
     def __init__(self, matches, url='https://example.test/', hint='source page'):
@@ -64,6 +97,19 @@ class _Page:
         self.wait_for_load_state = AsyncMock()
         self.wait_for_function = AsyncMock()
         self.wait_for_timeout = AsyncMock()
+        # The settle step's DOM watch: a fake document never mutates.
+        self.evaluate = AsyncMock(return_value='unchanged')
+        self.page_listeners = {}
+
+    def on(self, event, callback):
+        self.page_listeners.setdefault(event, []).append(callback)
+
+    def remove_listener(self, event, callback):
+        self.page_listeners[event].remove(callback)
+
+    async def wait_for_url(self, predicate, wait_until='load', timeout=None):
+        if not predicate(self.url):
+            raise TimeoutError(f'Timeout {timeout}ms exceeded waiting for URL')
 
     def get_by_role(self, role, **kwargs):
         self.calls.append((role, kwargs))
@@ -144,7 +190,8 @@ async def test_button_mode_resolves_visible_link_by_accessible_name():
 
     assert resolved is link
     assert selector == "role=link[name='kintone']"
-    assert link.visible_filter_calls == [{'visible': True}]
+    assert link.visible_filter_calls
+    assert all(call == {'visible': True} for call in link.visible_filter_calls)
     assert page.calls[0][0] == 'button'
     assert page.calls[1][0] == 'link'
 

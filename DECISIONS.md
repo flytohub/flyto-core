@@ -7,6 +7,79 @@ and validator; the phone and Runtime gateway cannot infer that a valid
 graph ran. Local operation requires no hosted Cloud or security Engine.
 Approval, physical movement and independent evidence remain separate gates.
 
+## 2026-10-04 - A module pack is the registry row as JSON (`flyto.pack.v1`)
+
+Decision: define a new schema, `flyto.pack.v1`, rather than extend
+`flyto.plugin.v1`. A pack manifest is the `ModuleRegistry` row written as
+JSON — the `@register_module` keyword names, the decorator's defaults applied
+by the validator, a `flyto.capability-contract.v1` contract validated by the
+same `validate_contract` — plus the pack id, namespaces, runtime binding
+(`subprocess-jsonrpc`, `http`, `inprocess-python`) and a tree digest.
+Out-of-process packs install through `core.pack.host.install_pack`, which
+verifies the digest and an ed25519 publisher signature against a host-supplied
+key set (required by default, offline), then registers one `@register_module`
+row per module inside a `ModuleRegistry` load transaction owned by the pack id.
+Subprocess packs are registered with a `PluginManager` that is wired into the
+`RuntimeInvoker`. Python packs export their manifest with
+`flyto pack manifest`.
+
+Rationale: `flyto.plugin.v1` is an inert adoption contract whose parameter
+schema is a closed JSON-Schema subset and whose shape (required evidence and
+capability lists, artifact kind, support URL) describes adoption, not the
+registry. Mapping a decorator's parameter mapping into that subset and
+back is lossy (labels, placeholders, options, UI hints), so a decorator export
+could not round-trip and a Node row could not be compared with a Python row.
+Making the manifest the row itself means one validator, identical normalized
+JSON from any authoring language, and no translation layer to drift.
+Registering through the decorator and the registry transaction, instead of a
+side table, is what makes a foreign module appear in the catalog, the
+capability manifest and MCP with no special case, and puts it behind the same
+ownership stamping and per-plugin policy as a Python plugin. The signature
+covers the normalized manifest, which carries the artifact digest, so it
+attests to the code that runs and not only to the declaration; formatting
+does not invalidate it. The foreign process gets parameters and identifiers
+only, because the execution context holds secrets and host authority.
+
+Not decided here: an operating-system sandbox, a pack registry or key
+distribution, and flyto-cloud calling `install_pack` (its worker still
+discovers `plugin.yaml` plugins only).
+
+## 2026-10-04 - A capability pack runs with flyto-core alone, under contract policy
+
+Decision: Core ships a generic capability host (`core.capability_host`,
+`flyto run --capability-host`) that resolves an adapter from
+`flyto2.external_adapters` and enforces each capability's contract: an allow
+list for actuating capabilities (a missing or ambiguous contract counts as
+actuating), physical-deployment confirmation that fails closed without a
+terminal, safe stop on timeout/failure/interrupt, and contract-driven deadlines
+and observation phases. The contract gains optional `role`, `artifacts`,
+`recovery` and `expected_duration_ms`, emitted only when declared.
+
+Rationale: a host should not need provider knowledge (which capability stops,
+which returns a picture, how long navigation takes) to drive a pack, and a
+pack should be provable without Flyto2 Desktop. The host holds no thresholds:
+refuse-never-clamp floors stay in the adapter, and the host passes adapter
+refusals through unchanged. Verdicts are recorded beside the outcome rather
+than replacing it, so the host never claims more than the adapter reported.
+Desktop keeps its own dispatcher; the HTTP API does not create a host.
+
+## 2026-10-04 - A provider plugs in with one decorator carrying a capability contract
+
+Decision: `register_module(..., contract=...)` carries a closed, validated
+`flyto.capability-contract.v1` describing a capability's actuation, safety
+class, safe-stop, cancellation, idempotency, effects, preconditions and the
+evidence that proves it. Parameter bounds stay in `params_schema` `min`/`max`
+and are mandatory for numeric parameters of an actuating contract. Core owns
+the schema and the pure evidence arithmetic (`core.capability_contract.judge`);
+hosts read contracts as data from catalog detail or the manifest `contracts`
+key and re-implement the arithmetic from `docs/CAPABILITY_CONTRACT.md`.
+
+Reason: hosts must contain no provider-specific code. Without a declared
+contract every new device or connector needed a row of host vocabulary
+(safety class, bounds, verification constants), which is exactly the
+provider-specific code the platform must not accumulate. The manifest key is
+conditional so an installation without contracts keeps its exact hash.
+
 ## 2026-09-22 - Host capability authority crosses HTTP only as opaque local host state
 
 Decision: the Core workflow API may accept execution-host capability authority only from authenticated host headers naming a literal `127.0.0.1` endpoint and bounded bearer token. The resulting proxy is marked opaque, never workflow data, never followed through redirects, and is removed from every persistence/evidence projection. `capability.invoke` remains the only workflow primitive that consumes it. The host may be the built-in AI Space executor, optional Flyto2 Runtime, or another compatible implementation.

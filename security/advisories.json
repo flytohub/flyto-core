@@ -479,5 +479,85 @@
     "regression_tests": [
       "tests/core/test_reported_security_advisories.py::test_verify_spec_ruleset_cannot_run_a_denied_module"
     ]
+  },
+  {
+    "ghsa": "GHSA-59pf-mh94-r7vv",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": "< 2.33.0",
+    "patched": "2.33.0",
+    "summary": "Out-of-sandbox image file read in verify.visual_diff via unvalidated reference_url local-image path",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_visual_diff_rejects_a_reference_image_outside_the_sandbox",
+      "tests/core/test_reported_advisories_2026_09.py::test_visual_diff_rejects_a_traversing_reference_path"
+    ]
+  },
+  {
+    "ghsa": "GHSA-8j62-f337-86xw",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": ">= 2.28.0, < 2.33.0",
+    "patched": "2.33.0",
+    "summary": "SSRF via base_url in llm.agent/ai.model: base-install aiohttp fallback lacks connect-time guard (DNS rebinding to metadata)",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_chat_model_fallback_refuses_a_rebound_base_url",
+      "tests/core/test_reported_advisories_2026_09.py::test_legacy_provider_fallback_refuses_a_rebound_base_url",
+      "tests/core/test_reported_advisories_2026_09.py::test_plain_aiohttp_sessions_exist_only_for_fixed_vendor_hosts"
+    ]
+  },
+  {
+    "ghsa": "GHSA-cqv6-3m5f-qvw2",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": ">= 2.28.0, < 2.33.0",
+    "patched": "2.33.0",
+    "summary": "env.set returns any host environment variable via previous_value, exposing secrets to authenticated module-execution API clients",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_env_set_is_denied_by_default",
+      "tests/core/test_reported_advisories_2026_09.py::test_env_set_reported_request_is_refused_through_execute_module",
+      "tests/core/test_reported_advisories_2026_09.py::test_opted_in_env_set_withholds_the_previous_value"
+    ]
+  },
+  {
+    "ghsa": "GHSA-6r7h-3hcc-jwpr",
+    "severity": "high",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": "< 2.33.0",
+    "patched": "2.33.0",
+    "summary": "SSRF and operator HF_TOKEN exfiltration: huggingface.* modules send the token to a caller-controlled model_id URL",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_url_model_id_never_reaches_a_token_bound_client",
+      "tests/core/test_reported_advisories_2026_09.py::test_reported_module_path_does_not_send_the_token"
+    ]
+  },
+  {
+    "ghsa": "GHSA-hc4c-6x9g-5fq3",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": ">= 2.26.3, < 2.33.0",
+    "patched": "2.33.0",
+    "summary": "SSRF guard bypass via Teredo IPv6 transition addresses: _extract_embedded_ipv4 never decodes 2001:0000::/32",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_validate_url_ssrf_rejects_the_reported_teredo_url",
+      "tests/core/test_reported_advisories_2026_09.py::test_connect_time_resolver_rejects_teredo_metadata"
+    ]
+  },
+  {
+    "ghsa": "GHSA-m5gf-24gv-m9g8",
+    "severity": "medium",
+    "cve": null,
+    "published": "2026-09-30",
+    "affected": ">= 2.26.7, < 2.33.0",
+    "patched": "2.33.0",
+    "summary": "DNS-rebinding TOCTOU in verification callback: raw aiohttp session leaks runner secret past the pre-request SSRF check",
+    "regression_tests": [
+      "tests/core/test_reported_advisories_2026_09.py::test_callback_does_not_deliver_the_runner_secret_to_a_rebound_address",
+      "tests/core/test_reported_advisories_2026_09.py::test_callback_does_not_follow_a_redirect_with_the_secret"
+    ]
   }
 ]

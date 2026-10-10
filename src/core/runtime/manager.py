@@ -38,7 +38,9 @@ logger = logging.getLogger(__name__)
 # Security: Regex pattern for valid plugin IDs
 # Allows alphanumeric, hyphens, underscores, and forward slashes (for namespacing)
 # Does not allow: .., leading/trailing slashes, spaces, special chars
-VALID_PLUGIN_ID_PATTERN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_\-/]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$')
+# Single dots are allowed so a reverse-DNS pack id (``com.example.greeter``)
+# can be a plugin id; ``..`` is refused separately in ``validate_plugin_id``.
+VALID_PLUGIN_ID_PATTERN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_\-/.]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$')
 
 # Security: Dangerous permissions that require extra scrutiny
 DANGEROUS_PERMISSIONS = frozenset([
@@ -186,6 +188,12 @@ class PluginManifest:
     runtime: RuntimeConfig = field(default_factory=RuntimeConfig)
     # Modules (new format for marketplace plugins)
     modules: List[Dict[str, Any]] = field(default_factory=list)
+    # Set for a pack registered from a ``flyto.pack.v1`` manifest: the
+    # language is what the manifest declared and is never re-detected from
+    # the directory contents, and these variables are added to the
+    # whitelisted process environment.
+    language_explicit: bool = False
+    process_env: Dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], validate: bool = True) -> "PluginManifest":
@@ -541,7 +549,7 @@ class PluginManager:
 
         # Determine language: manifest > auto-detect
         language = manifest.runtime.language
-        if language == "python":
+        if language == "python" and not manifest.language_explicit:
             # Check if we should auto-detect (when manifest doesn't specify)
             detected = detect_language(plugin_path)
             if detected != "python":
@@ -572,6 +580,7 @@ class PluginManager:
             plugin_dir=plugin_path,
             entry_point=manifest.entry_point,
             language=language,
+            env=dict(manifest.process_env),
         )
 
         # Create process (but don't start yet)
@@ -916,6 +925,57 @@ class PluginManager:
     def list_available_plugins(self) -> List[str]:
         """List all discovered (available) plugins."""
         return list(self._manifests.keys())
+
+    def register_pack(
+        self,
+        pack_id: str,
+        pack_dir: Path,
+        *,
+        version: str,
+        language: str,
+        entry: str,
+        steps: List[Dict[str, Any]],
+        env: Optional[Dict[str, str]] = None,
+    ) -> PluginManifest:
+        """Make a ``flyto.pack.v1`` subprocess pack invocable by id.
+
+        The pack was validated (and, where the host requires it, signature
+        verified) by ``core.pack.host`` before reaching here; this registers it
+        the way discovery registers a ``plugin.yaml`` — a manifest plus the
+        directory it was found in — so ``invoke``, ``get_manifest`` and the
+        runtime policy gate treat it exactly like any other plugin. Nothing is
+        started: the process is spawned lazily on first invoke.
+
+        ``steps`` are ``{"id": module_id, "required_permissions": [...]}``.
+        Re-registering an id replaces its manifest; a running process for the
+        old manifest keeps running until it is unloaded.
+        """
+        validate_plugin_id(pack_id)
+        validate_version(version)
+        path = Path(pack_dir).resolve(strict=True)
+        validate_entry_point(entry, path)
+        get_language_config(language)
+        manifest = PluginManifest(
+            id=pack_id,
+            name=pack_id,
+            version=version,
+            vendor="",
+            entry_point=entry,
+            steps=[dict(step) for step in steps],
+            runtime=RuntimeConfig(language=language, entry=entry),
+            meta={"source": "flyto.pack.v1"},
+            language_explicit=True,
+            process_env=dict(env or {}),
+        )
+        self._manifests[pack_id] = manifest
+        self._manifest_paths[pack_id] = path
+        return manifest
+
+    async def unregister_pack(self, pack_id: str) -> None:
+        """Stop a pack's process (draining in-flight calls) and forget it."""
+        await self.unload_plugin(pack_id)
+        self._manifests.pop(pack_id, None)
+        self._manifest_paths.pop(pack_id, None)
 
     def get_manifest(self, plugin_id: str) -> Optional["PluginManifest"]:
         """Get the manifest for a specific plugin."""

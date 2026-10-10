@@ -16,3 +16,9 @@ Flyto2 infrastructure.
 Enterprise/private deployments can reuse these examples as acceptance tests by
 overriding target URLs and credentials at runtime. Do not add enterprise-only
 logic here; put deployment-specific policy in config or workflow inputs.
+
+## Module packs
+
+`packs/node-greeter/` is a module pack written in Node.js. Its
+`registerModule({...})` helper produces the same `flyto.pack.v1` rows as
+Python's `@register_module`; see `docs/specs/PACK_MANIFEST_SPEC.md`.

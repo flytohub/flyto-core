@@ -43,10 +43,17 @@ row would be a worse defect than the one this file is fixing.
 from typing import Any, Dict, Optional, Tuple
 
 from ....engine.outcome import ClaimBy, Outcome, envelope
+from ....engine.redaction import SENSITIVE_PARAMS_KEY
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+from ._label_resolve import (  # one label resolver, shared with browser.fill_form
+    _SENSITIVE_FIELD_HINT,
+    _associated_label_selectors,
+    _is_password_field,
+    label_fallback_selectors,
+)
 
 
 async def _read_field_value(page, selector: str) -> Tuple[Optional[str], Optional[str]]:
@@ -191,7 +198,7 @@ def _type_outcome(
 @register_module(
     module_id='browser.type',
     postcondition=POSTCONDITION,
-    version='1.1.0',
+    version='1.2.1',
     category='browser',
     tags=['browser', 'interaction', 'input', 'keyboard', 'ssrf_protected'],
     label='Type Text',
@@ -343,6 +350,26 @@ class BrowserTypeModule(BaseModule):
     module_description = "Type text into an input field"
     required_permission = "browser.automation"
 
+    @classmethod
+    def sensitive_params(cls, params: Dict[str, Any]) -> frozenset:
+        """``text`` carries a credential when the step says so or names one.
+
+        ``sensitive_text`` is already secret in the schema. ``text`` is the
+        free-text field, and it holds a password whenever ``input_type`` is
+        password or the field being typed into is named like a credential --
+        a login step built with ``type_method: label, target: Password``
+        and the default ``input_type: text`` is the case that leaked.
+        """
+        if not isinstance(params, dict):
+            return frozenset()
+        if str(params.get('input_type') or '').lower() == 'password':
+            return frozenset({'text'})
+        for key in ('target', 'selector'):
+            value = params.get(key)
+            if isinstance(value, str) and _SENSITIVE_FIELD_HINT.search(value):
+                return frozenset({'text'})
+        return frozenset()
+
     def validate_params(self) -> None:
         method = self.params.get('type_method', 'placeholder')
         raw_selector = self.params.get('selector', '').strip()
@@ -371,16 +398,15 @@ class BrowserTypeModule(BaseModule):
         elif method == 'label':
             if not target:
                 raise ValueError("Label text is required")
-            # Two strategies tried in order during execute():
-            # 1. label element containing text → find input inside/after it
-            # 2. input with aria-label attribute
-            self._label_selectors = [
-                f'label:has-text("{escaped}") >> input',
-                f'label:has-text("{escaped}") + input',
-                f'label:has-text("{escaped}") ~ input',
-                f'input[aria-label="{escaped}"]',
-                f'textarea[aria-label="{escaped}"]',
-            ]
+            # Tried in order during execute():
+            # 1. every field the label text names -- a wrapping label,
+            #    label[for], aria-labelledby, aria-label -- ranked on the page
+            #    (exact before partial, visible before hidden) and inserted
+            #    here by execute()
+            # 2. static fallbacks when the page cannot be evaluated or names
+            #    nothing: aria-label, then the structural guesses, which only
+            #    ever pick a field that accepts text
+            self._label_selectors = label_fallback_selectors(target)
             self.selector = self._label_selectors[0]  # default, may be overridden in execute
         else:  # placeholder (default)
             if not target:
@@ -403,11 +429,15 @@ class BrowserTypeModule(BaseModule):
         if not browser:
             raise RuntimeError("Browser not launched. Please run browser.launch first")
 
-        # Label method: try multiple selector strategies (label>>input, label+input, aria-label)
+        # Label method: the page ranks what the label names; static fallbacks after
         if hasattr(self, '_label_selectors'):
             page = browser.page
             found = False
-            for sel in self._label_selectors:
+            associated = await _associated_label_selectors(
+                page, self.params.get('target', '').strip(),
+            )
+            candidates = associated + self._label_selectors
+            for sel in candidates:
                 try:
                     count = await page.locator(sel).count()
                     if count > 0:
@@ -419,7 +449,8 @@ class BrowserTypeModule(BaseModule):
             if not found:
                 raise RuntimeError(
                     f"Could not find input field with label \"{self.params.get('target')}\". "
-                    f"Tried: label>>input, label+input, label~input, aria-label"
+                    f"Tried: label (wrapping or label[for]), aria-labelledby, aria-label, "
+                    f"label+input, label~input"
                 )
 
         # Wait for element to be visible before interacting
@@ -442,10 +473,17 @@ class BrowserTypeModule(BaseModule):
 
         after, after_error = await _read_field_value(browser.page, self.selector)
 
-        # Mask sensitive text in return value
-        is_sensitive = self.input_type == 'password' or any(
-            kw in self.selector.lower()
-            for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential']
+        # Mask sensitive text in return value. The page is asked too: a field
+        # that turns out to be <input type=password> is a password field
+        # whatever the parameters called it.
+        is_password_field = await _is_password_field(browser.page, self.selector)
+        is_sensitive = (
+            is_password_field
+            or bool(self.sensitive_params(self.params))
+            or any(
+                kw in self.selector.lower()
+                for kw in ['password', 'passwd', 'secret', 'token', 'key', 'credential']
+            )
         )
         result = {
             "status": "success",
@@ -462,6 +500,10 @@ class BrowserTypeModule(BaseModule):
                 read_error=baseline_error or after_error,
             ),
         }
+        if is_sensitive:
+            # Tells the engine to redact these parameters wherever it records
+            # this step (hooks, trace), including what it learned only now.
+            result[SENSITIVE_PARAMS_KEY] = ['text', 'sensitive_text']
         # Post-action: refresh hints (typing may trigger dynamic UI changes)
         hints = await browser.get_hints(force=True)
         browser._snapshot_since_nav = True

@@ -1,0 +1,91 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.greeter",
+    "version": "0.1.0",
+    "namespaces": [
+      "greeter"
+    ],
+    "description": "Example pack written in Node.js: greetings and repetition.",
+    "min_host": "2.37.0"
+  },
+  "runtime": {
+    "binding": "subprocess-jsonrpc",
+    "language": "node",
+    "entry": "index.js"
+  },
+  "modules": [
+    {
+      "module_id": "greeter.greet",
+      "version": "1.0.0",
+      "category": "greeter",
+      "label": "Greet",
+      "description": "Return a greeting for a name",
+      "icon": "Hand",
+      "tags": [
+        "example",
+        "greeting"
+      ],
+      "params_schema": {
+        "name": {
+          "type": "string",
+          "label": "Name",
+          "description": "Who to greet",
+          "placeholder": "Ada",
+          "required": true,
+          "maxLength": 64
+        }
+      },
+      "output_schema": {
+        "greeting": {
+          "type": "string",
+          "description": "The greeting"
+        }
+      },
+      "provides_capability": "greeter.greet",
+      "contract": {
+        "actuates": false,
+        "safety_class": "read_only",
+        "requires_safe_stop": false,
+        "cancellable": true,
+        "idempotent": true
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "module_id": "greeter.repeat",
+      "version": "1.0.0",
+      "category": "greeter",
+      "label": "Repeat",
+      "description": "Repeat a text a bounded number of times",
+      "icon": "Repeat",
+      "tags": [
+        "example"
+      ],
+      "params_schema": {
+        "text": {
+          "type": "string",
+          "label": "Text",
+          "description": "Text to repeat",
+          "placeholder": "hi",
+          "required": true
+        },
+        "times": {
+          "type": "integer",
+          "label": "Times",
+          "description": "How many times",
+          "default": 2,
+          "min": 1,
+          "max": 5
+        }
+      },
+      "output_schema": {
+        "text": {
+          "type": "string",
+          "description": "The repeated text"
+        }
+      },
+      "timeout_ms": 5000
+    }
+  ]
+}

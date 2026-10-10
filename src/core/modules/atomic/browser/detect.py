@@ -64,7 +64,6 @@ Character counts only in the envelope, never the value. This module fills text
 into arbitrary fields, and a password read back into a trace row would be a
 worse defect than any this file fixes.
 """
-import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -74,6 +73,7 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+from ._settle import first_state, next_mutation
 
 logger = logging.getLogger(__name__)
 
@@ -580,8 +580,10 @@ class BrowserDetectModule(BaseModule):
         strategies = self._build_strategies(all_texts)
 
         # Retry loop: honour self.timeout for dynamically loaded elements.
-        # First attempt runs immediately; if nothing found, poll every 500ms
-        # until timeout expires.
+        # First attempt runs immediately; if nothing found, the next pass is
+        # triggered by the page itself -- a strategy's element becoming
+        # visible, or a DOM mutation the text heuristics might match -- and
+        # the timeout only bounds a page that never changes.
         deadline = time.monotonic() + (self.timeout / 1000)
         match = None
         js_candidates = []
@@ -602,9 +604,11 @@ class BrowserDetectModule(BaseModule):
                         match = frame_match
                 if not js_candidates:
                     js_candidates = iframe_candidates
-            if match or time.monotonic() >= deadline:
+            remaining_ms = (deadline - time.monotonic()) * 1000
+            if match or remaining_ms <= 0:
                 break
-            await asyncio.sleep(0.5)
+            if not await self._wait_for_page_change(page, strategies, remaining_ms):
+                break
 
         # ── Build result ──
         if match:
@@ -749,6 +753,57 @@ class BrowserDetectModule(BaseModule):
                 logger.debug("detect: JS fuzzy fallback failed: %s", exc)
 
         return match, js_candidates
+
+    async def _wait_for_page_change(self, page, strategies, remaining_ms):
+        """Return when the page changed in a way the next pass could match.
+
+        False means the page can no longer be watched at all (it closed), so
+        another pass could only fail the same way.
+
+        One auto-waiting union of every locator strategy resolves the moment
+        any of their elements is visible; a MutationObserver in each frame
+        covers the fuzzy and proximity heuristics no locator expresses.
+        """
+        waits = {}
+        union = None
+        for _name, locator_fn, _confidence in strategies:
+            try:
+                locator = locator_fn(page)
+                union = locator if union is None else union.or_(locator)
+            except Exception:  # noqa: BLE001 - a strategy that cannot build is skipped
+                continue
+        if union is not None:
+            visible = union.filter(visible=True)
+            try:
+                # Already-visible matches the last pass rejected (role filter,
+                # unreadable info) would resolve the union at once and spin
+                # the loop; only an empty union can signal a change.
+                watchable = await visible.count() == 0
+            except Exception:  # noqa: BLE001 - mutations still cover this page
+                watchable = False
+            if watchable:
+                waits['locator'] = visible.first.wait_for(
+                    state='attached', timeout=max(1, remaining_ms),
+                )
+        try:
+            frames = list(page.frames)
+        except Exception:  # noqa: BLE001 - a Frame context has no frame list
+            frames = [page]
+        for index, frame in enumerate(frames):
+            waits[f'mutation:{index}'] = next_mutation(frame, cap_ms=remaining_ms)
+        started = time.monotonic()
+        answer = await first_state(waits, timeout_ms=remaining_ms)
+        if answer is not None or (time.monotonic() - started) * 1000 >= remaining_ms:
+            return True
+        # Every wait failed early: a navigation destroyed the contexts, or the
+        # page is gone. Let a new document parse before the next pass reads it.
+        try:
+            await page.wait_for_load_state(
+                'domcontentloaded', timeout=max(1, remaining_ms),
+            )
+        except Exception:  # noqa: BLE001 - no document to wait for means stop
+            return False
+        return True
 
     async def _search_frames(self, page, strategies, all_texts):
         """Search child iframes for the element. Returns (match, candidates)."""

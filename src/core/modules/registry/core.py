@@ -59,6 +59,7 @@ from datetime import datetime  # noqa: E402
 from importlib.metadata import entry_points, version as get_version  # noqa: E402
 from typing import Any, Dict, List, Optional, Set, Tuple, Type  # noqa: E402
 
+from ...capability_contract import validate_contract  # noqa: E402
 from ...constants import ErrorMessages  # noqa: E402
 from ..base import BaseModule  # noqa: E402
 from ..types import (  # noqa: E402
@@ -99,6 +100,10 @@ class PluginInfo:
     module_count: int
     loaded_at: datetime = field(default_factory=datetime.now)
     entry_point: str = ""
+    # The pack's own one-line summary, read from an optional module-level
+    # ``PACK_DESCRIPTION`` string beside its ``register_all`` (see
+    # ``_pack_description``). Empty when the pack declares none.
+    description: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -106,8 +111,30 @@ class PluginInfo:
             "version": self.version,
             "module_count": self.module_count,
             "loaded_at": self.loaded_at.isoformat(),
-            "entry_point": self.entry_point
+            "entry_point": self.entry_point,
+            "description": self.description,
         }
+
+
+def _pack_description(register_func: Any) -> str:
+    """The ``PACK_DESCRIPTION`` a pack declares beside its ``register_all``.
+
+    A pack describes itself with an optional module-level string in the module
+    that defines the entry point callable::
+
+        PACK_DESCRIPTION = "Building lifts and stock control"
+
+        def register_all():
+            ...
+
+    It is read, never called: a constant cannot run code, fail halfway, or
+    differ between two reads, so it adds nothing to what a plugin load can do.
+    Anything that is not a non-empty string reads as "declares nothing".
+    """
+    module_name = getattr(register_func, "__module__", None)
+    module = sys.modules.get(module_name) if isinstance(module_name, str) else None
+    value = getattr(module, "PACK_DESCRIPTION", None) if module is not None else None
+    return value.strip() if isinstance(value, str) else ""
 
 
 @dataclass
@@ -316,6 +343,13 @@ class ModuleRegistry:
     # answers a different question — which modules the plugin still provides —
     # and an id the plugin only deleted must not count as one it provides.
     _pass_touched: Optional[Set[str]] = None
+    # Packs installed from a ``flyto.pack.v1`` manifest rather than a
+    # ``flyto.modules`` entry point (see ``install_external_pack``), keyed by
+    # pack id. Each value quacks like an entry point — ``name``, ``value``,
+    # ``load()`` — so discovery loads it through exactly the same transactional
+    # path, with the same ownership stamping, and a forced rediscovery keeps
+    # it instead of forgetting it as uninstalled.
+    _external_packs: Dict[str, Any] = {}
     # Set by clear(), consumed by the next discovery pass. Replay is a repair
     # for a cleared registry, so the condition has to be "clear() happened", not
     # "the registry is empty": a registry emptied deliberately, by unregistering
@@ -441,6 +475,17 @@ class ModuleRegistry:
                 if total > 48:
                     raise ValueError("semantic contract exceeds the identifier bound")
 
+        # The capability contract is validated here too, not only in the
+        # decorator: a plugin may call register() with hand-built metadata, and
+        # a host enforces whatever the stored row says. Absent → no change.
+        normalized_contract = None
+        if metadata is not None and "contract" in metadata:
+            if not metadata.get("provides_capability"):
+                raise ValueError("capability contracts require provides_capability")
+            normalized_contract = validate_contract(
+                metadata.get("contract"), metadata.get("params_schema")
+            )
+
         cls._note_pass_touch(module_id)
         if cls._pass_registered is not None:
             cls._pass_registered.add(module_id)
@@ -474,6 +519,10 @@ class ModuleRegistry:
             # Enforcement reads the stored row, so a permission grown after
             # registration — or an owner rewritten — is one nobody vouched for.
             metadata = copy.deepcopy(dict(metadata))
+            if normalized_contract is not None:
+                # Fresh containers built by the validator: the stored contract
+                # is the validated one, never an alias to caller state.
+                metadata['contract'] = normalized_contract
             # Ensure required fields
             metadata.setdefault('module_id', module_id)
             metadata.setdefault('version', '1.0.0')
@@ -686,6 +735,26 @@ class ModuleRegistry:
         """Check if module exists"""
         cls._ensure_discovered()
         return module_id in cls._modules
+
+    @classmethod
+    @_synchronized
+    def secret_param_names(cls, module_id: str) -> frozenset:
+        """Parameter names this module's schema declares secret.
+
+        A field is secret when its schema says ``secret: True`` or
+        ``format: 'password'``. Read from the stored row without the localising
+        copy ``get_metadata`` makes, because the step executor asks this for
+        every step it hands to a hook. Unknown modules declare nothing.
+        """
+        cls._ensure_discovered()
+        schema = (cls._metadata.get(module_id) or {}).get('params_schema')
+        if not isinstance(schema, dict):
+            return frozenset()
+        return frozenset(
+            name for name, spec in schema.items()
+            if isinstance(spec, dict)
+            and (spec.get('secret') is True or spec.get('format') == 'password')
+        )
 
     @classmethod
     @_synchronized
@@ -1066,7 +1135,7 @@ class ModuleRegistry:
         cls._discovering = True
         cls._discovery_thread = threading.get_ident()
         try:
-            eps = _iter_entry_points()
+            eps = _iter_entry_points() + list(cls._external_packs.values())
 
             # Whether this pass follows a clear(), which is the cycle the
             # contribution record exists to rebuild. Read by _load_plugin, so it
@@ -1117,8 +1186,10 @@ class ModuleRegistry:
         return cls._plugins.copy()
 
     @classmethod
-    def _load_plugin(cls, ep: Any) -> None:
+    def _load_plugin(cls, ep: Any) -> bool:
         """Load one entry point, or leave it exactly as it was.
+
+        Returns True when the load completed and False when it was rolled back.
 
         Failure is the interesting case. A plugin that raises halfway through
         ``register_all`` has published a set of modules it never meant to
@@ -1201,22 +1272,31 @@ class ModuleRegistry:
                     # would be replayed back into existence by the next clear().
                     cls._plugin_contributions[name] = cls._capture(owned)
 
-            try:
-                pkg_version = get_version(value.split(':')[0].split('.')[0])
-            except Exception:
-                pkg_version = "unknown"
+            # A pack installed from a manifest states its own version and
+            # description; an entry point's come from its distribution.
+            pkg_version = getattr(ep, "pack_version", None)
+            if not isinstance(pkg_version, str) or not pkg_version:
+                try:
+                    pkg_version = get_version(value.split(':')[0].split('.')[0])
+                except Exception:
+                    pkg_version = "unknown"
+            description = getattr(ep, "pack_description", None)
+            if not isinstance(description, str):
+                description = _pack_description(register_func)
 
             cls._plugins[name] = PluginInfo(
                 name=name,
                 version=pkg_version,
                 module_count=len(owned),
                 entry_point=value,
+                description=description.strip(),
             )
             cls._bump_generation()
 
             logger.info(
                 f"Plugin loaded: {name} ({len(owned)} modules, v{pkg_version})"
             )
+            return True
 
         except Exception as e:
             cls._loading_plugin = ""
@@ -1247,6 +1327,69 @@ class ModuleRegistry:
             cls._plugins.update(prior_plugins)
             cls._bump_generation()
             logger.error(f"Failed to load plugin {name}: {e}")
+            return False
+
+    @classmethod
+    def install_external_pack(cls, ep: Any) -> PluginInfo:
+        """Load a pack that did not arrive through a ``flyto.modules`` entry point.
+
+        ``ep`` is entry-point shaped (``name``, ``value``, ``load()`` returning
+        a ``register_all`` callable, optional ``pack_version`` and
+        ``pack_description``). It is loaded by ``_load_plugin`` — the same
+        transaction an installed Python package goes through — so its modules
+        are stamped with ``name`` as their owner, a failing ``register_all`` is
+        rolled back exactly, and it is remembered for every later discovery
+        pass. Installing the same name again replaces the earlier load.
+
+        Refuses a name an installed entry point already uses: two owners with
+        one name would merge their policy grants.
+
+        Raises ``ValueError`` when the name collides or the load was rolled
+        back; the registry is then exactly as it was.
+        """
+        name = getattr(ep, "name", "") or ""
+        if not name:
+            raise ValueError("an external pack needs a name")
+        with cls._discovery_lock:
+            cls._ensure_discovered()
+            if name in {getattr(e, "name", "") for e in _iter_entry_points()}:
+                raise ValueError(
+                    f"pack id '{name}' is already used by an installed flyto.modules entry point"
+                )
+            previous = cls._external_packs.get(name)
+            cls._external_packs[name] = ep
+            cls._discovering = True
+            cls._discovery_thread = threading.get_ident()
+            try:
+                loaded = cls._load_plugin(ep)
+            finally:
+                cls._loading_plugin = ""
+                cls._discovering = False
+                cls._discovery_thread = None
+            if not loaded:
+                if previous is None:
+                    cls._external_packs.pop(name, None)
+                else:
+                    cls._external_packs[name] = previous
+                raise ValueError(f"pack '{name}' failed to register; the registry is unchanged")
+            return cls._plugins[name]
+
+    @classmethod
+    def uninstall_external_pack(cls, name: str) -> List[str]:
+        """Remove a pack installed by ``install_external_pack``.
+
+        Returns the module ids that were removed. Unknown names remove nothing.
+        """
+        with cls._discovery_lock:
+            if cls._external_packs.pop(name, None) is None:
+                return []
+            removed = cls._owned_by(name)
+            for module_id in removed:
+                cls.unregister(module_id)
+            cls._plugins.pop(name, None)
+            cls._plugin_contributions.pop(name, None)
+            cls._bump_generation()
+            return sorted(removed)
 
     @classmethod
     def _forget_uninstalled_plugins(cls, present: Any) -> None:

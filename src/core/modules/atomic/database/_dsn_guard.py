@@ -30,6 +30,8 @@ import socket
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
+from ....utils import _extract_embedded_ipv4
+
 _TRUTHY = {"1", "true", "yes", "on"}
 
 # Param keys that, when supplied by the client, point the connection at a
@@ -52,15 +54,16 @@ def _is_blocked_ip(ip: ipaddress._BaseAddress) -> bool:
     # Cloud metadata endpoint (link_local already covers 169.254.0.0/16, but be explicit).
     if str(ip) == "169.254.169.254":
         return True
-    # NAT64 well-known prefix 64:ff9b::/96 — extract the embedded IPv4 and re-check.
+    # IPv6 transition forms (IPv4-mapped, 6to4, Teredo, NAT64, ...) — extract
+    # the embedded IPv4 and re-check it. This used to decode only NAT64 and
+    # IPv4-mapped itself and leaned on the stdlib for the rest, whose
+    # `is_private` coverage of 6to4 changed between Python releases; the shared
+    # decoder gives every supported interpreter the same answer.
     if isinstance(ip, ipaddress.IPv6Address):
         try:
-            if ip in ipaddress.ip_network("64:ff9b::/96"):
-                embedded = ipaddress.IPv4Address(int(ip) & 0xFFFFFFFF)
+            embedded = _extract_embedded_ipv4(ip)
+            if embedded is not None:
                 return _is_blocked_ip(embedded)
-            # IPv4-mapped ::ffff:a.b.c.d
-            if ip.ipv4_mapped is not None:
-                return _is_blocked_ip(ip.ipv4_mapped)
         except Exception:
             return True
     return False

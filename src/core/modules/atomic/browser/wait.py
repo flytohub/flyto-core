@@ -92,6 +92,7 @@ grew `OutcomeError`, a raise that carries a rung, and the driver grew
 `BrowserWaitTimeout` so a timeout is distinguishable from a page that was
 simply gone. This module now opts in on that one branch and no other.
 """
+import logging
 import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -101,6 +102,17 @@ from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
+
+logger = logging.getLogger(__name__)
+
+# Returned with every duration-only wait. The callers that read results --
+# an AI composing the next step, a template author -- learn that a fixed
+# pause guesses at page state the page could report directly.
+_DURATION_WAIT_ADVICE = (
+    'A fixed-duration wait guesses at page state. Prefer waiting on a '
+    'condition: pass selector (with state visible, hidden, attached or '
+    'detached) so the step ends as soon as the page is ready.'
+)
 
 
 #: The states a selector matching NOTHING satisfies without the page doing
@@ -331,6 +343,8 @@ def _duration_outcome(*, requested_ms: float, elapsed_ms: float) -> Dict[str, An
                 'description_key': 'modules.browser.wait.output.duration_ms.description'},
         'elapsed_ms': {'type': 'number', 'optional': True, 'description': 'Time that actually passed, from a monotonic clock read either side of the sleep',
                 'description_key': 'modules.browser.wait.output.elapsed_ms.description'},
+        'advice': {'type': 'string', 'optional': True, 'description': 'Present on a duration-only wait: how to wait on page state instead of a fixed pause',
+                'description_key': 'modules.browser.wait.output.advice.description'},
         'outcome': {'type': 'object', 'description': (
             'How far the wait was followed: observed when the element state '
             'held in the live DOM, or when the clock confirmed the requested '
@@ -446,7 +460,14 @@ class BrowserWaitModule(BaseModule):
             }
         else:
             # Wait for specified duration. The clock is read either side of the
-            # sleep rather than the duration being echoed back.
+            # sleep rather than the duration being echoed back. The explicit
+            # duration is honoured, but a condition almost always exists, so
+            # the pause is reported to whoever composed it.
+            logger.warning(
+                "browser.wait without a selector sleeps a fixed %sms; "
+                "wait on a selector state instead",
+                self.duration_ms,
+            )
             started = time.monotonic()
             await asyncio.sleep(self.duration_ms / 1000)
             elapsed_ms = (time.monotonic() - started) * 1000
@@ -454,6 +475,7 @@ class BrowserWaitModule(BaseModule):
                 "status": "success",
                 "duration_ms": self.duration_ms,
                 "elapsed_ms": round(elapsed_ms, 3),
+                "advice": _DURATION_WAIT_ADVICE,
                 "outcome": _duration_outcome(
                     requested_ms=self.duration_ms, elapsed_ms=elapsed_ms
                 ),

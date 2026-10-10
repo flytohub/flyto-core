@@ -69,7 +69,7 @@ async def _call_openai_aiohttp(
     base_url: Optional[str]
 ) -> Dict[str, Any]:
     """Call OpenAI API using aiohttp fallback."""
-    import aiohttp
+    from ....utils import guarded_client_session
 
     url = base_url or "https://api.openai.com/v1"
     url = f"{url.rstrip('/')}/chat/completions"
@@ -90,7 +90,9 @@ async def _call_openai_aiohttp(
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
-    async with aiohttp.ClientSession() as session:
+    # Same connect-time guard as the httpx branch (GHSA-8j62-f337-86xw): the
+    # caller's base_url must not be re-resolved to an internal address.
+    async with guarded_client_session() as session:
         async with session.post(url, headers=headers, json=payload) as response:
             result = await response.json()
 
@@ -140,7 +142,7 @@ async def call_anthropic_with_tools(
         from ....utils import guarded_httpx_client
         use_httpx = True
     except ImportError:
-        import aiohttp
+        from ....utils import guarded_client_session
         use_httpx = False
 
     url = "https://api.anthropic.com/v1/messages"
@@ -206,7 +208,7 @@ async def call_anthropic_with_tools(
             response = await client.post(url, headers=headers, json=payload)
             result = response.json()
     else:
-        async with aiohttp.ClientSession() as session:
+        async with guarded_client_session() as session:
             async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
 

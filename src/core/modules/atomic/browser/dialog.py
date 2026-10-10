@@ -228,6 +228,9 @@ class BrowserDialogModule(BaseModule):
             'appeared': False, 'message': None, 'type': None,
             'default_value': None, 'handle_error': None,
         }
+        # Set by the dialog event itself once the dialog has been handled,
+        # so the wait below ends on that event rather than on a poll.
+        dialog_handled = asyncio.Event()
 
         async def handle_dialog(dialog):
             dialog_info['appeared'] = True
@@ -253,22 +256,23 @@ class BrowserDialogModule(BaseModule):
                 dialog_info['handle_error'] = (
                     f"{type(error).__name__}: {str(error).splitlines()[0][:160]}"
                 )
+            finally:
+                dialog_handled.set()
 
         page.on('dialog', handle_dialog)
 
         try:
-            if self.action == 'listen':
-                # Just wait and capture any dialogs
-                await asyncio.sleep(self.timeout / 1000)
-            else:
-                # Wait for dialog to appear
-                try:
-                    await asyncio.wait_for(
-                        self._wait_for_dialog(dialog_info),
-                        timeout=self.timeout / 1000
-                    )
-                except asyncio.TimeoutError:
-                    pass
+            # Every action, 'listen' included, ends on the first dialog: the
+            # result reports one dialog, and an unhandled one blocks the page
+            # until something answers it, so waiting on would only run out
+            # the timeout. The timeout bounds a page that shows none.
+            try:
+                await asyncio.wait_for(
+                    dialog_handled.wait(),
+                    timeout=self.timeout / 1000
+                )
+            except asyncio.TimeoutError:
+                pass
 
         finally:
             page.remove_listener('dialog', handle_dialog)
@@ -301,6 +305,3 @@ class BrowserDialogModule(BaseModule):
                 "outcome": found,
             }
 
-    async def _wait_for_dialog(self, dialog_info: dict):
-        while not dialog_info['appeared']:
-            await asyncio.sleep(0.1)
