@@ -11,6 +11,16 @@ unknown evidence key is still refused
 (`tests/core/test_capability_contract_evidence_display.py`). Additive:
 contracts without them normalize and hash as on 2.39. Not tagged or released.
 
+## Opt-in Runtime capability bridge client (2026-10-11)
+
+`core.runtime.capability_bridge.FlytoRuntimeCapabilityClient` provides an
+explicit localhost HTTP client for Runtime's `flyto2.execution.v1` manifest
+and invocation contracts. Importing Core does not connect to Runtime. A caller
+must supply an explicit same-user token or token-file path; accepted invocations
+use bounded follow-ups and preserve the original operation ID. This is an
+optional library boundary, not a new execution engine or a hosted dependency.
+Focused tests: `tests/runtime/test_capability_bridge.py`.
+
 ## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
 
 A contract's `recovery` block may declare `on` / `alternatives` / `preserves` /
@@ -504,7 +514,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 993 maintained Python files, 6,331
+- Source-backed documentation now covers 994 maintained Python files, 6,355
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
