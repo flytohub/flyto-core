@@ -1,5 +1,14 @@
 # Flyto2 Core Architecture
 
+## Local-first mobile validator (2026-10-10)
+
+The opt-in core.workflow.validate process uses the existing Core workflow
+validator to return actual graph validity and content SHA-256 proof over
+the provider-neutral flyto2.execution.v1 contract. The App does not gain
+workflow execution or device authority and need not use hosted Cloud or
+the separately evolved cybersecurity Engine.
+See docs/mobile-workflow-validator.md.
+
 ## Product Layers
 
 Flyto2 is one product with three independently usable packages. `flyto-ai`
@@ -41,7 +50,7 @@ own the first two layers or hosted product/account logic.
 - Warroom modules infer observable site/action/API/state graphs from evidence;
   they do not own product business logic and do not treat LLM output as a gate.
 - `docs/reference/` is generated from Python AST and repository assets. It maps
-  980 maintained Python files, 6,091 declarations, 488 literal module
+  981 maintained Python files, 6,095 declarations, 488 literal module
   registrations, 28 HTTP operations, 108 environment names, CLI parsers,
   recipes, bundles, and workflows back to source.
 

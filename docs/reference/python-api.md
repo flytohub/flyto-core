@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,091 declarations across 829 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,095 declarations across 830 files**.
 
 ## `demo.py`
 
@@ -2833,6 +2833,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def MeteringTracker._should_bill(self, success: bool, is_retry: bool) -> bool` | Determine if invocation should be billed. | [`src/core/metering/tracker.py:281`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L281) |
 | method | `def MeteringTracker._generate_id(self) -> str` | Generate unique record ID. | [`src/core/metering/tracker.py:296`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L296) |
 | function | `def get_metering_tracker(config: Optional&#91;MeteringConfig&#93;=None) -> MeteringTracker` | Get global metering tracker instance. | [`src/core/metering/tracker.py:306`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L306) |
+
+## `src/core/mobile_provider.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _clock() -> str` | Implements `_clock`; linked source is authoritative. | [`src/core/mobile_provider.py:26`](https://github.com/flytohub/flyto-core/blob/main/src/core/mobile_provider.py#L26) |
+| function | `def _validated(request: Any) -> tuple&#91;str, list&#91;dict&#93;, list&#91;dict&#93;&#93;` | Implements `_validated`; linked source is authoritative. | [`src/core/mobile_provider.py:30`](https://github.com/flytohub/flyto-core/blob/main/src/core/mobile_provider.py#L30) |
+| function | `def execute(request: Any) -> dict&#91;str, Any&#93;` | Validate a user-supplied graph using the real Core module registry. | [`src/core/mobile_provider.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/core/mobile_provider.py#L69) |
+| function | `def main() -> int` | Implements `main`; linked source is authoritative. | [`src/core/mobile_provider.py:121`](https://github.com/flytohub/flyto-core/blob/main/src/core/mobile_provider.py#L121) |
 
 ## `src/core/module_policy.py`
 

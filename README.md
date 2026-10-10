@@ -1,5 +1,10 @@
 # Flyto2 Core
 
+The [local mobile workflow validator](docs/mobile-workflow-validator.md)
+offers real Core workflow validation as an optional, low-risk installed
+Runtime capability without Cloud or the cybersecurity Engine. It never
+executes a workflow.
+
 **AI said it finished. Flyto2 shows the proof.**
 
 A Python execution engine for AI agents. It runs browser and API work as

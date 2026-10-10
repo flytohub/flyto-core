@@ -1,5 +1,13 @@
 # Flyto2 Roadmap
 
+## Standalone mobile AI Space parity
+
+- [x] Expose real Core workflow validation through a read-only host process.
+- [ ] Compose locally approved workflow execution, step lifecycle,
+  cancellation and evidence in Core, not the phone.
+- [ ] Verify physical robot/cockpit adapters and optional Cloud transport
+  obey the same task/approval/result contracts.
+
 ## Strategic Priorities
 
 ### 0. Warroom Deterministic Verification

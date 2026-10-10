@@ -1,5 +1,7 @@
 # Flyto2 Core Documentation
 
+- [Core mobile workflow validator](mobile-workflow-validator.md)
+
 Flyto2 turns AI work into verified, replayable procedures: "AI said it
 finished. Flyto2 shows the proof." `flyto-ai` understands/routes/governs new
 work, `flyto-blueprint` stores/learns/scores procedures and never executes, and
@@ -69,7 +71,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 481 active runtime modules across 89 catalog categories.
-- 980 maintained Python files and 6,091 declarations.
+- 981 maintained Python files and 6,095 declarations.
 - 488 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.

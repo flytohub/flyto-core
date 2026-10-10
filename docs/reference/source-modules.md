@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **980 Python files**, **231,960 lines**, and **6,091 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **981 Python files**, **232,097 lines**, and **6,095 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -195,6 +195,7 @@ Inventory: **980 Python files**, **231,960 lines**, and **6,091 class/function/m
 | [`src/core/mcp_server.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L1) | 132 | 3 | `asyncio, core, json, os, sys, typing` | Flyto2 Core MCP Server — STDIO Transport |
 | [`src/core/metering/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/__init__.py#L1) | 23 | 0 | `tracker` | Metering Module |
 | [`src/core/metering/tracker.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/metering/tracker.py#L1) | 311 | 15 | `dataclasses, enum, logging, secrets, time, typing` | Metering Tracker |
+| [`src/core/mobile_provider.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/mobile_provider.py#L1) | 137 | 4 | `__future__, core, datetime, hashlib, json, re, sys, typing` | Read-only Core workflow-validation capability for locally paired devices. |
 | [`src/core/module_policy.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L1) | 405 | 15 | `fnmatch, logging, os, typing, yaml` | Module capability policy — denylist / allowlist filter. |
 | [`src/core/modules/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/__init__.py#L1) | 291 | 0 | `atomic, base, builtin, catalog, connection_rules, errors, express, items, lint, registry, result, runtime` | Module System - Core Registration and Execution |
 | [`src/core/modules/atomic/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/__init__.py#L1) | 131 | 1 | `browser, element, element_registry, flow, importlib` | Atomic Modules - Community Edition |

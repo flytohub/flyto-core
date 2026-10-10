@@ -1,5 +1,13 @@
 # Flyto2 Core State
 
+## 2026-10-10 — Read-only mobile Core capability
+
+An installed host may expose bounded Core workflow validation through the
+standard Runtime result contract. It returns actual validation errors
+and a graph fingerprint, not workflow execution or robot completion.
+Standalone task planning, approval, lifecycle and physical equipment
+verification are not complete.
+
 ## Host capability proxy closure (2026-09-22)
 
 The local Core HTTP workflow boundary now composes with any trusted assignment-scoped execution host. Host authority arrives only through authenticated headers, is restricted to a literal loopback endpoint, is represented inside Core by an opaque proxy, and is stripped from all serializable evidence/state surfaces. Flyto2 Runtime is one optional host implementation. Core continues to own deterministic workflow execution only; equipment discovery, approval, scheduling and transport remain outside Core.
@@ -386,7 +394,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 980 maintained Python files, 6,091
+- Source-backed documentation now covers 981 maintained Python files, 6,095
   declarations, 488 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

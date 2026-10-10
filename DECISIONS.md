@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-10-10 — Core preview cannot be promoted into execution authority
+
+Validation is a low-risk installed host capability. Core owns its schema
+and validator; the phone and Runtime gateway cannot infer that a valid
+graph ran. Local operation requires no hosted Cloud or security Engine.
+Approval, physical movement and independent evidence remain separate gates.
+
 ## 2026-09-22 - Host capability authority crosses HTTP only as opaque local host state
 
 Decision: the Core workflow API may accept execution-host capability authority only from authenticated host headers naming a literal `127.0.0.1` endpoint and bounded bearer token. The resulting proxy is marked opaque, never workflow data, never followed through redirects, and is removed from every persistence/evidence projection. `capability.invoke` remains the only workflow primitive that consumes it. The host may be the built-in AI Space executor, optional Flyto2 Runtime, or another compatible implementation.

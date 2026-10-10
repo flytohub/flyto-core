@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-10-10 | Standalone Core mobile workflow validation | `2026-10-10-local-mobile-workflow-validation.md` | Read-only provider, real validator, 7 tests PASS, docs passed; existing MCP recipe taint finding remains. Owner: ChatGPT |
 | 2026-09-22 | Host capability proxy closure | `2026-09-22-host-capability-proxy.md` | Local Runtime can inject execution-scoped capability authority into Core without serializing it into workflow data. Literal-loopback, bearer, no-redirect and opaque-context persistence boundaries verified; strict Indexer 18/18. Owner: ChatGPT |
 | 2026-09-21 | Generic external capability invocation runtime | `2026-09-21-capability-invoke-runtime.md` | Candidate: `capability.invoke` keeps device protocols outside Core and requires opaque host authority. Focused registry/atomic verification 145 passed / 1 skipped. Coordinating Cloud pin and final CI remain before release. Owner: ChatGPT |
 | 2026-09-06 | MCP conditional parameter validation | `2026-09-06-mcp-conditional-parameters.md` | Corrects the real AI Space text-input blocker by honoring conditional fields and schema defaults. Focused real Core validation evidence and release gate outcomes are recorded in the handoff. Owner: codex |

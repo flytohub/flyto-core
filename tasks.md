@@ -1,5 +1,9 @@
 # Tasks
 
+- [x] Add independent read-only Core workflow validation via installed host.
+- [ ] Finish local-first AI Space planning, per-step approval, execution
+  and real robotics/vehicle evidence.
+
 ## Open
 
 - `PluginService` / runtime plugin lifecycle: the out-of-process plugin path

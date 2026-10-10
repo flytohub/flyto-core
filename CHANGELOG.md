@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Core local mobile validator
+
+- Added a bounded, standalone workflow-validation capability with real
+  Core validity, errors, warnings and graph fingerprint. No fake execution,
+  mandatory hosted Cloud or cybersecurity Engine dependency.
+
 ## Unreleased — host capability proxy
 
 - Allow authenticated local execution hosts to inject loopback-only, bearer-protected capability authority into `POST /v1/workflow/run` for canonical `capability.invoke` steps.
