@@ -78,7 +78,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 482 active runtime modules across 89 catalog categories.
-- 993 maintained Python files and 6,327 declarations.
+- 994 maintained Python files and 6,351 declarations.
 - 489 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.
@@ -97,3 +97,12 @@ unowned source/configuration, or broken local links.
 - Defined-but-unmounted or optional capability is labelled explicitly.
 - Public naming is Flyto2 and public examples use registered `@flyto2.com`
   mailboxes.
+
+## Optional Flyto2 Runtime Composition
+
+`core.runtime.capability_bridge` is the low-level Core client for an explicitly
+configured, separately installed Flyto2 Runtime. It uses the Runtime-owned
+localhost `flyto2.execution.v1` bridge, requires a caller-supplied bridge token,
+and supports live capability discovery and durable accepted-operation follow-up.
+It does not replace workflow `capability.invoke`, which remains the host-neutral
+resource/equipment boundary.

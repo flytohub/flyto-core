@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-10-11 | Opt-in Runtime capability bridge client (ported onto current main) | `2026-09-30-runtime-capability-bridge-client.md` | Focused contract tests 4/4; source-backed reference regenerated. Independent opt-in localhost client; no startup connection or token persistence. |
 | 2026-10-07 | Recovery semantics in the capability contract (2.39.0) | `2026-10-07-recovery-semantics-schema.md` | On `claude/recovery-declaration`: `recovery` admits `on`/`alternatives`/`preserves`/`resource_scope`/`fills`, `capabilities` optional, strict and bounded; 2.38 blocks normalize and hash unchanged. Owner: claude |
 | 2026-10-04 | Absolute-target contract evidence (2.38.0) | `2026-10-04-absolute-target-evidence.md` | On `claude/contract-distance-to`: `distance_to` / `angle_to` measure ops and `measure.frame` judge the end state against the call's arguments; 20 parity vectors for Cloud. Additive (unchanged normalization/hash for existing contracts). Owner: claude |
 | 2026-10-04 | `browser.fill_form`: whole form in one call (2.38.0) | `2026-10-04-browser-fill-form.md` | Implemented on `claude/browser-fill-form`: label-resolved fields, uploads, submit and confirmation in one call; all targets resolved before the first write; `controlled` contract without `actuates`. fill_form 20/20 (12 real Chromium), type label 23/23; docs/brand/memory checks pass; strict Indexer all pass but the pre-existing taint finding. Owner: claude |

@@ -43,6 +43,9 @@ categories, with 41 maintained built-in recipes exposed through the CLI.
   replay, state, metering, browser control, and provider adapters.
 - CLI entry points `flyto`, `flyto-serve`, and `flyto-verification`.
 - MCP stdio, authenticated MCP HTTP, Execution API, and verification service.
+- Optional, explicit client-side composition with an independently installed
+  Flyto2 Runtime through the provider-neutral `flyto2.execution.v1` localhost
+  bridge; Core does not own or auto-discover the Runtime implementation.
 - Packaged recipes, workflow fixtures, plugin protocol, package metadata,
   generated module/source references, and release verification automation.
 

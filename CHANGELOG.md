@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in, localhost-only `FlytoRuntimeCapabilityClient` for Runtime capability
+  manifests and bounded `flyto2.execution.v1` invocations. The transport uses
+  an explicitly provided same-user token and preserves the operation ID while
+  reconciling accepted side effects; importing Core has no Runtime dependency
+  or connection side effect.
+
 ## [2.39.0] - 2026-10-07
 
 ### Added
