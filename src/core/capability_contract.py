@@ -41,7 +41,8 @@ from __future__ import annotations
 import json
 import math
 import re
-from typing import Any, Dict, List, Mapping, Optional
+from types import MappingProxyType
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 __all__ = [
     "CONTRACT_SCHEMA",
@@ -60,6 +61,12 @@ __all__ = [
     "RECOVERY_RESOURCE_SCOPES",
     "RECOVERY_ROLE_PATTERN",
     "RECOVERY_ROLES_MAX",
+    "EVIDENCE_DISPLAY_FIELDS",
+    "EVIDENCE_LABEL_PATTERN",
+    "EVIDENCE_LABEL_LANGS_MAX",
+    "EVIDENCE_LABEL_MAX",
+    "EVIDENCE_UNIT_MAX",
+    "TELEMETRY_CHANNEL_PATTERN",
     "validate_contract",
     "validate_evidence",
     "judge",
@@ -106,7 +113,7 @@ _IDENTIFIER_LIST_MAX = 16
 _EVIDENCE_MAX = 8
 
 _EVIDENCE_REQUIRED = frozenset(("kind", "observe", "phases", "measure", "expect", "tolerance"))
-_EVIDENCE_OPTIONAL = frozenset(("settle",))
+# ``_EVIDENCE_OPTIONAL`` is defined after the display-key checks below.
 _MEASURE_KEYS = frozenset(("op", "fields"))
 _MEASURE_OPTIONAL = frozenset(("heading_field", "frame"))
 _TOLERANCE_KEYS = frozenset(("absolute", "relative"))
@@ -159,6 +166,23 @@ _RECOVERY_SEMANTIC_KEYS = frozenset(("on", "alternatives", "preserves", "resourc
 #: ``capabilities``) feature-detects them with
 #: ``"fills" in core.capability_contract.RECOVERY_FIELDS`` (exists from 2.39.0).
 RECOVERY_FIELDS = _RECOVERY_REPORT_KEYS | _RECOVERY_SEMANTIC_KEYS
+
+#: What the reading an evidence spec judges *is*, for a host to show it
+#: (2.40.0): a localized ``label`` (``{language tag: text}``), a ``unit`` and
+#: the telemetry ``channel`` the observed field belongs to. Optional, kept
+#: verbatim in the normalized spec, never read by :func:`judge`. A provider
+#: that must also load on an older core (whose closed schema rejects them)
+#: feature-detects them with ``"label" in EVIDENCE_DISPLAY_FIELDS``.
+EVIDENCE_DISPLAY_FIELDS = frozenset(("label", "unit", "channel"))
+#: A ``label`` language tag: BCP 47 language plus at most one subtag
+#: (``en``, ``zh-TW``, ``und``), the presentation schema's ``localized`` keys.
+EVIDENCE_LABEL_PATTERN = re.compile(r"^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$")
+EVIDENCE_LABEL_LANGS_MAX = 8
+EVIDENCE_LABEL_MAX = 64
+#: A ``unit`` may be empty: a count or a state has none.
+EVIDENCE_UNIT_MAX = 16
+#: A telemetry channel id, as a resource manifest declares it.
+TELEMETRY_CHANNEL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$")
 
 _TWO_PI = 2.0 * math.pi
 
@@ -268,6 +292,46 @@ def _check_absolute_expect(
             raise ValueError(f"{where}.expect.optional contradicts required parameter {argument!r}")
         normalized["optional"] = True
     return normalized
+
+
+def _is_display_text(value: Any, minimum: int, maximum: int) -> bool:
+    return type(value) is str and minimum <= len(value) <= maximum and value.isprintable()
+
+
+def _check_evidence_label(value: Any, where: str) -> Dict[str, str]:
+    if type(value) is not dict:
+        raise ValueError(f"{where} must be a mapping of language tag to text")
+    if not 1 <= len(value) <= EVIDENCE_LABEL_LANGS_MAX:
+        raise ValueError(f"{where} must hold 1..{EVIDENCE_LABEL_LANGS_MAX} languages, got {len(value)}")
+    for tag, text in value.items():
+        if type(tag) is not str or not EVIDENCE_LABEL_PATTERN.fullmatch(tag):
+            raise ValueError(f"{where} key {tag!r} is not a language tag matching {EVIDENCE_LABEL_PATTERN.pattern}")
+        if not _is_display_text(text, 1, EVIDENCE_LABEL_MAX):
+            raise ValueError(f"{where}[{tag!r}] must be printable text of 1..{EVIDENCE_LABEL_MAX} characters")
+    return dict(value)
+
+
+def _check_evidence_unit(value: Any, where: str) -> str:
+    if not _is_display_text(value, 0, EVIDENCE_UNIT_MAX):
+        raise ValueError(f"{where} must be a string of printable text, at most {EVIDENCE_UNIT_MAX} characters")
+    return value
+
+
+def _check_evidence_channel(value: Any, where: str) -> str:
+    if type(value) is not str or not TELEMETRY_CHANNEL_PATTERN.fullmatch(value):
+        raise ValueError(
+            f"{where} must be a telemetry channel id matching {TELEMETRY_CHANNEL_PATTERN.pattern}"
+        )
+    return value
+
+
+# One check per display key; validate_evidence applies whichever are declared.
+_EVIDENCE_DISPLAY_CHECKS: Mapping[str, Callable[[Any, str], Any]] = MappingProxyType({
+    "label": _check_evidence_label,
+    "unit": _check_evidence_unit,
+    "channel": _check_evidence_channel,
+})
+_EVIDENCE_OPTIONAL = frozenset(("settle",)) | EVIDENCE_DISPLAY_FIELDS
 
 
 def validate_evidence(
@@ -387,6 +451,9 @@ def validate_evidence(
         normalized["settle"] = {
             "max_drift": _check_non_negative(settle["max_drift"], f"{where}.settle.max_drift")
         }
+    for key, check in _EVIDENCE_DISPLAY_CHECKS.items():
+        if key in evidence:
+            normalized[key] = check(evidence[key], f"{where}.{key}")
     return normalized
 
 

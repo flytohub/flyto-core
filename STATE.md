@@ -1,5 +1,16 @@
 # Flyto2 Core State
 
+## Evidence display keys in the capability contract, 2.40.0 (2026-10-12)
+
+An evidence spec may carry `label` (1..8 language tags to text of 1..64
+characters), `unit` (at most 16 characters, may be empty) and `channel` (a
+telemetry channel id), so a host shows a check's reading in the provider's own
+words without provider-specific code. Kept verbatim through the registry, the
+catalog detail and the capability manifest; never read by `judge`; every other
+unknown evidence key is still refused
+(`tests/core/test_capability_contract_evidence_display.py`). Additive:
+contracts without them normalize and hash as on 2.39. Not tagged or released.
+
 ## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
 
 A contract's `recovery` block may declare `on` / `alternatives` / `preserves` /
@@ -493,7 +504,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 993 maintained Python files, 6,327
+- Source-backed documentation now covers 993 maintained Python files, 6,331
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
