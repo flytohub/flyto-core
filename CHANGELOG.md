@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.40.0] - 2026-10-12
+
+### Added
+
+- Capability contract evidence specs may carry display keys: `label` (1..8
+  language tags to printable text of 1..64 characters), `unit` (printable text,
+  at most 16 characters, `""` allowed) and `channel` (a telemetry channel id).
+  They are validated by type and bound, kept verbatim through registration,
+  the catalog detail and the capability manifest, and never read by `judge`.
+  Any other unknown evidence key is still refused. A contract without them
+  normalizes and hashes as on 2.39.
+- `EVIDENCE_DISPLAY_FIELDS`, `EVIDENCE_LABEL_PATTERN`,
+  `EVIDENCE_LABEL_LANGS_MAX`, `EVIDENCE_LABEL_MAX`, `EVIDENCE_UNIT_MAX`,
+  `TELEMETRY_CHANNEL_PATTERN`. `"label" in EVIDENCE_DISPLAY_FIELDS` is the
+  feature test for a provider that also loads on 2.39.
+
 ## [2.39.0] - 2026-10-07
 
 ### Added

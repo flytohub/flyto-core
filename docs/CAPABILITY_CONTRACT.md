@@ -78,6 +78,17 @@ the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
 | `expect` | yes | For the relative ops, exactly one of `{"argument": name}` / `{"argument": name, "scale": number}` (a `number`/`integer` key of `params_schema`; `scale` finite, non-zero, default `1`) or `{"value": number}`; `scale` is not allowed with `value`. For the absolute ops, see [Absolute targets](#absolute-targets-2380). |
 | `tolerance` | yes | Non-empty mapping with `absolute` and/or `relative`, each finite and ≥ 0. An absent one is normalized to `0`. An absolute op requires `relative` to be `0` (or absent). |
 | `settle` | no | `{"max_drift": number ≥ 0}`; requires `settled` in `phases`. |
+| `label` | no | 2.40.0. What the reading is called, by language: a mapping of 1..8 language tags (`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$`, e.g. `en`, `zh-TW`, `und`) to printable text of 1..64 characters. |
+| `unit` | no | 2.40.0. The reading's unit, printable text of at most 16 characters; `""` for a count or a state. |
+| `channel` | no | 2.40.0. The telemetry channel the observed field belongs to, matching `^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$`. |
+
+`label`, `unit` and `channel` are display keys: a host shows a check with them
+(a channel the resource's manifest declares can supply what the spec leaves
+out, such as precision). They are kept verbatim in the normalized spec and are
+never read by `judge`, so they cannot change a verdict. A provider that must
+also load on 2.39 or older (which rejects them as unknown keys) sends them only
+when `"label" in core.capability_contract.EVIDENCE_DISPLAY_FIELDS`. Every other
+key is still refused.
 
 ### Absolute targets (2.38.0)
 
@@ -213,7 +224,8 @@ capability manifest.
 from fresh containers: it always carries `schema`, `effects`, `requires`,
 `evidence`, every tolerance carries both `absolute` and `relative`, and every
 `expect.argument` carries its `scale` (default `1`). The optional `role`,
-`artifacts`, `recovery` and `expected_duration_ms` appear only when declared.
+`artifacts`, `recovery` and `expected_duration_ms` appear only when declared,
+and so do an evidence spec's `settle`, `label`, `unit` and `channel`.
 The registry stores this form, so every consumer reads one shape.
 
 ## Where a contract is published
