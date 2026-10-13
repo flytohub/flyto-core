@@ -1,5 +1,18 @@
 # Decisions
 
+## 2026-10-13 - Reuse Core host for external IoT ecosystems
+
+Decision: publish reference implementations in an optional installable
+examples/integrations distribution, with existing flyto.modules and
+flyto2.external_adapters entry points. WoT discovery never authorizes;
+Home Assistant uses a durable call-id barrier before effect submission and
+independent logical-state observation; MQTT remains read-only until device
+receipts can prove safe physical retries. No duplicate executor, registry,
+Cloud approval authority or default Core SDK dependencies are added.
+
+Live devices, cross-host ledger authority, Open-RMF fleet restart, industrial
+and native Matter integrations remain separate physical acceptance gates.
+
 ## 2026-10-04 - A module pack is the registry row as JSON (`flyto.pack.v1`)
 
 Decision: define a new schema, `flyto.pack.v1`, rather than extend

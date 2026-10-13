@@ -88,6 +88,10 @@ def source_files() -> list[Path]:
         if base.exists()
         for path in base.rglob("*.py")
         if "tests" not in path.parts
+        # Independently packaged external ecosystems are not Core's source
+        # inventory or its registered built-in modules. Their own package
+        # and tests live under examples/integrations.
+        and not path.is_relative_to(ROOT / "examples" / "integrations")
     ]
     files.extend(
         path

@@ -1,5 +1,14 @@
 # Flyto2 Core State
 
+## Optional external IoT ecosystem reference adapters (2026-10-13, development)
+
+An independently installable examples/integrations package provides passive
+WoT TD 1.1, Home Assistant state/light/switch control with persistent local
+intent admission, and MQTT exact-topic read-only telemetry. Its modules and
+providers use Core's existing entry points; no default SDK dependency or
+alternate execution authority was added. Tests and wheel pass locally.
+No real IoT, fleet or industrial equipment acceptance is claimed.
+
 ## Evidence display keys in the capability contract, 2.40.0 (2026-10-12)
 
 An evidence spec may carry `label` (1..8 language tags to text of 1..64

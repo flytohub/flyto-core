@@ -1,5 +1,10 @@
 # Flyto2 Core Project
 
+External IoT drivers and vendor SDKs are not Core's owned runtime surface.
+The optional examples/integrations reference distribution documents how
+third-party providers join the canonical Registry and Capability Host
+without transferring approval or execution authority to discovery metadata.
+
 ## Mission
 
 Flyto2 turns AI work into verified, replayable procedures. Its proof line is:

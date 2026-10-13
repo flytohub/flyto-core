@@ -1,5 +1,10 @@
 # Flyto2 Core Documentation
 
+The optional [external IoT ecosystem adapter reference package](../examples/integrations/README.md)
+uses the existing Core Registry and Capability Host for WoT TD 1.1,
+Home Assistant and MQTT read-only telemetry. No built-in or live equipment
+support is implied.
+
 Flyto2 turns AI work into verified, replayable procedures: "AI said it
 finished. Flyto2 shows the proof." `flyto-ai` understands/routes/governs new
 work, `flyto-blueprint` stores/learns/scores procedures and never executes, and
