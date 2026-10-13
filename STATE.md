@@ -1,5 +1,13 @@
 # Flyto2 Core State
 
+## External IoT reference package (2026-10-13, unreleased development)
+
+Optional independent package under examples/integrations: passive WoT Thing
+Description 1.1, Home Assistant state observation/light+switch dispatch with
+durable local idempotency barrier, and read-only MQTT TLS telemetry. The four
+declared capability modules reuse Core's existing registry and dispatcher.
+This is not a live equipment acceptance or a new Cloud execution engine.
+
 ## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
 
 A contract's `recovery` block may declare `on` / `alternatives` / `preserves` /

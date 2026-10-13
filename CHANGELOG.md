@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - 2026-10-13
+
+- Add independently installable IoT ecosystem reference adapters: W3C WoT TD
+  1.1 discovery/exchange, Home Assistant entity state and controlled effects
+  with durable call id and observation, and read-only MQTT telemetry. Core's
+  default dependencies and execution engine remain unchanged.
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),

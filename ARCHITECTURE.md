@@ -1,5 +1,16 @@
 # Flyto2 Core Architecture
 
+## Optional external IoT ecosystem providers
+
+The independently installable examples/integrations package demonstrates
+WoT TD 1.1 exchange, Home Assistant and read-only MQTT through the existing
+flyto.modules / flyto2.external_adapters entry points. It is not imported by
+Core by default and does not contain a second scheduler, Registry, or device
+approval authority. Credentials, vendor SDKs, physical safety and durable
+per-resource effect admission stay on the selected execution host; AI Space
+remains responsible for scope/approval, task intent and final evidence.
+See examples/integrations/README.md.
+
 ## Product Layers
 
 Flyto2 is one product with three independently usable packages. `flyto-ai`

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flyto-ecosystems"
+version = "0.1.0"
+description = "Reference external ecosystems adapters for Flyto2 capability hosts"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+mqtt = ["paho-mqtt>=2.1,<3"]
+
+[project.entry-points."flyto2.external_adapters"]
+"homeassistant.entity" = "flyto_ecosystems.home_assistant:build_adapter"
+"mqtt.sensor" = "flyto_ecosystems.mqtt:build_adapter"
+
+[project.entry-points."flyto.modules"]
+homeassistant = "flyto_ecosystems.pack:register_all"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flyto_ecosystems*"]
