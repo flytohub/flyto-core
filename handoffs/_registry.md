@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-10-13 | Optional WoT / Home Assistant / read-only MQTT ecosystem adapters | 2026-10-13-ecosystem-adapters.md | One isolated development branch, simulator/store regressions; live device acceptance outstanding. Owner: ChatGPT |
 | 2026-10-12 | Evidence display keys in the capability contract (2.40.0) | `2026-10-12-evidence-display-keys.md` | On `claude/evidence-display-keys`: evidence specs admit `label` (localized map), `unit` and `channel`, kept verbatim through registry/catalog/manifest, never judged; other unknown keys still refused. Contract tests 533 passed locally; full suite and strict Indexer left to CI. Owner: claude |
 | 2026-10-11 | Opt-in Runtime capability bridge client (ported onto current main) | `2026-09-30-runtime-capability-bridge-client.md` | Focused contract tests 4/4; source-backed reference regenerated. Independent opt-in localhost client; no startup connection or token persistence. |
 | 2026-10-07 | Recovery semantics in the capability contract (2.39.0) | `2026-10-07-recovery-semantics-schema.md` | On `claude/recovery-declaration`: `recovery` admits `on`/`alternatives`/`preserves`/`resource_scope`/`fills`, `capabilities` optional, strict and bounded; 2.38 blocks normalize and hash unchanged. Owner: claude |

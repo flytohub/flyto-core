@@ -2,6 +2,16 @@
 
 ## Open
 
+- [ ] External IoT ecosystem rollout: optional WoT/HA/MQTT reference adapter
+  package exists under examples/integrations, but has no authorized live HA
+  account, broker, AI Space end-to-end approval/verification or distributed
+  ledger acceptance. Do not claim production support until those gates pass.
+- [ ] Existing flyto-robotics Open-RMF fleet adapter: prove crash/restart,
+  cancellation and real multiple-fleet dispatch before production use.
+- [ ] Native OPC UA, Viam, Matter and Isaac Sim external adapters require
+  authorized SDK targets and dedicated conformance; avoid placeholders and
+  duplicate Core/Cloud execution engines.
+
 - `PluginService` / runtime plugin lifecycle: the out-of-process plugin path
   (`src/core/api/plugins/service.py`, `src/core/plugin/`) is still outside the
   discovery transaction. It is omitted from the coverage kernel, has no

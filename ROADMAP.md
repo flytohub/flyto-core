@@ -1,5 +1,13 @@
 # Flyto2 Roadmap
 
+## IoT ecosystem integration acceptance
+
+- [x] Optional WoT/Home Assistant/read-only MQTT reference distribution with regression tests.
+- [ ] Live HA and real broker permission, failure, state and reboot proof.
+- [ ] AI Space resource onboarding, approval, evidence and multi-host authority acceptance.
+- [ ] Reuse the existing flyto-robotics Open-RMF adapter; prove fleet rejoin and safe stop.
+- [ ] OPC UA, Viam, native Matter and Isaac Sim: authorized rigs, dedicated provider SDKs, security and license acceptance.
+
 ## Strategic Priorities
 
 ### 0. Warroom Deterministic Verification
