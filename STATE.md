@@ -1,12 +1,24 @@
 # Flyto2 Core State
 
-## External IoT reference package (2026-10-13, unreleased development)
+## Optional external IoT ecosystem reference adapters (2026-10-13, development)
 
-Optional independent package under examples/integrations: passive WoT Thing
-Description 1.1, Home Assistant state observation/light+switch dispatch with
-durable local idempotency barrier, and read-only MQTT TLS telemetry. The four
-declared capability modules reuse Core's existing registry and dispatcher.
-This is not a live equipment acceptance or a new Cloud execution engine.
+An independently installable examples/integrations package provides passive
+WoT TD 1.1, Home Assistant state/light/switch control with persistent local
+intent admission, and MQTT exact-topic read-only telemetry. Its modules and
+providers use Core's existing entry points; no default SDK dependency or
+alternate execution authority was added. Tests and wheel pass locally.
+No real IoT, fleet or industrial equipment acceptance is claimed.
+
+## Evidence display keys in the capability contract, 2.40.0 (2026-10-12)
+
+An evidence spec may carry `label` (1..8 language tags to text of 1..64
+characters), `unit` (at most 16 characters, may be empty) and `channel` (a
+telemetry channel id), so a host shows a check's reading in the provider's own
+words without provider-specific code. Kept verbatim through the registry, the
+catalog detail and the capability manifest; never read by `judge`; every other
+unknown evidence key is still refused
+(`tests/core/test_capability_contract_evidence_display.py`). Additive:
+contracts without them normalize and hash as on 2.39. Not tagged or released.
 
 ## Recovery semantics in the capability contract, 2.39.0 (2026-10-07)
 
@@ -501,7 +513,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 993 maintained Python files, 6,327
+- Source-backed documentation now covers 993 maintained Python files, 6,331
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
