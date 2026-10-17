@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-10-17 | Resource states and parts in the capability contract (2.41.0) | `2026-10-17-resource-states-and-parts.md` | On `claude/contract-states-channels`: optional `establishes`/`occupies`; schema only, no host enforces them yet; closure green except pre-existing taint and network tests (same on main). |
 | 2026-10-12 | Evidence display keys in the capability contract (2.40.0) | `2026-10-12-evidence-display-keys.md` | On `claude/evidence-display-keys`: evidence specs admit `label` (localized map), `unit` and `channel`, kept verbatim through registry/catalog/manifest, never judged; other unknown keys still refused. Contract tests 533 passed locally; full suite and strict Indexer left to CI. Owner: claude |
 | 2026-10-07 | Recovery semantics in the capability contract (2.39.0) | `2026-10-07-recovery-semantics-schema.md` | On `claude/recovery-declaration`: `recovery` admits `on`/`alternatives`/`preserves`/`resource_scope`/`fills`, `capabilities` optional, strict and bounded; 2.38 blocks normalize and hash unchanged. Owner: claude |
 | 2026-10-04 | Absolute-target contract evidence (2.38.0) | `2026-10-04-absolute-target-evidence.md` | On `claude/contract-distance-to`: `distance_to` / `angle_to` measure ops and `measure.frame` judge the end state against the call's arguments; 20 parity vectors for Cloud. Additive (unchanged normalization/hash for existing contracts). Owner: claude |

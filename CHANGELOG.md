@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.41.0] - 2026-10-17
+
+### Added
+
+- Capability contracts may declare `establishes` (1..16 resource states a
+  completed call leaves true, the counterpart of `requires`) and `occupies`
+  (1..8 parts of the resource a running call holds). A host can check a
+  call's preconditions, order calls by state, and run calls on different
+  parts of one multi-part resource at once; a `safe_stop` names what it
+  leaves the resource in. A contract without them occupies the whole
+  resource and normalizes and hashes as on 2.40.
+- A `safe_stop` that declares `occupies` is refused: a stop must be
+  admitted whatever else runs.
+- `RESOURCE_STATE_FIELDS` (the feature test for a provider that also loads
+  on 2.40) and `OCCUPIES_MAX`. Admit/refuse vectors in
+  `tests/core/vectors/capability_contract_resource_states.json`.
+
 ## [2.40.0] - 2026-10-12
 
 ### Added
