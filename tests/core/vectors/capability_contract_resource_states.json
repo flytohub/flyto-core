@@ -1,0 +1,26 @@
+{
+  "about": "Resource-state keys (flyto-core 2.41.0). A host that reads establishes and occupies without importing Core must admit every 'admitted' contract and refuse every 'refused' one. Each fragment is merged into the base contract of its section; the normalized keys equal the fragment's.",
+  "base": {"actuates": true, "safety_class": "movement", "requires_safe_stop": true, "cancellable": true, "idempotent": false},
+  "stop_base": {"actuates": true, "safety_class": "movement", "requires_safe_stop": false, "cancellable": false, "idempotent": true, "role": "safe_stop"},
+  "admitted": [
+    {"name": "a call that needs one state and leaves another", "fragment": {"requires": ["posture.standing"], "establishes": ["posture.walking"]}},
+    {"name": "a call that holds one part of the resource", "fragment": {"occupies": ["locomotion"]}},
+    {"name": "a call that holds two parts", "fragment": {"occupies": ["arm.left", "gripper.left"]}},
+    {"name": "everything at once", "fragment": {"requires": ["posture.standing"], "establishes": ["object.held"], "occupies": ["arm.left"]}}
+  ],
+  "admitted_stops": [
+    {"name": "a stop that says what it leaves the resource in", "fragment": {"establishes": ["posture.standing"]}},
+    {"name": "a stop that leaves two states", "fragment": {"establishes": ["motion.halted", "posture.damped"]}}
+  ],
+  "refused": [
+    {"name": "occupies nothing", "fragment": {"occupies": []}},
+    {"name": "establishes nothing", "fragment": {"establishes": []}},
+    {"name": "duplicate part", "fragment": {"occupies": ["arm.left", "arm.left"]}},
+    {"name": "not an identifier", "fragment": {"establishes": ["Posture Standing"]}},
+    {"name": "too many parts", "fragment": {"occupies": ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"]}},
+    {"name": "a string, not a list", "fragment": {"occupies": "locomotion"}}
+  ],
+  "refused_stops": [
+    {"name": "a stop that occupies a part it must be able to interrupt", "fragment": {"occupies": ["locomotion"]}}
+  ]
+}

@@ -62,6 +62,8 @@ The key set is closed at every level: an unknown key is an error, not ignored.
 | `artifacts` | list | no (2.36.0) | Output artifacts a completed call returns. |
 | `recovery` | mapping | no (2.36.0) | Capabilities a planner may use instead after a failure, and guidance text. |
 | `expected_duration_ms` | integer | no (2.36.0) | The call's deadline budget, 1..3,600,000 ms. |
+| `establishes` | list of identifiers | no (2.41.0) | 1..16 resource states a completed call leaves true. See [Resource states and parts](#resource-states-and-parts-2410). |
+| `occupies` | list of identifiers | no (2.41.0) | 1..8 parts of the resource a running call holds. |
 
 Booleans must be real `bool`s (`1` and `"true"` are rejected). Identifiers use
 the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
@@ -207,6 +209,38 @@ semantic keys. A provider that must also load there sends them only when
 from 2.39.0), and otherwise drops them (and the whole block when nothing else
 is left).
 
+### Resource states and parts (2.41.0)
+
+A resource with more than one capability needs two things a single-capability
+resource never did: what state a call needs and leaves, and which part of the
+resource a call holds while it runs. Both are data, so a host checks them
+without naming any capability.
+
+| Key | Rule |
+| --- | --- |
+| `establishes` | 1..16 distinct identifiers: the resource states a completed call leaves true. It is the counterpart of `requires` (the states a call needs): a host may refuse a call whose `requires` the resource does not report, and a planner may order a call that `establishes` a state before one that `requires` it. On a `safe_stop` it names what the stop leaves the resource in (`posture.standing`, `motion.halted`). |
+| `occupies` | 1..8 distinct identifiers: the parts of the resource a running call holds (`locomotion`, `arm.left`). Two calls on one resource conflict only when what they occupy overlaps. A contract that declares no `occupies` holds the whole resource, which is what every host did before 2.41.0. |
+
+Coherence: a `safe_stop` must not declare `occupies`. A stop is admitted
+whatever else runs on the resource; a stop that held a part would conflict
+with the call it has to stop. An empty list is refused for both keys, because
+"occupies nothing" is not the same as not declaring.
+
+```json
+{"requires": ["posture.standing"], "establishes": ["posture.walking"], "occupies": ["locomotion"]}
+```
+
+Admitting a declaration is not trusting it. Core checks the shape; a host
+decides how it learns a resource's current states (the adapter's reported
+state, its own observation) and whether a declared state is believed.
+`tests/core/vectors/capability_contract_resource_states.json` lists contracts
+a re-implementing host must admit and refuse.
+
+**Feature detection.** A 2.40 core refuses both keys. A provider that must
+also load there sends them only when
+`"occupies" in core.capability_contract.RESOURCE_STATE_FIELDS` (the frozenset
+exists from 2.41.0).
+
 ### Parameter bounds
 
 Bounds are not a contract field: they are `params_schema` `min` / `max` (plus
@@ -224,7 +258,8 @@ capability manifest.
 from fresh containers: it always carries `schema`, `effects`, `requires`,
 `evidence`, every tolerance carries both `absolute` and `relative`, and every
 `expect.argument` carries its `scale` (default `1`). The optional `role`,
-`artifacts`, `recovery` and `expected_duration_ms` appear only when declared,
+`artifacts`, `recovery`, `expected_duration_ms`, `establishes` and `occupies`
+appear only when declared,
 and so do an evidence spec's `settle`, `label`, `unit` and `channel`.
 The registry stores this form, so every consumer reads one shape.
 

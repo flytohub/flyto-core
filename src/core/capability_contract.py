@@ -56,6 +56,8 @@ __all__ = [
     "EXPECTED_DURATION_MS_MAX",
     "ARTIFACT_MAX_BYTES",
     "RECOVERY_FIELDS",
+    "RESOURCE_STATE_FIELDS",
+    "OCCUPIES_MAX",
     "RECOVERY_STOP_FAMILIES",
     "RECOVERY_PRESERVES",
     "RECOVERY_RESOURCE_SCOPES",
@@ -107,7 +109,19 @@ _REQUIRED_KEYS = frozenset((*_REQUIRED_BOOLEANS, "safety_class"))
 #: Each appears in the normalized contract only when declared, so a contract
 #: that declares none of them normalizes, and hashes, exactly as on 2.35.
 OPTIONAL_FIELDS = frozenset(("role", "artifacts", "recovery", "expected_duration_ms"))
-_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence")) | OPTIONAL_FIELDS
+#: Resource-state keys added in flyto-core 2.41.0, feature-detected with
+#: ``"occupies" in core.capability_contract.RESOURCE_STATE_FIELDS``.
+#: ``establishes`` names the resource states a completed call leaves true (the
+#: counterpart of ``requires``, so a host can check a precondition and a
+#: planner can order calls; a ``safe_stop`` says what a stop leaves the
+#: resource in). ``occupies`` names the parts of the resource a running call
+#: holds; two calls on one resource conflict only when what they occupy
+#: overlaps, and a contract that declares none occupies the whole resource.
+#: Each appears in the normalized contract only when declared.
+RESOURCE_STATE_FIELDS = frozenset(("establishes", "occupies"))
+_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence")) | OPTIONAL_FIELDS | RESOURCE_STATE_FIELDS
+#: The most parts one call may occupy.
+OCCUPIES_MAX = 8
 _IDENTIFIER_LISTS = ("effects", "requires")
 _IDENTIFIER_LIST_MAX = 16
 _EVIDENCE_MAX = 8
@@ -632,14 +646,29 @@ def _check_optional_fields(contract: Mapping[str, Any], normalized: Dict[str, An
         normalized["expected_duration_ms"] = duration
 
 
+def _check_resource_state_fields(contract: Mapping[str, Any], normalized: Dict[str, Any]) -> None:
+    """Validate the 2.41.0 resource-state keys into ``normalized``, only when declared.
+
+    Both are bounded identifier lists with at least one entry: an empty list
+    would read as "occupies nothing", which is not the same as not declaring
+    (the whole resource), so it is refused rather than guessed at.
+    """
+    if "establishes" in contract:
+        normalized["establishes"] = _check_identifier_list(
+            contract["establishes"], "contract.establishes", 1, _IDENTIFIER_LIST_MAX
+        )
+    if "occupies" in contract:
+        normalized["occupies"] = _check_identifier_list(contract["occupies"], "contract.occupies", 1, OCCUPIES_MAX)
+
+
 def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     """Validate a capability contract and return its normalized form.
 
     The returned dict is built from fresh plain containers (nothing aliases
     the caller's objects) and always carries ``schema``, ``effects``,
     ``requires`` and ``evidence``, so every consumer reads one shape. The
-    optional ``role``, ``artifacts``, ``recovery`` and ``expected_duration_ms``
-    appear only when declared.
+    optional ``role``, ``artifacts``, ``recovery``, ``expected_duration_ms``,
+    ``establishes`` and ``occupies`` appear only when declared.
 
     Raises:
         ValueError: with a message naming the offending key on any violation.
@@ -684,6 +713,11 @@ def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] 
         for index, item in enumerate(evidence)
     ]
     _check_optional_fields(contract, normalized)
+    _check_resource_state_fields(contract, normalized)
+    if normalized.get("role") == "safe_stop" and "occupies" in normalized:
+        # A stop is admitted whatever else runs on the resource. A stop that
+        # occupied a part would conflict with the very call it has to stop.
+        raise ValueError("contract.role safe_stop must not declare occupies")
     return normalized
 
 
