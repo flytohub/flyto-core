@@ -1,5 +1,14 @@
 # Flyto2 Core State
 
+## Resource states and parts in the capability contract, 2.41.0 (2026-10-17)
+
+A contract may declare `establishes` (states a completed call leaves true,
+the counterpart of `requires`) and `occupies` (parts of the resource a running
+call holds). Absent, a contract holds the whole resource and hashes as on
+2.40. A `safe_stop` may not occupy anything. This is the schema only: no host
+in this repository enforces preconditions or per-part holds yet (the next
+step is the generic `capability_host` and Flyto2 Cloud's leases).
+
 ## Optional external IoT ecosystem reference adapters (2026-10-13, development)
 
 An independently installable examples/integrations package provides passive
@@ -527,7 +536,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 994 maintained Python files, 6,355
+- Source-backed documentation now covers 994 maintained Python files, 6,356
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
