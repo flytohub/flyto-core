@@ -92,3 +92,27 @@ and `token_url`, and in Cloud a false positive now refuses a save.
 
 - Bump Cloud's flyto-core pin once this lands, in the Cloud lane
   `lane/secrets-at-save`.
+
+## Addendum (second commit): engine step settings are one table
+
+- `core.engine.flow_control.STEP_SETTING_KEYS` and `is_step_setting` list
+  the per-step execution settings the engine reads off a step. These are
+  `timeout`, `retry`, `on_error`, `when`, `foreach`, `as` and `output`, plus
+  the legacy spellings `onError`, `runIf` and `foreachAs`.
+- No module schema declares these settings. Cloud's contract reader reads
+  this table, so it does not refuse them as undeclared module parameters.
+- `tests/core/test_step_setting_keys.py` ties the table to the engine
+  source: 3 tests failed before the change and pass after.
+- The CHANGELOG entry is under 2.41.0. The generated reference was
+  regenerated, and the inventory tokens are now 6,409 declarations and
+  239,669 lines.
+- Checks after the change:
+  - `tests/core` and `tests/modules` (excluding browser-marked): 4,632
+    passed, 165 skipped;
+  - docs check passed on 187 Markdown files, the brand check on 1,276 files,
+    and the memory lint passed;
+  - `verify --strict`: 20 passed, 1 failed. The failure is the same
+    pre-existing `weak_scan_taint` finding.
+- Cloud must pin a flyto-core commit that contains this table. Until it
+  does, Cloud's reader treats `timeout` and the other settings as
+  undeclared, and refuses them.

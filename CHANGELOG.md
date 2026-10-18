@@ -98,6 +98,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3 `false`),
   and `tests/modules/test_module_sensitivity_contract.py` keeps it that way. The
   capability manifest carries these markers; they name no value.
+- `core.engine.flow_control.STEP_SETTING_KEYS` (and `is_step_setting`): the
+  per-step execution settings the engine reads off a step -- `timeout`,
+  `retry`, `on_error`, `when`, `foreach`, `as`, `output` and the legacy
+  spellings. No module schema declares them, so a host asking a module
+  contract about a step's parameters reads this table to tell a setting from
+  an undeclared module parameter. `tests/core/test_step_setting_keys.py` ties
+  the table to what the engine actually reads.
 
 ### Optional IoT reference package (`examples/integrations`, not in the Core wheel)
 

@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,002 Python files**, **241,132 lines**, and **6,501 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,002 Python files**, **241,147 lines**, and **6,502 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -134,7 +134,7 @@ Inventory: **1,002 Python files**, **241,132 lines**, and **6,501 class/function
 | [`src/core/engine/evolution/healer.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/evolution/healer.py#L1) | 236 | 7 | `_interfaces_compat, json, logging, memory, re, typing` | Step Healer — Auto-fix failed workflow steps using AI. |
 | [`src/core/engine/evolution/memory.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/evolution/memory.py#L1) | 132 | 11 | `json, logging, os, pathlib, time, typing` | Evolution Memory — JSON-file persistence for workflow patches and stats. |
 | [`src/core/engine/exceptions.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/exceptions.py#L1) | 107 | 12 | `module_policy` | Workflow Engine Exceptions |
-| [`src/core/engine/flow_control.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L1) | 259 | 8 | `typing` | Flow Control Module Detection and Constants |
+| [`src/core/engine/flow_control.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L1) | 274 | 9 | `typing` | Flow Control Module Detection and Constants |
 | [`src/core/engine/guards/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/guards/__init__.py#L1) | 25 | 0 | `timeout` | Execution Guards |
 | [`src/core/engine/guards/timeout.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/guards/timeout.py#L1) | 303 | 15 | `asyncio, dataclasses, hooks, time, typing` | Execution Timeout Guard |
 | [`src/core/engine/hooks/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/hooks/__init__.py#L1) | 100 | 1 | `base, implementations, metering, models, typing` | Executor Hooks Module |

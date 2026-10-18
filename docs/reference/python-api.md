@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,501 declarations across 849 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,502 declarations across 849 files**.
 
 ## `demo.py`
 
@@ -1565,14 +1565,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def is_flow_control_module(module_id: str) -> bool` | Check if a module ID represents a flow control module. | [`src/core/engine/flow_control.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L90) |
-| function | `def is_flow_jumping_module(module_id: str) -> bool` | Check if a module can jump to a different step. | [`src/core/engine/flow_control.py:103`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L103) |
-| function | `def is_iteration_module(module_id: str) -> bool` | Check if a module performs iteration. | [`src/core/engine/flow_control.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L116) |
-| function | `def is_parallel_module(module_id: str) -> bool` | Check if a module creates parallel execution paths. | [`src/core/engine/flow_control.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L129) |
-| function | `def normalize_module_id(module_id: str) -> str` | Normalize a module ID to its canonical form. | [`src/core/engine/flow_control.py:142`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L142) |
-| function | `def get_flow_control_type(module_id: str) -> str` | Get the type of flow control for a module. | [`src/core/engine/flow_control.py:173`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L173) |
-| function | `def normalize_step_settings(step_config)` | Return a step config the engine's canonical settings readers understand. | [`src/core/engine/flow_control.py:226`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L226) |
-| function | `def normalize_step_settings_list(steps)` | Apply :func:`normalize_step_settings` across a list of step configs. | [`src/core/engine/flow_control.py:255`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L255) |
+| function | `def is_flow_control_module(module_id: str) -> bool` | Check if a module ID represents a flow control module. | [`src/core/engine/flow_control.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L89) |
+| function | `def is_flow_jumping_module(module_id: str) -> bool` | Check if a module can jump to a different step. | [`src/core/engine/flow_control.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L102) |
+| function | `def is_iteration_module(module_id: str) -> bool` | Check if a module performs iteration. | [`src/core/engine/flow_control.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L115) |
+| function | `def is_parallel_module(module_id: str) -> bool` | Check if a module creates parallel execution paths. | [`src/core/engine/flow_control.py:128`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L128) |
+| function | `def normalize_module_id(module_id: str) -> str` | Normalize a module ID to its canonical form. | [`src/core/engine/flow_control.py:141`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L141) |
+| function | `def get_flow_control_type(module_id: str) -> str` | Get the type of flow control for a module. | [`src/core/engine/flow_control.py:172`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L172) |
+| function | `def is_step_setting(name)` | Whether ``name`` is a per-step execution setting (``STEP_SETTING_KEYS``). | [`src/core/engine/flow_control.py:236`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L236) |
+| function | `def normalize_step_settings(step_config)` | Return a step config the engine's canonical settings readers understand. | [`src/core/engine/flow_control.py:241`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L241) |
+| function | `def normalize_step_settings_list(steps)` | Apply :func:`normalize_step_settings` across a list of step configs. | [`src/core/engine/flow_control.py:270`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/flow_control.py#L270) |
 
 ## `src/core/engine/guards/timeout.py`
 
