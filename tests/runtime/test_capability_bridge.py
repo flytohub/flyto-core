@@ -162,6 +162,26 @@ def test_client_rejects_non_loopback_runtime_bridge():
         )
 
 
+@pytest.mark.parametrize("host", ["localhost", "LOCALHOST", "localhost."])
+def test_client_rejects_a_loopback_name_that_needs_resolution(host):
+    # The client uses a plain aiohttp session, which resolves the host again at
+    # connect time. Only a literal loopback address keeps the token on this
+    # machine whatever the resolver answers, as HostCapabilityProxy requires.
+    with pytest.raises(ValueError, match="literal loopback"):
+        FlytoRuntimeCapabilityClient(
+            TOKEN,
+            base_url=f"http://{host}:7676/flyto2/capabilities/v1",
+        )
+
+
+@pytest.mark.parametrize("host", ["127.0.0.1", "[::1]"])
+def test_client_accepts_literal_loopback_addresses(host):
+    FlytoRuntimeCapabilityClient(
+        TOKEN,
+        base_url=f"http://{host}:7676/flyto2/capabilities/v1",
+    )
+
+
 def test_token_file_is_explicit_runtime_input(tmp_path: Path):
     token_file = tmp_path / "runtime.token"
     token_file.write_text(f"{TOKEN}\n", encoding="utf-8")

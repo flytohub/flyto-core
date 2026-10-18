@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an explicitly provided same-user token and preserves the operation ID while
   reconciling accepted side effects; importing Core has no Runtime dependency
   or connection side effect.
+  The bridge URL must name a literal loopback address (`127.0.0.1` or
+  `[::1]`); `localhost` is refused because the session resolves names again at
+  connect time.
 - Adapter developer kit. `flyto pack conform <pack-dir>` runs an offline
   conformance suite (`flyto.pack-conformance.v1`, `core.pack.conformance`) on
   a third-party `flyto.pack.v1` pack: manifest, tree digest, signature, a

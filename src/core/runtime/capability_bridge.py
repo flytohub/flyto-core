@@ -141,9 +141,10 @@ class CapabilityResult(BaseModel):
 class FlytoRuntimeCapabilityClient:
     """Explicit same-machine client for Flyto2 Runtime capabilities.
 
-    The client accepts only a loopback HTTP endpoint and never discovers or
-    reads Runtime credentials implicitly. Callers may pass a token directly or
-    use :meth:`from_token_file` with a path supplied at runtime.
+    The client accepts only a literal loopback HTTP endpoint (127.0.0.1 or
+    [::1]) and never discovers or reads Runtime credentials implicitly.
+    Callers may pass a token directly or use :meth:`from_token_file` with a
+    path supplied at runtime.
     """
 
     def __init__(
@@ -371,8 +372,14 @@ def _normalize_bridge_url(value: str) -> str:
         raise ValueError("Flyto2 Runtime capability bridge must use local HTTP")
     if parsed.username or parsed.password:
         raise ValueError("Flyto2 Runtime bridge URL must not contain credentials")
-    if parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
-        raise ValueError("Flyto2 Runtime capability bridge must use a loopback host")
+    # A literal address, never a name: the session below is a plain aiohttp
+    # session that resolves the host again at connect time, so a name such as
+    # ``localhost`` would let the resolver choose where the token goes.
+    if parsed.hostname not in {"127.0.0.1", "::1"}:
+        raise ValueError(
+            "Flyto2 Runtime capability bridge must use a literal loopback "
+            "address (127.0.0.1 or [::1])"
+        )
     if parsed.query or parsed.fragment:
         raise ValueError("Flyto2 Runtime bridge URL must not contain query or fragment")
     path = parsed.path.rstrip("/")
