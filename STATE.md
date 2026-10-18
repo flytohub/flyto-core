@@ -1,12 +1,17 @@
 # Flyto2 Core State
 
-## External IoT reference package (2026-10-13, unreleased development)
+## Optional external IoT ecosystem reference adapters (2026-10-13, development)
 
-Optional independent package under examples/integrations: passive WoT Thing
-Description 1.1, Home Assistant state observation/light+switch dispatch with
-durable local idempotency barrier, and read-only MQTT TLS telemetry. The four
-declared capability modules reuse Core's existing registry and dispatcher.
-This is not a live equipment acceptance or a new Cloud execution engine.
+An independently installable examples/integrations package provides passive
+WoT TD 1.1, Home Assistant state/light/switch control with persistent local
+intent admission, and MQTT exact-topic read-only telemetry. Its modules and
+providers use Core's existing entry points; no default SDK dependency or
+alternate execution authority was added. Tests and wheel pass locally.
+No real IoT, fleet or industrial equipment acceptance is claimed.
+Since 2026-10-18 (`claude/j06-interop`) WoT import and export validate against
+the vendored, digest-pinned official W3C TD 1.1 JSON Schema; schema-invalid
+TDs and write-only properties are refused. There is no OPC UA adapter, so
+there are no OPC UA mapping tests.
 
 ## Evidence display keys in the capability contract, 2.40.0 (2026-10-12)
 

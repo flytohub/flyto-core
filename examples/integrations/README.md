@@ -10,12 +10,12 @@ evidence.
 
 | Integration | Implemented here | Not established |
 |---|---|---|
-| W3C WoT TD 1.1 | Passive, bounded Property/Action/Event import to DISCOVERED offers; export requires real authenticated forms | Import does not approve a device, invoke arbitrary form URLs or prove a device's safe/idempotent claim |
+| W3C WoT TD 1.1 | Passive, bounded Property/Action/Event import to DISCOVERED offers, admitted only when the TD validates against the vendored official W3C TD 1.1 JSON Schema; write-only properties refused (no observation meaning); export requires real authenticated forms and is itself schema-validated | Import does not approve a device, invoke arbitrary form URLs or prove a device's safe/idempotent claim; `@type` annotations never select a Flyto2 capability |
 | Home Assistant | Read entity states; discover lights, switches and sensors; exact light/switch on/off; SQLite intent saved before HTTP; verify observed HA state; no automatic replay of unknown outcomes | Logical HA state is not independent physical evidence; no real live HA acceptance |
 | MQTT | Optional paho TLS exact-topic subscription; read-only fresh JSON scalar telemetry; retained samples are ignored | No publish, control, device-side ACK or real broker acceptance |
 | Open-RMF | Existing flyto-robotics Open-RMF adapter is reused, not duplicated | Multi-fleet live dispatch and host restart recovery not tested here |
 | Matter | Via an authorized Home Assistant Matter integration when exposed as supported HA entities | No native Matter commissioning/controller |
-| OPC UA | Not implemented | Requires industrial test endpoint, vendor contract and independent acceptance |
+| OPC UA | Not implemented, so there are no OPC UA mapping tests: a mapping test needs a real adapter to test | Requires an adapter, an industrial test endpoint, vendor contract and independent acceptance |
 | Viam | Not implemented | Requires authorized Viam machine / SDK integration |
 | NVIDIA Isaac Sim | Not implemented | Requires simulator installation, GPU/physics acceptance and license review |
 
@@ -56,6 +56,11 @@ command publish, and retained deliveries are not counted as fresh telemetry.
 
     PYTHONPATH=examples/integrations:src python3.11 -m pytest -o addopts='' examples/integrations/tests -q
     ruff check examples/integrations
+
+`tests/test_wot_td11_conformance.py` pins the vendored schema by SHA-256 and
+asserts that the adapter never admits a TD the official schema refuses, that
+the TD 1.1 Recommendation example maps forward to vendor offers, and that an
+approved export validates and maps back to the same offers.
 
 Tests use real SQLite transactions and mocked external transports, not a
 real light, PLC, robot, MQTT broker or Viam/Matter device. They cover

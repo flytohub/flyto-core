@@ -2,7 +2,8 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
-| 2026-10-13 | Optional WoT / Home Assistant / read-only MQTT ecosystem adapters | 2026-10-13-ecosystem-adapters.md | One isolated development branch, simulator/store regressions; live device acceptance outstanding. Owner: ChatGPT |
+| 2026-10-18 | WoT TD 1.1 admission bound to the official W3C schema (J06) | `2026-10-18-wot-td11-official-schema.md` | On `claude/j06-interop` (on top of PR #138): import/export validate against the vendored digest-pinned W3C TD 1.1 schema; 11/21 conformance tests failed first; package 74 passed, with Core host/contract 466 passed; strict Indexer 20/21 (pre-existing taint). No OPC UA adapter, so no OPC UA tests. Owner: claude |
+| 2026-10-13 | Optional WoT / Home Assistant / read-only MQTT ecosystem adapters | 2026-10-13-ecosystem-adapters.md | Independent optional package, local Core-host tests; external live acceptance pending. Owner: ChatGPT |
 | 2026-10-12 | Evidence display keys in the capability contract (2.40.0) | `2026-10-12-evidence-display-keys.md` | On `claude/evidence-display-keys`: evidence specs admit `label` (localized map), `unit` and `channel`, kept verbatim through registry/catalog/manifest, never judged; other unknown keys still refused. Contract tests 533 passed locally; full suite and strict Indexer left to CI. Owner: claude |
 | 2026-10-11 | Opt-in Runtime capability bridge client (ported onto current main) | `2026-09-30-runtime-capability-bridge-client.md` | Focused contract tests 4/4; source-backed reference regenerated. Independent opt-in localhost client; no startup connection or token persistence. |
 | 2026-10-07 | Recovery semantics in the capability contract (2.39.0) | `2026-10-07-recovery-semantics-schema.md` | On `claude/recovery-declaration`: `recovery` admits `on`/`alternatives`/`preserves`/`resource_scope`/`fills`, `capabilities` optional, strict and bounded; 2.38 blocks normalize and hash unchanged. Owner: claude |

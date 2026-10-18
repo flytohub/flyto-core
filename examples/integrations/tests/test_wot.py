@@ -14,14 +14,19 @@ def td():
         "@context": TD_CONTEXT, "title": "Ceiling light",
         "securityDefinitions": {"token": {"scheme": "bearer"}},
         "security": "token",
-        "properties": {"brightness": {"readOnly": True}},
+        "properties": {"brightness": {
+            "readOnly": True,
+            "forms": [{"href": "https://lights.local/api/brightness", "op": "readproperty"}],
+        }},
         "actions": {
             "turn-on": {
                 "safe": False, "idempotent": True,
                 "forms": [{"href": "https://lights.local/api/turn_on", "op": "invokeaction"}],
             },
         },
-        "events": {"power_changed": {}},
+        "events": {"power_changed": {
+            "forms": [{"href": "https://lights.local/api/events", "subprotocol": "sse"}],
+        }},
     }
 
 
@@ -63,11 +68,12 @@ def test_export_requires_real_authorized_forms(td):
     {"securityDefinitions": {}},
     {"@context": "https://example.org/not-td"},
     {"title": ""},
-    {"actions": {"turn_on": {"safe": "true"}}},
-    {"actions": {"turn_on": {"idempotent": 1}}},
+    {"actions": {"turn_on": {"safe": "true", "forms": [{"href": "https://l/a"}]}}},
+    {"actions": {"turn_on": {"idempotent": 1, "forms": [{"href": "https://l/a"}]}}},
     {"actions": {"turn_on": {"forms": [{"href": "file:///etc/passwd"}]}}},
     {"actions": {"turn_on": {"forms": [{"href": "https://user:secret@host/"}]}}},
-    {"actions": {"turn-on": {}, "turn_on": {}}},
+    {"actions": {"turn-on": {"forms": [{"href": "https://l/a"}]},
+                 "turn_on": {"forms": [{"href": "https://l/b"}]}}},
 ])
 def test_bad_external_data_fails_closed(td, mutation):
     td.update(mutation)
@@ -76,7 +82,7 @@ def test_bad_external_data_fails_closed(td, mutation):
 
 
 def test_undeclared_action_flags_are_not_assumed_safe(td):
-    td["actions"]["turn-on"] = {}
+    td["actions"]["turn-on"] = {"forms": [{"href": "https://lights.local/api/turn_on"}]}
     offers = import_thing_description(td, resource_id="light-1")
     action = next(x for x in offers if x.kind == "action")
     assert not action.safe and not action.idempotent

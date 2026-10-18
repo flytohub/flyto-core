@@ -1,0 +1,1493 @@
+{
+  "title": "Thing Description",
+  "version": "1.1-12-March-2025",
+  "description": "JSON Schema for validating TD instances against the TD information model. TD instances can be with or without terms that have default values",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.w3.org/2022/wot/td-schema/v1.1",
+  "definitions": {
+    "anyUri": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "descriptions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "title": {
+      "type": "string"
+    },
+    "titles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "security": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "scopes": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "subprotocol": {
+      "type": "string",
+      "examples": [
+        "longpoll",
+        "websub",
+        "sse"
+      ]
+    },
+    "thing-context-td-uri-v1": {
+      "type": "string",
+      "const": "https://www.w3.org/2019/wot/td/v1"
+    },
+    "thing-context-td-uri-v1.1": {
+      "type": "string",
+      "const": "https://www.w3.org/2022/wot/td/v1.1"
+    },
+    "thing-context-td-uri-temp": {
+      "type": "string",
+      "const": "http://www.w3.org/ns/td"
+    },
+    "thing-context": {
+      "anyOf": [
+        {
+          "$comment": "New context URI with other vocabularies after it but not the old one",
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/thing-context-td-uri-v1.1"
+            }
+          ],
+          "additionalItems": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/anyUri"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ],
+            "not": {
+              "$ref": "#/definitions/thing-context-td-uri-v1"
+            }
+          }
+        },
+        {
+          "$comment": "Only the new context URI",
+          "$ref": "#/definitions/thing-context-td-uri-v1.1"
+        },
+        {
+          "$comment": "Old context URI, followed by the new one and possibly other vocabularies. minItems and contains are required since prefixItems does not say all items should be provided",
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/thing-context-td-uri-v1"
+            },
+            {
+              "$ref": "#/definitions/thing-context-td-uri-v1.1"
+            }
+          ],
+          "minItems": 2,
+          "additionalItems": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/anyUri"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$comment": "Old context URI, followed by possibly other vocabularies. minItems and contains are required since prefixItems does not say all items should be provided",
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/thing-context-td-uri-v1"
+            }
+          ],
+          "minItems": 1,
+          "additionalItems": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/anyUri"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "$comment": "Only the old context URI",
+          "$ref": "#/definitions/thing-context-td-uri-v1"
+        }
+      ]
+    },
+    "bcp47_string": {
+      "type": "string",
+      "pattern": "^(((([A-Za-z]{2,3}(-([A-Za-z]{3}(-[A-Za-z]{3}){0,2}))?)|[A-Za-z]{4}|[A-Za-z]{5,8})(-([A-Za-z]{4}))?(-([A-Za-z]{2}|[0-9]{3}))?(-([A-Za-z0-9]{5,8}|[0-9][A-Za-z0-9]{3}))*(-([0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*(-(x(-[A-Za-z0-9]{1,8})+))?)|(x(-[A-Za-z0-9]{1,8})+)|((en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|zh-hakka|zh-min|zh-min-nan|zh-xiang)))$"
+    },
+    "type_declaration": {
+      "oneOf": [
+        {
+          "type": "string",
+          "not": {
+            "const": "tm:ThingModel"
+          }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "not": {
+              "const": "tm:ThingModel"
+            }
+          }
+        }
+      ]
+    },
+    "dataSchema-type": {
+      "type": "string",
+      "enum": [
+        "boolean",
+        "integer",
+        "number",
+        "string",
+        "object",
+        "array",
+        "null"
+      ]
+    },
+    "dataSchema": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "title": {
+          "$ref": "#/definitions/title"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "titles": {
+          "$ref": "#/definitions/titles"
+        },
+        "writeOnly": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "oneOf": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "unit": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "format": {
+          "type": "string"
+        },
+        "const": {},
+        "default": {},
+        "contentEncoding": {
+          "type": "string"
+        },
+        "contentMediaType": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/dataSchema-type"
+        },
+        "items": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/dataSchema"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dataSchema"
+              }
+            }
+          ]
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "exclusiveMinimum": {
+          "type": "number"
+        },
+        "exclusiveMaximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "multipleOf": {
+          "$ref": "#/definitions/multipleOfDefinition"
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "additionalResponsesDefinition": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "multipleOfDefinition": {
+      "type": [
+        "integer",
+        "number"
+      ],
+      "exclusiveMinimum": 0
+    },
+    "expectedResponse": {
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "contentType"
+      ]
+    },
+    "form_element_base": {
+      "type": "object",
+      "properties": {
+        "op": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "href": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "contentCoding": {
+          "type": "string"
+        },
+        "subprotocol": {
+          "$ref": "#/definitions/subprotocol"
+        },
+        "security": {
+          "$ref": "#/definitions/security"
+        },
+        "scopes": {
+          "$ref": "#/definitions/scopes"
+        },
+        "response": {
+          "$ref": "#/definitions/expectedResponse"
+        },
+        "additionalResponses": {
+          "$ref": "#/definitions/additionalResponsesDefinition"
+        }
+      },
+      "required": [
+        "href"
+      ],
+      "additionalProperties": true
+    },
+    "form_element_property": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/form_element_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "op": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "readproperty",
+                "writeproperty",
+                "observeproperty",
+                "unobserveproperty"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "readproperty",
+                  "writeproperty",
+                  "observeproperty",
+                  "unobserveproperty"
+                ]
+              },
+              "minItems": 1
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "form_element_action": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/form_element_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "op": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "invokeaction",
+                "queryaction",
+                "cancelaction"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "invokeaction",
+                  "queryaction",
+                  "cancelaction"
+                ]
+              },
+              "minItems": 1
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "form_element_event": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/form_element_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "op": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "subscribeevent",
+                "unsubscribeevent"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "subscribeevent",
+                  "unsubscribeevent"
+                ]
+              },
+              "minItems": 1
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+    "form_element_root": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/form_element_base"
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "op": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "readallproperties",
+                "writeallproperties",
+                "readmultipleproperties",
+                "writemultipleproperties",
+                "observeallproperties",
+                "unobserveallproperties",
+                "queryallactions",
+                "subscribeallevents",
+                "unsubscribeallevents"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "readallproperties",
+                  "writeallproperties",
+                  "readmultipleproperties",
+                  "writemultipleproperties",
+                  "observeallproperties",
+                  "unobserveallproperties",
+                  "queryallactions",
+                  "subscribeallevents",
+                  "unsubscribeallevents"
+                ]
+              },
+              "minItems": 1
+            }
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "op"
+      ]
+    },
+    "form": {
+      "$comment": "This is NOT for validation purposes but for automatic generation of TS types. For more info, please see: https://github.com/w3c/wot-thing-description/pull/1319#issuecomment-994950057",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/form_element_property"
+        },
+        {
+          "$ref": "#/definitions/form_element_action"
+        },
+        {
+          "$ref": "#/definitions/form_element_event"
+        },
+        {
+          "$ref": "#/definitions/form_element_root"
+        }
+      ]
+    },
+    "property_element": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "title": {
+          "$ref": "#/definitions/title"
+        },
+        "titles": {
+          "$ref": "#/definitions/titles"
+        },
+        "forms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/form_element_property"
+          }
+        },
+        "uriVariables": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "observable": {
+          "type": "boolean"
+        },
+        "writeOnly": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "oneOf": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "unit": {
+          "type": "string"
+        },
+        "enum": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "format": {
+          "type": "string"
+        },
+        "const": {},
+        "default": {},
+        "type": {
+          "$ref": "#/definitions/dataSchema-type"
+        },
+        "items": {
+          "oneOf": [
+            {
+              "$ref": "#/definitions/dataSchema"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dataSchema"
+              }
+            }
+          ]
+        },
+        "maxItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minItems": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "exclusiveMinimum": {
+          "type": "number"
+        },
+        "exclusiveMaximum": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "multipleOf": {
+          "$ref": "#/definitions/multipleOfDefinition"
+        },
+        "properties": {
+          "additionalProperties": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "forms"
+      ],
+      "additionalProperties": true
+    },
+    "action_element": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "title": {
+          "$ref": "#/definitions/title"
+        },
+        "titles": {
+          "$ref": "#/definitions/titles"
+        },
+        "forms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/form_element_action"
+          }
+        },
+        "uriVariables": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "input": {
+          "$ref": "#/definitions/dataSchema"
+        },
+        "output": {
+          "$ref": "#/definitions/dataSchema"
+        },
+        "safe": {
+          "type": "boolean"
+        },
+        "idempotent": {
+          "type": "boolean"
+        },
+        "synchronous": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "forms"
+      ],
+      "additionalProperties": true
+    },
+    "event_element": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "title": {
+          "$ref": "#/definitions/title"
+        },
+        "titles": {
+          "$ref": "#/definitions/titles"
+        },
+        "forms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/form_element_event"
+          }
+        },
+        "uriVariables": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/dataSchema"
+          }
+        },
+        "subscription": {
+          "$ref": "#/definitions/dataSchema"
+        },
+        "data": {
+          "$ref": "#/definitions/dataSchema"
+        },
+        "dataResponse": {
+          "$ref": "#/definitions/dataSchema"
+        },
+        "cancellation": {
+          "$ref": "#/definitions/dataSchema"
+        }
+      },
+      "required": [
+        "forms"
+      ],
+      "additionalProperties": true
+    },
+    "base_link_element": {
+      "type": "object",
+      "properties": {
+        "href": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "type": {
+          "type": "string"
+        },
+        "rel": {
+          "type": "string"
+        },
+        "anchor": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "hreflang": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/bcp47_string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/bcp47_string"
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "href"
+      ],
+      "additionalProperties": true
+    },
+    "link_element": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/base_link_element"
+        },
+        {
+          "not": {
+            "description": "A basic link element should not contain sizes",
+            "type": "object",
+            "properties": {
+              "sizes": {}
+            },
+            "required": [
+              "sizes"
+            ]
+          }
+        },
+        {
+          "not": {
+            "description": "A basic link element should not contain icon or tm:extends",
+            "properties": {
+              "rel": {
+                "enum": [
+                  "icon",
+                  "tm:extends"
+                ]
+              }
+            },
+            "required": [
+              "rel"
+            ]
+          }
+        }
+      ]
+    },
+    "icon_link_element": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/base_link_element"
+        },
+        {
+          "properties": {
+            "rel": {
+              "const": "icon"
+            },
+            "sizes": {
+              "type": "string",
+              "pattern": "[0-9]*x[0-9]+"
+            }
+          },
+          "required": [
+            "rel"
+          ]
+        }
+      ]
+    },
+    "additionalSecurityScheme": {
+      "description": "Applies to additional SecuritySchemes not defined in the WoT TD specification.",
+      "$comment": "Additional SecuritySchemes should always be defined via a context extension, using a prefixed value for the scheme. This prefix (e.g. 'ace', see the example below) must contain at least one character in order to reference a valid JSON-LD context extension.",
+      "examples": [
+        {
+          "scheme": "ace:ACESecurityScheme",
+          "ace:as": "coaps://as.example.com/token",
+          "ace:audience": "coaps://rs.example.com",
+          "ace:scopes": [
+            "limited",
+            "special"
+          ],
+          "ace:cnonce": true
+        }
+      ],
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "pattern": ".+:.*"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "noSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "nosec"
+          ]
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "autoSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "auto"
+          ]
+        }
+      },
+      "not": {
+        "required": [
+          "name"
+        ]
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "comboSecurityScheme": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "@type": {
+              "$ref": "#/definitions/type_declaration"
+            },
+            "description": {
+              "$ref": "#/definitions/description"
+            },
+            "descriptions": {
+              "$ref": "#/definitions/descriptions"
+            },
+            "proxy": {
+              "$ref": "#/definitions/anyUri"
+            },
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "combo"
+              ]
+            },
+            "oneOf": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "scheme",
+            "oneOf"
+          ],
+          "additionalProperties": true
+        },
+        {
+          "type": "object",
+          "properties": {
+            "@type": {
+              "$ref": "#/definitions/type_declaration"
+            },
+            "description": {
+              "$ref": "#/definitions/description"
+            },
+            "descriptions": {
+              "$ref": "#/definitions/descriptions"
+            },
+            "proxy": {
+              "$ref": "#/definitions/anyUri"
+            },
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "combo"
+              ]
+            },
+            "allOf": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "scheme",
+            "allOf"
+          ],
+          "additionalProperties": true
+        }
+      ]
+    },
+    "basicSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "basic"
+          ]
+        },
+        "in": {
+          "type": "string",
+          "enum": [
+            "header",
+            "query",
+            "body",
+            "cookie",
+            "auto"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "digestSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "digest"
+          ]
+        },
+        "qop": {
+          "type": "string",
+          "enum": [
+            "auth",
+            "auth-int"
+          ]
+        },
+        "in": {
+          "type": "string",
+          "enum": [
+            "header",
+            "query",
+            "body",
+            "cookie",
+            "auto"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "apiKeySecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "apikey"
+          ]
+        },
+        "in": {
+          "type": "string",
+          "enum": [
+            "header",
+            "query",
+            "body",
+            "cookie",
+            "uri",
+            "auto"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "bearerSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "bearer"
+          ]
+        },
+        "authorization": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "alg": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "in": {
+          "type": "string",
+          "enum": [
+            "header",
+            "query",
+            "body",
+            "cookie",
+            "auto"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "pskSecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "psk"
+          ]
+        },
+        "identity": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "oAuth2SecurityScheme": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "$ref": "#/definitions/type_declaration"
+        },
+        "description": {
+          "$ref": "#/definitions/description"
+        },
+        "descriptions": {
+          "$ref": "#/definitions/descriptions"
+        },
+        "proxy": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "oauth2"
+          ]
+        },
+        "authorization": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "token": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "refresh": {
+          "$ref": "#/definitions/anyUri"
+        },
+        "scopes": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "flow": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "code",
+                "client"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "scheme"
+      ],
+      "additionalProperties": true
+    },
+    "securityScheme": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/noSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/autoSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/comboSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/basicSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/digestSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/apiKeySecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/bearerSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/pskSecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/oAuth2SecurityScheme"
+        },
+        {
+          "$ref": "#/definitions/additionalSecurityScheme"
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "title": {
+      "$ref": "#/definitions/title"
+    },
+    "titles": {
+      "$ref": "#/definitions/titles"
+    },
+    "properties": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/property_element"
+      }
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/action_element"
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/event_element"
+      }
+    },
+    "description": {
+      "$ref": "#/definitions/description"
+    },
+    "descriptions": {
+      "$ref": "#/definitions/descriptions"
+    },
+    "version": {
+      "type": "object",
+      "properties": {
+        "instance": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance"
+      ]
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/definitions/link_element"
+          },
+          {
+            "$ref": "#/definitions/icon_link_element"
+          }
+        ]
+      }
+    },
+    "forms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/form_element_root"
+      }
+    },
+    "base": {
+      "$ref": "#/definitions/anyUri"
+    },
+    "securityDefinitions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/securityScheme"
+      }
+    },
+    "schemaDefinitions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/definitions/dataSchema"
+      }
+    },
+    "support": {
+      "$ref": "#/definitions/anyUri"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "modified": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "profile": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/anyUri"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/anyUri"
+          }
+        }
+      ]
+    },
+    "security": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "uriVariables": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/dataSchema"
+      }
+    },
+    "@type": {
+      "$ref": "#/definitions/type_declaration"
+    },
+    "@context": {
+      "$ref": "#/definitions/thing-context"
+    }
+  },
+  "required": [
+    "title",
+    "security",
+    "securityDefinitions",
+    "@context"
+  ],
+  "additionalProperties": true
+}

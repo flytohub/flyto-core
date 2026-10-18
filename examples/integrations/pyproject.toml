@@ -7,7 +7,7 @@ name = "flyto-ecosystems"
 version = "0.1.0"
 description = "Reference external ecosystems adapters for Flyto2 capability hosts"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["jsonschema>=4.18,<5"]
 
 [project.optional-dependencies]
 test = ["pytest>=8"]
@@ -23,3 +23,6 @@ homeassistant = "flyto_ecosystems.pack:register_all"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["flyto_ecosystems*"]
+
+[tool.setuptools.package-data]
+flyto_ecosystems = ["schemas/*.json", "schemas/NOTICE"]

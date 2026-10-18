@@ -2,6 +2,14 @@
 
 ## Unreleased - 2026-10-13
 
+- WoT TD 1.1 import and export now validate against the official W3C TD 1.1
+  JSON Schema (vendored unmodified, digest-pinned). TDs the schema refuses --
+  affordances without forms, forms without `href`, a misordered `@context`,
+  a security definition without `scheme`, a form `op` from another affordance
+  kind -- were previously turned into offers and are now refused. A
+  `writeOnly` property is refused because it has no observation meaning. The
+  optional package now depends on `jsonschema`.
+
 - Add independently installable IoT ecosystem reference adapters: W3C WoT TD
   1.1 discovery/exchange, Home Assistant entity state and controlled effects
   with durable call id and observation, and read-only MQTT telemetry. Core's

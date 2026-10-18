@@ -7,15 +7,24 @@ binding, cancellation and evidence. This module never makes a network request.
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import lru_cache
+from importlib import resources
 from typing import Any
 from urllib.parse import urlsplit
+
+import jsonschema
 
 TD_CONTEXT = "https://www.w3.org/2022/wot/td/v1.1"
 MAX_AFFORDANCES = 128
 _WOT_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{0,63}$")
+# The official W3C TD 1.1 JSON Schema, vendored unmodified (schemas/NOTICE).
+_TD_SCHEMA = "w3c-wot-td-1.1.schema.json"
+# Interaction affordances Flyto2 has a meaning for, keyed by TD collection.
+_AFFORDANCES = (("property", "properties"), ("action", "actions"), ("event", "events"))
 
 
 @dataclass(frozen=True)
@@ -30,6 +39,24 @@ class Offer:
     safe: bool = False
     observable: bool = False
     approval_status: str = "DISCOVERED"
+
+
+@lru_cache(maxsize=1)
+def _td_validator() -> jsonschema.Draft7Validator:
+    text = resources.files(__package__).joinpath("schemas", _TD_SCHEMA).read_text(encoding="utf-8")
+    return jsonschema.Draft7Validator(json.loads(text))
+
+
+def _require_td11(td: Mapping[str, Any]) -> None:
+    """Refuse anything the official TD 1.1 schema refuses.
+
+    The error names where and which rule failed, never the vendor value, so a
+    credential pasted into a TD cannot reach a log through this message.
+    """
+    error = jsonschema.exceptions.best_match(_td_validator().iter_errors(td))
+    if error is not None:
+        where = "/" + "/".join(str(part) for part in error.absolute_path)
+        raise ValueError(f"not a W3C WoT TD 1.1 document at {where} ({error.validator})")
 
 
 def _names(td: Mapping[str, Any], key: str) -> Mapping[str, Any]:
@@ -65,14 +92,13 @@ def import_thing_description(td: Mapping[str, Any], *, resource_id: str) -> tupl
         raise ValueError("Thing Description must be an object")
     if not isinstance(resource_id, str) or not resource_id or len(resource_id) > 192:
         raise ValueError("resource_id must identify a bounded resource")
-    context = td.get("@context")
-    contexts = [context] if isinstance(context, str) else context
-    if not isinstance(contexts, list) or TD_CONTEXT not in contexts:
-        raise ValueError("Thing Description 1.1 context required")
-    if not isinstance(td.get("title"), str) or not td["title"].strip():
+    for _kind, key in _AFFORDANCES:
+        _names(td, key)
+    _require_td11(td)
+    if not td["title"].strip():
         raise ValueError("Thing Description title is required")
-    defs = td.get("securityDefinitions")
-    if not isinstance(defs, Mapping) or not defs:
+    defs = td["securityDefinitions"]
+    if not defs:
         raise ValueError("securityDefinitions are required")
     selected = td.get("security")
     selected_names = [selected] if isinstance(selected, str) else selected
@@ -83,19 +109,15 @@ def import_thing_description(td: Mapping[str, Any], *, resource_id: str) -> tupl
 
     result: list[Offer] = []
     used: set[str] = set()
-    for kind, key in (("property", "properties"), ("action", "actions"), ("event", "events")):
+    for kind, key in _AFFORDANCES:
         for name, spec in _names(td, key).items():
             if not isinstance(name, str) or not _WOT_NAME.fullmatch(name):
                 raise ValueError(f"invalid TD {kind} name")
-            if not isinstance(spec, Mapping):
-                raise ValueError("TD affordance must be an object")
             _forms(spec)
-            if kind == "action":
-                for flag in ("safe", "idempotent"):
-                    if flag in spec and type(spec[flag]) is not bool:
-                        raise ValueError(f"{flag} must be a boolean")
-            if kind == "property" and "readOnly" in spec and type(spec["readOnly"]) is not bool:
-                raise ValueError("readOnly must be a boolean")
+            if kind == "property" and spec.get("writeOnly") is True:
+                # A Flyto2 property offer is an observation; a value that
+                # cannot be read has no such meaning.
+                raise ValueError("writeOnly TD property has no observation mapping")
             canonical = name.replace("-", "_").lower()
             cap = f"vendor.wot.{kind}_{canonical}"
             if cap in used:
@@ -157,4 +179,5 @@ def export_thing_description(
             spec = {"readOnly": True}
         spec["forms"] = forms
         td[collection][offer.name] = spec
+    _require_td11(td)
     return td
