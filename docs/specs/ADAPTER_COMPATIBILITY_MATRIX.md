@@ -20,6 +20,7 @@ missing.
 | `evidence.absolute_targets` | 2.38.0 | `distance_to` / `angle_to` measure ops, `measure.frame` |
 | `recovery.semantics` | 2.39.0 | `recovery.on` / `alternatives` / `preserves` / `resource_scope` / `fills` |
 | `evidence.display_keys` | 2.40.0 | evidence `label`, `unit`, `channel` |
+| `contract.resource_states` | 2.41.0 | `establishes`, `occupies` |
 
 Rows are only ever added; a released version never changes what it
 accepts. `tests/core/pack/test_pack_conformance.py` keeps this table equal

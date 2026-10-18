@@ -9604,13 +9604,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def _contract(row: Row) -> Mapping&#91;str, Any&#93;` | Implements `_contract`; linked source is authoritative. | [`src/core/pack/compatibility.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L35) |
-| function | `def _evidence(row: Row) -> List&#91;Mapping&#91;str, Any&#93;&#93;` | Implements `_evidence`; linked source is authoritative. | [`src/core/pack/compatibility.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L40) |
-| function | `def _uses_absolute_targets(row: Row) -> bool` | Implements `_uses_absolute_targets`; linked source is authoritative. | [`src/core/pack/compatibility.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L44) |
-| function | `def _uses_recovery_semantics(row: Row) -> bool` | Implements `_uses_recovery_semantics`; linked source is authoritative. | [`src/core/pack/compatibility.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L54) |
-| class | `class Feature` | Defines the Feature runtime contract. | [`src/core/pack/compatibility.py:60`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L60) |
-| function | `def version_key(text: Any) -> Tuple&#91;int, ...&#93;` | ``2.40.0`` -> ``(2, 40, 0)``; anything unreadable sorts lowest. | [`src/core/pack/compatibility.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L83) |
-| function | `def required_host(manifest: Mapping&#91;str, Any&#93;) -> Tuple&#91;str, List&#91;str&#93;&#93;` | The oldest flyto-core that accepts everything ``manifest`` uses, and the features that set it. | [`src/core/pack/compatibility.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L92) |
+| function | `def _contract(row: Row) -> Mapping&#91;str, Any&#93;` | Implements `_contract`; linked source is authoritative. | [`src/core/pack/compatibility.py:36`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L36) |
+| function | `def _evidence(row: Row) -> List&#91;Mapping&#91;str, Any&#93;&#93;` | Implements `_evidence`; linked source is authoritative. | [`src/core/pack/compatibility.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L41) |
+| function | `def _uses_absolute_targets(row: Row) -> bool` | Implements `_uses_absolute_targets`; linked source is authoritative. | [`src/core/pack/compatibility.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L45) |
+| function | `def _uses_recovery_semantics(row: Row) -> bool` | Implements `_uses_recovery_semantics`; linked source is authoritative. | [`src/core/pack/compatibility.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L55) |
+| class | `class Feature` | Defines the Feature runtime contract. | [`src/core/pack/compatibility.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L61) |
+| function | `def version_key(text: Any) -> Tuple&#91;int, ...&#93;` | ``2.40.0`` -> ``(2, 40, 0)``; anything unreadable sorts lowest. | [`src/core/pack/compatibility.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L86) |
+| function | `def required_host(manifest: Mapping&#91;str, Any&#93;) -> Tuple&#91;str, List&#91;str&#93;&#93;` | The oldest flyto-core that accepts everything ``manifest`` uses, and the features that set it. | [`src/core/pack/compatibility.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L95) |
 
 ## `src/core/pack/conformance.py`
 

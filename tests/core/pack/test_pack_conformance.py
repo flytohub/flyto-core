@@ -120,6 +120,19 @@ async def test_a_min_host_older_than_the_features_used_fails(tmp_path, min_host,
     assert result["verdict"] == "fail" and needle in result["detail"]
 
 
+@pytest.mark.parametrize("key,value", [("establishes", ["axis.positioned"]), ("occupies", ["axis"])])
+async def test_a_pack_using_resource_states_needs_the_host_that_admits_them(tmp_path, key, value):
+    # A 2.40 host refuses `establishes` / `occupies` with a closed-schema error,
+    # so a pack that declares either and promises 2.40.0 breaks every 2.40 host.
+    pack = copy(tmp_path)
+    edit_manifest(pack, lambda raw: raw["modules"][0]["contract"].update({key: value}))
+    manifest = validate_pack_manifest(json.loads((pack / MANIFEST_FILENAME).read_text()))
+    assert compatibility.required_host(manifest) == ("2.41.0", ["contract.resource_states"])
+    report = await conform_async(pack, run=False)
+    result = next(item for item in report["results"] if item["check"] == "compatibility")
+    assert result["verdict"] == "fail" and "older than 2.41.0" in result["detail"]
+
+
 async def test_changed_files_fail_the_digest_and_a_valid_signature_passes(tmp_path, keypair):
     private, public = keypair
     pack = copy(tmp_path)

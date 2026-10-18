@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **998 Python files**, **239,524 lines**, and **6,403 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **998 Python files**, **239,527 lines**, and **6,403 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -951,7 +951,7 @@ Inventory: **998 Python files**, **239,524 lines**, and **6,403 class/function/m
 | [`src/core/modules/validation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validation.py#L1) | 831 | 35 | `constants, dataclasses, re, typing` | Module Validation Utilities |
 | [`src/core/modules/validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1) | 1132 | 31 | `ast, dataclasses, inspect, logging, re, registry, typing` | Unified Module Validator - Comprehensive validation for module registration |
 | [`src/core/pack/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/__init__.py#L1) | 38 | 0 | `manifest` | Language-neutral module packs — ``flyto.pack.v1``. |
-| [`src/core/pack/compatibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L1) | 105 | 7 | `__future__, capability_contract, dataclasses, typing` | The versioned compatibility matrix: which flyto-core first accepts each pack feature. |
+| [`src/core/pack/compatibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L1) | 108 | 7 | `__future__, capability_contract, dataclasses, typing` | The versioned compatibility matrix: which flyto-core first accepts each pack feature. |
 | [`src/core/pack/conformance.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L1) | 305 | 24 | `__future__, asyncio, compatibility, dataclasses, host, manifest, pathlib, signature, typing` | Offline conformance for a third-party ``flyto.pack.v1`` adapter pack. |
 | [`src/core/pack/export.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/export.py#L1) | 165 | 7 | `__future__, copy, importlib, manifest, modules, typing` | Export a Python pack's ``@register_module`` rows as a ``flyto.pack.v1`` manifest. |
 | [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 666 | 40 | `__future__, asyncio, dataclasses, datetime, json, logging, manifest, modules, os, pathlib, plugin, runtime` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |

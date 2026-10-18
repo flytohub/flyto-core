@@ -24,6 +24,7 @@ from ..capability_contract import (
     EVIDENCE_DISPLAY_FIELDS,
     OPTIONAL_FIELDS,
     RECOVERY_FIELDS,
+    RESOURCE_STATE_FIELDS,
 )
 
 MATRIX_VERSION = "1"
@@ -77,6 +78,8 @@ FEATURES: Tuple[Feature, ...] = (
             _uses_recovery_semantics),
     Feature("evidence.display_keys", "2.40.0", "evidence `label`, `unit`, `channel`",
             lambda row: any(EVIDENCE_DISPLAY_FIELDS & set(item) for item in _evidence(row))),
+    Feature("contract.resource_states", "2.41.0", "`establishes`, `occupies`",
+            lambda row: bool(RESOURCE_STATE_FIELDS & set(_contract(row)))),
 )
 
 
