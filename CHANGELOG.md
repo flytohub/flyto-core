@@ -1,20 +1,5 @@
 # Changelog
 
-## Unreleased - 2026-10-13
-
-- WoT TD 1.1 import and export now validate against the official W3C TD 1.1
-  JSON Schema (vendored unmodified, digest-pinned). TDs the schema refuses --
-  affordances without forms, forms without `href`, a misordered `@context`,
-  a security definition without `scheme`, a form `op` from another affordance
-  kind -- were previously turned into offers and are now refused. A
-  `writeOnly` property is refused because it has no observation meaning. The
-  optional package now depends on `jsonschema`.
-
-- Add independently installable IoT ecosystem reference adapters: W3C WoT TD
-  1.1 discovery/exchange, Home Assistant entity state and controlled effects
-  with durable call id and observation, and read-only MQTT telemetry. Core's
-  default dependencies and execution engine remain unchanged.
-
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -22,34 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Opt-in, localhost-only `FlytoRuntimeCapabilityClient` for Runtime capability
-  manifests and bounded `flyto2.execution.v1` invocations. The transport uses
-  an explicitly provided same-user token and preserves the operation ID while
-  reconciling accepted side effects; importing Core has no Runtime dependency
-  or connection side effect.
-
-- Adapter developer kit. `flyto pack conform <pack-dir>` runs an offline
-  conformance suite (`flyto.pack-conformance.v1`, `core.pack.conformance`) on
-  a third-party `flyto.pack.v1` pack: manifest, tree digest, signature, a
-  `role: safe_stop` row for anything that needs a stop, evidence on every
-  actuating capability, and `min_host` against the versioned compatibility
-  matrix (`core.pack.compatibility`); then, unless `--static-only`, it installs
-  the pack through `install_pack` and asks the runner directly whether the
-  stop answers, an in-bounds actuation completes, a value past a published
-  maximum is refused rather than clamped, and every call is answered. A pass
-  is D2 and says `hardware_acceptance: NOT_VERIFIED`. Template pack:
-  `examples/packs/adapter-template` (one simulated axis, stdlib runner).
-  Matrix and check list: `docs/specs/ADAPTER_COMPATIBILITY_MATRIX.md`.
-
-- `docs/specs/PORTABLE_CAPABILITY_SPEC.md`: shipping capability contracts with
-  the thing that performs them (a device adapter or a trained policy), in a
-  `flyto.pack.v1` pack any host can read. No new format; an example pack,
-  `examples/packs/tabletop-arm/`, is validated by
-  `tests/core/pack/test_portable_capability_example.py`.
-
-## [2.41.0] - 2026-10-17
+## [2.41.0] - 2026-10-18
 
 ### Added
 
@@ -70,6 +28,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and share none; a `safe_stop` conflicts with nothing) and `unmet_requires`.
   Their `overlaps` and `satisfies` vectors, and `unchanged`: pinned 2.40.0
   SHA-256s of contracts without the keys, which must not move.
+- Opt-in, localhost-only `FlytoRuntimeCapabilityClient` for Runtime capability
+  manifests and bounded `flyto2.execution.v1` invocations. The transport uses
+  an explicitly provided same-user token and preserves the operation ID while
+  reconciling accepted side effects; importing Core has no Runtime dependency
+  or connection side effect.
+- Adapter developer kit. `flyto pack conform <pack-dir>` runs an offline
+  conformance suite (`flyto.pack-conformance.v1`, `core.pack.conformance`) on
+  a third-party `flyto.pack.v1` pack: manifest, tree digest, signature, a
+  `role: safe_stop` row for anything that needs a stop, evidence on every
+  actuating capability, and `min_host` against the versioned compatibility
+  matrix (`core.pack.compatibility`); then, unless `--static-only`, it installs
+  the pack through `install_pack` and asks the runner directly whether the
+  stop answers, an in-bounds actuation completes, a value past a published
+  maximum is refused rather than clamped, and every call is answered. A pass
+  is D2 and says `hardware_acceptance: NOT_VERIFIED`. Template pack:
+  `examples/packs/adapter-template` (one simulated axis, stdlib runner).
+  Matrix and check list: `docs/specs/ADAPTER_COMPATIBILITY_MATRIX.md`.
+- Compatibility matrix row `contract.resource_states` (since 2.41.0): a pack
+  that declares `establishes` or `occupies` must say `min_host: 2.41.0`, since
+  every 2.40 host refuses those keys.
+- `docs/specs/PORTABLE_CAPABILITY_SPEC.md`: shipping capability contracts with
+  the thing that performs them (a device adapter or a trained policy), in a
+  `flyto.pack.v1` pack any host can read. No new format; an example pack,
+  `examples/packs/tabletop-arm/`, is validated by
+  `tests/core/pack/test_portable_capability_example.py`.
+
+### Optional IoT reference package (`examples/integrations`, not in the Core wheel)
+
+- WoT TD 1.1 import and export now validate against the official W3C TD 1.1
+  JSON Schema (vendored unmodified, digest-pinned). TDs the schema refuses --
+  affordances without forms, forms without `href`, a misordered `@context`,
+  a security definition without `scheme`, a form `op` from another affordance
+  kind -- were previously turned into offers and are now refused. A
+  `writeOnly` property is refused because it has no observation meaning. The
+  optional package now depends on `jsonschema`.
+- Add independently installable IoT ecosystem reference adapters: W3C WoT TD
+  1.1 discovery/exchange, Home Assistant entity state and controlled effects
+  with durable call id and observation, and read-only MQTT telemetry. Core's
+  default dependencies and execution engine remain unchanged.
 
 ## [2.40.0] - 2026-10-12
 

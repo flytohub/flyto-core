@@ -1,6 +1,6 @@
 # Flyto2 Core State
 
-## Adapter developer kit, unreleased (2026-10-18)
+## Adapter developer kit, 2.41.0 (2026-10-18)
 
 `flyto pack conform` checks a third-party `flyto.pack.v1` pack offline
 (static checks, then the runner through `install_pack`: stop answers,
