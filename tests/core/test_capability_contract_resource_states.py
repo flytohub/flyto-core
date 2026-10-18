@@ -15,12 +15,15 @@ or a production cell would read the same way.
 """
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
 from core.capability_contract import OCCUPIES_MAX, RESOURCE_STATE_FIELDS, validate_contract
+from core.capability_resource_states import occupancy_overlaps, unmet_requires
+from core.pack.manifest import canonical_bytes
 
 VECTORS = json.loads(
     (Path(__file__).parent / "vectors" / "capability_contract_resource_states.json").read_text("utf-8")
@@ -87,3 +90,28 @@ def test_the_normalized_lists_do_not_alias_the_input():
     source["occupies"].append("injected")
     assert normalized["establishes"] == ["posture.walking"]
     assert normalized["occupies"] == ["locomotion"]
+
+
+@pytest.mark.parametrize("vector", VECTORS["unchanged"], ids=lambda v: v["name"])
+def test_a_contract_without_the_keys_hashes_byte_identically_to_2_40(vector):
+    normalized = validate_contract(copy.deepcopy(vector["contract"]))
+    assert not RESOURCE_STATE_FIELDS & normalized.keys()
+    assert hashlib.sha256(canonical_bytes(normalized)).hexdigest() == vector["sha256"]
+
+
+def _call(fragment: dict) -> dict:
+    fragment = dict(fragment)
+    base = "stop_base" if fragment.pop("stop", False) else "base"
+    return validate_contract(_contract(base, fragment))
+
+
+@pytest.mark.parametrize("vector", VECTORS["overlaps"], ids=lambda v: v["name"])
+def test_two_running_calls_conflict_only_when_what_they_occupy_overlaps(vector):
+    first, second = _call(vector["first"]), _call(vector["second"])
+    assert occupancy_overlaps(first, second) is vector["overlap"]
+    assert occupancy_overlaps(second, first) is vector["overlap"]
+
+
+@pytest.mark.parametrize("vector", VECTORS["satisfies"], ids=lambda v: v["name"])
+def test_a_call_lacks_exactly_the_required_states_nothing_established(vector):
+    assert unmet_requires(vector["requires"], vector["established"]) == vector["unmet"]

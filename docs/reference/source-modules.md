@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **994 Python files**, **238,919 lines**, and **6,356 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **995 Python files**, **238,962 lines**, and **6,358 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -105,6 +105,7 @@ Inventory: **994 Python files**, **238,919 lines**, and **6,356 class/function/m
 | [`src/core/capability_host/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/__init__.py#L1) | 42 | 0 | `host` | Generic capability host: run an installed capability pack with flyto-core alone. |
 | [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 688 | 34 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
 | [`src/core/capability_manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L1) | 430 | 6 | `__future__, copy, core, hashlib, json, threading, typing` | Capability Manifest — ``flyto.core.capability-manifest.v1`` |
+| [`src/core/capability_resource_states.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_resource_states.py#L1) | 43 | 2 | `__future__, typing` | The two rules a host applies to ``establishes`` and ``occupies`` (2.41.0). |
 | [`src/core/catalog/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/__init__.py#L1) | 32 | 0 | `category, module, outline` | Flyto2 Core Catalog API |
 | [`src/core/catalog/category.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/category.py#L1) | 127 | 3 | `modules, outline, typing` | Catalog Category Detail API |
 | [`src/core/catalog/module.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/catalog/module.py#L1) | 355 | 7 | `modules, typing` | Catalog Module Detail API |

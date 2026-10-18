@@ -1,5 +1,5 @@
 {
-  "about": "Resource-state keys (flyto-core 2.41.0). A host that reads establishes and occupies without importing Core must admit every 'admitted' contract and refuse every 'refused' one. Each fragment is merged into the base contract of its section; the normalized keys equal the fragment's.",
+  "about": "Resource-state keys (flyto-core 2.41.0). A host that reads establishes and occupies without importing Core must admit every 'admitted' contract and refuse every 'refused' one. Each fragment is merged into the base contract of its section; the normalized keys equal the fragment's. 'unchanged' pins the SHA-256 of the canonical JSON (sorted keys, no whitespace, UTF-8) of contracts that declare neither key, computed on 2.40.0: it must not move. 'overlaps' and 'satisfies' are the two rules a host applies to normalized contracts: whether two running calls on one resource conflict, and which required states a call still lacks after the states earlier completed calls established.",
   "base": {"actuates": true, "safety_class": "movement", "requires_safe_stop": true, "cancellable": true, "idempotent": false},
   "stop_base": {"actuates": true, "safety_class": "movement", "requires_safe_stop": false, "cancellable": false, "idempotent": true, "role": "safe_stop"},
   "admitted": [
@@ -22,5 +22,26 @@
   ],
   "refused_stops": [
     {"name": "a stop that occupies a part it must be able to interrupt", "fragment": {"occupies": ["locomotion"]}}
+  ],
+  "unchanged": [
+    {"name": "a movement call", "contract": {"actuates": true, "safety_class": "movement", "requires_safe_stop": true, "cancellable": true, "idempotent": false, "requires": ["posture.standing"], "effects": ["position.changed"]}, "sha256": "ea6afd9305e53fbb3dd75c9aea1fcf21d138d480366315bee295d247cec0cc50"},
+    {"name": "a read", "contract": {"actuates": false, "safety_class": "read_only", "requires_safe_stop": false, "cancellable": false, "idempotent": true}, "sha256": "df4af338dd9a1df924cdcc2ae28d93250fcb34c40c30eca5c580e2b337b7c5ef"},
+    {"name": "a stop", "contract": {"actuates": true, "safety_class": "movement", "requires_safe_stop": false, "cancellable": false, "idempotent": true, "role": "safe_stop"}, "sha256": "3cdc92642f1a0a93f25e2b8aad0f34200c3909db995bf145b48c12187053bcfc"},
+    {"name": "a call with the 2.35/2.36 optional keys", "contract": {"actuates": true, "safety_class": "controlled", "requires_safe_stop": true, "cancellable": true, "idempotent": false, "expected_duration_ms": 30000, "artifacts": [{"kind": "image", "media_types": ["image/jpeg"], "max_bytes": 1048576}]}, "sha256": "cac34bbccac5f01c955fbe457e7ea46f5fc255d41df06d56caaa2d5a5654be07"}
+  ],
+  "overlaps": [
+    {"name": "neither declares parts: both hold the whole resource", "first": {}, "second": {}, "overlap": true},
+    {"name": "one declares parts, the other holds the whole resource", "first": {"occupies": ["locomotion"]}, "second": {}, "overlap": true},
+    {"name": "different parts", "first": {"occupies": ["locomotion"]}, "second": {"occupies": ["arm.left"]}, "overlap": false},
+    {"name": "one shared part among several", "first": {"occupies": ["arm.left", "gripper.left"]}, "second": {"occupies": ["gripper.left", "camera.wrist"]}, "overlap": true},
+    {"name": "the same part", "first": {"occupies": ["arm.left"]}, "second": {"occupies": ["arm.left"]}, "overlap": true},
+    {"name": "a stop never conflicts with what it must stop", "first": {"stop": true}, "second": {"occupies": ["locomotion"]}, "overlap": false},
+    {"name": "a stop never conflicts with a whole-resource call", "first": {}, "second": {"stop": true}, "overlap": false}
+  ],
+  "satisfies": [
+    {"name": "nothing required", "requires": [], "established": [], "unmet": []},
+    {"name": "an earlier call left the state true", "requires": ["posture.standing"], "established": ["posture.standing"], "unmet": []},
+    {"name": "nothing established yet", "requires": ["posture.standing"], "established": [], "unmet": ["posture.standing"]},
+    {"name": "one of two states missing, in requires order", "requires": ["posture.standing", "object.held"], "established": ["object.held", "motion.halted"], "unmet": ["posture.standing"]}
   ]
 }

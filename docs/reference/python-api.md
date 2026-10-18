@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,356 declarations across 841 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,358 declarations across 842 files**.
 
 ## `demo.py`
 
@@ -1182,6 +1182,13 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | function | `def build_capability_manifest() -> Dict&#91;str, Any&#93;` | Build the manifest from the live registry, bypassing the cache. | [`src/core/capability_manifest.py:303`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L303) |
 | function | `def get_capability_manifest(refresh: bool=False) -> Dict&#91;str, Any&#93;` | Return the capability manifest. | [`src/core/capability_manifest.py:313`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L313) |
 | function | `def refresh_capability_manifest() -> Dict&#91;str, Any&#93;` | Re-discover plugins, then rebuild and return the manifest. | [`src/core/capability_manifest.py:404`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_manifest.py#L404) |
+
+## `src/core/capability_resource_states.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def occupancy_overlaps(first: Mapping&#91;str, Any&#93;, second: Mapping&#91;str, Any&#93;) -> bool` | Whether two normalized contracts' calls conflict when they run at once on one resource. | [`src/core/capability_resource_states.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_resource_states.py#L31) |
+| function | `def unmet_requires(requires: Iterable&#91;str&#93;, established: Iterable&#91;str&#93;) -> List&#91;str&#93;` | The required states nothing established, in ``requires`` order. | [`src/core/capability_resource_states.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_resource_states.py#L40) |
 
 ## `src/core/catalog/category.py`
 

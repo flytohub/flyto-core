@@ -46,6 +46,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RESOURCE_STATE_FIELDS` (the feature test for a provider that also loads
   on 2.40) and `OCCUPIES_MAX`. Admit/refuse vectors in
   `tests/core/vectors/capability_contract_resource_states.json`.
+- `core.capability_resource_states`: the reference reading of the two keys,
+  `occupancy_overlaps` (two running calls conflict unless both declare parts
+  and share none; a `safe_stop` conflicts with nothing) and `unmet_requires`.
+  Their `overlaps` and `satisfies` vectors, and `unchanged`: pinned 2.40.0
+  SHA-256s of contracts without the keys, which must not move.
 
 ## [2.40.0] - 2026-10-12
 

@@ -236,6 +236,22 @@ state, its own observation) and whether a declared state is believed.
 `tests/core/vectors/capability_contract_resource_states.json` lists contracts
 a re-implementing host must admit and refuse.
 
+**Reading the keys.** `core.capability_resource_states` is the reference
+reading of normalized contracts, so every host decides the same way:
+
+- `occupancy_overlaps(first, second)`: two calls running at once on one
+  resource conflict unless both declare `occupies` and share no part. A
+  `safe_stop` conflicts with nothing. Whether a call takes a hold at all
+  (a read may not) is the host's grading.
+- `unmet_requires(requires, established)`: the required states that the
+  `establishes` of earlier completed calls do not cover, in `requires` order.
+
+The vectors file also pins `unchanged`: the SHA-256 of the canonical JSON of
+contracts that declare neither key, computed on 2.40.0. A contract without
+the keys hashes byte-identically on 2.41.0, and the `overlaps` and
+`satisfies` vectors are the two rules above for a host that does not import
+Core.
+
 **Feature detection.** A 2.40 core refuses both keys. A provider that must
 also load there sends them only when
 `"occupies" in core.capability_contract.RESOURCE_STATE_FIELDS` (the frozenset
