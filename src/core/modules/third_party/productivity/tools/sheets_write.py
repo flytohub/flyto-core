@@ -122,6 +122,7 @@ def _sheets_write_outcome(result: Dict[str, Any]) -> Dict[str, Any]:
 
     params_schema={
         'credentials': {
+            'secret': True,
             'type': 'object',
             'label': 'Service Account Credentials',
             'label_key': 'modules.api.google_sheets.write.params.credentials.label',

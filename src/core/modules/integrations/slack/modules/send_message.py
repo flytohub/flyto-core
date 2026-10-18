@@ -92,6 +92,7 @@ from .....engine.outcome import ClaimBy, Outcome, envelope
             "required": False,
         },
         "token": {
+            'secret': True,
             "type": "string",
             "label": "Bot Token",
             "description": "Slack Bot Token (xoxb-...)",

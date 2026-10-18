@@ -214,7 +214,7 @@ def _connection_outcome(
         field('password', type='string', label='Password', label_key='modules.ssh.exec.params.password.label',
               description='SSH password', format='password',
               group=FieldGroup.CONNECTION),
-        field('private_key', type='string', label='Private Key', label_key='modules.ssh.exec.params.private_key.label',
+        field('private_key', secret=True, type='string', label='Private Key', label_key='modules.ssh.exec.params.private_key.label',
               description='PEM-format private key', format='multiline',
               group=FieldGroup.CONNECTION),
         field('command', type='string', label='Command', label_key='modules.ssh.exec.params.command.label',

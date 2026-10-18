@@ -9,6 +9,7 @@ read is open, the rebuild is not.
 """
 
 import json
+import re
 
 import pytest
 from fastapi.testclient import TestClient
@@ -170,8 +171,18 @@ async def test_rest_get_agrees_with_the_mcp_tool(anon):
 
 
 def test_rest_get_response_carries_no_volatile_detail(anon):
-    """No timestamps, paths, or host identity cross the wire."""
-    blob = anon.get("/v1/capabilities").text
+    """No timestamps, paths, or host identity cross the wire.
+
+    A parameter schema's own secret marker (``"secret": true|false``,
+    ``"format": "password"``) is the contract a host reads to keep a
+    credential out of what it stores; it names no value, so it is the one
+    spelling of those words the document may carry.
+    """
+    blob = re.sub(
+        r'"secret":\s*(?:true|false)|"format":\s*"password"',
+        "",
+        anon.get("/v1/capabilities").text,
+    )
 
     for forbidden in (
         "loaded_at",

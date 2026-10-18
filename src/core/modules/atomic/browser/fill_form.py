@@ -308,10 +308,10 @@ _PARAMS_SCHEMA = compose(
                 'label': {'type': 'string', 'description': 'Visible label text of the field'},
                 'selector': {'type': 'string', 'description': 'CSS selector, instead of label'},
                 'value': {'description': 'Value to fill'},
-                # No ``format`` hint and no credential words in this schema:
-                # it is published on /v1/capabilities. The value is redacted by
-                # its key name (``sensitive_*``) wherever the step is recorded.
-                'sensitive_value': {'type': 'string',
+                # The contract marker, read by every host that stores or
+                # copies a workflow; ``value`` on a field named like a
+                # credential is declared by ``sensitive_paths`` instead.
+                'sensitive_value': {'type': 'string', 'secret': True,
                                     'description': 'Use instead of value for a credential; never echoed or logged'},
             },
         },
@@ -483,20 +483,31 @@ class BrowserFillFormModule(BaseModule):
     required_permission = "browser.automation"
 
     @classmethod
-    def sensitive_params(cls, params: Dict[str, Any]) -> frozenset:
-        """``fields`` carries a credential when any field is named like one.
+    def sensitive_paths(cls, params: Dict[str, Any]) -> frozenset:
+        """Each field value that is a credential: ``("fields", index, key)``.
 
-        A ``sensitive_value`` is already redacted by its name wherever the step
-        is recorded. A ``value`` typed into a field labelled "Password" is the
-        case ``browser.type`` learned to catch; here the whole ``fields`` list
-        is withheld, as ``browser.type`` withholds the whole ``text``.
+        A ``sensitive_value`` is one by declaration. A ``value`` typed into a
+        field labelled or selected like a credential ("Password") is one by
+        that field -- the case ``browser.type`` learned to catch for ``text``.
+        Only the leaf is named, so a host keeps the form's other fields and
+        labels readable.
         """
-        if not isinstance(params, dict):
+        if not isinstance(params, dict) or not isinstance(params.get('fields'), list):
             return frozenset()
-        for item in params.get('fields') or ():
-            if isinstance(item, dict) and _names_a_credential(item) and item.get('value') not in (None, ''):
-                return frozenset({'fields'})
-        return frozenset()
+        paths = set()
+        for index, item in enumerate(params['fields']):
+            if not isinstance(item, dict):
+                continue
+            if item.get('sensitive_value') not in (None, ''):
+                paths.add(('fields', index, 'sensitive_value'))
+            if _names_a_credential(item) and item.get('value') not in (None, ''):
+                paths.add(('fields', index, 'value'))
+        return frozenset(paths)
+
+    @classmethod
+    def sensitive_params(cls, params: Dict[str, Any]) -> frozenset:
+        """``fields`` whenever one of its values is a credential (``sensitive_paths``)."""
+        return frozenset(path[0] for path in cls.sensitive_paths(params))
 
     def validate_params(self) -> None:
         fields = self.params.get('fields') or []

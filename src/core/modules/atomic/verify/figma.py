@@ -287,7 +287,7 @@ def _figma_node_missing(*, target_kind: str, target: Optional[str], detail: str)
                      placeholder='unique-id'),
         schema_field('node_name', type='string', required=False, description='Find node by name',
                      placeholder='my-name'),
-        schema_field('token', type='string', required=False, description='Figma token (or use FIGMA_TOKEN env var)',
+        schema_field('token', secret=True, type='string', required=False, description='Figma token (or use FIGMA_TOKEN env var)',
                      placeholder='your-token'),
     ),
     output_schema={

@@ -145,10 +145,13 @@ def redact_for_persistence(data: Any, depth: int = 0) -> Any:
 # is enough:
 #
 #   1. the name looks like a credential (`password`, `api_key`, `secret`,
-#      `sensitive_text`, `access_token`, ...);
+#      `sensitive_text`, `access_token`, ...), unless the schema states
+#      `secret: False` for it (a `password_selector`, a `token_url`);
 #   2. the module's schema declares the field `secret` / `format: password`;
-#   3. the module class says so for these params (`sensitive_params`), for a
-#      free-text field that is only a credential when another field says it is;
+#   3. the module class says so for these params (`sensitive_paths`, which
+#      defaults to the names `sensitive_params` returns), for a value that is
+#      only a credential when another field says it is -- and a path names one
+#      leaf, so the rest of a form's fields stay readable;
 #   4. the module found out at runtime and said so in its result under
 #      SENSITIVE_PARAMS_KEY -- an `<input type=password>` behind a selector
 #      that names nothing of the sort.
@@ -194,27 +197,41 @@ def is_sensitive_param_name(name: Any) -> bool:
     return bool(_SENSITIVE_PARAM_NAME.search(split))
 
 
-def _declared_sensitive(module_id: Any, params: dict) -> frozenset:
-    """Names the registry schema or the module class mark sensitive.
+_NOTHING_DECLARED = (frozenset(), frozenset(), frozenset())
+
+
+def _class_paths(module_class: Any, params: dict) -> frozenset:
+    """``sensitive_paths`` when the class has it, else its names as whole paths."""
+    declare = getattr(module_class, 'sensitive_paths', None)
+    if callable(declare):
+        return frozenset(tuple(path) for path in declare(params) or () if path)
+    declare = getattr(module_class, 'sensitive_params', None)
+    if callable(declare):
+        return frozenset((name,) for name in declare(params) or ())
+    return frozenset()
+
+
+def _declared_sensitive(module_id: Any, params: dict) -> tuple:
+    """(schema secret names, class-declared paths, schema-cleared names).
 
     Best effort by construction: redaction must never be the reason a step
     cannot be logged, so a lookup that fails declares nothing and the name
     rule still applies.
     """
     if not module_id or not isinstance(module_id, str):
-        return frozenset()
+        return _NOTHING_DECLARED
     lookup_id = 'template.invoke' if module_id.startswith('template.invoke:') else module_id
     try:
         from ..modules.registry import ModuleRegistry
 
-        names = set(ModuleRegistry.secret_param_names(lookup_id))
+        names = frozenset(ModuleRegistry.secret_param_names(lookup_id))
+        cleared = frozenset(ModuleRegistry.cleared_param_names(lookup_id))
+        paths = frozenset()
         if ModuleRegistry.has(lookup_id):
-            declare = getattr(ModuleRegistry.get(lookup_id), 'sensitive_params', None)
-            if callable(declare):
-                names.update(declare(params) or ())
-        return frozenset(names)
+            paths = _class_paths(ModuleRegistry.get(lookup_id), params)
+        return names, paths, cleared
     except Exception:  # noqa: BLE001 - see docstring
-        return frozenset()
+        return _NOTHING_DECLARED
 
 
 def _keep_visible(value: Any) -> bool:
@@ -248,14 +265,37 @@ def redact_step_params(
     """
     if not isinstance(params, dict):
         return params
-    named = set(_declared_sensitive(module_id, params))
+    names, paths, cleared = _declared_sensitive(module_id, params)
+    named = set(names) | {path[0] for path in paths if len(path) == 1}
     named.update(str(name) for name in (extra or ()))
-    return {
-        key: _redact_param_value(
-            value, key in named or is_sensitive_param_name(key), 1,
-        )
-        for key, value in params.items()
-    }
+    leaves: dict = {}
+    for path in paths:
+        if len(path) > 1:
+            leaves.setdefault(path[0], []).append(path[1:])
+    redacted = {}
+    for key, value in params.items():
+        sensitive = key in named or (key not in cleared and is_sensitive_param_name(key))
+        if not sensitive and key in leaves:
+            value = _redact_leaves(value, leaves[key])
+        redacted[key] = _redact_param_value(value, sensitive, 1)
+    return redacted
+
+
+def _redact_leaves(value: Any, tails: list) -> Any:
+    """A copy of ``value`` with each leaf a module named (``sensitive_paths``) redacted."""
+    import copy
+
+    out = copy.deepcopy(value)
+    for tail in tails:
+        holder = out
+        try:
+            for part in tail[:-1]:
+                holder = holder[part]
+            if not _keep_visible(holder[tail[-1]]):
+                holder[tail[-1]] = _REDACT_TOKEN
+        except (KeyError, IndexError, TypeError):
+            continue  # a path these params do not have names nothing
+    return out
 
 
 def _redact_param_value(value: Any, sensitive: bool, depth: int) -> Any:

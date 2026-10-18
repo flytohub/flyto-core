@@ -140,6 +140,22 @@ class BaseModule(ABC):
         """
         return frozenset()
 
+    @classmethod
+    def sensitive_paths(cls, params: Dict[str, Any]) -> frozenset:
+        """The values these params hold that are credentials, as paths.
+
+        A path is a tuple into ``params``: ``("text",)`` is a whole parameter,
+        ``("fields", 1, "value")`` is one leaf of a list of records. A host
+        that stores a workflow asks this, not ``sensitive_params``, so it can
+        withhold the credential and keep the rest of the parameter -- the
+        labels of a form, say -- readable. By default every name
+        ``sensitive_params`` returns is a whole-parameter path; override it
+        (and derive ``sensitive_params`` from it) when the credential is one
+        leaf of a larger value. Same rule as ``sensitive_params``: read only
+        the params, never the page or the network.
+        """
+        return frozenset((name,) for name in cls.sensitive_params(params))
+
     @abstractmethod
     def validate_params(self) -> None:
         """Validate input parameters. Raise ValueError if invalid."""

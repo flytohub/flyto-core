@@ -548,7 +548,7 @@ def _login_outcome(
               description='CSS selector for username input. Leave empty for auto-detect.',
               required=False, default='',
               group='advanced'),
-        field('password_selector', type='string', label='Password field selector',
+        field('password_selector', secret=False, type='string', label='Password field selector',
               description='CSS selector for password input. Leave empty for auto-detect.',
               required=False, default='',
               group='advanced'),

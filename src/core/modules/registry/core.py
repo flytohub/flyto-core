@@ -758,6 +758,24 @@ class ModuleRegistry:
 
     @classmethod
     @_synchronized
+    def cleared_param_names(cls, module_id: str) -> frozenset:
+        """Parameter names this module's schema declares NOT secret (``secret: False``).
+
+        The counterpart of ``secret_param_names``: a ``password_selector`` or a
+        ``token_url`` is named like a credential and holds a selector or a URL.
+        The schema's explicit answer outranks the engine's name rule.
+        """
+        cls._ensure_discovered()
+        schema = (cls._metadata.get(module_id) or {}).get('params_schema')
+        if not isinstance(schema, dict):
+            return frozenset()
+        return frozenset(
+            name for name, spec in schema.items()
+            if isinstance(spec, dict) and spec.get('secret') is False
+        )
+
+    @classmethod
+    @_synchronized
     def module_count(cls) -> int:
         """Get number of registered modules"""
         cls._ensure_discovered()

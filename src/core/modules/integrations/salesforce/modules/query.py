@@ -164,6 +164,7 @@ def _fetch_all_outcome(record_count: int) -> Dict[str, Any]:
             "required": False,
         },
         "access_token": {
+            'secret': True,
             "type": "string",
             "label": "Access Token",
             "placeholder": "${env.SALESFORCE_ACCESS_TOKEN}",

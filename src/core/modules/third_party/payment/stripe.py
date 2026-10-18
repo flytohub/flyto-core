@@ -124,6 +124,7 @@ def _simplify_charges(charges_data):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.payment.stripe.create_payment.params.api_key.label',
@@ -367,6 +368,7 @@ class StripeCreatePaymentModule(BaseModule):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.payment.stripe.get_customer.params.api_key.label',
@@ -527,6 +529,7 @@ class StripeGetCustomerModule(BaseModule):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.payment.stripe.list_charges.params.api_key.label',

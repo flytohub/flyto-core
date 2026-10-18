@@ -222,6 +222,7 @@ def _send_failed(error: BaseException, *, handed_over: bool) -> Dict[str, Any]:
             'required': True
         },
         'password': {
+            'secret': True,
             'type': 'string',
             'label': 'Password',
             'description': 'SMTP password (use env variable!)',

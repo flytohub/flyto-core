@@ -127,6 +127,7 @@ def _usage_reported(
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.api.anthropic.chat.params.api_key.label',
@@ -375,6 +376,7 @@ async def anthropic_chat(context):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.api.google_gemini.chat.params.api_key.label',

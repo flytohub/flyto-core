@@ -175,6 +175,7 @@ def _length_outcome(
             'sensitive': True
         },
         'aws_secret_access_key': {
+            'secret': True,
             'type': 'string',
             'label': 'AWS Secret Access Key',
             'label_key': 'modules.cloud.aws_s3.upload.params.aws_secret_access_key.label',
@@ -466,6 +467,7 @@ async def aws_s3_upload(context):
             'sensitive': True
         },
         'aws_secret_access_key': {
+            'secret': True,
             'type': 'string',
             'label': 'AWS Secret Access Key',
             'label_key': 'modules.cloud.aws_s3.download.params.aws_secret_access_key.label',

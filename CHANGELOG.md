@@ -56,6 +56,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `flyto.pack.v1` pack any host can read. No new format; an example pack,
   `examples/packs/tabletop-arm/`, is validated by
   `tests/core/pack/test_portable_capability_example.py`.
+- Module credentials are declared in the contract, not left to a parameter's
+  spelling. `BaseModule.sensitive_paths(params)` names each credential as a
+  path into the params (`("fields", 1, "value")`), defaulting to the
+  whole-parameter names `sensitive_params` returns; `redact_step_params`
+  redacts exactly those leaves. `browser.fill_form` declares a `value` typed
+  into a field labelled or selected like a credential and every
+  `sensitive_value` (now `secret: true` in its item schema), so a step record
+  keeps the form's other fields readable. `ModuleRegistry.cleared_param_names`
+  reads `secret: false`, which outranks the name rule for a parameter named
+  like a credential that holds a selector, a URL or a switch
+  (`browser.login.password_selector`, `auth.oauth2.token_url`,
+  `browser.proxy_rotate.preserve_cookies`). Every catalog parameter named like
+  a credential now states `secret` (41 entries in 30 module files: 38 `true`,
+  3 `false`),
+  and `tests/modules/test_module_sensitivity_contract.py` keeps it that way. The
+  capability manifest carries these markers; they name no value.
 
 ### Optional IoT reference package (`examples/integrations`, not in the Core wheel)
 

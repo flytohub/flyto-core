@@ -257,7 +257,7 @@ def _fingerprint(proxy: str) -> str:
               description='Run browser in headless mode after rotation.',
               default=True,
               group='basic'),
-        field('preserve_cookies', type='boolean', label='Preserve cookies',
+        field('preserve_cookies', secret=False, type='boolean', label='Preserve cookies',
               description='Export cookies before rotation and import into the new browser. Keeps login sessions alive.',
               default=True,
               group='basic'),

@@ -49,7 +49,7 @@ from ...schema import compose, field as schema_field
         schema_field('ruleset_path', type='string', required=False, description='Path to YAML ruleset file', placeholder='/path/to/ruleset.yaml'),
         schema_field('expected_styles', type='object', required=False, description='Expected styles per selector'),
         schema_field('figma_file_id', type='string', required=False, description='Figma file ID for comparison', placeholder='xxxxxxxxx'),
-        schema_field('figma_token', type='string', required=False, description='Figma token (or FIGMA_TOKEN env)', placeholder='figd_...'),
+        schema_field('figma_token', secret=True, type='string', required=False, description='Figma token (or FIGMA_TOKEN env)', placeholder='figd_...'),
         schema_field('figma_mapping', type='object', required=False, description='Selector to Figma node mapping'),
         schema_field('output_dir', type='string', required=False, default='./verify-reports', description='Output directory', placeholder='/path/to/output'),
         schema_field('report_format', type='string', required=False, default='html', description='Report format', placeholder='html'),
