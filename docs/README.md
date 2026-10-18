@@ -30,6 +30,9 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [Module Pack Manifest](specs/PACK_MANIFEST_SPEC.md): `flyto.pack.v1`, the
   language-neutral registry row; out-of-process pack install with tree digest
   and ed25519 publisher signature; `flyto pack` CLI.
+- [Portable Capabilities](specs/PORTABLE_CAPABILITY_SPEC.md): how a vendor,
+  device or trained policy ships its own capability contracts in a
+  `flyto.pack.v1` pack so any host can read them; guidance only, no new format.
 - [Plugin Manifest Specification](specs/PLUGIN_MANIFEST_SPEC.md): the implemented
   inert language-neutral manifest/adoption slice, its bounded existing-ID
   collision input, pre-canonicalization Unicode safety boundary, stable

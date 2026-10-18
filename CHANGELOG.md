@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `docs/specs/PORTABLE_CAPABILITY_SPEC.md`: shipping capability contracts with
+  the thing that performs them (a device adapter or a trained policy), in a
+  `flyto.pack.v1` pack any host can read. No new format; an example pack,
+  `examples/packs/tabletop-arm/`, is validated by
+  `tests/core/pack/test_portable_capability_example.py`.
+
 ## [2.40.0] - 2026-10-12
 
 ### Added

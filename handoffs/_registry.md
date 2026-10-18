@@ -2,6 +2,7 @@
 
 | Date | Topic | File | Status |
 | --- | --- | --- | --- |
+| 2026-10-18 | Portable capabilities: contracts shipped with the device or trained policy in a `flyto.pack.v1` pack | `2026-10-18-portable-capability-spec.md` | On `claude/portable-capability-spec`: guidance page, validated tabletop-arm example, 7 tests incl. excerpt-drift check. Docs and example only; no new format. |
 | 2026-10-12 | Evidence display keys in the capability contract (2.40.0) | `2026-10-12-evidence-display-keys.md` | On `claude/evidence-display-keys`: evidence specs admit `label` (localized map), `unit` and `channel`, kept verbatim through registry/catalog/manifest, never judged; other unknown keys still refused. Contract tests 533 passed locally; full suite and strict Indexer left to CI. Owner: claude |
 | 2026-10-07 | Recovery semantics in the capability contract (2.39.0) | `2026-10-07-recovery-semantics-schema.md` | On `claude/recovery-declaration`: `recovery` admits `on`/`alternatives`/`preserves`/`resource_scope`/`fills`, `capabilities` optional, strict and bounded; 2.38 blocks normalize and hash unchanged. Owner: claude |
 | 2026-10-04 | Absolute-target contract evidence (2.38.0) | `2026-10-04-absolute-target-evidence.md` | On `claude/contract-distance-to`: `distance_to` / `angle_to` measure ops and `measure.frame` judge the end state against the call's arguments; 20 parity vectors for Cloud. Additive (unchanged normalization/hash for existing contracts). Owner: claude |
