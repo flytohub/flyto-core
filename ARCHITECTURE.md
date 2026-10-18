@@ -19,11 +19,27 @@ own the first two layers or hosted product/account logic.
   authorization or complete validation: unresolved values and all runtime
   schema, policy, and path checks remain enforced during execution.
 - Recipes compose modules into repeatable workflows.
+- Core may optionally compose with a separately installed Flyto2 Runtime through
+  `core.runtime.capability_bridge.FlytoRuntimeCapabilityClient`. This is a
+  low-level, explicit same-machine client for `flyto2.execution.v1`; it is not
+  registered as a workflow module, performs no automatic Runtime discovery, and
+  never makes Flyto2 Runtime a Core installation prerequisite. The client accepts
+  loopback HTTP only, requires a caller-supplied same-user bridge token, discovers
+  the live Runtime manifest, preserves `operation_id`, and resolves bounded
+  `accepted` follow-up handles before returning a terminal result.
 - External equipment authoring and execution remain distinct. Optional robotics
   modules may emit `flyto.capability-request.v1` without executing it; a later
   `capability.invoke` step may consume one only when the trusted host injects
   opaque execution-scoped authority. Core never discovers, approves, routes, or
   chooses equipment and contains no ROS/vendor transport.
+- These two capability boundaries stay separate. `capability.invoke` and
+  `HostCapabilityProxy` carry workflow resource commands
+  (`resource_id + capability_id + arguments`) to a host-scoped equipment
+  dispatcher. `FlytoRuntimeCapabilityClient` carries machine/coding execution
+  capabilities such as workspace, source, test/build, Git, evidence, and
+  optional agent operations using the versioned `flyto2.execution.v1`
+  envelope. Neither surface translates itself into the other or imports
+  provider implementations.
 - `docs/TOOL_CATALOG.md` is generated from the module registry; it is the
   source of truth for the current 482-module, 89-category public inventory.
 - Catalog search and detail carry each module's registry-declared
