@@ -7,6 +7,7 @@ Usage:
     flyto pack keygen --private FILE --public FILE
     flyto pack sign <pack-dir> --key PRIVATE_PEM --key-id ID
     flyto pack verify <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--allow-unsigned]
+    flyto pack conform <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--static-only] [--json]
 """
 
 import json
@@ -47,6 +48,16 @@ def add_pack_parser(subparsers) -> None:
     verify_p.add_argument("--trusted-key", action="append", default=[], metavar="ID=FILE",
                           help="Trusted publisher public key (PEM or base64 raw); repeatable")
     verify_p.add_argument("--allow-unsigned", action="store_true", help="Accept a pack with no signature")
+
+    conform_p = sub.add_parser(
+        "conform",
+        help="Offline conformance: static checks, then the pack's runner (run it against a simulator)",
+    )
+    conform_p.add_argument("pack_dir")
+    conform_p.add_argument("--trusted-key", action="append", default=[], metavar="ID=FILE",
+                           help="Trusted publisher public key (PEM or base64 raw); repeatable")
+    conform_p.add_argument("--static-only", action="store_true", help="Read the files; never start the runner")
+    conform_p.add_argument("--json", action="store_true", help="Print the report as JSON")
 
 
 def _trusted_keys(pairs):
@@ -153,6 +164,14 @@ def _verify(args) -> int:
     return 0
 
 
+def _conform(args) -> int:
+    from core.pack.conformance import conform, render
+
+    report = conform(args.pack_dir, trusted_keys=_trusted_keys(args.trusted_key), run=not args.static_only)
+    print(json.dumps(report, indent=2, sort_keys=True) if args.json else render(report))
+    return 0 if report["conformant"] else 1
+
+
 def run_pack_command(args) -> int:
     """Execute a pack subcommand."""
     from core.pack.manifest import PackManifestError
@@ -164,9 +183,10 @@ def run_pack_command(args) -> int:
         "keygen": _keygen,
         "sign": _sign,
         "verify": _verify,
+        "conform": _conform,
     }
     if action not in handlers:
-        print("Usage: flyto pack <manifest|digest|keygen|sign|verify>")
+        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform>")
         return 1
     try:
         return handlers[action](args)

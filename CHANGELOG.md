@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reconciling accepted side effects; importing Core has no Runtime dependency
   or connection side effect.
 
+- Adapter developer kit. `flyto pack conform <pack-dir>` runs an offline
+  conformance suite (`flyto.pack-conformance.v1`, `core.pack.conformance`) on
+  a third-party `flyto.pack.v1` pack: manifest, tree digest, signature, a
+  `role: safe_stop` row for anything that needs a stop, evidence on every
+  actuating capability, and `min_host` against the versioned compatibility
+  matrix (`core.pack.compatibility`); then, unless `--static-only`, it installs
+  the pack through `install_pack` and asks the runner directly whether the
+  stop answers, an in-bounds actuation completes, a value past a published
+  maximum is refused rather than clamped, and every call is answered. A pass
+  is D2 and says `hardware_acceptance: NOT_VERIFIED`. Template pack:
+  `examples/packs/adapter-template` (one simulated axis, stdlib runner).
+  Matrix and check list: `docs/specs/ADAPTER_COMPATIBILITY_MATRIX.md`.
+
 ## [2.41.0] - 2026-10-17
 
 ### Added

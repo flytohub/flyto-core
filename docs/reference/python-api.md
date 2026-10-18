@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,358 declarations across 842 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,403 declarations across 845 files**.
 
 ## `demo.py`
 
@@ -72,6 +72,24 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
 | function | `async def main()` | Implements `main`; linked source is authoritative. | [`examples/happy-test/test_yaml_ruleset.py:22`](https://github.com/flytohub/flyto-core/blob/main/examples/happy-test/test_yaml_ruleset.py#L22) |
+
+## `examples/packs/adapter-template/runner/main.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class RefusedError(Exception)` | A request the device will not run. | [`examples/packs/adapter-template/runner/main.py:30`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L30) |
+| method | `def RefusedError.__init__(self, code: str, message: str)` | Implements `RefusedError.__init__`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:33`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L33) |
+| class | `class Axis` | A simulated axis. | [`examples/packs/adapter-template/runner/main.py:38`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L38) |
+| method | `def Axis.__init__(self) -> None` | Implements `Axis.__init__`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:41`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L41) |
+| method | `def Axis.move_to(self, target: float) -> float` | Implements `Axis.move_to`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:45`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L45) |
+| method | `def Axis.halt(self) -> None` | Implements `Axis.halt`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:53`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L53) |
+| function | `def _number(value) -> float` | Implements `_number`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:60`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L60) |
+| function | `def move_to(params: dict) -> dict` | Implements `move_to`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:66`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L66) |
+| function | `def read_position(_params: dict) -> dict` | Implements `read_position`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:71`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L71) |
+| function | `def halt(_params: dict) -> dict` | Implements `halt`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:75`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L75) |
+| function | `def _invoke(params: dict) -> dict` | Implements `_invoke`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:88`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L88) |
+| function | `def _reply(message_id, result=None, error=None) -> None` | Implements `_reply`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:105`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L105) |
+| function | `def serve() -> None` | Implements `serve`; linked source is authoritative. | [`examples/packs/adapter-template/runner/main.py:112`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L112) |
 
 ## `plugin-template/src/flyto_plugin_example/modules.py`
 
@@ -605,14 +623,15 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| function | `def add_pack_parser(subparsers) -> None` | Add the ``pack`` subcommand to the CLI. | [`src/cli/pack.py:17`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L17) |
-| function | `def _trusted_keys(pairs)` | Implements `_trusted_keys`; linked source is authoritative. | [`src/cli/pack.py:52`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L52) |
-| function | `def _manifest(args) -> int` | Implements `_manifest`; linked source is authoritative. | [`src/cli/pack.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L62) |
-| function | `def _digest(args) -> int` | Implements `_digest`; linked source is authoritative. | [`src/cli/pack.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L76) |
-| function | `def _keygen(args) -> int` | Implements `_keygen`; linked source is authoritative. | [`src/cli/pack.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L83) |
-| function | `def _sign(args) -> int` | Implements `_sign`; linked source is authoritative. | [`src/cli/pack.py:104`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L104) |
-| function | `def _verify(args) -> int` | Implements `_verify`; linked source is authoritative. | [`src/cli/pack.py:129`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L129) |
-| function | `def run_pack_command(args) -> int` | Execute a pack subcommand. | [`src/cli/pack.py:156`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L156) |
+| function | `def add_pack_parser(subparsers) -> None` | Add the ``pack`` subcommand to the CLI. | [`src/cli/pack.py:18`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L18) |
+| function | `def _trusted_keys(pairs)` | Implements `_trusted_keys`; linked source is authoritative. | [`src/cli/pack.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L63) |
+| function | `def _manifest(args) -> int` | Implements `_manifest`; linked source is authoritative. | [`src/cli/pack.py:73`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L73) |
+| function | `def _digest(args) -> int` | Implements `_digest`; linked source is authoritative. | [`src/cli/pack.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L87) |
+| function | `def _keygen(args) -> int` | Implements `_keygen`; linked source is authoritative. | [`src/cli/pack.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L94) |
+| function | `def _sign(args) -> int` | Implements `_sign`; linked source is authoritative. | [`src/cli/pack.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L115) |
+| function | `def _verify(args) -> int` | Implements `_verify`; linked source is authoritative. | [`src/cli/pack.py:140`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L140) |
+| function | `def _conform(args) -> int` | Implements `_conform`; linked source is authoritative. | [`src/cli/pack.py:167`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L167) |
+| function | `def run_pack_command(args) -> int` | Execute a pack subcommand. | [`src/cli/pack.py:175`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L175) |
 
 ## `src/cli/params.py`
 
@@ -9580,6 +9599,47 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 | method | `def ValidationResult.is_valid(self) -> bool` | Implements `ValidationResult.is_valid`; linked source is authoritative. | [`src/core/modules/validator.py:1053`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1053) |
 | method | `def ValidationResult.to_dict(self) -> Dict&#91;str, Any&#93;` | Implements `ValidationResult.to_dict`; linked source is authoritative. | [`src/core/modules/validator.py:1057`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1057) |
 | function | `def validate_all_modules(mode: str='ci') -> ValidationResult` | Validate all registered modules. | [`src/core/modules/validator.py:1069`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1069) |
+
+## `src/core/pack/compatibility.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| function | `def _contract(row: Row) -> Mapping&#91;str, Any&#93;` | Implements `_contract`; linked source is authoritative. | [`src/core/pack/compatibility.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L35) |
+| function | `def _evidence(row: Row) -> List&#91;Mapping&#91;str, Any&#93;&#93;` | Implements `_evidence`; linked source is authoritative. | [`src/core/pack/compatibility.py:40`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L40) |
+| function | `def _uses_absolute_targets(row: Row) -> bool` | Implements `_uses_absolute_targets`; linked source is authoritative. | [`src/core/pack/compatibility.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L44) |
+| function | `def _uses_recovery_semantics(row: Row) -> bool` | Implements `_uses_recovery_semantics`; linked source is authoritative. | [`src/core/pack/compatibility.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L54) |
+| class | `class Feature` | Defines the Feature runtime contract. | [`src/core/pack/compatibility.py:60`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L60) |
+| function | `def version_key(text: Any) -> Tuple&#91;int, ...&#93;` | ``2.40.0`` -> ``(2, 40, 0)``; anything unreadable sorts lowest. | [`src/core/pack/compatibility.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L83) |
+| function | `def required_host(manifest: Mapping&#91;str, Any&#93;) -> Tuple&#91;str, List&#91;str&#93;&#93;` | The oldest flyto-core that accepts everything ``manifest`` uses, and the features that set it. | [`src/core/pack/compatibility.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L92) |
+
+## `src/core/pack/conformance.py`
+
+| Kind | Signature | Responsibility | Source |
+|---|---|---|---|
+| class | `class Check` | Defines the Check runtime contract. | [`src/core/pack/conformance.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L44) |
+| method | `def Check.to_dict(self) -> Dict&#91;str, str&#93;` | Implements `Check.to_dict`; linked source is authoritative. | [`src/core/pack/conformance.py:49`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L49) |
+| function | `def _contract(row: Mapping&#91;str, Any&#93;) -> Mapping&#91;str, Any&#93;` | Implements `_contract`; linked source is authoritative. | [`src/core/pack/conformance.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L53) |
+| function | `def _is_stop(row: Mapping&#91;str, Any&#93;) -> bool` | Implements `_is_stop`; linked source is authoritative. | [`src/core/pack/conformance.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L58) |
+| function | `def _actuators(manifest: Mapping&#91;str, Any&#93;) -> List&#91;Mapping&#91;str, Any&#93;&#93;` | Implements `_actuators`; linked source is authoritative. | [`src/core/pack/conformance.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L62) |
+| function | `def _numeric_bounds(row: Mapping&#91;str, Any&#93;) -> List&#91;Tuple&#91;str, float, float&#93;&#93;` | Implements `_numeric_bounds`; linked source is authoritative. | [`src/core/pack/conformance.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L66) |
+| function | `def probe_arguments(row: Mapping&#91;str, Any&#93;, *, outside: Optional&#91;str&#93;=None) -> Dict&#91;str, Any&#93;` | In-bounds arguments for every declared parameter; ``outside`` names one pushed past its maximum. | [`src/core/pack/conformance.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L74) |
+| function | `def _midpoint(spec: Mapping&#91;str, Any&#93;) -> Any` | Implements `_midpoint`; linked source is authoritative. | [`src/core/pack/conformance.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L86) |
+| function | `def _check_digest(root: Path, manifest: Mapping&#91;str, Any&#93;) -> Check` | Implements `_check_digest`; linked source is authoritative. | [`src/core/pack/conformance.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L105) |
+| function | `def _check_signature(root: Path, manifest: Mapping&#91;str, Any&#93;, trusted_keys: Mapping&#91;str, Any&#93;) -> Check` | Implements `_check_signature`; linked source is authoritative. | [`src/core/pack/conformance.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L114) |
+| function | `def _check_stop_declared(manifest: Mapping&#91;str, Any&#93;) -> Check` | Implements `_check_stop_declared`; linked source is authoritative. | [`src/core/pack/conformance.py:127`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L127) |
+| function | `def _check_evidence_declared(manifest: Mapping&#91;str, Any&#93;) -> Check` | Implements `_check_evidence_declared`; linked source is authoritative. | [`src/core/pack/conformance.py:136`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L136) |
+| function | `def _check_compatibility(manifest: Mapping&#91;str, Any&#93;, host_version: str) -> Check` | Implements `_check_compatibility`; linked source is authoritative. | [`src/core/pack/conformance.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L146) |
+| function | `def _envelope(answer: Any) -> Optional&#91;bool&#93;` | The envelope's ``ok``; None when the answer is not an envelope at all. | [`src/core/pack/conformance.py:164`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L164) |
+| function | `async def _ask(invoke: Invoke, module_id: str, arguments: Dict&#91;str, Any&#93;) -> Tuple&#91;Optional&#91;bool&#93;, str&#93;` | Implements `_ask`; linked source is authoritative. | [`src/core/pack/conformance.py:171`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L171) |
+| function | `async def _running_checks(manifest: Mapping&#91;str, Any&#93;, invoke: Invoke) -> List&#91;Check&#93;` | Implements `_running_checks`; linked source is authoritative. | [`src/core/pack/conformance.py:181`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L181) |
+| function | `def _graded(name: str, applicable: bool, failures: Sequence&#91;str&#93;, failed_means: str, passed: str) -> Check` | One running check's verdict: not applicable, failed with what failed, or passed. | [`src/core/pack/conformance.py:218`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L218) |
+| function | `async def _run_installed(root: Path, manifest: Mapping&#91;str, Any&#93;, trusted_keys: Mapping&#91;str, Any&#93;) -> List&#91;Check&#93;` | Implements `_run_installed`; linked source is authoritative. | [`src/core/pack/conformance.py:227`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L227) |
+| method | `async def _run_installed.invoke(module_id: str, arguments: Dict&#91;str, Any&#93;) -> Any` | Implements `_run_installed.invoke`; linked source is authoritative. | [`src/core/pack/conformance.py:239`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L239) |
+| function | `def _host_version() -> str` | Implements `_host_version`; linked source is authoritative. | [`src/core/pack/conformance.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L248) |
+| function | `async def conform_async(pack_dir: Any, *, trusted_keys: Optional&#91;Mapping&#91;str, Any&#93;&#93;=None, run: bool=True) -> Dict&#91;str, Any&#93;` | Implements `conform_async`; linked source is authoritative. | [`src/core/pack/conformance.py:254`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L254) |
+| function | `def conform(pack_dir: Any, *, trusted_keys: Optional&#91;Mapping&#91;str, Any&#93;&#93;=None, run: bool=True) -> Dict&#91;str, Any&#93;` | Run the suite from synchronous code (the CLI). | [`src/core/pack/conformance.py:275`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L275) |
+| function | `def _report(root: Path, manifest: Optional&#91;Mapping&#91;str, Any&#93;&#93;, checks: Sequence&#91;Check&#93;) -> Dict&#91;str, Any&#93;` | Implements `_report`; linked source is authoritative. | [`src/core/pack/conformance.py:280`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L280) |
+| function | `def render(report: Mapping&#91;str, Any&#93;) -> str` | Implements `render`; linked source is authoritative. | [`src/core/pack/conformance.py:296`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L296) |
 
 ## `src/core/pack/export.py`
 

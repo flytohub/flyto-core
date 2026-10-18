@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **995 Python files**, **238,962 lines**, and **6,358 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **998 Python files**, **239,524 lines**, and **6,403 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -15,6 +15,7 @@ Inventory: **995 Python files**, **238,962 lines**, and **6,358 class/function/m
 | [`examples/happy-test/test_figma.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/happy-test/test_figma.py#L1) | 60 | 1 | `asyncio, os, pathlib, src, sys` | 测试 Figma API 连接 |
 | [`examples/happy-test/test_spec_runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/happy-test/test_spec_runner.py#L1) | 113 | 2 | `asyncio, pathlib, src, sys` | 测试 Spec Runner 动态验证 |
 | [`examples/happy-test/test_yaml_ruleset.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/happy-test/test_yaml_ruleset.py#L1) | 70 | 1 | `asyncio, pathlib, src, sys` | 测试从 YAML 文件加载 ruleset |
+| [`examples/packs/adapter-template/runner/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/examples/packs/adapter-template/runner/main.py#L1) | 132 | 13 | `__future__, json, sys` | Adapter template runner: one simulated linear axis, served over JSON-RPC on stdio. |
 | [`plugin-template/src/flyto_plugin_example/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/plugin-template/src/flyto_plugin_example/__init__.py#L1) | 3 | 0 | `none` | Flyto2 Plugin Example — a template for building flyto plugins. |
 | [`plugin-template/src/flyto_plugin_example/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/plugin-template/src/flyto_plugin_example/modules.py#L1) | 120 | 4 | `core` | Plugin modules registration. |
 | [`run.py:1`](https://github.com/flytohub/flyto-core/blob/main/run.py#L1) | 19 | 0 | `os, src, sys` | Flyto2 Core - Simple Workflow Runner |
@@ -64,7 +65,7 @@ Inventory: **995 Python files**, **238,962 lines**, and **6,358 class/function/m
 | [`src/cli/learn.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/learn.py#L1) | 245 | 2 | `asyncio, config, core, json, os, pathlib, sys, time, typing` | flyto learn — AI explores a task, then compiles to a reusable recipe. |
 | [`src/cli/main.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/main.py#L1) | 422 | 4 | `argparse, capability_host, config, core, i18n, learn, modules, os, pack, params, pathlib, plugin` | Workflow Automation Engine - Standalone CLI |
 | [`src/cli/modules.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/modules.py#L1) | 163 | 4 | `config, core, datetime, importlib, json, os, sys, typing` | CLI Module Listing Command |
-| [`src/cli/pack.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L1) | 178 | 8 | `core, cryptography, json, os, pathlib, sys` | Pack CLI Commands — the language-neutral ``flyto.pack.v1`` contract. |
+| [`src/cli/pack.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L1) | 198 | 9 | `core, cryptography, json, os, pathlib, sys` | Pack CLI Commands — the language-neutral ``flyto.pack.v1`` contract. |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
 | [`src/cli/recipe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L1) | 624 | 20 | `asyncio, config, core, json, os, pathlib, sys, time, typing, yaml` | CLI Recipe Runner |
@@ -950,6 +951,8 @@ Inventory: **995 Python files**, **238,962 lines**, and **6,358 class/function/m
 | [`src/core/modules/validation.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validation.py#L1) | 831 | 35 | `constants, dataclasses, re, typing` | Module Validation Utilities |
 | [`src/core/modules/validator.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/validator.py#L1) | 1132 | 31 | `ast, dataclasses, inspect, logging, re, registry, typing` | Unified Module Validator - Comprehensive validation for module registration |
 | [`src/core/pack/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/__init__.py#L1) | 38 | 0 | `manifest` | Language-neutral module packs — ``flyto.pack.v1``. |
+| [`src/core/pack/compatibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L1) | 105 | 7 | `__future__, capability_contract, dataclasses, typing` | The versioned compatibility matrix: which flyto-core first accepts each pack feature. |
+| [`src/core/pack/conformance.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L1) | 305 | 24 | `__future__, asyncio, compatibility, dataclasses, host, manifest, pathlib, signature, typing` | Offline conformance for a third-party ``flyto.pack.v1`` adapter pack. |
 | [`src/core/pack/export.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/export.py#L1) | 165 | 7 | `__future__, copy, importlib, manifest, modules, typing` | Export a Python pack's ``@register_module`` rows as a ``flyto.pack.v1`` manifest. |
 | [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 666 | 40 | `__future__, asyncio, dataclasses, datetime, json, logging, manifest, modules, os, pathlib, plugin, runtime` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
 | [`src/core/pack/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/manifest.py#L1) | 589 | 24 | `__future__, capability_contract, copy, hashlib, json, os, pathlib, plugin, re, stat, typing, unicodedata` | Module pack manifest — ``flyto.pack.v1``. |

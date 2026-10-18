@@ -1,5 +1,14 @@
 # Flyto2 Core State
 
+## Adapter developer kit, unreleased (2026-10-18)
+
+`flyto pack conform` checks a third-party `flyto.pack.v1` pack offline
+(static checks, then the runner through `install_pack`: stop answers,
+in-bounds completes, out-of-bounds refused, every call answered) against the
+versioned compatibility matrix (`core.pack.compatibility`, matrix v1).
+Template: `examples/packs/adapter-template`. D2 only; the verified
+pack/device/host table is empty. Not tagged or released.
+
 ## Resource states and parts in the capability contract, 2.41.0 (2026-10-17)
 
 A contract may declare `establishes` (states a completed call leaves true,
@@ -540,7 +549,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 995 maintained Python files, 6,358
+- Source-backed documentation now covers 998 maintained Python files, 6,403
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,
