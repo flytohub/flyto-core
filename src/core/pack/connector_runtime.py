@@ -68,7 +68,7 @@ from .jsonpath import expand, parse
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["STATUS_FAILURES", "ConnectorCallError", "ConnectorTransport", "sensitive_result_paths"]
+__all__ = ["STATUS_FAILURES", "ConnectorCallError", "ConnectorTransport", "sensitive_result_paths", "status_failure"]
 
 #: HTTP status -> the typed failure a module returns. The first matching row
 #: wins; a status no row covers is ``PROVIDER_UNEXPECTED_STATUS``.
@@ -105,7 +105,7 @@ class ConnectorCallError(Exception):
         return out
 
 
-def _status_failure(status: int) -> str:
+def status_failure(status: int) -> str:
     for low, high, code in STATUS_FAILURES:
         if low <= status <= high:
             return code
@@ -445,7 +445,7 @@ class ConnectorTransport:
         except aiohttp.ClientError as error:
             raise ConnectorCallError("PROVIDER_TRANSPORT_ERROR", f"request failed: {type(error).__name__}") from None
         if not 200 <= status <= 299:
-            raise ConnectorCallError(_status_failure(status), f"the provider answered HTTP {status}",
+            raise ConnectorCallError(status_failure(status), f"the provider answered HTTP {status}",
                                    http_status=status, retry_after_s=_retry_after(reply_headers.get("Retry-After")))
         if len(raw) > max_bytes:
             raise ConnectorCallError("PROVIDER_RESPONSE_TOO_LARGE", "the response exceeds runtime.max_response_bytes",

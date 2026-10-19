@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,003 Python files**, **241,864 lines**, and **6,553 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,005 Python files**, **242,343 lines**, and **6,585 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -960,6 +960,8 @@ Inventory: **1,003 Python files**, **241,864 lines**, and **6,553 class/function
 | [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 744 | 45 | `__future__, asyncio, connector, connector_runtime, dataclasses, datetime, json, logging, manifest, modules, os, pathlib` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
 | [`src/core/pack/jsonpath.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/jsonpath.py#L1) | 106 | 6 | `__future__, re, typing` | The JSONPath subset a connector declares: ``$``, ``.name``, ``['name']``, ``[n]``, ``[*]``. |
 | [`src/core/pack/manifest.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/manifest.py#L1) | 624 | 25 | `__future__, capability_contract, connector, copy, hashlib, json, os, pathlib, plugin, re, stat, typing` | Module pack manifest — ``flyto.pack.v1``. |
+| [`src/core/pack/mcp_client.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/mcp_client.py#L1) | 314 | 21 | `__future__, aiohttp, asyncio, connector_runtime, hashlib, json, logging, typing, urllib, utils` | The smallest MCP client a consumer needs: Streamable HTTP, three methods. |
+| [`src/core/pack/mcp_oauth.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/mcp_oauth.py#L1) | 165 | 11 | `__future__, base64, connector_runtime, hashlib, json, mcp_client, secrets, typing, urllib` | OAuth 2.1 authorization code with PKCE, run by Flyto2 for one MCP server. |
 | [`src/core/pack/openapi.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/openapi.py#L1) | 253 | 18 | `__future__, manifest, re, typing` | Draft a ``connector`` section from an OpenAPI 3 document. |
 | [`src/core/pack/signature.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/signature.py#L1) | 196 | 8 | `__future__, base64, binascii, cryptography, json, manifest, os, pathlib, re, typing` | Publisher signatures for ``flyto.pack.v1`` — ed25519, offline. |
 | [`src/core/plugin/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/plugin/__init__.py#L1) | 46 | 0 | `manifest` | Flyto2 Plugin System |

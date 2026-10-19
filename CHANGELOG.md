@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `core.pack.mcp_client`: the minimal MCP Streamable HTTP client a consumer
+  needs (`initialize`, `tools/list` with pagination, `tools/call`; JSON or
+  event-stream answers). It reuses the connector runtime's typed failures and
+  SSRF-guarded outbound path, adds `MCP_TOOL_ERROR`, `MCP_RPC_ERROR`,
+  `MCP_INVALID_PARAMS`, `MCP_METHOD_UNSUPPORTED`, `MCP_TOOL_MALFORMED`, marks
+  a server's refusal `final`, and takes no caller headers: the only
+  credential it sends is the one held for that server's resource.
+- `core.pack.mcp_oauth`: OAuth 2.1 authorization code with S256 PKCE for one
+  MCP server (RFC 9728 resource metadata, RFC 8414, RFC 7591 registration,
+  RFC 8707 `resource` on every request).
+- `core.pack.connector_runtime.status_failure` is public, for the MCP client.
+
 ## [2.41.0] - 2026-10-18
 
 ### Added
