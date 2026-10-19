@@ -92,3 +92,16 @@ async def test_the_engine_refuses_to_run_two_lines_from_one_exit():
 
     assert refused.value.code == "EXIT_HAS_ONE_EDGE"
     assert refused.value.conflicts[0]["edge_id"] == "e2"
+
+
+@pytest.mark.asyncio
+async def test_an_edge_and_a_connection_naming_the_same_line_are_one_line():
+    workflow = {
+        "steps": [
+            {"id": "if", "module": "flow.branch", "params": {"condition": "1 > 0"}, "connections": {"true": ["a"]}},
+            {"id": "a", "module": "string.uppercase", "params": {"text": "a"}},
+        ],
+        "edges": [_edge("e1", "if", "a", "source-true")],
+    }
+
+    await WorkflowEngine(workflow, {}).execute()

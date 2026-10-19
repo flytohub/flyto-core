@@ -164,6 +164,7 @@ def exit_edge_conflicts(edges: Iterable[Dict[str, Any]], ports_of) -> List[Dict[
     or the handle when the module declares none) and the exit's limit.
     """
     counts: Dict[tuple, int] = {}
+    seen: set = set()
     conflicts: List[Dict[str, Any]] = []
     for index, edge in enumerate(edges or []):
         source = edge.get('source')
@@ -175,6 +176,10 @@ def exit_edge_conflicts(edges: Iterable[Dict[str, Any]], ports_of) -> List[Dict[
         exit_id = port['id'] if port else handle
         limit = exit_edge_limit(port)
         key = (source, exit_id)
+        # A document may name one line twice (an edge and a step connection).
+        if (key, edge.get('target')) in seen:
+            continue
+        seen.add((key, edge.get('target')))
         counts[key] = counts.get(key, 0) + 1
         if limit is not None and counts[key] > limit:
             conflicts.append({

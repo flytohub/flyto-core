@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,015 Python files**, **246,631 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,636 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -102,7 +102,7 @@ Inventory: **1,015 Python files**, **246,631 lines**, and **6,812 class/function
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
-| [`src/core/canvas_handles.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/canvas_handles.py#L1) | 187 | 10 | `typing` | Canvas handles: the one table that says which declared port an edge end means. |
+| [`src/core/canvas_handles.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/canvas_handles.py#L1) | 192 | 10 | `typing` | Canvas handles: the one table that says which declared port an edge end means. |
 | [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 910 | 29 | `__future__, json, math, re, types, typing` | Capability contract — ``flyto.capability-contract.v1``. |
 | [`src/core/capability_host/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/__init__.py#L1) | 42 | 0 | `host` | Generic capability host: run an installed capability pack with flyto-core alone. |
 | [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 688 | 34 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
