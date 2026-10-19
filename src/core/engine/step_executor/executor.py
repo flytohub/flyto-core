@@ -55,6 +55,7 @@ except ImportError:
 
 if TYPE_CHECKING:
     from ...modules.items import Item
+    from ..evolution.healer import StepHealer
     from ..trace import StepTrace, TraceCollector
     from ..variable_resolver import VariableResolver
 
@@ -1027,7 +1028,7 @@ class StepExecutor:
                 timeout=timeout
             )
         except asyncio.TimeoutError:
-            raise StepTimeoutError(step_id, timeout)
+            raise StepTimeoutError(step_id, timeout) from None
 
     async def _execute_module(
         self,
@@ -1110,7 +1111,7 @@ class StepExecutor:
                 )
 
         except Exception as e:
-            raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
+            raise StepExecutionError(step_id, f"Step failed: {str(e)}", e) from e
 
     async def _execute_single_mode(
         self,
