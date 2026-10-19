@@ -17,9 +17,10 @@ import asyncio
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ..exceptions import StepTimeoutError, StepExecutionError, is_policy_refusal
+from ..exceptions import StepExecutionError, StepTimeoutError, is_policy_refusal
+from ..hooks import ExecutorHooks, HookAction
 from ..outcome import (
     ENVELOPE_KEY,
     ClaimBy,
@@ -27,13 +28,12 @@ from ..outcome import (
     cap,
     ceiling_for,
     default_for,
-    envelope_from_exception,
     envelope,
+    envelope_from_exception,
     is_on_ladder,
     read_envelope,
     rung_index,
 )
-from ..hooks import ExecutorHooks, HookAction
 from ..redaction import (
     apply_hook_param_changes,
     redact_step_params,
@@ -54,9 +54,9 @@ except ImportError:
     _RUNTIME_INVOKER_AVAILABLE = False
 
 if TYPE_CHECKING:
-    from ..variable_resolver import VariableResolver
-    from ...modules.items import Item, NodeExecutionResult, StepInputItems
+    from ...modules.items import Item
     from ..trace import StepTrace, TraceCollector
+    from ..variable_resolver import VariableResolver
 
 logger = logging.getLogger(__name__)
 
@@ -641,7 +641,6 @@ class StepExecutor:
 
             # Record successful step trace
             if step_trace:
-                from ..trace import StepOutput
                 items_output = []
                 # The trace is persisted and returned to callers: it gets the
                 # result with the leaves the module declares sensitive redacted.
@@ -947,9 +946,7 @@ class StepExecutor:
         # Apply patch to step config
         patched = dict(step_config)
         params = dict(patched.get("params", {}))
-        if patch["fix_type"] == "replace_param":
-            params[patch["param_key"]] = patch["new_value"]
-        elif patch["fix_type"] == "add_param":
+        if patch["fix_type"] == "replace_param" or patch["fix_type"] == "add_param":
             params[patch["param_key"]] = patch["new_value"]
         patched["params"] = params
 
@@ -1166,8 +1163,13 @@ class StepExecutor:
     ) -> Any:
         """Process each input item independently."""
         from ...modules.items import (
-            Item, ItemContext, NodeExecutionResult, ExecutionStatus,
-            ItemError, ExecutionMeta, items_to_legacy_context
+            ExecutionMeta,
+            ExecutionStatus,
+            Item,
+            ItemContext,
+            ItemError,
+            NodeExecutionResult,
+            items_to_legacy_context,
         )
 
         items = input_items if input_items is not None else [Item(json={})]
@@ -1236,8 +1238,11 @@ class StepExecutor:
     ) -> Any:
         """Process all items at once."""
         from ...modules.items import (
-            ItemContext, NodeExecutionResult, ExecutionStatus,
-            ExecutionMeta, items_to_legacy_context
+            ExecutionMeta,
+            ExecutionStatus,
+            ItemContext,
+            NodeExecutionResult,
+            items_to_legacy_context,
         )
 
         items = input_items or []

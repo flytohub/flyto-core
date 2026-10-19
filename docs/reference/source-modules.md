@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,018 Python files**, **248,357 lines**, and **6,885 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,018 Python files**, **248,362 lines**, and **6,885 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -166,7 +166,7 @@ Inventory: **1,018 Python files**, **248,357 lines**, and **6,885 class/function
 | [`src/core/engine/sdk/resolver.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/sdk/resolver.py#L1) | 505 | 19 | `context, dataclasses, json, logging, models, os, re, typing` | Variable Resolver v2 |
 | [`src/core/engine/step_executor/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/__init__.py#L1) | 56 | 1 | `context_builder, executor, foreach, hooks, retry, typing` | Step Executor Package |
 | [`src/core/engine/step_executor/context_builder.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/context_builder.py#L1) | 179 | 3 | `datetime, exceptions, executor, hooks, outcome, redaction, time, typing, variable_resolver` | Step Context Builder |
-| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 1460 | 30 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, outcome, re, redaction, retry` | Step Executor |
+| [`src/core/engine/step_executor/executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/executor.py#L1) | 1465 | 30 | `asyncio, context_builder, evolution, exceptions, foreach, hooks, logging, modules, outcome, re, redaction, retry` | Step Executor |
 | [`src/core/engine/step_executor/foreach.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/foreach.py#L1) | 92 | 1 | `exceptions, logging, trace, typing, variable_resolver` | Foreach Execution |
 | [`src/core/engine/step_executor/retry.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor/retry.py#L1) | 150 | 2 | `asyncio, constants, context_builder, exceptions, hooks, logging, typing` | Retry Logic |
 | [`src/core/engine/step_executor.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/step_executor.py#L1) | 36 | 0 | `step_executor` | Step Executor - Single step execution with retry, timeout, and foreach support |
