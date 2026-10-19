@@ -321,7 +321,7 @@ class WorkflowRouter:
                 values[port['id']] = context[edge['source']]
         # An edge drawn without naming an input takes the first one still free.
         free = [p['id'] for p in ports if p['id'] not in values]
-        for edge, port_id in zip(unnamed, free):
+        for edge, port_id in zip(unnamed, free, strict=False):
             if edge.get('source') in context:
                 values[port_id] = context[edge['source']]
         return values
