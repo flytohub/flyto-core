@@ -4924,9 +4924,9 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class ForkModule(BaseModule)` | Fork Module (Spec v1.1) | [`src/core/modules/atomic/flow/fork.py:134`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L134) |
-| method | `def ForkModule.validate_params(self) -> None` | Implements `ForkModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/flow/fork.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L147) |
-| method | `async def ForkModule.execute(self) -> Dict&#91;str, Any&#93;` | Fork execution into parallel branches. | [`src/core/modules/atomic/flow/fork.py:153`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L153) |
+| class | `class ForkModule(BaseModule)` | Fork Module (Spec v1.1) | [`src/core/modules/atomic/flow/fork.py:135`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L135) |
+| method | `def ForkModule.validate_params(self) -> None` | Implements `ForkModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/flow/fork.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L148) |
+| method | `async def ForkModule.execute(self) -> Dict&#91;str, Any&#93;` | Fork execution into parallel branches. | [`src/core/modules/atomic/flow/fork.py:154`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L154) |
 
 ## `src/core/modules/atomic/flow/goto.py`
 

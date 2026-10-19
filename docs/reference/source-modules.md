@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,015 Python files**, **246,636 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,637 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -432,7 +432,7 @@ Inventory: **1,015 Python files**, **246,636 lines**, and **6,812 class/function
 | [`src/core/modules/atomic/flow/end.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/end.py#L1) | 174 | 6 | `base, core, datetime, re, registry, schema, types, typing` | End Module - Explicit workflow end node |
 | [`src/core/modules/atomic/flow/error_handle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/error_handle.py#L1) | 374 | 8 | `base, datetime, registry, schema, types, typing` | Error Handle Module - Catches and handles errors from upstream nodes |
 | [`src/core/modules/atomic/flow/error_workflow_trigger.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/error_workflow_trigger.py#L1) | 184 | 3 | `base, datetime, registry, schema, types, typing` | Error Workflow Trigger Module - Entry point for error workflows |
-| [`src/core/modules/atomic/flow/fork.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L1) | 194 | 3 | `base, registry, schema, types, typing` | Fork Module - run every branch, in a defined order |
+| [`src/core/modules/atomic/flow/fork.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/fork.py#L1) | 195 | 3 | `base, registry, schema, types, typing` | Fork Module - run every branch, in a defined order |
 | [`src/core/modules/atomic/flow/goto.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/goto.py#L1) | 143 | 3 | `base, registry, schema, types, typing` | Goto Module - Unconditional jump to another step |
 | [`src/core/modules/atomic/flow/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/invoke.py#L1) | 383 | 12 | `asyncio, base, core, engine, logging, pathlib, re, registry, schema, time, types, typing` | Invoke Workflow Module - Execute external workflows as subflows |
 | [`src/core/modules/atomic/flow/join.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/join.py#L1) | 272 | 7 | `base, datetime, registry, schema, types, typing` | Join Module - Wait for parallel branches to complete |

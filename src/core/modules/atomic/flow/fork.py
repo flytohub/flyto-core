@@ -14,10 +14,11 @@ Contract (the engine's router implements it, core/engine/workflow/routing.py):
 - Returns __event__ 'fork' for engine routing.
 """
 from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, presets
-from ...types import NodeType, EdgeType, DataType
+from ...types import DataType, EdgeType, NodeType
 
 
 @register_module(
