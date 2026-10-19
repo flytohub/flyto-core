@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,002 Python files**, **241,147 lines**, and **6,502 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,002 Python files**, **241,168 lines**, and **6,503 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -997,7 +997,7 @@ Inventory: **1,002 Python files**, **241,147 lines**, and **6,502 class/function
 | [`src/core/training/daily_practice.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/daily_practice.py#L1) | 56 | 6 | `typing` | Daily Practice Engine - Stub for OSS version |
 | [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1390 | 48 | `aiohttp, asyncio, constants, contextlib, contextvars, fnmatch, functools, httpx, ipaddress, logging, os, re` | Core Utilities - Shared utility functions |
 | [`src/core/validation/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/__init__.py#L1) | 61 | 0 | `connection, errors, index, workflow` | Flyto2 Core Validation API |
-| [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 663 | 15 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
+| [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 684 | 16 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 165 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |
 | [`src/core/validation/index.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/index.py#L1) | 175 | 8 | `modules, threading, typing` | Connection Index |
 | [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 544 | 11 | `connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |
