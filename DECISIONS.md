@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-10-19 - Certification is a signed record of offline checks; a key's revocation point is a list of digests
+
+Decision: `flyto pack certify` signs a `flyto.pack-certification.v1` record
+only when verify, the declared-compatibility check, conform, `pack test` and
+standalone health all pass (the last two against the pack's own recorded
+fixtures, so certification reaches no provider). A host requires it through
+a policy table (`flyto.pack-certification-policy.v1`), checked by
+`install_pack` itself, so no host can install around it. The record names a
+flyto-core range whose top is the host that ran the checks; a newer host
+finds it stale (`CERTIFICATION_STALE`) and the pack is certified again.
+
+Revoking a publisher key (`flyto.pack-revocations.v2`) names the packs and
+rotation statements the key signed before the revocation point
+(`retained`), and refuses everything else it signed. A timestamp was
+rejected as the point: a signature carries none a compromised key could not
+forge.
+
+Rejected:
+
+- A hand-maintained compatibility table. The matrix is generated from
+  `FEATURES` and a test fails when the committed copy is stale.
+- Certifying a pack that does not verify. Its code is not what anyone
+  signed, so it is never run.
+- Trusting a rotated key without a chain from a trusted key. A host trusts
+  only what it was given, plus at most 8 signed hops from it.
+- Upgrades that replace a running version implicitly. The new version names
+  what it supersedes and the running one names what it may roll back to.
+
 ## 2026-10-19 - A standalone pack may be pointed at a local stand-in, and only there
 
 Decision: `flyto pack run|health --provider-base-url URL` redirects a

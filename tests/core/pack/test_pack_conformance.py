@@ -168,11 +168,12 @@ def test_the_template_needs_exactly_what_its_min_host_says():
     assert manifest["pack"]["min_host"] == "2.40.0"
 
 
-def test_the_matrix_page_lists_exactly_the_matrix():
+def test_the_matrix_page_writes_no_matrix_by_hand():
+    """The feature table is generated (docs/reference/pack-compatibility-matrix.*); the spec page links it."""
     text = MATRIX_DOC.read_text(encoding="utf-8")
     assert f"Matrix version: **{compatibility.MATRIX_VERSION}**" in text
-    rows = re.findall(r"^\| `([a-z0-9_.]+)` \| ([0-9.]+) \|", text, re.M)
-    assert rows == [(item.feature_id, item.since) for item in compatibility.FEATURES]
+    assert re.findall(r"^\| `([a-z0-9_.]+)` \| ([0-9.]+) \|", text, re.M) == []
+    assert "../reference/pack-compatibility-matrix.md" in text
 
 
 def test_the_cli_exit_code_follows_the_verdict(tmp_path, capsys):

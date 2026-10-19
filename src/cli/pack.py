@@ -37,9 +37,12 @@ def add_pack_parser(subparsers) -> None:
     sub = pack_parser.add_subparsers(dest="pack_action", help="Pack actions")
 
     init_p = sub.add_parser(
-        "init", help="Scaffold a connector pack: manifest, recorded fixtures and a test (every consequence unset)"
+        "init", help="Scaffold a pack: a connector or a device adapter, with a test (every consequence unset)"
     )
     init_p.add_argument("pack_dir", help="New or empty directory to write the pack into")
+    init_p.add_argument("--template", choices=("connector", "device-adapter"), default="connector",
+                        help="connector: a provider API (default); device-adapter: a module pack with capability "
+                             "contracts, served over JSON-RPC on stdio against a simulated device")
     init_p.add_argument("--openapi", help="Draft the operations from this OpenAPI 3 document (JSON or YAML)")
     init_p.add_argument("--pack-id", help="Pack id (default: com.example.<directory name>)")
     init_p.add_argument("--namespace", help="Module namespace (default: the last part of the pack id)")
@@ -49,7 +52,7 @@ def add_pack_parser(subparsers) -> None:
         "consequence", help="Record your decision of what each operation does to the world"
     )
     consequence_p.add_argument("pack_dir")
-    consequence_p.add_argument("decisions", nargs="+", metavar="OPERATION=LEVEL",
+    consequence_p.add_argument("decisions", nargs="+", metavar="TARGET=LEVEL",
                                help="observe, reversible, external_write, real_world or irreversible")
 
     doctor_p = sub.add_parser("doctor", help="Explain every validation refusal: its cause and its fix")
@@ -86,6 +89,7 @@ def add_pack_parser(subparsers) -> None:
     )
     verify_p.add_argument("pack_dir", help="Pack directory or built zip")
     _add_trust_arguments(verify_p)
+    _add_maintenance_arguments(verify_p)
 
     build_p = sub.add_parser(
         "build", help="Build a portable pack zip: validate, generate entry points, README and notice, sign"
@@ -102,12 +106,41 @@ def add_pack_parser(subparsers) -> None:
     run_p.add_argument("--host", default="127.0.0.1", help="Loopback address for streamable_http")
     run_p.add_argument("--port", type=int, default=8765, help="Port for streamable_http (0 picks one)")
     _add_trust_arguments(run_p)
+    _add_maintenance_arguments(run_p)
     _add_provider_argument(run_p)
 
     health_p = sub.add_parser("health", help="Healthcheck a portable pack: verify, runtime, credential names")
     health_p.add_argument("source", help="Pack directory or built zip")
     _add_trust_arguments(health_p)
+    _add_maintenance_arguments(health_p)
     _add_provider_argument(health_p)
+
+    certify_p = sub.add_parser(
+        "certify", help="Run verify, compatibility, conform, pack test and standalone health; sign a "
+                        "certification record when every check passes"
+    )
+    certify_p.add_argument("source", help="Built pack zip (or a signed pack directory)")
+    certify_p.add_argument("--key", required=True, help="Certifier ed25519 private key (PEM)")
+    certify_p.add_argument("--key-id", required=True, help="Certifier key id")
+    certify_p.add_argument("-o", "--output", help="Record to write (default: <pack id>-<version>.certification.json)")
+    certify_p.add_argument("--json", action="store_true", help="Print the whole report as JSON")
+    _add_trust_arguments(certify_p)
+    certify_p.add_argument("--key-rotation", action="append", default=[], metavar="FILE",
+                           help="Publisher key rotation statement (flyto.publisher-key-rotation.v1); repeatable")
+
+    matrix_p = sub.add_parser("matrix", help="Print the pack feature x flyto-core version matrix")
+    matrix_p.add_argument("--json", action="store_true", help="Print it as JSON (flyto.pack-compatibility-matrix.v1)")
+    matrix_p.add_argument("--certification", action="append", default=[], metavar="FILE",
+                          help="Certification record to list (verified with --certifier-key); repeatable")
+    matrix_p.add_argument("--certifier-key", action="append", default=[], metavar="ID=FILE",
+                          help="Public key trusted to sign certification records; repeatable")
+
+    rotate_p = sub.add_parser("rotate-key", help="Sign a publisher key rotation statement with the old key")
+    rotate_p.add_argument("--key", required=True, help="The old publisher private key (PEM)")
+    rotate_p.add_argument("--key-id", required=True, help="The old publisher key id")
+    rotate_p.add_argument("--new-public", required=True, help="The new publisher public key (PEM)")
+    rotate_p.add_argument("--new-key-id", required=True, help="The new publisher key id")
+    rotate_p.add_argument("-o", "--output", required=True, help="Statement to write; must not exist")
 
     fixtures_p = sub.add_parser(
         "serve-fixtures", help="Serve a pack's recorded fixtures as a local provider stand-in (loopback only)"
@@ -140,6 +173,17 @@ def _add_trust_arguments(parser) -> None:
     parser.add_argument("--revocations", help="Signed revocation list (flyto.pack-revocations.v1) to check first")
     parser.add_argument("--revocation-key", action="append", default=[], metavar="ID=FILE",
                         help="Public key trusted to sign the revocation list; repeatable")
+
+
+def _add_maintenance_arguments(parser) -> None:
+    parser.add_argument("--key-rotation", action="append", default=[], metavar="FILE",
+                        help="Publisher key rotation statement (flyto.publisher-key-rotation.v1); repeatable")
+    parser.add_argument("--certification-policy", metavar="FILE",
+                        help="Certification policy table (flyto.pack-certification-policy.v1)")
+    parser.add_argument("--certifier-key", action="append", default=[], metavar="ID=FILE",
+                        help="Public key trusted to sign certification records; repeatable")
+    parser.add_argument("--certification", action="append", default=[], metavar="FILE",
+                        help="Certification record (flyto.pack-certification.v1); repeatable")
 
 
 def _add_provider_argument(parser) -> None:
@@ -258,12 +302,34 @@ def _revocations(args):
     return read_revocations(path, _trusted_keys(getattr(args, "revocation_key", None) or []))
 
 
+def _read_documents(paths):
+    return [json.loads(Path(path).read_text(encoding="utf-8")) for path in paths or ()]
+
+
+def _certification(args):
+    """The certification gate the arguments name, or ``None`` when no policy is given."""
+    path = getattr(args, "certification_policy", None)
+    if not path:
+        if getattr(args, "certification", None):
+            raise ValueError("--certification needs --certification-policy")
+        return None
+    from core.pack.certification import load_certification_policy
+
+    return load_certification_policy(json.loads(Path(path).read_text(encoding="utf-8")),
+                                     _trusted_keys(getattr(args, "certifier_key", None) or []),
+                                     records=_read_documents(getattr(args, "certification", None)))
+
+
 def _trust(args):
-    return {
+    trust = {
         "trusted_keys": _trusted_keys(getattr(args, "trusted_key", None) or []),
         "require_signature": not getattr(args, "allow_unsigned", False),
         "revocations": _revocations(args),
     }
+    if hasattr(args, "certification_policy"):
+        trust["key_rotations"] = _read_documents(args.key_rotation)
+        trust["certification"] = _certification(args)
+    return trust
 
 
 def _verify(args) -> int:
@@ -357,6 +423,57 @@ def _conform(args) -> int:
     return 0 if report["conformant"] else 1
 
 
+def _certify(args) -> int:
+    from core.pack.certification import certify
+
+    trust = _trust(args)
+    key, key_id = _private_key(args)
+    report = certify(args.source, private_key=key, key_id=key_id, key_rotations=_read_documents(args.key_rotation),
+                     **trust)
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        for item in report["results"]:
+            print(f"  [{item['verdict']:<14}] {item['check']:<18} {item['detail']}")
+    if report["record"] is None:
+        print("not certified: every applicable check must pass", file=sys.stderr)
+        return 1
+    output = args.output or f"{report['pack']['id']}-{report['pack']['version']}.certification.json"
+    with open(output, "x", encoding="utf-8") as handle:
+        handle.write(json.dumps(report["record"], indent=2) + "\n")
+    print(f"certified {report['pack']['id']} {report['pack']['version']} ({report['pack_digest']}) as {key_id}: "
+          f"{output}", file=sys.stderr)
+    return 0
+
+
+def _matrix(args) -> int:
+    from core.pack.certification import verify_certification
+    from core.pack.compatibility import compatibility_matrix, render_matrix_markdown
+
+    keys = _trusted_keys(args.certifier_key)
+    bodies = [verify_certification(document, keys) for document in _read_documents(args.certification)]
+    matrix = compatibility_matrix(bodies)
+    print(json.dumps(matrix, indent=2) if args.json else render_matrix_markdown(matrix), end="" if not args.json
+          else "\n")
+    return 0
+
+
+def _rotate_key(args) -> int:
+    from datetime import datetime, timezone
+
+    from core.pack.publisher_keys import sign_key_rotation
+    from core.pack.signature import load_public_key
+
+    key, key_id = _private_key(args)
+    issued = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    statement = sign_key_rotation(key, key_id, load_public_key(Path(args.new_public).read_text(encoding="utf-8")),
+                                  args.new_key_id, issued_at=issued)
+    with open(args.output, "x", encoding="utf-8") as handle:
+        handle.write(json.dumps(statement, indent=2) + "\n")
+    print(f"wrote {args.output}: {key_id} -> {args.new_key_id}")
+    return 0
+
+
 def _import_openapi(args) -> int:
     import yaml
 
@@ -380,7 +497,7 @@ def _init(args) -> int:
     from core.pack.scaffold import init_pack
 
     report = init_pack(args.pack_dir, openapi=args.openapi, pack_id=args.pack_id, namespace=args.namespace,
-                       probe=args.probe)
+                       probe=args.probe, template=args.template)
     print(json.dumps(report, indent=2))
     print(f"decide each consequence: flyto pack consequence {args.pack_dir} "
           + " ".join(f"{op}=LEVEL" for op in report["undecided"]), file=sys.stderr)
@@ -434,10 +551,12 @@ def run_pack_command(args) -> int:
         "run": _run,
         "health": _health,
         "serve-fixtures": _serve_fixtures,
+        "certify": _certify,
+        "matrix": _matrix,
+        "rotate-key": _rotate_key,
     }
     if action not in handlers:
-        print("Usage: flyto pack <init|consequence|doctor|test|manifest|digest|keygen|sign|verify|conform|"
-              "import-openapi|build|run|health|serve-fixtures>")
+        print("Usage: flyto pack <" + "|".join(handlers) + ">")
         return 1
     try:
         return handlers[action](args)

@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 from devkit_helpers import ROOT, cli, decided_scaffold, edit_json, operation
 
-from core.pack import bundle, doctor, supply_chain
+from core.pack import bundle, certification, doctor, supply_chain, upgrade
 from core.pack.recorded import TEST_FAILURES
 from core.pack.scaffold import SCAFFOLD_REFUSALS
 
@@ -84,6 +84,9 @@ DYNAMIC_SITES = {
     ("supply_chain.py", "REVOCATION_SIGNATURE_REFUSALS.get(exc.code, 'REVOCATION_INVALID')"):
         lambda: set(supply_chain.REVOCATION_SIGNATURE_REFUSALS.values()) | {"REVOCATION_INVALID"},
     ("host.py", "exc.code"): _plugin_endpoint_codes,
+    ("upgrade.py", "row.refusal"): lambda: {row.refusal for row in upgrade.TRANSITIONS},
+    ("certification.py", "CERTIFICATION_SIGNATURE_REFUSALS.get(error.code, 'CERTIFICATION_INVALID')"):
+        lambda: set(certification.CERTIFICATION_SIGNATURE_REFUSALS.values()) | {"CERTIFICATION_INVALID"},
 }
 
 

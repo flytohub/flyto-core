@@ -28,9 +28,9 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from .connector import CONSEQUENCES
+from .connector import CONSEQUENCE_CONTRACTS, CONSEQUENCES
 from .manifest import MANIFEST_FILENAME, PACK_SCHEMA, PackManifestError, _read_regular_file
 from .recorded import FIXTURES_PATH, FIXTURES_SCHEMA
 
@@ -85,6 +85,177 @@ def test_the_pack_passes_its_recorded_fixtures():
     report = run_pack_tests(PACK)
     assert report["passed"], render(report)
 '''
+
+_DEVICE_TEST_SOURCE = '''"""Run the offline conformance suite against this pack's runner: ``flyto pack conform`` under pytest."""
+
+from pathlib import Path
+
+from core.pack.conformance import conform, render
+
+PACK = Path(__file__).resolve().parents[1]
+
+
+def test_the_pack_conforms():
+    report = conform(PACK)
+    assert report["conformant"], render(report)
+'''
+
+DEVICE_RUNNER = "runner/main.py"
+#: The device adapter's runner: standard library only, one simulated device.
+#: ``__NAMESPACE__`` is replaced by the pack's namespace.
+_DEVICE_RUNNER_SOURCE = r'''"""Device adapter runner: one simulated device with a bounded setpoint, served over JSON-RPC on stdio.
+
+Standard library only. Replace ``SimulatedDevice`` with your device's own
+driver (serial, fieldbus, a vendor SDK); keep the rest. A host relies on:
+
+* every call answered, as ``{"ok": true, "data": ...}`` or
+  ``{"ok": false, "error": {"code", "message"}}``;
+* a value outside the bounds published in ``flyto-pack.json`` refused, never
+  clamped;
+* the stop answering always, as its own capability;
+* ``move_to`` reporting the measured position it ended at, so the host judges
+  the contract's evidence itself.
+
+Check it offline: ``flyto pack conform PACK_DIR``.
+"""
+
+import json
+import sys
+
+PACK_VERSION = "0.1.0"
+NAMESPACE = "__NAMESPACE__"
+# The bounds published in flyto-pack.json (params_schema.target.min/max).
+BOUNDS = (0.0, 100.0)
+
+
+class RefusedError(Exception):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+
+class SimulatedDevice:
+    """A simulated device. A real adapter talks to the device here."""
+
+    def __init__(self):
+        self.position = 0.0
+        self.stopped = False
+
+    def move_to(self, target):
+        low, high = BOUNDS
+        if not low <= target <= high:
+            raise RefusedError("OUT_OF_BOUNDS", f"target {target} is outside {low}..{high}")
+        self.stopped = False
+        self.position = float(target)
+        return self.position
+
+    def stop(self):
+        self.stopped = True
+
+
+DEVICE = SimulatedDevice()
+
+
+def _number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise RefusedError("INVALID_ARGUMENT", "target must be a number")
+    return float(value)
+
+
+def move_to(params):
+    return {"device_state": {"position": DEVICE.move_to(_number(params.get("target")))}}
+
+
+def read_state(_params):
+    return {"device_state": {"position": DEVICE.position}, "stopped": DEVICE.stopped}
+
+
+def stop(_params):
+    DEVICE.stop()
+    return {"stopped": True}
+
+
+# module_id -> handler: the one place a call is routed.
+HANDLERS = {
+    NAMESPACE + ".move_to": move_to,
+    NAMESPACE + ".read_state": read_state,
+    NAMESPACE + ".stop": stop,
+}
+
+
+def _invoke(params):
+    handler = HANDLERS.get(params.get("step"))
+    if handler is None:
+        return {"ok": False, "error": {"code": "UNKNOWN_MODULE", "message": "this pack does not serve that module"}}
+    try:
+        return {"ok": True, "data": handler(params.get("input") or {})}
+    except RefusedError as refused:
+        return {"ok": False, "error": {"code": refused.code, "message": str(refused)}}
+
+
+METHODS = {
+    "handshake": lambda params: {"pluginVersion": PACK_VERSION, "protocolVersion": params.get("protocolVersion")},
+    "ping": lambda _params: {},
+    "invoke": _invoke,
+}
+
+
+def _reply(message_id, result=None, error=None):
+    message = {"jsonrpc": "2.0", "id": message_id}
+    message.update({"error": error} if error else {"result": result})
+    sys.stdout.write(json.dumps(message) + "\n")
+    sys.stdout.flush()
+
+
+def serve():
+    for line in sys.stdin:
+        if not line.strip():
+            continue
+        try:
+            request = json.loads(line)
+        except ValueError:
+            continue
+        method, message_id = request.get("method"), request.get("id")
+        if method == "shutdown":
+            _reply(message_id, {})
+            return
+        handler = METHODS.get(method)
+        if handler is None:
+            _reply(message_id, error={"code": -32601, "message": f"unknown method {method}"})
+            continue
+        _reply(message_id, handler(request.get("params") or {}))
+
+
+if __name__ == "__main__":
+    serve()
+'''
+
+
+def _device_modules(namespace: str) -> List[Dict[str, Any]]:
+    """The device template's rows: capability contracts with every fact but the consequence (``safety_class``)."""
+    return [
+        {"module_id": f"{namespace}.move_to", "label": "Move to a setpoint",
+         "description": "Moves the simulated device to a setpoint, refusing any target outside its bounds.",
+         "provides_capability": f"{namespace}.move_to",
+         "params_schema": {"target": {"type": "number", "required": True, "min": 0, "max": 100}},
+         "timeout_ms": 30000,
+         "contract": {"actuates": True, "requires_safe_stop": True, "cancellable": True, "idempotent": False,
+                      "effects": ["position.changed"], "expected_duration_ms": 20000,
+                      "evidence": [{"kind": "setpoint_reached", "observe": "device_state",
+                                    "phases": ["after", "settled"],
+                                    "measure": {"op": "distance_to", "fields": ["position"]},
+                                    "expect": {"arguments": {"position": "target"}},
+                                    "tolerance": {"absolute": 0.5}}]}},
+        {"module_id": f"{namespace}.read_state", "label": "Read the device state",
+         "description": "Reports the simulated device's position. Moves nothing.",
+         "provides_capability": f"{namespace}.read_state",
+         "contract": {"actuates": False, "requires_safe_stop": False, "cancellable": True, "idempotent": True}},
+        {"module_id": f"{namespace}.stop", "label": "Stop the device",
+         "description": "Stops the simulated device where it is.",
+         "provides_capability": f"{namespace}.stop",
+         "contract": {"actuates": True, "requires_safe_stop": False, "cancellable": False, "idempotent": True,
+                      "role": "safe_stop", "effects": ["safe_stop"]}},
+    ]
 
 
 def _fail(code: str, message: str) -> None:
@@ -190,17 +361,8 @@ def _dump(document: Any) -> str:
     return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
 
 
-def init_pack(target: os.PathLike[str] | str, *, openapi: Optional[os.PathLike[str] | str] = None,
-              pack_id: Optional[str] = None, namespace: Optional[str] = None,
-              probe: Optional[str] = None) -> Dict[str, Any]:
-    """Scaffold a connector pack in ``target``; returns what was written and what is left to decide.
-
-    Everything is checked before the first file is written, so a refusal
-    leaves nothing behind.
-    """
-    root = Path(target)
-    _empty_target(root)
-    pack_id, namespace = _names(root, pack_id, namespace)
+def _connector_files(pack_id: str, namespace: str, *, openapi: Any, probe: Optional[str]) -> Dict[str, Any]:
+    """The connector template: manifest, recorded fixtures and the pytest file."""
     unmapped: List[Dict[str, str]] = []
     if openapi is not None:
         draft = _read_openapi(openapi)
@@ -225,17 +387,63 @@ def init_pack(target: os.PathLike[str] | str, *, openapi: Optional[os.PathLike[s
         "entitlements": entitlements,
         "scopes": scopes,
     }
+    return {"files": {MANIFEST_FILENAME: _dump(manifest), FIXTURES_PATH: _dump(fixtures), TEST_FILE: _TEST_SOURCE},
+            "undecided": sorted(op["id"] for op in connector["operations"]), "unmapped": unmapped}
+
+
+def _device_files(pack_id: str, namespace: str, *, openapi: Any, probe: Optional[str]) -> Dict[str, Any]:
+    """The device-adapter template: a module pack, its simulated-device runner and the pytest file."""
+    if openapi is not None or probe is not None:
+        _fail("INIT_TEMPLATE_CONFLICT", "--openapi and --probe describe an HTTP API; a device adapter has none")
+    modules = _device_modules(namespace)
+    manifest = {
+        "schema": PACK_SCHEMA,
+        "pack": {"id": pack_id, "version": "0.1.0", "namespaces": [namespace],
+                 "title": f"{namespace} device adapter",
+                 "description": f"A {namespace} device adapter, scaffolded against a simulated device.",
+                 "min_host": _host_version()},
+        "runtime": {"binding": "subprocess-jsonrpc", "language": "python", "entry": DEVICE_RUNNER,
+                    "request_timeout_ms": 30000},
+        "modules": modules,
+    }
+    return {"files": {MANIFEST_FILENAME: _dump(manifest),
+                      DEVICE_RUNNER: _DEVICE_RUNNER_SOURCE.replace("__NAMESPACE__", namespace),
+                      TEST_FILE: _DEVICE_TEST_SOURCE},
+            "undecided": sorted(row["module_id"] for row in modules), "unmapped": []}
+
+
+#: ``--template`` -> what it writes. Each returns ``{files, undecided, unmapped}`` and writes nothing itself.
+TEMPLATES: Mapping[str, Any] = {
+    "connector": _connector_files,
+    "device-adapter": _device_files,
+}
+
+
+def init_pack(target: os.PathLike[str] | str, *, openapi: Optional[os.PathLike[str] | str] = None,
+              pack_id: Optional[str] = None, namespace: Optional[str] = None,
+              probe: Optional[str] = None, template: str = "connector") -> Dict[str, Any]:
+    """Scaffold a pack from ``template`` in ``target``; returns what was written and what is left to decide.
+
+    Everything is checked before the first file is written, so a refusal
+    leaves nothing behind.
+    """
+    if template not in TEMPLATES:
+        _fail("INIT_TEMPLATE_UNKNOWN", f"template is one of {', '.join(TEMPLATES)}")
+    root = Path(target)
+    _empty_target(root)
+    pack_id, namespace = _names(root, pack_id, namespace)
+    scaffold = TEMPLATES[template](pack_id, namespace, openapi=openapi, probe=probe)
     root.mkdir(parents=True, exist_ok=True)
-    _write(root / MANIFEST_FILENAME, _dump(manifest))
-    _write(root / FIXTURES_PATH, _dump(fixtures))
-    _write(root / TEST_FILE, _TEST_SOURCE)
+    for rel, text in scaffold["files"].items():
+        _write(root.joinpath(*rel.split("/")), text)
     return {
         "pack_dir": str(root),
         "pack_id": pack_id,
         "namespace": namespace,
-        "written": [MANIFEST_FILENAME, FIXTURES_PATH, TEST_FILE],
-        "undecided": sorted(op["id"] for op in connector["operations"]),
-        "unmapped": unmapped,
+        "template": template,
+        "written": list(scaffold["files"]),
+        "undecided": scaffold["undecided"],
+        "unmapped": scaffold["unmapped"],
     }
 
 
@@ -268,30 +476,59 @@ def _raw_manifest(root: Path) -> Dict[str, Any]:
     return document
 
 
-def decide_consequences(pack_dir: os.PathLike[str] | str, decisions: Mapping[str, str]) -> Dict[str, Any]:
-    """Record the author's consequence for each named operation; returns what is still undecided.
+def _decision_targets(document: Mapping[str, Any]) -> Tuple[Dict[str, Dict[str, Any]], Any]:
+    """``({id: the object a decision edits}, how a level is written into it)`` for a connector or module pack."""
+    connector = document.get("connector")
+    operations = connector.get("operations") if isinstance(connector, dict) else None
+    if isinstance(operations, list):
+        return ({op.get("id"): op for op in operations if isinstance(op, dict)},
+                lambda op, level: op.__setitem__("consequence", level))
+    modules = document.get("modules")
+    if isinstance(modules, list):
+        rows = {row.get("module_id"): row for row in modules
+                if isinstance(row, dict) and isinstance(row.get("contract"), dict)}
+        return rows, _decide_module
+    _fail("CONNECTOR_REQUIRED", "only a connector pack or a module pack with contracts has consequences to decide")
 
-    Every decision is checked before the manifest is written: an operation the
-    connector does not declare (``CONSEQUENCE_TARGET_UNKNOWN``) or a level
-    that is not one of :data:`~core.pack.connector.CONSEQUENCES`
-    (``CONSEQUENCE_UNKNOWN``) refuses all of them.
+
+def _decide_module(row: Dict[str, Any], level: str) -> None:
+    """A module's consequence is its contract's ``safety_class``, with the level's effect class added."""
+    stated = CONSEQUENCE_CONTRACTS[level]
+    contract = row["contract"]
+    contract["safety_class"] = stated["safety_class"]
+    effects = list(contract.get("effects") or [])
+    contract["effects"] = effects + [effect for effect in stated["effects"] if effect not in effects]
+
+
+def _decided(target: Mapping[str, Any]) -> Optional[str]:
+    """What is decided for one target now: an operation's consequence, a module's safety class."""
+    return target.get("consequence") if "module_id" not in target else target["contract"].get("safety_class")
+
+
+def decide_consequences(pack_dir: os.PathLike[str] | str, decisions: Mapping[str, str]) -> Dict[str, Any]:
+    """Record the author's consequence for each named operation or module; returns what is still undecided.
+
+    Every decision is checked before the manifest is written: an operation or
+    module the pack does not declare (``CONSEQUENCE_TARGET_UNKNOWN``) or a
+    level that is not one of :data:`~core.pack.connector.CONSEQUENCES`
+    (``CONSEQUENCE_UNKNOWN``) refuses all of them. A module's level is
+    written as its contract's ``safety_class`` and effect class
+    (:data:`~core.pack.connector.CONSEQUENCE_CONTRACTS`), the same statement
+    a connector operation's level becomes.
     """
     root = Path(pack_dir)
     document = _raw_manifest(root)
-    connector = document.get("connector")
-    operations = connector.get("operations") if isinstance(connector, dict) else None
-    if not isinstance(operations, list):
-        _fail("CONNECTOR_REQUIRED", "only a connector pack declares operations to decide")
-    by_id = {op.get("id"): op for op in operations if isinstance(op, dict)}
-    for op_id, level in decisions.items():
-        if op_id not in by_id:
-            _fail("CONSEQUENCE_TARGET_UNKNOWN", f"the connector declares no operation {op_id}")
+    targets, write = _decision_targets(document)
+    for target_id, level in decisions.items():
+        if target_id not in targets:
+            _fail("CONSEQUENCE_TARGET_UNKNOWN", f"the pack declares no operation or module {target_id}")
         if level not in CONSEQUENCES:
-            _fail("CONSEQUENCE_UNKNOWN", f"consequence for {op_id} is not one of {', '.join(CONSEQUENCES)}")
+            _fail("CONSEQUENCE_UNKNOWN", f"consequence for {target_id} is not one of {', '.join(CONSEQUENCES)}")
     changed = {}
-    for op_id, level in decisions.items():
-        changed[op_id] = {"from": by_id[op_id].get("consequence"), "to": level}
-        by_id[op_id]["consequence"] = level
+    for target_id, level in decisions.items():
+        target = targets[target_id]
+        changed[target_id] = {"from": _decided(target), "to": level}
+        write(target, level)
     (root / MANIFEST_FILENAME).write_text(_dump(document), encoding="utf-8")
-    undecided = sorted(op_id for op_id, op in by_id.items() if isinstance(op_id, str) and op.get("consequence") is None)
+    undecided = sorted(t for t, target in targets.items() if isinstance(t, str) and _decided(target) is None)
     return {"decided": changed, "undecided": undecided}

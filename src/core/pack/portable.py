@@ -49,7 +49,7 @@ import tempfile
 import unicodedata
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 from .manifest import (
     MANIFEST_FILENAME,
@@ -599,9 +599,17 @@ def verify_pack_dir(
     trusted_keys: Optional[Mapping[str, Any]] = None,
     require_signature: bool = True,
     revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
 ) -> Dict[str, Any]:
-    """Verify one pack directory without installing it; returns what was verified."""
-    from .signature import read_signature, verify_manifest_signature
+    """Verify one pack directory without installing it; returns what was verified.
+
+    The publisher check is ``install_pack``'s own (``verify_publisher``), and
+    so is the certification policy, so what verifies here installs there.
+    """
+    from .host import _host_version
+    from .publisher_keys import verify_publisher
+    from .signature import read_signature
     from .supply_chain import pack_digest
 
     manifest = read_pack_manifest(root)
@@ -612,12 +620,10 @@ def verify_pack_dir(
     if digest is not None and pack_tree_digest(root) != digest:
         _fail("DIGEST_MISMATCH", "pack files do not match artifact.digest")
     requirements = _check_portable_tree(root, manifest) if "standalone" in manifest else None
-    signature_doc = read_signature(root)
-    signature = None
-    if signature_doc is not None:
-        signature = verify_manifest_signature(manifest, signature_doc, trusted_keys or {})
-    elif require_signature:
-        _fail("UNSIGNED", "pack is not signed (pass --allow-unsigned to accept it)")
+    signature = verify_publisher(manifest, read_signature(root), trusted_keys=trusted_keys,
+                                 require_signature=require_signature, revocations=revocations,
+                                 key_rotations=key_rotations)
+    certified = certification.check(manifest, host_version=_host_version()) if certification is not None else None
     report: Dict[str, Any] = {
         "pack_id": manifest["pack"]["id"],
         "version": manifest["pack"]["version"],
@@ -629,6 +635,9 @@ def verify_pack_dir(
                        if revocations is not None else "no list configured"),
         "module_ids": [row["module_id"] for row in manifest["modules"]],
     }
+    if certified is not None:
+        report["certification"] = {"certifier_key_id": certified["certifier_key_id"],
+                                   "certified_at": certified["certified_at"], "core": certified["core"]}
     if requirements is not None:
         report["standalone"] = {"transports": manifest["standalone"]["transports"],
                                 "credentials": [item["name"] for item in manifest["standalone"]["credentials"]],
@@ -642,11 +651,13 @@ def verify_pack(
     trusted_keys: Optional[Mapping[str, Any]] = None,
     require_signature: bool = True,
     revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
 ) -> Dict[str, Any]:
     """Verify a pack directory or zip: digest, signature, revocation, and a portable pack's tree."""
     with opened_pack(source) as root:
         return verify_pack_dir(root, trusted_keys=trusted_keys, require_signature=require_signature,
-                               revocations=revocations)
+                               revocations=revocations, key_rotations=key_rotations, certification=certification)
 
 
 # ---------------------------------------------------------------------------

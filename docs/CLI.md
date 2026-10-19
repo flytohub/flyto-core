@@ -124,6 +124,10 @@ flyto pack test items-pack
 flyto pack build items-pack --lock requirements.lock --key publisher.pem --key-id publisher-1
 flyto pack serve-fixtures items-pack --port 8799
 flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub --provider-base-url http://127.0.0.1:8799
+flyto pack certify items-0.1.0.zip --trusted-key publisher-1=publisher.pub --key certifier.pem --key-id certifier-1
+flyto pack matrix --json
+flyto pack rotate-key --key publisher.pem --key-id publisher-1 --new-public publisher-2.pub --new-key-id publisher-2 -o rotation.json
+flyto pack init device-pack --template device-adapter
 ```
 
 - `init` writes a connector pack: the manifest (`connector`, `entitlements`,
@@ -142,6 +146,20 @@ flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub --provide
   `run` and `health` reach it with `--provider-base-url`, which accepts only a
   loopback address or a host already in `FLYTO_ALLOWED_HOSTS`
   (`PROVIDER_BASE_URL_REFUSED` otherwise).
+- `init --template device-adapter` writes a module pack for a device that
+  speaks no HTTP: capability contracts without a consequence, a
+  standard-library runner against a simulated device, and a pytest file that
+  runs `conform`.
+- `certify` runs verify, the compatibility check, `conform`, `test` and
+  standalone `health` (both against the pack's recorded fixtures) and signs a
+  `flyto.pack-certification.v1` record only when every applicable check
+  passes. `verify`, `run` and `health` enforce a certification policy with
+  `--certification-policy`, `--certifier-key` and `--certification`.
+- `matrix` prints the generated pack feature by flyto-core version matrix,
+  plus the packs that verified certification records certify.
+- `rotate-key` signs a publisher key rotation statement with the old key;
+  `--key-rotation FILE` lets a host that trusts the old key verify packs signed
+  with the new one.
 
 ## Templates
 

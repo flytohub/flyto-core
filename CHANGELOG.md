@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Adapter ecosystem (J17). `flyto pack certify PACK` runs verify, the
+  declared-compatibility check, conform, `pack test` and standalone health
+  (against the pack's own recorded fixtures) and signs a
+  `flyto.pack-certification.v1` record only when every applicable check
+  passes. A host policy table (`flyto.pack-certification-policy.v1`) can
+  require certification by named certifier keys: `install_pack` and
+  `verify_pack` take `certification=` and refuse `PACK_UNCERTIFIED` /
+  `CERTIFICATION_STALE` (`core.pack.certification`).
+- The pack feature x flyto-core version matrix is generated
+  (`core.pack.compatibility.compatibility_matrix`,
+  `docs/reference/pack-compatibility-matrix.json` and `.md`, `flyto pack
+  matrix`); a test fails when the committed copy is stale.
+- `upgrade` manifest section (`supersedes`, `rollback`, `migrations`;
+  feature `pack.upgrade`, 2.41.0) and `install_pack(..., upgrade_from=...)`:
+  `UPGRADE_UNDECLARED`, `ROLLBACK_UNDECLARED`, `VERSION_REBUILT`,
+  `ROLLBACK_IRREVERSIBLE` (`core.pack.upgrade`).
+- Publisher key rotation (`flyto.publisher-key-rotation.v1`,
+  `core.pack.publisher_keys`, `flyto pack rotate-key`, `--key-rotation`):
+  a bounded chain from a trusted key; `KEY_ROTATION_BROKEN`,
+  `KEY_ROTATION_TOO_LONG`. Revocation list `flyto.pack-revocations.v2` adds
+  `revoked_keys`: a revoked key revokes every pack it signed after the
+  revocation point (`retained` digests mark what it signed before).
+- `flyto pack init --template device-adapter`: a module pack with capability
+  contracts and no consequence, a stdlib runner against a simulated device
+  and a conformance test. A declared module row without
+  `contract.safety_class` is `CONSEQUENCE_MISSING`; `flyto pack consequence`
+  decides module rows as well as connector operations.
+
 - Provider developer kit. `flyto pack init DIR [--openapi FILE]` scaffolds a
   connector pack: the manifest with `connector`, `entitlements`, `scopes`
   and `standalone`, recorded fixtures (`flyto.pack-fixtures.v1`) and a

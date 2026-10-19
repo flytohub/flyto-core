@@ -647,12 +647,59 @@ so it is admitted narrowly:
 - **Updates** are a new pinned version: a new manifest, a new digest, a new
   zip. A build never writes over an existing file, and installing an id that
   is already installed is refused (`ALREADY_INSTALLED`).
+- **Key revocation** (`flyto.pack-revocations.v2`, its own signing domain)
+  adds `revoked_keys: [{key_id, reason, since, retained}]` to the list body.
+  Revoking a key revokes every pack it signed after the revocation point. A
+  signature carries no time a compromised key could not forge, so the point
+  is the set of digests the key signed before it (`retained`: pack digests
+  and rotation statement digests). Any other pack signed by, or declaring
+  `publisher_key_id` of, that key is `PACK_REVOKED`; any other rotation
+  statement it signed is `PUBLISHER_KEY_REVOKED`. A v1 list loads unchanged.
+- **Key rotation** (`flyto.publisher-key-rotation.v1`,
+  `core.pack.publisher_keys`): a statement signed by the old key names the new
+  key id and its raw public key. `install_pack(..., key_rotations=[...])` and
+  `--key-rotation FILE` follow at most 8 statements from a trusted key;
+  `KEY_ROTATION_BROKEN` when one does not connect, is not signed by its old
+  key, or rebinds a known key id; `KEY_ROTATION_TOO_LONG` past 8. The old key
+  stays trusted for what it signed; retiring it is a revocation.
+- **Certification** (`flyto.pack-certification.v1`, `core.pack.certification`):
+  `flyto pack certify` and the host policy table
+  (`flyto.pack-certification-policy.v1`; `install_pack(..., certification=...)`,
+  `PACK_UNCERTIFIED`, `CERTIFICATION_STALE`). Specified in
+  [the adapter compatibility spec](ADAPTER_COMPATIBILITY_MATRIX.md).
+
+## Upgrades: `upgrade` (2.41.0)
+
+```json
+"upgrade": {"supersedes": ["0.1.0", "0.2.0"], "rollback": ["0.2.0"],
+            "migrations": [{"from": "0.1.0", "state": "calibration", "reversible": false}]}
+```
+
+`supersedes` names the earlier versions this one upgrades from; `rollback`
+the ones it may be replaced by again (a subset of `supersedes`);
+`migrations` the stored state that changes when upgrading from a version.
+Malformed is `INVALID_UPGRADE`; a declared rollback across an irreversible
+migration is `ROLLBACK_IRREVERSIBLE`. `install_pack(..., upgrade_from=RUNNING)`
+calls `core.pack.upgrade.check_transition`, whose table refuses an
+undeclared upgrade (`UPGRADE_UNDECLARED`), an undeclared downgrade
+(`ROLLBACK_UNDECLARED`), the same version with other content
+(`VERSION_REBUILT`) and another pack (`PACK_ID_MISMATCH`). It returns the
+migrations the switch crosses; running them is the pack's own runtime's job.
+
+## Module consequences
+
+A declared module row whose `contract` has no `safety_class` is refused with
+`CONSEQUENCE_MISSING`, naming every such module, as an undecided connector
+operation is. `flyto pack consequence DIR MODULE=LEVEL` writes the level's
+`safety_class` and adds its effect class (`CONSEQUENCE_CONTRACTS`), the same
+statement an operation's level becomes. `flyto pack init --template
+device-adapter` writes every contract that way.
 
 ## CLI
 
 ```
-flyto pack init <dir> [--openapi FILE] [--pack-id ID] [--namespace NS] [--probe OPERATION]
-flyto pack consequence <dir> OPERATION=LEVEL ...
+flyto pack init <dir> [--template connector|device-adapter] [--openapi FILE] [--pack-id ID] [--namespace NS] [--probe OPERATION]
+flyto pack consequence <dir> TARGET=LEVEL ...
 flyto pack doctor <dir> [--json]
 flyto pack test <dir> [--json]
 flyto pack manifest <entry-point|module:callable> [--pack-id ID] [--version V] [-o FILE]
@@ -667,12 +714,16 @@ flyto pack verify <dir|zip> [--trusted-key ID=FILE ...] [--allow-unsigned] [--re
 flyto pack run <dir|zip> [--transport stdio|streamable_http] [--host 127.0.0.1] [--port N] [trust options] [--provider-base-url URL]
 flyto pack health <dir|zip> [trust options] [--provider-base-url URL]
 flyto pack serve-fixtures <dir> [--port N]
+flyto pack certify <zip|dir> --key PRIVATE_PEM --key-id ID [-o FILE] [--json] [--trusted-key ID=FILE ...] [--key-rotation FILE ...]
+flyto pack matrix [--json] [--certification FILE ... --certifier-key ID=FILE ...]
+flyto pack rotate-key --key OLD_PEM --key-id OLD --new-public NEW_PUB --new-key-id NEW -o FILE
 flyto bundle build <dir> --pack ZIP ... [-o ZIP] [--key PRIVATE_PEM --key-id ID]
 flyto bundle verify <dir|zip> --pack ZIP ... [trust options]
 ```
 
 Trust options are `--trusted-key`, `--allow-unsigned`, `--revocations` and
-`--revocation-key`. Every refusal prints `error [CODE]: …` and exits 1.
+`--revocation-key`. `verify`, `run` and `health` also take `--key-rotation`,
+`--certification-policy`, `--certifier-key` and `--certification`. Every refusal prints `error [CODE]: …` and exits 1.
 
 ## Developing a pack offline: `flyto.pack-fixtures.v1`
 

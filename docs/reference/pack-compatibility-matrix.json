@@ -1,0 +1,182 @@
+{
+  "schema": "flyto.pack-compatibility-matrix.v1",
+  "matrix_version": "1",
+  "conformance_suite": "flyto.pack-conformance.v1",
+  "core_versions": [
+    "2.35.0",
+    "2.36.0",
+    "2.37.0",
+    "2.38.0",
+    "2.39.0",
+    "2.40.0",
+    "2.41.0"
+  ],
+  "features": [
+    {
+      "feature": "capability_contract.v1",
+      "since": "2.35.0",
+      "describes": "`contract` on a module row (`flyto.capability-contract.v1`)",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": true,
+        "2.36.0": true,
+        "2.37.0": true,
+        "2.38.0": true,
+        "2.39.0": true,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "contract.optional_fields",
+      "since": "2.36.0",
+      "describes": "`role`, `artifacts`, `recovery`, `expected_duration_ms`",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": true,
+        "2.37.0": true,
+        "2.38.0": true,
+        "2.39.0": true,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "pack.v1",
+      "since": "2.37.0",
+      "describes": "`flyto.pack.v1` manifest, `subprocess-jsonrpc` and `http` bindings",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": true,
+        "2.38.0": true,
+        "2.39.0": true,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "evidence.absolute_targets",
+      "since": "2.38.0",
+      "describes": "`distance_to` / `angle_to` measure ops, `measure.frame`",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": true,
+        "2.39.0": true,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "recovery.semantics",
+      "since": "2.39.0",
+      "describes": "`recovery.on` / `alternatives` / `preserves` / `resource_scope` / `fills`",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": true,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "evidence.display_keys",
+      "since": "2.40.0",
+      "describes": "evidence `label`, `unit`, `channel`",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": true,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "contract.resource_states",
+      "since": "2.41.0",
+      "describes": "`establishes`, `occupies`",
+      "reads": "row",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": false,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "pack.connector",
+      "since": "2.41.0",
+      "describes": "`connector` section and `connector` binding (operations become modules)",
+      "reads": "manifest",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": false,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "pack.entitlements",
+      "since": "2.41.0",
+      "describes": "`entitlements` probe and `scopes` sections (the connector pre-check)",
+      "reads": "manifest",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": false,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "pack.standalone",
+      "since": "2.41.0",
+      "describes": "`standalone` section (runs on its own as an MCP server; portable zip)",
+      "reads": "manifest",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": false,
+        "2.41.0": true
+      }
+    },
+    {
+      "feature": "pack.upgrade",
+      "since": "2.41.0",
+      "describes": "`upgrade` section (`supersedes`, `rollback`, `migrations`)",
+      "reads": "manifest",
+      "accepted": {
+        "2.35.0": false,
+        "2.36.0": false,
+        "2.37.0": false,
+        "2.38.0": false,
+        "2.39.0": false,
+        "2.40.0": false,
+        "2.41.0": true
+      }
+    }
+  ],
+  "certified": []
+}

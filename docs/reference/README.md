@@ -9,6 +9,7 @@
 - [HTTP route reference](http-api.md): every FastAPI route with mount and decorator-auth status.
 - [Configuration and packaged assets](configuration.md): environment readers, recipes, bundles, and workflow files.
 - [Packaged recipe reference](recipes.md): every recipe parameter and composed module step.
+- [Pack compatibility matrix](pack-compatibility-matrix.md): every pack feature against the flyto-core releases that accept it ([JSON](pack-compatibility-matrix.json)).
 - [Runtime Tool Catalog](../TOOL_CATALOG.md): all registry-discovered modules with parameter and output schemas.
 
 Run `.venv/bin/python scripts/generate_reference.py` after changing documented

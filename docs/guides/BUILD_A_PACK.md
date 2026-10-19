@@ -132,9 +132,10 @@ A Space installs the same zip from a file, through the same `install_pack` call
 the standalone server uses:
 
 ```python
+import asyncio
 from pathlib import Path
 
-from core.pack.host import install_pack
+from core.pack.host import install_pack, uninstall_pack
 from core.pack.portable import extract_pack_zip
 
 Path("space-copy").mkdir()
@@ -142,10 +143,12 @@ extract_pack_zip("items-0.1.0.zip", "space-copy")
 provenance = install_pack("space-copy", trusted_keys={"publisher-1": Path("publisher.pub").read_text()})
 assert provenance.signature_verified
 print(provenance.module_ids)
+asyncio.run(uninstall_pack("com.example.items"))
 ```
 
 Each operation is a module with the same id (`items.item.get`), and the Space
-supplies the credential under the same name.
+supplies the credential under the same name. `uninstall_pack` unloads it
+again.
 
 ## 7. Start from an OpenAPI document
 
@@ -237,3 +240,91 @@ flyto pack test examples/packs/product-combinations
 
 `tests/core/pack/test_product_combinations.py` checks all eight rows of the table
 above, written out by hand.
+
+## 9. Certify and publish privately
+
+Certification runs every offline check on the built zip and signs one record
+when all of them pass. A certifier may be you, your customer's own security
+team, or anyone a host chooses to trust; it needs no Flyto2 service.
+
+```sh
+flyto pack keygen --private certifier.pem --public certifier.pub
+flyto pack certify items-0.1.0.zip --trusted-key publisher-1=publisher.pub --key certifier.pem --key-id certifier-1 -o items-0.1.0.certification.json
+flyto pack matrix --certification items-0.1.0.certification.json --certifier-key certifier-1=certifier.pub
+```
+
+`certify` runs `verify`, the declared-compatibility check against the host
+matrix, `conform`, `pack test` against the recorded fixtures inside the zip,
+and standalone `health` against those same fixtures with a fixture customer's
+test credential. A pack that fails `verify` is not run at all. The record
+(`flyto.pack-certification.v1`) names the pack digest, the flyto-core range it
+passed on, each check's result and the certifier key id. It is evidence level
+D2 and says `hardware_acceptance: NOT_VERIFIED`. `matrix` prints the pack
+feature by flyto-core version matrix, with the packs the given records
+certify. The same matrix, without certifications, is generated into
+[the reference](../reference/pack-compatibility-matrix.md).
+
+A host can require certification with a policy table. The first rule whose
+`packs` pattern matches the pack id decides:
+
+<!-- file: certification-policy.json -->
+```json
+{"schema": "flyto.pack-certification-policy.v1",
+ "rules": [{"packs": "com.example.*", "require": true, "certifiers": ["certifier-1"], "max_age_days": 365}]}
+```
+
+```sh
+flyto pack verify items-0.1.0.zip --trusted-key publisher-1=publisher.pub --certification-policy certification-policy.json --certifier-key certifier-1=certifier.pub  # exit 1
+flyto pack verify items-0.1.0.zip --trusted-key publisher-1=publisher.pub --certification-policy certification-policy.json --certifier-key certifier-1=certifier.pub --certification items-0.1.0.certification.json
+```
+
+Without a record the pack is refused with `PACK_UNCERTIFIED`. A record for
+another build does not count, and a record that no longer applies (a newer
+flyto-core than it passed on, another matrix version, or older than
+`max_age_days`) is `CERTIFICATION_STALE`. `install_pack` takes the same gate.
+
+Publishing privately means handing your customers three files over a channel
+you already trust: the zip, `publisher.pub`, and the certification record. No
+marketplace and no review is involved. A Desktop Space keeps them under its
+own trust folder and installs from file.
+
+When you replace your publisher key, sign a rotation statement with the old
+key. A host that trusts the old key follows it, with no new key exchange:
+
+```sh
+flyto pack keygen --private publisher-2.pem --public publisher-2.pub
+flyto pack rotate-key --key publisher.pem --key-id publisher-1 --new-public publisher-2.pub --new-key-id publisher-2 -o rotation-1-to-2.json
+flyto pack build items-pack --lock requirements.lock --key publisher-2.pem --key-id publisher-2 -o items-0.1.0-key2.zip
+flyto pack verify items-0.1.0-key2.zip --trusted-key publisher-1=publisher.pub  # exit 1
+flyto pack verify items-0.1.0-key2.zip --trusted-key publisher-1=publisher.pub --key-rotation rotation-1-to-2.json
+```
+
+A chain that does not connect is `KEY_ROTATION_BROKEN`. If a key is
+compromised, the revocation list (`flyto.pack-revocations.v2`) revokes the key
+and every pack it signed except the ones it lists as signed before the
+compromise. A new version declares the versions it upgrades from in its
+`upgrade` section; a host refuses an undeclared upgrade or rollback. See
+[the compatibility spec](../specs/ADAPTER_COMPATIBILITY_MATRIX.md).
+
+## 10. A device adapter
+
+A device that speaks no HTTP gets a module pack instead of a connector:
+capability contracts served by your own runner over JSON-RPC on stdio. The
+template drives a simulated device; replace it with your device's driver.
+
+```sh
+flyto pack init device-pack --template device-adapter --pack-id com.example.device
+flyto pack doctor device-pack  # exit 1
+flyto pack consequence device-pack device.move_to=real_world device.read_state=observe device.stop=real_world
+flyto pack conform device-pack
+flyto pack sign device-pack --key publisher-2.pem --key-id publisher-2
+flyto pack certify device-pack --trusted-key publisher-2=publisher-2.pub --key certifier.pem --key-id certifier-1 -o device-0.1.0.certification.json
+```
+
+The template sets every fact of each contract except its consequence: whether
+it actuates, its bounds, its evidence and its stop. The consequence becomes the
+contract's `safety_class`, and until you decide it the pack is refused with
+`CONSEQUENCE_MISSING`, naming each module. `conform` calls the movement once
+inside its bounds and once outside them, so run it against the simulator, or
+with the machine clear of people. Certifying a module pack runs its runner
+through `conform`; `pack test` and standalone health do not apply to it.

@@ -200,7 +200,7 @@ def _run_page(workdir, capsys, monkeypatch, ran, standalone, background):
 def test_the_page_covers_the_whole_path():
     subcommands = [shlex.split(EXIT.sub("", line))[2] for line in commands() if line.startswith("flyto ")]
     for step in ("init", "doctor", "consequence", "test", "keygen", "build", "verify", "serve-fixtures", "health",
-                 "run"):
+                 "run", "certify", "matrix", "rotate-key", "conform", "sign"):
         assert step in subcommands, f"the page has no flyto pack {step}"
     assert subcommands.index("init") < subcommands.index("test") < subcommands.index("build") < subcommands.index("run")
 

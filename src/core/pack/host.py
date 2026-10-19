@@ -37,7 +37,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..modules.base import BaseModule
 from ..plugin.manifest import (
@@ -55,7 +55,8 @@ from .manifest import (
     read_pack_manifest,
     stage_pack_tree,
 )
-from .signature import read_signature, verify_manifest_signature
+from .publisher_keys import verify_publisher
+from .signature import read_signature
 
 logger = logging.getLogger(__name__)
 
@@ -571,8 +572,25 @@ def install_pack(
     require_signature: bool = True,
     provenance_dir: Optional[os.PathLike[str] | str] = None,
     revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
+    upgrade_from: Optional[Mapping[str, Any]] = None,
 ) -> PackProvenance:
     """Verify and install one pack directory. Returns its provenance record.
+
+    ``key_rotations`` are ``flyto.publisher-key-rotation.v1`` statements a
+    signer reached from ``trusted_keys`` may be found through
+    (``core.pack.publisher_keys``). A revocation list that revokes the signing
+    key refuses every pack that key signed after its revocation point.
+
+    ``certification`` is a ``core.pack.certification.CertificationGate``: when
+    its policy table requires certification for this pack, a pack without a
+    valid record is refused (``PACK_UNCERTIFIED`` / ``CERTIFICATION_STALE``).
+
+    ``upgrade_from`` is the normalized manifest of the version this one
+    replaces. The switch must be declared (``core.pack.upgrade``): an
+    undeclared upgrade is ``UPGRADE_UNDECLARED``, an undeclared downgrade
+    ``ROLLBACK_UNDECLARED``.
 
     ``revocations`` is a verified ``core.pack.supply_chain.RevocationList``.
     A pack whose digest it names is refused (``PACK_REVOKED``) before its
@@ -597,6 +615,9 @@ def install_pack(
             require_signature=require_signature,
             provenance_dir=provenance_dir,
             revocations=revocations,
+            key_rotations=key_rotations,
+            certification=certification,
+            upgrade_from=upgrade_from,
         )
 
 
@@ -607,6 +628,9 @@ def _install_pack(
     require_signature: bool,
     provenance_dir: Optional[os.PathLike[str] | str],
     revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
+    upgrade_from: Optional[Mapping[str, Any]] = None,
 ) -> PackProvenance:
     try:
         root = Path(pack_dir).resolve(strict=True)
@@ -622,13 +646,17 @@ def _install_pack(
             "inprocess-python packs load through their flyto.modules entry point",
         )
     _check_min_host(manifest)
+    if upgrade_from is not None:
+        from .upgrade import check_transition
 
-    signature_doc = read_signature(root)
-    signature: Optional[Dict[str, str]] = None
-    if signature_doc is not None:
-        signature = verify_manifest_signature(manifest, signature_doc, trusted_keys or {})
-    elif require_signature:
-        raise PackManifestError("UNSIGNED", "pack is not signed and the host requires a signature")
+        check_transition(upgrade_from, manifest)
+
+    signature: Optional[Dict[str, str]] = verify_publisher(
+        manifest, read_signature(root), trusted_keys=trusted_keys, require_signature=require_signature,
+        revocations=revocations, key_rotations=key_rotations,
+    )
+    if certification is not None:
+        certification.check(manifest, host_version=_host_version())
 
     pack_id = manifest["pack"]["id"]
     if pack_id in _INSTALLED:

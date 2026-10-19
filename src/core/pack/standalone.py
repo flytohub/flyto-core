@@ -49,7 +49,7 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from .. import mcp_protocol
@@ -254,6 +254,8 @@ def load_standalone(
     revocations: Any = None,
     resolver_factory: Optional[Callable[[Mapping[str, Any]], Any]] = None,
     provider_base_url: Optional[str] = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
 ) -> StandalonePack:
     """Verify and install a portable pack for standalone serving; refuses with a typed reason.
 
@@ -278,9 +280,10 @@ def load_standalone(
         transport = transport or manifest["standalone"]["transports"][0]
         if transport not in manifest["standalone"]["transports"]:
             _fail("TRANSPORT_NOT_DECLARED", f"the pack does not declare the {transport} transport")
-        verification = verify_pack_dir(root, trusted_keys=trusted_keys, require_signature=require_signature,
-                                       revocations=revocations)
-        install_pack(root, trusted_keys=trusted_keys, require_signature=require_signature, revocations=revocations)
+        trust = {"trusted_keys": trusted_keys, "require_signature": require_signature, "revocations": revocations,
+                 "key_rotations": key_rotations, "certification": certification}
+        verification = verify_pack_dir(root, **trust)
+        install_pack(root, **trust)
         factory = resolver_factory or (lambda standalone: CredentialResolver(standalone))
         pack = StandalonePack(manifest=manifest, root=root, transport=transport, verification=verification,
                               resolver=factory(manifest["standalone"]), _scratch=scratch)
@@ -463,6 +466,8 @@ def health(
     revocations: Any = None,
     resolver_factory: Optional[Callable[[Mapping[str, Any]], Any]] = None,
     provider_base_url: Optional[str] = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
 ) -> Dict[str, Any]:
     """Verify, install and list a pack without serving it.
 
@@ -475,7 +480,8 @@ def health(
 
     pack = load_standalone(source, transport=None, trusted_keys=trusted_keys,
                            require_signature=require_signature, revocations=revocations,
-                           resolver_factory=resolver_factory, provider_base_url=provider_base_url)
+                           resolver_factory=resolver_factory, provider_base_url=provider_base_url,
+                           key_rotations=key_rotations, certification=certification)
 
     async def run() -> Dict[str, Any]:
         try:

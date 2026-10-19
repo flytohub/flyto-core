@@ -560,6 +560,7 @@ def reference_index() -> str:
 - [HTTP route reference](http-api.md): every FastAPI route with mount and decorator-auth status.
 - [Configuration and packaged assets](configuration.md): environment readers, recipes, bundles, and workflow files.
 - [Packaged recipe reference](recipes.md): every recipe parameter and composed module step.
+- [Pack compatibility matrix](pack-compatibility-matrix.md): every pack feature against the flyto-core releases that accept it ([JSON](pack-compatibility-matrix.json)).
 - [Runtime Tool Catalog](../TOOL_CATALOG.md): all registry-discovered modules with parameter and output schemas.
 
 Run `.venv/bin/python scripts/generate_reference.py` after changing documented
@@ -567,7 +568,29 @@ source. CI runs the same command with `--check` and rejects drift.
 """
 
 
+def pack_compatibility_matrix() -> tuple[str, str]:
+    """The pack feature x flyto-core version matrix, from ``core.pack.compatibility.FEATURES``."""
+    source = str(ROOT / "src")
+    if source not in sys.path:
+        sys.path.insert(0, source)
+    from core.pack.compatibility import compatibility_matrix, render_matrix_markdown
+
+    matrix = compatibility_matrix()
+    text = "\n".join([
+        "# Pack compatibility matrix",
+        "",
+        "Generated from `core.pack.compatibility.FEATURES` (also as",
+        "[`pack-compatibility-matrix.json`](pack-compatibility-matrix.json) and from",
+        "`flyto pack matrix`). What each check means and how a pack joins the",
+        "certified list: [the adapter compatibility spec](../specs/ADAPTER_COMPATIBILITY_MATRIX.md).",
+        "",
+        render_matrix_markdown(matrix),
+    ])
+    return json.dumps(matrix, indent=2), HEADER + text
+
+
 def outputs() -> dict[Path, str]:
+    matrix_json, matrix_markdown = pack_compatibility_matrix()
     documents = {
         REFERENCE / "README.md": reference_index(),
         REFERENCE / "source-modules.md": module_inventory(),
@@ -577,6 +600,8 @@ def outputs() -> dict[Path, str]:
         REFERENCE / "http-api.md": http_reference(),
         REFERENCE / "configuration.md": configuration_reference(),
         REFERENCE / "recipes.md": recipe_reference(),
+        REFERENCE / "pack-compatibility-matrix.json": matrix_json,
+        REFERENCE / "pack-compatibility-matrix.md": matrix_markdown,
     }
     return {path: content.rstrip() + "\n" for path, content in documents.items()}
 

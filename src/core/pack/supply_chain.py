@@ -27,6 +27,22 @@ the same ed25519 step as a pack signature. A loader that is given a list
 verifies it first — a list that does not verify refuses the start, since it
 can no longer say the pack is not revoked — then refuses a pack whose digest
 it names with ``PACK_REVOKED``, before any of the pack runs.
+
+**Key revocation** (``flyto.pack-revocations.v2``) adds ``revoked_keys`` to the
+list body, signed under its own domain::
+
+    "revoked_keys": [{"key_id": "publisher-1", "reason": "key_compromise",
+                      "since": "2026-10-01T00:00:00Z",
+                      "retained": ["sha256:<hex>", ...]}]
+
+Revoking a publisher key revokes every pack that key signed after the
+revocation point. A signature carries no time a compromised key could not
+forge, so the point is stated by what the key signed before it: the
+``retained`` digests (pack digests, and the digests of rotation statements
+the key signed, ``core.pack.publisher_keys.rotation_digest``). Anything else
+signed by that key is refused — a pack with ``PACK_REVOKED``, a rotation
+statement with ``PUBLISHER_KEY_REVOKED``. ``since`` records the point for
+people; no check reads it. A v1 list still loads and revokes no key.
 """
 
 from __future__ import annotations
@@ -34,7 +50,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
@@ -44,7 +60,9 @@ from .signature import sign_detached, verify_detached
 __all__ = [
     "LOCKFILE_FORMAT",
     "REVOCATIONS_SCHEMA",
+    "REVOCATIONS_SCHEMA_V2",
     "REVOCATION_REASONS",
+    "KeyRevocation",
     "RevocationList",
     "pack_digest",
     "parse_lockfile",
@@ -56,6 +74,16 @@ __all__ = [
 LOCKFILE_FORMAT = "pip-require-hashes"
 REVOCATIONS_SCHEMA = "flyto.pack-revocations.v1"
 REVOCATIONS_DOMAIN = b"flyto.pack-revocations.v1\n"
+REVOCATIONS_SCHEMA_V2 = "flyto.pack-revocations.v2"
+#: schema -> (signature domain, the keys its list body holds). v2 adds ``revoked_keys``.
+REVOCATION_FORMATS: Mapping[str, Tuple[bytes, FrozenSet[str]]] = {
+    REVOCATIONS_SCHEMA: (REVOCATIONS_DOMAIN, frozenset({"sequence", "issued_at", "revoked"})),
+    REVOCATIONS_SCHEMA_V2: (b"flyto.pack-revocations.v2\n",
+                            frozenset({"sequence", "issued_at", "revoked", "revoked_keys"})),
+}
+MAX_REVOKED_KEYS = 256
+MAX_RETAINED = 100_000
+_KEY_REVOCATION_KEYS = frozenset({"key_id", "reason", "since", "retained"})
 #: Why a digest is revoked. A closed vocabulary, so a loader can say why it refused.
 REVOCATION_REASONS = ("key_compromise", "malicious", "vulnerable", "withdrawn", "superseded")
 #: A signature refusal on a revocation list, as the list's own refusal; any other is ``REVOCATION_INVALID``.
@@ -160,6 +188,15 @@ def parse_lockfile(text: str, *, runtime_package: str, min_version: Optional[str
 
 
 @dataclass(frozen=True)
+class KeyRevocation:
+    """One revoked publisher key: why, from when, and what it signed before that point."""
+
+    reason: str
+    since: str
+    retained: FrozenSet[str]
+
+
+@dataclass(frozen=True)
 class RevocationList:
     """A verified revocation list."""
 
@@ -167,6 +204,7 @@ class RevocationList:
     sequence: int
     issued_at: str
     revoked: Mapping[str, str]
+    revoked_keys: Mapping[str, KeyRevocation] = field(default_factory=dict)
 
     @property
     def digests(self) -> FrozenSet[str]:
@@ -183,6 +221,24 @@ class RevocationList:
                 "PACK_REVOKED", f"pack {manifest['pack']['id']} {manifest['pack']['version']} is revoked "
                 f"({self.revoked[digest]})"
             )
+
+    def signed_after_revocation(self, key_id: Optional[str], digest: str) -> Optional[KeyRevocation]:
+        """The key's revocation when ``key_id`` is revoked and ``digest`` is not among what it signed before."""
+        revoked = self.revoked_keys.get(key_id) if key_id else None
+        if revoked is None or digest in revoked.retained:
+            return None
+        return revoked
+
+    def check_signer(self, manifest: Mapping[str, Any], key_ids: Tuple[Optional[str], ...]) -> None:
+        """Refuse a pack signed (or declared published) by a revoked key after its revocation point."""
+        digest = pack_digest(manifest)
+        for key_id in key_ids:
+            revoked = self.signed_after_revocation(key_id, digest)
+            if revoked is not None:
+                raise PackManifestError(
+                    "PACK_REVOKED", f"pack {manifest['pack']['id']} {manifest['pack']['version']} was signed by "
+                    f"revoked key {key_id} after its revocation point ({revoked.reason})"
+                )
 
 
 def _revocation_body(sequence: Any, issued_at: Any, revoked: Any) -> Dict[str, Any]:
@@ -208,29 +264,62 @@ def _revocation_body(sequence: Any, issued_at: Any, revoked: Any) -> Dict[str, A
     return {"sequence": sequence, "issued_at": issued_at, "revoked": sorted(entries, key=lambda e: e["digest"])}
 
 
+def _key_revocations(revoked_keys: Any) -> List[Dict[str, Any]]:
+    from .signature import _KEY_ID
+
+    if type(revoked_keys) is not list or len(revoked_keys) > MAX_REVOKED_KEYS:
+        _fail("REVOCATION_INVALID", "revoked_keys must be a bounded list")
+    entries = []
+    seen = set()
+    for item in revoked_keys:
+        if type(item) is not dict or set(item) != _KEY_REVOCATION_KEYS:
+            _fail("REVOCATION_INVALID", "a key revocation is {key_id, reason, since, retained}")
+        if type(item["key_id"]) is not str or not _KEY_ID.fullmatch(item["key_id"]) or item["key_id"] in seen:
+            _fail("REVOCATION_INVALID", "a key revocation names one valid key id, once")
+        seen.add(item["key_id"])
+        if item["reason"] not in REVOCATION_REASONS:
+            _fail("REVOCATION_INVALID", f"a revocation reason is one of {', '.join(REVOCATION_REASONS)}")
+        if type(item["since"]) is not str or not _TIMESTAMP.fullmatch(item["since"]):
+            _fail("REVOCATION_INVALID", "a key revocation's since must be a UTC timestamp")
+        retained = item["retained"]
+        if (type(retained) is not list or len(retained) > MAX_RETAINED
+                or any(type(d) is not str or not _DIGEST.fullmatch(d) for d in retained)
+                or len(set(retained)) != len(retained)):
+            _fail("REVOCATION_INVALID", "retained must be a bounded list of distinct sha256:<hex> digests")
+        entries.append({"key_id": item["key_id"], "reason": item["reason"], "since": item["since"],
+                        "retained": sorted(retained)})
+    return sorted(entries, key=lambda e: e["key_id"])
+
+
 def sign_revocations(revoked: List[Mapping[str, Any]], private_key: Any, key_id: str, *, sequence: int,
-                     issued_at: str) -> Dict[str, Any]:
-    """A signed ``flyto.pack-revocations.v1`` document."""
+                     issued_at: str, revoked_keys: Optional[List[Mapping[str, Any]]] = None) -> Dict[str, Any]:
+    """A signed revocation document: v1, or v2 when ``revoked_keys`` is given."""
     body = _revocation_body(sequence, issued_at, [dict(item) for item in revoked])
-    return {"schema": REVOCATIONS_SCHEMA, "list": body,
-            "signature": sign_detached(REVOCATIONS_DOMAIN, body, private_key, key_id)}
+    schema = REVOCATIONS_SCHEMA
+    if revoked_keys is not None:
+        schema = REVOCATIONS_SCHEMA_V2
+        body["revoked_keys"] = _key_revocations([dict(item) for item in revoked_keys])
+    return {"schema": schema, "list": body,
+            "signature": sign_detached(REVOCATION_FORMATS[schema][0], body, private_key, key_id)}
 
 
 def load_revocations(document: Any, trusted_keys: Mapping[str, Any]) -> RevocationList:
     """Verify a revocation document against ``trusted_keys``; refuse anything else."""
     if type(document) is not dict or set(document) != {"schema", "list", "signature"}:
         _fail("REVOCATION_INVALID", "revocation document has the wrong shape")
-    if document["schema"] != REVOCATIONS_SCHEMA:
-        _fail("REVOCATION_INVALID", f"schema must be {REVOCATIONS_SCHEMA}")
+    if document["schema"] not in REVOCATION_FORMATS:
+        _fail("REVOCATION_INVALID", f"schema must be one of {', '.join(REVOCATION_FORMATS)}")
+    domain, body_keys = REVOCATION_FORMATS[document["schema"]]
     body = document["list"]
-    if type(body) is not dict or set(body) != {"sequence", "issued_at", "revoked"}:
+    if type(body) is not dict or set(body) != body_keys:
         _fail("REVOCATION_INVALID", "revocation list has the wrong shape")
     normalized = _revocation_body(body["sequence"], body["issued_at"], body["revoked"])
+    key_entries = _key_revocations(body["revoked_keys"]) if "revoked_keys" in body_keys else []
     signature = document["signature"]
     if type(signature) is not dict or set(signature) != {"algorithm", "key_id", "signature"}:
         _fail("REVOCATION_INVALID", "revocation signature has the wrong shape")
     try:
-        key_id = verify_detached(REVOCATIONS_DOMAIN, body, signature, trusted_keys)
+        key_id = verify_detached(domain, body, signature, trusted_keys)
     except PackManifestError as exc:
         raise PackManifestError(REVOCATION_SIGNATURE_REFUSALS.get(exc.code, "REVOCATION_INVALID"),
                                 f"revocation list: {exc}") from None
@@ -239,6 +328,8 @@ def load_revocations(document: Any, trusted_keys: Mapping[str, Any]) -> Revocati
         sequence=normalized["sequence"],
         issued_at=normalized["issued_at"],
         revoked={entry["digest"]: entry["reason"] for entry in normalized["revoked"]},
+        revoked_keys={entry["key_id"]: KeyRevocation(entry["reason"], entry["since"], frozenset(entry["retained"]))
+                      for entry in key_entries},
     )
 
 

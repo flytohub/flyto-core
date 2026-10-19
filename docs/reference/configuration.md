@@ -39,7 +39,7 @@ Implementation sources read **109 environment-variable names**. The package ship
 | `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L64) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L83) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L90) |
-| `FLYTO_PACK_HTTP_TOKEN` | [`src/cli/pack.py:315`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L315) |
+| `FLYTO_PACK_HTTP_TOKEN` | [`src/cli/pack.py:381`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L381) |
 | `FLYTO_PLUGIN_ALLOWLIST` | [`src/core/module_policy.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L245) |
 | `FLYTO_PLUGIN_DENYLIST` | [`src/core/module_policy.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L248) |
 | `FLYTO_PLUGIN_GRANTS` | [`src/core/module_policy.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L234) |

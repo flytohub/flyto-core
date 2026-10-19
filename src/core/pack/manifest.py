@@ -101,6 +101,7 @@ _PATTERN_TEXT = re.compile(r"^[A-Za-z0-9_.*-]{1,96}$")
 
 _TOP_KEYS = frozenset({
     "schema", "pack", "runtime", "artifact", "modules", "connector", "entitlements", "scopes", "standalone",
+    "upgrade",
 })
 _PACK_REQUIRED = frozenset({"id", "version", "namespaces"})
 _PACK_OPTIONAL = frozenset({"title", "description", "license", "min_host", "publisher_key_id"})
@@ -414,6 +415,26 @@ def _runtime(value: Any) -> Dict[str, Any]:
     return runtime
 
 
+def _require_consequences(modules: Any) -> None:
+    """Refuse declared rows whose contract leaves the consequence (``safety_class``) undecided, naming each.
+
+    ``flyto pack init --template device-adapter`` writes every contract
+    without one: what a capability does to the world is the author's
+    decision (``flyto pack consequence``), never a scaffold default.
+    """
+    if type(modules) is not list:
+        return
+    undecided = sorted(
+        row["module_id"] for row in modules
+        if isinstance(row, dict) and isinstance(row.get("module_id"), str)
+        and isinstance(row.get("contract"), dict) and "safety_class" not in row["contract"]
+    )
+    if undecided:
+        raise PackManifestError(
+            "CONSEQUENCE_MISSING", f"modules without a consequence: {', '.join(undecided)}; decide each one with "
+            "flyto pack consequence", operation=undecided[0], operations=tuple(undecided))
+
+
 def _declared_or_derived_modules(top: Mapping[str, Any], namespaces: List[str], result: Dict[str, Any]) -> Any:
     """The rows a pack declares, or, for a connector pack, the rows its operations become.
 
@@ -426,6 +447,7 @@ def _declared_or_derived_modules(top: Mapping[str, Any], namespaces: List[str], 
                 _fail("CONNECTOR_BINDING", f"a {section} section needs runtime.binding connector")
         if "modules" not in top:
             _fail("MISSING_FIELD", "manifest is missing required field: modules")
+        _require_consequences(top["modules"])
         return top["modules"]
     if "connector" not in top:
         _fail("CONNECTOR_REQUIRED", "runtime.binding connector needs a connector section")
@@ -493,6 +515,11 @@ def validate_pack_manifest(data: Any) -> Dict[str, Any]:
         from .portable import validate_standalone
 
         result["standalone"] = validate_standalone(top["standalone"], result)
+    if "upgrade" in top:
+        # What this version upgrades from and may roll back to (core.pack.upgrade).
+        from .upgrade import validate_upgrade
+
+        result["upgrade"] = validate_upgrade(top["upgrade"], result)
     return result
 
 
