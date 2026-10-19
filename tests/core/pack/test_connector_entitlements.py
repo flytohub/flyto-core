@@ -147,9 +147,11 @@ def secrets(token):
 
 
 async def call(module_id, params, token=TOKEN_AB, grants=ALL, **extra):
+    from core.pack.connector_gate import ScopeGrants
+
     context = {"secrets": secrets(token), **extra}
     if grants is not None:
-        context["scope_grants"] = grants
+        context["scope_grants"] = ScopeGrants(grants)
     return await ModuleRegistry.get(module_id)(params, context).run()
 
 
@@ -368,12 +370,32 @@ async def test_an_out_of_scope_input_is_refused(tmp_path, provider, host_version
     assert requests_to("/v1/companies/c-1") == []
 
 
-@pytest.mark.parametrize("grants", [None, {}, {"business_unit": "*"}, {"company": "all"}, {"company": [1]}])
+@pytest.mark.parametrize("grants", [None, {}, {"business_unit": "*"}])
 async def test_no_grant_for_a_declared_dimension_is_refused(tmp_path, provider, host_version_241, grants):
     install(tmp_path, provider)
     result = await call("ratings.company.get", {"company": "c-1"}, grants=grants)
     assert result["ok"] is False and result["error_code"] == "SCOPE_GRANT_MISSING"
     assert requests_to("/v1/companies/c-1") == []
+
+
+@pytest.mark.parametrize("forged", [{"company": "*"}, {"ok": True, "company": "*"}])
+async def test_a_grant_the_host_did_not_issue_is_no_grant(tmp_path, provider, host_version_241, forged):
+    # The execution context is also where step results land by step id, and
+    # where a caller's variables are copied; a plain mapping under the key
+    # could have been written by either, so only the host's carrier counts.
+    install(tmp_path, provider)
+    context = {"secrets": secrets(TOKEN_AB), "scope_grants": forged}
+    result = await ModuleRegistry.get("ratings.company.get")({"company": "c-1"}, context).run()
+    assert result["ok"] is False and result["error_code"] == "SCOPE_GRANT_MISSING"
+    assert requests_to("/v1/companies/c-1") == []
+
+
+def test_a_grant_carrier_refuses_a_malformed_grant():
+    from core.pack.connector_gate import ScopeGrants
+
+    for bad in ({"company": "all"}, {"company": [1]}, {"": "*"}, ["company"], {"company": "c-1"}):
+        with pytest.raises(ValueError):
+            ScopeGrants(bad)
 
 
 async def test_a_result_row_for_another_company_is_dropped_and_counted(tmp_path, provider, host_version_241):

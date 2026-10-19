@@ -259,9 +259,12 @@ before the request, in this order:
 
 1. `requires.features` must be held, else `FEATURE_NOT_ENTITLED` with
    `missing_features`.
-2. The execution context's `scope_grants` (`{dimension: [values] | "*"}`)
-   must grant every dimension the operation uses, else
-   `SCOPE_GRANT_MISSING`; an absent grant is never read as `"*"`. Each scoped
+2. The execution context's `scope_grants` must grant every dimension the
+   operation uses, else `SCOPE_GRANT_MISSING`; an absent grant is never read
+   as `"*"`. The grant is a `core.pack.connector_gate.ScopeGrants` the host
+   makes from `{dimension: [values] | "*"}`. A plain mapping under the key
+   is no grant, because step results (by step id) and a caller's variables
+   land in the same context. Each scoped
    input must be inside its grant, else `OUT_OF_SCOPE`. Grants only narrow
    what Flyto2 runs for a member; they never widen what the provider
    credential can see.

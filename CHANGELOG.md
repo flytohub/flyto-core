@@ -75,7 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `resolve` operation). `core.pack.connector_gate.admit`, run for every
   operation before its request, refuses `FEATURE_NOT_ENTITLED` (with
   `missing_features`), `SCOPE_GRANT_MISSING`, `OUT_OF_SCOPE` and
-  `QUOTA_EXHAUSTED`; a probe that fails or is misshapen refuses every gated
+  `QUOTA_EXHAUSTED`. The grant is read only from a host-made
+  `ScopeGrants` under the context's `scope_grants`; a plain mapping is no
+  grant. A probe that fails or is misshapen refuses every gated
   operation with `PROVIDER_ENTITLEMENT_UNREADABLE`. Results are filtered by
   `result_scope` (now `{dimension, path}`; text is shorthand for a single
   declared dimension) and refused as `RESULT_SCOPE_UNREADABLE` when an item

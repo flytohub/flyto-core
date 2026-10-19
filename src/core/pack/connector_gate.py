@@ -21,7 +21,8 @@ Three facts are read, each from one source:
   answer and refuses every feature-gated operation
   (``PROVIDER_ENTITLEMENT_UNREADABLE``).
 * **Scope grants** come from the caller's execution context
-  (``scope_grants: {dimension: [values] | "*"}``). They only narrow what Flyto2
+  (``scope_grants``, a :class:`ScopeGrants` carrying
+  ``{dimension: [values] | "*"}``; a plain mapping is no grant). They only narrow what Flyto2
   runs for a member; they never widen what the provider credential can see.
   A declared dimension with no grant is refused (``SCOPE_GRANT_MISSING``),
   never read as ``"*"``.
@@ -48,6 +49,7 @@ __all__ = [
     "EntitlementAnswer",
     "EntitlementCache",
     "PrecheckError",
+    "ScopeGrants",
     "Admission",
     "admit",
     "filter_result",
@@ -230,13 +232,52 @@ class EntitlementCache:
 # -- scope -----------------------------------------------------------------------------
 
 
+class ScopeGrants:
+    """The data scope a host grants one execution: ``{dimension: [values] | "*"}``.
+
+    Only an instance of this class under ``scope_grants`` counts. The
+    execution context is also where step results land by step id and where a
+    caller's variables are copied, so a plain mapping there could have been
+    written by the workflow or the caller; it is read as no grant at all.
+    The grant is validated when it is made, and it cannot be changed after.
+    """
+
+    __slots__ = ("_grants",)
+
+    def __init__(self, grants: Mapping[str, Any]):
+        if not isinstance(grants, Mapping):
+            raise ValueError("scope grants are a mapping of dimension to values")
+        parsed: Dict[str, Any] = {}
+        for dimension, value in grants.items():
+            if type(dimension) is not str or not dimension:
+                raise ValueError("a scope dimension is a non-empty key")
+            if value == ALL_VALUES:
+                parsed[dimension] = ALL_VALUES
+            elif isinstance(value, (list, tuple, frozenset)) and all(type(item) is str for item in value):
+                parsed[dimension] = frozenset(value)
+            else:
+                raise ValueError(f"scope grant for {dimension} must be a list of values or '*'")
+        object.__setattr__(self, "_grants", parsed)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise AttributeError("scope grants cannot be changed")
+
+    def allowed(self, dimension: str) -> Any:
+        """``"*"``, a frozenset of values, or None when the dimension is not granted."""
+        return self._grants.get(dimension)
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {k: (v if v == ALL_VALUES else sorted(v)) for k, v in sorted(self._grants.items())}
+
+    def __repr__(self) -> str:
+        return f"ScopeGrants({self.as_dict()!r})"
+
+
 def _grant(grants: Any, dimension: str) -> Any:
     """The allowed values for one dimension: ``"*"`` or a frozenset; refuses when there is none."""
-    value = grants.get(dimension) if isinstance(grants, Mapping) else None
-    if value == ALL_VALUES:
-        return ALL_VALUES
-    if isinstance(value, (list, tuple)) and all(type(item) is str for item in value):
-        return frozenset(value)
+    value = grants.allowed(dimension) if isinstance(grants, ScopeGrants) else None
+    if value is not None:
+        return value
     raise PrecheckError("SCOPE_GRANT_MISSING", f"no scope grant for dimension {dimension}; nothing is assumed",
                       dimension=dimension)
 

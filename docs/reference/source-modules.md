@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,003 Python files**, **241,823 lines**, and **6,547 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,003 Python files**, **241,864 lines**, and **6,553 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -954,7 +954,7 @@ Inventory: **1,003 Python files**, **241,823 lines**, and **6,547 class/function
 | [`src/core/pack/compatibility.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/compatibility.py#L1) | 119 | 7 | `__future__, capability_contract, dataclasses, typing` | The versioned compatibility matrix: which flyto-core first accepts each pack feature. |
 | [`src/core/pack/conformance.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/conformance.py#L1) | 313 | 24 | `__future__, asyncio, compatibility, dataclasses, host, manifest, pathlib, signature, typing` | Offline conformance for a third-party ``flyto.pack.v1`` adapter pack. |
 | [`src/core/pack/connector.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/connector.py#L1) | 607 | 26 | `__future__, connector_gate, engine, ipaddress, jsonpath, manifest, re, typing, urllib` | The ``connector`` section of ``flyto.pack.v1``: a provider's HTTP API, declared as data. |
-| [`src/core/pack/connector_gate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/connector_gate.py#L1) | 372 | 31 | `__future__, dataclasses, hashlib, json, jsonpath, time, typing` | The connector pre-check: entitlements, quota and data scope, for every operation. |
+| [`src/core/pack/connector_gate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/connector_gate.py#L1) | 413 | 37 | `__future__, dataclasses, hashlib, json, jsonpath, time, typing` | The connector pre-check: entitlements, quota and data scope, for every operation. |
 | [`src/core/pack/connector_runtime.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/connector_runtime.py#L1) | 587 | 46 | `__future__, aiohttp, asyncio, base64, connector, connector_gate, dataclasses, engine, json, jsonpath, logging, modules` | The one runtime every connector operation runs on. |
 | [`src/core/pack/export.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/export.py#L1) | 165 | 7 | `__future__, copy, importlib, manifest, modules, typing` | Export a Python pack's ``@register_module`` rows as a ``flyto.pack.v1`` manifest. |
 | [`src/core/pack/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/host.py#L1) | 744 | 45 | `__future__, asyncio, connector, connector_runtime, dataclasses, datetime, json, logging, manifest, modules, os, pathlib` | Install out-of-process ``flyto.pack.v1`` packs into the module registry. |
