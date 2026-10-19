@@ -559,8 +559,14 @@ def install_pack(
     trusted_keys: Optional[Mapping[str, Any]] = None,
     require_signature: bool = True,
     provenance_dir: Optional[os.PathLike[str] | str] = None,
+    revocations: Any = None,
 ) -> PackProvenance:
     """Verify and install one pack directory. Returns its provenance record.
+
+    ``revocations`` is a verified ``core.pack.supply_chain.RevocationList``.
+    A pack whose digest it names is refused (``PACK_REVOKED``) before its
+    signature, files or code are looked at: the same check a standalone
+    start makes, so a revoked pack runs nowhere.
 
     ``require_signature`` defaults to True: an unsigned pack is refused unless
     the host opts out, and a signed one must verify against ``trusted_keys``.
@@ -579,6 +585,7 @@ def install_pack(
             trusted_keys=trusted_keys,
             require_signature=require_signature,
             provenance_dir=provenance_dir,
+            revocations=revocations,
         )
 
 
@@ -588,12 +595,15 @@ def _install_pack(
     trusted_keys: Optional[Mapping[str, Any]],
     require_signature: bool,
     provenance_dir: Optional[os.PathLike[str] | str],
+    revocations: Any = None,
 ) -> PackProvenance:
     try:
         root = Path(pack_dir).resolve(strict=True)
     except OSError:
         raise PackManifestError("PACK_UNREADABLE", "pack directory is missing") from None
     manifest = read_pack_manifest(root)
+    if revocations is not None:
+        revocations.check(manifest)
     runtime = manifest["runtime"]
     if runtime["binding"] not in LOADABLE_BINDINGS:
         raise PackManifestError(

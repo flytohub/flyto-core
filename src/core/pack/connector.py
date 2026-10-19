@@ -51,6 +51,7 @@ __all__ = [
     "AUTH_KINDS",
     "CONSEQUENCES",
     "CONSEQUENCE_CONTRACTS",
+    "CONSEQUENCE_ANNOTATIONS",
     "PAGINATION_STRATEGIES",
     "validate_connector",
     "operation_rows",
@@ -72,6 +73,20 @@ CONSEQUENCE_CONTRACTS: Mapping[str, Mapping[str, Any]] = {
     "external_write": {"safety_class": "controlled", "effects": ("external_write",), "idempotent": False},
     "real_world": {"safety_class": "movement", "effects": ("physical_actuation",), "idempotent": False},
     "irreversible": {"safety_class": "dangerous", "effects": ("irreversible",), "idempotent": False},
+}
+
+#: How each level is stated as MCP tool annotations when the pack runs as a
+#: standalone MCP server (``core.pack.standalone``). Only ``observe`` is
+#: read-only. ``destructiveHint`` is true where the change may not be undone:
+#: a real-world effect and an irreversible one. Every connector call reaches
+#: an outside system, so ``openWorldHint`` is always true.
+CONSEQUENCE_ANNOTATIONS: Mapping[str, Mapping[str, bool]] = {
+    "observe": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": True},
+    "reversible": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True},
+    "external_write": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False,
+                       "openWorldHint": True},
+    "real_world": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True},
+    "irreversible": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True},
 }
 
 METHODS = ("GET", "POST", "PUT", "PATCH", "DELETE")

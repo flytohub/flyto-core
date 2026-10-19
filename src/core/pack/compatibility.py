@@ -88,6 +88,8 @@ FEATURES: Tuple[Feature, ...] = (
             lambda manifest: (manifest.get("runtime") or {}).get("binding") == "connector", reads="manifest"),
     Feature("pack.entitlements", "2.41.0", "`entitlements` probe and `scopes` sections (the connector pre-check)",
             lambda manifest: bool(manifest.get("entitlements") or manifest.get("scopes")), reads="manifest"),
+    Feature("pack.standalone", "2.41.0", "`standalone` section (runs on its own as an MCP server; portable zip)",
+            lambda manifest: "standalone" in manifest, reads="manifest"),
 )
 
 

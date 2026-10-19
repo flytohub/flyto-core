@@ -23,6 +23,7 @@ missing.
 | `contract.resource_states` | 2.41.0 | `establishes`, `occupies` |
 | `pack.connector` | 2.41.0 | `connector` section and `connector` binding (operations become modules) |
 | `pack.entitlements` | 2.41.0 | `entitlements` probe and `scopes` sections (the connector pre-check) |
+| `pack.standalone` | 2.41.0 | `standalone` section (runs on its own as an MCP server; portable zip) |
 
 Rows are only ever added; a released version never changes what it
 accepts. `tests/core/pack/test_pack_conformance.py` keeps this table equal

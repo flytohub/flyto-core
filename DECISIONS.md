@@ -23,6 +23,26 @@ Rejected: a result filter that skips items without a scope value (it would
 show unfiltered data when a field is renamed); inferring a result's
 dimension when the pack declares several (the text form of `result_scope`
 is shorthand only for a single dimension).
+## 2026-10-19 - One pack artifact, two ways to run; bundles reference, never copy
+
+Decision: a portable pack is the same `flyto.pack.v1` zip whether it runs on
+its own or in a Flyto2 Space. The standalone server is not generated per
+provider: `core.pack.standalone` installs the pack with `install_pack` (the
+Space's own call) and serves its modules as MCP tools with
+`core.mcp_protocol`, which `core.mcp_handler` now uses too, so there is one
+protocol implementation. Everything a person would otherwise hand-write per
+pack (credential names, per-platform entry points, README, notice) is
+derived from the manifest by tables in `core.pack.portable`; a hand-written
+copy is refused as `STANDALONE_DERIVED`.
+
+The pack digest is the hash of the normalized manifest. It already covers
+every file through `artifact.digest`, so no second digest format was added;
+bundles pin it and revocation lists name it. Signing stays the one ed25519
+step, now `sign_detached(domain, …)`, with a domain per document type.
+
+A revocation list that does not verify refuses the start rather than being
+ignored, because it can no longer say the pack is not revoked. When no list
+is configured, the loader says so (`"revocation": "no list configured"`).
 
 ## 2026-10-19 - A provider connector is data in the pack, run by one runtime
 

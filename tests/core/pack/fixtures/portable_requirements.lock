@@ -1,0 +1,5 @@
+# Test fixture. The hash is sha256 of the bytes
+# "flyto-core test fixture: not a real distribution", not of a published wheel:
+# these tests check the lockfile's shape and never install from it.
+flyto-core==2.41.0 \
+    --hash=sha256:2c80586d640d9f923430cdd1480d4994622c8d9a47aaa998099e61bd3f3f7f9d

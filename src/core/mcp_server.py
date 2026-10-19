@@ -19,18 +19,15 @@ Claude Code config (~/.claude/mcp_servers.json):
 }
 """
 
-import json
-import sys
-import os
 import asyncio
+import contextlib
+import os
+import sys
 from typing import Any, Dict
 
-from core.mcp_handler import (
-    handle_jsonrpc_request,
-    execute_module as _handler_execute_module,
-    TOOLS,
-    SERVER_VERSION,
-)
+from core.mcp_handler import execute_module as _handler_execute_module
+from core.mcp_handler import handle_jsonrpc_request
+from core.mcp_protocol import serve_stdio
 from core.session_reaper import reaper_loop
 
 # Browser session store — persists BrowserDriver across MCP tool calls (STDIO-specific)
@@ -80,25 +77,19 @@ async def execute_module(module_id, params, context=None):
 
 async def async_main():
     """MCP Server main loop — persistent event loop for browser session survival."""
-    loop = asyncio.get_event_loop()
     reaper_task = asyncio.create_task(
         reaper_loop(_browser_sessions, _debugger_sessions, _session_activity)
     )
-    while True:
-        line = await loop.run_in_executor(None, sys.stdin.readline)
-        if not line:
-            break  # EOF
-        try:
-            request = json.loads(line.strip())
-            response = await handle_jsonrpc_request(
-                request, _browser_sessions, _debugger_sessions, _session_activity,
-            )
-            if response is not None:
-                print(json.dumps(response), flush=True)
-        except json.JSONDecodeError:
-            pass
-        except Exception as e:
-            print(json.dumps({"jsonrpc": "2.0", "error": {"code": -32000, "message": str(e)}}), flush=True)
+
+    async def dispatch(request):
+        return await handle_jsonrpc_request(
+            request, _browser_sessions, _debugger_sessions, _session_activity,
+        )
+
+    def write_line(text):
+        print(text, flush=True)
+
+    await serve_stdio(dispatch, read_line=sys.stdin.readline, write_line=write_line)
 
     reaper_task.cancel()
     await asyncio.gather(reaper_task, return_exceptions=True)
@@ -107,19 +98,15 @@ async def async_main():
     # best-effort and safe even mid-pause. The idle-timeout reaper above
     # catches sessions abandoned mid-workflow; this is the final backstop
     # for whatever's still open at process EOF.
-    for session_id, reverse_session in list(_debugger_sessions.items()):
-        try:
+    for reverse_session in list(_debugger_sessions.values()):
+        with contextlib.suppress(Exception):
             await reverse_session.detach()
-        except Exception:
-            pass
     _debugger_sessions.clear()
 
     # Cleanup: close all browser sessions to prevent zombie Chromium processes
-    for session_id, driver in list(_browser_sessions.items()):
-        try:
+    for driver in list(_browser_sessions.values()):
+        with contextlib.suppress(Exception):
             await driver.close()
-        except Exception:
-            pass
     _browser_sessions.clear()
 
 

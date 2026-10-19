@@ -33,6 +33,8 @@ playwright install chromium
 | `flyto replay --from-step STEP` | Resume a recorded run | `.flyto-runs` state |
 | `flyto modules` | List registry modules | Environment-filtered registry |
 | `flyto plugin ...` | Search, install, inspect, or remove plugins | Local plugin loader and registry |
+| `flyto pack ...` | Export, sign, verify, build, run and healthcheck `flyto.pack.v1` packs | Local files; `run` serves MCP on stdio or loopback |
+| `flyto bundle ...` | Build and verify `flyto.bundle.v1` bundles | Local files; packs supplied with `--pack` |
 | `flyto template ...` | Exchange templates with the configured API | Remote template API |
 | `flyto serve` | Start the local Execution API | FastAPI, optional `api` extra |
 | `flyto learn TASK --save NAME` | Explore with an LLM and save a recipe | Optional provider credentials |

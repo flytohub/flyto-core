@@ -47,6 +47,8 @@ __all__ = [
     "sign_manifest",
     "verify_manifest_signature",
     "read_signature",
+    "sign_detached",
+    "verify_detached",
 ]
 
 SIGNATURE_SCHEMA = "flyto.pack-signature.v1"
@@ -70,10 +72,6 @@ def _ed25519():
             "ed25519 verification needs the 'cryptography' package (pip install 'flyto-core[crypto]')",
         )
     return ed25519
-
-
-def _message(manifest: Mapping[str, Any]) -> bytes:
-    return SIGNATURE_DOMAIN + canonical_bytes(manifest)
 
 
 def load_public_key(value: Any):
@@ -120,23 +118,18 @@ def load_trusted_keys(keys: Mapping[str, Any]) -> Dict[str, Any]:
 
 def sign_manifest(manifest: Mapping[str, Any], private_key: Any, key_id: str) -> Dict[str, Any]:
     """Return the signature document for a *normalized* manifest."""
-    ed25519 = _ed25519()
-    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        _fail("INVALID_KEY", "signing key must be an ed25519 private key")
-    if type(key_id) is not str or not _KEY_ID.fullmatch(key_id):
-        _fail("INVALID_KEY", "key id is invalid")
     if "artifact" not in manifest:
         _fail("UNSIGNABLE", "a signed manifest must carry artifact.digest")
     publisher = (manifest.get("pack") or {}).get("publisher_key_id")
     if publisher is not None and publisher != key_id:
         _fail("KEY_MISMATCH", "key id differs from pack.publisher_key_id")
-    signature = private_key.sign(_message(manifest))
+    detached = sign_detached(SIGNATURE_DOMAIN, manifest, private_key, key_id)
     return {
         "schema": SIGNATURE_SCHEMA,
         "algorithm": "ed25519",
         "key_id": key_id,
         "manifest_sha256": manifest_sha256(manifest),
-        "signature": base64.b64encode(signature).decode("ascii"),
+        "signature": detached["signature"],
     }
 
 
@@ -165,8 +158,6 @@ def verify_manifest_signature(
     loaded (see :func:`load_trusted_keys`) or be loadable by it.
     """
     _ed25519()
-    from cryptography.exceptions import InvalidSignature
-
     if type(signature) is not dict or set(signature) != _SIGNATURE_KEYS:
         _fail("INVALID_SIGNATURE", "signature document has the wrong shape")
     if signature["schema"] != SIGNATURE_SCHEMA or signature["algorithm"] != "ed25519":
@@ -185,12 +176,44 @@ def verify_manifest_signature(
     expected = manifest_sha256(manifest)
     if signature["manifest_sha256"] != expected:
         _fail("SIGNATURE_MISMATCH", "signature was made over a different manifest")
+    verify_detached(SIGNATURE_DOMAIN, manifest, {"key_id": key_id, "signature": signature["signature"]}, keys)
+    return {"key_id": key_id, "algorithm": "ed25519", "manifest_sha256": expected}
+
+
+def sign_detached(domain: bytes, document: Any, private_key: Any, key_id: str) -> Dict[str, str]:
+    """Sign ``domain + canonical_bytes(document)``: the one signing step every signed document uses.
+
+    A pack manifest, a bundle manifest and a revocation list each have their
+    own ``domain``, so a signature over one can never be replayed as another.
+    """
+    ed25519 = _ed25519()
+    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
+        _fail("INVALID_KEY", "signing key must be an ed25519 private key")
+    if type(key_id) is not str or not _KEY_ID.fullmatch(key_id):
+        _fail("INVALID_KEY", "key id is invalid")
+    raw = private_key.sign(domain + canonical_bytes(document))
+    return {"algorithm": "ed25519", "key_id": key_id, "signature": base64.b64encode(raw).decode("ascii")}
+
+
+def verify_detached(domain: bytes, document: Any, signature: Mapping[str, Any], trusted_keys: Mapping[str, Any]) -> str:
+    """Verify a :func:`sign_detached` signature; returns the key id or raises ``PackManifestError``."""
+    _ed25519()
+    from cryptography.exceptions import InvalidSignature
+
+    key_id = signature.get("key_id") if isinstance(signature, Mapping) else None
+    if type(key_id) is not str or not _KEY_ID.fullmatch(key_id):
+        _fail("INVALID_SIGNATURE", "signature key id is invalid")
+    if signature.get("algorithm", "ed25519") != "ed25519":
+        _fail("INVALID_SIGNATURE", "signature algorithm is not supported")
+    keys = load_trusted_keys(trusted_keys)
+    if key_id not in keys:
+        _fail("UNTRUSTED_KEY", "the signing key is not in the host's trusted key set")
     try:
-        raw = base64.b64decode(signature["signature"], validate=True)
+        raw = base64.b64decode(signature.get("signature"), validate=True)
     except (binascii.Error, ValueError, TypeError):
         _fail("INVALID_SIGNATURE", "signature is not base64")
     try:
-        keys[key_id].verify(raw, _message(manifest))
+        keys[key_id].verify(raw, domain + canonical_bytes(document))
     except InvalidSignature:
         _fail("SIGNATURE_MISMATCH", "signature does not verify against the trusted key")
-    return {"key_id": key_id, "algorithm": "ed25519", "manifest_sha256": expected}
+    return key_id

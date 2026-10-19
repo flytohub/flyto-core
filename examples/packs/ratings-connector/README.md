@@ -35,6 +35,16 @@ flyto pack verify examples/packs/ratings-connector --allow-unsigned
 flyto pack conform examples/packs/ratings-connector --static-only
 ```
 
+The `standalone` section makes it a portable pack: the same zip runs on its
+own as an MCP server and loads into a Space. Building it needs a lockfile
+that pins and hashes flyto-core (`--lock`); the tests use a fixture lock
+whose hash is not of a real wheel.
+
+```bash
+flyto pack build examples/packs/ratings-connector --lock requirements.lock -o ratings.zip
+flyto pack run ratings.zip --allow-unsigned            # MCP over stdio
+```
+
 `api.ratings.example` is a placeholder. The tests run this pack against a
 local fake server (`tests/core/pack/test_connector_runtime.py`). To start a
 connector from a provider's OpenAPI document, run

@@ -9,6 +9,12 @@ Usage:
     flyto pack verify <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--allow-unsigned]
     flyto pack conform <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--static-only] [--json]
     flyto pack import-openapi <openapi.json|yaml> [-o FILE]
+    flyto pack build <pack-dir> [-o ZIP] [--lock FILE] [--key PRIVATE_PEM --key-id ID]
+    flyto pack verify <pack-dir|zip> [...] [--revocations FILE --revocation-key ID=FILE ...]
+    flyto pack run <pack-dir|zip> [--transport stdio|streamable_http] [--port N] [trust options]
+    flyto pack health <pack-dir|zip> [trust options]
+    flyto bundle build <bundle-dir> --pack ZIP ... [-o ZIP] [--key PRIVATE_PEM --key-id ID]
+    flyto bundle verify <bundle-dir|zip> --pack ZIP ... [trust options]
 """
 
 import json
@@ -44,11 +50,31 @@ def add_pack_parser(subparsers) -> None:
     sign_p.add_argument("--key", required=True, help="ed25519 private key (PEM)")
     sign_p.add_argument("--key-id", required=True, help="Publisher key id")
 
-    verify_p = sub.add_parser("verify", help="Validate, digest-check and signature-check a pack (installs nothing)")
-    verify_p.add_argument("pack_dir")
-    verify_p.add_argument("--trusted-key", action="append", default=[], metavar="ID=FILE",
-                          help="Trusted publisher public key (PEM or base64 raw); repeatable")
-    verify_p.add_argument("--allow-unsigned", action="store_true", help="Accept a pack with no signature")
+    verify_p = sub.add_parser(
+        "verify", help="Validate a pack directory or zip: digest, signature, revocation (installs nothing)"
+    )
+    verify_p.add_argument("pack_dir", help="Pack directory or built zip")
+    _add_trust_arguments(verify_p)
+
+    build_p = sub.add_parser(
+        "build", help="Build a portable pack zip: validate, generate entry points, README and notice, sign"
+    )
+    build_p.add_argument("pack_dir")
+    build_p.add_argument("-o", "--output", help="Zip to write (default: <pack id>-<version>.zip); must not exist")
+    build_p.add_argument("--lock", help="Hashed lockfile to place at standalone.lockfile")
+    build_p.add_argument("--key", help="ed25519 private key (PEM) to sign with")
+    build_p.add_argument("--key-id", help="Publisher key id (with --key)")
+
+    run_p = sub.add_parser("run", help="Run a portable pack on its own as an MCP server")
+    run_p.add_argument("source", help="Pack directory or built zip")
+    run_p.add_argument("--transport", choices=("stdio", "streamable_http"), default="stdio")
+    run_p.add_argument("--host", default="127.0.0.1", help="Loopback address for streamable_http")
+    run_p.add_argument("--port", type=int, default=8765, help="Port for streamable_http (0 picks one)")
+    _add_trust_arguments(run_p)
+
+    health_p = sub.add_parser("health", help="Healthcheck a portable pack: verify, runtime, credential names")
+    health_p.add_argument("source", help="Pack directory or built zip")
+    _add_trust_arguments(health_p)
 
     conform_p = sub.add_parser(
         "conform",
@@ -66,6 +92,38 @@ def add_pack_parser(subparsers) -> None:
     )
     import_p.add_argument("document", help="OpenAPI 3 document, JSON or YAML")
     import_p.add_argument("-o", "--output", help="Write the draft to this file instead of stdout")
+
+
+def _add_trust_arguments(parser) -> None:
+    parser.add_argument("--trusted-key", action="append", default=[], metavar="ID=FILE",
+                        help="Trusted publisher public key (PEM or base64 raw); repeatable")
+    parser.add_argument("--allow-unsigned", action="store_true", help="Accept a pack with no signature")
+    parser.add_argument("--revocations", help="Signed revocation list (flyto.pack-revocations.v1) to check first")
+    parser.add_argument("--revocation-key", action="append", default=[], metavar="ID=FILE",
+                        help="Public key trusted to sign the revocation list; repeatable")
+
+
+def add_bundle_parser(subparsers) -> None:
+    """Add the ``bundle`` subcommand: packs by pinned digest, plus workflows and templates."""
+    bundle_parser = subparsers.add_parser(
+        "bundle",
+        help="Bundles (flyto.bundle.v1): packs pinned by digest, workflows, templates",
+        description="Build and verify flyto.bundle.v1 bundles. A bundle references packs; it never copies one.",
+    )
+    sub = bundle_parser.add_subparsers(dest="bundle_action", help="Bundle actions")
+    build_p = sub.add_parser("build", help="Pin the packs and file digests, validate, and write a bundle zip")
+    build_p.add_argument("source", help="Bundle directory holding flyto-bundle.json")
+    build_p.add_argument("--pack", action="append", default=[], help="A referenced pack (zip or directory)")
+    build_p.add_argument("-o", "--output", help="Zip to write (default: <bundle id>-<version>.bundle.zip)")
+    build_p.add_argument("--key", help="ed25519 private key (PEM) to sign with")
+    build_p.add_argument("--key-id", help="Publisher key id (with --key)")
+    build_p.add_argument("--trusted-key", action="append", default=[], metavar="ID=FILE",
+                         help="Trusted publisher key for the referenced packs; repeatable")
+    build_p.add_argument("--allow-unsigned", action="store_true", help="Accept unsigned referenced packs")
+    verify_p = sub.add_parser("verify", help="Verify a bundle against the packs it pins")
+    verify_p.add_argument("source", help="Bundle directory or zip")
+    verify_p.add_argument("--pack", action="append", default=[], help="A referenced pack (zip or directory)")
+    _add_trust_arguments(verify_p)
 
 
 def _trusted_keys(pairs):
@@ -145,31 +203,90 @@ def _sign(args) -> int:
     return 0
 
 
-def _verify(args) -> int:
-    from core.pack.manifest import pack_tree_digest, read_pack_manifest
-    from core.pack.signature import read_signature, verify_manifest_signature
+def _revocations(args):
+    """The verified revocation list the arguments name, or ``None``."""
+    path = getattr(args, "revocations", None)
+    if not path:
+        return None
+    from core.pack.supply_chain import read_revocations
 
-    manifest = read_pack_manifest(args.pack_dir)
-    digest = manifest.get("artifact", {}).get("digest")
-    if digest is not None and pack_tree_digest(args.pack_dir) != digest:
-        print("error: pack files do not match artifact.digest", file=sys.stderr)
-        return 1
-    signature_doc = read_signature(args.pack_dir)
-    signature = None
-    if signature_doc is not None:
-        signature = verify_manifest_signature(manifest, signature_doc, _trusted_keys(args.trusted_key))
-    elif not args.allow_unsigned:
-        print("error: pack is not signed (pass --allow-unsigned to accept it)", file=sys.stderr)
-        return 1
-    print(json.dumps({
-        "pack_id": manifest["pack"]["id"],
-        "version": manifest["pack"]["version"],
-        "binding": manifest["runtime"]["binding"],
-        "artifact_digest": digest,
-        "signature": signature,
-        "module_ids": [row["module_id"] for row in manifest["modules"]],
-    }, indent=2))
+    return read_revocations(path, _trusted_keys(getattr(args, "revocation_key", None) or []))
+
+
+def _trust(args):
+    return {
+        "trusted_keys": _trusted_keys(getattr(args, "trusted_key", None) or []),
+        "require_signature": not getattr(args, "allow_unsigned", False),
+        "revocations": _revocations(args),
+    }
+
+
+def _verify(args) -> int:
+    from core.pack.portable import verify_pack
+
+    print(json.dumps(verify_pack(args.pack_dir, **_trust(args)), indent=2))
     return 0
+
+
+def _private_key(args):
+    if not getattr(args, "key", None):
+        return None, None
+    from cryptography.hazmat.primitives import serialization
+
+    if not args.key_id:
+        raise ValueError("--key needs --key-id")
+    return serialization.load_pem_private_key(Path(args.key).read_bytes(), password=None), args.key_id
+
+
+def _build(args) -> int:
+    from core.pack.manifest import read_pack_manifest
+    from core.pack.portable import build_portable_pack
+
+    output = args.output
+    if not output:
+        pack = read_pack_manifest(args.pack_dir)["pack"]
+        output = f"{pack['id']}-{pack['version']}.zip"
+    key, key_id = _private_key(args)
+    report = build_portable_pack(args.pack_dir, output, lockfile=args.lock, private_key=key, key_id=key_id)
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+def _run(args) -> int:
+    import asyncio
+    import os
+    import secrets
+
+    from core.pack.standalone import load_standalone, serve_http, serve_stdio
+
+    pack = load_standalone(args.source, transport=args.transport, **_trust(args))
+
+    async def serve() -> None:
+        try:
+            if args.transport == "stdio":
+                await serve_stdio(pack)
+            else:
+                token = os.environ.get("FLYTO_PACK_HTTP_TOKEN")
+                if not token:
+                    token = secrets.token_urlsafe(32)
+                    print(f"bearer token for this run: {token}", file=sys.stderr, flush=True)
+                await serve_http(pack, host=args.host, port=args.port, token=token)
+        finally:
+            await pack.close()
+
+    try:
+        asyncio.run(serve())
+    except KeyboardInterrupt:
+        return 0
+    return 0
+
+
+def _health(args) -> int:
+    from core.pack.standalone import health
+
+    report = health(args.source, **_trust(args))
+    print(json.dumps(report, indent=2))
+    return 0 if report["healthy"] else 1
 
 
 def _conform(args) -> int:
@@ -212,9 +329,54 @@ def run_pack_command(args) -> int:
         "verify": _verify,
         "conform": _conform,
         "import-openapi": _import_openapi,
+        "build": _build,
+        "run": _run,
+        "health": _health,
     }
     if action not in handlers:
-        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform|import-openapi>")
+        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform|import-openapi|build|run|health>")
+        return 1
+    try:
+        return handlers[action](args)
+    except PackManifestError as exc:
+        print(f"error [{exc.code}]: {exc}", file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+
+
+def _bundle_build(args) -> int:
+    from core.pack.bundle import BUNDLE_FILENAME, build_bundle
+
+    output = args.output
+    if not output:
+        header = json.loads((Path(args.source) / BUNDLE_FILENAME).read_text(encoding="utf-8"))["bundle"]
+        output = f"{header['id']}-{header['version']}.bundle.zip"
+    key, key_id = _private_key(args)
+    report = build_bundle(args.source, output, packs=args.pack, trusted_keys=_trusted_keys(args.trusted_key),
+                          require_signature=not args.allow_unsigned, private_key=key, key_id=key_id)
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+def _bundle_verify(args) -> int:
+    from core.pack.bundle import verify_bundle
+
+    trust = _trust(args)
+    report = verify_bundle(args.source, packs=args.pack, require_bundle_signature=trust["require_signature"], **trust)
+    print(json.dumps(report, indent=2))
+    return 0
+
+
+def run_bundle_command(args) -> int:
+    """Execute a bundle subcommand."""
+    from core.pack.manifest import PackManifestError
+
+    handlers = {"build": _bundle_build, "verify": _bundle_verify}
+    action = getattr(args, "bundle_action", None)
+    if action not in handlers:
+        print("Usage: flyto bundle <build|verify>")
         return 1
     try:
         return handlers[action](args)

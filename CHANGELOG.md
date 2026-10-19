@@ -102,6 +102,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PROVIDER_QUOTA_REFUSED`. Validation refuses an undeclared feature, meter
   or dimension, and a probe that is not an ungated observe operation.
   Compatibility matrix row `pack.entitlements` (since 2.41.0).
+- Portable packs: one `flyto.pack.v1` artifact that runs on its own as an
+  MCP server with the user's own credentials, and loads into a Flyto2 Space
+  unchanged. A connector pack adds a `standalone` section (`transports`,
+  `runtime`, `lockfile`); core derives the credential names (read at call
+  time from `FLYTO_CREDENTIAL_<NAME>` or the OS keychain) and the install,
+  healthcheck and serve entry points for macOS, Linux and Windows.
+  `flyto pack build` validates, generates the entry points, a README and a
+  third-party notice, signs, and writes one deterministic zip; `flyto pack
+  verify` checks a directory or zip; `flyto pack run` serves the pack over
+  stdio or Streamable HTTP through one generic runtime
+  (`core.pack.standalone`), with tool annotations from each operation's
+  consequence (`connector.CONSEQUENCE_ANNOTATIONS`); `flyto pack health`
+  reports credential names and sources, never values. Compatibility matrix
+  row `pack.standalone` (since 2.41.0). Spec:
+  `docs/specs/PACK_MANIFEST_SPEC.md`.
+- Pack supply chain (`core.pack.supply_chain`): the pack digest (SHA-256 of
+  the normalized manifest, which carries `artifact.digest`); a hashed
+  lockfile in pip's `--require-hashes` format, every requirement pinned and
+  hashed; and a signed revocation list (`flyto.pack-revocations.v1`) that
+  `install_pack(..., revocations=…)`, `flyto pack run|health|verify` and
+  `flyto bundle verify` check first, so a revoked pack refuses to start
+  standalone or in a Space (`PACK_REVOKED`).
+- Bundles (`flyto.bundle.v1`, `core.pack.bundle`, `flyto bundle
+  build|verify`): packs referenced by id, exact version and pack digest,
+  never copied, plus Space workflow documents and report templates, each
+  with its own digest. Verification refuses a pack digest that does not
+  match, a workflow that uses a module no referenced pack or core provides,
+  duplicate names and undeclared files. Spec: `docs/specs/BUNDLE_SPEC.md`;
+  example `examples/bundles/rating-review/`.
+- `core.mcp_protocol`: the MCP protocol plumbing (protocol-era selection,
+  JSON-RPC dispatch, Streamable HTTP POST rules, the STDIO loop) moved out of
+  `core.mcp_handler` and `core.api.routes.mcp` so the catalog server and the
+  standalone pack server share one implementation. Behavior is unchanged.
 - `BaseModule.sensitive_result_paths(result)` and
   `core.engine.redaction.redact_step_result`: a module names the leaves of its
   result that the step log and the trace must not show. The workflow still

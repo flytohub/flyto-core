@@ -19,7 +19,8 @@ The document::
       "runtime": {"binding": "subprocess-jsonrpc", "language": "node",
                   "entry": "index.js", "request_timeout_ms": 30000},
       "artifact": {"digest": "sha256:<tree digest of the pack directory>"},
-      "modules": [ {<module row>}, ... ]
+      "modules": [ {<module row>}, ... ],
+      "standalone": {...}      # optional: run on its own (core.pack.portable)
     }
 
 ``validate_pack_manifest`` returns the *normalized* manifest: every module row
@@ -98,7 +99,9 @@ _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _LANGUAGE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 _PATTERN_TEXT = re.compile(r"^[A-Za-z0-9_.*-]{1,96}$")
 
-_TOP_KEYS = frozenset({"schema", "pack", "runtime", "artifact", "modules", "connector", "entitlements", "scopes"})
+_TOP_KEYS = frozenset({
+    "schema", "pack", "runtime", "artifact", "modules", "connector", "entitlements", "scopes", "standalone",
+})
 _PACK_REQUIRED = frozenset({"id", "version", "namespaces"})
 _PACK_OPTIONAL = frozenset({"title", "description", "license", "min_host", "publisher_key_id"})
 _ARTIFACT_KEYS = frozenset({"digest"})
@@ -481,6 +484,11 @@ def validate_pack_manifest(data: Any) -> Dict[str, Any]:
         _fail("DUPLICATE_ID", "module ids must be unique")
     result["modules"] = sorted(rows, key=lambda row: row["module_id"])
     pack["namespaces"] = sorted(namespaces)
+    if "standalone" in top:
+        # The portable section: how the pack runs on its own (core.pack.portable).
+        from .portable import validate_standalone
+
+        result["standalone"] = validate_standalone(top["standalone"], result)
     return result
 
 
@@ -536,11 +544,12 @@ def _reject_duplicates(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
     return result
 
 
-def _iter_pack_files(root: Path):
+def _iter_pack_files(root: Path, skip: Tuple[str, ...] = (MANIFEST_FILENAME, SIGNATURE_FILENAME)):
     """Yield ``(posix relative path, bytes, mode)`` for every attested file.
 
-    The manifest and signature are skipped. A symlink anywhere in the tree, a
-    special file, or a tree beyond the file/byte bounds fails closed.
+    The files named in ``skip`` (the manifest and signature) are left out. A
+    symlink anywhere in the tree, a special file, or a tree beyond the
+    file/byte bounds fails closed.
     """
     try:
         root_info = os.lstat(root)
@@ -557,7 +566,7 @@ def _iter_pack_files(root: Path):
         for name in filenames:
             full = Path(current) / name
             rel = full.relative_to(root).as_posix()
-            if rel in (MANIFEST_FILENAME, SIGNATURE_FILENAME):
+            if rel in skip:
                 continue
             info = os.lstat(full)
             if stat.S_ISLNK(info.st_mode):

@@ -272,7 +272,7 @@ class TestModernProtocol:
             {"name": "validate_params", "arguments": {"module_id": "math.abs"}},
         )
         with patch(
-            "core.api.routes.mcp._decode_mcp_header",
+            "core.mcp_protocol.decode_mcp_header",
             side_effect=ValueError("traceback: /srv/flyto/private/decoder.py"),
         ):
             resp = client.post(

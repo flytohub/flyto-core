@@ -2,7 +2,7 @@
 
 # Configuration And Packaged Assets
 
-Implementation sources read **108 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **18 workflow fixtures/templates**.
+Implementation sources read **109 environment-variable names**. The package ships **41 recipes** and **1 recipe bundles**; the repository also maintains **18 workflow fixtures/templates**.
 
 ## Environment variables
 
@@ -36,9 +36,10 @@ Implementation sources read **108 environment-variable names**. The package ship
 | `FLYTO_GRANTED_PERMISSIONS` | [`src/core/module_policy.py:179`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L179) |
 | `FLYTO_HTTP_ALLOWED_PORTS` | [`src/core/utils.py:654`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L654) |
 | `FLYTO_HTTP_DISABLE_SSRF_GUARD` | [`src/core/utils.py:731`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L731) |
-| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L67) |
+| `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L64) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L83) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L90) |
+| `FLYTO_PACK_HTTP_TOKEN` | [`src/cli/pack.py:269`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L269) |
 | `FLYTO_PLUGIN_ALLOWLIST` | [`src/core/module_policy.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L245) |
 | `FLYTO_PLUGIN_DENYLIST` | [`src/core/module_policy.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L248) |
 | `FLYTO_PLUGIN_GRANTS` | [`src/core/module_policy.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L234) |
