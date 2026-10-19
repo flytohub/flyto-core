@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,018 Python files**, **248,363 lines**, and **6,885 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,018 Python files**, **248,377 lines**, and **6,886 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -652,7 +652,7 @@ Inventory: **1,018 Python files**, **248,363 lines**, and **6,885 class/function
 | [`src/core/modules/atomic/string/truncate.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/string/truncate.py#L1) | 160 | 1 | `errors, registry, schema, typing` | String Truncate Module Truncate a string to a maximum length. |
 | [`src/core/modules/atomic/string/uppercase.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/string/uppercase.py#L1) | 79 | 1 | `errors, registry, schema, typing` | String Uppercase Module Convert a string to uppercase |
 | [`src/core/modules/atomic/template/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/__init__.py#L1) | 12 | 0 | `invoke` | Template Modules |
-| [`src/core/modules/atomic/template/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/invoke.py#L1) | 711 | 16 | `asyncio, base, browser, core, engine, logging, metering, re, registry, runtime, schema, secrets` | Invoke Template Module - Execute templates from user library |
+| [`src/core/modules/atomic/template/invoke.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/template/invoke.py#L1) | 725 | 17 | `asyncio, base, browser, core, engine, logging, metering, re, registry, runtime, schema, secrets` | Invoke Template Module - Execute templates from user library |
 | [`src/core/modules/atomic/testing/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/__init__.py#L1) | 52 | 0 | `assert_contains, assert_equal, assert_greater_than, assert_length, assert_not_null, assert_status, assert_timing, assert_true, e2e, gate, http_suite, lint` | Testing Modules |
 | [`src/core/modules/atomic/testing/assert_contains.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/assert_contains.py#L1) | 181 | 5 | `base, registry, typing` | Assert Contains Module |
 | [`src/core/modules/atomic/testing/assert_equal.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/testing/assert_equal.py#L1) | 120 | 3 | `base, registry, typing` | Assert Equal Module |
