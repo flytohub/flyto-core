@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,014 Python files**, **246,262 lines**, and **6,790 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,302 lines**, and **6,795 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -102,6 +102,7 @@ Inventory: **1,014 Python files**, **246,262 lines**, and **6,790 class/function
 | [`src/core/browser/proxy_pool.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/proxy_pool.py#L1) | 94 | 9 | `logging, random, threading, typing` | Proxy Pool — Rotation strategies for proxy lists |
 | [`src/core/browser/rate_limiter.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/rate_limiter.py#L1) | 113 | 9 | `asyncio, logging, random, time` | Adaptive Rate Limiter — Smart delay between requests |
 | [`src/core/browser/reverse_session.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/reverse_session.py#L1) | 789 | 47 | `asyncio, json, logging, time, typing, uuid` | ReverseSession - CDP Debugger wrapper for interactive JS debugging. |
+| [`src/core/canvas_handles.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/canvas_handles.py#L1) | 130 | 6 | `typing` | Canvas handles: the one table that says which declared port an edge end means. |
 | [`src/core/capability_contract.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_contract.py#L1) | 910 | 29 | `__future__, json, math, re, types, typing` | Capability contract — ``flyto.capability-contract.v1``. |
 | [`src/core/capability_host/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/__init__.py#L1) | 42 | 0 | `host` | Generic capability host: run an installed capability pack with flyto-core alone. |
 | [`src/core/capability_host/host.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/capability_host/host.py#L1) | 688 | 34 | `__future__, asyncio, base64, binascii, capability_contract, dataclasses, hashlib, importlib, logging, math, modules, pathlib` | A generic capability host, so an installed pack runs with flyto-core alone. |
@@ -181,7 +182,7 @@ Inventory: **1,014 Python files**, **246,262 lines**, and **6,790 class/function
 | [`src/core/engine/workflow/debug.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/debug.py#L1) | 180 | 18 | `logging, typing` | Workflow Debug Control |
 | [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 889 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, redaction` | Workflow Engine |
 | [`src/core/engine/workflow/output.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/output.py#L1) | 122 | 4 | `datetime, typing, variable_resolver` | Workflow Output Collection |
-| [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 547 | 19 | `flow_control, logging, typing` | Workflow Routing |
+| [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 537 | 20 | `canvas_handles, flow_control, logging, modules, typing` | Workflow Routing |
 | [`src/core/enterprise/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/__init__.py#L1) | 160 | 0 | `ai_native, idp, mining, orchestrator, queue, rpa, state_machine` | Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities |
 | [`src/core/enterprise/ai_native/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/ai_native/__init__.py#L1) | 574 | 36 | `dataclasses, datetime, enum, typing` | AI-Native Features - First-Class AI Integration |
 | [`src/core/enterprise/ai_native/impl.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/ai_native/impl.py#L1) | 919 | 34 | `anthropic, asyncio, datetime, json, logging, openai, os, re, typing, uuid, yaml` | AI Native Implementation |
@@ -1009,7 +1010,7 @@ Inventory: **1,014 Python files**, **246,262 lines**, and **6,790 class/function
 | [`src/core/training/daily_practice.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/training/daily_practice.py#L1) | 56 | 6 | `typing` | Daily Practice Engine - Stub for OSS version |
 | [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1390 | 48 | `aiohttp, asyncio, constants, contextlib, contextvars, fnmatch, functools, httpx, ipaddress, logging, os, re` | Core Utilities - Shared utility functions |
 | [`src/core/validation/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/__init__.py#L1) | 61 | 0 | `connection, errors, index, workflow` | Flyto2 Core Validation API |
-| [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 684 | 16 | `dataclasses, errors, index, modules, typing` | Connection Validation API |
+| [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 604 | 14 | `canvas_handles, dataclasses, errors, index, modules, typing` | Connection Validation API |
 | [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 165 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |
 | [`src/core/validation/index.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/index.py#L1) | 175 | 8 | `modules, threading, typing` | Connection Index |
 | [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 544 | 11 | `connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |

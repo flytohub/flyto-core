@@ -10,6 +10,7 @@ Used by flyto-cloud for edge-level validation.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from ..canvas_handles import INPUT, OUTPUT, resolve_port
 from .errors import ErrorCode
 
 
@@ -20,81 +21,6 @@ class ConnectionResult:
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     meta: Dict[str, Any] = field(default_factory=dict)
-
-
-# Port alias mapping: VueFlow handle IDs ↔ flyto-core port IDs
-# VueFlow uses: 'output', 'target', 'in', etc.
-# flyto-core uses: 'success', 'error', 'input', 'iterate', 'done', etc.
-OUTPUT_PORT_ALIASES = {
-    'output': 'success',
-    'source': 'success',
-    'source-true': 'true',
-    'source-false': 'false',
-    'source-error': 'error',
-    'body_out': 'iterate',
-    'done_out': 'done',
-}
-INPUT_PORT_ALIASES = {
-    'input': 'input',
-    'target': 'input',
-    'in': 'input',  # LoopNode uses 'in' for input
-    'target-model': 'model',
-    'target-memory': 'memory',
-    'target-tools': 'tools',
-}
-
-
-# The canvas draws one generic handle per side of a node, whatever ports the
-# module declares. A generic handle means the module's one ordinary port; a
-# module with several ordinary ports needs the edge to name one.
-GENERIC_OUTPUT_HANDLES = frozenset({'output', 'source', 'main'})
-GENERIC_INPUT_HANDLES = frozenset({'input', 'target', 'in'})
-# An error output is a side exit, never the one a generic output handle means.
-# An input named ``error`` (an error handler's) is still its ordinary input.
-NON_ORDINARY_OUTPUT_PORT_IDS = frozenset({'error'})
-
-
-def _sole_ordinary_port(
-    ports: List, port_id: str, generic_handles: frozenset, side_exits: frozenset = frozenset(),
-) -> Optional[Dict]:
-    """The one declared port a generic canvas handle stands for, if the module has exactly one."""
-    if port_id not in generic_handles:
-        return None
-    ordinary = [p for p in ports if p.get('id') not in side_exits]
-    return ordinary[0] if len(ordinary) == 1 else None
-
-
-def _find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
-    """Find port by ID or alias, also checks handle_id"""
-    if not ports:
-        return None
-    # Direct match by id
-    match = next((p for p in ports if p.get('id') == port_id), None)
-    if match:
-        return match
-    # Match by handle_id (frontend sends VueFlow handle IDs like 'source-true')
-    match = next((p for p in ports if p.get('handle_id') == port_id), None)
-    if match:
-        return match
-    # Try alias
-    alias_id = aliases.get(port_id)
-    if alias_id:
-        match = next((p for p in ports if p.get('id') == alias_id), None)
-        if match:
-            return match
-    # Strip 'source-' prefix as general pattern (e.g. 'source-case-xxx' -> 'case-xxx')
-    if port_id.startswith('source-'):
-        stripped = port_id[len('source-'):]
-        match = next((p for p in ports if p.get('id') == stripped), None)
-        if match:
-            return match
-    # Strip 'target-' prefix (e.g. 'target-model' -> 'model')
-    if port_id.startswith('target-'):
-        stripped = port_id[len('target-'):]
-        match = next((p for p in ports if p.get('id') == stripped), None)
-        if match:
-            return match
-    return None
 
 
 def _validate_template_connection(
@@ -256,14 +182,8 @@ def _validate_port_compatibility(
     if not to_port and to_ports:
         to_port = to_ports[0].get('id', 'input')
 
-    from_port_meta = (
-        _find_port(from_ports, from_port, OUTPUT_PORT_ALIASES)
-        or _sole_ordinary_port(from_ports, from_port, GENERIC_OUTPUT_HANDLES, NON_ORDINARY_OUTPUT_PORT_IDS)
-    ) if from_port else None
-    to_port_meta = (
-        _find_port(to_ports, to_port, INPUT_PORT_ALIASES)
-        or _sole_ordinary_port(to_ports, to_port, GENERIC_INPUT_HANDLES)
-    ) if to_port else None
+    from_port_meta = resolve_port(from_ports, from_port, OUTPUT) if from_port else None
+    to_port_meta = resolve_port(to_ports, to_port, INPUT) if to_port else None
 
     if from_ports and from_port and not from_port_meta:
         return ConnectionResult(

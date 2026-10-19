@@ -9,6 +9,8 @@ Edge-based routing and step connection handling for Workflow Spec v1.2.
 import logging
 from typing import Any, Dict, List, Set
 
+from ...canvas_handles import handle_events
+
 logger = logging.getLogger(__name__)
 
 
@@ -393,10 +395,9 @@ class WorkflowRouter:
             target_handle = edge.get('targetHandle', 'input')
 
             # Filter by edge type if requested
-            if data_edges_only:
-                # Only data and iterate edges pass items
-                if edge_type not in ('data', 'iterate'):
-                    continue
+            # Only data and iterate edges pass items
+            if data_edges_only and edge_type not in ('data', 'iterate'):
+                continue
 
             # Group by target handle (input port)
             port = target_handle or 'input'
@@ -475,37 +476,26 @@ class WorkflowRouter:
             case_id = handle_id.replace('source-case-', '')
             return self._expand_case_events(f"case:{case_id}", step)
 
-        normalized = handle_id
-        if normalized.startswith('source-'):
-            normalized = normalized[len('source-'):]
-
+        normalized = handle_id[len('source-'):] if handle_id.startswith('source-') else handle_id
         if normalized.startswith('branch-') or normalized.startswith('branch_'):
             return ['fork', normalized]
 
-        alias_map = {
-            'main': 'success',
-            'success': 'success',
-            'error': 'error',
-            'true': 'true',
-            'false': 'false',
-            'default': 'default',
-            'item': 'iterate',
-            'iterate': 'iterate',
-            'done': 'done',
-            'body_out': 'iterate',
-            'done_out': 'done',
-            'trigger': 'trigger',
-            'triggered': 'trigger',
-            'start': 'start',
-            # Error handling events
-            'handled': 'handled',
-            'escalate': 'escalate',
-        }
+        # Which declared port the handle means, and the event that port emits,
+        # come from the one table connection validation also reads.
+        return handle_events(handle_id, self._declared_output_ports(step))
 
-        if normalized in ('merged', 'joined'):
-            return [normalized, 'success']
-
-        return [alias_map.get(normalized, normalized)]
+    @staticmethod
+    def _declared_output_ports(step: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """The output ports the step's module declares, or none when it is not registered."""
+        module_id = (step or {}).get('module')
+        if not isinstance(module_id, str) or not module_id:
+            return []
+        try:
+            from ...modules.registry import ModuleRegistry
+            meta = ModuleRegistry.get_metadata(module_id) or {}
+        except Exception:  # an unregistered or unloadable module routes by the table alone
+            return []
+        return list(meta.get('output_ports') or [])
 
     def _expand_case_events(
         self,
