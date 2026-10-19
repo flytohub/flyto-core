@@ -32,6 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   RFC 8707 `resource` on every request).
 - `core.pack.connector_runtime.status_failure` is public, for the MCP client.
 
+- `flyto pack run|health --provider-base-url URL` sends a standalone pack's
+  requests to a local stand-in instead of its manifest `base_url`. It accepts
+  loopback, or a host already in `FLYTO_ALLOWED_HOSTS`
+  (`PROVIDER_BASE_URL_REFUSED`), and opens the SSRF guard for that one
+  loopback origin only while the pack runs. `flyto pack serve-fixtures DIR`
+  serves the recorded fixtures as that stand-in.
+  `core.pack.connector_runtime.loopback_origin_allowed` is the one scoped
+  opening, which `flyto pack test` now uses too.
+
 ### Changed
 
 - `CONSEQUENCE_MISSING` names every undecided operation at once (message and

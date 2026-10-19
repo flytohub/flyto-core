@@ -122,7 +122,8 @@ flyto pack consequence items-pack item.get=observe
 flyto pack doctor items-pack
 flyto pack test items-pack
 flyto pack build items-pack --lock requirements.lock --key publisher.pem --key-id publisher-1
-flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub
+flyto pack serve-fixtures items-pack --port 8799
+flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub --provider-base-url http://127.0.0.1:8799
 ```
 
 - `init` writes a connector pack: the manifest (`connector`, `entitlements`,
@@ -137,6 +138,10 @@ flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub
   against a loopback fake provider built from the fixtures. It reports each
   operation with typed failures, then runs `pack conform`, and exits 1 on any
   failure.
+- `serve-fixtures` serves the same recorded fake on `127.0.0.1` until stopped.
+  `run` and `health` reach it with `--provider-base-url`, which accepts only a
+  loopback address or a host already in `FLYTO_ALLOWED_HOSTS`
+  (`PROVIDER_BASE_URL_REFUSED` otherwise).
 
 ## Templates
 

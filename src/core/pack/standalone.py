@@ -120,7 +120,10 @@ class StandalonePack:
     transport: str
     verification: Dict[str, Any]
     resolver: Any
+    #: Where requests go instead of the manifest's ``base_url`` (``--provider-base-url``), or None.
+    provider_base_url: Optional[str] = None
     _scratch: Optional[Path] = None
+    _guard: Any = None
     _tools: List[Dict[str, Any]] = field(default_factory=list)
     _closed: bool = False
 
@@ -188,6 +191,8 @@ class StandalonePack:
         try:
             await uninstall_pack(self.manifest["pack"]["id"])
         finally:
+            if self._guard is not None:
+                self._guard.close()
             if self._scratch is not None:
                 shutil.rmtree(self._scratch, ignore_errors=True)
 
@@ -208,6 +213,38 @@ def _unpack(source: Path) -> Tuple[Path, Optional[Path]]:
     return scratch, scratch
 
 
+def admit_provider_base_url(url: Any) -> Tuple[str, bool]:
+    """``(url, is_loopback)`` for a ``--provider-base-url`` override, or a typed refusal.
+
+    The override changes where the credential is sent without a new signed
+    manifest, so it is admitted only to a loopback address (a local stand-in
+    such as ``flyto pack serve-fixtures``) or to a host the operator already
+    allow-listed for the SSRF guard (``FLYTO_ALLOWED_HOSTS``). Anything else
+    is ``PROVIDER_BASE_URL_REFUSED``. The scheme rules are the connector's:
+    https, or http to loopback only.
+    """
+    from ..utils import _host_in_allowlist
+    from .connector import _is_loopback, _looks_like_secret, _url
+
+    parts = urlsplit(url) if isinstance(url, str) and len(url) <= 2048 else None
+    try:
+        host = parts.hostname if parts is not None else None
+    except ValueError:
+        host = None
+    if not host:
+        _fail("INVALID_BASE_URL", "--provider-base-url must be scheme://host[:port][/path]")
+    if parts.username is not None or parts.password is not None or _looks_like_secret(url):
+        _fail("INLINE_SECRET", "--provider-base-url carries a credential; the credential is named, never in a URL")
+    if parts.query or parts.fragment:
+        _fail("INVALID_BASE_URL", "--provider-base-url must be scheme://host[:port][/path]")
+    loopback = _is_loopback(host)
+    allowed = [h.strip() for h in os.environ.get("FLYTO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+    if not loopback and not _host_in_allowlist(host, allowed):
+        _fail("PROVIDER_BASE_URL_REFUSED", "--provider-base-url must be a loopback address or a host in "
+              "FLYTO_ALLOWED_HOSTS")
+    return _url(url, "--provider-base-url"), loopback
+
+
 def load_standalone(
     source: os.PathLike[str] | str,
     *,
@@ -216,10 +253,15 @@ def load_standalone(
     require_signature: bool = True,
     revocations: Any = None,
     resolver_factory: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    provider_base_url: Optional[str] = None,
 ) -> StandalonePack:
     """Verify and install a portable pack for standalone serving; refuses with a typed reason.
 
     ``transport`` ``None`` takes the first one the pack declares.
+    ``provider_base_url`` sends the pack's requests there instead of to the
+    manifest's ``base_url`` (:func:`admit_provider_base_url`), for local
+    testing against a stand-in; a loopback origin is opened in the SSRF guard
+    for that one host and port until the pack is closed.
     """
     from .host import install_pack
     from .portable import STANDALONE_TRANSPORTS, verify_pack_dir
@@ -227,6 +269,7 @@ def load_standalone(
 
     if transport is not None and transport not in STANDALONE_TRANSPORTS:
         _fail("TRANSPORT_UNKNOWN", f"transport is one of {', '.join(STANDALONE_TRANSPORTS)}")
+    override = admit_provider_base_url(provider_base_url) if provider_base_url is not None else None
     root, scratch = _unpack(Path(source))
     try:
         manifest = read_pack_manifest(root)
@@ -239,12 +282,32 @@ def load_standalone(
                                        revocations=revocations)
         install_pack(root, trusted_keys=trusted_keys, require_signature=require_signature, revocations=revocations)
         factory = resolver_factory or (lambda standalone: CredentialResolver(standalone))
-        return StandalonePack(manifest=manifest, root=root, transport=transport, verification=verification,
+        pack = StandalonePack(manifest=manifest, root=root, transport=transport, verification=verification,
                               resolver=factory(manifest["standalone"]), _scratch=scratch)
+        if override is not None:
+            _point(pack, *override)
+        return pack
     except BaseException:
         if scratch is not None:
             shutil.rmtree(scratch, ignore_errors=True)
         raise
+
+
+def _point(pack: StandalonePack, url: str, loopback: bool) -> None:
+    import contextlib
+
+    from .connector_runtime import loopback_origin_allowed
+    from .host import _INSTALLED
+
+    _INSTALLED[pack.manifest["pack"]["id"]].transport.point_at(url)
+    pack.provider_base_url = url
+    if loopback:
+        parts = urlsplit(url)
+        guard = contextlib.ExitStack()
+        guard.enter_context(loopback_origin_allowed(parts.hostname, parts.port or (443 if parts.scheme == "https"
+                                                                                   else 80)))
+        pack._guard = guard
+    logger.warning("pack %s sends its requests to %s, not its manifest base_url", pack.manifest["pack"]["id"], url)
 
 
 # ---------------------------------------------------------------------------
@@ -387,6 +450,7 @@ async def _health(pack: StandalonePack) -> Dict[str, Any]:
         "transports": standalone["transports"],
         "tools": tools,
         "entitled_tools": len(listing.module_ids),
+        "provider_base_url": pack.provider_base_url,
         "entitlements": listing.status(),
     }
 
@@ -398,6 +462,7 @@ def health(
     require_signature: bool = True,
     revocations: Any = None,
     resolver_factory: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    provider_base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Verify, install and list a pack without serving it.
 
@@ -410,7 +475,7 @@ def health(
 
     pack = load_standalone(source, transport=None, trusted_keys=trusted_keys,
                            require_signature=require_signature, revocations=revocations,
-                           resolver_factory=resolver_factory)
+                           resolver_factory=resolver_factory, provider_base_url=provider_base_url)
 
     async def run() -> Dict[str, Any]:
         try:

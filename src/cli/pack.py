@@ -15,8 +15,9 @@ Usage:
     flyto pack import-openapi <openapi.json|yaml> [-o FILE]
     flyto pack build <pack-dir> [-o ZIP] [--lock FILE] [--key PRIVATE_PEM --key-id ID]
     flyto pack verify <pack-dir|zip> [...] [--revocations FILE --revocation-key ID=FILE ...]
-    flyto pack run <pack-dir|zip> [--transport stdio|streamable_http] [--port N] [trust options]
-    flyto pack health <pack-dir|zip> [trust options]
+    flyto pack run <pack-dir|zip> [--transport stdio|streamable_http] [--port N] [trust options] [--provider-base-url URL]
+    flyto pack health <pack-dir|zip> [trust options] [--provider-base-url URL]
+    flyto pack serve-fixtures <pack-dir> [--port N]
     flyto bundle build <bundle-dir> --pack ZIP ... [-o ZIP] [--key PRIVATE_PEM --key-id ID]
     flyto bundle verify <bundle-dir|zip> --pack ZIP ... [trust options]
 """
@@ -101,10 +102,18 @@ def add_pack_parser(subparsers) -> None:
     run_p.add_argument("--host", default="127.0.0.1", help="Loopback address for streamable_http")
     run_p.add_argument("--port", type=int, default=8765, help="Port for streamable_http (0 picks one)")
     _add_trust_arguments(run_p)
+    _add_provider_argument(run_p)
 
     health_p = sub.add_parser("health", help="Healthcheck a portable pack: verify, runtime, credential names")
     health_p.add_argument("source", help="Pack directory or built zip")
     _add_trust_arguments(health_p)
+    _add_provider_argument(health_p)
+
+    fixtures_p = sub.add_parser(
+        "serve-fixtures", help="Serve a pack's recorded fixtures as a local provider stand-in (loopback only)"
+    )
+    fixtures_p.add_argument("pack_dir", help="Pack source directory holding fixtures/exchanges.json")
+    fixtures_p.add_argument("--port", type=int, default=0, help="Port on 127.0.0.1 (0 picks one)")
 
     conform_p = sub.add_parser(
         "conform",
@@ -131,6 +140,12 @@ def _add_trust_arguments(parser) -> None:
     parser.add_argument("--revocations", help="Signed revocation list (flyto.pack-revocations.v1) to check first")
     parser.add_argument("--revocation-key", action="append", default=[], metavar="ID=FILE",
                         help="Public key trusted to sign the revocation list; repeatable")
+
+
+def _add_provider_argument(parser) -> None:
+    parser.add_argument("--provider-base-url", metavar="URL",
+                        help="Send the pack's requests here instead of its manifest base_url, for local testing: "
+                             "a loopback address (such as flyto pack serve-fixtures) or a host in FLYTO_ALLOWED_HOSTS")
 
 
 def add_bundle_parser(subparsers) -> None:
@@ -289,7 +304,8 @@ def _run(args) -> int:
 
     from core.pack.standalone import load_standalone, serve_http, serve_stdio
 
-    pack = load_standalone(args.source, transport=args.transport, **_trust(args))
+    pack = load_standalone(args.source, transport=args.transport, provider_base_url=getattr(args, "provider_base_url", None),
+                           **_trust(args))
 
     async def serve() -> None:
         try:
@@ -314,9 +330,23 @@ def _run(args) -> int:
 def _health(args) -> int:
     from core.pack.standalone import health
 
-    report = health(args.source, **_trust(args))
+    report = health(args.source, provider_base_url=getattr(args, "provider_base_url", None), **_trust(args))
     print(json.dumps(report, indent=2))
     return 0 if report["healthy"] else 1
+
+
+def _serve_fixtures(args) -> int:
+    import threading
+
+    from core.pack.recorded import serve_fixtures
+
+    with serve_fixtures(args.pack_dir, port=args.port) as url:
+        print(f"serving recorded fixtures at {url}", flush=True)
+        try:
+            threading.Event().wait()
+        except KeyboardInterrupt:
+            return 0
+    return 0
 
 
 def _conform(args) -> int:
@@ -403,10 +433,11 @@ def run_pack_command(args) -> int:
         "build": _build,
         "run": _run,
         "health": _health,
+        "serve-fixtures": _serve_fixtures,
     }
     if action not in handlers:
         print("Usage: flyto pack <init|consequence|doctor|test|manifest|digest|keygen|sign|verify|conform|"
-              "import-openapi|build|run|health>")
+              "import-openapi|build|run|health|serve-fixtures>")
         return 1
     try:
         return handlers[action](args)

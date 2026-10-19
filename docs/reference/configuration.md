@@ -19,7 +19,7 @@ Implementation sources read **109 environment-variable names**. The package ship
 | `DEPLOYMENT_MODE` | [`src/core/browser/driver.py:240`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L240), [`src/core/browser/driver.py:564`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L564), [`src/core/browser/driver.py:763`](https://github.com/flytohub/flyto-core/blob/main/src/core/browser/driver.py#L763), [`src/core/engine/breakpoints/manager.py:483`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/breakpoints/manager.py#L483), [`src/core/engine/breakpoints/screenshot.py:179`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/breakpoints/screenshot.py#L179) |
 | `DISCORD_WEBHOOK_URL` | [`src/core/modules/third_party/communication/messaging/discord.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/third_party/communication/messaging/discord.py#L267) |
 | `FIGMA_TOKEN` | [`examples/happy-test/test_figma.py:21`](https://github.com/flytohub/flyto-core/blob/main/examples/happy-test/test_figma.py#L21), [`src/core/modules/atomic/verify/figma.py:314`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/verify/figma.py#L314) |
-| `FLYTO_ALLOWED_HOSTS` | [`src/core/utils.py:652`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L652) |
+| `FLYTO_ALLOWED_HOSTS` | [`src/core/pack/standalone.py:241`](https://github.com/flytohub/flyto-core/blob/main/src/core/pack/standalone.py#L241), [`src/core/utils.py:652`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L652) |
 | `FLYTO_ALLOW_ABSOLUTE_PATHS` | [`src/core/utils.py:1288`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1288) |
 | `FLYTO_ALLOW_CLIENT_DB_DSN` | [`src/core/modules/atomic/database/_dsn_guard.py:48`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/database/_dsn_guard.py#L48) |
 | `FLYTO_ALLOW_PORT_SCAN` | [`src/core/modules/atomic/port/check.py:371`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/port/check.py#L371) |
@@ -39,7 +39,7 @@ Implementation sources read **109 environment-variable names**. The package ship
 | `FLYTO_MCP_ALLOW_LOCALHOST` | [`src/core/mcp_server.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/core/mcp_server.py#L64) |
 | `FLYTO_MODULE_ALLOWLIST` | [`src/core/module_policy.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L83) |
 | `FLYTO_MODULE_DENYLIST` | [`src/core/module_policy.py:90`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L90) |
-| `FLYTO_PACK_HTTP_TOKEN` | [`src/cli/pack.py:299`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L299) |
+| `FLYTO_PACK_HTTP_TOKEN` | [`src/cli/pack.py:315`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L315) |
 | `FLYTO_PLUGIN_ALLOWLIST` | [`src/core/module_policy.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L245) |
 | `FLYTO_PLUGIN_DENYLIST` | [`src/core/module_policy.py:248`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L248) |
 | `FLYTO_PLUGIN_GRANTS` | [`src/core/module_policy.py:234`](https://github.com/flytohub/flyto-core/blob/main/src/core/module_policy.py#L234) |

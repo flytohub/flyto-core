@@ -582,6 +582,30 @@ exits 1 when a needed credential is missing (`CREDENTIAL_MISSING`), the
 probe is unreadable with a credential present
 (`PROVIDER_ENTITLEMENT_UNREADABLE`), or the runtime is older than the floor.
 
+### Local testing: `--provider-base-url`
+
+`flyto pack run` and `flyto pack health` take `--provider-base-url URL`
+(`standalone.admit_provider_base_url`). For that run, the pack's requests go
+there instead of to the manifest's `base_url`, and token URLs move to the same
+origin with their paths kept. It is meant for a local stand-in:
+`flyto pack serve-fixtures DIR [--port N]` serves the pack's recorded fixtures
+(the fake `flyto pack test` builds) on `127.0.0.1` until stopped.
+
+The override changes where the credential goes without a new signed manifest,
+so it is admitted narrowly:
+
+- The host is loopback, or a host the operator already lists in
+  `FLYTO_ALLOWED_HOSTS`. Otherwise it is refused with
+  `PROVIDER_BASE_URL_REFUSED`, before anything is installed. The list is never
+  widened.
+- The scheme rules are the connector's: https, or plain http to loopback only
+  (`INVALID_BASE_URL`). A URL carrying userinfo or a token is refused with
+  `INLINE_SECRET`.
+- A loopback origin is opened in the SSRF guard for that one host and port,
+  only while the pack is open, then restored.
+- The signed manifest and its digest are unchanged. `health` reports the
+  override as `provider_base_url`, and `run` logs it.
+
 ## Supply chain (2.41.0)
 
 `core.pack.supply_chain`.
@@ -640,8 +664,9 @@ flyto pack conform <dir> [--trusted-key ID=FILE ...] [--static-only] [--json]
 flyto pack import-openapi <openapi.json|yaml> [-o FILE]
 flyto pack build <dir> --lock FILE [-o ZIP] [--key PRIVATE_PEM --key-id ID]
 flyto pack verify <dir|zip> [--trusted-key ID=FILE ...] [--allow-unsigned] [--revocations FILE --revocation-key ID=FILE ...]
-flyto pack run <dir|zip> [--transport stdio|streamable_http] [--host 127.0.0.1] [--port N] [trust options]
-flyto pack health <dir|zip> [trust options]
+flyto pack run <dir|zip> [--transport stdio|streamable_http] [--host 127.0.0.1] [--port N] [trust options] [--provider-base-url URL]
+flyto pack health <dir|zip> [trust options] [--provider-base-url URL]
+flyto pack serve-fixtures <dir> [--port N]
 flyto bundle build <dir> --pack ZIP ... [-o ZIP] [--key PRIVATE_PEM --key-id ID]
 flyto bundle verify <dir|zip> --pack ZIP ... [trust options]
 ```

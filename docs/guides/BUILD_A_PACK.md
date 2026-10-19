@@ -99,17 +99,32 @@ zip. Keep `publisher.pem` private and give your customers `publisher.pub`.
 
 A customer runs the same zip with their own credential. The credential is named in
 the pack (`items_api_token`), and its value comes from the environment (or the OS
-keychain), never from the pack:
+keychain), never from the pack.
+
+Before any real account exists, run the built zip against your recorded fixtures.
+`serve-fixtures` serves the same fake `pack test` builds, on loopback. Then
+`--provider-base-url` sends the pack's requests there instead of to its manifest
+`base_url`. The credential is the fixture customer's test value:
 
 ```sh
-export FLYTO_CREDENTIAL_ITEMS_API_TOKEN=your-provider-token
-flyto pack health items-0.1.0.zip --trusted-key publisher-1=publisher.pub
-flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub
+flyto pack serve-fixtures items-pack --port 8799 &
+export FLYTO_CREDENTIAL_ITEMS_API_TOKEN=fixture-token-not-real
+flyto pack health items-0.1.0.zip --trusted-key publisher-1=publisher.pub --provider-base-url http://127.0.0.1:8799
+flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub --provider-base-url http://127.0.0.1:8799
 ```
 
-`health` verifies the pack and reports each credential name and where its value
-would come from, never the value itself. `run` serves the operations as MCP tools
-over stdio; add `--transport streamable_http` for loopback HTTP.
+`health` verifies the pack, reads the entitlements probe from the provider, and
+reports each credential name and where its value would come from, never the value
+itself. `run` serves the operations the credential is entitled to as MCP tools over
+stdio; add `--transport streamable_http` for loopback HTTP.
+
+`--provider-base-url` accepts a loopback address, or a host the operator already
+lists in `FLYTO_ALLOWED_HOSTS`, and nothing else (`PROVIDER_BASE_URL_REFUSED`).
+Plain http is accepted only to loopback, and the URL may not carry a credential.
+A loopback origin is opened in the SSRF guard for that one host and port, only
+while the pack runs. The signed manifest is unchanged, and `health` reports the
+override as `provider_base_url`. With a real account, set the real token and drop
+the flag. The pack then calls its manifest `base_url`.
 
 ## 6. Load it into a Space
 

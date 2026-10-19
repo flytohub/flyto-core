@@ -218,6 +218,9 @@ DIAGNOSES: Mapping[str, Diagnosis] = {
     "TRANSPORT_UNKNOWN": D("The requested transport is not stdio or streamable_http.", "Use --transport stdio or streamable_http."),
     "TRANSPORT_NOT_DECLARED": D("The pack does not declare the requested transport.",
                                 "Add it to standalone.transports, or run with a declared one."),
+    "PROVIDER_BASE_URL_REFUSED": D("--provider-base-url names a host that is neither loopback nor in FLYTO_ALLOWED_HOSTS.",
+                                   "Point it at a local stand-in such as flyto pack serve-fixtures on 127.0.0.1, or "
+                                   "have the operator allow-list the host."),
     "HTTP_BIND_REFUSED": D("The standalone HTTP server was asked to listen beyond loopback.",
                            "Listen on 127.0.0.1; put a reverse proxy in front if others must reach it."),
     "HTTP_TOKEN_WEAK": D("The HTTP bearer token is too short.", "Set FLYTO_PACK_HTTP_TOKEN to a long random value."),

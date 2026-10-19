@@ -1,5 +1,25 @@
 # Decisions
 
+## 2026-10-19 - A standalone pack may be pointed at a local stand-in, and only there
+
+Decision: `flyto pack run|health --provider-base-url URL` redirects a
+standalone pack's requests for one run, so a provider can run its built zip
+against `flyto pack serve-fixtures` (its recorded fake) before any real
+account exists. This narrows the run-time `--base-url` override that
+`handoffs/2026-10-19-portable-packs-and-bundles.md` rejected, because it would change where the credential goes without a new signed
+manifest. The override is admitted only to loopback, or to a host the
+operator has already allow-listed for the SSRF guard. A loopback origin is
+opened for that one host and port while the pack is open, and the manifest,
+digest and signature are unchanged. `health` reports the override.
+
+Rejected:
+
+- An environment variable. It outlives the command and is easy to leave set,
+  so later runs would send the credential somewhere other than the manifest.
+- Admitting any host. That is the risk the earlier decision named.
+- Rewriting the manifest. That would break its signature and hide the
+  override inside the artifact.
+
 ## 2026-10-19 - A provider builds its pack alone, and decides every consequence itself
 
 Decision: the provider developer kit is four commands over the existing

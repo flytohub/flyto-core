@@ -8,7 +8,8 @@ test reads it and runs it:
   directory in page order (``export`` lines set the environment; a trailing
   ``# exit N`` states the exit code the page promises, otherwise 0);
   ``flyto pack run`` is started as a real process and spoken to as an MCP
-  client;
+  client; a line ending in `` &`` is started as a background process that
+  must say it is serving, and is stopped when the page is done;
 * a block after ``<!-- file: NAME -->`` is written to ``NAME`` first;
 * every ```` ```python ```` block is executed;
 * a ```` ```json ```` block after ``<!-- excerpt: PATH -->`` must be the
@@ -17,8 +18,9 @@ test reads it and runs it:
 
 So no command on the page is untested prose. The page's hashed lockfile is
 this suite's fixture lock (the page cannot ship a real hash), and nothing
-reaches a provider: ``pack test`` answers from recorded fixtures, and the
-standalone server is only listed, never called.
+reaches a provider: ``pack test`` answers from recorded fixtures, and
+``health`` and ``run`` are pointed at ``flyto pack serve-fixtures`` on
+loopback with ``--provider-base-url``.
 """
 
 import json
@@ -64,6 +66,20 @@ def contained(excerpt, actual):
     if isinstance(excerpt, list):
         return isinstance(actual, list) and all(any(contained(e, a) for a in actual) for e in excerpt)
     return excerpt == actual
+
+
+def start_background(argv, cwd, env):
+    """Start a ``... &`` line; it must print that it is serving before the page goes on."""
+    process = subprocess.Popen([sys.executable, "-m", "cli.main", *argv], cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+    first = []
+    reader = threading.Thread(target=lambda: first.append(process.stdout.readline()), daemon=True)
+    reader.start()
+    reader.join(60)
+    if not first or "serving" not in first[0]:
+        process.kill()
+        raise AssertionError(f"{' '.join(argv)} did not start serving: {process.stderr.read()}")
+    return process
 
 
 def run_standalone(argv, cwd, env):
@@ -119,6 +135,26 @@ def workdir(tmp_path, monkeypatch):
 def test_every_command_on_the_page_runs_as_written(workdir, capsys, monkeypatch):
     ran = []
     standalone = []
+    background = []
+    try:
+        _run_page(workdir, capsys, monkeypatch, ran, standalone, background)
+    finally:
+        for process in background:
+            process.terminate()
+            process.wait(timeout=30)
+            process.stdout.close()
+            process.stderr.close()
+    assert "python" in ran, "the page loads the pack into a Space"
+    assert background, "the page runs the pack against a local provider stand-in"
+    assert standalone, "the page runs the pack standalone"
+    answers, stderr = standalone[0]
+    assert answers[0]["result"]["serverInfo"]["name"] == "com.example.items"
+    # Both tools: the probe was read from the stand-in, and it holds the feature.
+    assert {tool["name"] for tool in answers[1]["result"]["tools"]} == {"items.account.entitlements", "items.item.get"}
+    assert "fixture-token-not-real" not in stderr
+
+
+def _run_page(workdir, capsys, monkeypatch, ran, standalone, background):
     for marker, target, language, body in blocks():
         if marker == "file":
             (workdir / target).write_text(body, encoding="utf-8")
@@ -138,6 +174,12 @@ def test_every_command_on_the_page_runs_as_written(workdir, capsys, monkeypatch)
             if match:
                 expected, line = int(match.group(1)), line[: match.start()]
             argv = shlex.split(line)
+            if argv[-1] == "&":
+                assert argv[:2] == ["flyto", "pack"], f"the page runs only flyto pack commands: {line}"
+                env = {**os.environ, "PYTHONPATH": str(ROOT / "src")}
+                background.append(start_background(argv[1:-1], workdir, env))
+                ran.append(line)
+                continue
             if argv[0] == "export":
                 name, _, value = argv[1].partition("=")
                 monkeypatch.setenv(name, value)
@@ -153,17 +195,12 @@ def test_every_command_on_the_page_runs_as_written(workdir, capsys, monkeypatch)
                 code = cli(*argv[2:])
             assert code == expected, f"{line} exited {code}, the page says {expected}\n{capsys.readouterr()}"
             ran.append(line)
-    assert "python" in ran, "the page loads the pack into a Space"
-    assert standalone, "the page runs the pack standalone"
-    answers, stderr = standalone[0]
-    assert answers[0]["result"]["serverInfo"]["name"] == "com.example.items"
-    assert {tool["name"] for tool in answers[1]["result"]["tools"]} == {"items.account.entitlements", "items.item.get"}
-    assert "your-provider-token" not in stderr
 
 
 def test_the_page_covers_the_whole_path():
     subcommands = [shlex.split(EXIT.sub("", line))[2] for line in commands() if line.startswith("flyto ")]
-    for step in ("init", "doctor", "consequence", "test", "keygen", "build", "verify", "health", "run"):
+    for step in ("init", "doctor", "consequence", "test", "keygen", "build", "verify", "serve-fixtures", "health",
+                 "run"):
         assert step in subcommands, f"the page has no flyto pack {step}"
     assert subcommands.index("init") < subcommands.index("test") < subcommands.index("build") < subcommands.index("run")
 

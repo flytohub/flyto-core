@@ -45,6 +45,7 @@ from typing import Any, AsyncIterator, Dict, Iterator, List, Mapping, Optional, 
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from .connector import METHODS, module_id_for
+from .connector_runtime import loopback_origin_allowed
 from .manifest import MANIFEST_FILENAME, PackManifestError, _read_regular_file
 
 __all__ = [
@@ -54,6 +55,7 @@ __all__ = [
     "TEST_FAILURES",
     "load_fixtures",
     "recorded_install",
+    "serve_fixtures",
     "render",
     "run_pack_tests",
     "run_pack_tests_async",
@@ -84,8 +86,6 @@ TEST_FAILURES = (
 #: answer, reported as the declaration's own failure; any other is ``UNEXPECTED_RESULT``.
 DECLARATION_FAILURES: Mapping[str, str] = {"RESULT_SCOPE_UNREADABLE": "RESULT_SCOPE_UNMATCHED"}
 
-_ALLOWED_HOSTS_ENV = "FLYTO_ALLOWED_HOSTS"
-_ALLOWED_PORTS_ENV = "FLYTO_HTTP_ALLOWED_PORTS"
 _LOOPBACK = "127.0.0.1"
 _TOKEN_PREFIX = "fixture-access-"
 
@@ -267,7 +267,7 @@ class _Provider:
     base_url: str = ""
     _server: Any = None
 
-    def start(self) -> None:
+    def start(self, port: int = 0) -> None:
         provider = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -289,7 +289,7 @@ class _Provider:
             def do_DELETE(self) -> None:  # noqa: N802
                 provider.handle(self)
 
-        self._server = ThreadingHTTPServer((_LOOPBACK, 0), Handler)
+        self._server = ThreadingHTTPServer((_LOOPBACK, port), Handler)
         threading.Thread(target=self._server.serve_forever, daemon=True).start()
         self.base_url = f"http://{_LOOPBACK}:{self._server.server_address[1]}"
 
@@ -370,23 +370,6 @@ def _reply(handler: Any, status: int, body: Any, headers: Mapping[str, str]) -> 
     handler.wfile.write(raw)
 
 
-@contextlib.contextmanager
-def _loopback_allowed(port: int) -> Iterator[None]:
-    """Let the SSRF guard reach the fake provider, and only for this run: the operator's own opt-in."""
-    saved = {name: os.environ.get(name) for name in (_ALLOWED_HOSTS_ENV, _ALLOWED_PORTS_ENV)}
-    for name, value in ((_ALLOWED_HOSTS_ENV, _LOOPBACK), (_ALLOWED_PORTS_ENV, str(port))):
-        existing = [item for item in (saved[name] or "").split(",") if item.strip()]
-        os.environ[name] = ",".join([*existing, value])
-    try:
-        yield
-    finally:
-        for name, value in saved.items():
-            if value is None:
-                os.environ.pop(name, None)
-            else:
-                os.environ[name] = value
-
-
 # -- the installed pack ---------------------------------------------------------------------
 
 
@@ -439,52 +422,87 @@ class RecordedSession:
         return [entry for entry in self.provider.log if path is None or entry["path"] == path]
 
 
-async def _identities(session: RecordedSession) -> Dict[Tuple[str, str], str]:
+def _transport(manifest: Mapping[str, Any]) -> Any:
+    """The pack's connector transport, built as a host builds it, without installing anything."""
+    from .connector_runtime import ConnectorTransport
+
+    return ConnectorTransport(pack_id=manifest["pack"]["id"], namespace=manifest["pack"]["namespaces"][0],
+                              connector=manifest["connector"], runtime=manifest["runtime"],
+                              entitlements=manifest.get("entitlements"))
+
+
+async def _identities(manifest: Mapping[str, Any], fixtures: Fixtures) -> Dict[Tuple[str, str], str]:
     """Which request header value identifies each customer, as the runtime itself encodes it."""
     from .connector_runtime import _AUTH_KINDS
-    from .host import _INSTALLED
 
-    auth = session.manifest["connector"]["auth"]
+    auth = manifest["connector"]["auth"]
     if not auth:
         return {}
     entry = auth[0]
     found: Dict[Tuple[str, str], str] = {}
     if entry["kind"] == "oauth2_client_credentials":
-        for name in session.fixtures.customers:
+        for name in fixtures.customers:
             found[("authorization", f"Bearer {_TOKEN_PREFIX}{name}")] = name
         return found
-    transport = _INSTALLED[session.manifest["pack"]["id"]].transport
-    for name, customer in session.fixtures.customers.items():
+    transport = _transport(manifest)
+    for name, customer in fixtures.customers.items():
         headers = await _AUTH_KINDS[entry["kind"]](transport, entry, customer.get("credential"), 1000)
         for header, value in headers.items():
             found[(header.lower(), value)] = name
     return found
 
 
+def _read_pack(root: Path) -> Tuple[Dict[str, Any], Fixtures]:
+    from .manifest import read_pack_manifest
+
+    manifest = read_pack_manifest(root)
+    if manifest["runtime"]["binding"] != "connector":
+        _fail("NOT_A_CONNECTOR_PACK", "flyto pack test runs connector packs; run flyto pack conform for others")
+    return manifest, load_fixtures(root, manifest)
+
+
+@contextlib.contextmanager
+def serve_fixtures(pack_dir: os.PathLike[str] | str, *, port: int = 0) -> Iterator[str]:
+    """Serve the pack's recorded fixtures on ``127.0.0.1:port`` while the block runs; yields the base URL.
+
+    The same fake ``flyto pack test`` builds, standing on its own, so a built
+    zip can run against it: ``flyto pack run|health --provider-base-url URL``.
+    Requests are matched relative to the URL it yields.
+    """
+    import concurrent.futures
+
+    manifest, fixtures = _read_pack(Path(pack_dir))
+    provider = _Provider(fixtures)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        # Encoded by the runtime's own auth code, on a loop of its own (the caller may be inside one).
+        provider.identities = pool.submit(asyncio.run, _identities(manifest, fixtures)).result()
+    provider.start(port)
+    try:
+        yield provider.base_url
+    finally:
+        provider.stop()
+
+
 @contextlib.asynccontextmanager
 async def recorded_install(pack_dir: os.PathLike[str] | str) -> AsyncIterator[RecordedSession]:
     """Install a copy of the pack pointed at a fake provider built from its fixtures; remove both after."""
     from .host import install_pack, uninstall_pack
-    from .manifest import read_pack_manifest
     from .portable import _read_raw_manifest
 
     root = Path(pack_dir)
-    manifest = read_pack_manifest(root)
-    if manifest["runtime"]["binding"] != "connector":
-        _fail("NOT_A_CONNECTOR_PACK", "flyto pack test runs connector packs; run flyto pack conform for others")
-    fixtures = load_fixtures(root, manifest)
+    manifest, fixtures = _read_pack(root)
     provider = _Provider(fixtures)
     provider.start()
     stage = Path(tempfile.mkdtemp(prefix="flyto-pack-test-"))
     installed = False
     try:
-        with _loopback_allowed(provider.port):
+        with loopback_origin_allowed(_LOOPBACK, provider.port):
             (stage / MANIFEST_FILENAME).write_text(json.dumps(_pointed_at(_read_raw_manifest(root), provider)),
                                                    encoding="utf-8")
             install_pack(stage, require_signature=False)
             installed = True
             session = RecordedSession(manifest=manifest, fixtures=fixtures, provider=provider)
-            provider.identities = await _identities(session)
+            provider.identities = await _identities(manifest, fixtures)
             yield session
     finally:
         try:

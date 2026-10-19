@@ -43,11 +43,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Tuple
 from urllib.parse import quote, urlencode, urlsplit
 
 from .connector import BODY_METHODS, module_id_for
@@ -69,7 +71,39 @@ from .jsonpath import expand, parse
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["STATUS_FAILURES", "ConnectorCallError", "ConnectorTransport", "sensitive_result_paths", "status_failure"]
+__all__ = [
+    "STATUS_FAILURES",
+    "ConnectorCallError",
+    "ConnectorTransport",
+    "loopback_origin_allowed",
+    "sensitive_result_paths",
+    "status_failure",
+]
+
+_ALLOWED_HOSTS_ENV = "FLYTO_ALLOWED_HOSTS"
+_ALLOWED_PORTS_ENV = "FLYTO_HTTP_ALLOWED_PORTS"
+
+
+@contextlib.contextmanager
+def loopback_origin_allowed(host: str, port: int) -> Iterator[None]:
+    """Let the SSRF guard reach one loopback ``host:port`` while the block runs, then restore it.
+
+    This is the operator opt-in the guard already reads (``FLYTO_ALLOWED_HOSTS``
+    and ``FLYTO_HTTP_ALLOWED_PORTS``), narrowed to the one origin a local
+    provider stand-in listens on. Callers pass a loopback host only.
+    """
+    saved = {name: os.environ.get(name) for name in (_ALLOWED_HOSTS_ENV, _ALLOWED_PORTS_ENV)}
+    for name, value in ((_ALLOWED_HOSTS_ENV, host), (_ALLOWED_PORTS_ENV, str(port))):
+        existing = [item for item in (saved[name] or "").split(",") if item.strip()]
+        os.environ[name] = ",".join([*existing, value])
+    try:
+        yield
+    finally:
+        for name, value in saved.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 #: HTTP status -> the typed failure a module returns. The first matching row
 #: wins; a status no row covers is ``PROVIDER_UNEXPECTED_STATUS``.
@@ -198,6 +232,29 @@ class ConnectorTransport:
         self._origin = (origin.scheme, origin.hostname, origin.port)
         max_age = (self.entitlements or {}).get("max_age_s", DEFAULT_MAX_AGE_S)
         self._entitlement_cache = EntitlementCache(max_age_s=max_age)
+
+    def point_at(self, base_url: str) -> None:
+        """Send this pack's requests to ``base_url`` instead of the manifest's, for this transport only.
+
+        The caller has already admitted the URL (``standalone`` admits a
+        loopback or allow-listed origin). Token URLs move to the same origin,
+        keeping their path, so no request leaves for the manifest's origin.
+        """
+        origin = urlsplit(base_url)
+        connector = dict(self.connector)
+        connector["base_url"] = base_url.rstrip("/")
+        auth = []
+        for entry in connector.get("auth") or []:
+            entry = dict(entry)
+            for key in ("token_url", "authorize_url"):
+                if key in entry:
+                    entry[key] = f"{origin.scheme}://{origin.netloc}{urlsplit(entry[key]).path}"
+            auth.append(entry)
+        connector["auth"] = auth
+        self.connector = connector
+        self._origin = (origin.scheme, origin.hostname, origin.port)
+        self._tokens.clear()
+        self._entitlement_cache.clear()
 
     def operation(self, module_id: str) -> Optional[Mapping[str, Any]]:
         return self._operations.get(module_id)
