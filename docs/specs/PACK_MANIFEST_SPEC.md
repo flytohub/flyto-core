@@ -151,7 +151,7 @@ per provider or per operation.
                "severity": {"type": "string"}},
     "result_scope": {"dimension": "company", "path": "$.items[*].guid"},
     "sensitive": ["$.items[*].assets"],
-    "requires": {"features": ["spm"]},
+    "requires": {"features": ["ratings"]},
     "consumes": {"meter": "lookups", "amount": 1},
     "paginate": {"strategy": "offset", "data_path": "results", "page_size": 100}
   }]

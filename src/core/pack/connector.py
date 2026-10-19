@@ -16,7 +16,7 @@ each operation::
         "consequence": "observe",
         "inputs": {"company": {"type": "string", "scope": "company"}},
         "result_scope": "$.guid", "sensitive": ["$.findings[*].assets"],
-        "requires": {"features": ["spm"]}, "consumes": {"meter": "lookups", "amount": 1},
+        "requires": {"features": ["ratings"]}, "consumes": {"meter": "lookups", "amount": 1},
         "paginate": {"strategy": "offset", "data_path": "results"}
       }]
     }
