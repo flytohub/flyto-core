@@ -93,7 +93,38 @@ without a chain; a hand-written matrix; scaffold defaults for consequences.
 
 ## Verified
 
-See the final section, filled after the runs.
+Evidence files are in the lane scratchpad `round9/j17-evidence/`.
+
+- Failing first (`failing-first.txt`): all five new test files failed at
+  collection before any code: `ModuleNotFoundError: core.pack.certification`,
+  `core.pack.upgrade`, `core.pack.publisher_keys`; `ImportError` for
+  `compatibility.MATRIX_SCHEMA` and `scaffold.TEMPLATES` (5 errors).
+- New tests, 71 passed: `test_pack_certification.py` 22,
+  `test_compatibility_matrix.py` 6, `test_pack_upgrade.py` 16 (incl. the
+  install-beside upgrade/rollback path through `install_pack(upgrade_from=)`),
+  `test_publisher_key_rotation.py` 16, `test_device_adapter_template.py` 11
+  (incl. a decided, signed device pack certifying with `pack_test` and
+  `standalone_health` not applicable). `test_build_a_pack_guide.py` 4 passed
+  with sections 9 and 10 run as written; `test_pack_doctor.py` 162 passed with
+  the 18 new codes.
+- `tests/core/pack` + `tests/test_documentation_generators.py`, mid-lane:
+  659 passed, 2 failed, both the doctor completeness test naming the new
+  codes without rows; after the rows that file passed 162, and the full
+  suite below covers the rest.
+- Full non-browser suite `pytest -m 'not browser and not e2e' --no-cov`:
+  6064 passed, 174 skipped, 508 deselected, 0 failed (13 min).
+- `generate_reference.py` regenerated, `--check` PASS (1017 files, 6,855
+  declarations); `check_documentation.py` PASS (198 Markdown files, 258
+  local links) after the inventory tokens; `check_brand_identity.py` PASS;
+  `lint-project-memory.sh` PASS; ruff clean on every changed Python file
+  (3 import-order/`dict.fromkeys` findings fixed).
+- `flyto-index verify --strict` on the commit: PASS, 21 pass, 0 warn, 0 fail.
+- Exploration before editing: `flyto-index context` / `impact` CLI on this
+  worktree (install_pack 45 direct references, verify_pack_dir 3,
+  load_revocations 9, verify_manifest_signature 12, validate_pack_manifest
+  54). The MCP server is pinned to flyto-indexer's own root, so MCP `task`
+  plan ran but its gates and `task(action='validate')` could not target this
+  repository; not run.
 
 ## Not verified
 
