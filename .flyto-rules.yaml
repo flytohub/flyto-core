@@ -113,3 +113,8 @@ conventions:
 
 verify:
   min_docs_score: 90
+
+taint:
+  sanitizers:
+    - pattern: confined_recipe_path
+      cleanses: ["path_traversal"]

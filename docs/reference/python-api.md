@@ -2,7 +2,7 @@
 
 # Python Declaration Reference
 
-Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,500 declarations across 849 files**.
+Every class, function, nested function, and method in maintained runtime, CLI, script, example, and plugin-template sources: **6,501 declarations across 849 files**.
 
 ## `demo.py`
 
@@ -661,24 +661,25 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 |---|---|---|---|
 | function | `def _fmt_duration(ms: int) -> str` | Format milliseconds as a human-readable string with comma separators. | [`src/cli/recipe.py:32`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L32) |
 | function | `def _print_step_line(step_num: int, total: int, module_id: str, status: str, duration_ms: int=0, hint: str='') -> None` | Print a single step line with aligned columns. | [`src/cli/recipe.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L39) |
-| function | `def load_recipe(recipe_name: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Load a recipe YAML file by name. | [`src/cli/recipe.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L66) |
-| function | `def list_all_recipes() -> List&#91;Dict&#91;str, Any&#93;&#93;` | List all available recipes with metadata. | [`src/cli/recipe.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L84) |
-| function | `def substitute_args(workflow: Dict&#91;str, Any&#93;, args: Dict&#91;str, str&#93;) -> Dict&#91;str, Any&#93;` | Replace {{arg}} placeholders in workflow with actual values. | [`src/cli/recipe.py:104`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L104) |
-| function | `def _substitute_deep(obj: Any, args: Dict&#91;str, str&#93;) -> Any` | Recursively substitute {{arg}} placeholders. | [`src/cli/recipe.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L109) |
-| function | `def _auto_type(value: str) -> Any` | Convert string to int/float/bool/json if possible. | [`src/cli/recipe.py:126`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L126) |
-| function | `def parse_recipe_args(raw_args: List&#91;str&#93;, recipe: Dict&#91;str, Any&#93;) -> Dict&#91;str, str&#93;` | Parse CLI args like --symbol AAPL --range 1mo into a dict. | [`src/cli/recipe.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L149) |
-| function | `def print_recipe_usage(recipe: Dict&#91;str, Any&#93;) -> None` | Print usage for a single recipe. | [`src/cli/recipe.py:190`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L190) |
-| function | `def run_recipes_list() -> int` | List all available recipes. | [`src/cli/recipe.py:218`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L218) |
-| function | `def _step_hint(step: Dict&#91;str, Any&#93;) -> str` | Generate a short hint for notable steps based on module type. | [`src/cli/recipe.py:245`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L245) |
-| function | `def run_recipe(recipe_name: str, raw_args: List&#91;str&#93;) -> int` | Load, substitute, and execute a recipe. | [`src/cli/recipe.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L267) |
-| method | `async def run_recipe._on_checkpoint(step_index, step_id, checkpoint_data, status)` | Implements `run_recipe._on_checkpoint`; linked source is authoritative. | [`src/cli/recipe.py:339`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L339) |
-| method | `async def run_recipe._run()` | Implements `run_recipe._run`; linked source is authoritative. | [`src/cli/recipe.py:363`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L363) |
-| function | `def _print_output_files(args: Dict&#91;str, str&#93;, engine) -> None` | Print sizes of any generated output files. | [`src/cli/recipe.py:418`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L418) |
-| function | `def _save_json(path: Path, data: Any) -> None` | Save JSON, silently skip non-serializable data. | [`src/cli/recipe.py:446`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L446) |
-| function | `def _save_checkpoint_snapshot(run_dir: Path, step_index: int, step_id: str, checkpoint_data: Dict&#91;str, Any&#93;, status: str) -> None` | Save a context snapshot after each step for replay. | [`src/cli/recipe.py:460`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L460) |
-| function | `def run_replay(from_step: str, run_dir_path: Optional&#91;str&#93;=None) -> int` | Replay a workflow from a specific step using saved state. | [`src/cli/recipe.py:489`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L489) |
-| method | `async def run_replay._on_checkpoint(si, sid, cp_data, status)` | Implements `run_replay._on_checkpoint`; linked source is authoritative. | [`src/cli/recipe.py:579`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L579) |
-| method | `async def run_replay._run()` | Implements `run_replay._run`; linked source is authoritative. | [`src/cli/recipe.py:595`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L595) |
+| function | `def confined_recipe_path(recipe_name: str) -> Optional&#91;Path&#93;` | The bundled recipe file a name names, or None when it would leave ``RECIPES_DIR``. | [`src/cli/recipe.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L66) |
+| function | `def load_recipe(recipe_name: str) -> Optional&#91;Dict&#91;str, Any&#93;&#93;` | Load a bundled recipe by name; None when the name is outside it or no such recipe exists. | [`src/cli/recipe.py:82`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L82) |
+| function | `def list_all_recipes() -> List&#91;Dict&#91;str, Any&#93;&#93;` | List all available recipes with metadata. | [`src/cli/recipe.py:91`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L91) |
+| function | `def substitute_args(workflow: Dict&#91;str, Any&#93;, args: Dict&#91;str, str&#93;) -> Dict&#91;str, Any&#93;` | Replace {{arg}} placeholders in workflow with actual values. | [`src/cli/recipe.py:111`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L111) |
+| function | `def _substitute_deep(obj: Any, args: Dict&#91;str, str&#93;) -> Any` | Recursively substitute {{arg}} placeholders. | [`src/cli/recipe.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L116) |
+| function | `def _auto_type(value: str) -> Any` | Convert string to int/float/bool/json if possible. | [`src/cli/recipe.py:133`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L133) |
+| function | `def parse_recipe_args(raw_args: List&#91;str&#93;, recipe: Dict&#91;str, Any&#93;) -> Dict&#91;str, str&#93;` | Parse CLI args like --symbol AAPL --range 1mo into a dict. | [`src/cli/recipe.py:156`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L156) |
+| function | `def print_recipe_usage(recipe: Dict&#91;str, Any&#93;) -> None` | Print usage for a single recipe. | [`src/cli/recipe.py:197`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L197) |
+| function | `def run_recipes_list() -> int` | List all available recipes. | [`src/cli/recipe.py:225`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L225) |
+| function | `def _step_hint(step: Dict&#91;str, Any&#93;) -> str` | Generate a short hint for notable steps based on module type. | [`src/cli/recipe.py:252`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L252) |
+| function | `def run_recipe(recipe_name: str, raw_args: List&#91;str&#93;) -> int` | Load, substitute, and execute a recipe. | [`src/cli/recipe.py:274`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L274) |
+| method | `async def run_recipe._on_checkpoint(step_index, step_id, checkpoint_data, status)` | Implements `run_recipe._on_checkpoint`; linked source is authoritative. | [`src/cli/recipe.py:346`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L346) |
+| method | `async def run_recipe._run()` | Implements `run_recipe._run`; linked source is authoritative. | [`src/cli/recipe.py:370`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L370) |
+| function | `def _print_output_files(args: Dict&#91;str, str&#93;, engine) -> None` | Print sizes of any generated output files. | [`src/cli/recipe.py:425`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L425) |
+| function | `def _save_json(path: Path, data: Any) -> None` | Save JSON, silently skip non-serializable data. | [`src/cli/recipe.py:453`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L453) |
+| function | `def _save_checkpoint_snapshot(run_dir: Path, step_index: int, step_id: str, checkpoint_data: Dict&#91;str, Any&#93;, status: str) -> None` | Save a context snapshot after each step for replay. | [`src/cli/recipe.py:467`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L467) |
+| function | `def run_replay(from_step: str, run_dir_path: Optional&#91;str&#93;=None) -> int` | Replay a workflow from a specific step using saved state. | [`src/cli/recipe.py:496`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L496) |
+| method | `async def run_replay._on_checkpoint(si, sid, cp_data, status)` | Implements `run_replay._on_checkpoint`; linked source is authoritative. | [`src/cli/recipe.py:586`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L586) |
+| method | `async def run_replay._run()` | Implements `run_replay._run`; linked source is authoritative. | [`src/cli/recipe.py:602`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L602) |
 
 ## `src/cli/runner.py`
 

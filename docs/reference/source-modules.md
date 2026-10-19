@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,002 Python files**, **241,125 lines**, and **6,500 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,002 Python files**, **241,132 lines**, and **6,501 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -68,7 +68,7 @@ Inventory: **1,002 Python files**, **241,125 lines**, and **6,500 class/function
 | [`src/cli/pack.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L1) | 226 | 10 | `core, cryptography, json, os, pathlib, sys, yaml` | Pack CLI Commands — the language-neutral ``flyto.pack.v1`` contract. |
 | [`src/cli/params.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/params.py#L1) | 127 | 2 | `config, json, os, pathlib, sys, typing, yaml` | CLI Parameter Utilities |
 | [`src/cli/plugin.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/plugin.py#L1) | 271 | 9 | `argparse, core, sys, typing` | Plugin CLI Commands |
-| [`src/cli/recipe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L1) | 624 | 20 | `asyncio, config, core, json, os, pathlib, sys, time, typing, yaml` | CLI Recipe Runner |
+| [`src/cli/recipe.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/recipe.py#L1) | 631 | 21 | `asyncio, config, core, json, os, pathlib, sys, time, typing, yaml` | CLI Recipe Runner |
 | [`src/cli/runner.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/runner.py#L1) | 189 | 7 | `asyncio, capability_host, config, core, datetime, i18n, json, pathlib, sys, time, typing, yaml` | CLI Workflow Runner |
 | [`src/cli/template.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/template.py#L1) | 446 | 15 | `config, json, os, pathlib, sys, urllib` | CLI Template Commands |
 | [`src/cli/ui.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/cli/ui.py#L1) | 41 | 3 | `config, i18n` | CLI User Interface |
