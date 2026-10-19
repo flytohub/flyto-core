@@ -96,3 +96,16 @@ async def test_a_branch_of_several_steps_does_not_step_into_the_other_branch(ran
     await WorkflowEngine(workflow, {}).execute()
 
     assert ran == ["y1", "y2"]
+
+
+@pytest.mark.asyncio
+async def test_an_edge_drawn_without_a_handle_takes_the_first_free_input(ran):
+    workflow = _fork_workflow()
+    for edge in workflow["edges"]:
+        if edge["targetHandle"] == "target-input_1":
+            edge.pop("targetHandle")
+
+    engine = WorkflowEngine(workflow, {})
+    await engine.execute()
+
+    assert len(engine.context["join"]["outputs"]["output"]["merged_data"]) == 2

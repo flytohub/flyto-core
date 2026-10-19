@@ -311,11 +311,19 @@ class WorkflowRouter:
         if len(ports) < 2:
             return {}
         values: Dict[str, Any] = {}
+        unnamed = []
         for edge in self._incoming_edges.get(step_id, []):
             handle = edge.get('targetHandle') or edge.get('target_handle') or ''
-            port = resolve_port(ports, handle, INPUT)
-            if port is not None and edge.get('source') in context:
+            port = resolve_port(ports, handle, INPUT) if handle else None
+            if port is None:
+                unnamed.append(edge)
+            elif edge.get('source') in context:
                 values[port['id']] = context[edge['source']]
+        # An edge drawn without naming an input takes the first one still free.
+        free = [p['id'] for p in ports if p['id'] not in values]
+        for edge, port_id in zip(unnamed, free):
+            if edge.get('source') in context:
+                values[port_id] = context[edge['source']]
         return values
 
     def has_route(self, step_id: str, event: str) -> bool:
