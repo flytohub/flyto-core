@@ -1,0 +1,10 @@
+{
+  "_about": "Recorded-shape responses for the example ratings connector. Modeled on the read operations a security-ratings provider's v1 API exposes (Bitsight: company rating, company findings, portfolio). Values are invented; nothing here came from a real account.",
+  "company": {"guid": "c-1", "name": "Example Co", "rating": 720, "rating_date": "2026-10-01"},
+  "findings": [
+    {"risk_vector": "open_ports", "severity": "material", "assets": ["10.0.0.1:22"]},
+    {"risk_vector": "patching_cadence", "severity": "moderate", "assets": ["host-a.example"]},
+    {"risk_vector": "tls_certificates", "severity": "minor", "assets": ["host-b.example"]}
+  ],
+  "portfolio": {"companies": [{"guid": "c-1", "name": "Example Co"}, {"guid": "c-2", "name": "Second Co"}]}
+}

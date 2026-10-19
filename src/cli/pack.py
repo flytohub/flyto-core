@@ -8,6 +8,7 @@ Usage:
     flyto pack sign <pack-dir> --key PRIVATE_PEM --key-id ID
     flyto pack verify <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--allow-unsigned]
     flyto pack conform <pack-dir> [--trusted-key ID=PUBLIC_KEY_FILE ...] [--static-only] [--json]
+    flyto pack import-openapi <openapi.json|yaml> [-o FILE]
 """
 
 import json
@@ -58,6 +59,13 @@ def add_pack_parser(subparsers) -> None:
                            help="Trusted publisher public key (PEM or base64 raw); repeatable")
     conform_p.add_argument("--static-only", action="store_true", help="Read the files; never start the runner")
     conform_p.add_argument("--json", action="store_true", help="Print the report as JSON")
+
+    import_p = sub.add_parser(
+        "import-openapi",
+        help="Draft a connector section from an OpenAPI 3 document (every consequence left for you to set)",
+    )
+    import_p.add_argument("document", help="OpenAPI 3 document, JSON or YAML")
+    import_p.add_argument("-o", "--output", help="Write the draft to this file instead of stdout")
 
 
 def _trusted_keys(pairs):
@@ -172,6 +180,25 @@ def _conform(args) -> int:
     return 0 if report["conformant"] else 1
 
 
+def _import_openapi(args) -> int:
+    import yaml
+
+    from core.pack.openapi import import_openapi
+
+    text = Path(args.document).read_text(encoding="utf-8")
+    document = yaml.safe_load(text)
+    draft = import_openapi(document)
+    output = json.dumps(draft, indent=2, ensure_ascii=False) + "\n"
+    if args.output:
+        Path(args.output).write_text(output, encoding="utf-8")
+    else:
+        sys.stdout.write(output)
+    undecided = sum(1 for item in draft["unmapped"] if item["where"].endswith(".consequence"))
+    print(f"{len(draft['connector']['operations'])} operations drafted; {undecided} consequences to decide; "
+          f"{len(draft['unmapped']) - undecided} other items not mapped", file=sys.stderr)
+    return 0
+
+
 def run_pack_command(args) -> int:
     """Execute a pack subcommand."""
     from core.pack.manifest import PackManifestError
@@ -184,9 +211,10 @@ def run_pack_command(args) -> int:
         "sign": _sign,
         "verify": _verify,
         "conform": _conform,
+        "import-openapi": _import_openapi,
     }
     if action not in handlers:
-        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform>")
+        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform|import-openapi>")
         return 1
     try:
         return handlers[action](args)

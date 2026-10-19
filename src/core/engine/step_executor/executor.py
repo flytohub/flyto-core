@@ -37,6 +37,7 @@ from ..hooks import ExecutorHooks, HookAction
 from ..redaction import (
     apply_hook_param_changes,
     redact_step_params,
+    redact_step_result,
     runtime_sensitive_params,
     snapshot_hook_params,
 )
@@ -642,12 +643,15 @@ class StepExecutor:
             if step_trace:
                 from ..trace import StepOutput
                 items_output = []
-                if isinstance(result, dict):
-                    items = result.get('items', [])
+                # The trace is persisted and returned to callers: it gets the
+                # result with the leaves the module declares sensitive redacted.
+                traced = redact_step_result(module_id, result)
+                if isinstance(traced, dict):
+                    items = traced.get('items', [])
                     if items:
                         items_output = [items]
-                    elif result.get('data'):
-                        items_output = [[result.get('data')]]
+                    elif traced.get('data'):
+                        items_output = [[traced.get('data')]]
                 step_trace.set_output(items=items_output)
                 absorbed = self._absorbed_failure(step_id, result, pop=False)
                 if absorbed is not None:
@@ -688,7 +692,9 @@ class StepExecutor:
         finally:
             # Call post-execute hook
             # SECURITY: Redact sensitive data before passing to hooks
-            redacted_result = _redact_sensitive_output(result) if result else result
+            redacted_result = (
+                _redact_sensitive_output(redact_step_result(module_id, result)) if result else result
+            )
             found_sensitive = runtime_sensitive_params(result)
             if found_sensitive and step_trace and step_trace.input is not None:
                 step_trace.input.params = redact_step_params(

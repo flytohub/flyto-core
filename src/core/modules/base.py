@@ -156,6 +156,18 @@ class BaseModule(ABC):
         """
         return frozenset((name,) for name in cls.sensitive_params(params))
 
+    @classmethod
+    def sensitive_result_paths(cls, result: Any) -> frozenset:
+        """The values this module's result holds that the step log must not show, as paths.
+
+        The result side of ``sensitive_paths``: each path is a tuple into the
+        result (``("data", "items", 0, "assets")``). The workflow -- the next
+        step, the caller -- still receives every value; only the copies handed
+        to hooks and the trace are redacted. Default: nothing. A connector
+        operation derives its paths from the pack's ``sensitive`` JSONPaths.
+        """
+        return frozenset()
+
     @abstractmethod
     def validate_params(self) -> None:
         """Validate input parameters. Raise ValueError if invalid."""

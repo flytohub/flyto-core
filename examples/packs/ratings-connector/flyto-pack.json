@@ -1,0 +1,72 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.ratings",
+    "version": "0.1.0",
+    "namespaces": ["ratings"],
+    "title": "Example ratings connector",
+    "description": "A read-only connector declared as data: one company's rating, its findings, and the portfolio.",
+    "min_host": "2.41.0"
+  },
+  "runtime": {
+    "binding": "connector",
+    "request_timeout_ms": 20000
+  },
+  "connector": {
+    "base_url": "https://api.ratings.example",
+    "auth": [
+      {
+        "kind": "api_token",
+        "header": "Authorization",
+        "scheme": "Basic",
+        "credential": "ratings_api_token"
+      }
+    ],
+    "rate_limit": {"requests": 100, "per_seconds": 60},
+    "operations": [
+      {
+        "id": "company.get",
+        "label": "Company rating",
+        "description": "Read one company's current rating.",
+        "method": "GET",
+        "path": "/v1/companies/{company}",
+        "consequence": "observe",
+        "inputs": {
+          "company": {"type": "string", "description": "Company identifier", "scope": "company"}
+        },
+        "result_scope": "$.guid"
+      },
+      {
+        "id": "findings.list",
+        "label": "Company findings",
+        "description": "List one company's findings, every page.",
+        "method": "GET",
+        "path": "/v1/companies/{company}/findings",
+        "consequence": "observe",
+        "inputs": {
+          "company": {"type": "string", "description": "Company identifier", "scope": "company"},
+          "severity": {"type": "string", "description": "Only findings of this severity", "required": false}
+        },
+        "paginate": {
+          "strategy": "offset",
+          "data_path": "results",
+          "offset_param": "offset",
+          "limit_param": "limit",
+          "page_size": 100,
+          "max_pages": 20
+        },
+        "sensitive": ["$.items[*].assets"]
+      },
+      {
+        "id": "portfolio.list",
+        "label": "Portfolio",
+        "description": "List the companies in the portfolio.",
+        "method": "GET",
+        "path": "/v1/portfolio",
+        "consequence": "observe",
+        "inputs": {},
+        "result_scope": "$.companies[*].guid"
+      }
+    ]
+  }
+}

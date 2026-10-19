@@ -233,6 +233,14 @@ async def _run_installed(root: Path, manifest: Mapping[str, Any], trusted_keys: 
     except PackManifestError as error:
         return [Check("installs", FAIL, error.code)]
     try:
+        installed = Check("installs", PASS, "installed from a host-private copy")
+        if manifest["runtime"]["binding"] == "connector":
+            # A connector's operations are calls to the provider's API. An
+            # offline suite never makes them; recorded responses do (§11).
+            return [
+                Check("installs", PASS, f"{len(manifest['modules'])} operations registered as modules"),
+                Check("operations_called", NOT_APPLICABLE, "a connector call reaches the provider; not called offline"),
+            ]
         transport = _INSTALLED[pack_id].transport
         timeout = int(manifest["runtime"]["request_timeout_ms"])
 
@@ -240,7 +248,7 @@ async def _run_installed(root: Path, manifest: Mapping[str, Any], trusted_keys: 
             context = {"pack_id": pack_id, "module_id": module_id, "execution_id": "conformance"}
             return await transport.invoke(module_id, arguments, context, timeout)
 
-        return [Check("installs", PASS, "installed from a host-private copy"), *await _running_checks(manifest, invoke)]
+        return [installed, *await _running_checks(manifest, invoke)]
     finally:
         await uninstall_pack(pack_id)
 

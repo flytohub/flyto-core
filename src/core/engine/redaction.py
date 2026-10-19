@@ -281,7 +281,31 @@ def redact_step_params(
     return redacted
 
 
-def _redact_leaves(value: Any, tails: list) -> Any:
+def redact_step_result(module_id: Any, result: Any) -> Any:
+    """A copy of a step's result with the leaves its module declares sensitive redacted.
+
+    The module class names them (``BaseModule.sensitive_result_paths``). The
+    caller keeps the original: this copy is for hooks and the trace only.
+    Best effort like ``_declared_sensitive``: a lookup that fails redacts
+    nothing here, and the key-name rules applied after it still hold.
+    """
+    if not isinstance(result, dict) or not module_id or not isinstance(module_id, str):
+        return result
+    try:
+        from ..modules.registry import ModuleRegistry
+
+        if not ModuleRegistry.has(module_id):
+            return result
+        declare = getattr(ModuleRegistry.get(module_id), 'sensitive_result_paths', None)
+        paths = [tuple(path) for path in (declare(result) if callable(declare) else ()) or () if path]
+    except Exception:  # noqa: BLE001 - see docstring
+        return result
+    if not paths:
+        return result
+    return _redact_leaves(result, paths, keep_visible=False)
+
+
+def _redact_leaves(value: Any, tails: list, keep_visible: bool = True) -> Any:
     """A copy of ``value`` with each leaf a module named (``sensitive_paths``) redacted."""
     import copy
 
@@ -291,7 +315,7 @@ def _redact_leaves(value: Any, tails: list) -> Any:
         try:
             for part in tail[:-1]:
                 holder = holder[part]
-            if not _keep_visible(holder[tail[-1]]):
+            if not (keep_visible and _keep_visible(holder[tail[-1]])):
                 holder[tail[-1]] = _REDACT_TOKEN
         except (KeyError, IndexError, TypeError):
             continue  # a path these params do not have names nothing

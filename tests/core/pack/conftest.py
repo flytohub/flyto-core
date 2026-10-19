@@ -23,6 +23,15 @@ def host_version(monkeypatch):
     return "2.37.0"
 
 
+@pytest.fixture
+def host_version_241(monkeypatch):
+    """A host new enough for connector packs (``pack.connector``, 2.41.0)."""
+    import core.pack.host as host
+
+    monkeypatch.setattr(host, "_host_version", lambda: "2.41.0")
+    return "2.41.0"
+
+
 @pytest.fixture(autouse=True)
 async def _uninstall_packs():
     yield

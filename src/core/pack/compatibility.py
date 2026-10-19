@@ -10,8 +10,9 @@ pack ships. ``docs/specs/ADAPTER_COMPATIBILITY_MATRIX.md`` renders it, and a
 test keeps the two equal.
 
 Each row names one feature, the first release that accepts it, and how to
-tell from a normalized manifest row whether the pack uses it. Rows are only
-ever added: a released version never changes what it accepts.
+tell from a normalized manifest row (or, for a feature of the pack as a
+whole, from the manifest) whether the pack uses it. Rows are only ever added:
+a released version never changes what it accepts.
 """
 
 from __future__ import annotations
@@ -63,6 +64,9 @@ class Feature:
     since: str
     describes: str
     used_by: Callable[[Row], bool]
+    #: ``row``: ``used_by`` reads one module row. ``manifest``: it reads the
+    #: whole normalized manifest (a binding, a top-level section).
+    reads: str = "row"
 
 
 FEATURES: Tuple[Feature, ...] = (
@@ -80,6 +84,8 @@ FEATURES: Tuple[Feature, ...] = (
             lambda row: any(EVIDENCE_DISPLAY_FIELDS & set(item) for item in _evidence(row))),
     Feature("contract.resource_states", "2.41.0", "`establishes`, `occupies`",
             lambda row: bool(RESOURCE_STATE_FIELDS & set(_contract(row)))),
+    Feature("pack.connector", "2.41.0", "`connector` section and `connector` binding (operations become modules)",
+            lambda manifest: (manifest.get("runtime") or {}).get("binding") == "connector", reads="manifest"),
 )
 
 
@@ -97,8 +103,11 @@ def required_host(manifest: Mapping[str, Any]) -> Tuple[str, List[str]]:
     used: Dict[str, str] = {}
     for row in manifest.get("modules") or ():
         for feature in FEATURES:
-            if feature.used_by(row):
+            if feature.reads == "row" and feature.used_by(row):
                 used[feature.feature_id] = feature.since
+    for feature in FEATURES:
+        if feature.reads == "manifest" and feature.used_by(manifest):
+            used[feature.feature_id] = feature.since
     if not used:
         return "0", []
     newest = max(used.values(), key=version_key)

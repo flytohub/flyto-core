@@ -34,7 +34,9 @@ and emits evidence. The repo-local role contract is [`flyto-product.toml`](../fl
 - [Item Pipeline Specification](specs/ITEM_PIPELINE_SPEC.md): item semantics.
 - [Module Pack Manifest](specs/PACK_MANIFEST_SPEC.md): `flyto.pack.v1`, the
   language-neutral registry row; out-of-process pack install with tree digest
-  and ed25519 publisher signature; `flyto pack` CLI.
+  and ed25519 publisher signature; `flyto pack` CLI; `connector` packs, which
+  declare a provider's HTTP API as data (example
+  `examples/packs/ratings-connector`).
 - [Adapter Compatibility Matrix](specs/ADAPTER_COMPATIBILITY_MATRIX.md): which
   flyto-core first accepts each pack and contract feature, the
   `flyto pack conform` check list, and the (empty) table of verified
@@ -91,7 +93,7 @@ The generated layer makes source coverage auditable without turning narrative
 guides into hand-maintained symbol dumps:
 
 - 482 active runtime modules across 89 catalog categories.
-- 998 maintained Python files and 6,408 declarations.
+- 1002 maintained Python files and 6,500 declarations.
 - 489 literal module registrations linked to source.
 - every static CLI parser and HTTP decorator.
 - 108 environment-variable readers.

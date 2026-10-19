@@ -1,5 +1,30 @@
 # Decisions
 
+## 2026-10-19 - A provider connector is data in the pack, run by one runtime
+
+Decision: a provider's HTTP API is a `connector` section of `flyto.pack.v1`
+with its own binding, not generated code. Each operation becomes one module
+row, which `@register_module` registers. One runtime,
+`core.pack.connector_runtime`, executes every row. A connector pack declares
+no `modules` of its own, because a second list could only disagree with the
+operations.
+
+`consequence` is required, and nothing infers it. The OpenAPI importer
+leaves it unset, because an HTTP method is not a statement of consequence:
+a GET can start a scan and a POST can be a search. The level is written into
+the row's capability contract (safety class plus effect class), so hosts
+grade a connector operation from its contract alone.
+
+Credentials are names. The runtime reads the value from the execution
+context's `secrets` layer, which core already gives modules, instead of
+adding a second resolver. A pack with a value-bearing key, or a credential
+that is not a name, is refused as `INLINE_SECRET`.
+
+Response sensitivity is declared by the module
+(`BaseModule.sensitive_result_paths`, the result-side twin of
+`sensitive_paths`). The step log and the trace get a redacted copy. The
+workflow gets the original.
+
 ## 2026-10-13 - Reuse Core host for external IoT ecosystems
 
 Decision: publish reference implementations in an optional installable

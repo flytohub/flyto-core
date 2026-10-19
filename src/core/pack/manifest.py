@@ -67,12 +67,14 @@ PACK_SCHEMA = "flyto.pack.v1"
 MANIFEST_FILENAME = "flyto-pack.json"
 SIGNATURE_FILENAME = "flyto-pack.sig.json"
 
-#: How a host reaches the pack's code.
-BINDINGS = ("subprocess-jsonrpc", "http", "inprocess-python")
+#: How a host reaches the pack's code. ``connector`` packs have none: their
+#: ``connector`` section declares an HTTP API, and flyto-core's one generic
+#: runtime (``core.pack.connector_runtime``) calls it.
+BINDINGS = ("subprocess-jsonrpc", "http", "inprocess-python", "connector")
 #: Bindings ``core.pack.host.install_pack`` loads. ``inprocess-python`` packs
 #: arrive through the ``flyto.modules`` entry point; their manifest is an
 #: export of what the decorators registered.
-LOADABLE_BINDINGS = ("subprocess-jsonrpc", "http")
+LOADABLE_BINDINGS = ("subprocess-jsonrpc", "http", "connector")
 
 MAX_MANIFEST_BYTES = 2 * 1024 * 1024
 MAX_JSON_DEPTH = 24
@@ -96,7 +98,7 @@ _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _LANGUAGE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 _PATTERN_TEXT = re.compile(r"^[A-Za-z0-9_.*-]{1,96}$")
 
-_TOP_KEYS = frozenset({"schema", "pack", "runtime", "artifact", "modules"})
+_TOP_KEYS = frozenset({"schema", "pack", "runtime", "artifact", "modules", "connector"})
 _PACK_REQUIRED = frozenset({"id", "version", "namespaces"})
 _PACK_OPTIONAL = frozenset({"title", "description", "license", "min_host", "publisher_key_id"})
 _ARTIFACT_KEYS = frozenset({"digest"})
@@ -104,6 +106,7 @@ _RUNTIME_KEYS = {
     "subprocess-jsonrpc": (frozenset({"binding", "language", "entry"}), frozenset({"request_timeout_ms"})),
     "http": (frozenset({"binding", "locality"}), frozenset({"request_timeout_ms", "max_response_bytes"})),
     "inprocess-python": (frozenset({"binding", "entry_point"}), frozenset()),
+    "connector": (frozenset({"binding"}), frozenset({"request_timeout_ms", "max_response_bytes"})),
 }
 _STABILITY = ("stable", "beta", "alpha", "deprecated")
 _REQUEST_TIMEOUT_MAX = 600_000
@@ -146,8 +149,10 @@ _MODULE_KEYS = frozenset(MODULE_DEFAULTS) | {"module_id", "label", "label_key", 
 class PackManifestError(ValueError):
     """A stable, value-free failure of pack validation or verification."""
 
-    def __init__(self, code: str, message: str):
+    def __init__(self, code: str, message: str, *, operation: Optional[str] = None):
         self.code = code
+        #: The connector operation the refusal is about, when there is one.
+        self.operation = operation
         super().__init__(message)
 
 
@@ -389,6 +394,9 @@ def _runtime(value: Any) -> Dict[str, Any]:
             _fail("INVALID_RUNTIME", "runtime.locality is invalid")
         runtime.setdefault("max_response_bytes", _DEFAULT_RESPONSE_BYTES)
         _bounded_int(runtime["max_response_bytes"], "runtime.max_response_bytes", 1, _RESPONSE_BYTES_MAX)
+    elif binding == "connector":
+        runtime.setdefault("max_response_bytes", _DEFAULT_RESPONSE_BYTES)
+        _bounded_int(runtime["max_response_bytes"], "runtime.max_response_bytes", 1, _RESPONSE_BYTES_MAX)
     else:
         entry_point = _text(runtime["entry_point"], "runtime.entry_point", allow_empty=False)
         if len(entry_point) > 256 or not re.fullmatch(r"[A-Za-z0-9_.:-]+", entry_point):
@@ -399,6 +407,30 @@ def _runtime(value: Any) -> Dict[str, Any]:
     return runtime
 
 
+def _declared_or_derived_modules(top: Mapping[str, Any], namespaces: List[str], result: Dict[str, Any]) -> Any:
+    """The rows a pack declares, or, for a connector pack, the rows its operations become.
+
+    A connector pack declares no rows: each operation is one module, so a
+    second, hand-written row list could only disagree with the operations.
+    """
+    if result["runtime"]["binding"] != "connector":
+        if "connector" in top:
+            _fail("CONNECTOR_BINDING", "a connector section needs runtime.binding connector")
+        if "modules" not in top:
+            _fail("MISSING_FIELD", "manifest is missing required field: modules")
+        return top["modules"]
+    if "connector" not in top:
+        _fail("CONNECTOR_REQUIRED", "runtime.binding connector needs a connector section")
+    if "modules" in top:
+        _fail("MODULES_DERIVED", "a connector pack declares operations, not modules")
+    if len(namespaces) != 1:
+        _fail("INVALID_NAMESPACE", "a connector pack has exactly one namespace")
+    from .connector import operation_rows, validate_connector
+
+    result["connector"] = validate_connector(top["connector"])
+    return operation_rows(result["connector"], namespaces[0])
+
+
 def validate_pack_manifest(data: Any) -> Dict[str, Any]:
     """Return the normalized ``flyto.pack.v1`` manifest, or raise ``PackManifestError``."""
     plain = _plain(data, 0, [0])
@@ -407,7 +439,7 @@ def validate_pack_manifest(data: Any) -> Dict[str, Any]:
     # The schema is compared before any other key is read.
     if type(plain) is not dict or plain.get("schema") != PACK_SCHEMA:
         _fail("UNSUPPORTED_SCHEMA", "schema must be flyto.pack.v1")
-    top = _object(plain, "manifest", frozenset({"schema", "pack", "runtime", "modules"}), _TOP_KEYS)
+    top = _object(plain, "manifest", frozenset({"schema", "pack", "runtime"}), _TOP_KEYS)
 
     pack = dict(_object(top["pack"], "pack", _PACK_REQUIRED, _PACK_OPTIONAL))
     pack_id = _text(pack["id"], "pack.id", allow_empty=False)
@@ -437,7 +469,7 @@ def validate_pack_manifest(data: Any) -> Dict[str, Any]:
             _fail("INVALID_DIGEST", "artifact.digest must be lowercase sha256:<hex>")
         result["artifact"] = {"digest": artifact["digest"]}
 
-    modules = top["modules"]
+    modules = _declared_or_derived_modules(top, namespaces, result)
     if type(modules) is not list or not 1 <= len(modules) <= MAX_MODULES:
         _fail("INVALID_COUNT", "modules count is outside its bound")
     rows = [_module_row(value, index, tuple(namespaces)) for index, value in enumerate(modules)]

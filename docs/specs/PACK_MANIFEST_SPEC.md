@@ -128,6 +128,94 @@ literal; `same_network` requires an exact entry in
 `FLYTO_PLUGIN_ENDPOINT_ALLOWED_HOSTS` (comma-separated). Redirects are not
 followed. Optional `max_response_bytes` (default 1 MiB, max 16 MiB).
 
+### `connector` (2.41.0)
+
+A provider pack with no code. `runtime` is `{"binding": "connector"}` with the
+optional `request_timeout_ms` and `max_response_bytes`. The pack declares a
+`connector` section instead of `modules`, and has exactly one namespace.
+Each operation becomes one module, `<namespace>.<operation id>`, registered
+through `@register_module` like any other row. One generic runtime
+(`core.pack.connector_runtime`) runs every operation. No code is generated
+per provider or per operation.
+
+```json
+"connector": {
+  "base_url": "https://api.provider.example",
+  "auth": [{"kind": "api_token", "header": "Authorization", "scheme": "Basic",
+            "credential": "provider_api_token"}],
+  "rate_limit": {"requests": 100, "per_seconds": 60},
+  "operations": [{
+    "id": "findings.list", "method": "GET", "path": "/v1/companies/{company}/findings",
+    "consequence": "observe",
+    "inputs": {"company": {"type": "string", "scope": "company"},
+               "severity": {"type": "string"}},
+    "result_scope": "$.items[*].guid",
+    "sensitive": ["$.items[*].assets"],
+    "requires": {"features": ["spm"]},
+    "consumes": {"meter": "lookups", "amount": 1},
+    "paginate": {"strategy": "offset", "data_path": "results", "page_size": 100}
+  }]
+}
+```
+
+- **`base_url`**: `https`, or `http` to a loopback host for local development.
+  It may not carry userinfo.
+- **`auth`**: up to four entries. `api_token` has `header` and an optional
+  `scheme`. `oauth2_client_credentials` has `token_url` and optional `scopes`.
+  `oauth2_authorization_code` has `authorize_url`, `token_url` and optional
+  `scopes`. Each entry names its `credential`; none holds a value. At call
+  time the runtime uses the first entry whose credential the host supplies in
+  the execution context's `secrets` layer, by that name. If the host supplies
+  none, the call fails with `CREDENTIAL_MISSING` before any request is sent.
+  `scheme: Basic` sends a bare token as the user name with an empty password,
+  and sends a `{username, password}` credential as that pair.
+  `oauth2_client_credentials` exchanges `client_id`/`client_secret` at
+  `token_url` and reuses the token until it expires.
+  `oauth2_authorization_code` sends the access token the host keeps fresh.
+- **`rate_limit`**: one token bucket shared by all of the pack's operations.
+- **`operations[]`**:
+  - `consequence` is one of the platform's levels: `observe`, `reversible`,
+    `external_write`, `real_world`, `irreversible`. The row's
+    `flyto.capability-contract.v1` contract states it as a safety class and an
+    effect class (`core.pack.connector.CONSEQUENCE_CONTRACTS`), so a host
+    grades the operation from the contract alone.
+  - `inputs` are JSON-schema typed parameters and become the row's
+    `params_schema`. An input goes `in` the path, the query or the body. By
+    default a `{name}` in the path goes in the path, GET and DELETE send the
+    rest in the query, and POST, PUT and PATCH send it in a JSON body. Path
+    inputs are always required, and each one is encoded as a single segment.
+    `secret: true` redacts the input in step logs.
+  - `sensitive` and `result_scope` are JSONPaths (`$`, `.name`, `['name']`,
+    `[n]`, `[*]`) into the operation's data: the body, or
+    `{"items", "pages_fetched"}` for a paginated operation. Sensitive leaves
+    are redacted in the step log and the trace
+    (`BaseModule.sensitive_result_paths`), and the workflow still receives
+    them.
+  - `paginate` uses the `http.paginate` shapes (`offset`, `page`, `cursor`,
+    `link_header`) with the same keys. A Link-header page must stay on the
+    pack's origin.
+  - `requires.features` is a list, or `{"any": [...]}`. `consumes` is
+    `{meter, amount}`. Both are kept on the normalized operation for the
+    entitlement and quota layers. This release does not enforce them.
+- **Refusals** are typed, and their `operation` attribute names the
+  operation: `CONSEQUENCE_MISSING`, `CONSEQUENCE_UNKNOWN`,
+  `PATH_PARAM_UNDECLARED`, `INLINE_SECRET` (a value-bearing auth key, a
+  credential that is not a name, a secret-looking default, userinfo in a URL),
+  `UNKNOWN_AUTH_KIND`, `INVALID_JSONPATH`, `INVALID_PAGINATION`,
+  `CONNECTOR_REQUIRED`, `CONNECTOR_BINDING`, `MODULES_DERIVED`.
+- **Calls** go through the platform SSRF guard and follow no redirects. They
+  return `{"ok": true, "data": <body>}` or a typed failure carrying
+  `error_code` and `http_status`: `PROVIDER_UNAUTHORIZED` (401),
+  `PROVIDER_FORBIDDEN` (403), `PROVIDER_NOT_FOUND` (404),
+  `PROVIDER_RATE_LIMITED` (429, with `retry_after_s`), `PROVIDER_REJECTED`
+  (other 4xx), `PROVIDER_ERROR` (5xx), `PROVIDER_INVALID_RESPONSE`,
+  `PROVIDER_TIMEOUT`, `PROVIDER_UNREACHABLE`, `SSRF_BLOCKED`. A failure on any
+  page fails the whole call.
+
+`flyto pack import-openapi DOC` drafts a `connector` section from an OpenAPI 3
+document and lists what it could not map. It never sets `consequence`, so the
+draft is refused until a person has decided each one.
+
 ### What a pack process receives
 
 Parameters (validated against `params_schema` first) and a context of
@@ -226,6 +314,8 @@ flyto pack digest <dir>
 flyto pack keygen --private FILE --public FILE
 flyto pack sign <dir> --key PRIVATE_PEM --key-id ID
 flyto pack verify <dir> [--trusted-key ID=FILE ...] [--allow-unsigned]
+flyto pack conform <dir> [--trusted-key ID=FILE ...] [--static-only] [--json]
+flyto pack import-openapi <openapi.json|yaml> [-o FILE]
 ```
 
 ## Example
@@ -234,6 +324,10 @@ flyto pack verify <dir> [--trusted-key ID=FILE ...] [--allow-unsigned]
 dependency-free helper (`flyto.js`): `registerModule({...})` takes the
 `@register_module` field names plus a `handler`; `node index.js --manifest`
 prints the manifest; `node index.js` serves JSON-RPC.
+
+`examples/packs/ratings-connector/` is a read-only connector pack with no
+code: one company's rating, its findings (offset pagination, a sensitive
+path), and a portfolio. The tests run it against a local fake server.
 
 ## Relation to `flyto.plugin.v1`
 

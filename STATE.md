@@ -1,5 +1,20 @@
 # Flyto2 Core State
 
+## Connector packs, 2.41.0 (2026-10-19)
+
+A provider pack can declare its HTTP API as data (`runtime.binding:
+connector`, `connector` section) with no code. Each operation becomes one
+module, `<namespace>.<operation>`, run by one runtime
+(`core.pack.connector_runtime`). Credentials are named, never held, and
+resolved from the execution context's `secrets` layer. Validation refuses an
+operation with no `consequence`, and `flyto pack import-openapi` never sets
+one. Response leaves marked `sensitive` are redacted in the step log and the
+trace through `BaseModule.sensitive_result_paths`. Example:
+`examples/packs/ratings-connector`. Tested only against a local fake server.
+Not wired: entitlements (`requires`), quotas (`consumes`), data scope
+(`scope`, `result_scope`), roles, AI-egress policy, Cloud credential
+injection into `secrets`. Not tagged or released.
+
 ## Adapter developer kit, 2.41.0 (2026-10-18)
 
 `flyto pack conform` checks a third-party `flyto.pack.v1` pack offline
@@ -549,7 +564,7 @@ contract was made explicit.
 - The 60% line coverage gate measures the maintained orchestration and
   security-control kernel. Pluggable module implementations and product
   overlays remain covered by catalog, contract, and integration suites.
-- Source-backed documentation now covers 998 maintained Python files, 6,408
+- Source-backed documentation now covers 1002 maintained Python files, 6,500
   declarations, 489 literal module registrations, all CLI/HTTP/environment
   surfaces (28 static HTTP operations, 108 environment names), and all
   maintained recipe/workflow assets. CI rejects drift, missing ownership,

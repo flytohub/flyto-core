@@ -21,6 +21,7 @@ missing.
 | `recovery.semantics` | 2.39.0 | `recovery.on` / `alternatives` / `preserves` / `resource_scope` / `fills` |
 | `evidence.display_keys` | 2.40.0 | evidence `label`, `unit`, `channel` |
 | `contract.resource_states` | 2.41.0 | `establishes`, `occupies` |
+| `pack.connector` | 2.41.0 | `connector` section and `connector` binding (operations become modules) |
 
 Rows are only ever added; a released version never changes what it
 accepts. `tests/core/pack/test_pack_conformance.py` keeps this table equal
@@ -38,6 +39,7 @@ its row in the same change that adds the feature.
 | `evidence_declared` | files | an actuating capability declares no evidence |
 | `compatibility` | files + matrix | `min_host` is missing, older than the matrix requires, or newer than this host |
 | `installs` | runner | `install_pack` refuses the pack |
+| `operations_called` | — | never: a connector's operations reach the provider, so this offline suite does not call them (`not_applicable`) |
 | `safe_stop_answers` | runner | a stop answers anything but `ok: true` |
 | `completes_in_bounds` | runner | an actuation inside the published bounds is refused |
 | `refuses_out_of_bounds` | runner | a value past a published maximum is accepted (clamped or ignored) |

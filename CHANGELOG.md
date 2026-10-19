@@ -51,6 +51,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatibility matrix row `contract.resource_states` (since 2.41.0): a pack
   that declares `establishes` or `occupies` must say `min_host: 2.41.0`, since
   every 2.40 host refuses those keys.
+- Connector packs: a provider's HTTP API declared as data in `flyto.pack.v1`
+  (`runtime.binding: connector`, a `connector` section, no code). The section
+  holds `base_url`, `auth` (`api_token`, `oauth2_client_credentials`,
+  `oauth2_authorization_code`, each naming a credential and never holding
+  its value), `rate_limit` and `operations`. Each operation has a method, a
+  path with `{params}`, typed inputs, a `consequence` level, an optional
+  `result_scope`, `sensitive` JSONPaths, `requires.features`,
+  `consumes.meter/amount` and `paginate` with the `http.paginate` shapes.
+  Each operation becomes one module, `<namespace>.<operation>`, run by one
+  generic runtime (`core.pack.connector_runtime`). That runtime resolves the
+  credential by name from the execution context's `secrets` layer, applies
+  the rate limit, paginates, and returns HTTP failures as typed
+  `PROVIDER_*` failures. Validation refuses, with a typed code that names
+  the operation, a missing consequence, an undeclared path parameter, an
+  inline secret, an unknown auth kind, and a JSONPath that does not parse.
+  The consequence is carried into the row's capability contract. Example:
+  `examples/packs/ratings-connector/`. Compatibility matrix row
+  `pack.connector` (since 2.41.0).
+- `BaseModule.sensitive_result_paths(result)` and
+  `core.engine.redaction.redact_step_result`: a module names the leaves of its
+  result that the step log and the trace must not show. The workflow still
+  receives them.
+- `flyto pack import-openapi DOC` (`core.pack.openapi.import_openapi`) drafts
+  a `connector` section from an OpenAPI 3 document and reports what it could
+  not map. It leaves every `consequence` unset, so the draft does not
+  validate until a person has decided each one.
 - `docs/specs/PORTABLE_CAPABILITY_SPEC.md`: shipping capability contracts with
   the thing that performs them (a device adapter or a trained policy), in a
   `flyto.pack.v1` pack any host can read. No new format; an example pack,
