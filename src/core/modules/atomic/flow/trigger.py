@@ -290,8 +290,8 @@ class TriggerModule(BaseModule):
             raise ValueError(f"Invalid trigger_type: {self.trigger_type}")
 
         # Validate type-specific params
-        if self.trigger_type == 'webhook' and not self.webhook_path:
-            raise ValueError("webhook_path required for webhook trigger")
+        # A webhook's address is its deployment's to give (a registered webhook
+        # has its own); webhook_path is only for a server that mounts by path.
         if self.trigger_type == 'schedule' and not self.schedule:
             raise ValueError("schedule required for schedule trigger")
         if self.trigger_type == 'event' and not self.event_name:
@@ -343,7 +343,7 @@ class TriggerModule(BaseModule):
         }
         if self.config:
             trigger_data['config'] = self.config
-        if self.trigger_type == 'webhook':
+        if self.trigger_type == 'webhook' and self.webhook_path:
             trigger_data['webhook_path'] = self.webhook_path
         elif self.trigger_type == 'schedule':
             trigger_data['schedule'] = self.schedule
