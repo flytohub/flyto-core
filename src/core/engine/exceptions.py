@@ -25,6 +25,25 @@ class WorkflowExecutionError(Exception):
         super().__init__(message)
 
 
+class ExitEdgeConflictError(WorkflowExecutionError):
+    """A document leaves one exit by more edges than its port allows.
+
+    The engine refuses it before the first step instead of following one of
+    the lines or all of them: running several at once is an explicit fork.
+    """
+
+    code = 'EXIT_HAS_ONE_EDGE'
+
+    def __init__(self, conflicts):
+        self.conflicts = list(conflicts)
+        first = self.conflicts[0]
+        super().__init__(
+            f"Step '{first['node_id']}' leaves its '{first['exit']}' exit by more than "
+            f"{first['limit']} edge(s); run both through flow.fork or flow.parallel",
+            step_id=first['node_id'],
+        )
+
+
 class StepExecutionError(Exception):
     """Raised when a step execution fails"""
 

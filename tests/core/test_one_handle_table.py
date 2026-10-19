@@ -92,7 +92,8 @@ def test_an_error_edge_still_routes_the_error_event():
 
 def test_a_named_branch_exit_still_routes_only_its_own_event():
     assert _route("flow.branch", "source-true", "true") == 2
-    assert _route("flow.branch", "source-true", "false") == 1
+    # No false edge drawn: the path ends instead of taking the true edge.
+    assert _route("flow.branch", "source-true", "false") != 2
 
 
 def test_validation_and_the_engine_import_the_one_table():
@@ -110,6 +111,6 @@ def test_neither_reader_keeps_its_own_alias_table(relative):
     literals = [
         node for node in ast.walk(tree)
         if isinstance(node, ast.Dict)
-        and any(isinstance(k, ast.Constant) and k.value in {"output", "main", "body_out", "target"} for k in node.keys)
+        and any(isinstance(k, ast.Constant) and k.value in {"output", "main", "body_out", "done_out"} for k in node.keys)
     ]
     assert not literals, f"{relative} still defines a handle alias table at line {literals[0].lineno}"

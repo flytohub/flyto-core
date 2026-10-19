@@ -10,6 +10,7 @@ Used by flyto-cloud before save/execute.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Set
 
+from ..canvas_handles import exit_edge_conflicts
 from .connection import validate_connection
 from .errors import ErrorCode
 
@@ -235,6 +236,29 @@ def _duration_only_waits(nodes: List[Dict[str, Any]]) -> List[WorkflowError]:
     return results
 
 
+def _exit_edge_errors(edges: List[Dict[str, Any]], node_map: Dict[str, Dict[str, Any]]) -> List[WorkflowError]:
+    """Each edge beyond what its exit allows (core.canvas_handles), as a typed error on that edge."""
+    from ..modules.registry import ModuleRegistry
+
+    def ports_of(node_id: str) -> List[Dict[str, Any]]:
+        module_id = (node_map.get(node_id) or {}).get('module_id') or ''
+        try:
+            return (ModuleRegistry.get_metadata(module_id) or {}).get('output_ports') or []
+        except Exception:  # an unregistered module is judged by its handle alone
+            return []
+
+    return [
+        WorkflowError(
+            code=ErrorCode.EXIT_HAS_ONE_EDGE,
+            message=f"{conflict['node_id']} already leaves its {conflict['exit']} exit by another edge",
+            path=f"edges[{conflict['edge_id']}]",
+            meta={'node_id': conflict['node_id'], 'exit': conflict['exit'],
+                  'limit': conflict['limit'], 'target': conflict['target']},
+        )
+        for conflict in exit_edge_conflicts(edges, ports_of)
+    ]
+
+
 def validate_workflow(
     nodes: List[Dict[str, Any]],
     edges: List[Dict[str, Any]],
@@ -334,6 +358,8 @@ def validate_workflow(
         # Track connections
         outgoing[source_id].append(target_id)
         incoming[target_id].append(source_id)
+
+    errors.extend(_exit_edge_errors(edges, node_map))
 
     # Validate start nodes
     start_errors = validate_start(nodes, edges)

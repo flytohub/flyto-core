@@ -18,6 +18,8 @@ class ErrorCode:
     TYPE_MISMATCH = 'TYPE_MISMATCH'
     PORT_NOT_FOUND = 'PORT_NOT_FOUND'
     MAX_CONNECTIONS = 'MAX_CONNECTIONS'
+    # An exit carries at most the edges its port allows (one unless declared).
+    EXIT_HAS_ONE_EDGE = 'EXIT_HAS_ONE_EDGE'
     SELF_CONNECTION = 'SELF_CONNECTION'
     INCOMPATIBLE_MODULES = 'INCOMPATIBLE_MODULES'
 
@@ -47,6 +49,10 @@ class ErrorCode:
 
 # Error message templates (support i18n key replacement)
 ERROR_MESSAGES = {
+    ErrorCode.EXIT_HAS_ONE_EDGE: {
+        'en': '{node_id} already leaves its {exit} exit by another edge; run both through a Parallel step',
+        'zh-TW': '{node_id} 的 {exit} 出口已有一條連線；要同時執行請改用平行步驟',
+    },
     # Connection
     ErrorCode.TYPE_MISMATCH: {
         'en': '{to_module} requires {expected}, but received {received}',

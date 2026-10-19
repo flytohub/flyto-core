@@ -128,3 +128,60 @@ def handle_events(handle: Optional[str], ports: Optional[Iterable[Any]] = None) 
     for name in list(names):
         names.extend(EVENT_SYNONYMS.get(name, ()))
     return list(dict.fromkeys(names))
+
+
+#: How many edges may leave one exit when its port does not say: one. Two
+#: lines from one exit never say which runs; running several at once is an
+#: explicit fork (flow.fork / flow.parallel), choosing is flow.branch /
+#: flow.switch. A port that accepts more declares ``max_connections``
+#: (``None`` = no limit) in its own contract.
+DEFAULT_EXIT_EDGES = 1
+#: Edge kinds that are not a step's exit (an AI agent's model/tools wiring).
+NON_EXIT_EDGE_TYPES = frozenset({'resource'})
+
+
+def exit_edge_limit(port: Optional[Dict[str, Any]]) -> Optional[int]:
+    """How many edges may leave ``port``: its declared ``max_connections``, else one."""
+    if isinstance(port, dict) and 'max_connections' in port:
+        return port['max_connections']
+    return DEFAULT_EXIT_EDGES
+
+
+def _edge_kind(edge: Dict[str, Any]) -> str:
+    data = edge.get('data') or {}
+    return edge.get('edge_type') or data.get('edgeType') or data.get('edge_type') or edge.get('type') or ''
+
+
+def _edge_source_handle(edge: Dict[str, Any]) -> str:
+    return edge.get('sourceHandle') or edge.get('source_handle') or edge.get('from_port') or 'output'
+
+
+def exit_edge_conflicts(edges: Iterable[Dict[str, Any]], ports_of) -> List[Dict[str, Any]]:
+    """Every edge beyond what its exit allows, in document order.
+
+    ``ports_of(node_id)`` returns that node's declared output ports. Each
+    conflict names the edge, its source node, the exit (the resolved port id,
+    or the handle when the module declares none) and the exit's limit.
+    """
+    counts: Dict[tuple, int] = {}
+    conflicts: List[Dict[str, Any]] = []
+    for index, edge in enumerate(edges or []):
+        source = edge.get('source')
+        if not source or _edge_kind(edge) in NON_EXIT_EDGE_TYPES:
+            continue
+        handle = _edge_source_handle(edge)
+        ports = ports_of(source) or []
+        port = resolve_port(ports, handle, OUTPUT)
+        exit_id = port['id'] if port else handle
+        limit = exit_edge_limit(port)
+        key = (source, exit_id)
+        counts[key] = counts.get(key, 0) + 1
+        if limit is not None and counts[key] > limit:
+            conflicts.append({
+                'edge_id': edge.get('id', f'edge_{index}'),
+                'node_id': source,
+                'exit': exit_id,
+                'limit': limit,
+                'target': edge.get('target'),
+            })
+    return conflicts

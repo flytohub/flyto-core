@@ -1,12 +1,17 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
 """
-Fork Module - Split execution into parallel branches
+Fork Module - run every branch, in a defined order
 
-Workflow Spec v1.1:
-- Fork node with single input and N outputs
-- All output ports fire simultaneously
-- Returns __event__ for engine routing
+Contract (the engine's router implements it, core/engine/workflow/routing.py):
+- Every connected branch exit runs, one after another in exit order
+  (branch_1 first). Each exit carries one edge.
+- A branch runs until its path ends or reaches a joining step (flow.merge /
+  flow.join); after the last branch the run continues at that join, which
+  receives each branch on the input its edge was drawn to.
+- A branch that fails ends the run with that failure; later branches do not
+  start. Nothing runs concurrently.
+- Returns __event__ 'fork' for engine routing.
 """
 from typing import Any, Dict
 from ...base import BaseModule
@@ -22,7 +27,7 @@ from ...types import NodeType, EdgeType, DataType
     tags=['flow', 'fork', 'parallel', 'split', 'control'],
     label='Fork',
     label_key='modules.flow.fork.label',
-    description='Split execution into parallel branches',
+    description='Run every branch, one after another in branch order, then continue at the merge; a failing branch stops the run',
     description_key='modules.flow.fork.description',
     icon='GitFork',
     color='#06B6D4',
