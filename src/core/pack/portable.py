@@ -322,13 +322,22 @@ def _tool_rows(manifest: Mapping[str, Any]) -> List[str]:
     from .connector import CONSEQUENCE_ANNOTATIONS, module_id_for
 
     namespace = manifest["pack"]["namespaces"][0]
-    rows = ["| Tool | Operation | Consequence | Read-only | Destructive |", "| --- | --- | --- | --- | --- |"]
+    rows = ["| Tool | Operation | Consequence | Read-only | Destructive | Requires |",
+            "| --- | --- | --- | --- | --- | --- |"]
     for op in manifest["connector"]["operations"]:
         hints = CONSEQUENCE_ANNOTATIONS[op["consequence"]]
+        required = (op.get("requires") or {}).get("features") or []
+        keys = required.get("any", []) if isinstance(required, Mapping) else required
+        needs = (" or " if isinstance(required, Mapping) else ", ").join(f"`{key}`" for key in keys) or "-"
         rows.append(
             f"| `{module_id_for(namespace, op['id'])}` | {op.get('label', op['id'])} | {op['consequence']} | "
-            f"{'yes' if hints['readOnlyHint'] else 'no'} | {'yes' if hints['destructiveHint'] else 'no'} |"
+            f"{'yes' if hints['readOnlyHint'] else 'no'} | {'yes' if hints['destructiveHint'] else 'no'} | "
+            f"{needs} |"
         )
+    if manifest.get("entitlements"):
+        rows += ["", "`tools/list` shows only the tools your credential is entitled to, as the provider's",
+                 f"`{module_id_for(namespace, manifest['entitlements']['probe'])}` answer says. If that answer "
+                 "cannot be read, only the tools that require nothing are listed."]
     return rows
 
 

@@ -22,6 +22,8 @@ from portable_helpers import (
     ROOT,
     TOKEN,
     Provider,
+    declared_ids,
+    entitled_ids,
     example_doc,
     example_source,
     start_provider,
@@ -71,8 +73,8 @@ def test_each_operation_is_a_tool_annotated_from_its_consequence():
     def mutate(doc):
         doc["connector"]["operations"].append(IRREVERSIBLE_OP)
     tools = {tool["name"]: tool for tool in tools_for(validate_pack_manifest(example_doc(mutate)))}
-    assert set(tools) == {"ratings.company.get", "ratings.findings.list", "ratings.portfolio.list",
-                          "ratings.finding.dismiss"}
+    assert sorted(tools) == declared_ids(example_doc(mutate))
+    assert "ratings.finding.dismiss" in tools
     observe = tools["ratings.company.get"]
     assert observe["annotations"]["readOnlyHint"] is True
     assert observe["annotations"]["destructiveHint"] is False
@@ -110,15 +112,58 @@ async def test_tools_list_and_call_in_process(tmp_path, provider, host_version_2
                            resolver_factory=env_resolver)
     try:
         listed = await pack.dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
-        assert [tool["name"] for tool in listed["result"]["tools"]] == [
-            "ratings.company.get", "ratings.findings.list", "ratings.portfolio.list",
-        ]
+        assert [tool["name"] for tool in listed["result"]["tools"]] == entitled_ids(example_doc(),
+                                                                                   Provider.customer)
         called = await pack.dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
                                       "params": {"name": "ratings.company.get", "arguments": {"company": "c-1"}}})
         body = called["result"]
         assert body["isError"] is False
-        assert body["structuredContent"] == {"ok": True, "data": RECORDED["company"]}
+        content = body["structuredContent"]
+        assert (content["ok"], content["data"]) == (True, RECORDED["company"])
+        # Listed first, so the call is admitted on the cached probe answer, under the standalone "*" grant.
+        assert content["metadata"]["precheck"]["entitlements"] == "cache"
+        assert content["metadata"]["precheck"]["scope"] == {"dimension": "company", "kept": 1, "dropped": 0}
         assert Provider.seen[-1]["auth"].startswith("Basic ")
+    finally:
+        await pack.close()
+
+
+async def test_a_credential_entitled_to_fewer_features_lists_fewer_tools(tmp_path, provider, host_version_241):
+    base_url, _ = provider
+    Provider.customer = "ratings_only"
+    expected = entitled_ids(example_doc(), "ratings_only")
+    assert expected != declared_ids(example_doc())  # the example has a tool this customer does not hold
+    pack = load_standalone(build(tmp_path, base_url), transport="stdio", require_signature=False,
+                           resolver_factory=env_resolver)
+    try:
+        listed = await pack.dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+        assert [tool["name"] for tool in listed["result"]["tools"]] == expected
+        hidden = sorted(set(declared_ids(example_doc())) - set(expected))
+        # Hidden is not unreachable: a call still goes through the gate, which refuses it typed.
+        called = await pack.dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                                      "params": {"name": hidden[0], "arguments": {"company": "c-1"}}})
+        assert called["result"]["isError"] is True
+        assert called["result"]["structuredContent"]["error_code"] == "FEATURE_NOT_ENTITLED"
+    finally:
+        await pack.close()
+
+
+async def test_an_unreadable_probe_lists_only_the_ungated_tools(tmp_path, provider, host_version_241):
+    base_url, _ = provider
+    Provider.customer = None
+    pack = load_standalone(build(tmp_path, base_url), transport="stdio", require_signature=False,
+                           resolver_factory=env_resolver)
+    try:
+        listed = await pack.dispatch({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+        names = [tool["name"] for tool in listed["result"]["tools"]]
+        assert names == entitled_ids(example_doc(), None)
+        probe = "ratings." + example_doc()["entitlements"]["probe"]
+        assert probe in names  # the probe is an ungated observe operation, so it stays a tool
+        called = await pack.dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                                      "params": {"name": "ratings.company.get", "arguments": {"company": "c-1"}}})
+        assert called["result"]["isError"] is True
+        assert called["result"]["structuredContent"]["error_code"] == "PROVIDER_ENTITLEMENT_UNREADABLE"
+        assert all(seen["path"] != "/v1/companies/c-1" for seen in Provider.seen)
     finally:
         await pack.close()
 
@@ -149,8 +194,9 @@ async def test_an_unknown_tool_is_a_protocol_error(tmp_path, host_version_241):
         await pack.close()
 
 
-async def test_modern_protocol_requests_are_served(tmp_path, host_version_241):
-    pack = load_standalone(build(tmp_path), transport="stdio", require_signature=False,
+async def test_modern_protocol_requests_are_served(tmp_path, provider, host_version_241):
+    base_url, _ = provider
+    pack = load_standalone(build(tmp_path, base_url), transport="stdio", require_signature=False,
                            resolver_factory=env_resolver)
     try:
         meta = {"io.modelcontextprotocol/protocolVersion": MODERN_PROTOCOL_VERSION,
@@ -158,6 +204,10 @@ async def test_modern_protocol_requests_are_served(tmp_path, host_version_241):
         answer = await pack.dispatch({"jsonrpc": "2.0", "id": 1, "method": "server/discover",
                                       "params": {"_meta": meta}})
         assert answer["result"]["_meta"]["io.modelcontextprotocol/serverInfo"]["name"] == "com.example.ratings"
+        listed = await pack.dispatch({"jsonrpc": "2.0", "id": 2, "method": "tools/list",
+                                      "params": {"_meta": meta}})
+        # The list depends on the credential, so it carries no public cache hint.
+        assert "cacheScope" not in listed["result"] and "ttlMs" not in listed["result"]
     finally:
         await pack.close()
 
@@ -235,17 +285,35 @@ def test_the_keychain_readers_are_a_table_of_os_commands(monkeypatch):
     assert credentials.read_keychain("flyto.pack.x", "name", platform="plan9", run=fake_run) is None
 
 
-def test_health_reports_names_never_values(tmp_path, host_version_241):
-    out = build(tmp_path)
+def test_health_reports_names_never_values(tmp_path, provider, host_version_241):
+    base_url, _ = provider
+    out = build(tmp_path, base_url)
     report = health(out, require_signature=False, resolver_factory=lambda s: env_resolver(s, value="s3cr3t-value"))
     assert report["healthy"] is True
     assert report["credentials"] == [{"name": "ratings_api_token", "source": "env"}]
-    assert report["tools"] == 3
+    assert report["tools"] == len(declared_ids(example_doc()))
     assert report["runtime"]["satisfied"] is True
     assert "s3cr3t-value" not in json.dumps(report)
     missing = health(out, require_signature=False, resolver_factory=lambda s: env_resolver(s, value=None))
     assert missing["healthy"] is False
     assert missing["problems"] == ["CREDENTIAL_MISSING"]
+    assert missing["entitled_tools"] == len(entitled_ids(example_doc(), None))
+    assert missing["entitlements"] == {"source": "unreadable", "error_code": "CREDENTIAL_MISSING"}
+
+
+@pytest.mark.parametrize("customer", ["ratings_only", "ratings_and_monitoring", None])
+def test_health_reports_the_entitled_count(tmp_path, provider, host_version_241, customer):
+    base_url, _ = provider
+    Provider.customer = customer
+    report = health(build(tmp_path, base_url), require_signature=False, resolver_factory=env_resolver)
+    assert report["tools"] == len(declared_ids(example_doc()))
+    assert report["entitled_tools"] == len(entitled_ids(example_doc(), customer))
+    if customer is None:
+        assert report["entitlements"] == {"source": "unreadable", "error_code": "PROVIDER_ENTITLEMENT_UNREADABLE"}
+        assert report["problems"] == ["PROVIDER_ENTITLEMENT_UNREADABLE"]
+    else:
+        assert report["entitlements"] == {"source": "provider"}
+        assert report["healthy"] is True
 
 
 # -- over Streamable HTTP ------------------------------------------------------------------------
@@ -277,7 +345,9 @@ async def test_streamable_http_needs_the_token_and_serves_the_tools(tmp_path, pr
                                                "params": {"name": "ratings.portfolio.list", "arguments": {}}},
                                     headers=authorized) as response:
                 body = await response.json()
-                assert body["result"]["structuredContent"] == {"ok": True, "data": RECORDED["portfolio"]}
+                content = body["result"]["structuredContent"]
+                assert (content["ok"], content["data"]) == (True, RECORDED["portfolio"])
+                assert content["metadata"]["precheck"]["entitlements"] == "provider"
             async with session.get(url, headers=authorized) as response:
                 assert response.status == 405
     finally:
@@ -371,12 +441,17 @@ def test_the_built_zip_runs_standalone_over_stdio_through_its_generated_entry_po
         client.request({"jsonrpc": "2.0", "method": "notifications/initialized"})
         listed = client.request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
         tools = {tool["name"]: tool for tool in listed["result"]["tools"]}
-        assert set(tools) == {"ratings.company.get", "ratings.findings.list", "ratings.portfolio.list"}
-        assert all(tool["annotations"]["readOnlyHint"] is True for tool in tools.values())
+        assert sorted(tools) == entitled_ids(entry, Provider.customer)
+        from core.pack.connector import CONSEQUENCE_ANNOTATIONS
+
+        consequence = {f"ratings.{op['id']}": op["consequence"] for op in entry["connector"]["operations"]}
+        for name, tool in tools.items():
+            assert tool["annotations"]["readOnlyHint"] is CONSEQUENCE_ANNOTATIONS[consequence[name]]["readOnlyHint"]
         called = client.request({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                                  "params": {"name": "ratings.company.get", "arguments": {"company": "c-1"}}})
         assert called["result"]["isError"] is False
-        assert called["result"]["structuredContent"] == {"ok": True, "data": RECORDED["company"]}
+        content = called["result"]["structuredContent"]
+        assert (content["ok"], content["data"]) == (True, RECORDED["company"])
         assert Provider.seen[-1]["path"] == "/v1/companies/c-1"
     finally:
         process.stdin.close()

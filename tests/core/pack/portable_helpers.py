@@ -46,10 +46,42 @@ def example_doc(mutate=None):
     return doc
 
 
+#: The recorded customer whose entitlement answer the fake provider gives by default.
+DEFAULT_CUSTOMER = "ratings_and_monitoring"
+
+
+def entitled_ids(doc, customer):
+    """The module ids a customer's recorded entitlement answer admits, read from the manifest.
+
+    ``customer`` ``None`` stands for an unreadable probe: only the operations
+    that require no feature are listed. Computed here from the declared
+    ``requires.features`` lists, not by the gate under test.
+    """
+    namespace = doc["pack"]["namespaces"][0]
+    held = set(RECORDED["entitlements"][customer]["features"]) if customer else None
+    out = []
+    for op in doc["connector"]["operations"]:
+        required = set((op.get("requires") or {}).get("features") or [])
+        if not required or (held is not None and required <= held):
+            out.append(f"{namespace}.{op['id']}")
+    return sorted(out)
+
+
+def declared_ids(doc):
+    """Every operation the manifest declares, as module ids."""
+    namespace = doc["pack"]["namespaces"][0]
+    return sorted(f"{namespace}.{op['id']}" for op in doc["connector"]["operations"])
+
+
 class Provider(BaseHTTPRequestHandler):
-    """A loopback stand-in for the provider, answering with recorded-shape bodies."""
+    """A loopback stand-in for the provider, answering with recorded-shape bodies.
+
+    ``customer`` names the recorded entitlement answer the probe returns;
+    ``None`` makes the probe fail (503), as an unreadable answer.
+    """
 
     seen = []
+    customer = DEFAULT_CUSTOMER
 
     def log_message(self, *args):
         return None
@@ -66,7 +98,12 @@ class Provider(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         query = {k: v[0] for k, v in parse_qs(url.query).items()}
         Provider.seen.append({"path": url.path, "query": query, "auth": self.headers.get("Authorization")})
-        if url.path == "/v1/companies/c-1":
+        if url.path == "/v1/account/entitlements":
+            if Provider.customer is None:
+                self._reply(503, {"detail": "entitlements unavailable"})
+            else:
+                self._reply(200, RECORDED["entitlements"][Provider.customer])
+        elif url.path == "/v1/companies/c-1":
             self._reply(200, RECORDED["company"])
         elif url.path == "/v1/portfolio":
             self._reply(200, RECORDED["portfolio"])
@@ -77,6 +114,7 @@ class Provider(BaseHTTPRequestHandler):
 def start_provider():
     """Start the fake provider; returns ``(base_url, port, stop)``."""
     Provider.seen = []
+    Provider.customer = DEFAULT_CUSTOMER
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), Provider)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()

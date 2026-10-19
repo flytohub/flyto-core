@@ -154,3 +154,46 @@ Rejected alternatives:
   `install_pack(revocations=...)`, and install bundles from file with
   `verify_bundle`.
 - Windows: run the generated `.cmd` entry points on a Windows host.
+
+## Addendum: the standalone server lists only entitled tools
+
+Owner: claude
+Branch: lane/standalone-entitled (on core-integ f75f3a2)
+
+The connector pre-check landed beside portable packs, and the example pack
+gained an entitlements probe (`ratings.account.entitlements`) and a gated
+write (`ratings.portfolio.add`). The standalone server listed every declared
+operation, and its calls carried no scope grant, so six tests failed: five
+hardcoded the old three tools, and the calls were refused
+`PROVIDER_NOT_FOUND` (the fake provider had no probe) and then
+`SCOPE_GRANT_MISSING`.
+
+- `connector_gate.EntitledListing` and `ConnectorTransport.entitled_listing`:
+  the one listing, with what it stood on (`provider`, `cache`,
+  `not_required`, `unreadable` + `error_code`). `effective_module_ids` is
+  now a wrapper over it; `host.entitled_listing(pack_id, secrets)` is the
+  host entry point.
+- `standalone`: `tools/list` filters the declared tools by that listing
+  (same probe, same cache, no second copy). An unreadable probe lists only
+  ungated tools; every declared tool stays callable and the gate refuses
+  typed. The probe is itself a tool (ungated observe, always listed).
+  Calls carry `standalone_scope_grants`: `"*"` for each declared dimension,
+  because the credential holder is the caller. `health` adds
+  `entitled_tools` and `entitlements`, and an unreadable probe with a
+  credential present is a `PROVIDER_ENTITLEMENT_UNREADABLE` problem.
+- `mcp_protocol.McpServer`: `list_tools` may be a coroutine;
+  `tools_list_public=False` drops the public cache hint on a
+  per-credential list.
+- Tests read expectations from the example manifest and the recorded
+  entitlement answers (`portable_helpers.entitled_ids` / `declared_ids`);
+  no tool count is hardcoded. New: fewer features list fewer tools (and the
+  hidden call is `FEATURE_NOT_ENTITLED`), an unreadable probe lists only
+  ungated tools (and `company.get` is `PROVIDER_ENTITLEMENT_UNREADABLE`
+  without reaching the provider), health reports the entitled count for
+  three answers, and a modern `tools/list` carries no `cacheScope`.
+- `PACK_MANIFEST_SPEC.md` "Running standalone" and the pre-check section
+  record the rule and the probe-as-tool decision.
+
+Not verified: no real provider, no Windows or Linux entry point run, CI not
+run. The standalone `"*"` scope grant is a design decision recorded in the
+spec; no owner review of it yet.

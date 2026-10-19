@@ -290,6 +290,13 @@ meter read again after the call.
 `core.pack.host.effective_module_ids(pack_id, secrets)` lists the operations
 a credential is entitled to, through the same probe and cache. An operation
 whose features the answer does not hold is omitted, not marked.
+`core.pack.host.entitled_listing(pack_id, secrets)` is the same listing with
+what it stood on (`connector_gate.EntitledListing`): `source` is `provider`
+or `cache`, `not_required` when no operation is gated, or `unreadable`, in
+which case only the ungated operations are listed and `error_code` names why
+(`PROVIDER_ENTITLEMENT_UNREADABLE`, `CREDENTIAL_MISSING`). Every surface that
+offers a pack's operations reads this one listing: a Space's module listing
+and a standalone server's `tools/list`.
 
 Only the credential the pack names, resolved from `secrets`, is sent to the
 provider. Nothing else in the execution context, such as an inbound client's
@@ -515,9 +522,31 @@ with no `flyto-pack.json` at its root (`ZIP_NO_MANIFEST`).
    server uses (STDIO and Streamable HTTP, MCP 2024-11-05 through
    2026-07-28).
 
-`tools/list` lists one tool per operation, named by its module id, with an
-`inputSchema` from the operation's inputs and annotations from its
-consequence (`connector.CONSEQUENCE_ANNOTATIONS`):
+`tools/list` lists one tool per operation the running credential is
+entitled to, named by its module id, with an `inputSchema` from the
+operation's inputs and annotations from its consequence
+(`connector.CONSEQUENCE_ANNOTATIONS`). The provider is the authority, and
+Flyto2 only hides and stops early, standalone as in a Space:
+
+- The listing is `core.pack.host.entitled_listing`, read through the same
+  probe and per-credential cache as every call; there is no second copy. An
+  operation whose `requires.features` the answer does not hold is omitted.
+- If the probe cannot be read, only the ungated operations are listed. A
+  call to a gated operation (listed or not) still goes through the gate and
+  is refused typed (`PROVIDER_ENTITLEMENT_UNREADABLE`, `FEATURE_NOT_ENTITLED`,
+  `QUOTA_EXHAUSTED`); hiding is not the enforcement.
+- The `entitlements.probe` operation is itself a tool. It must be an ungated
+  `observe` operation, so it is always listed: a client can see which
+  products and meters the account holds without guessing from what is
+  missing.
+- Because the list depends on the credential, a modern `tools/list` result
+  carries no public cache hint (`ttlMs`, `cacheScope`).
+- Standalone there is no Flyto2 member to narrow for: the person running the
+  server holds the credential. Each call carries an explicit `ScopeGrants`
+  of `"*"` for every declared scope dimension
+  (`standalone.standalone_scope_grants`), and the provider's access control
+  decides what that credential sees. Results still carry
+  `metadata.precheck`.
 
 | Consequence | `readOnlyHint` | `destructiveHint` | `idempotentHint` |
 | --- | --- | --- | --- |
@@ -541,11 +570,15 @@ otherwise) or one generated and printed to stderr. A request whose `Origin`
 is not loopback is refused with 403, so a web page cannot reach the user's
 credentials through it.
 
-`flyto pack health ZIP|DIR` makes the same checks without serving or calling
-the provider, and reports the runtime it runs on, each credential's name and
-source (`env`, `keychain`, `missing`; never a value) and the tool count. It
-exits 1 when a needed credential is missing (`CREDENTIAL_MISSING`) or the
-runtime is older than the floor.
+`flyto pack health ZIP|DIR` makes the same checks without serving. Its only
+provider request is the entitlements probe. It reports the runtime it runs
+on, each credential's name and source (`env`, `keychain`, `missing`; never a
+value), the declared tool count (`tools`), the count the credential is
+entitled to (`entitled_tools`) and what that count stood on (`entitlements`:
+`{source}` plus `error_code` when unreadable; never a feature or a value). It
+exits 1 when a needed credential is missing (`CREDENTIAL_MISSING`), the
+probe is unreadable with a credential present
+(`PROVIDER_ENTITLEMENT_UNREADABLE`), or the runtime is older than the floor.
 
 ## Supply chain (2.41.0)
 

@@ -80,10 +80,14 @@ class McpServer:
 
     server_info: Callable[[], Dict[str, Any]]
     instructions: str
-    list_tools: Callable[[], List[Dict[str, Any]]]
+    #: The tools; may be a coroutine when the list depends on who is asking.
+    list_tools: Callable[[], Any]
     #: ``(request_id, params, modern) -> JSON-RPC response``.
     call_tool: Callable[[Any, Any, bool], Awaitable[Dict[str, Any]]]
     tools_list_changed: bool = False
+    #: Whether ``tools/list`` is the same for every caller, so a modern
+    #: result may carry a public cache hint. A per-credential list carries none.
+    tools_list_public: bool = True
 
     def capabilities(self) -> Dict[str, Any]:
         return {"tools": {"listChanged": self.tools_list_changed}}
@@ -235,7 +239,12 @@ async def dispatch_jsonrpc(server: McpServer, request: dict) -> Optional[dict]:
         return jsonrpc_error(req_id, -32601, f"Method not found: {method}")
 
     if method == "tools/list":
-        return result({"tools": server.list_tools()}, ttl_ms=STATIC_LIST_TTL_MS, cache_scope="public")
+        tools = server.list_tools()
+        if asyncio.iscoroutine(tools):
+            tools = await tools
+        if not server.tools_list_public:
+            return result({"tools": tools})
+        return result({"tools": tools}, ttl_ms=STATIC_LIST_TTL_MS, cache_scope="public")
 
     if method == "tools/call":
         return await server.call_tool(req_id, params, modern)

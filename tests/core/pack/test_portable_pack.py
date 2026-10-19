@@ -15,7 +15,7 @@ import stat
 import zipfile
 
 import pytest
-from portable_helpers import EXAMPLE_DIR, LOCK, example_doc, example_source
+from portable_helpers import EXAMPLE_DIR, LOCK, declared_ids, example_doc, example_source
 
 from core.pack.manifest import (
     PackManifestError,
@@ -164,6 +164,11 @@ def test_the_readme_and_notice_are_generated_from_the_manifest_and_lock(tmp_path
     readme = zip_text(out, "README.md")
     assert "com.example.ratings" in readme and "0.1.0" in readme
     assert "ratings.company.get" in readme and "observe" in readme
+    for module_id in declared_ids(example_doc()):
+        assert f"| `{module_id}` |" in readme
+    assert "| `ratings.portfolio.add` | Add a company to the portfolio | external_write | no | no | `monitoring` |" \
+        in readme
+    assert "only the tools your credential is entitled to" in readme
     assert "FLYTO_CREDENTIAL_RATINGS_API_TOKEN" in readme
     assert report["pack_digest"] not in readme  # the README is inside what the digest covers
     # The author's README is kept, under its own heading.
@@ -422,7 +427,7 @@ def test_the_pack_cli_builds_and_verifies_a_zip(tmp_path, capsys):
     verified = json.loads(capsys.readouterr().out)
     assert verified["pack_digest"] == built_report["pack_digest"]
     assert verified["revocation"] == "no list configured"
-    assert verified["module_ids"] == ["ratings.company.get", "ratings.findings.list", "ratings.portfolio.list"]
+    assert verified["module_ids"] == declared_ids(example_doc())
     # Without a lock the CLI refuses, with the typed reason.
     again = argparse.Namespace(pack_action="build", pack_dir=str(example_source(tmp_path, name="nolock")),
                                output=str(tmp_path / "nolock.zip"), lock=None, key=None, key_id=None)

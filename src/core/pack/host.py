@@ -45,6 +45,7 @@ from ..plugin.manifest import (
     plugin_environment_names,
     validate_plugin_endpoint,
 )
+from .connector_gate import EntitledListing
 from .manifest import (
     LOADABLE_BINDINGS,
     PACK_SCHEMA,
@@ -356,12 +357,22 @@ async def effective_module_ids(pack_id: str, secrets: Mapping[str, Any]) -> List
     cache every call uses). Any other pack has no entitlements, so all its
     modules are listed. An uninstalled pack lists nothing.
     """
+    return list((await entitled_listing(pack_id, secrets)).module_ids)
+
+
+async def entitled_listing(pack_id: str, secrets: Mapping[str, Any]) -> EntitledListing:
+    """:func:`effective_module_ids` with what the listing stood on (``EntitledListing``).
+
+    One listing for every surface that offers a pack's operations: a Space's
+    module listing and a standalone server's ``tools/list`` both read it.
+    """
     installed = _INSTALLED.get(pack_id)
     if installed is None:
-        return []
-    listing = getattr(installed.transport, "effective_module_ids", None)
+        return EntitledListing(module_ids=(), source="unreadable", error_code="PACK_NOT_INSTALLED")
+    listing = getattr(installed.transport, "entitled_listing", None)
     if listing is None:
-        return sorted(row["module_id"] for row in installed.manifest["modules"])
+        return EntitledListing(module_ids=tuple(sorted(row["module_id"] for row in installed.manifest["modules"])),
+                               source="not_required")
     return await listing(secrets if isinstance(secrets, Mapping) else {})
 
 

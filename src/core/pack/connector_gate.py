@@ -51,6 +51,7 @@ __all__ = [
     "PrecheckError",
     "ScopeGrants",
     "Admission",
+    "EntitledListing",
     "admit",
     "filter_result",
     "missing_features",
@@ -320,6 +321,25 @@ class Admission:
     entitlements: str  # "provider", "cache" or "not_required"
     grants: Mapping[str, Any]
     meter: Optional[Mapping[str, Any]] = None
+
+
+@dataclass(frozen=True)
+class EntitledListing:
+    """The operations one credential may be offered, and what the listing stood on.
+
+    ``source`` is ``provider`` or ``cache`` (the probe answer), ``not_required``
+    (no operation is gated, so the probe was not read) or ``unreadable`` (only
+    the ungated operations are listed; ``error_code`` says why). A hidden
+    operation is still behind :func:`admit`: listing is not admission.
+    """
+
+    module_ids: Tuple[str, ...]
+    source: str
+    error_code: Optional[str] = None
+
+    def status(self) -> Dict[str, Any]:
+        """``{source}`` plus ``error_code`` when the probe was unreadable; never a feature or a value."""
+        return {"source": self.source, **({"error_code": self.error_code} if self.error_code else {})}
 
 
 def admit(op: Mapping[str, Any], params: Mapping[str, Any], scope_grants: Any,

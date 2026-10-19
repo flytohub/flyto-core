@@ -14,11 +14,23 @@ its directory), this module:
 3. serves the pack's operations as MCP tools over stdio or Streamable HTTP
    with ``core.mcp_protocol``, the protocol code core's own MCP server uses.
    ``tools/list`` comes from the manifest: each tool's annotations from its
-   operation's consequence (``connector.CONSEQUENCE_ANNOTATIONS``).
+   operation's consequence (``connector.CONSEQUENCE_ANNOTATIONS``). It lists
+   exactly the operations the running credential is entitled to, by
+   ``core.pack.host.entitled_listing`` — the listing a Space uses, through
+   the same probe and cache as every call. An unreadable probe lists only the
+   ungated operations.
    ``tools/call`` runs the module through ``core.mcp_handler.execute_module``
    with the credentials resolved by name for that call
    (``core.pack.standalone_auth``), and returns the connector runtime's result
-   or its typed failure (``CREDENTIAL_MISSING``, ``PROVIDER_*``) unchanged.
+   or its typed failure (``CREDENTIAL_MISSING``, ``FEATURE_NOT_ENTITLED``,
+   ``PROVIDER_*``) unchanged. Every declared operation stays callable: a
+   hidden one is refused by the gate, typed, not by the listing.
+
+Standalone, the person running the server holds the provider credential and
+there is no Flyto2 member to narrow for, so each call carries an explicit
+``ScopeGrants`` of ``"*"`` for every scope dimension the pack declares
+(``standalone_scope_grants``). The provider's own access control decides
+what that credential sees.
 
 The HTTP transport binds a loopback address only and needs a bearer token on
 every request; a browser ``Origin`` other than loopback is refused, so a web
@@ -45,7 +57,7 @@ from .manifest import PackManifestError, read_pack_manifest
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["StandalonePack", "tools_for", "load_standalone", "serve_stdio", "start_http", "serve_http", "health"]
+__all__ = ["StandalonePack", "tools_for", "standalone_scope_grants", "load_standalone", "serve_stdio", "start_http", "serve_http", "health"]
 
 #: Keys of a registry parameter definition -> their JSON Schema names.
 _SCHEMA_KEYS: Mapping[str, str] = {
@@ -92,6 +104,13 @@ def tools_for(manifest: Mapping[str, Any]) -> List[Dict[str, Any]]:
     return tools
 
 
+def standalone_scope_grants(manifest: Mapping[str, Any]) -> Any:
+    """Every declared scope dimension granted ``"*"``: standalone, the credential holder is the caller."""
+    from .connector_gate import ALL_VALUES, ScopeGrants
+
+    return ScopeGrants({scope["key"]: ALL_VALUES for scope in manifest.get("scopes") or []})
+
+
 @dataclass
 class StandalonePack:
     """One verified, installed pack and the MCP server that serves it."""
@@ -108,6 +127,7 @@ class StandalonePack:
     def __post_init__(self) -> None:
         self._tools = tools_for(self.manifest)
         self._names = frozenset(tool["name"] for tool in self._tools)
+        self._grants = standalone_scope_grants(self.manifest)
         pack = self.manifest["pack"]
         self.server = mcp_protocol.McpServer(
             server_info=lambda: {
@@ -117,9 +137,21 @@ class StandalonePack:
                 "description": pack.get("description", ""),
             },
             instructions=pack.get("description") or f"The operations of {pack['id']} as tools.",
-            list_tools=lambda: self._tools,
+            list_tools=self.list_tools,
             call_tool=self._call_tool,
+            tools_list_public=False,
         )
+
+    async def listing(self) -> Any:
+        """What the running credential is entitled to (``connector_gate.EntitledListing``)."""
+        from .host import entitled_listing
+
+        return await entitled_listing(self.manifest["pack"]["id"], self.resolver.resolve())
+
+    async def list_tools(self) -> List[Dict[str, Any]]:
+        """The declared tools the running credential is entitled to, in declared order."""
+        offered = frozenset((await self.listing()).module_ids)
+        return [tool for tool in self._tools if tool["name"] in offered]
 
     async def _call_tool(self, request_id: Any, params: Any, modern: bool) -> Dict[str, Any]:
         from ..mcp_handler import execute_module
@@ -139,7 +171,7 @@ class StandalonePack:
         try:
             # Resolved per call, by name: a keychain change applies to the next
             # call, and no value outlives the call that needed it.
-            outcome = await execute_module(name, dict(arguments), context={"secrets": self.resolver.resolve()})
+            outcome = await execute_module(name, dict(arguments), context={"secrets": self.resolver.resolve(), "scope_grants": self._grants})
         except Exception as exc:  # noqa: BLE001 - a failed call is a tool error, not a dead server
             return result({"content": [{"type": "text", "text": f"{type(exc).__name__}"}], "isError": True})
         return result(mcp_protocol.tool_call_body(outcome))
@@ -331,8 +363,8 @@ async def _health(pack: StandalonePack) -> Dict[str, Any]:
 
     standalone = pack.manifest["standalone"]
     floor = _python_floor(standalone["runtime"]["version"])
-    listed = await pack.dispatch({"jsonrpc": "2.0", "id": "health", "method": "tools/list"})
-    tools = len(listed["result"]["tools"])
+    tools = len(pack._tools)
+    listing = await pack.listing()
     credentials = pack.resolver.status()
     problems = []
     if sys.version_info[:2] < floor:
@@ -341,6 +373,8 @@ async def _health(pack: StandalonePack) -> Dict[str, Any]:
         problems.append("CREDENTIAL_MISSING")
     if tools != len(pack.manifest["connector"]["operations"]):
         problems.append("TOOLS_INCOMPLETE")
+    if listing.error_code == "PROVIDER_ENTITLEMENT_UNREADABLE":
+        problems.append("PROVIDER_ENTITLEMENT_UNREADABLE")
     return {
         "healthy": not problems,
         "problems": problems,
@@ -352,6 +386,8 @@ async def _health(pack: StandalonePack) -> Dict[str, Any]:
         "credentials": credentials,
         "transports": standalone["transports"],
         "tools": tools,
+        "entitled_tools": len(listing.module_ids),
+        "entitlements": listing.status(),
     }
 
 
@@ -363,9 +399,11 @@ def health(
     revocations: Any = None,
     resolver_factory: Optional[Callable[[Mapping[str, Any]], Any]] = None,
 ) -> Dict[str, Any]:
-    """Verify, install and list a pack without serving it or calling its provider.
+    """Verify, install and list a pack without serving it.
 
-    The report names each credential and where it would come from, never
+    The only provider request is the entitlements probe (an observe
+    operation), so the report can count the tools the credential is entitled
+    to. The report names each credential and where it would come from, never
     its value.
     """
     import asyncio

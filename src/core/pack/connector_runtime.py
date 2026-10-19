@@ -53,6 +53,7 @@ from urllib.parse import quote, urlencode, urlsplit
 from .connector import BODY_METHODS, module_id_for
 from .connector_gate import (
     DEFAULT_MAX_AGE_S,
+    EntitledListing,
     EntitlementAnswer,
     EntitlementCache,
     PrecheckError,
@@ -290,28 +291,34 @@ class ConnectorTransport:
         return out
 
     async def effective_module_ids(self, secrets: Mapping[str, Any]) -> List[str]:
+        """The operations this credential is entitled to; see :meth:`entitled_listing`."""
+        return list((await self.entitled_listing(secrets)).module_ids)
+
+    async def entitled_listing(self, secrets: Mapping[str, Any]) -> EntitledListing:
         """The operations this credential is entitled to, by the probe (a cached answer may serve).
 
         An operation that needs no feature is always listed. A gated one is
         listed only when the answer is readable and holds its features; the
-        rest are omitted, not marked.
+        rest are omitted, not marked. An unreadable probe lists only the
+        ungated operations and names its typed reason.
         """
+        operations = sorted(self._operations.items())
+        ungated = tuple(module_id for module_id, op in operations if not needs_entitlements(op))
+        gated = [module_id for module_id, op in operations if needs_entitlements(op)]
+        if not gated:
+            return EntitledListing(module_ids=ungated, source="not_required")
         budget_ms = self._budget(None)
-        answer: Optional[EntitlementAnswer] = None
-        offered = []
-        for module_id, op in sorted(self._operations.items()):
-            if not needs_entitlements(op):
-                offered.append(module_id)
-                continue
-            if answer is None:
-                try:
-                    headers, key = await self._headers(module_id, secrets, budget_ms)
-                    answer, _ = await self._entitlements(headers, key, budget_ms, fresh=False)
-                except (PrecheckError, ConnectorCallError):
-                    return [m for m, o in sorted(self._operations.items()) if not needs_entitlements(o)]
-            if not missing_features((op.get("requires") or {}).get("features") or [], answer.features):
-                offered.append(module_id)
-        return offered
+        try:
+            headers, key = await self._headers(gated[0], secrets, budget_ms)
+            answer, source = await self._entitlements(headers, key, budget_ms, fresh=False)
+        except (PrecheckError, ConnectorCallError) as failure:
+            return EntitledListing(module_ids=ungated, source="unreadable", error_code=failure.code)
+        offered = tuple(
+            module_id for module_id, op in operations
+            if not needs_entitlements(op)
+            or not missing_features((op.get("requires") or {}).get("features") or [], answer.features)
+        )
+        return EntitledListing(module_ids=offered, source=source)
 
     def _request_parts(self, op: Mapping[str, Any], params: Mapping[str, Any]) -> Tuple[str, Dict, Optional[Dict]]:
         path = op["path"]
