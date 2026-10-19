@@ -152,10 +152,14 @@ _MODULE_KEYS = frozenset(MODULE_DEFAULTS) | {"module_id", "label", "label_key", 
 class PackManifestError(ValueError):
     """A stable, value-free failure of pack validation or verification."""
 
-    def __init__(self, code: str, message: str, *, operation: Optional[str] = None):
+    def __init__(self, code: str, message: str, *, operation: Optional[str] = None,
+                 operations: Tuple[str, ...] = ()):
         self.code = code
         #: The connector operation the refusal is about, when there is one.
         self.operation = operation
+        #: Every operation the refusal is about, when it names more than one
+        #: (``CONSEQUENCE_MISSING`` names each undecided operation at once).
+        self.operations = tuple(operations) or ((operation,) if operation else ())
         super().__init__(message)
 
 

@@ -33,7 +33,7 @@ playwright install chromium
 | `flyto replay --from-step STEP` | Resume a recorded run | `.flyto-runs` state |
 | `flyto modules` | List registry modules | Environment-filtered registry |
 | `flyto plugin ...` | Search, install, inspect, or remove plugins | Local plugin loader and registry |
-| `flyto pack ...` | Export, sign, verify, build, run and healthcheck `flyto.pack.v1` packs | Local files; `run` serves MCP on stdio or loopback |
+| `flyto pack ...` | Scaffold, diagnose, test, export, sign, verify, build, run and healthcheck `flyto.pack.v1` packs | Local files; `test` answers from recorded fixtures on loopback; `run` serves MCP on stdio or loopback |
 | `flyto bundle ...` | Build and verify `flyto.bundle.v1` bundles | Local files; packs supplied with `--pack` |
 | `flyto template ...` | Exchange templates with the configured API | Remote template API |
 | `flyto serve` | Start the local Execution API | FastAPI, optional `api` extra |
@@ -108,6 +108,35 @@ flyto plugin uninstall example
 
 Plugin installation executes package-manager operations. Review package source,
 permissions, manifest, and trust before installation. See [Plugin SDK](PLUGIN_SDK.md).
+
+## Packs
+
+A provider builds its own pack with these commands, and needs nothing from
+Flyto2 to do it. [Build a provider pack](guides/BUILD_A_PACK.md) walks the
+whole path, and a test runs every command on that page.
+
+```bash
+flyto pack init items-pack --pack-id com.example.items
+flyto pack init tracker-pack --openapi openapi.yaml --probe get_account
+flyto pack consequence items-pack item.get=observe
+flyto pack doctor items-pack
+flyto pack test items-pack
+flyto pack build items-pack --lock requirements.lock --key publisher.pem --key-id publisher-1
+flyto pack run items-0.1.0.zip --trusted-key publisher-1=publisher.pub
+```
+
+- `init` writes a connector pack: the manifest (`connector`, `entitlements`,
+  `scopes`, `standalone`), `fixtures/exchanges.json` and a pytest file. It
+  never writes a consequence, and refuses a directory that is not empty.
+- `consequence` records the author's decision for each named operation.
+  Validation and the build refuse `CONSEQUENCE_MISSING` and name every
+  undecided operation.
+- `doctor` explains every refusal with its code, cause and fix, checking each
+  operation on its own. It exits 1 while any refusal remains.
+- `test` runs each recorded call through the real connector runtime and gate
+  against a loopback fake provider built from the fixtures. It reports each
+  operation with typed failures, then runs `pack conform`, and exits 1 on any
+  failure.
 
 ## Templates
 

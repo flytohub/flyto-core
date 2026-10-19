@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Provider developer kit. `flyto pack init DIR [--openapi FILE]` scaffolds a
+  connector pack: the manifest with `connector`, `entitlements`, `scopes`
+  and `standalone`, recorded fixtures (`flyto.pack-fixtures.v1`) and a
+  pytest file. Every operation starts without a consequence, and
+  `flyto pack consequence DIR OP=LEVEL ...` records the author's decision.
+  `flyto pack test DIR` runs each recorded call through the real connector
+  runtime and gate against a loopback fake provider built from the fixtures.
+  It reports each operation with typed failures (`core.pack.recorded`), then
+  runs conformance. `flyto pack doctor DIR` gives the cause and fix of every
+  refusal code (`core.pack.doctor.DIAGNOSES`). Guide:
+  `docs/guides/BUILD_A_PACK.md`. Example: `examples/packs/product-combinations`.
 - `core.pack.mcp_client`: the minimal MCP Streamable HTTP client a consumer
   needs (`initialize`, `tools/list` with pagination, `tools/call`; JSON or
   event-stream answers). It reuses the connector runtime's typed failures and
@@ -20,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MCP server (RFC 9728 resource metadata, RFC 8414, RFC 7591 registration,
   RFC 8707 `resource` on every request).
 - `core.pack.connector_runtime.status_failure` is public, for the MCP client.
+
+### Changed
+
+- `CONSEQUENCE_MISSING` names every undecided operation at once (message and
+  `PackManifestError.operations`, in file order). `operation` is still the
+  first one.
 
 ## [2.41.0] - 2026-10-18
 

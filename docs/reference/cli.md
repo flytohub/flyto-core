@@ -2,55 +2,55 @@
 
 # CLI Parser Reference
 
-The implementation defines **38 parser commands** and **83 arguments**. Recipe-specific arguments are generated from recipe parameter schemas at runtime and documented in [Recipes](../RECIPES.md).
+The implementation defines **42 parser commands** and **94 arguments**. Recipe-specific arguments are generated from recipe parameter schemas at runtime and documented in [Recipes](../RECIPES.md).
 
 ## `flyto build`
 
 Build a portable pack zip: validate, generate entry points, README and notice, sign
 
-Parser source: [`src/cli/pack.py:59`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L59).
+Parser source: [`src/cli/pack.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L89).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L62) |
-| `-o, --output` | no | `` | `` | Zip to write (default: <pack id>-<version>.zip); must not exist | [`src/cli/pack.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L63) |
-| `--lock` | no | `` | `` | Hashed lockfile to place at standalone.lockfile | [`src/cli/pack.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L64) |
-| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L65) |
-| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L66) |
-| `source` | yes | `` | `` | Bundle directory holding flyto-bundle.json | [`src/cli/pack.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L115) |
-| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L116) |
-| `-o, --output` | no | `` | `` | Zip to write (default: <bundle id>-<version>.bundle.zip) | [`src/cli/pack.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L117) |
-| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L118) |
-| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L119) |
-| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher key for the referenced packs; repeatable | [`src/cli/pack.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L120) |
-| `--allow-unsigned` | no | `` | `` | Accept unsigned referenced packs | [`src/cli/pack.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L122) |
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L92) |
+| `-o, --output` | no | `` | `` | Zip to write (default: <pack id>-<version>.zip); must not exist | [`src/cli/pack.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L93) |
+| `--lock` | no | `` | `` | Hashed lockfile to place at standalone.lockfile | [`src/cli/pack.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L94) |
+| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L95) |
+| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L96) |
+| `source` | yes | `` | `` | Bundle directory holding flyto-bundle.json | [`src/cli/pack.py:145`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L145) |
+| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L146) |
+| `-o, --output` | no | `` | `` | Zip to write (default: <bundle id>-<version>.bundle.zip) | [`src/cli/pack.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L147) |
+| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L148) |
+| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L149) |
+| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher key for the referenced packs; repeatable | [`src/cli/pack.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L150) |
+| `--allow-unsigned` | no | `` | `` | Accept unsigned referenced packs | [`src/cli/pack.py:152`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L152) |
 
 ## `flyto build`
 
 Pin the packs and file digests, validate, and write a bundle zip
 
-Parser source: [`src/cli/pack.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L114).
+Parser source: [`src/cli/pack.py:144`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L144).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L62) |
-| `-o, --output` | no | `` | `` | Zip to write (default: <pack id>-<version>.zip); must not exist | [`src/cli/pack.py:63`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L63) |
-| `--lock` | no | `` | `` | Hashed lockfile to place at standalone.lockfile | [`src/cli/pack.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L64) |
-| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L65) |
-| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L66) |
-| `source` | yes | `` | `` | Bundle directory holding flyto-bundle.json | [`src/cli/pack.py:115`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L115) |
-| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L116) |
-| `-o, --output` | no | `` | `` | Zip to write (default: <bundle id>-<version>.bundle.zip) | [`src/cli/pack.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L117) |
-| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:118`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L118) |
-| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L119) |
-| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher key for the referenced packs; repeatable | [`src/cli/pack.py:120`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L120) |
-| `--allow-unsigned` | no | `` | `` | Accept unsigned referenced packs | [`src/cli/pack.py:122`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L122) |
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:92`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L92) |
+| `-o, --output` | no | `` | `` | Zip to write (default: <pack id>-<version>.zip); must not exist | [`src/cli/pack.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L93) |
+| `--lock` | no | `` | `` | Hashed lockfile to place at standalone.lockfile | [`src/cli/pack.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L94) |
+| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:95`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L95) |
+| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:96`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L96) |
+| `source` | yes | `` | `` | Bundle directory holding flyto-bundle.json | [`src/cli/pack.py:145`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L145) |
+| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:146`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L146) |
+| `-o, --output` | no | `` | `` | Zip to write (default: <bundle id>-<version>.bundle.zip) | [`src/cli/pack.py:147`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L147) |
+| `--key` | no | `` | `` | ed25519 private key (PEM) to sign with | [`src/cli/pack.py:148`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L148) |
+| `--key-id` | no | `` | `` | Publisher key id (with --key) | [`src/cli/pack.py:149`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L149) |
+| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher key for the referenced packs; repeatable | [`src/cli/pack.py:150`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L150) |
+| `--allow-unsigned` | no | `` | `` | Accept unsigned referenced packs | [`src/cli/pack.py:152`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L152) |
 
 ## `flyto bundle`
 
 Build and verify flyto.bundle.v1 bundles. A bundle references packs; it never copies one.
 
-Parser source: [`src/cli/pack.py:108`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L108).
+Parser source: [`src/cli/pack.py:138`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L138).
 
 This command has no static command-specific arguments.
 
@@ -58,56 +58,92 @@ This command has no static command-specific arguments.
 
 Offline conformance: static checks, then the pack's runner (run it against a simulator)
 
-Parser source: [`src/cli/pack.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L79).
+Parser source: [`src/cli/pack.py:109`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L109).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L83) |
-| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher public key (PEM or base64 raw); repeatable | [`src/cli/pack.py:84`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L84) |
-| `--static-only` | no | `` | `` | Read the files; never start the runner | [`src/cli/pack.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L86) |
-| `--json` | no | `` | `` | Print the report as JSON | [`src/cli/pack.py:87`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L87) |
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:113`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L113) |
+| `--trusted-key` | no | `&#91;&#93;` | `` | Trusted publisher public key (PEM or base64 raw); repeatable | [`src/cli/pack.py:114`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L114) |
+| `--static-only` | no | `` | `` | Read the files; never start the runner | [`src/cli/pack.py:116`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L116) |
+| `--json` | no | `` | `` | Print the report as JSON | [`src/cli/pack.py:117`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L117) |
+
+## `flyto consequence`
+
+Record your decision of what each operation does to the world
+
+Parser source: [`src/cli/pack.py:47`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L47).
+
+| Argument | Required | Default | Choices | Purpose | Source |
+|---|---|---|---|---|---|
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:50`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L50) |
+| `decisions` | yes | `` | `` | observe, reversible, external_write, real_world or irreversible | [`src/cli/pack.py:51`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L51) |
 
 ## `flyto digest`
 
 Print the tree digest of a pack directory
 
-Parser source: [`src/cli/pack.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L41).
+Parser source: [`src/cli/pack.py:71`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L71).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:42`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L42) |
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L72) |
+
+## `flyto doctor`
+
+Explain every validation refusal: its cause and its fix
+
+Parser source: [`src/cli/pack.py:54`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L54).
+
+| Argument | Required | Default | Choices | Purpose | Source |
+|---|---|---|---|---|---|
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:55`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L55) |
+| `--json` | no | `` | `` | Print the diagnoses as JSON | [`src/cli/pack.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L56) |
 
 ## `flyto health`
 
 Healthcheck a portable pack: verify, runtime, credential names
 
-Parser source: [`src/cli/pack.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L75).
+Parser source: [`src/cli/pack.py:105`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L105).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `source` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L76) |
+| `source` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:106`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L106) |
 
 ## `flyto import-openapi`
 
 Draft a connector section from an OpenAPI 3 document (every consequence left for you to set)
 
-Parser source: [`src/cli/pack.py:89`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L89).
+Parser source: [`src/cli/pack.py:119`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L119).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `document` | yes | `` | `` | OpenAPI 3 document, JSON or YAML | [`src/cli/pack.py:93`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L93) |
-| `-o, --output` | no | `` | `` | Write the draft to this file instead of stdout | [`src/cli/pack.py:94`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L94) |
+| `document` | yes | `` | `` | OpenAPI 3 document, JSON or YAML | [`src/cli/pack.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L123) |
+| `-o, --output` | no | `` | `` | Write the draft to this file instead of stdout | [`src/cli/pack.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L124) |
+
+## `flyto init`
+
+Scaffold a connector pack: manifest, recorded fixtures and a test (every consequence unset)
+
+Parser source: [`src/cli/pack.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L38).
+
+| Argument | Required | Default | Choices | Purpose | Source |
+|---|---|---|---|---|---|
+| `pack_dir` | yes | `` | `` | New or empty directory to write the pack into | [`src/cli/pack.py:41`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L41) |
+| `--openapi` | no | `` | `` | Draft the operations from this OpenAPI 3 document (JSON or YAML) | [`src/cli/pack.py:42`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L42) |
+| `--pack-id` | no | `` | `` | Pack id (default: com.example.<directory name>) | [`src/cli/pack.py:43`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L43) |
+| `--namespace` | no | `` | `` | Module namespace (default: the last part of the pack id) | [`src/cli/pack.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L44) |
+| `--probe` | no | `` | `` | The operation that reads what the account holds (entitlements.probe) | [`src/cli/pack.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L45) |
 
 ## `flyto keygen`
 
 Generate an ed25519 publisher key pair
 
-Parser source: [`src/cli/pack.py:44`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L44).
+Parser source: [`src/cli/pack.py:74`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L74).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `--private` | yes | `` | `` | Private key output (PEM, mode 0600) | [`src/cli/pack.py:45`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L45) |
-| `--public` | yes | `` | `` | Public key output (PEM) | [`src/cli/pack.py:46`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L46) |
+| `--private` | yes | `` | `` | Private key output (PEM, mode 0600) | [`src/cli/pack.py:75`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L75) |
+| `--public` | yes | `` | `` | Public key output (PEM) | [`src/cli/pack.py:76`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L76) |
 
 ## `flyto learn`
 
@@ -129,15 +165,15 @@ Parser source: [`src/cli/main.py:225`](https://github.com/flytohub/flyto-core/bl
 
 Print the manifest a Python pack's decorators produce
 
-Parser source: [`src/cli/pack.py:34`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L34).
+Parser source: [`src/cli/pack.py:64`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L64).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `target` | yes | `` | `` | flyto.modules entry point name, or package.module:register_all | [`src/cli/pack.py:35`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L35) |
-| `--pack-id` | no | `` | `` | Pack id (default: the entry point name) | [`src/cli/pack.py:36`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L36) |
-| `--version` | no | `` | `` | Pack version (default: the distribution version) | [`src/cli/pack.py:37`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L37) |
-| `--description` | no | `` | `` | Pack description | [`src/cli/pack.py:38`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L38) |
-| `-o, --output` | no | `` | `` | Write to this file instead of stdout | [`src/cli/pack.py:39`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L39) |
+| `target` | yes | `` | `` | flyto.modules entry point name, or package.module:register_all | [`src/cli/pack.py:65`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L65) |
+| `--pack-id` | no | `` | `` | Pack id (default: the entry point name) | [`src/cli/pack.py:66`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L66) |
+| `--version` | no | `` | `` | Pack version (default: the distribution version) | [`src/cli/pack.py:67`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L67) |
+| `--description` | no | `` | `` | Pack description | [`src/cli/pack.py:68`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L68) |
+| `-o, --output` | no | `` | `` | Write to this file instead of stdout | [`src/cli/pack.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L69) |
 
 ## `flyto modules`
 
@@ -155,7 +191,7 @@ Parser source: [`src/cli/modules.py:143`](https://github.com/flytohub/flyto-core
 
 Export, sign and verify flyto.pack.v1 module pack manifests.
 
-Parser source: [`src/cli/pack.py:27`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L27).
+Parser source: [`src/cli/pack.py:31`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L31).
 
 This command has no static command-specific arguments.
 
@@ -274,14 +310,14 @@ Parser source: [`src/cli/main.py:108`](https://github.com/flytohub/flyto-core/bl
 
 Run a portable pack on its own as an MCP server
 
-Parser source: [`src/cli/pack.py:68`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L68).
+Parser source: [`src/cli/pack.py:98`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L98).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `source` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:69`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L69) |
-| `--transport` | no | `stdio` | `stdio, streamable_http` |  | [`src/cli/pack.py:70`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L70) |
-| `--host` | no | `127.0.0.1` | `` | Loopback address for streamable_http | [`src/cli/pack.py:71`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L71) |
-| `--port` | no | `8765` | `` | Port for streamable_http (0 picks one) | [`src/cli/pack.py:72`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L72) |
+| `source` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:99`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L99) |
+| `--transport` | no | `stdio` | `stdio, streamable_http` |  | [`src/cli/pack.py:100`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L100) |
+| `--host` | no | `127.0.0.1` | `` | Loopback address for streamable_http | [`src/cli/pack.py:101`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L101) |
+| `--port` | no | `8765` | `` | Port for streamable_http (0 picks one) | [`src/cli/pack.py:102`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L102) |
 
 ## `flyto serve`
 
@@ -298,13 +334,13 @@ Parser source: [`src/cli/main.py:82`](https://github.com/flytohub/flyto-core/blo
 
 Set artifact.digest and write flyto-pack.sig.json
 
-Parser source: [`src/cli/pack.py:48`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L48).
+Parser source: [`src/cli/pack.py:78`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L78).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:49`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L49) |
-| `--key` | yes | `` | `` | ed25519 private key (PEM) | [`src/cli/pack.py:50`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L50) |
-| `--key-id` | yes | `` | `` | Publisher key id | [`src/cli/pack.py:51`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L51) |
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:79`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L79) |
+| `--key` | yes | `` | `` | ed25519 private key (PEM) | [`src/cli/pack.py:80`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L80) |
+| `--key-id` | yes | `` | `` | Publisher key id | [`src/cli/pack.py:81`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L81) |
 
 ## `flyto template`
 
@@ -413,26 +449,37 @@ Parser source: [`src/cli/template.py:407`](https://github.com/flytohub/flyto-cor
 | `query` | yes | `` | `` | Search query | [`src/cli/template.py:408`](https://github.com/flytohub/flyto-core/blob/main/src/cli/template.py#L408) |
 | `--limit` | no | `20` | `` | Max results | [`src/cli/template.py:409`](https://github.com/flytohub/flyto-core/blob/main/src/cli/template.py#L409) |
 
+## `flyto test`
+
+Run each operation against the recorded fixtures through the real runtime, then conform
+
+Parser source: [`src/cli/pack.py:58`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L58).
+
+| Argument | Required | Default | Choices | Purpose | Source |
+|---|---|---|---|---|---|
+| `pack_dir` | yes | `` | `` |  | [`src/cli/pack.py:61`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L61) |
+| `--json` | no | `` | `` | Print the report as JSON | [`src/cli/pack.py:62`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L62) |
+
 ## `flyto verify`
 
 Validate a pack directory or zip: digest, signature, revocation (installs nothing)
 
-Parser source: [`src/cli/pack.py:53`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L53).
+Parser source: [`src/cli/pack.py:83`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L83).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L56) |
-| `source` | yes | `` | `` | Bundle directory or zip | [`src/cli/pack.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L124) |
-| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L125) |
+| `pack_dir` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L86) |
+| `source` | yes | `` | `` | Bundle directory or zip | [`src/cli/pack.py:154`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L154) |
+| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L155) |
 
 ## `flyto verify`
 
 Verify a bundle against the packs it pins
 
-Parser source: [`src/cli/pack.py:123`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L123).
+Parser source: [`src/cli/pack.py:153`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L153).
 
 | Argument | Required | Default | Choices | Purpose | Source |
 |---|---|---|---|---|---|
-| `pack_dir` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:56`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L56) |
-| `source` | yes | `` | `` | Bundle directory or zip | [`src/cli/pack.py:124`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L124) |
-| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:125`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L125) |
+| `pack_dir` | yes | `` | `` | Pack directory or built zip | [`src/cli/pack.py:86`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L86) |
+| `source` | yes | `` | `` | Bundle directory or zip | [`src/cli/pack.py:154`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L154) |
+| `--pack` | no | `&#91;&#93;` | `` | A referenced pack (zip or directory) | [`src/cli/pack.py:155`](https://github.com/flytohub/flyto-core/blob/main/src/cli/pack.py#L155) |

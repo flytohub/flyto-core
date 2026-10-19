@@ -58,6 +58,11 @@ REVOCATIONS_SCHEMA = "flyto.pack-revocations.v1"
 REVOCATIONS_DOMAIN = b"flyto.pack-revocations.v1\n"
 #: Why a digest is revoked. A closed vocabulary, so a loader can say why it refused.
 REVOCATION_REASONS = ("key_compromise", "malicious", "vulnerable", "withdrawn", "superseded")
+#: A signature refusal on a revocation list, as the list's own refusal; any other is ``REVOCATION_INVALID``.
+REVOCATION_SIGNATURE_REFUSALS: Mapping[str, str] = {
+    "UNTRUSTED_KEY": "REVOCATION_UNTRUSTED_KEY",
+    "SIGNATURE_MISMATCH": "REVOCATION_SIGNATURE_MISMATCH",
+}
 
 MAX_LOCKFILE_BYTES = 1024 * 1024
 MAX_LOCK_REQUIREMENTS = 512
@@ -227,8 +232,8 @@ def load_revocations(document: Any, trusted_keys: Mapping[str, Any]) -> Revocati
     try:
         key_id = verify_detached(REVOCATIONS_DOMAIN, body, signature, trusted_keys)
     except PackManifestError as exc:
-        code = {"UNTRUSTED_KEY": "REVOCATION_UNTRUSTED_KEY", "SIGNATURE_MISMATCH": "REVOCATION_SIGNATURE_MISMATCH"}
-        raise PackManifestError(code.get(exc.code, "REVOCATION_INVALID"), f"revocation list: {exc}") from None
+        raise PackManifestError(REVOCATION_SIGNATURE_REFUSALS.get(exc.code, "REVOCATION_INVALID"),
+                                f"revocation list: {exc}") from None
     return RevocationList(
         key_id=key_id,
         sequence=normalized["sequence"],

@@ -163,10 +163,10 @@ _SECRET_WORDS = re.compile(
 )
 
 
-def _fail(code: str, message: str, operation: Optional[str] = None) -> None:
+def _fail(code: str, message: str, operation: Optional[str] = None, operations: Tuple[str, ...] = ()) -> None:
     from .manifest import PackManifestError
 
-    raise PackManifestError(code, message, operation=operation)
+    raise PackManifestError(code, message, operation=operation, operations=operations)
 
 
 def _object(value: Any, where: str, required: frozenset, optional: frozenset, operation: Optional[str]) -> Dict:
@@ -432,6 +432,24 @@ def _operation(value: Any, index: int) -> Dict[str, Any]:
     return normalized
 
 
+def _refuse_undecided(operations: List[Any]) -> None:
+    """Refuse every operation still without a consequence, naming each one at once.
+
+    A scaffold or an OpenAPI draft leaves every consequence unset, and the
+    author decides them. Naming only the first undecided operation would
+    turn that into one refusal per operation; the refusal lists them all
+    (``PackManifestError.operations``), in the order the file declares them.
+    """
+    undecided = [
+        op["id"] for op in operations
+        if type(op) is dict and op.get("consequence") is None
+        and type(op.get("id")) is str and _OPERATION_ID.fullmatch(op["id"])
+    ]
+    if undecided:
+        _fail("CONSEQUENCE_MISSING", f"operations without a consequence: {', '.join(undecided)}; declare each one "
+              f"of {', '.join(CONSEQUENCES)}", undecided[0], tuple(undecided))
+
+
 def validate_connector(value: Any) -> Dict[str, Any]:
     """The normalized ``connector`` section, or a typed refusal."""
     connector = _object(value, "connector", _CONNECTOR_REQUIRED, _CONNECTOR_OPTIONAL, None)
@@ -444,6 +462,7 @@ def validate_connector(value: Any) -> Dict[str, Any]:
     operations = connector["operations"]
     if type(operations) is not list or not 1 <= len(operations) <= MAX_OPERATIONS:
         _fail("INVALID_COUNT", "connector.operations count is outside its bound")
+    _refuse_undecided(operations)
     normalized = [_operation(op, index) for index, op in enumerate(operations)]
     ids = [op["id"] for op in normalized]
     if len(set(ids)) != len(ids):

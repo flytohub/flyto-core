@@ -1,0 +1,127 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.suite",
+    "version": "0.1.0",
+    "namespaces": [
+      "suite"
+    ],
+    "title": "Example product suite connector",
+    "description": "One provider, three products a customer can hold in any combination; one operation needs two of them.",
+    "min_host": "2.41.0"
+  },
+  "runtime": {
+    "binding": "connector",
+    "request_timeout_ms": 20000
+  },
+  "connector": {
+    "base_url": "https://api.suite.example",
+    "auth": [
+      {
+        "kind": "api_token",
+        "header": "Authorization",
+        "scheme": "Bearer",
+        "credential": "suite_api_token"
+      }
+    ],
+    "operations": [
+      {
+        "id": "account.entitlements",
+        "label": "Account entitlements",
+        "description": "Read which products the account holds.",
+        "method": "GET",
+        "path": "/v1/account/entitlements",
+        "consequence": "observe",
+        "inputs": {}
+      },
+      {
+        "id": "record.get",
+        "label": "Get a record",
+        "description": "Read one record. Needs the records product.",
+        "method": "GET",
+        "path": "/v1/records/{record}",
+        "consequence": "observe",
+        "inputs": {
+          "record": {
+            "type": "string",
+            "description": "Record identifier"
+          }
+        },
+        "requires": {
+          "features": [
+            "records"
+          ]
+        }
+      },
+      {
+        "id": "plan.get",
+        "label": "Get a plan",
+        "description": "Read one plan. Needs the planning product.",
+        "method": "GET",
+        "path": "/v1/plans/{plan}",
+        "consequence": "observe",
+        "inputs": {
+          "plan": {
+            "type": "string",
+            "description": "Plan identifier"
+          }
+        },
+        "requires": {
+          "features": [
+            "planning"
+          ]
+        }
+      },
+      {
+        "id": "trend.get",
+        "label": "Get a trend",
+        "description": "Read one metric's trend. Needs the analytics product.",
+        "method": "GET",
+        "path": "/v1/trends/{metric}",
+        "consequence": "observe",
+        "inputs": {
+          "metric": {
+            "type": "string",
+            "description": "Metric name"
+          }
+        },
+        "requires": {
+          "features": [
+            "analytics"
+          ]
+        }
+      },
+      {
+        "id": "plan.forecast",
+        "label": "Forecast a plan",
+        "description": "Project a plan forward from its trends. Needs both the planning and the analytics product.",
+        "method": "GET",
+        "path": "/v1/plans/{plan}/forecast",
+        "consequence": "observe",
+        "inputs": {
+          "plan": {
+            "type": "string",
+            "description": "Plan identifier"
+          }
+        },
+        "requires": {
+          "features": [
+            "planning",
+            "analytics"
+          ]
+        }
+      }
+    ]
+  },
+  "entitlements": {
+    "probe": "account.entitlements",
+    "features": {
+      "keys": [
+        "records",
+        "planning",
+        "analytics"
+      ],
+      "path": "$.products[*]"
+    }
+  }
+}

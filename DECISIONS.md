@@ -1,5 +1,32 @@
 # Decisions
 
+## 2026-10-19 - A provider builds its pack alone, and decides every consequence itself
+
+Decision: the provider developer kit is four commands over the existing
+pack code, with no second implementation of any of it. `flyto pack init`
+scaffolds from a blank template or through the existing OpenAPI draft
+import. `flyto pack consequence` records the author's decisions.
+`flyto pack test` runs recorded calls through `install_pack`, the module
+registry, the connector runtime and the gate against a loopback fake built
+only from the fixtures, then runs `pack conform`. `flyto pack doctor`
+explains refusals from one table, `core.pack.doctor.DIAGNOSES`. A test reads
+the pack sources, so a refusal code without a row, or a row nothing raises,
+fails CI.
+
+No step guesses a consequence. The scaffold leaves each one unset, the HTTP
+method is never read as the decision, and `CONSEQUENCE_MISSING` names every
+undecided operation at once.
+
+Rejected:
+
+- Inferring `observe` from GET. A GET can start a scan.
+- Inventing responses for an OpenAPI scaffold. The test then fails with
+  `UNRECORDED_REQUEST` until the provider's own answers are recorded.
+- A test mode inside the runtime. The fake is an ordinary loopback server
+  reached through the SSRF guard's operator opt-in, set for the run and
+  restored after.
+- A doctor table hand-kept beside the code with no check.
+
 ## 2026-10-19 - The connector pre-check reads the provider, and the provider stays the authority
 
 Decision: a connector pack's features and meters are read from the

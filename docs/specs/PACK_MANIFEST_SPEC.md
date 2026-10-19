@@ -206,7 +206,9 @@ per provider or per operation.
     `result_scope` name a data-scope dimension. The pre-check below enforces
     all four.
 - **Refusals** are typed, and their `operation` attribute names the
-  operation: `CONSEQUENCE_MISSING`, `CONSEQUENCE_UNKNOWN`,
+  operation. `CONSEQUENCE_MISSING` names every undecided operation at once,
+  in file order, in its `operations` attribute and its message. The codes are
+  `CONSEQUENCE_MISSING`, `CONSEQUENCE_UNKNOWN`,
   `PATH_PARAM_UNDECLARED`, `INLINE_SECRET` (a value-bearing auth key, a
   credential that is not a name, a secret-looking default, userinfo in a URL),
   `UNKNOWN_AUTH_KIND`, `INVALID_JSONPATH`, `INVALID_PAGINATION`,
@@ -625,6 +627,10 @@ probe is unreadable with a credential present
 ## CLI
 
 ```
+flyto pack init <dir> [--openapi FILE] [--pack-id ID] [--namespace NS] [--probe OPERATION]
+flyto pack consequence <dir> OPERATION=LEVEL ...
+flyto pack doctor <dir> [--json]
+flyto pack test <dir> [--json]
 flyto pack manifest <entry-point|module:callable> [--pack-id ID] [--version V] [-o FILE]
 flyto pack digest <dir>
 flyto pack keygen --private FILE --public FILE
@@ -643,6 +649,47 @@ flyto bundle verify <dir|zip> --pack ZIP ... [trust options]
 Trust options are `--trusted-key`, `--allow-unsigned`, `--revocations` and
 `--revocation-key`. Every refusal prints `error [CODE]: …` and exits 1.
 
+## Developing a pack offline: `flyto.pack-fixtures.v1`
+
+`flyto pack test` (`core.pack.recorded`) reads `fixtures/exchanges.json`:
+
+```json
+{
+  "schema": "flyto.pack-fixtures.v1",
+  "customers": {"example_customer": {"credential": "fixture-token-not-real", "offered": ["item.get"]}},
+  "exchanges": [{"customer": "example_customer",
+                 "request": {"method": "GET", "path": "/v1/items/item-1", "query": {}},
+                 "response": {"status": 200, "body": {"id": "item-1"}, "headers": {}}}],
+  "calls": [{"operation": "item.get", "customer": "example_customer", "input": {"item": "item-1"},
+             "grants": {"item": ["item-1"]}, "expect": {"ok": true}}]
+}
+```
+
+- `customers` holds a **test** value for the pack's first `auth` credential,
+  and optionally the operation ids that customer must be `offered`. A pack
+  without auth has exactly one customer.
+- An exchange's `request.path` is relative to `connector.base_url`. Its
+  `query` (text values) and `body` match when given, and an exchange without
+  `customer` answers any customer. A response header value may use
+  `{base_url}` for a Link-header page.
+- A call's `grants` default to `"*"` for every declared scope dimension, and
+  `expect` is `{"ok": true}` or `{"error_code": CODE}`. `secrets` replaces the
+  customer's credential for that one call.
+- The fake provider identifies the customer by the header the runtime itself
+  encodes for that credential. An `oauth2_client_credentials` pack gets a test
+  token from the fake's token endpoint. An unknown credential is answered 401.
+
+The report (`flyto.pack-test-report.v1`) has one entry per operation, with
+`calls`, `verdict`, `checks` and typed `failures`: `UNEXPECTED_RESULT`,
+`CALL_RAISED`, `UNRECORDED_REQUEST`, `UNKNOWN_CREDENTIAL`,
+`SENSITIVE_PATH_UNMATCHED`, `DATA_PATH_UNMATCHED`, `RESULT_SCOPE_UNMATCHED`,
+`PROBE_SHAPE_INVALID` and `OPERATION_UNTESTED`. It also has `probe` (each
+customer's answer read with `read_answer`), `customers` (each listing from
+`effective_module_ids`, `EFFECTIVE_OPERATIONS_MISMATCH` when it differs) and
+`conformance`. The fixture file is refused with `FIXTURES_MISSING`,
+`FIXTURES_INVALID` or `NOT_A_CONNECTOR_PACK`. `core.pack.doctor.DIAGNOSES`
+gives the cause and fix of every code this spec names.
+
 ## Example
 
 `examples/packs/node-greeter/` is a Node.js pack with a 120-line,
@@ -657,6 +704,10 @@ declares a `standalone` section, so `flyto pack build` turns it into a
 portable zip; `tests/core/pack/test_standalone_server.py` runs that zip's
 generated `serve` entry point as a subprocess and drives it over stdio as an
 MCP client. `examples/bundles/rating-review/` is a bundle that pins it.
+
+`examples/packs/product-combinations/` is one provider with three products
+(`records`, `planning`, `analytics`) and an operation that needs two; its
+fixtures declare one customer per combination and what each is offered.
 
 ## Relation to `flyto.plugin.v1`
 

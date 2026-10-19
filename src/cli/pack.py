@@ -2,6 +2,10 @@
 Pack CLI Commands — the language-neutral ``flyto.pack.v1`` contract.
 
 Usage:
+    flyto pack init <dir> [--openapi FILE] [--pack-id ID] [--namespace NS] [--probe OPERATION]
+    flyto pack consequence <pack-dir> OPERATION=LEVEL [OPERATION=LEVEL ...]
+    flyto pack doctor <pack-dir> [--json]
+    flyto pack test <pack-dir> [--json]
     flyto pack manifest <entry-point|module:callable> [--pack-id ID] [--version V] [-o FILE]
     flyto pack digest <pack-dir>
     flyto pack keygen --private FILE --public FILE
@@ -30,6 +34,32 @@ def add_pack_parser(subparsers) -> None:
         description="Export, sign and verify flyto.pack.v1 module pack manifests.",
     )
     sub = pack_parser.add_subparsers(dest="pack_action", help="Pack actions")
+
+    init_p = sub.add_parser(
+        "init", help="Scaffold a connector pack: manifest, recorded fixtures and a test (every consequence unset)"
+    )
+    init_p.add_argument("pack_dir", help="New or empty directory to write the pack into")
+    init_p.add_argument("--openapi", help="Draft the operations from this OpenAPI 3 document (JSON or YAML)")
+    init_p.add_argument("--pack-id", help="Pack id (default: com.example.<directory name>)")
+    init_p.add_argument("--namespace", help="Module namespace (default: the last part of the pack id)")
+    init_p.add_argument("--probe", help="The operation that reads what the account holds (entitlements.probe)")
+
+    consequence_p = sub.add_parser(
+        "consequence", help="Record your decision of what each operation does to the world"
+    )
+    consequence_p.add_argument("pack_dir")
+    consequence_p.add_argument("decisions", nargs="+", metavar="OPERATION=LEVEL",
+                               help="observe, reversible, external_write, real_world or irreversible")
+
+    doctor_p = sub.add_parser("doctor", help="Explain every validation refusal: its cause and its fix")
+    doctor_p.add_argument("pack_dir")
+    doctor_p.add_argument("--json", action="store_true", help="Print the diagnoses as JSON")
+
+    test_p = sub.add_parser(
+        "test", help="Run each operation against the recorded fixtures through the real runtime, then conform"
+    )
+    test_p.add_argument("pack_dir")
+    test_p.add_argument("--json", action="store_true", help="Print the report as JSON")
 
     manifest_p = sub.add_parser("manifest", help="Print the manifest a Python pack's decorators produce")
     manifest_p.add_argument("target", help="flyto.modules entry point name, or package.module:register_all")
@@ -316,12 +346,53 @@ def _import_openapi(args) -> int:
     return 0
 
 
+def _init(args) -> int:
+    from core.pack.scaffold import init_pack
+
+    report = init_pack(args.pack_dir, openapi=args.openapi, pack_id=args.pack_id, namespace=args.namespace,
+                       probe=args.probe)
+    print(json.dumps(report, indent=2))
+    print(f"decide each consequence: flyto pack consequence {args.pack_dir} "
+          + " ".join(f"{op}=LEVEL" for op in report["undecided"]), file=sys.stderr)
+    return 0
+
+
+def _consequence(args) -> int:
+    from core.pack.scaffold import decide_consequences, parse_decisions
+
+    report = decide_consequences(args.pack_dir, parse_decisions(args.decisions))
+    print(json.dumps(report, indent=2))
+    if report["undecided"]:
+        print(f"still undecided: {', '.join(report['undecided'])}", file=sys.stderr)
+    return 0
+
+
+def _doctor(args) -> int:
+    from core.pack.doctor import diagnose, render
+
+    report = diagnose(args.pack_dir)
+    print(json.dumps(report, indent=2) if args.json else render(report))
+    return 0 if report["valid"] else 1
+
+
+def _test(args) -> int:
+    from core.pack.recorded import render, run_pack_tests
+
+    report = run_pack_tests(args.pack_dir)
+    print(json.dumps(report, indent=2, sort_keys=True) if args.json else render(report))
+    return 0 if report["passed"] else 1
+
+
 def run_pack_command(args) -> int:
     """Execute a pack subcommand."""
     from core.pack.manifest import PackManifestError
 
     action = getattr(args, "pack_action", None)
     handlers = {
+        "init": _init,
+        "consequence": _consequence,
+        "doctor": _doctor,
+        "test": _test,
         "manifest": _manifest,
         "digest": _digest,
         "keygen": _keygen,
@@ -334,7 +405,8 @@ def run_pack_command(args) -> int:
         "health": _health,
     }
     if action not in handlers:
-        print("Usage: flyto pack <manifest|digest|keygen|sign|verify|conform|import-openapi|build|run|health>")
+        print("Usage: flyto pack <init|consequence|doctor|test|manifest|digest|keygen|sign|verify|conform|"
+              "import-openapi|build|run|health>")
         return 1
     try:
         return handlers[action](args)

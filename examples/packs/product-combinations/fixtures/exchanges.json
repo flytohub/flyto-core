@@ -1,0 +1,307 @@
+{
+  "schema": "flyto.pack-fixtures.v1",
+  "customers": {
+    "none": {
+      "credential": "fixture-token-none",
+      "offered": [
+        "account.entitlements"
+      ]
+    },
+    "records": {
+      "credential": "fixture-token-records",
+      "offered": [
+        "account.entitlements",
+        "record.get"
+      ]
+    },
+    "planning": {
+      "credential": "fixture-token-planning",
+      "offered": [
+        "account.entitlements",
+        "plan.get"
+      ]
+    },
+    "analytics": {
+      "credential": "fixture-token-analytics",
+      "offered": [
+        "account.entitlements",
+        "trend.get"
+      ]
+    },
+    "records_planning": {
+      "credential": "fixture-token-records-planning",
+      "offered": [
+        "account.entitlements",
+        "plan.get",
+        "record.get"
+      ]
+    },
+    "records_analytics": {
+      "credential": "fixture-token-records-analytics",
+      "offered": [
+        "account.entitlements",
+        "record.get",
+        "trend.get"
+      ]
+    },
+    "planning_analytics": {
+      "credential": "fixture-token-planning-analytics",
+      "offered": [
+        "account.entitlements",
+        "plan.forecast",
+        "plan.get",
+        "trend.get"
+      ]
+    },
+    "records_planning_analytics": {
+      "credential": "fixture-token-records-planning-analytics",
+      "offered": [
+        "account.entitlements",
+        "plan.forecast",
+        "plan.get",
+        "record.get",
+        "trend.get"
+      ]
+    }
+  },
+  "exchanges": [
+    {
+      "customer": "none",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-none",
+          "products": []
+        }
+      }
+    },
+    {
+      "customer": "records",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-records",
+          "products": [
+            "records"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "planning",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-planning",
+          "products": [
+            "planning"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "analytics",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-analytics",
+          "products": [
+            "analytics"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "records_planning",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-records_planning",
+          "products": [
+            "records",
+            "planning"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "records_analytics",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-records_analytics",
+          "products": [
+            "records",
+            "analytics"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "planning_analytics",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-planning_analytics",
+          "products": [
+            "planning",
+            "analytics"
+          ]
+        }
+      }
+    },
+    {
+      "customer": "records_planning_analytics",
+      "request": {
+        "method": "GET",
+        "path": "/v1/account/entitlements"
+      },
+      "response": {
+        "body": {
+          "account": "acct-records_planning_analytics",
+          "products": [
+            "records",
+            "planning",
+            "analytics"
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/records/r-1"
+      },
+      "response": {
+        "body": {
+          "id": "r-1",
+          "title": "Example record"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/plans/p-1"
+      },
+      "response": {
+        "body": {
+          "id": "p-1",
+          "title": "Example plan"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/trends/throughput"
+      },
+      "response": {
+        "body": {
+          "metric": "throughput",
+          "points": [
+            3,
+            5,
+            8
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/plans/p-1/forecast"
+      },
+      "response": {
+        "body": {
+          "plan": "p-1",
+          "forecast": [
+            9,
+            11
+          ]
+        }
+      }
+    }
+  ],
+  "calls": [
+    {
+      "operation": "record.get",
+      "customer": "records",
+      "input": {
+        "record": "r-1"
+      }
+    },
+    {
+      "operation": "plan.get",
+      "customer": "planning",
+      "input": {
+        "plan": "p-1"
+      }
+    },
+    {
+      "operation": "trend.get",
+      "customer": "analytics",
+      "input": {
+        "metric": "throughput"
+      }
+    },
+    {
+      "operation": "plan.forecast",
+      "customer": "planning_analytics",
+      "input": {
+        "plan": "p-1"
+      }
+    },
+    {
+      "operation": "plan.forecast",
+      "customer": "planning",
+      "input": {
+        "plan": "p-1"
+      },
+      "expect": {
+        "error_code": "FEATURE_NOT_ENTITLED"
+      }
+    },
+    {
+      "operation": "plan.forecast",
+      "customer": "analytics",
+      "input": {
+        "plan": "p-1"
+      },
+      "expect": {
+        "error_code": "FEATURE_NOT_ENTITLED"
+      }
+    },
+    {
+      "operation": "record.get",
+      "customer": "planning_analytics",
+      "input": {
+        "record": "r-1"
+      },
+      "expect": {
+        "error_code": "FEATURE_NOT_ENTITLED"
+      }
+    }
+  ]
+}
