@@ -568,7 +568,7 @@ class WorkflowEngine:
         if self._loop_stack and not self._router.has_outgoing_edges(step_id):
             return self._loop_stack[-1]
 
-        return current_idx + 1
+        return self._router.next_in_order(step_id, current_idx, len(steps))
 
     async def _execute_step(
         self,

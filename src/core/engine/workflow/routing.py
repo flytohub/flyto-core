@@ -9,7 +9,7 @@ Edge-based routing and step connection handling for Workflow Spec v1.2.
 import logging
 from typing import Any, Dict, List, Set
 
-from ...canvas_handles import handle_events
+from ...canvas_handles import GENERIC_HANDLES, OUTPUT, handle_events, ordinary_port, resolve_port
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,13 @@ class WorkflowRouter:
         # Set of step IDs that are resource sources (sub-nodes like ai.tool, ai.model)
         self._resource_source_ids: Set[str] = set()
 
+        # Steps some other step reaches through a routed exit (a branch's
+        # true/false, a loop's body or done, an error exit): entered only
+        # through that exit, never by stepping on in list order.
+        self._routed_targets: Set[str] = set()
+        # source_id -> the steps it names as its ordinary way on
+        self._successors: Dict[str, Set[str]] = {}
+
     def build_step_index(self, steps: List[Dict[str, Any]]) -> None:
         """Build index mapping step IDs to their positions."""
         self._step_index = {}
@@ -82,6 +89,8 @@ class WorkflowRouter:
         self._step_connections = {}
         self._resource_edges = {}
         self._resource_source_ids = set()
+        self._routed_targets = set()
+        self._successors = {}
 
         step_map = self._step_map
 
@@ -126,6 +135,10 @@ class WorkflowRouter:
             if target not in self._incoming_edges:
                 self._incoming_edges[target] = []
             self._incoming_edges[target].append(edge)
+            if self._is_routed_exit(source_handle, step_map.get(source)):
+                self._routed_targets.add(target)
+            else:
+                self._successors.setdefault(source, set()).add(target)
 
             # Build event route: "source:handle" -> target
             route_key = f"{source}:{source_handle}"
@@ -154,6 +167,10 @@ class WorkflowRouter:
                         targets = [targets]
                     if isinstance(targets, list) and targets:
                         self._step_connections[step_id][port_name] = targets
+                        if self._is_routed_exit(port_name, step):
+                            self._routed_targets.update(targets)
+                        else:
+                            self._successors.setdefault(step_id, set()).update(targets)
                         # Also add to _event_routes for backward compat
                         route_key = f"{step_id}:{port_name}"
                         if route_key not in self._event_routes:
@@ -167,6 +184,33 @@ class WorkflowRouter:
                                 self._event_routes[normalized_key] = targets[0]
 
         self._log_build_summary(edges)
+
+    def _is_routed_exit(self, handle: str, step: Dict[str, Any] = None) -> bool:
+        """Whether leaving ``step`` by ``handle`` is a routed exit, not its ordinary way on."""
+        if not handle or handle in GENERIC_HANDLES[OUTPUT] or handle in ('success', 'default'):
+            return False
+        ports = self._declared_output_ports(step)
+        port = resolve_port(ports, handle, OUTPUT)
+        if port is None:
+            return True
+        return port is not ordinary_port(ports, OUTPUT)
+
+    def next_in_order(self, step_id: str, current_idx: int, steps_count: int) -> int:
+        """The index the run steps on to when ``step_id`` names no route of its own.
+
+        The next step in list order, skipping every step another step reaches
+        only through a routed exit, unless this step names it as its ordinary
+        successor.
+        """
+        own = self._successors.get(step_id, set())
+        order = sorted(self._step_index, key=self._step_index.get)
+        index = current_idx + 1
+        while index < steps_count and index < len(order):
+            candidate = order[index]
+            if candidate not in self._routed_targets or candidate in own:
+                return index
+            index += 1
+        return index
 
     def _log_build_summary(self, edges: List[Dict[str, Any]]) -> None:
         """Log summary of built indices."""
@@ -349,7 +393,7 @@ class WorkflowRouter:
         if next_step_id and next_step_id in self._step_index:
             return self._step_index[next_step_id]
 
-        return current_idx + 1
+        return self.next_in_order(step_id, current_idx, len(self._step_index))
 
     def get_step_index(self, step_id: str) -> int:
         """Get index for a step ID, or -1 if not found."""

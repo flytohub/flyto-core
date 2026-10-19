@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,015 Python files**, **246,302 lines**, and **6,795 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,346 lines**, and **6,797 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -182,7 +182,7 @@ Inventory: **1,015 Python files**, **246,302 lines**, and **6,795 class/function
 | [`src/core/engine/workflow/debug.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/debug.py#L1) | 180 | 18 | `logging, typing` | Workflow Debug Control |
 | [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 889 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, redaction` | Workflow Engine |
 | [`src/core/engine/workflow/output.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/output.py#L1) | 122 | 4 | `datetime, typing, variable_resolver` | Workflow Output Collection |
-| [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 537 | 20 | `canvas_handles, flow_control, logging, modules, typing` | Workflow Routing |
+| [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 581 | 22 | `canvas_handles, flow_control, logging, modules, typing` | Workflow Routing |
 | [`src/core/enterprise/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/__init__.py#L1) | 160 | 0 | `ai_native, idp, mining, orchestrator, queue, rpa, state_machine` | Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities |
 | [`src/core/enterprise/ai_native/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/ai_native/__init__.py#L1) | 574 | 36 | `dataclasses, datetime, enum, typing` | AI-Native Features - First-Class AI Integration |
 | [`src/core/enterprise/ai_native/impl.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/ai_native/impl.py#L1) | 919 | 34 | `anthropic, asyncio, datetime, json, logging, openai, os, re, typing, uuid, yaml` | AI Native Implementation |
