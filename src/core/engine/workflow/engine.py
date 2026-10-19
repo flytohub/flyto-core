@@ -22,7 +22,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ...constants import WorkflowStatus
-from ..exceptions import ExitEdgeConflictError, StepExecutionError, WorkflowExecutionError, is_policy_refusal
+from ..exceptions import (
+    ExitEdgeConflictError,
+    StepExecutionError,
+    WorkflowExecutionError,
+    is_policy_refusal,
+)
 from ..flow_control import (
     is_flow_control_module,
     is_iteration_module,

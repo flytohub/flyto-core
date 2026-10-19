@@ -7,8 +7,7 @@ All validation errors use consistent error codes.
 Cloud/Pro only need to display, not define rules.
 """
 
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 
 class ErrorCode:

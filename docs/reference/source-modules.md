@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,015 Python files**, **246,637 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,642 lines**, and **6,812 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -180,7 +180,7 @@ Inventory: **1,015 Python files**, **246,637 lines**, and **6,812 class/function
 | [`src/core/engine/versioning/manager.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/versioning/manager.py#L1) | 336 | 15 | `__future__, core, dataclasses, datetime, typing, uuid` | Workflow Versioning Manager. |
 | [`src/core/engine/workflow/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/__init__.py#L1) | 19 | 0 | `debug, engine, output, routing` | Workflow Engine Module |
 | [`src/core/engine/workflow/debug.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/debug.py#L1) | 180 | 18 | `logging, typing` | Workflow Debug Control |
-| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 907 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, redaction` | Workflow Engine |
+| [`src/core/engine/workflow/engine.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/engine.py#L1) | 912 | 36 | `asyncio, constants, datetime, debug, evolution, exceptions, flow_control, hooks, logging, modules, output, redaction` | Workflow Engine |
 | [`src/core/engine/workflow/output.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/output.py#L1) | 122 | 4 | `datetime, typing, variable_resolver` | Workflow Output Collection |
 | [`src/core/engine/workflow/routing.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/engine/workflow/routing.py#L1) | 699 | 29 | `canvas_handles, flow_control, logging, modules, typing` | Workflow Routing |
 | [`src/core/enterprise/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/enterprise/__init__.py#L1) | 160 | 0 | `ai_native, idp, mining, orchestrator, queue, rpa, state_machine` | Enterprise Features - Flyto2 Enterprise RPA & AI Capabilities |
@@ -449,7 +449,7 @@ Inventory: **1,015 Python files**, **246,637 lines**, and **6,812 class/function
 | [`src/core/modules/atomic/flow/subflow_ref.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/subflow_ref.py#L1) | 256 | 10 | `base, core, re, registry, schema, types, typing, uuid` | Subflow Module - Reference and execute external workflows |
 | [`src/core/modules/atomic/flow/switch.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/switch.py#L1) | 290 | 8 | `base, core, registry, schema, types, typing, uuid` | Switch Module - Multi-way branching for workflows |
 | [`src/core/modules/atomic/flow/throttle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/throttle.py#L1) | 279 | 5 | `base, registry, schema, time, types, typing` | Throttle Module - Throttle execution rate |
-| [`src/core/modules/atomic/flow/trigger.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L1) | 356 | 4 | `base, datetime, registry, schema, types, typing` | Trigger Module - Workflow entry point |
+| [`src/core/modules/atomic/flow/trigger.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L1) | 357 | 4 | `base, datetime, registry, schema, types, typing` | Trigger Module - Workflow entry point |
 | [`src/core/modules/atomic/format/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/__init__.py#L1) | 33 | 0 | `currency, duration, filesize, number, percentage` | Atomic Format Operations Number, currency, filesize, duration, and percentage formatting |
 | [`src/core/modules/atomic/format/currency.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/currency.py#L1) | 158 | 1 | `errors, registry, typing` | Format Currency Module Format numbers as currency |
 | [`src/core/modules/atomic/format/duration.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/duration.py#L1) | 176 | 6 | `errors, registry, typing` | Format Duration Module Format seconds as human-readable duration |
@@ -1011,7 +1011,7 @@ Inventory: **1,015 Python files**, **246,637 lines**, and **6,812 class/function
 | [`src/core/utils.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/utils.py#L1) | 1390 | 48 | `aiohttp, asyncio, constants, contextlib, contextvars, fnmatch, functools, httpx, ipaddress, logging, os, re` | Core Utilities - Shared utility functions |
 | [`src/core/validation/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/__init__.py#L1) | 61 | 0 | `connection, errors, index, workflow` | Flyto2 Core Validation API |
 | [`src/core/validation/connection.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/connection.py#L1) | 604 | 14 | `canvas_handles, dataclasses, errors, index, modules, typing` | Connection Validation API |
-| [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 171 | 2 | `dataclasses, typing` | Unified Error Codes for Validation |
+| [`src/core/validation/errors.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/errors.py#L1) | 170 | 2 | `typing` | Unified Error Codes for Validation |
 | [`src/core/validation/index.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/index.py#L1) | 175 | 8 | `modules, threading, typing` | Connection Index |
 | [`src/core/validation/workflow.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/validation/workflow.py#L1) | 570 | 13 | `canvas_handles, connection, dataclasses, errors, index, modules, typing` | Workflow Validation API |
 | [`src/core/verification/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/verification/__init__.py#L1) | 1 | 0 | `none` | Versioned adapter contracts for the existing deterministic verification runner. |

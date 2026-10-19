@@ -8,13 +8,14 @@ Workflow Spec v1.1:
 - Types: manual, webhook, schedule, event, mcp, polling
 - No input ports (entry point)
 """
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ...types import NodeType, EdgeType, DataType
+from ...types import EdgeType, NodeType
 
 
 @register_module(
