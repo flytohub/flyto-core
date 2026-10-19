@@ -2,7 +2,7 @@
 
 # Source Module Inventory
 
-Inventory: **1,015 Python files**, **246,378 lines**, and **6,797 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
+Inventory: **1,015 Python files**, **246,382 lines**, and **6,797 class/function/method declarations**. Test files are covered by the test suite rather than treated as public implementation.
 
 | Source module | Lines | Declarations | Import roots | Responsibility |
 |---|---:|---:|---|---|
@@ -449,7 +449,7 @@ Inventory: **1,015 Python files**, **246,378 lines**, and **6,797 class/function
 | [`src/core/modules/atomic/flow/subflow_ref.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/subflow_ref.py#L1) | 256 | 10 | `base, core, re, registry, schema, types, typing, uuid` | Subflow Module - Reference and execute external workflows |
 | [`src/core/modules/atomic/flow/switch.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/switch.py#L1) | 290 | 8 | `base, core, registry, schema, types, typing, uuid` | Switch Module - Multi-way branching for workflows |
 | [`src/core/modules/atomic/flow/throttle.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/throttle.py#L1) | 279 | 5 | `base, registry, schema, time, types, typing` | Throttle Module - Throttle execution rate |
-| [`src/core/modules/atomic/flow/trigger.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L1) | 352 | 4 | `base, datetime, registry, schema, types, typing` | Trigger Module - Workflow entry point |
+| [`src/core/modules/atomic/flow/trigger.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L1) | 356 | 4 | `base, datetime, registry, schema, types, typing` | Trigger Module - Workflow entry point |
 | [`src/core/modules/atomic/format/__init__.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/__init__.py#L1) | 33 | 0 | `currency, duration, filesize, number, percentage` | Atomic Format Operations Number, currency, filesize, duration, and percentage formatting |
 | [`src/core/modules/atomic/format/currency.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/currency.py#L1) | 158 | 1 | `errors, registry, typing` | Format Currency Module Format numbers as currency |
 | [`src/core/modules/atomic/format/duration.py:1`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/format/duration.py#L1) | 176 | 6 | `errors, registry, typing` | Format Duration Module Format seconds as human-readable duration |

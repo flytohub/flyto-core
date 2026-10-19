@@ -3,7 +3,9 @@
 A host refuses to save a parameter the module contract does not declare. The
 trigger editor writes the schedule's ``timezone``, a webhook's
 ``webhook_provider`` and ``require_signature``, and the ``triggers`` list; each
-is declared, holds no secret, and is never drawn as a generic field.
+is declared, holds no secret, is never drawn as a generic field, and gets
+no default: a new trigger node's params stay what they were, so an empty
+``triggers`` list never turns a single trigger into a list of none.
 """
 
 import pytest
@@ -20,4 +22,6 @@ def test_the_trigger_declares_each_host_setting_hidden(key):
 
     assert key in schema
     assert schema[key].get("visibility") == "hidden"
+    assert schema[key].get("skipDefault") is True
+    assert "default" not in schema[key]
     assert not schema[key].get("secret") and schema[key].get("format") != "password"
