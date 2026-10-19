@@ -5083,10 +5083,10 @@ Every class, function, nested function, and method in maintained runtime, CLI, s
 
 | Kind | Signature | Responsibility | Source |
 |---|---|---|---|
-| class | `class TriggerModule(BaseModule)` | Trigger Module (Spec v1.1) | [`src/core/modules/atomic/flow/trigger.py:220`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L220) |
-| method | `def TriggerModule.validate_params(self) -> None` | Implements `TriggerModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/flow/trigger.py:235`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L235) |
-| method | `async def TriggerModule.execute(self) -> Dict&#91;str, Any&#93;` | Process trigger and emit triggered event. | [`src/core/modules/atomic/flow/trigger.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L267) |
-| method | `def TriggerModule._build_trigger_data(self, trigger_payload: Dict, triggered_at: str) -> Dict&#91;str, Any&#93;` | Implements `TriggerModule._build_trigger_data`; linked source is authoritative. | [`src/core/modules/atomic/flow/trigger.py:299`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L299) |
+| class | `class TriggerModule(BaseModule)` | Trigger Module (Spec v1.1) | [`src/core/modules/atomic/flow/trigger.py:252`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L252) |
+| method | `def TriggerModule.validate_params(self) -> None` | Implements `TriggerModule.validate_params`; linked source is authoritative. | [`src/core/modules/atomic/flow/trigger.py:267`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L267) |
+| method | `async def TriggerModule.execute(self) -> Dict&#91;str, Any&#93;` | Process trigger and emit triggered event. | [`src/core/modules/atomic/flow/trigger.py:299`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L299) |
+| method | `def TriggerModule._build_trigger_data(self, trigger_payload: Dict, triggered_at: str) -> Dict&#91;str, Any&#93;` | Implements `TriggerModule._build_trigger_data`; linked source is authoritative. | [`src/core/modules/atomic/flow/trigger.py:331`](https://github.com/flytohub/flyto-core/blob/main/src/core/modules/atomic/flow/trigger.py#L331) |
 
 ## `src/core/modules/atomic/format/currency.py`
 
