@@ -156,6 +156,10 @@ def _connect_outcome(
     module_id='browser.connect',
     version='1.0.0',
     category='browser',
+    # Opens the browser session later browser steps work on (the session
+    # contract save validation reads; see types/context.py).
+    requires_context=[],
+    provides_context=['browser', 'page'],
     tags=['browser', 'remote', 'cloud', 'browserless', 'anti-detection'],
     label='Connect Remote',
     label_key='modules.browser.connect.label',

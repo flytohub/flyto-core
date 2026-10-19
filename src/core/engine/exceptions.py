@@ -45,12 +45,38 @@ class ExitEdgeConflictError(WorkflowExecutionError):
 
 
 class StepExecutionError(Exception):
-    """Raised when a step execution fails"""
+    """Raised when a step execution fails.
 
-    def __init__(self, step_id: str, message: str, original_error: Exception = None):
+    ``error_code`` is the typed reason a module gave for failing (the
+    ``error_code`` of its result), carried as data so a host can say why on
+    the step without reading the English message. None when the module gave
+    none.
+    """
+
+    def __init__(self, step_id: str, message: str, original_error: Exception = None, error_code: str = None):
         self.step_id = step_id
         self.original_error = original_error
+        self.error_code = error_code
         super().__init__(message)
+
+
+def error_code_from_exception(error) -> "str | None":
+    """The typed reason a raise carries, found at any wrapping depth, or None.
+
+    Walks the same deliberate links as ``is_policy_refusal`` and
+    ``outcome.envelope_from_exception``: ``original_error`` and ``__cause__``,
+    never ``__context__``. Only an ``error_code`` attribute counts; nothing is
+    read out of an exception's type or message, so a raise that carries no
+    code yields None and a host words it generically.
+    """
+    seen = set()
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        code = getattr(error, 'error_code', None)
+        if isinstance(code, str) and code:
+            return code
+        error = getattr(error, 'original_error', None) or getattr(error, '__cause__', None)
+    return None
 
 
 class FlowControlError(Exception):

@@ -375,8 +375,13 @@ class OutcomeError(Exception):
         claim_by: "ClaimBy" = None,
         effects: Optional[List[Dict[str, Any]]] = None,
         postcondition: Optional[str] = None,
+        code: Optional[str] = None,
     ) -> None:
         super().__init__(message)
+        #: The typed reason beside the rung (e.g. ``TIMEOUT``), read by hosts
+        #: through ``exceptions.error_code_from_exception``. None when the
+        #: raiser named none.
+        self.error_code = code
         rung = Outcome(rung)
         if rung in LADDER:
             raise ValueError(

@@ -8,7 +8,7 @@ Used by flyto-cloud before save/execute.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from ..canvas_handles import exit_edge_conflicts
 from .connection import validate_connection
@@ -206,7 +206,133 @@ def validate_node_params(
                         }
                     ))
 
+    results.extend(_exclusive_param_errors(node_id, module_id, properties, params))
     return results
+
+
+def _is_set(value: Any) -> bool:
+    """A param counts as set when it holds something; None and '' are unset."""
+    return value is not None and value != ''
+
+
+def _exclusive_param_errors(
+    node_id: str,
+    module_id: str,
+    properties: Any,
+    params: Dict[str, Any],
+) -> List[WorkflowError]:
+    """Each declared-exclusive param set beside a field that rules it out.
+
+    A field's ``exclusive_with`` names the fields that, once set, make it
+    unused (``browser.wait``: a selector rules out ``duration_ms``). The error
+    sits on the ruled-out field, the one a panel greys out.
+    """
+    if not isinstance(properties, dict):
+        return []
+    found: List[WorkflowError] = []
+    for param_key, param_def in properties.items():
+        if not isinstance(param_def, dict) or not _is_set(params.get(param_key)):
+            continue
+        for other in param_def.get('exclusive_with') or []:
+            if _is_set(params.get(other)):
+                found.append(WorkflowError(
+                    code=ErrorCode.PARAMS_EXCLUSIVE,
+                    message=f'{param_key} is not used while {other} is set',
+                    path=f'nodes[{node_id}].params.{param_key}',
+                    meta={
+                        'node_id': node_id,
+                        'module_id': module_id,
+                        'param': param_key,
+                        'ruled_out_by': other,
+                    },
+                ))
+                break
+    return found
+
+
+def _context_values(contexts: Any) -> List[str]:
+    """Context names as plain strings (metadata may hold ContextType members)."""
+    return [str(getattr(c, 'value', c)) for c in (contexts or [])]
+
+
+def _upstream(node_ids: List[str], edges: List[Dict[str, Any]]) -> Dict[str, Set[str]]:
+    """Every node each node can be reached from.
+
+    With edges the document runs as a graph, so upstream is what the edges
+    say. Without any, the engine runs the steps in list order, so every
+    earlier step is upstream of a later one.
+    """
+    if not edges:
+        return {nid: set(node_ids[:index]) for index, nid in enumerate(node_ids)}
+    parents: Dict[str, Set[str]] = {nid: set() for nid in node_ids}
+    for edge in edges:
+        source, target = edge.get('source'), edge.get('target')
+        if source in parents and target in parents and source != target:
+            parents[target].add(source)
+    found: Dict[str, Set[str]] = {}
+    for nid in node_ids:
+        seen: Set[str] = set()
+        stack = list(parents[nid])
+        while stack:
+            current = stack.pop()
+            if current in seen:
+                continue
+            seen.add(current)
+            stack.extend(parents.get(current, ()))
+        found[nid] = seen - {nid}
+    return found
+
+
+def _session_context_errors(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+) -> List[WorkflowError]:
+    """Each step requiring a session context no upstream step provides.
+
+    Read from the contract (``requires_context`` / ``provides_context``), never
+    from a module name; only contexts with an establisher in
+    ``CONTEXT_ESTABLISHERS`` are sessions, so only those are enforced.
+    """
+    from ..modules.registry import ModuleRegistry
+    from ..modules.types.context import CONTEXT_ESTABLISHERS
+
+    def contract(module_id: str) -> Dict[str, Any]:
+        try:
+            return ModuleRegistry.get_metadata(module_id) or {}
+        except Exception:  # an unregistered module is reported elsewhere
+            return {}
+
+    node_ids = [n.get('id') for n in nodes if n.get('id')]
+    contracts = {n.get('id'): contract(n.get('module_id') or '') for n in nodes if n.get('id')}
+    upstream = _upstream(node_ids, edges)
+    found: List[WorkflowError] = []
+    for node in nodes:
+        node_id = node.get('id')
+        if not node_id:
+            continue
+        needed = [c for c in _context_values(contracts[node_id].get('requires_context')) if c in CONTEXT_ESTABLISHERS]
+        if not needed:
+            continue
+        provided: Set[str] = set()
+        for ancestor in upstream.get(node_id, ()):
+            provided.update(_context_values(contracts.get(ancestor, {}).get('provides_context')))
+        missing = [c for c in needed if c not in provided]
+        if not missing:
+            continue
+        context = missing[0]
+        found.append(WorkflowError(
+            code=ErrorCode.CONTEXT_NOT_ESTABLISHED,
+            message=f'{node_id} needs a {context} session opened before it',
+            path=f'nodes[{node_id}]',
+            meta={
+                'node_id': node_id,
+                'module_id': node.get('module_id') or '',
+                'context': context,
+                'missing': missing,
+                'establish_with': CONTEXT_ESTABLISHERS[context],
+            },
+        ))
+    return found
 
 
 def _duration_only_waits(nodes: List[Dict[str, Any]]) -> List[WorkflowError]:
@@ -263,6 +389,7 @@ def validate_workflow(
     nodes: List[Dict[str, Any]],
     edges: List[Dict[str, Any]],
     validate_params: bool = True,
+    context_edges: Optional[List[Dict[str, Any]]] = None,
 ) -> WorkflowResult:
     """
     Validate entire workflow.
@@ -282,6 +409,9 @@ def validate_workflow(
         edges: List of edge definitions
             [{'id': 'e1', 'source': 'n1', 'target': 'n2'}, ...]
         validate_params: Whether to validate params against schema
+        context_edges: The edges a session travels along, when a host
+            validates fewer control-flow edges than the document has (a loop
+            body reached by an iterate edge). Defaults to ``edges``.
 
     Returns:
         WorkflowResult with valid=True/False and error/warning lists
@@ -379,6 +509,9 @@ def validate_workflow(
                     errors.append(err)
 
     warnings.extend(_duration_only_waits(nodes))
+
+    # A step whose session no upstream step opens fails at run time; refuse it here.
+    errors.extend(_session_context_errors(nodes, edges if context_edges is None else context_edges))
 
     # Check for cycles (simple DFS)
     cycle_errors = _detect_cycles(node_ids, outgoing, node_map)

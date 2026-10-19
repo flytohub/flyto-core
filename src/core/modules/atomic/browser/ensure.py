@@ -100,6 +100,10 @@ def _reused_session_outcome(driver: Any):
     module_id='browser.ensure',
     version='1.0.0',
     category='browser',
+    # Opens the browser session later browser steps work on (the session
+    # contract save validation reads; see types/context.py).
+    requires_context=[],
+    provides_context=['browser', 'page'],
     tags=['browser', 'automation', 'setup', 'session', 'composable', 'ssrf_protected'],
     label='Ensure Browser',
     label_key='modules.browser.ensure.label',

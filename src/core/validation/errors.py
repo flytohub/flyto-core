@@ -40,6 +40,13 @@ class ErrorCode:
     UNKNOWN_PARAM = 'UNKNOWN_PARAM'
     # Warning only: a wait that sleeps instead of waiting on page state.
     DURATION_ONLY_WAIT = 'DURATION_ONLY_WAIT'
+    # Two params the schema declares exclusive (``exclusive_with``) are both set.
+    PARAMS_EXCLUSIVE = 'PARAMS_EXCLUSIVE'
+
+    # Session errors
+    # A step requires a session context (types.context.CONTEXT_ESTABLISHERS)
+    # that no step upstream of it provides.
+    CONTEXT_NOT_ESTABLISHED = 'CONTEXT_NOT_ESTABLISHED'
 
     # Module errors
     MODULE_NOT_FOUND = 'MODULE_NOT_FOUND'
@@ -118,6 +125,17 @@ ERROR_MESSAGES = {
     ErrorCode.DURATION_ONLY_WAIT: {
         'en': '{node_id} waits a fixed duration; wait on a selector state instead',
         'zh-TW': '{node_id} 固定等待一段時間；請改為等待元素狀態 (selector)',
+    },
+
+    ErrorCode.PARAMS_EXCLUSIVE: {
+        'en': '{param} is not used while {ruled_out_by} is set in {node_id}; clear one of them',
+        'zh-TW': '{node_id} 已設定 {ruled_out_by}，{param} 不會被使用；請清除其中一個',
+    },
+
+    # Session
+    ErrorCode.CONTEXT_NOT_ESTABLISHED: {
+        'en': '{node_id} needs a {context} session opened before it; add {establish_with} first',
+        'zh-TW': '{node_id} 之前需要先開啟 {context} 工作階段；請先加入 {establish_with}',
     },
 
     # Module

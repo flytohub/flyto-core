@@ -314,7 +314,10 @@ def _duration_outcome(*, requested_ms: float, elapsed_ms: float) -> Dict[str, An
 
     # Schema-driven params
     params_schema=compose(
-        presets.DURATION_MS(key='duration_ms', default=1000, label='Wait Duration (ms)'),
+        # A selector wait never sleeps: with one set, the duration is unused
+        # (execute() returns from the selector branch). Declared, so a panel
+        # greys it out and validation refuses both (PARAMS_EXCLUSIVE).
+        presets.DURATION_MS(key='duration_ms', default=1000, label='Wait Duration (ms)', exclusive_with=['selector']),
         presets.SELECTOR(required=False, placeholder='.element-to-wait-for'),
         field(
             'state',
@@ -426,6 +429,7 @@ class BrowserWaitModule(BaseModule):
                     str(error),
                     rung=Outcome.INDETERMINATE,
                     claim_by=ClaimBy.NONE,
+                    code='TIMEOUT',
                     effects=[{
                         'kind': 'element_wait_timed_out',
                         'selector': self.selector,

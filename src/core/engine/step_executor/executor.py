@@ -1139,6 +1139,9 @@ class StepExecutor:
                 raise StepExecutionError(
                     step_id,
                     f"Module returned failure [{code}]: {message}",
+                    # The code the module itself returned, as data. Not the
+                    # "UNKNOWN" the wrapper fills in when it returned none.
+                    error_code=result.get('error_code') or None,
                 )
             # Return legacy format for backward compatibility
             return items_to_legacy_context(node_result)
@@ -1149,6 +1152,7 @@ class StepExecutor:
             raise StepExecutionError(
                 step_id,
                 f"Module returned failure [{code}]: {message}",
+                error_code=code,
             )
         return result
 

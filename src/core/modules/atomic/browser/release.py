@@ -54,6 +54,8 @@ from ._session_outcome import browser_object, closed_claim, observe_disconnected
     module_id='browser.release',
     version='1.0.0',
     category='browser',
+    # Answers "no browser to release" when none is open, so it needs none.
+    requires_context=[],
     tags=['browser', 'automation', 'cleanup', 'session', 'composable', 'ssrf_protected'],
     label='Release Browser',
     label_key='modules.browser.release.label',

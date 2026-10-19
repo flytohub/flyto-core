@@ -36,6 +36,7 @@ from .ports import (
 )
 from .context import (
     CONTEXT_INCOMPATIBLE_PAIRS,
+    CONTEXT_ESTABLISHERS,
     DEFAULT_CONTEXT_PROVISIONS,
     DEFAULT_CONTEXT_REQUIREMENTS,
     get_context_error_message,
@@ -80,6 +81,7 @@ __all__ = [
     "get_default_ports",
     # Context
     "CONTEXT_INCOMPATIBLE_PAIRS",
+    "CONTEXT_ESTABLISHERS",
     "DEFAULT_CONTEXT_PROVISIONS",
     "DEFAULT_CONTEXT_REQUIREMENTS",
     "get_context_error_message",

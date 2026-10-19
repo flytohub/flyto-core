@@ -123,6 +123,10 @@ def _close_all_outcome(readings: List[Dict[str, Any]]) -> Optional[Dict[str, Any
     module_id='browser.pool',
     version='1.0.0',
     category='browser',
+    # Opens the browser session later browser steps work on (the session
+    # contract save validation reads; see types/context.py).
+    requires_context=[],
+    provides_context=['browser', 'page'],
     tags=['browser', 'parallel', 'pool', 'multi', 'concurrent'],
     label='Browser Pool',
     label_key='modules.browser.pool.label',

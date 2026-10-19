@@ -207,6 +207,10 @@ def _fingerprint(proxy: str) -> str:
     module_id='browser.proxy_rotate',
     version='1.0.0',
     category='browser',
+    # Opens the browser session later browser steps work on (the session
+    # contract save validation reads; see types/context.py).
+    requires_context=[],
+    provides_context=['browser', 'page'],
     tags=['browser', 'proxy', 'rotation', 'anti-ban', 'crawl'],
     label='Rotate Proxy',
     label_key='modules.browser.proxy_rotate.label',

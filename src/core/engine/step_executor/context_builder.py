@@ -87,8 +87,27 @@ def create_step_context(
         hook_context.error_message = str(error)
 
     _carry_the_outcome(hook_context, result, error)
+    _carry_the_reason(hook_context, error)
 
     return hook_context
+
+
+def _carry_the_reason(hook_context: HookContext, error=None) -> None:
+    """Put the typed reason a raise carries where a host can read it.
+
+    A module's failure code used to reach hosts only inside the message
+    ("Module returned failure [SSRF_BLOCKED]: ..."), so saying why on the step
+    meant parsing English. ``metadata['error_code']`` is the code itself, from
+    ``StepExecutionError.error_code`` or an ``OutcomeError``'s ``code``. Absent
+    when the raise named none; nothing is inferred from its type or text.
+    """
+    if error is None:
+        return
+    from ..exceptions import error_code_from_exception
+
+    code = error_code_from_exception(error)
+    if code is not None:
+        hook_context.metadata['error_code'] = code
 
 
 def _carry_the_outcome(hook_context: HookContext, result, error=None) -> None:
