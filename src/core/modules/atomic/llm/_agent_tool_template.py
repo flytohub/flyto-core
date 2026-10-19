@@ -148,20 +148,20 @@ class TemplateAgentTool:
         from ..template.invoke import (
             _MAX_TEMPLATE_INVOKE_DEPTH,
             _TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY,
+            definition_workflow,
         )
 
-        # `steps`, not `nodes`/`edges`. A template definition holds steps --
-        # `template.invoke` builds `workflow={'steps': steps}` from the same
-        # shape -- and the engine answers "No steps defined in workflow" to
-        # anything else. This was unreachable behind the import error above, so
-        # the wrong shape had never once run.
-        steps = definition.get("steps", [])
-        if not steps:
+        # `steps` (and the saved `edges`), not `nodes`. A template definition
+        # holds the steps of a saved workflow and the edges it was drawn
+        # with; `template.invoke` builds its inner workflow from the same
+        # shape (`definition_workflow`), and the engine answers "No steps
+        # defined in workflow" to anything else.
+        workflow = definition_workflow(definition)
+        if not workflow.get("steps"):
             return {
                 "ok": False,
                 "error": f"Template has no steps: {self._template_id}",
             }
-        workflow = {"steps": steps}
 
         # The recursion cap `template.invoke` enforces, enforced here too. A
         # template whose agent has that same template as a tool recurses, and

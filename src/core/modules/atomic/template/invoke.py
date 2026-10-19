@@ -30,6 +30,20 @@ _TEMPLATE_INVOKE_DEPTH_CONTEXT_KEY = "_template_invoke_depth"
 _BROWSER_PROFILE_SCOPE_CONTEXT_KEY = "_browser_profile_scope"
 _MAX_TEMPLATE_INVOKE_DEPTH = 16
 
+#: The parts of a saved workflow its inner engine runs from: the steps and,
+#: when the definition was saved with them, the edges (fork branches, merge
+#: inputs, routed exits) the engine follows as drawn.
+DEFINITION_GRAPH_KEYS = ('steps', 'edges')
+
+
+def definition_workflow(definition: Dict[str, Any]) -> Dict[str, Any]:
+    """The workflow an inner engine runs for a template definition, its saved graph included."""
+    return {
+        key: definition[key]
+        for key in DEFINITION_GRAPH_KEYS
+        if isinstance(definition.get(key), list) and (key == 'steps' or definition[key])
+    }
+
 
 class _TemplateDefinitionResolver:
     """Opaque runtime capability for nested template lookup.
@@ -528,11 +542,11 @@ class InvokeTemplate(BaseModule):
                 initial_context['keep_browser_alive'] = True
                 logger.debug("Marked browser as inherited from parent")
 
-        steps = definition.get('steps', [])
-        logger.debug(f"Creating inner WorkflowEngine with {len(steps)} steps")
+        workflow = definition_workflow(definition)
+        logger.debug(f"Creating inner WorkflowEngine with {len(workflow.get('steps', []))} steps")
 
         engine = WorkflowEngine(
-            workflow={'steps': steps},
+            workflow=workflow,
             params=params,
             initial_context=initial_context if initial_context else None
         )
