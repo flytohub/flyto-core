@@ -98,7 +98,7 @@ _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 _LANGUAGE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 _PATTERN_TEXT = re.compile(r"^[A-Za-z0-9_.*-]{1,96}$")
 
-_TOP_KEYS = frozenset({"schema", "pack", "runtime", "artifact", "modules", "connector"})
+_TOP_KEYS = frozenset({"schema", "pack", "runtime", "artifact", "modules", "connector", "entitlements", "scopes"})
 _PACK_REQUIRED = frozenset({"id", "version", "namespaces"})
 _PACK_OPTIONAL = frozenset({"title", "description", "license", "min_host", "publisher_key_id"})
 _ARTIFACT_KEYS = frozenset({"digest"})
@@ -414,8 +414,9 @@ def _declared_or_derived_modules(top: Mapping[str, Any], namespaces: List[str], 
     second, hand-written row list could only disagree with the operations.
     """
     if result["runtime"]["binding"] != "connector":
-        if "connector" in top:
-            _fail("CONNECTOR_BINDING", "a connector section needs runtime.binding connector")
+        for section in ("connector", "entitlements", "scopes"):
+            if section in top:
+                _fail("CONNECTOR_BINDING", f"a {section} section needs runtime.binding connector")
         if "modules" not in top:
             _fail("MISSING_FIELD", "manifest is missing required field: modules")
         return top["modules"]
@@ -425,9 +426,11 @@ def _declared_or_derived_modules(top: Mapping[str, Any], namespaces: List[str], 
         _fail("MODULES_DERIVED", "a connector pack declares operations, not modules")
     if len(namespaces) != 1:
         _fail("INVALID_NAMESPACE", "a connector pack has exactly one namespace")
-    from .connector import operation_rows, validate_connector
+    from .connector import operation_rows, validate_connector, validate_provider_sections
 
     result["connector"] = validate_connector(top["connector"])
+    # Declared sections only, so a pack without them normalizes (and signs) as before.
+    result.update({k: v for k, v in validate_provider_sections(top, result["connector"]).items() if v})
     return operation_rows(result["connector"], namespaces[0])
 
 

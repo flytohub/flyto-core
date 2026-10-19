@@ -22,6 +22,7 @@ missing.
 | `evidence.display_keys` | 2.40.0 | evidence `label`, `unit`, `channel` |
 | `contract.resource_states` | 2.41.0 | `establishes`, `occupies` |
 | `pack.connector` | 2.41.0 | `connector` section and `connector` binding (operations become modules) |
+| `pack.entitlements` | 2.41.0 | `entitlements` probe and `scopes` sections (the connector pre-check) |
 
 Rows are only ever added; a released version never changes what it
 accepts. `tests/core/pack/test_pack_conformance.py` keeps this table equal

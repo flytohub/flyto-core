@@ -149,7 +149,7 @@ per provider or per operation.
     "consequence": "observe",
     "inputs": {"company": {"type": "string", "scope": "company"},
                "severity": {"type": "string"}},
-    "result_scope": "$.items[*].guid",
+    "result_scope": {"dimension": "company", "path": "$.items[*].guid"},
     "sensitive": ["$.items[*].assets"],
     "requires": {"features": ["spm"]},
     "consumes": {"meter": "lookups", "amount": 1},
@@ -194,23 +194,96 @@ per provider or per operation.
   - `paginate` uses the `http.paginate` shapes (`offset`, `page`, `cursor`,
     `link_header`) with the same keys. A Link-header page must stay on the
     pack's origin.
-  - `requires.features` is a list, or `{"any": [...]}`. `consumes` is
-    `{meter, amount}`. Both are kept on the normalized operation for the
-    entitlement and quota layers. This release does not enforce them.
+  - `requires.features` is a list (all needed), or `{"any": [...]}`.
+    `consumes` is `{meter, amount}`. An input's `scope` and the operation's
+    `result_scope` name a data-scope dimension. The pre-check below enforces
+    all four.
 - **Refusals** are typed, and their `operation` attribute names the
   operation: `CONSEQUENCE_MISSING`, `CONSEQUENCE_UNKNOWN`,
   `PATH_PARAM_UNDECLARED`, `INLINE_SECRET` (a value-bearing auth key, a
   credential that is not a name, a secret-looking default, userinfo in a URL),
   `UNKNOWN_AUTH_KIND`, `INVALID_JSONPATH`, `INVALID_PAGINATION`,
-  `CONNECTOR_REQUIRED`, `CONNECTOR_BINDING`, `MODULES_DERIVED`.
+  `CONNECTOR_REQUIRED`, `CONNECTOR_BINDING`, `MODULES_DERIVED`, and for the
+  pre-check sections `ENTITLEMENTS_REQUIRED`, `FEATURE_UNDECLARED`,
+  `METER_UNDECLARED`, `SCOPE_UNDECLARED`, `RESULT_SCOPE_DIMENSION_REQUIRED`,
+  `PROBE_UNKNOWN`, `PROBE_NOT_OBSERVE`, `RESOLVE_UNKNOWN`,
+  `INVALID_ENTITLEMENTS`, `INVALID_SCOPES`.
 - **Calls** go through the platform SSRF guard and follow no redirects. They
   return `{"ok": true, "data": <body>}` or a typed failure carrying
   `error_code` and `http_status`: `PROVIDER_UNAUTHORIZED` (401),
-  `PROVIDER_FORBIDDEN` (403), `PROVIDER_NOT_FOUND` (404),
+  `PROVIDER_QUOTA_REFUSED` (402), `PROVIDER_FORBIDDEN` (403), `PROVIDER_NOT_FOUND` (404),
   `PROVIDER_RATE_LIMITED` (429, with `retry_after_s`), `PROVIDER_REJECTED`
   (other 4xx), `PROVIDER_ERROR` (5xx), `PROVIDER_INVALID_RESPONSE`,
   `PROVIDER_TIMEOUT`, `PROVIDER_UNREACHABLE`, `SSRF_BLOCKED`. A failure on any
   page fails the whole call.
+
+### The pre-check: `entitlements` and `scopes` (2.41.0)
+
+The provider is the source of truth for its own product, and a customer can
+use it directly without Flyto2. The provider's own access control always
+applies underneath. Flyto2 adds collaboration policy on top: a pre-check that
+hides operations the account does not hold and stops a call early. It never
+authorizes provider access. Whatever a cached answer said, a provider refusal
+of an admitted call is final and comes back as its own typed failure
+(`PROVIDER_FORBIDDEN`, `PROVIDER_QUOTA_REFUSED`, ...), and a refused call is
+never retried.
+
+```json
+"entitlements": {
+  "probe": "account.entitlements",
+  "max_age_s": 900,
+  "features": {"keys": ["ratings", "monitoring"], "path": "$.features[*]"},
+  "meters": {"monitoring_slots": "$.meters.monitoring_slots.remaining"}
+},
+"scopes": [{"key": "company", "resolve": "portfolio.list"}]
+```
+
+- **`entitlements.probe`** names an ungated `observe` operation of the same
+  connector. Its answer is mapped through the declared JSONPaths: `features`
+  to the set of declared keys it lists (a listed key the pack does not
+  declare is ignored), and each meter to its remaining amount, a non-negative
+  integer. Any other shape is unreadable.
+- The answer is read **per credential** and cached for `max_age_s` (default
+  900, at most 86,400). A read may use the cache. A write, a quota-consuming
+  call, and any call after a provider error read the probe again. A probe
+  that fails or answers outside its shape drops the cached answer and refuses
+  every feature-gated operation with `PROVIDER_ENTITLEMENT_UNREADABLE`.
+- **`scopes`** declares the dimensions the provider's data is split by. A
+  text `result_scope` names the one declared dimension; with two or more it
+  must be `{"dimension", "path"}`.
+- Every feature, meter and dimension an operation names must be declared, or
+  the pack is refused.
+
+`core.pack.connector_gate.admit` is the one gate, run for every operation
+before the request, in this order:
+
+1. `requires.features` must be held, else `FEATURE_NOT_ENTITLED` with
+   `missing_features`.
+2. The execution context's `scope_grants` (`{dimension: [values] | "*"}`)
+   must grant every dimension the operation uses, else
+   `SCOPE_GRANT_MISSING`; an absent grant is never read as `"*"`. Each scoped
+   input must be inside its grant, else `OUT_OF_SCOPE`. Grants only narrow
+   what Flyto2 runs for a member; they never widen what the provider
+   credential can see.
+3. A `consumes` meter must have `remaining >= amount`, else `QUOTA_EXHAUSTED`.
+
+After the call, the result is filtered by `result_scope`: the items are the
+elements under its last `[*]`, and items outside the grant are dropped and
+counted. An item that does not name exactly one scalar scope value refuses
+the whole result (`RESULT_SCOPE_UNREADABLE`); a result without `[*]` that is
+outside the grant is refused (`OUT_OF_SCOPE`), never shown as empty. A
+pre-checked result carries `metadata.precheck`: where the answer came from
+(`provider` or `cache`), the features required, the scope counts, and for a
+quota-consuming call `{meter, amount, before, after, matches}`, with the
+meter read again after the call.
+
+`core.pack.host.effective_module_ids(pack_id, secrets)` lists the operations
+a credential is entitled to, through the same probe and cache. An operation
+whose features the answer does not hold is omitted, not marked.
+
+Only the credential the pack names, resolved from `secrets`, is sent to the
+provider. Nothing else in the execution context, such as an inbound client's
+bearer token or request headers, reaches it.
 
 `flyto pack import-openapi DOC` drafts a `connector` section from an OpenAPI 3
 document and lists what it could not map. It never sets `consequence`, so the

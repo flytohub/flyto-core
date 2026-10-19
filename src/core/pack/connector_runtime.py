@@ -12,10 +12,22 @@ lands here with the operation's normalized declaration. This module:
 2. builds the request: path parameters encoded as one segment each, the other
    inputs in the query or the JSON body as declared;
 3. waits on the pack's rate limit, one limiter shared by all its operations;
-4. paginates with the declared ``http.paginate`` shape;
-5. returns the body as ``{"ok": true, "data": ...}``, or a typed failure —
+4. runs the pre-check (``core.pack.connector_gate.admit``): the features the
+   operation requires, the data scope of its inputs, and its quota, against
+   the provider's own entitlement answer and the caller's ``scope_grants``;
+5. paginates with the declared ``http.paginate`` shape, then filters the
+   answer by ``result_scope``;
+6. returns the body as ``{"ok": true, "data": ...}``, or a typed failure —
    ``PROVIDER_UNAUTHORIZED``, ``PROVIDER_RATE_LIMITED``, ``PROVIDER_ERROR``
    and the rest of :data:`STATUS_FAILURES` — never an empty success.
+
+The provider stays the authority on its own product: the pre-check can only
+stop a call, and a provider refusal of an admitted call comes back as its own
+typed failure. A refused call is never retried.
+
+The only credential sent is the one the pack names, resolved from
+``secrets``. Nothing else in the execution context (an inbound client's
+bearer token, request headers) reaches the provider.
 
 Outbound requests go through the platform SSRF guard
 (``validate_url_with_env_config`` and the DNS-rebinding-guarded connector),
@@ -39,6 +51,19 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import quote, urlencode, urlsplit
 
 from .connector import BODY_METHODS, module_id_for
+from .connector_gate import (
+    DEFAULT_MAX_AGE_S,
+    EntitlementAnswer,
+    EntitlementCache,
+    PrecheckError,
+    admit,
+    filter_result,
+    missing_features,
+    needs_entitlements,
+    needs_fresh_read,
+    read_answer,
+    scope_dimensions,
+)
 from .jsonpath import expand, parse
 
 logger = logging.getLogger(__name__)
@@ -50,6 +75,7 @@ __all__ = ["STATUS_FAILURES", "ConnectorCallError", "ConnectorTransport", "sensi
 STATUS_FAILURES: Tuple[Tuple[int, int, str], ...] = (
     (401, 401, "PROVIDER_UNAUTHORIZED"),
     (403, 403, "PROVIDER_FORBIDDEN"),
+    (402, 402, "PROVIDER_QUOTA_REFUSED"),
     (404, 404, "PROVIDER_NOT_FOUND"),
     (429, 429, "PROVIDER_RATE_LIMITED"),
     (300, 399, "PROVIDER_REDIRECT_REFUSED"),
@@ -154,6 +180,8 @@ class ConnectorTransport:
     namespace: str
     connector: Mapping[str, Any]
     runtime: Mapping[str, Any]
+    #: The pack's normalized ``entitlements`` section, or None when it has none.
+    entitlements: Optional[Mapping[str, Any]] = None
     _operations: Dict[str, Mapping[str, Any]] = field(default_factory=dict, repr=False)
     _limiter: Any = field(default=None, repr=False)
     _tokens: Dict[str, _Token] = field(default_factory=dict, repr=False)
@@ -167,32 +195,123 @@ class ConnectorTransport:
             self._limiter = RateLimiter(calls=limit["requests"], period=limit["per_seconds"])
         origin = urlsplit(self.connector["base_url"])
         self._origin = (origin.scheme, origin.hostname, origin.port)
+        max_age = (self.entitlements or {}).get("max_age_s", DEFAULT_MAX_AGE_S)
+        self._entitlement_cache = EntitlementCache(max_age_s=max_age)
 
     def operation(self, module_id: str) -> Optional[Mapping[str, Any]]:
         return self._operations.get(module_id)
 
     async def close(self) -> None:
         self._tokens.clear()
+        self._entitlement_cache.clear()
+
+    def _budget(self, timeout_ms: Optional[int]) -> int:
+        return min(timeout_ms or self.runtime["request_timeout_ms"], self.runtime["request_timeout_ms"])
 
     # -- the call ------------------------------------------------------------------
 
     async def call(self, module_id: str, params: Mapping[str, Any], secrets: Mapping[str, Any],
-                   timeout_ms: Optional[int]) -> Dict[str, Any]:
+                   timeout_ms: Optional[int], scope_grants: Any = None) -> Dict[str, Any]:
         op = self._operations.get(module_id)
         if op is None:
             return ConnectorCallError("OPERATION_UNKNOWN", f"{module_id} is not an operation of {self.pack_id}").result()
-        budget_ms = min(timeout_ms or self.runtime["request_timeout_ms"], self.runtime["request_timeout_ms"])
+        budget_ms = self._budget(timeout_ms)
+        key = None
         try:
-            headers = {"Accept": "application/json", **await self._auth_headers(module_id, secrets, budget_ms)}
-            url, query, body = self._request_parts(op, params)
-            if op["paginate"] is not None:
-                data = await self._paginate(op, url, query, body, headers, budget_ms)
-            else:
-                data, _ = await self._send(op["method"], url, query, body, headers, budget_ms)
+            headers, key = await self._headers(module_id, secrets, budget_ms)
+            admission = await self._precheck(op, params, scope_grants, headers, key, budget_ms)
+            data = await self._execute(op, params, headers, budget_ms)
+            data, scope = filter_result(op, data, admission.grants)
+        except PrecheckError as refusal:
+            logger.info("Connector call %s refused by the pre-check: %s", module_id, refusal.code)
+            return refusal.result()
         except ConnectorCallError as failure:
             logger.info("Connector call %s failed: %s", module_id, failure.code)
+            if key is not None and failure.http_status is not None:
+                # Whatever the provider refused, the next call asks it again.
+                self._entitlement_cache.provider_error(key)
             return failure.result()
-        return {"ok": True, "data": data}
+        if not needs_entitlements(op) and not scope_dimensions(op):
+            return {"ok": True, "data": data}
+        precheck: Dict[str, Any] = {"entitlements": admission.entitlements, "features": list(admission.features)}
+        if scope is not None:
+            precheck["scope"] = scope
+        if admission.meter is not None:
+            precheck["meter"] = await self._meter_after(admission.meter, headers, key, budget_ms)
+        return {"ok": True, "data": data, "metadata": {"precheck": precheck}}
+
+    async def _execute(self, op: Mapping[str, Any], params: Mapping[str, Any], headers: Mapping[str, str],
+                       budget_ms: int) -> Any:
+        url, query, body = self._request_parts(op, params)
+        if op["paginate"] is not None:
+            return await self._paginate(op, url, query, body, headers, budget_ms)
+        data, _ = await self._send(op["method"], url, query, body, headers, budget_ms)
+        return data
+
+    # -- the pre-check -------------------------------------------------------------
+
+    async def _precheck(self, op: Mapping[str, Any], params: Mapping[str, Any], scope_grants: Any,
+                        headers: Mapping[str, str], key: str, budget_ms: int):
+        answer, source = None, "not_required"
+        if needs_entitlements(op):
+            answer, source = await self._entitlements(headers, key, budget_ms, fresh=needs_fresh_read(op))
+        return admit(op, params, scope_grants, answer, source)
+
+    async def _entitlements(self, headers: Mapping[str, str], key: str, budget_ms: int,
+                            *, fresh: bool) -> Tuple[EntitlementAnswer, str]:
+        """The provider's answer for this credential: cached for a read, read again otherwise."""
+        if not fresh:
+            cached = self._entitlement_cache.fresh(key)
+            if cached is not None:
+                return cached, "cache"
+        probe = self._operations[module_id_for(self.namespace, self.entitlements["probe"])]
+        try:
+            answer = read_answer(self.entitlements, await self._execute(probe, {}, headers, budget_ms))
+        except (ConnectorCallError, PrecheckError) as failure:
+            # A failed read never falls back to the last good answer.
+            self._entitlement_cache.drop(key)
+            raise PrecheckError("PROVIDER_ENTITLEMENT_UNREADABLE",
+                              f"the provider's entitlements could not be read ({failure.code})",
+                              probe_error=failure.code) from None
+        self._entitlement_cache.store(key, answer)
+        return answer, "provider"
+
+    async def _meter_after(self, meter: Mapping[str, Any], headers: Mapping[str, str], key: str,
+                           budget_ms: int) -> Dict[str, Any]:
+        """The meter read again after the call; a mismatch with the declared amount is a finding."""
+        out = dict(meter)
+        try:
+            answer, _ = await self._entitlements(headers, key, budget_ms, fresh=True)
+        except PrecheckError:
+            out.update(after=None, matches=None)
+            return out
+        out["after"] = answer.meters[meter["meter"]]
+        out["matches"] = meter["before"] - out["after"] == meter["amount"]
+        return out
+
+    async def effective_module_ids(self, secrets: Mapping[str, Any]) -> List[str]:
+        """The operations this credential is entitled to, by the probe (a cached answer may serve).
+
+        An operation that needs no feature is always listed. A gated one is
+        listed only when the answer is readable and holds its features; the
+        rest are omitted, not marked.
+        """
+        budget_ms = self._budget(None)
+        answer: Optional[EntitlementAnswer] = None
+        offered = []
+        for module_id, op in sorted(self._operations.items()):
+            if not needs_entitlements(op):
+                offered.append(module_id)
+                continue
+            if answer is None:
+                try:
+                    headers, key = await self._headers(module_id, secrets, budget_ms)
+                    answer, _ = await self._entitlements(headers, key, budget_ms, fresh=False)
+                except (PrecheckError, ConnectorCallError):
+                    return [m for m, o in sorted(self._operations.items()) if not needs_entitlements(o)]
+            if not missing_features((op.get("requires") or {}).get("features") or [], answer.features):
+                offered.append(module_id)
+        return offered
 
     def _request_parts(self, op: Mapping[str, Any], params: Mapping[str, Any]) -> Tuple[str, Dict, Optional[Dict]]:
         path = op["path"]
@@ -218,14 +337,17 @@ class ConnectorTransport:
 
     # -- auth ------------------------------------------------------------------------
 
-    async def _auth_headers(self, module_id: str, secrets: Mapping[str, Any], budget_ms: int) -> Dict[str, str]:
+    async def _headers(self, module_id: str, secrets: Mapping[str, Any],
+                       budget_ms: int) -> Tuple[Dict[str, str], str]:
+        """The request headers, and the key the credential's entitlement answer is cached under."""
         auth = self.connector["auth"]
         if not auth:
-            return {}
+            return {"Accept": "application/json"}, EntitlementCache.key("", None)
         for entry in auth:
             value = secrets.get(entry["credential"]) if isinstance(secrets, Mapping) else None
             if value not in (None, ""):
-                return await _AUTH_KINDS[entry["kind"]](self, entry, value, budget_ms)
+                headers = await _AUTH_KINDS[entry["kind"]](self, entry, value, budget_ms)
+                return {"Accept": "application/json", **headers}, EntitlementCache.key(entry["credential"], value)
         names = ", ".join(entry["credential"] for entry in auth)
         raise ConnectorCallError("CREDENTIAL_MISSING", f"{module_id} needs credential {names}; the host supplied none")
 

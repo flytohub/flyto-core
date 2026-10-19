@@ -1,10 +1,78 @@
 {
   "_about": "Recorded-shape responses for the example ratings connector. Modeled on the read operations a security-ratings provider's v1 API exposes (Bitsight: company rating, company findings, portfolio). Values are invented; nothing here came from a real account.",
-  "company": {"guid": "c-1", "name": "Example Co", "rating": 720, "rating_date": "2026-10-01"},
+  "company": {
+    "guid": "c-1",
+    "name": "Example Co",
+    "rating": 720,
+    "rating_date": "2026-10-01"
+  },
   "findings": [
-    {"risk_vector": "open_ports", "severity": "material", "assets": ["10.0.0.1:22"]},
-    {"risk_vector": "patching_cadence", "severity": "moderate", "assets": ["host-a.example"]},
-    {"risk_vector": "tls_certificates", "severity": "minor", "assets": ["host-b.example"]}
+    {
+      "risk_vector": "open_ports",
+      "severity": "material",
+      "assets": [
+        "10.0.0.1:22"
+      ]
+    },
+    {
+      "risk_vector": "patching_cadence",
+      "severity": "moderate",
+      "assets": [
+        "host-a.example"
+      ]
+    },
+    {
+      "risk_vector": "tls_certificates",
+      "severity": "minor",
+      "assets": [
+        "host-b.example"
+      ]
+    }
   ],
-  "portfolio": {"companies": [{"guid": "c-1", "name": "Example Co"}, {"guid": "c-2", "name": "Second Co"}]}
+  "portfolio": {
+    "companies": [
+      {
+        "guid": "c-1",
+        "name": "Example Co"
+      },
+      {
+        "guid": "c-2",
+        "name": "Second Co"
+      }
+    ]
+  },
+  "entitlements": {
+    "_about": "Two customers of the same provider: one holds the ratings product only, the other ratings and monitoring with a monitoring-slot meter.",
+    "ratings_only": {
+      "account": "acct-a",
+      "features": [
+        "ratings"
+      ],
+      "meters": {
+        "monitoring_slots": {
+          "remaining": 0,
+          "limit": 0
+        }
+      }
+    },
+    "ratings_and_monitoring": {
+      "account": "acct-ab",
+      "features": [
+        "ratings",
+        "monitoring",
+        "reports"
+      ],
+      "meters": {
+        "monitoring_slots": {
+          "remaining": 2,
+          "limit": 5
+        }
+      }
+    }
+  },
+  "portfolio_added": {
+    "guid": "c-1",
+    "name": "Example Co",
+    "monitoring": true
+  }
 }

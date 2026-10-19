@@ -86,6 +86,8 @@ FEATURES: Tuple[Feature, ...] = (
             lambda row: bool(RESOURCE_STATE_FIELDS & set(_contract(row)))),
     Feature("pack.connector", "2.41.0", "`connector` section and `connector` binding (operations become modules)",
             lambda manifest: (manifest.get("runtime") or {}).get("binding") == "connector", reads="manifest"),
+    Feature("pack.entitlements", "2.41.0", "`entitlements` probe and `scopes` sections (the connector pre-check)",
+            lambda manifest: bool(manifest.get("entitlements") or manifest.get("scopes")), reads="manifest"),
 )
 
 

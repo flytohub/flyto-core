@@ -99,8 +99,27 @@ def provider(monkeypatch):
     httpd.server_close()
 
 
+def ungated(doc):
+    """The example without its pre-check, so these tests exercise the transport alone.
+
+    Entitlements, quota and data scope are covered by
+    ``test_connector_entitlements.py`` against the full example.
+    """
+    doc.pop("entitlements", None)
+    doc.pop("scopes", None)
+    doc["connector"]["operations"] = [
+        o for o in doc["connector"]["operations"] if not o.get("consumes") and o["consequence"] == "observe"
+    ]
+    for operation in doc["connector"]["operations"]:
+        operation.pop("requires", None)
+        operation.pop("result_scope", None)
+        for spec in operation["inputs"].values():
+            spec.pop("scope", None)
+    return doc
+
+
 def install(tmp_path, base_url, mutate=None):
-    doc = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+    doc = ungated(json.loads(EXAMPLE.read_text(encoding="utf-8")))
     doc["connector"]["base_url"] = base_url
     if mutate:
         mutate(doc)
@@ -125,7 +144,9 @@ async def call(module_id, params, secrets=None):
 async def test_a_declared_operation_is_a_registered_module(tmp_path, provider, host_version_241):
     provenance = install(tmp_path, provider)
     assert provenance.binding == "connector"
-    assert set(provenance.module_ids) == {"ratings.company.get", "ratings.findings.list", "ratings.portfolio.list"}
+    assert set(provenance.module_ids) == {
+        "ratings.account.entitlements", "ratings.company.get", "ratings.findings.list", "ratings.portfolio.list",
+    }
     metadata = ModuleRegistry.get_metadata("ratings.company.get")
     assert metadata["plugin"] == "com.example.ratings"
     assert metadata["contract"]["safety_class"] == "read_only"

@@ -33,8 +33,9 @@ supplies the value at call time through the execution context's ``secrets``
 layer, the same name-keyed layer core already hands modules.
 
 ``requires``, ``consumes``, ``result_scope`` and each input's ``scope`` are
-validated for shape and kept on the normalized operation for the entitlement,
-quota and data-scope layers; nothing here enforces them.
+validated here and bound to the pack's ``entitlements`` and ``scopes``
+sections (:func:`validate_provider_sections`). ``core.pack.connector_gate``
+enforces them at every call.
 """
 
 from __future__ import annotations
@@ -54,6 +55,7 @@ __all__ = [
     "validate_connector",
     "operation_rows",
     "path_parameters",
+    "validate_provider_sections",
 ]
 
 #: The consequence levels, mildest first: the platform's level vocabulary
@@ -295,6 +297,17 @@ def _inputs(value: Any, op_id: str, method: str, path_params: List[str]) -> Dict
     return inputs
 
 
+def _result_scope(value: Any, op_id: str) -> Dict[str, Any]:
+    """``{"dimension", "path"}``; the text form leaves the dimension to the pack's one ``scopes`` key."""
+    if type(value) is dict:
+        declared = _object(value, f"operation {op_id} result_scope", frozenset({"dimension", "path"}), frozenset(),
+                           op_id)
+        if type(declared["dimension"]) is not str or not _KEY.fullmatch(declared["dimension"]):
+            _fail("INVALID_CONNECTOR", f"operation {op_id} result_scope.dimension must be a scope key", op_id)
+        return {"dimension": declared["dimension"], "path": _jsonpath(declared["path"], "result_scope", op_id)}
+    return {"dimension": None, "path": _jsonpath(value, "result_scope", op_id)}
+
+
 def _features(value: Any, op_id: str) -> Any:
     def keys(items: Any) -> List[str]:
         if type(items) is not list or len(items) > 32 or any(type(k) is not str or not _KEY.fullmatch(k)
@@ -380,7 +393,7 @@ def _operation(value: Any, index: int) -> Dict[str, Any]:
         "paginate": None,
     }
     if op.get("result_scope") is not None:
-        normalized["result_scope"] = _jsonpath(op["result_scope"], "result_scope", op_id)
+        normalized["result_scope"] = _result_scope(op["result_scope"], op_id)
     sensitive = op.get("sensitive", [])
     if type(sensitive) is not list or len(sensitive) > MAX_PATHS:
         _fail("INVALID_JSONPATH", f"sensitive of operation {op_id} must be a list of JSONPaths", op_id)
@@ -471,3 +484,124 @@ def operation_rows(connector: Mapping[str, Any], namespace: str) -> List[Dict[st
             row["timeout_ms"] = op["timeout_ms"]
         rows.append(row)
     return rows
+
+
+# -- entitlements and scopes ----------------------------------------------------------------
+
+#: The pre-check sections a connector pack may declare beside ``connector``.
+PROVIDER_SECTIONS = ("entitlements", "scopes")
+MAX_FEATURES = 64
+MAX_METERS = 32
+MAX_SCOPES = 16
+#: How long a probe answer may admit a read: at least a second, at most a day.
+MAX_AGE_BOUNDS = (1, 86_400)
+_ENTITLEMENTS_REQUIRED = frozenset({"probe", "features"})
+_ENTITLEMENTS_OPTIONAL = frozenset({"meters", "max_age_s"})
+
+
+def _key_list(value: Any, where: str, high: int) -> List[str]:
+    if type(value) is not list or len(value) > high or any(type(k) is not str or not _KEY.fullmatch(k) for k in value):
+        _fail("INVALID_ENTITLEMENTS", f"{where} must list keys")
+    if len(set(value)) != len(value):
+        _fail("DUPLICATE_ID", f"{where} lists a key twice")
+    return list(value)
+
+
+def _entitlements(value: Any, operations: Mapping[str, Mapping[str, Any]]) -> Dict[str, Any]:
+    from .connector_gate import DEFAULT_MAX_AGE_S
+
+    section = _object(value, "entitlements", _ENTITLEMENTS_REQUIRED, _ENTITLEMENTS_OPTIONAL, None)
+    probe = section["probe"]
+    op = operations.get(probe) if type(probe) is str else None
+    if op is None:
+        _fail("PROBE_UNKNOWN", "entitlements.probe must name an operation of this connector")
+    # The probe answers what gates the others, so it is gated by nothing, and
+    # reading it changes nothing at the provider.
+    if op["consequence"] != "observe" or op["requires"]["features"] or op["consumes"] is not None:
+        _fail("PROBE_NOT_OBSERVE", "entitlements.probe must be an ungated observe operation", probe)
+    features = _object(section["features"], "entitlements.features", frozenset({"keys", "path"}), frozenset(), None)
+    meters = section.get("meters", {})
+    if type(meters) is not dict or len(meters) > MAX_METERS:
+        _fail("INVALID_ENTITLEMENTS", "entitlements.meters must map meter keys to JSONPaths")
+    for name in meters:
+        if not _KEY.fullmatch(name):
+            _fail("INVALID_ENTITLEMENTS", "entitlements.meters has an invalid meter key")
+    max_age = section.get("max_age_s", DEFAULT_MAX_AGE_S)
+    if type(max_age) is not int or not MAX_AGE_BOUNDS[0] <= max_age <= MAX_AGE_BOUNDS[1]:
+        _fail("INVALID_ENTITLEMENTS", "entitlements.max_age_s is outside its bound")
+    return {
+        "probe": probe,
+        "max_age_s": max_age,
+        "features": {
+            "keys": _key_list(features["keys"], "entitlements.features.keys", MAX_FEATURES),
+            "path": _jsonpath(features["path"], "entitlements.features.path", probe),
+        },
+        "meters": {name: _jsonpath(path, f"entitlements.meters.{name}", probe) for name, path in meters.items()},
+    }
+
+
+def _scopes(value: Any, operations: Mapping[str, Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    if type(value) is not list or len(value) > MAX_SCOPES:
+        _fail("INVALID_SCOPES", "scopes must be a list of at most 16 dimensions")
+    scopes = []
+    for index, entry in enumerate(value):
+        entry = _object(entry, f"scopes[{index}]", frozenset({"key"}), frozenset({"resolve"}), None)
+        if type(entry["key"]) is not str or not _KEY.fullmatch(entry["key"]):
+            _fail("INVALID_SCOPES", f"scopes[{index}].key must be a scope key")
+        if "resolve" in entry and entry["resolve"] not in operations:
+            _fail("RESOLVE_UNKNOWN", f"scopes[{index}].resolve must name an operation of this connector")
+        scopes.append(dict(entry))
+    keys = [entry["key"] for entry in scopes]
+    if len(set(keys)) != len(keys):
+        _fail("DUPLICATE_ID", "scopes keys must be unique")
+    return scopes
+
+
+def _bind_operation(op: Dict[str, Any], features: frozenset, meters: frozenset, dimensions: List[str],
+                    gated: bool) -> None:
+    """Refuse an operation whose pre-check names a feature, meter or dimension the pack does not declare."""
+    op_id = op["id"]
+    requires = op["requires"]["features"]
+    keys = requires.get("any", []) if isinstance(requires, dict) else requires
+    if (keys or op["consumes"] is not None) and not gated:
+        _fail("ENTITLEMENTS_REQUIRED", f"operation {op_id} is gated, so the pack must declare entitlements", op_id)
+    for key in keys:
+        if key not in features:
+            _fail("FEATURE_UNDECLARED", f"operation {op_id} requires {key}, which entitlements does not declare",
+                  op_id)
+    if op["consumes"] is not None and op["consumes"]["meter"] not in meters:
+        _fail("METER_UNDECLARED", f"operation {op_id} consumes a meter entitlements does not declare", op_id)
+    for name, spec in op["inputs"].items():
+        if spec.get("scope") and spec["scope"] not in dimensions:
+            _fail("SCOPE_UNDECLARED", f"operation {op_id} input {name} names an undeclared scope", op_id)
+    declared = op["result_scope"]
+    if declared is None:
+        return
+    if declared["dimension"] is None:
+        # The text form is shorthand only while there is exactly one dimension
+        # it could mean; nothing guesses between two.
+        if len(dimensions) != 1:
+            _fail("RESULT_SCOPE_DIMENSION_REQUIRED" if dimensions else "SCOPE_UNDECLARED",
+                  f"operation {op_id} result_scope must name its dimension", op_id)
+        declared["dimension"] = dimensions[0]
+    elif declared["dimension"] not in dimensions:
+        _fail("SCOPE_UNDECLARED", f"operation {op_id} result_scope names an undeclared scope", op_id)
+
+
+def validate_provider_sections(top: Mapping[str, Any], connector: Dict[str, Any]) -> Dict[str, Any]:
+    """The normalized ``entitlements`` and ``scopes`` sections, bound to the operations that use them.
+
+    Every feature, meter and scope dimension an operation names must be
+    declared, so the pre-check (``core.pack.connector_gate``) can always
+    enforce what the pack says. A declaration it could not enforce refuses
+    the pack instead.
+    """
+    operations = {op["id"]: op for op in connector["operations"]}
+    entitlements = _entitlements(top["entitlements"], operations) if "entitlements" in top else None
+    scopes = _scopes(top.get("scopes", []), operations)
+    features = frozenset(entitlements["features"]["keys"]) if entitlements else frozenset()
+    meters = frozenset(entitlements["meters"]) if entitlements else frozenset()
+    dimensions = [entry["key"] for entry in scopes]
+    for op in connector["operations"]:
+        _bind_operation(op, features, meters, dimensions, entitlements is not None)
+    return {"entitlements": entitlements, "scopes": scopes}

@@ -69,6 +69,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The consequence is carried into the row's capability contract. Example:
   `examples/packs/ratings-connector/`. Compatibility matrix row
   `pack.connector` (since 2.41.0).
+- Connector pre-check. A connector pack may declare `entitlements` (a probe
+  operation, `features.keys`/`features.path`, `meters` JSONPaths,
+  `max_age_s`, default 900) and `scopes` (dimension keys with an optional
+  `resolve` operation). `core.pack.connector_gate.admit`, run for every
+  operation before its request, refuses `FEATURE_NOT_ENTITLED` (with
+  `missing_features`), `SCOPE_GRANT_MISSING`, `OUT_OF_SCOPE` and
+  `QUOTA_EXHAUSTED`; a probe that fails or is misshapen refuses every gated
+  operation with `PROVIDER_ENTITLEMENT_UNREADABLE`. Results are filtered by
+  `result_scope` (now `{dimension, path}`; text is shorthand for a single
+  declared dimension) and refused as `RESULT_SCOPE_UNREADABLE` when an item
+  does not name its scope. Successful pre-checked results carry
+  `metadata.precheck`, with the meter before and after for quota use.
+  `core.pack.host.effective_module_ids(pack_id, secrets)` lists the
+  operations a credential is entitled to. HTTP 402 is
+  `PROVIDER_QUOTA_REFUSED`. Validation refuses an undeclared feature, meter
+  or dimension, and a probe that is not an ungated observe operation.
+  Compatibility matrix row `pack.entitlements` (since 2.41.0).
 - `BaseModule.sensitive_result_paths(result)` and
   `core.engine.redaction.redact_step_result`: a module names the leaves of its
   result that the step log and the trace must not show. The workflow still

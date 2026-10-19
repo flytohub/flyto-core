@@ -40,7 +40,10 @@ def test_the_example_validates():
     manifest = read_pack_manifest(EXAMPLE)
     assert manifest["runtime"]["binding"] == "connector"
     ids = [row["module_id"] for row in manifest["modules"]]
-    assert ids == ["ratings.company.get", "ratings.findings.list", "ratings.portfolio.list"]
+    assert ids == [
+        "ratings.account.entitlements", "ratings.company.get", "ratings.findings.list", "ratings.portfolio.add",
+        "ratings.portfolio.list",
+    ]
 
 
 def test_an_operation_row_takes_its_params_from_inputs():
@@ -75,24 +78,24 @@ def test_the_consequence_vocabulary_is_the_five_levels():
     assert CONSEQUENCES == ("observe", "reversible", "external_write", "real_world", "irreversible")
 
 
-def test_the_normalized_connector_keeps_what_later_lanes_read():
+def test_the_normalized_connector_keeps_what_the_pre_check_reads():
     manifest = validate_pack_manifest(example())
     op = next(o for o in manifest["connector"]["operations"] if o["id"] == "company.get")
     assert op["consequence"] == "observe"
     assert op["inputs"]["company"]["scope"] == "company"
-    assert op["result_scope"] == "$.guid"
-    assert op["requires"] == {"features": []}
+    assert op["result_scope"] == {"dimension": "company", "path": "$.guid"}
+    assert op["requires"] == {"features": ["ratings"]}
     assert op["consumes"] is None
 
 
 def test_requires_and_consumes_are_kept_as_declared():
     doc = example()
     op = operation(doc, "company.get")
-    op["requires"] = {"features": {"any": ["spm", "cm"]}}
-    op["consumes"] = {"meter": "lookups", "amount": 1}
+    op["requires"] = {"features": {"any": ["ratings", "monitoring"]}}
+    op["consumes"] = {"meter": "monitoring_slots", "amount": 1}
     normalized = next(o for o in validate_pack_manifest(doc)["connector"]["operations"] if o["id"] == "company.get")
-    assert normalized["requires"] == {"features": {"any": ["spm", "cm"]}}
-    assert normalized["consumes"] == {"meter": "lookups", "amount": 1}
+    assert normalized["requires"] == {"features": {"any": ["ratings", "monitoring"]}}
+    assert normalized["consumes"] == {"meter": "monitoring_slots", "amount": 1}
 
 
 def test_a_connector_pack_needs_2_41():

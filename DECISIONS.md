@@ -1,5 +1,29 @@
 # Decisions
 
+## 2026-10-19 - The connector pre-check reads the provider, and the provider stays the authority
+
+Decision: a connector pack's features and meters are read from the
+provider, through an `entitlements` probe that is an ordinary observe
+operation of the same pack, and Flyto2 keeps no second copy. The answer is
+cached per credential for a bounded time the pack declares. A cache may
+shorten a grant, never extend it: a write, a quota-consuming call and any
+call after a provider error read again, and a failed read drops the answer.
+One function, `core.pack.connector_gate.admit`, runs for every operation;
+no surface has its own check.
+
+The pre-check is not authorization. A customer can use the provider
+directly, and the provider's access control applies underneath. The
+pre-check hides operations and stops calls early; a provider refusal is
+final and surfaces as its own typed failure, and a refused call is not
+retried. Scope grants come from the caller's context and only narrow what
+Flyto2 runs; an absent grant refuses instead of meaning "all". Only the
+credential the pack names is sent upstream, never an inbound token.
+
+Rejected: a result filter that skips items without a scope value (it would
+show unfiltered data when a field is renamed); inferring a result's
+dimension when the pack declares several (the text form of `result_scope`
+is shorthand only for a single dimension).
+
 ## 2026-10-19 - A provider connector is data in the pack, run by one runtime
 
 Decision: a provider's HTTP API is a `connector` section of `flyto.pack.v1`

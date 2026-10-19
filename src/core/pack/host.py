@@ -338,10 +338,31 @@ class ConnectorModule(PackModule):
         installed = _INSTALLED.get(self.pack_id)
         if installed is None:
             return _failure("PACK_NOT_INSTALLED", f"pack '{self.pack_id}' is not installed")
-        secrets = self.context.get("secrets") if isinstance(self.context, dict) else None
+        context = self.context if isinstance(self.context, dict) else {}
+        secrets = context.get("secrets")
+        # Only the named credential from ``secrets`` and the caller's scope
+        # grants reach the runtime; nothing else in the context does.
         return await installed.transport.call(
-            self.module_id, dict(self.params), secrets if isinstance(secrets, Mapping) else {}, self._row_timeout_ms
+            self.module_id, dict(self.params), secrets if isinstance(secrets, Mapping) else {}, self._row_timeout_ms,
+            context.get("scope_grants"),
         )
+
+
+async def effective_module_ids(pack_id: str, secrets: Mapping[str, Any]) -> List[str]:
+    """The installed pack's module ids this credential may be offered: the pre-check's listing.
+
+    A connector pack lists only the operations whose ``requires.features`` the
+    provider's entitlement answer holds (read through the same probe and
+    cache every call uses). Any other pack has no entitlements, so all its
+    modules are listed. An uninstalled pack lists nothing.
+    """
+    installed = _INSTALLED.get(pack_id)
+    if installed is None:
+        return []
+    listing = getattr(installed.transport, "effective_module_ids", None)
+    if listing is None:
+        return sorted(row["module_id"] for row in installed.manifest["modules"])
+    return await listing(secrets if isinstance(secrets, Mapping) else {})
 
 
 def _connector_attributes(manifest: Mapping[str, Any], row: Mapping[str, Any]) -> Dict[str, Any]:
@@ -648,7 +669,8 @@ def _register_pack(
         from .connector_runtime import ConnectorTransport
 
         transport = ConnectorTransport(
-            pack_id, manifest["pack"]["namespaces"][0], manifest["connector"], runtime
+            pack_id, manifest["pack"]["namespaces"][0], manifest["connector"], runtime,
+            entitlements=manifest.get("entitlements"),
         )
     else:
         transport = _HttpTransport(
