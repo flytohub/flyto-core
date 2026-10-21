@@ -64,6 +64,9 @@ __all__ = [
     "RECOVERY_ROLE_PATTERN",
     "RECOVERY_ROLES_MAX",
     "EVIDENCE_DISPLAY_FIELDS",
+    "EVIDENCE_OBSERVERS",
+    "EVIDENCE_OBSERVER_OTHER_RESOURCE",
+    "EVIDENCE_OBSERVER_SELF",
     "EVIDENCE_LABEL_PATTERN",
     "EVIDENCE_LABEL_LANGS_MAX",
     "EVIDENCE_LABEL_MAX",
@@ -345,7 +348,16 @@ _EVIDENCE_DISPLAY_CHECKS: Mapping[str, Callable[[Any, str], Any]] = MappingProxy
     "unit": _check_evidence_unit,
     "channel": _check_evidence_channel,
 })
-_EVIDENCE_OPTIONAL = frozenset(("settle",)) | EVIDENCE_DISPLAY_FIELDS
+#: Who must have observed an effect. ``self``, the default, is the acting
+#: resource's own adapter. ``other_resource`` is another resource: a camera
+#: seeing a lamp light, never the plug's own report. A capability host observes
+#: only its own adapter, so it never proves an ``other_resource`` spec
+#: (:func:`judge`); the control plane holding every resource's observations does.
+EVIDENCE_OBSERVER_SELF = "self"
+EVIDENCE_OBSERVER_OTHER_RESOURCE = "other_resource"
+EVIDENCE_OBSERVERS = frozenset((EVIDENCE_OBSERVER_SELF, EVIDENCE_OBSERVER_OTHER_RESOURCE))
+
+_EVIDENCE_OPTIONAL = frozenset(("settle", "observer")) | EVIDENCE_DISPLAY_FIELDS
 
 
 def validate_evidence(
@@ -465,6 +477,11 @@ def validate_evidence(
         normalized["settle"] = {
             "max_drift": _check_non_negative(settle["max_drift"], f"{where}.settle.max_drift")
         }
+    if "observer" in evidence:
+        # Kept only when declared, so a contract that names none hashes as before.
+        if evidence["observer"] not in EVIDENCE_OBSERVERS:
+            raise ValueError(f"{where}.observer must be one of {sorted(EVIDENCE_OBSERVERS)}")
+        normalized["observer"] = evidence["observer"]
     for key, check in _EVIDENCE_DISPLAY_CHECKS.items():
         if key in evidence:
             normalized[key] = check(evidence[key], f"{where}.{key}")
@@ -826,6 +843,10 @@ def judge(
     The arithmetic is specified in ``docs/CAPABILITY_CONTRACT.md``.
     """
     spec = validate_evidence(dict(evidence_spec) if type(evidence_spec) is not dict else evidence_spec)
+    if spec.get("observer", EVIDENCE_OBSERVER_SELF) != EVIDENCE_OBSERVER_SELF:
+        # These are the acting resource's own observations; only another
+        # resource's can prove this spec, and that is not judged here.
+        return _verdict(False, "proven only by another resource's observation, not the acting resource's own")
     measure = spec["measure"]
     op = measure["op"]
     fields = measure["fields"]

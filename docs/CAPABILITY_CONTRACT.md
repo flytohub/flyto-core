@@ -80,6 +80,7 @@ the registry's bounded grammar `^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$`, at most
 | `expect` | yes | For the relative ops, exactly one of `{"argument": name}` / `{"argument": name, "scale": number}` (a `number`/`integer` key of `params_schema`; `scale` finite, non-zero, default `1`) or `{"value": number}`; `scale` is not allowed with `value`. For the absolute ops, see [Absolute targets](#absolute-targets-2380). |
 | `tolerance` | yes | Non-empty mapping with `absolute` and/or `relative`, each finite and ≥ 0. An absent one is normalized to `0`. An absolute op requires `relative` to be `0` (or absent). |
 | `settle` | no | `{"max_drift": number ≥ 0}`; requires `settled` in `phases`. |
+| `observer` | no | 2.41.0. Who must have observed the effect: `self` (the default, the acting resource's own adapter) or `other_resource` (another resource, e.g. a camera seeing a lamp light that a plug switched). A capability host observes only its own adapter, so `judge` never proves an `other_resource` spec: its verdict is unusable, and the control plane that holds every resource's observations judges it. |
 | `label` | no | 2.40.0. What the reading is called, by language: a mapping of 1..8 language tags (`^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$`, e.g. `en`, `zh-TW`, `und`) to printable text of 1..64 characters. |
 | `unit` | no | 2.40.0. The reading's unit, printable text of at most 16 characters; `""` for a count or a state. |
 | `channel` | no | 2.40.0. The telemetry channel the observed field belongs to, matching `^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$`. |
@@ -276,7 +277,7 @@ from fresh containers: it always carries `schema`, `effects`, `requires`,
 `expect.argument` carries its `scale` (default `1`). The optional `role`,
 `artifacts`, `recovery`, `expected_duration_ms`, `establishes` and `occupies`
 appear only when declared,
-and so do an evidence spec's `settle`, `label`, `unit` and `channel`.
+and so do an evidence spec's `settle`, `observer`, `label`, `unit` and `channel`.
 The registry stores this form, so every consumer reads one shape.
 
 ## Where a contract is published

@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Evidence `observer` (`self` | `other_resource`). An evidence spec may require
+  that another resource observed the effect: a camera seeing a lamp light, not
+  the plug's own report. `validate_evidence` keeps it only when declared, so
+  existing contract hashes are unchanged, and `judge` never proves an
+  `other_resource` spec from the acting host's own observations.
 - Adapter ecosystem (J17). `flyto pack certify PACK` runs verify, the
   declared-compatibility check, conform, `pack test` and standalone health
   (against the pack's own recorded fixtures) and signs a
