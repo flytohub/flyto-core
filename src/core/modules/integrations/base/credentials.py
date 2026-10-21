@@ -8,12 +8,6 @@ whether the secret belongs to the caller or to the operator. Worse, both the
 module wrapper and the integration class did it, so by the time the request was
 built a value read from ``JIRA_API_TOKEN`` was indistinguishable from one the
 caller typed — the laundering step behind GHSA-4346-4gqg-59f9.
-
-The environment value is passed in rather than the variable's *name* on purpose:
-``scripts/generate_reference.py`` builds the environment-variable reference by
-finding literal ``os.getenv`` calls in the sources, so moving the name inside
-this helper would quietly delete three documented credentials from that
-reference.
 """
 
 from typing import Optional, Tuple

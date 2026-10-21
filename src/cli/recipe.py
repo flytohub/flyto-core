@@ -63,19 +63,25 @@ def _print_step_line(
     print(f"  Step {num_str}  {module_id:<{_COL_MODULE}} {icon} {dur_str}{hint_str}")
 
 
-def load_recipe(recipe_name: str) -> Optional[Dict[str, Any]]:
-    """Load a recipe YAML file by name.
+def confine_recipe_path(recipe_name: str) -> Optional[Path]:
+    """Resolve a recipe name to a file inside ``RECIPES_DIR``, or None.
 
-    GHSA-mxcc: ``recipe_name`` is caller-controlled (MCP ``run_recipe``). It is
-    confined to the bundled recipes directory — a name containing ``..`` or an
-    absolute path is rejected (returns None) so it can never load a workflow
-    outside ``RECIPES_DIR``.
+    GHSA-mxcc: ``recipe_name`` is caller-controlled (MCP ``run_recipe``). A name
+    containing ``..`` or an absolute path resolves outside the bundled recipes
+    directory and is rejected, so it can never load a workflow from elsewhere.
+    Declared as a path_traversal sanitizer in ``.flyto-rules.yaml``.
     """
     recipes_root = RECIPES_DIR.resolve()
     recipe_path = (RECIPES_DIR / f"{recipe_name}.yaml").resolve()
     if recipe_path != recipes_root and recipes_root not in recipe_path.parents:
         return None
-    if not recipe_path.exists():
+    return recipe_path
+
+
+def load_recipe(recipe_name: str) -> Optional[Dict[str, Any]]:
+    """Load a bundled recipe YAML file by name (see ``confine_recipe_path``)."""
+    recipe_path = confine_recipe_path(recipe_name)
+    if recipe_path is None or not recipe_path.exists():
         return None
     with open(recipe_path, 'r') as f:
         return yaml.safe_load(f)

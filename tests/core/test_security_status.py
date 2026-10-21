@@ -1,19 +1,16 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
-"""Keeps the published security status page honest.
+"""Keeps the security advisory manifest honest.
 
-`SECURITY_STATUS.md` makes two public claims: every advisory is patched, and
-every one has a regression test. A page that drifts from reality is worse than
-no page — it converts an accurate reputation problem into an inaccurate
-reassurance. So the claims are checked here rather than trusted:
+`security/advisories.json` claims that every published advisory is patched and
+has a regression test. The claims are checked here rather than trusted:
 
 * every advisory in the manifest names at least one regression test, and every
   named test resolves to a test node pytest can actually collect;
-* the rendered page is current with the manifest;
 * the manifest is internally consistent (no duplicate or malformed entries).
 
 The collection check is the important one. Without it, renaming or deleting a
-test would leave the page advertising coverage that no longer exists.
+test would leave the manifest advertising coverage that no longer exists.
 """
 
 from __future__ import annotations
@@ -27,8 +24,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "security" / "advisories.json"
-STATUS_PAGE = ROOT / "SECURITY_STATUS.md"
-GENERATOR = ROOT / "scripts" / "generate_security_status.py"
 
 REQUIRED_FIELDS = {
     "ghsa",
@@ -102,64 +97,8 @@ def test_named_regression_test_is_collectable(reference):
         text=True,
     )
     assert result.returncode == 0, (
-        f"{reference} did not collect — the security status page names it as the "
+        f"{reference} did not collect — the advisory manifest names it as the "
         f"regression test for a published advisory.\n{result.stdout[-1500:]}"
     )
     assert "no tests ran" not in result.stdout, f"{reference} collected zero tests"
 
-
-def test_status_page_is_current():
-    """The rendered page must match the manifest."""
-    result = subprocess.run(
-        [sys.executable, str(GENERATOR), "--check"],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, (
-        "SECURITY_STATUS.md is stale. Run "
-        f"`python scripts/generate_security_status.py`.\n{result.stdout}{result.stderr}"
-    )
-
-
-def test_status_page_states_both_version_claims():
-    """The headline claims readers act on: which version ships, and which
-    version clears every advisory. They are different questions and the page
-    must not conflate them — that is how a status page starts telling readers
-    something subtly untrue."""
-    page = STATUS_PAGE.read_text(encoding="utf-8")
-
-    patched = {
-        entry["patched"].lstrip(">= ").strip()
-        for entry in advisories()
-        if entry["patched"] != "-"
-    }
-    fully_patched_from = max(
-        patched, key=lambda v: tuple(int(p) for p in v.split(".") if p.isdigit())
-    )
-
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    release = next(
-        line.split("=", 1)[1].strip().strip('"')
-        for line in pyproject.splitlines()
-        if line.startswith("version = ")
-    )
-
-    assert f"Current release: `{release}`" in page
-    assert f"fixed as of `{fully_patched_from}`" in page
-
-
-def test_status_page_release_matches_the_packaged_version():
-    """A status page naming a version the package does not ship is worse than
-    no page. This catches a version bump that forgot to regenerate."""
-    page = STATUS_PAGE.read_text(encoding="utf-8")
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    release = next(
-        line.split("=", 1)[1].strip().strip('"')
-        for line in pyproject.splitlines()
-        if line.startswith("version = ")
-    )
-    assert f"`{release}`" in page, (
-        f"SECURITY_STATUS.md does not mention the packaged version {release}. "
-        "Run `python scripts/generate_security_status.py`."
-    )

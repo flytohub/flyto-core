@@ -2,8 +2,7 @@
 
 """Regression coverage for advisory fixes that shipped without a test.
 
-Building the generated security status page (``scripts/generate_security_status.py``)
-required naming a regression test for every published advisory. Three had none —
+Building the security status page (since removed) required naming a regression test for every published advisory. Three had none —
 the fix was in the source and correct, but nothing would have caught its removal:
 
 * GHSA-hr7p-wg7r-hg9m — ``${env.VAR}`` interpolation read any environment secret

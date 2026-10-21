@@ -112,4 +112,16 @@ conventions:
   - rule: "pytest cov-fail-under should be at least 60%"
 
 verify:
-  min_docs_score: 90
+  # This repository keeps no Markdown (#143): no README for docs_coverage to
+  # score and no AGENTS.md/CLAUDE.md for agent_hygiene to read. Both are
+  # reported as warnings rather than failing --strict.
+  allow_warn:
+    - docs_coverage
+    - agent_hygiene
+
+taint:
+  sanitizers:
+    # Rejects any recipe name that resolves outside the bundled recipes
+    # directory (GHSA-mxcc); see tests/core/test_unwitnessed_advisory_fixes.py.
+    - pattern: "confine_recipe_path("
+      cleanses: ["path_traversal"]

@@ -27,7 +27,6 @@ explicit act:
 
 import ast
 import importlib.util
-import re
 from pathlib import Path
 
 import pytest
@@ -187,21 +186,21 @@ def test_entries_state_a_reason():
 # the registry held 476, which is the same class of drift as a module that is
 # documented and unreachable — a claim with nothing behind it.
 #
-# The catalog itself is verified fresh against the registry by
-# `scripts/generate_catalog.py --check` in CI, so comparing the constants to the
-# generated header chains onto that rather than duplicating its grouping rules.
+# The grouping rules (env-gated categories and plugin-owned rows excluded) live
+# in `scripts/check_catalog_facts.py`, so this asks that script rather than
+# duplicating them.
 
-CATALOG = (Path(__file__).resolve().parents[2] / "docs" / "TOOL_CATALOG.md").read_text(
-    encoding="utf-8"
-)
+FACTS_CHECK = Path(__file__).resolve().parents[2] / "scripts" / "check_catalog_facts.py"
 
 
-def test_catalog_facts_match_the_generated_catalog():
-    header = re.search(r"\*\*(\d+) modules\*\* across \*\*(\d+) categories\*\*", CATALOG)
-    assert header, "TOOL_CATALOG.md no longer states its module/category totals"
+def test_catalog_facts_match_the_first_party_inventory():
+    spec = importlib.util.spec_from_file_location("_check_catalog_facts", FACTS_CHECK)
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+    categories = checker.first_party_catalog()
 
-    assert int(header.group(1)) == catalog_facts.CORE_MODULE_COUNT
-    assert int(header.group(2)) == catalog_facts.CORE_CATALOG_CATEGORY_COUNT
+    assert sum(len(ids) for ids in categories.values()) == catalog_facts.CORE_MODULE_COUNT
+    assert len(categories) == catalog_facts.CORE_CATALOG_CATEGORY_COUNT
 
 
 def test_browser_module_count_matches_the_registry():

@@ -10,7 +10,6 @@ build-backend = "setuptools.build_meta"
 name = "flyto-core"
 version = "2.40.0"
 description = "The open-source execution engine for AI agents. 482 modules, MCP-native, triggers, queue, versioning, metering."
-readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [
@@ -97,7 +96,7 @@ image = [
     # py3.9; with the 3.10 floor that reason is gone and >= 12.2.0 is now
     # reachable. Left at 11.3.0 deliberately in this change: moving the major
     # is an image-module change that needs the image suite run against it, not
-    # a packaging edit. Tracked in ROADMAP.md.
+    # a packaging edit.
     "Pillow>=11.3.0,<13",
 ]
 crypto = [
@@ -163,8 +162,8 @@ Homepage = "https://flyto2.com"
 Documentation = "https://docs.flyto2.com"
 Repository = "https://github.com/flytohub/flyto-core"
 Issues = "https://github.com/flytohub/flyto-core/issues"
-Changelog = "https://github.com/flytohub/flyto-core/blob/main/CHANGELOG.md"
-Security = "https://github.com/flytohub/flyto-core/blob/main/SECURITY.md"
+Changelog = "https://github.com/flytohub/flyto-core/releases"
+Security = "https://github.com/flytohub/flyto-core/security/advisories"
 Blog = "https://blog.flyto2.com/posts/ai-workflow-automation-alternatives"
 Examples = "https://docs.flyto2.com/guide/first-workflow"
 Download = "https://flyto2.com/download.html"

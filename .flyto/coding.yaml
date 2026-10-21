@@ -28,25 +28,6 @@
 # encoding whose laptop wrote it.
 version: flyto.coding-config.v1
 
-# Deterministic source-to-reference rewrite available to the audited
-# implementer by name only. The argv is fixed here, runs in the isolated
-# project-action sandbox, and is still followed by the required
-# generated_reference check below.
-actions:
-  # Same interpreter as the `generated_reference` check below, on purpose: the
-  # generator and the check that diffs its output have to agree, and a bare
-  # `python` from the service PATH is not guaranteed to be the interpreter the
-  # check runs. When they differ, regeneration can produce output the check then
-  # rejects, with nothing in either result saying why.
-  - name: generate_reference
-    argv: [".venv/bin/python", "scripts/generate_reference.py"]
-    timeout_seconds: 300
-    description: Rewrite generated reference docs from the current Core source.
-  - name: generate_catalog
-    argv: [".venv/bin/python", "scripts/generate_catalog.py"]
-    timeout_seconds: 300
-    description: Rewrite the generated Core tool catalog from current registrations.
-
 checks:
   # Bounded deterministic domain-solver implementation and its complete
   # registration/catalog/manifest/transport falsification lane.
@@ -80,12 +61,6 @@ checks:
     timeout_seconds: 300
     required: true
 
-  # Project-memory scaffold contract required by CLAUDE.md/AGENTS.md.
-  - name: project_memory
-    argv: ["bash", "scripts/lint-project-memory.sh"]
-    timeout_seconds: 300
-    required: true
-
   # Byte-compile the package so syntax and import-time breakage fail fast.
   - name: compile
     argv: [".venv/bin/python", "-m", "compileall", "-q", "src"]
@@ -107,9 +82,7 @@ checks:
       - "-m"
       - "ruff"
       - "check"
-      - "scripts/generate_catalog.py"
-      - "scripts/generate_reference.py"
-      - "scripts/check_documentation.py"
+      - "scripts/check_catalog_facts.py"
       - "scripts/check_brand_identity.py"
       - "src/cli/__init__.py"
       - "src/cli/config.py"
@@ -272,8 +245,6 @@ checks:
     timeout_seconds: 300
     required: true
 
-  # Reject drift between source, API routes, CLI parsers, recipes, environment
-  # readers, workflows, and the committed generated documentation.
   # A version number that already shipped different code makes every other
   # check here describe an artifact nobody can install. Passes while the
   # version is unreleased, so it asks for a correct number, not a release.
@@ -282,8 +253,9 @@ checks:
     timeout_seconds: 60
     required: true
 
-  - name: generated_reference
-    argv: [".venv/bin/python", "scripts/check_documentation.py"]
+  # Reject drift between core/catalog_facts.py and the first-party registry.
+  - name: catalog_facts
+    argv: [".venv/bin/python", "scripts/check_catalog_facts.py"]
     timeout_seconds: 600
     required: true
 
