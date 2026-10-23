@@ -104,7 +104,6 @@ checks:
       - "src/core/api/routes/modules.py"
       - "src/core/mcp_handler.py"
       - "tests/conftest.py"
-      - "tests/test_documentation_generators.py"
       - "tests/test_version_identity.py"
       - "tests/core/test_validation.py"
       - "tests/core/api/test_routes.py"
