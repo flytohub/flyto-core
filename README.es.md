@@ -2,70 +2,63 @@
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## La IA dice «listo». Flyto2 revisa las pruebas.
+**Sí, se conecta a un robot de verdad.**
 
-**Navegadores, APIs, workflows y robots ROS 2 reales conectados mediante adaptadores externos.**
+También abre sitios web, llama APIs, trabaja con archivos y ejecuta los pasos que hay entre una cosa y otra.
 
-Abre páginas, pulsa botones, extrae datos, llama APIs y guarda archivos. Flyto2 ejecuta estos pasos, deja un registro y comprueba la evidencia según los contratos de capacidades.
+## Prueba algo.
 
-**Flyto2 es software.** No es un robot, firmware ni un controlador de motores. Para ROS 2 usamos un adaptador independiente y el software que el robot ya tiene: ROS 2 / Nav2.
+Imagina que quieres revisar una página, sacar capturas, recoger datos y guardar un informe:
 
-| | Acciones disponibles |
-|---|---|
-| 🌐 Web | Automatizar el navegador, extraer información y hacer capturas |
-| ⚡ APIs | Encadenar llamadas y procesar resultados |
-| 🧩 Workflows | Ejecutar tareas con varios pasos |
-| 🔌 MCP | Dar herramientas de ejecución a clientes de IA |
-| 🤖 ROS 2 | Conectar robots estándar mediante adaptadores externos |
-| 🦾 Capacidades | Describir acciones, límites y observaciones con contratos |
-
-**482 módulos · 89 categorías · 41 recetas listas para ejecutar.** Inventario actual de Core.
-
-## Pruébalo ahora
-
-~~~bash
-python -m pip install "flyto-core[browser]"
+```bash
+pip install "flyto-core[browser]"
 playwright install chromium
 flyto recipe competitor-intel --url https://github.com/pricing
-~~~
+```
 
-Verás los pasos ejecutados, capturas y un informe. También puedes explorar:
+Es un workflow que puedes ejecutar ahora mismo. No necesitas escribir un prompt. Abre el navegador, ejecuta los pasos y guarda los resultados.
 
-~~~bash
-flyto recipes
-flyto modules
-flyto run my-workflow.yaml
-~~~
+¿Quieres curiosear?
 
-## Software conectado con robots de verdad
+```bash
+flyto recipes                 # workflows incluidos
+flyto modules                 # herramientas disponibles
+flyto run your-workflow.yaml  # ejecuta el tuyo
+```
 
-~~~text
-Persona / IA
-     |
-Flyto2 AI Space  ->  objetivo y permisos
-     |
-flyto-core       ->  ejecución, workflows, trazas
-     |
-Adaptador ROS 2  ->  ROS 2 / Nav2  ->  TurtleBot3
-~~~
+El inventario actual de Core incluye **482 módulos registrados** y **41 recetas**. Navegador, APIs, archivos, datos, pruebas y más.
 
-La integración ROS 2 se ha desarrollado con equipos TurtleBot3 reales. La aceptación física completa de la versión integrada todavía requiere pruebas específicas; no prometemos que cualquier robot funcione nada más instalar Core.
+## ¿Y lo del robot?
 
-**Una pila de software de dispositivo, un pack independiente.** Los controladores y motores de cada marca se quedan fuera de Core.
+Ya estamos conectando Flyto2 con un **TurtleBot3 real a través de ROS 2**.
 
-## MCP para tus agentes
+El robot sigue usando ROS 2 / Nav2. Un adaptador independiente habla con él, mientras Flyto2 ejecuta los pasos de software y guarda el registro.
 
-~~~bash
-python -m pip install flyto-core
+**Sin firmware especial de Flyto2 en el robot. Sin meter controladores de motores dentro de Core.**
+
+Todavía queda la aceptación completa en hardware de la integración actual. No estamos diciendo que cualquier robot funcione con solo instalar el paquete.
+
+## ¿Qué hay en este repositorio?
+
+**flyto-core** es el motor de ejecución Python de Flyto2.
+
+Puedes usarlo desde Python, YAML, una API HTTP local o un cliente de IA mediante MCP:
+
+```bash
+pip install flyto-core
 python -m core.mcp_server
-~~~
+```
 
-MCP no concede por sí solo permiso para mover una máquina real. La autorización y los límites físicos siguen bajo el control del host.
+Conectarse por MCP no da permiso automático para mover equipos físicos. Un host de confianza debe autorizar esas acciones.
 
-## Un registro por cada paso.
+Cada pila de software de un equipo tiene su propio Pack. Los drivers específicos de cada marca quedan fuera de Core.
 
-**Evidencia para comprobar cada resultado presentado.**
+## ¿Cómo sabes qué pasó?
 
-Flyto2 ejecuta las acciones, guarda lo ocurrido y comprueba la evidencia entregada frente al contrato de capacidades.
+Flyto2 registra cada paso. Si algo falla, puedes revisar el historial y recuperar la ejecución desde un checkpoint cuando sea seguro.
 
-[Documentación](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Licencia](LICENSE) · [README completo en inglés](README.md)
+Y cuando una herramienta responde «hecho», Core puede comprobar las pruebas presentadas frente al contrato de esa capacidad.
+
+---
+
+[Sitio web](https://flyto2.com) · [Documentación](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Issues](https://github.com/flytohub/flyto-core/issues) · [Apache-2.0](LICENSE)
