@@ -123,15 +123,11 @@ flyto serve
 
 By default the server binds to 127.0.0.1:8333. Do not expose it publicly without the proper authentication and network controls.
 
-## Built to run. Built to know what happened.
+## AI says it's done. Flyto2 checks the receipts.
 
-Every serious execution engine needs to answer three questions: **What ran? What changed? What happens next?**
+**Every step leaves a record. Every result has evidence to check.**
 
-Flyto2 records each step, supports checkpoints and bounded replay, and checks declared execution evidence. An action's “success” response is not automatically proof that a physical goal was achieved. The Flyto2 host / AI Space handles approvals, independent observations and the final task verdict.
-
-That technology is underneath the experience — **the experience is doing real work.**
-
-**Less chat. More action.**
+Flyto2 runs the steps, keeps the execution trail, and checks reported evidence against the capability contract. No need to take an AI's word for it.
 
 [Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [YouTube](https://www.youtube.com/@Flyto2) · [Issues](https://github.com/flytohub/flyto-core/issues)
 
