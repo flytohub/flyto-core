@@ -82,7 +82,7 @@ flyto-core               workflow, execution, contracts, trace
                   +--> ROS 2 / Nav2 --> TurtleBot3
 ~~~
 
-The [Flyto2 robotics adapter](https://github.com/flytohub/flyto-robotics) is developed against real TurtleBot3 equipment. The latest combined end-to-end physical acceptance is still a separate verification step — we don't present a software integration as an already certified robot deployment.
+The Flyto2 robotics adapter is developed against real TurtleBot3 equipment. The latest combined end-to-end physical acceptance is still a separate verification step — we don't present a software integration as an already certified robot deployment.
 
 **One device software stack, one pack.** Drivers, motors, robot models and vendor SDKs live outside Core. Core stays independent of the brand of robot, arm or connected device.
 
