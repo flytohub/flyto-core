@@ -62,6 +62,10 @@ python -m core.mcp_server
 
 MCP não libera sozinho a movimentação de equipamento físico. Permissões e limites de segurança são responsabilidade do host.
 
-**Menos conversa. Mais ação.**
+## A IA disse que terminou. O Flyto2 confere as provas.
+
+**Cada etapa fica registrada. Cada resultado tem evidências para conferir.**
+
+O Flyto2 executa as ações, registra o que aconteceu e verifica as evidências entregues conforme o contrato de capacidade.
 
 [Documentação](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Licença](LICENSE) · [README completo em inglês](README.md)
