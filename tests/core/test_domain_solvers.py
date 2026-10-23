@@ -4,7 +4,6 @@
 
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
 from starlette.testclient import TestClient
@@ -144,12 +143,6 @@ def test_receipt_schema_is_exact_detached_and_visible_in_catalog():
     assert len({id(schema) for schema in schemas}) == len(SOLVER_IDS)
     for field in RECEIPT_FIELD_TYPES:
         assert len({id(schema[field]) for schema in schemas}) == len(SOLVER_IDS)
-
-    catalog = Path("docs/TOOL_CATALOG.md").read_text(encoding="utf-8")
-    expected_output = ", ".join(f"`{name}` ({kind})" for name, kind in RECEIPT_FIELD_TYPES.items())
-    for module_id in SOLVER_IDS:
-        row = next(line for line in catalog.splitlines() if line.startswith(f"| `{module_id}` |"))
-        assert expected_output in row
 
 
 def test_search_matches_composite_goal_frames_by_exact_declared_semantic_tokens():

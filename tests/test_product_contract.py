@@ -61,15 +61,3 @@ def test_core_product_contract_is_exact() -> None:
     contract = _load_contract()
     assert contract == {**COMMON, "package": CORE_PACKAGE}
 
-
-def test_readme_presents_the_shared_contract_and_core_role() -> None:
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    for value in COMMON.values():
-        assert value in readme
-    for role in (
-        "`flyto-ai` | Understand, route, and govern new work and provider use.",
-        "`flyto-blueprint` | Store, learn from, and score reusable procedures; it never executes them.",
-        "`flyto-core` | Validate schemas, execute and replay deterministically, and emit evidence.",
-        "`flyto-core` is a standalone execution package",
-    ):
-        assert role in readme

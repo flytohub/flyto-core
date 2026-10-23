@@ -1,30 +1,25 @@
 # Copyright 2026 Flyto2. Licensed under Apache-2.0. See LICENSE.
 
-"""The generated catalog must be a property of the source, not of the machine.
+"""The first-party inventory must be a property of the source, not of the machine.
 
-`docs/TOOL_CATALOG.md` is generated from the live `ModuleRegistry`, and some
-module categories only register when an optional dependency is importable
-(`huggingface` checks `find_spec("transformers")` before importing anything).
-That made the output depend on which extras the developer happened to have:
-running the generator on a machine with the `vector` extra installed — which
-pulls `transformers` in transitively — silently rewrote the catalog to advertise
-7 modules and a whole category that a default `pip install flyto-core` does not
-expose, and every cross-referencing count in README/STATE/ARCHITECTURE with it.
+`scripts/check_catalog_facts.py` counts the live `ModuleRegistry` and compares
+the result to `core/catalog_facts.py`. Some module categories only register when
+an optional dependency is importable (`huggingface` checks
+`find_spec("transformers")` before importing anything), so a machine with the
+`vector` extra installed — which pulls `transformers` in transitively — would
+count 7 modules and a whole category that a default `pip install flyto-core`
+does not expose.
 
-That is a bad failure mode because it is invisible: the generator succeeds, the
-diff looks intentional, and the next person to regenerate on a clean machine
-reverts it. So the guarantee is enforced here rather than documented and hoped
-for: the generator is run twice in subprocesses, once with the gating dependency
-visible and once with it hidden, and the two outputs must be byte-identical.
+That is a bad failure mode because it is invisible: the check passes on one
+machine and fails on the next for reasons unrelated to the change under review.
+So the guarantee is enforced here: the check is run in subprocesses, once with
+the gating dependency visible and once with it hidden, and the two module lists
+must be identical.
 
-Installed plugins are the same failure by a second route. The catalog is built
-from the live `ModuleRegistry`, which is deliberately open to any distribution
-declaring a `flyto.modules` entry point — so a checkout with a module pack
-installed generated a catalog carrying that pack's modules. `--check` then
-passed inside the clean release container and failed on the developer's host,
-for reasons that had nothing to do with the change under review. The same
-technique covers it: the generator is run against a described plugin whose
-modules must not reach the file.
+Installed plugins are the same failure by a second route. The registry is
+deliberately open to any distribution declaring a `flyto.modules` entry point,
+so the check is also run against a described plugin whose modules must not be
+counted.
 """
 
 from __future__ import annotations
@@ -37,8 +32,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERATOR = ROOT / "scripts" / "generate_catalog.py"
-CATALOG = ROOT / "docs" / "TOOL_CATALOG.md"
+CHECKER = ROOT / "scripts" / "check_catalog_facts.py"
 
 # Written into a temporary PYTHONPATH entry to simulate a machine that does not
 # have the gating dependency, without touching the real environment.
@@ -58,10 +52,9 @@ def find_spec(name, *args, **kwargs):
 importlib.util.find_spec = find_spec
 '''
 
-# The module a described plugin registers. Its category sorts last and belongs
-# to no real one, so if it ever reached the file it would move the module count,
-# the category count, the table of contents and a whole section — a leak cannot
-# be mistaken for noise.
+# The module a described plugin registers. Its category belongs to no real one,
+# so if it were ever counted it would move both the module and category totals
+# — a leak cannot be mistaken for noise.
 PLUGIN_MODULE_ID = "zzplugin.scan"
 PLUGIN_NAME = "zzplugin"
 
@@ -70,7 +63,7 @@ PLUGIN_NAME = "zzplugin"
 # `sitecustomize` runs before anything imports the registry, so patching
 # `importlib.metadata.entry_points` here reaches the name the registry binds at
 # import time. That is what makes this a faithful stand-in for a real installed
-# plugin rather than a monkeypatch of the generator's own internals.
+# plugin rather than a monkeypatch of the checker's own internals.
 _PLUGIN_SHIM = '''\
 import importlib.metadata as _md
 
@@ -136,18 +129,18 @@ _md.entry_points = entry_points
 
 
 def _gating_dependencies() -> set[str]:
-    """The optional distributions that gate a category, read from the generator."""
-    # Kept in sync with scripts/generate_catalog.py rather than duplicated: the
-    # category name maps to the distribution its __init__ checks for.
-    source = GENERATOR.read_text(encoding="utf-8")
+    """The optional distributions that gate a category, read from the checker."""
+    # Kept in sync with scripts/check_catalog_facts.py rather than duplicated:
+    # the category name maps to the distribution its __init__ checks for.
+    source = CHECKER.read_text(encoding="utf-8")
     assert "_ENV_GATED_CATEGORIES" in source, (
-        "generate_catalog.py no longer declares _ENV_GATED_CATEGORIES; the "
-        "catalog may have become environment-dependent again."
+        "check_catalog_facts.py no longer declares _ENV_GATED_CATEGORIES; the "
+        "inventory may have become environment-dependent again."
     )
     return {"transformers"}
 
 
-def _run_generator(extra_pythonpath: str | None) -> subprocess.CompletedProcess:
+def _run_checker(extra_pythonpath: str | None) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     if extra_pythonpath:
         existing = env.get("PYTHONPATH", "")
@@ -155,7 +148,7 @@ def _run_generator(extra_pythonpath: str | None) -> subprocess.CompletedProcess:
             f"{extra_pythonpath}{os.pathsep}{existing}" if existing else extra_pythonpath
         )
     return subprocess.run(
-        [sys.executable, str(GENERATOR), "--check"],
+        [sys.executable, str(CHECKER), "--list"],
         cwd=ROOT,
         env=env,
         capture_output=True,
@@ -163,12 +156,10 @@ def _run_generator(extra_pythonpath: str | None) -> subprocess.CompletedProcess:
     )
 
 
-def _counts(result: subprocess.CompletedProcess) -> str:
-    """The generator's own reported totals, so a mismatch names the numbers."""
-    for line in result.stdout.splitlines():
-        if "modules across" in line:
-            return line.strip()
-    return f"<no count line: {result.stdout!r} {result.stderr!r}>"
+def _inventory(result: subprocess.CompletedProcess) -> list[str]:
+    """Every counted module id followed by the checker's own totals line."""
+    assert result.stdout, f"checker printed nothing: {result.stderr!r}"
+    return result.stdout.splitlines()
 
 
 @pytest.fixture
@@ -219,136 +210,85 @@ def test_the_plugin_shim_really_registers_a_module(installed_plugin_path):
     )
 
 
-def test_committed_catalog_ignores_an_installed_plugin(installed_plugin_path):
+def test_check_passes_with_an_installed_plugin(installed_plugin_path):
     """The check that made the host and the container disagree.
 
-    A machine with any `flyto.modules` distribution installed must generate the
-    same catalog as a clean one; otherwise `--check` reports a change nobody
+    A machine with any `flyto.modules` distribution installed must count the
+    same inventory as a clean one; otherwise the check reports a change nobody
     made and the fix is to uninstall a package."""
-    result = _run_generator(installed_plugin_path)
+    result = _run_checker(installed_plugin_path)
     assert result.returncode == 0, (
-        "docs/TOOL_CATALOG.md depends on which plugin packages are installed. "
-        "The generator must exclude plugin-owned modules so the catalog stays a "
-        "property of this source tree.\n" + result.stdout + result.stderr
+        "The first-party inventory depends on which plugin packages are "
+        "installed. Plugin-owned modules must be excluded.\n"
+        + result.stdout[-1500:]
+        + result.stderr
     )
 
 
-def test_catalog_counts_are_unchanged_by_an_installed_plugin(installed_plugin_path):
-    """Compare the reported totals, so a mismatch names the numbers."""
-    clean = _run_generator(None)
-    with_plugin = _run_generator(installed_plugin_path)
+def test_inventory_is_unchanged_by_an_installed_plugin(installed_plugin_path):
+    """Compare the full module list, so a leak names the module."""
+    clean = _inventory(_run_checker(None))
+    with_plugin = _inventory(_run_checker(installed_plugin_path))
 
-    assert _counts(clean) == _counts(with_plugin), (
-        "The catalog generator reports different totals depending on which "
-        "plugin packages are installed:\n"
-        f"  without plugin: {_counts(clean)}\n"
-        f"  with plugin:    {_counts(with_plugin)}"
+    assert PLUGIN_MODULE_ID not in with_plugin
+    assert clean == with_plugin, (
+        "The inventory differs depending on which plugin packages are installed: "
+        f"{sorted(set(clean) ^ set(with_plugin))}"
     )
 
 
-def test_committed_catalog_lists_no_plugin_module():
-    """The counts could agree while a plugin module still appeared somewhere.
-
-    Read the committed file. Together with the check above — which proves a
-    with-plugin render equals this file byte for byte — that closes it."""
-    catalog = CATALOG.read_text(encoding="utf-8")
-    assert PLUGIN_MODULE_ID not in catalog
-    assert f"## {PLUGIN_NAME}" not in catalog
-    assert "plugin packages are excluded" in catalog, (
-        "The catalog no longer says its counts exclude installed plugins, so a "
-        "reader cannot tell whether the number is core-only."
-    )
-
-
-def test_the_catalog_documents_how_ownership_is_decided():
-    """The rule itself has to be readable, not only its consequence.
-
-    "Plugin modules are excluded" does not tell a reader what happens to a row
-    whose owner is `null`, or missing, or not a mapping at all — and those are
-    exactly the shapes the exclusion fails closed on. Someone auditing whether a
-    module belongs to Core must be able to learn the rule from the file rather
-    than from the generator's source."""
-    catalog = CATALOG.read_text(encoding="utf-8")
-    assert "exactly the empty string" in catalog, (
-        "The catalog no longer states that first-party means an owner of "
-        "exactly `\"\"`, so a reader cannot tell how a malformed or unowned row "
-        "was classified."
-    )
-    assert "not a metadata mapping" in catalog, (
-        "The catalog no longer says a row that is not a mapping counts as "
-        "plugin-owned, which is the conservative half of the rule."
-    )
-
-
-def test_committed_catalog_is_current_in_this_environment():
-    """Baseline: the catalog matches what this machine generates."""
-    result = _run_generator(None)
+def test_check_passes_in_this_environment():
+    """Baseline: core/catalog_facts.py matches what this machine registers."""
+    result = _run_checker(None)
     assert result.returncode == 0, (
-        "docs/TOOL_CATALOG.md is stale. Run "
-        f"`python scripts/generate_catalog.py`.\n{result.stdout}{result.stderr}"
+        "core/catalog_facts.py is stale. Update it to the totals reported by "
+        f"`python scripts/check_catalog_facts.py`.\n{result.stdout[-500:]}{result.stderr}"
     )
 
 
-def test_committed_catalog_is_current_without_the_optional_dependency(
-    hidden_dependency_path,
-):
-    """The same catalog must be correct on a machine without the extras.
+def test_check_passes_without_the_optional_dependency(hidden_dependency_path):
+    """The same facts must hold on a machine without the extras.
 
-    This is the check that matters. If it fails while the test above passes,
-    the committed catalog was generated on a machine with an optional extra
-    installed and advertises modules the released package does not expose.
+    If this fails while the test above passes, the facts were counted on a
+    machine with an optional extra installed and advertise modules the released
+    package does not expose.
     """
-    result = _run_generator(hidden_dependency_path)
+    result = _run_checker(hidden_dependency_path)
     assert result.returncode == 0, (
-        "docs/TOOL_CATALOG.md is only valid on a machine that has the optional "
-        "dependency installed. Regenerate it — the generator must exclude "
-        "environment-gated categories.\n" + result.stdout + result.stderr
+        "core/catalog_facts.py is only valid on a machine that has the optional "
+        "dependency installed. Environment-gated categories must be excluded.\n"
+        + result.stdout[-500:]
+        + result.stderr
     )
 
 
-def test_catalog_counts_agree_across_environments(hidden_dependency_path):
-    """Both runs must report the same module and category totals.
+def test_inventory_agrees_across_environments(hidden_dependency_path):
+    """Both runs must count exactly the same modules."""
+    with_dep = _inventory(_run_checker(None))
+    without_dep = _inventory(_run_checker(hidden_dependency_path))
 
-    Compares the generator's own reported counts rather than only its exit
-    status, so a mismatch names the numbers instead of just failing."""
-    with_dep = _run_generator(None)
-    without_dep = _run_generator(hidden_dependency_path)
-
-    assert _counts(with_dep) == _counts(without_dep), (
-        "The catalog generator reports different totals depending on which "
-        f"optional dependencies are installed:\n"
-        f"  with:    {_counts(with_dep)}\n"
-        f"  without: {_counts(without_dep)}"
+    assert with_dep == without_dep, (
+        "The inventory differs depending on which optional dependencies are "
+        f"installed: {sorted(set(with_dep) ^ set(without_dep))}"
     )
 
 
-def test_catalog_documents_the_exclusion():
-    """A reader must be able to tell the counts exclude optional categories,
-    otherwise the number looks like the whole story."""
-    catalog = CATALOG.read_text(encoding="utf-8")
-    assert "default `pip install flyto-core`" in catalog
-    assert "huggingface" in catalog, (
-        "The catalog no longer names the excluded optional category, so its "
-        "module count silently under-reports what the package can offer."
-    )
-
-
-def _load_generator():
-    """`scripts/` is not a package, so import the generator by path."""
+def _load_checker():
+    """`scripts/` is not a package, so import the checker by path."""
     import importlib.util as _iu
 
-    spec = _iu.spec_from_file_location("_generate_catalog_under_test", GENERATOR)
+    spec = _iu.spec_from_file_location("_check_catalog_facts_under_test", CHECKER)
     module = _iu.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
 def _load_is_plugin_owned():
-    return _load_generator()._is_plugin_owned
+    return _load_checker()._is_plugin_owned
 
 
 def test_only_an_exactly_empty_owner_counts_as_first_party():
-    """The one row shape the catalog may publish as flyto-core's own.
+    """The one row shape the inventory may count as flyto-core's own.
 
     "Exactly" governs the row's type as well as its owner. `isinstance(meta,
     dict)` admitted every subclass, and a subclass decides what `.get` returns —
@@ -379,7 +319,7 @@ def test_only_an_exactly_empty_owner_counts_as_first_party():
 
     # And an ordinary subclass is refused too. The rule is "the registry's own
     # exact dict", not "anything that has not been caught lying yet" — the
-    # catalog cannot tell the two apart without asking the row.
+    # inventory cannot tell the two apart without asking the row.
     plain_subclass = type("_SubclassRow", (dict,), {})
     assert is_plugin_owned(plain_subclass({"plugin": ""})) is True
 
@@ -426,10 +366,10 @@ def test_a_row_that_is_not_a_mapping_is_plugin_owned(meta):
 
     `(meta or {}).get("plugin")` assumed every row was either a dict or falsy.
     Anything else — a string, a list, an arbitrary object — has no `.get`, so
-    the ownership test raised `AttributeError` and took the whole generator with
-    it: one bad row and `python scripts/generate_catalog.py` produces a
-    traceback instead of a catalog, and `--check` fails in CI for a reason that
-    names no module.
+    the ownership test raised `AttributeError` and took the whole check with
+    it: one bad row and `python scripts/check_catalog_facts.py` produces a
+    traceback instead of an inventory, and CI fails for a reason that names no
+    module.
 
     Note that `""` and `[]` are the sharper cases. They are falsy, so the old
     expression turned them into `{}` and read the *absent* key — the same path a
@@ -442,35 +382,27 @@ def test_a_row_that_is_not_a_mapping_is_plugin_owned(meta):
     assert _load_is_plugin_owned()(meta) is True
 
 
-def test_the_generator_renders_past_a_malformed_row(monkeypatch):
+def test_the_inventory_survives_a_malformed_row(monkeypatch):
     """Classifying correctly is only half of it — the order has to hold too.
 
-    `render_catalog` reads `ui_description`, `params_schema` and `output_schema`
-    off each row. If a row that is not a mapping reached any of those, the run
-    would still die on `.get`; the ownership test has to be the thing that
-    excludes it, and it has to run first. Driving the real renderer over a
-    described set of rows proves both at once — the malformed row is skipped,
-    the plugin row is skipped, and the one first-party row is still published
-    with its counts intact.
+    The ownership test has to be the thing that excludes a malformed row, and it
+    has to run before anything else reads the row. Driving the real inventory
+    over a described set of rows proves both at once — the malformed row is
+    skipped, the plugin rows are skipped, and the one first-party row is still
+    counted.
     """
     from core.modules.registry import ModuleRegistry
 
-    generator = _load_generator()
+    checker = _load_checker()
     rows = {
-        "http.get": {
-            "plugin": "",
-            "ui_description": "a first-party row",
-            "params_schema": {"url": {"type": "string", "required": True}},
-            "output_schema": {"body": {"type": "string"}},
-        },
+        "http.get": {"plugin": "", "ui_description": "a first-party row"},
         "broken.row": "this row is not a mapping at all",
         "unowned.row": {"ui_description": "stored without an owner stamp"},
         # A row that passes `isinstance(meta, dict)` and answers the ownership
-        # probe with `""` while storing a plugin's name. Everything the renderer
-        # reads off it afterwards comes from the same overridden `get`, so if
-        # the exclusion took its word the catalog would publish a plugin's
-        # module under Core's name — the exact failure the boundary exists to
-        # prevent, arriving in the one shape `isinstance` waves through.
+        # probe with `""` while storing a plugin's name. If the exclusion took
+        # its word, a plugin's module would be counted as Core's — the exact
+        # failure the boundary exists to prevent, arriving in the one shape
+        # `isinstance` waves through.
         "lying.row": type(
             "_LyingRow",
             (dict,),
@@ -485,12 +417,4 @@ def test_the_generator_renders_past_a_malformed_row(monkeypatch):
         ModuleRegistry, "get_all_metadata", classmethod(lambda cls, **kw: rows)
     )
 
-    content, total, cat_count = generator.render_catalog()
-
-    assert (total, cat_count) == (1, 1)
-    assert "`http.get`" in content
-    assert "broken.row" not in content
-    assert "unowned.row" not in content
-    assert "lying.row" not in content
-    assert "claims to be first-party" not in content
-    assert PLUGIN_MODULE_ID not in content
+    assert checker.first_party_catalog() == {"http": ["http.get"]}
