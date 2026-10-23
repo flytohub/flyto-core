@@ -2,11 +2,11 @@
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## MENOS CHARLA. MÁS ACCIÓN.
+## La IA dice «listo». Flyto2 revisa las pruebas.
 
 **Navegadores, APIs, workflows y robots ROS 2 reales conectados mediante adaptadores externos.**
 
-La IA puede explicarte lo que hay que hacer. Flyto2 da el siguiente paso: abrir páginas, pulsar botones, extraer datos, llamar APIs, guardar archivos y convertir todo eso en workflows ejecutables.
+Abre páginas, pulsa botones, extrae datos, llama APIs y guarda archivos. Flyto2 ejecuta estos pasos, deja un registro y comprueba la evidencia según los contratos de capacidades.
 
 **Flyto2 es software.** No es un robot, firmware ni un controlador de motores. Para ROS 2 usamos un adaptador independiente y el software que el robot ya tiene: ROS 2 / Nav2.
 
@@ -62,9 +62,9 @@ python -m core.mcp_server
 
 MCP no concede por sí solo permiso para mover una máquina real. La autorización y los límites físicos siguen bajo el control del host.
 
-## La IA dice «listo». Flyto2 mira las pruebas.
+## Un registro por cada paso.
 
-**Cada paso deja un registro. Cada resultado tiene evidencia que revisar.**
+**Evidencia para comprobar cada resultado presentado.**
 
 Flyto2 ejecuta las acciones, guarda lo ocurrido y comprueba la evidencia entregada frente al contrato de capacidades.
 
