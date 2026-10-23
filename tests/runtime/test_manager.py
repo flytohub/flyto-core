@@ -591,7 +591,11 @@ class TestPluginManagerIdleReclaim:
             raise RuntimeError("plugin exploded")
 
         assert await manager._start_sweeper("_health_check_task", "health", 0.01, boom)
-        await asyncio.sleep(0.05)
+        # Wait for the second sweep rather than guessing how many fit in a
+        # fixed sleep: under a loaded machine 50 ms held a single sweep.
+        deadline = asyncio.get_running_loop().time() + 5.0
+        while len(sweeps) < 2 and asyncio.get_running_loop().time() < deadline:
+            await asyncio.sleep(0.01)
         task = manager._health_check_task
 
         assert len(sweeps) > 1

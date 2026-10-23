@@ -14,6 +14,10 @@ from .enums import ContextType
 # Default context requirements by category
 # Used when module does not explicitly declare requires_context
 DEFAULT_CONTEXT_REQUIREMENTS: Dict[str, List[ContextType]] = {
+    # A browser step works on the session an earlier step opened. The modules
+    # that open one (browser.launch, .connect, .ensure, .pool, .proxy_rotate)
+    # declare requires_context=[] and provides_context themselves.
+    "browser": [ContextType.BROWSER],
     # Browser-related: require browser context
     "page": [ContextType.BROWSER],
     "scraper": [ContextType.BROWSER],
@@ -32,8 +36,8 @@ DEFAULT_CONTEXT_REQUIREMENTS: Dict[str, List[ContextType]] = {
 # Default context provisions by category
 # Used when module does not explicitly declare provides_context
 DEFAULT_CONTEXT_PROVISIONS: Dict[str, List[ContextType]] = {
-    # Browser: provides browser context
-    "browser": [ContextType.BROWSER, ContextType.PAGE],
+    # Browser: no default. Using a session is not opening one; only the
+    # modules that open a session declare that they provide it.
 
     # File: provides file context
     "file": [ContextType.FILE],
@@ -59,6 +63,17 @@ DEFAULT_CONTEXT_PROVISIONS: Dict[str, List[ContextType]] = {
 
     # Flow: passes through context (neutral)
     "flow": [],
+}
+
+
+# Contexts that are a session some step must establish before a step that
+# requires it can run, and the module a person is offered to establish it.
+# Save validation refuses a step whose requirement no upstream step provides
+# (``validation.workflow``: CONTEXT_NOT_ESTABLISHED). A context absent here
+# (data, file, ...) describes an input, not a session, and is not enforced.
+CONTEXT_ESTABLISHERS: Dict[str, str] = {
+    ContextType.BROWSER.value: "browser.launch",
+    ContextType.PAGE.value: "browser.launch",
 }
 
 

@@ -295,6 +295,7 @@ def _nested_failure_outcome(result: Dict[str, Any]) -> Dict[str, Any]:
             }
         },
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'OpenAI API Key',
             'label_key': 'modules.ui.evaluate.params.api_key.label',

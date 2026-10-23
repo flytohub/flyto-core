@@ -51,6 +51,10 @@ from ._session_outcome import read_engine, started_claim
     module_id='browser.launch',
     version='2.0.0',
     category='browser',
+    # Opens the browser session later browser steps work on (the session
+    # contract save validation reads; see types/context.py).
+    requires_context=[],
+    provides_context=['browser', 'page'],
     tags=['browser', 'automation', 'setup', 'ssrf_protected'],
     label='Launch Browser',
     label_key='modules.browser.launch.label',

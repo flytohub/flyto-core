@@ -83,6 +83,7 @@ from .....engine.outcome import ClaimBy, Outcome, envelope
             "required": True,
         },
         "access_token": {
+            'secret': True,
             "type": "string",
             "label": "Access Token",
             "placeholder": "${env.SALESFORCE_ACCESS_TOKEN}",

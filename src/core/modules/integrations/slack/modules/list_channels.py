@@ -81,6 +81,7 @@ from .....engine.outcome import ClaimBy, Outcome, envelope
             "required": False,
         },
         "token": {
+            'secret': True,
             "type": "string",
             "label": "Bot Token",
             "placeholder": "${env.SLACK_BOT_TOKEN}",

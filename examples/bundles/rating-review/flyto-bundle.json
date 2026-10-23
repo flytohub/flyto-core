@@ -1,0 +1,18 @@
+{
+  "schema": "flyto.bundle.v1",
+  "bundle": {
+    "id": "com.example.rating-review",
+    "version": "0.1.0",
+    "title": "Rating review",
+    "description": "One company's rating and findings, written up as a short report."
+  },
+  "packs": [
+    {"id": "com.example.ratings", "version": "0.1.0"}
+  ],
+  "workflows": [
+    {"name": "rating-review", "path": "workflows/rating-review.json"}
+  ],
+  "templates": [
+    {"name": "rating-summary", "path": "templates/rating-summary.md", "media_type": "text/markdown"}
+  ]
+}

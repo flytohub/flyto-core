@@ -191,6 +191,7 @@ def _refused(status: int, body: str) -> Dict[str, Any]:
             'required': True
         },
         'access_token': {
+            'secret': True,
             'type': 'password',
             'label': 'Access Token',
             'description': 'Meta access token for WhatsApp Business API',

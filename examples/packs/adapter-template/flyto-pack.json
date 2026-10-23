@@ -1,0 +1,79 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.positioner",
+    "version": "0.1.0",
+    "namespaces": ["positioner"],
+    "title": "Adapter template: one simulated linear axis",
+    "description": "Template for a third-party adapter pack. Replace the simulated axis in runner/main.py with your device.",
+    "license": "Apache-2.0",
+    "min_host": "2.40.0"
+  },
+  "runtime": {
+    "binding": "subprocess-jsonrpc",
+    "language": "python",
+    "entry": "runner/main.py",
+    "request_timeout_ms": 30000
+  },
+  "modules": [
+    {
+      "module_id": "positioner.move_to",
+      "label": {"en": "Move to position", "zh-TW": "移動到位置"},
+      "description": "Moves the axis to an absolute position, refusing any target outside its travel.",
+      "provides_capability": "positioner.move_to",
+      "params_schema": {
+        "target_mm": {"type": "number", "required": true, "min": 0, "max": 300, "unit": "mm"}
+      },
+      "timeout_ms": 30000,
+      "contract": {
+        "actuates": true,
+        "safety_class": "movement",
+        "requires_safe_stop": true,
+        "cancellable": true,
+        "idempotent": false,
+        "effects": ["position.changed"],
+        "expected_duration_ms": 20000,
+        "evidence": [
+          {
+            "kind": "position_reached",
+            "observe": "axis_position",
+            "phases": ["after", "settled"],
+            "measure": {"op": "distance_to", "fields": ["position_mm"]},
+            "expect": {"arguments": {"position_mm": "target_mm"}},
+            "tolerance": {"absolute": 0.5},
+            "label": {"en": "Distance from target", "zh-TW": "離目標距離"},
+            "unit": "mm"
+          }
+        ]
+      }
+    },
+    {
+      "module_id": "positioner.read_position",
+      "label": {"en": "Read position", "zh-TW": "讀取位置"},
+      "description": "Reports the axis position. Moves nothing.",
+      "provides_capability": "positioner.read_position",
+      "contract": {
+        "actuates": false,
+        "safety_class": "read_only",
+        "requires_safe_stop": false,
+        "cancellable": true,
+        "idempotent": true
+      }
+    },
+    {
+      "module_id": "positioner.halt",
+      "label": {"en": "Stop the axis", "zh-TW": "停止軸"},
+      "description": "Stops the axis where it is.",
+      "provides_capability": "positioner.halt",
+      "contract": {
+        "actuates": true,
+        "safety_class": "controlled",
+        "requires_safe_stop": false,
+        "cancellable": false,
+        "idempotent": true,
+        "role": "safe_stop",
+        "effects": ["safe_stop"]
+      }
+    }
+  ]
+}

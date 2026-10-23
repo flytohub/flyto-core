@@ -554,6 +554,9 @@ FIXED_VENDOR_HOST_SESSIONS = frozenset({
     'core/modules/third_party/productivity/airtable.py',
     'core/modules/third_party/productivity/tools/notion_create_page.py',
     'core/modules/third_party/productivity/tools/notion_query.py',
+    # Flyto2 Runtime bridge: _normalize_bridge_url admits only the literal
+    # loopback addresses 127.0.0.1 and ::1, so no resolver picks the host.
+    'core/runtime/capability_bridge.py',
 })
 
 

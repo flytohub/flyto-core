@@ -37,7 +37,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..modules.base import BaseModule
 from ..plugin.manifest import (
@@ -45,6 +45,7 @@ from ..plugin.manifest import (
     plugin_environment_names,
     validate_plugin_endpoint,
 )
+from .connector_gate import EntitledListing
 from .manifest import (
     LOADABLE_BINDINGS,
     PACK_SCHEMA,
@@ -54,7 +55,8 @@ from .manifest import (
     read_pack_manifest,
     stage_pack_tree,
 )
-from .signature import read_signature, verify_manifest_signature
+from .publisher_keys import verify_publisher
+from .signature import read_signature
 
 logger = logging.getLogger(__name__)
 
@@ -315,24 +317,103 @@ class PackModule(BaseModule):
         return _failure(code, message)
 
 
+class ConnectorModule(PackModule):
+    """A connector operation: a declared HTTP call, run by ``core.pack.connector_runtime``.
+
+    Unlike a process pack, the call runs in this process, so the module hands
+    the runtime the execution context's ``secrets`` layer to resolve the
+    credential the pack names. Nothing leaves this process but the request.
+    """
+
+    #: The operation's ``sensitive`` JSONPaths, parsed once at install.
+    _sensitive: Tuple[Tuple[Any, ...], ...] = ()
+
+    @classmethod
+    def sensitive_result_paths(cls, result: Any) -> frozenset:
+        """The leaves of ``result`` the operation declares sensitive (``sensitive``)."""
+        from .connector_runtime import sensitive_result_paths
+
+        return sensitive_result_paths(cls._sensitive, result)
+
+    async def execute(self) -> Dict[str, Any]:
+        """Run the declared operation."""
+        installed = _INSTALLED.get(self.pack_id)
+        if installed is None:
+            return _failure("PACK_NOT_INSTALLED", f"pack '{self.pack_id}' is not installed")
+        context = self.context if isinstance(self.context, dict) else {}
+        secrets = context.get("secrets")
+        # Only the named credential from ``secrets`` and the caller's scope
+        # grants reach the runtime; nothing else in the context does.
+        return await installed.transport.call(
+            self.module_id, dict(self.params), secrets if isinstance(secrets, Mapping) else {}, self._row_timeout_ms,
+            context.get("scope_grants"),
+        )
+
+
+async def effective_module_ids(pack_id: str, secrets: Mapping[str, Any]) -> List[str]:
+    """The installed pack's module ids this credential may be offered: the pre-check's listing.
+
+    A connector pack lists only the operations whose ``requires.features`` the
+    provider's entitlement answer holds (read through the same probe and
+    cache every call uses). Any other pack has no entitlements, so all its
+    modules are listed. An uninstalled pack lists nothing.
+    """
+    return list((await entitled_listing(pack_id, secrets)).module_ids)
+
+
+async def entitled_listing(pack_id: str, secrets: Mapping[str, Any]) -> EntitledListing:
+    """:func:`effective_module_ids` with what the listing stood on (``EntitledListing``).
+
+    One listing for every surface that offers a pack's operations: a Space's
+    module listing and a standalone server's ``tools/list`` both read it.
+    """
+    installed = _INSTALLED.get(pack_id)
+    if installed is None:
+        return EntitledListing(module_ids=(), source="unreadable", error_code="PACK_NOT_INSTALLED")
+    listing = getattr(installed.transport, "entitled_listing", None)
+    if listing is None:
+        return EntitledListing(module_ids=tuple(sorted(row["module_id"] for row in installed.manifest["modules"])),
+                               source="not_required")
+    return await listing(secrets if isinstance(secrets, Mapping) else {})
+
+
+def _connector_attributes(manifest: Mapping[str, Any], row: Mapping[str, Any]) -> Dict[str, Any]:
+    from .connector import module_id_for
+    from .connector_runtime import parse_sensitive
+
+    namespace = manifest["pack"]["namespaces"][0]
+    for op in manifest["connector"]["operations"]:
+        if module_id_for(namespace, op["id"]) == row["module_id"]:
+            return {"_sensitive": parse_sensitive(op["sensitive"])}
+    raise ValueError("connector module row has no operation")
+
+
+#: Binding -> the module class a row is registered as, and the class
+#: attributes it needs beyond the row itself.
+_MODULE_CLASSES = {
+    "connector": (ConnectorModule, _connector_attributes),
+}
+
+
 def _failure(code: str, message: str) -> Dict[str, Any]:
     """The failure shape atomic modules return: ``ok`` false, message and code."""
     return {"ok": False, "error": message, "error_code": code}
 
 
-def _proxy_class(pack_id: str, row: Mapping[str, Any]) -> type:
+def _proxy_class(pack_id: str, row: Mapping[str, Any], manifest: Optional[Mapping[str, Any]] = None) -> type:
     name = "Pack_" + "".join(ch if ch.isalnum() else "_" for ch in row["module_id"])
-    return type(
-        name,
-        (PackModule,),
-        {
-            "__doc__": f"{row['module_id']} from pack {pack_id}.",
-            "__module__": __name__,
-            "module_id": row["module_id"],
-            "pack_id": pack_id,
-            "_row_timeout_ms": row["timeout_ms"],
-        },
-    )
+    binding = (manifest or {}).get("runtime", {}).get("binding")
+    base, extra = _MODULE_CLASSES.get(binding, (PackModule, None))
+    attributes = {
+        "__doc__": f"{row['module_id']} from pack {pack_id}.",
+        "__module__": __name__,
+        "module_id": row["module_id"],
+        "pack_id": pack_id,
+        "_row_timeout_ms": row["timeout_ms"],
+    }
+    if extra is not None:
+        attributes.update(extra(manifest, row))
+    return type(name, (base,), attributes)
 
 
 def _decorator_kwargs(row: Mapping[str, Any]) -> Dict[str, Any]:
@@ -379,9 +460,11 @@ class _PackEntryPoint:
         self.pack_description = manifest["pack"].get("description", "")
         self.pack_namespaces = tuple(manifest["pack"]["namespaces"])
         self._rows = [dict(row) for row in manifest["modules"]]
+        self._manifest = manifest
 
     def load(self):
         rows = self._rows
+        manifest = self._manifest
         pack_id = self.name
         namespaces = self.pack_namespaces
 
@@ -397,7 +480,7 @@ class _PackEntryPoint:
                         # Raising rolls the whole pack back: a pack does not
                         # get to replace flyto-core's module or another pack's.
                         raise ValueError(f"module id '{module_id}' is already registered by another owner")
-                register_module(**_decorator_kwargs(row))(_proxy_class(pack_id, row))
+                register_module(**_decorator_kwargs(row))(_proxy_class(pack_id, row, manifest))
             _check_capability_contracts(ModuleRegistry, pack_id, rows)
 
         return register_all
@@ -488,8 +571,31 @@ def install_pack(
     trusted_keys: Optional[Mapping[str, Any]] = None,
     require_signature: bool = True,
     provenance_dir: Optional[os.PathLike[str] | str] = None,
+    revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
+    upgrade_from: Optional[Mapping[str, Any]] = None,
 ) -> PackProvenance:
     """Verify and install one pack directory. Returns its provenance record.
+
+    ``key_rotations`` are ``flyto.publisher-key-rotation.v1`` statements a
+    signer reached from ``trusted_keys`` may be found through
+    (``core.pack.publisher_keys``). A revocation list that revokes the signing
+    key refuses every pack that key signed after its revocation point.
+
+    ``certification`` is a ``core.pack.certification.CertificationGate``: when
+    its policy table requires certification for this pack, a pack without a
+    valid record is refused (``PACK_UNCERTIFIED`` / ``CERTIFICATION_STALE``).
+
+    ``upgrade_from`` is the normalized manifest of the version this one
+    replaces. The switch must be declared (``core.pack.upgrade``): an
+    undeclared upgrade is ``UPGRADE_UNDECLARED``, an undeclared downgrade
+    ``ROLLBACK_UNDECLARED``.
+
+    ``revocations`` is a verified ``core.pack.supply_chain.RevocationList``.
+    A pack whose digest it names is refused (``PACK_REVOKED``) before its
+    signature, files or code are looked at: the same check a standalone
+    start makes, so a revoked pack runs nowhere.
 
     ``require_signature`` defaults to True: an unsigned pack is refused unless
     the host opts out, and a signed one must verify against ``trusted_keys``.
@@ -508,6 +614,10 @@ def install_pack(
             trusted_keys=trusted_keys,
             require_signature=require_signature,
             provenance_dir=provenance_dir,
+            revocations=revocations,
+            key_rotations=key_rotations,
+            certification=certification,
+            upgrade_from=upgrade_from,
         )
 
 
@@ -517,12 +627,18 @@ def _install_pack(
     trusted_keys: Optional[Mapping[str, Any]],
     require_signature: bool,
     provenance_dir: Optional[os.PathLike[str] | str],
+    revocations: Any = None,
+    key_rotations: Sequence[Any] = (),
+    certification: Any = None,
+    upgrade_from: Optional[Mapping[str, Any]] = None,
 ) -> PackProvenance:
     try:
         root = Path(pack_dir).resolve(strict=True)
     except OSError:
         raise PackManifestError("PACK_UNREADABLE", "pack directory is missing") from None
     manifest = read_pack_manifest(root)
+    if revocations is not None:
+        revocations.check(manifest)
     runtime = manifest["runtime"]
     if runtime["binding"] not in LOADABLE_BINDINGS:
         raise PackManifestError(
@@ -530,13 +646,17 @@ def _install_pack(
             "inprocess-python packs load through their flyto.modules entry point",
         )
     _check_min_host(manifest)
+    if upgrade_from is not None:
+        from .upgrade import check_transition
 
-    signature_doc = read_signature(root)
-    signature: Optional[Dict[str, str]] = None
-    if signature_doc is not None:
-        signature = verify_manifest_signature(manifest, signature_doc, trusted_keys or {})
-    elif require_signature:
-        raise PackManifestError("UNSIGNED", "pack is not signed and the host requires a signature")
+        check_transition(upgrade_from, manifest)
+
+    signature: Optional[Dict[str, str]] = verify_publisher(
+        manifest, read_signature(root), trusted_keys=trusted_keys, require_signature=require_signature,
+        revocations=revocations, key_rotations=key_rotations,
+    )
+    if certification is not None:
+        certification.check(manifest, host_version=_host_version())
 
     pack_id = manifest["pack"]["id"]
     if pack_id in _INSTALLED:
@@ -594,6 +714,13 @@ def _register_pack(
         except Exception as exc:  # noqa: BLE001 - runtime validation errors carry no stable code
             raise PackManifestError("INVALID_RUNTIME", f"pack runtime is not usable: {type(exc).__name__}") from None
         transport: Any = _SubprocessTransport(pack_id, manager, timeout_ms)
+    elif runtime["binding"] == "connector":
+        from .connector_runtime import ConnectorTransport
+
+        transport = ConnectorTransport(
+            pack_id, manifest["pack"]["namespaces"][0], manifest["connector"], runtime,
+            entitlements=manifest.get("entitlements"),
+        )
     else:
         transport = _HttpTransport(
             manifest["pack"]["namespaces"][0], runtime["locality"], timeout_ms, runtime["max_response_bytes"]

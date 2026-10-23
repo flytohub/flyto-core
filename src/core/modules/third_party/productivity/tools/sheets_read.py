@@ -109,6 +109,7 @@ def _sheets_read_outcome(*, values: list, reported_range: Any, header_consumed: 
 
     params_schema={
         'credentials': {
+            'secret': True,
             'type': 'object',
             'label': 'Service Account Credentials',
             'label_key': 'modules.api.google_sheets.read.params.credentials.label',

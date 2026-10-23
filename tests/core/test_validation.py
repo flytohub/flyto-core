@@ -11,6 +11,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 import pytest
 
+# -- errors.py imports --
+from core.canvas_handles import OUTPUT, resolve_port
+
 # Register all atomic modules so ModuleRegistry is populated
 from core.modules import atomic  # noqa: F401
 
@@ -18,7 +21,6 @@ from core.modules import atomic  # noqa: F401
 from core.validation.connection import (
     ConnectionResult,
     _data_types_compatible,
-    _find_port,
     _get_module_category,
     _matches_any_pattern,
     _types_compatible,
@@ -31,8 +33,6 @@ from core.validation.connection import (
     validate_connection,
     validate_replacement,
 )
-
-# -- errors.py imports --
 from core.validation.errors import ErrorCode, explain_error
 
 # -- index.py imports --
@@ -157,7 +157,7 @@ class TestConnectionResult:
 
 
 class TestFindPort:
-    """Test _find_port() helper."""
+    """The shared canvas-handle reader (core.canvas_handles.resolve_port)."""
 
     PORTS = [
         {"id": "success", "handle_id": "source-success"},
@@ -167,36 +167,35 @@ class TestFindPort:
     ]
 
     def test_direct_match(self):
-        result = _find_port(self.PORTS, "success", {})
+        result = resolve_port(self.PORTS, "success", OUTPUT)
         assert result is not None
         assert result["id"] == "success"
 
     def test_alias_match(self):
-        aliases = {"output": "success"}
-        result = _find_port(self.PORTS, "output", aliases)
+        result = resolve_port(self.PORTS, "output", OUTPUT)
         assert result is not None
         assert result["id"] == "success"
 
     def test_handle_id_match(self):
-        result = _find_port(self.PORTS, "source-success", {})
+        result = resolve_port(self.PORTS, "source-success", OUTPUT)
         assert result is not None
         assert result["id"] == "success"
 
     def test_source_prefix_strip(self):
-        result = _find_port(self.PORTS, "source-case-abc", {})
+        result = resolve_port(self.PORTS, "source-case-abc", OUTPUT)
         assert result is not None
         assert result["id"] == "case-abc"
 
     def test_not_found(self):
-        result = _find_port(self.PORTS, "nonexistent", {})
+        result = resolve_port(self.PORTS, "nonexistent", OUTPUT)
         assert result is None
 
     def test_empty_ports(self):
-        result = _find_port([], "success", {})
+        result = resolve_port([], "success", OUTPUT)
         assert result is None
 
     def test_none_ports(self):
-        result = _find_port(None, "success", {})
+        result = resolve_port(None, "success", OUTPUT)
         assert result is None
 
 

@@ -245,7 +245,7 @@ def _broke_outcome(
         field('password', type='string', label='Password', label_key='modules.ssh.sftp_download.params.password.label',
               description='SSH password', format='password',
               group=FieldGroup.CONNECTION),
-        field('private_key', type='string', label='Private Key', label_key='modules.ssh.sftp_download.params.private_key.label',
+        field('private_key', secret=True, type='string', label='Private Key', label_key='modules.ssh.sftp_download.params.private_key.label',
               description='PEM-format private key', format='multiline',
               group=FieldGroup.CONNECTION),
         field('remote_path', type='string', label='Remote Path', label_key='modules.ssh.sftp_download.params.remote_path.label',

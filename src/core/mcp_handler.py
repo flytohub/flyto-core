@@ -8,11 +8,11 @@ Contains tool definitions, dispatch, and execution functions.
 """
 
 import importlib.metadata
-import json
 import uuid
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from core import mcp_protocol as _protocol
 from core.catalog_facts import (
     BROWSER_MODULE_COUNT,
     CORE_CATALOG_CATEGORY_COUNT,
@@ -37,27 +37,17 @@ def _get_version() -> str:
 
 SERVER_VERSION = _get_version()
 
-# MCP 2026-07-28 is stateless and selected on every request through `_meta`.
-# Older revisions keep the initialize handshake for compatibility.
-# Reference:
-# https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning
-MODERN_PROTOCOL_VERSION = "2026-07-28"
-LEGACY_PROTOCOL_VERSIONS = (
-    "2025-11-25",
-    "2025-06-18",
-    "2025-03-26",
-    "2024-11-05",
-)
-SUPPORTED_PROTOCOL_VERSIONS = (
-    MODERN_PROTOCOL_VERSION,
-    *LEGACY_PROTOCOL_VERSIONS,
-)
-_PROTOCOL_VERSION_META_KEY = "io.modelcontextprotocol/protocolVersion"
-_CLIENT_CAPABILITIES_META_KEY = "io.modelcontextprotocol/clientCapabilities"
-_CLIENT_INFO_META_KEY = "io.modelcontextprotocol/clientInfo"
-_SERVER_INFO_META_KEY = "io.modelcontextprotocol/serverInfo"
-_DISCOVERY_TTL_MS = 60_000
-_STATIC_LIST_TTL_MS = 60_000
+# The protocol itself (versions, eras, dispatch, Streamable HTTP) lives in
+# core.mcp_protocol, shared with the standalone pack server; the names stay
+# importable from here for existing callers.
+MODERN_PROTOCOL_VERSION = _protocol.MODERN_PROTOCOL_VERSION
+LEGACY_PROTOCOL_VERSIONS = _protocol.LEGACY_PROTOCOL_VERSIONS
+SUPPORTED_PROTOCOL_VERSIONS = _protocol.SUPPORTED_PROTOCOL_VERSIONS
+negotiate_protocol_version = _protocol.negotiate_protocol_version
+negotiate_legacy_protocol_version = _protocol.negotiate_legacy_protocol_version
+_DISCOVERY_TTL_MS = _protocol.DISCOVERY_TTL_MS
+_STATIC_LIST_TTL_MS = _protocol.STATIC_LIST_TTL_MS
+_INSTRUCTIONS = "Discover, validate, and execute Flyto2 modules and recipes through MCP tools."
 
 
 def _server_info() -> dict:
@@ -81,20 +71,6 @@ SERVER_CAPABILITIES = {
     "capabilities": _server_capabilities(),
     "serverInfo": _server_info(),
 }
-
-
-def negotiate_protocol_version(client_version: Optional[str]) -> str:
-    """Select a supported version, preferring the latest revision."""
-    if client_version and client_version in SUPPORTED_PROTOCOL_VERSIONS:
-        return client_version
-    return SUPPORTED_PROTOCOL_VERSIONS[0]
-
-
-def negotiate_legacy_protocol_version(client_version: Optional[str]) -> str:
-    """Select a handshake revision without crossing into stateless MCP."""
-    if client_version and client_version in LEGACY_PROTOCOL_VERSIONS:
-        return client_version
-    return LEGACY_PROTOCOL_VERSIONS[0]
 
 
 def build_initialize_response(client_version: Optional[str]) -> dict:
@@ -1101,103 +1077,13 @@ TOOLS = [
 # JSON-RPC Dispatch
 # ============================================================
 
-def _jsonrpc_error(
-    request_id: Any,
-    code: int,
-    message: str,
-    data: Optional[dict] = None,
-) -> dict:
-    error = {"code": code, "message": message}
-    if data is not None:
-        error["data"] = data
-    return {"jsonrpc": "2.0", "id": request_id, "error": error}
+_jsonrpc_error = _protocol.jsonrpc_error
+_request_protocol_era = _protocol.request_protocol_era
 
 
-def _modern_result(
-    result: dict,
-    *,
-    ttl_ms: Optional[int] = None,
-    cache_scope: Optional[str] = None,
-) -> dict:
+def _modern_result(result: dict, *, ttl_ms: Optional[int] = None, cache_scope: Optional[str] = None) -> dict:
     """Add the fields required on successful MCP 2026-07-28 results."""
-    modern_result = dict(result)
-    modern_result.setdefault("resultType", "complete")
-    result_meta = modern_result.get("_meta")
-    result_meta = dict(result_meta) if isinstance(result_meta, dict) else {}
-    result_meta.setdefault(_SERVER_INFO_META_KEY, _server_info())
-    modern_result["_meta"] = result_meta
-    if ttl_ms is not None and cache_scope is not None:
-        modern_result["ttlMs"] = ttl_ms
-        modern_result["cacheScope"] = cache_scope
-    return modern_result
-
-
-def _request_protocol_era(
-    request_id: Any,
-    method: str,
-    params: Any,
-) -> tuple[Optional[str], Optional[dict]]:
-    """Return the request era plus a structured error when metadata is invalid."""
-    if not isinstance(params, dict):
-        if method == "server/discover":
-            return None, _jsonrpc_error(
-                request_id,
-                -32602,
-                "Request params must be an object",
-            )
-        return "legacy", None
-
-    metadata = params.get("_meta")
-    has_version = (
-        isinstance(metadata, dict)
-        and _PROTOCOL_VERSION_META_KEY in metadata
-    )
-    if not has_version:
-        if method == "server/discover":
-            return None, _jsonrpc_error(
-                request_id,
-                -32602,
-                f"Missing required request metadata: {_PROTOCOL_VERSION_META_KEY}",
-            )
-        return "legacy", None
-
-    requested = metadata.get(_PROTOCOL_VERSION_META_KEY)
-    if not isinstance(requested, str):
-        return None, _jsonrpc_error(
-            request_id,
-            -32602,
-            f"{_PROTOCOL_VERSION_META_KEY} must be a string",
-        )
-    if requested != MODERN_PROTOCOL_VERSION:
-        return None, _jsonrpc_error(
-            request_id,
-            -32022,
-            "Unsupported protocol version",
-            {
-                "requested": requested,
-                "supported": list(SUPPORTED_PROTOCOL_VERSIONS),
-            },
-        )
-
-    client_capabilities = metadata.get(_CLIENT_CAPABILITIES_META_KEY)
-    if not isinstance(client_capabilities, dict):
-        return None, _jsonrpc_error(
-            request_id,
-            -32602,
-            f"Missing or invalid request metadata: {_CLIENT_CAPABILITIES_META_KEY}",
-        )
-    client_info = metadata.get(_CLIENT_INFO_META_KEY)
-    if client_info is not None and (
-        not isinstance(client_info, dict)
-        or not isinstance(client_info.get("name"), str)
-        or not isinstance(client_info.get("version"), str)
-    ):
-        return None, _jsonrpc_error(
-            request_id,
-            -32602,
-            f"Invalid request metadata: {_CLIENT_INFO_META_KEY}",
-        )
-    return "modern", None
+    return _protocol.modern_result(result, _server_info(), ttl_ms=ttl_ms, cache_scope=cache_scope)
 
 
 def _jsonrpc_result(
@@ -1208,13 +1094,9 @@ def _jsonrpc_result(
     ttl_ms: Optional[int] = None,
     cache_scope: Optional[str] = None,
 ) -> dict:
-    if modern:
-        result = _modern_result(
-            result,
-            ttl_ms=ttl_ms,
-            cache_scope=cache_scope,
-        )
-    return {"jsonrpc": "2.0", "id": request_id, "result": result}
+    return _protocol.jsonrpc_result(
+        request_id, result, modern=modern, server_info=_server_info, ttl_ms=ttl_ms, cache_scope=cache_scope
+    )
 
 
 async def _handle_tool_call(
@@ -1281,17 +1163,7 @@ async def _handle_tool_call(
                 f"Unknown tool: {tool_name}",
             )
 
-        text = json.dumps(result, ensure_ascii=False, indent=2)
-        is_error = (
-            isinstance(result, dict)
-            and (result.get("error") is not None or result.get("ok") is False)
-        )
-        response_body = {
-            "content": [{"type": "text", "text": text}],
-            "structuredContent": result,
-            "isError": is_error,
-        }
-        return _jsonrpc_result(request_id, response_body, modern=modern)
+        return _jsonrpc_result(request_id, _protocol.tool_call_body(result), modern=modern)
     except Exception as exc:
         response_body = {
             "content": [{"type": "text", "text": str(exc)}],
@@ -1314,53 +1186,10 @@ async def handle_jsonrpc_request(
         debugger_sessions = {}
     if session_activity is None:
         session_activity = {}
-    method = request.get("method", "")
-    req_id = request.get("id")
-    params = request.get("params", {})
-    era, protocol_error = _request_protocol_era(req_id, method, params)
-    if protocol_error is not None:
-        return protocol_error
-    modern = era == "modern"
 
-    if method == "initialize" and not modern:
-        client_version = params.get("protocolVersion") if isinstance(params, dict) else None
-        return _jsonrpc_result(
-            req_id,
-            build_initialize_response(client_version),
-            modern=False,
-        )
-
-    if method == "server/discover" and modern:
-        return _jsonrpc_result(
-            req_id,
-            {
-                "supportedVersions": list(SUPPORTED_PROTOCOL_VERSIONS),
-                "capabilities": _server_capabilities(),
-                "instructions": (
-                    "Discover, validate, and execute Flyto2 modules and recipes "
-                    "through MCP tools."
-                ),
-            },
-            modern=True,
-            ttl_ms=_DISCOVERY_TTL_MS,
-            cache_scope="public",
-        )
-
-    if modern and method in {"initialize", "ping", "logging/setLevel"}:
-        return _jsonrpc_error(req_id, -32601, f"Method not found: {method}")
-
-    if method == "tools/list":
-        return _jsonrpc_result(
-            req_id,
-            {"tools": TOOLS},
-            modern=modern,
-            ttl_ms=_STATIC_LIST_TTL_MS,
-            cache_scope="public",
-        )
-
-    if method == "tools/call":
+    async def call_tool(request_id: Any, params: Any, modern: bool) -> dict:
         return await _handle_tool_call(
-            req_id,
+            request_id,
             params,
             modern=modern,
             browser_sessions=browser_sessions,
@@ -1368,12 +1197,10 @@ async def handle_jsonrpc_request(
             session_activity=session_activity,
         )
 
-    if method == "ping":
-        return _jsonrpc_result(req_id, {}, modern=False)
-
-    if method.startswith("notifications/"):
-        return None  # Notifications have no response
-
-    if req_id is not None:
-        return _jsonrpc_error(req_id, -32601, f"Method not found: {method}")
-    return None
+    server = _protocol.McpServer(
+        server_info=_server_info,
+        instructions=_INSTRUCTIONS,
+        list_tools=lambda: TOOLS,
+        call_tool=call_tool,
+    )
+    return await _protocol.dispatch_jsonrpc(server, request)

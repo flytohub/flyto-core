@@ -8,13 +8,14 @@ Workflow Spec v1.1:
 - Types: manual, webhook, schedule, event, mcp, polling
 - No input ports (entry point)
 """
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any, Dict
+
 from ...base import BaseModule
 from ...registry import register_module
 from ...schema import compose, field, presets
 from ...schema.constants import FieldGroup
-from ...types import NodeType, EdgeType, DataType
+from ...types import EdgeType, NodeType
 
 
 @register_module(
@@ -155,6 +156,42 @@ from ...types import NodeType, EdgeType, DataType
               description="Custom trigger config (for composites: LINE BOT, Telegram, Slack, etc.)",
               description_key="modules.flow.trigger.param.config.description",
               group=FieldGroup.ADVANCED),
+        # Settings a host's trigger editor writes and its trigger registration
+        # reads. Declared so a host can tell them from an undeclared parameter
+        # (and decide none of them holds a secret); edited by the host's own
+        # trigger panel, so never drawn as a generic field.
+        field("timezone", type="string",
+              label="Timezone",
+              label_key="schema.field.timezone",
+              description="IANA timezone the schedule is read in (UTC when unset)",
+              showIf={"trigger_type": {"$in": ["schedule"]}},
+              visibility="hidden",
+              skipDefault=True,
+              group=FieldGroup.OPTIONS),
+        field("webhook_provider", type="string",
+              label="Webhook Provider",
+              label_key="schema.field.webhook_provider",
+              description="Which sender's signature scheme a webhook expects",
+              showIf={"trigger_type": {"$in": ["webhook"]}},
+              visibility="hidden",
+              skipDefault=True,
+              group=FieldGroup.OPTIONS),
+        field("require_signature", type="boolean",
+              label="Require Signature",
+              label_key="schema.field.require_signature",
+              description="Refuse a webhook call whose signature does not verify",
+              showIf={"trigger_type": {"$in": ["webhook"]}},
+              visibility="hidden",
+              skipDefault=True,
+              group=FieldGroup.OPTIONS),
+        field("triggers", type="array",
+              label="Triggers",
+              label_key="schema.field.triggers",
+              description="Several ways in, each shaped like a single trigger (trigger_type plus its settings)",
+              items={"type": "object"},
+              visibility="hidden",
+              skipDefault=True,
+              group=FieldGroup.ADVANCED),
         presets.DESCRIPTION(),
     ),
 
@@ -253,8 +290,8 @@ class TriggerModule(BaseModule):
             raise ValueError(f"Invalid trigger_type: {self.trigger_type}")
 
         # Validate type-specific params
-        if self.trigger_type == 'webhook' and not self.webhook_path:
-            raise ValueError("webhook_path required for webhook trigger")
+        # A webhook's address is its deployment's to give (a registered webhook
+        # has its own); webhook_path is only for a server that mounts by path.
         if self.trigger_type == 'schedule' and not self.schedule:
             raise ValueError("schedule required for schedule trigger")
         if self.trigger_type == 'event' and not self.event_name:
@@ -306,7 +343,7 @@ class TriggerModule(BaseModule):
         }
         if self.config:
             trigger_data['config'] = self.config
-        if self.trigger_type == 'webhook':
+        if self.trigger_type == 'webhook' and self.webhook_path:
             trigger_data['webhook_path'] = self.webhook_path
         elif self.trigger_type == 'schedule':
             trigger_data['schedule'] = self.schedule

@@ -1,0 +1,165 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.ratings",
+    "version": "0.1.0",
+    "namespaces": [
+      "ratings"
+    ],
+    "title": "Example ratings connector",
+    "description": "A connector declared as data: one company's rating, its findings, the portfolio, and adding a company to it, gated by what the provider says the account holds.",
+    "min_host": "2.41.0"
+  },
+  "runtime": {
+    "binding": "connector",
+    "request_timeout_ms": 20000
+  },
+  "standalone": {
+    "transports": ["stdio", "streamable_http"],
+    "runtime": {"language": "python", "version": ">=3.10"},
+    "lockfile": "requirements.lock"
+  },
+  "connector": {
+    "base_url": "https://api.ratings.example",
+    "auth": [
+      {
+        "kind": "api_token",
+        "header": "Authorization",
+        "scheme": "Basic",
+        "credential": "ratings_api_token"
+      }
+    ],
+    "rate_limit": {
+      "requests": 100,
+      "per_seconds": 60
+    },
+    "operations": [
+      {
+        "id": "account.entitlements",
+        "label": "Account entitlements",
+        "description": "Read which products the account holds and how much of each meter remains.",
+        "method": "GET",
+        "path": "/v1/account/entitlements",
+        "consequence": "observe",
+        "inputs": {}
+      },
+      {
+        "id": "company.get",
+        "label": "Company rating",
+        "description": "Read one company's current rating.",
+        "method": "GET",
+        "path": "/v1/companies/{company}",
+        "consequence": "observe",
+        "inputs": {
+          "company": {
+            "type": "string",
+            "description": "Company identifier",
+            "scope": "company"
+          }
+        },
+        "result_scope": "$.guid",
+        "requires": {
+          "features": [
+            "ratings"
+          ]
+        }
+      },
+      {
+        "id": "findings.list",
+        "label": "Company findings",
+        "description": "List one company's findings, every page.",
+        "method": "GET",
+        "path": "/v1/companies/{company}/findings",
+        "consequence": "observe",
+        "inputs": {
+          "company": {
+            "type": "string",
+            "description": "Company identifier",
+            "scope": "company"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Only findings of this severity",
+            "required": false
+          }
+        },
+        "paginate": {
+          "strategy": "offset",
+          "data_path": "results",
+          "offset_param": "offset",
+          "limit_param": "limit",
+          "page_size": 100,
+          "max_pages": 20
+        },
+        "sensitive": [
+          "$.items[*].assets"
+        ],
+        "requires": {
+          "features": [
+            "ratings"
+          ]
+        }
+      },
+      {
+        "id": "portfolio.list",
+        "label": "Portfolio",
+        "description": "List the companies in the portfolio.",
+        "method": "GET",
+        "path": "/v1/portfolio",
+        "consequence": "observe",
+        "inputs": {},
+        "result_scope": "$.companies[*].guid",
+        "requires": {
+          "features": [
+            "ratings"
+          ]
+        }
+      },
+      {
+        "id": "portfolio.add",
+        "label": "Add a company to the portfolio",
+        "description": "Start monitoring one company. Uses one monitoring slot.",
+        "method": "POST",
+        "path": "/v1/portfolio/companies",
+        "consequence": "external_write",
+        "inputs": {
+          "company": {
+            "type": "string",
+            "description": "Company identifier",
+            "scope": "company"
+          }
+        },
+        "requires": {
+          "features": [
+            "monitoring"
+          ]
+        },
+        "consumes": {
+          "meter": "monitoring_slots",
+          "amount": 1
+        },
+        "result_scope": "$.guid"
+      }
+    ]
+  },
+  "entitlements": {
+    "probe": "account.entitlements",
+    "max_age_s": 900,
+    "features": {
+      "keys": [
+        "ratings",
+        "monitoring"
+      ],
+      "path": "$.features[*]"
+    },
+    "meters": {
+      "monitoring_slots": "$.meters.monitoring_slots.remaining"
+    }
+  },
+  "scopes": [
+    {
+      "key": "company",
+      "resolve": "portfolio.list"
+    }
+  ]
+}

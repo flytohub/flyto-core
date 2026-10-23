@@ -218,6 +218,7 @@ def _simplify_repos(data):
             'required': True
         },
         'token': {
+            'secret': True,
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token (optional but recommended)',
@@ -405,6 +406,7 @@ class GitHubGetRepoModule(BaseModule):
             'required': False
         },
         'token': {
+            'secret': True,
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token',
@@ -579,6 +581,7 @@ class GitHubListIssuesModule(BaseModule):
             'required': False
         },
         'token': {
+            'secret': True,
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token (required for creation)',
@@ -786,6 +789,7 @@ class GitHubCreateIssueModule(BaseModule):
             'default': False
         },
         'token': {
+            'secret': True,
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token (required for creation)',
@@ -983,6 +987,7 @@ class GitHubCreatePRModule(BaseModule):
             'default': 30
         },
         'token': {
+            'secret': True,
             'type': 'string',
             'label': 'Access Token',
             'description': 'GitHub Personal Access Token (optional, required for private repos and "me")',

@@ -1,0 +1,10 @@
+{
+  "name": "Rating review",
+  "description": "Read one company's rating and findings, then name the company in upper case for the report title.",
+  "params": {"company": {"type": "string", "required": true}},
+  "steps": [
+    {"id": "rating", "module": "ratings.company.get", "params": {"company": "${params.company}"}},
+    {"id": "findings", "module": "ratings.findings.list", "params": {"company": "${params.company}"}},
+    {"id": "title", "module": "string.uppercase", "params": {"text": "${rating.data.name}"}}
+  ]
+}

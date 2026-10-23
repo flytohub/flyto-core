@@ -1,0 +1,15 @@
+w3c-wot-td-1.1.schema.json
+
+Source:    https://www.w3.org/2022/wot/td-schema/v1.1
+Version:   "1.1-12-March-2025" (the schema's own "version" field)
+SHA-256:   fd44f319f94c6f16f66978860ef2f9f4e0e9fd7fc5835a2f3840b9cf2002e0f1
+Retrieved: 2026-10-18, byte-for-byte unmodified
+
+Copyright (c) 2025 World Wide Web Consortium. This file is distributed under
+the W3C Software and Document License:
+https://www.w3.org/copyright/software-license-2023/
+
+The file is the official JSON Schema for W3C Web of Things Thing Description
+1.1 and is the single definition of what a well-formed TD is for this package.
+Refresh it only by replacing it with a newer official copy and updating the
+digest above; tests/test_wot_td11_conformance.py pins the digest.

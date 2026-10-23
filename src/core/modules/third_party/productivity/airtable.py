@@ -102,6 +102,7 @@ def _airtable_answered(status: int) -> Dict[str, Any]:
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.productivity.airtable.read.params.api_key.label',
@@ -318,6 +319,7 @@ class AirtableReadModule(BaseModule):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.productivity.airtable.create.params.api_key.label',
@@ -509,6 +511,7 @@ class AirtableCreateModule(BaseModule):
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.productivity.airtable.update.params.api_key.label',

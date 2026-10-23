@@ -144,6 +144,7 @@ def _twilio_accepted(*, kind: str, sid: str, status: str, to: str, http_status: 
             'placeholder': 'ACxxxxxxxx',
 },
         'auth_token': {
+            'secret': True,
             'type': 'string',
             'label': 'Auth Token',
             'label_key': 'modules.communication.twilio.send_sms.params.auth_token.label',
@@ -338,6 +339,7 @@ class TwilioSendSMSModule(BaseModule):
             'sensitive': True
         },
         'auth_token': {
+            'secret': True,
             'type': 'string',
             'label': 'Auth Token',
             'label_key': 'modules.communication.twilio.make_call.params.auth_token.label',

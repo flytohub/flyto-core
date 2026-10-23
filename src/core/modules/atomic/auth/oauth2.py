@@ -318,6 +318,7 @@ def _apply_client_auth(
             required=True,
             validation={'pattern': r'^https?://.+', 'message': 'Must start with http:// or https://'},
             format='url',
+            secret=False,
             group=FieldGroup.BASIC,
         ),
         field(

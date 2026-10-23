@@ -6,9 +6,14 @@
 * ``signature`` — ed25519 publisher signatures, verified offline.
 * ``host`` — install an out-of-process pack into ``ModuleRegistry``.
 * ``export`` — print the manifest a Python pack's decorators produce.
+* ``portable`` — the ``standalone`` section, ``flyto pack build`` and the zip format.
+* ``standalone`` — the one runtime that serves a portable pack as an MCP server.
+* ``standalone_auth`` — credential values by name, from the environment or the OS keychain.
+* ``supply_chain`` — the pack digest, the hashed lockfile, the signed revocation list.
+* ``bundle`` — ``flyto.bundle.v1``: packs pinned by digest, workflows, templates.
 
 See ``docs/CAPABILITY_CONTRACT.md`` ("Other languages") and
-``docs/specs/PACK_MANIFEST_SPEC.md``.
+``docs/specs/PACK_MANIFEST_SPEC.md`` and ``docs/specs/BUNDLE_SPEC.md``.
 """
 
 from .manifest import (

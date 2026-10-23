@@ -56,12 +56,17 @@ __all__ = [
     "EXPECTED_DURATION_MS_MAX",
     "ARTIFACT_MAX_BYTES",
     "RECOVERY_FIELDS",
+    "RESOURCE_STATE_FIELDS",
+    "OCCUPIES_MAX",
     "RECOVERY_STOP_FAMILIES",
     "RECOVERY_PRESERVES",
     "RECOVERY_RESOURCE_SCOPES",
     "RECOVERY_ROLE_PATTERN",
     "RECOVERY_ROLES_MAX",
     "EVIDENCE_DISPLAY_FIELDS",
+    "EVIDENCE_OBSERVERS",
+    "EVIDENCE_OBSERVER_OTHER_RESOURCE",
+    "EVIDENCE_OBSERVER_SELF",
     "EVIDENCE_LABEL_PATTERN",
     "EVIDENCE_LABEL_LANGS_MAX",
     "EVIDENCE_LABEL_MAX",
@@ -107,7 +112,19 @@ _REQUIRED_KEYS = frozenset((*_REQUIRED_BOOLEANS, "safety_class"))
 #: Each appears in the normalized contract only when declared, so a contract
 #: that declares none of them normalizes, and hashes, exactly as on 2.35.
 OPTIONAL_FIELDS = frozenset(("role", "artifacts", "recovery", "expected_duration_ms"))
-_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence")) | OPTIONAL_FIELDS
+#: Resource-state keys added in flyto-core 2.41.0, feature-detected with
+#: ``"occupies" in core.capability_contract.RESOURCE_STATE_FIELDS``.
+#: ``establishes`` names the resource states a completed call leaves true (the
+#: counterpart of ``requires``, so a host can check a precondition and a
+#: planner can order calls; a ``safe_stop`` says what a stop leaves the
+#: resource in). ``occupies`` names the parts of the resource a running call
+#: holds; two calls on one resource conflict only when what they occupy
+#: overlaps, and a contract that declares none occupies the whole resource.
+#: Each appears in the normalized contract only when declared.
+RESOURCE_STATE_FIELDS = frozenset(("establishes", "occupies"))
+_OPTIONAL_KEYS = frozenset(("schema", "effects", "requires", "evidence")) | OPTIONAL_FIELDS | RESOURCE_STATE_FIELDS
+#: The most parts one call may occupy.
+OCCUPIES_MAX = 8
 _IDENTIFIER_LISTS = ("effects", "requires")
 _IDENTIFIER_LIST_MAX = 16
 _EVIDENCE_MAX = 8
@@ -331,7 +348,16 @@ _EVIDENCE_DISPLAY_CHECKS: Mapping[str, Callable[[Any, str], Any]] = MappingProxy
     "unit": _check_evidence_unit,
     "channel": _check_evidence_channel,
 })
-_EVIDENCE_OPTIONAL = frozenset(("settle",)) | EVIDENCE_DISPLAY_FIELDS
+#: Who must have observed an effect. ``self``, the default, is the acting
+#: resource's own adapter. ``other_resource`` is another resource: a camera
+#: seeing a lamp light, never the plug's own report. A capability host observes
+#: only its own adapter, so it never proves an ``other_resource`` spec
+#: (:func:`judge`); the control plane holding every resource's observations does.
+EVIDENCE_OBSERVER_SELF = "self"
+EVIDENCE_OBSERVER_OTHER_RESOURCE = "other_resource"
+EVIDENCE_OBSERVERS = frozenset((EVIDENCE_OBSERVER_SELF, EVIDENCE_OBSERVER_OTHER_RESOURCE))
+
+_EVIDENCE_OPTIONAL = frozenset(("settle", "observer")) | EVIDENCE_DISPLAY_FIELDS
 
 
 def validate_evidence(
@@ -451,6 +477,11 @@ def validate_evidence(
         normalized["settle"] = {
             "max_drift": _check_non_negative(settle["max_drift"], f"{where}.settle.max_drift")
         }
+    if "observer" in evidence:
+        # Kept only when declared, so a contract that names none hashes as before.
+        if evidence["observer"] not in EVIDENCE_OBSERVERS:
+            raise ValueError(f"{where}.observer must be one of {sorted(EVIDENCE_OBSERVERS)}")
+        normalized["observer"] = evidence["observer"]
     for key, check in _EVIDENCE_DISPLAY_CHECKS.items():
         if key in evidence:
             normalized[key] = check(evidence[key], f"{where}.{key}")
@@ -632,14 +663,29 @@ def _check_optional_fields(contract: Mapping[str, Any], normalized: Dict[str, An
         normalized["expected_duration_ms"] = duration
 
 
+def _check_resource_state_fields(contract: Mapping[str, Any], normalized: Dict[str, Any]) -> None:
+    """Validate the 2.41.0 resource-state keys into ``normalized``, only when declared.
+
+    Both are bounded identifier lists with at least one entry: an empty list
+    would read as "occupies nothing", which is not the same as not declaring
+    (the whole resource), so it is refused rather than guessed at.
+    """
+    if "establishes" in contract:
+        normalized["establishes"] = _check_identifier_list(
+            contract["establishes"], "contract.establishes", 1, _IDENTIFIER_LIST_MAX
+        )
+    if "occupies" in contract:
+        normalized["occupies"] = _check_identifier_list(contract["occupies"], "contract.occupies", 1, OCCUPIES_MAX)
+
+
 def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
     """Validate a capability contract and return its normalized form.
 
     The returned dict is built from fresh plain containers (nothing aliases
     the caller's objects) and always carries ``schema``, ``effects``,
     ``requires`` and ``evidence``, so every consumer reads one shape. The
-    optional ``role``, ``artifacts``, ``recovery`` and ``expected_duration_ms``
-    appear only when declared.
+    optional ``role``, ``artifacts``, ``recovery``, ``expected_duration_ms``,
+    ``establishes`` and ``occupies`` appear only when declared.
 
     Raises:
         ValueError: with a message naming the offending key on any violation.
@@ -684,6 +730,11 @@ def validate_contract(contract: Any, params_schema: Optional[Mapping[str, Any]] 
         for index, item in enumerate(evidence)
     ]
     _check_optional_fields(contract, normalized)
+    _check_resource_state_fields(contract, normalized)
+    if normalized.get("role") == "safe_stop" and "occupies" in normalized:
+        # A stop is admitted whatever else runs on the resource. A stop that
+        # occupied a part would conflict with the very call it has to stop.
+        raise ValueError("contract.role safe_stop must not declare occupies")
     return normalized
 
 
@@ -792,6 +843,10 @@ def judge(
     The arithmetic is specified in ``docs/CAPABILITY_CONTRACT.md``.
     """
     spec = validate_evidence(dict(evidence_spec) if type(evidence_spec) is not dict else evidence_spec)
+    if spec.get("observer", EVIDENCE_OBSERVER_SELF) != EVIDENCE_OBSERVER_SELF:
+        # These are the acting resource's own observations; only another
+        # resource's can prove this spec, and that is not judged here.
+        return _verdict(False, "proven only by another resource's observation, not the acting resource's own")
     measure = spec["measure"]
     op = measure["op"]
     fields = measure["fields"]

@@ -70,6 +70,7 @@ logger = logging.getLogger(__name__)
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.api.notion.create_page.params.api_key.label',

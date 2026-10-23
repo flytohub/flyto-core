@@ -47,8 +47,20 @@ def _executor(hooks):
     return StepExecutor(hooks=hooks, workflow_id="wf", workflow_name="wf", total_steps=1)
 
 
+_REGISTERED: list[str] = []
+
+
+@pytest.fixture(autouse=True)
+def _forget_test_modules():
+    """Remove the modules a test registered, so the shipped catalog is all later tests see."""
+    yield
+    while _REGISTERED:
+        ModuleRegistry.unregister(_REGISTERED.pop())
+
+
 def _register(module_id, fn, params_schema=None):
     if not ModuleRegistry.has(module_id):
+        _REGISTERED.append(module_id)
         register_module(
             module_id=module_id,
             version="1.0.0",

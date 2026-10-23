@@ -65,6 +65,7 @@ logger = logging.getLogger(__name__)
 
     params_schema={
         'api_key': {
+            'secret': True,
             'type': 'string',
             'label': 'API Key',
             'label_key': 'modules.api.notion.query_database.params.api_key.label',

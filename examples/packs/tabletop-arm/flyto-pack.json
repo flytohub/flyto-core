@@ -1,0 +1,70 @@
+{
+  "schema": "flyto.pack.v1",
+  "pack": {
+    "id": "com.example.tabletop-arm",
+    "version": "1.0.0",
+    "namespaces": ["tabletop"],
+    "title": "Tabletop arm, learned pick and place",
+    "description": "A pick-and-place policy trained by demonstration, served by the vendor's runner.",
+    "license": "Apache-2.0",
+    "min_host": "2.40.0"
+  },
+  "runtime": {
+    "binding": "subprocess-jsonrpc",
+    "language": "python",
+    "entry": "runner/main.py",
+    "request_timeout_ms": 90000
+  },
+  "modules": [
+    {
+      "module_id": "tabletop.pick_place",
+      "label": {"en": "Pick and place", "zh-TW": "夾取並放置"},
+      "description": "Picks the named object and places it at the target point on the table.",
+      "provides_capability": "tabletop.pick_place",
+      "params_schema": {
+        "object_id": {"type": "string", "required": true},
+        "target_x": {"type": "number", "required": true, "min": -0.30, "max": 0.30, "unit": "m"},
+        "target_y": {"type": "number", "required": true, "min": 0.10, "max": 0.45, "unit": "m"}
+      },
+      "timeout_ms": 90000,
+      "contract": {
+        "actuates": true,
+        "safety_class": "movement",
+        "requires_safe_stop": true,
+        "cancellable": true,
+        "idempotent": false,
+        "effects": ["object.relocated"],
+        "requires": ["tabletop.calibrated"],
+        "expected_duration_ms": 60000,
+        "evidence": [
+          {
+            "kind": "placement",
+            "observe": "object_pose",
+            "phases": ["after", "settled"],
+            "measure": {"op": "distance_to", "fields": ["x", "y"], "frame": "table"},
+            "expect": {"arguments": {"x": "target_x", "y": "target_y"}},
+            "tolerance": {"absolute": 0.02},
+            "label": {"en": "Distance from target", "zh-TW": "離目標距離"},
+            "unit": "m"
+          }
+        ],
+        "artifacts": [
+          {"kind": "photo", "media_types": ["image/jpeg"], "max_bytes": 5242880}
+        ]
+      }
+    },
+    {
+      "module_id": "tabletop.halt",
+      "label": {"en": "Stop the arm", "zh-TW": "停止手臂"},
+      "provides_capability": "tabletop.halt",
+      "contract": {
+        "actuates": true,
+        "safety_class": "controlled",
+        "requires_safe_stop": false,
+        "cancellable": false,
+        "idempotent": true,
+        "role": "safe_stop"
+      }
+    }
+  ]
+}

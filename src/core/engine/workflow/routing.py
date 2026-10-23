@@ -9,6 +9,17 @@ Edge-based routing and step connection handling for Workflow Spec v1.2.
 import logging
 from typing import Any, Dict, List, Set
 
+from ...canvas_handles import (
+    GENERIC_HANDLES,
+    INPUT,
+    OUTPUT,
+    exit_edge_conflicts,
+    handle_events,
+    ordinary_port,
+    port_event,
+    resolve_port,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +57,19 @@ class WorkflowRouter:
         # Set of step IDs that are resource sources (sub-nodes like ai.tool, ai.model)
         self._resource_source_ids: Set[str] = set()
 
+        # Steps some other step reaches through a routed exit (a branch's
+        # true/false, a loop's body or done, an error exit): entered only
+        # through that exit, never by stepping on in list order.
+        self._routed_targets: Set[str] = set()
+        # source_id -> the steps it names as its ordinary way on
+        self._successors: Dict[str, Set[str]] = {}
+        # A document that draws its plain edges is read as a graph: a step goes
+        # on along its ordinary edge, and a path with no edge ends there.
+        self._graph_mode = False
+        # Open forks, innermost last: the branch targets still to run and the
+        # join step the branches converge on (see flow.fork's contract).
+        self._fork_frames: List[Dict[str, Any]] = []
+
     def build_step_index(self, steps: List[Dict[str, Any]]) -> None:
         """Build index mapping step IDs to their positions."""
         self._step_index = {}
@@ -80,6 +104,13 @@ class WorkflowRouter:
         self._step_connections = {}
         self._resource_edges = {}
         self._resource_source_ids = set()
+        self._routed_targets = set()
+        self._successors = {}
+        self._fork_frames = []
+        self._graph_mode = any(
+            e.get('source') and e.get('target') and (e.get('edge_type') or (e.get('data') or {}).get('edgeType')) != 'resource'
+            for e in edges or []
+        )
 
         step_map = self._step_map
 
@@ -124,6 +155,10 @@ class WorkflowRouter:
             if target not in self._incoming_edges:
                 self._incoming_edges[target] = []
             self._incoming_edges[target].append(edge)
+            if self._is_routed_exit(source_handle, step_map.get(source)):
+                self._routed_targets.add(target)
+            else:
+                self._successors.setdefault(source, set()).add(target)
 
             # Build event route: "source:handle" -> target
             route_key = f"{source}:{source_handle}"
@@ -152,6 +187,10 @@ class WorkflowRouter:
                         targets = [targets]
                     if isinstance(targets, list) and targets:
                         self._step_connections[step_id][port_name] = targets
+                        if self._is_routed_exit(port_name, step):
+                            self._routed_targets.update(targets)
+                        else:
+                            self._successors.setdefault(step_id, set()).update(targets)
                         # Also add to _event_routes for backward compat
                         route_key = f"{step_id}:{port_name}"
                         if route_key not in self._event_routes:
@@ -165,6 +204,131 @@ class WorkflowRouter:
                                 self._event_routes[normalized_key] = targets[0]
 
         self._log_build_summary(edges)
+
+    def exit_conflicts(self, edges: List[Dict[str, Any]], steps: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Edges and connection targets beyond what their exit allows (core.canvas_handles)."""
+        lines = list(edges or [])
+        for step in steps:
+            for port_name, targets in (step.get('connections') or {}).items():
+                for target in [targets] if isinstance(targets, str) else list(targets or []):
+                    lines.append({'id': f"{step.get('id')}.{port_name}->{target}", 'source': step.get('id'),
+                                  'sourceHandle': port_name, 'target': target})
+        return exit_edge_conflicts(lines, lambda step_id: self._declared_output_ports(self._step_map.get(step_id)))
+
+    def _is_routed_exit(self, handle: str, step: Dict[str, Any] = None) -> bool:
+        """Whether leaving ``step`` by ``handle`` is a routed exit, not its ordinary way on."""
+        if not handle or handle in GENERIC_HANDLES[OUTPUT] or handle in ('success', 'default'):
+            return False
+        ports = self._declared_output_ports(step)
+        port = resolve_port(ports, handle, OUTPUT)
+        if port is None:
+            return True
+        return port is not ordinary_port(ports, OUTPUT)
+
+    def next_in_order(self, step_id: str, current_idx: int, steps_count: int) -> int:
+        """The index the run steps on to when ``step_id`` names no route of its own.
+
+        A document that draws its plain edges goes on along the step's ordinary
+        edge; a step with none ends its path (the next fork branch, the join,
+        or the end of the run). A document without edges runs in list order,
+        skipping every step another step reaches only through a routed exit,
+        unless this step names it as its ordinary successor.
+        """
+        own = self._successors.get(step_id, set())
+        if self._graph_mode:
+            successor = next(iter(sorted(own, key=lambda s: self._step_index.get(s, steps_count))), None)
+            if successor is None or successor not in self._step_index:
+                return self.path_end(steps_count)
+            index = self._step_index[successor]
+            if self._fork_frames and self._is_join(successor):
+                self._fork_frames[-1]['join'] = index
+                return self.path_end(steps_count)
+            return index
+        order = sorted(self._step_index, key=self._step_index.get)
+        index = current_idx + 1
+        while index < steps_count and index < len(order):
+            candidate = order[index]
+            if candidate not in self._routed_targets or candidate in own:
+                return index
+            index += 1
+        return index
+
+    # -----------------------------------------------------------------
+    # Forks (flow.fork): every branch, in exit order, then the join
+    # -----------------------------------------------------------------
+
+    def start_fork(self, step_id: str, current_idx: int, steps_count: int) -> int:
+        """Begin a fork: run its first branch now and keep the rest for when it ends.
+
+        Branches are the step's exits whose declared event is ``fork``, in the
+        order the module declares them. A fork with no connected branch ends
+        its path.
+        """
+        ports = self._declared_output_ports(self._step_map.get(step_id))
+        order = [p['id'] for p in ports if isinstance(p, dict) and p.get('id') and port_event(p) == 'fork']
+        targets = []
+        for edge in self._edge_index.get(step_id, []):
+            port = resolve_port(ports, edge.get('sourceHandle') or '', OUTPUT)
+            if port is not None and port['id'] in order and edge.get('target') in self._step_index:
+                targets.append((order.index(port['id']), self._step_index[edge['target']]))
+        targets.sort()
+        if not targets:
+            return self.path_end(steps_count)
+        self._fork_frames.append({'step_id': step_id, 'pending': [index for _, index in targets[1:]], 'join': None})
+        return targets[0][1]
+
+    def path_end(self, steps_count: int) -> int:
+        """Where the run goes when a path ends: the open fork's next branch, its join, or the end."""
+        while self._fork_frames:
+            frame = self._fork_frames[-1]
+            if frame['pending']:
+                return frame['pending'].pop(0)
+            self._fork_frames.pop()
+            if frame['join'] is not None:
+                return frame['join']
+        return steps_count
+
+    def _is_join(self, step_id: str) -> bool:
+        """A step that declares more than one input port joins paths (flow.merge, flow.join)."""
+        return len(self.declared_input_ports(self._step_map.get(step_id))) > 1
+
+    @staticmethod
+    def declared_input_ports(step: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """The input ports the step's module declares, or none when it is not registered."""
+        module_id = (step or {}).get('module')
+        if not isinstance(module_id, str) or not module_id:
+            return []
+        try:
+            from ...modules.registry import ModuleRegistry
+            meta = ModuleRegistry.get_metadata(module_id) or {}
+        except Exception:  # an unregistered module declares nothing
+            return []
+        return [p for p in meta.get('input_ports') or [] if isinstance(p, dict) and p.get('id')]
+
+    def inputs_by_port(self, step_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """For a joining step: each declared input port's value, from the edge drawn to it."""
+        ports = self.declared_input_ports(self._step_map.get(step_id))
+        if len(ports) < 2:
+            return {}
+        values: Dict[str, Any] = {}
+        unnamed = []
+        for edge in self._incoming_edges.get(step_id, []):
+            handle = edge.get('targetHandle') or edge.get('target_handle') or ''
+            port = resolve_port(ports, handle, INPUT) if handle else None
+            if port is None:
+                unnamed.append(edge)
+            elif edge.get('source') in context:
+                values[port['id']] = context[edge['source']]
+        # An edge drawn without naming an input takes the first one still free.
+        free = [p['id'] for p in ports if p['id'] not in values]
+        for edge, port_id in zip(unnamed, free, strict=False):
+            if edge.get('source') in context:
+                values[port_id] = context[edge['source']]
+        return values
+
+    def has_route(self, step_id: str, event: str) -> bool:
+        """Whether the step names a route for ``event`` (a connection or an edge)."""
+        return bool((self._step_connections.get(step_id) or {}).get(event)) or f"{step_id}:{event}" in self._event_routes
 
     def _log_build_summary(self, edges: List[Dict[str, Any]]) -> None:
         """Log summary of built indices."""
@@ -347,7 +511,7 @@ class WorkflowRouter:
         if next_step_id and next_step_id in self._step_index:
             return self._step_index[next_step_id]
 
-        return current_idx + 1
+        return self.next_in_order(step_id, current_idx, len(self._step_index))
 
     def get_step_index(self, step_id: str) -> int:
         """Get index for a step ID, or -1 if not found."""
@@ -393,10 +557,9 @@ class WorkflowRouter:
             target_handle = edge.get('targetHandle', 'input')
 
             # Filter by edge type if requested
-            if data_edges_only:
-                # Only data and iterate edges pass items
-                if edge_type not in ('data', 'iterate'):
-                    continue
+            # Only data and iterate edges pass items
+            if data_edges_only and edge_type not in ('data', 'iterate'):
+                continue
 
             # Group by target handle (input port)
             port = target_handle or 'input'
@@ -475,37 +638,26 @@ class WorkflowRouter:
             case_id = handle_id.replace('source-case-', '')
             return self._expand_case_events(f"case:{case_id}", step)
 
-        normalized = handle_id
-        if normalized.startswith('source-'):
-            normalized = normalized[len('source-'):]
-
+        normalized = handle_id[len('source-'):] if handle_id.startswith('source-') else handle_id
         if normalized.startswith('branch-') or normalized.startswith('branch_'):
             return ['fork', normalized]
 
-        alias_map = {
-            'main': 'success',
-            'success': 'success',
-            'error': 'error',
-            'true': 'true',
-            'false': 'false',
-            'default': 'default',
-            'item': 'iterate',
-            'iterate': 'iterate',
-            'done': 'done',
-            'body_out': 'iterate',
-            'done_out': 'done',
-            'trigger': 'trigger',
-            'triggered': 'trigger',
-            'start': 'start',
-            # Error handling events
-            'handled': 'handled',
-            'escalate': 'escalate',
-        }
+        # Which declared port the handle means, and the event that port emits,
+        # come from the one table connection validation also reads.
+        return handle_events(handle_id, self._declared_output_ports(step))
 
-        if normalized in ('merged', 'joined'):
-            return [normalized, 'success']
-
-        return [alias_map.get(normalized, normalized)]
+    @staticmethod
+    def _declared_output_ports(step: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """The output ports the step's module declares, or none when it is not registered."""
+        module_id = (step or {}).get('module')
+        if not isinstance(module_id, str) or not module_id:
+            return []
+        try:
+            from ...modules.registry import ModuleRegistry
+            meta = ModuleRegistry.get_metadata(module_id) or {}
+        except Exception:  # an unregistered or unloadable module routes by the table alone
+            return []
+        return list(meta.get('output_ports') or [])
 
     def _expand_case_events(
         self,

@@ -22,7 +22,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ...constants import WorkflowStatus
-from ..exceptions import StepExecutionError, WorkflowExecutionError, is_policy_refusal
+from ..exceptions import (
+    ExitEdgeConflictError,
+    StepExecutionError,
+    WorkflowExecutionError,
+    is_policy_refusal,
+)
 from ..flow_control import (
     is_flow_control_module,
     is_iteration_module,
@@ -257,6 +262,9 @@ class WorkflowEngine:
 
             self._router.build_step_index(steps)
             self._router.build_edge_index(self._edges, steps)
+            conflicts = self._router.exit_conflicts(self._edges, steps)
+            if conflicts:
+                raise ExitEdgeConflictError(conflicts)
 
             # Validate error edges (non-blocking — log warnings only)
             error_edge_warnings = self._router.validate_error_edges()
@@ -306,6 +314,8 @@ class WorkflowEngine:
 
             await self._handle_workflow_error(e)
 
+            if isinstance(e, ExitEdgeConflictError):
+                raise
             raise WorkflowExecutionError(f"Workflow execution failed: {str(e)}") from e
 
         finally:
@@ -406,7 +416,7 @@ class WorkflowEngine:
                 # Check for error edge route before propagating
                 error_result = {'__event__': 'error', 'ok': False, 'error': str(e)}
                 error_next = self._router.get_next_step_index(step_id, error_result, current_idx)
-                if error_next != current_idx + 1 or f"{step_id}:error" in self._router.event_routes:
+                if self._router.has_route(step_id, 'error'):
                     # Error edge exists — route to error handler instead of failing
                     self.context[step_id] = error_result
                     next_idx = error_next
@@ -544,6 +554,8 @@ class WorkflowEngine:
 
         # Use router for flow control modules OR steps with explicit connections
         if is_flow_control_module(module_id) or has_connections:
+            if isinstance(result, dict) and result.get('__event__') == 'fork':
+                return self._router.start_fork(step_id, current_idx, len(steps))
             next_idx = self._router.get_next_step_index(step_id, result, current_idx)
 
             # Track iteration loop controllers (foreach/loop) for edge-mode.
@@ -568,7 +580,7 @@ class WorkflowEngine:
         if self._loop_stack and not self._router.has_outgoing_edges(step_id):
             return self._loop_stack[-1]
 
-        return current_idx + 1
+        return self._router.next_in_order(step_id, current_idx, len(steps))
 
     async def _execute_step(
         self,
@@ -596,6 +608,12 @@ class WorkflowEngine:
         # Execute resource sub-nodes (ai.model, ai.memory, ai.tool) and inject into context
         await self._execute_resource_sub_nodes(step_id)
 
+        # A joining step (several declared inputs, e.g. flow.merge) reads each
+        # input port's value from the edge drawn to it, for this step only.
+        port_inputs = self._router.inputs_by_port(step_id, self.context)
+        shadowed = {key: self.context[key] for key in port_inputs if key in self.context}
+        self.context.update(port_inputs)
+
         # Inject real-time notify callback for agent modules (tool call streaming)
         if module_id and 'agent' in module_id:
             create_notifier = getattr(self._hooks, 'create_step_notifier', None)
@@ -607,14 +625,19 @@ class WorkflowEngine:
         should_execute = await self._should_execute_step(step_config)
         resolver = self._get_resolver()
 
-        result = await self._step_executor.execute_step(
-            step_config=step_config,
-            step_index=step_index,
-            context=self.context,
-            resolver=resolver,
-            should_execute=should_execute,
-            trace_collector=self._trace_collector,
-        )
+        try:
+            result = await self._step_executor.execute_step(
+                step_config=step_config,
+                step_index=step_index,
+                context=self.context,
+                resolver=resolver,
+                should_execute=should_execute,
+                trace_collector=self._trace_collector,
+            )
+        finally:
+            for key in port_inputs:
+                self.context.pop(key, None)
+            self.context.update(shadowed)
 
         if result is not None:
             self.execution_log.append({

@@ -90,6 +90,7 @@ from .....engine.outcome import ClaimBy, Outcome, envelope
             "required": False,
         },
         "api_token": {
+            'secret': True,
             "type": "string",
             "placeholder": "${env.JIRA_API_TOKEN}",
             "required": False,

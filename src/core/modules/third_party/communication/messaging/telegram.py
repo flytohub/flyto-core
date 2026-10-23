@@ -147,6 +147,7 @@ def _refused(error_code: Any, description: str) -> Dict[str, Any]:
 
     params_schema={
         'bot_token': {
+            'secret': True,
             'type': 'string',
             'label': 'Bot Token',
             'description': 'Telegram bot token (from env.TELEGRAM_BOT_TOKEN or direct input)',

@@ -148,8 +148,9 @@ def DURATION_MS(
     max_ms: int = 300000,
     label: str = "Duration (ms)",
     label_key: str = "schema.field.duration_ms",
+    **extra: Any,
 ) -> Dict[str, Dict[str, Any]]:
-    """Duration field in milliseconds."""
+    """Duration field in milliseconds. ``extra`` adds field keys (e.g. ``exclusive_with``)."""
     return field(
         key,
         type="number",
@@ -163,6 +164,7 @@ def DURATION_MS(
         ui={"unit": "ms"},
         visibility=Visibility.DEFAULT,
         group=FieldGroup.BASIC,
+        **extra,
     )
 
 

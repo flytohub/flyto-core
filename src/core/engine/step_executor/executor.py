@@ -17,9 +17,10 @@ import asyncio
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from ..exceptions import StepTimeoutError, StepExecutionError, is_policy_refusal
+from ..exceptions import StepExecutionError, StepTimeoutError, is_policy_refusal
+from ..hooks import ExecutorHooks, HookAction
 from ..outcome import (
     ENVELOPE_KEY,
     ClaimBy,
@@ -27,16 +28,16 @@ from ..outcome import (
     cap,
     ceiling_for,
     default_for,
-    envelope_from_exception,
     envelope,
+    envelope_from_exception,
     is_on_ladder,
     read_envelope,
     rung_index,
 )
-from ..hooks import ExecutorHooks, HookAction
 from ..redaction import (
     apply_hook_param_changes,
     redact_step_params,
+    redact_step_result,
     runtime_sensitive_params,
     snapshot_hook_params,
 )
@@ -53,9 +54,10 @@ except ImportError:
     _RUNTIME_INVOKER_AVAILABLE = False
 
 if TYPE_CHECKING:
-    from ..variable_resolver import VariableResolver
-    from ...modules.items import Item, NodeExecutionResult, StepInputItems
+    from ...modules.items import Item
+    from ..evolution.healer import StepHealer
     from ..trace import StepTrace, TraceCollector
+    from ..variable_resolver import VariableResolver
 
 logger = logging.getLogger(__name__)
 
@@ -640,14 +642,16 @@ class StepExecutor:
 
             # Record successful step trace
             if step_trace:
-                from ..trace import StepOutput
                 items_output = []
-                if isinstance(result, dict):
-                    items = result.get('items', [])
+                # The trace is persisted and returned to callers: it gets the
+                # result with the leaves the module declares sensitive redacted.
+                traced = redact_step_result(module_id, result)
+                if isinstance(traced, dict):
+                    items = traced.get('items', [])
                     if items:
                         items_output = [items]
-                    elif result.get('data'):
-                        items_output = [[result.get('data')]]
+                    elif traced.get('data'):
+                        items_output = [[traced.get('data')]]
                 step_trace.set_output(items=items_output)
                 absorbed = self._absorbed_failure(step_id, result, pop=False)
                 if absorbed is not None:
@@ -688,7 +692,9 @@ class StepExecutor:
         finally:
             # Call post-execute hook
             # SECURITY: Redact sensitive data before passing to hooks
-            redacted_result = _redact_sensitive_output(result) if result else result
+            redacted_result = (
+                _redact_sensitive_output(redact_step_result(module_id, result)) if result else result
+            )
             found_sensitive = runtime_sensitive_params(result)
             if found_sensitive and step_trace and step_trace.input is not None:
                 step_trace.input.params = redact_step_params(
@@ -941,9 +947,7 @@ class StepExecutor:
         # Apply patch to step config
         patched = dict(step_config)
         params = dict(patched.get("params", {}))
-        if patch["fix_type"] == "replace_param":
-            params[patch["param_key"]] = patch["new_value"]
-        elif patch["fix_type"] == "add_param":
+        if patch["fix_type"] == "replace_param" or patch["fix_type"] == "add_param":
             params[patch["param_key"]] = patch["new_value"]
         patched["params"] = params
 
@@ -1024,7 +1028,7 @@ class StepExecutor:
                 timeout=timeout
             )
         except asyncio.TimeoutError:
-            raise StepTimeoutError(step_id, timeout)
+            raise StepTimeoutError(step_id, timeout) from None
 
     async def _execute_module(
         self,
@@ -1107,7 +1111,7 @@ class StepExecutor:
                 )
 
         except Exception as e:
-            raise StepExecutionError(step_id, f"Step failed: {str(e)}", e)
+            raise StepExecutionError(step_id, f"Step failed: {str(e)}", e) from e
 
     async def _execute_single_mode(
         self,
@@ -1133,6 +1137,9 @@ class StepExecutor:
                 raise StepExecutionError(
                     step_id,
                     f"Module returned failure [{code}]: {message}",
+                    # The code the module itself returned, as data. Not the
+                    # "UNKNOWN" the wrapper fills in when it returned none.
+                    error_code=result.get('error_code') or None,
                 )
             # Return legacy format for backward compatibility
             return items_to_legacy_context(node_result)
@@ -1143,6 +1150,7 @@ class StepExecutor:
             raise StepExecutionError(
                 step_id,
                 f"Module returned failure [{code}]: {message}",
+                error_code=code,
             )
         return result
 
@@ -1156,8 +1164,13 @@ class StepExecutor:
     ) -> Any:
         """Process each input item independently."""
         from ...modules.items import (
-            Item, ItemContext, NodeExecutionResult, ExecutionStatus,
-            ItemError, ExecutionMeta, items_to_legacy_context
+            ExecutionMeta,
+            ExecutionStatus,
+            Item,
+            ItemContext,
+            ItemError,
+            NodeExecutionResult,
+            items_to_legacy_context,
         )
 
         items = input_items if input_items is not None else [Item(json={})]
@@ -1226,8 +1239,11 @@ class StepExecutor:
     ) -> Any:
         """Process all items at once."""
         from ...modules.items import (
-            ItemContext, NodeExecutionResult, ExecutionStatus,
-            ExecutionMeta, items_to_legacy_context
+            ExecutionMeta,
+            ExecutionStatus,
+            ItemContext,
+            NodeExecutionResult,
+            items_to_legacy_context,
         )
 
         items = input_items or []

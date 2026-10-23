@@ -9,8 +9,7 @@ Provides utilities for identifying and handling flow control modules
 This module should be the single source of truth for flow control
 module identification, avoiding hardcoded module IDs in multiple places.
 """
-from typing import Set, FrozenSet
-
+from typing import FrozenSet
 
 # =============================================================================
 # Flow Control Module IDs
@@ -221,6 +220,22 @@ LEGACY_STEP_SETTING_KEYS = {
     'runIf': 'when',
     'foreachAs': 'as',
 }
+
+
+#: The per-step execution settings: read off the step by the engine
+#: (``StepExecutor`` / ``WorkflowEngine``), never by its module, so no module
+#: schema declares them. A host that asks a module contract about a step's
+#: parameters reads this table to tell a setting from an undeclared module
+#: parameter. The legacy spellings above are settings too.
+STEP_SETTING_KEYS = frozenset({
+    'timeout', 'retry', 'on_error', 'when', 'foreach', 'as', 'output',
+    *LEGACY_STEP_SETTING_KEYS,
+})
+
+
+def is_step_setting(name):
+    """Whether ``name`` is a per-step execution setting (``STEP_SETTING_KEYS``)."""
+    return name in STEP_SETTING_KEYS
 
 
 def normalize_step_settings(step_config):

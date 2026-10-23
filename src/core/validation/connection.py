@@ -7,9 +7,10 @@ Validates connections between modules.
 Used by flyto-cloud for edge-level validation.
 """
 
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
+from ..canvas_handles import INPUT, OUTPUT, resolve_port
 from .errors import ErrorCode
 
 
@@ -20,61 +21,6 @@ class ConnectionResult:
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     meta: Dict[str, Any] = field(default_factory=dict)
-
-
-# Port alias mapping: VueFlow handle IDs ↔ flyto-core port IDs
-# VueFlow uses: 'output', 'target', 'in', etc.
-# flyto-core uses: 'success', 'error', 'input', 'iterate', 'done', etc.
-OUTPUT_PORT_ALIASES = {
-    'output': 'success',
-    'source': 'success',
-    'source-true': 'true',
-    'source-false': 'false',
-    'source-error': 'error',
-    'body_out': 'iterate',
-    'done_out': 'done',
-}
-INPUT_PORT_ALIASES = {
-    'input': 'input',
-    'target': 'input',
-    'in': 'input',  # LoopNode uses 'in' for input
-    'target-model': 'model',
-    'target-memory': 'memory',
-    'target-tools': 'tools',
-}
-
-
-def _find_port(ports: List, port_id: str, aliases: Dict) -> Optional[Dict]:
-    """Find port by ID or alias, also checks handle_id"""
-    if not ports:
-        return None
-    # Direct match by id
-    match = next((p for p in ports if p.get('id') == port_id), None)
-    if match:
-        return match
-    # Match by handle_id (frontend sends VueFlow handle IDs like 'source-true')
-    match = next((p for p in ports if p.get('handle_id') == port_id), None)
-    if match:
-        return match
-    # Try alias
-    alias_id = aliases.get(port_id)
-    if alias_id:
-        match = next((p for p in ports if p.get('id') == alias_id), None)
-        if match:
-            return match
-    # Strip 'source-' prefix as general pattern (e.g. 'source-case-xxx' -> 'case-xxx')
-    if port_id.startswith('source-'):
-        stripped = port_id[len('source-'):]
-        match = next((p for p in ports if p.get('id') == stripped), None)
-        if match:
-            return match
-    # Strip 'target-' prefix (e.g. 'target-model' -> 'model')
-    if port_id.startswith('target-'):
-        stripped = port_id[len('target-'):]
-        match = next((p for p in ports if p.get('id') == stripped), None)
-        if match:
-            return match
-    return None
 
 
 def _validate_template_connection(
@@ -134,33 +80,29 @@ def _validate_connection_rules(
     can_receive_from = to_meta.get('can_receive_from', ['*'])
 
     # Wildcard check
-    if '*' not in can_connect_to:
-        # Check if to_module matches any pattern
-        if not _matches_any_pattern(to_module_id, can_connect_to):
-            return ConnectionResult(
-                valid=False,
-                error_code=ErrorCode.INCOMPATIBLE_MODULES,
-                error_message=f'{from_module_id} cannot connect to {to_module_id}',
-                meta={
-                    'from_module': from_module_id,
-                    'to_module': to_module_id,
-                    'allowed': can_connect_to
-                }
-            )
+    if '*' not in can_connect_to and not _matches_any_pattern(to_module_id, can_connect_to):
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.INCOMPATIBLE_MODULES,
+            error_message=f'{from_module_id} cannot connect to {to_module_id}',
+            meta={
+                'from_module': from_module_id,
+                'to_module': to_module_id,
+                'allowed': can_connect_to
+            }
+        )
 
-    if '*' not in can_receive_from:
-        # Check if from_module matches any pattern
-        if not _matches_any_pattern(from_module_id, can_receive_from):
-            return ConnectionResult(
-                valid=False,
-                error_code=ErrorCode.INCOMPATIBLE_MODULES,
-                error_message=f'{to_module_id} cannot receive from {from_module_id}',
-                meta={
-                    'from_module': from_module_id,
-                    'to_module': to_module_id,
-                    'allowed': can_receive_from
-                }
-            )
+    if '*' not in can_receive_from and not _matches_any_pattern(from_module_id, can_receive_from):
+        return ConnectionResult(
+            valid=False,
+            error_code=ErrorCode.INCOMPATIBLE_MODULES,
+            error_message=f'{to_module_id} cannot receive from {from_module_id}',
+            meta={
+                'from_module': from_module_id,
+                'to_module': to_module_id,
+                'allowed': can_receive_from
+            }
+        )
 
     return None
 
@@ -240,8 +182,8 @@ def _validate_port_compatibility(
     if not to_port and to_ports:
         to_port = to_ports[0].get('id', 'input')
 
-    from_port_meta = _find_port(from_ports, from_port, OUTPUT_PORT_ALIASES) if from_port else None
-    to_port_meta = _find_port(to_ports, to_port, INPUT_PORT_ALIASES) if to_port else None
+    from_port_meta = resolve_port(from_ports, from_port, OUTPUT) if from_port else None
+    to_port_meta = resolve_port(to_ports, to_port, INPUT) if to_port else None
 
     if from_ports and from_port and not from_port_meta:
         return ConnectionResult(
@@ -281,20 +223,20 @@ def _validate_port_compatibility(
         if from_data_type and to_data_type:
             from_types = from_data_type if isinstance(from_data_type, list) else [from_data_type]
             to_types = to_data_type if isinstance(to_data_type, list) else [to_data_type]
-            if 'any' not in from_types and 'any' not in to_types:
-                if not _data_types_compatible(from_types, to_types):
-                    return ConnectionResult(
-                        valid=False,
-                        error_code=ErrorCode.TYPE_MISMATCH,
-                        error_message=f'{to_module_id} requires {to_types}, but received {from_types}',
-                        meta={
-                            'to_module': to_module_id,
-                            'expected': to_types,
-                            'received': from_types,
-                            'from_port': from_port,
-                            'to_port': to_port,
-                        }
-                    )
+            if ('any' not in from_types and 'any' not in to_types
+                    and not _data_types_compatible(from_types, to_types)):
+                return ConnectionResult(
+                    valid=False,
+                    error_code=ErrorCode.TYPE_MISMATCH,
+                    error_message=f'{to_module_id} requires {to_types}, but received {from_types}',
+                    meta={
+                        'to_module': to_module_id,
+                        'expected': to_types,
+                        'received': from_types,
+                        'from_port': from_port,
+                        'to_port': to_port,
+                    }
+                )
         # Port-level checks passed; skip module-level type checks
         return ConnectionResult(valid=True)
 
@@ -302,20 +244,19 @@ def _validate_port_compatibility(
     output_types = from_meta.get('output_types', [])
     input_types = to_meta.get('input_types', [])
 
-    if output_types and input_types:
-        # If both have types, check compatibility
-        if '*' not in input_types and '*' not in output_types:
-            if not _types_compatible(output_types, input_types):
-                return ConnectionResult(
-                    valid=False,
-                    error_code=ErrorCode.TYPE_MISMATCH,
-                    error_message=f'{to_module_id} requires {input_types}, but received {output_types}',
-                    meta={
-                        'to_module': to_module_id,
-                        'expected': input_types,
-                        'received': output_types
-                    }
-                )
+    if (output_types and input_types
+            and '*' not in input_types and '*' not in output_types
+            and not _types_compatible(output_types, input_types)):
+            return ConnectionResult(
+                valid=False,
+                error_code=ErrorCode.TYPE_MISMATCH,
+                error_message=f'{to_module_id} requires {input_types}, but received {output_types}',
+                meta={
+                    'to_module': to_module_id,
+                    'expected': input_types,
+                    'received': output_types
+                }
+            )
 
     return ConnectionResult(valid=True)
 
@@ -556,8 +497,8 @@ def get_connectable_for_replacement(
     Returns:
         List of modules compatible with both upstream and downstream
     """
-    from .index import ConnectionIndex
     from ..modules.registry import ModuleRegistry
+    from .index import ConnectionIndex
 
     index = ConnectionIndex.get_instance()
 

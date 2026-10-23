@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
             description_key='modules.crypto.jwt_verify.params.token.description',
             required=True,
             placeholder='eyJhbGciOiJIUzI1NiIs...',
+            secret=True,
             group=FieldGroup.BASIC,
         ),
         field(
