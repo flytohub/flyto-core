@@ -1,8 +1,8 @@
 <h1 align="center">Flyto2</h1>
 
 <p align="center">
-  <strong>STOP CHATTING. START DOING.</strong><br>
-  <em>Give AI a way to act — across browsers, APIs, workflows, and real ROS 2 robots.</em>
+  <strong>AI says it's done. Flyto2 checks the receipts.</strong><br>
+  <em>Run real actions. Keep the full execution trail. Check the evidence.</em>
 </p>
 
 <p align="center">
@@ -17,11 +17,9 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-## Your AI has ideas. Give it tools.
+## Run actions. Keep the receipts.
 
-A model can explain how to do something. **Flyto2 turns those steps into actions you can actually run.**
-
-**Open the page. Click the button. Call the API. Move the data. Run the workflow.**
+**Open pages. Call APIs. Save files. Execute workflows.** Flyto2 records what happened at each step and checks reported evidence against capability contracts.
 
 And yes, **Flyto2 already connects to ROS 2 robots through external adapters.** The robot uses its own ROS 2 / Nav2 software. Flyto2 is the software execution layer, **not robot firmware or a motor controller**.
 
@@ -123,11 +121,11 @@ flyto serve
 
 By default the server binds to 127.0.0.1:8333. Do not expose it publicly without the proper authentication and network controls.
 
-## AI says it's done. Flyto2 checks the receipts.
+## Every step has a record.
 
-**Every step leaves a record. Every result has evidence to check.**
+**Every reported result has evidence to check.**
 
-Flyto2 runs the steps, keeps the execution trail, and checks reported evidence against the capability contract. No need to take an AI's word for it.
+Flyto2 runs the steps, keeps the execution trail, and checks reported evidence against the capability contract. The execution log and evidence are available for inspection.
 
 [Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [YouTube](https://www.youtube.com/@Flyto2) · [Issues](https://github.com/flytohub/flyto-core/issues)
 
