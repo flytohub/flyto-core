@@ -1,17 +1,12 @@
 <h1 align="center">Flyto2</h1>
 
 <p align="center">
-  <strong>AI can talk. Flyto2 lets it do things.</strong><br />
-  One open-source software engine for real actions — from browser tabs and APIs to ROS 2 robots through external adapters.
+  <strong>STOP CHATTING. START DOING.</strong><br>
+  <em>Give AI a way to act — across browsers, APIs, workflows, and real ROS 2 robots.</em>
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> ·
-  <a href="README.ja.md">日本語</a> ·
-  <a href="README.ko.md">한국어</a> ·
-  <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="README.es.md">Español</a> ·
-  <a href="README.pt-BR.md">Português (BR)</a>
+  <a href="README.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.es.md">Español</a> · <a href="README.pt-BR.md">Português (BR)</a>
 </p>
 
 <p align="center">
@@ -22,118 +17,87 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-## An AI agent needs more than a chat box
+## Your AI has ideas. Give it tools.
 
-Your AI has a plan. Now what?
+A model can explain how to do something. **Flyto2 turns those steps into actions you can actually run.**
 
-**Open a website. Grab some data. Call an API. Save a file. Run the next step.**
-Flyto2 makes these actions into reusable workflows instead of a pile of one-off scripts.
+**Open the page. Click the button. Call the API. Move the data. Run the workflow.**
 
-And it doesn't stop at software screens. **Flyto2 already connects to ROS 2 robots using external adapters.** Core supplies the common execution and capability-contract layer; the robotics package talks to the robot's own ROS 2 stack. The robot is not running Flyto2 firmware.
+And yes, **Flyto2 already connects to ROS 2 robots through external adapters.** The robot uses its own ROS 2 / Nav2 software. Flyto2 is the software execution layer, **not robot firmware or a motor controller**.
 
-> **One core. Different worlds.**
->
-> 🌐 **Web** — browser automation and data extraction  
-> 🔌 **Software** — APIs, files, MCP tools and workflows  
-> 🤖 **Robotics** — ROS 2 through separate, host-approved adapters  
-> 🦾 **Manipulation** — LeRobot arm integration is being built as a separate pack  
-> 🏠 **IoT** — device-specific packs can connect smart equipment without bloating Core
+| | What you can do |
+|---|---|
+| 🌐 **Web** | Open pages, click, extract data, take screenshots |
+| ⚡ **APIs** | Chain requests and transform responses |
+| 🧩 **Workflows** | Turn multi-step jobs into reusable automations |
+| 🔌 **MCP** | Give compatible AI agents a real execution toolbox |
+| 🤖 **ROS 2** | Connect standard ROS 2 robots through host-side adapters |
+| 🦾 **Capabilities** | Describe device actions, limits and evidence with portable contracts |
 
-This is a **software project**, not a robot model, a motor controller, or an all-in-one hardware SDK.
+**482 modules · 89 categories · 41 ready-to-run recipes** in the current Core inventory.
 
-## See it move
+## Watch it run
 
 <p align="center">
-  <img src="demo/flyto-core-demo.gif" alt="Flyto2 running a browser and API workflow with visible steps" width="760" />
+  <img src="demo/flyto-core-demo.gif" alt="Flyto2 running a real software automation workflow step by step" width="760" />
 </p>
 
-*The recording above demonstrates a software workflow, not a physical-robot run.*
+*This is a real software-workflow recording. The ROS 2 integration runs separately; this GIF is not a robot demo.*
 
-## Run something in 30 seconds
-
-Install the browser extra and try a real workflow:
+## Run your first workflow
 
 ~~~bash
 python -m pip install "flyto-core[browser]"
 playwright install chromium
+
+# Go to a real page, collect information and save the results.
 flyto recipe competitor-intel --url https://github.com/pricing
 ~~~
 
-You'll get a step-by-step execution trace, browser captures and a report. Want to see what's built in?
+That's a working command, not a mock screenshot. To explore more:
 
 ~~~bash
 flyto recipes
 flyto modules
-~~~
-
-Or run your own YAML workflow:
-
-~~~bash
 flyto run my-workflow.yaml
 ~~~
 
-**482 registry-backed modules, 89 catalog categories and 41 packaged recipes** in the current Core inventory. You don't have to install every optional integration to use the engine.
+## Software that reaches the real world
 
-## The stuff that makes it powerful
-
-| You want to… | Flyto2 gives you… |
-| --- | --- |
-| Turn an idea into actual software actions | A workflow engine with typed, reusable steps |
-| Let an agent use existing tools | An MCP server and a module registry |
-| Connect another tool or device stack | Installable packs and host-bound capability contracts |
-| Understand what ran | Structured traces and execution evidence |
-| Continue after a failure | Checkpoints and replay controls, subject to each action's safety rules |
-| Keep physical actions under control | Declared limits, explicit host authority and safe-stop contracts |
-
-**Important:** a command returning “OK” isn't automatically proof that the real-world task succeeded. Core records execution and can judge declared evidence; a Flyto2 host / AI Space coordinates permissions, independent observations and the final mission verdict.
-
-## One engine, not one giant dependency tree
+Our robotics connection doesn't replace ROS 2. It **uses ROS 2**.
 
 ~~~text
-User or AI agent
-      |
-      v
-Flyto2 host / AI Space   <-- goal, choice of tools, approvals
-      |
-      v
-Flyto2              <-- workflow, contracts, execution, trace
-      |
-      +--> Browser / APIs / files / MCP
-      |
-      +--> Approved device pack
-               |
-               +--> ROS 2 adapter  --> ROS 2 robot
-               +--> LeRobot pack   --> robot arm (integration in progress)
-               +--> IoT adapter    --> smart device
+Human / AI agent
+       |
+       v
+Flyto2 AI Space          goal, device choice, permissions
+       |
+       v
+flyto-core               workflow, execution, contracts, trace
+       |
+       +--> Browser / API / Files / MCP
+       |
+       +--> Approved external adapter
+                  |
+                  +--> ROS 2 / Nav2 --> TurtleBot3
 ~~~
 
-**Here's the rule:** one device software stack, one separate pack.
+The [Flyto2 robotics adapter](https://github.com/flytohub/flyto-robotics) is developed against real TurtleBot3 equipment. The latest combined end-to-end physical acceptance is still a separate verification step — we don't present a software integration as an already certified robot deployment.
 
-ROS 2 stays in the robotics adapter stack. LeRobot gets its own pack. An ESP32 integration or another smart appliance gets the pack appropriate to its actual software stack. **No vendor-specific motor code goes into Flyto2.**
+**One device software stack, one pack.** Drivers, motors, robot models and vendor SDKs live outside Core. Core stays independent of the brand of robot, arm or connected device.
 
-An adapter declares what a machine can do and what it needs. The trusted execution host decides whether that action is allowed. **Discovery never equals permission.** A model's confidence isn't a safety guarantee, and a failed or unknown physical action isn't blindly retried.
+## Give your agent the toolbox
 
-### What is ready — and what still needs proof
-
-- **Core software:** workflows, browser/API/file modules, MCP interface, capability contracts, execution traces, recovery tools and adapter-pack mechanisms are implemented.
-- **ROS 2 connection:** Flyto2 uses an external ROS 2 robotics stack with real TurtleBot3 development work. This is **not** a built-in ROS 2 implementation inside Core, and end-to-end physical acceptance of the current integration is still pending.
-- **Robot arms:** a portable pick-and-place contract example exists; the AM-ARM200 / LeRobot adapter is a separate work in progress. Don't treat the example as a tested arm driver.
-- **Smart devices:** optional adapters and integrations live outside Core. Compatibility and safety have to be tested per actual device.
-
-We would rather show the boundary clearly than pretend every robot or refrigerator works out of the box.
-
-## Plug it into your tools
-
-### MCP — give your coding agent a workflow toolbox
+### MCP
 
 ~~~bash
 python -m pip install flyto-core
 python -m core.mcp_server
 ~~~
 
-You can configure that command as an MCP server in a compatible client. MCP exposes software capabilities; it does **not** grant physical-motion permission by itself.
+Configure that command in your MCP client to expose Core tools. **MCP access alone does not authorize moving a physical robot.** The trusted host still controls device access.
 
-### Python — call a module
+### Python
 
 ~~~python
 import asyncio
@@ -142,7 +106,7 @@ from core.modules.registry import ModuleRegistry
 async def main():
     result = await ModuleRegistry.execute(
         "string.reverse",
-        params={"text": "Hello, world!"},
+        params={"text": "Flyto2"},
         context={},
     )
     print(result)
@@ -150,31 +114,25 @@ async def main():
 asyncio.run(main())
 ~~~
 
-### HTTP — run an execution service
+### Local HTTP API
 
 ~~~bash
 python -m pip install "flyto-core[api]"
 flyto serve
 ~~~
 
-The local execution API runs on 127.0.0.1:8333 by default. Protect the service and configure authentication before exposing it beyond a trusted environment.
+By default the server binds to 127.0.0.1:8333. Do not expose it publicly without the proper authentication and network controls.
 
-## Why build on this?
+## Built to run. Built to know what happened.
 
-Most demos stop at “the AI said it did it.”
+Every serious execution engine needs to answer three questions: **What ran? What changed? What happens next?**
 
-We care about the next step: **what actually ran, what changed, and what you can safely do next.** That's why trace, replay, bounded capabilities and evidence exist. They're not the headline; they're how we make the headline real.
+Flyto2 records each step, supports checkpoints and bounded replay, and checks declared execution evidence. An action's “success” response is not automatically proof that a physical goal was achieved. The Flyto2 host / AI Space handles approvals, independent observations and the final task verdict.
 
-Flyto2 stays useful on its own. [Flyto2](https://flyto2.com) adds goal planning, AI Spaces and cross-device coordination around that execution layer.
+That technology is underneath the experience — **the experience is doing real work.**
 
-**Build agents that do things. Then make those things real.**
+**Less chat. More action.**
 
-[Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Issues](https://github.com/flytohub/flyto-core/issues) · [YouTube](https://www.youtube.com/@Flyto2)
+[Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [YouTube](https://www.youtube.com/@Flyto2) · [Issues](https://github.com/flytohub/flyto-core/issues)
 
-## Security and licensing
-
-Physical actions must be authorized by a trusted host and backed by the actual device's local safety controls. A ROS 2 adapter, external provider or workflow is not a substitute for emergency-stop hardware or site safety validation. No blanket certification or universal device compatibility is claimed.
-
-To report a vulnerability, use [GitHub Security Advisories](https://github.com/flytohub/flyto-core/security/advisories).
-
-[Apache License 2.0](LICENSE) — free to use, modify and build on.
+<sub>Package name: <code>flyto-core</code>. Product: <strong>Flyto2</strong>. Open source under the <a href="LICENSE">Apache License 2.0</a>. Report vulnerabilities through <a href="https://github.com/flytohub/flyto-core/security/advisories">GitHub Security Advisories</a>.</sub>
