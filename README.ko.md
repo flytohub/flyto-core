@@ -2,70 +2,63 @@
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## AI는 끝났다고 말합니다. Flyto2는 증거를 확인합니다.
+**네, 실제 로봇에도 연결됩니다.**
 
-**브라우저, API, 워크플로. 그리고 외부 어댑터를 통해 실제 ROS 2 로봇까지.**
+웹사이트도 열고, API도 호출하고, 파일도 다룹니다. 그 사이에 필요한 작업까지 한 번에 실행하는 소프트웨어가 Flyto2예요.
 
-페이지 열기, 클릭, 데이터 추출, API 호출, 파일 저장. Flyto2는 이런 작업을 실행하고 각 단계를 기록하며 기능 계약에 맞춰 증거를 확인합니다.
+## 일단 하나 실행해 볼까요?
 
-**Flyto2는 소프트웨어입니다.** 로봇 펌웨어나 모터 제어 프로그램이 아닙니다. ROS 2 로봇은 별도 호스트 어댑터로 연결하고, 로봇은 원래 사용하던 ROS 2 / Nav2를 그대로 사용합니다.
+웹페이지를 확인하고, 데이터와 스크린샷을 모으고, 보고서까지 저장하려면:
 
-| | 지금 할 수 있는 것 |
-|---|---|
-| 🌐 웹 | 브라우저 자동화, 데이터 추출, 스크린샷 |
-| ⚡ API | 요청 연결 및 데이터 처리 |
-| 🧩 워크플로 | 여러 단계를 하나의 자동화로 실행 |
-| 🔌 MCP | AI 클라이언트에 실행 도구 제공 |
-| 🤖 ROS 2 | 외부 어댑터를 통해 표준 ROS 2 로봇 연결 |
-| 🦾 기능 계약 | 장비 동작과 제한, 관측 요구 사항 선언 |
-
-**482개 모듈 · 89개 카테고리 · 41개 레시피.** 현재 Core 코드에 있는 기능입니다.
-
-## 직접 실행해 보세요
-
-~~~bash
-python -m pip install "flyto-core[browser]"
+```bash
+pip install "flyto-core[browser]"
 playwright install chromium
 flyto recipe competitor-intel --url https://github.com/pricing
-~~~
+```
 
-브라우저 작업, 실행 단계, 캡처 및 보고서를 확인할 수 있습니다.
+바로 실행되는 워크플로입니다. AI에게 프롬프트를 먼저 쓸 필요도 없어요. 브라우저가 열리고, 작업이 진행되고, 결과가 저장됩니다.
 
-~~~bash
-flyto recipes
-flyto modules
-flyto run my-workflow.yaml
-~~~
+더 둘러보려면:
 
-## 로봇에 닿는 소프트웨어
+```bash
+flyto recipes                 # 내장 워크플로 보기
+flyto modules                 # 도구 목록
+flyto run your-workflow.yaml  # 직접 만든 워크플로 실행
+```
 
-~~~text
-사람 / AI
-    |
-Flyto2 AI Space  ->  목표와 권한
-    |
-flyto-core       ->  실행, 워크플로, 기록
-    |
-ROS 2 어댑터     ->  ROS 2 / Nav2  ->  TurtleBot3
-~~~
+현재 Core에는 **482개 등록 모듈**과 **41개 내장 레시피**가 있습니다. 브라우저, API, 파일, 데이터 처리, 테스트 등을 다룰 수 있습니다.
 
-실제 TurtleBot3를 기반으로 통합 개발이 진행됐습니다. 다만 현재 통합 버전의 전체 실기기 검증은 별도로 남아 있습니다. 모든 장비가 설치 즉시 작동한다는 주장은 하지 않습니다.
+## 로봇 얘기로 돌아가서…
 
-**장비 소프트웨어 스택 하나에 별도 Pack 하나.** 제조사별 모터 제어 코드는 Core에 넣지 않습니다.
+Flyto2는 외부 ROS 2 어댑터를 통해 **실제 TurtleBot3**와 연결되어 있습니다.
 
-## MCP로 연결하기
+로봇은 원래 쓰던 ROS 2 / Nav2를 그대로 사용합니다. 어댑터가 통신을 담당하고, Flyto2는 소프트웨어 작업 실행과 기록을 담당해요.
 
-~~~bash
-python -m pip install flyto-core
+**로봇에 전용 Flyto2 펌웨어를 설치할 필요도, Core에 모터 드라이버를 넣을 필요도 없습니다.**
+
+최신 통합 버전의 실기기 전체 검증은 아직 남아 있습니다. 어떤 로봇이든 설치만 하면 동작한다는 뜻은 아닙니다.
+
+## 이 저장소는 뭔가요?
+
+**flyto-core**는 Flyto2의 Python 실행 엔진입니다.
+
+YAML 워크플로, Python, 로컬 HTTP API, MCP로 사용할 수 있습니다. AI 클라이언트에 연결하려면:
+
+```bash
+pip install flyto-core
 python -m core.mcp_server
-~~~
+```
 
-MCP 도구 연결만으로 로봇의 물리적 움직임이 승인되지는 않습니다. 실제 권한과 안전 검사는 호스트가 담당합니다.
+MCP가 연결됐다고 로봇의 움직임이 자동으로 허가되지는 않습니다. 실제 장비 접근은 신뢰된 실행 호스트가 승인해야 합니다.
 
-## 실행한 모든 단계를 기록합니다.
+장비 소프트웨어 스택마다 별도 Pack을 둡니다. 제조사별 드라이버는 Core 밖에 남겨둡니다.
 
-**제출된 결과를 증거로 확인합니다.**
+## 실행 뒤에는요?
 
-Flyto2는 작업을 실행하고 각 단계를 남깁니다. 제출된 증거는 기능 계약에 따라 확인합니다.
+Flyto2는 각 단계에서 무슨 일이 있었는지 기록합니다. 문제가 생기면 기록을 보고, 안전한 경우 체크포인트부터 다시 실행할 수 있습니다.
 
-[문서](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [라이선스](LICENSE) · [전체 영어 README](README.md)
+도구가 “완료”라고 답해도 Core는 기능 계약에 따라 제출된 증거를 검사할 수 있습니다.
+
+---
+
+[웹사이트](https://flyto2.com) · [문서](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Issues](https://github.com/flytohub/flyto-core/issues) · [Apache-2.0](LICENSE)
