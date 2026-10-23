@@ -1,14 +1,14 @@
-# Flyto Core
+# Flyto2
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## La IA sabe hablar. Flyto Core la pone a trabajar.
+## La IA sabe hablar. Flyto2 la pone a trabajar.
 
 **Del navegador a las APIs. Y mediante adaptadores externos, también a robots ROS 2. Un solo motor de ejecución de código abierto.**
 
 Tu agente tiene un plan. ¿Y ahora qué?
 
-Abre páginas, extrae datos, llama APIs, guarda archivos y sigue con el siguiente paso. Flyto Core convierte esas acciones en flujos reutilizables, sin tener que unir scripts improvisados.
+Abre páginas, extrae datos, llama APIs, guarda archivos y sigue con el siguiente paso. Flyto2 convierte esas acciones en flujos reutilizables, sin tener que unir scripts improvisados.
 
 Y no se queda en la pantalla. **Flyto2 ya se conecta con robots ROS 2 mediante adaptadores externos.** Core aporta la ejecución común y los contratos de capacidades; el adaptador independiente habla con el software ROS 2 del robot.
 
@@ -20,7 +20,7 @@ Y no se queda en la pantalla. **Flyto2 ya se conecta con robots ROS 2 mediante a
 > 🦾 **Brazos robóticos** — integración LeRobot en desarrollo, como pack aparte  
 > 🏠 **IoT** — packs independientes según la tecnología de cada equipo
 
-**Flyto Core es software. No es un robot, ni firmware, ni un controlador de motores.**
+**Flyto2 es software. No es un robot, ni firmware, ni un controlador de motores.**
 
 ## Pruébalo en 30 segundos
 
