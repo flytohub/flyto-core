@@ -1,11 +1,7 @@
-<p align="center">
-  <img src="https://flyto2.com/logo.png" alt="Flyto2" width="96" />
-</p>
-
-<h1 align="center">Flyto Core</h1>
+<h1 align="center">Flyto2</h1>
 
 <p align="center">
-  <strong>AI can talk. Flyto Core lets it do things.</strong><br />
+  <strong>AI can talk. Flyto2 lets it do things.</strong><br />
   One open-source software engine for real actions — from browser tabs and APIs to ROS 2 robots through external adapters.
 </p>
 
@@ -31,9 +27,9 @@
 Your AI has a plan. Now what?
 
 **Open a website. Grab some data. Call an API. Save a file. Run the next step.**
-Flyto Core makes these actions into reusable workflows instead of a pile of one-off scripts.
+Flyto2 makes these actions into reusable workflows instead of a pile of one-off scripts.
 
-And it doesn't stop at software screens. **Flyto2 already connects to ROS 2 robots using external adapters.** Core supplies the common execution and capability-contract layer; the robotics package talks to the robot's own ROS 2 stack. The robot is not running Flyto Core firmware.
+And it doesn't stop at software screens. **Flyto2 already connects to ROS 2 robots using external adapters.** Core supplies the common execution and capability-contract layer; the robotics package talks to the robot's own ROS 2 stack. The robot is not running Flyto2 firmware.
 
 > **One core. Different worlds.**
 >
@@ -48,7 +44,7 @@ This is a **software project**, not a robot model, a motor controller, or an all
 ## See it move
 
 <p align="center">
-  <img src="demo/flyto-core-demo.gif" alt="Flyto Core running a browser and API workflow with visible steps" width="760" />
+  <img src="demo/flyto-core-demo.gif" alt="Flyto2 running a browser and API workflow with visible steps" width="760" />
 </p>
 
 *The recording above demonstrates a software workflow, not a physical-robot run.*
@@ -80,7 +76,7 @@ flyto run my-workflow.yaml
 
 ## The stuff that makes it powerful
 
-| You want to… | Flyto Core gives you… |
+| You want to… | Flyto2 gives you… |
 | --- | --- |
 | Turn an idea into actual software actions | A workflow engine with typed, reusable steps |
 | Let an agent use existing tools | An MCP server and a module registry |
@@ -100,7 +96,7 @@ User or AI agent
 Flyto2 host / AI Space   <-- goal, choice of tools, approvals
       |
       v
-Flyto Core              <-- workflow, contracts, execution, trace
+Flyto2              <-- workflow, contracts, execution, trace
       |
       +--> Browser / APIs / files / MCP
       |
@@ -113,7 +109,7 @@ Flyto Core              <-- workflow, contracts, execution, trace
 
 **Here's the rule:** one device software stack, one separate pack.
 
-ROS 2 stays in the robotics adapter stack. LeRobot gets its own pack. An ESP32 integration or another smart appliance gets the pack appropriate to its actual software stack. **No vendor-specific motor code goes into Flyto Core.**
+ROS 2 stays in the robotics adapter stack. LeRobot gets its own pack. An ESP32 integration or another smart appliance gets the pack appropriate to its actual software stack. **No vendor-specific motor code goes into Flyto2.**
 
 An adapter declares what a machine can do and what it needs. The trusted execution host decides whether that action is allowed. **Discovery never equals permission.** A model's confidence isn't a safety guarantee, and a failed or unknown physical action isn't blindly retried.
 
@@ -169,7 +165,7 @@ Most demos stop at “the AI said it did it.”
 
 We care about the next step: **what actually ran, what changed, and what you can safely do next.** That's why trace, replay, bounded capabilities and evidence exist. They're not the headline; they're how we make the headline real.
 
-Flyto Core stays useful on its own. [Flyto2](https://flyto2.com) adds goal planning, AI Spaces and cross-device coordination around that execution layer.
+Flyto2 stays useful on its own. [Flyto2](https://flyto2.com) adds goal planning, AI Spaces and cross-device coordination around that execution layer.
 
 **Build agents that do things. Then make those things real.**
 
