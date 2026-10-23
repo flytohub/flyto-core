@@ -34,14 +34,6 @@ And yes, **Flyto2 already connects to ROS 2 robots through external adapters.** 
 
 **482 modules · 89 categories · 41 ready-to-run recipes** in the current Core inventory.
 
-## Watch it run
-
-<p align="center">
-  <img src="demo/flyto-core-demo.gif" alt="Flyto2 running a real software automation workflow step by step" width="760" />
-</p>
-
-*This is a real software-workflow recording. The ROS 2 integration runs separately; this GIF is not a robot demo.*
-
 ## Run your first workflow
 
 ~~~bash
