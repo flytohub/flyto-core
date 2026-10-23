@@ -2,70 +2,63 @@
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## AIは「完了」と言う。Flyto2は証拠を確認する。
+**そう、実際のロボットにもつながっています。**
 
-**ブラウザー、API、ワークフロー。さらに外部アダプターを通じて、実際のROS 2ロボットにも接続。**
+もちろんWebサイトの操作、APIの呼び出し、ファイル処理も。必要なステップをまとめて実行するのがFlyto2です。
 
-ページを開く。クリックする。データを集め、APIを呼び、ファイルを保存する。Flyto2はこれらを実行し、各ステップを記録して、能力契約に沿って証拠を確認します。
+## とりあえず動かしてみよう
 
-**Flyto2はソフトウェアです。** ロボットのファームウェアでもモーター制御プログラムでもありません。ROS 2ロボットには、ホスト側の独立したアダプターから接続します。
+たとえばページを調べて、データとスクリーンショットを集めて、レポートを保存したいなら：
 
-| | 今できること |
-|---|---|
-| 🌐 Web | ブラウザー操作、データ抽出、スクリーンショット |
-| ⚡ API | リクエスト実行、結果の変換と連携 |
-| 🧩 Workflow | ステップを組み合わせた自動処理 |
-| 🔌 MCP | AIクライアントに実行ツールを提供 |
-| 🤖 ROS 2 | 外部アダプター経由でロボットの標準ソフトウェアに接続 |
-| 🦾 Capabilities | 機器の動作・制限・観測を契約として記述 |
-
-**482モジュール、89カテゴリー、41レシピ。** 現在のCoreに含まれる機能です。
-
-## まず1つ動かしてみよう
-
-~~~bash
-python -m pip install "flyto-core[browser]"
+```bash
+pip install "flyto-core[browser]"
 playwright install chromium
 flyto recipe competitor-intel --url https://github.com/pricing
-~~~
+```
 
-ブラウザー操作、実行記録、キャプチャー、レポートを確認できます。
+これは実際に実行できるワークフロー。AIへのプロンプトは不要です。ブラウザーを開き、処理を進め、結果を保存します。
 
-~~~bash
-flyto recipes
-flyto modules
-flyto run my-workflow.yaml
-~~~
+ほかにも試すなら：
 
-## ロボットとの接続も、ソフトウェアで
+```bash
+flyto recipes                 # ワークフロー一覧
+flyto modules                 # ツール一覧
+flyto run your-workflow.yaml  # 自分のワークフローを実行
+```
 
-~~~text
-AI / ユーザー
-     |
-Flyto2 AI Space  ->  目標・権限
-     |
-flyto-core       ->  実行・ワークフロー・記録
-     |
-ROS 2アダプター   ->  ROS 2 / Nav2  ->  TurtleBot3
-~~~
+現在のCoreには**482の登録モジュール**と**41のレシピ**があります。ブラウザー、API、ファイル、データ処理、テストなどに対応しています。
 
-実際のTurtleBot3を使った開発が行われています。ただし、最新の構成での実機エンドツーエンド検証は別途必要です。何でも接続するだけで動く、と主張するものではありません。
+## ロボットの話、もう少し。
 
-**機器のソフトウェアスタックごとに、独立したPackを1つ。** Coreにメーカー固有のモーター制御コードは入れません。
+Flyto2は外部のROS 2アダプターを通じて、**実機のTurtleBot3**につながっています。
 
-## MCPで使う
+ロボット側はいつものROS 2 / Nav2を使用。アダプターが通信を担当し、Flyto2がソフトウェアの処理と実行記録を扱います。
 
-~~~bash
-python -m pip install flyto-core
+**専用ファームウェアをロボットに入れる必要はありません。Coreにモータードライバーを詰め込むこともありません。**
+
+最新の統合構成については、実機を使った一連の受け入れ検証がまだ必要です。どんなロボットでもすぐ動く、という意味ではありません。
+
+## このリポジトリは？
+
+**flyto-core** はFlyto2のPython実行エンジンです。
+
+YAML、Python、ローカルHTTP API、MCPから使えます。AIクライアントにつなぐなら：
+
+```bash
+pip install flyto-core
 python -m core.mcp_server
-~~~
+```
 
-MCPツールの公開だけで、ロボットの操作権限が付くことはありません。認可と安全確認はホスト側で行います。
+MCP接続だけで実機の操作権限が付くわけではありません。機器への操作は信頼されたホストが認可します。
 
-## 実行の記録を残す。
+機器ごとのソフトウェアスタックは独立したPackに分けます。Coreは機種固有のドライバーを抱えません。
 
-**提出された結果は、証拠で確認する。**
+## 実行したら、それで終わり？
 
-Flyto2は処理を実行し、各ステップを記録。提出された証拠を能力契約と照らし合わせてチェックします。
+どのステップを実行したか、Flyto2には記録が残ります。問題が起きたら履歴を確認し、安全に再実行できる範囲でチェックポイントから復帰できます。
 
-[ドキュメント](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [ライセンス](LICENSE) · [英語版の詳細](README.md)
+ツールが「完了」と返したときも、Coreは能力契約に沿って提出された証拠をチェックできます。
+
+---
+
+[公式サイト](https://flyto2.com) · [ドキュメント](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Issues](https://github.com/flytohub/flyto-core/issues) · [Apache-2.0](LICENSE)
