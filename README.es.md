@@ -62,6 +62,10 @@ python -m core.mcp_server
 
 MCP no concede por sí solo permiso para mover una máquina real. La autorización y los límites físicos siguen bajo el control del host.
 
-**Menos promesas. Más cosas funcionando.**
+## La IA dice «listo». Flyto2 mira las pruebas.
+
+**Cada paso deja un registro. Cada resultado tiene evidencia que revisar.**
+
+Flyto2 ejecuta las acciones, guarda lo ocurrido y comprueba la evidencia entregada frente al contrato de capacidades.
 
 [Documentación](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Licencia](LICENSE) · [README completo en inglés](README.md)
