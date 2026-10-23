@@ -2,27 +2,26 @@
 
 [English](README.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [Español](README.es.md) · [Português (BR)](README.pt-BR.md)
 
-## La IA sabe hablar. Flyto2 la pone a trabajar.
+## MENOS CHARLA. MÁS ACCIÓN.
 
-**Del navegador a las APIs. Y mediante adaptadores externos, también a robots ROS 2. Un solo motor de ejecución de código abierto.**
+**Navegadores, APIs, workflows y robots ROS 2 reales conectados mediante adaptadores externos.**
 
-Tu agente tiene un plan. ¿Y ahora qué?
+La IA puede explicarte lo que hay que hacer. Flyto2 da el siguiente paso: abrir páginas, pulsar botones, extraer datos, llamar APIs, guardar archivos y convertir todo eso en workflows ejecutables.
 
-Abre páginas, extrae datos, llama APIs, guarda archivos y sigue con el siguiente paso. Flyto2 convierte esas acciones en flujos reutilizables, sin tener que unir scripts improvisados.
+**Flyto2 es software.** No es un robot, firmware ni un controlador de motores. Para ROS 2 usamos un adaptador independiente y el software que el robot ya tiene: ROS 2 / Nav2.
 
-Y no se queda en la pantalla. **Flyto2 ya se conecta con robots ROS 2 mediante adaptadores externos.** Core aporta la ejecución común y los contratos de capacidades; el adaptador independiente habla con el software ROS 2 del robot.
+| | Acciones disponibles |
+|---|---|
+| 🌐 Web | Automatizar el navegador, extraer información y hacer capturas |
+| ⚡ APIs | Encadenar llamadas y procesar resultados |
+| 🧩 Workflows | Ejecutar tareas con varios pasos |
+| 🔌 MCP | Dar herramientas de ejecución a clientes de IA |
+| 🤖 ROS 2 | Conectar robots estándar mediante adaptadores externos |
+| 🦾 Capacidades | Describir acciones, límites y observaciones con contratos |
 
-> **Un solo Core. Muchos mundos.**
->
-> 🌐 **Web** — navegación automatizada y extracción de datos  
-> 🔌 **Software** — APIs, archivos, MCP y workflows  
-> 🤖 **Robótica** — ROS 2 a través de adaptadores externos autorizados  
-> 🦾 **Brazos robóticos** — integración LeRobot en desarrollo, como pack aparte  
-> 🏠 **IoT** — packs independientes según la tecnología de cada equipo
+**482 módulos · 89 categorías · 41 recetas listas para ejecutar.** Inventario actual de Core.
 
-**Flyto2 es software. No es un robot, ni firmware, ni un controlador de motores.**
-
-## Pruébalo en 30 segundos
+## Pruébalo ahora
 
 ~~~bash
 python -m pip install "flyto-core[browser]"
@@ -30,7 +29,7 @@ playwright install chromium
 flyto recipe competitor-intel --url https://github.com/pricing
 ~~~
 
-Verás los pasos ejecutados, capturas del navegador y un informe.
+Verás los pasos ejecutados, capturas y un informe. También puedes explorar:
 
 ~~~bash
 flyto recipes
@@ -38,35 +37,31 @@ flyto modules
 flyto run my-workflow.yaml
 ~~~
 
-El inventario actual incluye **482 módulos registrados, 89 categorías y 41 recetas**. No necesitas instalar todas las integraciones para empezar.
+## Software conectado con robots de verdad
 
-## ¿Qué lo hace interesante?
+~~~text
+Persona / IA
+     |
+Flyto2 AI Space  ->  objetivo y permisos
+     |
+flyto-core       ->  ejecución, workflows, trazas
+     |
+Adaptador ROS 2  ->  ROS 2 / Nav2  ->  TurtleBot3
+~~~
 
-- **Pasar de las ideas a la acción:** workflows para navegador, APIs y archivos.
-- **Conectar agentes:** servidor MCP y registro de módulos.
-- **Conectar nuevos sistemas:** packs instalables y contratos de capacidades autorizados.
-- **Saber qué pasó:** trazas, evidencias y puntos de control.
-- **Recuperarse con cuidado:** nada de repetir acciones físicas inciertas a ciegas.
+La integración ROS 2 se ha desarrollado con equipos TurtleBot3 reales. La aceptación física completa de la versión integrada todavía requiere pruebas específicas; no prometemos que cualquier robot funcione nada más instalar Core.
 
-### Core ligero, posibilidades enormes
+**Una pila de software de dispositivo, un pack independiente.** Los controladores y motores de cada marca se quedan fuera de Core.
 
-**Un pack por pila de software del dispositivo.** ROS 2 queda en su adaptador; LeRobot tendrá su propio pack; ESP32 y los dispositivos inteligentes se conectan mediante packs adecuados. El código específico de motores no debe vivir dentro de Core.
-
-Ya existe trabajo de integración real con ROS 2, pero la aceptación completa en hardware de la versión integrada sigue pendiente. El pack LeRobot está en desarrollo. No prometemos compatibilidad universal ni control inmediato de cualquier robot.
-
-## Dale herramientas a tu agente con MCP
+## MCP para tus agentes
 
 ~~~bash
 python -m pip install flyto-core
 python -m core.mcp_server
 ~~~
 
-Exponer una herramienta por MCP **no autoriza automáticamente movimientos físicos**.
+MCP no concede por sí solo permiso para mover una máquina real. La autorización y los límites físicos siguen bajo el control del host.
 
-## Ejecutar no es lo mismo que lograr el objetivo
+**Menos promesas. Más cosas funcionando.**
 
-Una respuesta de “listo” no demuestra que algo haya salido bien en el mundo real. Core registra lo ejecutado y puede evaluar la evidencia declarada. El host / AI Space de Flyto2 controla los permisos, las observaciones independientes y el resultado final.
-
-**Haz que tus agentes hagan cosas. Cosas de verdad.**
-
-[README completo en inglés](README.md) · [Documentación](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Licencia Apache-2.0](LICENSE)
+[Documentación](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [Licencia](LICENSE) · [README completo en inglés](README.md)
