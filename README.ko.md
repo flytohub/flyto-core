@@ -62,6 +62,10 @@ python -m core.mcp_server
 
 MCP 도구 연결만으로 로봇의 물리적 움직임이 승인되지는 않습니다. 실제 권한과 안전 검사는 호스트가 담당합니다.
 
-**말만 하는 AI 말고, 실제로 움직이는 AI.**
+## AI는 끝났다고 말합니다. Flyto2는 기록과 증거를 확인합니다.
+
+**모든 단계에는 기록을. 결과에는 확인할 근거를.**
+
+Flyto2는 작업을 실행하고 각 단계를 남깁니다. 제출된 증거는 기능 계약에 따라 확인합니다.
 
 [문서](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [라이선스](LICENSE) · [전체 영어 README](README.md)
