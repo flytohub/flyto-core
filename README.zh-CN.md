@@ -62,6 +62,10 @@ python -m core.mcp_server
 
 MCP 提供调用入口，但不自动授予真实设备的控制权限，动作仍需要经过 Host 的授权与安全检查。
 
-**少一点空谈，多一点实际行动。**
+## AI 说做完了。Flyto2 去看一眼。
+
+**每一步都有记录，每个结果都要拿证据说话。**
+
+Flyto2 负责执行、留下每一步的记录，再按能力契约核对提交的证据。
 
 [文档](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [许可证](LICENSE) · [完整英文 README](README.md)
