@@ -1,8 +1,8 @@
 <h1 align="center">Flyto2</h1>
 
 <p align="center">
-  <strong>AI says it's done. Flyto2 checks the receipts.</strong><br>
-  <em>Run real actions. Keep the full execution trail. Check the evidence.</em>
+  <strong>Yep, it talks to a real robot.</strong><br>
+  It also opens websites, calls APIs, works with files, and runs the steps in between.
 </p>
 
 <p align="center">
@@ -17,108 +17,67 @@
 
 <!-- mcp-name: io.github.flytohub/flyto-core -->
 
-## Run actions. Keep the receipts.
+## Try something.
 
-**Open pages. Call APIs. Save files. Execute workflows.** Flyto2 records what happened at each step and checks reported evidence against capability contracts.
+Say you want to check a website, grab screenshots, collect some data, and save a report.
 
-And yes, **Flyto2 already connects to ROS 2 robots through external adapters.** The robot uses its own ROS 2 / Nav2 software. Flyto2 is the software execution layer, **not robot firmware or a motor controller**.
+Run this:
 
-| | What you can do |
-|---|---|
-| 🌐 **Web** | Open pages, click, extract data, take screenshots |
-| ⚡ **APIs** | Chain requests and transform responses |
-| 🧩 **Workflows** | Turn multi-step jobs into reusable automations |
-| 🔌 **MCP** | Give compatible AI agents a real execution toolbox |
-| 🤖 **ROS 2** | Connect standard ROS 2 robots through host-side adapters |
-| 🦾 **Capabilities** | Describe device actions, limits and evidence with portable contracts |
-
-**482 modules · 89 categories · 41 ready-to-run recipes** in the current Core inventory.
-
-## Run your first workflow
-
-~~~bash
-python -m pip install "flyto-core[browser]"
+```bash
+pip install "flyto-core[browser]"
 playwright install chromium
-
-# Go to a real page, collect information and save the results.
 flyto recipe competitor-intel --url https://github.com/pricing
-~~~
+```
 
-That's a working command, not a mock screenshot. To explore more:
+That's a real workflow. No agent prompt needed. It opens a browser, runs the steps, and saves the results.
 
-~~~bash
-flyto recipes
-flyto modules
-flyto run my-workflow.yaml
-~~~
+Want to poke around?
 
-## Software that reaches the real world
+```bash
+flyto recipes                 # see the built-in workflows
+flyto modules                 # browse the tools
+flyto run your-workflow.yaml  # run your own
+```
 
-Our robotics connection doesn't replace ROS 2. It **uses ROS 2**.
+There are **482 registered modules** and **41 built-in recipes** in the current Core inventory. Browser stuff, APIs, files, data, tests, and plenty more. Use what you need.
 
-~~~text
-Human / AI agent
-       |
-       v
-Flyto2 AI Space          goal, device choice, permissions
-       |
-       v
-flyto-core               workflow, execution, contracts, trace
-       |
-       +--> Browser / API / Files / MCP
-       |
-       +--> Approved external adapter
-                  |
-                  +--> ROS 2 / Nav2 --> TurtleBot3
-~~~
+## And about that robot…
 
-The Flyto2 robotics adapter is developed against real TurtleBot3 equipment. The latest combined end-to-end physical acceptance is still a separate verification step — we don't present a software integration as an already certified robot deployment.
+We're already connecting Flyto2 to a **real TurtleBot3 using ROS 2**.
 
-**One device software stack, one pack.** Drivers, motors, robot models and vendor SDKs live outside Core. Core stays independent of the brand of robot, arm or connected device.
+The robot runs its normal ROS 2 / Nav2 stack. A separate adapter talks to it. Flyto2 handles the software steps and their execution records.
 
-## Give your agent the toolbox
+**No custom Flyto2 firmware on the robot. No motor drivers crammed into this repo.**
 
-### MCP
+This isn't a claim that every robot is plug-and-play. The current combined setup still needs its full end-to-end hardware sign-off. But the ROS 2 adapter and real-robot development are already here.
 
-~~~bash
-python -m pip install flyto-core
+## So what's in this repo?
+
+This is **flyto-core**, the Python execution engine behind Flyto2.
+
+You can call it from Python, run YAML workflows, use its local HTTP API, or hook it into an AI client through MCP.
+
+```bash
+pip install flyto-core
 python -m core.mcp_server
-~~~
+```
 
-Configure that command in your MCP client to expose Core tools. **MCP access alone does not authorize moving a physical robot.** The trusted host still controls device access.
+Your agent gets access to Core's tools. Moving a physical device still requires a trusted host to approve the action.
 
-### Python
+**Different device software stack? Different pack.** That's how ROS 2 and other integrations stay separate without turning Core into a giant pile of device drivers.
 
-~~~python
-import asyncio
-from core.modules.registry import ModuleRegistry
+## How do I know what actually happened?
 
-async def main():
-    result = await ModuleRegistry.execute(
-        "string.reverse",
-        params={"text": "Flyto2"},
-        context={},
-    )
-    print(result)
+This part matters.
 
-asyncio.run(main())
-~~~
+When a workflow runs, Flyto2 keeps a record of each step. If something fails, you can inspect the run and use checkpoints or replay where it's safe to do so.
 
-### Local HTTP API
+And if a tool says “done”? Core can check the evidence it reports against the action's contract. It doesn't just throw away the trail once the command returns.
 
-~~~bash
-python -m pip install "flyto-core[api]"
-flyto serve
-~~~
+That's it. Run something, see what happened, build the next thing.
 
-By default the server binds to 127.0.0.1:8333. Do not expose it publicly without the proper authentication and network controls.
-
-## Every step has a record.
-
-**Every reported result has evidence to check.**
-
-Flyto2 runs the steps, keeps the execution trail, and checks reported evidence against the capability contract. The execution log and evidence are available for inspection.
+---
 
 [Website](https://flyto2.com) · [Documentation](https://docs.flyto2.com) · [PyPI](https://pypi.org/project/flyto-core/) · [YouTube](https://www.youtube.com/@Flyto2) · [Issues](https://github.com/flytohub/flyto-core/issues)
 
-<sub>Package name: <code>flyto-core</code>. Product: <strong>Flyto2</strong>. Open source under the <a href="LICENSE">Apache License 2.0</a>. Report vulnerabilities through <a href="https://github.com/flytohub/flyto-core/security/advisories">GitHub Security Advisories</a>.</sub>
+<sub>Flyto2 is the product. <code>flyto-core</code> is the Python package. Licensed under <a href="LICENSE">Apache 2.0</a>. Security reports: <a href="https://github.com/flytohub/flyto-core/security/advisories">GitHub advisories</a>.</sub>
